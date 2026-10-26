@@ -16,7 +16,7 @@
 
 ## Summary
 
-208 defects: **0 BLOCKER, 24 MAJOR, 125 MINOR, 59 NIT**, after merging 5 duplicates found by more than one reviewer. Every gate in `.github/workflows/validate-catalog.yml` passes at `0e02e28b` (run in a scratch copy, chain exit 0) except the mermaid gate, which was not run: the host has no Node. So most of what follows is prose a gate cannot see — instructions an agent would execute wrongly.
+273 defects: **0 BLOCKER, 26 MAJOR, 170 MINOR, 77 NIT**, after merging 10 duplicates found by more than one reviewer. Every gate in `.github/workflows/validate-catalog.yml` passes at `0e02e28b` (run in a scratch copy, chain exit 0) except the mermaid gate, which was not run: the host has no Node. So most of what follows is prose a gate cannot see — instructions an agent would execute wrongly.
 
 The MAJOR defects, in area order:
 
@@ -44,6 +44,12 @@ The MAJOR defects, in area order:
 - **DOC-C-B1** — Writing a page by the route page's step 4 breaks the scaffold's `--strict` builds, because nothing regenerates the "never hand-edited" `nav:`
 - **DOC-C-B2** — `/docs-init` and standalone `/docs-brand` stops after the specs preflight skip the emitter tail, against `specs-repo-git` §4
 - **FBB-B1** — `/prd-proposal` writes `proposal-profile.yml` and calls it committed, but nothing ever stages it
+- **DQW-B1** — The docs-workflows Update block leaves out `workflows-core`, which every recent docs-workflows release has to be updated with
+- **DQW-B2** — obsidian-llm-wiki README says the Stop hook updates `hot.md` "at session end", but the hook blocks Claude at the end of every turn
+
+### Documentation quality
+
+Added the same day, after the first version of this file was pushed (`cf139b47`): five more reviewers read every plugin's README and `docs/` tree as a user would — navigation, broken links, page-set parity across plugins, workflow diagrams against the commands, and internal vocabulary reaching users. They found 65 defects (2 MAJOR, 45 MINOR, 18 NIT), listed under the *documentation quality* areas below. All 1,330 relative links in the 117 human-facing files resolve and no page is an orphan; what is wrong is what the pages link to and say. The most visible: `guideline-reviewers`' README does not link its workflow diagram and its root-README row has no Docs link (DQS-B1); 18 command pages never link back to their plugin's workflow page and the overview pages link no command page (DQS-B2, DQS-B3); 18 links leave the plugin directory and break in an installed copy (DQS-B5); the workflow diagrams of dev- and product-workflows skip `/conformance` and the security scan (DQD-B3, DQP-B5); maintainer vocabulary — design-decision ids, `§` citations, grep recipes over `plugins/`, change history — runs through every plugin's user pages (DQS-B7, DQS-B8 and the per-plugin entries); and the two MAJORs: docs-workflows' update block leaves `workflows-core` behind (DQW-B1), and obsidian-llm-wiki's `Stop` hook blocks every response while its README says it runs at session end (DQW-B2, re-checked by the coordinator against `hooks/hooks.json`).
 
 ### Coverage and its limits
 
@@ -81,6 +87,8 @@ Seventeen review passes, each on one slice, read the slice end to end at `0e02e2
 | DOC-C-B1 | MAJOR | docs-workflows and the smaller plugins | Writing a page by the route page's step 4 breaks the scaffold's `--strict` builds, because nothing regenerates the "never hand-edited" `nav:` |
 | DOC-C-B2 | MAJOR | docs-workflows and the smaller plugins | `/docs-init` and standalone `/docs-brand` stops after the specs preflight skip the emitter tail, against `specs-repo-git` §4 |
 | FBB-B1 | MAJOR | field feedback — BOOK-2-01 runs | `/prd-proposal` writes `proposal-profile.yml` and calls it committed, but nothing ever stages it |
+| DQW-B1 | MAJOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | The docs-workflows Update block leaves out `workflows-core`, which every recent docs-workflows release has to be updated with |
+| DQW-B2 | MAJOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | obsidian-llm-wiki README says the Stop hook updates `hot.md` "at session end", but the hook blocks Claude at the end of every turn |
 | SEC-B2 | MINOR | security-workflows | `register.py commit` takes any status from the decisions file, so "closed only on evidence" is enforced by prose alone |
 | SEC-B3 | MINOR | security-workflows | an empty `--by` is accepted, so an accepted risk can be recorded with no owner |
 | SEC-B4 | MINOR | security-workflows | Phase 3 looks for the report only at the scan root, while Claude Security creates it with a cwd-relative `mkdir` |
@@ -206,6 +214,51 @@ Seventeen review passes, each on one slice, read the slice end to end at `0e02e2
 | FBB-B43 | MINOR | field feedback — BOOK-2-01 runs | `/brd-interview`: follow-up prompts may be batched, and the round-record and question-set layouts are unspecified |
 | FBB-B45 | MINOR | field feedback — BOOK-2-01 runs | `/brd-package` and `/brd-reconcile`: the display before the question, scan tooling, prose references, author attribution, `[SR#n]` answer mapping, and bundle filenames in section 12 |
 | TRK-B2 | MINOR | older review records | An edition-port obligation from the 2026-08-22 docs restructure has no entry in to-fix.md |
+| DQS-B1 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | `guideline-reviewers`: README does not link its workflow diagram or getting-started page, and the repo-root table has no Docs link for it |
+| DQS-B2 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | Workflow, BRD-route, roles and getting-started pages draw or name every command but link to none of the command pages |
+| DQS-B3 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | 18 command pages do not link back to their plugin's workflow page |
+| DQS-B4 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | Next and previous commands named in prose but not linked; `/harvest-decisions` never mentions `/promote-decisions`; no command page links `/docs-audit` |
+| DQS-B5 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | 18 relative links leave the plugin directory and break in the installed cache |
+| DQS-B6 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | Page-set parity holes in `docs-workflows` and `security-workflows`; command pages name a "Roles and phases" page that the plugin does not have |
+| DQS-B7 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | Internal design-decision IDs (D4 … D25) leak into user pages with nothing to resolve them against |
+| DQS-B8 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | 317 bare `workflows-core:<name>` citations and 306 `§` section citations on user pages, none linked |
+| DQS-B11 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | obsidian-llm-wiki README: the local-install command is `cc`, not `claude`, and the marketplace step gives no command |
+| DQS-B12 | MINOR | documentation quality — links, navigation, page-set parity (all plugins) | The READMEs of the three plugins without a `docs/` tree leave out what a user needs |
+| DQC-B2 | MINOR | documentation quality — family entry points and workflows-core | "Option B" cost snapshot and `cost_statusline_usd` point at a page that never mentions either |
+| DQC-B3 | MINOR | documentation quality — family entry points and workflows-core | three of the five family getting-started pages skip the status-line step the root README calls step 5 and the core index says to "run first" |
+| DQC-B4 | MINOR | documentation quality — family entry points and workflows-core | maintainer `grep` recipes over `plugins/*/…` are given to users as the way to find things |
+| DQC-B5 | MINOR | documentation quality — family entry points and workflows-core | internal vocabulary and § citations into references a user never opens, on the core plugin's user pages |
+| DQC-B6 | MINOR | documentation quality — family entry points and workflows-core | stale and changelog-style statements on user pages |
+| DQC-B7 | MINOR | documentation quality — family entry points and workflows-core | the family map omits two forward steps the commands offer |
+| DQC-B8 | MINOR | documentation quality — family entry points and workflows-core | the core docs never point a user to the three run flags under their own name |
+| DQD-B1 | MINOR | documentation quality — dev-workflows and security-workflows | The first-run example key `EPIC-98760` is not a key shape any Epic gets, so a new user copying it learns the wrong form |
+| DQD-B2 | MINOR | documentation quality — dev-workflows and security-workflows | The `/implement` page's example promises a next step the command no longer offers |
+| DQD-B3 | MINOR | documentation quality — dev-workflows and security-workflows | The dev workflow diagram skips the PE's PRD-level `/conformance` before documentation, and sends every *amend the document* to `/specify` |
+| DQD-B4 | MINOR | documentation quality — dev-workflows and security-workflows | The environment layout files follow-ups under `dev-workflows/`, contradicting the follow-ups and roles pages |
+| DQD-B5 | MINOR | documentation quality — dev-workflows and security-workflows | "`dev-workflows` reads five environment variables" counts one it never reads |
+| DQD-B6 | MINOR | documentation quality — dev-workflows and security-workflows | The dev Session cost page's worked example names product-workflows commands as "dev-workflows commands", and leaks an internal team count |
+| DQD-B7 | MINOR | documentation quality — dev-workflows and security-workflows | Maintainer vocabulary and change history fill the user pages |
+| DQD-B8 | MINOR | documentation quality — dev-workflows and security-workflows | The `/vuln` and `/upgrade` diagrams leave out the commit, push and pull request step, and the per-unit loop |
+| DQP-B1 | MINOR | documentation quality — product-workflows | Getting started promises a handoff and a `/create-prd` takeover that a run with an unanswered question never gets |
+| DQP-B2 | MINOR | documentation quality — product-workflows | Getting started never tells the reader to merge the pull request, or what to do with a specs repo that has no remote |
+| DQP-B3 | MINOR | documentation quality — product-workflows | The BRD-route parameter table lists `@<idea.md>` as an optional argument of `/create-prd` on that route; the command skips the idea ladder there entirely |
+| DQP-B4 | MINOR | documentation quality — product-workflows | The `/create-prd` page says the BRD route seeds from `prd-seed.md`, which a normal BRD route never has |
+| DQP-B5 | MINOR | documentation quality — product-workflows | The main workflow diagram routes `/implement` straight to the docs commands, leaves out the security scan, and gives the PE's PRD conformance no edge onward |
+| DQP-B6 | MINOR | documentation quality — product-workflows | Both workflow diagrams leave out offers their commands make, and `brd-workflow.md` describes the re-entry from `/brd-reconcile` as two edges when it is four |
+| DQP-B7 | MINOR | documentation quality — product-workflows | Internal rulings and reference-section citations leak into user pages, with no link a user could follow |
+| DQP-B8 | MINOR | documentation quality — product-workflows | The docs teach example keys that carry a folder-kind token, and use a different key on every BRD-route page |
+| DQP-B15 | MINOR | documentation quality — product-workflows | Nine of the 16 command pages never link to either workflow page |
+| DQW-B3 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | getting-started's "no docs yet" path sends the new user to `/document` and never mentions `/docs-audit` or the route page |
+| DQW-B4 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | `/docs-serve`'s next-step offer and its docs page name `/document` as the next step, which contradicts the route |
+| DQW-B5 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | The plugin README draws a third version of the documentation route, and it disagrees with the route page |
+| DQW-B6 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | The split between `workflow.md` and `docs-workflow.md` is unclear: the file names invert the titles, and one command page calls the route "The documentation workflow" |
+| DQW-B8 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | The `/api-guideline-reviewer` page hides that five bundled Spectral rules ship with placeholder literals that fail every real spec at `error` |
+| DQW-B9 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | The `/guideline-reviewer` page says it needs "nothing else", but the agent runs a bundled Python scanner that getting-started says needs `python3` 3.11 |
+| DQW-B10 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | The docs-workflows docs leak maintainer vocabulary a user cannot resolve: design-decision ids, `§` citations into references, "ceded" runs and "the split" |
+| DQW-B11 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | `/document` and `/release-notes` pages refer to "the tracker" and "the docs automation" as if every reader had them |
+| DQW-B13 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | Three docs-workflows command pages never link back to the Workflow overview |
+| DQW-B14 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | prose-style README is stale about which family uses it, and gives no install command |
+| DQW-B15 | MINOR | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | The acli README does not say how to use the skill or how to authenticate headless, though it says both are documented |
 | SEC-B5 | NIT | security-workflows | the roles page understates which unwritten fixes are offered again |
 | GIT-B5 | NIT | workflows-core — git, handoff, resume pointer | phase-handoff §3.6 misquotes the offline note it says it reuses |
 | GIT-B6 | NIT | workflows-core — git, handoff, resume pointer | followup-emission says it mirrors nothing, then says twice to mirror another plugin's command |
@@ -265,6 +318,24 @@ Seventeen review passes, each on one slice, read the slice end to end at `0e02e2
 | FBB-B36 | NIT | field feedback — BOOK-2-01 runs | `test-baseliner` verify lists new failures by name only |
 | FBB-B39 | NIT | field feedback — BOOK-2-01 runs | Session files pushed straight to the default branch are not called out |
 | TRK-B1 | NIT | older review records | The 2026-10-15 review record says C1–C8 are still tracked in to-fix.md, but they were fixed and removed |
+| DQS-B9 | NIT | documentation quality — links, navigation, page-set parity (all plugins) | Command pages without a diagram where their siblings have one |
+| DQS-B10 | NIT | documentation quality — links, navigation, page-set parity (all plugins) | workflows-core's README does not link the family map, the one diagram that draws the whole family |
+| DQC-B9 | NIT | documentation quality — family entry points and workflows-core | root README's "three core environment variables" cannot be matched to the five it exports |
+| DQC-B10 | NIT | documentation quality — family entry points and workflows-core | dev-workflows' getting-started says it reads five variables, and the core environment page says four |
+| DQC-B11 | NIT | documentation quality — family entry points and workflows-core | workflow.md counts "three dashed and solid edges" where the diagram draws five |
+| DQC-B12 | NIT | documentation quality — family entry points and workflows-core | /frames' diagram labels Phase 0 "kind-gated" on a page that says no kind is passed |
+| DQC-B13 | NIT | documentation quality — family entry points and workflows-core | core pages call the five-plugin family "the `dev-workflows` plugin family" |
+| DQC-B14 | NIT | documentation quality — family entry points and workflows-core | the root README's "Directory structure" leaves out three of the layouts the variables expect |
+| DQD-B9 | NIT | documentation quality — dev-workflows and security-workflows | The security workflow diagram draws `/dev-workflows:conformance` as an edge label, not a node, and omits the scan's own next step to the PE's `/conformance <PRD>` |
+| DQD-B10 | NIT | documentation quality — dev-workflows and security-workflows | The register's status diagram has no `reopened → open` edge, though triage suggests *decide later* for a reopened finding |
+| DQD-B11 | NIT | documentation quality — dev-workflows and security-workflows | Missing space joins two paragraphs on the `/ready` page |
+| DQP-B9 | NIT | documentation quality — product-workflows | "Two segments or three" contradicts the key grammar, which fixes no depth |
+| DQP-B10 | NIT | documentation quality — product-workflows | `brd-workflow.md` and `prd-ground.md` carry search-and-replace residue and development-history wording |
+| DQP-B11 | NIT | documentation quality — product-workflows | The `/idea` page names a personal-vault path and lists "a file" and "a saved file" as different sources |
+| DQP-B12 | NIT | documentation quality — product-workflows | The workflow page's role and artifact-home tables disagree with the roles page and the `/specify` page |
+| DQP-B13 | NIT | documentation quality — product-workflows | Getting started says the three optional variables each "degrade to a documented default or a silent skip"; two do not |
+| DQP-B14 | NIT | documentation quality — product-workflows | The README's documentation table leaves out three reference pages that the sibling README lists |
+| DQP-B16 | NIT | documentation quality — product-workflows | Three reference paragraphs are too long for a person to read |
 
 ## Cross-reference: `docs/superpowers/to-fix.md` at `0e02e28b`
 
@@ -2441,3 +2512,641 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Suggested fix:** Sweep the record into to-fix.md as an E-item ("check whether each edition still carries `team`/`QA`; if so, port the role collapse"), saying in the commit that it moves an open item. Or record here that it already landed.
 - **Source:** `docs/superpowers/verification/2026-08-22-docs-restructure-open-items.md`
 - **Confidence:** medium. The port may have landed in the editions; that is not verifiable here.
+
+## documentation quality — links, navigation, page-set parity (all plugins)
+
+### DQS-B1 — MINOR — `guideline-reviewers`: README does not link its workflow diagram or getting-started page, and the repo-root table has no Docs link for it
+- **Also found as:** DQW-B7 (merged here)
+- **Where:** `plugins/guideline-reviewers/README.md:5`, `:7`; `README.md:13`
+- **What is wrong:** The plugin README links the two command pages (`:5`) and "[the documentation index](docs/README.md)" (`:7`), and nothing else. It does not link `docs/workflow.md`, which holds the plugin's only mermaid diagram, or `docs/getting-started.md`. All five sibling `PLUGIN_RELS` READMEs link both. The repo-root table row (`README.md:13`) ends after its description, with no `[Docs](plugins/guideline-reviewers/docs/README.md)`. The rows for dev-, product-, docs-, security-workflows and workflows-core all carry one (`README.md:11,12,14,15,16`).
+- **Failure scenario:** A user who starts from the repo root, or from the plugin README, reaches the diagram only through the index. That is two clicks, against one for every sibling. From the root table, nothing shows that the plugin has a docs tree at all. This is the user-reported case that started this review.
+- **Evidence:** `graph.py` prints `README missing direct links to: [docs/getting-started.md, docs/workflow.md]` for this plugin alone. For the root README it prints `guideline-reviewers: docsindex=False anydocs=[]`.
+- **Suggested fix:** Give the README the same Documentation table the siblings carry (index, getting started, workflow overview, the two command pages, the three reference pages). Append `[Docs](plugins/guideline-reviewers/docs/README.md)` to `README.md:13`.
+- **Source:** review (user observation, BRIEF-DOCS)
+- **Confidence:** high
+
+### DQS-B2 — MINOR — Workflow, BRD-route, roles and getting-started pages draw or name every command but link to none of the command pages
+- **Where:**
+  - `plugins/dev-workflows/docs/workflow.md` (4 links, 0 to `commands/`; it names `/design` 11×, `/implement` 11×, `/ready` 8×)
+  - `plugins/product-workflows/docs/workflow.md` (3 links, 0 to `commands/`; it names `/specify` 12×, `/brd-reconcile` 15×, `/create-prd` 10×)
+  - `plugins/docs-workflows/docs/workflow.md:91` ("See the [documentation index](README.md) for the per-command pages")
+  - `plugins/security-workflows/docs/workflow.md:67` (same deferral)
+  - `plugins/product-workflows/docs/brd-workflow.md`: the BRD route page links 5 command pages (`brd-proposal`, `create-prd`, `epics`, `idea`, `specify`) but **none of the six BRD-route commands it describes**, although it names `/brd-reconcile` 36×, `/brd-interview`, `/brd-split` and `/prd-ground` 23× each, and `/brd-intake` and `/brd-package` 15× each (first at `:20`, `:25`)
+  - roles pages with 0 command links: `dev-workflows/docs/roles-and-phases.md`, `product-workflows/docs/roles-and-phases.md`, `security-workflows/docs/roles-and-phases.md` (names `/scan` 4×), `workflows-core/docs/roles-and-phases.md`
+  - getting-started pages with 0 command links: `dev-workflows` (names `/design` 12×; its walkthrough is "run `/design` end to end", `:3`), `docs-workflows` (`/document` 13×), `product-workflows` (`/idea` 9×)
+- **What is wrong:** GitHub renders mermaid without `click` navigation, so the diagram page's prose is the only way to click from a node to its command page. On these pages that prose names the commands as code spans, not links. The siblings show the pattern: `guideline-reviewers/docs/workflow.md`, `workflows-core/docs/workflow.md`, `docs-workflows/docs/docs-workflow.md` (6 command links) and `workflows-core/docs/getting-started.md` (6) all link their commands.
+- **Failure scenario:** A reader on `/brd-reconcile`'s node in `brd-workflow.md` wants its parameters. They must go back to the index or the README to find `commands/brd-reconcile.md`. The same is true on every workflow page above, and on the getting-started pages that tell the reader to run a command.
+- **Evidence:** `unlinked.py` (output summarised under *Evidence*) lists each page with the sibling commands it names but never links. The overview-page link count is in the *Evidence* table.
+- **Suggested fix:** Link the first mention of each command on each of these pages. Better, add a "Commands on this diagram" list under each diagram, linking each node's page.
+- **Source:** review
+- **Confidence:** high
+
+### DQS-B3 — MINOR — 18 command pages do not link back to their plugin's workflow page
+- **Where:** each page's *See also* list:
+  - `dev-workflows/docs/commands/` — all six: `conformance.md:103`, `design.md:90`, `implement.md:110`, `ready.md:80`, `upgrade.md:72`, `vuln.md:70`
+  - `docs-workflows/docs/commands/` — `docs-brand.md:61`, `document.md:109`, `release-notes.md:97`
+  - `product-workflows/docs/commands/` — `brd-intake.md:296`, `brd-interview.md:552`, `brd-package.md:466`, `brd-reconcile.md:724`, `brd-split.md:616`, `epics.md:89`, `idea.md:177`, `prd-ground.md:589`, `update-prd.md:79`
+- **What is wrong:** None of these pages links `../workflow.md` (or, for the BRD commands, `../brd-workflow.md`), and none links the docs index either. Their siblings do: both guideline-reviewers pages, `security-workflows/docs/commands/scan.md`, all seven workflows-core pages, docs-workflows' `docs-audit`, `docs-init`, `docs-profile` and `docs-serve`, and product-workflows' `brd-proposal`, `create-ard`, `create-prd`, `harvest-decisions`, `prd-proposal`, `promote-decisions` and `specify`.
+- **Failure scenario:** A reader who lands on a command page from a search or a link cannot get from it to the diagram showing where the command sits. In `dev-workflows` no command page offers that path at all.
+- **Evidence:** `graph.py`, "CMD no link to any workflow page", which also reports `links to index: False` for all 18.
+- **Suggested fix:** Add `- [Workflow overview](../workflow.md) — where this command sits` (and `../brd-workflow.md` for the six BRD-route commands) to each *See also* list.
+- **Source:** review
+- **Confidence:** high
+
+### DQS-B4 — MINOR — Next and previous commands named in prose but not linked; `/harvest-decisions` never mentions `/promote-decisions`; no command page links `/docs-audit`
+- **Where:**
+  - `plugins/product-workflows/docs/commands/harvest-decisions.md`: no occurrence of "promote" in the page (`grep -c promote` → 0), although `promote-decisions.md:7` says it runs "after [`/harvest-decisions`]". The harvest command's own handoff text names `/promote-decisions` (`commands/harvest-decisions.md:46`). `promote-decisions.md` has no inbound link from any command page.
+  - `plugins/docs-workflows/docs/commands/docs-audit.md` has no inbound link from any command page. `docs-init.md` names `/docs-audit` 5× (`:3`, `:23`, `:35`, `:62`) and `docs-serve.md` names it 3×, all unlinked. The README diagram draws `SERVE --> AUDIT` (`plugins/docs-workflows/README.md:30`).
+  - `plugins/dev-workflows/docs/commands/ready.md` names `/implement` 4× (`:23`, `:47`) unlinked. `design.md` names `/ready` unlinked (`:58`).
+  - Smaller cases on command pages: `brd-intake.md` (`/epics`, `/idea`, `/create-prd`), `brd-package.md` (`/prd-ground` 4×, `/brd-intake`), `brd-split.md` (`/create-ard`, `/specify`), `prd-ground.md` (`/idea`, `/prd-proposal`), `brd-reconcile.md` (`/update-prd`), `docs-brand.md` (`/docs-audit` 2×, `/document`, `/release-notes`), `document.md` (`/docs-init`, `/docs-profile`), `frames.md` (`/prompt-brainstorm`, `/prompt-grill-me`), `diagnose-session.md` (`/feedback` 3×).
+- **What is wrong:** The brief's navigation rule: a "see X" that names a page must link it, and a command page should link its next and previous command. The decision-harvest pair is the sharpest case. Nothing on the harvest page tells the architect that a promotion step exists.
+- **Failure scenario:** An architect who has just harvested decisions reads the harvest page and never learns that `/promote-decisions` turns the harvested records into ADRs.
+- **Evidence:** `unlinked.py` and the command-to-command link matrix (*Evidence*).
+- **Suggested fix:** Add `/promote-decisions` to `harvest-decisions.md`'s *See also* as the next step. Link the first mention of each named sibling on each listed page.
+- **Source:** review
+- **Confidence:** high
+
+### DQS-B5 — MINOR — 18 relative links leave the plugin directory and break in the installed cache
+- **Where:**
+  - Seven plugin READMEs → `../../README.md`: `dev-workflows/README.md:5`, `docs-workflows/README.md:5`, `product-workflows/README.md:5`, `security-workflows/README.md:5`, `workflows-core/README.md:5`, `obsidian-llm-wiki/README.md:80`, `prose-style/README.md:407`.
+  - Nine getting-started links → `../../../README.md`: `dev-workflows/docs/getting-started.md:21` (`#prerequisites`) and `:25`, `docs-workflows/...:23`, `guideline-reviewers/...:19`, `product-workflows/...:21` and `:23`, `security-workflows/...:34` (`#prerequisites`) and `:62` (`#4-raise-claude-codes-skill-listing-budget`), `workflows-core/...:25`.
+  - Two links into another plugin: `dev-workflows/docs/reference/hooks.md:9` → `../../../workflows-core/docs/reference/hooks.md`, and `dev-workflows/docs/reference/model-routing.md:57` → `../../../workflows-core/docs/reference/environment.md`.
+- **What is wrong:** An installed plugin sits at `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`, which holds one plugin and no repository root. From `<plugin>/<version>/README.md`, `../../README.md` resolves to `cache/<marketplace>/README.md`, which does not exist. The cross-plugin links go to `cache/<marketplace>/dev-workflows/workflows-core/...`, which is also absent. All 18 resolve on GitHub and in a checkout (0 broken in the repo).
+- **Failure scenario:** A user reading the installed `prose-style` README, which is that plugin's only documentation and carries no install command of its own (`:402-407`), follows "repo-root setup guide" and gets a missing file. The same happens to a reader of any installed getting-started page who follows "Prerequisites".
+- **Evidence:** `linkcheck.py`'s `escapes_plugin` list (18 entries, reproduced under *Evidence*). The cache layout comes from `CLAUDE.md` § Internal reference convention.
+- **Suggested fix:** Use absolute `https://github.com/ihudak/ai-workflows#prerequisites` URLs for the root-guide links. Check 10 allows a marketplace/container-repo name only in `getting-started.md`, so for the README back-links keep the wording generic, or confirm that check 10 does not cover READMEs. For the two cross-plugin links, cite the page by plugin name in prose, as the rest of the tree does ("it ships in the companion `workflows-core` plugin").
+- **Source:** review
+- **Confidence:** medium (the cache layout is from CLAUDE.md; that a user browses the cache is a judgement)
+
+### DQS-B6 — MINOR — Page-set parity holes in `docs-workflows` and `security-workflows`; command pages name a "Roles and phases" page that the plugin does not have
+- **Also found as:** DQW-B12 (merged here)
+- **Where:** parity matrix (*Evidence*). `plugins/docs-workflows/docs/commands/document.md:111` and `release-notes.md:99` (unlinked "Roles and phases —" bullets).
+- **What is wrong:**
+  - `docs-workflows` has no `roles-and-phases.md`, although dev-, product-, security-workflows and workflows-core all carry one and its commands emit roles (`document` dev/documenting; `release-notes` pm/dev). The two *See also* bullets begin "Roles and phases —" with no link, then explain that "No one page defines all four" and that "`documenting` has no roles page" (`release-notes.md:99`).
+  - `docs-workflows` also has no `session-feedback.md` (5 of 7 commands run `emit-auto`: `docs-init`, `docs-brand`, `docs-audit`, `release-notes`, `document`), no `resume-and-checkpoints.md`, and no `model-routing.md` (all 7 commands cite model routing). dev- and product-workflows carry all three.
+  - `security-workflows` has no `session-feedback.md`, although `/scan` runs `emit-auto` (`commands/scan.md`, 2 hits).
+  - No rules file or rationale section calls these holes deliberate. `.claude/rules/docs-workflows.md:29` and `.claude/rules/security-workflows.md:18` only enumerate the page sets. `docs-serve`'s "outside the role pipeline" status is deliberate, but that covers one command, not the plugin.
+- **Failure scenario:** A docs-workflows user who wants to know where a `/document` run's feedback note lands, or how its Opus review falls back, finds no page in this plugin. The *See also* item that should take them to the roles page is plain text.
+- **Evidence:** parity matrix; `grep -c emit-auto` per command (*Evidence*).
+- **Suggested fix:** Add `docs-workflows/docs/roles-and-phases.md` that defines the `documenting` phase, and link the two bullets to it. Add short `session-feedback.md` pages, or link the workflows-core page by name in prose, to docs- and security-workflows. Alternatively, record in `.claude/rules/docs-workflows.md` that the plugin defers these pages to `workflows-core`, and say so on the index.
+- **Source:** review
+- **Confidence:** high (the holes); medium (whether each one deserves its own page)
+
+### DQS-B7 — MINOR — Internal design-decision IDs (D4 … D25) leak into user pages with nothing to resolve them against
+- **Where:**
+  - `plugins/docs-workflows/docs/commands/docs-brand.md:33`: "**Opus review regardless of class (D17, D20)**", "**There is no dedicated fixer for this diff (D25)**"
+  - `docs-serve.md:34`: "**No review gate, by design (D17).**"
+  - `docs-workflows/docs/reference/environment.md:31`: "read it oppositely (D23)"
+  - `product-workflows/docs/roles-and-phases.md:24`: "**All three refuse a `BRD-` container** (D5)"
+  - `product-workflows/docs/workflow.md:168` and `commands/specify.md:15`: "no command takes a chain (D4)"
+  - `product-workflows/docs/commands/create-prd.md:49`: "(D7)"
+  - `product-workflows/docs/reference/references.md:16`: "(D12)", "(D18)"
+- **What is wrong:** These are decision numbers from design specs under `docs/superpowers/specs/`. Those specs are not in the plugin and are never linked, and each spec numbers its decisions from D1, so "D17" means different things in different specs. A reader cannot resolve any of them. BRIEF-DOCS names this internal vocabulary as a defect.
+- **Failure scenario:** A docs-workflows user reads "(D17, D20)" as a reference to something they should look up, and finds nothing in the docs tree.
+- **Evidence:** `grep -rnoE "\((D|C|E|F|L)[0-9]{1,2}…\)" plugins/*/docs` (10 hits in 8 files, quoted above).
+- **Suggested fix:** Delete the parenthesised IDs. The sentences already state the rule.
+- **Source:** review
+- **Confidence:** high
+
+### DQS-B8 — MINOR — 317 bare `workflows-core:<name>` citations and 306 `§` section citations on user pages, none linked
+- **Where:** bare `` `workflows-core:<name>` `` citations per plugin's `docs/`: dev-workflows 74 (15 files), docs-workflows 48 (11), product-workflows 179 (25), security-workflows 6 (2), workflows-core 10 (4). `§` counts: 52 / 43 / 135 / 6 / 70. Examples in *See also* lists: `dev-workflows/docs/commands/design.md` ("`workflows-core:ard-resolution` — how the optional ARD is resolved and inherited"), `implement.md`, `upgrade.md`, `vuln.md` (`workflows-core:finding-triage`), `docs-workflows/docs/commands/document.md:115` and `release-notes.md:103` (`workflows-core:model-routing/classification`), `workflows-core/docs/commands/feedback.md` ("`references/cost-emission.md` §7").
+- **What is wrong:** `workflows-core:<name>` is the agents' citation form (CLAUDE.md § Internal reference convention). On a human page it reads as a *See also* entry with nothing to click. A user-facing inventory of every such file exists, `plugins/workflows-core/docs/reference/references.md`, but no page in another plugin can link it (see DQS-B5), and the pages do not name it either.
+- **Failure scenario:** A reader follows *See also* → "`workflows-core:finding-triage` — the triage step run between `code-review` and `review-fixer`" and has no way to open it from the plugin's docs.
+- **Evidence:** `grep -rhoE '`workflows-core:[a-z/-]+`' plugins/<p>/docs | wc -l` and `grep -rho '§'` per plugin (*Evidence*).
+- **Suggested fix:** In *See also* lists, replace each bare citation with "the `<name>` reference, listed on `workflows-core`'s References page". Inside `workflows-core/docs`, link `reference/references.md#…`. Drop `§n` numbers from user prose where the sentence already says what the rule is.
+- **Source:** review
+- **Confidence:** medium (the counts are exact; how many to rewrite is a judgement)
+
+### DQS-B9 — NIT — Command pages without a diagram where their siblings have one
+- **Also found as:** DQP-G6 (merged here)
+- **Where:** `plugins/docs-workflows/docs/commands/` `docs-audit.md`, `docs-brand.md`, `docs-init.md`, `docs-profile.md`, `docs-serve.md` (no mermaid block; `document.md:31` and `release-notes.md:27` have one); `plugins/product-workflows/docs/commands/harvest-decisions.md` (none; the other 15 product command pages, `promote-decisions.md:21` among them, have one); `plugins/workflows-core/docs/commands/` (only `frames.md:29` has one).
+- **What is wrong:** All six dev-workflows command pages and `scan.md` carry a per-command flow diagram. In docs-workflows five of seven pages lack one, and `/harvest-decisions` is the only product command page without one.
+- **Failure scenario:** A reader cannot see `/docs-init`'s phase flow the way they can see `/document`'s, though `/docs-init` has 11+ phases (`docs-init.md:35`).
+- **Evidence:** `linkcheck.py`'s mermaid inventory (*Evidence*).
+- **Suggested fix:** Add phase-flow diagrams to `docs-init`, `docs-audit`, `docs-brand` and `harvest-decisions` at least. The workflows-core utilities and `docs-serve` can stay prose-only.
+- **Source:** review
+- **Confidence:** medium
+
+### DQS-B10 — NIT — workflows-core's README does not link the family map, the one diagram that draws the whole family
+- **Where:** `plugins/workflows-core/README.md` (the family map's inbound links are `README.md:23` at the repo root, `plugins/workflows-core/docs/README.md` and `docs/workflow.md`)
+- **What is wrong:** `docs/family-map.md` is the family-wide diagram that `CLAUDE.md` and the repo-root README point to, but the README of the plugin that ships it does not link it. Reaching it from that README takes two clicks. In the installed cache it is reachable only through the index, because the root README is absent there.
+- **Failure scenario:** A user who opens workflows-core's README to see how the plugins fit together does not find the map.
+- **Evidence:** `graph.py`'s mermaid reachability list.
+- **Suggested fix:** Add a `[Family map](docs/family-map.md)` row to the README's documentation table, next to CORE-B16's missing grounding row.
+- **Source:** review
+- **Confidence:** high
+
+### DQS-B11 — MINOR — obsidian-llm-wiki README: the local-install command is `cc`, not `claude`, and the marketplace step gives no command
+- **Also found as:** DQW-B16 (merged here)
+- **Where:** `plugins/obsidian-llm-wiki/README.md:100` (`cc --plugin-dir /path/to/obsidian-llm-wiki`); `:86-92` ("add it once via Claude Code settings or the `/plugin` command, then install: `/plugin install obsidian-llm-wiki@shipwright`")
+- **What is wrong:** `cc` is the C compiler on Linux and macOS. Claude Code's executable is `claude` (CLAUDE.md, the root README, `.claude/rules/plugin-updates.md`), so a user who pastes the line runs `cc` on a directory. The marketplace step names the action but gives no command. The command (`claude plugin marketplace add ihudak/ai-workflows`) sits behind the `../../README.md` link, which is broken in the cache (DQS-B5).
+- **Failure scenario:** A user who pastes `cc --plugin-dir …` gets a compiler error instead of a Claude Code session with the plugin loaded.
+- **Evidence:** read `:80-110`; `grep -n plugin-dir` → `:100` only.
+- **Suggested fix:** Change it to `claude --plugin-dir /path/to/obsidian-llm-wiki`, and show `claude plugin marketplace add ihudak/ai-workflows` inline, as `acli`'s README does (`plugins/acli/README.md:29-30`).
+- **Source:** review
+- **Confidence:** medium (`cc` may be a personal alias of the author, but a reader does not have it)
+
+### DQS-B12 — MINOR — The READMEs of the three plugins without a `docs/` tree leave out what a user needs
+- **Where:** `plugins/prose-style/README.md`, `plugins/acli/README.md`, `plugins/obsidian-llm-wiki/README.md`
+- **What is wrong:** Each README is the plugin's only user documentation.
+  - **prose-style** (407 lines) documents its commands, agents, skill and overlay well. Its *Installation* section (`:402-407`) has no install command, only "Install it through Claude Code's plugin system" and the broken-in-cache root link. *How it fits* (`:383-400`) cites `/document` "Phase 6.4" and `/epics` "Phase 6.2" with no explanation of what a phase number is (both are accurate at HEAD: `docs-workflows/commands/document.md:890`, `product-workflows/commands/epics.md:713`). It has no diagram of the overlay resolution order, which is the plugin's one non-obvious mechanism (`:40-96`).
+  - **acli** (31 lines) has an install block but no usage section. It gives no example prompt that triggers the skill, no first-run authentication steps (the headless token-on-stdin flow is described only as a change from upstream, `:15-17`, never as instructions), and no statement of what the skill refuses to do without approval, beyond the change note at `:18-21`.
+  - **obsidian-llm-wiki**: see DQS-B11. Its command table (`:167-180`) does not link the ten command files, and it has no troubleshooting section for a missing `VAULT_PATH` or an uninitialised vault.
+- **Failure scenario:** An acli user installs the plugin and does not know how to authenticate in a container or what to ask for. A prose-style user who reads the installed README finds no install line.
+- **Evidence:** heading lists and reads of each README (*Evidence*).
+- **Suggested fix:** For prose-style, add the install line (`claude plugin install prose-style@shipwright`; it is also pulled in as a dependency) and drop the phase numbers. For acli, add *Authenticate* and *Example requests* sections. For obsidian, add the fix in DQS-B11.
+- **Source:** review
+- **Confidence:** medium
+
+## documentation quality — family entry points and workflows-core
+
+### DQC-B2 — MINOR — "Option B" cost snapshot and `cost_statusline_usd` point at a page that never mentions either
+- **Where:** `README.md:111` ("enables the Option-B snapshot used by session-cost reporting"); `plugins/workflows-core/docs/commands/statusline.md:26` ("the per-session **cost snapshot** ("Option B") that [Session cost](../reference/session-cost.md) reads when computing `cost_statusline_usd`"), `:43` ("the Option B cost snapshot this command enables")
+- **What is wrong:** `plugins/workflows-core/docs/reference/session-cost.md` contains neither "Option B", "snapshot" nor `cost_statusline_usd` (`grep -n "snapshot\|cost_statusline_usd\|Option" …/session-cost.md` returns nothing). It mentions the cross-check only to send the reader to `references/cost-emission.md` (`:45`). "Option B" is a name left over from a design discussion, and no user page defines it.
+- **Failure scenario:** a user who wants to know what the status line adds to cost reporting follows the link and finds nothing about a snapshot or `cost_statusline_usd`. The getting-started pages (`plugins/workflows-core/docs/getting-started.md:83`) describe it as "the cost cross-check" instead, so the reader meets three names for one thing.
+- **Evidence:** grep above; lines quoted.
+- **Suggested fix:** drop "Option B" everywhere. Add a short "Status-line cross-check" section to `session-cost.md`, saying what the snapshot is, where it is stored, and which entry field (`cost_statusline_usd`) it fills. Link to that section from the two places above.
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B3 — MINOR — three of the five family getting-started pages skip the status-line step the root README calls step 5 and the core index says to "run first"
+- **Where:** `README.md:109-111` ("### 5. Run `/workflows-core:statusline` first"); `plugins/workflows-core/docs/README.md:12` ("**run this first**"); present in `plugins/dev-workflows/docs/getting-started.md:70-84` and `plugins/workflows-core/docs/getting-started.md:77-89`; absent from `plugins/product-workflows/docs/getting-started.md`, `plugins/docs-workflows/docs/getting-started.md` and `plugins/security-workflows/docs/getting-started.md`. Their headings (`grep -n '^#'`) have no status-line section, and each mentions the status line only inside the `jq` prerequisite sentence.
+- **What is wrong:** the install path a user follows depends on which plugin's page they open. Three of them never say to install the status line. Without it, the cost report has no figure to check the price table against: dev's page `:76` explains this, and the others do not.
+- **Failure scenario:** a PM who installs `product-workflows` from its getting-started page runs `/idea` and `/create-prd` with no status line. The cost entries carry no cross-check figure, and nothing told them why.
+- **Evidence:** headings listed above.
+- **Suggested fix:** give the three pages the same short "Install the status line" section that dev and core have, or at least one sentence linking to the core page's section.
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B4 — MINOR — maintainer `grep` recipes over `plugins/*/…` are given to users as the way to find things
+- **Where:** `README.md:93` ("Required by the commands that stop without it — `grep -lE 'Set SPECS_PATH|Required path environment variable unset' plugins/*/commands/*.md` lists them"); `plugins/dev-workflows/docs/getting-started.md:21` ("`grep -ln 'WebFetch\|WebSearch' plugins/dev-workflows/agents/*.md` re-derives that set rather than trusting this list"); `plugins/workflows-core/docs/reference/agents.md:22` ("re-derive both halves with `ls plugins/workflows-core/commands/` and `grep -n subagent_type …`"); `plugins/workflows-core/docs/reference/references.md:3` (the "36 + 2 = 38" arithmetic)
+- **What is wrong:** these recipes belong to the repository's maintainer discipline (CLAUDE.md, *Re-measure in one place*). In user-facing pages they replace the answer. The paths `plugins/…` exist only in a clone of this repository, not in the installed cache (`~/.claude/plugins/cache/shipwright/<plugin>/<version>/`).
+- **Failure scenario:** a new user reads the root README to learn which commands need `SPECS_PATH`. They get a shell command to run against a repository they have not cloned, and no list.
+- **Evidence:** lines quoted.
+- **Suggested fix:** state the answer in plain words. For README:93: "every command that writes into the specs tree, and `/implement`, keyed `/document` and `/release-notes` on a key address". Move the recipes to `docs/maintainers/` or to an HTML comment.
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B5 — MINOR — internal vocabulary and § citations into references a user never opens, on the core plugin's user pages
+- **Where:** `plugins/workflows-core/docs/roles-and-phases.md:3` ("the **lifecycle** phases `references/cost-emission.md` §7 carries — read them off its table, as fixed pairs, and off the inference paragraphs beside it … A sibling page that counts lifecycle phases counts them without the fallback, which is not a disagreement"), `:9`, `:14`, `:26`; `plugins/workflows-core/docs/reference/environment.md:3` ("the names its own inventory check encounters … `OWNER_REPO` are … internal template names"), `:5` (a paragraph on which sibling plugin reads four of the five variables); `plugins/workflows-core/docs/getting-started.md:29` ("for eight of the nine, the only read anywhere in this plugin"), `:57`, `:61`, `:65` ("`workflows-core:run-flags` is the single source of truth"); `plugins/dev-workflows/docs/getting-started.md:108` ("as `workflows-core:phase-handoff` §3.4 lists"); `plugins/workflows-core/docs/commands/statusline.md:17` and `plugins/docs-workflows/docs/getting-started.md:23` (bare "Phase 4" / "the Phase 0 toolchain preflight")
+- **What is wrong:** the opening paragraph of roles-and-phases is addressed to someone maintaining page counts, not to someone asking what phase their run was charged to. It never names the phases, and sends the reader to a § of a file the docs do not link. environment.md opens with which *source files* read which variable. The getting-started pages use `plugin:reference` ids (`workflows-core:run-flags`) as if they were page names.
+- **Failure scenario:** a user who opens Roles and phases to learn which phase `/create-prd` costs land in is told to read `references/cost-emission.md` §7. A user who reads "See `workflows-core:run-flags`" finds no page by that name and no link.
+- **Evidence:** lines quoted. `grep -c "§"` over the core docs gives 4 on roles-and-phases, 7 on environment, 9 on frames, 9 on references, 5 on agents, and 4 each on session-cost and session-feedback.
+- **Suggested fix:** open roles-and-phases with a plain list of the phase names and what each means, and move the counting caveat to `docs/maintainers/`. Replace each `workflows-core:<ref>` "see" with a link to the [References](reference/references.md) entry or a plain description. Cut environment.md:3 and :5 to one sentence per plugin.
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B6 — MINOR — stale and changelog-style statements on user pages
+- **Also found as:** DQW-B17 (merged here)
+- **Where:** `plugins/workflows-core/docs/reference/session-cost.md:33` ("Before the manifest existed the rule was … which, once the family spanned four, made a *sibling's* run … invisible"); `plugins/workflows-core/docs/commands/frames.md:108` ("Before this, such a file was reported and never read…"), `:112` ("Three such exports once rejoined the describe set on every future run, forever"), `:120` ("Design grounding on the `/product-workflows:idea` route ships in this same increment as the BRD route's own — §6.1 says so … now on both routes"); `README.md:161` and the five getting-started pages (`dev :34`, `product :32`, `docs :33`, `workflows-core :17`, `guideline-reviewers :17`): "This page used to say the first line alone was enough"
+- **What is wrong:** these are change history, not documentation. "Once the family spanned four" is now false: the family has five plugins (README:23, family-map:3). "Ships in this same increment" has no meaning for a reader, and on the frames page it is a claim with an expiry date that has passed. "This page used to say…" corrects a page the new reader never saw.
+- **Failure scenario:** a reader takes "four" to be the current size of the family, or reads "this increment" as meaning design grounding on the idea route is new or partial.
+- **Evidence:** lines quoted; family size from `README.md:23`.
+- **Suggested fix:** delete the history sentences and keep the rule each one explains, for example "A claim is matched against a manifest of every family command" with no "before". Move the history to `CHANGELOG.md`.
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B7 — MINOR — the family map omits two forward steps the commands offer
+- **Where:** `plugins/workflows-core/docs/family-map.md:137-144` (the `conformanceprd` and `secscan` edges)
+- **What is wrong:** `workflows-core:next-phase-offer` says the PRD-level `/dev-workflows:conformance <PRD>` → "once settled → `/docs-workflows:document <PRD>`" (`plugins/workflows-core/references/next-phase-offer.md:333`). It also says the Dev's `/security-workflows:scan <EPIC>` → "… then the PE's `/dev-workflows:conformance <PRD>`" (`:334`). The map's `conformanceprd` node has only the two amendment edges (to `specify` and `updateprd`), and `secscan` has no edge to `conformanceprd`. The map's only edge into `/document` comes from `/implement` (`:134`), but `/implement` offers `/document` only after the PE's PRD conformance (`next-phase-offer.md:330-331`).
+- **Failure scenario:** a PE reading the map sees PRD conformance end in amendments, with no forward path. A reader may conclude that `/document` follows each Epic's `/implement` directly, when the offer puts it after every Epic has merged and the PRD has been checked.
+- **Evidence:** edges listed at `family-map.md:88-161`; offers at `next-phase-offer.md:330-334`.
+- **Suggested fix:** add `conformanceprd -->|"settled PRD"| document` and `secscan -.->|"after the merge, every Epic merged"| conformanceprd`. Optionally relabel `implement --> document` to say "once every Epic has merged".
+- **Source:** review
+- **Confidence:** medium. The map says "An artifact edge is not an automatic invocation" (`:176`), so the missing edges may be deliberate. Nothing on the page says so.
+
+### DQC-B8 — MINOR — the core docs never point a user to the three run flags under their own name
+- **Where:** `plugins/workflows-core/docs/README.md` (no row or entry for run flags); `plugins/workflows-core/README.md:22-33` (same); `plugins/workflows-core/docs/getting-started.md:57`, `:61`, `:65` ("See `workflows-core:run-flags`", unlinked)
+- **What is wrong:** `workflows-core` owns `--skip-costs`, `--skip-feedback` and `--enforce-model`. Its docs describe them only under environment-variable headings (getting-started, environment.md) and in pieces across session-cost.md and session-feedback.md. The accepted `--enforce-model` values are explained only in environment.md:105 with § citations to `run-flags.md` §2. The fuller user explanation is in the dev and product `docs/reference/model-routing.md` pages ("Enforcing one model"), which the core docs do not link.
+- **Failure scenario:** a user who wants to know what `--enforce-model=` accepts, or what `--skip-feedback` drops, looks at the core docs index and finds no entry.
+- **Evidence:** `grep -rn "run-flags\|enforce-model" plugins/workflows-core/docs` lists only the env-var sections, the per-command synopses and `references.md:68`.
+- **Suggested fix:** add an index row, "skip cost or feedback, or pin one model for a run", that links to a short "Run flags" section in environment.md. That section should list the three flags, the accepted `--enforce-model` values (`opus`, `sonnet`, `haiku`, `fable`, a newest-row version id, `routing`), and an example invocation. Turn the three "See `workflows-core:run-flags`" mentions into links to it.
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B9 — NIT — root README's "three core environment variables" cannot be matched to the five it exports
+- **Where:** `README.md:83-90`
+- **What is wrong:** "three core environment variables — plus an optional `DOCS_PATH` … and an optional `ARCHITECTURE_REPO_PATH`". The block that follows exports five variables, and only `SPECS_PATH` and `REPOS_PATH` are not marked optional. The third `GIT_USER_INITIALS`, is marked "optional" in the block.
+- **Failure scenario:** a new user cannot tell which three are "core" and which they must set. Only `SPECS_PATH` is required.
+- **Suggested fix:** "One required variable, `SPECS_PATH`; `REPOS_PATH` has a default; the rest are optional."
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B10 — NIT — dev-workflows' getting-started says it reads five variables, and the core environment page says four
+- **Where:** `plugins/dev-workflows/docs/getting-started.md:38` ("`dev-workflows` reads five environment variables"), `:50` (`DOCS_PATH`: "None of this plugin's own six commands grounds against it … documented here only because … a boundary statement, not a consumer"); `plugins/workflows-core/docs/reference/environment.md:5` ("`dev-workflows` reads four of the five — … `$DOCS_PATH` is not among the variables its own commands or references read")
+- **What is wrong:** the two pages give different counts, and the dev page's own `DOCS_PATH` section says the plugin does not read the variable.
+- **Suggested fix:** "reads four … and `DOCS_PATH` is listed only to say it is never touched", or drop the `DOCS_PATH` section from dev.
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B11 — NIT — workflow.md counts "three dashed and solid edges" where the diagram draws five
+- **Where:** `plugins/workflows-core/docs/workflow.md:38` against `:25-32`
+- **What is wrong:** five edges run into `pipeline`: `loader`, `skill` and `agents` (solid), and `setup` and `repair` (dashed). The sentence means the three solid ones (read a reference, load the skill, dispatch an agent).
+- **Suggested fix:** "The three solid edges into …".
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B12 — NIT — /frames' diagram labels Phase 0 "kind-gated" on a page that says no kind is passed
+- **Where:** `plugins/workflows-core/docs/commands/frames.md:78` (`"Phase 0 — Resolve the address (kind-gated) + model routing"`) against `:54` ("with no kind narrowing") and `:70` ("No kind is passed, because `design/` is reserved at every level"); the command's heading is `## Phase 0 — Resolve the address + model routing` (`plugins/workflows-core/commands/frames.md:35`)
+- **What is wrong:** the diagram adds a qualifier that contradicts its own page and is not in the command.
+- **Suggested fix:** drop "(kind-gated)", or say "(any BRD, PRD or Epic folder)".
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B13 — NIT — core pages call the five-plugin family "the `dev-workflows` plugin family"
+- **Where:** `plugins/workflows-core/README.md:3`; `plugins/workflows-core/docs/getting-started.md:21`; `plugins/workflows-core/docs/workflow.md:3`; `plugins/workflows-core/docs/roles-and-phases.md:3`; `plugins/workflows-core/docs/reference/references.md:5`
+- **What is wrong:** the root README and family map call it "the workflow plugin family" or "the family" of five plugins (`README.md:14`, `:23`). The core plugin's first sentence calls it the `dev-workflows` family.
+- **Failure scenario:** a docs-workflows or security-workflows user who reads only the core README's first line takes `workflows-core` to be a `dev-workflows` add-on.
+- **Suggested fix:** "the workflow plugin family (`product-workflows`, `dev-workflows`, `docs-workflows`, `security-workflows`)".
+- **Source:** review
+- **Confidence:** high
+
+### DQC-B14 — NIT — the root README's "Directory structure" leaves out three of the layouts the variables expect
+- **Where:** `README.md:163-176`
+- **What is wrong:** it shows `$SPECS_PATH/specifications/PRD-<KEY>-<slug>/` only. It leaves out `BRD-<KEY>-<slug>/` (the second entry route, `README.md:28`), `$SPECS_PATH/security/<repo-slug>/` (the findings register; `plugins/security-workflows/docs/getting-started.md:56`) and `$SPECS_PATH/architecture/` (team decision records; `plugins/workflows-core/docs/reference/grounding.md:35`). `ARCHITECTURE_REPO_PATH`, which the section above exports, is also absent.
+- **Failure scenario:** a team setting up a new specs repository from this section does not expect `security/` and `architecture/` to appear at its root, or the BRD folders.
+- **Suggested fix:** add the three entries, one line each.
+- **Source:** review
+- **Confidence:** high
+
+## documentation quality — dev-workflows and security-workflows
+
+### DQD-B1 — MINOR — The first-run example key `EPIC-98760` is not a key shape any Epic gets, so a new user copying it learns the wrong form
+- **Also found as:** DQC-B1 (merged here)
+- **Where:** `plugins/dev-workflows/docs/getting-started.md:97`, `:100`, `:104`, `:110`; `plugins/dev-workflows/docs/commands/design.md:85`, `:88`; `plugins/dev-workflows/docs/commands/implement.md:105`, `:108`; `plugins/dev-workflows/docs/commands/ready.md:75`, `:78`; `plugins/dev-workflows/docs/reference/session-cost.md:80`
+- **What is wrong:** Getting started says "`/dev-workflows:design EPIC-98760`" and "`EPIC-98760` resolves the Epic within its PRD, the same key `/product-workflows:specify` used to land `specification.md`". The design page says "The run resolves `EPIC-98760` as the focus Epic within PRD `PRODUCT-1234`". But `/epics` mints every Epic key as the PRD key plus a two-digit segment, in a folder `EPIC-<PRD-KEY>-NN-<eslug>/` (`plugins/product-workflows/docs/commands/epics.md:69`; this plugin's own layout block at `plugins/dev-workflows/docs/reference/environment.md:76` shows `EPIC-<KEY>-NN-<eslug>/`). An Epic of PRD `PRODUCT-1234` is `PRODUCT-1234-01`. Under `workflows-core:addressing` §1 `read-key`, `EPIC-98760` is the whole key `EPIC-98760`, because `98760` alone is not a valid key. It is not "`EPIC-` plus key `98760`", which is how the example reads. The other pages in the same plugin use the minted shape: `BOOK-1-02` (`conformance.md:99`) and `ACME-77-01` (`commit-convention.md:6`). The security getting-started uses `ACME-7-01`.
+- **Failure scenario:** A new user reads that a folder `EPIC-PRODUCT-1234-01-alerts/` is addressed as `EPIC-98760` and types `EPIC-01` or `EPIC-1234`. Either stops with `DESIGN_NEEDS_KEY` or finds no folder. The same user cannot connect the example to the folders `/epics` created.
+- **Evidence:** `grep -rn 'EPIC-98760' plugins/dev-workflows/docs` (11 lines across 5 pages); `addressing.md` §1 `read-key` rules 1 and 3; `epics.md:69`.
+- **Suggested fix:** Use a minted key everywhere, for example `PRODUCT-1234-01` (or `EPIC-PRODUCT-1234-01` to show the prefix form). In getting started, add one sentence: an Epic's key is its PRD's key plus `-NN`, and the `EPIC-` prefix is optional. Make the session-cost sample entry follow the same shape.
+- **Source:** review
+- **Confidence:** high
+
+### DQD-B2 — MINOR — The `/implement` page's example promises a next step the command no longer offers
+- **Where:** `plugins/dev-workflows/docs/commands/implement.md:108`
+- **What is wrong:** "…closes with the four Phase 4 maintenance agents and the Final Report — recommending the next Epic, or `/docs-workflows:document` once every Epic under the PRD is implemented." The command's `### Next step` (`plugins/dev-workflows/commands/implement.md:1291`) follows the dev lane. That lane offers, before the pull request merges, `/dev-workflows:conformance <EPIC>` and then `/security-workflows:scan <EPIC>`, then the remaining Epics. Once every Epic has merged it offers the PE's `/dev-workflows:conformance <PRD>`, and only then `/docs-workflows:document <PRD>` (`next-phase-offer.md:318-319`). Nowhere on the `/implement` page does a user learn that `/conformance` and the security scan are the next step after an Epic. Its *See also* (`:110-`) does not link `/conformance` either.
+- **Failure scenario:** A Dev following the page goes straight to the next Epic or to `/document`. They skip the pre-merge conformance check and scan that the family's delivery assumes. `/dev-workflows:conformance`'s own page says `/implement` "offers this command as its next step" (`conformance.md:105`), so the two pages contradict each other.
+- **Evidence:** compared the example's sentence with `next-phase-offer.md:318` and `commands/implement.md:1291-1302`.
+- **Suggested fix:** Rewrite the example's ending: "…and the Final Report, whose next step is `/dev-workflows:conformance EPIC-…` and then `/security-workflows:scan`, before the pull request merges." Add a short *What comes next* paragraph and a `/conformance` see-also link.
+- **Source:** review
+- **Confidence:** high
+
+### DQD-B3 — MINOR — The dev workflow diagram skips the PE's PRD-level `/conformance` before documentation, and sends every *amend the document* to `/specify`
+- **Where:** `plugins/dev-workflows/docs/workflow.md:28`, `:31`
+- **What is wrong:** The diagram draws `implement -.->|code + implementation.md, in docs-workflows| docsplugin` directly. It has no edge for the lane's "once ALL Epics implemented and merged → PE → `/dev-workflows:conformance <PRD>` → `/docs-workflows:document <PRD>`" (`next-phase-offer.md:319`), nor for "`/dev-workflows:conformance <PRD>` … once settled → `/docs-workflows:document <PRD>`" (`:321`). The single `conformance -.->|"PRD: the PE, every Epic merged — amend the document"| specify` edge says an amendment always goes to `/specify`. The lane sends it to "the command its note names" (`:321`), which can be `/update-prd` or `/create-ard` too.
+- **Failure scenario:** A reader takes the diagram as the order of work. They go from the last `/implement` straight to `/document`, without the PE's PRD conformance run the docs and offers expect first. Or they run `/specify` to amend a PRD-level requirement.
+- **Evidence:** diagram lines 21-31 read against `next-phase-offer.md:316-321`.
+- **Suggested fix:** Route the docs edge from `conformance` ("PRD: once settled") instead of from `implement`, or add that edge beside it. Relabel the amend edge to "amend the document — the command its note names" and point it at the `PMPRD` subgraph rather than at `specify` alone.
+- **Source:** review
+- **Confidence:** medium
+
+### DQD-B4 — MINOR — The environment layout files follow-ups under `dev-workflows/`, contradicting the follow-ups and roles pages
+- **Where:** `plugins/dev-workflows/docs/reference/environment.md:77`
+- **What is wrong:** The layout block says `dev-workflows/                  # bookkeeping: feedback, cost, resume.md, follow-ups`. The follow-ups page says "**`follow-ups.md` in the folder the run resolved**, appended, alongside the artifacts the follow-ups are about" (`reference/follow-ups.md:24`). The roles page says "Two records land outside that subfolder … follow-up tasks, in the folder the run resolved" (`workflow.md:60`).
+- **Failure scenario:** A user looking for the follow-ups `/implement` or `/conformance` wrote searches `<PRD-dir>/dev-workflows/` and finds nothing. The tasks are in the Epic folder's `follow-ups.md`.
+- **Evidence:** the three lines quoted.
+- **Suggested fix:** Drop `follow-ups` from the `dev-workflows/` comment. Add a `follow-ups.md`, `implementation.md` line under the PRD and `EPIC-` folders.
+- **Source:** review
+- **Confidence:** high
+
+### DQD-B5 — MINOR — "`dev-workflows` reads five environment variables" counts one it never reads
+- **Where:** `plugins/dev-workflows/docs/getting-started.md:38`; `plugins/dev-workflows/docs/reference/environment.md:3` ("The plugin reads five user-settable variables")
+- **What is wrong:** One of the five is `DOCS_PATH`. The same page says "None of this plugin's own six commands grounds against it … It is documented here only because `code-handoff.md`'s git finish states plainly that it never touches this path either — a boundary statement, not a consumer" (`getting-started.md:50`). `grep -rn DOCS_PATH plugins/dev-workflows/{commands,agents,references,hooks,scripts}` hits only `references/code-handoff.md:360`, a "never touches" sentence.
+- **Failure scenario:** A new user setting up from *What you set on your machine* spends time on a docs clone and `DOCS_PATH` that this plugin never uses. Or they conclude that `/implement` reads their docs.
+- **Evidence:** grep above; both sentences quoted.
+- **Suggested fix:** "reads four … `DOCS_PATH` is not read by this plugin; it is listed here because the companion plugins read it". Or move the `DOCS_PATH` section under a "read by companion plugins, not this one" heading.
+- **Source:** review
+- **Confidence:** high
+
+### DQD-B6 — MINOR — The dev Session cost page's worked example names product-workflows commands as "dev-workflows commands", and leaks an internal team count
+- **Where:** `plugins/dev-workflows/docs/reference/session-cost.md:13`
+- **What is wrong:** "A single session that runs several dev-workflows commands in a row — `/idea` then `/create-prd` then `/specify`, say — appends one entry per command invocation". Those three ship in `product-workflows`. Line 38 of the same page says so: "Twelve more commands that used to make this list — `/idea`, `/create-prd` … — ship in the companion `product-workflows` plugin now". The same paragraph also says "the largest PRD to date was worked by 23 teams". That is a statistic about the organisation the plugin came from, which no user can check or use.
+- **Failure scenario:** A dev-workflows user is told that `/idea` is one of this plugin's commands, contradicting the README's command table. The "23 teams" figure reads as an operational fact about the user's own repository.
+- **Evidence:** lines 13 and 38 of the page.
+- **Suggested fix:** Use `/design` then `/implement` then `/conformance` as the example. Replace the team count with "a PRD worked by many teams".
+- **Source:** review
+- **Confidence:** high
+
+### DQD-B7 — MINOR — Maintainer vocabulary and change history fill the user pages
+- **Where (examples, not exhaustive):**
+  - change history addressed to no user: `plugins/dev-workflows/docs/getting-started.md:34` ("This page used to say the first line alone was enough"); `commands/vuln.md:7` and `commands/upgrade.md:7` ("the rule lived only on this page until it was restated there"); `reference/follow-ups.md:34` ("It used to have four rungs, the first of which was a vault"); `commands/ready.md:23` ("A block an `/implement` run before 4.1.2 left…"); `reference/agents.md:3` (the 19 agent names that moved out); `reference/hooks.md:9`, `:11`, `:17` (how `preload-context` was split)
+  - maintainer recipes: `getting-started.md:21` ("`grep -ln 'WebFetch\|WebSearch' plugins/dev-workflows/agents/*.md` re-derives that set rather than trusting this list" — a repository path a user of the installed cache does not have); `reference/environment.md:3` ("the names the plugin's own inventory check encounters while scanning for `$VAR` reads … `OSTYPE`, `BASH_SOURCE`, `BASH_REMATCH`, `ROOT`, and `OWNER_REPO`"); `security-workflows/docs/reference/environment.md:3` (the same)
+  - harness and reference internals: `commands/implement.md:15` ("`$ARGUMENTS` resolves to one of two modes"); `roles-and-phases.md:12`, `:26` and `commands/ready.md:54`, `:82` (three restatements of `/product-workflows:brd-reconcile`'s "cross-BRD write guard, and a `--sent` run's redundancy check at Phase 0 step 6, which reads the gate inverted (`phase-handoff` §3.7)" — a BRD-route detail with no bearing on any dev-workflows command); `commands/design.md:58` ("Of this plugin's three gated inputs" — never named — "§3.3 rows D/E"); about 40 lines carrying `§` citations into `workflows-core` references the user never sees (`grep -rc '§' plugins/dev-workflows/docs`); security `roles-and-phases.md:42` and `reference/session-cost.md:7-11` ("passes `phase: inferred, role: inferred` with the run's role as `run_role`", "Its §7 row names it by its bare name, `/scan`"); raw `choices: [...]` arrays on `security-workflows/docs/commands/scan.md` (5 lines) and `dev-workflows/docs/reference/environment.md:11`
+- **What is wrong:** These are notes for the maintainer, history of earlier releases, and citations into internal references. The brief names them as user-facing defects. The BRD-reconcile caveat is repeated four times across two dev pages. Its terms ("stopping row", "reads the gate inverted") are defined nowhere a dev-workflows user can reach.
+- **Failure scenario:** A new user reading Roles and phases to learn what the Dev owns meets three lines on a command of another plugin's BRD route. A user told to "re-derive that set" with a repository-relative `grep` has no `plugins/` directory in the installed cache. A user who sees "before 4.1.2" cannot tell whether it applies to their tree.
+- **Evidence:** lines quoted. Ran `grep -rn 'used to\|until it was\|before 4\.' plugins/dev-workflows/docs plugins/security-workflows/docs`.
+- **Suggested fix:** Move history to `CHANGELOG.md` and maintainer recipes to `docs/maintainers/`. Cut the `/brd-reconcile` caveat from the dev pages: "`/ready` is the one command here whose gate never stops it" is enough. Replace each `§` citation with what it means, in plain words, and keep at most one link to the companion plugin's page. Show the options of a question as prose (*Set SPECS_PATH* / *Cancel*) rather than as a `choices:` array.
+- **Source:** review
+- **Confidence:** high (that the text is there); the impact is reader confusion, not a wrong run
+
+### DQD-B8 — MINOR — The `/vuln` and `/upgrade` diagrams leave out the commit, push and pull request step, and the per-unit loop
+- **Where:** `plugins/dev-workflows/docs/commands/vuln.md:25-35`, `plugins/dev-workflows/docs/commands/upgrade.md:23-35`
+- **What is wrong:** `/vuln`'s diagram ends `tv --> s4["Step 4 — Summarise"]`. `/upgrade`'s ends `tv --> done["Collect results → Post-batch maintenance"]`. Neither draws the commit `code-handoff` makes per CVE (Step 3.9) or per component (step 6.5), nor the consent-gated push and pull request (per CVE, or once for the batch at step 7.5). Neither draws the loop back for the next CVE or component, nor the rule that a commit that does not land ends the loop (workflow map in `.claude/rules/dev-workflows.md`). These steps are the user-visible result of both commands, and the only point where the user is asked a question after the plan.
+- **Failure scenario:** A reader of either diagram cannot tell that one pull request is opened per CVE and one per upgrade batch, or that they will be asked about pushing. The prose under each diagram says so only in the example paragraph.
+- **Evidence:** diagrams read against `commands/vuln.md` `## Git Workflow` and the rules-file workflow map lines for `/vuln` and `/upgrade`.
+- **Suggested fix:** Add `tv --> commit["Commit (per CVE / per component) → push + PR behind one consent choice"]`, a loop edge back to the next unit, and a "commit did not land → stop" edge.
+- **Source:** review
+- **Confidence:** high
+
+### DQD-B9 — NIT — The security workflow diagram draws `/dev-workflows:conformance` as an edge label, not a node, and omits the scan's own next step to the PE's `/conformance <PRD>`
+- **Where:** `plugins/security-workflows/docs/workflow.md:23`, `:5-38`
+- **What is wrong:** `implement -.->|"action: offered after /dev-workflows:conformance, before the merge"| scan`. `/dev-workflows:conformance` has no node, so its own offer of the scan ("where it decided no fix", stated at `:49`) cannot be drawn. The lane's offers after a change scan — the remaining Epics, then "the PE's `/dev-workflows:conformance <PRD>`" (`next-phase-offer.md:322`; `docs/commands/scan.md:165`), and a change scan from each other repository the Epic names — have no edge either.
+- **Failure scenario:** A Dev reading only the diagram sees `/implement` hand straight to the scan. They do not learn that `/conformance` comes first, or that the PE's PRD check follows the merge. The ASCII block on `getting-started.md:68-79` shows both, so the two pages differ.
+- **Evidence:** diagram vs `next-phase-offer.md:320-322`.
+- **Suggested fix:** Add a `conformance["/dev-workflows:conformance"]:::dev` node in the DEV subgraph, with edges `implement → conformance → scan`. Add a dashed `scan -.->|"after the merge: the PE"| prdconf["/dev-workflows:conformance PRD"]`.
+- **Source:** review
+- **Confidence:** medium
+
+### DQD-B10 — NIT — The register's status diagram has no `reopened → open` edge, though triage suggests *decide later* for a reopened finding
+- **Where:** `plugins/security-workflows/docs/reference/security-register.md:66-101`
+- **What is wrong:** The diagram's edges out of `reopened` are `fix`, `false_positive`, `accepted_risk` and `fixed`. The scan page's triage says the suggested decision is "**decide later** for the rest, on a new, reopened or open row" (`docs/commands/scan.md:110`), and decide later records `open` (status table, `:58`). The suggestion `/security-workflows:scan` makes for a reopened MEDIUM or LOW finding is therefore a move the diagram does not draw.
+- **Failure scenario:** A Security Engineer checking the diagram thinks a reopened finding cannot go back to *decide later*.
+- **Evidence:** diagram lines read against `scan.md:110` and the status table.
+- **Suggested fix:** Add `reopened --> open: decide later`.
+- **Source:** review
+- **Confidence:** medium (`register.py`'s decision validation was not read; `security-register-format` §4 names no restriction)
+
+### DQD-B11 — NIT — Missing space joins two paragraphs on the `/ready` page
+- **Where:** `plugins/dev-workflows/docs/commands/ready.md:62`
+- **What is wrong:** "…never `_readiness.md` itself.Phase 7 additionally emits one follow-up per named readiness gap…"
+- **Failure scenario:** The follow-up rule reads as part of the handoff sentence. Cosmetic.
+- **Evidence:** `grep -n 'itself.Phase' plugins/dev-workflows/docs/commands/ready.md`.
+- **Suggested fix:** Start a new paragraph at "Phase 7".
+- **Source:** review
+- **Confidence:** high
+
+## documentation quality — product-workflows
+
+### DQP-B1 — MINOR — Getting started promises a handoff and a `/create-prd` takeover that a run with an unanswered question never gets
+- **Where:** `plugins/product-workflows/docs/getting-started.md:78`, `:80`
+- **What is wrong:** Step 1 says *"a question you cannot answer yet becomes a logged `[NEEDS CLARIFICATION]` marker rather than a blocker"*. Step 3 says *"At the end it offers to commit the brief, push it, and open a pull request … Once that lands, `/create-prd ACME-77` finds `idea.md`"*. But any open marker makes the brief `status: draft`, and a draft is never handed off and no offer is made: `commands/idea.md:705` (*"`status: draft` … **never hand off**, and do not ask"*), and the command's own docs page says the same at `docs/commands/idea.md:157`. On a draft, `/create-prd ACME-77` with no path does not read the brief in contract (`commands/idea.md:714-723`). Only `/idea <KEY> <same source>` or `/create-prd <KEY> @<path>` work.
+- **Failure scenario:** A new PM skips one of the ten questions, as the page invites. No commit or PR offer appears. They then run `/create-prd ACME-77`, which names the brief but does not read it, and grills from scratch or offers a same-session idea.
+- **Evidence:** Read getting-started steps 1–3 against `commands/idea.md:700-723` and the docs page's *Gates* section.
+- **Suggested fix:** In step 1, say that an unanswered question leaves the brief a draft. In step 3, say the handoff is offered only for a refined brief, and name the two ways forward from a draft: re-run `/idea` with the same source, or `/create-prd <KEY> @<path>`.
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B2 — MINOR — Getting started never tells the reader to merge the pull request, or what to do with a specs repo that has no remote
+- **Where:** `plugins/product-workflows/docs/getting-started.md:80` (*"Once that lands, `/create-prd ACME-77` finds `idea.md`"*); `:40` (the `SPECS_PATH` section)
+- **What is wrong:** "Once that lands" is the page's only hint that the reader must merge the pull request before the next command. While it is open, `/create-prd` stops (`docs/commands/idea.md:180`). The page also never says the specs repo must be a git repository, or what happens without an `origin` remote. In that case the handoff commits on a plugin branch, pushes nothing, opens no PR, and reports *"The phase is NOT handed off"* (`workflows-core/references/phase-handoff.md:445`). The next command then stops on that unmerged branch until the reader merges it locally. None of this is on the page, and the page has no `export` example either. The root README has one (`README.md:86`), but only the "Prerequisites" anchor is linked from here.
+- **Failure scenario:** A PM runs `/idea`, accepts the PR offer, and runs `/create-prd ACME-77` at once. It stops on the open PR. Or a PM working in a local-only specs repo is told the phase is not handed off, and no page explains how to continue.
+- **Evidence:** Read getting-started end to end, and `phase-handoff.md:44`, `:108` and `:445`.
+- **Suggested fix:** Add a "Before you start" block: create or clone a specs git repository (with an `origin` for PRs), and give a three-line `export SPECS_PATH=…` example. In step 3, add "merge the pull request (or, with no remote, merge the `idea/…` branch into your default branch), then run `/create-prd ACME-77`".
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B3 — MINOR — The BRD-route parameter table lists `@<idea.md>` as an optional argument of `/create-prd` on that route; the command skips the idea ladder there entirely
+- **Where:** `plugins/product-workflows/docs/brd-workflow.md:284` (`/create-prd` row, Optional: *"`--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<idea.md>`"*), in a table whose last three rows are *"shown in their the BRD route form only"* (`:273`)
+- **What is wrong:** `commands/create-prd.md:90` says *"Resolve `idea.md` … **Skipped entirely on the BRD route**, where `prd-seed.md` is the seed and there is no `idea.md` to find"*. The rules file puts it the same way: *"no idea ladder"* (`.claude/rules/brd-route.md` BRD route tail). `workflow.md:162` gives the same row without `@<idea.md>`, so the two copies of the table disagree.
+- **Failure scenario:** A PM hands a slice an idea file through `@`, expecting it to seed the PRD. It is never read on that route.
+- **Evidence:** Compared the two tables, then read `commands/create-prd.md:90-93`.
+- **Suggested fix:** Drop `@<idea.md>` from the BRD-route row.
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B4 — MINOR — The `/create-prd` page says the BRD route seeds from `prd-seed.md`, which a normal BRD route never has
+- **Where:** `plugins/product-workflows/docs/commands/create-prd.md:3` (*"a decided BRD slice's register and seed"*), `:17` (*"the run seeds the PRD from that BRD's `prd-seed.md` and `decisions.md`"*)
+- **What is wrong:** `brd-workflow.md:421-426` says `--sort-existing` is *"the only writer of any of the three"* seeds and that *"a reconciled BRD normally holds no seed at all, so each of those runs reports its seed absent as the **ordinary** case"*. `.claude/rules/brd-route.md` warns against wording that sends a reader after a seed file that does not exist. A PM reading the `/create-prd` page expects a `prd-seed.md` and goes looking for it. The two pages contradict each other.
+- **Failure scenario:** A PM sees "prd-seed absent" in the run and thinks the route lost content.
+- **Evidence:** Compared `create-prd.md:17` with `brd-workflow.md:421-429`.
+- **Suggested fix:** Reword to "seeds the PRD from the slice's `decisions.md` (filtered by altitude) and its grounding findings; a `prd-seed.md` exists only after a `--sort-existing` migration".
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B5 — MINOR — The main workflow diagram routes `/implement` straight to the docs commands, leaves out the security scan, and gives the PE's PRD conformance no edge onward
+- **Where:** `plugins/product-workflows/docs/workflow.md:65-70`, `:91`, `:192-198`
+- **What is wrong:** The diagram draws `implement -.->|code + implementation.md, in docs-workflows| docsplugin` (`:91`), and `conformanceprd` has edges only back to `specify`, `epics` and `updatevi` (`:68-70`). The routing graph is different. `/implement` goes to `/conformance <EPIC>`, then `/security-workflows:scan <EPIC>`, then the remaining Epics. Once all have merged, `/conformance <PRD>` goes to `/docs-workflows:document` and then `/release-notes`, and `/conformance <PRD>` → *"once settled → `/docs-workflows:document <PRD>`"* (`workflows-core/references/next-phase-offer.md`, part `dev`). `/security-workflows:scan` appears nowhere in `workflow.md`. Its *Cross-cutting commands* list (`:192-198`) names the commands of `workflows-core`, `docs-workflows` and `dev-workflows` but not `security-workflows`. Meanwhile `roles-and-phases.md:46` does name `/security-workflows:scan`.
+- **Failure scenario:** A PE following the diagram thinks the docs run follows `/implement` directly. They never learn that `/conformance <PRD>` is the gate before docs, or that a security scan sits between an Epic's implementation and its merge.
+- **Evidence:** `grep -n security plugins/product-workflows/docs/workflow.md` returns nothing. The edge list was read against the `next-phase-offer.md` routing graph.
+- **Suggested fix:** Replace the `implement → docsplugin` edge with `conformanceprd -.->|"settled"| docsplugin`. Add a `/security-workflows:scan` node (class `dev`) between `conformanceepic` and the merge. Add a `security-workflows` bullet to *Cross-cutting commands*.
+- **Source:** review (and spec `docs/superpowers/specs/2026-10-12-conformance-design.md` D22, see DQP-G2)
+- **Confidence:** high
+
+### DQP-B6 — MINOR — Both workflow diagrams leave out offers their commands make, and `brd-workflow.md` describes the re-entry from `/brd-reconcile` as two edges when it is four
+- **Where:** `plugins/product-workflows/docs/workflow.md:46-90`; `plugins/product-workflows/docs/brd-workflow.md:41-58`, `:104-106` (*"The two dashed edges leaving `/brd-reconcile` are different in kind … either state is settled by running the command that owns it again"*)
+- **What is wrong:** The routing graph (`next-phase-offer.md`, parts `pa`, `pe`, `brd`, `proposals`) makes these offers, and neither diagram draws them:
+  - `/create-ard <PRD>` → `/specify <PRD>`, and Epic-level `/create-ard <EPIC>` → `/specify <EPIC>` (recommended). `createard` has no edge to `specify`.
+  - `/epics` → `/create-ard <EPIC>` (optional PA).
+  - `/brd-interview` → another round, and → `/prd-ground` for a question no finding bears on yet.
+  - `/brd-reconcile` → `/prd-ground <KEY> --rebaseline` where the review challenged a code claim, and → `/brd-reconcile` again on the same review where a dependent's sweep was only recorded. That makes four re-entry routes, not the two the prose names.
+  - `/prd-proposal` → `/create-ard` / `/specify` to raise the tier; `/brd-proposal` → `/prd-proposal <SLICE>` re-runs.
+
+  `workflow.md:101` excuses sparse edges only for the ARD's *consumers*, not for next-step offers.
+- **Failure scenario:** A PA who has just merged a PRD-level ARD finds no route to `/specify` in the diagram. A PM whose customer review challenged a code claim does not learn that `--rebaseline` grounding is the next step.
+- **Evidence:** Edge lists read against `plugins/workflows-core/references/next-phase-offer.md:178-330`.
+- **Suggested fix:** Add the dashed edges, or state under each diagram that it draws only the main forward path and link each command page's next-step section. Rewrite `brd-workflow.md:104-106` to name all four re-entry routes.
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B7 — MINOR — Internal rulings and reference-section citations leak into user pages, with no link a user could follow
+- **Where (rulings, `D<n>`):** `roles-and-phases.md:24` *"(D5)"*; `workflow.md:168` *"(D4)"*; `commands/create-prd.md:49` *"(D7)"*; `commands/specify.md:15` *"(D4)"*; `commands/brd-reconcile.md:80` *"it is decision row D14"*, `:498` *"the D20 failure"*; `reference/references.md:12` *"the D23 roll-up"*, `:13` *"the D19 rule"*, `:16` *"(D12)"* and *"(D18)"*, `:17` *"the D13 rule"*.
+- **Where (`§` citations):** 135 occurrences across 23 of the 31 pages (`grep -o "§" …`). Examples: `roles-and-phases.md:10` *"`workflows-core:phase-handoff` §3.4 lists them"*, `:12` *"§3.7"*; `commands/idea.md:26` *"(`workflows-core:run-flags` §5 step 3)"*, `:44` *"the §2.1 Sonnet chain"*; `brd-workflow.md:380` *"`workflows-core:grounding-format` §6.1"*.
+- **Where (internal field names and gate mechanics):** `roles-and-phases.md:41` *"(`vi_spec_present: false`)"*; `commands/idea.md:44` *"`detection_model` … `current_model`"*; `commands/prd-ground.md:11-14` and `commands/epics.md:19` open on how the kind gate tests a directory prefix and not the asserted `kind:`.
+- **What is wrong:** `D<n>` is a row of a design spec removed from the tree. A user has no page that defines it. The `workflows-core:<name> §n` citations name files inside another plugin, and the docs neither link nor summarise them. "Look it up in §3.4" sends a PM to a reference meant for agents, which `getting-started.md` never tells them how to find.
+- **Failure scenario:** A PM reads "(D5)" or "§3.4 lists them" and cannot find what it refers to. That list of which commands stop on an absent input is exactly what `roles-and-phases.md:10` withholds.
+- **Evidence:** Grep counts per page (rulings: 13 sites in 7 pages; `§`: 135 in 23 pages).
+- **Suggested fix:** Delete the `(D<n>)` tags and say the rule in words. Where a `§` citation carries information the reader needs (the list in `phase-handoff` §3.4), inline the list. Elsewhere, keep at most one plain "defined in the shared `workflows-core` references" note per page.
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B8 — MINOR — The docs teach example keys that carry a folder-kind token, and use a different key on every BRD-route page
+- **Where:** `brd-workflow.md:300-301` (*"a BRD owning its source document is keyed `EPIC-008` and a slice of it `EPIC-008-01`"*); `commands/prd-ground.md:575` (`/product-workflows:prd-ground PRD-2201` on the idea route); `commands/specify.md:109` (`/product-workflows:specify EPIC-98761` for *"a single Epic"*); BRD pages: `brd-intake.md` `ACME-001`, `brd-split.md`/`brd-interview.md`/`brd-package.md` `EPIC-008`, `brd-reconcile.md` `EPIC-008-01`, `brd-proposal.md` `PRODUCT-1234`
+- **What is wrong:** A folder is `<KIND>-<KEY>-<slug>` with kind `BRD`/`PRD`/`EPIC` (`getting-started.md:40`). Examples whose *key* is `EPIC-008` or `PRD-2201` give folders named `BRD-EPIC-008-…`, `PRD-EPIC-008-01-…` and `PRD-PRD-2201-…`. They lead a reader to think the key carries the folder kind. Here `EPIC-008-01` is a BRD *slice* and `EPIC-98761` a focus Epic, while a real Epic's key is `<PRD-KEY>-NN` (`roles-and-phases.md:40`). Addressing has to special-case keys that begin with a kind token (`.claude/rules/brd-route.md`, the prefix rule). Across the BRD route the key also changes on every page, so a reader cannot follow one BRD from intake to reconciliation.
+- **Failure scenario:** A PM keys their first BRD `BRD-12` or their first Epic `EPIC-5`, copying the pages. They get doubled-prefix folders and keys that are hard to tell apart from folder names.
+- **Evidence:** `grep -oE '/[a-z-]+ [A-Z][A-Z0-9_]*(-[0-9]+)+'` over every page; the keys per page are those listed under **Where**.
+- **Suggested fix:** Use one neutral key family across the plugin, e.g. BRD `ACME-001`, slices `ACME-001-01`/`-02`, idea-route PRD `ACME-77`, Epic `ACME-77-01`. Use it on every BRD-route page and in both workflow pages. (The earlier finding BRD2-B7 fixes only the root-vs-slice level of two of these examples.)
+- **Source:** review
+- **Confidence:** medium (the keys are valid by grammar, but the confusion is the defect)
+
+### DQP-B9 — NIT — "Two segments or three" contradicts the key grammar, which fixes no depth
+- **Where:** `workflow.md:168` (*"`<SLICE-KEY>` is `^[A-Z][A-Z0-9_]*(-\d+)+$` — **two segments or three**"*); `brd-workflow.md:300` (*"**That shape is two segments or three**"*)
+- **What is wrong:** `CLAUDE.md` and `commands/create-prd.md` docs page `:15` say the grammar *"fixes no depth"*. `ACME-1-2-3` is valid. The same `brd-workflow.md` paragraph then says *"a key's segment count is a naming convention, never a depth declaration"*, which contradicts its own bold sentence.
+- **Suggested fix:** Replace with "one or more numeric segments; the grammar fixes no depth".
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B10 — NIT — `brd-workflow.md` and `prd-ground.md` carry search-and-replace residue and development-history wording
+- **Where:** `brd-workflow.md:12` and `commands/prd-ground.md:56` (*"where so, a PA or PE runs it instead where the PM cannot clone the code repositories"*, with the condition doubled); `brd-workflow.md:234` (a sentence starting in lower case: *"the BRD route **ships** on …"*); `:273` (*"shown in their the BRD route form only"*); `:243` (*"the one this increment added"*); `:272` (*"not a preview of what a later increment adds"*); `getting-started.md:32` (*"This page used to say the first line alone was enough"*); `commands/idea.md:51` (*"past the old bounds"*), `:53` (*"exactly as a broken link always has"*), `:141` (*"the finder that searched a personal store … is gone"*); `commands/update-prd.md:59` (*"The run used to end with a manual reminder …"*); `reference/environment.md:13` (*"it used to be indistinguishable"*)
+- **What is wrong:** A new user has no "increment" and no earlier version to compare against. These sentences describe a change history that belongs in `CHANGELOG.md`. The garbled ones read as errors.
+- **Suggested fix:** Fix the three garbled sentences. Delete or rewrite the history clauses as present-tense facts.
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B11 — NIT — The `/idea` page names a personal-vault path and lists "a file" and "a saved file" as different sources
+- **Where:** `commands/idea.md:3` (*"a prompt, a file, a community post, or a saved file"*), `:17` (*"a saved community post the operator downloaded (typically under `Projects/Products/…`)"*)
+- **What is wrong:** The synopsis gives exactly two forms (`:15`, *"one of **two** source forms"*). The four-item opener contradicts it. `Projects/Products/…` is someone's vault layout, not a convention of the plugin.
+- **Suggested fix:** "Refines one raw source — an inline prompt or a markdown file (a note, a saved community post, a PRD) — …". Drop the path.
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B12 — NIT — The workflow page's role and artifact-home tables disagree with the roles page and the `/specify` page
+- **Where:** `workflow.md:176` (PA row: runs only *"`/create-ard` (optional)"*); `:177` (PE row: `/epics`, `/specify` only); `:183` (*"the PRD and the ARD, with `specification.md` in the `EPIC-` folders below it"*)
+- **What is wrong:** `README.md:15` and `roles-and-phases.md:29` give the PA `/harvest-decisions` and `/promote-decisions` too. `roles-and-phases.md:38` gives the PE `/dev-workflows:conformance <PRD-KEY>`. A broad PRD-level `specification.md` lives in the PRD folder itself (`commands/specify.md:92`, and `workflow.md:60`'s own *"PRD-level specification.md"* edge).
+- **Suggested fix:** Bring the two rows into line with the roles page. Say "`specification.md` in the PRD folder (PRD-level) or in each `EPIC-` folder".
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B13 — NIT — Getting started says the three optional variables each "degrade to a documented default or a silent skip"; two do not
+- **Where:** `getting-started.md:36`
+- **What is wrong:** When `$REPOS_PATH` has no existing entry, `/create-ard`, `/specify`, `/epics` and `/prd-ground` ask you to set it, and `/prd-ground` offers only *Set REPOS_PATH* or *Cancel* (`reference/environment.md:25`). An unset `$ARCHITECTURE_REPO_PATH` reports `OFF` *"with a line naming the variable"* (`environment.md:33`). That is neither a default nor silent.
+- **Suggested fix:** "the other three are optional: `DOCS_PATH` is skipped silently, `ARCHITECTURE_REPO_PATH` is reported off, and `REPOS_PATH` defaults to `/workspace` and is asked for where that does not exist".
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B14 — NIT — The README's documentation table leaves out three reference pages that the sibling README lists
+- **Where:** `plugins/product-workflows/README.md:24-36`
+- **What is wrong:** The table has no rows for [Effort proposals](docs/reference/proposal-format.md), [Session feedback](docs/reference/session-feedback.md) or [Resume and checkpoints](docs/reference/resume-and-checkpoints.md). `plugins/dev-workflows/README.md:35,37` lists its Session feedback and Resume pages. Effort proposals is the one page a PM sends a customer about. `README.md:20` also calls the twelve `references/` files "reference pages", although the docs tree has nine pages under `docs/reference/`.
+- **Suggested fix:** Add the three rows. Say "twelve reference files (see References)".
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B15 — MINOR — Nine of the 16 command pages never link to either workflow page
+- **Where:** `docs/commands/brd-intake.md`, `brd-interview.md`, `brd-package.md`, `brd-reconcile.md`, `brd-split.md`, `prd-ground.md`, `epics.md`, `idea.md`, `update-prd.md` (`grep -c "workflow.md"` = 0 on each)
+- **What is wrong:** None of the six BRD-route pages links [BRD workflow](../brd-workflow.md), the page that shows how they chain together. `idea.md`, `epics.md` and `update-prd.md` do not link [Workflow overview](../workflow.md). The other seven pages do.
+- **Failure scenario:** A PM who lands on `/brd-interview` from a search cannot reach the route diagram or the parameter table from that page.
+- **Suggested fix:** Add the route page (BRD pages) or the overview (idea-route pages) as the first *See also* item on every command page.
+- **Source:** review
+- **Confidence:** high
+
+### DQP-B16 — NIT — Three reference paragraphs are too long for a person to read
+- **Where:** `reference/resume-and-checkpoints.md:19` (one paragraph of 13,886 characters on carry-forward settling, including `git blame --porcelain` dating rules and `/security-workflows:scan` 0.2.0 compatibility); `reference/environment.md:15` (6,051 characters on `SPECS_PATH_INSIDE_TREE`); `commands/idea.md:138` (3,046 characters on `IDEA_NOT_AN_IDEA_FOLDER`'s named next commands)
+- **What is wrong:** These are agent-facing contracts pasted into user pages. A PM looking for "what happens if my `SPECS_PATH` is wrong" or "why is this item still in my resume pointer" cannot pull the answer out of them.
+- **Suggested fix:** Lead each with a short user-facing summary (the symptom, what to do), and move or link the full contract.
+- **Source:** review
+- **Confidence:** medium (readability, but the length is measured)
+
+## documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki
+
+### DQW-B1 — MAJOR — The docs-workflows Update block leaves out `workflows-core`, which every recent docs-workflows release has to be updated with
+- **Where:** `plugins/docs-workflows/docs/getting-started.md:27-33`
+- **What is wrong:** The block is `claude plugin marketplace update shipwright` / `claude plugin update docs-workflows@shipwright` / `claude plugin update prose-style@shipwright`, and the text after it says only "**Update `prose-style` with it**". It never mentions `workflows-core`. But `.claude/rules/plugin-updates.md` pairs `docs-workflows` 1.15.0, 1.16.0, 1.17.0 and 1.18.0 with a matching `workflows-core` release (1.39.0, 1.40.0, 1.44.0 and 1.45.0). For 1.17.0 it explains that an older loader reads `args: "escalation-rules review"` as an entry point and "may run a section whose heading merely contains the word". The page also says `claude plugin update` "re-fetches exactly one plugin" (plugin-updates.md: "An update re-fetches exactly one plugin").
+- **Failure scenario:** A user on docs-workflows 1.16 / workflows-core 1.43 follows this page. They end up with docs-workflows 1.18.0 beside workflows-core 1.43. Every `/document`, `/docs-audit` and `/release-notes` run then asks an older loader for reference parts it cannot serve, or meets a `next-phase-offer` that disagrees with it (the 1.44.0 and 1.45.0 bullets).
+- **Evidence:** I read the Update block and compared it with `plugins/security-workflows/docs/getting-started.md:43-48`. That page lists `claude plugin update workflows-core@shipwright` and says "**Update `workflows-core` with it**". `plugins/docs-workflows/.claude-plugin/plugin.json` is at 1.18.0 and `workflows-core` at 1.45.0.
+- **Suggested fix:** Add `claude plugin update workflows-core@shipwright` to the block, with a sentence saying why: the commands load the shared references and the part loader from it at runtime. Follow security-workflows' page.
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B2 — MAJOR — obsidian-llm-wiki README says the Stop hook updates `hot.md` "at session end", but the hook blocks Claude at the end of every turn
+- **Where:** `plugins/obsidian-llm-wiki/README.md:95`, `:224-225`; `plugins/obsidian-llm-wiki/hooks/hooks.json` (the `Stop` entry); also `plugins/obsidian-llm-wiki/CLAUDE.md:77-78`
+- **What is wrong:** The README says "Hooks activate automatically: session start reads `hot.md`, session end updates it" and "auto-updated at session end (Stop hook)". The `Stop` hook fires each time the main agent finishes a response. It prints `{"decision":"block","reason":"Read …/skills/wiki-hot/SKILL.md fully, then update wiki/hot.md …"}` whenever `${VAULT_PATH:-$HOME/obsidian_vault}/wiki` exists, and it is suppressed only on the immediate re-stop (`stop_hook_active`). Its own reason text even handles a turn with no wiki activity ("If nothing wiki-related happened this session, update Last Updated…").
+- **Failure scenario:** A user installs the plugin, and their machine has `~/obsidian_vault/wiki`. From then on, in every Claude Code session in any repository, each answered prompt is followed by a forced extra cycle: read the skill, then rewrite the vault's `hot.md`. That costs tokens and time and rewrites a file in another repository. The README tells them nothing of this. It also goes against the marketplace convention "Hook scripts must exit 0 — they must never block Claude" (`CLAUDE.md` § Conventions). The plugin keeps its own `CLAUDE.md`, but that file repeats the same "session end" claim.
+- **Evidence:** I read `hooks.json`. The Stop command emits `"decision":"block"`. Claude Code's Stop event fires once per completed response, not once per session (SessionEnd is the session-end event).
+- **Suggested fix:** At minimum, correct the README (and the plugin's `CLAUDE.md` and `AGENTS.md:25`) to say "after every response, while the vault's `wiki/` exists", and document the cost and how to turn it off. Better: move the update to `SessionEnd`, or gate it on wiki activity in this session.
+- **Source:** review
+- **Confidence:** medium. The README misstatement is certain. Whether the per-turn firing counts as MAJOR depends on how often users have a vault and the plugin installed while working elsewhere.
+
+### DQW-B3 — MINOR — getting-started's "no docs yet" path sends the new user to `/document` and never mentions `/docs-audit` or the route page
+- **Where:** `plugins/docs-workflows/docs/getting-started.md:83`, and the whole page (no occurrence of `docs-audit` or `docs-workflow.md`)
+- **What is wrong:** After `/docs-init` the page says: "Then `/docs-workflows:docs-serve` serves the result … and `/document` starts filling it in." That disagrees with three other sources:
+  - The route page says that after serving comes `/docs-audit`, then writing units by hand. It also says `/document` "reads no backlog" (`docs-workflow.md:67-81`, `:111`).
+  - `/docs-init`'s own Next step says "Then `/docs-workflows:docs-audit <root>` to find out what this portal is still missing" (`commands/docs-init.md:285`).
+  - `/document` keyed mode needs a PRD folder with an implementation record, which a cold-start project usually does not have.
+- **Failure scenario:** A new user scaffolds a portal, serves it, and then runs `/document` on an empty portal. They have no PRD key, or they get a feature page with no coverage plan. They never learn that `/docs-audit` and the route exist, because getting-started is the page that "takes you from zero to your first successful run" and the route page is its only link to the backlog loop.
+- **Evidence:** `grep -n "docs-audit\|docs-workflow.md" getting-started.md` returns nothing.
+- **Suggested fix:** Replace the "and `/document` starts filling it in" clause with "then `/docs-workflows:docs-audit` to see what the portal is missing, and follow [The documentation route](docs-workflow.md)". List the route page in the line 3 orientation sentence too.
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B4 — MINOR — `/docs-serve`'s next-step offer and its docs page name `/document` as the next step, which contradicts the route
+- **Where:** `plugins/docs-workflows/commands/docs-serve.md:272`; `plugins/docs-workflows/docs/commands/docs-serve.md:68`; against `plugins/docs-workflows/docs/docs-workflow.md:9-17` (`SERVE --> AUDIT`), `:57-73`, and `plugins/docs-workflows/commands/docs-init.md:285`
+- **What is wrong:** The command says "On a successful serve, recommend reviewing the site at the reported URL, then `/docs-workflows:document <address>` to write or update pages once satisfied". The docs page says "[`/document`](document.md) — the natural next step once the served site looks right". On the route page, step 2 (`/docs-serve`) leads to step 3 (`/docs-audit`), and `/document` is only an optional prose aid in step 4. `/docs-init`'s own offer also puts `/docs-audit` after `/docs-serve`.
+- **Failure scenario:** A user follows the route: `/docs-init`, then `/docs-serve`. The serve run tells them to run `/document <address>`. That needs a PRD key they do not have, and it skips the audit that the route and `/docs-init` both name. The workflow diagram (`workflow.md:48-52`) draws no edge from `docsserve` to `document` either, so the offer matches no diagram.
+- **Evidence:** I read the lines cited.
+- **Suggested fix:** Make the offer depend on the backlog. Where no `.dev-workflows/docs-backlog.yml` exists, recommend `/docs-workflows:docs-audit`. Otherwise recommend the route's step 4, with `/document` direct mode as an aid. Mirror that on the docs page's See also.
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B5 — MINOR — The plugin README draws a third version of the documentation route, and it disagrees with the route page
+- **Where:** `plugins/docs-workflows/README.md:21-32`; against `plugins/docs-workflows/docs/docs-workflow.md:9-39`
+- **What is wrong:** The README's diagram:
+  - draws `WRITE --> CAPTURE --> VERIFY` unconditionally;
+  - has no "re-read what review_by has aged" node;
+  - puts `/docs-brand` on the route as a separate step between init and serve.
+
+  The route page, which the README calls "the page to read next", draws the following, and its step 1 says `/docs-brand` runs inside `/docs-init`:
+  - `WRITE -->|"a how-to or a tutorial"| CAPTURE` and `WRITE -->|"anything else"| VERIFY`;
+  - a cadence group with `ROT["re-read what review_by has aged — by hand"]`.
+- **Failure scenario:** A reader of the README thinks every page needs a screenshot capture, and never learns that step 8 (the `review_by` re-read) is part of the loop. That matters because the route stresses that "nothing anywhere on this route sets [`review_by`] for you" (`docs-workflow.md:99`).
+- **Evidence:** I compared the two mermaid blocks side by side.
+- **Suggested fix:** Drop the README's diagram in favour of a one-line link to the route, or copy the route's diagram exactly. Two hand-kept copies of one graph are what drifted here.
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B6 — MINOR — The split between `workflow.md` and `docs-workflow.md` is unclear: the file names invert the titles, and one command page calls the route "The documentation workflow"
+- **Where:** `plugins/docs-workflows/docs/commands/docs-audit.md:7`, `:11`; `plugins/docs-workflows/commands/docs-audit.md:344`; `plugins/docs-workflows/docs/README.md:6-7`
+- **What is wrong:** `workflow.md` is titled "Workflow overview" and `docs-workflow.md` is titled "The documentation route". The `/docs-audit` page links `../workflow.md` as "Workflow overview" in one sentence. In the next sentence it links `../docs-workflow.md` as "[The documentation workflow]", and again at `:11`. The command's own Next step names the route only by path ("this plugin's route page, `docs/docs-workflow.md`"), which is a path in a repository the user may not have.
+- **Failure scenario:** A reader sees "Workflow overview" and "The documentation workflow" side by side, takes them for the same page, and does not follow the second link. That is the only link to the manual procedure this command's backlog needs. Opening `docs/` by file name, `docs-workflow.md` reads as the plugin's workflow page and `workflow.md` as a generic one.
+- **Evidence:** I read the lines cited. `docs-workflow.md:1` is "# The documentation route", and `workflow.md:1` is "# Workflow overview".
+- **Suggested fix:** Use "The documentation route" for every link to `docs-workflow.md`. Consider renaming the file to `docs-route.md` (with a redirect note), and have the command's Next step name the page by title.
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B8 — MINOR — The `/api-guideline-reviewer` page hides that five bundled Spectral rules ship with placeholder literals that fail every real spec at `error`
+- **Where:** `plugins/guideline-reviewers/docs/commands/api-guideline-reviewer.md:25`, `:47`, `:53`; `plugins/guideline-reviewers/references/api-guidelines/spectral/ruleset.yaml:33-45`, `:525-539`, `:870-885`
+- **What is wrong:** The page says the ruleset pins "the single org-wide tenant-header spelling and the org-wide security-scheme name … as literals". It then says organization-specific rules "deliberately do not ship". It never says that the literals are placeholders: `Example-Tenant`, the `Example-` custom-header prefix, the `oauth2` scheme id, and an open verb list. The ruleset's header names five such rules that "an organization is expected to replace exactly once". Two of them, `api-tenant-header-canonical-spelling` and `api-security-scheme-name-consistent`, are `severity: error`, and errors land under "Mistakes (MUST violations)" (`:47`).
+- **Failure scenario:** A user runs the documented example on their real spec, which uses a tenant header such as `Acme-Tenant` and a scheme named `bearerAuth`. They get MUST-level "Mistakes" for both, with no word in the docs that these are placeholders they must override in their own `.spectral.yaml`. The ruleset header holds the explanation, but no docs page points to it. Getting-started even says the command needs no configuration (`docs/getting-started.md:61`).
+- **Evidence:** I read the ruleset's header comment and the two rules. `grep -rn "placeholder\|Example-" plugins/guideline-reviewers/docs` returns nothing. Separately, the ruleset contradicts itself: the header says "Five rules carry a placeholder literal", while `:529` says the scheme name is "one of the four an adopting organization replaces".
+- **Suggested fix:** Add a "Before your first real run" subsection to the page. Name the five placeholder rules and show the `extends:` override snippet from the ruleset header. Fix "one of the four" to "one of the five".
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B9 — MINOR — The `/guideline-reviewer` page says it needs "nothing else", but the agent runs a bundled Python scanner that getting-started says needs `python3` 3.11
+- **Where:** `plugins/guideline-reviewers/docs/commands/guideline-reviewer.md:19-24`; against `plugins/guideline-reviewers/agents/guideline-reviewer.md:75-85` and `plugins/guideline-reviewers/docs/getting-started.md:61`
+- **What is wrong:** The page's "What it needs" says "Nothing else — no `$SPECS_PATH`…". It describes only the ESLint and axe detection as the deterministic step. The agent's "Automated Checks" says "Run automated checks before manual review: `python3 ${CLAUDE_PLUGIN_ROOT}/references/guidelines/check_guidelines.py …`" and calls it "this plugin's own heuristic scanner". Getting-started says "`/guideline-reviewer`'s automated checks need `python3` 3.11". So the command page and getting-started disagree, and the command page never mentions the scanner.
+- **Failure scenario:** A user without Python 3.11 reads the command page, expects a pure LLM-plus-ESLint review, and cannot tell why a scanner step fails or produces findings, or where those findings come from.
+- **Evidence:** I read the three sites.
+- **Suggested fix:** Add the heuristic scanner and its `python3` 3.11 prerequisite to the page's "What it needs" and to its description of what runs before the review passes.
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B10 — MINOR — The docs-workflows docs leak maintainer vocabulary a user cannot resolve: design-decision ids, `§` citations into references, "ceded" runs and "the split"
+- **Where (representative):**
+  - `plugins/docs-workflows/docs/commands/docs-serve.md:7` ("D17, the docs-workflow family design's rule … That family is the one the design's §4 table lists") and `:34`
+  - `docs/commands/docs-brand.md:33` ("D17, D20", "D25")
+  - `docs/reference/environment.md:31` ("(D23)"), and `:11`, which tells the reader to run `grep -lE … plugins/*/commands/*.md` "from the repository root"
+  - `docs/commands/docs-profile.md:7` ("§7's list of commands with nothing to inherit … and in §13.2 as a boundary no deferred claim pairs with")
+  - `docs/commands/docs-init.md:7` and `docs-audit.md:9`, `:36` ("§10")
+  - every command page's run-flag paragraph: "a ceded `/prompt-brainstorm` or `/prompt-grill-me` run" (`document.md:21`, `release-notes.md:19`, `docs-init.md:19`, `docs-audit.md:21`, `docs-brand.md:17`, `reference/session-cost.md:17`)
+  - `docs/README.md:58` ("the third increment of the marketplace split")
+  - `reference/session-cost.md:31` ("after the split it usually is")
+- **What is wrong:** These names are the design's decision ids, section numbers inside `workflows-core` references, and commands of another plugin, in a state ("ceded") no page here defines. A user of the installed plugin cannot follow any of them. The design documents are not shipped, and the `§` targets live in another plugin's `references/`. `grep -c "§"` over `plugins/docs-workflows/docs` counts 32 lines across 11 pages.
+- **Failure scenario:** A reader trying to learn why `/docs-serve` has no review gate gets "D17 … the design's §4 table". They cannot find either, and cannot tell whether the rule binds them. The environment page's grep recipe cannot be run from an installed plugin, which has no "repository root".
+- **Evidence:** I ran `grep -noE "\bD[0-9]{1,2}\b" -r plugins/docs-workflows/docs` and `grep -n prompt-brainstorm -r plugins/docs-workflows/docs`, and read each hit.
+- **Suggested fix:** On user pages, state the rule itself ("every command that writes an artefact passes an Opus review; `/docs-serve` writes none"). Drop the decision ids, the `§` numbers and the grep recipes, or move them to maintainer docs. Define "ceded" once on the Session cost page and link to it.
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B11 — MINOR — `/document` and `/release-notes` pages refer to "the tracker" and "the docs automation" as if every reader had them
+- **Where:** `plugins/docs-workflows/docs/commands/document.md:25`; `plugins/docs-workflows/docs/commands/release-notes.md:3`, `:61`; `plugins/docs-workflows/docs/workflow.md:84`
+- **What is wrong:** `document.md:25` says "`/document` never writes release-notes or what's-new pages, since those are generated from the tracker by the docs team's own automation". The same sentence opens "For release notes, use `/release-notes`". `release-notes.md:61` says the draft never carries "a `{{#internal-note}}` block, since the docs automation adds that metadata wrapper when it publishes". No page defines "the tracker", "the docs team's own automation" or the `{{#internal-note}}` syntax. These are leftovers from the environment the plugin was extracted from.
+- **Failure scenario:** A user without such automation reads that release notes are "generated from the tracker" and cannot tell whether `/release-notes` is meant for them. They also do not learn that they must add identifiers or metadata themselves when they publish the draft.
+- **Evidence:** I read the lines cited. `grep -rn "docs automation\|the tracker" plugins/docs-workflows/docs` finds no definition.
+- **Suggested fix:** Say what the draft omits and that the publisher adds it ("the draft is the body only; add any identifiers or wrapper your publishing process needs"). Drop "generated from the tracker" from `document.md:25`, keeping vendor neutrality.
+- **Source:** review
+- **Confidence:** medium
+
+### DQW-B13 — MINOR — Three docs-workflows command pages never link back to the Workflow overview
+- **Where:** `plugins/docs-workflows/docs/commands/document.md`, `release-notes.md`, `docs-brand.md` (whole files)
+- **What is wrong:** `docs-init.md`, `docs-audit.md`, `docs-profile.md` and `docs-serve.md` each link `../workflow.md`. These three do not, though `/document` and `/release-notes` are the spine of that diagram (`workflow.md:15-18`).
+- **Failure scenario:** A user who lands on `/document` from a search or the README table has no path to the diagram that shows where `/release-notes` and the PRD inputs fit.
+- **Evidence:** `grep -n "workflow.md" docs/commands/{document,release-notes,docs-brand}.md` returns nothing.
+- **Suggested fix:** Add a "[Workflow overview](../workflow.md)" entry to each See also. On `docs-brand.md`, also add the route page, since branding is route step 1.
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B14 — MINOR — prose-style README is stale about which family uses it, and gives no install command
+- **Where:** `plugins/prose-style/README.md:383`, `:398`, `:402-407`
+- **What is wrong:** The section heading says "How it fits with the dev-workflows family", `:398` says "without going through the `dev-workflows` pipeline", and `:405` says "Install it through Claude Code's plugin system — it will be available alongside `dev-workflows`." Per `CLAUDE.md`, `dev-workflows` "does not use `prose-style` at all". The consumers are `docs-workflows` and `product-workflows`, which the section body itself names (`/document`, `/epics`, `/create-prd`, `/release-notes`). The Installation section has no `claude plugin install prose-style@shipwright` line, unlike the acli README (`plugins/acli/README.md:28-31`).
+- **Failure scenario:** A user who only wants the standalone reviewers looks for the install command and finds none. A user of `dev-workflows` expects prose-style to come with it, but it does not: dev-workflows declares only `workflows-core`.
+- **Evidence:** `plugins/dev-workflows/.claude-plugin/plugin.json` dependencies, and `CLAUDE.md` § Active plugins.
+- **Suggested fix:** Retitle the section "How it fits with docs-workflows and product-workflows". Say that both install it as a dependency. Add the marketplace-add, install and update commands.
+- **Source:** review
+- **Confidence:** high
+
+### DQW-B15 — MINOR — The acli README does not say how to use the skill or how to authenticate headless, though it says both are documented
+- **Where:** `plugins/acli/README.md:8`, `:16-18`, `:26-31`
+- **What is wrong:** `:8` says it "authenticates via `acli … auth login`", with an ellipsis where the command should be. `:16-18` says that "the token-on-stdin form is documented instead" but shows no command. The README never says that the plugin is a model-invoked skill with no slash command, so the way to use it is to ask in prose (for example "list my open work items in project X"). It shows no example and no update command.
+- **Failure scenario:** A user installs the plugin, looks for a `/acli` command, and finds none. In a container they also do not know the headless auth form; the README's only hint, `--web`, is the form it says fails there. The working form (`acli jira auth login --site … --email … --token` with the token on stdin) appears only in `skills/acli/SKILL.md:328`.
+- **Evidence:** I read the README in full and `SKILL.md:12-15`, `:317-329`.
+- **Suggested fix:** Add a "Use" section ("no slash command; ask Claude in prose, and the `acli` skill loads"), a two-line headless auth example with the token on stdin, and the update command.
+- **Source:** review
+- **Confidence:** high

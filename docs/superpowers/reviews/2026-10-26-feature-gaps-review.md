@@ -8,10 +8,11 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## Summary
 
-56 gaps. The ones that matter most:
+64 gaps. The ones that matter most:
 
 - **Planned sub-projects that never started.** Lean context "part 3" — turning the `specs-repo-git` preflight/commit and `emit-cost` procedures into scripts, named "the lever" by both lean-context specs and D's cost record (GIT-G1). The post-D `/implement` restructure — one `code-writer` per plan, Epics sized by coupling — that `to-fix.md` E4 waits on, with no spec or plan (IMP-G1). `/conformance` Plan 2, the *Delivery verified* stage and the documentation readers of `_conformance.md` (DEV-G1, DEV-G2). docs-workflows' Spec 2 (`/docs-write`, `/docs-capture`, `/docs-verify`) and Spec 3 (`/docs-drift`) (DOC-D-G1, DOC-D-G2) — Spec 2's absence is also the cause of the MAJOR bug DOC-C-B1. security-workflows' sub-projects B–E (SEC-G1, SEC-G2).
 - **Promised verification never recorded:** no verification record for security-workflows' sub-project A (SEC-G3) or for implement-coding-subagents, whose cost target was missed (IMP-G2); the Epic size limit's live calibration (PRD-G2); live runs of the docs increment-2 commands, the `/vuln` baseline symmetry and blind grounding verification (DOC-D-G4, VU-G2, BRD-G2, BRD-G3).
+- **Documentation:** a plugin and its docs that no user can find their way into — `prose-style`, a declared dependency of two plugins, has no `docs/` tree (DQW-G1); the BRD route has no ordered walkthrough (DQP-G1); getting-started stops before `/implement` (DQD-G1); no glossary, no *what it offers next* sections, no security feedback page (DQP-G3, DQP-G4, DQD-G2). These came from the documentation-quality pass added after `cf139b47`.
 - **Deferred design items:** `implementation-format` §4's wider key boundary (CORE-G2), the `untrusted-content` split (SCR-G2), Fable escalation (IMP-G3), install-time-code safety for Poetry, uv, PDM, Hatch, Composer and Bundler (VU-G1).
 
 ## Index
@@ -74,6 +75,14 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 | FBB-B37 | field feedback — BOOK-2-01 runs | Gap: verbatim design markup is not checked against the target's CSS framework |
 | FBB-B40 | field feedback — BOOK-2-01 runs | Gap: `grounding/baselines.md` has no canonical entry layout |
 | FBB-B44 | field feedback — BOOK-2-01 runs | Gap: no command closes `unsourced` defects that a verified finding settles |
+| DQD-G1 | documentation quality — dev-workflows and security-workflows | Getting started stops at `/design`; nothing takes a new user through a first `/implement` or tells them what it needs |
+| DQD-G2 | documentation quality — dev-workflows and security-workflows | security-workflows has no page for the feedback, follow-up and resume-pointer files its command writes, which every sibling with a pipeline command documents |
+| DQP-G1 | documentation quality — product-workflows | No walkthrough for a first BRD-route run |
+| DQP-G2 | documentation quality — product-workflows | Conformance design D22 is only partly reflected in `product-workflows/docs/workflow.md` |
+| DQP-G3 | documentation quality — product-workflows | No glossary; route vocabulary is used before it is defined |
+| DQP-G4 | documentation quality — product-workflows | Command pages lack a "What it offers next" section (only `/brd-reconcile` has one) |
+| DQP-G5 | documentation quality — product-workflows | Getting started has no "Where to run it" or untrusted-input note, though this plugin reads more customer-supplied content than its siblings |
+| DQW-G1 | documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki | The small plugins that a family plugin depends on have no `docs/` tree |
 
 # Gaps, by area
 
@@ -493,3 +502,62 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Suggested fix:** Offer, with confirmation, to write `resolved-by: <SLICE-KEY>/[CG#n]`, or print the exact line to write by hand.
 - **Source:** feedback `brd-interview-unsourced-defects-no-closure` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
+
+## documentation quality — dev-workflows and security-workflows
+
+### DQD-G1 — Getting started stops at `/design`; nothing takes a new user through a first `/implement` or tells them what it needs
+- **Designed in:** the brief's reader criterion: "a getting-started page that would not get a new user to a first successful run". `plugins/dev-workflows/README.md:25` advertises the page as "your first `/design` run". The plugin's spine is `/design → /implement`.
+- **Current state:** `plugins/dev-workflows/docs/getting-started.md:92-112` ends at "Once that lands, `/implement EPIC-98760` picks up the design and starts the code change". It uses the bare form, two lines after the page explains why the qualified form is needed. Nothing on the page tells the user what `/implement` needs that `/design` did not:
+  - a clean working tree in the code repository (Phase 1.4);
+  - a session on Opus, or the session-model question it asks first (`commands/implement.md` Phase 0);
+  - a test suite `test-baseliner` can detect, or the Pre-Phase 3.5 prompt that asks for one;
+  - `gh` and an `origin` for the pull request;
+  - one `/implement` run at a time per working tree.
+
+  These facts are spread over a 54k-character command page (`docs/commands/implement.md`). The getting-started page also gives no way to obtain a `specification.md` without `product-workflows`, and no description of what a minimal specs repository holds. The repo-root README covers neither.
+- **Still worth doing?:** yes. The plugin's own README promises a first run, and `/implement` is the command most likely to stop a first-time user (dirty tree, Sonnet session, no detected tests).
+- **Suggested scope:** add a "Your first `/implement`" subsection to `getting-started.md` (5-8 lines: the qualified command, the five preconditions above as a checklist, and what the run ends with: a committed branch, a push and PR question, `implementation.md`, and the next step `/dev-workflows:conformance`). Add a line pointing to `/product-workflows:specify` or describing the minimum specs-repo layout (`environment.md`'s *Directory layout*).
+
+### DQD-G2 — security-workflows has no page for the feedback, follow-up and resume-pointer files its command writes, which every sibling with a pipeline command documents
+- **Designed in:** the parity criterion in BRIEF-DOCS.md. `dev-workflows` and `product-workflows` each ship `reference/session-feedback.md` and `reference/resume-and-checkpoints.md`, and `dev-workflows` ships `reference/follow-ups.md`.
+- **Current state:** `/security-workflows:scan` runs feedback, follow-ups, cost and the resume pointer in its tail (`docs/commands/scan.md:63`, `:168`). It takes `--skip-feedback` (`:29`). `docs/commands/scan.md:166` explains at length how the resume pointer carries its Security Engineer offers. The plugin's 8 pages still have no page saying where feedback lands, what `--skip-feedback` keeps, or what `resume.md` is and where it lives. `grep -rn -i 'resume.md\|session feedback' plugins/security-workflows/docs` finds only passing mentions. A user who installs only `security-workflows` plus its dependencies has no `dev-workflows` pages to fall back on.
+- **Still worth doing?:** yes, at low cost. A short page, or links to `workflows-core`'s equivalents if that plugin's docs carry them, closes the gap. `.claude/rules/security-workflows.md` fixes the page count at 8, so a new page means updating that count too.
+- **Suggested scope:** one `reference/session-feedback.md`, or a *Session bookkeeping* section on `session-cost.md`, covering feedback, the resume pointer and the follow-up file location, each linked from `scan.md`'s *The tail*.
+
+## documentation quality — product-workflows
+
+### DQP-G1 — No walkthrough for a first BRD-route run
+- **Designed in:** the docs addendum's bar (*"a getting-started page that would not get a new user to a first successful run"*). No spec covers it.
+- **Current state:** `getting-started.md:82` gives one sentence: *"`/brd-intake` in place of `/idea`"*. `brd-workflow.md` has the diagram, a parameter table and long prose, but no ordered list of commands with one key carried through. The list should run intake → merge → `/brd-split <BRD> "<instruction>"` → merge → `/prd-ground <SLICE> --repos …` → merge → `/brd-split <SLICE>` → `/brd-interview` → `/brd-package` → send → `/brd-reconcile`. Nor does any page say what to do before `/prd-ground`: clone the code under `$REPOS_PATH`, export design frames into `design/<set>/`, and run `/workflows-core:frames` to index them (the frame need is mentioned only at `brd-workflow.md:355` and `prd-ground.md:566`).
+- **Still worth doing?:** yes. The route has nine runs and several merges, and a first-time PM cannot reconstruct the order from six long pages.
+- **Suggested scope:** A "Your first BRD run" section in `getting-started.md` or at the top of `brd-workflow.md`: one key family, one line per command, the merge between steps, and the prerequisites for `/prd-ground`.
+
+### DQP-G2 — Conformance design D22 is only partly reflected in `product-workflows/docs/workflow.md`
+- **Designed in:** `docs/superpowers/specs/2026-10-12-conformance-design.md` D22: *"**PE:** `product-workflows/docs/workflow.md`'s two diagrams, as the PE step … (`/conformance <PRD>` after every Epic's `/implement`, feeding `/update-prd`, `/specify`, `/epics` and the docs commands)"*.
+- **Current state:** `workflow.md:34`, `:67-70` draw `conformanceprd` feeding `specify`, `epics` and `updatevi`, but not the docs node. The docs edge still leaves from `implement` (`:91`). The second diagram (architecture knowledge base) has no conformance node. That may be deliberate, since it is an architecture diagram.
+- **Still worth doing?:** yes, for the docs edge (see DQP-B5). The second-diagram half is probably superseded, because that diagram is not the pipeline.
+- **Suggested scope:** One edge `conformanceprd -.-> docsplugin`, and drop `implement -.-> docsplugin`.
+
+### DQP-G3 — No glossary; route vocabulary is used before it is defined
+- **Designed in:** the docs addendum (*"jargon used before it is defined"*).
+- **Current state:** `README.md:3` and `:12-16` use BRD, PRD, ARD, PM/PA/PE, "slice", "grounding" and "ledger" before any page defines them. BRD is first spelled out at `brd-workflow.md:5`, and PM/PA/PE only in `roles-and-phases.md` headings. Terms such as root, slice, `covered-here`, `allocate-only`, `[G]`/`[V]`/`[C]`, horizon/`will-change`, readiness tier and `<merge-clause>` are defined only inside individual command pages. `grep -i glossary` over the docs finds nothing.
+- **Still worth doing?:** yes. Every BRD page assumes the reader already knows these terms.
+- **Suggested scope:** A `docs/reference/glossary.md` (about 25 terms, each linked to the page that owns it), linked from the README and the index. Expand BRD/PRD/ARD/PM/PA/PE at first use in the README.
+
+### DQP-G4 — Command pages lack a "What it offers next" section (only `/brd-reconcile` has one)
+- **Current state:** Of the 16 pages, only `commands/brd-reconcile.md` has a section for its next step (*"Where the route goes next"*). The others leave it to a *See also* bullet (`idea.md:180`), to prose inside *Gates* or *Example* (`prd-ground.md:580-587`), or say nothing. This is how DQP-B6's missing edges stay invisible.
+- **Still worth doing?:** yes. Each command's next-step offer is its most useful fact for a new user.
+- **Suggested scope:** A short "Next step" section on each page, listing the offers from that command's next-step phase with their conditions.
+
+### DQP-G5 — Getting started has no "Where to run it" or untrusted-input note, though this plugin reads more customer-supplied content than its siblings
+- **Current state:** `dev-workflows/docs/getting-started.md:86-90` and `docs-workflows/docs/getting-started.md:65-69` both have *"Where to run it"*. It recommends a container and says that agents treat repository text as data. `product-workflows` has no such section, yet `/brd-intake` and `/idea` walk and transcribe customer-supplied documents, their links and their images. The only related note is in `reference/agents.md`.
+- **Still worth doing?:** yes, as a short parity section.
+- **Suggested scope:** Add a "Where to run it" section that matches its siblings, adapted for customer BRDs and community posts.
+
+## documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki
+
+### DQW-G1 — The small plugins that a family plugin depends on have no `docs/` tree
+- **Designed in:** No design spec covers it. The parity expectation comes from `BRIEF-DOCS.md` and `CLAUDE.md`'s docs-tree hard constraint, which binds only `PLUGIN_RELS`. `prose-style` is a declared dependency of `docs-workflows` and `product-workflows` (`plugins/docs-workflows/.claude-plugin/plugin.json`), and `scripts/check-docs.sh:93-95` already treats it as family for check 20.
+- **Current state:** `prose-style`, `acli` and `obsidian-llm-wiki` ship a README only. The prose-style README is about 400 lines and holds the command, agent, overlay and schema documentation that siblings split into `docs/commands/*` and `docs/reference/*`. Its `/prose-style-refresh` `source.yml` schema is reachable only by pointing the reader at the command prompt itself (`README.md:206`).
+- **Still worth doing?:** Yes for `prose-style`, which every docs-workflows and product-workflows user installs. Optional for `acli` and `obsidian-llm-wiki`, which are standalone and have their own upstream shape.
+- **Suggested scope:** Give `prose-style` a `docs/` tree (index, getting-started with install, update and `PROSE_STYLE_PATH`, three command pages, an overlay reference) and add it to `PLUGIN_RELS`.
