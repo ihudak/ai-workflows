@@ -65,6 +65,6 @@ Resolves the repo the same way, then stops the server this command has a record 
 ## See also
 
 - [`/docs-profile`](docs-profile.md) — writes the `dev_servers` block this command reads, and is what `DOCS_SERVE_NO_DEV_SERVER` points at.
-- [`/document`](document.md) — the natural next step once the served site looks right: write or update the pages it covers.
+- [`/docs-audit`](docs-audit.md) — the next step once the served site looks right, where the repository has no backlog yet: it finds what the portal is missing. Where it has one, the next step is writing the unit step 4 of the route selects — the highest-priority missing, unblocked one — by hand, as [The documentation route](../docs-workflow.md) describes — with [`/document`](document.md) in direct mode as an aid for the prose.
 - [Workflow overview](../workflow.md) — where this command sits among the setup utilities.
 - [Session cost](../reference/session-cost.md) — why this command, like `/docs-profile`, emits no cost entry.
