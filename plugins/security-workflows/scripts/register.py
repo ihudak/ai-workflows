@@ -3987,6 +3987,31 @@ def case_answered_plan_keeps_each_decision_on_its_finding(tmp):
     assert by_origin == {"sA:v3:aa": "false-positive", "sB:v3:bb": "open"}, by_origin
 
 
+def case_a_row_asked_again_after_a_re_plan_lands_on_its_finding(tmp):
+    # 7.1 and 7.2 rebase the decisions file into the re-plan and make it the answered plan, so a row asked
+    # again is answered in the numbering it is shown in: each decision keeps its own finding.
+    specs_a, specs_b = os.path.join(tmp, "A"), os.path.join(tmp, "B")
+    os.makedirs(specs_a)
+    os.makedirs(specs_b)
+    repo, c1 = _repo(tmp)
+    _scan(specs_b, "sB", c1, [("v3:bb", "src/b.py", 1, "CWE-79", "LOW")])
+    commit(specs_b, "code", plan(specs_b, "code", repo, "sB", None, "2026-10-16"), {}, "B", "scan", None,
+           "2026-10-16T08:00:00Z")
+    _scan(specs_a, "sA", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    commit(specs_a, "code", plan(specs_a, "code", repo, "sA", None, "2026-10-16"), {}, "A", "scan", None,
+           "2026-10-16T09:00:00Z")
+    seen = plan(specs_a, "code", repo, None, None, "2026-10-16")
+    dec = {"decisions": [{"target": "id:1", "status": "false-positive", "evidence": "src/a.py:10 - guarded"}]}
+    _copy_register(specs_b, specs_a)
+    now = plan(specs_a, "code", repo, None, None, "2026-10-16")
+    dec = rebase(seen, now, dec)
+    # the row asked again, in the numbering of the plan it is shown from: [SEC#1] is now bb
+    dec["decisions"].append({"target": "id:1", "status": "accepted-risk", "reason": "r", "review_by": "2027-01-01"})
+    commit(specs_a, "code", now, dec, "A", "triage", None, "2026-10-16T10:00:00Z", answered=now)
+    by_origin = {g["origin"]: g["status"] for g in _state(specs_a).values()}
+    assert by_origin == {"sA:v3:aa": "false-positive", "sB:v3:bb": "accepted-risk"}, by_origin
+
+
 def case_commit_subcommand_refuses_what_no_person_decides(tmp):
     specs, repo, c1 = _setup(tmp)
     _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
