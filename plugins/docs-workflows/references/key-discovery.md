@@ -16,6 +16,8 @@ kd=$(command mktemp) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/key-discovery.py"
 
 Each token is its own `--key`. Each repository the scan covers — those `implementation.md` names, resolved through the map, or, when it names none, every clone in the map, one per slug — the clone the user chose for the slug, where `/document` Phase 4 step 5 recorded one, else by Phase 4's preference (a basename ending `-repo`, then `_repo` or `_fast`, then the alphabetically last) — is its own `--repo`; every other clone the map holds goes as `--owner-of`, so every GitHub owner a clone under `$REPOS_PATH` belongs to is searched, although only the scanned clones are read.
 
+**No clone to scan: do not run it.** Where the scan covers no repository — the map holds no clone, as on a run that took `/document` Phase 1's *Proceed without the repos*, or every repository `implementation.md` names resolved to none — the script cannot run (it requires a `--repo`) and there is nothing to scan. Do not call it, and report the scan as not run, *no clone resolved*, with no `--no-github` retry and no script failure.
+
 The JSON goes to a file of the run's own, never to the tool's output, which a large result would overflow: read the file the printed line names — the script indents it, so it reads line by line however large — and remove it with `rm -f` once this phase has taken what it needs.
 
 **Never code: the specs repository and the docs repository.** Pass `--exclude <the specs repository>` — the top level of the PRD folder's repository, `git -C <PRD folder> rev-parse --show-toplevel` — and `--exclude <the docs repository>`: `/document`'s resolved `docs_repo_path`, and `/release-notes`' docs root, the one its documentation grounding resolved (`--docs <path>`, else `${DOCS_PATH:-/workspace/docs}`). Pass either only where it is a git checkout's top level and not a repository `implementation.md` names: documentation kept inside a code repository is that code's, and the code stays scanned. `--exclude` leaves out nothing for a path inside a repository, or outside any. The script leaves out every clone whose `origin` slug is one of theirs, a second clone of either included, and drops every pull request in a repository of that name: their commits and pull requests carry the run's tokens by the family's own conventions — the specs repository's artifact commits and handoff pull-request titles, the docs repository's squash subjects — and read as code they would verify a requirement by its own text.
@@ -29,14 +31,15 @@ The script fetches nothing and writes nothing: it reads each clone as it stands.
 ## 2. What it returns
 
 - `excluded` — the slugs `--exclude` left out.
-- `repos[]` — per clone: `path`, the `ref` scanned (`HEAD`), `scanned` (its non-merge commits), `matched`, `github` (`<owner>/<repo>`, or null where the clone is not on github.com), `error` (where it could not be read; `scanned` is then null), and `probe` — §4's unanchored probe, by SHA, date and subject, on a clone where `matched` is 0.
+- `repos[]` — per clone: `path`, the `ref` scanned (`HEAD`), `scanned` (its non-merge commits), `matched`, `github` (`<owner>/<repo>`, or null where the clone is not on github.com), `error` (where it could not be read; `scanned` is then null), `probe` — §4's unanchored probe, by SHA, date and subject, on a clone where `matched` is 0 — and `probe_error`, where that probe failed on a clone the scan read: the scan's own reach stands, and only the report-only probe is missing.
 - `commits[]` — each non-merge commit on `HEAD` whose message names a token whole (`via: message`), and each commit a found pull request landed whose own message names none (`via: pull-request`): `repo` (the clone), `sha`, `date` (local time), `subject`, `keys` — the tokens its message names and those of every found pull request that landed it — and `prs`, the URLs of the found pull requests that landed it.
-- `github` — `status` (`ok`; `partial` where a search failed, reached its 1000-hit limit, returned what the script cannot use, or ran out of its time budget; `rate-limited`; `not-installed`; `not-authenticated`; or `no-github-clones`), `detail` (each failure, or why `gh` cannot search), the `owners` searched, `queries`, `dropped_loose`, and `prs[]`: `url`, `owner`, `repo`, `number`, `title`, `state` (`MERGED`, `OPEN` or `CLOSED`), `keys`, `clone` (null where no scanned clone holds the repository), `head_ref`, `base_ref`, `head_oid`, `merge_commit`, `cross_repository`, `landed_as` (`merge`, `squash`, `rebase` or null), `landed` and `reason`.
+- `github` — `status` (`ok`; `partial` where a search failed, reached its 1000-hit limit, returned what the script cannot use, or ran out of its time budget — one budget over every GitHub call, the auth check, the searches and the views alike, each search batch it left unrun counted in `detail`, with its tokens; `rate-limited`; `not-installed`; `not-authenticated`; or `no-github-clones`), `detail` (each failure, or why `gh` cannot search), the `owners` searched, `queries`, `dropped_loose`, and `prs[]`: `url`, `owner`, `repo`, `number`, `title`, `state` (`MERGED`, `OPEN` or `CLOSED`), `keys`, `clone` (null where no scanned clone holds the repository), `head_ref`, `base_ref`, `head_oid`, `merge_commit`, `cross_repository`, `landed_as` (`merge`, `squash`, `rebase` or null), `landed` and `reason`.
 
 ## 3. The scan's result
 
 - `commits[]` with `via: message` are exactly the scan §4 describes.
 - `repos[].scanned` and `matched` are the scan's reach; a repository with an `error` was not read, and is reported as such, never as zero matches.
+- A repository whose `probe_error` is set was read: report its reach as above, and name the probe as failed with that reason, never the repository as unread.
 - `repos[].probe` is §4's report-only probe, less any commit a found pull request accounts for — its merge commit, or a commit it landed — which the run reads or lists under §4 below instead.
 
 ## 4. Pull requests — optional
@@ -53,5 +56,5 @@ Where a scanned clone's `origin` is on github.com — an SSH host alias resolved
 - The merged pull requests read through their landed commits, each by URL with its commits' SHAs.
 - The pull requests found but not read, each by URL and why.
 - Left out as never code: the `excluded` slugs.
-- Each repository the script could not read, by path and its `error`.
-- Where the script could not run at all, its stderr line, or that it timed out.
+- Each repository the script could not read, by path and its `error`; a failed probe on a repository it did read, by path and its `probe_error`, as a probe failure.
+- Where the script could not run at all, its stderr line, or that it timed out; where it was not run because there was no clone to scan, *not run — no clone resolved*.
