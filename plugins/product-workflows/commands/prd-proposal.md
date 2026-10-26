@@ -177,8 +177,11 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
 5. **Gate `prd.md` on main.** Execute `require-on-main`
    (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against the
-   PRD file in the resolved folder. **Resolve that file's actual name on the ref first**: `prd.md` on
-   a current tree, a `<KEY>_*.md` entry only through `workflows-core:addressing` §5's legacy fallback.
+   PRD file in the resolved folder, `prd.md`. **There is no filename fallback**: `workflows-core:addressing`
+   §5's legacy fallback covers the folder name and nothing inside it, so a folder written before the
+   artifact filenames lost their keys, holding a `<KEY>_<slug>.md` and no `prd.md`, is priced only
+   once that file is renamed to `prd.md` — §5 says so, and every later phase and
+   `proposal-record.py` read `prd.md` alone.
 
    **Map `stopped` before `on_main`**, per §3's own rule: `on_main: absent` is returned by row F
    alone, and a caller that branches on `absent` first cannot tell row F from rows D/E. Any stopping
@@ -187,7 +190,11 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
    **Row F splits into two stops on a test the gate cannot make**, exactly as `/prd-ground`'s
    idea-route row does — *never produced* and *produced, handoff declined* name different fixes. Test
-   whether a PRD file is in the worktree at all:
+   whether a `prd.md` is in the worktree at all. Where none is but the folder holds a legacy
+   `<KEY>_<slug>.md` PRD — a top-level `.md` file whose name is the resolved key followed by `_` —
+   other than `<KEY>_ARD.md`, the `<remedy>` is that file's rename and nothing else: `This folder's PRD is <name>, written
+   before the artifact filenames lost their keys: rename it to prd.md (git mv), land the rename, and
+   re-run.` Otherwise:
 
    ```
    PRD_PROPOSAL_NEEDS_PRD: no prd.md on any ref for <KEY>, and none in <path> either — there is nothing to estimate yet.
@@ -236,9 +243,11 @@ rewrites both, so the reconciliation would be against a file that no longer says
 `PRD_PROPOSAL_BASELINE_UNREADABLE: --baseline named <path>, which cannot be read. Give a readable path or drop the flag — a reconciliation section written against a baseline nobody can open is worse than none.`
 Absent, §4's section 22 does not exist, is not a gap, and the document does not apologise for it.
 
-**Note whether this run is a revision**, last: whether `proposal.md` and `proposal-brief.md` already
-exist in the resolved folder. Where either does, Phase 6 treats the prior as the anchor (§8) unless
-`--redo` was given, Phase 7 archives it (§2), and §4's section 23 renders (§12).
+**Note whether this run is a revision**, last: whether `proposal.md` already exists in the resolved
+folder. Where it does, Phase 6 treats it as the anchor (§8) unless `--redo` was given, Phase 7
+archives it (§2), and §4's section 23 renders (§12). **A `proposal-brief.md` standing without a
+`proposal.md` makes no revision** — the anchor, the proposal archive and the changelog all need a
+prior proposal — and is archived by Phase 8, as any prior brief is, only where this run renders one.
 
 `/prd-proposal` is **cwd-agnostic**: it reads the resolved folder and the profile, and opens no code
 repository at any point. Every commit any grounding finding cites was pinned by `/prd-ground`, and
@@ -352,6 +361,13 @@ A run that cannot obtain a profile at all — the grill was cancelled, or the fi
 stops:
 `PRD_PROPOSAL_NEEDS_PROFILE: no proposal profile at $SPECS_PATH/.dev-workflows/proposal-profile.yml, and none was captured. Re-run with --profile to author one; an effort proposal cannot state a team, a schedule or a productivity basis without it.`
 
+**The profile is committed by this run's handoff, not by `commit-artifacts`.** It is not one of
+`workflows-core:specs-repo-git` §2.1's bookkeeping paths, so Phase 10 declares it among the
+deliverable paths on every run, as `.dev-workflows/proposal-profile.yml` relative to `$SPECS_PATH`:
+`workflows-core:phase-handoff` §2.3 stages it where this run wrote or corrected it, or where it was
+never committed, and accounts for it silently where the branch already carries it unchanged. A
+declined handoff leaves it uncommitted with the proposal, and a teammate's clone then holds none.
+
 **No rates, no currency, no money in this file** — the same rule that binds both artifacts
 (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §1). A profile carrying one is reported and
 the value is not read.
@@ -388,13 +404,14 @@ folder does not meet:
    exist and neither is re-expressed here: *verified grounding* is `workflows-core:grounding-format`'s
    rule that a finding carrying no verifier outcome is not evidence, applied to every finding in
    `grounding/code-grounding.md` and `grounding/design-grounding.md`; *a settled register* is
-   **`decisions.md` present, and every `interview/round-<N>.md` it names settled** — the test
-   `commands/brd-package.md` already applies, counting no record that
+   **`decisions.md` present, naming at least one `interview/round-<N>.md`, and every round it names
+   settled** — the test `commands/brd-package.md` already applies, counting no record that
    `${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §8 calls a torn write, and neither
-   do the drivers and the defect sweep below. **Test the presence first and do not collapse the two**
-   (§5): a folder holding no register names no round, so the settled half alone is vacuously true on
-   an idea-route folder that has never held one, and this step would grade it tier 2 on grounding
-   alone. Tier **2 · Grounded**.
+   do the drivers and the defect sweep below. **Test the presence and the round first, and do not
+   collapse the three** (§5): a folder holding no register names no round, and neither does the
+   register `/product-workflows:create-prd` creates holding only an open `[AS#n]` before any
+   interview, so the settled half alone is vacuously true on both and this step would grade either
+   tier 2 on grounding alone. Tier **2 · Grounded**.
 3. **`ard.md` in the resolved folder.** Tier **3 · Architected**.
 4. **`specification.md` in the resolved folder.** Tier **4 · Specified**.
 
@@ -444,7 +461,12 @@ what can be built, tested and accepted independently.
    operator confirmation; sweep and union all three, reading that policy there rather than from here.
    **This phase's own job is the confirming**: take each candidate from a source §7 marks as needing
    it one at a time, quoting the finding's own text and its `file:line` so the operator rules on the
-   record rather than on a summary of it.
+   record rather than on a summary of it. **Quote any conflict beside it, in the same question**:
+   before asking, read the candidate against `prd.md`'s `## Scope` **Out of scope** list and every
+   `status: decided` `[VD#n]`/`[CD#n]` in `decisions.md`, and where the repair it would price falls
+   out of scope or reverses what a decision settled, quote that line or record by its id — a
+   confirmation taken without it prices a repair the customer's own scope or a signed decision has
+   already excluded, and the operator learns so only when the reviewer or the customer does.
    `choices: ["Confirm — an unrepaired code defect this engagement would repair", "Reject — already repaired, or not the vendor's to repair"]`
    A confirmed defect is identical downstream whichever source produced it.
 4. **The defect-remediation package.** Where the sweep confirmed anything, its repair is its own
@@ -501,9 +523,9 @@ review package and the proposal.
    band about the expected figure is §6's default for the grade; the low and high figures describe a
    **credible range rather than best and worst cases**, and the document says so in as many words.
 4. **Any deviation from the default band — in either direction — carries a stated reason in the
-   confidence section** (§6). Widening and narrowing are treated alike. §6 owns the two severities and
-   the one-percentage-point tolerance the reviewer applies to them; this phase's job is to compute the
-   default, record the deviation, and record its reason.
+   confidence section** (§6). Widening and narrowing are treated alike. §6 owns the two severities,
+   the precision the Low and High figures are rendered at, and the tolerance the reviewer applies to
+   them; this phase's job is to compute the default, record the deviation, and record its reason.
 5. **A package graded Low carries a declared re-estimate gate naming its trigger event** — a profiling
    result, an arriving decision, a load measurement (§8), rendered as §4's section 8. Declaring the
    gate is mandatory at Low; **the no-hours commitment is not**, and it belongs to a particular gate
@@ -553,7 +575,14 @@ executes them:
 - **Section 21 cites a requirement in the form the source artifact carries it** (§11), because a
   proposal is read by the **customer**, who wrote those identifiers in their own document in their own
   form. The `[WP#n]` and `[ED#n]` namespaces this run mints are the plugin's own and stay bracketed. A
-  conversion in either direction is the defect the reviewer looks for.
+  conversion in either direction is the defect the reviewer looks for. **Every live `[SM#n]` and
+  `[SMC#n]` in `prd.md` reaches it** (§4 section 21), mapped to the `[WP#n]` that delivers or
+  measures it or named in section 20 as excluded.
+
+**Attribute every decision to the side that made it** (§8): a `[VD#n]` is the delivery team's and a
+`[CD#n]` the customer's (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md`), so no
+sentence credits the customer with a `[VD#n]` or the delivery team with a `[CD#n]`. Phase 9's
+pre-lint checks it over both artifacts.
 
 Write the whole file as prose that is never hard-wrapped (`workflows-core:prose-formatting`).
 
@@ -610,7 +639,9 @@ file describes the archived revision and not this one.
    `priced-against` record is checked here too** (§15.3): re-run Phase 7's `stamp` with the same
    record file. `{"written": false}` passes; `{"written": true}` means the record was missing, altered or
    no longer last — a pre-lint finding, already fixed by that run from Phase 2's ids, never from a
-   fresh hash.
+   fresh hash. **Decision attribution is checked here too** (§8): for every `[VD#n]` and `[CD#n]`
+   either artifact cites, read the sentence citing it, and inline-fix any that names the customer as
+   the decider of a `[VD#n]` or the delivery team as the decider of a `[CD#n]`.
 2. **The review gate.** Dispatch `proposal-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model):
 
    → Agent (subagent_type: "product-workflows:proposal-reviewer", model: `<review_model — §2 Opus chain, equal to proposal-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
@@ -652,7 +683,9 @@ file describes the archived revision and not this one.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
 run Phase 7's `stamp` once more** with the same record file, so no edit carries a damaged record into the
-handoff; `{"written": true}` there is reported beside the edit that caused it.
+handoff; `{"written": true}` there is reported beside the edit that caused it. **Re-run step 1's
+decision-attribution check too**, over every sentence an inline edit wrote or changed in either
+artifact — an edit made after the review is read by no reviewer, so this is the only check it gets.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
@@ -691,7 +724,9 @@ gated array", which since §4.1's split identifies two (§5 rule 4).
 On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: prd`
 (§2.9's table — the proposal opens on the shared `prd` prefix rather than a prefix of its own; the prefixes §1 rule 3 fixes are not extended, and nothing about a proposal makes it a phase of its own),
 `feature_folder` as resolved in Phase 0, `deliverable_paths` = `proposal.md`, `proposal-brief.md` where
-this run rendered one, and, on a revision, the archived prior under `revisions/` at the name §2's
+this run rendered one, `.dev-workflows/proposal-profile.yml` (Phase 2 — repo-relative, outside the
+folder, and declared on every run, since §2.3 stages it only where it is not already on the branch
+unchanged), and, on a revision, the archived prior under `revisions/` at the name §2's
 first-free rule actually wrote — `<KEY>_proposal_<YYYYMMDD>.md`, or the first free `-2`, `-3` form
 where that was taken — and the brief archived beside it, where one was, at the name the same rule
 wrote for it, `title: <KEY> Effort proposal <YYYYMMDD>`, and `body_facts` = the readiness tier and what

@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.49.0] — 2026-10-26
+
+### Fixed
+- `phase-handoff` §4.0 classifies `.dev-workflows/proposal-profile.yml` as advisory: `product-workflows` 3.39.0's proposal commands now hand it off with their proposal. Either version runs beside the other — the row only names the reader of a path the producer's set already holds a stronger class beside.
+
 ## [1.48.0] — 2026-10-26
 
 **Update `product-workflows` to 3.38.1 with this release**: the lanes, the picker rule and the deliverable table below state what its `/create-ard` and `/specify` do since 3.37.0 and 3.38.0. Closes to-fix D17.

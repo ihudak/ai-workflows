@@ -32,6 +32,8 @@ You do not need an ARD, a specification, or anything beyond the PRD to get a pro
 | 3 · Architected | \+ an ARD | discovery becomes translating an architecture, not authoring one |
 | 4 · Specified | \+ a specification | QA is sized from the authored test cases |
 
+A register is **settled** when `decisions.md` names at least one interview round and every round it names is settled — so a register holding only an open assumption `/create-prd` wrote, before any interview, settles nothing and leaves the folder at tier 1.
+
 The tier is a **ceiling on confidence**, never the confidence itself: tier 1 caps every package at Low, tier 2 at Medium, tier 4 at High, and tier 3 at High only for a package an `[AD#n]` covers. Evidence can push a package lower; nothing pushes it above its tier.
 
 **A tier-1 proposal is still a real document** — scope, packages, team, schedule, a ranged number, every assumption and dependency. What it does not carry is the argument for why the number is what it is, which is also why the brief does not render below tier 2 no matter what you pass: a two-page pre-read explaining a large number, written when the reasons are unknown, is the one artifact this subsystem must not produce.
@@ -48,7 +50,7 @@ Every work package carries a confidence grade with a stated reason, and the grad
 | Medium | −20 % / +40 % |
 | Low | −45 % / +80 %, plus a declared re-estimate gate |
 
-**Low and high are a credible range, not best and worst cases** — the document says so in as many words. A band that departs from its grade's default, in either direction, carries a reason; a band narrower than the default of the grade one step above is a defect the reviewer blocks, because a Medium package priced tighter than any High package claims a precision its own grade denies.
+**Low and high are a credible range, not best and worst cases** — the document says so in as many words. Both are rendered to one decimal place of an hour, and the reviewer's comparison with the default band allows a point, or the rounding a figure carries where that is more. A band that departs from its grade's default, in either direction, carries a reason; a band narrower than the default of the grade one step above is a defect the reviewer blocks, because a Medium package priced tighter than any High package claims a precision its own grade denies.
 
 A **Low** package always names the event that will trigger its re-estimate — a profiling result, an arriving decision, a load measurement. A wide range with a dated gate is honest; a narrow range over unprofiled work is not. Declaring the gate is mandatory at Low. Committing that no hours are spent before it fires is a separate, optional promise you attach where delivery genuinely should not begin yet — it is not something the grade imposes on its own.
 
@@ -59,7 +61,7 @@ The document prints a **naive baseline** first, at every tier: what the requirem
 **A driver that cites nothing from this closed set does not render at all:**
 
 1. a **verified grounding finding** — a `[CG#n]` or `[DG#n]` carrying its verifier outcome, cited with the `file:line` the finding itself records;
-2. a **frozen decision** — a `[VD#n]` or `[CD#n]` in the register, for scope the customer added after the baseline;
+2. a **frozen decision** — a `[VD#n]` or `[CD#n]` in the register, for scope the customer added after the baseline. Wherever either document names one, a `[VD#n]` is credited to the delivery team and a `[CD#n]` to the customer, never the other way round;
 3. a **confirmed code defect** — a `[CDF#n]`, or a finding the run asked you to confirm.
 
 The narrowing is per driver, not global: a driver making a claim about the code cites class 1, because a decision cannot evidence a statement about a repository. The point of the rule is that it is mechanically checkable — a candidate driver with no citation is dropped and named in the run's report, rather than left to authorial care.
@@ -75,6 +77,8 @@ Requirements cluster by **delivery seam** — what can be built, tested and acce
 `[WP#n]` names a work package and `[ED#n]` names a cost driver. Both are the plugin's own and stay in that bracketed form.
 
 **A requirement, though, is cited in the form its own source document carries it.** Most of what this plugin writes is read by you, and what a customer does see of the rest — [`/brd-package`](../commands/brd-package.md)'s bundle — arrives with a prompt that explains the plugin's own records to them; a proposal is read by the **customer** with no such prompt, who wrote those identifiers in their own document in their own notation. Rendering this plugin's bracketed form to a reader who has never seen it makes the traceability section unusable to its only reader. That is also why the two proposal artifacts sit outside the auto-link collision check the pre-lint applies to PRD, ARD and Epic files — that check protects documents that get pasted into a tracker, and these are sent to a customer instead. Every other pre-lint check still runs.
+
+**Every live success measure is traced.** On a slice's proposal, each `[SM#n]` and `[SMC#n]` the PRD still carries appears in the traceability section against the work package that delivers or measures it, or among the exclusions from scope — a success measure the customer wrote is never left unpriced in silence.
 
 ## Re-running one, and what a revision owes
 
