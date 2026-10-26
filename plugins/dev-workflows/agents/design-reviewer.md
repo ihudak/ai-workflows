@@ -26,7 +26,7 @@ The caller passes:
   expectations (a `SIMPLE` design legitimately omits scaled sections with a one-line `_N/A — why_`; a
   `HIGH-RISK` design must cover them thoroughly). Never flag a section that `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` says is
   legitimately omittable at this classification — save the *Pieces* check's recommendation, below,
-  for a change that plainly needs pieces.
+  for a change in one repository that plainly needs pieces.
 - **Repositories** — one line per implementation repository the design's `Repos` header names:
   `<absolute path> @ <commit> — working tree at it` or `… — working tree not at it`, `<commit>`
   being the id of the commit `/design` Phase 4 scanned that repository at, and the line followed by
@@ -202,8 +202,8 @@ If nothing is actionable, say so and state the classification you reviewed again
   scaling rule. Only flag an omission the classification does not license. The exceptions are
   **Observability & release verification** marked `_N/A_` on a change to behaviour a deployed
   system runs, which the Release-verification check grades at every classification, and a design
-  with no pieces (no `## Pieces`, or one marked `_N/A_`) for a change that plainly needs them,
-  which the *Pieces* check recommends drawing, at most as a `MINOR`.
+  with no pieces (no `## Pieces`, or one marked `_N/A_`) for a change in one repository that
+  plainly needs them, which the *Pieces* check recommends drawing, at most as a `MINOR`.
 - Test-strategy / design steps may describe how the system is built or exercised — that is design
   intent, not a "describes implementation" defect (implementation detail is expected in a design doc,
   unlike a specification).

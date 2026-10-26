@@ -201,7 +201,7 @@ reach.
     of review, never of coding: a part of the change — its code and its tests — that one reviewer
     can review in depth on its own, at a boundary the design fixes. How `/implement`'s review gate
     reviews by piece is for its Phase 3B steps 5–8 to say; who writes the code and the tests does
-    not change. Pieces need both of two things, and are never drawn by count:
+    not change. Pieces need all three of these, and are never drawn by count:
     - **A reason — whether to split.** The `Reason:` line says why one reviewer could not review the
       whole change in depth: its size, the distinct layers or concerns it spans, the test cases it
       carries — about 1,500 lines of production code in two layers with different test styles,
@@ -212,12 +212,14 @@ reach.
       is fixed in `## Interfaces / contracts` and named in their `Contract:` lines. A big change with
       no such boundary stays one piece, since a reviewer cut off at a fuzzy line misses what it
       needs.
+    - **One repository — where the change lies.** A design whose change spans more than one
+      repository — its header's `Repos` naming two or more — draws no pieces, since one
+      `/implement` run changes one repository; `/design` Phase 5.5 removes the section from such a
+      design.
 
-    A design whose change spans more than one repository — its header's `Repos` naming two or more —
-    draws no pieces, since one `/implement` run changes one repository. One piece, the default, is
-    written by omitting the section, or by writing `_N/A — <why>_` as its only line — never as a
-    section with one piece. The heading is `## Pieces` exactly, and every line of the section starts
-    at the beginning of its line:
+    One piece, the default, is written by omitting the section, or by writing `_N/A — <why>_` as its
+    only line — never as a section with one piece. The heading is `## Pieces` exactly, and every line
+    of the section starts at the beginning of its line:
 
     ```
     ## Pieces
