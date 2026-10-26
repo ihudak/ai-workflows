@@ -940,7 +940,7 @@ Then act on the return:
 
   When the re-run completes, rewrite the `style_check` row's `findings:` to the post-fix violation count so the Phase 9 table reports what survived, not what was found.
 
-  Then go on to Phase 6.5 — where the re-run found nothing, and on *Proceed to review anyway*, whose review is Phase 7's, after it.
+  Then, on every outcome of this branch but **Cancel**, go on to Phase 6.5 — where the re-run found nothing, on *Proceed to review anyway*, after *Show remaining violations and let me fix manually*, and where a `NEEDS HUMAN` answer skipped the check; the review is Phase 7's, after it.
 
 - **`status: ERROR`** — every primary rung failed or was never detected, and the `prose-style-checker` pass also failed. Surface the error reason, then STOP: the `style_check` row is `UNAVAILABLE`, and the only prompt the user sees is the `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` §5 conversion list. Do NOT ask an ad-hoc question here — §5 owns this decision, and the "Choice lists are presented verbatim" rule in `workflows-core:escalation-rules` binds it.
 
