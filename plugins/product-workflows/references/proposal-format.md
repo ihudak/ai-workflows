@@ -122,7 +122,7 @@ tier, and a section with nothing to say says so rather than being omitted.
 | 18 | Scope levers and priced options | shaped by `engagement_model` — the `[WP#n]`s that may be dropped, deferred or taken up, and what each does to the range. **This is the priced-options table §7's defect-package prohibition names**, and a defect-remediation package never renders in it |
 | 19 | Acceptance | per package, which is why a package must be independently acceptable |
 | 20 | Exclusions from scope | |
-| 21 | Traceability | requirement identifiers → `[WP#n]`, in the form §11 fixes |
+| 21 | Traceability | requirement identifiers → `[WP#n]`, in the form §11 fixes. **Every live `[SM#n]` and `[SMC#n]` in a slice's `prd.md` is traced** — to the `[WP#n]` that delivers or measures it, or to section 20 as an exclusion — so a success measure the customer wrote is never silently left unpriced; an umbrella traces its slices, whose proposals carry this |
 | 22 | Reconciliation to a prior estimate | **conditional** — renders only under `--baseline`; absent is not a gap and is never apologised for |
 | 23 | Changelog | **conditional** — renders only on a revision; §12 |
 
@@ -146,13 +146,18 @@ refusal on readiness is the absence of the caller's own gated input, which that 
 
 **Both tier conditions reuse rules that already exist.** *Verified grounding* means every finding
 carries a verifier outcome — `workflows-core:grounding-format`'s rule that a finding without an
-outcome is not evidence. *A settled register* means **a `decisions.md` is present and every interview
-round it names is settled**, the test `commands/brd-package.md` already applies, a torn write
-(`references/decision-register-format.md` §8) naming no round. **The presence half
-is not redundant**: a folder holding no register at all names no round, so a condition worded only as
-*every round is settled* is vacuously true there — and combined with grounding, which is reachable on
-either route, it would grade a folder with no register at all at tier 2 and unlock the brief this
-section's own floor withholds.
+outcome is not evidence. *A settled register* means **a `decisions.md` is present, `interview/`
+holds at least one `round-<N>.md` record, and every round is settled** — the tests
+`commands/brd-package.md` already applies, its `BRD_PACKAGE_NOT_INTERVIEWED` stop for the middle
+one, a torn write (`references/decision-register-format.md` §8) naming no round. **The presence half
+and the round half are not redundant**: a folder holding no register has no round to settle, and
+neither has a register `commands/create-prd.md` created holding only an open `[AS#n]` for a
+customer-authority gap, before any interview — so a condition worded only as *every round is
+settled* is vacuously true on both, and combined with grounding, which is reachable on either route,
+it would grade a never-interviewed folder at tier 2 and unlock the brief this section's own floor
+withholds. **The round is read off `interview/`, never off what the register lists**: a round whose
+every question a verified finding settled leaves a register holding its header line alone
+(`references/decision-register-format.md` §1), an ordinary interviewed state that grades tier 2.
 
 **The tier caps confidence; it never sets it.** Range width is computed bottom-up from per-package
 confidence (§6). The tier is a ceiling: evidence can only push a package lower.
@@ -243,8 +248,14 @@ of the grade it left, which is drift no author notices and no reader can see.
   package priced tighter than any High package claims precision its own grade denies, and no reason
   rescues that.
 
-**Both comparisons carry a one-percentage-point tolerance.** Whole-hour rounding moves a band by up to
-a point, and without the tolerance the rule fires on arithmetic rather than on judgement.
+**Low and High are rendered to one decimal place of an hour**, so a band edge sits at most 0.05 h
+from its exact value. **Both comparisons carry a tolerance of
+one percentage point, or the rounding a rendered figure actually carries where that is larger** —
+50 ÷ the package's expected hours, in points, for a figure rendered in whole hours, as a proposal
+written before this precision rule, an anchor revision among them, may carry: on a 38 h package
+that is 1.3 points (a −20 % edge of 30.4 h rendered as 30 h reads −21.05 %). The band is measured
+against the Expected figure as rendered. Without the tolerance the rule fires on arithmetic rather
+than on judgement.
 
 **Confidence is stated per package with a reason, and the document says in as many words that the low
 and high figures describe a credible range rather than best and worst cases.**
@@ -316,7 +327,10 @@ disk an independent reader can open:
    which `workflows-core:grounding-format` says it is not evidence, cited with the `file:line` the
    finding itself records;
 2. a **frozen decision** — `[VD#n]` or `[CD#n]` in the register, for the driver class that is *scope
-   the customer added after the baseline*;
+   the customer added after the baseline*. **A decision is attributed to the side that made it,
+   wherever either artifact names one**: a `[VD#n]` is the delivery team's, a `[CD#n]` the
+   customer's (`references/decision-register-format.md`), and a sentence crediting the other side
+   misstates who carries it;
 3. a **confirmed code defect** — `[CDF#n]`, or a §7-confirmed finding from either other source.
 
 **A driver citing nothing from that set does not render at all.** The value of the rule is that it is
@@ -531,7 +545,7 @@ file one time. **A proposal written before this record existed carries none**, a
 
 | Input | Why the pricing reads it |
 |---|---|
-| `prd.md` — or, where none exists, the `<KEY>_<slug>.md` PRD `workflows-core:addressing` §5's legacy fallback accepts | the requirement set the packages cluster |
+| `prd.md` — never a legacy `<KEY>_<slug>.md`, which `workflows-core:addressing` §5's fallback does not cover and `commands/prd-proposal.md` Phase 0 asks to be renamed | the requirement set the packages cluster |
 | `decisions.md` | tier 2's settled-register half; frozen decisions are driver evidence |
 | `ard.md` | tier 3 |
 | `specification.md` | tier 4; the authored test-case count sizes QA |

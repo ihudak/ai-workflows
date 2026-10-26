@@ -52,7 +52,6 @@ LINE_RE = re.compile(r"(?P<path>.+) (?P<id>[0-9a-f]{40}|[0-9a-f]{64})(?: (?P<fla
 BRD_LINK_RE = re.compile(r"[^/]+/brd-link\.md")
 OUTSIDE_TOKEN = "<outside>"
 PARENT_RE = re.compile(r"\s*parent:\s*(['\"]?)([^'\"\s#]+)\1\s*(?:#.*)?")
-LEGACY_PRD_RE = re.compile(r"[A-Z][A-Z0-9_]*(?:-\d+)+_[^/]*\.md")
 
 
 class Unrunnable(Exception):
@@ -536,15 +535,14 @@ def case_a_parent_with_a_comment_or_an_indent_is_still_the_parent(tmp):
     assert slices(brd, "BRD-1") == ["PRD-1-01", "PRD-1-02", "PRD-1-03", "PRD-1-04", "PRD-1-05"], slices(brd, "BRD-1")
 
 
-def case_a_legacy_named_prd_is_an_input(tmp):
+def case_a_legacy_named_prd_is_no_input(tmp):
+    # addressing section 5's fallback covers the folder name only: a <KEY>_<slug>.md PRD is renamed to prd.md before pricing
     specs, folder = _slice(tmp)
     os.remove(os.path.join(folder, "prd.md"))
     _put(os.path.join(folder, "PRD-1-01_orders.md"), "# PRD\n")
-    _put(os.path.join(folder, "revisions", "PRD-1-01_orders_20260901.md"), "old\n")
+    _put(os.path.join(folder, "PRD-1-01_ARD.md"), "# ARD\n")
     got = slice_inputs(specs, folder)
-    assert "PRD-1-01_orders.md" in got and not any(k.startswith("revisions/") for k in got), sorted(got)
-    _put(os.path.join(folder, "prd.md"), "# PRD\n")
-    assert "PRD-1-01_orders.md" not in slice_inputs(specs, folder)
+    assert "PRD-1-01_orders.md" not in got and "PRD-1-01_ARD.md" not in got, sorted(got)
 
 
 def case_umbrella_records_its_own_defect_sources(tmp):
@@ -856,12 +854,6 @@ def slice_inputs(specs, folder):
         path = os.path.join(folder, name)
         if _plain_file(path):
             out[name] = path
-    if "prd.md" not in out:
-        # addressing's legacy fallback: a <KEY>_<slug>.md PRD, which /prd-proposal prices when no prd.md exists
-        for name in os.listdir(folder):
-            path = os.path.join(folder, name)
-            if LEGACY_PRD_RE.fullmatch(name) and _plain_file(path):
-                out[name] = path
     _grounding_and_self_reviews(folder, out)
     interview = os.path.join(folder, "interview")
     if _plain_dir(interview):

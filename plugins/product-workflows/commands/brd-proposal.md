@@ -158,9 +158,12 @@ not work: a flag is a token, so `--redo` would arrive as the address.
    Where both lines are absent, say so rather than inventing a key. It is a user halt, so
    `emit-block` does not fire.
 
-5. **Note whether this run is a revision**, last: whether `proposal.md` and `proposal-brief.md`
-   already exist in the resolved folder. Where either does, Phase 6 treats the prior as the anchor
-   (§8) unless `--redo` was given, Phase 8 archives it (§2), and §4's section 23 renders (§12).
+5. **Note whether this run is a revision**, last: whether `proposal.md` already exists in the
+   resolved folder. Where it does, Phase 6 treats it as the anchor (§8) unless `--redo` was given,
+   Phase 8 archives it (§2), and §4's section 23 renders (§12). **A `proposal-brief.md` standing
+   without a `proposal.md` makes no revision** — the anchor, the proposal archive and the changelog
+   all need a prior proposal — and is archived by Phase 9, as any prior brief is, only where this run
+   renders one.
 
 **Nothing gates on `prd.md`, `ard.md` or `specification.md` here, and there is nothing at this
 altitude for such a gate to find**: a `BRD-` container holds none of the three — they are authored in
@@ -486,6 +489,11 @@ this run never re-prices a slice (§14). Name the affected slices in the report 
 re-running `/product-workflows:prd-proposal` on each; the umbrella's own figures use the corrected
 profile from here on.
 
+**The profile is committed by this run's handoff, not by `commit-artifacts`**, as in
+`/prd-proposal` Phase 2: it is not one of `workflows-core:specs-repo-git` §2.1's bookkeeping paths,
+so Phase 11 declares `.dev-workflows/proposal-profile.yml` among the deliverable paths on every run,
+and the handoff stages it only where it is not already on the branch unchanged.
+
 **No rates, no currency, no money in this file** — the same rule that binds both artifacts
 (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §1). A profile carrying one is reported and
 the value is not read.
@@ -589,10 +597,12 @@ and enumerate the remainder by identifier. §14 owns what each class means and w
 by identifier rather than by slice name; this phase performs the classification and renders the
 result.
 
-**Which slices count as included is this run's own input to that**, and it is Phase 3's decision
-rather than the ledger's: a row `covered-by` a slice the walk excluded is unpriced however the ledger
-reads. Carry Phase 3's membership list into the classification, and report the row counts per class
-beside the statement.
+**Which slices count as included is this run's own input to that**, and it is the operator's
+decision rather than the ledger's: a row `covered-by` a slice the run excluded is unpriced however the
+ledger reads. Carry the membership list **as Phase 3 and Phase 6 step 1 left it** into the
+classification — a slice excluded at Phase 6 step 1, because its figures could not be read, is
+excluded here exactly as one the walk excluded, the list `--excluded` passes to Phase 8's `stamp` —
+and report the row counts per class beside the statement.
 
 **Where the resolved folder holds no `coverage-ledger.md` at all**, §14 says the document claims no
 proportion; say so in the report as well, so the operator knows the number was withheld rather than
@@ -634,6 +644,11 @@ them and this run executes them:
   proposal is read by the **customer**, who wrote those identifiers in their own document in their
   own form. The `[WP#n]` and `[ED#n]` namespaces this run mints are the plugin's own and stay
   bracketed. A conversion in either direction is the defect the reviewer looks for.
+
+**Attribute every decision to the side that made it** (§8): a `[VD#n]` is the delivery team's and a
+`[CD#n]` the customer's (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md`), so no
+sentence credits the customer with a `[VD#n]` or the delivery team with a `[CD#n]`. Phase 10's
+pre-lint checks it over both artifacts.
 
 Write the whole file as prose that is never hard-wrapped (`workflows-core:prose-formatting`).
 
@@ -693,12 +708,16 @@ that file describes the archived revision and not this one.
    mechanical ones, and proceed; the reviewer is the gate. **The `priced-against` record is checked
    here too** (§15.3): re-run Phase 8's `stamp`, with the same record file and `--excluded`. `{"written": false}` passes;
    `{"written": true}` means the record was missing, altered or no longer last — a pre-lint finding,
-   already fixed by that run from Phase 5's ids, never from a fresh hash.
+   already fixed by that run from Phase 5's ids, never from a fresh hash. **Decision attribution is
+   checked here too** (§8): for every `[VD#n]` and `[CD#n]` either artifact cites, read the sentence
+   citing it, and inline-fix any that names the customer as the decider of a `[VD#n]` or the delivery
+   team as the decider of a `[CD#n]`.
 2. **The review gate.** Dispatch `proposal-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model). **It is the same reviewer the sibling dispatches, unchanged** — its
-   check 9 (Coverage) applies on this run and is `N/A` on a slice's, and its check 2 carries an
-   umbrella-totals relation for the same reason; nothing else in that agent narrows a check to an
-   umbrella, though check 6's re-grade delegates to a tier ladder that grades no umbrella off it at
-   all (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §5):
+   check 9 (Coverage) applies on this run and is `N/A` on a slice's, its check 2 carries an
+   umbrella-totals relation for the same reason, its check 6 reads the included slices' tiers in
+   place of a ladder that grades no umbrella (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md`
+   §5, §14), and its check 10's success-measure trace is `N/A` here; nothing else in that agent
+   narrows a check to an umbrella:
 
    → Agent (subagent_type: "product-workflows:proposal-reviewer", model: `<review_model — §2 Opus chain, equal to proposal-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
      > "Review the effort proposal:
@@ -739,7 +758,9 @@ that file describes the archived revision and not this one.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
 run Phase 8's `stamp` once more** with the same record file and `--excluded`, so no edit carries a damaged record into the
-handoff; `{"written": true}` there is reported beside the edit that caused it.
+handoff; `{"written": true}` there is reported beside the edit that caused it. **Re-run step 1's
+decision-attribution check too**, over every sentence an inline edit wrote or changed in either
+artifact — an edit made after the review is read by no reviewer, so this is the only check it gets.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
@@ -776,7 +797,9 @@ Nothing runs `require-on-main` on an umbrella's `proposal.md` — §3.4's `/brd-
 On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: brd`
 (§2.9's table — the shared prefix every `/brd-*` command uses; the prefixes §1 rule 3 fixes are
 not extended, and nothing about an umbrella makes it a phase of its own), `feature_folder` as resolved in
-Phase 0, `deliverable_paths` = `proposal.md`, `proposal-brief.md` where this run rendered one, and, on
+Phase 0, `deliverable_paths` = `proposal.md`, `proposal-brief.md` where this run rendered one,
+`.dev-workflows/proposal-profile.yml` (Phase 5 — repo-relative, outside the folder, and declared on
+every run), and, on
 a revision, the archived prior under `revisions/` at the name §2's first-free rule actually wrote —
 `<KEY>_proposal_<YYYYMMDD>.md`, or the first free `-2`, `-3` form where that was taken — and the brief
 archived beside it, where one was, at the name the same rule wrote for it,

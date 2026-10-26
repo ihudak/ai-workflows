@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.39.0] — 2026-10-26
+
+### Fixed
+- `/prd-proposal` and `/brd-proposal` declare `.dev-workflows/proposal-profile.yml` in their handoff's `deliverable_paths` on every run, so the profile both call committed is committed: before, nothing staged it, and a teammate's clone had none. Pairs with `workflows-core` 1.49.0, whose `phase-handoff` §4.0 classifies the path; either runs beside the other.
+- Tier 2's settled register now also needs `interview/` to hold at least one round record, `/brd-package`'s `BRD_PACKAGE_NOT_INTERVIEWED` test (`proposal-format` §5, `/prd-proposal` Phase 3, `proposal-reviewer` check 6): a register `/create-prd` created holding only an open `[AS#n]` no longer grades a never-interviewed slice tier 2, while an interviewed slice whose register is empty still does.
+- `/brd-proposal` Phase 7 classifies coverage from the membership list as Phase 3 and Phase 6 step 1 left it, so a slice excluded for unreadable figures is not counted as priced.
+- `proposal-reviewer` check 6 has an umbrella form: it reads the included slices' tiers, confirms the printed tier is their minimum with the mix printed, and applies the brief floor against that minimum.
+- The proposal pair no longer reads a legacy `<KEY>_<slug>.md` PRD through a filename fallback `workflows-core:addressing` §5 disclaims: `/prd-proposal` names the rename in its `PRD_PROPOSAL_NEEDS_PRD` stop, and `proposal-record.py` records `prd.md` alone (it also no longer took a `<KEY>_ARD.md` for a PRD).
+- A `proposal-brief.md` standing without a `proposal.md` no longer makes a run a revision, in either command.
+- `proposal-format` §6 states the precision Low and High are rendered at, and a tolerance that covers a whole-hour rounding on a small package, in place of the false claim that rounding moves a band by at most a point.
+- The `/prd-proposal` docs example no longer says the tier-2 array offers `/create-ard` first.
+
+### Added
+- Decision attribution: `proposal-format` §8 requires a `[VD#n]` credited to the delivery team and a `[CD#n]` to the customer; `/prd-proposal`'s and `/brd-proposal`'s pre-lint checks it and re-checks every sentence a post-review edit touched, and `proposal-reviewer` check 1 files a crediting error as a BLOCKER.
+- `/prd-proposal`'s defect-sweep confirmation quotes any conflict a candidate has with the PRD's out-of-scope list or a decided `[VD#n]`/`[CD#n]`.
+- Every live `[SM#n]`/`[SMC#n]` must be traced in a slice proposal's section 21 to a `[WP#n]` or to section 20 (`proposal-format` §4, `proposal-reviewer` check 10).
+
 ## [3.38.1] — 2026-10-26
 
 ### Fixed

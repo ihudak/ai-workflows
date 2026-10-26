@@ -89,6 +89,12 @@ code — what exists, what runs, what a path returns — cites class 1 specifica
 such a claim while citing only a decision or a defect is a **BLOCKER**, because a decision or a
 defect record cannot evidence a statement about a repository.
 
+**Every decision is attributed to the side that made it** (§8, class 2): read each sentence, in
+either artifact, that cites a `[VD#n]` or a `[CD#n]` — in a driver row or anywhere else — and
+confirm it names the delivery team as the decider of a `[VD#n]` and the customer as the decider of
+a `[CD#n]`. A sentence crediting the other side is a **BLOCKER**: it tells the customer they signed
+something they did not, or that the vendor decided what they did.
+
 ## 2. Arithmetic
 
 **Check 2 is the reason this agent exists, and it is the one check that cannot be delegated to
@@ -106,8 +112,8 @@ Re-derive, against §4 section 6's `[WP#n]` × role grid:
   Low and High columns each sum to the stated total range separately from the Expected column** — a
   relation a reader is least likely to re-add, and exactly where a silent error survives.
 - Every package's Low–High range brackets its own Expected figure.
-- Every band in §4 section 7 matches its confidence grade's default (§6) within the
-  one-percentage-point tolerance §6 fixes. A deviation with no stated reason is a
+- Every band in §4 section 7 matches its confidence grade's default (§6) within the tolerance §6
+  fixes — one percentage point, or the rounding the rendered figure carries where that is larger. A deviation with no stated reason is a
   **RECOMMENDATION**; a band narrower than the default of the grade one step above is a **BLOCKER**
   (§6) — both under that same tolerance.
 - Every FTE figure in §4 sections 10–11 reconciles to hours ÷ weeks ÷ hours-per-week, the last two
@@ -153,14 +159,31 @@ tier or flag that excuses it.
 
 The tier printed in §4 section 1's header block is the tier §5's ladder actually supports on
 disk — re-grade the folder against §5's own conditions (for tier 2, verified grounding **plus a
-`decisions.md` that is present and every interview round it names settled**; `ard.md` for tier 3;
-`specification.md` for tier 4) rather than trusting the printed grade. **Re-grade the presence of the
-register, not only the settledness of its rounds:** a folder holding none names no round, so the
-settled half alone passes vacuously and this check would confirm a tier-2 grade §5 caps at 1. A tier
+`decisions.md` that is present, an `interview/` holding at least one `round-<N>.md` record, and
+every round settled**; `ard.md` for tier 3; `specification.md` for tier 4) rather than trusting the
+printed grade. **Re-grade the presence of the register and of a round, not only the settledness of
+the rounds:** a folder holding no register has no round, and neither has one whose register
+`/create-prd` created holding only an open `[AS#n]` before any interview, so the settled half alone
+passes vacuously and this check would confirm a tier-2 grade §5 caps at 1. Read the round off
+`interview/`, never off what the register lists: a register holding its header line alone after an
+interview whose every question a finding settled is settled (§5). A tier
 claimed that the folder's own evidence does not support, in either direction, is a
 **BLOCKER**: a customer is told the wrong grade of evidence behind the number either way. **The
 brief is absent below tier 2, irrespective of any flag** (§5) — its presence there, or its absence
 at tier ≥ 2 for a reason other than the operator's own `--no-brief`, is a **BLOCKER**.
+
+**On an umbrella the ladder is not re-graded at all** (§5 grades no `BRD-` container off it) —
+decided by the same folder-kind test as check 9, the directory prefix. Read instead the tier in
+each included slice's own `proposal.md` header — the included slices being those the umbrella's row
+set names, each an immediate subdirectory of the reviewed folder whose `brd-link.md` names this BRD
+as `parent:` (the positive test `commands/brd-proposal.md` Phase 2 enumerates by — never a name
+match), matched to its row by the `key:` that `brd-link.md` records — and confirm the umbrella's
+printed tier is their minimum and that it prints the mix behind it (§14); then apply the brief rule
+above against that minimum. A printed tier other than the minimum, a missing mix, a brief present
+while the minimum is tier 1, or a brief absent while the minimum is tier 2 or higher for a reason
+other than `--no-brief`, is a **BLOCKER**. A
+slice proposal you cannot open, or whose header carries no tier, is reported as such and never
+guessed at.
 
 ## 7. Brief agreement, in both directions
 
@@ -213,6 +236,12 @@ or `Withdrawn` prices work nobody now asks for. An identifier converted in eithe
 plugin's own bracketed form is a **BLOCKER**. `[WP#n]` and `[ED#n]` are the plugin's own minted
 namespaces (§3) and this direction test does not apply to them: either one rendered in any form but
 the bracketed one is a **BLOCKER** on its own, regardless of what any source artifact does.
+
+**Every live success measure is traced** (§4 section 21): on a `PRD-` slice's proposal, every
+`[SM#n]` and `[SMC#n]` in `prd.md` not marked `Superseded by` or `Withdrawn` appears in section 21
+mapped to a `[WP#n]`, or in section 20 as an exclusion. One that appears in neither is a
+**BLOCKER**. On an umbrella this is `N/A` — its slices' proposals carry the trace — by the same
+folder-kind test as check 9.
 
 ## 11. Range exclusions
 
@@ -312,11 +341,10 @@ notes: |
 - NEVER skip a check silently. Report all eleven passes, including an `N/A` with its reason (check 3
   with no anchor, check 7 or check 9 where the artifact each gates does not exist in this run).
 - NEVER let check 9 leak into any other check. Every other check is worked the same way on a `BRD-`
-  umbrella's proposal as on a `PRD-` slice's — apart from check 9, check 2's final bullet is the only
-  place this file narrows a check to an umbrella, and it says so where it stands. A rule a check
-  **delegates** to still carries its own scope: check 6 re-grades against
-  `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §5, which grades no umbrella off its ladder
-  at all.
+  umbrella's proposal as on a `PRD-` slice's — apart from check 9, three places in this file read a
+  check differently on an umbrella, and each says so where it stands: check 2's final bullet, check
+  6's umbrella paragraph (§5 grades no umbrella off its ladder, so check 6 reads the included
+  slices' tiers instead), and check 10's success-measure paragraph.
 - NEVER return an empty findings list without the per-check account Process step 6 requires.
 - NEVER raise a finding against the `<!-- priced-against … -->` comment that ends a proposal, nor
   count it against §4's or §10's section set. It is machine data the producing command writes and
