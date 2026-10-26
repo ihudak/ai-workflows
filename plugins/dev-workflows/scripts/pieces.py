@@ -62,13 +62,9 @@ class Fail(Exception):
         self.code = code
 
 
-def show(s):
-    """A string as the caller will read it in a message."""
-    return s.encode("utf-8", "surrogateescape").decode("utf-8", "replace")
-
-
 def escaped(s):
-    """A path with each byte that is not UTF-8 written as \\xNN."""
+    """A string -- a path, or text from the design -- with each byte that is not UTF-8 written as
+    \\xNN, as a message or the output carries it."""
     return s.encode("utf-8", "surrogateescape").decode("utf-8", "backslashreplace")
 
 
@@ -138,7 +134,7 @@ def parse_files(rest):
             bad = rest[i:j if j >= 0 else n].strip()
             if not bad:
                 return None, "a Files list has an empty slot between two commas"
-            return None, "the Files entry %s is not in backticks" % show(bad)
+            return None, "the Files entry %s is not in backticks" % escaped(bad)
         j = rest.find("`", i + 1)
         if j < 0:
             return None, "a Files entry opens a backtick it never closes"
@@ -147,7 +143,7 @@ def parse_files(rest):
             return None, "a Files entry is empty"
         if entry.startswith("/") or entry.startswith("./"):
             return None, ("the Files entry %s begins with / or ./; an entry is relative to the "
-                          "repository's top level" % show(entry))
+                          "repository's top level" % escaped(entry))
         entries.append(entry)
         i = j + 1
         expecting = False
@@ -156,7 +152,7 @@ def parse_files(rest):
         if i >= n:
             break
         if rest[i] != ",":
-            return None, "the text %s follows a Files entry outside its backticks" % show(rest[i:].strip())
+            return None, "the text %s follows a Files entry outside its backticks" % escaped(rest[i:].strip())
         i += 1
         expecting = True
     return entries, None
@@ -187,9 +183,9 @@ def parse_section(text):
             continue
         if s.startswith("Reason:"):
             if cur is not None or pieces:
-                return malformed("the Reason line %s comes after the first piece" % show(s))
+                return malformed("the Reason line %s comes after the first piece" % escaped(s))
             if reason is not None:
-                return malformed("the section holds a second Reason line: %s" % show(s))
+                return malformed("the section holds a second Reason line: %s" % escaped(s))
             reason = s[len("Reason:"):].strip()
             if not reason:
                 return malformed("the Reason line is empty")
@@ -199,9 +195,9 @@ def parse_section(text):
                 return malformed("the section has no Reason line before its first piece")
             name = s[4:].strip()
             if not NAME_RE.match(name):
-                return malformed("the piece name %s is not kebab-case" % show(name), reason)
+                return malformed("the piece name %s is not kebab-case" % escaped(name), reason)
             if any(p["name"] == name for p in pieces):
-                return malformed("the piece name %s is used twice" % show(name), reason)
+                return malformed("the piece name %s is used twice" % escaped(name), reason)
             cur = {"name": name, "files": None, "contract": []}
             cur["_contract_seen"] = False
             pieces.append(cur)
@@ -217,7 +213,7 @@ def parse_section(text):
             for e in entries:
                 if e in seen_entry and seen_entry[e] != cur["name"]:
                     return malformed("the Files entry %s is in both %s and %s"
-                                     % (show(e), seen_entry[e], cur["name"]), reason)
+                                     % (escaped(e), seen_entry[e], cur["name"]), reason)
                 seen_entry[e] = cur["name"]
             cur["files"] = entries
             continue
@@ -234,7 +230,7 @@ def parse_section(text):
             else:
                 cur["contract"] = [c.strip() for c in body.split(",") if c.strip()]
             continue
-        return malformed("the section holds a line it does not allow: %s" % show(s), reason)
+        return malformed("the section holds a line it does not allow: %s" % escaped(s), reason)
     if reason is None:
         return malformed("the section has no Reason line")
     for p in pieces:
@@ -297,7 +293,7 @@ def assign(parsed, paths):
         if len(hit) > 1:
             return {"status": "malformed",
                     "defect": "the path %s is matched by both %s and %s"
-                              % (show(path), parsed["pieces"][hit[0]]["name"], parsed["pieces"][hit[1]]["name"]),
+                              % (escaped(path), parsed["pieces"][hit[0]]["name"], parsed["pieces"][hit[1]]["name"]),
                     "reason": parsed["reason"], "pieces": [], "unassigned": list(paths), "split": False}
         if hit:
             out["pieces"][hit[0]]["paths"].append(path)
@@ -551,6 +547,9 @@ def selftest():
         except UnicodeDecodeError:
             strict_ok = False
         check("parse_non_utf8_design_text_strict_utf8", code == 0 and strict_ok)
+        r = parse("# D\n\n## Pieces\n\nReason: two parts\n\n### caf\udce9\n- Files: `x/*`\n")
+        check("defect_non_utf8_text_escaped", r["status"] == "malformed" and "caf\\xe9" in r["defect"]
+              and "\ufffd" not in r["defect"])
         # paths files: no trailing NUL, consecutive NULs
         for label, raw in (("no_trailing_nul", b"src/parser/P.java\0src/runs/R.java"),
                            ("double_nul", b"src/parser/P.java\0\0src/runs/R.java\0\0")):

@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.38.0] — 2026-10-26
+
+Findings 85.2 to 85.6 of the 2026-10-26 post-merge review of #82–#85 and #87, against 4.33.0's piece-review fixes. No `workflows-core` change is needed.
+
+### Fixed
+- **`pieces.py` quoted design text in a `defect` with `�`** where its bytes are not UTF-8, though its docstring, `design-format` and 4.33.0's entry say such a byte is written `\xNN`. Every message now escapes them as `printable()` does; the selftest grows to 77 checks. (85.3)
+- **`/design` Phase 5.5 removed "the section"** where the design may hold a second `## Pieces` heading, which leaves the other: both removals now take every `## Pieces` section. Its "one fix" rule read as a section malformed after its removal; it now says a section its one fix leaves malformed or overlapping is removed. (85.4, 85.5)
+- **`/design`'s Final report named only the multi-repository removal of `## Pieces`**, not the removal of a section its one fix left malformed or overlapping, which Phase 5.5 and Phase 6 say to report. (85.2)
+- **`docs/commands/implement.md` left out that a third `### Re-classification`**, after **Re-run the full review**, stops the run. (85.6)
 ## [4.36.0] — 2026-10-26
 
 Take with `workflows-core` 1.53.0, whose merged test the PRD run below reads; beside 1.52.0 the PRD run's extra fetch is harmless and the test keeps its old two legs.
