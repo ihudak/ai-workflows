@@ -142,7 +142,9 @@ array carries every option.
 
 **PE — breakdown & specification**
 
-- `/product-workflows:specify <PRD>` (PRD-level spec) → `/product-workflows:epics <PRD>`.
+- `/product-workflows:specify <PRD>` (PRD-level spec) → `/product-workflows:epics <PRD>`, or Dev → `/dev-workflows:design <PRD>` to design
+  the spec whole rather than through Epics — on a multi-component PRD only as `/dev-workflows:design`'s override, and only
+  where the PRD folder holds no Epic folder.
 - `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
