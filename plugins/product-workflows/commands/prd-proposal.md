@@ -689,7 +689,8 @@ file describes the archived revision and not this one.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
 run Phase 7's `stamp` once more** with the same record file, so no edit carries a damaged record into the
-handoff; `{"written": true}` there is reported beside the edit that caused it. **Re-run step 1's
+handoff; `{"written": true}` there is reported beside the edit that caused it. **After the last
+inline edit to either artifact — `proposal.md` or `proposal-brief.md` — re-run step 1's
 decision-attribution check too**, over every sentence an inline edit wrote or changed in either
 artifact — an edit made after the review is read by no reviewer, so this is the only check it gets.
 
@@ -735,7 +736,8 @@ folder, and declared on every run, since §2.3 stages it only where it is not al
 unchanged), and, on a revision, the archived prior under `revisions/` at the name §2's
 first-free rule actually wrote — `<KEY>_proposal_<YYYYMMDD>.md`, or the first free `-2`, `-3` form
 where that was taken — and the brief archived beside it, where one was, at the name the same rule
-wrote for it, `title: <KEY> Effort proposal <YYYYMMDD>`, and `body_facts` = the readiness tier and what
+wrote for it — and, on any run, a revision or not, a brief Phase 8 archived that stood without a
+`proposal.md` (Phase 0), at the name that rule wrote for it — `title: <KEY> Effort proposal <YYYYMMDD>`, and `body_facts` = the readiness tier and what
 capped it; the `[WP#n]` count and the total expected hours with its range; the count of packages graded
 Low and how many carry a declared re-estimate gate; the `proposal-reviewer` verdict with its version line and every finding left open (`workflows-core:escalation-rules`, *A recorded verdict names the version it was taken against*); and whether a rationale brief was rendered. Emit its §4.1 outcome line in the final report.
 

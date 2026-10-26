@@ -181,7 +181,7 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
 |---|---|---|
 | `self-review-<date>.md` | The adversarial pass: every `[SR#n]` with its class, target, attack and disposition, plus the per-pass account | **no** — see below |
 | `customer-review-prompt-<date>.md` | The self-contained prompt the customer pastes, in the fixed eleven-part order, with the review schema inlined | yes |
-| `bundle-<date>/` | Plain markdown and images, de-Obsidianised save the customer's own files, which go in byte for byte, plus a manifest and any dependency package | it *is* the bundle |
+| `bundle-<date>/` | Plain markdown and images, de-Obsidianised save the customer's own files, which go in byte for byte, plus a manifest and each prerequisite's own files | it *is* the bundle |
 | `customer-delivery-note-<date>.md` | The covering letter, under a 200-word ceiling | **no** — it is the email, not a package document |
 
 `brd-link.md` also gains any prerequisite this run declared, merged additively.
@@ -271,8 +271,10 @@ attack.
   run with `BRD_PACKAGE_BUNDLE_EXISTS`. Rewriting it destroys the only evidence of what the reviewer
   of that date was looking at, and the command cannot tell whether the existing directory was already
   sent — the operator can. A same-dated self-review, prompt or delivery note beside no bundle of that
-  date is left by a run that stopped before assembling where the self-review is on no ref — a
-  committed one means the bundle was built and moved, and the run stops. The next run that day overwrites a stopped
+  date is left by a run that stopped before assembling where the self-review is on no ref and no
+  directory in the folder holds a prompt whose `Package reviewed:` line names this key and date — a
+  committed self-review means the bundle was built and moved, such a prompt that it was built and
+  renamed in place, and either stops the run with `BRD_PACKAGE_BUNDLE_EXISTS`. The next run that day overwrites a stopped
   run's files whole, never reads its self-review as a prior review, and says the disposition walk
   starts again.
 - **Phase 4 — the disposition gate.** No bundle is built while any `[SR#n]` is undisposed. The gate
