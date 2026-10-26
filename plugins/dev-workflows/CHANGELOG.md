@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.39.1] — 2026-10-26
+
+Take with `workflows-core` 1.58.0 (batch B01).
+
+### Changed
+- **`/implement` Phase 4.5 states its reason for the falling-back array without a stale census**: no consumer of `design.md` stops on row F, which now includes `/conformance` (IMP-B3).
+- **`/conformance` and `/ready` describe `branch-merged` and row B′ as `workflows-core` 1.58.0 has them**: a squash read unmerged only where merging the branch would still change the default branch, and B′ stopping a branch that changed the document too.
+
 ## [4.38.1] — 2026-10-26
 
 ### Changed

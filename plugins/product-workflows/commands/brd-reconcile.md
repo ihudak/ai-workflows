@@ -138,7 +138,7 @@ And no later run would write it, since the same-review rule skips the decision t
 costs nothing D20 guards against: the parent is not downstream of this slice but the BRD its
 requirements come from, and what the gate stops on is its log as this checkout holds it — edited and
 not handed off, not on the default branch at all, or changed on the default branch after this run's
-own branch was cut, that branch holding the copy it was cut with or none (`require-on-main`'s row B′). **The test is made once, before any answer is confirmed, and not again before the write.** After the canonicalised review's handoff the run
+own branch was cut, whatever that branch holds of it (`require-on-main`'s row B′). **The test is made once, before any answer is confirmed, and not again before the write.** After the canonicalised review's handoff the run
 stands on its own branch, where the gate passes — save where that handoff reused a branch of this
 run's own (`workflows-core:phase-handoff` §2.2 rule 3) cut before the log last changed on the default
 branch, and holding the copy it was cut with or none: there a second test would stop at row B′, and the write lands on what that branch holds,
@@ -492,8 +492,8 @@ write would re-ask a question already answered.
    not handed off — a run whose handoff was declined leaves it so — or on a branch the default
    branch does not have, or on no branch at all, or the repository itself cannot be
    checked (no default branch, a detached HEAD), or it changed on `<default>` after this run's own
-   branch was cut and that branch holds the copy it was cut with, or none (row B′, whose message names the merge
-   of `<default>` into the branch). Say what the gate reported — the files, branch or
+   branch was cut, whatever that branch holds of it (row B′, whose message names the merge
+   of `<default>` into the branch, save where no merge can run). Say what the gate reported — the files, branch or
    pull request it named, or the repository state — say that this run writes its defect resolutions
    into that file and waits rather than write over an edit, into a copy that lacks what has merged on `<default>` since, or leave them unwritten, and say that
    this plugin never commits, merges or discards anything for it. Then ask:
