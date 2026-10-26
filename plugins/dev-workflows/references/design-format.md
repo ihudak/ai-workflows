@@ -258,19 +258,23 @@ reach.
     found wherever it stands in the design, and a `## Pieces` line inside a fenced block — a design
     quoting the format — never starts it; as in CommonMark, a line of backticks followed by text
     holding another backtick opens no fenced block; CRLF line ends are accepted. It reads as one piece
-    (`none`) where there is no such heading, or where the section's first non-blank line begins
-    `_N/A`. It is **malformed** where it has no `Reason:` line, an empty one, a
+    (`none`) where there is no such heading, or where the section's only non-blank line begins
+    `_N/A` at the start of its line. It is **malformed** where the design holds a second `## Pieces`
+    heading outside a fenced block; where an `_N/A` line stands beside any other non-blank line;
+    where it has no `Reason:` line, an empty one, a
     second one, or one after the first piece; fewer than two pieces; a piece name that is not
     kebab-case or is used twice; a piece with no `Files:` line, a second one, or one with no entry;
-    a `Files:` entry not in backticks, an empty one, one that begins `/` or `./`, an unclosed
-    backtick, a trailing comma, or other text outside the backticks; a piece with a second
-    `Contract:` line; the same entry in two pieces' `Files:`; or any other non-blank line — prose,
-    or a fenced block inside the section, whose lines are all read as the section's.
+    a `Files:` entry not in backticks, an empty one, an empty slot between two commas, one that
+    begins `/` or `./`, an unclosed backtick, a trailing comma, or other text outside the backticks;
+    a piece with a second `Contract:` line, or one before its `Files:` line; the same entry in two
+    pieces' `Files:`; or any other non-blank line — prose, an indented `_N/A`, or a fenced block
+    inside the section, whose lines are all read as the section's.
     `pieces.py parse` is the check `/design` runs on the section it writes and `design-reviewer`
     runs on the section it reviews; `pieces.py assign` is what `/implement` runs on the change's paths, and
     `/design` on the target repository's files at the commit Phase 4 scanned, and it also reads the
     section as malformed where one of those paths is matched by two pieces' patterns — an overlap
-    no entry's text shows — or is not valid UTF-8.
+    no entry's text shows — or, on a section that draws pieces, is not valid UTF-8. Its output is
+    always valid UTF-8: a byte that is not, in a path or in the design's own text, is written `\xNN`.
 
 ## Architecture governance
 

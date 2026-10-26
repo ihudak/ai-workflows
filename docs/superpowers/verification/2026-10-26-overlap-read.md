@@ -1,6 +1,6 @@
 # Verification — the overlap read lists what a requirement reaches (to-fix PR1, FBB-B13)
 
-**Date:** 2026-10-26 · **Branch:** `iv-gu/overlap-read` · **Versions:** workflows-core 1.51.0, dev-workflows 4.33.0, product-workflows 3.42.0
+**Date:** 2026-10-26 · **Branch:** `iv-gu/overlap-read` · **Versions:** workflows-core 1.51.0, dev-workflows 4.34.0, product-workflows 3.42.0
 
 ## What changed, and the population it serves
 
@@ -23,7 +23,7 @@ The reach: the ten callers of `grilling-technique` for the gate read, and the se
 
 **Result.** All eight named the measured conflict, under the old rules as under the new. The four agents under the new rules printed the `Overlap read:` line in its format where the step asks for one (A and C), and three of the four listed the kinds by name. Several of them found more, under either arm: in A, a second transaction committed after the first leaves D5's "no partial write" false; in B, `[AC10]` keeps a `200` for a change the new criteria refuse.
 
-**What it shows, and what it cannot.** The old rule was not misunderstood: in a fresh context holding only the task, it caught every case. So the replay does not show the change's value. That value lies in long sessions, where the measured misses happened, and a small replay cannot reach them. Two further limits apply. The new rule's worked examples are these four cases, so the new arm was shown the answer. And the replay checks that the rule can be understood and the line printed, never that a run follows it. `docs/superpowers/to-fix.md` PR3 carries the test that can show it: the next live `/design` or `/specify` run, with a trigger for a dedicated reader if the line is missing or a conflict of a listed kind reaches the reviewer anyway.
+**What it shows, and what it cannot.** The old rule was not misunderstood: in a fresh context holding only the task, it caught every case. So the replay does not show the change's value. That value lies in long sessions, where the measured misses happened, and a small replay cannot reach them. Two further limits apply. The new rule's worked examples are these four cases, so the new arm was shown the answer. And the replay checks that the rule can be understood and the line printed, never that a run follows it. `docs/superpowers/to-fix.md` PR5 carries the test that can show it: the next live `/design` or `/specify` run, with a trigger for a dedicated reader if the line is missing or a conflict of a listed kind reaches the reviewer anyway.
 
 ## Review
 

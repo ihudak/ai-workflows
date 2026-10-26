@@ -27,7 +27,7 @@
 | N8 | NIT | verification record `:5, :21, :30` | Record's state and gate result predate the merge of `main` |
 | N9 | NIT | `docs/superpowers/reviews/2026-10-26-feature-gaps-review.md:169` | IMP-G1's *Current state* contradicts its *Resolved* heading |
 
-### F1 — Split-round dedup contradicts `finding-triage`, and the conflict is not reconciled (MINOR)
+### F1 — Split-round dedup contradicts `finding-triage`, and the conflict is not reconciled (MINOR) — **Fixed in dev-workflows 4.33.0**
 
 - **Text.** `implement.md:991`: "a finding a later review of the round raises at a location and with a claim an earlier review's finding holds is that same finding, verified once, and takes its disposition — the match made between findings only".
 - **Authority.** `plugins/workflows-core/references/finding-triage.md:86-90`: "For each finding, **before any grouping or deduplication**: 1. Verify its own claimed consequence … Another finding's outcome, however adjacent, never settles this one." The triage sub-step tells the run to load and follow that reference, so the executing agent holds two instructions that disagree.
@@ -35,27 +35,27 @@
 - **Against the design.** §3.1 pt 5 does want "a finding two scopes both made is one finding". §6, though, says combining scopes is `/implement`'s own step, "where it needs a change in the shared reference, `.claude/rules/plugin-updates.md` gets the coupling bullet". Plan Task 5 step 1 asks for wording that satisfies `finding-triage`, or else a recorded ruling. Neither happened. The plan's `:278` carries the sentence over from the shelved branch, and no P-ruling or coupling bullet covers it. `plugins/workflows-core` is unchanged in this merge.
 - **Fix direction.** Either verify every finding first and merge afterwards (the overall finding is verified, and a confirmed duplicate collapses into one), which satisfies `finding-triage` with no shared change, or amend `finding-triage` to license this merge and add the coupling bullet.
 
-### F2 — `/design` Phase 5.5's fix loop has no bound (MINOR)
+### F2 — `/design` Phase 5.5's fix loop has no bound (MINOR) — **Fixed in dev-workflows 4.33.0**
 
 - **Text.** `commands/design.md:405`: "`status: malformed` → fix the section in the file … and run it again, until it prints `none` or `pieces` … removing the section, which leaves one piece, always ends this". An overlap is "fixed as a malformed section is, and both commands run again".
 - **Defect.** The sentence names an exit, removing the section, but never says when to take it. A run whose rewrites keep trading one defect or overlap for another has no rule that stops it. It asks the user nothing, as the design requires, but it is not sure to end. Design §2's anti-goal on bounded loops names `/implement`'s review loop, and the same principle applies here.
 - **Fix direction.** Give an explicit cap, e.g. "after a second `malformed` result, remove the section and name the removal in the Final report".
 
-### F3 — An `_N/A` line followed by drawn pieces reads silently as one piece (MINOR)
+### F3 — An `_N/A` line followed by drawn pieces reads silently as one piece (MINOR) — **Fixed in dev-workflows 4.33.0**
 
 - **Contradiction inside `design-format.md`.** `:220-221` allow `_N/A — <why>_` only "as its only line", and the section "holds nothing else". `:261-262` say it reads as `none` "where the section's first non-blank line begins `_N/A`", which is what `pieces.py:163-167` does. `line.lstrip()` also accepts an indented `_N/A`, though "every line of the section starts at the beginning of its line".
 - **Reproduced.** A section of `_N/A — one change_`, then `Reason: r` and two pieces, gives `"status": "none"`.
 - **Effect.** A hand edit that leaves a stale `_N/A` above real pieces makes every consumer ignore them, with no message. `/implement` makes one review and prints nothing, because `none` is not "unusable". `design-reviewer` takes the `status: none` path and can at most recommend drawing pieces that are already drawn. Design §3.1 pt 2 wants a section the run cannot use to be named as unusable.
 - **Fix direction.** Read the section as `none` only when the `_N/A` line is its only non-blank line, and anything else as `malformed`. Then align `:261-262` with that.
 
-### F4 — A non-UTF-8 diff path on a `none` design writes invalid UTF-8 JSON (MINOR)
+### F4 — A non-UTF-8 diff path on a `none` design writes invalid UTF-8 JSON (MINOR) — **Fixed in dev-workflows 4.33.0**
 
 - **Defect.** The not-UTF-8 check runs only on `status: pieces`. On `none`, the commonest case, the raw bytes go into `unassigned` on stdout, and on the malformed-by-UTF-8 result the raw path is in `unassigned` too. The docstring (`:16-20`) says a non-UTF-8 path "makes the status malformed" without that qualification.
 - **Reproduced.** `printf 'x/\xff\0' > p; printf '# D\n' > none.md; pieces.py assign none.md p | python3 -c '…json.loads(…decode("utf-8"))'` gives `UnicodeDecodeError … byte 0xff in position 92`.
 - **Effect.** `implement.md:962` routes "output that does not parse" to `design.md's ## Pieces unusable … reviewed as one piece` and records it in `assumptions`. A strict reader would therefore print a false "unusable" on a design with no Pieces section. `/design` is safe because its reader uses `errors="replace"`. The population is small, since it needs a non-UTF-8 file name in the diff.
 - **Fix direction.** Emit with `ensure_ascii=True` (`json.dumps`'s default) after decoding paths with `surrogateescape`, or drop the raw paths from the output.
 
-### F5 — The design's one-piece `/design` test never ran on a small Epic (MINOR)
+### F5 — The design's one-piece `/design` test never ran on a small Epic (MINOR) — **Tracked as `docs/superpowers/to-fix.md` PR3**
 
 - **Design §4.** "An Epic that should get one piece (`BOOK-1-01` …): it should draw none." The live run drew four. Ruling P22 holds that the expectation was an unmeasured premise and that four pieces hold under the format's `Reason:` model. The design's status note records the same.
 - **P22 is sound on its ground.** The earlier `/implement EPIC-BOOK-1-01` ledger (`docs/superpowers/verification/2026-10-17-implement-coding-subagents-ledger.md:228-229`) records HIGH-RISK, 101 files and +8,909 lines, against BOOK-3-01's 36 files and +4,161.
@@ -63,13 +63,13 @@
 - **A signal worth noting.** In both runs `/design` offered its piece count as the `(Recommended)` option, and neither `design-reviewer` pass questioned the `Reason:` (record `:178`, `:206`).
 - **Fix direction.** Add a to-fix item: one `/design` run on a genuinely small Epic, expecting no `## Pieces`.
 
-### F6 — Design §5's to-fix entry was replaced by a ruling (MINOR)
+### F6 — Design §5's to-fix entry was replaced by a ruling (MINOR) — **Fixed: `to-fix.md` PR4, and the verification record's §10**
 
 - **Design §5.** The mocked-writer test-strategy finding "goes into `docs/superpowers/to-fix.md` … One instance, recorded, not ruled on."
 - **What happened.** Ruling P21 decides instead that `/design` itself has none of this defect, on one `/design` run (BOOK-3-01), and writes no entry. The ledger (`:109`) still refers to "the to-fix entry Task 9 writes". The deviation is disclosed, with its cost if wrong, but it is a ruling made from a single sample where the design asked for a record, not a ruling.
 - **Fix direction.** Write the one-line to-fix entry the design asked for, citing P21 as current evidence, and correct the ledger's reference.
 
-### F7 — `pieces.py` selftest gaps (MINOR)
+### F7 — `pieces.py` selftest gaps (MINOR) — **Fixed in dev-workflows 4.33.0**
 
 Each of these behaves as documented when run by hand, but nothing pins it:
 - `_N/A` followed by other lines (F3);
@@ -84,18 +84,18 @@ Each of these behaves as documented when run by hand, but nothing pins it:
 
 ### NITs
 
-- **N1** (`implement.md:994`). The `### Re-classification` arm's **Re-run the full review** re-invokes `code-review` without limit. Each answer adds a review beyond design §3.1 pt 5's bound. It is unreachable on a split round, because `code-review` never returns a Re-classification on a brief with `Scope:`, and the unbounded re-run was already true at `MODERATE` before this change.
-- **N2** (`implement.md:991`). "a review of each such piece that has no review yet, whose first-round review left a survivor …, or whose fresh diff differs …" chains three alternatives with commas and one final "or", so it reads as a conjunction that contradicts itself. Write "or whose" before the second clause too.
-- **N3** (`commands/design.md:451`). Phase 6 re-runs the pieces check after an edit to `## Pieces` or the `Repos` line. The `- **Target**:` line also decides which repository `Files:` patterns are relative to (`design-format.md:248`), and it is not in the trigger. This is rare, since `Target` comes from the Epic.
-- **N4** (`docs/commands/design.md:72, 80`). The page says Phase 5.5 always runs `assign` and that a malformed section or an overlap "is fixed before the review". The command adds "where Phase 4 recorded a commit", and has three report-and-continue exceptions: a non-zero exit, a non-UTF-8 path, and no recorded commit.
-- **N5** (design §3.1 pt 2: "`design-reviewer` refuses such a section"). The build grades a malformed section `MAJOR`, which Phase 6 offers and the user may decline. That follows plan Task 2 step 3, and `/implement`'s fallback degrades safely, but no ruling records the design's "refuses" becoming a declinable `MAJOR`. In practice only overlap among files the design creates reaches review unfixed.
-- **N6** (`pieces.py`).
+- **N1** (`implement.md:994`). The `### Re-classification` arm's **Re-run the full review** re-invokes `code-review` without limit. Each answer adds a review beyond design §3.1 pt 5's bound. It is unreachable on a split round, because `code-review` never returns a Re-classification on a brief with `Scope:`, and the unbounded re-run was already true at `MODERATE` before this change. — **Fixed in dev-workflows 4.33.0**
+- **N2** (`implement.md:991`). "a review of each such piece that has no review yet, whose first-round review left a survivor …, or whose fresh diff differs …" chains three alternatives with commas and one final "or", so it reads as a conjunction that contradicts itself. Write "or whose" before the second clause too. — **Fixed in dev-workflows 4.33.0**
+- **N3** (`commands/design.md:451`). Phase 6 re-runs the pieces check after an edit to `## Pieces` or the `Repos` line. The `- **Target**:` line also decides which repository `Files:` patterns are relative to (`design-format.md:248`), and it is not in the trigger. This is rare, since `Target` comes from the Epic. — **Fixed in dev-workflows 4.33.0**
+- **N4** (`docs/commands/design.md:72, 80`). The page says Phase 5.5 always runs `assign` and that a malformed section or an overlap "is fixed before the review". The command adds "where Phase 4 recorded a commit", and has three report-and-continue exceptions: a non-zero exit, a non-UTF-8 path, and no recorded commit. — **Fixed in dev-workflows 4.33.0**
+- **N5** (design §3.1 pt 2: "`design-reviewer` refuses such a section"). The build grades a malformed section `MAJOR`, which Phase 6 offers and the user may decline. That follows plan Task 2 step 3, and `/implement`'s fallback degrades safely, but no ruling records the design's "refuses" becoming a declinable `MAJOR`. In practice only overlap among files the design creates reaches review unfixed. — **Ruled: P23, the verification record's §10**
+- **N6** (`pieces.py`). — **Fixed in dev-workflows 4.33.0**
   - `- Contract:` before `- Files:` is accepted, though the format fixes the order (`:197-221`).
   - A second `## Pieces` section is ignored (`:105-110`), and the format states no uniqueness rule either way.
   - `` `a`,, `c` `` yields the defect message "the Files entry  is not in backticks", with an empty name (`:128-131`).
-- **N7** (`.claude/rules/dev-workflows-implement.md:23`). "returns no `### Re-classification` on a `MODERATE` brief or one with a `Scope:` line naming only `SIMPLE` on a higher one" now lets "naming only `SIMPLE`" attach to the `Scope:` clause. `implement.md:994` and `code-review.md` are unambiguous. A comma after "line" fixes it.
-- **N8** (verification record `:5, :21, :30`). "Not yet merged", "runs beside workflows-core 1.45.0" and the gate chain's `EXIT=0` were measured at `7c436653`, before `8f96c887` merged `main` (workflows-core 1.47.0, security-workflows 0.4.0, product-workflows 3.37.0). No dev-workflows value moved, but the record does not cover the merged tree. This review's gate run does (below).
-- **N9** (`feature-gaps-review.md:169`). IMP-G1's heading says "Resolved by dev-workflows 4.32.0", but its *Current state* line still says "no spec … no plan, no branch/commit".
+- **N7** (`.claude/rules/dev-workflows-implement.md:23`). "returns no `### Re-classification` on a `MODERATE` brief or one with a `Scope:` line naming only `SIMPLE` on a higher one" now lets "naming only `SIMPLE`" attach to the `Scope:` clause. `implement.md:994` and `code-review.md` are unambiguous. (Corrected while fixing it: the comma after "line" was already there; the ambiguity was the trailing participle, and 4.33.0 rewrites the sentence as two clauses.) — **Fixed in dev-workflows 4.33.0**
+- **N8** (verification record `:5, :21, :30`). "Not yet merged", "runs beside workflows-core 1.45.0" and the gate chain's `EXIT=0` were measured at `7c436653`, before `8f96c887` merged `main` (workflows-core 1.47.0, security-workflows 0.4.0, product-workflows 3.37.0). No dev-workflows value moved, but the record does not cover the merged tree. This review's gate run does (below). — **Fixed: the verification record's §10**
+- **N9** (`feature-gaps-review.md:169`). IMP-G1's heading says "Resolved by dev-workflows 4.32.0", but its *Current state* line still says "no spec … no plan, no branch/commit". — **Fixed alongside dev-workflows 4.33.0**
 
 ## Design points verified as implemented faithfully
 

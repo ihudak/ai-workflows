@@ -2347,7 +2347,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `prd-proposal-band-rendering-precision` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B13 — MINOR — The fix-cycle overlap read is too narrow: it misses imported rules and new outcomes added to an existing trigger — **Fixed in workflows-core 1.51.0 / product-workflows 3.42.0 / dev-workflows 4.33.0 (to-fix PR1), parts (1) and (2)**
+### FBB-B13 — MINOR — The fix-cycle overlap read is too narrow: it misses imported rules and new outcomes added to an existing trigger — **Fixed in workflows-core 1.51.0 / product-workflows 3.42.0 / dev-workflows 4.34.0 (to-fix PR1), parts (1) and (2)**
 - **Where:** `plugins/workflows-core/references/escalation-rules.md:570-606` (*An inline fix is read against what it overlaps*). It reads requirements "whose trigger, precondition, state or figure overlaps"; it lists no importers-by-reference and no outcome-set enumeration. `plugins/workflows-core/references/pre-lint.md:76-83` (the spec block checks only headings, ID contiguity and the open-question count).
 - **What is wrong:** Three `/specify` runs on this PRD spent their review cap on one defect class. In the first, a criterion imports "every rule of a change", so the changed rule reaches `POST`. In the second, a new outcome is added to a trigger's implicit outcome set, but sibling criteria keep their old wording. Neither case reads as an overlap. No deterministic check of category coverage or required inputs exists either.
 - **Failure scenario:** The re-review finds BLOCKERs the fix or the draft itself wrote. The cap is spent, so the spec ships under unreviewed manual notes.
