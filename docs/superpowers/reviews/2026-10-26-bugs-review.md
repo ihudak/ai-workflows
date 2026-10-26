@@ -609,7 +609,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### CORE-B13 — NIT — `handoff/code-scanner.md` gives `REPO_MISSING` a narrower meaning than the agent returns it for
+### CORE-B13 — NIT — `handoff/code-scanner.md` gives `REPO_MISSING` a narrower meaning than the agent returns it for — **Fixed in workflows-core 1.56.0 (batch B18)**
 - **Where:** `plugins/workflows-core/references/handoff/code-scanner.md:68`; contrast `plugins/workflows-core/agents/code-scanner.md:36-41` and `plugins/workflows-core/references/escalation-rules.md` § *Repo missing (after resolution)*
 - **What is wrong:** the handoff's status table says `REPO_MISSING` means "`repo_path` does not exist". The agent also returns it when the clone's `origin` slug does not match `repo_url_slug` ("On mismatch, return `status: REPO_MISSING` with a note naming both slugs"), and escalation-rules relies on that second case: "*Specify a different absolute path for this repo* is the option that resolves the second case". A caller that reads only the handoff, as `/docs-audit` does ("`workflows-core:handoff/code-scanner` fixes six"), reports an existing directory as missing. The agent also runs the slug check (`git -C <repo_path> remote get-url origin`) before its Process step 1 checks that the directory exists, and does not say what happens when there is no `origin`.
 - **Failure scenario:** a repo mounted under a fork name or a renamed origin returns `REPO_MISSING`. A handoff-driven caller tells the user the path does not exist when it does.
@@ -2264,7 +2264,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `BOOK-2-02-prd-ground-repo-instruction-files-as-docs` in F3
 - **Confidence:** high
 
-### FBA-B8 — MINOR — `grounding-format` §3 has no verdict rule for a premise that is vacuously true because its surface does not exist
+### FBA-B8 — MINOR — `grounding-format` §3 has no verdict rule for a premise that is vacuously true because its surface does not exist — **Fixed in workflows-core 1.56.0 (batch B18)**
 - **Where:** `plugins/workflows-core/references/grounding-format.md:399-410` (verdict table), `:442-479`
 - **What is wrong:** `AMENDED` is "Partly true; the finding states the correction" and `REWRITTEN` is "The premise is materially wrong". Nothing covers a rule about a surface the pinned commit lacks ("a not-for-sale book is never suggested" where no suggestions exist). The later *A claim that restricts a value* subsection does not cover it either.
 - **Failure scenario:** On BOOK-2-02, `code-grounder` classed BR#13, 14, 17 and 18 all `AMENDED`, while the blind derive classed 13/14 `AMENDED` and 17/18 `REWRITTEN`. The compare `contradict` branch then rewrote 17/18, so one corpus carries two verdicts for the same shape of premise, decided by which side ran last.
@@ -2293,7 +2293,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `prd-proposal-profile-not-committed` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B2 — MINOR — `consumed_by` is single-valued, so `/specify` overwrites the ARD's consumption record
+### FBB-B2 — MINOR — `consumed_by` is single-valued, so `/specify` overwrites the ARD's consumption record — **Fixed in workflows-core 1.56.0 / product-workflows 3.46.0 (batch B18)**
 - **Where:** `plugins/workflows-core/references/grounding-format.md:57` ("one of `PRD | ARD | specification | none`"), `:86`; `plugins/product-workflows/commands/specify.md:271` ("write `consumed_by: specification` back there").
 - **What is wrong:** A finding the ARD drew on and the spec then drew on loses `ARD`. The route's "nothing was lost" tracking for the earlier consumer then cannot be checked. Nothing states that the overwrite is intended.
 - **Failure scenario:** On the live run, nine `[CG#n]` went from `ARD` to `specification`.
@@ -2302,7 +2302,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `specify-consumed-by-overwrites-provenance` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B3 — MINOR — The pre-lint placeholder scan flags literal code, markup and display formats, even in fenced blocks
+### FBB-B3 — MINOR — The pre-lint placeholder scan flags literal code, markup and display formats, even in fenced blocks — **Fixed in workflows-core 1.56.0 (batch B18)**
 - **Where:** `plugins/workflows-core/references/pre-lint.md:18-26` (Universal check 1; it has no fenced-block or inline-code exclusion, while the auto-link check at `:44` has one).
 - **What is wrong:** `<fieldset>`, `EventEmitter<number>`, `(<n> ratings)` and a lowercase `<b>` fixture are all BLOCKER "placeholders". In particular, a fenced code block that *is* the design's decision cannot reach zero BLOCKERs.
 - **Failure scenario:** A frontend `/design` or `/specify` run must reword correct content around the regex, or label false positives by hand.
@@ -2311,7 +2311,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `specify-pre-lint-placeholder-literal-format`, `specify-pre-lint-flags-markup-fixture`, `design-pre-lint-placeholder-flags-code` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B4 — MINOR — `/create-prd`'s own route template fails its own pre-lint
+### FBB-B4 — MINOR — `/create-prd`'s own route template fails its own pre-lint — **Fixed in product-workflows 3.46.0 (batch B18)**
 - **Where:** `plugins/product-workflows/commands/create-prd.md:648`, `:704`, `:915` (`/product-workflows:brd-reconcile <SLICE-KEY> @<review-file>` is to be written into `prd.md`); `pre-lint.md:18` (placeholder regex), `:44-45` (inline code is not exempt from the auto-link grep).
 - **What is wrong:** When the instructed route string is written into the PRD, it trips two BLOCKERs: `<review-file>` is read as a placeholder, and the slice key in inline code is read as an auto-link.
 - **Failure scenario:** On the BRD route, a contradiction with a `[CD#n]` is recorded, pre-lint blocks it, and the run drops the exact command.
@@ -2320,7 +2320,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `create-prd-route-template-fails-pre-lint` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B5 — MINOR — `prd-format` does not say how `[AC#N]` are grouped, and the natural reading trips the duplicate-id BLOCKER
+### FBB-B5 — MINOR — `prd-format` does not say how `[AC#N]` are grouped, and the natural reading trips the duplicate-id BLOCKER — **Fixed in workflows-core 1.56.0 (batch B18)**
 - **Where:** `plugins/workflows-core/references/prd-format.md:139` ("`[AC#N]` under each story").
 - **What is wrong:** Repeating the `### [US#N]:` headings under `## Acceptance Criteria` defines each story twice.
 - **Failure scenario:** The pre-lint duplicate-id check raises a BLOCKER, and the fix (a bold `**[US#N] title**` label) can be found only by reading another PRD.
@@ -2355,7 +2355,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Suggested fix:** (1) Widen the overlap set to cover importers and the rules they import. (2) Add an outcome-set read (per trigger, list every outcome and check that each has a criterion and a stated precedence) at the Stage 4 gate, before the first review and after the fix cycle. (3) Add an advisory to pre-lint's spec block that lists cross-criterion imports, and add per-AC Happy-path and Negative coverage checks.
 - **Source:** feedback `specify-fix-cycle-unverified-overlaps`, `specify-overlap-read-misses-inherited-rules`, `specify-precedence-and-inheritance-playback`, `specify-new-outcome-siblings-unqualified` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
-- **Part (3), not in that fix — left for batch B18 (pre-lint):** a pre-lint list of cross-criterion imports would not have caught the measured case, whose import named no id ("under every rule of a change in this story"), so it is dropped; the per-AC Happy-path and Negative coverage checks are a coverage check, not an overlap read, and belong with pre-lint's other spec checks.
+- **Part (3), not in that fix — left for batch B18 (pre-lint):** a pre-lint list of cross-criterion imports would not have caught the measured case, whose import named no id ("under every rule of a change in this story"), so it is dropped; the per-AC Happy-path and Negative coverage checks are a coverage check, not an overlap read, and belong with pre-lint's other spec checks. **Part (3) fixed in workflows-core 1.56.0 (batch B18).**
 
 ### FBB-B15 — MINOR — The version line after a verdict names no requirement whose Rule changed after the verdict — **Fixed in workflows-core 1.52.0 (batch B16)**
 - **Where:** `plugins/workflows-core/references/escalation-rules.md:444-460` (*A recorded verdict names the version it was taken against*: "names the edits", with no requirement to list changed `[AD#N]`/contract rows or `[Uxx] [ACxx]` ids apart from rewording); `plugins/product-workflows/commands/create-ard.md:712`; `/specify` Phase 6; `/design`.
@@ -2375,7 +2375,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `epics-keep-whole-asked-after-writer-splits` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B18 — MINOR — `code-scanner` line numbers are not validated
+### FBB-B18 — MINOR — `code-scanner` line numbers are not validated — **Fixed in workflows-core 1.56.0 (batch B18)**
 - **Where:** `plugins/workflows-core/agents/code-scanner.md:63` (`lines` come from grep hits); no post-scan bound check anywhere.
 - **What is wrong:** The scan cited lines 376–382 of a 21-line file. The scanner apparently numbered lines across a concatenated read, and nothing catches it.
 - **Failure scenario:** Invented `file:line` evidence reaches `epic-writer` and `epic-reviewer`. The orchestrator stripped every line number, losing the valid ones too.
@@ -2384,7 +2384,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `epics-code-scanner-line-numbers-out-of-range` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B19 — MINOR — The pre-lint auto-link branches leave a bare specs key in limbo, and `epic-writer` writes keys bare
+### FBB-B19 — MINOR — The pre-lint auto-link branches leave a bare specs key in limbo, and `epic-writer` writes keys bare — **Fixed in workflows-core 1.56.0 / product-workflows 3.46.0 (batch B18)**
 - **Where:** `plugins/workflows-core/references/pre-lint.md:44-50`. Branch 2 says "confirm the key with the author before wrapping"; a specs-tree key is neither a tracker ticket nor a standard. `plugins/product-workflows/agents/epic-writer.md` wraps only `Parent PRD` and `Consumes` keys (`:103`, `:113`).
 - **What is wrong:** Every sibling-Epic or slice key `epic-writer` writes in prose is a BLOCKER that needs author confirmation, although `[[KEY]]` is the specs tree's required traceability form.
 - **Evidence:** I read both files.

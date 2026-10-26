@@ -117,6 +117,8 @@ kept_whole: <only where the scope keeps this Epic whole over size_limit, or the 
 
 Create the output directory if missing — your `Write` tool auto-creates parent directories (no shell). Write every Epic file before proceeding to the downstream clarification / style / review phases.
 
+**Every specs-tree key you write in an Epic's body is a wikilink** — `[[<KEY>]]`, a sibling Epic, the parent PRD, a slice or any other folder under `specifications/` — never bare and never in inline code. `workflows-core:pre-lint`'s auto-link check flags a bare key as a BLOCKER, and the `[[KEY]]` form is the specs tree's own traceability form. The frontmatter's `key:` stays bare.
+
 Traceability: every claim in each Epic must be traceable to the handoff `folder_read` (key + which item type — PRD goal, existing Epic summary, Story theme) or `code_scanner_outputs` (`evidence.path` + symbols). Do not invent content the sources don't contain. `docs_grounding` (when present) is a **consistency reference** — align terminology and avoid contradicting shipped behavior with it — but it is never itself a source of new Epic claims; every Epic claim still traces to `folder_read` or `code_scanner_outputs`.
 
 **Write restrictions** (enforced by invariants):

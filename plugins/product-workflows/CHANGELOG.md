@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.46.0] — 2026-10-26
+
+Take with `workflows-core` 1.56.0 (its `consumed_by` list, `baselines.md` layout and scanner coupling field).
+
+### Changed
+- **`/create-prd`, `/update-prd`, `/create-ard` and `/specify` add their name to `consumed_by`**, beside any earlier consumer, and the decision register's field follows the same rule, save its own return to `none` when a decision's position is replaced (FBB-B2).
+- **`/prd-ground` writes each `baselines.md` entry in `grounding-format` §4's layout**, and `code-grounder` and `grounding-verifier` both apply `grounding-format` §3's rule for a premise restricting a surface the pinned commit lacks (FBB-B40, FBA-B8).
+- **`/specify` asks `code-scanner` for dependency coupling** and checks every fault-isolation test case against it before playing it back (FBA-G5).
+- **`/create-prd` writes the route to the customer into `prd.md` as the commands alone and the slice's wikilink**, never the template with its `<review-file>` slot and a key in inline code, which pre-lint blocked (FBB-B4).
+- **`epic-writer` wikilinks every specs-tree key in an Epic's body**, and `/create-ard` wraps a BRD key that resolves in this specs tree as `[[<BRD-KEY>]]`, the specs-tree branch pre-lint now has, where it had left it bare; one that does not resolve stays as written and is reported (FBB-B19).
+
 ## [3.45.1] — 2026-10-26
 
 ### Changed

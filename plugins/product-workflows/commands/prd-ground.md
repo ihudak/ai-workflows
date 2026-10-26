@@ -894,7 +894,8 @@ the tree would pin new findings to a commit the repository has left.
 
 **Hold one dated `grounding/baselines.md` entry per repository for Phase 8 to append** — **except under `--no-code`, which writes no baseline entry at all** (stated in full above; repeated here because this is the instruction it excepts, and a reader who arrives at an unconditional imperative does not go looking for its exception):
 the repository, by the slug `workflows-core:grounding-format` §4 step 1 fixes, the pinned commit,
-the verification result, and the `[CG#n]` id assigned above — the same
+the verification result, and the `[CG#n]` id assigned above, written as the one block that step's
+layout fixes (`date`, `repo`, `commit`, `integrity`, `finding`) and no other shape — the same
 three commands are what the customer's own reviewer re-runs later against their own checkout.
 **This phase writes nothing to that file.** A pin is recorded together with the findings it pins,
 in Phase 8, and never before them: every stop between here and Phase 8 — Phase 5's and Phase 7's —

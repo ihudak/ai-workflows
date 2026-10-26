@@ -24,6 +24,18 @@ ID this run introduced, never one the artifact already carried; delete a stray p
    `<the ISBN>` in an API template — `?isbn=<the ISBN>`, the notation an ARD's Rule and an Epic's
    criteria use for a request's parameter — which this pattern leaves alone, its class holding no
    capital letter; the absent `:` keeps a markdown autolink (`<https://…>`) out as well.
+   **Inside code, the `<…>` half reads only what code cannot be.** Code is literal by the author's
+   own markup — `<fieldset>`, `EventEmitter<number>`, a `<b>` fixture, a design's decision written as
+   a code block — so: a `<…>` hit inside a **fenced block** is discarded; one inside an **inline code
+   span** is discarded where its content is a single token (`<fieldset>`, `<n>`) and kept where it
+   holds a space — `` `<path or glob>` `` is a template slot left unfilled, the shape `design-format`'s
+   own *Pieces* template writes, and markup or a generic type never holds one. **`TBD`, `TODO`,
+   `FIXME` and `XXX` are flagged everywhere**, code included: a `// TODO` in a design's code block is
+   work left undone. Without the fenced-block exclusion a block that *is* the decision could never
+   reach zero BLOCKERs. **A display format with a variable part** — a count in a label, a parameter
+   in a URL — goes in inline code with a one-token slot (`` `(<n> ratings)` ``) or names the variable
+   in words ("the rating count in parentheses"); bare in prose, it reads as a placeholder and is
+   flagged.
 2. **Identifier integrity** — for each ID series the artifact uses (below), the numbers form a
    contiguous run from the scheme's base with no duplicates. A duplicate → BLOCKER; a gap → MINOR.
 3. **Required-section presence** — every mandatory heading listed for the artifact is present
@@ -43,11 +55,12 @@ key; scanning the whole file reported that line on every Epic of a live run.
 
 Discard a hit ONLY when it is a deliberate tracker reference: inside a wikilink (`[[KEY-123]]`), inside
 a markdown link (link text or URL), or inside a fenced code block. Inline code (`` `KEY-123` ``) is NOT excluded and IS flagged.
-Classify every surviving hit into exactly one of three branches, and name the branch in the finding — the taxonomy is not exhaustive by assumption, so a hit that fits none of the first two belongs in the third:
+Classify every surviving hit into exactly one of four branches, and name the branch in the finding — the taxonomy is not exhaustive by assumption, so a hit that fits none of the first three belongs in the fourth:
 
-1. **A requirement ID** (`US`/`AC`/`SM`/`SMC`/`UC`/`FR`/`AD` prefix) → **BLOCKER**; convert it to `[PREFIX#N]`. This branch alone is mechanical, so inline-fix it under the standard pre-lint contract.
-2. **A real tracker ticket** (a key in a project that actually exists) → **BLOCKER**; wrap it as `[[KEY-123]]` so a tracker and a wiki-style importer both read it as the deliberate reference it is. Not mechanical — confirm the key with the author before wrapping.
-3. **Neither — a standards, protocol, or algorithm reference** such as `ISO-8601`, `RFC-8446`, `TLS-13`, `SHA-256`, or `HTTP-2` → **MINOR**; leave the token **exactly as written** and report it. It is correct prose that happens to match the grep, so there is nothing in the artifact to fix. NEVER rewrite it as `[PREFIX#N]` and NEVER wrap it in a wikilink — `[[ISO-8601]]` is a dangling link to a ticket that does not exist, and the inline-fix clause in branch 1 does not reach this branch. If a tracker project genuinely shares the prefix, that is the author's call to make, never the linter's.
+1. **A requirement ID** (`US`/`AC`/`SM`/`SMC`/`UC`/`FR`/`AD` prefix) → **BLOCKER**; convert it to `[PREFIX#N]`. Mechanical, so inline-fix it under the standard pre-lint contract.
+2. **A specs-tree key** → **BLOCKER**. Extend the hit over every `-<digits>` segment that follows it — the grep matches only two segments, so on `ACME-90-01` it reports `ACME-90` — and resolve that whole key with `workflows-core:addressing`'s `resolve-key` (resolution against the tree, never a pattern). `found` puts it in this branch; `absent` sends it on to branch 3 or 4; `ambiguous` is reported with the hit and never stops the run, since pre-lint never hard-stops. A key in this branch is wrapped as `[[KEY]]`, the whole key, the specs tree's own traceability form (`workflows-core:doc-structure-conventions` §1). Mechanical — the resolution is the confirmation — so inline-fix it. Where the hit sits in inline code, which a wikilink cannot enter, take the key out of the span and write the wikilink beside it.
+3. **A real tracker ticket** (a key in a project that actually exists, and resolving to no specs folder) → **BLOCKER**; wrap it as `[[KEY-123]]` so a tracker and a wiki-style importer both read it as the deliberate reference it is. Not mechanical — confirm the key with the author before wrapping.
+4. **None of these — a standards, protocol, or algorithm reference** such as `ISO-8601`, `RFC-8446`, `TLS-13`, `SHA-256`, or `HTTP-2` → **MINOR**; leave the token **exactly as written** and report it. It is correct prose that happens to match the grep, so there is nothing in the artifact to fix. NEVER rewrite it as `[PREFIX#N]` and NEVER wrap it in a wikilink — `[[ISO-8601]]` is a dangling link to a ticket that does not exist, and the inline-fix clauses of branches 1 and 2 do not reach this branch. If a tracker project genuinely shares the prefix, that is the author's call to make, never the linter's.
 
 The ARD is not itself pasted anywhere, but `epic-writer` copies its `AD` references into Epic
 drafts, which are. Catching it at the source is cheaper than catching it downstream.
@@ -56,7 +69,7 @@ drafts, which are. Catching it at the source is cheaper than catching it downstr
 
 - Required headings: `## Problem`, `## Goal`, `## Target audience`, `## User Stories`,
   `## Acceptance Criteria`, `## Scope`, `## Success Metrics`.
-- ID series: `[US#N]` (in `### [US#N]:` headings), `[AC#N]`, `[SM#N]` — each contiguous from 1, superseded and withdrawn ids counted (`prd-format.md` § Changing a requirement). An id counts where it is defined — its `### [US#N]:` heading, or the id that opens its own line or list item — and one cited anywhere else (a `Superseded by` marker, an FR's *Implements:*, a cross-reference) is a reference, never a duplicate. A mechanical fix renumbers only a duplicate this run introduced, never an id the PRD already carried.
+- ID series: `[US#N]` (in `### [US#N]:` headings), `[AC#N]`, `[SM#N]` — each contiguous from 1, superseded and withdrawn ids counted (`prd-format.md` § Changing a requirement). An id counts where it is defined — its `### [US#N]:` heading, or the id that opens its own line or list item — and one cited anywhere else (a `Superseded by` marker, an FR's *Implements:*, a cross-reference) is a reference, never a duplicate. A mechanical fix renumbers only a duplicate this run introduced, never an id the PRD already carried. **A story id repeated as a `### [US#N]:` heading under `## Acceptance Criteria` is the usual duplicate**, and renumbering is the wrong fix for it: name the fix in the finding — group that story's criteria under a `**For [US#N] — <title>**` label line (`prd-format.md` § Spine) — and, where this run wrote the heading, make it inline.
   Plus `[SMC#N]` (counter-metrics), `[UC#N]`, `[FR#N]` when those adapt-in clusters are present.
 - Report the count of `[NEEDS CLARIFICATION]` (a relentless-grilled PRD should converge to 0; >0 → MINOR).
 
@@ -81,6 +94,11 @@ drafts, which are. Catching it at the source is cheaper than catching it downstr
   contiguous within each story; `[TCxx]` (in `**[TCxx]:`) contiguous within each AC.
 - **Open-questions header consistency:** the integer in `- **Open questions**: N` must equal the
   count of `- [ ]` items in the file (`grep -cE '^[[:space:]]*- \[ \]' <file>`). Mismatch → MAJOR.
+- **Per-criterion test coverage:** under each `#### [ACxx]:`, its `**[TCxx]: <title> — <Category>:**`
+  lines carry at least one `Happy path` and at least one `Negative / boundary` category
+  (`specification-format.md` Stage 5). An `[ACxx]` missing either → MAJOR, naming the story, the
+  criterion and the category it lacks. Read the category after the last ` — ` of the line, as the
+  format writes it; a criterion with no test case at all lacks both.
 
 ## Epic — per-Epic file (`/epics`; template in `product-workflows:epic-writer`, NOT a `*-format.md` doc)
 
@@ -110,3 +128,16 @@ drafts, which are. Catching it at the source is cheaper than catching it downstr
   one-line `_N/A — <why>_`; a MODERATE+ design missing `## Seams` with no `_N/A_` → MAJOR.
 - Report the `- [ ]` count under `## Open questions` (design-format requires 0 to hand off — the
   design-reviewer enforces the hard block; pre-lint only reports it).
+- **Unscoped `kubectl` operational command** — a rollout, a rollback step or a runbook that restarts,
+  deletes or scales every workload of a kind in a namespace, where it meant one:
+
+      grep -nE 'kubectl( +(-n|--namespace)( +|=)[^ `|;&]+)* +(rollout +restart|delete|scale)( +[a-z][a-z.]*)?( +(-n|--namespace)( +|=)[^ `|;&]+| +(--all|--all-namespaces|-A)| +--replicas=[0-9]+)* *($|[`|;&#\\])' <file>
+
+  A hit is a command that names at most a resource kind and otherwise only a namespace, `--all` or a
+  replica count — no resource name, no `-l`/`--selector`, no `-f`. Each → **MAJOR**, advisory: quote
+  the line and ask the author to name the resource or a selector. Unlike the placeholder scan, this
+  one reads code blocks too, where such a command is usually written; a namespace flag before the
+  verb, a trailing `#` comment and a `\` line continuation are matched, and a command split across
+  lines with its resource on the next line is not — read those by hand. Never inline-fixed: which
+  resource was meant is the author's to say. A `kubectl get` or any other read-only verb is outside
+  the pattern.
