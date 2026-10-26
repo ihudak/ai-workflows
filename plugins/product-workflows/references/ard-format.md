@@ -23,8 +23,8 @@ kind: ard                    # what this document is
 key: <KEY>                   # this folder's key — must match the folder name
 title: <PRD or Epic title> — ARD
 scope: prd | epic
-prd: <PRD-KEY — or, on the BRD route, the slice's parent BRD key (the route resolves a PRD- slice folder and refuses a BRD- container)>
-epic: <EPIC-KEY | null — on the BRD route, always the slice's own key>
+prd: <PRD-KEY — or, on a BRD-route slice's own ARD, the slice's parent BRD key (the route refuses a BRD- container); an Epic's ARD under a slice names the slice>
+epic: <EPIC-KEY | null — on a BRD-route slice's own ARD, the slice's own key>
 area: <name | null>
 status: draft | reviewed
 grounded_repos:
@@ -33,7 +33,7 @@ components:                  # PRD level only — the components this PRD touche
   - id: <repo-slug> | <repo-slug>:<path>
     kind: code | deploy      # optional; default code
     paths: [<path>, ...]     # optional; default the id's own path, or the whole repository for a bare slug
-inherits: <path to the PRD folder's ard.md | null — on the BRD route, the parent BRD folder's ard.md>
+inherits: <path to the PRD folder's ard.md | null — on a BRD-route slice's own ARD, the parent BRD folder's ard.md; an Epic's ARD under a slice inherits the slice's ard.md>
 derived_from: <path to the PRD file, canonical prd.md — or, in a BRD folder that holds no PRD, that folder's ard-seed.md>
 ---
 ```
@@ -43,13 +43,14 @@ derived_from: <path to the PRD file, canonical prd.md — or, in a BRD folder th
 **Unknown frontmatter keys are preserved.** Every command that rewrites this file keeps fields it does not recognise, in place and unmodified — the same rule `workflows-core:prd-format` states for a PRD, and for the same reason: a user's own field must survive a run that did not author it. `workitem_key` is the documented example, and it is reserved rather than special-cased.
 
 **`prd`, `epic` and `derived_from` are widened for the BRD route, and the widening is confined to
-them.** Under `/create-ard` on the BRD route the run holds a **BRD key**, which addresses a folder under
+them.** Under `/create-ard` on the BRD route the run holds a slice's key, or an Epic's under it, which addresses a folder under
 `$SPECS_PATH` and may carry a third numeric segment (`workflows-core:addressing` §1 fixes no
 depth), so `prd` and `epic` are validated against that grammar — `^[A-Z][A-Z0-9_]*(-\d+)+$` — rather
 than any narrower form; `ard-reviewer` applies exactly this and `commands/create-ard.md` writes
-exactly this, from one resolution rather than two. `scope` follows the same pairing it always did: a
-source-owning BRD is `prd`, a slice is `epic`, because a slice sits where an Epic sits — one level
-down, inheriting its parent's `AD#N` read-only. `derived_from` names the PRD file when the folder
+exactly this. On a slice's own ARD the pairing is the one it always was: the source-owning BRD is
+`prd`, the slice is `epic`, because a slice sits where an Epic sits — one level down, inheriting its
+parent's `AD#N` read-only. On an Epic's ARD under a slice the slice is `prd` and the Epic is `epic`,
+as on any Epic-level ARD. `derived_from` names the PRD file when the folder
 holds one (the ordinary case, since this route is normally reached from
 `/create-prd` on the BRD route's own next-step offer) and the folder's `ard-seed.md` when it does not: the
 field records provenance, and naming a PRD path in a folder that holds no PRD would name a file that

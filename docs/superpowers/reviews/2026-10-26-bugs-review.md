@@ -1090,7 +1090,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 <!-- /create-ard -->
 
-### PRD2-ARD-B1 — MAJOR — An Epic-level run under a BRD slice is told to write the slice's frontmatter: `epic: <SLICE-KEY>`, `components:`, and an `inherits:` that points past the slice ARD it must inherit
+### PRD2-ARD-B1 — MAJOR — An Epic-level run under a BRD slice is told to write the slice's frontmatter: `epic: <SLICE-KEY>`, `components:`, and an `inherits:` that points past the slice ARD it must inherit — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:**
   - `plugins/product-workflows/commands/create-ard.md:386-390` (an Epic under a slice *"is the BRD route with that slice as the BRD folder and this Epic as the focus"*);
   - `:513-518` (*"a `parent:` (this folder is a slice — the only shape this route resolves …) → `prd: <parent-key>`, `epic: <SLICE-KEY>`"*);
@@ -1113,7 +1113,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-ARD-B2 — MAJOR — On a BRD slice with no `prd.md`, the ordinary state, the run passes `key: null` to `emit-auto`, `emit-cost` and `commit-artifacts`, so its cost lands in a pending file; `/create-prd` passes the slice key
+### PRD2-ARD-B2 — MAJOR — On a BRD slice with no `prd.md`, the ordinary state, the run passes `key: null` to `emit-auto`, `emit-cost` and `commit-artifacts`, so its cost lands in a pending file; `/create-prd` passes the slice key — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:** `plugins/product-workflows/commands/create-ard.md:910-918` (*"Phase 0 resolved a BRD key … the `key` passed to `emit-auto` and `emit-cost` below is that minted key when the folder holds a PRD carrying one, and `null` otherwise … The `<BRD-KEY>` is never passed as a `key`"*), against `commands/create-prd.md:890-891` (*"the run's `key` — which on the BRD route is the `<SLICE-KEY>` … so the write stays on that reference's primary tier instead of dropping to the unfiled one"*) and `workflows-core/references/cost-emission.md:599-606` (§9: when no PRD key resolves, the entry goes to `pending-<date>-<sid8>.md`).
 - **What is wrong:**
   - The paragraph predates the container refusal. Phase 0 now resolves a `PRD-` slice key, not a BRD key, and the PRD's `key` is that slice key by construction (`.claude/rules/brd-route.md`: *"The PRD's `key` is written by `/create-prd` … set to the resolved folder's own key"*).
@@ -1130,7 +1130,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-ARD-B3 — MINOR — A BRD-route refine resolves the slice's own prior ARD as read-only inherited invariants
+### PRD2-ARD-B3 — MINOR — A BRD-route refine resolves the slice's own prior ARD as read-only inherited invariants — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:**
   - `plugins/product-workflows/commands/create-ard.md:513-524` (`prd: <parent-key>`, `epic: <SLICE-KEY>`; *"`found` → inherit those `AD#N` read-only; `unmerged` → **stop**"*);
   - `workflows-core/references/ard-resolution.md:29-31` (Epic-level collection: *"the Epic folder's `ard.md` … **plus** the PRD folder's own `ard.md`"*);
@@ -1154,7 +1154,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-ARD-B5 — MINOR — Phase 7 names `/prd-proposal <PRD>` unconditionally, and it stops on arrival in the ordinary BRD state of a slice with no `prd.md`
+### PRD2-ARD-B5 — MINOR — Phase 7 names `/prd-proposal <PRD>` unconditionally, and it stops on arrival in the ordinary BRD state of a slice with no `prd.md` — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:** `plugins/product-workflows/commands/create-ard.md:866-877` (*"`/product-workflows:prd-proposal <PRD>` now prices this folder against a settled architecture … No merge wait: that command gates on `prd.md`, which this run does not write"*), against `commands/prd-proposal.md:188-194` (`PRD_PROPOSAL_NEEDS_PRD: no prd.md on any ref for <KEY>, and none in <path> either — there is nothing to estimate yet.`).
 - **What is wrong:** The paragraph concedes that the command gates on `prd.md`, yet names it on every route with no test. Phase 7's own opening precondition (`:755-772`) exists to avoid "offering … a run that stops on arrival", and it tests `prd.md` for `/epics`.
 - **Failure scenario:** On a slice with an ARD and no `prd.md`, the operator follows the prose and gets `PRD_PROPOSAL_NEEDS_PRD`.
@@ -1162,7 +1162,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-ARD-B6 — MINOR — The Epic-level array offers `/dev-workflows:design <EPIC>` without testing for the merged `specification.md` that `/design` stops without
+### PRD2-ARD-B6 — MINOR — The Epic-level array offers `/dev-workflows:design <EPIC>` without testing for the merged `specification.md` that `/design` stops without — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:** `plugins/product-workflows/commands/create-ard.md:803` (`"Hand to Dev — /dev-workflows:design <EPIC> (Dev) <merge-clause>"`), against `plugins/dev-workflows/commands/design.md:101` (`absent` (row F) → stop: `DESIGN_NO_SPEC: no specification.md on the specs repo's default branch for <ADDRESS>`). The command itself says this at `:854-855`: *"`/dev-workflows:design` … takes over a merged `specification.md` — a file this run did not write"*.
 - **What is wrong:** The Epic-level ARD is usually authored before the Epic's spec, which is the recommended next step, so the second option commonly names a run that stops on arrival.
 - **Failure scenario:** `/create-ard EPIC-…-01` runs on an Epic with no spec, and the operator picks *Hand to Dev*. `/design` stops with `DESIGN_NO_SPEC`.
@@ -1231,7 +1231,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 <!-- /specify -->
 
-### PRD2-SPEC-B1 — MAJOR — *Next Epic* loops back to Step B and Phases 3–7, skipping Phase 2.5, so the next Epic is specified and reviewed against the previous Epic's ARD
+### PRD2-SPEC-B1 — MAJOR — *Next Epic* loops back to Step B and Phases 3–7, skipping Phase 2.5, so the next Epic is specified and reviewed against the previous Epic's ARD — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:** `plugins/product-workflows/commands/specify.md:1045`; Phase 2.5 at `:769`.
 - **What is wrong:**
   - The loop says: *"on selection, set `focus_key` to the new Epic and loop back through Phase 2 Step B — whose *Gate the Epics first* gates it — → Phases 3–7 for it"*. Phase 2.5, which resolves the ARD with `<EPIC>` (`focus_key`), sits between Step B and Phase 3, and the loop does not re-enter it.
@@ -1270,7 +1270,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high (the overwrite path); medium (how much a live grill would preserve by reading the old file as material)
 
-### PRD2-SPEC-B3 — MINOR — On a BRD-route Epic run, Phase 2.5 passes `epic: <SLICE-KEY>`, so the Epic's own ARD is never resolved; the claim that "the route resolves a slice and nothing else" is false
+### PRD2-SPEC-B3 — MINOR — On a BRD-route Epic run, Phase 2.5 passes `epic: <SLICE-KEY>`, so the Epic's own ARD is never resolved; the claim that "the route resolves a slice and nothing else" is false — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:**
   - `specify.md:769` (*"On the BRD route the pair comes from `brd-link.md`'s `parent:` … the route resolves a slice and nothing else (Phase 0 step 0), so the `parent:` is always there — pass `prd: <parent-key>`, `epic: <SLICE-KEY>`"*);
   - against `:41-43` and `:259-271` (an `EPIC-` folder inside a slice **is** on the BRD route, addressed directly or set by the picker);
@@ -1289,7 +1289,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (the exact `ard-resolution` semantics for a three-level stack are not specified anywhere, which is itself the gap)
 
-### PRD2-SPEC-B4 — MINOR — The `### Next step` routes by what the address resolved, so a picker-chosen per-Epic spec is told to run `/epics <PRD>` rather than `/design <EPIC>`
+### PRD2-SPEC-B4 — MINOR — The `### Next step` routes by what the address resolved, so a picker-chosen per-Epic spec is told to run `/epics <PRD>` rather than `/design <EPIC>` — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:** `specify.md:1200` (*"**Epic-level spec** (the address resolved an `EPIC-` folder) → … `/dev-workflows:design <EPIC>` …; **PRD-level spec** (the address resolved a `PRD-` folder) → `/product-workflows:epics <PRD>`"*); also `:1208-1209`.
 - **What is wrong:** Phase 2 Step A re-points a PRD address to an Epic (single-Epic auto-select, or a picker selection; `:547-571`, `:601-606`), and the spec written is then per-Epic. The Next step tests the *address*, not `focus_key`, so it classifies that run as PRD-level.
 - **Failure scenario:**
@@ -1323,7 +1323,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (extends PRD-B2's related bullet, which misstates `/specify`'s mapping)
 - **Confidence:** high
 
-### PRD2-SPEC-B6 — MINOR — On a BRD slice with no `prd.md`, `/specify` passes key `null` to `emit-cost`/`emit-auto`, so the run's cost goes to pending although its folder exists; the paragraph still says "Phase 0 resolved a BRD key"
+### PRD2-SPEC-B6 — MINOR — On a BRD slice with no `prd.md`, `/specify` passes key `null` to `emit-cost`/`emit-auto`, so the run's cost goes to pending although its folder exists; the paragraph still says "Phase 0 resolved a BRD key" — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:** `specify.md:1079-1087`.
 - **What is wrong:**
   - The paragraph says *"Phase 0 resolved a BRD key … Any tracker identity for this work, if one exists at all, is the `key` in the PRD this BRD folder holds — glob the BRD folder's `prd.md` … that minted key when the folder holds a PRD carrying one, and `null` otherwise"*.
@@ -1345,7 +1345,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-SPEC-B8 — MINOR — The commercial step names `/prd-proposal` and "tier 4" on a BRD slice without testing for `prd.md`, though that command stops without one
+### PRD2-SPEC-B8 — MINOR — The commercial step names `/prd-proposal` and "tier 4" on a BRD slice without testing for `prd.md`, though that command stops without one — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:** `specify.md:1261-1274`.
 - **What is wrong:**
   - The step says: *"On the BRD route, where verified grounding and a settled register already exist and an `ard.md` is already in place, this specification takes the folder to tier 4 … **`/product-workflows:prd-proposal <PRD>` prices it at the tightest range the format allows** … No merge wait: that command gates on `prd.md`, which this run does not write."*
@@ -1358,7 +1358,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-SPEC-B9 — NIT — On the BRD route, the handoff always declares `<prd_dir>/decisions.md`, even where the slice holds none, so §4.1 reports a false *declaration unaccounted for*
+### PRD2-SPEC-B9 — NIT — On the BRD route, the handoff always declares `<prd_dir>/decisions.md`, even where the slice holds none, so §4.1 reports a false *declaration unaccounted for* — **Fixed in product-workflows 3.37.0 (batch B07)**
 - **Where:** `specify.md:1037` (*"and, additionally on the BRD route, `<prd_dir>/decisions.md`"*, unconditional), against `:334-336` (no `decisions.md` is an ordinary, non-stopping state) and `phase-handoff.md` §2.3 step 4 (a declared path nothing wrote and `HEAD` lacks is *"named in §4.1's *declaration unaccounted for* clause"*).
 - **What is wrong:** The grounding files are declared only *"wherever `prd_dir` holds `grounding/`"*, but the register is declared unconditionally. A slice nobody has interviewed holds no register, so the declaration names a file that does not exist.
 - **Failure scenario:** `/specify <SLICE>` runs on a ground but un-interviewed slice. The `Phase handoff:` line reports `decisions.md` as declared but not on the branch, which suggests a lost write.
