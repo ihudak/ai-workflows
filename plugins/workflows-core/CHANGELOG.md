@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.57.0] — 2026-10-26
+
+Take with `product-workflows` 3.46.0, whose consumers write `consumed_by` as the list and `baselines.md` in the layout this release fixes.
+
+### Changed
+- **`grounding-format` §2: `consumed_by` is a list each consumer adds to** — `none`, or `[PRD, ARD, specification]` in ladder order — never a value the next consumer overwrites. `/specify` replaced the ARD's stamp, so nine findings of a live run lost their record of the ARD drawing on them. A bare value already on file reads as a one-element list (FBB-B2).
+- **`grounding-format` §3: a premise that restricts a surface the pinned commit does not have is `AMENDED`**, its correction "the surface does not exist at <commit>; the rule is a requirement on new work", where §2.2's control on the absence fires — `NOT-PROVABLE` where it fails — while a premise asserting the surface exists stays `REWRITTEN`. The grounder and the blind verifier had split such premises between `AMENDED` and `REWRITTEN` (FBA-B8).
+- **`grounding-format` §4: one `baselines.md` entry layout** — `date`, `repo`, `commit`, `integrity`, `finding` — where each run improvised one that later runs parse (FBB-B40).
+- **`pre-lint`:** the placeholder scan's `<…>` half skips fenced blocks and single-token inline code, so a design's code block can reach zero BLOCKERs, while a phrase slot in inline code (`` `<path or glob>` ``) and `TODO`-style tokens anywhere are still flagged; it says how to write a display format with a variable part (FBB-B3); the auto-link check gains a specs-tree branch — the hit extended to its whole key and resolved with `resolve-key`, a found key wrapped `[[KEY]]` mechanically, never left for author confirmation, an ambiguous one reported (FBB-B19); the PRD block names the fix for a story heading repeated under `## Acceptance Criteria` (FBB-B5); the spec block checks every criterion has a Happy-path and a Negative/boundary test case (FBB-B13 part 3); and the design block flags an unscoped `kubectl rollout restart`, `delete` or `scale`, a namespace flag before the verb included (FBA-G7).
+- **`escalation-rules`' *Repo missing (after resolution)*** names the scanner's no-`origin` case beside a slug mismatch (CORE-B13).
+- **`prd-format`:** acceptance criteria are grouped under a `**For [US#N] — <title>**` label line, never a repeated story heading (FBB-B5).
+- **`code-scanner`:** it checks a directory exists before comparing its `origin` slug, and says when `REPO_MISSING` means "not the repository asked for", as the handoff now does (CORE-B13); it bounds every line number by the file's length, a coupling call's included, and drops one out of range (FBB-B18); and an optional `dependency_coupling` brief returns, per entry point, what it calls on its read and write paths (FBA-G5).
+
 ## [1.56.0] — 2026-10-26
 
 **Take with `docs-workflows` 1.24.0** (`.claude/rules/plugin-updates-coupling.md`): `/document` carries its own copy of the per-discrepancy array changed below, and `/release-notes` presents it. Post-merge review 87.3, recorded as to-fix D23 and settled with the maintainer.

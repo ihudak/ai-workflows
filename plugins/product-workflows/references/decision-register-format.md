@@ -68,7 +68,7 @@ settles: [[DEF#4]]                        # [CD#n] only, never a [VD#n]: omitted
 altitude: product | architecture | implementation
 conditional_on: <BRD-KEY>/<decision-id>   # omitted unless the decision depends on a prerequisite
 status: open | decided | reopened | superseded | withdrawn
-consumed_by: PRD | ARD | specification | none
+consumed_by: none | [<any of PRD, ARD, specification, in that order>]
 round: 2
 ```
 
@@ -85,7 +85,7 @@ round: 2
 | `altitude` | which level the decision sits at, so the spec's §7 altitude routing can send it to the right downstream artifact. **The test is that artifact**: `product` where the answer is the PRD's to state (`commands/create-prd.md`), `architecture` where it is the ARD's (`commands/create-ard.md`), `implementation` where it is the specification's (`commands/specify.md`) — the three commands that each read the register filtered on the value that is theirs. **A `[CD#n]` copies it** from what its answer answers — the held `[C]` question's own `- **Altitude:**` line, which `commands/brd-interview.md` decides by this same test when it holds the question, or an `[AS#n]`'s field — because the customer's answer carries no altitude of its own (`commands/brd-reconcile.md`, *Freeze the customer decisions*) |
 | `conditional_on` | omitted unless the decision depends on a prerequisite — §5 |
 | `status` | one of the five in §3 |
-| `consumed_by` | the same field, values, and starting-at-`none` rule as `workflows-core:grounding-format` §2, applied to a decision instead of a finding |
+| `consumed_by` | the same field, values, starting-at-`none` rule and add-never-replace rule as `workflows-core:grounding-format` §2, applied to a decision instead of a finding — save §4's return to `none` where a decision's position is replaced |
 | `round` | the interview round that produced the decision, per `references/interview-tagging.md` §5. **Omitted where the decision came from no round** — a `[CD#n]` answering an `[AS#n]` that itself carries none (§7) is the case that occurs, and inventing a value there would put it into the set `/brd-package` derives the rounds from. That is the only route to a round-less `[VD#n]`/`[CD#n]`: one taken in a round always carries it |
 
 **Which prefix a decision gets is fixed by the tag of the question it answers, not by who typed it.**

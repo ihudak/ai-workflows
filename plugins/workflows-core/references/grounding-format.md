@@ -48,13 +48,13 @@ Every finding — `[CG#n]` from `code-grounder`, `[DG#n]` from `design-grounder`
 | `prior_verdict` | *(required where `verdict` is `SUPERSEDED`, omitted otherwise)* the verdict the finding carried at the moment it was superseded — one of §3's other five, never `SUPERSEDED`. Written by whichever run marks the finding `SUPERSEDED`, in the same write, since superseding overwrites `verdict` and this is the only place the verdict survives. A finding already reading `SUPERSEDED` is never marked again, by any rule of any run, so no write can record `SUPERSEDED` here. It is history, not a second verdict: `verdict` reads `SUPERSEDED` and is the one every consumer reads |
 | `evidence` | a `file:line` list, or — when the verdict is `NOT-PROVABLE` or the finding asserts an absence — an explicit statement of why no evidence exists rather than an empty field |
 | `control` | *(required wherever the finding asserts an absence — the second half of `evidence`'s own disjunction, not the whole of it: a `NOT-PROVABLE` finding that asserts no absence owes `evidence` and no control; omitted otherwise)* the **positive control** on the search, or the reading, that reached that absence: the same method, run against a case of the same kind known to be present in this same source, and what it returned (§2.2) |
-| `commit` | the pinned commit SHA the finding was checked against (`baseline-integrity`, §4); **absent on a `[DG#n]` of class 1, 2 or 3**, which is settled from the frame set and the requirement text alone (§6) and is pinned to no commit. A class-4 `[DG#n]` carries the cited `[CG#n]`'s own |
+| `commit` | the pinned commit's full SHA, as `rev-parse HEAD` prints it, the finding was checked against (`baseline-integrity`, §4); **absent on a `[DG#n]` of class 1, 2 or 3**, which is settled from the frame set and the requirement text alone (§6) and is pinned to no commit. A class-4 `[DG#n]` carries the cited `[CG#n]`'s own |
 | `altitude` | one of `product \| architecture \| implementation` |
 | `horizon` | one of `current \| will-change` (§5), naming the prerequisite decision when `will-change` |
 | `class` | *(design-grounding only)* one of the four `[DG#n]` reconciliation classes defined in §6; absent on a `[CG#n]` |
 | `cites` | *(design-grounding only)* a `[CG#n]` id; required when `class` is the fourth (§6), **omitted** on a `[DG#n]` of class 1, 2 or 3 (§2.1 — never written empty), absent on a `[CG#n]` |
 | `prerequisite` | the prerequisite decision this finding's horizon turns on; **required when `horizon` is `will-change`, omitted otherwise** (§5). Both grounder agents emit it, so it is a field of the record rather than a phrase inside `horizon`'s |
-| `consumed_by` | one of `PRD \| ARD \| specification \| none` — which downstream artifact has actually drawn on this finding; `none` until something has |
+| `consumed_by` | `none`, or the list of the downstream artifacts that have actually drawn on this finding — any of `PRD`, `ARD`, `specification`, each at most once; `none` until something has |
 
 `class` and `cites` apply only to `[DG#n]` findings — a `[CG#n]` finding carries neither. See §6 for
 what the four classes mean and why the fourth requires a citation; this table fixes only the field
@@ -84,8 +84,17 @@ was searched or read; `control` (§2.2) is whether that search or reading could 
 an absence claim owes both — the first without the second is the reason this field set gained a row.
 
 **`consumed_by` starts at `none` and is written later**, by whichever downstream authoring command
-actually cites the finding — this file fixes only that the field exists and what its values mean,
-not when a caller updates it.
+actually cites the finding — this file fixes that the field exists, what its values mean and how a
+write combines with what is there, not when a caller updates it. **A command that sets
+`consumed_by: <X>` adds `<X>` to the list, and never removes another consumer's name** — the one
+reset being a register's own, where a decision's position is replaced and its `consumed_by` returns
+to `none` (`product-workflows:decision-register-format` §4): an
+architecture decision and a specification can both draw on one finding, and a single value written
+by the later of the two erased the earlier — nine `[CG#n]` of a live run went from `ARD` to
+`specification`, leaving the ARD's consumption uncheckable. A value already on file as one bare name
+(`consumed_by: ARD`, the form before the list) reads as a one-element list, and the next write
+rewrites it in the list form. A reader asking whether something is still unconsumed tests for
+`none`, as before; one asking whether a given artifact drew on it tests membership.
 
 ### 2.1 How a finding is serialised, and why exactly one spelling is canonical
 
@@ -130,6 +139,10 @@ So, canonically:
   holds, its earlier `outcome` included, the run reporting that finding as not verified by it (§8).
   Writing that `contradict` beside the verdict it contradicts would be exactly the live disagreement
   this bullet forbids.
+- **`consumed_by` is written `none`, or as a flow list in the ladder's order** — `[PRD]`,
+  `[ARD, specification]`, `[PRD, ARD, specification]` — with no duplicate and nothing else in it,
+  whatever order the stamps came in, so two runs that drew on a finding in different orders write the
+  same bytes.
 - **A field that does not apply is omitted, never written empty** — `class` and `cites` on a
   `[CG#n]`, `cites` on a `[DG#n]` of class 1, 2 or 3, `commit` on a `[DG#n]` of class 1, 2 or 3,
   `prerequisite` on any finding whose `horizon` is `current`, `prior_verdict` on any finding whose
@@ -146,7 +159,7 @@ So, canonically:
   evidence:
     - scheduler/jobs.py:88
     - scheduler/config/nightly.yaml:12
-  commit: 4f1c9ab
+  commit: 4f1c9ab0d2e7c35a91b8f6e04c2d7a5b9e13f860
   altitude: implementation
   horizon: current
   consumed_by: none
@@ -277,7 +290,7 @@ vocabulary and the exact rule.
     - no column, association or writer under app/models matches approver attribution
     - searched `git grep -n 'approv' <commit> -- app/models app/services`
   control: same grep shape for `submitted` attribution, which BR#9 settled as written — app/models/request.rb:41
-  commit: 4f1c9ab
+  commit: 4f1c9ab0d2e7c35a91b8f6e04c2d7a5b9e13f860
   altitude: implementation
   horizon: current
   consumed_by: none
@@ -297,7 +310,7 @@ re-runs it and fails too **agrees** (§8):
     - no column, association or writer under app/models matches approver attribution
     - searched `git grep -n 'approv' <commit> -- app/models app/services`
   control: same grep shape for `submitted` attribution, which BR#9 settled as written — no match
-  commit: 4f1c9ab
+  commit: 4f1c9ab0d2e7c35a91b8f6e04c2d7a5b9e13f860
   altitude: implementation
   horizon: current
   consumed_by: none
@@ -429,7 +442,9 @@ searched, and why it fell short of settling the claim.
 ### Why `FALSE-FRIEND` earns its own verdict
 
 An absent mechanism is easy to be honest about — nothing is there, so the finding says
-`NOT-PROVABLE` or `REWRITTEN` and a careful reader keeps looking if they need to. A
+`NOT-PROVABLE` or `REWRITTEN` (or `AMENDED`, for a rule that only restricts a surface the commit
+lacks — *A rule about a surface the commit does not have*, below) and a careful reader keeps looking
+if they need to. A
 **plausibly-named** constant, column, or field is more dangerous than an absent one, because it
 gives the reader a place to stop. A configuration key called `AUTO_APPROVE_THRESHOLD` reads as
 though it supports a BRD premise about automatic approval; if it is in fact unused, or gates an
@@ -478,6 +493,31 @@ leaves the value out builds the record without calling the setter and stores the
 outside the range. The guard is real; it is not the whole answer, and a grounder and a blind
 re-derivation that both read the line showing the gap can both cite the guard.
 
+### A rule about a surface the commit does not have
+
+**A premise that restricts or conditions a surface without asserting that the surface exists is
+`AMENDED` where the pinned commit has no such surface**, with the correction `the surface does not
+exist at <commit>; the rule is a requirement on new work`. "A not-for-sale book is never suggested",
+ground against a commit with no suggestions feature, is the case: nothing violates it, so it is not
+materially wrong, and nothing enforces it, so it is not `CONFIRMED`; it is true only vacuously,
+which is the partial truth `AMENDED` records.
+
+Two limits hold it in place:
+
+- **The absence is an absence claim and owes §2.2's control.** Where the control fires, the verdict
+  is `AMENDED` as above; where it fails, the search was never shown to work, and the verdict is
+  `NOT-PROVABLE` with the failed control recorded, exactly as §2.2 says for any absence.
+- **A premise that asserts the surface exists is not this case.** "The nightly export runs at 02:00
+  UTC", ground against a commit with no export, states that something is there, and it is not: that
+  premise is materially wrong and stays `REWRITTEN`. The test is the premise's own verb — one that
+  says how a surface behaves where it occurs restricts it; one that says it occurs asserts it.
+
+The worked pair is the reason for this subsection: of four such restricting premises on one live
+run, the grounder classed all four `AMENDED` while the blind re-derivation classed two `AMENDED` and
+two `REWRITTEN`, and §8's `contradict` branch rewrote the two — so one corpus carried two verdicts
+for one shape of premise, decided by which side ran last. `code-grounder` and `grounding-verifier`
+both apply this rule as written here, so the two sides agree on it rather than racing.
+
 ## 4. Baseline integrity
 
 Before any finding is written, every repository grounding reads is pinned and proven clean **in
@@ -507,6 +547,25 @@ git -C "<repo>" status --porcelain                  # any entry -> line-count co
    repository after the clone moves, and two entries name one repository exactly where their slugs
    are equal. Every reader that compares entries, or an entry with a resolved repository, compares
    slugs.
+
+   **An entry is one block, in exactly this layout**, appended at the end of the file and never
+   edited once written — later runs and `/brd-interview` parse it, and a layout each run improvises
+   is a pin a reader misparses:
+
+   ```
+   - date: 2026-10-26
+     repo: bookstore-api
+     commit: 4f1c9ab0d2e7c35a91b8f6e04c2d7a5b9e13f860
+     integrity: clean
+     finding: [CG#3]
+   ```
+
+   `date` is the run's date; `repo` the slug above; `commit` the full SHA `rev-parse HEAD` printed,
+   never abbreviated — the pin itself, which the baseline finding's own `commit` field records too,
+   so a reader comparing the two compares equal strings; `integrity` is `clean`, or one line saying what steps 2–3 reported; and `finding`
+   is the baseline `[CG#n]` minted for this pin (§4.1). Keys in this order, one space after each
+   colon, as §2.1 fixes for a finding. An entry written before this layout existed is read by these
+   fields wherever it carries them, and reported where it lacks one, never rewritten.
 2. **`diff --ignore-cr-at-eol --stat`** must produce no output. `--ignore-cr-at-eol` is not
    optional: without it, a checkout can report hundreds of modified files that differ only in line
    endings, and a gate that fires on every line-ending checkout trains its own operators to ignore

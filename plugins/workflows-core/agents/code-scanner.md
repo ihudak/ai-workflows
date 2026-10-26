@@ -30,21 +30,24 @@ refresh:
   pull: true   # default true — capability scans target present-day code and want the
                # default-branch tip. (Asymmetry with diff-summarizer, which keeps
                # pull: false because it targets historical merged commits.)
+dependency_coupling: false   # optional; true asks for step 6's coupling list
 ```
 
 Refuse to run without `repo_path`, at least one entry in `capability_themes`, and a `context`.
-
-When `repo_url_slug` is provided, before scanning run
-`git -C <repo_path> remote get-url origin`, strip any trailing `/` and then a trailing `.git`, and compare
-the URL's last path segment — what follows its last `/` or `:` — to `repo_url_slug`. On mismatch, return
-`status: REPO_MISSING` with a note naming both slugs. When `repo_url_slug` is
-absent, trust `repo_path` as given.
 
 ## Process
 
 **Every command names `repo_path`.** Your Bash tool starts every call in the session's directory — where the dispatching command stands, which need not be `repo_path` — and a `cd` does not persist between calls, so a bare `git` reads and moves the session's repository instead of this one. Write every command against the repository as `git -C "<repo_path>" …`, with an absolute path, or as a subshell `(builtin cd "<repo_path>" >/dev/null && …)` inside one Bash call — `builtin cd`, its output discarded, since your Bash tool's shell carries the user's shell functions and aliases, and a `cd` of theirs would otherwise run in its place and could print into what you read; and give every `Grep` and `Glob` call `repo_path` as its `path`, since without one they search the session's directory too.
 
-1. **Verify repo exists.** If `repo_path` is not a directory, return `status: REPO_MISSING`.
+1. **Verify repo exists.** If `repo_path` is not a directory, return `status: REPO_MISSING`, with a note saying so.
+
+   **Then, when `repo_url_slug` is provided, verify it is the expected repository.** Run
+   `git -C "<repo_path>" remote get-url origin`, strip any trailing `/` and then a trailing `.git`, and compare
+   the URL's last path segment — what follows its last `/` or `:` — to `repo_url_slug`. On mismatch, return
+   `status: REPO_MISSING` with a note naming both slugs; where the clone has no `origin`, return it with a note
+   saying the clone has no `origin` to compare. Either way the directory exists, and the note says so, since
+   `REPO_MISSING` here means "not the repository asked for", not "not there". When `repo_url_slug` is
+   absent, trust `repo_path` as given.
 
 2. **Prep step.**
 
@@ -60,7 +63,7 @@ absent, trust `repo_path` as given.
    - Run `grep` / `glob` / file reads against `search_hints.keywords`, `search_hints.symbols`, and `search_hints.paths`.
    - Augment hints with conservative derivations from the theme text itself (tokenise the theme into 2–3 keywords if `search_hints.keywords` is thin).
    - Collect file paths and top-level symbols (class names, function names, exported identifiers) that match.
-   - Record the 1-based line numbers of grep hits in that evidence entry's `lines` — both the `Grep` tool and `git grep -n <ref>` return them, so no extra command is needed. Leave `lines` **absent** for an entry found by a path glob or a whole-file read; never invent a line number.
+   - Record the 1-based line numbers of grep hits in that evidence entry's `lines` — both the `Grep` tool and `git grep -n <ref>` return them, so no extra command is needed. Take each number from the hit's own file, as the search printed it — never count lines across several files read together, which numbers a line by its place in the concatenation. Leave `lines` **absent** for an entry found by a path glob or a whole-file read; never invent a line number.
 
 4. **Read top candidates.** For each theme, open the head (~80 lines) of the top 2–3 matching files — with `Read` on the working tree, at `<repo_path>/<path>`, or `git -C "<repo_path>" show <scanned_ref>:<path>` in ref mode. Use that to characterise the capability in a one-line `note`.
 
@@ -70,7 +73,11 @@ absent, trust `repo_path` as given.
    - `absent` — no matching code after all searches; the theme is a pure gap.
    - `error` — a search step failed (permission error on a sub-tree, file-read error, timeout). Record the reason and move on; do NOT abort the whole scan.
 
-6. **Write the reusable/gap prose.**
+6. **Dependency coupling — only where the brief sets `dependency_coupling: true`.** For each endpoint, handler or public entry point the scan found for a theme, list the other services or modules it calls, separately on its read path and on its write path, each with the `path` and `lines` that show the call. A caller writes fault-isolation test cases — one dependency failing while another succeeds — from this list, and such a case is invalid wherever the "other" dependency itself calls the failing one. List what the code shows and nothing more; where the scan cannot tell which path a call is on, list it under both and say so.
+
+7. **Bound every line number before returning.** For each evidence entry carrying `lines`, and each `dependency_coupling` call carrying them, count the file's lines at `scanned_ref` — `wc -l < "<repo_path>/<path>"` on the working tree, or `git -C "<repo_path>" show <scanned_ref>:<path> | wc -l` in ref mode, adding one where the file does not end in a newline — and drop every value below 1 or above that count. Where any value was dropped, add to that evidence entry's `note` `(line numbers out of range dropped: <values>)` — or, on a coupling call, the same words in a `note` beside its `lines`, and where none survive, leave `lines` absent. A line number a reader cannot open is worse than none: it is cited as evidence downstream, and a reader who finds one wrong distrusts the others.
+
+8. **Write the reusable/gap prose.**
    - `reusable_components` — 1–2 paragraphs naming the existing code the new Epic can build on (by file and symbol). Anchor every mention in the `capability_map` evidence.
    - `gap_summary` — 1–2 paragraphs on what needs to be implemented from scratch. Distinguish "partial — finish the remaining half" from "absent — build the whole thing".
 
@@ -99,6 +106,11 @@ capability_map:
     gap_summary: |
       <only when classification == partial or absent — what's missing>
     error: <only when classification == error — one-line reason>
+dependency_coupling:            # only where the brief set dependency_coupling: true (step 6)
+  - entry_point: <endpoint, handler or public symbol>
+    path:        <relative to repo>
+    on_read:     [{ calls: <service or module>, path: <file>, lines: [<n>] }]
+    on_write:    [{ calls: <service or module>, path: <file>, lines: [<n>] }]
 reusable_components: |
   <1–2 paragraphs: what existing code the new Epic can build on>
 gap_summary: |

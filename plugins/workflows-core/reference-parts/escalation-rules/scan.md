@@ -218,9 +218,10 @@ outcome the command cannot deliver.
 Used when a diff-summarizer or code-scanner batch returns `REPO_MISSING` at
 Phase 5 after Phase 4 already checked, in `/idea` Phase 2.6, which has no
 earlier check, and in `/implement` Phase 1.7. `REPO_MISSING` means `repo_path`
-is not a directory **or** the clone's `origin` slug does not match
-`repo_url_slug`; *Specify a different absolute path for this repo* is the
-option that resolves the second case, which the previous list had no answer
+is not a directory, **or** the clone's `origin` slug does not match
+`repo_url_slug`, or it has no `origin` to compare — the agent's note says which,
+and in the last two the directory exists; *Specify a different absolute path for this repo* is the
+option that resolves those two, which the previous list had no answer
 for at all. Present this choice per affected repo. No `(Recommended)` marker —
 which option is right depends entirely on why the repo is absent.
 
