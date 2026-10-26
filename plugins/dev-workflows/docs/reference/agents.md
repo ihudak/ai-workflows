@@ -4,12 +4,12 @@
 
 ## Reviewers and planners
 
-Opus-gated quality gates, plus the lighter-weight planners that feed or precede them.
+Opus-gated quality gates, plus the lighter-weight planners that feed or precede them. `code-review` reviews a change whole, or — where `/implement` splits its review by the design's pieces — one piece per review, which checks that piece's side of the contract the design fixes between the pieces, then the whole change after the piece reviews, for what none of them can see. On an `/implement` brief with a specification in scope it also asks, of each test the change adds or changes that is named after a specification test case or acceptance criterion — on a split review, within the files that review reviews in full: a piece review's own, and the overall review's, those no piece names and the files of a piece whose review it cannot read — whether the test would fail if the behaviour it names broke.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `code-review` | opus | Read, Glob, Grep, Skill | Reviews SIGNIFICANT / HIGH-RISK changes, and `/implement`'s MODERATE ones — correctness, security, architecture, edge cases, migration, dependencies, tests, rollback; gates the test run. | `/implement`, `/upgrade`, `/vuln` |
-| `design-reviewer` | opus | Read, Glob, Grep, Bash | Reviews a design against the design-format authority and its specification — any open design question a BLOCKER — and re-derives its claims about the existing system from the code it was grounded on. | `/design` |
+| `code-review` | opus | Read, Glob, Grep, Skill | Reviews SIGNIFICANT / HIGH-RISK changes and `/implement`'s MODERATE ones — correctness, security, architecture, edge cases, migration, dependencies, tests, rollback; gates tests; by piece if split. | `/implement`, `/upgrade`, `/vuln` |
+| `design-reviewer` | opus | Read, Glob, Grep, Bash | Reviews a design against design-format and its specification — any open question a BLOCKER — re-derives its claims about the existing system from the scanned code, and checks its review pieces. | `/design` |
 | `readiness-reviewer` | opus | Read, Glob, Grep | Cross-artifact readiness verifier — checks the ARD/spec/design justify the phase derived from them and the next transition; the only reviewer that synthesises a verdict across artifacts. | `/ready` |
 | `risk-planner` | opus | Read, Glob, Grep, Bash, WebFetch, WebSearch, Skill | Risk-weighted planner for SIGNIFICANT / HIGH-RISK tasks; returns a structured plan with an explicit risks section. Never dispatched for SIMPLE / MODERATE work. | `/implement`, `/upgrade` |
 | `interface-designer` | per routing | Read, Glob, Grep, Bash, Skill | Produces one interface proposal for one contested interface under one named design constraint, for `/design`'s optional three-take Phase 5 fan-out. | `/design` |
