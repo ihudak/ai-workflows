@@ -563,8 +563,7 @@ is the only command that writes one at all.
   - **● done** — `specification.md` exists there → shown greyed, **not** default-selectable;
     selecting it rewrites that Epic's specification behind Phase 5's *Existing specification* guard —
     every existing copy archived first, or a stop where it is published. In the prose list, label this
-    row *done — selecting it rewrites it behind an archive*, not `epic-picker`'s *offers to revise*,
-    which `/specify` does not.
+    row *done — selecting it rewrites it behind an archive*, the ● rule `epic-picker` defers to.
   Default cursor = the first actionable row (in-progress before not-started). Render per
   `Skill(skill: "workflows-core:reference", args: "epic-picker")`: every Epic listed as prose above the prompt, and
   the array carrying **at most two** Epic rows (marker + key + title), the explicit

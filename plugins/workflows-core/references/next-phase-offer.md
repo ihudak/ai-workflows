@@ -286,13 +286,16 @@ array carries every option.
 - `/product-workflows:create-ard <PRD>` (PRD-level) → PE → `/product-workflows:epics <PRD>` (recommended) or `/product-workflows:specify <PRD>` — the two swap where the ARD's `components:` holds two or more `kind: code` entries and the PRD has no Epics (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3), the PRD-level spec being what `/epics` splits.
   *(No `/dev-workflows:design` — no Epics yet.)*
 - `/product-workflows:create-ard <EPIC>` (Epic-level) → `/product-workflows:specify <EPIC>` (recommended) or Dev →
-  `/dev-workflows:design <EPIC>`.
+  `/dev-workflows:design <EPIC>` — the second only where the Epic's `specification.md` is on the default branch, since
+  `/dev-workflows:design` stops with `DESIGN_NO_SPEC` without one.
 <!-- /part -->
 
 <!-- part: pe -->
 **PE — breakdown & specification**
 
-- `/product-workflows:specify <PRD>` (PRD-level spec) → `/product-workflows:epics <PRD>`.
+- `/product-workflows:specify <PRD>` (PRD-level spec) → `/product-workflows:epics <PRD>`, or Dev → `/dev-workflows:design <PRD>` to design
+  the spec whole rather than through Epics — on a multi-component PRD only as `/dev-workflows:design`'s override where the
+  PRD folder holds no Epic folder, and, where it holds Epics, as designing those Epics.
 - `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
 <!-- /part -->
 

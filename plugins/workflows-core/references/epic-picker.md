@@ -47,8 +47,9 @@ folder** — never a status somebody declared:
 
 - **○ not started** — the command's output artifact is absent → selectable.
 - **◐ in progress** — a resume file exists but the final artifact does not → selectable as a resume.
-- **● done** — the artifact exists → shown greyed and not default-selectable; selecting it offers to
-  revise. For `/implement` the artifact is a record — an `implementation.md` holding at least one
+- **● done** — the artifact exists → shown greyed and not default-selectable; selecting it does what
+  the command's own ● rule says — `/specify` rewrites the specification behind an archive, and stops on a
+  published one. For `/implement` the artifact is a record — an `implementation.md` holding at least one
   block, never a file holding only its heading (`references/implementation-format.md` §1).
 
 Default cursor on the first actionable row, in-progress before not-started.
@@ -69,7 +70,7 @@ remainder**:
       ◐ EPIC-ACME-77-02  order intake       (in progress)
       ○ EPIC-ACME-77-03  billing hand-off
       ○ EPIC-ACME-77-05  refund path
-      ● EPIC-ACME-77-01  catalogue sync     (done — selecting it offers to revise)
+      ● EPIC-ACME-77-01  catalogue sync     (done — selecting it does what the command's ● rule says)
 
     choices: ["◐ EPIC-ACME-77-02 order intake (Recommended)", "○ EPIC-ACME-77-03 billing hand-off", "○ EPIC-ACME-77-05 refund path", "Another Epic from the list above (you'll be prompted for its key)"]
 

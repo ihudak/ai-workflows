@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.38.1] — 2026-10-26
+
+### Fixed
+- `/specify`'s picker label for a ● row cites the ● rule `workflows-core:epic-picker` 1.48.0 defers to, rather than contradicting the *offers to revise* wording that release removed. Take with `workflows-core` 1.48.0.
+
 ## [3.38.0] — 2026-10-26
 
 `/specify` never overwrites a specification silently, and `/create-ard` and `/specify` ask their questions in an order that never asks about something already moot. Batch B08 of the 2026-10-26 review; take it with 3.37.0, which it builds on.

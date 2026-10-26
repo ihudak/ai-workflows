@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.48.0] — 2026-10-26
+
+**Update `product-workflows` to 3.38.1 with this release**: the lanes, the picker rule and the deliverable table below state what its `/create-ard` and `/specify` do since 3.37.0 and 3.38.0. Closes to-fix D17.
+
+### Fixed
+- **`next-phase-offer`'s `pa` lane** offers `/dev-workflows:design <EPIC>` after an Epic-level `/create-ard` only where the Epic's `specification.md` is on the default branch, as `/create-ard` does, since `/design` stops with `DESIGN_NO_SPEC` without one; its **`pe` lane** adds `/dev-workflows:design <PRD>` after a PRD-level `/specify`, to design the spec whole, on a multi-component PRD only as `/design`'s override where the PRD folder holds no Epic folder, and as designing those Epics where it does.
+- **`epic-picker`'s ● row** does what the command's own ● rule says, rather than always offering to revise: `/specify` rewrites behind an archive and stops on a published specification.
+- **`phase-handoff` §4's deliverable table** lists `/specify`'s archived `revisions/specification_*.md` copies as advisory: a later `/specify` run reads them to reuse an identical archive and stages one an interrupted run wrote.
+
 ## [1.47.0] — 2026-10-26
 
 **Update `security-workflows` to 0.4.0 with this release**: `security-register-format` states what its `register.py` now does. Batch B04 of the 2026-10-26 review.

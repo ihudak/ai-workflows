@@ -145,7 +145,8 @@ array carries every option.
 - `/product-workflows:create-ard <PRD>` (PRD-level) → PE → `/product-workflows:epics <PRD>` (recommended) or `/product-workflows:specify <PRD>` — the two swap where the ARD's `components:` holds two or more `kind: code` entries and the PRD has no Epics (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3), the PRD-level spec being what `/epics` splits.
   *(No `/dev-workflows:design` — no Epics yet.)*
 - `/product-workflows:create-ard <EPIC>` (Epic-level) → `/product-workflows:specify <EPIC>` (recommended) or Dev →
-  `/dev-workflows:design <EPIC>`.
+  `/dev-workflows:design <EPIC>` — the second only where the Epic's `specification.md` is on the default branch, since
+  `/dev-workflows:design` stops with `DESIGN_NO_SPEC` without one.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
 holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder
