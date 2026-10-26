@@ -702,15 +702,17 @@ finding; inline-fix the mechanical ones (renumber a duplicate `[AD#N]`, delete a
 token); leave content gaps for the grill/author. **Advisory** — never blocks;
 proceed to Phase 5 once findings are surfaced. `ard-reviewer` remains the gate.
 
-**On the BRD route, a `<BRD-KEY>` in the ARD body is the auto-link check's third branch, not its
-second.** The body legitimately names prerequisite BRDs — a `will-change` finding's prerequisite, a
-`conditional_on` decision's — and the collision grep matches the leading two segments of any of them.
-A BRD key is not a requirement ID and it is **not a real tracker ticket**: it is a folder name under
-`$SPECS_PATH`, validated for shape and never checked against a tracker
-(`workflows-core:addressing` §1). So it falls to the "neither" branch —
-**MINOR, left exactly as written, reported**. Never wrap it as `[[KEY-123]]`: that branch is for a key
-in a project that actually exists, and wrapping a BRD key would mint a dangling link to a ticket
-nobody created.
+**On the BRD route, a `<BRD-KEY>` in the ARD body is the auto-link check's specs-tree branch
+(branch 2), never its tracker branch.** The body legitimately names prerequisite BRDs — a
+`will-change` finding's prerequisite, a `conditional_on` decision's — and the collision grep matches
+the leading two segments of any of them. A BRD key is not a requirement ID and it is **not a tracker
+ticket**: it is a folder name under `$SPECS_PATH`, validated for shape and never checked against a
+tracker (`workflows-core:addressing` §1). Where it resolves in this specs tree — pre-lint branch 2 —
+it is wrapped as `[[<BRD-KEY>]]`, the specs tree's own traceability form
+(`workflows-core:doc-structure-conventions` §1), mechanically, with no author confirmation, since
+the resolution is the confirmation. Where it does not — a prerequisite BRD not yet ingested here —
+it is branch 4: left exactly as written and reported, **MINOR**. Either way it is never confirmed as
+a tracker ticket, which nobody created.
 
 ## Phase 5 — Review gate
 Dispatch `ard-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model):
@@ -735,12 +737,12 @@ Write the ARD file(s) into the feature folder.
 
 **Wherever `prd_dir` holds `grounding/`, on either route, close the consumption loop before
 the offer.** The design's *Consumption tracking* section (§7.3) has every finding and decision record
-a `consumed_by`, so that "nothing was lost" is checkable rather than hoped for. Set `consumed_by: ARD`
-on each `[CG#n]`/`[DG#n]` finding in `<prd_dir>/grounding/code-grounding.md` / `<prd_dir>/grounding/design-grounding.md`
+a `consumed_by`, so that "nothing was lost" is checkable rather than hoped for. Add `ARD` to the `consumed_by`
+of each `[CG#n]`/`[DG#n]` finding in `<prd_dir>/grounding/code-grounding.md` / `<prd_dir>/grounding/design-grounding.md`
 **this ARD actually drew on** — and on nothing else: a record read for context and not used is still
 `none`, and marking it consumed would report a routing that never happened. A finding with no verifier
 outcome is never marked, whatever the ARD did with the claim, because it was never evidence
-(`workflows-core:grounding-format` §8). **On the BRD route, additionally**, set `consumed_by: ARD` on
+(`workflows-core:grounding-format` §8). **On the BRD route, additionally**, add `ARD` to the `consumed_by` of
 each architecture-altitude `decided` record in `decisions.md` this ARD actually drew on, under the same
 exclusion. These are the **only** writes this command makes into a grounding file or, on the BRD route,
 into `decisions.md`, and none of them is a `status` change or any other field (Phase 4). Everything at

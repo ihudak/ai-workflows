@@ -646,7 +646,12 @@ which only `/product-workflows:prd-ground <SLICE-KEY>` mints — with `--rebasel
 code has moved — and `/product-workflows:brd-interview <SLICE-KEY>` then re-decides against; a
 `[CD#n]` needs the **customer**, through `/product-workflows:brd-package <SLICE-KEY>` and then
 `/product-workflows:brd-reconcile <SLICE-KEY> @<review-file>`. Naming the route is what keeps the
-contradiction actionable without this command taking the decision.
+contradiction actionable without this command taking the decision. **In `prd.md` itself, name each
+command alone and the slice by its wikilink** — "run `/product-workflows:brd-package`, then
+`/product-workflows:brd-reconcile` with the customer's returned review file, on [[<SLICE-KEY>]]" —
+never the template above: its `<review-file>` is a placeholder and a key inside inline code is an
+auto-link hit, two BLOCKERs `workflows-core:pre-lint` raises on the PRD. The same holds for the
+`[AS#n]` route below; the final report, which no pre-lint reads, writes the templates as they are.
 
 **A gap the grill cannot close is triaged by who could settle it, and a customer-authority one gets
 a route rather than a paragraph.** PRD authoring surfaces questions nothing before it could have —
@@ -784,7 +789,7 @@ when Phase 3 authored the draft live, the pre-write archive (Phase 3) runs first
 
 **On the BRD route, also close the consumption loop before the offer.** The design's *Consumption
 tracking* section (§7.3) has every finding and decision record a `consumed_by`, so that "nothing was
-lost" is checkable rather than hoped for. Set `consumed_by: PRD` on each product-altitude
+lost" is checkable rather than hoped for. Add `PRD` to the `consumed_by` of each product-altitude
 `decided` record in `decisions.md` this PRD actually took content from — and on nothing else: a
 record this run read for context and did not use is still `none`, and marking it consumed would
 report a routing that never happened. This is the only write this command makes onto a

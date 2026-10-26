@@ -103,7 +103,7 @@ of theirs would otherwise run in its place and could print into what you read; g
    **A claim that restricts a value is `CONFIRMED` only with the restriction shown on every path
    that writes the value — a request that leaves it out, and the default it is then stored with,
    among them — so look for the write that would break it first** (`workflows-core:grounding-format`
-   §3, *A claim that restricts a value*).
+   §3, *A claim that restricts a value*). **A premise that restricts or conditions a surface without asserting it exists, ground against a commit with no such surface, is `AMENDED`** — its correction `the surface does not exist at <commit>; the rule is a requirement on new work` — where §2.2's control on that absence fires, and `NOT-PROVABLE` where it fails; a premise that asserts the surface exists stays `REWRITTEN` (`workflows-core:grounding-format` §3, *A rule about a surface the commit does not have*, which both this agent and `grounding-verifier` apply as written).
 
    **`NOT-PROVABLE` is a legitimate, final answer, not a shortfall.** When a claim genuinely cannot
    be settled from the repository — the mechanism it describes could live in a system this

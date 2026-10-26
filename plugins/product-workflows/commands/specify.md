@@ -268,7 +268,7 @@ nothing.
    `EPIC-` folder's containing directory is a `PRD-` slice carrying `brd-link.md`, this run **is** on the
    BRD route, with that slice as the BRD folder and this Epic as the focus — read `decisions.md`, the
    grounding files and the derivation matrix from the slice exactly as the picker path does, apply the
-   freeze rule, and write `consumed_by: specification` back there.
+   freeze rule, and add `specification` there to the `consumed_by` of each record and finding this run draws on — beside any earlier consumer, never in its place (`workflows-core:grounding-format` §2).
 
    **Deciding it on the resolved folder alone was a silent contract loss, and the plugin recommends the
    address that triggered it.** `/epics` ends by offering `/product-workflows:specify <EPIC>`; taken on a
@@ -849,7 +849,10 @@ For each repo in the batch:
   >   keywords: [grep keywords extracted from themes]
   > refresh:
   >   switch_to_default_branch: [true if Phase 1 chose 'fetch + pull default branch' (default) or 'fetch only'; false if 'no refresh']
-  >   pull: [true if 'fetch + pull default branch'; false otherwise]"
+  >   pull: [true if 'fetch + pull default branch'; false otherwise]
+  > dependency_coupling: true"
+
+**Every dispatch asks for the dependency-coupling list**, which Stage 5 reads: a fault-isolation test case — one dependency failing while another succeeds — is valid only where the scan shows the other does not itself call the failing one on that path.
 
 A repository Phase 3 marked `architecture repository — scanned without refresh` is dispatched with `refresh: { switch_to_default_branch: false, pull: false }` whatever Phase 1 chose: it is the repository the architecture snapshot describes, and it is never switched, pulled or stashed.
 
@@ -899,7 +902,7 @@ Walk the stages in order, authoring `specification.md` live against `${CLAUDE_PL
 2. **Scope** (In/Out)
 3. **User stories** (`[Uxx]`)
 4. **Acceptance criteria** (`[ACxx]`, EARS)
-5. **Test cases** (`[TCxx]`)
+5. **Test cases** (`[TCxx]`) — a fault-isolation case, one dependency failing while another succeeds, is checked against the Phase 4 scan's `dependency_coupling` list before it is played back: where the succeeding dependency calls the failing one on the path the case exercises, the setup cannot happen, and the case is rewritten or dropped. Where no scan covered that code, say so in the play-back rather than assume the two are independent.
 
 **Before Stage 4's play-back, list each trigger's outcomes.** Before the confirmation gate that closes Stage 4, read every criterion against everything that overlaps it, as `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it, **its trigger's other outcomes** and **what it imports and what imports it** first: for each trigger the criteria name, list every outcome any criterion gives it — each has a criterion or a stated exclusion, a sibling written for an older set of outcomes is limited to its own case, and where two can fire for one input (two faults in one request), one criterion states which wins — and list every criterion that applies another's rules by reference, with the request types and states it carries them to. Run the read again over the whole specification, test cases included, before the confirmation gate that precedes the first `spec-reviewer` dispatch. A pair that gives one situation two outcomes is put to the user one question at a time before the gate. Each of the two play-backs carries one line on the read whatever it found — `Overlap read: <n> triggers, <n> imports, <n> failure paths, <n> [AD#N] Rules — <each conflict and the criterion that settled it | no conflict>` — so a play-back without that line is a read that did not run.
 
@@ -1030,13 +1033,13 @@ Write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` —
 
 **Wherever `prd_dir` holds `grounding/`, on either route, close the consumption loop before
 the offer.** The design's *Consumption tracking* section (§7.3) has every finding and decision record
-a `consumed_by`, so that "nothing was lost" is checkable rather than hoped for. Set `consumed_by:
-specification` on each `[CG#n]`/`[DG#n]` finding in `<prd_dir>/grounding/code-grounding.md` /
+a `consumed_by`, so that "nothing was lost" is checkable rather than hoped for. Add `specification` to the
+`consumed_by` of each `[CG#n]`/`[DG#n]` finding in `<prd_dir>/grounding/code-grounding.md` /
 `<prd_dir>/grounding/design-grounding.md` **this specification actually drew on** — and on nothing else: a
 record read for context and not used is still `none`, and marking it consumed would report a routing
 that never happened. A finding with no verifier outcome is never marked, whatever the spec did with
 the claim, because it was never evidence (`workflows-core:grounding-format` §8). **On the BRD route,
-additionally**, set `consumed_by: specification` on each implementation-altitude `decided` record in
+additionally**, add `specification` to the `consumed_by` of each implementation-altitude `decided` record in
 `<prd_dir>/decisions.md` this specification actually drew on, under the same exclusion. These are the **only**
 writes this command makes into a grounding file or, on the BRD route, into `decisions.md`, and none of
 them is a `status` change or any other field (Phase 5). Everything at implementation altitude still
