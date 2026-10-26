@@ -202,7 +202,7 @@ Entries:
 
 **Notes:** DEV-B1 was worked out from §8.3's stated behaviour, not reproduced: reproduce it in a session-branch checkout first. D3 says to measure which consumers list the working tree rather than gate before widening; do that measurement first and record it in the commit.
 
-**Version bumps:** dev-workflows minor (4.32.0).
+**Version bumps:** dev-workflows minor (4.33.0 or later: 4.32.0 is piece review's).
 
 ### B06 — dev-workflows: /vuln and /upgrade orchestration and agents
 
@@ -674,7 +674,7 @@ Entries:
 
 **Confirm first:** IMP-B1 (medium); FBB-B32 (medium); FBB-B38 (medium); FBB-B36 (medium); FBB-B31 (medium); FBB-B33 (medium); FBB-B37 (low).
 
-**Notes:** IMP-G1, the `/implement` restructure, is a design track that rewrites the dispatch phases. If it is scheduled soon, take only the entries outside its scope here (IMP-B1, IMP-B4, FBB-B32, FBB-B34, FBB-B36, DQD-B2) and fold the rest into it, saying so in the review file. FBB-B37 is low confidence: confirm the case on the BOOK-2-01 feedback entry it cites first.
+**Notes:** IMP-G1, the `/implement` restructure, landed as piece review (dev-workflows 4.32.0), which did not rewrite the dispatch phases, so this batch takes all eleven entries. 4.32.0 changed `implement.md`, `code-review.md` and `docs/commands/implement.md`: re-locate each entry by its quoted text. FBB-B37 is low confidence: confirm the case on the BOOK-2-01 feedback entry it cites first.
 
 **Version bumps:** dev-workflows minor.
 
@@ -1063,7 +1063,7 @@ Each of these is the same defect or gap as another entry and is fixed by that en
 Each needs its own brainstorm, spec and plan before any code. They are not batches; none should start before the batches that change the same files have landed.
 
 - **GIT-G1** — Lean context part 3: script `specs-repo-git`'s procedures. Script `branch-merged`, `branch-key`, `push-scope` and the §2.1 classifier first, with a selftest, then decide `specs-preflight` and `commit-artifacts`. B01's fixes to GIT-B1 and GIT-B2 become its first test cases. Merged gaps: CORE-G1, SCR-G1.
-- **IMP-G1** — The post-D `/implement` restructure. One `code-writer` per approved plan, Epics sized by coupling with `size_limit` as a warning, the PRD-level `/specify` question, and the A/B on the e2e copies. Blocks E4's port of `40e6b9ea`. Takes IMP-G2's cost bar and PRD-G2's calibration as inputs (decisions list). Merged gap: PRD-G1.
+- **IMP-G1** — The post-D `/implement` restructure. One `code-writer` per approved plan, Epics sized by coupling with `size_limit` as a warning, the PRD-level `/specify` question, and the A/B on the e2e copies. Blocks E4's port of `40e6b9ea`. Takes IMP-G2's cost bar and PRD-G2's calibration as inputs (decisions list). Merged gap: PRD-G1. *Resolved by dev-workflows 4.32.0 (piece review): part (a) was built, measured and shelved; its review scopes shipped; the coupling cut and a mandatory `/specify` were dropped; E4 now ports `40e6b9ea` with 4.32.0 (`docs/superpowers/verification/2026-10-25-implement-piece-review.md`).*
 - **DEV-G1** — `/conformance` Plan 2, part 1: the *Delivery verified* stage. The optional `workflow-states` rung, `/ready` reading the PRD-level `_conformance.md`, the `readiness-reviewer` rubric line, and every page that draws the ladder.
 - **DEV-G2** — `/conformance` Plan 2, part 2: documentation readers take a recorded decision. `doc-planner`'s requirement field, the `source-truth` §7 mapping, reads in `/document` Phase 5.8 and `/release-notes`. Run after B03, B12 and B13, which change the same phases. Merged gap: DOC-D-G3.
 - **DOC-D-G1** — docs-workflows Spec 2: `/docs-write`, `/docs-capture`, `/docs-verify`. Start with `/docs-write --next`, which also regenerates the nav and replaces B14's interim DOC-C-B1 procedure. Revive the design from history as the entry says. Merged gap: DOC-C-G1.
@@ -1085,15 +1085,15 @@ Each needs an answer more than work. Where the answer is "record it", the record
 | **BRD-G3** | Verify the BRD-figures rows left open on 2026-09-22? | Yes for the `/brd-intake` re-run path: one fixture re-intake and one *Stop and convert them first* run, after B27. |
 | **SCR-G2** | Split `untrusted-content` by part, or drop the idea? | Drop it: D measured that splitting has not clearly paid, and check 20 pins the block. Record the drop in `to-fix.md`'s Accepted section (B29). |
 | **IMP-G3** | Pick up Fable escalation (sub-project F part 2)? | No. Its deferral ground, no measured Opus shortfall, still holds. Record it as deferred in `to-fix.md` and revisit with a measured case. |
-| **IMP-G2** | Accept the missed implement-coding-subagents cost target, or keep it as a goal? | Fold it into IMP-G1's A/B as its baseline: measure today's `/implement` on the route-3 copy once and record it against the bar; do not chase it separately. |
-| **PRD-G2** | Calibrate the Epic size limit live, or drop the calibration? | Fold it into IMP-G1, which turns the limit into a warning that still needs calibrated numbers. |
-| **IMP-G5** | Build resume-from-run-state for a crashed `/implement`? | Not now; IMP-G1 may change the state model. Record the deferral in `to-fix.md` so it stays visible. |
+| **IMP-G2** | Accept the missed implement-coding-subagents cost target, or keep it as a goal? | ~~Fold it into IMP-G1's A/B as its baseline~~ — IMP-G1 shipped as piece review without a route-3 measurement, and its BOOK-3-01 runs ($57.17 on 4.31.0) are a different Epic, so they do not close the bar: measure today's `/implement` on the route-3 copy once and record it against the bar, or record a ruling that accepts the higher cost. |
+| **PRD-G2** | Calibrate the Epic size limit live, or drop the calibration? | ~~Fold it into IMP-G1~~ — IMP-G1 dropped the coupling cut (the user's decision, 2026-10-25), so `size_limit` stays a cut: calibrate it live, or record a ruling that drops the calibration. |
+| **IMP-G5** | Build resume-from-run-state for a crashed `/implement`? | Not now. IMP-G1 shipped as piece review, which added the run-state keys `pieces` and `reviews` and changed nothing else of the state model. Record the deferral in `to-fix.md` so it stays visible. |
 | **CORE-G2** | Take up `implementation-format` §4's widened key boundary? | Not yet. Record it in `to-fix.md` beside C2 and C9 in B03's commit; if taken up, give it a short design that first measures the boundary's readers. |
 | **BRD-G1** | Carry a `needs-a-human` sweep item forward to `/brd-interview`, or let the report line suffice? | Widen `/brd-interview`'s re-disposition trigger to entries the latest reconciliation record flagged `needs-a-human` (lands in B25), because an item carried only in a report is lost when no interview round is planned. Move follow-up E-8 into `to-fix.md` either way. |
 | **DOC-D-G5** | What is `/release-notes`' missing starting-state fact, and is it a rule? | Recover the blind verdict first; until then file it in `to-fix.md` (B29). If the verdict holds, add a "state before the change" requirement for Changed and Fixed entries to `release-note-types`. |
 | **FBA-G8** | Let `/brd-split`'s uniform-answer offer fire with two or more slices? | Yes, narrowly: a `full`-mode row that fires only where Phase 1.5 placed every offered row on a keyed child Phase 2, as one confirmation listing each target. It lands in B27, rewriting the refusing sentence rather than appending to it. |
 | **FBB-B16** | Ship a `spec-tool.py` for mechanical spec edits and checks? | Not yet. B08 adds FBA-G6's renumbering note; build the tool only if live runs keep needing it, and then as one script with the deterministic checks FBB-B16 names. |
-| **FBB-B35** | Allow a non-running type-check of test sources before the Opus review? | Yes, stated as "not a test run", because a review of tests that do not compile wastes the Opus pass; if `.claude/rules/dev-workflows-tests.md`'s test-writing rules forbid it, record why there instead. Decide before IMP-G1, which redraws the same phases. |
+| **FBB-B35** | Allow a non-running type-check of test sources before the Opus review? | Yes, stated as "not a test run", because a review of tests that do not compile wastes the Opus pass; if `.claude/rules/dev-workflows-tests.md`'s test-writing rules forbid it, record why there instead. Decide it with B21: IMP-G1 shipped as piece review without redrawing these phases. |
 
 **Live verification still owed (to-fix.md L2).** Confirm in the next live run that writes `resume.md`: the `(waiting since …)` marker beside a carried command item, *Last completed* with its UTC offset, the register slug beside each Security Engineer offer, and the next run's §1 carry reading them back. It is attached to B04, whose live `/scan` run writes all three.
 
