@@ -319,7 +319,7 @@ Before its first write, `init` moves aside any file an earlier run left there, u
 - `run_flags` — the `strip-run-flags` record, whole, with `no_commit` added: `true` where Phase 0 stripped `--no-commit`.
 - `specs_git` — the preflight's `blocked` or `misrooted`, or `null`.
 - `specs_merged_branch` — the plugin branch the preflight's §3.5 B2 found merged and left, or `null` (Phase 0).
-- `spec_context` — `{"spec_paths", "in_scope_ids", "applicable_spec", "applicable_ard", "ard_paths", "companion_run", "tasks_only"}`: the in-scope `specification.md`/`design.md` paths Phase 0 resolved; `in_scope_ids` and `applicable_spec`, which Phase 2B writes; the `invariants` Phase 1.8 found, and the `ard_paths` it returned with them; and Phase 1's `companion_run` and `tasks_only` records.
+- `spec_context` — `{"spec_paths", "in_scope_ids", "applicable_spec", "applicable_ard", "ard_paths", "companion_run", "tasks_only"}`: the in-scope `specification.md`/`design.md` paths Phase 0 resolved; `in_scope_ids` and `applicable_spec`, which Phase 2A or 2B writes; the `invariants` Phase 1.8 found, and the `ard_paths` it returned with them; and Phase 1's `companion_run` and `tasks_only` records.
 - `task_shape` — `bug` once Phase 1.5 sets it.
 - `clarifications` — `{"settled", "answers"}`: each fact Phase 1's reading settled, with where it was found, and each open question the run settled itself, with what it chose; and each answer the user gave that a plan or a planner's brief must carry — Phase 1's decisions, a plan's **Revise**, Phase 2B's **Override** and repro hint, and the decisions of Phase 3A step 5, Phase 3B step 4 and a Phase 3.5 fix attempt.
 - `routing` — `{"block", "history"}`: the `model_routing` block as last recorded, and one line per class change after Phase 1.5 — `<from> → <to> — <where> — <why>`, as Phase 5's `### Classification` states it. `class` and `coding_model` are the block's `classification` and `implementation_model`, written with it, from Phase 1.5 on.
@@ -593,6 +593,8 @@ Only when the run resolved a key (PRD/Epic) — i.e. NOT direct-prompt mode — 
 **Write the exploration down** — save where this phase was entered from a `### Re-classification` the user accepted at Phase 2B, where `summary_file` already holds it: write the returned file map — or, where you gathered context yourself, what those reads found — to a temp file (`command mktemp -t dw-impl-summary-XXXXXX`, never inside a repo tree) and record its absolute path as `summary_file` (writes run-state `files.summary_file`).
 
 → Use the returned file map — or, where this phase was entered from an accepted `### Re-classification`, `summary_file` — as codebase context when writing the plan below.
+
+Where a `specification.md`/`design.md` is in scope, save on a companion run (Phase 1), extract its **in-scope** `[Uxx]`/`[ACxx]`/`[TCxx]` IDs as Phase 2B does, for the review gate a `MODERATE` run passes (Phase 3A step 6, whose Phase 3B step 6 brief reads them) — at `SIMPLE` too, so a run whose class rises later carries them (writes run-state `spec_context.in_scope_ids`, and `spec_context.applicable_spec` as `{spec_paths, in_scope_ids}`).
 
 Produce a written implementation plan:
 
