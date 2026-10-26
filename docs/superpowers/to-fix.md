@@ -54,7 +54,7 @@ Each edition keeps its own versions and changelog. Run its gate chain after. Whe
 | `c231cb9f`, `030e0f05` | the 2026-10-15 review and its re-review | E2 |
 | `25a3373c`, `5b462ebc` | this list; `/brd-reconcile`'s *Correct it* record (product-workflows 3.34.5) | no: this repository's list, and the BRD route |
 | `c3cd9d3e` | the `security-workflows` plugin (0.1.0). It also brings `implementation-format` §5's `unit-branch`, which `/implement` and `/conformance` read; `/implement` continuing on an Epic's open branch; `cost-emission`'s `/scan` row; and check 9's singular count (workflows-core 1.42.0, dev-workflows 4.28.0) | ask: a new plugin fits neither bucket. `unit-branch` and the `/conformance` rework onto it are generic and ported with it or alone. Check 9 is E3. |
-| `40e6b9ea` | `/implement` codes through `code-writer` subagents on a class-chosen coding model, keeps `run-state.py`'s run-state file, and reviews `MODERATE` work with the Opus gate (workflows-core 1.43.0, dev-workflows 4.29.0) | generic. The sub-project after D restructures exactly this, to one `code-writer` per plan and Epics sized by coupling, so port after that lands rather than twice. |
+| `40e6b9ea` | `/implement` codes through `code-writer` subagents on a class-chosen coding model, keeps `run-state.py`'s run-state file, and reviews `MODERATE` work with the Opus gate (workflows-core 1.43.0, dev-workflows 4.29.0) | generic. Port it together with this repository's piece-review release (dev-workflows 4.32.0), which keeps this coding flow and splits its review by the design's pieces. The one-writer restructure this row used to wait for was shelved, not merged (`docs/superpowers/verification/2026-10-24-implement-one-writer-a.md`). |
 | `b1f3adba` | verification records | no |
 | `0f68a91e` | lean context part 1: the loader reuses a reference already read, four rulebooks load by part, and `scripts/reference-parts.py` gates them (workflows-core 1.44.0, dev-workflows 4.30.0, product-workflows 3.35.0, docs-workflows 1.17.0, security-workflows 0.2.0) | per the question above. The loader's reuse rules (Rulings 68, 69) port either way. |
 | `cd015961` | `handoff/test-baseliner.md` drops a preamble it no longer needs (dev-workflows 4.30.1) | yes |
@@ -118,7 +118,7 @@ Found by the 2026-10-15 review or its re-review (line numbers at `7c13ce05` unle
 
 Found while D was built and run (`docs/superpowers/verification/2026-10-22-lean-context-handoff-part.md` §7).
 
-- **L2 — to verify in the next live run that writes a resume pointer:** that runs write and read back what D's `session-hygiene` §1 adds. That is the `(waiting since …)` marker beside a carried command item, *Last completed* with its UTC offset, and the register slug beside each Security Engineer offer. No gate checks these. Only a live run's `resume.md` and the next run's carry show them working.
+- **L2 — to verify in a live run that carries a resume pointer:** that runs write and read back the two of D's `session-hygiene` §1 additions not yet seen: the `(waiting since …)` marker beside a carried command item, and the register slug beside each Security Engineer offer. No gate checks these; only a live run's `resume.md` and the next run's carry show them working. The third addition, *Last completed* with its UTC offset, was written by all three `/implement BOOK-3-01` runs of 2026-10-25 and 2026-10-26. None of those runs could show the other two: each started with no pointer to carry and ran no scan, so it made no Security Engineer offer.
 
 ## Accepted — known, not to fix
 
