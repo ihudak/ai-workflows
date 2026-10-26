@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.33.0] — 2026-10-26
+
+Take with `workflows-core` 1.49.0, whose *What a requirement overlaps* both changes cite.
+
+### Changed
+- **`/design` reads every decision against what it overlaps before its whole-design play-back**, across the whole design rather than only what changed since its sections were confirmed, starting with what runs before each decision that answers a failure: every decision that places a step ahead of the failing point on the same request path is listed and read for whether that step meets the failure first. The play-back carries an `Overlap read:` line, so a read that did not run shows. A live run settled the import's answer with its database down, then put security hooks that read the same database ahead of the import, so the outage failed there with a bare `500`; the first `design-reviewer` pass found it as a BLOCKER.
+- **`/design`'s Phase 6 inline edits** — a fix, manual fix notes, an applied finding — are read against everything that overlaps them, as `workflows-core:grilling-technique` lists it, where they were read against what governs the same behaviour: an edit that accepts a bound, a limit or an outcome an inherited `[AD#N]` Rule fixes keeps the Rule or records its ARD deviation in the same pass.
+
 ## [4.32.0] — 2026-10-26
 
 `/implement` reviews a change by the design's pieces where the design draws them and the change its first review sees touches two or more, on a run its review gate reviews — `MODERATE` and up — that is no companion run. `/design` draws the pieces only where one reviewer could not review the whole change in depth and the change lies in one repository, and who writes the code and the tests does not change. On every run `/implement`'s review gate reviews that is no companion run and has a specification in scope, split or not, the review also checks the tests named after the specification. A split review costs more: on the one test Epic measured, a run whose review split into two pieces cost $84.51 against 4.31.0's $57.17, 48% more — $10.62 of the $27.34 in the extra reviews, $9.43 in the main session, about half of that in the split round's triage, and $5.52 in fixers acting on more findings — and four blind judges each rated its result slightly better. A split into more than two pieces has not been measured. This release runs beside `workflows-core` 1.45.0, as 4.31.0 does.

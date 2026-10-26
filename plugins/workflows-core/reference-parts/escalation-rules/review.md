@@ -298,8 +298,13 @@ offer above before the re-review offer or the handoff, and an escalation's manua
 the handoff, which no review follows at all:
 
 - each requirement the edit adds or changes — a criterion, a test case, a scope line, a story, a
-  decision's Rule, a cost line — is read against every other one whose trigger, precondition, state
-  or figure overlaps it, in its own section and across the others;
+  decision's Rule, a cost line — is read against everything that overlaps it, in its own section and
+  across the others, as `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it:
+  its condition, what it imports and what imports it, its trigger's other outcomes, what runs before
+  it, and the inherited `[AD#N]` Rules, each kind listed before it is read. A `/specify` fix that
+  limited one criterion to `PUT` missed another that imported it as "every rule of a change", and
+  a `/design` fix accepted missing an `[AD#N]` bound with no deviation recorded; each was the
+  re-review's only BLOCKER;
 - each operational step the edit adds or changes — a restart, a delete, a scale, a migration, a
   bootstrap, run against a deployed system — is read against everything its selector reaches in the
   deploy files of the repositories the run grounded in, stateful workloads and containers with side

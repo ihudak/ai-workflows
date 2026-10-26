@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.39.0] — 2026-10-26
+
+Take with `workflows-core` 1.49.0, whose *What a requirement overlaps* these changes cite.
+
+### Changed
+- **`/specify` lists each trigger's outcomes before Stage 4's play-back**, and again over the whole specification before the first review: each outcome has a criterion or a stated exclusion, a sibling written for an older set of outcomes is limited to its own case, two outcomes that can fire for one input have a stated winner, and every criterion that applies another's rules by reference is listed with the request types and states it carries them to. Each of those play-backs carries an `Overlap read:` line. Three `/specify` runs on one PRD spent their re-review on defects of this class.
+- **`/specify`'s, `/create-prd`'s and `/create-ard`'s inline-fix overlap read** reads each edit against everything that overlaps it, as `workflows-core:grilling-technique` lists it, where each named a narrower set: the criteria whose trigger, precondition or state overlapped; those whose condition overlapped; the decisions governing the same component or interface.
+
 ## [3.38.1] — 2026-10-26
 
 ### Fixed

@@ -2347,7 +2347,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `prd-proposal-band-rendering-precision` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B13 — MINOR — The fix-cycle overlap read is too narrow: it misses imported rules and new outcomes added to an existing trigger
+### FBB-B13 — MINOR — The fix-cycle overlap read is too narrow: it misses imported rules and new outcomes added to an existing trigger — **Fixed in workflows-core 1.49.0 / product-workflows 3.39.0 / dev-workflows 4.33.0 (to-fix PR1), parts (1) and (2)**
 - **Where:** `plugins/workflows-core/references/escalation-rules.md:570-606` (*An inline fix is read against what it overlaps*). It reads requirements "whose trigger, precondition, state or figure overlaps"; it lists no importers-by-reference and no outcome-set enumeration. `plugins/workflows-core/references/pre-lint.md:76-83` (the spec block checks only headings, ID contiguity and the open-question count).
 - **What is wrong:** Three `/specify` runs on this PRD spent their review cap on one defect class. In the first, a criterion imports "every rule of a change", so the changed rule reaches `POST`. In the second, a new outcome is added to a trigger's implicit outcome set, but sibling criteria keep their old wording. Neither case reads as an overlap. No deterministic check of category coverage or required inputs exists either.
 - **Failure scenario:** The re-review finds BLOCKERs the fix or the draft itself wrote. The cap is spent, so the spec ships under unreviewed manual notes.
@@ -2355,6 +2355,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Suggested fix:** (1) Widen the overlap set to cover importers and the rules they import. (2) Add an outcome-set read (per trigger, list every outcome and check that each has a criterion and a stated precedence) at the Stage 4 gate, before the first review and after the fix cycle. (3) Add an advisory to pre-lint's spec block that lists cross-criterion imports, and add per-AC Happy-path and Negative coverage checks.
 - **Source:** feedback `specify-fix-cycle-unverified-overlaps`, `specify-overlap-read-misses-inherited-rules`, `specify-precedence-and-inheritance-playback`, `specify-new-outcome-siblings-unqualified` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
+- **Part (3), not in that fix — left for batch B18 (pre-lint):** a pre-lint list of cross-criterion imports would not have caught the measured case, whose import named no id ("under every rule of a change in this story"), so it is dropped; the per-AC Happy-path and Negative coverage checks are a coverage check, not an overlap read, and belong with pre-lint's other spec checks.
 
 ### FBB-B15 — MINOR — The version line after a verdict names no requirement whose Rule changed after the verdict
 - **Where:** `plugins/workflows-core/references/escalation-rules.md:444-460` (*A recorded verdict names the version it was taken against*: "names the edits", with no requirement to list changed `[AD#N]`/contract rows or `[Uxx] [ACxx]` ids apart from rewording); `plugins/product-workflows/commands/create-ard.md:712`; `/specify` Phase 6; `/design`.
