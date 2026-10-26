@@ -172,6 +172,16 @@ finding written into the artifact, a style pass, a resumed verify step — the f
 plainly and names the edits. One line: *"`<verdict>` was reached before <the edits>, which followed
 it; the current text has not been reviewed."*
 
+**The line names by id what an edit changed in substance, apart from what it only reworded.** Where
+an edit after the verdict changed what an identified item says — an `[AD#N]` decision or its Rule, a
+contract row, a criterion or test case (`[Uxx]`, `[ACxx]`, `[TCxx]`), a PRD's `[FR#N]` or `[AC#N]` —
+the line adds *"Changed in substance since: <each id>"*, and an edit that changed the substance of
+text carrying no id names its section; an edit that changed only wording is counted among the edits
+and listed nowhere else. A reviewer of the pull request then checks exactly those, where *"the
+current text has not been reviewed"* alone left them diffing the whole artifact: three live runs —
+an `[AD#2]` lookup changed after a capped re-review, ten edits applied after a `PASS WITH
+RECOMMENDATIONS`, post-review `MINOR` edits to a design — each shipped with that line and no list.
+
 **The line also goes into the pull request of a specs-repository handoff, and into a session record.** A command that hands a reviewed artifact off in its specs-repository handoff puts the verdict in the handoff's `body_facts`, and the pull request is what a reviewer reads before merging: there the verdict carries this line, and every finding the run leaves open is listed beside it with its severity. A session record the command keeps (`/specify`'s `_session.md`, `/design`'s `_design-session.md`) records the verdict with the same line. A live `/specify` run had to work out both places for itself.
 
 **Which commands record a verdict is derived, not listed, and a phrase grep is not the derivation.** The set
@@ -228,7 +238,9 @@ answer naming some of the findings applies those.
 pass after the re-review is no second fix cycle, since no review follows it — and what the cap
 allows after it is exactly what it allowed before. Used by the commands that fix inline —
 `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and
-`/brd-proposal` — and by `/implement`, through `review-fixer`, after its first review and its one
+`/brd-proposal` — by `/epics`, whose orchestrator applies the offer's edits itself after its first
+review and its one re-review, since `doc-fixer`, which takes its `MAJOR` findings, takes no `NIT` —
+and by `/implement`, through `review-fixer`, after its first review and its one
 re-review, never after its review of the Phase 3.5 delta, whose edits would follow its tests.
 
 ## Edits after a verdict that is not BLOCK — the unspent re-review
@@ -321,7 +333,8 @@ the cap. It costs one read of what the edit touched and what overlaps it, agains
 on a defect the fix wrote.
 
 Used by the commands that fix inline — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`,
-`/design`, `/prd-proposal` and `/brd-proposal` — at their own fix steps.
+`/design`, `/prd-proposal` and `/brd-proposal` — at their own fix steps, and by `/epics` at the
+edits it makes on the offer to apply what a review leaves open.
 
 ## A finding left open that needs a decision is recorded in the artifact
 

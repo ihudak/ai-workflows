@@ -63,13 +63,16 @@ row per Epic is a picker that stops working on a perfectly ordinary PRD, which i
 of the picker rather than advice beside it.
 
 **Print every Epic as prose above the prompt** — marker, key and title, one line each, in the
-ordering above — and let the array carry **at most three Epic rows plus one option naming the
-remainder**:
+ordering above. **Where the Epics and the option the command adds, if any, fit in four, the array
+carries them all**, and the prose list is still printed because a greyed ● row reads better there.
+**Otherwise the cap applies**: the array carries **at most three Epic rows plus one option naming the
+remainder**, fewer where the command adds its own option (below). Five Epics, with no option added:
 
     Epics under PRD-ACME-77 orders:
       ◐ EPIC-ACME-77-02  order intake       (in progress)
       ○ EPIC-ACME-77-03  billing hand-off
       ○ EPIC-ACME-77-05  refund path
+      ○ EPIC-ACME-77-04  tax rules
       ● EPIC-ACME-77-01  catalogue sync     (done — selecting it does what the command's ● rule says)
 
     choices: ["◐ EPIC-ACME-77-02 order intake (Recommended)", "○ EPIC-ACME-77-03 billing hand-off", "○ EPIC-ACME-77-05 refund path", "Another Epic from the list above (you'll be prompted for its key)"]
@@ -78,16 +81,14 @@ Choosing the last option asks for the key in plain text, and a key typed straigh
 harness's free-text option is taken as given (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`
 §0, *A selection carries no text*); either way the run resolves the typed key **against the keys it
 just listed** — never by parsing one out of the answer
-(`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §1). Four or fewer Epics need none of this: the
-array carries them all, and the prose list is still printed because a greyed ● row reads better
-there.
+(`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §1).
 
 **A command that adds its own option to this picker counts it against the four.** `/specify`
 appends *"Author one broad PRD-level spec instead"* on every run — it is the command that authors
-the spec, so nothing can condition it — and its array carries at most **two** Epic rows plus that
-option plus the remainder option. `/implement` appends *"Implement one broad PRD-level slice
+the spec, so nothing can condition it — so up to three Epics fit beside it, and with four or more
+its array carries at most **two** Epic rows plus that option plus the remainder option. `/implement` appends *"Implement one broad PRD-level slice
 instead"* **only where the PRD folder holds a flat `specification.md` and the PRD is not multi-component** (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3), the same condition its
-one-Epic branch above carries, so its array carries at most **two** Epic rows where it appends that option and at most **three** where it does not, the freed row going back to the Epics. The added
+one-Epic branch above carries, so, where the Epics and that option do not fit in four, its array carries at most **two** Epic rows where it appends that option and at most **three** where it does not, the freed row going back to the Epics. The added
 option is never the one the **cap** drops: it is the alternative to picking any Epic at all, and a
 picker that hides it to fit forces a choice the command means to leave open. `/implement`
 withholding it is a different thing and not an exception to that — where no flat `specification.md`

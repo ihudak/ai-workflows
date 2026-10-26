@@ -172,6 +172,16 @@ finding written into the artifact, a style pass, a resumed verify step — the f
 plainly and names the edits. One line: *"`<verdict>` was reached before <the edits>, which followed
 it; the current text has not been reviewed."*
 
+**The line names by id what an edit changed in substance, apart from what it only reworded.** Where
+an edit after the verdict changed what an identified item says — an `[AD#N]` decision or its Rule, a
+contract row, a criterion or test case (`[Uxx]`, `[ACxx]`, `[TCxx]`), a PRD's `[FR#N]` or `[AC#N]` —
+the line adds *"Changed in substance since: <each id>"*, and an edit that changed the substance of
+text carrying no id names its section; an edit that changed only wording is counted among the edits
+and listed nowhere else. A reviewer of the pull request then checks exactly those, where *"the
+current text has not been reviewed"* alone left them diffing the whole artifact: three live runs —
+an `[AD#2]` lookup changed after a capped re-review, ten edits applied after a `PASS WITH
+RECOMMENDATIONS`, post-review `MINOR` edits to a design — each shipped with that line and no list.
+
 **The line also goes into the pull request of a specs-repository handoff, and into a session record.** A command that hands a reviewed artifact off in its specs-repository handoff puts the verdict in the handoff's `body_facts`, and the pull request is what a reviewer reads before merging: there the verdict carries this line, and every finding the run leaves open is listed beside it with its severity. A session record the command keeps (`/specify`'s `_session.md`, `/design`'s `_design-session.md`) records the verdict with the same line. A live `/specify` run had to work out both places for itself.
 
 **Which commands record a verdict is derived, not listed, and a phrase grep is not the derivation.** The set

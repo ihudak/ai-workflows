@@ -137,11 +137,12 @@ folder and what it carries — and, where it holds an `idea.md` and no `prd.md`,
     question, which of the specified units this run implements, and without that file the slice is a
     unit nothing specified: offering it unconditionally let an operator pick one, and the Phase 0
     gate below does not catch that, an absent in-scope spec being `absent` rather than a stop. So:
-    every Epic listed as prose, and the array carrying **at most two** Epic rows, that broad-slice
-    choice and *"Another Epic from the list above (you'll be prompted for its key)"* where the flat `specification.md`
-    stands; where it does not, the choice is omitted and the freed row goes back to the Epics —
-    **at most three** Epic rows plus that same remainder option, which is *The cap*'s own shape for
-    a picker appending nothing of its own. **`/implement`'s
+    every Epic listed as prose, and, where the flat `specification.md` stands, the array carrying that
+    broad-slice choice beside every Epic row where three or fewer stand, and otherwise **at most two**
+    Epic rows and *"Another Epic from the list above (you'll be prompted for its key)"*; where it does
+    not, the choice is omitted and the freed row goes back to the Epics — every Epic row where four or
+    fewer stand, and otherwise **at most three** plus that same remainder option, which is *The cap*'s
+    own shape for a picker appending nothing of its own. **`/implement`'s
     done-predicate is now the artifacts present in each Epic folder**, which is the mechanism
     `/design`'s own Epic picker already uses:
     `specification.md` but no `design.md` → ○; `design.md` present, no record → ◐; a record → ●
