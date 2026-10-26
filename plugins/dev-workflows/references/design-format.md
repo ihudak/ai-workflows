@@ -256,18 +256,21 @@ reach.
     `scripts/pieces.py` reads the section exactly so. It starts at a line `## Pieces` outside any
     fenced block and ends at the next `## ` heading outside one, or the end of the file, so it is
     found wherever it stands in the design, and a `## Pieces` line inside a fenced block — a design
-    quoting the format — never starts it; CRLF line ends are accepted. It reads as one piece
+    quoting the format — never starts it; as in CommonMark, a line of backticks followed by text
+    holding another backtick opens no fenced block; CRLF line ends are accepted. It reads as one piece
     (`none`) where there is no such heading, or where the section's first non-blank line begins
     `_N/A`. It is **malformed** where it has no `Reason:` line, an empty one, a
     second one, or one after the first piece; fewer than two pieces; a piece name that is not
     kebab-case or is used twice; a piece with no `Files:` line, a second one, or one with no entry;
-    a `Files:` entry not in backticks, an empty one, an unclosed backtick, a trailing comma, or
-    other text outside the backticks; a piece with a second `Contract:` line; the same entry in two
-    pieces' `Files:`; or any other non-blank line — prose, or a fenced block inside the section,
-    whose lines are all read as the section's. `pieces.py parse` is the check `/design` runs on the
-    section it writes and `design-reviewer` runs on the section it reviews; `pieces.py assign` is what `/implement` runs, and it also reads the section as
-    malformed where one path of the change is matched by two pieces' patterns — an overlap no
-    entry's text shows.
+    a `Files:` entry not in backticks, an empty one, one that begins `/` or `./`, an unclosed
+    backtick, a trailing comma, or other text outside the backticks; a piece with a second
+    `Contract:` line; the same entry in two pieces' `Files:`; or any other non-blank line — prose,
+    or a fenced block inside the section, whose lines are all read as the section's.
+    `pieces.py parse` is the check `/design` runs on the section it writes and `design-reviewer`
+    runs on the section it reviews; `pieces.py assign` is what `/implement` runs on the change's paths, and
+    `/design` on the target repository's files at the commit Phase 4 scanned, and it also reads the
+    section as malformed where one of those paths is matched by two pieces' patterns — an overlap
+    no entry's text shows — or is not valid UTF-8.
 
 ## Architecture governance
 
