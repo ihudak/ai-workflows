@@ -20,7 +20,7 @@
 - [`/feedback`](commands/feedback.md) — log a note about the plugin itself, for the maintainer to aggregate.
 - [`/frames`](commands/frames.md) — (re)build the index every `design/<frame-set>/` of one resolved folder must carry before anything can read it.
 - [`/prompt`](commands/prompt.md) — log a correction you just made to a command's output, then apply the fix directly.
-- [`/prompt-brainstorm`](commands/prompt-brainstorm.md) — log a correction, then hand off to `superpowers:brainstorming` to redesign it together.
+- [`/prompt-brainstorm`](commands/prompt-brainstorm.md) — log a correction, then hand off to `superpowers:brainstorming` to redesign it together, where that skill is installed.
 - [`/prompt-grill-me`](commands/prompt-grill-me.md) — log a correction, then grill the fix inline with a bounded interrogation.
 - [`/statusline`](commands/statusline.md) — install the plugin family's multi-line status line into your Claude Code settings.
 

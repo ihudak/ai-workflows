@@ -246,10 +246,10 @@ elsewhere (§2.1).
 
 Sub-agents that receive a `model_routing` block:
 
-- Research / planning sub-agents (NVD lookup, detect, compatibility checks):
-  record the block in their output; their tier is the `model:` argument on the
-  dispatch, resolved by step nature per §9. Both agents this parenthetical names
-  take the `detection_model` on their first dispatch, because each is invoked
+- Research / planning sub-agents — `/vuln`'s `vuln-research` (NVD lookup, detect)
+  and `/upgrade`'s `upgrade-planner` (compatibility checks): record the block in
+  their output; their tier is the `model:` argument on the dispatch, resolved by
+  step nature per §9. Both take the `detection_model` on their first dispatch, because each is invoked
   before its command's per-unit classification exists — and they diverge once it
   does. `/upgrade`'s `upgrade-planner` **always** runs on the `detection_model`:
   for a `SIGNIFICANT`/`HIGH-RISK` component `/upgrade` escalates through the

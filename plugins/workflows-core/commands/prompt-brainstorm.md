@@ -1,6 +1,6 @@
 ---
 name: prompt-brainstorm
-description: Log a corrective interaction as plugin feedback, then hand off to superpowers:brainstorming to redesign the correction together. Captures the friction, your verbatim prompt (secrets, email addresses, non-public hosts, IP addresses and home paths redacted), and the resolution to the specs repo for the maintainer.
+description: Log a corrective interaction as plugin feedback, then hand off to superpowers:brainstorming, where installed, to redesign the correction together — or, without it, point to /prompt-grill-me. Captures the friction, your verbatim prompt (secrets, email addresses, non-public hosts, IP addresses and home paths redacted), and the resolution to the specs repo for the maintainer.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 disable-model-invocation: true
 ---
@@ -39,13 +39,23 @@ Infer the target command from recent context — which command's output you are
 correcting. Ask only if genuinely ambiguous (one grouped prompt of 2–4 options; the
 harness supplies the free-text escape). If no command applies, use `n/a`.
 
+**Then check for the brainstorming skill.** `superpowers:brainstorming` is an optional
+companion, not a dependency (`${CLAUDE_PLUGIN_ROOT}/references/dependencies.md`): record
+`brainstorming: present` where it is among the skills this session can invoke, else
+`brainstorming: absent` — the session's skill listing is the test, since invoking the skill to probe it would cede the session. Nothing here installs it, and nothing stands in for it — there is
+no embedded brainstorming technique in this family — so an absent skill changes what
+Phase 2 records and what Phase 3 does, and nothing else.
+
 ## Phase 2 — Persist the corrective triple
 
 Cite `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` and call its
 `emit-prompt` entry point (§6). Provide:
 - **Friction** — what the command produced that was wrong.
 - **User prompt** — `$ARGUMENTS`, **verbatim** (never paraphrased, and never redacted here: `emit-prompt` applies `feedback-emission.md` §1.1's redactions as it writes).
-- **Resolution** — `Handed off to superpowers:brainstorming to redesign the correction.`
+- **Resolution** — `Handed off to superpowers:brainstorming to redesign the correction.` where
+  Phase 1 found the skill present; where it found it absent, `Not explored: superpowers:brainstorming
+  is not installed. Explore it with /workflows-core:prompt-grill-me, or apply a fix with
+  /workflows-core:prompt.` — never a hand-off that will not happen.
 - `command` (Phase 1), an inferred `category` (§1 vocab, reuse-first), `impact`,
   `key` (or `null`), `source`, and `plugin_version`, read from
   `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` — this command's own plugin, as
@@ -56,8 +66,8 @@ the entry with the two extra prose blocks (`origin: prompt`), appends per §3
 (never silently skipped), and writes silently. Surface the persisted path and
 any degradation notice.
 
-**Then defer the cost entry.** This command cedes the session at Phase 3 and never regains control, so it
-cannot measure its own spend. Record what a cost phase would have claimed, and
+**Then defer the cost entry.** Where Phase 1 found the skill present, this command cedes the session at Phase 3 and never regains control, so it
+cannot measure its own spend; where it found it absent, the run ends at Phase 3 all the same, and both paths defer, so the command does one thing either way. Record what a cost phase would have claimed, and
 let the next cost-emitting run in this session claim it — cite
 `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` §13 and write its §13.1
 intent record now, before ceding:
@@ -90,18 +100,24 @@ figure here**, because the spend this record stands for has not happened yet.
 **Then commit session artifacts (terminal).** Cite
 `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `commit-artifacts` entry point (§4) inline — before the Phase 3 hand-off,
-because the brainstorming skill takes over the session there. It stages ONLY the
+because the brainstorming skill, where present, takes over the session there. It stages ONLY the
 §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add
 dev-workflows session artifacts (/prompt-brainstorm)` — or `NOISSUE …` when no
 `key` resolved — and pushes per §4 step 5. It NEVER touches a code/docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and
 skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Print its §6 outcome line here, prefixed `Specs repo:`, with any
-guard notice repeated in full. Repeat the `Run flags: …` line here too, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — this is the run's last printed output before the Phase 3 hand-off cedes the session.
+guard notice repeated in full. Repeat the `Run flags: …` line here too, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — this is the run's last printed output before the Phase 3 hand-off cedes the session, save the absent-skill message Phase 3 prints in its place.
 
 ## Phase 3 — Hand off
 
-Invoke `superpowers:brainstorming` (Skill tool) to explore and redesign the
-correction with the user. This is a direct skill use — there is **no declared
-install-time dependency**; the command simply invokes the skill if present.
+Where Phase 1 found the skill present, invoke `superpowers:brainstorming` (Skill tool) to
+explore and redesign the correction with the user. This is a direct skill use — there is
+**no declared install-time dependency**.
+
+Where it found the skill absent, invoke nothing. Say that the correction is logged but not
+explored, because `superpowers:brainstorming` is not installed, and name the two commands
+that can take it from here: `/workflows-core:prompt-grill-me` to grill it inline, which
+needs no other plugin, and `/workflows-core:prompt` to apply a one-shot fix. The run ends
+there; its Phase 2 commit and deferred cost record stand as written.
 
 This command NEVER commits into a docs/code repo, or the current
 working directory, where it is not the specs repository. The Phase 2 `commit-artifacts` step commits ONLY
