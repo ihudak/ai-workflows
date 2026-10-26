@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.37.0] — 2026-10-26
+
+`/create-ard` and `/specify` handle an Epic under a BRD slice as an Epic, file their cost and feedback under the resolved folder's key, re-resolve the ARD for every Epic the *Next Epic* loop takes, and offer only next steps that can run. Fixes batch B07 of the 2026-10-26 review (`docs/superpowers/reviews/2026-10-26-fix-batches.md`). No other plugin changes with it.
+
+### Fixed
+- **`/create-ard` on an Epic under a slice writes an Epic's ARD.** The BRD-route frontmatter, inheritance and report rules assumed every run of the route resolved the slice itself, so an Epic-level run wrote `epic: <SLICE-KEY>`, `components:` and an `inherits:` pointing at the parent BRD's absent ARD, leaving `ard-reviewer` no inherited decisions to check. It now takes any Epic-level ARD's frontmatter — `prd: <SLICE-KEY>`, `epic: <EPIC-KEY>`, `inherits:` the slice's `ard.md`, no `components:` — and inherits the slice's ARD read-only (PRD2-ARD-B1). `ard-format`'s frontmatter comments say which case each value covers.
+- **A slice's own ARD is never inherited by its refine.** `/create-ard` on a slice resolved `prd: <parent>`, `epic: <slice>`, which returned the slice's own `ard.md` as read-only invariants and stopped on its own open `ard/` branch; it now resolves the parent alone, and the slice's ARD is the prior ARD a refine may supersede (PRD2-ARD-B3).
+- **`/specify` on an Epic under a slice applies the Epic's own ARD**, resolving `prd: <SLICE-KEY>`, `epic: <focus_key>`, so an `[AD#N]` `/create-ard <EPIC-KEY>` wrote reaches the grill and `spec-reviewer` (PRD2-SPEC-B3).
+- **The *Next Epic* loop re-runs Phase 2.5 for each Epic it takes**, so the next Epic is no longer specified and reviewed against the previous Epic's ARD, components and contracts (PRD2-SPEC-B1).
+- **Cost, feedback and the session commit use the resolved folder's key on a slice with no `prd.md`**, the ordinary BRD-route state, as `/create-prd` does; both commands passed `null` from a paragraph written when the route resolved a BRD key, so the cost went to the pending tier and the commit read `NOISSUE` (PRD2-ARD-B2, PRD2-SPEC-B6).
+- **Next steps that can run.** `/specify`'s `### Next step` keys on `focus_key`, so a per-Epic spec chosen under a PRD address is offered `/dev-workflows:design <EPIC>` and the sibling fan-out, not `/epics` or `/create-prd`, while a PRD-level spec is offered `/epics <PRD>` and, on both routes alike, `/dev-workflows:design <PRD>` to design it whole (on a multi-component PRD only as `/design`'s override, and only with no Epic folder) — every offer naming the resolved PRD's key, never a typed `@<path>` (PRD2-SPEC-B4); `/create-ard`'s Epic-level array offers `/dev-workflows:design <EPIC>` only where the Epic's `specification.md` is on the default branch (PRD2-ARD-B6); and both name `/prd-proposal` and a readiness tier only where the folder holds a `prd.md`, which that command stops without (PRD2-ARD-B5, PRD2-SPEC-B8).
+- **A readiness tier is claimed only on a PRD-level run.** An Epic-level ARD or a per-Epic spec lands in the `EPIC-` folder, which `proposal-format` §5 does not grade, so neither command claims it raised the folder's tier.
+- `ard-reviewer` and `ard-format` describe an Epic ARD under a slice (`prd:` the slice, `epic:` the Epic) beside a slice's own; and the sentences saying the route resolves only a slice now name the `EPIC-` folder inside one.
+- Both commands declare `<prd_dir>/decisions.md` in their handoff only where the slice holds one, so an un-interviewed slice's handoff reports no false *declaration unaccounted for* (PRD2-SPEC-B9).
+- **The `*_REGISTER_NOT_ON_MAIN` and `*_REGISTER_NOT_HANDED_OFF` stops no longer promise every later run stops the same way** (to-fix D16): a run from another branch may meet the gate's repair instead, so they now say each run meets the register's gate again until the state it reported is resolved — or, for a declined handoff, until the register is on the default branch.
+
 ## [3.36.1] — 2026-10-24
 
 ### Fixed
