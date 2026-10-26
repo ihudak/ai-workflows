@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.36.1] — 2026-10-26
+
+### Fixed
+- **`/implement`'s tasks-only definition** named only Phase 2B and 3B as checking the change against the unit's specification and design. Since 4.35.1, Phase 2A extracts the in-scope IDs too, and on a `MODERATE` run the check is the review gate (Phase 3A step 6). The sentence now names both.
+
 ## [4.36.0] — 2026-10-26
 
 Take with `workflows-core` 1.53.0, whose merged test the PRD run below reads; beside 1.52.0 the PRD run's extra fetch is harmless and the test keeps its old two legs.
