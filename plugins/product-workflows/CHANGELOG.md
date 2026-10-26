@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.43.0] — 2026-10-26
+
+Fix batch B16 of the 2026-10-26 review, with `workflows-core` 1.52.0, whose `escalation-rules` names `/epics` among the commands making the offer below (`.claude/rules/plugin-updates.md`).
+
+### Added
+- **`/epics` offers to apply the MINOR and NIT findings a review leaves open** whose fix is only an edit, after its first review and after its one re-review where neither is `BLOCK`, as the other authoring commands do. Its orchestrator makes those edits itself, read against what they overlap: `doc-fixer`, which keeps taking the `MAJOR` findings, takes no `NIT` and runs only on a `MAJOR`, so the entry's suggestion to route every severity through it would have been refused. An edit the offer applies answers a verdict that was not `BLOCK`, so the unspent re-review is offered after it; after the re-review no review follows, and the version line names the edits. An *Epic size* finding, an unverified one and one on user-resolved text are never offered.
+
+### Changed
+- **`/specify`'s Epic picker carries every Epic beside its broad-spec option where three or fewer stand**, and at most two plus the remainder option otherwise, as `epic-picker`'s *The cap* now says.
+
 ## [3.42.0] — 2026-10-26
 
 Take with `workflows-core` 1.51.0, whose *What a requirement overlaps* these changes cite.

@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.52.0] — 2026-10-26
+
+Fix batch B16 of the 2026-10-26 review: `escalation-rules`, `next-phase-offer` and `epic-picker`. Install it with `product-workflows` 3.43.0 and `dev-workflows` 4.35.0 (`.claude/rules/plugin-updates.md`).
+
+### Changed
+- **`next-phase-offer`'s `<merge-clause>` table resolves `phase-handoff` §4.1's *Commit failed*** to `(once the deliverable staged on <branch> is committed, pushed and its pull request merged)`, where it fell to the catch-all, which named no branch. The paragraph under the table names all four appends and resolves every outcome row of §4.1 that is not an append, counting none, and the rows that name a branch are those that left something on one — committed or staged.
+- **`epic-picker`'s *The cap*: the array carries every Epic where the Epics and the command's own option fit in four**, and the cap — at most three Epic rows plus the remainder option, fewer beside a command's own option — applies only otherwise. Its example now lists five Epics, where it listed four under the cap that the rule two lines later said four need not take.
+- **The BRD lane offers `/product-workflows:brd-reconcile <BRD-KEY> [@<review-file>]`** after `/product-workflows:brd-package`, the path optional, as `/brd-package`'s own `<review-clause>` is: on the repository route the review is committed beside the bundle and `/brd-reconcile` takes no path.
+- **The PE lane's `/dev-workflows:design <PRD>` on a PRD holding Epics** is offered only where an Epic's `specification.md` is on the default branch, as the PA lane states for `/dev-workflows:design <EPIC>`: `/dev-workflows:design` stops with `DESIGN_NO_SPEC` without one.
+- **`escalation-rules`' version line names by id what an edit after the verdict changed in substance** — an `[AD#N]` decision or its Rule, a contract row, a criterion or test case, a PRD's `[FR#N]` or `[AC#N]` — as *"Changed in substance since: <each id>"*, an edit to text with no id naming its section, so a pull-request reviewer need not diff the whole artifact.
+- **`escalation-rules`' offer to apply what a review leaves open names `/epics`** among its users, its edits the orchestrator's own since `doc-fixer` takes no `NIT`, and *An inline fix is read against what it overlaps* names it at those edits.
+
 ## [1.51.0] — 2026-10-26
 
 **Update `dev-workflows` to 4.34.0 and `product-workflows` to 3.42.0 with this release**: their commands cite the rule below by name. Closes to-fix PR1, and FBB-B13 of the 2026-10-26 bugs review.

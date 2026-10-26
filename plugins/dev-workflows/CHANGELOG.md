@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.35.0] — 2026-10-26
+
+With `workflows-core` 1.52.0 (fix batch B16). It runs beside 1.45.0 too: the one change is a copy of `epic-picker`'s cap brought into line with 1.52.0's.
+
+### Changed
+- **`/implement`'s Epic picker carries every Epic where they fit in four beside its broad-slice option, or without it**, and the cap applies only otherwise, as `epic-picker`'s *The cap* now says.
+
 ## [4.34.0] — 2026-10-26
 
 Take with `workflows-core` 1.51.0, whose *What a requirement overlaps* both changes cite.

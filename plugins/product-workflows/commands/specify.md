@@ -566,9 +566,9 @@ is the only command that writes one at all.
     row *done — selecting it rewrites it behind an archive*, the ● rule `epic-picker` defers to.
   Default cursor = the first actionable row (in-progress before not-started). Render per
   `Skill(skill: "workflows-core:reference", args: "epic-picker")`: every Epic listed as prose above the prompt, and
-  the array carrying **at most two** Epic rows (marker + key + title), the explicit
-  **"Author one broad PRD-level spec instead"** choice, and *"Another Epic from the list above (you'll be
-  prompted for its key)"*. That file's *The cap* section is why the Epic rows are the ones that give way: the
+  the array carrying the explicit **"Author one broad PRD-level spec instead"** choice beside the Epics —
+  every Epic row (marker + key + title) where three or fewer stand, and otherwise **at most two** Epic
+  rows and *"Another Epic from the list above (you'll be prompted for its key)"*. That file's *The cap* section is why the Epic rows are the ones that give way: the
   broad-spec choice is the alternative to picking any Epic at all, so hiding it would force a choice
   this command means to leave open.
   - On selecting an Epic → set `focus_key` = that Epic; re-point the feature folder to its per-Epic

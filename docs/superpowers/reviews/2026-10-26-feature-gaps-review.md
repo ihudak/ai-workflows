@@ -424,7 +424,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `specify-scratch-scripts-for-tc-and-fixes` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B21 — MINOR — Gap: `/epics` cannot apply MINOR or NIT findings a review leaves open
+### FBB-B21 — MINOR — Gap: `/epics` cannot apply MINOR or NIT findings a review leaves open — **Fixed in workflows-core 1.52.0 and product-workflows 3.43.0 (batch B16)**
 - **Where:** `plugins/workflows-core/references/escalation-rules.md:515-518` (the apply offer is "Used by" `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal`, `/brd-proposal` and `/implement`, but not `/epics`); `plugins/product-workflows/commands/epics.md:800-813` (`doc-fixer` gets MAJOR only; "MINOR / NIT findings are deferred").
 - **What is wrong:** A contradictory criterion that the fixer itself introduced shipped open in the pull request.
 - **Evidence:** I read both files.
