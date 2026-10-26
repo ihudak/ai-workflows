@@ -83,7 +83,7 @@ D, by feature. Its `CHANGELOG.md` sections dated 2026-10-24 list every change wi
 - **Not ported (BRD route):** 8b's ground-tier and local-path rule, 8e's grounding rules, 8i's `/prd-ground` fixes and `scripts/ledger-evidence.py`, and `bundle-packaging`'s model-id row.
 - **With `security-workflows`:** `/scan`'s changes, if the editions take the plugin.
 
-Check `.claude/rules/plugin-updates.md`'s coupling bullets for each version pair the editions take, as their own versions will differ.
+Check `.claude/rules/plugin-updates-coupling.md`'s coupling bullets for each version pair the editions take, as their own versions will differ.
 
 ## The merged test — `workflows-core:implementation-format` §5
 
