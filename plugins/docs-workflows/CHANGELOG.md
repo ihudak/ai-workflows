@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.23.0] — 2026-10-26
+
+Findings 87.1, 87.2, 87.4 and 87.5 of the 2026-10-26 post-merge review of #82–#85 and #87, against 1.19.0's batch B12. No `workflows-core` change is needed. 87.3, whether `/release-notes` should recommend the specification's phrasing per claim, is recorded for a decision, not changed.
+
+### Fixed
+- **`/document` Phase 6.4's exit named two of its outcomes**, where the re-run found nothing and *Proceed to review anyway*, and gave *Show remaining violations and let me fix manually* and a `NEEDS HUMAN` answer that skipped the check none, so an agent could read the list as closed and jump to Phase 7. Every outcome but **Cancel** now goes on to Phase 6.5. (87.2)
+- **`docs/workflow.md` said keyed `/document` finishes on a branch**, though since 1.19.0 a "no branch" answer at *Revise plan* leaves the pages uncommitted; it now says so, as `getting-started.md` and the command's page do. (87.1)
+- **`docs/commands/document.md`**: a `PASS WITH RECOMMENDATIONS` whose findings triage dismissed settles at `finding-triage`'s first settle prompt before it goes on, and the no-repos gate stays down only where no base named at *Revise plan* undid the *Proceed without the repos* answer. (87.4, 87.5)
+
 ## [1.22.0] — 2026-10-26
 
 Nothing in this release needs a newer `workflows-core` than 1.21.0 did (1.53.0).

@@ -121,6 +121,8 @@ Found by the 2026-10-15 review or its re-review (line numbers at `7c13ce05` unle
 
 - **D21 — `/brd-package` ships no deterministic scan script, and builds the bundle in place.** Split from FBB-B45 (feedback `brd-package-no-shipped-bundle-scans`, `BOOK-2-01-feedback.md`) in batch B11: Phase 8's plugin-free, citation-resolution and set-resolution scans are run ad hoc by the agent, which gave a false commit match on a date (`20261012`), and a failed build left a partial `bundle-<YYYYMMDD>/` that step 11's never-rewrite guard then refuses. Ship a `scripts/` scanner (standard library, `--selftest`, CI-held) for the token and citation passes, and assemble into a temporary directory moved into place only once every rule passes.
 
+- **D23 — `/release-notes`' per-claim discrepancy prompt recommends the specification's phrasing in customer-facing notes.** It presents `/document` Phase 5.8's per-claim prompt, `workflows-core:source-truth` §7.3's word for word, which since docs-workflows 1.19.0 marks *Document as intended (spec)* `(Recommended)`; in `/release-notes` that choice writes the PRD phrasing over shipped code that contradicts it, with no marker in the notes (`release-notes.md` Phase 6's *Code discrepancies second*, step 3), the gap going only to the gaps file. Before 1.19.0 nothing was recommended. Decide whether `/release-notes` gets its own per-claim array, recommending *Document as actual (code)* or nothing, or whether §7.3 lets a caller writing customer-facing notes move the marker. Post-merge review 87.3; D22, which covered the batch array alone, was closed in 1.20.0 (batch B13).
+
 ## From lean context D — any machine
 
 Found while D was built and run (`docs/superpowers/verification/2026-10-22-lean-context-handoff-part.md` §7).
