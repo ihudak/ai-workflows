@@ -52,16 +52,32 @@ worked by 23 teams) and **no dedup / no prose** (pure measurement, append-only).
 No dedup or cross-reference between the three. This subsystem does NOT use the
 `impl-maintenance` agent.
 
-**Cost runs unless the user skipped it.** Unlike feedback (which writes nothing when there is no plugin signal), the cost phase always computes and always advances the checkpoint (§3) — even when it can only report-only — except under `--skip-costs`, where `workflows-core:run-flags` `skip-cost` advances the checkpoint without loading this file and writes no entry, and except where no run started at all — `/product-workflows:prd-ground`'s `PRD_GROUND_TYPED_ONLY`, the one such stop (`workflows-core:specs-repo-git` §4). A silent write with no interaction is the norm; the sole interactive moment is pending reconciliation (§9), and only when pending files exist.
+**Cost runs unless the user skipped it.** Unlike feedback (which writes nothing when there is no plugin signal), the cost phase always computes and always advances the checkpoint (§3) — even when it can only report-only — except where §1 finds no transcript holding this run's invocation, which it names in one line and measures nothing, except under `--skip-costs`, where `workflows-core:run-flags` `skip-cost` advances the checkpoint without loading this file and writes no entry, and except where no run started at all — `/product-workflows:prd-ground`'s `PRD_GROUND_TYPED_ONLY`, the one such stop (`workflows-core:specs-repo-git` §4). A silent write with no interaction is the norm; the sole interactive moment is pending reconciliation (§9), and only when pending files exist.
 
 ## 1. Session-artifact resolution
 
 Derive from `cwd` and the current session (Claude Code's project-slug rule):
 
-- **`<cwd-slug>`** — the absolute `cwd` with every `/` and `.` replaced by `-`
-  (e.g. `/workspace/docs` -> `-workspace-docs`).
-- **Main transcript** — the newest `*.jsonl` directly under
-  `~/.claude/projects/<cwd-slug>/`. Its basename minus `.jsonl` is `session_id`.
+- **`<cwd-slug>`** — the absolute `cwd` with every character outside `[A-Za-z0-9]`
+  replaced by `-` (e.g. `/workspace/docs` -> `-workspace-docs`,
+  `/workspace/my_service` -> `-workspace-my-service`). Where no directory of that
+  name exists, the project directory is the one under `~/.claude/projects/` whose
+  transcripts' `cwd` field equals the absolute `cwd`.
+- **Main transcript** — the `*.jsonl` directly under `~/.claude/projects/<cwd-slug>/`
+  **holding this run's own invocation as its newest such record**. The invocation is
+  the `<command-name>` record of the command now running with the arguments it was
+  given, or — for a command another run started through the Skill tool, as
+  `/brd-split`'s *Ground now* starts `/product-workflows:prd-ground` — the `Skill`
+  `tool_use` whose `input.skill` names that command, with the same `input.args`.
+  Among the files holding such a record, take the one whose matching record is the
+  newest by its `timestamp`: neither the newest file nor the newest file holding
+  the invocation is enough, since another session in the same directory may have
+  written last, or run the same command earlier. Its basename minus `.jsonl` is
+  `session_id`. Where no file holds the invocation, there is no main
+  transcript: the cost phase prints one line, `cost not measured — no transcript
+  under ~/.claude/projects/<cwd-slug>/ holds this run's invocation`, writes no
+  entry, advances no checkpoint (the newest file's checkpoint may be another
+  session's) and leaves any §13.1 deferred file in place, and the run continues.
 - **`<sid8>`** — the first 8 characters of `session_id`.
 - **Subagents dir** — `~/.claude/projects/<cwd-slug>/<session_id>/subagents/`
   (holds `agent-*.jsonl` with their own Sonnet/other `usage` + `model`, and a
@@ -261,9 +277,9 @@ installed (via `/workflows-core:statusline`):
   a live `/specify` window holding one manual `/compact` of a 675,221-token
   context differed by $3.23. That gap is not price-table drift, and the entry's
   `compactions:` field (§6) is what tells a reader so.
-- Pending a one-line implementation check that `.cost.total_cost_usd` is present
-  on the statusline stdin in the target Claude Code version; if absent, B is
-  simply unavailable and A stands alone.
+- Where a Claude Code version omits `.cost.total_cost_usd` from the statusline
+  stdin, B is unavailable and A stands alone; the live window above shows the
+  field present.
 
 ## 6. Report artifact & entry format
 
@@ -343,7 +359,7 @@ price is the single biggest contributor to this run, not a minor stray call.
 
 **Action.** `emit-cost` prints one visible warning line to the run output —
 not just the inline YAML note — in every persistence tier, including
-report-only (§8 tier 5), naming the model id and stating that the figure is a
+report-only (§8 tier 4), naming the model id and stating that the figure is a
 lower bound:
 
 ```
@@ -558,8 +574,12 @@ subdir. Walk top-down; stop at the first tier that applies:
 
 **Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or takes it for an artifact that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place. A pending entry written there would never reconcile, and §9 does not run either.
 
-1. `$SPECS_PATH` writable **and** the PRD dir exists (matched by
-   `$SPECS_PATH/{specs|specifications|vis}/…/<KEY>{-|_}<slug>/…`) ->
+1. `$SPECS_PATH` writable **and** the PRD dir exists (the folder
+   the run's own `resolve-address` found for `<KEY>` (`workflows-core:addressing` §3) — or,
+   where the run resolved none, the one `resolve-key <KEY>` returns as `found`, its
+   kind-prefixed name or §5's legacy fallback alike; `absent` or `ambiguous` is no
+   match here, never a stop — placed by §4.1: a `PRD-` or `BRD-` folder is
+   the PRD dir itself, an `EPIC-` folder's is the folder above it) ->
    `<PRD-dir>/dev-workflows/cost/<sid8>.md`. *[primary]*
 2. `$SPECS_PATH` writable but no PRD dir (or no key resolved) — three branches,
    and the documentation and security branches are tried first:
@@ -646,7 +666,7 @@ and acceptable.
 ## 11. Caller contract — `emit-cost`
 
 One entry point, called by the
-twenty-eight commands that measure themselves (§1) and by
+twenty-eight commands that measure themselves (§7) and by
 whichever of them replays a §13 record (never by the two that defer — they call
 nothing). Every caller supplies `command`, `phase`, `role` (or the
 `inferred` marker — `/release-notes`, `/frames`, `/conformance`, `/scan`, the four feedback commands and
@@ -699,7 +719,9 @@ Inputs:
 - `plugin_version` — the version of **the plugin whose command ran**: the one that ships the command named in `command:`, read from **that plugin's** `.claude-plugin/plugin.json` (`python3 -c "import json;print(json.load(open('<path>'))['version'])"`). It is **supplied by the caller and never resolved here**, and the distinction is not pedantic: this reference is read through the loader skill, so a `${CLAUDE_PLUGIN_ROOT}` written *in this file* resolves to the plugin that **ships this reference**, and a run of a sibling's command would file its entry under `workflows-core`'s version — named outright, because every reader of this sentence is in a different plugin from the one it is about. Each calling command already reads the value from its own `${CLAUDE_PLUGIN_ROOT}`, which resolves correctly there, and passes it in. Two things make the emitter's convenience the wrong trade. The field sits beside `command:`, so an entry pairing one plugin's command with another plugin's version describes no artifact that ever shipped. And every entry already on disk carries the version series of the plugin whose command ran — silently re-basing that series onto a different counter destroys exactly the comparability the field exists for. A §13 replay uses the **record's own** `plugin_version` (§13.1), never the replaying run's.
 
 Behavior:
-1. Resolve session artifacts (§1) and the price table (§4).
+1. Resolve session artifacts (§1) and the price table (§4). Where §1 finds no
+   main transcript, print its line and stop: no step below runs, step 7's
+   checkpoint write included.
 2. Read the §13.1 deferred file, if any. Run `session-cost.py` (§2) with the
    checkpoint (§3), the snapshot (§5) when present, and **one `--claim` per
    deferred record, oldest first**. With no deferred file this is the call it has
@@ -724,28 +746,41 @@ Behavior:
 ## 12. Maintainer checklist — onboarding a new model generation
 
 A new model generation (e.g. a hypothetical Opus 4.9, or a new Sonnet minor)
-touches **two** files that must change together. Skipping one is exactly the
-omission that produced the stale "Opus 4.5-4.8" chain comment this reference
-and `cost-prices.yaml:22` both used to carry:
+touches **two** files that must change together, and then every file that names
+the chain head it supersedes. Skipping one is exactly the omission that produced
+the stale "Opus 4.5-4.8" chain comment this reference and `cost-prices.yaml:22`
+both used to carry:
 
-1. `${CLAUDE_PLUGIN_ROOT}/references/model-routing/classification.md` §2 — add
-   the new model id to the correct fallback chain (Opus / Sonnet), in
-   priority order, ahead of the model(s) it supersedes.
-2. `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml` — add a matching
-   `models:` entry (`input`, `output`, `cache_read`, `cache_write_5m`,
+1. **Its chain.** An Opus or Sonnet id goes in
+   `${CLAUDE_PLUGIN_ROOT}/references/model-routing/classification.md` §2 (Opus)
+   or §2.1 (Sonnet), in priority order, ahead of the model(s) it supersedes. A
+   Haiku id has no `classification.md` chain: it goes at the top of
+   `${CLAUDE_PLUGIN_ROOT}/references/run-flags.md` §2's **Haiku rows**, which are
+   Haiku's chain wherever `run-flags` says chain row.
+2. **Its price.** `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml` — add a
+   matching `models:` entry (`input`, `output`, `cache_read`, `cache_write_5m`,
    `cache_write_1h`, USD per million tokens, **permanent/standard rate only**
    — §4) keyed by the same undated model id, and update the chain-summary
    comment above the relevant block (e.g. "Opus 5 and Opus 4.6-4.8 all bill at
-   $5 / $25"). **A new id that extends an existing key** (`claude-opus-5-5` extends
-   `claude-opus-5`) is priced at the shorter key's rates by the prefix fallback until it
-   has its own entry — silently, with no `unpriced-model` note — so for such an id (2)
-   is not optional so it still lists every model actually in the chain.
+   $5 / $25"). **A new id that extends an existing key** (`claude-opus-5-5`
+   extends `claude-opus-5`) is priced at the shorter key's rates by the prefix
+   fallback until it has its own entry, silently and with no `unpriced-model`
+   note, so for such an id step 2 is still required: without it the chain
+   comment no longer lists every model the key bills.
+3. **Every site that names the old head.** A new chain head replaces the old one
+   wherever a file names a family's newest row — `run-flags` §2's family-only
+   reachability rule, `classification.md`'s §4 example, the chain statement in
+   `.claude/rules/workflows-core.md`, the chains printed on the dev- and
+   product-workflows `docs/reference/model-routing.md` pages, and the
+   getting-started pages among them. Find them all with
+   `grep -rln '<old head id>' plugins/ .claude/rules README.md` (excluding
+   `CHANGELOG.md`), then read each hit: a site citing the old id as history keeps it.
 
 Do (1) without (2) and the new model routes but prices as `unpriced-model`
 every run — silently at first, loudly once §6.1's dominance warning fires. Do
 (2) without (1) and the price table carries a dead key nothing ever routes to.
-After editing either file, `grep` both for the new model id to confirm the
-other was updated too.
+Skip (3) and `run-flags` §2 still accepts only the old id as its family's newest
+row. After editing, `grep` for the new model id to confirm every step landed.
 
 ## 13. Deferred attribution (a command that cedes the session)
 
@@ -850,7 +885,7 @@ exists to catch.
 ### 13.3 The replay
 
 `emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-eight
-commands that measure themselves (§1) never take this path.
+commands that measure themselves (§7) never take this path.
 
 Otherwise the run passes one `--claim <command>` per deferred record, oldest
 first, and the script partitions the window:

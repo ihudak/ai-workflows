@@ -98,8 +98,8 @@ Under `run_flags.skip_feedback`, the command's maintenance phase dispatches `wor
 ## 5. `skip-cost` entry point
 
 1. **Resolve session artifacts** exactly as `cost-emission.md` §1 names them — restated here, in full, because this path must never load `cost-emission.md`:
-   - **`<cwd-slug>`** — the absolute `cwd` with every `/` and `.` replaced by `-`.
-   - **Main transcript** — the newest `*.jsonl` directly under `~/.claude/projects/<cwd-slug>/`; its basename minus `.jsonl` is `session_id`.
+   - **`<cwd-slug>`** — the absolute `cwd` with every character outside `[A-Za-z0-9]` replaced by `-`; where no directory of that name exists, the one under `~/.claude/projects/` whose transcripts' `cwd` field equals the absolute `cwd`.
+   - **Main transcript** — the newest `*.jsonl` directly under `~/.claude/projects/<cwd-slug>/` **holding this run's own invocation as its newest such record** — the invocation being the `<command-name>` record of the command now running with its arguments, or, for a command started through the Skill tool, the `Skill` `tool_use` whose `input.skill` names it with the same `input.args`; among the files holding one, the file whose matching record has the newest `timestamp`, never simply the newest file, which may be another session's in the same directory; its basename minus `.jsonl` is `session_id`. Where no file holds it, print `cost checkpoint not advanced — no transcript holds this run's invocation`, skip steps 2 and 3, and go on to step 4.
    - **Subagents dir** — `~/.claude/projects/<cwd-slug>/<session_id>/subagents/` (holding a `Workflow` run's agents under its `workflows/<run-id>/`).
 2. **Advance the checkpoint, and nothing else:**
    ```bash
