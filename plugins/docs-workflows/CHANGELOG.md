@@ -5,6 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.19.0] — 2026-10-26
+
+Runs beside `workflows-core` 1.45.0 and later; nothing here needs a newer one.
+
+### Changed
+- **`/document`'s plan says whether it will branch, and a run that chose no branch commits nothing.** In a `docs_repo` context the plan's branch line says Phase 6.2 cuts a branch, and a *Revise plan* asking for no branch records `branching_confirmed: false`: Phase 6.2 does not run, Phase 6.3 commits nothing — its commit column now follows the branch column — and Phase 8.5 is skipped, since it squashes onto a base only Phase 6.2 records. Where the run profiled the repository inline, profiling already cut the branch, so the plan says so and offers no opt-out. The pages of a no-branch run stay uncommitted on the branch the docs repository is on, and the report's `### Branch` and `### Git state` say so.
+- **Phase 5.8's decision arrays are `workflows-core:source-truth` §7.2's and §7.3's, word for word**, the per-discrepancy one recommending *Document as intended (spec)* and ending in *Cancel the whole run*, which now says what it leaves where inline profiling committed a profile. `/release-notes` presents its per-claim prompt as Phase 5.8's, so it now shows those labels too; its own batch array is unchanged (to-fix D22).
+
+### Fixed
+- **Phase 5.8 with nothing to escalate goes on to Phase 6.1**, where it said "skip to Phase 6.3" and so skipped the CDN handoff and the branch set-up, committing on whatever branch the docs repository was on.
+- **A clean style check goes on to Phase 6.5**, where it said "Proceed to Phase 7" and so skipped the build and smoke checks and their ledger rows, which `doc-reviewer` blocks on. Phase 6.4 now also says where a run goes after its re-lint.
+- **Phase 6.4's re-lint is a `docs-style-checker` dispatch.** The `doc-fixer` block sat under "re-run the linter once:", so a run read it as a second fixer and never re-linted; the block now comes first, and the re-run is named.
+- **A PASS WITH RECOMMENDATIONS with no MAJOR survivor dispatches nothing**, writes no `claims_file` and offers no re-review, going on to Phase 8 with its MINOR and NIT findings in the report — a set triage emptied still takes `finding-triage`'s first settle prompt — where it dispatched `doc-fixer` with nothing to apply and then offered a re-review of edits never made.
+- **A base named at *Revise plan* undoes Phase 1's *Proceed without the repos***, so Phase 4's and Phase 5's gates are put again and the run reads the code after all, and the plan's `Repos:` line has a PRD-only form. (to-fix D4)
+- **The model-routing text names `doc-writer`.** `current_model` was called "the inline writer", the report printed a "Session / writer model", §10's note kept `implementation_model` on the session model while Phase 1.5 said it carried the enforced id, and three lists named "the folder read", which no agent runs. The report now has a `doc-writer (implementation_model)` line.
+- **The keyed invariant on context hygiene follows `session-hygiene` §2** — Dev to Dev, `/compact` — where it prescribed a `/clear` docs-to-PM handoff its own report template did not print.
+- **`toolchain-preflight` §5's Cancel no longer says nothing has been written**: the check wrote nothing, and a caller that wrote before it, as `/document`'s inline profiling does, says what it left.
+- **`finish-and-handoff` and `/document` Phase 8.5 no longer say this plugin opens no pull request anywhere.** None opens one in a docs repository; `/release-notes` has opened one in `$SPECS_PATH` for its draft, through `handoff-to-main`, since 1.15.0.
+
 ## [1.18.0] — 2026-10-24
 
 Needs `workflows-core` 1.45.0 for two citations: `finish-and-handoff` and `key-discovery` name the SSH-alias rule as `phase-handoff` §2.6.1's `owner-repo`, a section 1.44.0 does not have — its derivation sits in §2.6 there. The rest runs beside 1.44.0, which serves `escalation-rules core`; `/document`'s invariants on what may follow its report cite `specs-repo-git` §4 step 7, which 1.44.0's step 7 does not say, and state the rule themselves.

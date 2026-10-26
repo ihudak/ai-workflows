@@ -321,7 +321,7 @@ Ask about:
   choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Proceed without the repos — PRD-only for every repo", "Cancel"]
   ```
   *Proceed without the repos* is Phase 4's *Proceed without them — PRD-only for the missing repos*, taken now for every repo: Phase 3's slug→clone map holds no clone, so every in-scope repo is missing, and Phase 4 records each one's refs as `unresolved` without putting its gate.
-  *Set REPOS_PATH* asks for the path in plain text and records the answer as `$REPOS_PATH` once an entry of it is an existing directory. A base named at Phase 2's *Revise plan* replaces it the same way. Individual clones are located in Phase 4 by matching their `git remote` against each in-scope `repo` slug the implementation record and the commit scan named — not by assuming a `<base>/<slug>` directory name.
+  *Set REPOS_PATH* asks for the path in plain text and records the answer as `$REPOS_PATH` once an entry of it is an existing directory. A base named at Phase 2's *Revise plan* replaces it the same way — and, where this question took *Proceed without the repos*, undoes that answer: once an entry of the named base is an existing directory, the run resolves repositories as if this question had never been asked, Phase 4's gate and Phase 5's aggregate gate put as on any run. Individual clones are located in Phase 4 by matching their `git remote` against each in-scope `repo` slug the implementation record and the commit scan named — not by assuming a `<base>/<slug>` directory name.
 - **Screenshots** — this question seeds the **add-list** only; it never skips Phase 5.6. The candidate list itself is built later in **Phase 5.6** (by which point `specs_dir`, the folder read `attachments[]`, and the resolved repos are all available), and Phase 5.6 **always** runs — it also reviews the images already on the pages this run is about to edit, regardless of this answer:
   ```
   choices: ["Yes — I have new screenshots to add (you'll pick the sources in Phase 5.6) (Recommended)", "No new screenshots", "Cancel"]
@@ -342,7 +342,7 @@ Ask about:
 Also display (for user context):
 - Resolved cwd absolute path
 - Write context (`obsidian` / `docs_repo` / `non_docs_repo` / `plain_dir`)
-- Whether branching will happen (only when context is `docs_repo` — confirmed at plan approval)
+- Whether branching will happen (only when context is `docs_repo`, or a `non_docs_repo` confirmed at Phase 0 step 2 — settled at plan approval, Phase 2)
 - The resolved address and folder
 
 ---
@@ -359,8 +359,8 @@ SIGNIFICANT → no separate Opus **risk-planner** for the high-level plan (the P
 model_routing:
   classification: SIGNIFICANT
   reason: <one-line>
-  current_model: <the model this orchestrator is running under>   # = the inline writer + Phase 5.8 framing
-  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  current_model: <the model this orchestrator is running under>   # = coordination + the interactive gates (Phase 5.8 framing, 6.1); the writer is doc-writer (implementation_model)
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it — implementation_model included, doc-writer being a dispatched step — and routing: bypassed
   defect_model: <§2.1 Sonnet chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 mid-tier Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>
   planning_model:  <§2 powerful chain: claude-opus-5-5 … fallback Sonnet per §2>   # doc-planner (5.7)
@@ -371,7 +371,7 @@ model_routing:
   notes: <any §2 / §2.1 fallback or degradation>
 ```
 
-Each subagent dispatch below cites which chain it uses (the §9 role→chain map): `doc-planner` → `planning_model`; the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, and the Phase 8 maintenance agents → `detection_model`; `doc-reviewer` keeps its own frontmatter Opus pin (recorded as `review_model`, no override added unless §10 enforces a model).
+Each subagent dispatch below cites which chain it uses (the §9 role→chain map): `doc-planner` → `planning_model`; `doc-writer` → `implementation_model`; `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, and the Phase 8 maintenance agents → `detection_model`; `doc-reviewer` keeps its own frontmatter Opus pin (recorded as `review_model`, no override added unless §10 enforces a model).
 
 **Orchestration advisory (window-focused).** `doc-planner` (5.7) and `doc-writer` (6.3) run on the §2 Opus chain regardless of session; only coordination + the interactive gates (5.8 decision, 6.1) run on `current_model`. **Unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then neither the relaunch bullet nor the degradation bullet below fires: `planning_model`, `review_model` and `implementation_model` already carry the enforced id, per this phase's `model_routing` block, and §10 suppresses this relaunch advisory alongside its own degradation notice):**
 
@@ -391,9 +391,9 @@ Present a concise plan:
 
 - The resolved address and the folder it resolved to
 - Output filename / path under the resolved `docs_repo_path` (from Phase 1)
-- `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH or named at the plan's approval` — the repositories to examine are resolved in Phase 4, after the folder read and the commit scan; a repository with several clones is asked about there
+- `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH or named at the plan's approval` — or, where Phase 1 took *Proceed without the repos*, `Repos: none — PRD-only for every repo (Phase 1); name a base at the plan's approval to read the code after all` — the repositories to examine are resolved in Phase 4, after the folder read and the commit scan; a repository with several clones is asked about there
 - Parallelism plan (up to 4 `diff-summarizer` instances per batch; up to 4 repos per Agent message)
-- Write context + whether branching will happen
+- Write context + whether branching will happen. In a `docs_repo` context (or a `non_docs_repo` confirmed at Phase 0 step 2) the plan says `Branch: yes — Phase 6.2 cuts a branch and the pages are committed on it; answer *Revise plan* with "no branch" to leave them uncommitted on the branch the docs repository is on`. A revision asking for no branch changes the line to `Branch: no — the pages are left uncommitted; no commit, squash, push or pull-request draft`, and one asking for the branch back changes it again. *Approve* records the line of the plan it approves: `branching_confirmed: true` for `Branch: yes`, `false` for `Branch: no`. **Except in the inline-profiling case** (`profile_source: generated`): Phase 0's profiling already cut `profile_branch` and committed the profile on it, so there is no branch left to decline — the line says `Branch: yes — <profile_branch>, which profiling cut, renamed in Phase 6.2`, `branching_confirmed` is `true`, and a revision asking for no branch is answered with that line and the plan re-asked. In every other context `branching_confirmed` is `false` and the line says why.
 - Screenshots: `new_images_wanted` (yes/no, from Phase 1). Phase 5.6 always runs: when yes, its add-list candidates are gathered and confirmed there (specs scan + folder `attachments[]` + manual paths) — list "candidates resolved in Phase 5.6"; either way, Phase 5.6 also reviews the images already on the edited pages for staleness.
 
 Ask:
@@ -511,7 +511,7 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
      ```
      Resolved <M>/<N> repositories from the implementation record.
      ```
-   - **`missing` is non-empty, and Phase 1 took *Proceed without the repos*** — put no gate: take *Proceed without them* below for the whole set, as Phase 1's answer already did.
+   - **`missing` is non-empty, and Phase 1 took *Proceed without the repos*** — unless a base named at Phase 2's *Revise plan* undid that answer (Phase 1) — put no gate: take *Proceed without them* below for the whole set, as Phase 1's answer already did.
    - **`missing` is non-empty** otherwise — present ONE consolidated gate (not one prompt per slug):
      ```
      This PRD's implementation record spans <N> repositories. <M> mounted, <K> missing:
@@ -570,7 +570,7 @@ After the batch returns, handle each per-repo status:
 - `prep.read_only: true` — not a failure. The scan ran at `prep.scanned_ref`. Escalate per the `Read-only mount — ref stale or diverged` rule in `workflows-core:escalation-rules` **only** when `prep.ref_committed_at` is more than 14 days old or `prep.head_divergence.ahead > 0`; otherwise proceed silently and cite evidence at `prep.scanned_ref`.
 - `NO_PRS_RESOLVED` — the agent's own declared return status, whatever the elements were called; record all that repo's refs as unresolved and continue.
 
-After every batch completes, if **every ref across every repo** is unresolved, present a single aggregate gate (not per-ref) — save where Phase 1 took *Proceed without the repos*, which already chose PRD-only content: there, put no gate and go on as its first option does:
+After every batch completes, if **every ref across every repo** is unresolved, present a single aggregate gate (not per-ref) — save where Phase 1 took *Proceed without the repos*, which already chose PRD-only content, and no base named at Phase 2's *Revise plan* undid it: there, put no gate and go on as its first option does:
 ```
 choices: ["Proceed with PRD-only content (Recommended — writer/planner draw from the folder read output; final report notes missing diff content)", "Cancel"]
 ```
@@ -741,7 +741,7 @@ choices: ["Approve & write (Recommended)", "Adjust (you'll be prompted)", "Cance
 - `code_repos` is non-empty and `doc-planner` returned no `verification_warnings` of an escalating type (`CONTRADICTED`, `NOT_FOUND`, `AMBIGUOUS`, `SPEC-VS-PRD`) → `RAN`, `mechanism: "claim-class verification per source-truth.md §2–§3"`, `findings: 0`. A list of only `VERIFIED` entries counts as none for this purpose — the row is final and this phase's body does not run.
 - `code_repos` is non-empty and at least one warning IS of an escalating type → append `RAN` provisionally now, then rewrite the row at the end of this phase per **Ledger (final)** below.
 
-Run the rest of this phase when the `doc-planner` handoff contains any `verification_warnings` with `finding: CONTRADICTED`, `NOT_FOUND`, `AMBIGUOUS`, or verdict `SPEC-VS-PRD`. If there are none, skip to Phase 6.3 — the row above is already recorded.
+Run the rest of this phase when the `doc-planner` handoff contains any `verification_warnings` with `finding: CONTRADICTED`, `NOT_FOUND`, `AMBIGUOUS`, or verdict `SPEC-VS-PRD`. If there are none, the rest of this phase does not run — the row above is already recorded — and the run goes on to Phase 6.1 — which, like Phase 6.2 after it, runs only where its own condition holds — never straight to Phase 6.3.
 
 This phase is **three-way** when a spec was provided (Phase 0 resolved `specs_dir` and Phase 5.7 passed it to `doc-planner`): it compares the **PRD** narrative, the **Spec** (authoritative "intended"), and the **Code** ("actual"), per `workflows-core:source-truth` §7. When no spec was provided, the planner emits `spec_phrasing: "(no spec)"`; the **Spec phrasing** column simply renders `(no spec)` and the run behaves exactly as the original PRD-vs-code two-way protocol.
 
@@ -768,15 +768,15 @@ the row `DEGRADED`, with `not_run:` naming what did not run (e.g.
 
 2. **Batch decision:**
    ```
-   choices: ["Decide per discrepancy (Recommended)", "Document ALL as intended (spec)", "Document ALL as actual (code)", "Skip ALL and report (drafts a bug report)"]
+   choices: ["Decide per discrepancy (Recommended)", "Document as intended (spec) for ALL", "Document as actual (code) for ALL", "Skip & report for ALL (drafts a bug report; no claims documented)"]
    ```
-   "Document ALL as intended (spec)" uses the `spec_phrasing` (or the PRD phrasing when it is `(no spec)`).
+   These are `workflows-core:source-truth` §7.2's choices, word for word, as step 3's are §7.3's. "Document as intended (spec) for ALL" uses the `spec_phrasing` (or the PRD phrasing when it is `(no spec)`).
 
 3. **Per-discrepancy** (if "Decide per discrepancy"): for each warning, show claim + PRD phrasing + Spec phrasing + Source (code) phrasing + location, then:
    ```
-   choices: ["Document as intended (spec)", "Document as actual (code)", "Skip this claim and report it", "Cancel"]
+   choices: ["Document as intended (spec) (Recommended) — describe the agreed contract (spec phrasing; PRD phrasing when no spec); the orchestrator drafts a bug-report so you can file a defect when the code lags", "Document as actual (code) — match what shipped; users see what's there", "Skip & report — the docs leave this paragraph out; the bug-report draft still records the gap (drafts a bug)", "Cancel the whole run"]
    ```
-   "Document as intended (spec)" describes the agreed contract — the `spec_phrasing` (or the PRD phrasing when it is `(no spec)`) — and, when the code lags the intended phrasing, adds an intentional-discrepancy marker + bug-report draft. "Document as actual (code)" matches what shipped, and when it is a qualifying `document-as-code` case per §7.5, also records the gap in the bug-report draft. "Skip this claim and report it" omits the claim but still records the gap in the bug-report draft.
+   "Document as intended (spec)" describes the agreed contract — the `spec_phrasing` (or the PRD phrasing when it is `(no spec)`) — and, when the code lags the intended phrasing, adds an intentional-discrepancy marker + bug-report draft. "Document as actual (code)" matches what shipped, and when it is a qualifying `document-as-code` case per §7.5, also records the gap in the bug-report draft. "Skip & report" omits the claim but still records the gap in the bug-report draft. "Cancel the whole run" stops the run; where Phase 0 step 4(c) committed a generated profile, it ends with that step's left-on-a-branch notice.
 
 4. **Record `discrepancy_decisions[]`** keyed by `number` (claim, prd_phrasing, spec_phrasing, source_phrasing, source_location, decision ∈ {document-as-spec, document-as-code, skip-and-report}, rationale). `spec_phrasing` is recorded verbatim (`(no spec)` when none was provided). Set `bug_report_destination` to the resolved PRD folder (ask if none) when any decision is `document-as-spec` (where the code lags the intended phrasing), `skip-and-report`, or a qualifying `document-as-code` per `workflows-core:source-truth` §7.5.
 
@@ -812,7 +812,7 @@ Run this phase when, in the checklist Phase 5.7 settled, **any** screenshot has 
 
 ## Phase 6.2 — Branch setup (conditional)
 
-Run this phase only when write context = `docs_repo` (or `non_docs_repo` after user confirmed at Phase 0 step 2) AND the user confirmed branching at plan approval. Never for `obsidian` or `plain_dir`.
+Run this phase only when write context = `docs_repo` (or `non_docs_repo` after user confirmed at Phase 0 step 2) AND `branching_confirmed` is `true` (Phase 2). Never for `obsidian` or `plain_dir`, and never where the operator chose no branch at the plan.
 
 Every git call in this phase, and in Phase 6.3's commit and Phase 8.5, runs as `git -C <docs_repo_path>` — the docs repository's top level (Phase 0 step 2), never the working directory — so every path given to git is relative to that top level.
 
@@ -855,7 +855,7 @@ The writing is delegated to the **`doc-writer`** subagent (pinned to the §2 Opu
 
 2. **Dispatch the writer:**
 
-→ Agent (subagent_type: "docs-workflows:doc-writer", model: `<planning_model — §9 / §2 Opus chain; under §10, run_flags.enforced_model>`):
+→ Agent (subagent_type: "docs-workflows:doc-writer", model: `<implementation_model — equal to planning_model, the §9 / §2 Opus chain; under §10, run_flags.enforced_model>`):
   > "Write the product documentation for this brief.
   >
   > handoff_file: [absolute path of the temp handoff file from step 1]"
@@ -879,8 +879,8 @@ Write context governs branch/commit (Phase 0 step 6); **the orchestrator commits
 | Write context | Branch | Commit |
 |---|---|---|
 | `obsidian` | NEVER | NEVER |
-| `docs_repo` | YES (opt-in confirmed at plan approval) — see Phase 6.2 | YES (orchestrator commits doc-writer's `files_written` that lie in the docs repo) |
-| `non_docs_repo` | Phase 0 step 2 already asked user to confirm; if confirmed, behave as `docs_repo` | YES (if user confirmed at Phase 0) |
+| `docs_repo` | YES where `branching_confirmed` (Phase 2) — see Phase 6.2; NO where the operator chose no branch | Follows the Branch column: YES (orchestrator commits doc-writer's `files_written` that lie in the docs repo) only on the branch Phase 6.2 cut; NO otherwise — the pages are left uncommitted on the branch the docs repository is on |
+| `non_docs_repo` | Phase 0 step 2 already asked user to confirm; if confirmed, behave as `docs_repo` | As `docs_repo`, where the user confirmed at Phase 0 |
 | `plain_dir` | NEVER | NEVER |
 
 This table governs the **documentation write target only**. Independently of every row above, the run's terminal `commit-artifacts` step commits `$SPECS_PATH`'s bounded session-artifact paths (`workflows-core:specs-repo-git` §2.1) — a different repository, never the docs write target.
@@ -920,8 +920,8 @@ number of checklist items that failed against the written files.
 
 Then act on the return:
 
-- **`status: OK`** — the chain ran (primary and/or complementary), zero merged violations. Proceed to Phase 7.
-- **`status: VIOLATIONS_FOUND`** — invoke `doc-fixer` with the violations treated as per their severity. After `doc-fixer` completes, **check its `Stop condition flag`**: `docs-style-checker` maps a linter's own blocking failure to `BLOCKER` (`agents/docs-style-checker.md`), so this dispatch can return `NEEDS HUMAN` — the fixer deferred a blocking violation it could not safely fix. On `NEEDS HUMAN`, surface each deferred BLOCKER with the fixer's reason and ask the user how to resolve it — fix by hand and re-run, or skip the check. A silent re-run only reports the same violation again. The `style_check` gate row stays open until that answer lands and then records its outcome per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` — `RAN` after a hand fix and re-run, `SKIPPED_BY_USER` with the choice quoted verbatim if skipped. Only on `CLEAR` re-run the linter once:
+- **`status: OK`** — the chain ran (primary and/or complementary), zero merged violations. Proceed to Phase 6.5.
+- **`status: VIOLATIONS_FOUND`** — invoke `doc-fixer` with the violations treated as per their severity:
 
   → Agent (subagent_type: "workflows-core:doc-fixer", model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
     > "Fix the style violations for this brief:
@@ -931,12 +931,16 @@ Then act on the return:
     > Project root: [the resolved docs_repo_path (Phase 0)]
     > Severities to fix: BLOCKER and MAJOR"
 
+  After `doc-fixer` completes, **check its `Stop condition flag`**: `docs-style-checker` maps a linter's own blocking failure to `BLOCKER` (`agents/docs-style-checker.md`), so this dispatch can return `NEEDS HUMAN` — the fixer deferred a blocking violation it could not safely fix. On `NEEDS HUMAN`, surface each deferred BLOCKER with the fixer's reason and ask the user how to resolve it — fix by hand and re-run, or skip the check. A silent re-run only reports the same violation again. The `style_check` gate row stays open until that answer lands and then records its outcome per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` — `RAN` after a hand fix and re-run, `SKIPPED_BY_USER` with the choice quoted verbatim if skipped. Only on `CLEAR` re-run the linter once: dispatch `docs-style-checker` again with this phase's own `docs-style-checker` brief — the dispatch at the top of the phase, before the ledger rows — unchanged, `files` naming the same pages; never a second `doc-fixer`.
+
   If violations remain after the re-run:
   ```
   choices: ["Proceed to review anyway — reviewer may still PASS", "Show remaining violations and let me fix manually", "Cancel"]
   ```
 
   When the re-run completes, rewrite the `style_check` row's `findings:` to the post-fix violation count so the Phase 9 table reports what survived, not what was found.
+
+  Then go on to Phase 6.5 — where the re-run found nothing, and on *Proceed to review anyway*, whose review is Phase 7's, after it.
 
 - **`status: ERROR`** — every primary rung failed or was never detected, and the `prose-style-checker` pass also failed. Surface the error reason, then STOP: the `style_check` row is `UNAVAILABLE`, and the only prompt the user sees is the `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` §5 conversion list. Do NOT ask an ad-hoc question here — §5 owns this decision, and the "Choice lists are presented verbatim" rule in `workflows-core:escalation-rules` binds it.
 
@@ -1092,7 +1096,7 @@ Act on the verdict:
   ```
   "Manual fix notes" → ask for the notes in plain text; apply them via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) in a bounded one-shot pass (no further re-review cycle). "Defer" → record in Phase 9 `### Deferred items` without an override flag. "Override" → ask for the user's rationale in plain text and record the finding in `### Deferred items` with it. "Cancel" aborts.
 
-- **PASS WITH RECOMMENDATIONS** — invoke `doc-fixer` for MAJOR findings only:
+- **PASS WITH RECOMMENDATIONS** — `doc-reviewer` returns this verdict on any MAJOR, MINOR or NIT, so first look at what survived triage. **Where triage emptied the survivor set**, `finding-triage`'s *When triage empties the survivor set* settles the verdict at its first settle prompt, and its *Proceed* goes on to Phase 8 as from a PASS — no fixer is dispatched and no re-review offered. **Where findings survived and none is MAJOR**, dispatch nothing, write no `claims_file` and offer no re-review — there are no edits for one to check — and go on to Phase 8, every MINOR and NIT survivor going to the Phase 9 report. **Otherwise** invoke `doc-fixer` for the MAJOR survivors only:
 
   → Agent (subagent_type: "workflows-core:doc-fixer", model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
     > "Fix the review findings for this brief:
@@ -1214,7 +1218,7 @@ into the docs repo or the current working directory, where it is not the specs r
 
 ## Phase 8.5 — Finish & handoff
 
-Run this phase only when Phase 6.3 wrote + committed in a git repo (write context `docs_repo`, or `non_docs_repo` confirmed at Phase 0) — i.e. a branch with this run's commits exists. Skip otherwise (nothing to hand off). Mechanics: `${CLAUDE_PLUGIN_ROOT}/references/finish-and-handoff.md`.
+Run this phase only when Phase 6.2 ran and Phase 6.3 committed on the branch it cut (write context `docs_repo`, or `non_docs_repo` confirmed at Phase 0, with `branching_confirmed`) — i.e. a branch with this run's commits exists, and `base_branch` is recorded. Skip otherwise (nothing to hand off) — a run whose operator chose no branch at the plan included, whose pages stay uncommitted. Mechanics: `${CLAUDE_PLUGIN_ROOT}/references/finish-and-handoff.md`.
 
 ### Step 1 — Squash (always)
 
@@ -1238,7 +1242,7 @@ Per `${CLAUDE_PLUGIN_ROOT}/references/finish-and-handoff.md` §4–§5:
 1. **Detect the host** from the docs repo's `git -C <docs_repo_path> remote get-url origin`, an SSH alias resolved first as §4 says (Bitbucket Cloud / Bitbucket Server / GitHub / other).
 2. **Compose the draft**: title (per `commit_convention`); body — what was documented, the output files, the Phase 6.5 render-verification summary, deferred style/review/render items, a link to the PRD. When Phase 5.8 recorded any `document-as-spec` / `skip-and-report` decision, prepend a banner: `> ⚠ DO NOT MERGE until <KEY>-implementation-gaps.md is resolved.` Where the docs repository carries a pull-request template, the body is that template filled with these facts, per `finish-and-handoff.md` §5 and `workflows-core:phase-handoff` §2.7.1, resolved in `<docs_repo_path>`, the banner still its first line. A qualifying `document-as-code` decision (§7.5) does NOT get this banner even though it also produces a gaps file — the docs correctly describe what shipped, so the PR is mergeable; only the source ticket needs correcting.
 3. **Write + show**: write `pr-draft.md` to the resolved PRD folder (ask if none) AND print it.
-4. **Host footer**: Bitbucket → "open a PR in the web UI and paste the title + body"; GitHub → additionally offer `gh pr create --title '<title>' --body-file <pr-draft path>` that the user may run, its title quoted as `finish-and-handoff.md` §5 says; other → "open a PR and paste the title + body". Bitbucket offers no CLI to open one — a host capability limit, not a policy: the family does open a pull request where a host offers a CLI (`workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo), and no command of this plugin opens one anywhere, this docs repo included.
+4. **Host footer**: Bitbucket → "open a PR in the web UI and paste the title + body"; GitHub → additionally offer `gh pr create --title '<title>' --body-file <pr-draft path>` that the user may run, its title quoted as `finish-and-handoff.md` §5 says; other → "open a PR and paste the title + body". Bitbucket offers no CLI to open one — a host capability limit, not a policy: the family does open a pull request where a host offers a CLI (`workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo), and no command of this plugin opens one in a docs repository, this one included — `/docs-workflows:release-notes` opens one in `$SPECS_PATH` alone, for its draft, through `handoff-to-main`.
 
 Carry the squash result, push outcome, and PR-draft path into the Phase 9 report.
 
@@ -1246,7 +1250,7 @@ Carry the squash result, push outcome, and PR-draft path into the Phase 9 report
 
 ## Phase 8.6 — Maintenance proposals
 
-Runs **after** Phase 8.5 — never before. The ordering is the whole safety property, and it holds whether or not Phase 8.5 ran: once this phase starts, **the run will create no further commit in the docs write target** — either Phase 8.5 sealed the docs commit, or the write context never commits at all (`obsidian` / `plain_dir`, per the Phase 6.3 branch/commit table — which governs the docs write target only, never `$SPECS_PATH`). Either way an accepted `CLAUDE.md` (or knowledge-base) edit has no commit left to ride. What still commits after this point is the terminal `commit-artifacts` step, which stages ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1) — it can never pick up a `CLAUDE.md` or knowledge-base edit, so the safety property holds unchanged.
+Runs **after** Phase 8.5 — never before. The ordering is the whole safety property, and it holds whether or not Phase 8.5 ran: once this phase starts, **the run will create no further commit in the docs write target** — either Phase 8.5 sealed the docs commit, or the docs write target takes no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval, per the Phase 6.3 branch/commit table — which governs the docs write target only, never `$SPECS_PATH`). Either way an accepted `CLAUDE.md` (or knowledge-base) edit has no commit left to ride. What still commits after this point is the terminal `commit-artifacts` step, which stages ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1) — it can never pick up a `CLAUDE.md` or knowledge-base edit, so the safety property holds unchanged.
 
 Skip this phase with no prompt when both Phase 8 Agent 2 and Agent 3 returned `'no update required'`.
 
@@ -1263,7 +1267,7 @@ choices: ["Skip — report only (Recommended)", "Apply all", "Choose per proposa
 - **Skip — report only** — apply nothing; every proposal's disposition is `proposed` for the Phase 9 report.
 - **Apply all** — apply every proposal via the mechanism below; every proposal's disposition is `applied-uncommitted`.
 - **Choose per proposal** — ask accept/decline for each proposal; apply the accepted ones (`applied-uncommitted`), leave the rest `declined`.
-- **Cancel** — apply nothing; every proposal's disposition is `proposed`. Unlike every other "Cancel" in this command, **Cancel here does not abort the run**: by the time this phase runs there is nothing upstream left to unwind — Phase 8.5's squash (and any push / PR draft) is already done, or the write context never committed at all (`obsidian` / `plain_dir`) (still true — what still commits after this point is the terminal `commit-artifacts` step, bounded to `$SPECS_PATH`'s artifact paths per `workflows-core:specs-repo-git` §2.1, and therefore never able to carry a proposal from this phase). Cancel only declines this phase's proposals; the run proceeds to Phase 9 and the Final Report is produced exactly as it would be after Skip.
+- **Cancel** — apply nothing; every proposal's disposition is `proposed`. Unlike every other "Cancel" in this command, **Cancel here does not abort the run**: by the time this phase runs there is nothing upstream left to unwind — Phase 8.5's squash (and any push / PR draft) is already done, or the docs write target took no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval) (still true — what still commits after this point is the terminal `commit-artifacts` step, bounded to `$SPECS_PATH`'s artifact paths per `workflows-core:specs-repo-git` §2.1, and therefore never able to carry a proposal from this phase). Cancel only declines this phase's proposals; the run proceeds to Phase 9 and the Final Report is produced exactly as it would be after Skip.
 
 **Apply mechanism.** For each accepted proposal, re-dispatch the agent that produced it — Agent 2 or Agent 3, same general-purpose agent and model as Phase 8, no new agent type — in apply mode, carrying its own proposal back verbatim:
 
@@ -1291,12 +1295,13 @@ Output a structured report — do NOT ask any closing confirmation:
 SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 
 ### Model Routing
-- Session / writer model (current_model): [model] — [if it ran degraded: "Sonnet; user proceeded past the Phase 1.5 advisory" | "Sonnet; no Opus available" | "on §2 chain — no degradation"]
+- Session model (current_model): [model] — [if it ran degraded: "Sonnet; user proceeded past the Phase 1.5 advisory" | "Sonnet; no Opus available" | "on §2 chain — no degradation"]
 - doc-planner synthesis (planning_model): [model]
-- Detection steps — the folder read, diff-summarizer, doc-location-finder, docs-style-checker, doc-fixer, maintenance (detection_model): [model]
+- doc-writer (implementation_model): [model]
+- Detection steps — diff-summarizer, doc-location-finder, docs-style-checker, doc-fixer, maintenance (detection_model): [model]
 - doc-reviewer (review_model): [model]
 - Opus available: [yes | no]
-- [Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` in place of the three dispatched-step lines above (doc-planner synthesis, Detection steps, doc-reviewer) — each already equals the enforced id, per `workflows-core:model-routing/classification` §10. `current_model` and `Opus available` are unaffected by enforcement (§10: the orchestrator stays on the session model, and `opus_available` is a property of the environment) and are reported above exactly as they stand.]
+- [Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` in place of the four dispatched-step lines above (doc-planner synthesis, doc-writer, Detection steps, doc-reviewer) — each already equals the enforced id, per `workflows-core:model-routing/classification` §10. `current_model` and `Opus available` are unaffected by enforcement (§10: the orchestrator stays on the session model, and `opus_available` is a property of the environment) and are reported above exactly as they stand.]
 - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line, where it fires, is carried in the Session learnings (Agent 4) line below; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
 
 ### PRD folder summary
@@ -1334,7 +1339,7 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 - ...
 
 ### Branch
-[branch name created in Phase 6.2, e.g. docs/<key>-<slug>] OR "N/A — no branch created (context: obsidian / plain_dir / user declined branching)"
+[branch name created in Phase 6.2, e.g. docs/<key>-<slug>] OR "N/A — no branch created (context: obsidian / plain_dir)" OR "N/A — no branch chosen at plan approval; the pages are left uncommitted on <the branch the docs repository is on>"
 
 ### Verification gates
 | Gate | Outcome | Mechanism | Detail |
@@ -1387,7 +1392,7 @@ List each gap (claim, decision) with its own status line — never print the DO-
 - [list any — including, where Phase 0 step 4(c)'s inline profiling handed them back, its `fixed_port_servers` and `server_command_defects` lines, each as it was printed there]
 
 ### Git state
-[When Phase 8.5 ran: "Branch <name> — squashed to N commit(s); pushed to origin: <yes/no>; PR draft: <pr-draft path>." When Phase 8.5 was skipped (no branch/commits): "Working tree has uncommitted changes. /document (keyed mode) writes but does not commit the docs write target in non-git contexts; this run's $SPECS_PATH session artifacts are committed separately by the terminal step."]
+[When Phase 8.5 ran: "Branch <name> — squashed to N commit(s); pushed to origin: <yes/no>; PR draft: <pr-draft path>." When Phase 8.5 was skipped because the operator chose no branch at plan approval: "Working tree has uncommitted changes: no branch was chosen at plan approval, so the pages are left uncommitted on <the branch the docs repository is on>; this run's $SPECS_PATH session artifacts are committed separately by the terminal step." When it was skipped for any other reason (no branch/commits): "Working tree has uncommitted changes. /document (keyed mode) writes but does not commit the docs write target in non-git contexts; this run's $SPECS_PATH session artifacts are committed separately by the terminal step."]
 
 ### Next step
 [Per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked. Once **all** the PRD's Epics are documented, draft/finalize the release note → `/docs-workflows:release-notes <PRD>` (PRD-level; run once, not per Epic). If the review BLOCKED, resolve that first.]
@@ -1491,7 +1496,7 @@ name is ever written (§10 privacy).
 - ALWAYS append each gate's ledger row at the moment that gate completes, per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` — NEVER reconstruct the ledger at Phase 9, and NEVER leave a registry gate without a row
 - NEVER present a phase's `choices:` array in an order, wording, or recommendation other than the one written; the "Choice lists are presented verbatim" rule in `workflows-core:escalation-rules` binds every prompt in this command
 - ALWAYS invoke `doc-reviewer` before Phase 8 maintenance
-- ALWAYS resolve the `model_routing` block at Phase 1.5 and pin each subagent dispatch to its §9 chain via `model:` — `doc-planner` to the §2 Opus chain, the mechanical steps (the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance) to the §2.1 Sonnet chain; `doc-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); the inline writer + gates run on `current_model` (advisory only)
+- ALWAYS resolve the `model_routing` block at Phase 1.5 and pin each subagent dispatch to its §9 chain via `model:` — `doc-planner` and `doc-writer` to the §2 Opus chain, the mechanical steps (`diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance) to the §2.1 Sonnet chain; `doc-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); only coordination and the interactive gates run on `current_model` (advisory only)
 - ALWAYS cap review/fix cycles: 1 fix + 1 re-review max
 - ALWAYS pass `Change type: docs` in the Phase 8 change summary block
 - ALWAYS pass `Command run: /document (keyed mode)` in the Phase 8 Agent 4 session handoff — the mode-qualified name this run already passes `emit-auto` in the same phase and `emit-cost` in Phase 11, and what keeps a returned phase-numbered suggestion resolvable between two modes that each number from their own Phase 0
@@ -1501,7 +1506,7 @@ name is ever written (§10 privacy).
 - ALWAYS end the Phase 9 report with a `### Next step` recommendation (per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane) — guidance only, never auto-invoked; omitted in direct doc-edit mode (Mode B)
 - ALL written claims must be traceable to a resolved key or to a summarised diff — attribution goes in the run's return payload and the commit message, NEVER inline in the rendered page (`workflows-core:doc-structure-conventions` §1)
 - For `image_policy: cdn_upload_required`, NEVER copy user-provided screenshots into the repo — stage under `<screenshot_staging_dir>` — the resolved PRD folder's screenshot subfolder by default, else a directory the operator names (Phase 1); never the docs repo, never `/tmp` — and surface in the Phase 9 `### Screenshots to upload manually` section
-- ALWAYS end the Phase 9 report with a `### Context hygiene` block per `Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the guidance only), then a docs→PM handoff suggestion (`/clear`) + `/rename <PRD-ID>-<slug>-dev`; guidance only, never auto-run. **Mode B (direct doc-edit) omits this** — no PRD context.
+- ALWAYS end the Phase 9 report with a `### Context hygiene` block per `Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the guidance only), then the role-aware suggestion `session-hygiene` §2 gives for the next step — here Dev→Dev, on to `/docs-workflows:release-notes`, so `/compact` — + `/rename <PRD-ID>-<slug>-dev`; guidance only, never auto-run. **Mode B (direct doc-edit) omits this** — no PRD context.
 
 ---
 

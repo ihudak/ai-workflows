@@ -1870,7 +1870,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## docs-workflows and the smaller plugins
 
-### DOC-A-B1 — MAJOR — Phase 5.8's no-discrepancy exit jumps to Phase 6.3, skipping Phase 6.1 (CDN handoff) and Phase 6.2 (branch setup)
+### DOC-A-B1 — MAJOR — Phase 5.8's no-discrepancy exit jumps to Phase 6.3, skipping Phase 6.1 (CDN handoff) and Phase 6.2 (branch setup) — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/commands/document.md:744`
 - **What is wrong:** "Run the rest of this phase when the `doc-planner` handoff contains any `verification_warnings` with `finding: CONTRADICTED`, `NOT_FOUND`, `AMBIGUOUS`, or verdict `SPEC-VS-PRD`. If there are none, skip to Phase 6.3 — the row above is already recorded." Phases 6.1 (`:789`) and 6.2 (`:813`) come between 5.8 and 6.3, and each has its own run condition that does not depend on discrepancies. Line 741 says the same no-escalation case is the one where "this phase's body does not run", and that case is common: every run whose `code_repos` is empty, and every run whose warnings are all `VERIFIED`.
 - **Failure scenario:** A keyed run in a `docs_repo` context has no escalating warnings, and the user approved branching. The run does what the text says and goes straight to 6.3. No branch is cut, and 6.3's commit (`:864`, table `:882` "Commit YES") lands on whatever branch HEAD is on, often the default branch. In the inline-profiling case, `profile_branch` is never renamed. Where a screenshot is `cdn_upload_required`, Phase 6.1 never asks for the CDN decision, so `doc-writer` gets no `cdn_handoff_decision`. Its entry validation (`agents/doc-writer.md:33-34`) only covers a decision that is present but whose inputs are missing.
@@ -1879,7 +1879,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-A-B2 — MAJOR — Phase 6.4's clean-style exit jumps to Phase 7, skipping Phase 6.5 (render verification) and its two ledger rows
+### DOC-A-B2 — MAJOR — Phase 6.4's clean-style exit jumps to Phase 7, skipping Phase 6.5 (render verification) and its two ledger rows — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/commands/document.md:923`; contradicts `:947`, `:952`
 - **What is wrong:** "**`status: OK`** — the chain ran (primary and/or complementary), zero merged violations. Proceed to Phase 7." Phase 6.5 says "Both gates this phase owns must carry a row on every run" (`:947`) and "Run this phase after Phase 6.4" (`:952`).
 - **Failure scenario:** The style check comes back clean, which is the best case. The run then skips the build check and the smoke check, and never writes the `build_check` / `render_smoke_check` rows. Where Phase 0's preflight pre-seeded no row, `doc-reviewer`'s Verification-gate integrity dimension BLOCKs on "a registry gate has no row" (`agents/doc-reviewer.md:60`, `references/gate-ledger.md` §6). The run then burns its one fix cycle on a ledger that `doc-fixer` cannot repair, and a broken build ships unchecked. The `VIOLATIONS_FOUND` branch names no next phase, so only the clean path is misdirected.
@@ -1897,7 +1897,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-A-B4 — MAJOR — Declining branching at plan approval still commits into the docs repo, and Phase 8.5 then squashes against an unset `base_branch`
+### DOC-A-B4 — MAJOR — Declining branching at plan approval still commits into the docs repo, and Phase 8.5 then squashes against an unset `base_branch` — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/commands/document.md:345`, `:396`, `:402`, `:815`, `:842`, `:882`, `:1217`, `:1223`, `:1337`
 - **What is wrong:**
   - Branching is "confirmed at plan approval" (`:345`, `:815`), but Phase 2's array is only `["Approve & continue (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]`. A decline can only come through *Revise*, which the report anticipates ("user declined branching", `:1337`).
@@ -1909,7 +1909,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DOC-A-B5 — MINOR — Phase 5.8's decision arrays differ from the `workflows-core:source-truth` §7.2/§7.3 arrays the run is told it "MUST follow"
+### DOC-A-B5 — MINOR — Phase 5.8's decision arrays differ from the `workflows-core:source-truth` §7.2/§7.3 arrays the run is told it "MUST follow" — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/commands/document.md:771`, `:777`; `plugins/workflows-core/references/source-truth.md:347-352`, `:384-392`, `:403-411`
 - **What is wrong:**
   - **Batch array.** The command has `"Document ALL as intended (spec)"`, `"Skip ALL and report (drafts a bug report)"`; the reference has `"Document as intended (spec) for ALL"`, `"Skip & report for ALL (drafts a bug report; no claims documented)"`.
@@ -1921,7 +1921,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DOC-A-B6 — MINOR — Stale "inline writer" claims: `current_model` is reported as the writer's model, and §10's handling of `implementation_model` contradicts itself
+### DOC-A-B6 — MINOR — Stale "inline writer" claims: `current_model` is reported as the writer's model, and §10's handling of `implementation_model` contradicts itself — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/commands/document.md:362`, `:363`, `:368`, `:376`, `:1294`, `:1494`
 - **What is wrong:**
   - **Writer model.** The writer is the delegated, Opus-pinned `doc-writer` (`:368`, `:852`, `:858`). But `:362` annotates `current_model` "= the inline writer + Phase 5.8 framing". The Phase 9 template prints "Session / writer model (current_model)" (`:1294`), and the invariant says "the inline writer + gates run on `current_model`" (`:1494`). That invariant's pin list also omits `doc-writer`.
@@ -1932,7 +1932,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-A-B7 — MINOR — The keyed-mode invariant prescribes a `/clear` docs→PM handoff; the report template and `session-hygiene` prescribe `/compact` (Dev→Dev)
+### DOC-A-B7 — MINOR — The keyed-mode invariant prescribes a `/clear` docs→PM handoff; the report template and `session-hygiene` prescribe `/compact` (Dev→Dev) — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/commands/document.md:1504` against `:1399`; `plugins/workflows-core/reference-parts/session-hygiene/guidance.md:45-56`; `reference-parts/next-phase-offer/dev.md:174`
 - **What is wrong:** The invariant says "then a docs→PM handoff suggestion (`/clear`) + `/rename <PRD-ID>-<slug>-dev`". The template says "**On to `/docs-workflows:release-notes <PRD>` (still Dev …)?** → run **`/compact`**". The `next-phase-offer` dev lane sends `/document` → `/release-notes` (same role), and `session-hygiene` says that pair takes `/compact` and that a command must not hardcode a per-command compact/clear verdict.
 - **Failure scenario:** Two live instructions, so a run may print `/clear` and tell the Dev to drop the context `/release-notes` needs.
@@ -1952,7 +1952,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DOC-A-B9 — MINOR — Phase 7's PASS WITH RECOMMENDATIONS branch dispatches `doc-fixer` "for MAJOR findings only" even when no MAJOR survived
+### DOC-A-B9 — MINOR — Phase 7's PASS WITH RECOMMENDATIONS branch dispatches `doc-fixer` "for MAJOR findings only" even when no MAJOR survived — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/commands/document.md:1095-1105`; `agents/doc-reviewer.md:41`
 - **What is wrong:**
   - **When the verdict fires.** `doc-reviewer` returns PASS WITH RECOMMENDATIONS on "at least one MAJOR, MINOR or NIT", so a MINOR/NIT-only review takes it.
@@ -1973,7 +1973,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-A-B11 — MINOR — Phase 6.4's text labels the `doc-fixer` dispatch as the linter re-run
+### DOC-A-B11 — MINOR — Phase 6.4's text labels the `doc-fixer` dispatch as the linter re-run — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/commands/document.md:924-932`
 - **What is wrong:** The bullet says "invoke `doc-fixer` … After `doc-fixer` completes, check its `Stop condition flag` … Only on `CLEAR` re-run the linter once:", and then the code block directly below that colon is `Agent (subagent_type: "workflows-core:doc-fixer", …)`. The re-run of the linter (a second `docs-style-checker` dispatch) is never written out. Read in order, the block under "re-run the linter once:" is a second `doc-fixer` call. The direct-mode twin (`:1686`) has no such block and reads correctly.
 - **Failure scenario:** A run dispatches `doc-fixer` twice and never re-lints, so "If violations remain after the re-run" (`:934`) is judged on a check that never ran, and the `style_check` findings count (`:939`) is not the post-fix count.
@@ -1982,7 +1982,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DOC-A-B12 — NIT — Model-routing text names a dispatched step, "the folder read", that is no agent
+### DOC-A-B12 — NIT — Model-routing text names a dispatched step, "the folder read", that is no agent — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/commands/document.md:374`, `:1296`, `:1494`
 - **What is wrong:** "the folder read, `diff-summarizer`, `doc-location-finder`, … → `detection_model`". Phase 3 reads the PRD folder inline ("Read the PRD folder directly", `:413`), and no agent is dispatched for it (`grep subagent_type` finds diff-summarizer, doc-location-finder, doc-planner, doc-reviewer, doc-writer, docs-style-checker, doc-fixer, general-purpose).
 - **Failure scenario:** The report's "Detection steps — the folder read, …" line credits work to a model that did not run it.
@@ -2007,7 +2007,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-A-B15 — NIT — `toolchain-preflight` §5 says Cancel leaves nothing written, which is false after `/document`'s inline profiling
+### DOC-A-B15 — NIT — `toolchain-preflight` §5 says Cancel leaves nothing written, which is false after `/document`'s inline profiling — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/references/toolchain-preflight.md` §5 (the `"Cancel"` bullet: "→ stop the run. Nothing has been written.")
 - **What is wrong:** In `/document` keyed mode, Phase 0 step 4(c) may already have committed a generated profile on `profile_branch` before step 7's preflight. The command knows this and appends the left-on-a-branch notice (`document.md:276-277`), but the reference it presents verbatim tells the operator otherwise.
 - **Suggested fix:** "Nothing this check wrote; a caller that wrote before it (`/document`'s inline profiling) says what it left."
@@ -2034,7 +2034,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-B-B3 — MINOR — "No command of this plugin opens [a pull request] anywhere" has been false since `/release-notes` gained its handoff
+### DOC-B-B3 — MINOR — "No command of this plugin opens [a pull request] anywhere" has been false since `/release-notes` gained its handoff — **Fixed in docs-workflows 1.19.0 (batch B12)**
 - **Where:** `plugins/docs-workflows/references/finish-and-handoff.md:8`, `:102`; `plugins/docs-workflows/commands/document.md:1241`
 - **What is wrong:** All three sites say the family opens a pull request through `phase-handoff` §2.6 or `code-handoff` §2.6, "but no command of this plugin opens one anywhere" (`:102` and `document.md:1241` add "this docs repo included"). Since `92a0b5bf` (2026-10-12), `/release-notes` Phase 8 step 1a runs `handoff-to-main` with `prefix: prd` (`release-notes.md:581-583`). That runs `gh pr create` in `$SPECS_PATH` (`release-notes.md:31`, `:758`). The sentence was written in `586377b4` (2026-09-16), when it was true; CHANGELOG 1.1.3 records why: "nothing under `docs-workflows` calls `handoff-to-main`".
 - **Failure scenario:** An agent or maintainer reading `finish-and-handoff` or `/document` Phase 8.5 is told the plugin opens no pull request anywhere. This is a claim-expiry defect beside the shipped feature (`CLAUDE.md` § Editing discipline).

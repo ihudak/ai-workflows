@@ -98,6 +98,6 @@ Then document a feature from its PRD:
 /docs-workflows:document ACME-77
 ```
 
-Here is what to expect. The run resolves the docs repository and its profile, reads the resolved PRD folder, resolves the repositories its implementation record and commit scan name to local clones, summarises their diffs in parallel, finds where each page belongs, plans the documentation, writes it, runs the style check, and gates the result on an Opus review before finishing on a branch with a copy-paste pull-request draft. For a one-off typo fix, pass a file or a description instead of a key — `/docs-workflows:document @note.md` — and the run takes the much shorter direct-mode path.
+Here is what to expect. The run resolves the docs repository and its profile, reads the resolved PRD folder, resolves the repositories its implementation record and commit scan name to local clones, summarises their diffs in parallel, finds where each page belongs, plans the documentation, writes it, runs the style check, and gates the result on an Opus review before finishing on a branch with a copy-paste pull-request draft — unless you chose no branch at the plan, which leaves the pages uncommitted. For a one-off typo fix, pass a file or a description instead of a key — `/docs-workflows:document @note.md` — and the run takes the much shorter direct-mode path.
 
 From here, [Workflow overview](workflow.md) shows where `/release-notes` fits, and the [documentation index](README.md) links every command page and inventory.
