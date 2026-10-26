@@ -187,6 +187,16 @@ The code-oriented commands' not-clean-finish invariant cites `code-handoff`'s *A
 
 The `/implement` invariant that Phase 3.5 **names what it did not cover rather than assuming it** is the honest form of the "full test suite is verified" that invariant used to claim in `CLAUDE.md`, a claim three reachable completions denied — the three the invariant now lists.
 
+## piece-review
+
+**`/implement` reviews by the design's pieces, and keeps its coding flow (dev-workflows 4.32.0).** The A/B that decided it, recorded in `docs/superpowers/verification/2026-10-24-implement-one-writer-a.md`, ran `/implement` on the test Epic BOOK-3-01 twice from one start state: arm A, the 4.31.0 flow, cost $57.17; arm B, a branch never released that coded each piece through one long-lived writer and reviewed each piece and then the whole change, $99.06 (+73%). Two blind Opus judges, labels swapped between them, each rated B slightly better at medium confidence, with no BLOCKER or MAJOR on either side. What they credited to B was found by its per-piece and overall review scopes; none of it was traced to the one-writer structure, which drove most of the extra cost. So the review scopes were kept and the writers were not.
+
+**Pieces need a stated reason.** A split buys reviews, and on a change one reviewer can review in depth the extra ones find nothing the one review would not; a count is no reason either, since it cuts a reviewer off at a line that is not a boundary. So `design-format`'s `Reason:` line says why one reviewer could not review the whole change in depth, and `design-reviewer` grades a reason that does not hold `MAJOR`, its fix to drop the pieces.
+
+**Step 8's review stays unsplit.** It reviews the whole change after Phase 3.5's fixes; a review scoped to the piece a fix lies in would look at that fix less deeply than one review of the whole change does.
+
+**Only the overall review traces requirements.** A requirement one piece implements would read as `missing` to the reviewer of every other piece, and the same requirement would be traced once per piece. With the specification-conformance dimension the overall review's alone, each requirement is traced once, over the whole change, and step 7.5's notes and run-state `conformance` come from one review, as they did before the split.
+
 ## test-writing-requirement
 
 Changing the tree to meet an unqualified first clause of the test-writing requirement was the alternative and was rejected: it would have to remove **both** escapes a user can choose — *"Accept the remaining failures and proceed"* and Pre-Phase 3.5's *"Skip tests for this run"* — and a gate-failed run that cannot finish is a run that leaves the implementation uncommitted, which `dev-workflows:code-handoff` §1 rule 5 exists to prevent. The completions nobody chooses are not options to remove at all: a suite that will not start is the environment's answer, not the operator's.
