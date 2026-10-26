@@ -1322,7 +1322,7 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 
 ### Branch-name probe
 [Phase 3's *Report the scan's own reach* step, one line per repository the whole-key commit scan left at zero matches — the only repositories it runs on. Omit the section entirely when it fired nowhere.]
-- <repo> — [each commit by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | matched nothing]
+- <repo> — [each commit by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | matched nothing | probe failed — <its `probe_error`>]
 - Nothing here was read: no commit above reached `diff-summarizer`, joined the refs, or is reported as unrecorded work.
 
 ### Pull requests
@@ -1331,8 +1331,8 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 - Read through their landed commits: [each merged pull request by URL, with its commits' SHAs | none]
 - Found but not read: [each by URL and why — open, closed, merge commit not in the clone or not on `HEAD`, lands other branches' merges, left unviewed by the time budget, or a repository no scanned clone holds | none]
 - Left out as never code: [the `excluded` slugs | none]
-- Repositories the script could not read: [each by path and its `error` | none]
-- [where the script could not run: the first call's reason, and whether the `--no-github` retry ran the scan]
+- Repositories the script could not read: [each by path and its `error` | none][; probe failed on a repository it read: each by path and its `probe_error`]
+- [where the script could not run: the first call's reason, and whether the `--no-github` retry ran the scan | where it was not run, there being no clone to scan: `not run — no clone resolved` (`key-discovery.md` §1)]
 
 ### Output file(s)
 - [absolute path] — [kind: extend-existing | new-page-in-existing-section | new-section]

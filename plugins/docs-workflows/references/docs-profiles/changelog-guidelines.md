@@ -55,10 +55,10 @@ changelog:
 
 | Page title | Changelog description | Notes |
 |---|---|---|
-| Infrastructure Monitoring mode | Clarified information around auto-injection and added a section on filtering hosts based on injection status. | ✔️ Complete sentence; ends with a period; 107 characters. |
+| Infrastructure Monitoring mode | Clarified information around auto-injection and added a section on filtering hosts based on injection status. | ✔️ Complete sentence; ends with a period; 109 characters. |
 | Start/stop/restart the agent | Described how to start/stop/restart all agent services, not just the main service. | ✔️ Complete sentence; ends with a period. |
 | Synthetic events | Additional JavaScript event example on changing the user for each monitor execution | ✔️ Phrase; **no** period. |
-| Webhooks | Moved Webhooks documentation from the Notification section to the Developer section; links and content remain the same. | ✔️ Page-move with from/to; ends with a period; 117 characters. |
+| Webhooks | Moved Webhooks documentation from the Notification section to the Developer section; links and content remain the same. | ✔️ Page-move with from/to; ends with a period; 119 characters. |
 | Managing labels and templates | Moved the section on managing templates to a page of its own | ✔️ A split, recorded on the page the content left; phrase; **no** period. |
 | Managing labels | New page, split from earlier page on managing labels and templates | ❌ A new page gets no entry — its published date covers it. Record the split on the page the content left. |
 | Install XYZ | Updated installation instructions. | ❌ To what effect? Rewrite highlighting the main changes. |

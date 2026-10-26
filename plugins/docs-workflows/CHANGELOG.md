@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.20.0] — 2026-10-26
+
+Runs beside `workflows-core` 1.45.0 and later; nothing here needs a newer one.
+
+### Changed
+- **`/release-notes`' discrepancy batch array is `workflows-core:source-truth` §7.2's, word for word**, as `/document`'s became in 1.19.0, its intended option meaning the PRD phrasing, since this flow has no spec. (to-fix D22)
+- **`key-discovery.py`'s GitHub time budget covers every GitHub call** — the auth check and the searches as well as the views. A search batch it leaves unrun makes the result `partial` and is counted in `detail` with its tokens, where the budget used to start after every search and so bounded the views alone.
+- **A failed probe no longer marks a repository unread.** The script records it in a new `probe_error` field, beside a scan that stands, and resets `scanned` to null wherever it sets `error`; `key-discovery` §2, §3 and §5 and both commands' reports — the branch-name probe lines and the pull-request lines — name a probe failure as one.
+
+### Fixed
+- **A new page gets no changelog entry.** `doc-planner` planned one on every target, and `doc-writer` wrote it, against the plugin's own frontmatter and changelog guidelines; both now confine it to `extend-existing`, and `doc-reviewer` raises a MAJOR on a new page that carries one.
+- **No key-discovery call when there is no clone to scan.** The script requires a `--repo`, so a PRD-only run made two failing calls and reported a script failure; `key-discovery` §1 now skips it and reports the scan as not run, *no clone resolved*.
+- **`/release-notes`' route options no longer promise a docs link on a PM-phase run**, which carries none.
+- **Docs pages:** `/epics` has 23 `## Phase` headings, not 22; the agents page names `defect-reporter`; the `/release-notes` page drops a `mode: direct` refusal the command never had and says an `@<path>` may name a file inside the folder.
+- **Smaller text:** `doc-planner`'s garbled "NO kea key" and "keyed automation", and two miscounted examples in the changelog guidelines (109 and 119 characters, not 107 and 117).
+
 ## [1.19.0] — 2026-10-26
 
 Runs beside `workflows-core` 1.45.0 and later; nothing here needs a newer one.

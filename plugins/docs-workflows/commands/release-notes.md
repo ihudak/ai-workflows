@@ -444,7 +444,7 @@ State the inference, then ask:
 > `<destination>` — confirm that route below, or pick another.
 
 ```
-choices: ["Feature update — titled section with a docs link, under ## Feature updates", "Breaking change — titled section with remediation steps, under ## Breaking changes", "Fix — one or two self-contained sentences, under ## Fixes"]
+choices: ["Feature update — titled section, under ## Feature updates (with a docs link on a dev-phase run)", "Breaking change — titled section with remediation steps, under ## Breaking changes", "Fix — one or two self-contained sentences, under ## Fixes"]
 ```
 
 **When the draft carries a deprecation note, present this array instead**, which offers no Fix: a
@@ -452,7 +452,7 @@ deprecation never routes to `## Fixes` (`release-note-types.md` §2, third tie-b
 would discard that choice and infer again.
 
 ```
-choices: ["Feature update — titled section with a docs link, under ## Feature updates", "Breaking change — titled section with remediation steps, under ## Breaking changes"]
+choices: ["Feature update — titled section, under ## Feature updates (with a docs link on a dev-phase run)", "Breaking change — titled section with remediation steps, under ## Breaking changes"]
 ```
 
 Either array is presented as written — it carries each route once, and the proposal is the one the
@@ -507,8 +507,9 @@ On the first choice, correct the claim to match the cited criterion. On the seco
 1. Show the analysis table (claim, PRD phrasing, source phrasing, location).
 2. Ask:
    ```
-   choices: ["Decide per discrepancy (Recommended)", "Document ALL as actual (code)", "Document ALL as intended (PRD)", "Skip ALL and report (drafts a bug report)"]
+   choices: ["Decide per discrepancy (Recommended)", "Document as intended (spec) for ALL", "Document as actual (code) for ALL", "Skip & report for ALL (drafts a bug report; no claims documented)"]
    ```
+   These are `workflows-core:source-truth` §7.2's choices, word for word, as the per-claim prompt is §7.3's. This flow has no spec, so "intended (spec)" is the PRD phrasing, by §7.2's own no-spec rule.
 3. Apply the decision to the draft prose and re-render `combined_rendered`: `document-as-code` → use source phrasing; `document-as-spec` → use PRD phrasing supported by the PRD (no marker in release notes prose — the gap is recorded only in the gaps file); `skip-and-report` → omit the claim.
 4. For `document-as-spec` or `skip-and-report`: resolve `bug_report_destination` to the resolved PRD folder. Write/append `<bug_report_destination>/<KEY>-implementation-gaps.md` using the §7.5 format from `Skill(skill: "workflows-core:reference", args: "source-truth")`, setting `Spec phrasing:` to `(no spec)` (this flow has no spec).
 
@@ -613,8 +614,8 @@ Outside that one case there is no question to ask and no option that replaces th
    - Diff grounding: <on (repos: …) | off>
    - Blocks used: <each block by its record and heading date | none>; dropped by §4's date fallback: <each block by its record and heading date, and each commit the date rule dropped by its own date, by SHA, date and subject — a commit dropped with a block recording it is accounted for by that block's listing | none> — on a run with diff grounding on
    - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — usually a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again
-   - Branch-name probe: <per repository the whole-key scan left at zero matches: each commit it matched, by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | fired on <repo>, matched nothing | not fired — the scan matched in every repository> — on a run with diff grounding on; nothing listed here was read
-   - Pull requests: <GitHub PR search: ok — <owners>, <queries> queries, <n> kept, <dropped> loose matches dropped | <status> — <detail> | not run — <first call's reason>>; read through their landed commits: <each by URL, with its commits' SHAs | none>; found but not read: <each by URL and why | none>; left out as never code: <the `excluded` slugs | none>; not read by the script: <each repository by path and its `error` | none> — on a run with diff grounding on (`key-discovery.md` §5)
+   - Branch-name probe: <per repository the whole-key scan left at zero matches: each commit it matched, by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | fired on <repo>, matched nothing | on <repo>, probe failed — <its `probe_error`> | not fired — the scan matched in every repository | not run — no clone resolved> — on a run with diff grounding on; nothing listed here was read
+   - Pull requests: <GitHub PR search: ok — <owners>, <queries> queries, <n> kept, <dropped> loose matches dropped | <status> — <detail> | not run — <first call's reason>>; read through their landed commits: <each by URL, with its commits' SHAs | none>; found but not read: <each by URL and why | none>; left out as never code: <the `excluded` slugs | none>; not read by the script: <each repository by path and its `error` | none><; probe failed: each repository by path and its `probe_error`>; or, the whole line, `not run — no clone resolved` where there was no clone to scan (`key-discovery.md` §1) — on a run with diff grounding on (`key-discovery.md` §5)
    - Style check: <applied N safe fixes | report only (M findings) | skipped — you chose "Skip style check"> — rules: <the checker's rules_source, where it ran><; DEGRADED — Phase 7's reason, where Phase 7 recorded it>
    - Model routing: <under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatch above already carries the enforced id, per `workflows-core:model-routing/classification` §10 | "MODERATE — detection chain throughout, no degradation (Phase 1.5)">
    - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 9's own output; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]

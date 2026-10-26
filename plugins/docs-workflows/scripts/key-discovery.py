@@ -51,6 +51,7 @@ OWNER_REPO_RE = re.compile(r"[^/\s]+/[^/\s]+")
 FMT = "%H%x1f%cd%x1f%B"
 SEARCH_LIMIT = 1000
 GH_BUDGET = 300
+_now = time.monotonic  # the budget's clock; the selftest replaces it
 STATES = {"merged": "MERGED", "open": "OPEN", "closed": "CLOSED"}
 
 
@@ -669,19 +670,60 @@ def case_an_odd_gh_answer_is_partial_and_the_scan_survives(tmp):
     assert [c["sha"] for c in out["commits"]] == [sha]
 
 
+def case_a_failed_read_after_the_count_and_a_failed_probe(tmp):
+    r = os.path.join(tmp, "r")
+    _git(tmp, "init", "-q", "r")
+    _commit(r, "base")
+
+    def broken(*_args, **_kwargs):
+        raise SearchFailed("git log failed")
+    saved = globals()["_log"]
+    globals()["_log"] = broken
+    try:
+        (entry,) = discover(["ACME-7"], [r], "head", github=False)["repos"]
+    finally:
+        globals()["_log"] = saved
+    assert entry["error"] and entry["scanned"] is None, entry
+    saved = globals()["probe_clone"]
+    globals()["probe_clone"] = broken
+    try:
+        (entry,) = discover(["ACME-7"], [r], "head", probe=True, github=False)["repos"]
+    finally:
+        globals()["probe_clone"] = saved
+    assert entry["error"] is None and entry["scanned"] == 1 and entry["probe_error"], entry
+
+
 def case_the_view_budget_runs_out(tmp):
     r = _github_clone(tmp)
     _commit(r, "base")
     _no_ssh_alias(tmp)
     _gh(tmp, [_search_hit("acme/app", 24, "[ACME-7]")], {24: _merged_view("7" * 40)})
-    saved = globals()["GH_BUDGET"]
-    globals()["GH_BUDGET"] = 0
+    ticks = iter([0, 0])  # the start and the one search are in budget; every view after is past it
+    saved = globals()["_now"]
+    globals()["_now"] = lambda: next(ticks, 10 ** 6)
     try:
         out = discover(["ACME-7"], [r], "head")
     finally:
-        globals()["GH_BUDGET"] = saved
+        globals()["_now"] = saved
     (pr,) = out["github"]["prs"]
     assert pr["head_ref"] is None and "budget" in pr["reason"] and out["github"]["status"] == "partial", out["github"]
+
+
+def case_the_budget_bounds_the_searches_too(tmp):
+    r = _github_clone(tmp)
+    _commit(r, "base")
+    _no_ssh_alias(tmp)
+    _gh(tmp, [_search_hit("acme/app", 24, "[ACME-7]")], {24: _merged_view("7" * 40)})
+    keys = ["ACME-%d" % n for n in range(1, 14)]  # three batches of six
+    ticks = iter([0, 0])  # the start and the first batch are in budget; the second batch is not
+    saved = globals()["_now"]
+    globals()["_now"] = lambda: next(ticks, 10 ** 6)
+    try:
+        out = discover(keys, [r], "head")
+    finally:
+        globals()["_now"] = saved
+    g = out["github"]
+    assert g["queries"] == 1 and g["status"] == "partial" and "2 of 3 not run: ACME-7 OR" in g["detail"], g
 
 
 def case_an_exclude_that_is_no_repository_top_excludes_nothing(tmp):
@@ -850,7 +892,8 @@ def _subject(body):
 
 def scan_clone(clone, scope, keys, patterns):
     """The repos[] entry for one clone and its key-matched commits."""
-    entry = {"path": clone, "ref": None, "scanned": None, "matched": 0, "github": None, "error": None, "probe": []}
+    entry = {"path": clone, "ref": None, "scanned": None, "matched": 0, "github": None, "error": None, "probe": [],
+             "probe_error": None}
     commits = []
     ref, shown = scan_ref(clone, scope)
     entry["ref"] = shown
@@ -866,6 +909,7 @@ def scan_clone(clone, scope, keys, patterns):
                                 "keys": named, "via": "message", "prs": []})
     except SearchFailed as e:
         entry["error"] = str(e)
+        entry["scanned"] = None  # a clone with an error was not read, whatever the count said first
         return entry, [], ref
     entry["matched"] = len(commits)
     return entry, commits, ref
@@ -1047,6 +1091,7 @@ def github_layer(keys, patterns, clones, slugs, owner_slugs=(), excluded=(), ref
     if not owners:
         result["status"] = "no-github-clones"
         return result
+    started = _now()  # the budget covers every GitHub call: the auth check, the searches and the views
     blocker, detail = gh_blocker()
     if blocker:
         result["status"], result["detail"] = blocker, detail
@@ -1054,6 +1099,11 @@ def github_layer(keys, patterns, clones, slugs, owner_slugs=(), excluded=(), ref
     result["owners"] = owners
     found, failures, loose = {}, [], set()
     for start in range(0, len(keys), BATCH):
+        if _now() - started >= GH_BUDGET:
+            left = (len(keys) - start + BATCH - 1) // BATCH
+            failures.append("the GitHub time budget (%ds) ran out before every search ran -- %d of %d not run: %s"
+                            % (GH_BUDGET, left, (len(keys) + BATCH - 1) // BATCH, " OR ".join(keys[start:])))
+            break
         batch = keys[start:start + BATCH]
         result["queries"] += 1
         try:
@@ -1087,13 +1137,12 @@ def github_layer(keys, patterns, clones, slugs, owner_slugs=(), excluded=(), ref
         if malformed:
             failures.append("%s: %d results gh printed in a shape it does not use" % (" OR ".join(batch), malformed))
     result["dropped_loose"] = len(loose)
-    started = time.monotonic()
     for pr in found.values():
         clone = by_slug.get(("%s/%s" % (pr["owner"], pr["repo"])).lower())
         pr["clone"] = clone
         if clone is None:
             continue
-        if time.monotonic() - started >= GH_BUDGET:
+        if _now() - started >= GH_BUDGET:
             pr["reason"] = "not viewed -- the GitHub time budget ran out"
             if "time budget" not in "; ".join(failures):
                 failures.append("the GitHub time budget (%ds) ran out before every pull request was viewed" % GH_BUDGET)
@@ -1191,7 +1240,7 @@ def discover(keys, clones, scope, probe=False, github=True, excludes=(), owners_
                 try:
                     entry["probe"] = probe_clone(entry["path"], refs[entry["path"]][0], keys, accounted)
                 except SearchFailed as e:
-                    entry["error"] = "probe: %s" % e
+                    entry["probe_error"] = str(e)  # the scan stands; only the report-only probe failed
     return {"keys": keys, "scope": scope, "excluded": excluded, "repos": repos, "commits": commits, "github": layer}
 
 
