@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.57.1] — 2026-10-26
+
+Either version runs beside `dev-workflows` 4.39.0 or older: the change is to what this reference says of `/upgrade`.
+
+### Fixed
+- **`implementation-format` §3 said all three code-changing commands write the `[<key>]` convention.** `/upgrade` takes no address and is keyless, which `dev-workflows` 4.39.0 states; the table and the sentence below it now say it writes the subject with no key (batch B06, VU-B10's sweep).
+
 ## [1.57.0] — 2026-10-26
 
 Take with `product-workflows` 3.46.0, whose consumers write `consumed_by` as the list and `baselines.md` in the layout this release fixes.

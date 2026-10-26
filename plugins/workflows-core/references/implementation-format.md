@@ -130,10 +130,10 @@ appears, and the difference matters:
 | Command | What it does with the code | What it does about the convention |
 |---|---|---|
 | `/implement` | branches, then commits and pushes through `dev-workflows:code-handoff`'s `finish-code-branch` (Phase 4.6) | **writes the subject itself** |
-| `/upgrade` | branches, commits each component in step 6.5, pushes once in step 7.5 | **writes the subject itself** |
+| `/upgrade` | branches, commits each component in step 6.5, pushes once in step 7.5 | **writes the subject itself**, with no key: it takes no address, so its run is keyless (`/upgrade` Phase 0) |
 | `/vuln` | `vuln-fixer` branches and applies the fix; the orchestrator commits and pushes in Step 3.9, using its own template | **writes the subject itself**, from the template in `/vuln`'s Git Workflow |
 
-**All three write it, and the history is worth keeping** because it explains why the convention is
+**All three write the subject — `/upgrade` with no key to put in it — and the history is worth keeping** because it explains why the convention is
 also *documented* rather than merely emitted. Until `code-handoff.md` existed, `/implement` and
 `/upgrade` left the working tree dirty and could only ask the operator to name the key — strictly
 weaker than doing it, and a command that does not commit cannot write a commit subject. That is no
