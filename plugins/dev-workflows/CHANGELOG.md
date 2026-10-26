@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.33.0] — 2026-10-26
 
-Take with `workflows-core` 1.49.0, whose *What a requirement overlaps* both changes cite.
+Take with `workflows-core` 1.51.0, whose *What a requirement overlaps* both changes cite.
 
 ### Changed
 - **`/design` reads every decision against what it overlaps before its whole-design play-back**, across the whole design rather than only what changed since its sections were confirmed, starting with each decision's place on a path: every decision that places a step ahead of the failing point of a decision that answers a failure, on the same request path, is listed and read for whether that step meets the failure first, whichever of the two was decided first. The play-back carries an `Overlap read:` line, so a read that did not run shows. A live run settled the import's answer with its database down, then put security hooks that read the same database ahead of the import, so the outage failed there with a bare `500`; the first `design-reviewer` pass found it as a BLOCKER.

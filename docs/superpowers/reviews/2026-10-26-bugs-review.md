@@ -1377,7 +1377,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 <!-- /prd-proposal and /brd-proposal -->
 
-### PRD2-PROP-B1 — MINOR — Tier 2's "settled register" is met by a register `/create-prd` created holding only open `[AS#n]`, the vacuous case §5 says its presence test exists to prevent
+### PRD2-PROP-B1 — MINOR — Tier 2's "settled register" is met by a register `/create-prd` created holding only open `[AS#n]`, the vacuous case §5 says its presence test exists to prevent — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:**
   - `plugins/product-workflows/commands/prd-proposal.md:391-397` (*"a settled register is `decisions.md` present, and every `interview/round-<N>.md` it names settled … Test the presence first and do not collapse the two"*);
   - `references/proposal-format.md:149-155` (*"The presence half is not redundant: a folder holding no register at all names no round, so a condition worded only as every round is settled is vacuously true there"*);
@@ -1395,7 +1395,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-PROP-B2 — MINOR — `/brd-proposal` Phase 7 classifies coverage from "Phase 3's membership list", missing a slice that Phase 6 step 1 excluded
+### PRD2-PROP-B2 — MINOR — `/brd-proposal` Phase 7 classifies coverage from "Phase 3's membership list", missing a slice that Phase 6 step 1 excluded — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:**
   - `plugins/product-workflows/commands/brd-proposal.md:592-595` (*"Which slices count as included is this run's own input to that, and it is Phase 3's decision … Carry Phase 3's membership list into the classification"*);
   - against `:521-530` (Phase 6 step 1's exclusion *"would reach the coverage statement Phase 7 computes … it is named in the final report and enumerated in the coverage statement"*) and `:647-649` (stamp `--excluded` *"in the walk, and in Phase 6 step 1"*).
@@ -1406,7 +1406,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-PROP-B3 — MINOR — `proposal-reviewer` check 6 has no umbrella form, so an umbrella's tier claim and its brief floor are checked by nothing, or checked wrongly
+### PRD2-PROP-B3 — MINOR — `proposal-reviewer` check 6 has no umbrella form, so an umbrella's tier claim and its brief floor are checked by nothing, or checked wrongly — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:**
   - `plugins/product-workflows/agents/proposal-reviewer.md:152-163` (check 6 re-grades "the folder" against §5's ladder: `decisions.md`, `ard.md`, `specification.md`);
   - `:314-319` (*"check 6 re-grades against `proposal-format.md` §5, which grades no umbrella off its ladder at all"*);
@@ -1422,7 +1422,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-PROP-B4 — MINOR — The proposal pair reads a legacy `<KEY>_*.md` PRD "through `addressing` §5's legacy fallback", which §5 says covers folder names only, with no command carrying a filename fallback
+### PRD2-PROP-B4 — MINOR — The proposal pair reads a legacy `<KEY>_*.md` PRD "through `addressing` §5's legacy fallback", which §5 says covers folder names only, with no command carrying a filename fallback — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:**
   - `plugins/product-workflows/commands/prd-proposal.md:180-181` (*"`prd.md` on a current tree, a `<KEY>_*.md` entry only through `workflows-core:addressing` §5's legacy fallback"*);
   - `references/proposal-format.md:533` (*"or, where none exists, the `<KEY>_<slug>.md` PRD `workflows-core:addressing` §5's legacy fallback accepts"*);
@@ -1442,7 +1442,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-PROP-B5 — NIT — The `/prd-proposal` docs example says the tier-2 next-step array offers `/create-ard` "first"; the command's array puts it third
+### PRD2-PROP-B5 — NIT — The `/prd-proposal` docs example says the tier-2 next-step array offers `/create-ard` "first"; the command's array puts it third — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:** `plugins/product-workflows/docs/commands/prd-proposal.md:92` (*"Its next-step array offers `/product-workflows:create-ard PRODUCT-1234-01` first"*), against `commands/prd-proposal.md:714`.
 - **What is wrong:** The tier-2 array is `["Stop here …", "Roll it into the programme umbrella …", "Raise the tier first — /product-workflows:create-ard <KEY> …", "Price the next sibling slice …"]`. The example is a BRD slice, so it has a parent and the umbrella option stays. `/create-ard` is therefore the third option, and it is not marked Recommended.
 - **Failure scenario:** A reader expects a different menu from the one the run presents verbatim.
@@ -1451,7 +1451,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-PROP-B6 — NIT — A folder holding a `proposal-brief.md` but no `proposal.md` counts as a revision, so the run looks for an anchor and archives a proposal that do not exist
+### PRD2-PROP-B6 — NIT — A folder holding a `proposal-brief.md` but no `proposal.md` counts as a revision, so the run looks for an anchor and archives a proposal that do not exist — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:** `plugins/product-workflows/commands/prd-proposal.md:239-241` (*"whether `proposal.md` and `proposal-brief.md` already exist … Where either does, Phase 6 treats the prior as the anchor (§8) unless `--redo` was given, Phase 7 archives it (§2), and §4's section 23 renders (§12)"*); the same wording is at `commands/brd-proposal.md:161-163`.
 - **What is wrong:** "Either" makes a leftover brief alone enough to start the stability anchor, the proposal archive and the changelog section. All three need a prior `proposal.md`.
 - **Failure scenario:** A brief is left after a hand-deleted `proposal.md`. The run:
@@ -1465,7 +1465,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## product-workflows — BRD route
 
-### BRD-B1 — MINOR — `/brd-package`'s docs page still says every `fixed` correction changes what the customer is shown (the copy 0e02e28b missed)
+### BRD-B1 — MINOR — `/brd-package`'s docs page still says every `fixed` correction changes what the customer is shown (the copy 0e02e28b missed) — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:** `plugins/product-workflows/docs/commands/brd-package.md:298-299`
 - **What is wrong:** The docs page says: "**Phase 4 — a `fixed` correction re-opens the review, exactly once, whatever artifact it named.** The correction changes what the customer will be shown, and one made under one finding can break a position another left standing". Commit 0e02e28b corrected this same claim in the command (`commands/brd-package.md:817-820`). The command now says "A correction **can** change what the customer will be shown — three of the five artifacts the row above admits, the prompt, the delivery note and the bundle's own rendered copies, are what this command renders for them". A `fixed` against the self-review or a `[SR#n]`'s own record changes nothing rendered for the customer.
 - **Failure scenario:** An operator disposes a finding `fixed` against `self-review-<date>.md`. The page tells them the correction changes what the customer is shown, which is false. The command's own CHANGELOG 3.36.1 bullet calls the old wording a defect. This is the claim-sweep refinement-8 case: the `docs/` copy is the one a person acts on.
@@ -1570,7 +1570,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (the key's shape does not by itself fix its level, but the page's prose and the family's example set do)
 
-### BRD2-B8 — NIT — Agent input examples use a key the agent's caller refuses; `/brd-package` Phase 3 does not say `questions` is optional
+### BRD2-B8 — NIT — Agent input examples use a key the agent's caller refuses; `/brd-package` Phase 3 does not say `questions` is optional — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:**
   - `plugins/product-workflows/agents/brd-package-reviewer.md:44`, `agents/customer-review-reader.md:48` (`brd_key: <BRD-KEY>  # e.g. EPIC-008`);
   - `plugins/product-workflows/commands/brd-package.md:595` (`questions: [path to interview/customer-questions.md]`).
@@ -1598,7 +1598,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## product-workflows — BRD route (third pass)
 
-### BRD3-B1 — MAJOR — A run stopped after Phase 5 wrote the register but before Phase 12 wrote the reconciliation record leaves `[CD#n]`s the re-run cannot reach, so the re-run mints a second `[CD#n]` for the same question
+### BRD3-B1 — MAJOR — A run stopped after Phase 5 wrote the register but before Phase 12 wrote the reconciliation record leaves `[CD#n]`s the re-run cannot reach, so the re-run mints a second `[CD#n]` for the same question — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** `plugins/product-workflows/commands/brd-reconcile.md:1096-1106` (`[C]` chain start), `:1114-1121` (`[SR#n]` chain start), `:1067-1091` (same-review rule), `:1441-1452` (step 1 writes the *answered by the customer* line after the mint), `:1487-1491` (a record frozen `open` for want of its reason leaves its question held, with no *answered by* line), `:2473-2516` (Phase 12, the only place a pass's `[CD#n]` list is written); `plugins/product-workflows/references/decision-register-format.md:581-582` (§8: "A `[CD#n]`" is never a torn write).
 - **What is wrong:** Phase 4 finds an existing `[CD#n]` for a target in only three ways:
   - the `[CD#n]` named by the target's first *answered by the customer* line, which Phase 5 step 1 writes;
@@ -1616,7 +1616,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high for the `open`-for-want-of-reason and `[SR#n]` paths (the prose names the reconciliation record as their only locator); medium for the `decided` `[C]` path, which needs a stop inside Phase 5.
 
-### BRD3-B2 — MAJOR — A stop or interruption after Phase 5 loses the run's defect resolutions, ledger moves and sweep: the re-run reads its own frozen [CD#n] as re-affirmations
+### BRD3-B2 — MAJOR — A stop or interruption after Phase 5 loses the run's defect resolutions, ledger moves and sweep: the re-run reads its own frozen [CD#n] as re-affirmations — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** commands/brd-reconcile.md:689-697 (which review froze a [CD#n] lives only in the reconciliation record), :1067-1083 (same-review rule keys on a pass in an earlier reconciliation record; "Without this rule a run cancelled halfway and restarted would mint a second [CD#n]"), :1162-1185 (re-affirmation: "mints no [CD#n] ... and adds nothing to the propagation sweep's changed-id set"), :1714-1715 (BRD_RECONCILE_UNDISPOSED_CORRECTION stop at the end of Phase 6), :2347-2348 (BRD_RECONCILE_UNSWEPT stop at the end of Phase 10), :2473-2475 (the record is written only in Phase 12), :146-149 (the command already states this outcome for one case: "leaving records frozen that no reconciliation record names: a re-run would find each re-affirmed, freeze nothing, and resolve no defect for it").
 - **What is wrong:** decisions.md carries no review provenance (§1's 13 fields), and the pass heading that every same-review rule keys on is written in Phase 12, after Phases 5–11 have written decisions.md, the corrections, banners, defect log, ledger and dependents. Two of the command's own gates stop between those writes and Phase 12. So does a lost session or exhausted context in the long interactive Phases 4–10.
 - **Failure scenario:** Phase 5 freezes [CD#4]. Phase 6 ends with one row undisposed and stops UNDISPOSED_CORRECTION. No reconciliation record exists. The re-run on the same review finds no pass, so the candidate is shown again. On Confirm it re-affirms [CD#4]: it freezes nothing and adds nothing to the changed-id set. Then:
@@ -1631,7 +1631,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Confidence:** high on the mechanism (every sentence quoted). Medium on how reachable it is: it needs a gate stop or an interruption after Phase 5.
 - **Also found independently by** sub-review C (its B2). It adds that Phases 7, 8 and 9 and the sweep each act only on records this run froze, completed or re-decided (`brd-reconcile.md:1794-1797`, `:1829`, `:1929-1931`, `:2014-2016`), so banners are lost too, and Phase 8's closing of fully-withdrawn held questions never fires.
 
-### BRD3-B3 — MAJOR — The documented remedy for a recorded-not-written dependent cannot write anything: the re-run's changed-id set is empty for the earlier pass's ids
+### BRD3-B3 — MAJOR — The documented remedy for a recorded-not-written dependent cannot write anything: the re-run's changed-id set is empty for the earlier pass's ids — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** commands/brd-reconcile.md:2114-2118 (the changed-id set is what was frozen, completed, re-decided, reopened or superseded "this run"), :1067-1076 (a re-run skips the earlier pass's candidates as *already reconciled*, so they are frozen nothing this run), :2232-2239 and :2300 (a conditional_on position "this run did not move" "takes this disposition [inherited-unchanged] and no other"), :2340-2345 (the recorded-not-written dependent "is swept again in full ... the operator merges the dependent's pull request exactly so the sweep can land"), :2557-2559 (the fix named: re-run `/brd-reconcile <BRD-KEY> @<review-file>` on this same review); Phase 14 offers the same (docs/commands/brd-reconcile.md:125).
 - **What is wrong:** on that re-run, every candidate of the earlier pass is skipped by the same-review rule, so the changed-id set holds none of the ids that reached the dependent. The citation pass then matches nothing. The conditional_on pass presents each position with "this run did not move it", and that case admits only inherited-unchanged. So the reopened/reverted/withdrawn dispositions that were recorded for the dependent cannot be written. Nothing says the re-run reads the dispositions the earlier pass recorded (:2328-2329 "the dispositions this run would have written").
 - **Failure scenario:** dependent D's register is on an open PR, so pass 1 records "reopen D [VD#2]". The operator merges D's PR and re-runs as told. The sweep reaches D [VD#2] by conditional_on. It is told the prerequisite did not move this run, and can only take inherited-unchanged. D [VD#2] stays decided on a moved prerequisite, and the run records the sweep as landed.
@@ -1639,7 +1639,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium-high. The re-run sentence ("swept again in full") could be read as carrying the old set, but no text supplies one.
 
-### BRD3-B4 — MAJOR — A prerequisite's bundle is copied in "wholesale", so its own copied-in prerequisites come along under a key the partition set does not hold. The "cannot arise" collision claim is false.
+### BRD3-B4 — MAJOR — A prerequisite's bundle is copied in "wholesale", so its own copied-in prerequisites come along under a key the partition set does not hold. The "cannot arise" collision claim is false. — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:** `plugins/product-workflows/references/bundle-packaging.md:483` ("A prerequisite package is copied into the bundle wholesale (§1.1)"), `:503-507` (the partition key is "this run's key plus every prerequisite key Phase 2 carried… no candidate in the set matches" → unkeyed-document stop), `:601-606`; `plugins/product-workflows/commands/brd-package.md:548` (Phase 2 walks "every declared prerequisite (this run's plus any already on file)", which means direct ones only), `:559-560` (step 3 copies the prerequisite's "most recent `bundle-<YYYYMMDD>/`"), `:1385-1387` ("one **between two prerequisite packages**, which neither may rename, cannot arise"), `:1502-1506`.
 - **What is wrong:** Slice A depends on B, and B was packaged with its own prerequisite C. B's `bundle-<date>/` therefore holds C's `C-…` documents (B's rule 5). A copies B's bundle wholesale, so the C-prefixed files enter A's bundle. C is not in A's key set, because Phase 2 carries only A's declared prerequisites. Rule 8 then finds documents whose key "no candidate in the set matches" and stops with `BRD_PACKAGE_DEAD_CITATION`. That stop's message ("some sentence in the package assumed that id or that file, and the sentence is what has to change") points the operator at prose. The real problem is a never-rewritten prerequisite copy, which they cannot change. Second case: A declares both B and C. C's own latest bundle and B's older copy of C's bundle both carry `C-decisions.md` and other C-prefixed names. That is a collision between two prerequisite packages, which rule 1 says "cannot arise" and gives no resolution for, since neither may be renamed.
 - **Failure scenario:** Any prerequisite chain of length 2 (A→B→C, with B packaged after C) makes A unpackageable. The stop message names no way out. Declaring C as well only trades the dead-citation stop for an unresolvable name collision.
@@ -1648,7 +1648,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (the wholesale copy is stated; whether a live chain of length 2 exists in any user tree is not measured)
 
-### BRD3-B5 — MINOR — Phase 10 names the wrong BRD in the rebaseline fix for a dependent's will-change finding
+### BRD3-B5 — MINOR — Phase 10 names the wrong BRD in the rebaseline fix for a dependent's will-change finding — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** commands/brd-reconcile.md:2332-2337 ("A [CG#n] or [DG#n] carrying horizon: will-change whose named prerequisite decision this run has just frozen ... recorded with the concrete fix — `/product-workflows:prd-ground <BRD-KEY> --rebaseline`").
 - **What is wrong:** a finding whose prerequisite decision is one of this BRD's decisions sits in a dependent BRD's grounding. It is set there by prd-ground Phase 6 from that dependent's declared prerequisite, and grounding-format §5 says a horizon names *another* BRD's decision. Throughout the command, `<BRD-KEY>` is this run's own slice (compare BRD2-B5). The fix therefore tells the operator to re-ground the slice just reconciled, which has no such finding, and not the dependent that does.
 - **Suggested fix:** `/product-workflows:prd-ground <DEPENDENT-KEY> --rebaseline`, naming the dependent the finding sits in. The same applies to the *what still needs a human* line (:2536).
@@ -1719,7 +1719,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD3-B10 — MINOR — A copied-in prerequisite package brings its own rendered prompt and manifest, and part 3 then sends the reviewer to that second prompt
+### BRD3-B10 — MINOR — A copied-in prerequisite package brings its own rendered prompt and manifest, and part 3 then sends the reviewer to that second prompt — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:** `plugins/product-workflows/references/bundle-packaging.md:88` (the rendered prompt is §1.1's first row of a bundle), `:100`, `:483`; `plugins/product-workflows/commands/brd-package.md:907` (part 3 lists "every other document `bundle-packaging.md` §1.1 admits **except the rendered prompt itself**"), `:1445-1449` (rule 5).
 - **What is wrong:** A prerequisite's `bundle-<date>/` contains that package's own `customer-review-prompt` and manifest. Nothing excludes them from the copy. The prompt carries its own one-new-file rule, its own `Package reviewed: <PREREQ-KEY> <date>` line and its own "the only file to send back" instruction naming `<PREREQ-KEY> Customer Review <YYYYMMDD>.md`. Part 3 excludes only *this* package's prompt, so it lists the prerequisite's prompt among the documents to review.
 - **Failure scenario:** A vanilla agent reads every document part 3 names. It meets a second complete review prompt that tells it to write a different file under the prerequisite's key, and may write two reviews or the wrong one. `/brd-reconcile` step 6a looks only for `<BRD-KEY> Customer Review <YYYYMMDD>.md` (`commands/brd-reconcile.md:361`, `:370`), so it finds nothing for a review written under the prerequisite's key.
@@ -1728,7 +1728,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD3-B11 — MINOR — Rule 5 marks a copied prerequisite document on "its own front matter line". Rule 4 strips every bundled frontmatter block, and rule 7 forbids rewriting such a copy.
+### BRD3-B11 — MINOR — Rule 5 marks a copied prerequisite document on "its own front matter line". Rule 4 strips every bundled frontmatter block, and rule 7 forbids rewriting such a copy. — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:** `plugins/product-workflows/commands/brd-package.md:1445-1447` ("The marking is on the documents' own front matter line in the bundle and in the manifest"), against `:1434-1437` (rule 4: "every bundled document that carries a frontmatter block loses it whole"), and `:1480-1484` (rule 7: "that package is never rewritten… rewriting the copy would make it disagree with the dated package it was copied from"); `bundle-packaging.md` §5 (`:452-455`).
 - **What is wrong:** These are three live instructions that cannot all be followed. Marking the copy means writing a frontmatter line into it. Rule 4 removes frontmatter from every bundled document. Rule 7 and §5 say the copy is never rewritten, because it must stay byte-identical with the dated bundle it came from.
 - **Failure scenario:** An agent following rule 5 edits each prerequisite document, which falsifies the "copy of the dated package" property that rule 7's model-id exemption depends on. An agent following rule 7 leaves the documents unmarked, against rule 5.
@@ -1737,7 +1737,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD3-B12 — MINOR — A same-day re-run rewrites this date's self-review, prompt and note. Phase 0's guard covers only the bundle directory, and the self-review's numbering rule reads as appending to the earlier run's file.
+### BRD3-B12 — MINOR — A same-day re-run rewrites this date's self-review, prompt and note. Phase 0's guard covers only the bundle directory, and the self-review's numbering rule reads as appending to the earlier run's file. — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:** `plugins/product-workflows/commands/brd-package.md:496-498` (step 11: one stamp for every artifact; only `bundle-<YYYYMMDD>/` is tested), `:463-465` ("nothing below deletes, renames or rewrites a dated artifact another run wrote"), `:622` ("Write `<BRD-dir>/self-review-<YYYYMMDD>.md` now"), `:628-631` (ids continue "from the highest already in that file"), `:596` (`prior_reviews`: "every earlier self-review-<YYYYMMDD>.md"); `:1177` (`BRD_PACKAGE_PROMPT_LEAK` ends "…and re-run").
 - **What is wrong:** Several stops tell the operator to repair the content and re-run. These include `BRD_PACKAGE_PROMPT_LEAK` in Phase 6, `BRD_PACKAGE_UNDISPOSED` (`:815`), and an abort of the disposition walk (`:692-693`). All of them fire after Phase 3 wrote `self-review-<date>.md`, and the prompt leak fires after the operator disposed every finding. The same-day re-run passes step 11, because no bundle exists. It then either:
   - overwrites the earlier run's self-review, prompt and note, which step 11's "nothing below… rewrites a dated artifact another run wrote" forbids, or
@@ -1750,7 +1750,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD3-B13 — MINOR — `/brd-reconcile`'s `BRD_RECONCILE_EMPTY_DIGEST` tells the operator to re-run "telling the run the file is prose", but the command gives them no way to say so
+### BRD3-B13 — MINOR — `/brd-reconcile`'s `BRD_RECONCILE_EMPTY_DIGEST` tells the operator to re-run "telling the run the file is prose", but the command gives them no way to say so — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** `plugins/product-workflows/commands/brd-reconcile.md:859` (the stop text), `:790` (the dispatch hard-codes `mode: auto`), `:77-78` and `:839-840` ("`free-text` where the operator has told it the file is prose"), `:164-200` (Phase 0 parses `<BRD-KEY>`, `@<review-file>`, `--sent` and the run flags, and nothing else).
 - **What is wrong:** There is no flag, no question and no step that sets the reader's mode to `free-text`. The dispatch's mode is the literal `auto`.
 - **Failure scenario:** A schema-looking review parses to three empty sets with section 2 reading `approved-with-required-changes`. The run stops. The operator re-runs as told, with `@<review-file>`. The dispatch is `auto` again, the reader returns the same digest, and the same stop fires. There is no exit except editing the review, which breaks the one-new-file rule.
@@ -1759,7 +1759,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD3-B14 — MINOR — §7 relation 1 never checks part 6's `in-scope` `[CDF#n]` list, and its reason for excluding part 6 ("prose… not the requirement ids") is false of that list
+### BRD3-B14 — MINOR — §7 relation 1 never checks part 6's `in-scope` `[CDF#n]` list, and its reason for excluding part 6 ("prose… not the requirement ids") is false of that list — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:** `plugins/product-workflows/references/bundle-packaging.md:956-960` (scope: "the open assumptions, the conditional positions and conditional defect entries, and the out-of-scope defect entries"), `:991-996` ("The review scope part renders… prose in the customer's own vocabulary… not the requirement ids"), `:1041-1049` (§7.2 names only part 6's other-BRD list as unseen); `plugins/product-workflows/commands/brd-package.md:970-973` (part 6: "every `[CDF#n]` disposed `in-scope`, named by id"); docs `plugins/product-workflows/docs/commands/brd-package.md` *Phase 8 — the set-resolution check* (same omission).
 - **What is wrong:** Part 6 enumerates identified records, `in-scope` `[CDF#n]` by id, from a source the bundle carries (`code-defect-log.md`, §1.1 `:95`), filtered on a record field (`disposition`). That is exactly relation 1's scope test. The conditional (part 8) and out-of-scope (part 11) slices of the same log are in scope; the in-scope slice is not, and §7.2 does not admit the gap. §1.1 `:95` calls this slice "the delivery boundary", and omitting an entry understates what the customer agrees to (`brd-package.md:972-973`).
 - **Failure scenario:** Part 6 drops one `in-scope` defect. Every relation stays green, and §7.2 does not list this case among what §7 cannot see.
@@ -1768,7 +1768,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD3-B15 — MINOR — §7.1 calls part 7's escalated-finding fraction "testable", but its source is the self-review, which the same section rules out of relation 1 because it is not in the bundle
+### BRD3-B15 — MINOR — §7.1 calls part 7's escalated-finding fraction "testable", but its source is the self-review, which the same section rules out of relation 1 because it is not in the bundle — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:** `plugins/product-workflows/references/bundle-packaging.md:996-998` ("so only the assumption and escalated-finding fractions of it are testable"), against `:957-958` (scope requires a source "itself in the bundle") and `:985-989` (accepted-risk findings are outside because their source "is the adversarial self-review, which §1.1 excludes… a relation that reached for it would resolve to an absent file on every correct bundle").
 - **What is wrong:** The escalated `[SR#n]`s come from the same excluded file as the accepted-risk ones. Calling them testable invites an executor to compare part 7's `[SR#n]` set against a source that yields nothing.
 - **Failure scenario:** An executor tests that fraction. The source yields zero records while part 7 restates some, which is `BRD_PACKAGE_SET_UNREADABLE` (`:1030-1039`; `brd-package.md:1558-1559`) on every package carrying an escalated finding.
@@ -1777,7 +1777,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD3-B16 — MINOR — The `brd-package-reviewer` `INPUT_MISSING` stop has no stop code, and Phase 11's capture-at-block classification leaves it out
+### BRD3-B16 — MINOR — The `brd-package-reviewer` `INPUT_MISSING` stop has no stop code, and Phase 11's capture-at-block classification leaves it out — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:** `plugins/product-workflows/commands/brd-package.md:598-602` ("Map that return to a stop naming the field it named — it is a defect in this dispatch, not in the package"); `:1722-1736` (Phase 11: "Six of this command's stops **do** qualify… `BRD_PACKAGE_REVIEW_UNACCOUNTED` is an agent-contract gap… **Every other stop fails that test**").
 - **What is wrong:** The command itself calls this a dispatch defect, which is an agent-contract or plugin gap of exactly the kind `emit-block` exists for. It is the counterpart of `/brd-reconcile`'s coded `BRD_RECONCILE_READER_CONTRACT` (`brd-reconcile.md:834`), which Phase 11 cites as the model. But it has no code, and Phase 11 says every stop outside the six fails the test, so no feedback is captured when it fires.
 - **Failure scenario:** A dispatch omits `package.grounding`. The run stops with a free-form message, and no `emit-block` record is written for a plugin defect.
@@ -1795,7 +1795,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high (Phase 5 is outside this slice's phase range; not in BRD/BRD2/FBB)
 
-### BRD3-B18 — MINOR — The docs page says the rendered schema headings are renumbered "so the customer's copy runs from 1"; the command renumbers them `<part>.1`–`<part>.5` and says outright that a restart at 1 is the wrong scheme
+### BRD3-B18 — MINOR — The docs page says the rendered schema headings are renumbered "so the customer's copy runs from 1"; the command renumbers them `<part>.1`–`<part>.5` and says outright that a restart at 1 is the wrong scheme — **Fixed in product-workflows 3.41.0 (batch B11)**
 - **Where:** `plugins/product-workflows/docs/commands/brd-package.md` *Gates*, Phase 6 bullet ("The rendered headings are renumbered so the customer's copy runs from 1 rather than visibly beginning at 2"), against `plugins/product-workflows/commands/brd-package.md:1129-1137` ("`## 2.` becomes `### <part>.1`… **and it does not restart at 1 inside a numbered outline either** — a body renumbered `1.`–`5.` inside part 10 of eleven reads as 1–10, then 1–5, then 11").
 - **What is wrong:** The docs page describes the rejected scheme.
 - **Failure scenario:** A maintainer or operator reading the docs expects `1.`–`5.` headings and reads the `10.1`–`10.5` render as a defect.
@@ -1804,7 +1804,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD3-B19 — MINOR — `/brd-reconcile` gates on the folder's *most recent* prompt, before it knows which package the review answers
+### BRD3-B19 — MINOR — `/brd-reconcile` gates on the folder's *most recent* prompt, before it knows which package the review answers — **Fixed in product-workflows 3.40.0 / workflows-core 1.50.0 (batch B10)**
 - **Where:** `plugins/product-workflows/commands/brd-reconcile.md:319-325` ("Execute it against the resolved folder's **most recent `customer-review-prompt-<YYYYMMDD>.md`**"), `:345-351` (`BRD_RECONCILE_PACKAGE_NOT_HANDED_OFF`: "Commit and merge the package's files…"), against `:792-819` (Phase 3 resolves the answered package later, by the `Package reviewed` line).
 - **What is wrong:** The gate is about "what the customer saw", but it tests the newest package, not the one the review answers.
 - **Failure scenario:** Package D1 is sent and merged. Package D2 is built later with its handoff declined, abandoned or not yet merged. The customer returns a review of D1, whose `Package reviewed:` line names D1. `/brd-reconcile` stops on D2 with `PACKAGE_NOT_HANDED_OFF` and tells the operator to land D2's files, a package nobody reviewed, before D1's answers can be reconciled.
@@ -2284,7 +2284,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## field feedback — BOOK-2-01 runs
 
-### FBB-B1 — MAJOR — `/prd-proposal` writes `proposal-profile.yml` and calls it committed, but nothing ever stages it
+### FBB-B1 — MAJOR — `/prd-proposal` writes `proposal-profile.yml` and calls it committed, but nothing ever stages it — **Fixed in product-workflows 3.39.0 / workflows-core 1.49.0 (batch B09)**
 - **Where:** `plugins/product-workflows/commands/prd-proposal.md:290`, `:345` (calls it "a committed `proposal-profile.yml`"); `:693` (`deliverable_paths` = `proposal.md`, `proposal-brief.md`, archived priors only); `plugins/workflows-core/references/specs-repo-git.md` §2.1 (no `.dev-workflows/` path; `grep -n '\.dev-workflows' specs-repo-git.md` returns nothing); `brd-proposal.md:447`.
 - **What is wrong:** The profile is read back by every later `/prd-proposal` and `/brd-proposal`, and the prose calls it committed. However, neither the handoff nor `commit-artifacts` stages it.
 - **Failure scenario:** A first proposal run grills a profile into `$SPECS_PATH/.dev-workflows/proposal-profile.yml`. The handoff commits only the proposal, and `commit-artifacts` treats the profile as outside its bounded paths. The profile stays untracked, so a teammate's clone has none and their `/brd-proposal` stops with `BRD_PROPOSAL_NEEDS_PROFILE`.
@@ -2338,7 +2338,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `create-prd-phase1-confirm-no-choices` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B9 — MINOR — `proposal-format` §6 makes a false claim about rounding
+### FBB-B9 — MINOR — `proposal-format` §6 makes a false claim about rounding — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:** `plugins/product-workflows/references/proposal-format.md:246-247` ("Whole-hour rounding moves a band by up to a point").
 - **What is wrong:** On a 38 h Medium package, the low end of 30.4 rounds to 30, which is −21.05 %. That is more than a point off the band, so the rule fires on arithmetic alone. The rendering precision of Low and High is unstated.
 - **Failure scenario:** A default band on a small package fails the one-point tolerance.
@@ -2347,7 +2347,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `prd-proposal-band-rendering-precision` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B13 — MINOR — The fix-cycle overlap read is too narrow: it misses imported rules and new outcomes added to an existing trigger — **Fixed in workflows-core 1.49.0 / product-workflows 3.39.0 / dev-workflows 4.33.0 (to-fix PR1), parts (1) and (2)**
+### FBB-B13 — MINOR — The fix-cycle overlap read is too narrow: it misses imported rules and new outcomes added to an existing trigger — **Fixed in workflows-core 1.51.0 / product-workflows 3.42.0 / dev-workflows 4.33.0 (to-fix PR1), parts (1) and (2)**
 - **Where:** `plugins/workflows-core/references/escalation-rules.md:570-606` (*An inline fix is read against what it overlaps*). It reads requirements "whose trigger, precondition, state or figure overlaps"; it lists no importers-by-reference and no outcome-set enumeration. `plugins/workflows-core/references/pre-lint.md:76-83` (the spec block checks only headings, ID contiguity and the open-question count).
 - **What is wrong:** Three `/specify` runs on this PRD spent their review cap on one defect class. In the first, a criterion imports "every rule of a change", so the changed rule reaches `POST`. In the second, a new outcome is added to a trigger's implicit outcome set, but sibling criteria keep their old wording. Neither case reads as an overlap. No deterministic check of category coverage or required inputs exists either.
 - **Failure scenario:** The re-review finds BLOCKERs the fix or the draft itself wrote. The cap is spent, so the spec ships under unreviewed manual notes.
@@ -2487,7 +2487,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `brd-interview-v-followups-batched`, `brd-interview-round-record-layout-unspecified` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B45 — MINOR — `/brd-package` and `/brd-reconcile`: the display before the question, scan tooling, prose references, author attribution, `[SR#n]` answer mapping, and bundle filenames in section 12
+### FBB-B45 — MINOR — `/brd-package` and `/brd-reconcile`: the display before the question, scan tooling, prose references, author attribution, `[SR#n]` answer mapping, and bundle filenames in section 12 — **Fixed in product-workflows 3.41.0 (batch B11), save the shipped scan script and temporary-directory build, split to to-fix D21**
 - **Where:** `plugins/product-workflows/commands/brd-package.md:639-641` (the display rule is one sentence above the picker, with no "same message" binding); `plugins/product-workflows/scripts/` (no scan tool; Phase 8 has no temporary-directory build); `brd-package.md:1367-1372` (rule 1 does not say whether prose references in plugin-written text are rewritten); `plugins/product-workflows/commands/brd-reconcile.md` *Ingest the review* (no anomaly class for reasons the review says were written by another author); `:1341` (no rule for mapping a factual answer onto `["as the package states", "as the finding argues"]`); `:1753-1757` (a section-12 row naming `<KEY>-decisions.md` reads as "anything under `bundle-<YYYYMMDD>/`" and is never rewritten; nothing maps it back through the manifest).
 - **What is wrong:** (1) The operator answered `[SR#4]` blind. (2) The ad-hoc scans gave a false commit match on `20261012`, and a failed build left a partial dated bundle. (3) Two prose references were rendered by judgement. (4) Eighteen `[CD#n]` froze AI-written reasons as the customer's own. (5) Six answers needed judgement. (6) A bundle-name row is classed as a dated snapshot and refused, not applied to the working file it was rendered from.
 - **Suggested fix:** Make the display and the picker one template in one message. Ship a deterministic scan script and build into a temporary directory. State rule 1's scope for prose references. Add a third-party-author anomaly class. Give mapping rules with worked examples. Resolve bundle names through the manifest.

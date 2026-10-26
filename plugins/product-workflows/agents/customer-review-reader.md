@@ -45,7 +45,7 @@ step 1's fail-closed rule from the outside.
 ## Inputs
 
 ```yaml
-brd_key:     <BRD-KEY>            # e.g. EPIC-008
+brd_key:     <BRD-KEY>            # e.g. EPIC-008-01
 review_path: <absolute path to the returned review file, already canonicalised by the caller>
 package:
   questions:   <path to the [C] question set the package put to the customer, when available>

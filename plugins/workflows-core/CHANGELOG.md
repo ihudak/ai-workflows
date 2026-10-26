@@ -5,13 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.49.0] — 2026-10-26
+## [1.51.0] — 2026-10-26
 
-**Update `dev-workflows` to 4.33.0 and `product-workflows` to 3.39.0 with this release**: their commands cite the rule below by name. Closes to-fix PR1, and FBB-B13 of the 2026-10-26 bugs review.
+**Update `dev-workflows` to 4.33.0 and `product-workflows` to 3.42.0 with this release**: their commands cite the rule below by name. Closes to-fix PR1, and FBB-B13 of the 2026-10-26 bugs review.
 
 ### Changed
 - **`grilling-technique`'s overlap read lists what a requirement reaches, not only what its wording meets.** A new *What a requirement overlaps* names five kinds, each listed before it is read: its condition (the trigger, precondition, state or figure the read compared before), what it imports and what imports it, its trigger's other outcomes, its place on a path — both ways, so a step placed ahead of a failure's answer is read against it whichever was written first — and the inherited `[AD#N]` Rules. The kinds are listed in the run's own working, never in the artifact. The read before each play-back now covers stories, scope lines and decisions beside criteria, test cases and Rules. Four live misses came in through those links: a criterion that carried a `PUT`-only rule to `POST` by applying "every rule of a change", a new outcome that left its sibling criteria on the old set, security hooks placed ahead of a database-down answer they pre-empted, and a fix that accepted missing an `[AD#N]` bound with no deviation recorded.
 - **`escalation-rules`' *An inline fix is read against what it overlaps*** reads each requirement an edit adds or changes against the same five kinds, citing that definition, where it read only those whose trigger, precondition, state or figure overlapped; its lead sentence says so, with the inherited `[AD#N]` Rules beside the artifact. `reference-parts/escalation-rules/review.md` is regenerated.
+## [1.50.0] — 2026-10-26
+
+### Fixed
+- `phase-handoff` §3.4's `/brd-reconcile` row names the prompt of the package the review answers, not the most recent one, as `product-workflows` 3.40.0 now gates it.
+
+## [1.49.0] — 2026-10-26
+
+### Fixed
+- `phase-handoff` §4.0 classifies `.dev-workflows/proposal-profile.yml` as advisory, and §2.9's `deliverable_paths` row says the proposal commands declare it on every run: `product-workflows` 3.39.0's proposal commands now hand it off with their proposal. `addressing` §5 notes that `/prd-proposal`'s stop on a pre-rename PRD names the rename. Either version runs beside the other — the row only names the reader of a path the producer's set already holds a stronger class beside.
 
 ## [1.48.0] — 2026-10-26
 

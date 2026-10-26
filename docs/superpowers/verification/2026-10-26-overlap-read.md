@@ -1,6 +1,6 @@
 # Verification — the overlap read lists what a requirement reaches (to-fix PR1, FBB-B13)
 
-**Date:** 2026-10-26 · **Branch:** `iv-gu/overlap-read` · **Versions:** workflows-core 1.49.0, dev-workflows 4.33.0, product-workflows 3.39.0
+**Date:** 2026-10-26 · **Branch:** `iv-gu/overlap-read` · **Versions:** workflows-core 1.51.0, dev-workflows 4.33.0, product-workflows 3.42.0
 
 ## What changed, and the population it serves
 

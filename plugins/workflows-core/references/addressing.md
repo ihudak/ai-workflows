@@ -685,7 +685,8 @@ covered filenames it never reached. Every command resolves an artifact by its **
 carries a fallback of its own, so a folder written before the artifact filenames lost their keys still
 needs its `<KEY>_<slug>.md` renamed to `prd.md` and its `<KEY>_ARD.md` to `ard.md`. Two more `git mv`s,
 and unlike the folder nothing resolves them for you: a command meeting the old filename reports the
-artifact absent and stops on that, with a remedy written for a folder that never had one. **Each
+artifact absent and stops on that, most with a remedy written for a folder that never had one —
+`/product-workflows:prd-proposal`'s stop names the rename instead. **Each
 renamed file also takes the `kind:` and `key:` its format now carries** — `kind: prd` and
 `key: <KEY>` on `prd.md`, `kind: ard` and the key on `ard.md` — because those fields arrived in the
 same commit as the keyless filenames (1da74804), so no file written under the old names carries

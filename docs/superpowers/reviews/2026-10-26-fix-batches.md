@@ -526,7 +526,7 @@ Entries:
 - **GIT-B3** (MINOR) — merge-clause table lacks *Commit failed* row
 - **GIT-B4** (MINOR) — epic-picker cap example contradicts its rule
 - **BRD3-B24** (NIT) — lane offers `/brd-reconcile` after every `/brd-package`
-- **FBB-B13** (MINOR) — fix-cycle overlap read misses imported rules — **parts (1) and (2) fixed in workflows-core 1.49.0 (to-fix PR1, now closed); part (3) is B18's**
+- **FBB-B13** (MINOR) — fix-cycle overlap read misses imported rules — **parts (1) and (2) fixed in workflows-core 1.51.0 (to-fix PR1, now closed); part (3) is B18's**
 - **FBB-B15** (MINOR) — post-verdict version line omits changed Rules
 - **FBB-B21** (gap) — gap: let `/epics` apply open MINOR and NIT findings
 

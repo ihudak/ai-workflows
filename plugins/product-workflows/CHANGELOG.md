@@ -5,13 +5,51 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.39.0] — 2026-10-26
+## [3.42.0] — 2026-10-26
 
-Take with `workflows-core` 1.49.0, whose *What a requirement overlaps* these changes cite.
+Take with `workflows-core` 1.51.0, whose *What a requirement overlaps* these changes cite.
 
 ### Changed
 - **`/specify` lists each trigger's outcomes before Stage 4's play-back**, and again over the whole specification before the first review: each outcome has a criterion or a stated exclusion, a sibling written for an older set of outcomes is limited to its own case, two outcomes that can fire for one input have a stated winner, and every criterion that applies another's rules by reference is listed with the request types and states it carries them to. Each of those play-backs carries an `Overlap read:` line, the inherited `[AD#N]` Rules counted in it. Three `/specify` runs on one PRD spent their re-review on defects of this class.
 - **The inline-fix overlap read of `/specify`, `/create-prd`, `/create-ard`, `/prd-proposal` and `/brd-proposal`** reads each edit against everything that overlaps it, as `workflows-core:grilling-technique` lists it, where each named a narrower set: the criteria whose trigger, precondition or state overlapped; those whose condition overlapped; the decisions governing the same component or interface; and, for the two proposal commands, only the totals computed from a changed figure, never the figures a changed total is computed from. Their docs pages say the same.
+## [3.41.0] — 2026-10-26
+
+### Fixed
+- `/brd-package` copies from a prerequisite's bundle only that prerequisite's own files, images included — never its rendered prompt, its manifest (whose entries for the copied files move into this bundle's manifest), or a package it carried in itself — so a prerequisite chain no longer brings in documents under a key the partition set lacks (BRD3-B4) or a second review prompt (BRD3-B10). Part 2 names a prerequisite's own prerequisite as context not included, and rule 8 names, without stopping, a reference in a copied document to such a package. The *not for re-review* marking is in the manifest and part 2 only, never written into the never-rewritten copies (BRD3-B11).
+- A same-dated self-review, prompt or delivery note beside no bundle is that date's scratch from a run that stopped before assembling: it is overwritten whole, never read as a prior review, and the run says the disposition walk starts again (BRD3-B12).
+- `bundle-packaging` §7 relation 1 covers part 6's `in-scope` `[CDF#n]` list (BRD3-B14), and no longer calls part 7's escalated-finding fraction testable (BRD3-B15).
+- The reviewer's `INPUT_MISSING` maps to `BRD_PACKAGE_REVIEWER_CONTRACT`, which captures feedback at the block (BRD3-B16).
+- The docs page describes the `<part>.1`–`<part>.5` heading renumbering (BRD3-B18) and says a `fixed` correction *can* change what the customer is shown (BRD-B1); agent examples use a slice key and `questions` is optional in the dispatch (BRD2-B8).
+- FBB-B45: the disposition walk shows each finding and its question in one message; rule 1 covers prose references to bundle documents; `/brd-reconcile` resolves a section-12 row naming a bundle filename to the working document it was rendered from, flags a review saying its reasons were drafted by another author, and maps an escalated `[SR#n]` answer onto its fixed pair by a stated rule with worked examples. The shipped scan script is to-fix D21.
+
+## [3.40.0] — 2026-10-26
+
+### Fixed
+- `/brd-reconcile` opens its pass in `reconciliation-<YYYYMMDD>.md` before the freeze writes anything — the pass heading, `- **Status:** freezing`, and a `- **Frozen:**` list of every record it is about to freeze, complete or re-decide, with what each answers — sets it `frozen` when the freeze lands, and `complete` when *Write the reconciliation record* finishes it. A run that stops after the freeze (a `BRD_RECONCILE_UNDISPOSED_CORRECTION` or `BRD_RECONCILE_UNSWEPT` stop, a lost session) no longer leaves frozen `[CD#n]`s nothing can find:
+  - a re-run over the same review reads the list, so it never mints a second `[CD#n]` for a question the stopped run answered (BRD3-B1);
+  - it adopts every unfinished pass over that review, counting its records as its own, so their corrections, banners, defect resolutions, ledger moves and sweep are made, each already on file reported and never written twice (BRD3-B2). The adopting pass records the adoption on its own `- **Adopts:**` line, naming any listed entry the stopped run never wrote; the stopped pass, in a dated record another run wrote, is never edited, and counts as finished only once that adopting pass completes;
+  - a run over a different review stops with `BRD_RECONCILE_INTERRUPTED_PASS` until the unfinished pass is finished.
+- A re-run sweeping a dependent an earlier pass over the same review could only record carries that pass's changed-id set in beside its own, so the recorded dispositions can be written, not just `inherited-unchanged` (BRD3-B3).
+- The rebaseline fix for a dependent's `will-change` finding names the dependent BRD, not this run's (BRD3-B5).
+- New `--free-text` flag: the operator's statement that the review is prose, passed to `customer-review-reader` as `mode: free-text`; `BRD_RECONCILE_EMPTY_DIGEST` names it (BRD3-B13).
+- The package gate runs against the package the review answers — its `Package reviewed:` line where `@<review-file>` carries one — and a newer package not yet landed no longer stops a review of an older one; the package the run resolves is gated before the reader is dispatched (BRD3-B19). Pairs with `workflows-core` 1.50.0, whose `phase-handoff` §3.4 row describes it; either runs beside the other.
+
+## [3.39.0] — 2026-10-26
+
+### Fixed
+- `/prd-proposal` and `/brd-proposal` declare `.dev-workflows/proposal-profile.yml` in their handoff's `deliverable_paths` on every run, so the profile both call committed is committed: before, nothing staged it, and a teammate's clone had none. Pairs with `workflows-core` 1.49.0, whose `phase-handoff` §4.0 classifies the path; either runs beside the other.
+- Tier 2's settled register now also needs `interview/` to hold at least one round record, `/brd-package`'s `BRD_PACKAGE_NOT_INTERVIEWED` test (`proposal-format` §5, `/prd-proposal` Phase 3, `proposal-reviewer` check 6): a register `/create-prd` created holding only an open `[AS#n]` no longer grades a never-interviewed slice tier 2, while an interviewed slice whose register is empty still does.
+- `/brd-proposal` Phase 7 classifies coverage from the membership list as Phase 3 and Phase 6 step 1 left it, so a slice excluded for unreadable figures is not counted as priced.
+- `proposal-reviewer` check 6 has an umbrella form: it reads the included slices' tiers, confirms the printed tier is their minimum with the mix printed, and applies the brief floor against that minimum.
+- The proposal pair no longer reads a legacy `<KEY>_<slug>.md` PRD through a filename fallback `workflows-core:addressing` §5 disclaims: `/prd-proposal` names the rename in its `PRD_PROPOSAL_NEEDS_PRD` stop, and `proposal-record.py` records `prd.md` alone (it also no longer took a `<KEY>_ARD.md` for a PRD).
+- A `proposal-brief.md` standing without a `proposal.md` no longer makes a run a revision, in either command.
+- `proposal-format` §6 states the precision Low and High are rendered at, and a tolerance that covers a whole-hour rounding on a small package, in place of the false claim that rounding moves a band by at most a point.
+- The `/prd-proposal` docs example no longer says the tier-2 array offers `/create-ard` first.
+
+### Added
+- Decision attribution: `proposal-format` §8 requires a `[VD#n]` credited to the delivery team and a `[CD#n]` to the customer; `/prd-proposal`'s and `/brd-proposal`'s pre-lint checks it and re-checks every sentence a post-review edit touched, and `proposal-reviewer` check 1 files a crediting error as a BLOCKER.
+- `/prd-proposal`'s defect-sweep confirmation quotes any conflict a candidate has with the PRD's out-of-scope list or a decided `[VD#n]`/`[CD#n]`.
+- Every live `[SM#n]`/`[SMC#n]` must be traced in a slice proposal's section 21 to a `[WP#n]` or to section 20 (`proposal-format` §4, `proposal-reviewer` check 10).
 
 ## [3.38.1] — 2026-10-26
 

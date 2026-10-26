@@ -460,9 +460,9 @@ cannot review, and they will not tell you that — they will review it anyway, b
     `disposition`, `statement`, `intent` and `blocked_on`, **read where the file is present** — it
     is absent on a package whose decisions turn on no code defect, and its absence is never a gate;
     `brd-link.md`; `interview/customer-questions.md`; every `interview/round-<N>.md`; and, when this
-    is a re-package, every earlier `self-review-<YYYYMMDD>.md`. A previous package's artifacts are
-    inputs, never scratch: nothing below deletes, renames or rewrites a dated artifact another run
-    wrote.
+    is a re-package, every earlier-dated `self-review-<YYYYMMDD>.md`. A previous package's artifacts
+    are inputs, never scratch: nothing below deletes, renames or rewrites a dated artifact another run
+    wrote, save step 11's same-dated scratch.
 
     **Resolve `brd/source/<basename>`, `brd/brd-defect-log.md` and — where it exists —
     `brd/brd-figures.md` here too**, even though no phase before *Assemble the bundle* reads their
@@ -495,12 +495,32 @@ cannot review, and they will not tell you that — they will review it anyway, b
     path, which the manifest's map already carries, so no target as written is named for it.
 11. **Fix the run's date.** One `<YYYYMMDD>` stamp, taken once, used for every artifact this run
     writes. If `bundle-<YYYYMMDD>/` already exists in the BRD folder, stop:
-    `BRD_PACKAGE_BUNDLE_EXISTS: <BRD-dir>/bundle-<YYYYMMDD>/ already exists — a dated bundle is never rewritten. Move or rename the existing directory if it was never sent, or package on the next date.`
+    `BRD_PACKAGE_BUNDLE_EXISTS: <BRD-dir>/bundle-<YYYYMMDD>/ already exists — a dated bundle is never rewritten. Package on the next date; or, where it was never sent, move the directory out of the specs repository and delete this date's self-review, prompt and delivery note beside it too, since a run reads them as its own once no bundle of this date stands.`
     **A dated bundle is never rewritten** (`bundle-packaging.md` §5): rewriting it destroys the only
     evidence of what the reviewer of that date was looking at, and every claim in their returned
     review then silently re-points at a document they never saw. This command cannot tell whether
     the existing directory was already sent, and the party who can is the operator, so it stops and
     says so rather than guessing either way.
+
+    **A same-dated self-review, prompt or delivery note beside no `bundle-<YYYYMMDD>/` is told apart
+    by whether the self-review is on any ref** —
+    `git -C "$SPECS_PATH" log --all -1 --format=%h -- "<the self-review's repo-relative path>"`. **On
+    a ref, it is a finished run's**: only the handoff that follows the bundle commits it, and
+    `commit-artifacts` never stages it, so a bundle of this date was built and the directory has since
+    been moved or renamed. **So is one where any directory in the folder holds a prompt whose
+    `Package reviewed:` line names this key and date** — a bundle built under a declined handoff,
+    then renamed in place. Stop rather than overwrite either:
+    `BRD_PACKAGE_BUNDLE_EXISTS: <BRD-dir>/self-review-<YYYYMMDD>.md belongs to a package built on this date (<committed at <sha> | its bundle now sits at <dir>>), whose directory is no longer at bundle-<YYYYMMDD>/. A dated package is never rewritten: package on the next date.`
+    **On no ref, it is an earlier run of today that stopped before assembling** —
+    `BRD_PACKAGE_PROMPT_LEAK`, `BRD_PACKAGE_UNDISPOSED`, an aborted disposition walk — and nothing of
+    it was committed. A bundle built under a declined handoff and then moved out of the folder looks
+    the same here and cannot be told apart, which is why the stop's remedy above has the operator
+    delete this date's files when they move a bundle out. **It is this date's scratch, and the one exception to the rule
+    above**: this run overwrites each of the three whole when it writes it, never appends to it,
+    and never reads that self-review as a prior review — `prior_reviews` and the *Re-escalates*
+    lookup take only earlier dates, save Phase 4's second pass, which passes this run's own file.
+    The dispositions that earlier run took are not carried: say so before Phase 3 runs, naming each
+    file and the count of dispositions it held, so the operator knows the walk starts again.
 
 ---
 
@@ -556,8 +576,8 @@ For every declared prerequisite (this run's plus any already on file):
    `${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §1), so a `[CD#n]` on file is the
    only evidence a review actually came back. Anything less — an open round, a package that was sent
    and not answered, a folder with `[VD#n]` records only — is **not** customer-reviewed.
-3. Found → look for its own most recent `bundle-<YYYYMMDD>/`. Present → it is copied into this
-   bundle by the *Assemble the bundle* phase and marked **not for re-review**. Absent → record
+3. Found → look for its own most recent `bundle-<YYYYMMDD>/`. Present → its own files are copied
+   into this bundle by the *Assemble the bundle* phase (rule 5) and marked **not for re-review**. Absent → record
    `<PREREQ-KEY> — no package on file; nothing to copy in`, and say so in the prompt's part naming
    what each package in the bundle is for, rather than referring the customer to a package they were
    not given.
@@ -592,14 +612,15 @@ Dispatch `brd-package-reviewer` once, over the whole package, pinned to the Opus
   >   seeds:          [paths to prd-seed.md / ard-seed.md / spec-seed.md, as they exist]
   >   ledger:         [path to coverage-ledger.md]
   >   defects:        [path to code-defect-log.md, or omit when the folder holds none]
-  >   questions:      [path to interview/customer-questions.md]
-  >   prior_reviews:  [paths to every earlier self-review-<YYYYMMDD>.md, or omit when none]"
+  >   questions:      [path to interview/customer-questions.md, or omit when the folder holds none]
+  >   prior_reviews:  [paths to every self-review-<YYYYMMDD>.md dated before this run's, or omit when none]"
 
 Supply the package **exactly as the agent's own Inputs contract declares it**, and supply all of it:
 that agent refuses to run without `brd_dir`, `package.decisions` and `package.grounding`, returning
 `status: INPUT_MISSING`. Map that return to a stop naming the field it named — it is a defect in
 this dispatch, not in the package, and proceeding past it would build a bundle on a review of
-nothing.
+nothing:
+`BRD_PACKAGE_REVIEWER_CONTRACT: brd-package-reviewer returned INPUT_MISSING (<field>) — the dispatch, not the package, is at fault; nothing but Phase 2's depends-on: merge into brd-link.md has been written.`
 
 **One dispatch, not one per document.** The six classes that agent works are cross-document by
 construction — a decision read against the finding it cites, a `[C]` question read against the test
@@ -638,7 +659,9 @@ inside each record rather than continuing a sequence across dates.
 
 **No bundle is built while any `[SR#n]` is undisposed.** Present each finding to the operator, one
 at a time, never batched, with its class, its target, its attack and its `what_would_settle_it`
-statement, and take exactly one disposition.
+statement, and take exactly one disposition. **The finding and its question are one message**: print
+the finding's block, then ask, in the same turn — never the question alone with the finding in an
+earlier message the operator may have scrolled past, and never the block after the answer.
 
 **Settle what this finding can take before asking, never after the answer.** Two of the four
 dispositions are admissible only on a condition the table below states, and both are tested here,
@@ -903,7 +926,7 @@ sections do.
 | # | Part | Filled from |
 |---|---|---|
 | 1 | Setup | the tier; the fixed capability line, locating instruction and OS note below |
-| 2 | What each package in the bundle is for | this BRD, plus each prerequisite package copied in, marked *not for re-review* |
+| 2 | What each package in the bundle is for | this BRD, plus each prerequisite package copied in, marked *not for re-review*, and, beside one whose own package rested on a prerequisite this bundle does not hold, that prerequisite named as context not included (*Assemble the bundle* rule 5) |
 | 3 | Documents to review | the manifest, by its bundled filename, then every other document `bundle-packaging.md` §1.1 admits **except the rendered prompt itself** — §1.1's first row, which is the document the reviewer is reading and not one it sends them to — each by the bundled filename *Assemble the bundle* rule 1 gives it. The manifest still lists the prompt, because it maps what the bundle carries; the two therefore differ by exactly that one entry, by design. **No check reaches that difference** — `bundle-packaging.md` §7's relation 1 is scoped to parts restated from identified records and relation 2 compares the manifest with the bundle, so neither compares this part with the manifest — which is why the rule is written here rather than left for a gate to catch |
 | 4 | Code baselines and the verification procedure | `grounding/baselines.md`, with the three commands written out |
 | 5 | The single most important claim to verify first | the register, the findings and the held `[C]` entries, by the rule below |
@@ -1335,8 +1358,8 @@ it exists, `brd/brd-figures.md` (**the parent's on a slice**, one hop, since a s
 them — `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1.1, §2.1, §4);
 `brd/brd-inventory.md`; `coverage-ledger.md`; `code-defect-log.md`, when the folder holds one;
 `grounding/code-grounding.md`, `grounding/design-grounding.md` and `grounding/baselines.md`;
-`decisions.md`; `interview/customer-questions.md`; every prerequisite package resolved above, copied
-in and marked **not for re-review**; every image those documents reference — including one a
+`decisions.md`; `interview/customer-questions.md`; every prerequisite package resolved above, its
+own files copied in (rule 5) and marked **not for re-review**; every image those documents reference — including one a
 captured file reaches through a `[[wikilink]]` or from outside the document's own directory, found
 through the link log (`bundle-packaging.md` §2.1) — and every image the figures file holds a section
 for, save one whose section carries the marker `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1.2
@@ -1369,7 +1392,13 @@ or not that line is there.
    and the bundle will be extracted, renamed, re-zipped and mailed on. So each document's bundle
    filename begins `<BRD-KEY>-` and is unique within the bundle, and every reference from one
    bundle document to another, and every instruction in the prompt that sends the reviewer to a
-   document, names that filename and tells them to search for it. **Every file the bundle carries
+   document, names that filename and tells them to search for it. **A reference in prose is a
+   reference**: in every document this package renders, a sentence that mentions another bundle
+   document by what it is — *the inventory*, *the decision register* — names it by its bundled
+   filename too, so no such sentence is left to judgement. The customer's own files (rule 2), a
+   prerequisite's copied files (rule 5), and every span rule 2 keeps exactly as written — an
+   inventory or ledger `text` cell, a `[CD#n]`'s quoted `argumentation` or `chosen`, an `[SR#n]`'s
+   `target`, `attack` or `what_would_settle_it` — are outside it, as they are outside every rewrite. **Every file the bundle carries
    takes the prefix, images included** — an image copied in is named `<BRD-KEY>-` followed by its
    own basename. **Where two of this package's own images share a basename** — frames in different
    `design/<frame-set>/` folders, or one under `brd/source/` and one under `brd/source-external/` —
@@ -1384,7 +1413,8 @@ or not that line is there.
    test runs again — `-2` can collide in its turn — until every name in the bundle is unique. A
    prerequisite package's filenames are among the names tested and are never renamed (below), so a
    collision with one is resolved on this package's file; one **between two prerequisite packages**,
-   which neither may rename, cannot arise. Every bundled name opens with its own package's key, so
+   which neither may rename, cannot arise, since rule 5 copies from each only the documents carrying
+   its own key. Every bundled name opens with its own package's key, so
    two names from different packages could only collide where one key is the other's prefix **at a
    segment boundary** — `<KEY>` against `<KEY>-1` — and distinct keys alone do not rule that out,
    the key grammar fixing no depth (`workflows-core:addressing` §1). What rules it out is what gets
@@ -1405,7 +1435,9 @@ or not that line is there.
    this run's key would collapse the corpus to one partition and let a cross-package citation
    resolve to the wrong finding while the check went green.
 2. **De-Obsidianise every copied document — except the customer's own files, the source document and
-   every other markdown file `/brd-intake` captured, which are copied byte for byte**
+   every other markdown file `/brd-intake` captured, which are copied byte for byte, and a
+   prerequisite's copied files, which their own packaging run already rendered and which are never
+   rewritten (rule 5)**
    (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §2.1). Every `[BR#n]` drawn from their
    text anchors into them, in the forms `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2 fixes,
    so a rendered copy breaks the traceability they are in the bundle to support; they are immutable
@@ -1433,7 +1465,8 @@ or not that line is there.
    converting it to something that renders everywhere, or removing it **with a note saying what
    stood there**. **Frontmatter is a class here and not one file**: every bundled document that
    carries a frontmatter block loses it whole — the inventory's and the ledger's as much as the
-   figures file's — because none of it means anything to a reader outside the vault and each names
+   figures file's, a prerequisite's copied documents aside, which their own packaging run already
+   rendered and which are never rewritten (rule 5) — because none of it means anything to a reader outside the vault and each names
    plugin-internal fields. The figures file is worked rather than singled out: its frontmatter goes
    whole, `written_by:` and `source:` with the rest, and its note names the customer's document by
    its bundled filename (`bundle-packaging.md` §1.1); every other file's note names what the block
@@ -1442,11 +1475,30 @@ or not that line is there.
    cannot open is named in the manifest rather than fixed in the file. A block that silently
    renders as nothing is the same defect as a dead wikilink: the reviewer cannot see that they are
    missing something.
-5. **Copy each prerequisite package in, marked *not for re-review*.** The marking is on the
-   documents' own front matter line in the bundle and in the manifest, and the prompt's part 2 says
-   what each is for. A prerequisite package is context for the positions this package took on top of
-   it — it is not a second package to review, and a reviewer who reviews it anyway spends their
-   effort on decisions another review already settled or will settle.
+5. **Copy each prerequisite's own files in, marked *not for re-review*.** From the prerequisite's
+   `bundle-<YYYYMMDD>/` (Phase 2 step 3) copy, byte for byte and under the names they carry, **every
+   file — document or image — whose bundled name begins `<PREREQ-KEY>-`**, that prerequisite's own,
+   **save its rendered prompt and its manifest**: the prompt is the one document there carrying a
+   `Package reviewed:` line — in a bundle built before prompts carried one, the bundled copy of its
+   `customer-review-prompt-<YYYYMMDD>.md` under `<PREREQ-KEY>-` — and the manifest is the document
+   that prompt's part 3 names first; where either cannot be told, ask the operator which file it is,
+   listing the candidates, rather than copy it.
+   Never copy a package that prerequisite itself carried in — files under any other key — nor its
+   prompt, whose one-new-file rule, `Package reviewed:` line and return filename address another
+   review, nor its manifest, which lists files this bundle does not hold; **what that manifest held
+   for the files copied comes across in this bundle's manifest instead** (rule 6). **Its own
+   prerequisites are the keys of the files under other keys in that bundle**, each resolved against
+   that prerequisite's `brd-link.md` `depends-on:` and never parsed from a name alone — a key that
+   list does not hold is named in part 2 all the same, and reported in the Final report as
+   unresolved; one is in
+   this bundle only where this run declares it too, and then from its own latest bundle, and where
+   it is not, part 2 names it, beside the prerequisite that rested on it, as context this package
+   does not include. **The marking is in the manifest and in part 2, never in the files**: a
+   copy is never rewritten (rule 7, `bundle-packaging.md` §5), and rule 4 does not reach it — it
+   arrives already rendered by the packaging run that built it. A prerequisite package is context
+   for the positions this package took on top of it — it is not a second package to review, and a
+   reviewer who reviews it anyway spends their effort on decisions another review already settled
+   or will settle.
 6. **Write the manifest**, listing documents **by filename** — the same reason rule 1 names them
    that way — with one line each saying what the document is and whether it is for review or *not
    for re-review*. **Then map every captured file the bundle carries** — each markdown file and each
@@ -1457,7 +1509,10 @@ or not that line is there.
    its basename alone no longer tells a reviewer which picture it is. **A `-2` earns the map on its
    own**: rule 1's uniqueness test can put one on an image that took no folder at all, and a name
    that is neither the basename nor the basename under a folder is exactly the one a reviewer cannot
-   place. A figures section's heading, an
+   place. **For a prerequisite's files rule 5 copied, carry what that prerequisite's own manifest
+   held for them** — its map from each captured file's path to its bundled name, and its *captured
+   and not bundled* and byte-for-byte notes (`bundle-packaging.md` §1.1, §2.1) — beside those files,
+   since its manifest is not copied and its documents cite those paths. A figures section's heading, an
    appendix or image anchor, and an interview question naming an image all give that relative path,
    and none of them is a bundle filename. **Rule 8's relation 3 does not test a quoted target as
    written** (`bundle-packaging.md` §6.2): it sits beside the bundled filename it maps to and quotes
@@ -1504,6 +1559,12 @@ or not that line is there.
    prerequisite key **whose package this run copied in** that no partition in the bundle answers to,
    which is what a collapsed set of filenames looks like from the key set (§6.1) — stops with:
    `BRD_PACKAGE_DEAD_CITATION: <id-or-filename> in <bundle document> resolves to nothing — <what it was resolved against>. A reference the reviewer cannot follow is not fixed by deleting it: some sentence in the package assumed that id or that file, and the sentence is what has to change. Where it is a [BR#n] this slice does not claim, cited bare in a question, a held entry or a register record written before 3.7.0 — which let a question cite a delegated row as context with no qualifier — qualify it by hand as <PARENT-KEY> [BR#n], <PARENT-KEY> being this slice's parent:, and change nothing else in that sentence.`
+
+   **A reference inside a document rule 5 copied in, naming a file or a record of a package that
+   prerequisite itself carried and this bundle does not, or that prerequisite's own rendered prompt
+   or manifest, which rule 5 does not copy**, is no stop: the copy is never rewritten,
+   and no sentence of this package composed it. Name each in the manifest beside that document, as
+   pointing at a package, or at that prerequisite's prompt or manifest, not included, and in the Final report, and package on.
 
    **A prerequisite Phase 2 carried with no package to copy in is not a hit**, and the discriminator
    is Phase 2's own carry — *whether a package of its own was found*. Its *BRD not found* and *no
@@ -1720,7 +1781,7 @@ auto-run.
 Terminal phase — runs after *Next steps*, and NEVER interrupts an earlier phase.
 
 **Capture-at-block invariant.** If an EARLIER phase halts on a plugin / skill / command / reference
-gap, `emit-block` (`workflows-core:feedback-emission`) fires at that halt before escalating. Six of
+gap, `emit-block` (`workflows-core:feedback-emission`) fires at that halt before escalating. Seven of
 this command's stops **do** qualify and are the reason the invariant is named here:
 `BRD_PACKAGE_SCHEMA_BOUNDARY`, `BRD_PACKAGE_SCHEMA_EXAMPLE_ID` and `BRD_PACKAGE_PROMPT_LEAK` are all
 reference-integrity gaps — a rendered authority whose boundary moved, a rendered authority carrying
@@ -1728,8 +1789,9 @@ an example identifier with a number in it, and a package artifact carrying a cit
 id, that should never have been written into it; `BRD_PACKAGE_CORPUS_UNREADABLE` and `BRD_PACKAGE_SET_UNREADABLE`
 are record-integrity gaps — each is, by its own text, this command's parse or read of the plugin's
 own records failing on content that is there, which no sentence in the package can fix; and
-`BRD_PACKAGE_REVIEW_UNACCOUNTED` is an agent-contract gap, a dispatch this command owns whose agent
-broke its return contract twice, the rule `/product-workflows:brd-reconcile` applies to its own
+`BRD_PACKAGE_REVIEW_UNACCOUNTED` and `BRD_PACKAGE_REVIEWER_CONTRACT` are agent-contract gaps — a
+dispatch this command owns whose agent broke its return contract twice, and one this command built
+without a field the agent requires — the rule `/product-workflows:brd-reconcile` applies to its own
 `BRD_RECONCILE_READER_CONTRACT`. **Every other stop fails that test and is classified by it, never
 by a list**: each reports the operator's own argument, the tree or the environment, a gate working,
 the operator's own ruling, or a defect in the package's own content that a sentence in it has to
