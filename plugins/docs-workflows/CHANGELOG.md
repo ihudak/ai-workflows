@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.22.0] — 2026-10-26
+
+Nothing in this release needs a newer `workflows-core` than 1.21.0 did (1.53.0).
+
+### Fixed
+- **A page written by the documentation route no longer breaks the scaffold's strict build.** `scaffold-tree.md` §4 said `nav:` is never hand-maintained, and only `/docs-init` regenerates it, so a page added by the route's step 4 — or by `/document` — sat in no `nav:`, and `strict: true` with `validation.nav.omitted_files: warn` failed both the local build and CI's gate 1. Until a regenerating command ships, §4 and §8 now have such a page placed by hand where §4's sort puts it, in each `nav:` block that lists its section; the scaffold's `nav:` comment says how; and the route page's step 4 carries the step (DOC-C-B1).
+- **`/docs-init` and standalone `/docs-brand` take every stop through the report and the emitter tail.** Their stops after the target resolved ended with no report, no cost entry and no `commit-artifacts`, against `workflows-core:specs-repo-git` §4, which runs the tail on a refusal too. Each now has a stop route, as `/docs-audit` has: the report names the stop, then the tail runs. Only the run-flag stops and `/docs-init`'s `DOCS_INIT_UNKNOWN_GENERATOR`, which end the run before a target resolves, run none. A standalone `/docs-brand` Cancel at a Phase 3–6 prompt takes the same route (DOC-C-B2).
+- **`docs-audit-reviewer` reads the internal tree from `spaces[].content_root`.** It was told to read a `docs_dir` from the profile, which has none. It applies the `<content_root>/internal/` layout only to a profile recording an internal build, and reports the check as not run on any other (DOC-C-B4).
+- **The no-convention branch is `branch-naming` §1.4's `<prefix>/<slug>`** — `docs/docs-init`, `docs/docs-brand`, `docs/docs-profile` — in place of a `NOISSUE-` form §1.4 never builds (DOC-C-B5).
+- **`/docs-init` fixes the profile's space id.** Phase 6 writes `id: docs` and `base_path: /` on its one space and `space: docs` on both dev servers, rather than leaving the id every per-space key reads to the run (DOC-C-B8).
+- **`/docs-serve`'s next step follows the route**: `/docs-audit` where the repository has no backlog yet, else the backlog's next unit, by hand, with `/document` as an aid — not `/document <address>`, which wants a PRD key a new portal does not have. Its invariant now names all four `workflows-core` references it loads (DQW-B4, DOC-C-B10).
+- **Getting started updates `workflows-core` with this plugin**, and its no-docs path goes on to `/docs-audit` and the route page rather than to `/document` (DQW-B1, DQW-B3).
+- **Pages.** The README links the route page instead of drawing a third, disagreeing copy of it (DQW-B5); every link to `docs-workflow.md` reads *The documentation route* (DQW-B6); the `/docs-init` page says the domain vocabulary is added by hand (DOC-C-B6); the `/docs-profile` page lists what its scan detects (DOC-C-B7); the backlog page, the coverage-model page and both `docs-audit` references read `threshold` as the priority number at or below which done applies (DOC-C-B11); the workflow page lists all three things `/docs-serve` writes (DOC-C-B12).
+
 ## [1.21.0] — 2026-10-26
 
 Take with `workflows-core` 1.53.0, whose `implementation-format` §4 states the boundary rule below; this command states it too, so it runs beside 1.52.0.

@@ -145,7 +145,7 @@ One surface spawns several units across quadrants, and **drift is detected per s
 
 Every figure in `coverage` is derived from the `units[]` table **in the same run that writes it**. A fraction carried forward from a previous run, or adjusted by hand, describes a backlog that is no longer the one in the file.
 
-`threshold` is the priority at or above which `coverage-model.md` §7's definition of done applies — every unit whose `priority` is less than or equal to it must be `published`. It is a number the operator sets; nothing derives it, and §1 states what the initial run seeds it with and why every later run writes it back unchanged.
+`threshold` is the priority number at or below which `coverage-model.md` §7's definition of done applies — every unit whose `priority` is less than or equal to it must be `published`. It is a number the operator sets; nothing derives it, and §1 states what the initial run seeds it with and why every later run writes it back unchanged.
 
 ---
 
