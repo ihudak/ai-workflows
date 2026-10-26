@@ -10,9 +10,9 @@ plugin, no import source.**
 
 A `design.md` records **engineering decisions**, not prose. Include a section only when it carries a
 real decision for this change; omit a section that does not apply and replace it with a one-line
-`_N/A — <why>_`. Never pad. The classification (`SIMPLE` → `HIGH-RISK`) scales how many sections appear
-and how deep each goes — a `SIMPLE` design is a few decisions; a `HIGH-RISK` design is thorough across
-every section.
+`_N/A — <why>_` — save an *optional* section (§ Sections), which may simply be left out. Never pad.
+The classification (`SIMPLE` → `HIGH-RISK`) scales how many sections appear and how deep each goes —
+a `SIMPLE` design is a few decisions; a `HIGH-RISK` design is thorough across every section.
 
 **Natural-language prose is the default medium; a decision-encoding snippet is the exception.** Where
 a snippet — a state machine, reducer, schema, or type shape — encodes a decision *more precisely than
@@ -66,12 +66,16 @@ carries no key: the folder supplies identity, the filename supplies kind.
 Rules: **`Open questions` MUST be 0 to hand off.** A `design.md` is the last gate before code, so any
 unresolved `- [ ]` under its `## Open questions` hard-blocks (`design-reviewer` BLOCKER; Phase 7
 refuses; `/implement` refuses). This is the opposite of `specification.md`, where open questions are
-tolerated. `Classification` matches the Phase 1.5 result and governs section inclusion below.
+tolerated. `Classification` matches the Phase 1.5 result and governs section inclusion below, save
+the optional section's, which follows its own rule.
 
 ## Sections (in order)
 
 Each section header is `## <name>`. Inclusion: **core** = always present (even `SIMPLE`); **scaled** =
-present for `MODERATE`+ or whenever the change touches that concern, else a one-line `_N/A — why_`.
+present for `MODERATE`+ or whenever the change touches that concern, else a one-line `_N/A — why_`;
+**optional** = present only where its own rule calls for it, its absence meaning what that rule says
+and needing no `_N/A_` line at any classification — `## Pieces` alone, which the scaled rule does not
+reach.
 
 1. **## Context & problem** (core) — 2–5 sentences from the spec: who is affected, what the change
    delivers. Reference, don't restate, the spec.
@@ -193,6 +197,80 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
 13. **## Open questions** (core; MUST be empty to hand off) — genuinely unresolved engineering items as
     `- [ ]`. Any present blocks handoff; resolve them in the grill, or push a genuinely undecidable one
     onto the `specification.md` as a spec-level `- [ ]` for the PM (the design then waits on it).
+14. **## Pieces** (optional — omitted for one piece) — the change's review pieces. A piece is a unit
+    of review, never of coding: a part of the change — its code and its tests — that one reviewer
+    can review in depth on its own, at a boundary the design fixes. How `/implement`'s review gate
+    reviews by piece is for its Phase 3B steps 5–8 to say; who writes the code and the tests does
+    not change. Pieces need all three of these, and are never drawn by count:
+    - **A reason — whether to split.** The `Reason:` line says why one reviewer could not review the
+      whole change in depth: its size, the distinct layers or concerns it spans, the test cases it
+      carries — about 1,500 lines of production code in two layers with different test styles,
+      carrying 85 test cases, is one. It is a judgement written down for `design-reviewer` to check,
+      never a threshold. A change one reviewer can review in depth gets no pieces, however clean its
+      internal boundaries.
+    - **A boundary — where to split.** The pieces' `Files:` do not overlap, and the part they share
+      is fixed in `## Interfaces / contracts` and named in their `Contract:` lines. A big change with
+      no such boundary stays one piece, since a reviewer cut off at a fuzzy line misses what it
+      needs.
+    - **One repository — where the change lies.** A design whose change spans more than one
+      repository — its header's `Repos` naming two or more — draws no pieces, since one
+      `/implement` run changes one repository; `/design` Phase 5.5 removes the section from such a
+      design.
+
+    One piece, the default, is written by omitting the section, or by writing `_N/A — <why>_` as its
+    only line — never as a section with one piece. The heading is `## Pieces` exactly, and every line
+    of the section starts at the beginning of its line:
+
+    ```
+    ## Pieces
+    Reason: <why one reviewer could not review the whole change in depth>
+    ### <piece-name>
+    - Files: `<path or glob>`, …
+    - Contract: <the `## Interfaces / contracts` items it provides or uses> | none
+    ```
+
+    - `Reason:` is one line, before the first piece. Each piece is a `### <name>` line — kebab-case
+      (lowercase letters and digits, in runs joined by single hyphens), unique in the section —
+      followed by one `- Files:` line and, optionally, one `- Contract:` line. The section holds
+      nothing else: no prose, no list, no comment, no fenced block, and no closing `---` — every
+      line up to the next `## ` heading, or the end of the file, is the section's.
+    - **`Files:` names the piece's tests as well as its code**, so its reviewer reviews them with it:
+      a comma-separated list of entries, each in backticks, with nothing but commas and spaces
+      outside them. A test file pieces share, such as a common test helper, is named by none.
+      **No file may be matched by two pieces' `Files:`** — a file on disk in the design's target
+      repository (below) at the commit `/design` Phase 4 scanned it at, or one the design creates; a
+      bare path and a glob, or two globs, matching the same file is an overlap. A file no piece names
+      belongs to no piece: it is reviewed with the whole change, and is not barred from editing.
+    - `Contract:` lists, comma-separated, the `## Interfaces / contracts` items the piece implements
+      and those it calls that another piece implements, or reads `none`; a piece with no `Contract:`
+      line has none.
+    - **Each `Files:` entry is a pattern relative to the top level of the design's target
+      repository** — the one its `- **Target**:` line names (the id before any `:`), else the one
+      repository its `Repos` line names — written without a leading `/` or `./`: `*` matches any run
+      of characters except `/`; `**` as a whole path segment matches zero or more segments
+      (`src/a/**` matches everything under `src/a/`, `**/X.java` matches `X.java` at any depth), and
+      inside a segment matches as `*` does; `?` matches one character except `/`; an entry ending in
+      `/` matches everything under that directory; every other character is literal — there is no
+      `[…]` and no `{…}`; an entry with no wildcard matches that one path.
+
+    `scripts/pieces.py` reads the section exactly so. It starts at a line `## Pieces` outside any
+    fenced block and ends at the next `## ` heading outside one, or the end of the file, so it is
+    found wherever it stands in the design, and a `## Pieces` line inside a fenced block — a design
+    quoting the format — never starts it; as in CommonMark, a line of backticks followed by text
+    holding another backtick opens no fenced block; CRLF line ends are accepted. It reads as one piece
+    (`none`) where there is no such heading, or where the section's first non-blank line begins
+    `_N/A`. It is **malformed** where it has no `Reason:` line, an empty one, a
+    second one, or one after the first piece; fewer than two pieces; a piece name that is not
+    kebab-case or is used twice; a piece with no `Files:` line, a second one, or one with no entry;
+    a `Files:` entry not in backticks, an empty one, one that begins `/` or `./`, an unclosed
+    backtick, a trailing comma, or other text outside the backticks; a piece with a second
+    `Contract:` line; the same entry in two pieces' `Files:`; or any other non-blank line — prose,
+    or a fenced block inside the section, whose lines are all read as the section's.
+    `pieces.py parse` is the check `/design` runs on the section it writes and `design-reviewer`
+    runs on the section it reviews; `pieces.py assign` is what `/implement` runs on the change's paths, and
+    `/design` on the target repository's files at the commit Phase 4 scanned, and it also reads the
+    section as malformed where one of those paths is matched by two pieces' patterns — an overlap
+    no entry's text shows — or is not valid UTF-8.
 
 ## Architecture governance
 
