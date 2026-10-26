@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.44.0] — 2026-10-26
+
+Finding 83.1 of the 2026-10-26 post-merge review of #82–#85 and #87, with `workflows-core` 1.54.0. Either runs beside the other.
+
+### Fixed
+- **`docs/roles-and-phases.md` said `/brd-reconcile` reads a stopping row without stopping at two sites and never at its ordinary Phase 0 gate.** Since 3.42.0 that gate, on the most recent prompt while the package the review answers is undetermined, tries each older prompt, newest first, and stops only where none passes; the page now names it as the third site (`workflows-core:phase-handoff` §3.7). (83.1)
+
 ## [3.43.0] — 2026-10-26
 
 Fix batch B16 of the 2026-10-26 review, with `workflows-core` 1.52.0, whose `escalation-rules` names `/epics` among the commands making the offer below (`.claude/rules/plugin-updates.md`).
