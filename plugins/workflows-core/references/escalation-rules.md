@@ -577,15 +577,20 @@ service does not answer", which two other new criteria met with the opposite out
 re-review found both, so the cap was spent on what the fix itself had written. A `/create-ard` fix
 had already spent a re-review the same way, on an unsearched *only* (that command's Phase 5).
 
-**So every inline edit that answers a review finding is read against the rest of the artifact that
-governs the same condition, and an operational step against what it acts on, before the step that
-follows it** — a `BLOCK`'s fix cycle before its re-review, a finding the user chose to apply at the
-offer above before the re-review offer or the handoff, and an escalation's manual fix notes before
-the handoff, which no review follows at all:
+**So every inline edit that answers a review finding is read against everything that overlaps it, in
+the artifact and among the `[AD#N]` Rules it inherits, and an operational step against what it acts
+on, before the step that follows it** — a `BLOCK`'s fix cycle before its re-review, a finding the
+user chose to apply at the offer above before the re-review offer or the handoff, and an
+escalation's manual fix notes before the handoff, which no review follows at all:
 
 - each requirement the edit adds or changes — a criterion, a test case, a scope line, a story, a
-  decision's Rule, a cost line — is read against every other one whose trigger, precondition, state
-  or figure overlaps it, in its own section and across the others;
+  decision's Rule, a cost line — is read against everything that overlaps it, in its own section and
+  across the others, as `workflows-core:grilling-technique`'s *What a requirement overlaps* lists
+  it: its condition, what it imports and what imports it, its trigger's other outcomes, its place on
+  a path, and the inherited `[AD#N]` Rules, each kind listed before it is read. A `/specify` fix
+  that limited one criterion to `PUT` missed another that imported it as "every rule of a change",
+  and a `/design` fix accepted missing an `[AD#N]` bound with no deviation recorded; each was the
+  re-review's only BLOCKER;
 - each operational step the edit adds or changes — a restart, a delete, a scale, a migration, a
   bootstrap, run against a deployed system — is read against everything its selector reaches in the
   deploy files of the repositories the run grounded in, stateful workloads and containers with side

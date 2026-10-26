@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.34.0] — 2026-10-26
+
+Take with `workflows-core` 1.51.0, whose *What a requirement overlaps* both changes cite.
+
+### Changed
+- **`/design` reads every decision against what it overlaps before its whole-design play-back**, across the whole design rather than only what changed since its sections were confirmed, starting with each decision's place on a path: every decision that places a step ahead of the failing point of a decision that answers a failure, on the same request path, is listed and read for whether that step meets the failure first, whichever of the two was decided first. The play-back carries an `Overlap read:` line, so a read that did not run shows. A live run settled the import's answer with its database down, then put security hooks that read the same database ahead of the import, so the outage failed there with a bare `500`; the first `design-reviewer` pass found it as a BLOCKER.
+- **`/design`'s Phase 6 inline edits** — a fix, manual fix notes, an applied finding — are read against everything that overlaps them, as `workflows-core:grilling-technique` lists it, where they were read against what governs the same behaviour, and its docs page says so: an edit that accepts a bound, a limit or an outcome an inherited `[AD#N]` Rule fixes keeps the Rule or records its ARD deviation in the same pass.
+
 ## [4.33.0] — 2026-10-26
 
 The fixes from the review of 4.32.0's piece review (`docs/superpowers/reviews/2026-10-26-piece-review-a980e58-review.md`). This release runs beside `workflows-core` 1.45.0, as 4.32.0 does: no `workflows-core` rule it cites is new.

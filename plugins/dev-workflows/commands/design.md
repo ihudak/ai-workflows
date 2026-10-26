@@ -391,6 +391,8 @@ The user chooses. Record the chosen interface in `## Interfaces / contracts`, an
 takes in `### Alternatives considered` (take, constraint, why it lost) per
 `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` section 3. Then resume the interview.
 
+**Before the whole-design play-back, read every decision against what it overlaps.** After the interview's last question and before Phase 5.5, the confirmation gate over the whole design (`workflows-core:grilling-technique`, *The confirmation gate*) is preceded by that reference's overlap read over the **whole** design, not only what changed since its sections were confirmed: each decision, interface and test-strategy line against everything that overlaps it, as *What a requirement overlaps* there lists it, **its place on a path** first — for each decision that answers a failure (a database or a dependency down, a timeout, a rejected input), list every decision that places a step ahead of the point that fails on the same request path, and read whether that step meets the failure first; a decision written after the one it pre-empts is caught here as surely as one written before it. A pair that gives one situation two outcomes is put to the user one question at a time before the gate, and a departure from an inherited `[AD#N]` Rule only as an ARD deviation, as Phase 2.5 says. The play-back carries one line on the read whatever it found — `Overlap read: <n> failure paths, <n> triggers, <n> imports, <n> [AD#N] Rules — <each conflict and the decision that settled it | no conflict>` — so a play-back without that line is a read that did not run.
+
 ---
 
 ## Phase 5.5 — Structural pre-lint
@@ -429,8 +431,10 @@ Dispatch `design-reviewer` (Opus):
   writer; a BLOCKER on a claim about the existing system that a settled decision rests on is fixed by
   putting that decision to the user again, one question, with the true premise and the `file:line` it
   was read at, then editing what the answer changes — never by editing the claim's line alone), read the fix against what it overlaps — each line it adds or changes, in any section (an
-  interface, a seam, a test-strategy line, a migration or rollout step), against those that govern
-  the same behaviour, and an operational step against everything its selector reaches in the deploy files of the repositories Phase 3 confirmed, ride-along deploy components included, per the `An inline fix is read against what it overlaps` rule in
+  interface, a seam, a test-strategy line, a migration or rollout step), against everything that
+  overlaps it, as `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it — the
+  inherited `[AD#N]` Rules among them, so an edit that accepts a bound, a limit or an outcome a Rule
+  fixes keeps the Rule or records its ARD deviation as Phase 2.5 says, in the same pass — and an operational step against everything its selector reaches in the deploy files of the repositories Phase 3 confirmed, ride-along deploy components included, per the `An inline fix is read against what it overlaps` rule in
   `workflows-core:escalation-rules`, and manual fix notes the same
   way before the handoff — and re-review once. **Any unresolved `design.md` `- [ ]` is a BLOCKER by policy** — resolve it
   or push it onto the spec (Phase 5) before handoff. If still `BLOCK`, escalate per the

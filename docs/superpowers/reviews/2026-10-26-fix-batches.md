@@ -526,7 +526,7 @@ Entries:
 - **GIT-B3** (MINOR) — merge-clause table lacks *Commit failed* row
 - **GIT-B4** (MINOR) — epic-picker cap example contradicts its rule
 - **BRD3-B24** (NIT) — lane offers `/brd-reconcile` after every `/brd-package`
-- **FBB-B13** (MINOR) — fix-cycle overlap read misses imported rules
+- **FBB-B13** (MINOR) — fix-cycle overlap read misses imported rules — **parts (1) and (2) fixed in workflows-core 1.51.0 (to-fix PR1, now closed); part (3) is B18's**
 - **FBB-B15** (MINOR) — post-verdict version line omits changed Rules
 - **FBB-B21** (gap) — gap: let `/epics` apply open MINOR and NIT findings
 
@@ -588,6 +588,7 @@ Entries:
 - **CORE-B13** (NIT) — handoff narrows `REPO_MISSING` meaning
 - **FBB-B18** (MINOR) — `code-scanner` line numbers not validated
 - **FBA-G5** (gap) — gap: dependency-coupling list in the scanner brief
+- **FBB-B13 part (3)** (MINOR) — `pre-lint`'s spec block: per-AC Happy-path and Negative coverage checks — split from B16's FBB-B13 when parts (1) and (2) were fixed, so not a new entry and not counted in this batch's eleven; the import list that part also suggested is dropped (see the entry)
 
 **to-fix.md items:** none.
 

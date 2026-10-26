@@ -901,6 +901,8 @@ Walk the stages in order, authoring `specification.md` live against `${CLAUDE_PL
 4. **Acceptance criteria** (`[ACxx]`, EARS)
 5. **Test cases** (`[TCxx]`)
 
+**Before Stage 4's play-back, list each trigger's outcomes.** Before the confirmation gate that closes Stage 4, read every criterion against everything that overlaps it, as `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it, **its trigger's other outcomes** and **what it imports and what imports it** first: for each trigger the criteria name, list every outcome any criterion gives it — each has a criterion or a stated exclusion, a sibling written for an older set of outcomes is limited to its own case, and where two can fire for one input (two faults in one request), one criterion states which wins — and list every criterion that applies another's rules by reference, with the request types and states it carries them to. Run the read again over the whole specification, test cases included, before the confirmation gate that precedes the first `spec-reviewer` dispatch. A pair that gives one situation two outcomes is put to the user one question at a time before the gate. Each of the two play-backs carries one line on the read whatever it found — `Overlap read: <n> triggers, <n> imports, <n> failure paths, <n> [AD#N] Rules — <each conflict and the criterion that settled it | no conflict>` — so a play-back without that line is a read that did not run.
+
 **A multi-component PRD at PRD level** (`workflows-core:components` §3, with `focus_key` null): the ARD's interface rows carried from Phase 2.5 are grill ground truth. An acceptance criterion or test case that crosses components names, in its own text, the `[AD#N]` interface it crosses, so `/epics` can split it per side and each side's Epic can test against it; the grill's *Cross-component* gap category applies (`workflows-core:grilling-technique`). The specification format is unchanged.
 
 **Architecture grounding.** Where Phase 4 dispatched `architecture-grounder`, the grill consumes its digest per `workflows-core:architecture-grounding` § Consumption, and the specification records what that section says a specification records: a conflict the grill cannot settle, as an open question naming the governing decision, standard, radar entry or team record, or `radar: <technology> not listed`.
@@ -991,8 +993,9 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
 2. **Act on the verdict:**
    - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `specification.md` inline —
      there is no delegated writer to re-dispatch), read the fix against what it overlaps — every
-     criterion and test case it adds or changes against those whose trigger, precondition or state
-     overlaps it, per the `An inline fix is read against what it overlaps` rule in
+     criterion and test case it adds or changes against everything that overlaps it, as
+     `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it — the trigger's
+     other outcomes and the criteria importing it among them — per the `An inline fix is read against what it overlaps` rule in
      `workflows-core:escalation-rules` — and re-review once. If still `BLOCK`, escalate per the
      `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in
      `workflows-core:escalation-rules` for each unresolved BLOCKER individually:
