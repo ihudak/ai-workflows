@@ -141,7 +141,7 @@ not handed off, not on the default branch at all, or changed on the default bran
 own branch was cut, whatever that branch holds of it (`require-on-main`'s row B′). **The test is made once, before any answer is confirmed, and not again before the write.** After the canonicalised review's handoff the run
 stands on its own branch, where the gate passes — save where that handoff reused a branch of this
 run's own (`workflows-core:phase-handoff` §2.2 rule 3) cut before the log last changed on the default
-branch, and holding the copy it was cut with or none: there a second test would stop at row B′, and the write lands on what that branch holds,
+branch: there a second test would stop at row B′, and the write lands on what that branch holds,
 the default branch's newer entries meeting it when the branch's pull request merges — or, where that handoff
 was declined, on the checkout step 6c has just passed, which nothing before the write touches the
 log in — so a second test would rarely stop — and

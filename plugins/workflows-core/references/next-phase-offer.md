@@ -115,6 +115,7 @@ So the merge is named by every next-step offer that names a downstream gate its 
 | PR already existed | `(once the pull request above is merged)` |
 | PR not opened | `(once you open the pull request for <branch> and it is merged)` |
 | Push failed | `(once <branch> is pushed, its pull request opened, and merged)` |
+| Push refused for access | `(once <branch> is pushed — this identity may not push to origin — its pull request opened, and merged)` |
 | No remote | `(once <branch> is merged into the default branch — this specs repo has no remote, so no pull request will do it)` |
 | Nothing to commit | `(its inputs are already on the default branch — you can run it now)` |
 | Commit failed | `(once the deliverable staged on <branch> is committed, pushed and its pull request merged)` |

@@ -612,7 +612,7 @@ That third one is reachable rather than theoretical: §2.1 fails on path, repo o
 **or** on either run-wide flag it names — `specs_git: blocked`, which Phase 0 carries for the whole
 run whenever its own preflight returns `workflows-core:specs-repo-git` §3.3's G0, and
 `specs_git: misrooted`, which it carries whenever that preflight's §3.1 notice set it. The other non-landing §4.1 rows are not
-further routes — *No remote* and *Push failed* both committed on a branch first (§2.4 runs before
+further routes — *No remote*, *Push failed* and *Push refused for access* all committed on a branch first (§2.4 runs before
 §2.5), and *Nothing to commit* changed nothing.
 
 On the next run of any command sharing that repo, §3.3's **G1** matches. Its consequences are three, not

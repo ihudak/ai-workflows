@@ -11,7 +11,7 @@ Take with `workflows-core` 1.58.0 (batch B01).
 
 ### Changed
 - **`/implement` Phase 4.5 states its reason for the falling-back array without a stale census**: no consumer of `design.md` stops on row F, which now includes `/conformance` (IMP-B3).
-- **`/conformance` and `/ready` describe `branch-merged` and row B′ as `workflows-core` 1.58.0 has them**: a squash read unmerged only where merging the branch would still change the default branch, and B′ stopping a branch that changed the document too.
+- **`/conformance` and `/ready` describe `branch-merged` and row B′ as `workflows-core` 1.58.0 has them**: a squash read unmerged only where merging the branch would still change the default branch, and B′ stopping a branch that changed the document too; `/ready` names B′'s merge only where its message names one.
 ## [4.39.0] — 2026-10-26
 
 Fix batch B06 of the 2026-10-26 review: `/vuln` and `/upgrade` orchestration and agents. Needs nothing newer than `workflows-core` 1.56.0; `workflows-core` 1.57.1 corrects one sentence about `/upgrade` and either runs beside the other.

@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Take with `workflows-core` 1.58.0, whose row B′ also stops where the run's own branch changed the path (batch B01).
 
 ### Changed
-- **The `*_REGISTER_NOT_ON_MAIN` B′ forms of `/create-prd`, `/create-ard` and `/specify` name the branch's own change** as a third state, and their remedy gloss covers the merge's push and the forms that name no merge. `/epics`, `/brd-reconcile`, `/prd-ground` and the docs pages describe B′ the same way.
+- **The `*_REGISTER_NOT_ON_MAIN` B′ forms of `/create-prd`, `/create-ard` and `/specify` name the branch's own change** as a third state, and their remedy gloss covers the merge's push and the forms that name no merge. `/epics`, `/brd-reconcile`, `/prd-ground` and the docs pages describe B′ the same way, and `/idea` counts *Push refused for access* among the non-landing handoff rows.
 
 ## [3.46.0] — 2026-10-26
 
