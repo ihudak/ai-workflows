@@ -100,7 +100,8 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes, as roadmap items (each needs its own spec; D depends on B or C).
 - **Suggested scope:** B first, per the dependency column.
 
-### SEC-G3 — No verification record for sub-project A
+### SEC-G3 — No verification record for sub-project A — **Done 2026-10-27: `docs/superpowers/verification/2026-10-15-security-workflows-scan.md`**
+- **Outcome:** route 7 and the clean install had run on 2026-10-16 and 17; only the record was missing. The build session's transcript still held the ledger, so the record, the ledger and its rulings are rebuilt from it. Both were re-run at 0.4.0, and run 6 of `docs/superpowers/verification/2026-10-26-live-checks.md` covers the session half of SEC-B1.
 - **Designed in:** spec § Verification ("An end-to-end run on the bookstore demo … covering the key, path, `--import`, `--triage` and `--verify-fixes` routes … two scans recorded from two clones before either pushed"; "A clean install … must bring in both"); plan Task 12 Steps 4–5; `CLAUDE.md` § Editing discipline ("A sub-project's verification record is written last").
 - **Current state:** `docs/superpowers/verification/` holds no security-workflows record. The demo's register was removed from `bookstore-specs` (commit `955d968`, "Remove the security-workflows end-to-end demo's register and notes"), so what Task 12 established — notably route 7 (two clones racing, the give-way/collision path that SEC-B1 lives on) and the clean install — is recorded nowhere. The feedback entries show routes 2, 4 and 6 ran.
 - **Still worth doing?:** yes — the renumbering race is the hardest part of `register.py` and is evidenced only by selftests.

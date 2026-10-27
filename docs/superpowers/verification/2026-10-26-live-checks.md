@@ -116,3 +116,29 @@ Every offer in the copy's transcripts was measured: 24 offers in 17 sessions sin
 **Also seen:**
 - The run wrote seven feedback entries to the specs copy. Besides LC7 and LC8 and the overlap-read errors above: `code-scanner` cited lines 195–244 of a 72-line `ConfigController.java`, and said `Config` has "no integer value field" where it has two `long` fields, which the writer carried into the Epic until the first review caught it; the mid-run `/feedback` cost entry carried the `/epics` spend up to that point; and a `cd` in a verification command moved the orchestrator's working directory, restored with no damage.
 - The style check's four NITs went to neither the fixer nor the offer, and the pull request lists them as left open: they are not review findings.
+
+## Run 5 — not run
+
+B16-5 needs a BRD slice whose interview has settled, for `/brd-package` to package. Neither BOOK-2 slice qualifies: BOOK-2-01's reconciliation of 2026-10-12 deferred four answers to another round, and BOOK-2-02 was never interviewed. Packaging one would have taken a `/brd-interview` run first, roughly $30–50 and an hour of answers to check one line of next-step text. The user chose to defer it to the next live run of the BRD route, and the item says so.
+
+## Run 6 — `/security-workflows:scan --triage` under a moving register (SEC-G3: SEC-B1's session half, F15)
+
+**Setup.** A setup script seeded the specs copy's register with one synthetic codebase scan at `6942a24`, recorded by `register.py` and pushed to `main` (`2b7b63b`): `[SEC#1]` CWE-79 in `rating-list.component.ts`, `[SEC#2]` CWE-319 in `book.service.ts`, both MEDIUM and open, in a record dated 09:05:30. In a scratch clone that never saw the seed, it recorded a second synthetic scan, a CWE-601 finding allocated `[SEC#1]` in a record dated 09:00:30, and held that record unpushed. A watcher pushed it, settling its own rebase with `register.py rebuild`, 4 s after the run asked its first triage question. From then on `origin/main` numbered CWE-601 `[SEC#1]` and the seeded CWE-79 `[SEC#3]`. One Opus session, `90f584a9`, ran `/security-workflows:scan /workspace/e2e/bookstore --triage` from the code copy on security-workflows 0.4.0. The driver chose *Decide each row*, marked `[SEC#1]` a false positive with the run sheet's evidence at line 23, and left `[SEC#2]` for later. The run cost $5.89.
+
+| Item | Expected | Seen | Result |
+|---|---|---|---|
+| The batch question | *Decide each row* / *Decide all later* where no row's suggestion records anything | exactly that | pass |
+| The evidence line | read at the evidence commit and shown beside the finding's `file:line` | read at `6942a24` (`this.ratings = data;`), but shown only in a command's output and the model's thinking | partial: LC6 |
+| 7.1, the refresh | fetch, reserve the record the checkout lacks, plan again, move the answers with `rebase` | fetched, reserved `0001-20261027T090030Z-3945795c.json` from `origin/main`, planned again, ran `rebase`, which moved nothing | ran: LC10 |
+| The answer's finding | the false positive on CWE-79, never on CWE-601 | the record names CWE-79 by `origin`; after the merge the register shows `[SEC#3]` CWE-79 false positive, confirmed, and `[SEC#1]` CWE-601 open | pass |
+| The move in the report | `[SEC#1]` → `[SEC#3]` named, with the record it came from | named, but only from a dry rebuild the run made on its own initiative: "neither `plan` nor `commit` reported a move" | fail: LC10 |
+| The closing push (F15) | where rejected, the settle line after the `Specs repo:` line | "push REJECTED …", then the `register.py rebuild` line with the plugin's real path, `git add` of both files, `rebase --continue`, push | pass |
+| The settle line itself | settles the register and pushes | run as printed: two conflicts, `rebuild` cleared both, `rebase --continue` and the push went through (`c0f3a9c`) | pass |
+
+**The answer reached the right finding, by `origin` rather than by the step meant for it.** After the answers, 7.1 fetched `origin/main` and reserved the planted record. It planned again, and `register.py plan` printed `"renumbered": []`, with `[SEC#1]` still CWE-79. The run read that as "The reserved record took number 3", and its `rebase` changed nothing. `plan` numbers only past a reserved record and past the moves its merge will make; it never renumbers the checkout's own findings, so in 7.1 the `rebase` has nothing to act on. The record the run committed carries the decision with CWE-79's `origin` beside `id: 1`. Claude then ran the run's printed settle lines, as written, on the specs copy. The merged register shows the false positive on CWE-79, now `[SEC#3]`. The REGISTER_MOVED path of 7.2, where the checkout itself gains a record while the run plans, was not reached. The script-level replay of `docs/superpowers/verification/2026-10-15-security-workflows-scan.md` covers it. Filed as LC10.
+
+**Why the run handed the push back.** The driver asked why the run did not settle the conflict and push itself. `workflows-core:specs-repo-git` never merges or rebases, and the rationale refuses rebasing session-file commits onto a diverged default branch. Its reason is a conflict left standing in a file several writers append to. Here the only conflicts were the two generated register files. The user asked for the narrow proposal to be filed: settle a conflict in a file the run can rebuild, and otherwise abort the rebase. Filed as LC11.
+
+**Also seen:**
+- The maintenance agent's lessons report said the false positive "may attach to the wrong finding" after the renumbering. The run corrected it in its report, rightly, since records name findings by origin. The run's own feedback entry records the `plan`/`rebuild` disagreement, which is LC10.
+- The planted record and the seed are synthetic scans written by `register.py` from the 2026-10-17 route-7 product templates. The final cleanup removes the specs copy's `security/` register with the rest.
