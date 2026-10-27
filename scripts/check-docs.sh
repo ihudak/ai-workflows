@@ -6,14 +6,15 @@
 # in the two restructures this one follows (a sibling plugin repo,
 # ai-containers#78).
 #
-# TWENTY-TWO checks, numbered 1-22 in the order their functions appear below. The number is
+# TWENTY-THREE checks, numbered 1-23 in the order their functions appear below. The number is
 # written here and nowhere else in this file, and nothing gates it -- re-derive it with
 # `grep -oE '\bfail [0-9]+ ' "$0" | awk '{print $2}' | sort -un` -- the numbers a fail() call
 # can actually report -- rather than trusting this sentence, and update it in the commit that
-# adds a check. Counting the banner comments instead gives 21: checks 1 and 2 share one. Every
-# edition carries all twenty-two: a check an edition has no use for is switched off by its
+# adds a check. Counting the banner comments instead gives 22: checks 1 and 2 share one. Every
+# edition carries all twenty-three: a check an edition has no use for is switched off by its
 # config block (checks 13, 16 and 19 in the internal editions, check 22 here and in the Copilot
-# edition), never cut from the body.
+# edition, check 23 in any edition whose escalation rules name no path-unset rule), never cut
+# from the body.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -181,6 +182,13 @@ INSTRUCTION_TIERS="CLAUDE.md .claude/rules/*.md docs/maintainers/*.md"
 # ships as a byte copy of another plugin's. An absent copy is skipped; one that differs fails.
 VENDORED_COPIES=""                   # internal Claude edition: the two scripts one of its
                                      # plugins vendors from another
+
+# Check 23: the name of the shared rule a command cites wherever it asks for an unset path
+# variable -- the option `Set <NAME>_PATH (you'll be prompted ...)` -- so the answer is carried
+# only once it names an existing directory. Empty switches the check off.
+PATH_UNSET_RULE="Required path environment variable unset"
+                                     # internal editions: the same name where their
+                                     # escalation rules carry it, else ""
 
 FAILURES=0
 
@@ -2638,6 +2646,45 @@ check_vendored_copies() {
   done
 }
 
+# ------------------------------------------------------------------ check 23
+# A path question cites its rule. An option `Set <NAME>_PATH (you'll be prompted ...)` asks for
+# a path the run then carries, and the shared rule PATH_UNSET_RULE names is what says the answer
+# is carried only once it names an existing directory and asked again where it does not. A
+# command that offers the option and states its own handling instead -- "carries it for the
+# run" -- carries any typo, so every paragraph holding the option (a run of non-blank lines, a
+# fenced `choices:` block inside it included) must name the rule, its whitespace collapsed so a
+# name wrapped across lines still counts. The paragraph, not the file: a command citing the rule
+# for one variable and carrying another's answer locally is the case the file-level test passes.
+# VACUITY: no such option in any command under PLUGIN_RELS.
+check_path_rule_cited() {
+  local root="$1" rel f rp seen=0 hit
+  [ -n "$PATH_UNSET_RULE" ] \
+    || { note "check 23 not applicable: this edition names no path-unset rule (PATH_UNSET_RULE is empty)"; return 0; }
+  for rel in $PLUGIN_RELS; do
+    while IFS= read -r f; do
+      [ -f "$f" ] || continue
+      rp="${f#$root/}"
+      while IFS= read -r hit; do
+        [ -n "$hit" ] || continue
+        case "$hit" in
+          seen) seen=$((seen + 1)) ;;
+          *) seen=$((seen + 1))
+             fail 23 "$rp:$hit offers to set a path variable without citing the *$PATH_UNSET_RULE* rule in its paragraph -- name the rule rather than carrying the typed path locally, so an answer naming no existing directory is asked for again" ;;
+        esac
+      done < <(awk -v rule="$PATH_UNSET_RULE" '
+        function flush() {
+          if (opt) { t = buf; gsub(/[[:space:]]+/, " ", t); print (index(t, rule) ? "seen" : optline) }
+          buf = ""; opt = 0
+        }
+        /^[[:space:]]*$/ { flush(); next }
+        { buf = buf " " $0
+          if (!opt && $0 ~ /Set [A-Z][A-Z0-9_]*_PATH \(you.ll be prompted/) { opt = 1; optline = NR } }
+        END { flush() }' "$f")
+    done < <(cmd_names "$root/$rel" | while IFS= read -r n; do cmd_file "$root/$rel" "$n"; done)
+  done
+  [ "$seen" -gt 0 ] || fail 23 "no command under $PLUGIN_RELS offers to set a path variable -- this check would examine nothing"
+}
+
 # ------------------------------------------------------------------ selftest
 # One passing fixture tree; each check gets a mutation of a fresh copy. Asserting
 # the exit code alone would let a mutation that trips a DIFFERENT check register
@@ -3498,7 +3545,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_pass_after "an opening \"Provide\" or \"Quote\" beside the prompted marker is accepted" \
     "printf -- '\nchoices: [\"Provide manual fix notes (you\047ll be prompted)\", \"Quote the sentence that binds (you\047ll be prompted)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "prompted labels are accepted" \
-    "printf -- '\nchoices: [\"Keep it whole (you\047ll be prompted for the reason)\", \"Set SPECS_PATH (you\047ll be prompted for the path)\", \"Another Epic from the list above (you\047ll be prompted for its key)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+    "printf -- '\nPer the *Required path environment variable unset* rule, where a path is asked for:\nchoices: [\"Keep it whole (you\047ll be prompted for the reason)\", \"Set SPECS_PATH (you\047ll be prompted for the path)\", \"Another Epic from the list above (you\047ll be prompted for its key)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "\"Name the clone's absolute path (you'll be prompted)\" is accepted" \
     "printf -- '\nchoices: [\"Name the clone\047s absolute path (you\047ll be prompted)\", \"Exclude it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "\"Just write the files — I'll handle git\" is accepted" \
@@ -4110,11 +4157,28 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     printf 'skip  the vendored-copy cases (the fixture declares fewer than two VENDORED_COPIES pairs)\n'
   fi
 
+  # Check 23 -- a path question cites its rule. The fixture's second plugin's command carries one
+  # green site, its rule name wrapped across two lines, so the unmutated pass proves the
+  # whitespace collapse; each case appends to that command or strips the site.
+  local p23="${PLUGIN_RELS#* }"; p23="${p23%% *}"
+  local c23; c23=$(cmd_file "$p23" omega)
+  local o23="choices: [\\\"Set REPOS_PATH (you'll be prompted for the path)\\\", \\\"Cancel\\\"]"
+  expect_fail_msg "a path option carried locally, citing no rule, is rejected" 23 "without citing the" \
+    "printf '\n%s\n' \"If unset, stop: $o23 -- the answer is carried for the run.\" >> $c23"
+  expect_fail_msg "the rule cited in another paragraph of the file does not cover this one" 23 "without citing the" \
+    "printf '\n%s\n%s\n%s\n%s\n' 'Set the base:' '\`\`\`' \"$o23\" '\`\`\`' >> $c23"
+  expect_pass_after "a fenced path option whose paragraph names the rule passes" \
+    "printf '\n%s\n%s\n%s\n%s\n' 'Per the *Required path environment variable unset* rule:' '\`\`\`' \"$o23\" '\`\`\`' >> $c23"
+  expect_fail_msg "no path option anywhere trips the empty-scan guard" 23 "would examine nothing" \
+    "grep -v 'SPECS_PATH' $c23 > c.tmp; mv c.tmp $c23"
+  expect_pass_saying "an empty PATH_UNSET_RULE says check 23 does not apply" "PATH_UNSET_RULE=" \
+    "check 23 not applicable" "grep -v 'SPECS_PATH' $c23 > c.tmp; mv c.tmp $c23"
+
   # Every config name is set by the config block, and none is taken from the environment: the
   # block above `FAILURES=0` is sourced with each name exported as a sentinel, and no name may
   # come out holding it (or unset, which aborts under set -u). This reads THIS edition's own
   # block, so each edition's selftest proves its own. ASSERT_PUBLISHED is not config.
-  local cfg_names="PLUGIN_RELS CMD_DIR CMD_SUFFIX CMD_EXCLUDE REF_DIR REF_FLAT_EXTRA DOC_CMD_DIR CMD_FORM CLI CLI_VERBS CLI_REQUIRED HAS_COST HAS_CHOICE_CAP HAS_AUTO_OTHER CHANGELOG_GLOB NS_MAP_REL COST_PLUGIN_RELS HANDOFF_PLUGIN_RELS GUARD_PLUGIN_RELS ITC_PLUGIN_REL CORE_PLUGIN_REL LOADER_SKILL RUNTIME_VARS RUNTIME_VARS_FROZEN EDITION_FORBIDDEN_B64 VENDOR_NEUTRAL CHECK11_FAMILY CHECK11_PROSE CHECK11_OFFER_SCOPE INSTRUCTION_TIERS VENDORED_COPIES" leaked
+  local cfg_names="PLUGIN_RELS CMD_DIR CMD_SUFFIX CMD_EXCLUDE REF_DIR REF_FLAT_EXTRA DOC_CMD_DIR CMD_FORM CLI CLI_VERBS CLI_REQUIRED HAS_COST HAS_CHOICE_CAP HAS_AUTO_OTHER CHANGELOG_GLOB NS_MAP_REL COST_PLUGIN_RELS HANDOFF_PLUGIN_RELS GUARD_PLUGIN_RELS ITC_PLUGIN_REL CORE_PLUGIN_REL LOADER_SKILL RUNTIME_VARS RUNTIME_VARS_FROZEN EDITION_FORBIDDEN_B64 VENDOR_NEUTRAL CHECK11_FAMILY CHECK11_PROSE CHECK11_OFFER_SCOPE INSTRUCTION_TIERS VENDORED_COPIES PATH_UNSET_RULE" leaked
   leaked=$(env $(for n in $cfg_names; do printf '%s=env-sentinel ' "$n"; done) bash -c '
     eval "$(sed -n "1,/^FAILURES=0\$/p" "$1")"
     for n in $2; do [ "${!n}" = env-sentinel ] && printf "%s " "$n"; done; true' _ "$0" "$cfg_names" 2>&1)
@@ -4206,6 +4270,10 @@ check_edition_forbidden   "$ROOT"
 check_untrusted_content   "$ROOT"
 check_install_time_code   "$ROOT"
 check_vendored_copies     "$ROOT"
+
+# Check 23 sits outside the loop for check 17's reason: its vacuity guard is a claim about every
+# command under PLUGIN_RELS at once.
+check_path_rule_cited     "$ROOT"
 
 if [ "$FAILURES" -gt 0 ]; then
   echo "FAIL: $FAILURES problem(s) under $PLUGIN_RELS" >&2

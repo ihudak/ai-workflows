@@ -81,7 +81,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
 
 2. **Resolve `$SPECS_PATH`.** `/design` reads `specification.md` and writes `design.md` under
    `$SPECS_PATH/specifications/`. If `$SPECS_PATH` is unset, stop with a clear error naming `SPECS_PATH`
-   (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run; *Cancel* ends the run). **Take this test before step 1
+   (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` once it names an existing directory, asking again where it does not, per the *Required path environment variable unset* rule in `workflows-core:escalation-rules`; *Cancel* ends the run). **Take this test before step 1
    resolves anything**: a key is found only by searching the specs tree, and the preflight step 1
    ends with needs the variable.
 

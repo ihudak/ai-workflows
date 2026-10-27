@@ -44,7 +44,7 @@ Usage: `/conformance <EPIC-KEY | PRD-KEY> [--skip-costs] [--skip-feedback] [--en
    `CONFORMANCE_NEEDS_KEY: /conformance needs an Epic or PRD address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7 or ACME-7-01) — re-run '/dev-workflows:conformance <ADDRESS>'.`
    On `invalid` the message goes on, naming the token: ` — '<token>' is not a key (workflows-core:addressing §1).`
 
-2. **Require `$SPECS_PATH`.** Take this test before step 1 resolves anything. If it is unset, stop naming it: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run; *Cancel* ends the run.
+2. **Require `$SPECS_PATH`.** Take this test before step 1 resolves anything. If it is unset, stop naming it: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` once it names an existing directory, asking again where it does not, per the *Required path environment variable unset* rule in `workflows-core:escalation-rules`; *Cancel* ends the run.
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, once the run key set is fixed (`workflows-core:specs-repo-git` §3.2: the resolved `key`, and on an Epic-level folder its parent PRD's key too), before step 3 places the folder. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. If it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 

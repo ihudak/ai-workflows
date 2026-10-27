@@ -209,7 +209,7 @@ nothing.
 2. **Resolve `$SPECS_PATH`.** `/specify` writes specifications under `$SPECS_PATH/specifications/`
    (exact layout resolved in step 3) — the specs repo. If `$SPECS_PATH` is unset, stop
    with a clear error naming `SPECS_PATH` (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`;
-   *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run; *Cancel* ends the run) —
+   *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` once it names an existing directory, asking again where it does not, per the *Required path environment variable unset* rule in `workflows-core:escalation-rules`; *Cancel* ends the run) —
    there is no fallback for this write target the way there is for reads.
 
 3. **Resolve the feature folder.** Derive provisional kebab-case slugs from the relevant

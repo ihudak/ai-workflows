@@ -28,6 +28,7 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
 0. **Flags.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. `--no-docs` — boolean; turns documentation grounding off for this run (Phase 2). `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. Strip both, and `--docs`'s value, from `$ARGUMENTS` before step 1 classifies what remains.
 
    **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+0a. **`$SPECS_PATH` (required).** Take this test before step 1 resolves anything. If it is unset, stop naming `SPECS_PATH`, per the *Required path environment variable unset* rule in `workflows-core:escalation-rules`: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` once it names an existing directory, asking again where it does not, as that rule says; *Cancel* ends the run. It comes first because a key is found only by searching the specs tree: with no tree a key resolves `absent`, and `EPICS_NOT_FOUND` would blame the address for what is the variable's, while a folder's whole name reads `needs-tree`, which `resolve-address` returns as `status: invalid`.
 1. **Resolve the address.** Parse the **single positional address** from `$ARGUMENTS` — a `<KEY>`, or an
    `@<path>` naming a folder or a file inside one — and resolve it with
    `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), **with no `<KIND>`
@@ -45,9 +46,9 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    one would then refuse: `/idea` and `/create-prd` each write `PRD-<KEY>-<slug>/` on their first
    write, and `/brd-split` carves the `PRD-` slice — all three `PRD-` folders that pass step 1a.
 
-   `/epics` is **address-required**: with no positional address, stop with
-   `EPICS_NEEDS_KEY: /epics needs a PRD or Epic address — a key, or an @<path> to its folder.` —
-   `/epics` has no direct-prompt behavior. Downstream, `<PRD-KEY>` denotes the
+   `/epics` is **address-required**: with no positional address, or one `read-key` (§1) finds `invalid` — which `resolve-address` returns as `status: invalid` — stop with
+   `EPICS_NEEDS_KEY: /epics needs a PRD or Epic address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7 or ACME-7-01) — a key, or an @<path> to its folder.` —
+   `/epics` has no direct-prompt behavior. On `invalid` the message goes on, naming the token: ` — '<token>' is not a key (workflows-core:addressing §1).` Downstream, `<PRD-KEY>` denotes the
    **PRD folder's** own `key` (`workflows-core:addressing` §4), read from its frontmatter
    and never parsed out of its directory name — the resolved folder itself when the address named a
    PRD, its parent when the address named an Epic (step 1b).
@@ -394,7 +395,7 @@ the PRD folder's key (Phase 0 step 1b), never the run's own `key`, which on a re
 Epic's — **`epic: null`** (PRD-level ARD only, on a re-refine run as on a draft one), and
 `$SPECS_PATH`.
 
-- On `status: none` (including `$SPECS_PATH` unset/unresolvable) → **skip and
+- On `status: none` (including `$SPECS_PATH` unresolvable) → **skip and
   proceed exactly as before.** No prompt, no extra output — save Phase 5.5, which asks wherever two or more components are proposed, and Phase 2.7 on a multi-component PRD, the one exception `workflows-core:ard-resolution`'s no-regression rule states.
 - On `status: unmerged` → **stop**, naming the returned `branch` and any `pr` — an ARD that exists but has not landed on `<default>` is a weaker architectural basis than the one about to arrive, and Epics drafted against it would need re-doing once it does.
 - On `status: found` → carry `invariants` + `guidance_summary` forward: pass them
@@ -417,7 +418,7 @@ inventory. **Additive, zero-cost when absent** — the common case, since
    use its `path`; `status: absent` → none exists; `status: ambiguous` → stop, naming every match
    and `@<path>` as the way through; `status: misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message, never a skip. No matching rule is written here: a second copy of the one §5
    states is the drift §1 warns about. If `$SPECS_PATH` is
-   unset/unresolvable, or no PRD dir matches at either level → **skip** (set
+   unresolvable, or no PRD dir matches at either level → **skip** (set
    `vi_spec_present: false`) — the same skip a PRD with no PRD-level specification
    takes, unchanged.
 2. **Detect:** execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against `<PRD-dir>/specification.md`, mapping its §3.7 return value by `stopped` first, never by `on_main` alone. On any stopping state, stop per §4.4, naming `$SPECS_PATH` explicitly — a spec that exists but has not yet landed on `<default>` is a weaker grounding basis than the one about to arrive, and so is what a branch of the run's own holds when `<default>` has changed the spec since that branch was cut (§3.3 row B′: the copy it was cut with, none, or its own change made without `<default>`'s); Epics drafted from either would need re-doing. Otherwise (`stopped: false`): on `pass`/`pass_amending`, proceed to step 3 (`pass_amending` prints §3.3's row-B message). On `unmanaged`, behave exactly as before this feature — **skip** (set `vi_spec_present: false`). On `absent`, **skip** (set `vi_spec_present: false`); the run proceeds byte-identically to today — this is the common case, and PRD-level `/specify` remains optional — save on a multi-component PRD, where Phase 2.7 asks for it.

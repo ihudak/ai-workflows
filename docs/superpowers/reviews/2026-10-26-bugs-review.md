@@ -919,7 +919,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## product-workflows — idea → PRD → ARD → spec → epics, decisions, proposals
 
-### PRD-B1 — MINOR — *Set SPECS_PATH* in four product commands carries any typed path, against the rule that re-asks until it names an existing directory (the D5 class, at sites D5 does not list)
+### PRD-B1 — MINOR — *Set SPECS_PATH* in four product commands carries any typed path, against the rule that re-asks until it names an existing directory (the D5 class, at sites D5 does not list) — **Fixed in product-workflows 3.48.0 / workflows-core 1.59.1 (batch B20)**
 - **Where:** `plugins/product-workflows/commands/create-prd.md:77`, `update-prd.md:29`, `create-ard.md:209`, `specify.md:211-212`; the rule is at `plugins/workflows-core/references/escalation-rules.md:226-233`.
 - **What is wrong:** Each of the four says *"Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run". The shared rule says the answer is carried *"once it names an existing directory … and the question is asked again where it does not"*. None of the four cites that rule, and the rule's own citer list does not name them. So two live instructions disagree, and the local one, which the agent follows, has no validation.
 - **Failure scenario:** `SPECS_PATH` is unset, `/create-ard ACME-7` runs, and the operator types a mistyped path. The run carries the path anyway, and the preflight then reports "not a directory / not a git repo". `resolve-address` returns `absent`, and the run stops with `CREATE_ARD_NOT_FOUND`, which says the folder does not exist. In `/create-prd` and `/idea` the `absent` branch goes on and creates a folder. A typo that happens to name an existing non-specs directory sends `/create-prd`'s first write to `<typo>/specifications/PRD-…/`.
@@ -928,7 +928,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (extends to-fix D5)
 - **Confidence:** high
 
-### PRD-B2 — MINOR — `/epics` has no `$SPECS_PATH`-unset step and no mapping for `resolve-address`'s `status: invalid`, while the hook and the docs promise that it asks
+### PRD-B2 — MINOR — `/epics` has no `$SPECS_PATH`-unset step and no mapping for `resolve-address`'s `status: invalid`, while the hook and the docs promise that it asks — **Fixed in product-workflows 3.48.0, dev-workflows 4.40.0 and workflows-core 1.59.1 (batch B20)**
 - **Where:**
   - `plugins/product-workflows/commands/epics.md:31-53` (Phase 0 step 1 maps only `found`, `ambiguous`, `misrooted` and `absent`; `EPICS_NEEDS_KEY` is only for "no positional address");
   - `plugins/product-workflows/hooks/preload-context.sh:76` (`"SPECS_PATH: (not set — the command will ask)"`);
@@ -997,7 +997,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD-B8 — NIT — the environment page says every command offers to enter a path when `$SPECS_PATH` is unset; `/harvest-decisions` and `/promote-decisions` stop flat
+### PRD-B8 — NIT — the environment page says every command offers to enter a path when `$SPECS_PATH` is unset; `/harvest-decisions` and `/promote-decisions` stop flat — **Fixed in product-workflows 3.48.0 (batch B20)**
 - **Where:** `plugins/product-workflows/docs/reference/environment.md:11`, against `commands/harvest-decisions.md:22` (`HARVEST_NEEDS_SPECS_PATH: set SPECS_PATH …`, no choice) and `workflows-core/references/architecture-promotion.md` §1 step 4 (`PROMOTE_NEEDS_SPECS_PATH`, no choice). `/epics` has no step at all (PRD-B2).
 - **What is wrong:** The page says *"Every command that needs it … offers to enter a path or cancel"*.
 - **Suggested fix:** Qualify the sentence: the two knowledge-base commands stop and name the variable.
