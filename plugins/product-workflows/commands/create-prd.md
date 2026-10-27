@@ -547,10 +547,10 @@ Carry the digest into Phase 3 with **grill-rank** consumption. When docs groundi
 
 ## Phase 3 — Author via grill
 
-**Interview technique (grilling — embedded; no runtime dependency).** Conduct a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer where one exists, fact-vs-decision split (look up facts from the idea/sources; put only decisions to the user), ask from the frontier, and clear the confirmation gate before writing each section. Rank every `docs_challenges` entry from Phase 2.5 into the grill's question order; a challenge competes for attention, it never suspends the spine below.
+**Interview technique (grilling — embedded; no runtime dependency).** Conduct a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer where one exists, fact-vs-decision split (look up facts from the idea/sources; put only decisions to the user), ask from the frontier, and clear the confirmation gate before writing — before each section where the run writes `prd.md` section by section, or once over the whole PRD where it writes it after the grill (`workflows-core:grilling-technique`, *The confirmation gate*, whose whole-artifact gate also plays back anything the writing changes in or adds to what a gate confirmed). Rank every `docs_challenges` entry from Phase 2.5 into the grill's question order; a challenge competes for attention, it never suspends the spine below.
 
 **Pre-write archive — before this run's first write to `prd.md`.** Immediately before this run's
-first write to `<feature-folder>/prd.md` — ordinarily the first live write of the authoring below,
+first write to `<feature-folder>/prd.md` — ordinarily the first write of the authoring below,
 and wherever that write falls — test whether the file exists. Where it does, archive it first, **on
 every route, with no exemption** — the idea route, `--from-prd` and the BRD route alike, and
 whichever Phase 1 step 2 choice brought the run here: copy it into `<feature-folder>/revisions/` by
@@ -572,7 +572,7 @@ writing anything:
 CREATE_PRD_ARCHIVE_FAILED: could not archive <feature-folder>/prd.md to <archive path> (<error>). Nothing was written — /create-prd never overwrites a PRD it has not archived. Make the file readable and revisions/ writable, then re-run '/product-workflows:create-prd <KEY>'.
 ```
 
-Author `prd.md` live against `Skill(skill: "workflows-core:reference", args: "prd-format")` for the selected profile, applying the no-hard-wrap prose convention in `Skill(skill: "workflows-core:reference", args: "prose-formatting")`. Walk the **spine** in dependency order:
+Author `prd.md` against `Skill(skill: "workflows-core:reference", args: "prd-format")` for the selected profile, applying the no-hard-wrap prose convention in `Skill(skill: "workflows-core:reference", args: "prose-formatting")`. Walk the **spine** in dependency order:
 
 1. Frontmatter — `sources` (propagated), `derived_from`, `seeded_from_prd` (only when `--from-prd` was used), and `key` — **written on every route**, set to the address this run resolved. On either route it is the `key:` the resolved folder asserts (`workflows-core:addressing` §4) — the positional key the operator chose on the `/idea` route, and the slice's own key on the BRD route, which is also the name of the folder this PRD is written into.
 
@@ -790,7 +790,7 @@ Cap: one fix cycle + one re-review. **A verdict that is not `BLOCK` spends neith
 ## Phase 5 — Handoff
 
 Write the feature folder: `prd.md` — where this is the run's first write to it, which it is not
-when Phase 3 authored the draft live, the pre-write archive (Phase 3) runs first. The in-contract `idea.md` is already there, committed by `/idea`; an out-of-contract idea stays where it is.
+when Phase 3 already wrote the draft, the pre-write archive (Phase 3) runs first. The in-contract `idea.md` is already there, committed by `/idea`; an out-of-contract idea stays where it is.
 
 **On the BRD route, also close the consumption loop before the offer.** The design's *Consumption
 tracking* section (§7.3) has every finding and decision record a `consumed_by`, so that "nothing was

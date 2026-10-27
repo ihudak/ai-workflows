@@ -257,7 +257,8 @@ pass after the re-review is no second fix cycle, since no review follows it — 
 allows after it is exactly what it allowed before. Used by the commands that fix inline —
 `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and
 `/brd-proposal` — by `/epics`, whose orchestrator applies the offer's edits itself after its first
-review and its one re-review, since `doc-fixer`, which takes its `MAJOR` findings, takes no `NIT` —
+review and its one re-review, since `doc-fixer`, which takes its `MAJOR` findings whose fix is only
+an edit, takes no `NIT` —
 and by `/implement`, through `review-fixer`, after its first review and its one
 re-review, never after its review of the Phase 3.5 delta, whose edits would follow its tests.
 
@@ -453,8 +454,8 @@ A free-text answer naming some of the findings folds those in, and leaves the re
 **It is not the offer to apply what a review leaves open** — it follows a `BLOCK`, never a verdict
 that is not — **and it raises no cap**: what it folds in is applied in the fix cycle the cap already
 allows and is checked by that cycle's one re-review. `/epics`, `/document` and `/implement` are
-outside it, since their `BLOCK` path dispatches a fixer: it takes the `MAJOR` survivors with the
-BLOCKERs, and `/implement`'s `review-fixer` the `MINOR` ones too, and the rest go where each command
+outside it, since their `BLOCK` path dispatches a fixer: it takes the BLOCKERs with the `MAJOR`
+survivors — in `/epics` the `MAJOR`s whose fix is only an edit — and `/implement`'s `review-fixer` the `MINOR` ones too, and the rest go where each command
 says — to the re-review's offer in `/epics` and `/implement`, and to Phase 9's `### Deferred items`
 in `/document`.
 

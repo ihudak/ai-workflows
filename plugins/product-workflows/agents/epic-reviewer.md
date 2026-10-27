@@ -157,7 +157,7 @@ Return this exact shape (no preamble, no chatter):
 
 ### Recommended next step
 - If BLOCK: [the specific thing that must be fixed before the run can continue]
-- If PASS WITH RECOMMENDATIONS: "triage, then invoke `workflows-core:doc-fixer` for the surviving MAJOR findings; MINOR / NIT may be deferred to the Phase 9 report."
+- If PASS WITH RECOMMENDATIONS: "triage, then invoke `workflows-core:doc-fixer` for the surviving MAJOR findings Phase 7 hands it; MINOR / NIT may be deferred to the Phase 9 report."
 - If PASS: "proceed to Phase 8 (maintenance)."
 ```
 
