@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.26.0] — 2026-10-27
+
+Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rule this step cites — to-fix LC3, LC6, PR7 (live checks of 2026-10-26); this plugin takes PR7.
+
+### Changed
+- `/document` Phase 7: *Provide manual fix notes* drafts the notes and asks, per `escalation-rules`' *Manual fix notes — the run drafts them*, then applies the draft or the user's own notes through `doc-fixer`, as before. It asked for the notes in plain text, with nothing saying the run waited for them.
+
 ## [1.25.0] — 2026-10-26
 
 Take with `workflows-core` 1.59.0 (batch B19).

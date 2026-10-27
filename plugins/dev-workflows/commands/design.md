@@ -427,15 +427,23 @@ Dispatch `design-reviewer` (Opus):
 **Repositories** is what `design-reviewer` re-derives the design's claims about the existing system from. A line's working tree is *at it* where `git -C "<path>" rev-parse HEAD` equals the recorded commit id and either the repository was writable at the scan (`prep.read_only: false` — the scan read its working tree, uncommitted changes included) or `git --no-optional-locks -C "<path>" status --porcelain` prints nothing and exits 0; anything else is *not at it*, and the reviewer reads at the commit instead. A repository whose scan never returned — one any *Skip* answer left out, whichever rule offered it — has no commit, and its line reads `— not scanned`. Every `design-reviewer` dispatch in this phase — the first review and any re-review — carries this brief, the working-tree test taken again at that dispatch.
 
 **Act on the verdict** (mirrors `/specify`, save `/specify`'s refinement-notes "Defer" and its open question for a finding left open — a design resolves its own open questions to zero):
-- **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `design.md` inline — no delegated
-  writer; a BLOCKER on a claim about the existing system that a settled decision rests on is fixed by
-  putting that decision to the user again, one question, with the true premise and the `file:line` it
-  was read at, then editing what the answer changes — never by editing the claim's line alone), read the fix against what it overlaps — each line it adds or changes, in any section (an
+- **`BLOCK`** — where the review also leaves open at least one `MAJOR`, `MINOR` or `NIT` finding whose
+  fix is only an edit, first ask once whether to fold them into the fix cycle, per the
+  `A BLOCK review's other findings — folded into its fix cycle` rule in
+  `workflows-core:escalation-rules`, the question's own text listing each finding with its severity,
+  where it is and what the edit would change:
+  `choices: ["Fold them into this fix cycle (Recommended)", "Fix the BLOCKERs only — the re-review's offer carries the rest"]`
+  Then fix the BLOCKER findings, and the findings folded in with them (the orchestrator/grill edits
+  `design.md` inline — no delegated writer; a BLOCKER on a claim about the existing system that a
+  settled decision rests on is fixed by putting that decision to the user again, one question, with
+  the true premise and the `file:line` it was read at, then editing what the answer changes — never
+  by editing the claim's line alone), read the fix against what it overlaps — each line it adds or changes, in any section (an
   interface, a seam, a test-strategy line, a migration or rollout step), against everything that
   overlaps it, as `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it — the
   inherited `[AD#N]` Rules among them, so an edit that accepts a bound, a limit or an outcome a Rule
   fixes keeps the Rule or records its ARD deviation as Phase 2.5 says, in the same pass — and an operational step against everything its selector reaches in the deploy files of the repositories Phase 3 confirmed, ride-along deploy components included, per the `An inline fix is read against what it overlaps` rule in
-  `workflows-core:escalation-rules`, and manual fix notes the same
+  `workflows-core:escalation-rules`, and manual fix notes — which the run drafts and asks about per
+  the `Manual fix notes — the run drafts them` rule in `workflows-core:escalation-rules` — the same
   way before the handoff — and re-review once. **Any unresolved `design.md` `- [ ]` is a BLOCKER by policy** — resolve it
   or push it onto the spec (Phase 5) before handoff. If still `BLOCK`, escalate per the
   `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in

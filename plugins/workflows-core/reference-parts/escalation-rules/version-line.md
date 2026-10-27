@@ -38,7 +38,9 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`
+- `A BLOCK review's other findings — folded into its fix cycle` → `review`
 - `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` → `review`
+- `Manual fix notes — the run drafts them` → `review`
 - `Review verdict BLOCK (unresolved after one fix cycle) — /document` → `review`
 - `Review verdict BLOCK (unresolved after one fix cycle) — /epics` → `review`
 - `The offer to apply what a review leaves open` → `review`
@@ -206,4 +208,4 @@ edit — a run has to stop somewhere — but believing the verdict covers it. Sa
 covers costs nothing, cannot itself introduce a defect, and leaves the decision about the residue
 where it belongs — with the user. **Where no edit followed the verdict,
 say that too**, so a clean run reads as checked rather than as unreported. A run whose verdict was
-not `BLOCK` has not spent the cap. Two offers can follow a review, each under a rule of its own that part `review` holds and that names the commands making it: *Findings a review leaves open — the offer to apply them*, which puts the residue to the user, and *Edits after a verdict that is not BLOCK — the unspent re-review*, which offers the re-review the cap still holds.
+not `BLOCK` has not spent the cap. Two offers can follow such a review, each under a rule of its own that part `review` holds and that names the commands making it: *Findings a review leaves open — the offer to apply them*, which puts the residue to the user, and *Edits after a verdict that is not BLOCK — the unspent re-review*, which offers the re-review the cap still holds.

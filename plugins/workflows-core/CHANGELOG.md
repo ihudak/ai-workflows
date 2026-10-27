@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.60.0] — 2026-10-27
+
+Take with `dev-workflows` 4.41.0, `product-workflows` 3.49.0 and `docs-workflows` 1.26.0, whose review steps cite this release's rules — to-fix LC3, LC6, PR7 (live checks of 2026-10-26).
+
+### Added
+- `escalation-rules` *A BLOCK review's other findings — folded into its fix cycle* (LC3). Where a command that fixes inline — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal`, `/brd-proposal` — has a review return `BLOCK` and go to its fix cycle while it also leaves open a `MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit, the run asks once, before the fix cycle, `["Fold them into this fix cycle (Recommended)", "Fix the BLOCKERs only — the re-review's offer carries the rest"]`. A finding folded in is applied in the fix cycle and read against what it overlaps, so the one re-review covers it; one left there goes to the re-review's offer, as before. It is no offer and raises no cap. Four live runs (`/specify` once, `/design` three times) asked this question in four wordings of their own. `/epics`, `/document` and `/implement`, whose `BLOCK` path dispatches a fixer, are outside it, and the rule names where their other findings go.
+
+### Changed
+- `escalation-rules` *Findings a review leaves open — the offer to apply them* (LC6): the question's own text lists the findings, one line per finding — its severity, where it is and what the edit would change — and never points at a list printed elsewhere. Two live offers made after a re-review, in `/specify` and `/epics`, asked about findings no text had shown, one of them as "listed above".
+- `escalation-rules` *Manual fix notes — the run drafts them* (PR7), cited by all three `BLOCK` escalation rules: *Provide manual fix notes* drafts notes for the BLOCKER from the finding's suggested fix and the artifact, and asks `["Apply these notes (Recommended)", "Write my own notes (you'll be prompted)"]`, with the drafted notes in the question's own text; the plain-text prompt for the user's own notes says in its first line that the run waits for them. In `/design BOOK-1-01` and `/specify BOOK-1-02` the follow-up was a plain-text request that never said the run was waiting, and both users typed "done?" minutes later. How the notes are applied is unchanged.
+- The references page describes the three rules.
+
 ## [1.59.1] — 2026-10-27
 
 Take with `dev-workflows` 4.40.0 and `product-workflows` 3.48.0, whose *Set SPECS_PATH* sites this release's citer list names (batch B20).

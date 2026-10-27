@@ -994,8 +994,17 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
   > contracts: [the `contracts` rows and `components` Phase 2.5 returned, on a PRD-level spec (`focus_key` null) of a multi-component PRD (`workflows-core:components` §3) — the run Phase 5's crossing-criterion rule binds; omit otherwise]"
 
 2. **Act on the verdict:**
-   - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `specification.md` inline —
-     there is no delegated writer to re-dispatch), read the fix against what it overlaps — every
+   - **`BLOCK`** — where the review also leaves open at least one `MAJOR`, `MINOR` or `NIT` finding
+     whose fix is only an edit, first ask once whether to fold them into the fix cycle, per the
+     `A BLOCK review's other findings — folded into its fix cycle` rule in
+     `workflows-core:escalation-rules`, the question's own text listing each finding with its
+     severity, where it is and what the edit would change:
+     ```
+     choices: ["Fold them into this fix cycle (Recommended)", "Fix the BLOCKERs only — the re-review's offer carries the rest"]
+     ```
+     Then fix the BLOCKER findings, and the findings folded in with them (the orchestrator/grill
+     edits `specification.md` inline — there is no delegated writer to re-dispatch), read the fix
+     against what it overlaps — every
      criterion and test case it adds or changes against everything that overlaps it, as
      `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it — the trigger's
      other outcomes and the criteria importing it among them — per the `An inline fix is read against what it overlaps` rule in
@@ -1005,8 +1014,10 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
      ```
      choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]
      ```
-     Manual fix notes are read against what they overlap before the handoff, as the fix cycle was,
-     since no review follows them. "Defer" means appending a `## Refinement notes` section to
+     Manual fix notes are drafted by the run and asked about per the
+     `Manual fix notes — the run drafts them` rule in `workflows-core:escalation-rules`, and read
+     against what they overlap before the handoff, as the fix cycle was, since no review follows
+     them. "Defer" means appending a `## Refinement notes` section to
      `specification.md` with one plain `- ` bullet per deferred finding (mirrors `/epics`'
      Epic-refinement note), in addition to the final report — never a `- [ ]` item, which `pre-lint`
      would count against the header's `Open questions` and the format would not. A deferred finding
