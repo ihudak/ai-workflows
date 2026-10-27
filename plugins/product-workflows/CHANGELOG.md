@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.48.0] — 2026-10-27
+
+Take with `workflows-core` 1.59.1 (batch B20).
+
+### Added
+- `/epics` Phase 0 step 0a: an unset `SPECS_PATH` stops before the address is resolved, naming the variable, per `escalation-rules`' *Required path environment variable unset* — the run used to reach `EPICS_NOT_FOUND`, which blamed the address. A token `read-key` finds `invalid`, which `resolve-address` returns as `status: invalid`, now stops with `EPICS_NEEDS_KEY`, stating the key grammar and naming the token; it had no stop. An `@<path>` run with `SPECS_PATH` unset now stops at step 0a too, where it ran on, skipping the ARD and nested-folder steps (PRD-B2).
+
+### Changed
+- `/create-prd`, `/update-prd`, `/create-ard` and `/specify`: *Set SPECS_PATH* cites *Required path environment variable unset* and carries the typed path only once it names an existing directory, asking again where it does not — it carried any path for the run (PRD-B1).
+- `/epics` Phase 2.5 and 2.6 no longer name an unset `$SPECS_PATH` among their skip cases, since step 0a stops on it first.
+- `/create-ard` takes its `$SPECS_PATH` check before step 1 resolves the address, as `/specify` does: with no tree a key resolved `absent` and stopped with `CREATE_ARD_NOT_FOUND`, and a folder's whole name read `needs-tree`, which `resolve-address` returns as `invalid` (PRD-B2).
+
+### Fixed
+- The environment reference page says `/harvest-decisions` and `/promote-decisions` stop on an unset `SPECS_PATH` and name it with no question, where it said every command offers to enter a path (PRD-B8). The `/epics` page lists `SPECS_PATH` among what the run needs.
+
 ## [3.47.0] — 2026-10-26
 
 Take with `workflows-core` 1.59.0 (batch B19).

@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.59.1] — 2026-10-27
+
+Take with `dev-workflows` 4.40.0 and `product-workflows` 3.48.0, whose *Set SPECS_PATH* sites this release's citer list names (batch B20).
+
+### Fixed
+- `escalation-rules` *Required path environment variable unset*: the citer list names `/conformance`, `/ready`, `/create-prd` and `/update-prd` for `SPECS_PATH`, and `/design`, `/specify`, `/create-ard` and `/epics` for `SPECS_PATH` as well as `REPOS_PATH`; its closing sentence no longer says other commands reproduce the list without naming the rule — none does now, and `scripts/check-docs.sh` check 23 holds that (to-fix D5, PRD-B1).
+- `specs-repo-git` §3.1's unset-`$SPECS_PATH` gate no longer names `/epics` among the commands with no stop on the variable, nor a command reproducing the list inline (PRD-B2).
+
 ## [1.59.0] — 2026-10-26
 
 Take with `dev-workflows` 4.39.2, `product-workflows` 3.47.0 and `docs-workflows` 1.25.0, whose questions this release's wording describes (batch B19).

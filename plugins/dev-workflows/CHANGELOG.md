@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.40.0] — 2026-10-27
+
+Take with `workflows-core` 1.59.1 (batch B20).
+
+### Changed
+- `/design`, `/ready` and `/conformance`: *Set SPECS_PATH* cites `escalation-rules`' *Required path environment variable unset* and carries the typed path only once it names an existing directory, asking again where it does not — it carried any path for the run (to-fix D5).
+
+### Fixed
+- The environment reference page lists `/epics` among the commands that stop on an unset `SPECS_PATH` and offer to set it, where it said `/epics` carried no such stop (PRD-B2).
+
 ## [4.39.2] — 2026-10-26
 
 Take with `workflows-core` 1.59.0 (batch B19).

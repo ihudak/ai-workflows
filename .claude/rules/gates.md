@@ -8,7 +8,7 @@ paths:
 
 Loaded when a file under `scripts/` or `.github/` is read. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
-Split out to keep this file under 20,000 characters, into files beside it that share its `paths:`, so load with it, and are bound by its opening rule: `gates-id-grammar.md` (the ID-grammar gate), `gates-validate-catalog.md` (`scripts/validate-catalog.py`), `gates-mermaid.md` (the mermaid gate) and `gates-reference-parts.md` (`scripts/reference-parts.py`).
+Split out to keep this file under 20,000 characters, into files beside it that share its `paths:`, so load with it, and are bound by its opening rule: `gates-id-grammar.md` (the ID-grammar gate), `gates-validate-catalog.md` (`scripts/validate-catalog.py`), `gates-mermaid.md` (the mermaid gate), `gates-reference-parts.md` (`scripts/reference-parts.py`) and `gates-check-docs-late.md` (`check-docs.sh`'s checks 22 and 23).
 
 **A gate widening or a scope change is measured before it is taken, and one that would fire only on correct content is refused.** Each refused widening below records that result; do not re-propose one without new evidence.
 
@@ -16,7 +16,7 @@ Split out to keep this file under 20,000 characters, into files beside it that s
 
 `scripts/check-docs.sh` iterates every plugin in its `PLUGIN_RELS` list, so every tree in it is gated identically. It runs on every push via `.github/workflows/validate-catalog.yml`, preceded there by `--selftest`, which copies a fixture tree per case and asserts both the exit code and *which* check fired — one case per check and failure mode, plus the fixture-growing cases that assert the gate still **passes**, which is the only way to prove a number word newly taught to check 9 converts correctly rather than merely being rejected. **No case count is stated in `CLAUDE.md` or the rules files, deliberately**: `--selftest` prints one `ok` line per case, so the number is a `grep -c` away and needs no copy. ([why](../../docs/maintainers/rationale.md#docs-tree))
 
-**One body, three editions.** Everything from the script's `FAILURES=0` line down is byte-identical here, in the internal Claude edition and in the Copilot edition; only the config block above it and `scripts/fixtures/docs/fixture.env` — the fixture's own configuration, which every selftest run reads with `--config` — differ. A fix ports by `cp` of the body, and `cmp` of the three bodies is the proof they agree. A check an edition has no use for is switched off in its config block, never cut from the body: 13 by `VENDOR_NEUTRAL=0`, 16 by an empty `LOADER_SKILL`, 19 by an empty `EDITION_FORBIDDEN_B64`, 22 by an empty `VENDORED_COPIES` (empty here) — and each says so when it runs. **Every config name is a plain assignment**, never `${NAME:-default}`, so nothing a shell exports changes what a real run checks; only `ASSERT_PUBLISHED` is read from the environment, and a selftest case sources each edition's block with every name exported as a sentinel to hold that. The body names no organisation, because check 19 reads it here. ([why](../../docs/maintainers/rationale.md#check-docs-one-body))
+**One body, three editions.** Everything from the script's `FAILURES=0` line down is byte-identical here, in the internal Claude edition and in the Copilot edition; only the config block above it and `scripts/fixtures/docs/fixture.env` — the fixture's own configuration, which every selftest run reads with `--config` — differ. A fix ports by `cp` of the body, and `cmp` of the three bodies is the proof they agree. A check an edition has no use for is switched off in its config block, never cut from the body: 13 by `VENDOR_NEUTRAL=0`, 16 by an empty `LOADER_SKILL`, 19 by an empty `EDITION_FORBIDDEN_B64`, 22 by an empty `VENDORED_COPIES` (empty here), 23 by an empty `PATH_UNSET_RULE` — and each says so when it runs. **Every config name is a plain assignment**, never `${NAME:-default}`, so nothing a shell exports changes what a real run checks; only `ASSERT_PUBLISHED` is read from the environment, and a selftest case sources each edition's block with every name exported as a sentinel to hold that. The body names no organisation, because check 19 reads it here. ([why](../../docs/maintainers/rationale.md#check-docs-one-body))
 
 ### Check 1
 
@@ -124,6 +124,6 @@ Every `choices:` option in the `/brd-*` and `/prd-*` families — the families c
 
 **Check 21 gates install-time code**: every install command in `ITC_PLUGIN_REL`'s three install references, two agents and two commands — each code span and each command of a chained line on its own, prose included — carries `--ignore-scripts` (yarn berry `--mode=skip-build`) if it is npm, pnpm or yarn, and `--only-binary=:all:` (a pipenv lock too), never `:all:` for no-binary, if it is pip or pipenv; none at all fails as vacuous.
 
-### Check 22
+### Checks 22 and 23
 
-**Check 22 holds a vendored copy to its original**: each `<original>:<copy>` pair `VENDORED_COPIES` names must be byte-identical, an absent copy is skipped, and an empty list — this edition's — makes it a no-op. The internal Claude edition lists the two scripts one of its plugins ships as copies of another's.
+In `gates-check-docs-late.md`.

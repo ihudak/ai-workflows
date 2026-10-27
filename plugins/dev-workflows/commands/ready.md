@@ -101,8 +101,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 
 2. **Resolve `$SPECS_PATH`.** `/ready` reads the ARD/spec/design artifacts and writes `_readiness.md`
    under `$SPECS_PATH/specifications/`. If `$SPECS_PATH` is unset, stop with a clear error naming
-   `SPECS_PATH`: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for
-   the path in plain text and carries it as `$SPECS_PATH` for the run; *Cancel* ends the run. **Take this test before
+   `SPECS_PATH`: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` once it names an existing directory, asking again where it does not, per the *Required path environment variable unset* rule in `workflows-core:escalation-rules`; *Cancel* ends the run. **Take this test before
    step 1 resolves anything**: a key is found only by searching the specs tree, so with no tree
    step 1's `absent` stop would name the wrong cause, and the preflight step 1 ends with needs the
    variable.

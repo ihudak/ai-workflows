@@ -10,3 +10,6 @@ Fixture body.
 Before anything else, load `dev-workflows:phase-handoff` — `Skill(skill: "dev-workflows:reference", args: "phase-handoff")`.
 
 Agent notices follow `dev-workflows:untrusted-content` — `Skill(skill: "dev-workflows:reference", args: "untrusted-content")`.
+
+Where the specs path is unset, stop naming it, per the *Required path environment variable
+unset* rule: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`.

@@ -83,6 +83,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `gates-validate-catalog.md` | as `gates.md` | `scripts/validate-catalog.py` |
 | `gates-mermaid.md` | as `gates.md` | the mermaid gate |
 | `gates-reference-parts.md` | as `gates.md` | the reference-parts gate |
+| `gates-check-docs-late.md` | as `gates.md` | `check-docs.sh`'s checks 22 and 23 |
 | `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |

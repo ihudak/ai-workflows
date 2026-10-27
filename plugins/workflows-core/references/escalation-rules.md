@@ -251,10 +251,13 @@ ending the run), `/brd-interview` (Phase 0 step 3), `/brd-package`
 (Phase 0 step 1), `/brd-proposal` (Phase 0 step 1), `/idea` (Phase 0 step 1),
 `/security-workflows:scan` (Phase 0 step 3, on every run), `/implement` (Phase 0
 *Address resolution*, on a `<KEY>` address only), `/document` (*Mode detection*, keyed mode on a
-`<KEY>` address only, and for `REPOS_PATH` keyed mode's Phase 1) and `/release-notes` (Phase 0
-step 1, on a `<KEY>` address only, and for `REPOS_PATH` Phase 1, with diff grounding on), and — for
-`REPOS_PATH` alone — `/design` (Phase 1 step 4), `/specify` (Phase 1 step 4), `/create-ard` (Phase 1
-step 3) and `/epics` (Phase 1, with code examination on) cite this rule by name. **`REPOS_PATH` is
+`<KEY>` address only, and for `REPOS_PATH` keyed mode's Phase 1), `/release-notes` (Phase 0
+step 1, on a `<KEY>` address only, and for `REPOS_PATH` Phase 1, with diff grounding on),
+`/conformance` (Phase 0 step 2), `/ready` (Phase 0 step 2), `/create-prd` (Phase 0 step 2b),
+`/update-prd` (Phase 0 step 2), and — for `SPECS_PATH` and `REPOS_PATH` both — `/design` (Phase 0
+step 2, and Phase 1 step 4), `/specify` (Phase 0 step 2, and Phase 1 step 4), `/create-ard` (Phase 0
+step 2, and Phase 1 step 3) and `/epics` (Phase 0 step 0a, and Phase 1, with code examination on)
+cite this rule by name. **`REPOS_PATH` is
 asked for only where no entry of `${REPOS_PATH:-/workspace}` is an existing directory**: a value
 that resolves is used without a question, and `/design`, `/specify`, `/create-ard`, `/epics`,
 `/document` and `/release-notes` print it on a `Repos:` line instead. **Where a citer's run can go on
@@ -274,10 +277,11 @@ rather than trusting this list:
 `grep -rl 'Required path environment variable unset' plugins/*/commands/*.md`, run from the
 repository root. For `SPECS_PATH` it is a stop, not a degradation: there is no "continue without
 it" option, because that path is where the run's inputs and outputs live. `REPOS_PATH` holds only
-code a run reads, which is why a citer whose run can go on without it offers that way on. Other
-commands reproduce the same two-option list inline without naming the rule; a citer that names the
-rule uses the list written here, save the `REPOS_PATH` way on, which this rule gives a citer whose run
-can go on without code.
+code a run reads, which is why a citer whose run can go on without it offers that way on. No
+command offers *Set <VAR>* without naming this rule in the same paragraph — `scripts/check-docs.sh`
+check 23 holds that, so a command never carries a typed path on its own terms; a citer uses the list
+written here, save the `REPOS_PATH` way on, which this rule gives a citer whose run can go on
+without code.
 <!-- /part -->
 
 <!-- part: scan -->
