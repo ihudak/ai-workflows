@@ -49,8 +49,16 @@ reads the bare selection as a refusal or as a promise the operator broke. Its la
 text as a promise or an instruction the selection itself would have to carry out (`— name it`,
 `I'll say which`, `give the reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
 the text is taken as given, and nothing is asked again. A question whose whole answer is text with
-no default — a name, a URL, a reason — is asked in plain text: never as a picker built for it, and
-never with an "I'll provide it" option.
+no default — a name, a URL, a reason — and no other way on is asked in plain text: never as a picker
+built for it, and never with an "I'll provide it" option. **An array whose other option is a real
+alternative is not built for the text, and stays** — a *Cancel* that ends the run the way the prose
+after the array states, a *Skip*, a way on without the text: its text option carries the marker
+above and is followed by the plain-text question, and the prose after the array — or the rule of
+this reference it cites, which states it for every citer — says what each other option does. An alternative no prose handles is not a real one: write its handling there.
+What this forbids is an array with no real alternative to offer, which is asked as a plain-text
+question instead. A plain-text question may still name its own way out in the question itself
+(`…, or type cancel`), as the *Branch prefix undetected* identity variant does, and needs no array
+for it.
 
 ## Choice lists are presented verbatim
 
@@ -135,7 +143,7 @@ to assert against a reference that overrules it.
 **No operator is trapped, and the reason is no longer `Cancel`.** Three of the first nine carried a
 trailing `Cancel` until the four-option cap was enforced, and it was dropped from each — a fifth slot
 the harness would not render. The escape that replaces it is the free-text option, which is always
-present and, on these eleven, is normalised rather than frozen. The tenth keeps its `Cancel` within the cap. Where aborting has a consequence the
+present and, on these eleven, is normalised rather than frozen. The tenth keeps its `Cancel` within the cap. The second keeps one too, labelled for what it does: it returns the candidate to the first's four options rather than aborting, so it adds no value to that picker's vocabulary. Where aborting has a consequence the
 operator must see before choosing, the command states it in the prose introducing the walk rather
 than in an option: `/brd-package`'s and `/brd-reconcile`'s walks both do.
 
@@ -212,7 +220,8 @@ This rule binds every command in the family — this plugin's own and those of e
 Used when the address resolved to no folder — `resolve-address` returned `status: absent`, or a
 folder that resolved earlier in the run is gone when a later phase reads it. *Re-enter key* is
 followed by one plain-text question for the key, which is read and resolved as the original address
-was (`workflows-core:addressing` §1, §3).
+was (`workflows-core:addressing` §1, §3). *Cancel* ends the run there, the stop standing as it
+would with no list.
 **A folder that is there is never this case, whatever it holds**: re-entering a key that resolved
 cannot help. A command that stops on what such a folder holds — a BRD container, a folder placed at
 no level, a PRD folder carrying no key, a PRD folder with no `prd.md` — raises a named stop of its
@@ -231,7 +240,8 @@ the run is missing, never a generic placeholder. *Set <VAR>* is followed at once
 question for the path (§0, *A selection carries no text*); the answer — for `REPOS_PATH` one
 directory or a colon-separated list — is carried as `$<VAR>` for the rest of the run once it names
 an existing directory (for a list, once one of its entries does), and the question is asked again
-where it does not.
+where it does not. *Cancel* ends the run there, the stop standing as it would with no list, save
+where a citer below says otherwise.
 
 `/brd-intake` (Phase 0 step 5), `/prd-ground` (Phase 0 step 3 for `SPECS_PATH` and Phase 0 step 7
 for `REPOS_PATH`), `/brd-split` (Phase 0 step 2, and for `REPOS_PATH` Phase 7's *Ground now*
@@ -314,7 +324,8 @@ missing — "Use case B with no repos derivable"). The `— /epics` suffix on th
 historical — `/epics` was its first citer — not a scope restriction; the rule serves every
 command whose repo set comes up empty this way, `/idea`, `/specify` and `/epics` among them, and any future
 citer with the same empty-repo-set shape uses it too. *List repos to scan manually* is followed by one plain-text question for the
-repositories' names, each resolved as the citing command resolves a derived one.
+repositories' names, each resolved as the citing command resolves a derived one. *Cancel* ends
+the run, on this list and on the `/prd-ground` form below.
 
 In `/prd-ground` Phase 1 step 4 the *Proceed without code scan* entry is omitted:
 `choices: ["List repos to check manually (you'll be prompted)", "Cancel"]`
@@ -412,7 +423,7 @@ left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the u
 
 Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/upgrade`, `/vuln`) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
 
-**Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it, in one prompt whose opening line names the convention:
+**Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text, its way out named in the question (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it, in one prompt whose opening line names the convention:
 
 `"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`), or type `cancel`:"`
 

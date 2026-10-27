@@ -1456,7 +1456,12 @@ check_handoff_applicability() {
 # for promising or asking for text (the labels of commands/, references/ and agents/ at the
 # commit before it, less those still in the tree after it): they match 55 of them, where the
 # first form of this part -- nine literal phrases -- matched 14, and they fire on no label of the
-# tree after it. The labels a second pass relabelled because their follow-up needs text their
+# tree after it. Two families joined later on a marker-loss measurement -- "Provide" and "Quote"
+# opening a label: with the marker stripped from every marked label of the upstream tree they
+# catch five more, and on that tree they match no label the rule passes. "(describe" was measured
+# beside them and refused: it fires on "Other… (describe)", correct in an edition whose host
+# supplies no free-text answer (HAS_AUTO_OTHER=0), whose selftest case says so.
+# The labels a second pass relabelled because their follow-up needs text their
 # wording never mentions ("Revise plan") match none, by construction. "I'll"
 # alone is not a phrase: "Just write the files — I'll handle git" promises an action outside
 # the prompt, not text, and passes.
@@ -1516,6 +1521,7 @@ ASKS = (
     ("Specify a path or command", r"^specify\b[^\u2014]*\b(path|command)\b"),
     ("List ... manually", r"^list\b[^\u2014]*\bmanually\b"),
     ("Name it / Supply the first", r"^(name its?|supply (the|a))\b"),
+    ("Provide / Quote first", r"^(provide|quote)\b"),
 )
 PROMPTED = "(you'll be prompted"
 START = re.compile(r'choices:\s*\[')
@@ -3466,6 +3472,12 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf -- '\nchoices: [\"Confirm\", \"Supply the path to use\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "an opening \"Name its\" or \"Supply the\" beside the prompted marker is accepted" \
     "printf -- '\nchoices: [\"Name its key (you\047ll be prompted)\", \"Supply the path (you\047ll be prompted)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option opening \"Provide\" is rejected" 12 "asks for text the selection cannot carry (Provide / Quote first)" \
+    "printf -- '\nchoices: [\"Defer\", \"Provide the fix notes\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option opening \"Quote\" is rejected" 12 "asks for text the selection cannot carry (Provide / Quote first)" \
+    "printf -- '\nchoices: [\"Confirm\", \"Quote the sentence that binds\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "an opening \"Provide\" or \"Quote\" beside the prompted marker is accepted" \
+    "printf -- '\nchoices: [\"Provide manual fix notes (you\047ll be prompted)\", \"Quote the sentence that binds (you\047ll be prompted)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "prompted labels are accepted" \
     "printf -- '\nchoices: [\"Keep it whole (you\047ll be prompted for the reason)\", \"Set SPECS_PATH (you\047ll be prompted for the path)\", \"Another Epic from the list above (you\047ll be prompted for its key)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "\"Name the clone's absolute path (you'll be prompted)\" is accepted" \

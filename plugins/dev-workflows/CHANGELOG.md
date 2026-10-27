@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.39.2] — 2026-10-26
+
+Take with `workflows-core` 1.59.0 (batch B19).
+
+### Fixed
+- `/implement`, `/ready`, `/design` and `/conformance`: every *Set SPECS_PATH*, *Set REPOS_PATH* and *Re-enter key* array now says what its *Cancel* does — it ends the run (to-fix D13).
+- `/implement` and `/ready`: the follow-up preview's restatement names the relabelled `Select some (you'll be prompted for the row numbers)` option (CORE-B6).
+- The follow-ups reference page says the run asks for the row numbers in plain text.
+
 ## [4.39.1] — 2026-10-26
 
 Take with `workflows-core` 1.58.0 (batch B01).

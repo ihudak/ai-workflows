@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.47.0] — 2026-10-26
+
+Take with `workflows-core` 1.59.0 (batch B19).
+
+### Added
+- `/create-prd` Phase 1 step 1's confirmation is a choices array — *Proceed*, *Change the profile (you'll be prompted …)*, *Cancel* — where it was a bare "Confirm" (FBB-B6).
+- `/prd-ground` Phase 4.5 asks the documentation-lead question with an array, one question for every lead: *Add repositories …* re-prints the cost statement with the new count, floors the class at SIGNIFICANT once the set holds more than one repository, pins each added repository through Phase 3 and re-runs the shared-pin check over the whole set; *Proceed on the record* goes on to Phase 5 (BRD2-B6).
+
+### Fixed
+- `/brd-reconcile`: the missing-reason picker's third option is `Cancel — return to this candidate's four options`, which resolves nothing and puts the candidate back on the four-option picker; the docs page says so (BRD3-B7).
+- `/brd-package` Phase 5: the tier picker drops the `Cancel` no prose handled, as the disposition gate does; an abort is the free-text option's, and its consequence is stated (BRD3-B17).
+- Every *Set SPECS_PATH*, *Set REPOS_PATH*, *Re-enter key*, *Re-enter the source*, *List repos to check manually* and *Provide the missing input* array in `/brd-intake`, `/brd-split`, `/prd-ground`, `/brd-interview`, `/brd-package`, `/brd-reconcile`, `/prd-proposal`, `/brd-proposal`, `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify` and `/epics` now says what its *Cancel* does (to-fix D13).
+- `/epics`: the follow-up preview's restatement names the relabelled `Select some` option (CORE-B6).
+
 ## [3.46.1] — 2026-10-26
 
 Take with `workflows-core` 1.58.0, whose row B′ also stops where the run's own branch changed the path (batch B01).

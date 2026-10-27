@@ -53,13 +53,13 @@ is **keyed**; absent → the run is **direct** (free-text / `@file`, this comman
 That is the whole mode test, and it unifies the input grammar with `/document`. **On a `<KEY>`,
 `$SPECS_PATH` comes first:** if it is unset, stop naming it before resolving anything
 (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`, `workflows-core:escalation-rules`
-*Required path environment variable unset*) — a key is found only by searching the specs tree, so
+*Required path environment variable unset*; *Cancel* ends the run) — a key is found only by searching the specs tree, so
 with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
 succeed. An `@<path>` address needs no specs tree: it is resolved without the variable and runs on,
 its record written into the folder it names, and a direct run is unaffected. `ambiguous` and
 `misrooted` are §3's two hard stops, the first naming every match and the second, on either address form,
 a `$SPECS_PATH` set inside the specs tree. **`status: absent` is a stop, never a fall-through to direct mode**
-— the `key dir not found` rule in `workflows-core:escalation-rules` (`["Re-enter key (you'll be prompted)", "Cancel"]`),
+— the `key dir not found` rule in `workflows-core:escalation-rules` (`["Re-enter key (you'll be prompted)", "Cancel"]`; *Cancel* ends the run),
 naming what creates a folder this command reads: a `PRD-` folder comes from
 `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from
 `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder from
@@ -1345,7 +1345,7 @@ follow-ups by invoking `Skill(skill: "workflows-core:reference", args: "followup
    (keyed runs carry a key; direct-prompt runs usually do not, so tasks
    are report-only), passing the unit's folder as `unit_folder` (§8): the folder Phase 4.7's record goes in, `unit_key`'s — the Epic's wherever `focus_key` is set, however it was set — so every run of one unit writes its follow-ups into one file, whichever address reached it;
    render + place tasks and verbose notes per §1–§3; dedupe per §5.
-4. **Preview + confirm** per §7 (`approve-all | select | cancel`), then write.
+4. **Preview + confirm** per §7 (`approve-all | Select some (you'll be prompted for the row numbers) | cancel`), then write.
 
 ADDITIVE — the follow-ups also remain in the Phase 5 report. This phase NEVER
 fails the run, NEVER commits (still true — this phase only writes follow-up

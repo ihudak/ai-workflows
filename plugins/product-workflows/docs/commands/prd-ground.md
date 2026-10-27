@@ -465,7 +465,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   sayable. The digest is therefore never passed into `code-grounder`, `design-grounder`, or
   `grounding-verifier`, whose input contracts carry no documentation field. The orchestrator uses
   it twice: as a **lead**, surfacing a page that names a subsystem no resolved repository covers so
-  the operator can add that repository before Phase 5 dispatches; and as a **divergence**, recorded
+  the operator can add that repository before Phase 5 dispatches — one question for every lead, after which an added repository is resolved and pinned like the rest, the cost statement is printed again with the new count, the class floors at SIGNIFICANT once more than one repository is in the set, and the shared-pin check runs again over the whole set; and as a **divergence**, recorded
   in Phase 8. A divergence gets **no identifier of its own** — it names the verified `[CG#n]` it
   diverges from instead, because a divergence is not an answer to a requirement premise, and a new
   prefix would sit permanently unverified in a namespace where an unverified id blocks

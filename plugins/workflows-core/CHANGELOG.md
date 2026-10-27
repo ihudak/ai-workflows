@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.59.0] — 2026-10-26
+
+Take with `dev-workflows` 4.39.2, `product-workflows` 3.47.0 and `docs-workflows` 1.25.0, whose questions this release's wording describes (batch B19).
+
+### Changed
+- `escalation-rules` §0, *A selection carries no text*: a two-option array of a text option and a real alternative — a *Cancel* the prose after it handles, a *Skip*, a way on without the text — is not "a picker built for" the text and stays; only an array with no real alternative is asked as a plain-text question. An alternative no prose handles is to be given its handling, not dropped; a plain-text question may still name its own way out, as *Branch prefix undetected*'s identity variant does (to-fix D13).
+- `prd-format`: `/release-notes` takes the release from `--version` or its Phase 1 question, not "that same grill".
+- `escalation-rules` *key dir not found*, *Required path environment variable unset* and *No repos derivable*: each now says what *Cancel* does — it ends the run, the stop standing — and *Required path environment variable unset* keeps a citer's own exception (`/brd-split`'s *Ground now*, where *Cancel* drops the continuation).
+- `escalation-rules` *Closed-vocabulary pickers*: the missing-reason picker's *Cancel* returns the candidate to the four-option picker and adds no value.
+
+### Fixed
+- `followup-emission` §7: the follow-up preview's `select` option needed text without saying so; it is now `Select some (you'll be prompted for the row numbers)`, followed by one plain-text question for the rows (CORE-B6).
+
 ## [1.58.0] — 2026-10-26
 
 Take with `product-workflows` 3.46.1, whose register stops state row B′'s new finding, and `dev-workflows` 4.39.1 (batch B01).

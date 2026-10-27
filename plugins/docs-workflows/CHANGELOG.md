@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.25.0] — 2026-10-26
+
+Take with `workflows-core` 1.59.0 (batch B19).
+
+### Added
+- `/release-notes` Phase 1 asks the release version, where `--version` was not given, with `["Enter the release version (you'll be prompted)", "File under # Unreleased"]`; Phase 2's plan shows it, and Phase 3 takes it without asking again (DOC-B-B4).
+
+### Fixed
+- `repo-resolution` `resolve-docs-repo`: rung 4's choice takes `epic-picker` *The cap*'s shape — one hit taken, every hit printed, two or three rows or two plus an overflow row, and *Cancel* — and rung 5's question is written out, with a *Cancel*; a *Cancel* at either makes the caller take its own stop route for that case, as `/docs-audit` Phase 0 step 2 relied on (DOC-C-B3).
+- `/docs-brand`: a *Cancel* at Phase 0's rung 4 choice or rung 5 question is a standalone stop with no emitter tail, beside `strip-run-flags`' two; under `--inline` it returns `no branding applied: <reason>`, and the `--inline` contract now requires the caller to pass the repository path.
+- `/document` and `/release-notes`: every *Set SPECS_PATH*, *Re-enter key*, *Specify locations manually* and *Provide the missing input* array now says what its *Cancel* does (to-fix D13); the follow-up preview's restatement names the relabelled `Select some` option (CORE-B6).
+
 ## [1.24.0] — 2026-10-26
 
 **Take with `workflows-core` 1.56.0** (`.claude/rules/plugin-updates-coupling.md`). Post-merge review 87.3 (to-fix D23), settled with the maintainer: a documentation page and a release note are both public, so both recommend documenting what shipped, and both hold the release on the other answer.
