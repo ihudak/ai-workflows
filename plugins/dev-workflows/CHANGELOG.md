@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.48.0] — 2026-10-27
+
+Take with `workflows-core` 1.65.0, whose `implementation-format` §5 merged test this release's pages describe and whose left-behind case its `/implement` and `/conformance` name (to-fix C10).
+
+### Changed
+- `/implement` Phase 1.4 prints, and `/conformance`'s Epic and PRD runs put in *Scope*, a line of its own where §5's merged test passed in its left-behind case: `tip conflicts and origin/<branch> is gone — the merge state rests on the commit subject alone`, beside the existing *tip not compared* line for an older git or a comparison that compared nothing.
+- The `/conformance` page says how the merged test now works: it looks along the branch's own commits, from the recorded work up and at most twenty, and a conflict does not count. The key alone counts only where the clone holds neither the commit nor the branch, where git is too old to compare or a comparison could not be made, and where a pushed local branch can show only a conflict once its remote copy is gone. The `/implement` page names that last case.
+
 ## [4.45.0] — 2026-10-27
 
 Fix batch B21 of the 2026-10-26 review: `/implement` and the agents it dispatches. Its own changes need nothing newer than `workflows-core` 1.59.0; take 1.62.0, which 4.44.0 needs.
