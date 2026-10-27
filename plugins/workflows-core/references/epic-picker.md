@@ -108,9 +108,11 @@ subject, as `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s *overflow r
 step 3 the routes an array leaves out; either way the set is named where the dialog shows it, never
 only in prose printed before the prompt. **A question over a set the run itself produced** — a
 review's findings, the failures a check left, the follow-up tasks a read-back found — names that set
-as its own rule says (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`'s *Findings a review
-leaves open — the offer to apply them*, for a review's findings), and, where no rule says, in the
-question's own text.
+as its own rule says, where the dialog shows it (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`'s
+*Findings a review leaves open — the offer to apply them*, for a review's findings, and
+`${CLAUDE_PLUGIN_ROOT}/references/followup-emission.md` §7, for a follow-up preview), and, where no
+rule says, in the question's own text; a rule that names the set only in prose printed before the
+prompt does not meet this.
 
 **In the Epic pick, the first actionable row carries `(Recommended)`**, whether or not the cap
 applied: the row the default cursor lands on (*The marker, and where it comes from*), ◐ before ○, as

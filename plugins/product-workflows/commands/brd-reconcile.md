@@ -1382,7 +1382,7 @@ both modes; a `conflict` flag the reader raised on the pair is
 shown beside them and is not required. **This picker is put before the re-affirmation test and the
 missing-reason picker**, and they only to the candidate this one leaves to be frozen; a candidate
 the missing-reason picker has already sent back to the customer is not *left on* *Confirm* or
-*Correct it*, and so triggers nothing here. Show the two together, each with its quotation, and put:
+*Correct it*, and so triggers nothing here. Show the two together, each with its quotation, and put — the question's own text quoting both, the earlier first, since every option says which of the two it keeps:
 
 ```
 choices: ["Freeze this one — the earlier candidate is set aside as a conflicting answer, for a human", "Keep the earlier one — this one is set aside as a conflicting answer, for a human", "Ask the customer — freeze neither; both take Ask the customer and the question is left as it stands"]

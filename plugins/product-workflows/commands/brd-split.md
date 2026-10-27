@@ -1460,6 +1460,8 @@ this run's pull request. Grounding a child is possible only once that pull reque
 choices: ["Ground now — the children that gained a row, run here one after another (Recommended) <merge-clause>", "Ground each child later, one run per child — /product-workflows:prd-ground <CHILD-KEY><later-recommended> <merge-clause>", "Stop here — this BRD's own allocation is complete", "Split another BRD"]
 ```
 
+*Ground now* carries a `description` naming each child in that set by its key, so the children it grounds are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*).
+
 **_Ground now_ is the operator electing to ground the children here, in this session, rather than
 retyping a command whose arguments this run already knows.** It runs
 `/product-workflows:prd-ground` on the children chosen below — one complete run each, after this

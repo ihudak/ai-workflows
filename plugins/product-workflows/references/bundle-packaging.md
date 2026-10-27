@@ -872,7 +872,9 @@ citation-resolution check never meets one: a model id is no identifier and no fi
 section covers — the plugin-free scan over the prompt, over the delivery note or over the finished
 bundle (`commands/brd-package.md`'s *Render the customer prompt*, *Render the delivery note* and
 *Assemble the bundle* rule 7), or this check (that phase's rule 8) — prints its grouped report
-(rule 4) and then asks once, over the whole of it:
+(rule 4) and then asks once, over the whole of it, the question's own text naming each hit as the
+report groups it — its token and the file it sits in — since *Ship it* ships them as they stand
+(`workflows-core:epic-picker` *The cap*):
 
 ```
 choices: ["Ship it — these are the customer's own words and naming, left exactly as they wrote them (Recommended)", "Hold the package — hand nothing off until the customer has seen these"]

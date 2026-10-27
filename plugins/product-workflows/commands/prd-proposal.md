@@ -340,7 +340,7 @@ calendar:
 - **Present** — **show it back for confirmation, every run, never read silently.** A productivity
   basis captured once and never revisited silently mis-scales every later proposal, which is the
   second of the two limits `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §13 states:
-  `choices: ["Use it as shown (Recommended)", "Correct a field (you'll be prompted)", "Re-grill the whole profile"]` —
+  `choices: ["Use it as shown (Recommended)", "Correct a field (you'll be prompted)", "Re-grill the whole profile"]`, *Use it as shown* carrying a `description` naming each field of the profile with its value, so the basis the proposal prices against is named in the dialog whether or not it was printed (`workflows-core:epic-picker` *The cap*) —
   *Correct a field* asks in plain text which field to correct and its new value.
 - **`--profile`** — re-grill it in full regardless of what is on disk, then continue the run.
 

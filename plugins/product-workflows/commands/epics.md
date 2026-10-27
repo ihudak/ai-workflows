@@ -572,6 +572,7 @@ If code scan is ON:
    ```
    choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll be prompted for the slug and the path)", "Cancel"]
    ```
+   *Use the preferred clones* carries a `description` naming each such slug with the clone it takes, and *Use another clone for a repository* one naming each such slug with its alternates, so they are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*); a typed slug is resolved against those, never parsed out of the answer.
    *Use another* asks in plain text for `<slug> <path>`, one per change. A path that is not one of that slug's `alternates` is refused with one line naming them, and the question asked again. Each path named becomes the slug's resolved path, the clone it replaces taking its place among the `alternates`. *Cancel* → stop and summarise what was planned. No slug with `alternates` → nothing is asked.
 
 3. If the final resolved repo list is empty (every repo was skipped or missing), escalate per the `No repos derivable — /epics` rule in `workflows-core:escalation-rules`:

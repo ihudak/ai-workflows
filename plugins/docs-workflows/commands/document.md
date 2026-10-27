@@ -506,6 +506,7 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
      ```
      choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll be prompted for the slug and the path)", "Cancel"]
      ```
+     *Use the preferred clones* carries a `description` naming each such slug with the clone it takes, and *Use another clone for a repository* one naming each such slug with its alternates, so they are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*); a typed slug is resolved against those, never parsed out of the answer.
      *Use another* asks in plain text for `<slug> <path>`, one per change. A path that is not one of that slug's `alternates` is refused with one line naming them, and the question asked again. Each path named becomes the slug's `repo_path` and its **chosen clone**, the clone it replaces taking its place among the `alternates`; then key discovery runs again (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*), which scans a slug's chosen clone and passes every other as `--owner-of` — on every later run in this run too — so the scan and the diff read the same clone. *Cancel* aborts the run, as the missing-repository gate's *Cancel* below does. Then the rest of this step runs. No slug with `alternates` → nothing is asked; after a re-scan below, it is asked again for a slug whose `alternates` it has not shown yet.
    - **`missing` is empty** — print one line and continue with no gate:
      ```
@@ -649,7 +650,7 @@ A target with no image references contributes nothing.
 
 ### Merged prompt
 
-Present both lists — "Found `<N>` add-list candidate(s) (`<count>` from specs scan, `<count>` from folder attachments, `<count>` from the project folder)" and "Found `<M>` existing image(s) across `<K>` edited page(s) to review for staleness" — then ask:
+Present both lists — "Found `<N>` add-list candidate(s) (`<count>` from specs scan, `<count>` from folder attachments, `<count>` from the project folder)" and "Found `<M>` existing image(s) across `<K>` edited page(s) to review for staleness" — then ask, the question's own text carrying both lines and naming each edited page with the number of its images, since *Add-list only — existing images are current* declares them current unreviewed (`workflows-core:epic-picker` *The cap*):
 ```
 choices: ["Review both lists item by item (Recommended)", "Add-list only — existing images are current", "Nothing to do — no image work this run", "Cancel"]
 ```
@@ -658,9 +659,10 @@ When both lists are empty, skip presenting this prompt — there is nothing to s
 - **Review both lists item by item**:
   - **Add list**, if non-empty, asks:
     ```
-    "Found <N> candidate image(s): <count> from specs scan, <count> from folder attachments, <count> from the project folder. How would you like to source screenshots?"
+    "Found <N> candidate image(s): <count> from specs scan, <count> from folder attachments, <count> from the project folder: <every deduped candidate, one per line — its path and its source>. How would you like to source screenshots?"
     choices: ["Use all auto-discovered + add manual paths (you'll be prompted) (Recommended)", "Use all auto-discovered only", "Select a subset (you'll pick per candidate)", "Provide screenshot paths manually only (you'll be prompted)"]
     ```
+    The question's own text names every deduped candidate, its path and source, since both *Use all* options take them all (`workflows-core:epic-picker` *The cap*).
     - **Use all auto-discovered + add manual** → take every deduped candidate, then prompt for additional free-text absolute paths to append.
     - **Use all auto-discovered only** → take every deduped candidate; no manual prompt.
     - **Select a subset** → present the deduped candidates and let the user pick which to keep.
@@ -832,6 +834,7 @@ Every git call in this phase, and in Phase 6.3's commit and Phase 8.5, runs as `
    ```
    choices: ["Stash changes and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff", "Cancel"]
    ```
+   The question's own text names each dirty path, one `git -C <docs_repo_path> status --short` line each, since both *Stash* and *Proceed anyway* turn on them (`workflows-core:epic-picker` *The cap*).
    A stash runs `workflows-core:escalation-rules` § *Stashing the user's changes*: named, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends.
    **Cancel** stops the run; where Phase 0 step 4(c) committed a generated profile, it ends with that step's left-on-a-branch notice.
 
@@ -939,7 +942,7 @@ Then act on the return:
 
   After `doc-fixer` completes, **check its `Stop condition flag`**: `docs-style-checker` maps a linter's own blocking failure to `BLOCKER` (`agents/docs-style-checker.md`), so this dispatch can return `NEEDS HUMAN` — the fixer deferred a blocking violation it could not safely fix. On `NEEDS HUMAN`, surface each deferred BLOCKER with the fixer's reason and ask the user how to resolve it — fix by hand and re-run, or skip the check. A silent re-run only reports the same violation again. The `style_check` gate row stays open until that answer lands and then records its outcome per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` — `RAN` after a hand fix and re-run, `SKIPPED_BY_USER` with the choice quoted verbatim if skipped. Only on `CLEAR` re-run the linter once: dispatch `docs-style-checker` again with this phase's own `docs-style-checker` brief — the dispatch at the top of the phase, before the ledger rows — unchanged, `files` naming the same pages; never a second `doc-fixer`.
 
-  If violations remain after the re-run:
+  If violations remain after the re-run, ask, the question's own text naming each remaining violation — its file, line and rule — since *Proceed to review anyway* goes on over them (`workflows-core:epic-picker` *The cap*):
   ```
   choices: ["Proceed to review anyway — reviewer may still PASS", "Show remaining violations and let me fix manually", "Cancel"]
   ```
@@ -968,7 +971,7 @@ Resolve the builds to run, most specific first (`${CLAUDE_PLUGIN_ROOT}/reference
 - **Otherwise** → `profile.commands.per_space.<space>.build`, else the flat `profile.commands.build`, run for every space in the **verification set** (`render-verification.md` §2): every space whose `content_root` holds at least one affected page.
 
 Run each from `docs_repo_path`, the top level every command the profile records runs from (Phase 0 step 2). Record **each build on its own** — its `builds[]` `id` (or, without `builds[]`, its space), its command, its exit code and, on a failure, its output — so a failure names the build that failed. Do NOT re-run the Phase 6.4 prose linter. Classify each failing build:
-- **Content failure** (the template won't compile, unresolved snippet include, broken postid/internal link, malformed token) → invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`; Severities: BLOCKER and MAJOR), handing it **the failing build's output** as its `Reviewer or style-checker output` — each failing build under its `id` (or space), with its command and its output verbatim, every error it reports a BLOCKER at the file it names — then re-run every build this step resolved, once. If failures remain:
+- **Content failure** (the template won't compile, unresolved snippet include, broken postid/internal link, malformed token) → invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`; Severities: BLOCKER and MAJOR), handing it **the failing build's output** as its `Reviewer or style-checker output` — each failing build under its `id` (or space), with its command and its output verbatim, every error it reports a BLOCKER at the file it names — then re-run every build this step resolved, once. If failures remain, ask, the question's own text naming each failing build — its `id` or space and the first error it reports — since *Proceed to smoke-check anyway* goes on over them (`workflows-core:epic-picker` *The cap*):
   ```
   choices: ["Proceed to smoke-check anyway", "Show remaining and fix manually", "Cancel"]
   ```
@@ -1269,6 +1272,8 @@ Otherwise present one row per proposal:
 ```
 choices: ["Skip — report only (Recommended)", "Apply all", "Choose per proposal", "Cancel"]
 ```
+
+The question's own text names every proposal — its file and the rule or entry in one line — since *Apply all* and *Choose per proposal* turn on them, whether or not the table was printed (`workflows-core:epic-picker` *The cap*); each per-proposal question names its own.
 
 - **Skip — report only** — apply nothing; every proposal's disposition is `proposed` for the Phase 9 report.
 - **Apply all** — apply every proposal via the mechanism below; every proposal's disposition is `applied-uncommitted`.
@@ -1811,6 +1816,8 @@ Otherwise present one row per proposal:
 ```
 choices: ["Skip — report only (Recommended)", "Apply all", "Choose per proposal", "Cancel"]
 ```
+
+The question's own text names every proposal — its file and the rule or entry in one line — since *Apply all* and *Choose per proposal* turn on them, whether or not the table was printed (`workflows-core:epic-picker` *The cap*); each per-proposal question names its own.
 
 - **Skip — report only** — apply nothing; every proposal's disposition is `proposed` for the Phase 5 report.
 - **Apply all** — apply every proposal via the mechanism below; every proposal's disposition is `applied-uncommitted`.

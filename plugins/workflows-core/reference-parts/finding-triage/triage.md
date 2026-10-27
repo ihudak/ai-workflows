@@ -121,7 +121,9 @@ triage. The disposition, in order:
    own word.
 3. **Surface it and let the user settle the verdict.** Report the verdict, the fact that nothing
    survived, every dismissal with its reason and every unverified finding with what would settle it,
-   then ask:
+   then ask, the question's own text carrying the verdict and naming each dismissal and each
+   unverified finding, one line each, since every option settles the verdict over them
+   (`${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap*):
    ```
    choices: ["Proceed as if the verdict were PASS — every disposition is recorded (Recommended)", "Re-review, supplying every disposition's reason", "Keep the verdict and stop for a human decision", "Cancel"]
    ```

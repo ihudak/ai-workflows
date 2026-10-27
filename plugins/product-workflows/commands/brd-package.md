@@ -1742,7 +1742,7 @@ alongside the same register. So the honest offer is the state this run actually 
 choices: ["Stop here — the package is written and, if you handed it off, committed", "Send it — the delivery note, with whatever has to hold first where anything does", "Reconcile the review once it comes back — /product-workflows:brd-reconcile <BRD-KEY> <review-clause> <merge-clause>", "Package another BRD or slice"]
 ```
 
-*Send it*'s `description` names what it turns on, where the dialog shows it whether or not the note and the delivery-route item were printed (`workflows-core:epic-picker` *The cap*): the route; on the archive route, the archive command; on the repository route, the condition the delivery-route item states — the branch and the pull request whose merge the note waits on, each path declared but staged by nothing, or, where the handoff pushed nothing, what must happen first.
+*Send it*'s `description` names what it turns on, where the dialog shows it whether or not the note and the delivery-route item were printed (`workflows-core:epic-picker` *The cap*): the note it sends, `<BRD-dir>/customer-delivery-note-<YYYYMMDD>.md` by its path; the route; on the archive route, the archive command; on the repository route, the condition the delivery-route item states — the branch and the pull request whose merge the note waits on, each path declared but staged by nothing, or, where the handoff pushed nothing, what must happen first.
 
 `<review-clause>` is `@<review-file>` on the archive route, the review coming back as a file whose
 path only the operator will know; on the repository route it is `(once you merge the customer's
