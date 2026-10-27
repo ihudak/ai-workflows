@@ -40,8 +40,7 @@ unfollowable.
 2. **A fifth option must go somewhere else, not away.** Where an offer has more routes than four,
    `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s *overflow rule* applies: the prose carries
    every route, the array carries the likeliest, and the run says the list is longer than the prompt
-   in the question's own text, after `Not shown as an option:`, naming every option the array leaves
-   out; it never says so only in text printed before the question.
+   where the dialog shows it, as that *overflow rule*'s step 3 says.
 
 **A selection carries no text.** Choosing an option returns its label and nothing else. An option
 that needs text from the operator — a name, a path, a key, a reason, a correction — is labelled
@@ -733,9 +732,11 @@ as needing one, with the decision it needs in place of the edit.
   fix cycle, as the grill asks, and apply the answer with the fixes; every other command leaves it
   open, as *Findings a review leaves open — the offer to apply them* says of such a finding.
 - **Fix the BLOCKERs only** — the findings stay open and wait for the re-review: its offer carries
-  them, as *Findings a review leaves open — the offer to apply them* says of every finding of the
-  first review still open, and a re-review that returns `BLOCK`, or stays blocked where the command
-  triages, makes no offer, so they stay in the final report and the pull request.
+  them where it makes one, as *Findings a review leaves open — the offer to apply them* says of every
+  finding of the first review still open. A finding that needs a decision makes no offer on its own,
+  and goes into the artifact as *A finding left open that needs a decision is recorded in the
+  artifact* says. A re-review that returns `BLOCK`, or stays blocked where the command triages,
+  makes no offer, so the findings stay in the final report and the pull request.
 
 A free-text answer naming some of the findings folds those in, and leaves the rest open.
 
