@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.59.2] — 2026-10-27
+
+Take with `dev-workflows` 4.41.0, whose `/conformance` walk this release's picker row describes (batch B05).
+
+### Fixed
+- `escalation-rules`' closed-vocabulary list names the `/conformance` decision picker's cluster form: one of the three decisions for every item of a cluster, *Split* into a question per item, or a typed `Cancel`, which ends the run — never a fourth decision; and *No operator is trapped* says the cluster form is the one form of that picker whose `Cancel` is the free-text answer the walk's preamble names, its four slots being full (FBB-B26).
+
 ## [1.59.1] — 2026-10-27
 
 Take with `dev-workflows` 4.40.0 and `product-workflows` 3.48.0, whose *Set SPECS_PATH* sites this release's citer list names (batch B20).

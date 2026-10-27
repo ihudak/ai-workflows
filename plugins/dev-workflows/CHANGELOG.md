@@ -5,7 +5,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.41.0] — 2026-10-27
+
+Fix batch B05 of the 2026-10-26 review: `/ready`, `/design` and `/conformance`. Take with `workflows-core` 1.59.2, whose `escalation-rules` lists `/conformance`'s new cluster form.
+
+4.40.0 was published twice under one number — batch B22's section (2026-10-26), then batch B20's (2026-10-27) — so a machine that updated between the two holds B22's changes without B20's; this release carries both, and updating to it brings that machine level.
+
+### Fixed
+- **`/ready`'s dirty-checkout question no longer fires on every run in session-branch mode, and its re-check can pass** (DEV-B1, reproduced: in a throwaway repository with `workflows.sessionBranch=true`, a cost file committed to `session/<id>` came back as `?? …/dev-workflows/` after `lift` and `put-back` on a clean `main`, every time). Phase 0 step 3 reads `status --porcelain -z --untracked-files=all` and classifies each path by `specs-repo-git` §2.1: a session file, wherever session-branch mode is on — with or without a resolved identity — and the command's own `_readiness.md` at the resolved scope are not dirt. The question names the paths that made the tree dirty.
+- **`/ready` no longer says `specs-preflight` "creates no branch, a hard invariant"** (DEV-B2): its three sites say it creates no deliverable branch, and that in session-branch mode its flush may create `session/<identity>` (`specs-repo-git` §8.2); the two "only branch `/ready` ever creates" sentences say *deliverable* branch, and the terminal step's says where its session commit lands in that mode.
+- **`/design`'s *Next Epic* loop re-enters Phase 0 step 5, Phase 1 step 2 and Phase 1.5** (DEV-B3): each Epic the loop takes is offered *Resume* or *Start fresh* where it has a design session of its own, and is classified and model-gated afresh, so a `HIGH-RISK` Epic after a `MODERATE` one meets the HARD gate. In the style of `/specify`'s fix of PRD2-SPEC-B1 (product-workflows 3.37.0).
+- **`DESIGN_NO_SPEC`'s message no longer prints an author's note** (DEV-B5), and the `/design` docs page quotes the message the command prints (DEV-B4). The `/ready` and `/conformance` pages name `READY_FOCUS_NOT_FOUND` and `CONFORMANCE_ARD_NOT_ON_MAIN`.
+- **`/ready`, `/design` and `/conformance` find a document or an Epic that merged after their branch was cut** (to-fix D3): each lists the PRD folder, and `/ready` and `/design` its flat specification, on `<default-ref>` as well as in the working tree, as `ard-resolution` does for the ARD, so such a document reaches `require-on-main` and meets row B′ instead of reading as missing or leaving an Epic out unseen. The same class in other commands is to-fix D24.
+- **`/design`'s interface fan-out brief carries what each take must keep** (FBB-B24): `problem_frame` quotes the specification's `[Uxx]`/`[ACxx]`/`[TCxx]` lines the interface serves, lists the public surface that must survive with its callers, and names the grill-settled values the interface depends on; each take is checked against every item before the comparison, and one that breaks an item is never recommended as it stands.
+- **The `conformance-tracer` handoff takes files on a large run** (FBB-B28): `requirements_path` in place of the inline list above 30 requirements per repository, and an `output_path` the tracer always writes and the command reads, never the transcript. Evidence is an exact `file:line` or a tight range — every line part of the code relied on, at most 20 lines.
+
+### Added
+- **`/design` lists framework defaults** (FBB-B23): where the stack auto-configures behaviour a decision rests on — Spring's `open-in-view` is the example — `design.md`'s `### Framework defaults` lists each, kept or overridden, with where it was read; the scanner brief asks for them and `design-reviewer` flags one missing.
+- **A ratio names who feeds it** (FBB-B25): `design-format`'s rollback signal, and any check or baseline that is a ratio, names the callers in its numerator and its denominator, every other caller feeding the same counter, and the window in which old and new clients coexist; `design-reviewer` checks it.
+- **`/conformance` asks once per shared cause** (FBB-B26): discrepancies whose evidence shares one location — the same `file:line` at one commit, or overlapping ranges in one file — are asked as one cluster naming that location, each item in one cluster at most and never a chain of overlaps, which can be split into a question per item or ended by a typed `Cancel`; a `Cancel` in a call leaves its other answers undecided, and a PRD run settles the Epic carrying a cluster's fix once, queuing one follow-up per Epic where they differ; the record keeps one entry per requirement, each with a new `shared-cause:` field, and a cluster decided *Fix the code* queues one follow-up.
+- **`/conformance` states its walk's cadence** (FBB-B27): up to four questions in one call, as Phase 1 does; the rationale rides on the answer's notes or free text, with one follow-up prompt only for an *Accept*, or a PRD run's overrule of a Dev decision, given without one.
+- **`_conformance.md` lists its `not-checkable` requirements** (FBB-B29): an optional `## Not checkable` section with the tracer's `reason`, which a later PRD run reads to trace each in full; a record written before 4.41.0 has only the count, which the same rule covers.
+
 ## [4.40.0] — 2026-10-27
+
+Shipped under the same number as the 2026-10-26 section below, batch B22's; 4.41.0 carries both.
 
 Take with `workflows-core` 1.59.1 (batch B20).
 
@@ -14,6 +38,7 @@ Take with `workflows-core` 1.59.1 (batch B20).
 
 ### Fixed
 - The environment reference page lists `/epics` among the commands that stop on an unset `SPECS_PATH` and offer to set it, where it said `/epics` carried no such stop (PRD-B2).
+
 ## [4.40.0] — 2026-10-26
 
 Fix batch B22 of the 2026-10-26 review: the references `/vuln` and `/upgrade` consult, install-time code, and the two docs pages. Needs nothing newer than `workflows-core` 1.57.1.
