@@ -564,11 +564,20 @@ is the only command that writes one at all.
     selecting it rewrites that Epic's specification behind Phase 5's *Existing specification* guard —
     every existing copy archived first, or a stop where it is published. In the prose list, label this
     row *done — selecting it rewrites it behind an archive*, the ● rule `epic-picker` defers to.
-  Default cursor = the first actionable row (in-progress before not-started). Render per
+  Default cursor = the first actionable row (in-progress before not-started), and that row carries
+  `(Recommended)` — **save on a multi-component PRD with no PRD-level `specification.md`**, which
+  `multi-component-test` decides on the PRD folder as in the one-Epic bullet above: there the
+  broad-spec choice carries it, as *"Author one broad PRD-level spec instead (Recommended)"*, and no
+  Epic row does, since that spec is what `/epics` splits and what `/implement` asks for, as the
+  one-Epic and zero-Epic branches say on the same shape. Where every Epic is ● and that exception does
+  not hold, no option carries it, and the question's own text says so. Render per
   `Skill(skill: "workflows-core:reference", args: "epic-picker")`: every Epic listed as prose above the prompt, and
   the array carrying the explicit **"Author one broad PRD-level spec instead"** choice beside the Epics —
   every Epic row (marker + key + title) where three or fewer stand, and otherwise **at most two** Epic
-  rows and *"Another Epic from the list above (you'll be prompted for its key)"*. That file's *The cap* section is why the Epic rows are the ones that give way: the
+  rows and *"Another Epic (you'll be prompted for its key)"*, whose `description` names every Epic the
+  array leaves out — marker, key and title each, in the picker's order — so a left-out Epic is named
+  in the dialog whether or not the prose list was printed; a typed key is resolved against the keys
+  the array and that description listed. That file's *The cap* section states the marker, the description and the typed-key rules, and is why the Epic rows are the ones that give way: the
   broad-spec choice is the alternative to picking any Epic at all, so hiding it would force a choice
   this command means to leave open.
   - On selecting an Epic → set `focus_key` = that Epic; re-point the feature folder to its per-Epic
@@ -864,7 +873,7 @@ Handle per-repo status after the batch returns:
   grill (e.g. answering a question from the scan instead of asking the user).
 - `REPO_MISSING` — should not happen at this stage (Phase 3 already checked). If it does, escalate per
   the `Repo missing (after resolution)` rule in `workflows-core:escalation-rules`.
-- `DIRTY_TREE` — escalate per the `Dirty working tree` rule in `workflows-core:escalation-rules`, which says what each choice does:
+- `DIRTY_TREE` — escalate per the `Dirty working tree` rule in `workflows-core:escalation-rules`, which says what each choice does and that the question's own text names the repository and each dirty path:
   ```
   choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]
   ```
@@ -994,8 +1003,18 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
   > contracts: [the `contracts` rows and `components` Phase 2.5 returned, on a PRD-level spec (`focus_key` null) of a multi-component PRD (`workflows-core:components` §3) — the run Phase 5's crossing-criterion rule binds; omit otherwise]"
 
 2. **Act on the verdict:**
-   - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `specification.md` inline —
-     there is no delegated writer to re-dispatch), read the fix against what it overlaps — every
+   - **`BLOCK`** — where the `BLOCK` review also leaves open at least one `MAJOR`, `MINOR` or `NIT`
+     finding whose fix is only an edit, first ask once whether to fold them into the fix cycle, per
+     the `A BLOCK review's other findings — folded into its fix cycle` rule in
+     `workflows-core:escalation-rules`, the question's own text listing each finding with its
+     severity, where it is and what the edit would change, and marking each open finding whose fix
+     needs a product decision, which stays open whatever the answer:
+     ```
+     choices: ["Fold them into this fix cycle (Recommended)", "Fix the BLOCKERs only — the rest wait for the re-review"]
+     ```
+     Then fix the BLOCKER findings, and the findings folded in with them (the orchestrator/grill
+     edits `specification.md` inline — there is no delegated writer to re-dispatch), read the fix
+     against what it overlaps — every
      criterion and test case it adds or changes against everything that overlaps it, as
      `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it — the trigger's
      other outcomes and the criteria importing it among them — per the `An inline fix is read against what it overlaps` rule in
@@ -1005,8 +1024,10 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
      ```
      choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]
      ```
-     Manual fix notes are read against what they overlap before the handoff, as the fix cycle was,
-     since no review follows them. "Defer" means appending a `## Refinement notes` section to
+     Manual fix notes are drafted or asked for as the
+     `Manual fix notes — the run drafts them` rule in `workflows-core:escalation-rules` says, and read
+     against what they overlap before the handoff, as the fix cycle was, since no review follows
+     them. "Defer" means appending a `## Refinement notes` section to
      `specification.md` with one plain `- ` bullet per deferred finding (mirrors `/epics`'
      Epic-refinement note), in addition to the final report — never a `- [ ]` item, which `pre-lint`
      would count against the header's `Open questions` and the format would not. A deferred finding
@@ -1221,7 +1242,7 @@ was not, why.
 
 ### Next step
 
-End the report with a `### Next step` recommendation per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pe")`, the *PE — breakdown & specification* lane (guidance only — never auto-invoked). `<SPEC-KEY>`, used below, is the key of the folder this run's `specification.md` landed in: `focus_key` where it is set, `<PRD>` (the resolved PRD folder's own key, never a typed `@<path>`) where it is null. **Epic-level spec** (`focus_key` is set — the address resolved an `EPIC-` folder, or Step A chose one under a PRD address, by its single-Epic auto-select or its picker) → hand to Dev → `/dev-workflows:design <EPIC>` `<merge-clause>`, which will not start until this spec is on the default branch — on every path, since `workflows-core:phase-handoff` §3.4's `/design` row is a stop even for a spec that reached no branch — and the **Epic fan-out** `/product-workflows:specify <SIBLING-EPIC>` for a sibling Epic (breadth), which waits on nothing this run produced and carries no clause; **PRD-level spec** (`focus_key` is null — a broad spec of the `PRD-` folder itself) → `/product-workflows:epics <PRD>` (PE) `<merge-clause>`, which stops rather than skipping wherever this spec reached a branch (§3.3 rows D/E) and, wherever it reached none, skips exactly as it did before (§3.4's `/epics` row) — save on a multi-component PRD, where `/epics` Phase 2.7 asks for that spec instead, offering to split without it (`workflows-core:components` §6) — and, to design this spec whole rather than through Epics, `/dev-workflows:design <PRD>` (Dev) `<merge-clause>`, which `/dev-workflows:design`'s Phase 0 takes as one design of the flat `specification.md`; on a multi-component PRD it does so only as its *Design across components anyway* override and only where the PRD folder holds no Epic folder — with Epics there it designs them instead, so name it there as designing the Epics, not this spec. If the run BLOCKED or left open `- [ ]` items, recommend resolving those first.
+End the report with a `### Next step` recommendation per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pe")`, the *PE — breakdown & specification* lane (guidance only — never auto-invoked). `<SPEC-KEY>`, used below, is the key of the folder this run's `specification.md` landed in: `focus_key` where it is set, `<PRD>` (the resolved PRD folder's own key, never a typed `@<path>`) where it is null. **Epic-level spec** (`focus_key` is set — the address resolved an `EPIC-` folder, or Step A chose one under a PRD address, by its single-Epic auto-select or its picker) → hand to Dev → `/dev-workflows:design <EPIC>` `<merge-clause>`, which will not start until this spec is on the default branch — on every path, since `workflows-core:phase-handoff` §3.4's `/design` row is a stop even for a spec that reached no branch — and the **Epic fan-out** `/product-workflows:specify <SIBLING-EPIC>` for a sibling Epic (breadth), which waits on nothing this run produced and carries no clause; **PRD-level spec** (`focus_key` is null — a broad spec of the `PRD-` folder itself) → `/product-workflows:epics <PRD>` (PE) `<merge-clause>`, which stops rather than skipping wherever this spec reached a branch (§3.3 rows D/E) and, wherever it reached none, skips exactly as it did before (§3.4's `/epics` row) — save on a multi-component PRD, where `/epics` Phase 2.7 asks for that spec instead, offering to split without it (`workflows-core:components` §6) — and, to design this spec whole rather than through Epics, `/dev-workflows:design <PRD>` (Dev) `<merge-clause>`, which `/dev-workflows:design`'s Phase 0 takes as one design of the flat `specification.md`; on a multi-component PRD it does so only as its *Design across components anyway* override and only where the PRD folder holds no Epic folder — with Epics there it designs them instead, so name it there as designing the Epics, not this spec, and only where an Epic's `specification.md` is on the default branch, since `/dev-workflows:design` stops without one: on the PRD's address its Phase 0 step 4 stops with the excluded-count report, naming `/product-workflows:specify <PRD>` for an Epic with no `specification.md` and the merge of the branch or pull request for one whose spec is not yet merged (the *PE — breakdown & specification* lane); where no Epic's is, name no `/dev-workflows:design <PRD>` at all. If the run BLOCKED or left open `- [ ]` items, recommend resolving those first.
 
 **One precondition governs every `/product-workflows:epics` option above, on both routes.** `/epics` accepts
 a folder holding a `prd.md` that asserts `kind: prd` and refuses one that does not

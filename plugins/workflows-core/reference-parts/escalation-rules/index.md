@@ -34,7 +34,9 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`
+- `A BLOCK review's other findings — folded into its fix cycle` → `review`
 - `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` → `review`
+- `Manual fix notes — the run drafts them` → `review`
 - `Review verdict BLOCK (unresolved after one fix cycle) — /document` → `review`
 - `Review verdict BLOCK (unresolved after one fix cycle) — /epics` → `review`
 - `The offer to apply what a review leaves open` → `review`

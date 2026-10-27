@@ -174,7 +174,7 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
 
    - **(a) cwd with signals (the cwd-preferred rung).** Run `git rev-parse --show-toplevel` from cwd to resolve the git root. If it succeeds **and** ≥ 1 docs signal is present there → `docs_repo_path` = that git root and proceed silently. This keeps every downstream phase that assumes cwd correct.
    - **(a.5) `$DOCS_PATH` hint.** Else, resolve `${DOCS_PATH:-/workspace/docs}`. If it exists and carries **≥ 1 docs signal** (the same signal set as (a)) **or** an in-repo `.dev-workflows/docs-profile.yml`, set `docs_repo_path` = that path and proceed. In an AI container the docs clone is mounted here, so this is the common fast path when cwd carries no docs signals. The check is signal-based, never keyed to a particular repository's name or file layout.
-   - **(b) Search for a docs repo.** Else, look under `${REPOS_PATH:-/workspace}` (single dir or colon-separated list) for a git root that carries an in-repo `.dev-workflows/docs-profile.yml` **or** ≥ 1 docs signal from (a)'s set. If exactly one matches → `docs_repo_path` = that path. If several match, list them and ask which to use (`choices` array of 2–4, a profiled repo recommended first; where more repos match than fit, list them all as prose and let the array carry the three likeliest plus one option naming the rest, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer overflow")`'s *overflow rule*). Discovery is by signal, never by repository name — no repo name is special-cased.
+   - **(b) Search for a docs repo.** Else, look under `${REPOS_PATH:-/workspace}` (single dir or colon-separated list) for a git root that carries an in-repo `.dev-workflows/docs-profile.yml` **or** ≥ 1 docs signal from (a)'s set. If exactly one matches → `docs_repo_path` = that path. If several match, list them and ask which to use (`choices` array of 2–4, a profiled repo recommended first; where more repos match than fit, list them all as prose and let the array carry the three likeliest plus *Another repository (you'll be prompted for its path)*, that option's `description` naming every repo the array leaves out, after `Not shown as an option:` — choosing it asks for the path in plain text, and a typed answer, there or in the harness's free-text option, is resolved against the matching repos, never parsed out of the answer — per `workflows-core:epic-picker` *The cap* and `Skill(skill: "workflows-core:reference", args: "next-phase-offer overflow")`'s *overflow rule*). Discovery is by signal, never by repository name — no repo name is special-cased.
    - **(c) Ask.** Else, ask:
      ```
      "No product-docs-repo signals in this working tree and no docs repo found under ${REPOS_PATH:-/workspace}. The signals I checked in cwd:
@@ -506,6 +506,7 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
      ```
      choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll be prompted for the slug and the path)", "Cancel"]
      ```
+     *Use the preferred clones* carries a `description` naming each such slug with the clone it takes, and *Use another clone for a repository* one naming each such slug with its alternates, so they are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*); a typed slug is resolved against those, never parsed out of the answer.
      *Use another* asks in plain text for `<slug> <path>`, one per change. A path that is not one of that slug's `alternates` is refused with one line naming them, and the question asked again. Each path named becomes the slug's `repo_path` and its **chosen clone**, the clone it replaces taking its place among the `alternates`; then key discovery runs again (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*), which scans a slug's chosen clone and passes every other as `--owner-of` — on every later run in this run too — so the scan and the diff read the same clone. *Cancel* aborts the run, as the missing-repository gate's *Cancel* below does. Then the rest of this step runs. No slug with `alternates` → nothing is asked; after a re-scan below, it is asked again for a slug whose `alternates` it has not shown yet.
    - **`missing` is empty** — print one line and continue with no gate:
      ```
@@ -524,6 +525,7 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
 
      choices: ["Mount the missing repo(s) now — I'll wait, then re-scan (Recommended)", "Proceed without them — PRD-only for the missing repos", "Cancel", "Specify a different absolute path for a missing repo (you'll be prompted)"]
      ```
+     *Mount the missing repo(s) now*, *Proceed without them* and *Specify a different absolute path for a missing repo* each carry a `description` naming every missing slug, in the order printed, so the missing set is named in the dialog whether or not that block was printed (`workflows-core:epic-picker` *The cap*); a slug typed for *Specify a different absolute path* is resolved against those, never parsed out of the answer.
      Choice semantics follow the `Repo unresolved (zero matches) — /document` rule in `workflows-core:escalation-rules`, applied to the whole missing set at once:
      - **Mount now & re-scan** (≈ the rule's "I'll clone it — wait") — pause until the user confirms the clones are present under `$REPOS_PATH`, then rebuild the map and run key discovery again (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*) and re-render this gate. Loop until `missing` is empty or the user picks another option. This is how the operator gets per-repo control: mount whichever repos are available, re-scan, then choose "Proceed" for whatever remains.
      - **Proceed without them** (≈ the rule's "Skip and continue without its refs") — record every currently-missing repo's refs as `unresolved`, out of scope; continue. Identical downstream state to the previous per-slug skip.
@@ -559,7 +561,7 @@ After the batch returns, handle each per-repo status:
 
 - `OK` / `PARTIAL` — store the output, continue.
 - `REPO_MISSING` — should not happen at this stage (Phase 4 already checked). If it does, escalate per the `Repo missing (after resolution)` rule in `workflows-core:escalation-rules`.
-- `DIRTY_TREE` — escalate per the `Dirty working tree` rule in `workflows-core:escalation-rules`, which says what each choice does:
+- `DIRTY_TREE` — escalate per the `Dirty working tree` rule in `workflows-core:escalation-rules`, which says what each choice does and that the question's own text names the repository and each dirty path:
   ```
   choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]
   ```
@@ -595,7 +597,7 @@ Handle the return:
   ```
   choices: ["Accept all proposed locations (Recommended)", "Adjust individual locations (you'll be prompted per item)", "Cancel"]
   ```
-  *Adjust individual locations*, here and below, walks the targets one at a time and asks in plain text for each one's correction — its `path`, `kind` or `section`, or to drop it.
+  *Accept all proposed locations* and *Adjust individual locations*, here and below, each carry a `description` naming every proposed target by its `path`, in the order returned, so the targets are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*). *Adjust individual locations*, here and below, walks the targets one at a time and asks in plain text for each one's correction — its `path`, `kind` or `section`, or to drop it.
 - **`status: LOW_CONFIDENCE`** — display `confidence_notes` alongside the targets so the user sees what was ambiguous:
   ```
   choices: ["Adjust individual locations (you'll be prompted per item) (Recommended)", "Accept all proposed locations", "Cancel"]
@@ -648,7 +650,7 @@ A target with no image references contributes nothing.
 
 ### Merged prompt
 
-Present both lists — "Found `<N>` add-list candidate(s) (`<count>` from specs scan, `<count>` from folder attachments, `<count>` from the project folder)" and "Found `<M>` existing image(s) across `<K>` edited page(s) to review for staleness" — then ask:
+Present both lists — "Found `<N>` add-list candidate(s) (`<count>` from specs scan, `<count>` from folder attachments, `<count>` from the project folder)" and "Found `<M>` existing image(s) across `<K>` edited page(s) to review for staleness" — then ask, the question's own text carrying both lines and naming each edited page with the number of its images, since *Add-list only — existing images are current* declares them current unreviewed (`workflows-core:epic-picker` *The cap*):
 ```
 choices: ["Review both lists item by item (Recommended)", "Add-list only — existing images are current", "Nothing to do — no image work this run", "Cancel"]
 ```
@@ -657,9 +659,10 @@ When both lists are empty, skip presenting this prompt — there is nothing to s
 - **Review both lists item by item**:
   - **Add list**, if non-empty, asks:
     ```
-    "Found <N> candidate image(s): <count> from specs scan, <count> from folder attachments, <count> from the project folder. How would you like to source screenshots?"
+    "Found <N> candidate image(s): <count> from specs scan, <count> from folder attachments, <count> from the project folder: <every deduped candidate, one per line — its path and its source>. How would you like to source screenshots?"
     choices: ["Use all auto-discovered + add manual paths (you'll be prompted) (Recommended)", "Use all auto-discovered only", "Select a subset (you'll pick per candidate)", "Provide screenshot paths manually only (you'll be prompted)"]
     ```
+    The question's own text names every deduped candidate, its path and source, since both *Use all* options take them all (`workflows-core:epic-picker` *The cap*).
     - **Use all auto-discovered + add manual** → take every deduped candidate, then prompt for additional free-text absolute paths to append.
     - **Use all auto-discovered only** → take every deduped candidate; no manual prompt.
     - **Select a subset** → present the deduped candidates and let the user pick which to keep.
@@ -716,6 +719,7 @@ Handle the `status` and `gaps`:
   ```
   choices: ["Copy them into the repository beside the page", "Stage for manual upload to the repo's image-management tool", "Leave these screenshots off this page", "Cancel"]
   ```
+  The first three options each carry a `description` naming the target path and every screenshot planned for it, so the screenshots they act on are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*).
   - **Copy them into the repository beside the page** → record `local` for that target.
   - **Stage for manual upload to the repo's image-management tool** → record `cdn_upload_required` for that target. Where `<screenshot_staging_dir>` is null — Phase 1's **Not found** branch was skipped — first take an absolute staging directory from the user, rejecting `/tmp` and any path inside the docs repo as that branch does, and record it as `<screenshot_staging_dir>`.
   - **Leave these screenshots off this page** → once the checklist is final — after the re-invocation below, where there is one — remove that target's `screenshots:` entries from it; the writer places no screenshot on that page, and each screenshot is listed in Phase 9's `### Deferred items` as a user-declined screenshot.
@@ -770,7 +774,7 @@ the row `DEGRADED`, with `not_run:` naming what did not run (e.g.
    ```
    choices: ["Decide per discrepancy (Recommended)", "Document as intended (spec) for ALL", "Document as actual (code) for ALL", "Skip & report for ALL (drafts a bug report; no claims documented)"]
    ```
-   These are `workflows-core:source-truth` §7.2's choices, word for word, as step 3's are §7.3's. "Document as intended (spec) for ALL" uses the `spec_phrasing` (or the PRD phrasing when it is `(no spec)`).
+   These are `workflows-core:source-truth` §7.2's choices, word for word, as step 3's are §7.3's, asked with §7.2's question, whose own text names every warning — its number, claim and verdict — one line each. "Document as intended (spec) for ALL" uses the `spec_phrasing` (or the PRD phrasing when it is `(no spec)`).
 
 3. **Per-discrepancy** (if "Decide per discrepancy"): for each warning, show claim + PRD phrasing + Spec phrasing + Source (code) phrasing + location, then:
    ```
@@ -820,7 +824,7 @@ Run this phase only when write context = `docs_repo` (or `non_docs_repo` after u
 
 Every git call in this phase, and in Phase 6.3's commit and Phase 8.5, runs as `git -C <docs_repo_path>` — the docs repository's top level (Phase 0 step 2), never the working directory — so every path given to git is relative to that top level.
 
-1. **Update the base branch.** `<base>` is a branch **name**, never an `origin/<name>` ref, which `git switch` refuses — the name the ladder below resolves: whichever branch `origin/HEAD` names, else `main` or `master` where the remote has one, and otherwise a local `main` or `master`, or the branch HEAD is on. Resolve it by `workflows-core:read-only-repos` §3's chain, run against `<docs_repo_path>`, and its **A switch takes the name** rule: rung 1, `git -C <docs_repo_path> symbolic-ref --quiet --short refs/remotes/origin/HEAD`, prints `origin/<name>`, and `<base>` is what follows `origin/`; where rung 1 fails — `origin/HEAD` unset, or naming a ref that no longer exists (§3 rung 1) — `<base>` is the literal `main` or `master` whose ref rungs 2–3 find. Two steps are this command's own, beside that chain. Where rung 1 fails, run `git -C <docs_repo_path> remote set-head origin --auto` and retry it before rungs 2–3. Where the chain is exhausted — no `origin`, or one holding neither branch — `<base>` is the local `main`, then `master`, whichever `git -C <docs_repo_path> rev-parse --verify --quiet refs/heads/<name> >/dev/null` finds, and the fetch and the pull below are skipped, there being no remote branch to bring it up to; with neither, `<base>` is the branch HEAD is on and nothing is switched. Once the base is resolved: `git -C <docs_repo_path> fetch origin`. Then update the base working copy **only outside the inline-profiling case**: when `profile_source` is NOT `generated`, `git -C <docs_repo_path> switch <base> && git -C <docs_repo_path> pull --ff-only`. **In the inline-profiling case (`profile_source: generated`), do NOT switch** — HEAD must stay on `profile_branch`, the branch Phase 0's profiling cut off the base and committed the profile on, so this run's docs commits land on it after step 5 renames it. When a switch happened and the fast-forward pull fails:
+1. **Update the base branch.** `<base>` is a branch **name**, never an `origin/<name>` ref, which `git switch` refuses — the name the ladder below resolves: whichever branch `origin/HEAD` names, else `main` or `master` where the remote has one, and otherwise a local `main` or `master`, or the branch HEAD is on. Resolve it by `workflows-core:read-only-repos` §3's chain, run against `<docs_repo_path>`, and its **A switch takes the name** rule: rung 1, `git -C <docs_repo_path> symbolic-ref --quiet --short refs/remotes/origin/HEAD`, prints `origin/<name>`, and `<base>` is what follows `origin/`; where rung 1 fails — `origin/HEAD` unset, or naming a ref that no longer exists (§3 rung 1) — `<base>` is the literal `main` or `master` whose ref rungs 2–3 find. Two steps are this command's own, beside that chain. Where rung 1 fails, run `git -C <docs_repo_path> remote set-head origin --auto` and retry it before rungs 2–3. Where the chain is exhausted — no `origin`, or one holding neither branch — `<base>` is the local `main`, then `master`, whichever `git -C <docs_repo_path> rev-parse --verify --quiet refs/heads/<name> >/dev/null` finds, and the fetch and the pull below are skipped, there being no remote branch to bring it up to; with neither, `<base>` is the branch HEAD is on and nothing is switched. Once the base is resolved: `git -C <docs_repo_path> fetch origin`. Then update the base working copy **only outside the inline-profiling case**: when `profile_source` is NOT `generated`, `git -C <docs_repo_path> switch <base> && git -C <docs_repo_path> pull --ff-only`. **In the inline-profiling case (`profile_source: generated`), do NOT switch** — HEAD must stay on `profile_branch`, the branch Phase 0's profiling cut off the base and committed the profile on, so this run's docs commits land on it after step 5 renames it. When a switch happened and the fast-forward pull fails, ask, the question's own text naming the docs repository and each dirty path, one `git -C <docs_repo_path> status --short` line each, since the choices turn on them (`workflows-core:epic-picker` *The cap*):
    ```
    choices: ["Stash local changes and continue (Recommended)", "Proceed from current base state", "Cancel"]
    ```
@@ -830,6 +834,7 @@ Every git call in this phase, and in Phase 6.3's commit and Phase 8.5, runs as `
    ```
    choices: ["Stash changes and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff", "Cancel"]
    ```
+   The question's own text names each dirty path, one `git -C <docs_repo_path> status --short` line each, since both *Stash* and *Proceed anyway* turn on them (`workflows-core:epic-picker` *The cap*).
    A stash runs `workflows-core:escalation-rules` § *Stashing the user's changes*: named, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends.
    **Cancel** stops the run; where Phase 0 step 4(c) committed a generated profile, it ends with that step's left-on-a-branch notice.
 
@@ -937,7 +942,7 @@ Then act on the return:
 
   After `doc-fixer` completes, **check its `Stop condition flag`**: `docs-style-checker` maps a linter's own blocking failure to `BLOCKER` (`agents/docs-style-checker.md`), so this dispatch can return `NEEDS HUMAN` — the fixer deferred a blocking violation it could not safely fix. On `NEEDS HUMAN`, surface each deferred BLOCKER with the fixer's reason and ask the user how to resolve it — fix by hand and re-run, or skip the check. A silent re-run only reports the same violation again. The `style_check` gate row stays open until that answer lands and then records its outcome per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` — `RAN` after a hand fix and re-run, `SKIPPED_BY_USER` with the choice quoted verbatim if skipped. Only on `CLEAR` re-run the linter once: dispatch `docs-style-checker` again with this phase's own `docs-style-checker` brief — the dispatch at the top of the phase, before the ledger rows — unchanged, `files` naming the same pages; never a second `doc-fixer`.
 
-  If violations remain after the re-run:
+  If violations remain after the re-run, ask, the question's own text naming each remaining violation — its file, line and rule — since *Proceed to review anyway* goes on over them (`workflows-core:epic-picker` *The cap*):
   ```
   choices: ["Proceed to review anyway — reviewer may still PASS", "Show remaining violations and let me fix manually", "Cancel"]
   ```
@@ -966,7 +971,7 @@ Resolve the builds to run, most specific first (`${CLAUDE_PLUGIN_ROOT}/reference
 - **Otherwise** → `profile.commands.per_space.<space>.build`, else the flat `profile.commands.build`, run for every space in the **verification set** (`render-verification.md` §2): every space whose `content_root` holds at least one affected page.
 
 Run each from `docs_repo_path`, the top level every command the profile records runs from (Phase 0 step 2). Record **each build on its own** — its `builds[]` `id` (or, without `builds[]`, its space), its command, its exit code and, on a failure, its output — so a failure names the build that failed. Do NOT re-run the Phase 6.4 prose linter. Classify each failing build:
-- **Content failure** (the template won't compile, unresolved snippet include, broken postid/internal link, malformed token) → invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`; Severities: BLOCKER and MAJOR), handing it **the failing build's output** as its `Reviewer or style-checker output` — each failing build under its `id` (or space), with its command and its output verbatim, every error it reports a BLOCKER at the file it names — then re-run every build this step resolved, once. If failures remain:
+- **Content failure** (the template won't compile, unresolved snippet include, broken postid/internal link, malformed token) → invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`; Severities: BLOCKER and MAJOR), handing it **the failing build's output** as its `Reviewer or style-checker output` — each failing build under its `id` (or space), with its command and its output verbatim, every error it reports a BLOCKER at the file it names — then re-run every build this step resolved, once. If failures remain, ask, the question's own text naming each failing build — its `id` or space and the first error it reports — since *Proceed to smoke-check anyway* goes on over them (`workflows-core:epic-picker` *The cap*):
   ```
   choices: ["Proceed to smoke-check anyway", "Show remaining and fix manually", "Cancel"]
   ```
@@ -1098,7 +1103,7 @@ Act on the verdict:
   ```
   choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]
   ```
-  "Manual fix notes" → ask for the notes in plain text; apply them via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) in a bounded one-shot pass (no further re-review cycle). "Defer" → record in Phase 9 `### Deferred items` without an override flag. "Override" → ask for the user's rationale in plain text and record the finding in `### Deferred items` with it. "Cancel" aborts.
+  "Manual fix notes" → get the BLOCKER's notes as the `Manual fix notes — the run drafts them` rule in `workflows-core:escalation-rules` says (the run's draft, or the user's own); apply them via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) in a bounded one-shot pass (no further re-review cycle). "Defer" → record in Phase 9 `### Deferred items` without an override flag. "Override" → ask for the user's rationale in plain text and record the finding in `### Deferred items` with it. "Cancel" aborts.
 
 - **PASS WITH RECOMMENDATIONS** — `doc-reviewer` returns this verdict on any MAJOR, MINOR or NIT, so first look at what survived triage. **Where triage emptied the survivor set**, `finding-triage`'s *When triage empties the survivor set* settles the verdict at its first settle prompt, and its *Proceed* goes on to Phase 8 as from a PASS — no fixer is dispatched and no re-review offered. **Where findings survived and none is MAJOR**, dispatch nothing, write no `claims_file` and offer no re-review — there are no edits for one to check — and go on to Phase 8, every MINOR and NIT survivor going to the Phase 9 report. **Otherwise** invoke `doc-fixer` for the MAJOR survivors only:
 
@@ -1233,6 +1238,8 @@ Fold the run into clean history before handoff, every git call as `git -C <docs_
 
 ### Step 2 — Offer push
 
+Only where Step 1's commit was made: where git refused it, report git's error or the hook's output and offer nothing, since after the `reset --soft` the branch stands at the squash base with the run's changes staged, and a push would publish it without them (`${CLAUDE_PLUGIN_ROOT}/references/finish-and-handoff.md` §3).
+
 ```
 choices: ["Push <branch> to origin now", "Skip — I'll push later", "Cancel"]
 ```
@@ -1254,7 +1261,7 @@ Carry the squash result, push outcome, and PR-draft path into the Phase 9 report
 
 ## Phase 8.6 — Maintenance proposals
 
-Runs **after** Phase 8.5 — never before. The ordering is the whole safety property, and it holds whether or not Phase 8.5 ran: once this phase starts, **the run will create no further commit in the docs write target** — either Phase 8.5 sealed the docs commit, or the docs write target takes no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval, per the Phase 6.3 branch/commit table — which governs the docs write target only, never `$SPECS_PATH`). Either way an accepted `CLAUDE.md` (or knowledge-base) edit has no commit left to ride. What still commits after this point is the terminal `commit-artifacts` step, which stages ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1) — it can never pick up a `CLAUDE.md` or knowledge-base edit, so the safety property holds unchanged.
+Runs **after** Phase 8.5 — never before. The ordering is the whole safety property, and it holds whether or not Phase 8.5 ran: once this phase starts, **the run will create no further commit in the docs write target** — either Phase 8.5 sealed the docs commit, or git refused Phase 8.5's squash commit and the run makes none in its place (Step 2), leaving its changes staged for you to commit, or the docs write target takes no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval, per the Phase 6.3 branch/commit table — which governs the docs write target only, never `$SPECS_PATH`). In each case an accepted `CLAUDE.md` (or knowledge-base) edit has no commit of the run's left to ride; after a refused squash commit, the commit you make of the staged changes carries the edit only where you stage it too. What still commits after this point is the terminal `commit-artifacts` step, which stages ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1) — it can never pick up a `CLAUDE.md` or knowledge-base edit, so the safety property holds unchanged.
 
 Skip this phase with no prompt when both Phase 8 Agent 2 and Agent 3 returned `'no update required'`.
 
@@ -1268,10 +1275,12 @@ Otherwise present one row per proposal:
 choices: ["Skip — report only (Recommended)", "Apply all", "Choose per proposal", "Cancel"]
 ```
 
+The question's own text names every proposal — its file and the rule or entry in one line — since *Apply all* and *Choose per proposal* turn on them, whether or not the table was printed (`workflows-core:epic-picker` *The cap*); each per-proposal question names its own.
+
 - **Skip — report only** — apply nothing; every proposal's disposition is `proposed` for the Phase 9 report.
 - **Apply all** — apply every proposal via the mechanism below; every proposal's disposition is `applied-uncommitted`.
 - **Choose per proposal** — ask accept/decline for each proposal; apply the accepted ones (`applied-uncommitted`), leave the rest `declined`.
-- **Cancel** — apply nothing; every proposal's disposition is `proposed`. Unlike every other "Cancel" in this command, **Cancel here does not abort the run**: by the time this phase runs there is nothing upstream left to unwind — Phase 8.5's squash (and any push / PR draft) is already done, or the docs write target took no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval) (still true — what still commits after this point is the terminal `commit-artifacts` step, bounded to `$SPECS_PATH`'s artifact paths per `workflows-core:specs-repo-git` §2.1, and therefore never able to carry a proposal from this phase). Cancel only declines this phase's proposals; the run proceeds to Phase 9 and the Final Report is produced exactly as it would be after Skip.
+- **Cancel** — apply nothing; every proposal's disposition is `proposed`. Unlike every other "Cancel" in this command, **Cancel here does not abort the run**: by the time this phase runs there is nothing upstream left to unwind — Phase 8.5's squash (and any push / PR draft) is already done, or git refused its squash commit and the run made none in its place, or the docs write target took no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval) (still true — what still commits after this point is the terminal `commit-artifacts` step, bounded to `$SPECS_PATH`'s artifact paths per `workflows-core:specs-repo-git` §2.1, and therefore never able to carry a proposal from this phase). Cancel only declines this phase's proposals; the run proceeds to Phase 9 and the Final Report is produced exactly as it would be after Skip.
 
 **Apply mechanism.** For each accepted proposal, re-dispatch the agent that produced it — Agent 2 or Agent 3, same general-purpose agent and model as Phase 8, no new agent type — in apply mode, carrying its own proposal back verbatim:
 
@@ -1809,6 +1818,8 @@ Otherwise present one row per proposal:
 ```
 choices: ["Skip — report only (Recommended)", "Apply all", "Choose per proposal", "Cancel"]
 ```
+
+The question's own text names every proposal — its file and the rule or entry in one line — since *Apply all* and *Choose per proposal* turn on them, whether or not the table was printed (`workflows-core:epic-picker` *The cap*); each per-proposal question names its own.
 
 - **Skip — report only** — apply nothing; every proposal's disposition is `proposed` for the Phase 5 report.
 - **Apply all** — apply every proposal via the mechanism below; every proposal's disposition is `applied-uncommitted`.

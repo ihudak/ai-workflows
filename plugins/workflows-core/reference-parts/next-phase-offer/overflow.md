@@ -70,7 +70,13 @@ never by silently deleting a route:
    applies to what survives it.
 3. **Say, in one line, that the prose list is longer than the prompt** and that anything on it is
    reachable through the harness's free-text option. A demoted route the operator cannot find is the
-   same defect as a deleted one.
+   same defect as a deleted one. **Put that line where the dialog shows it, naming every route the
+   array leaves out** — each with the command that runs it, in the prose's order, after
+   `Not shown as an option:` — because a run can skip the prose it prints before a prompt, and a
+   line in the prose would then point at nothing. It goes in the question's own text; where an
+   array carries an option naming the rest, it goes in that option's `description` instead, the
+   rule `${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap* states for a picker built
+   from a listing. No option's label sends the operator to the prose list.
 
 An offer whose options fit in four does none of this: the prose stays the universal minimum and the
 array carries every option.

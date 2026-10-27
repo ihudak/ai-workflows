@@ -225,7 +225,8 @@ allocated ledger satisfies the front of two of them and only one is the run the 
   resolves both in the same run.
 - **The no-op** — no row `unallocated`, no child standing empty, no child out of step with the
   parent's ledger, and no re-cuttable row: the run skips straight from Phase 0 to Phase 6, which
-  reports nothing to commit. A child is **in step** where its `brd-link.md` `claims:`, the rows of
+  reports nothing to commit — unless its branch holds a deliverable commit an earlier run could not push, or a merge of the default branch you made and have not pushed, which
+  it pushes then. A child is **in step** where its `brd-link.md` `claims:`, the rows of
   its `brd/brd-inventory.md`, and the parent's rows reading `covered-by: <that child>` name the same
   `[BR#n]` ids — the same test [`/prd-ground`](prd-ground.md) applies before grounding a slice. A
   child missing its inventory or ledger is not out of step: it is reported, never reconciled, since
@@ -419,7 +420,7 @@ so no child folder is created.
 
 Behind Phase 6's consent choice, these are committed, pushed, and a pull request opened against
 the specs repo's default branch under the shared `brd/<BRD-KEY>-<slug>` branch prefix — skipped
-with a "nothing to commit" report on the no-op path, and on a reconcile-path run that reconciled nothing and kept every empty child unchanged.
+with a "nothing to commit" report on the no-op path, and on a reconcile-path run that reconciled nothing and kept every empty child unchanged — unless the branch holds a deliverable commit an earlier run could not push, or a merge of the default branch you made and have not pushed, which is pushed then.
 
 ## Gates
 
@@ -600,7 +601,7 @@ offered here. It is each such child's own re-entry at `/prd-ground` and then, in
 `/brd-split` run is what offers `/brd-interview` next, on the child's own key.
 
 **_Ground now_ runs that grounding for you, in the same session — only when you choose it.** It is
-the recommended option on a root run whose pull request is open (or that had nothing to commit):
+the recommended option on a root run whose pull request is open (or that had nothing to commit, its files already on the default branch):
 you pick the children — all of them by default, or the ones you will work on soon, since grounding
 a slice nobody touches for weeks spends Opus time on a baseline that goes stale — name the
 repositories once, from the clones it lists, and see each child's cost before you confirm. The
@@ -610,7 +611,7 @@ and rebase included, and asks again if it finds none. Then it runs
 [`/prd-ground`](prd-ground.md) once per chosen child, one after another, each a complete run with
 its own pull request in that child's folder and its own cost entry under that child's key. Each grounding run asks its own questions — the repository it cannot find, its handoff, its next step — and a *Stop here* or *Cancel* there, its handoff's *Cancel* included, ends the children not yet ground, while *Just write the files* at its handoff lets the next child run; the split tells you so before the first run. *Ground
 each child later* names the command and runs nothing, as this phase always did; on an outcome that
-opened no pull request — a declined handoff, no remote, a failed push — *Ground now* is not offered,
+is neither an open pull request nor nothing to commit with the children's files already on the default branch — a declined handoff, no remote, a failed push, a pull request not opened, or nothing to commit while those files are not on the default branch yet — *Ground now* is not offered,
 and the run says what has to happen first.
 
 ## See also

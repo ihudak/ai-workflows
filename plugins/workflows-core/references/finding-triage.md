@@ -148,7 +148,10 @@ triage. The disposition, in order:
    own word.
 3. **Surface it and let the user settle the verdict.** Report the verdict, the fact that nothing
    survived, every dismissal with its reason and every unverified finding with what would settle it,
-   then ask:
+   then ask, the question's own text carrying the verdict and naming each dismissal, each
+   unverified finding and each survivor where any stands, one line each, since every option
+   settles the verdict over them
+   (`${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap*):
    ```
    choices: ["Proceed as if the verdict were PASS — every disposition is recorded (Recommended)", "Re-review, supplying every disposition's reason", "Keep the verdict and stop for a human decision", "Cancel"]
    ```
@@ -162,7 +165,7 @@ triage. The disposition, in order:
    and a caller whose stop for a review that stayed blocked is an escalation ends the run instead — or,
    working unit by unit, the unit — as its own Cancel does. **Cancel** is the caller's own cancel.
    Where findings still survive — the `BLOCK` case below, whose survivors the caller's fixer does not
-   take — **Proceed** reads its label as *not `BLOCK`*, not as *`PASS`*: say beside the prompt that it
+   take — **Proceed** reads its label as *not `BLOCK`*, not as *`PASS`*: say in the question's own text that it
    goes on as from a verdict that is not `BLOCK`, the survivors left standing and, in a caller that
    makes one, `escalation-rules`' offer to apply what a review leaves open made over them.
    **Never** promote a non-`PASS` verdict to `PASS` silently. The orchestrator's authority under this
@@ -235,7 +238,9 @@ reviewer's answer.
    a caller that works unit by unit may count a settle prompt's **Cancel** as one too, and says so; and a caller whose own rule keeps a first review's `BLOCKER` from the fixer, because its fix lies in another code repository, counts that `BLOCKER` as one, and says so; and `/epics`, whose *User-resolved text* hands the user a `BLOCKER` on text they chose, counts one the user kept there as none — it is their override, carried forward as such — and says so.
 3. **Where the second verdict is `BLOCK` and no `BLOCKER` survives**, the verdict is one its own
    findings no longer support. Never promote it silently: report the verdict, each carried row with
-   its outcome and every new disposition, then ask:
+   its outcome and every new disposition, then ask, the question's own text carrying the verdict and
+   naming each carried row and each new disposition, one line each, since every option settles the
+   verdict over them (`${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap*):
    ```
    choices: ["Proceed — no BLOCKER survived triage, and every disposition is recorded (Recommended)", "Keep the verdict and stop for a human decision", "Cancel"]
    ```

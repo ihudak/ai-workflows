@@ -378,7 +378,7 @@ Runs only when `--ground-code` was given; otherwise take the OFF branch at the e
   ```
   choices: ["Ground the proposed set (Recommended)", "Ground a different set (you'll be prompted)", "Ground nothing — continue without a code scan", "Cancel"]
   ```
-  *Ground a different set* asks in plain text for the repositories' names, each resolved against the directories just listed.
+  *Ground the proposed set* carries a `description` naming every repository it proposes, and *Ground a different set* one naming every directory the discovery listed, each in the listing's order, so they are named in the dialog whether or not the list was printed (`workflows-core:epic-picker` *The cap*). *Ground a different set* asks in plain text for the repositories' names, each resolved against the directories the discovery listed, never parsed out of the answer.
 - **Empty proposal — do not show that list.** When no theme matches any mounted repo its first option names a set that does not exist. Escalate instead per the `No repos derivable — /epics` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules scan")`. Every option in a shown list must name something that exists.
 - **"Ground nothing — continue without a code scan"** ends this phase for the run: no scanner is dispatched, Phase 4 writes no `## Feasibility grounding` section, and the Final report shows `code grounding: declined at the repo gate` — distinct from `code grounding: off`, which means the flag was never given at all.
 
@@ -602,16 +602,20 @@ they are deliverables, and they reach the default branch only through Phase 5's 
 `idea.md` **and every path this phase wrote** — one copy in `attachments/` for the source and for
 every markdown file Phase 1.5 took, one in `design/idea-sources/` for every image `figure-reader`
 read, and that set's `index.md` — a number Phase 1.5 fixes and no cap bounds, so a source that links
-a hub note leaves dozens of dirty OTHER paths. Three routes reach that state, and only one of them
+a hub note leaves dozens of dirty OTHER paths. Four routes reach that state, and only one of them
 is a decline: Phase 5's `status: refined` branch offers the handoff and the operator may decline it;
 its `status: draft` branch **never offers one at all** — so a draft run leaves the whole set
-dirty by construction rather than by a choice; and a `status: refined` run whose handoff was
+dirty by construction rather than by a choice; a `status: refined` run whose handoff was
 **taken** and whose `workflows-core:phase-handoff` §2.1 gate then refused it committed nothing
-either, which is the *Gate failed* line §4.1 emits and which Phase 5 already names beside a decline.
-That third one is reachable rather than theoretical: §2.1 fails on path, repo or permission grounds
+either, which is the *Gate failed* line §4.1 emits and which Phase 5 already names beside a decline;
+and one whose handoff was **taken** and whose §2.4 commit git then refused — a hook's rejection, a
+signature it cannot make — committed nothing too, and leaves the set staged on the branch §2.2 cut,
+which is the *Commit failed* line §4.1 emits and which Phase 5 names beside the other two. The third one is reachable rather than theoretical:
+§2.1 fails on path, repo or permission grounds
 **or** on either run-wide flag it names — `specs_git: blocked`, which Phase 0 carries for the whole
 run whenever its own preflight returns `workflows-core:specs-repo-git` §3.3's G0, and
-`specs_git: misrooted`, which it carries whenever that preflight's §3.1 notice set it. The other non-landing §4.1 rows are not
+`specs_git: misrooted`, which it carries whenever that preflight's §3.1 notice set it. The fourth
+needs only a specs repository whose `pre-commit` hook refuses the commit, a markdown linter for one. The other non-landing §4.1 rows are not
 further routes — *No remote*, *Push failed* and *Push refused for access* all committed on a branch first (§2.4 runs before
 §2.5), and *Nothing to commit* changed nothing.
 
@@ -684,10 +688,10 @@ the next phase — **adapted to status**:
   opened is still open that command stops on rows D/E — an unqualified recommendation sends the
   operator into a stop this run itself caused.
 
-  **On a decline, or where §4.1's *Gate failed* line was emitted, offer the `@<path>` route beside
-  it** — the one the draft branch below names for the same on-disk state:
-  `/product-workflows:create-prd <KEY> @<the absolute path of this idea.md>`. Neither outcome
-  committed anything. Where this run wrote a new brief, `idea.md` is written and on no ref, exactly as
+  **On a decline, or where §4.1's *Gate failed* or *Commit failed* line was emitted, offer the
+  `@<path>` route beside it** — the one the draft branch below names for the same on-disk state:
+  `/product-workflows:create-prd <KEY> @<the absolute path of this idea.md>`. None of the three
+  outcomes committed anything. Where this run wrote a new brief, `idea.md` is written and on no ref, exactly as
   a draft is, and `/create-prd <KEY>` with no path then finds it on no ref (row F), names it without
   reading it, and goes on down its idea ladder — which comes back to this brief only through its
   same-session rung or a path the operator types, and otherwise grills the PRD from scratch. Where it

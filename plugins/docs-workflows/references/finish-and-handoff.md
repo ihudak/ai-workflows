@@ -55,6 +55,11 @@ Then squash:
 
 ## 3. Push (opt-in)
 
+Only where §2's commit was made. Where git refused it — a hook's rejection, a signature it
+cannot make — report git's error or the hook's output and offer nothing: after the
+`reset --soft`, `<branch>` stands at the squash base with the run's changes staged, so a push
+would publish the branch without them.
+
 Offer `["Push <branch> to origin now", "Skip — I'll push later", "Cancel"]`.
 - **Push** → `git -C <docs_repo_path> push -u origin <branch>`; report the result. `git push` is
   git-protocol, not the REST API the zero-external-API invariant forbids. Where git cannot write
