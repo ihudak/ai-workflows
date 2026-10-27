@@ -6,14 +6,15 @@
 # in the two restructures this one follows (a sibling plugin repo,
 # ai-containers#78).
 #
-# TWENTY-TWO checks, numbered 1-22 in the order their functions appear below. The number is
+# TWENTY-THREE checks, numbered 1-23 in the order their functions appear below. The number is
 # written here and nowhere else in this file, and nothing gates it -- re-derive it with
 # `grep -oE '\bfail [0-9]+ ' "$0" | awk '{print $2}' | sort -un` -- the numbers a fail() call
 # can actually report -- rather than trusting this sentence, and update it in the commit that
-# adds a check. Counting the banner comments instead gives 21: checks 1 and 2 share one. Every
-# edition carries all twenty-two: a check an edition has no use for is switched off by its
+# adds a check. Counting the banner comments instead gives 22: checks 1 and 2 share one. Every
+# edition carries all twenty-three: a check an edition has no use for is switched off by its
 # config block (checks 13, 16 and 19 in the internal editions, check 22 here and in the Copilot
-# edition), never cut from the body.
+# edition, check 23 in any edition whose escalation rules name no path-unset rule), never cut
+# from the body.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -181,6 +182,13 @@ INSTRUCTION_TIERS="CLAUDE.md .claude/rules/*.md docs/maintainers/*.md"
 # ships as a byte copy of another plugin's. An absent copy is skipped; one that differs fails.
 VENDORED_COPIES=""                   # internal Claude edition: the two scripts one of its
                                      # plugins vendors from another
+
+# Check 23: the name of the shared rule a command cites wherever it asks for an unset path
+# variable -- the option `Set <NAME>_PATH (you'll be prompted ...)` -- so the answer is carried
+# only once it names an existing directory. Empty switches the check off.
+PATH_UNSET_RULE="Required path environment variable unset"
+                                     # internal editions: the same name where their
+                                     # escalation rules carry it, else ""
 
 FAILURES=0
 
@@ -2547,6 +2555,13 @@ check_untrusted_content() {
 #     for only-binary, which turns that off, and never
 #     :all: anywhere in a no-binary value, which builds every package from source -- a named
 #     --no-binary=<names> beside --only-binary=:all: is the allow path;
+#   - uv add, sync or lock (flags, and a flag's value, may come first) carry --no-build (or UV_NO_BUILD=1 / true):
+#     uv's project interface has no other way to refuse a source build, and uv pip is held by
+#     the pip rule above;
+#   - composer install, update, require and remove, and their aliases (i, u, upgrade, r, rm,
+#     uninstall), and create-project -- flags, and a flag's value, may come first -- carry both
+#     --no-scripts and --no-plugins: the first skips the root
+#     composer.json's scripts, the second keeps an installed composer-plugin from loading;
 #   - setup.py install or develop is refused whatever it carries: it runs a setup.py.
 # VACUITY: no install command at all.
 ITC_FILES="$REF_DIR/fix-vuln/build-systems.md $REF_DIR/upgrade/ecosystems.md $REF_DIR/install-time-code.md"
@@ -2554,6 +2569,8 @@ ITC_OPTIONAL="agents/vuln-fixer.md agents/upgrade-executor.md $CMD_DIR/vuln$CMD_
 ITC_NODE='(^|[^[:alnum:]_.-])(npm|pnpm)([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+(install|i|in|ins|inst|insta|instal|isnt|isnta|isntal|isntall|add|it|ci|cit|clean-install|ic|install-clean|isntall-clean|install-test|install-ci-test|update|up|upgrade|udpate|dedupe|ddp|link|ln|audit[[:space:]]+fix)([^[:alnum:]_-]|$)|(^|[^[:alnum:]_.-])yarn([[:space:]]+(workspace[[:space:]]+[^[:space:]]+|-[^[:space:]]+))*[[:space:]]+(install|add|upgrade|up|upgrade-interactive|dedupe|global[[:space:]]+add)([^[:alnum:]_-]|$)|^[[:space:]]*yarn([[:space:]]*$|[[:space:]]*\)|[[:space:]]+-)'
 ITC_PY='(^|[^[:alnum:]_.-])pip[0-9.]*[[:space:]]+(install|download|wheel|sync)([^[:alnum:]_-]|$)|(^|[^[:alnum:]_.-])pip-sync([^[:alnum:]_-]|$)|(^|[^[:alnum:]_.-])pipenv[[:space:]]+(install|sync|update|upgrade|lock)([^[:alnum:]_-]|$)'
 ITC_SETUP='(^|[^[:alnum:]_.-])setup\.py[[:space:]]+(install|develop)([^[:alnum:]_-]|$)'
+ITC_UV='(^|[^[:alnum:]_.-])uv([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+(add|sync|lock)([^[:alnum:]_-]|$)'
+ITC_COMPOSER='(^|[^[:alnum:]_.-])composer([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+(install|i|update|u|upgrade|require|r|remove|rm|uninstall|create-project)([^[:alnum:]_-]|$)'
 check_install_time_code() {
   local root="$1" rel f n=0 ln line seg cmd req
   for rel in $ITC_FILES $ITC_OPTIONAL; do
@@ -2573,6 +2590,16 @@ check_install_time_code() {
           { grep -qE -- '--ignore-scripts([[:space:]]|$|=true)|--mode=skip-build' <<<"$cmd" \
             && ! grep -qE -- '--ignore-scripts=false' <<<"$cmd"; } \
             || fail 21 "$ITC_PLUGIN_REL/$rel:$ln installs a Node.js dependency without --ignore-scripts (yarn berry: --mode=skip-build) -- a new release's install script would run with the user's permissions"
+        fi
+        if grep -qE -- "$ITC_UV" <<<"$seg"; then
+          n=$((n + 1))
+          grep -qE -- '--no-build([[:space:]]|$)|UV_NO_BUILD=(1|true)([[:space:]]|$)' <<<"$cmd" \
+            || fail 21 "$ITC_PLUGIN_REL/$rel:$ln runs uv's project install without --no-build (or UV_NO_BUILD=1) -- a source distribution's build would run its backend with the user's permissions"
+        fi
+        if grep -qE -- "$ITC_COMPOSER" <<<"$seg"; then
+          n=$((n + 1))
+          { grep -qE -- '--no-scripts([[:space:]]|$)' <<<"$cmd" && grep -qE -- '--no-plugins([[:space:]]|$)' <<<"$cmd"; } \
+            || fail 21 "$ITC_PLUGIN_REL/$rel:$ln runs a Composer install without both --no-scripts and --no-plugins -- the root's scripts or an installed plugin's code would run with the user's permissions"
         fi
         if grep -qE -- "$ITC_SETUP" <<<"$seg"; then
           n=$((n + 1))
@@ -2617,6 +2644,45 @@ check_vendored_copies() {
     cmp -s "$root/$src" "$root/$dst" \
       || fail 22 "$dst differs from $src -- copy the original over it; a vendored copy must stay byte-identical"
   done
+}
+
+# ------------------------------------------------------------------ check 23
+# A path question cites its rule. An option `Set <NAME>_PATH (you'll be prompted ...)` asks for
+# a path the run then carries, and the shared rule PATH_UNSET_RULE names is what says the answer
+# is carried only once it names an existing directory and asked again where it does not. A
+# command that offers the option and states its own handling instead -- "carries it for the
+# run" -- carries any typo, so every paragraph holding the option (a run of non-blank lines, a
+# fenced `choices:` block inside it included) must name the rule, its whitespace collapsed so a
+# name wrapped across lines still counts. The paragraph, not the file: a command citing the rule
+# for one variable and carrying another's answer locally is the case the file-level test passes.
+# VACUITY: no such option in any command under PLUGIN_RELS.
+check_path_rule_cited() {
+  local root="$1" rel f rp seen=0 hit
+  [ -n "$PATH_UNSET_RULE" ] \
+    || { note "check 23 not applicable: this edition names no path-unset rule (PATH_UNSET_RULE is empty)"; return 0; }
+  for rel in $PLUGIN_RELS; do
+    while IFS= read -r f; do
+      [ -f "$f" ] || continue
+      rp="${f#$root/}"
+      while IFS= read -r hit; do
+        [ -n "$hit" ] || continue
+        case "$hit" in
+          seen) seen=$((seen + 1)) ;;
+          *) seen=$((seen + 1))
+             fail 23 "$rp:$hit offers to set a path variable without citing the *$PATH_UNSET_RULE* rule in its paragraph -- name the rule rather than carrying the typed path locally, so an answer naming no existing directory is asked for again" ;;
+        esac
+      done < <(awk -v rule="$PATH_UNSET_RULE" '
+        function flush() {
+          if (opt) { t = buf; gsub(/[[:space:]]+/, " ", t); print (index(t, rule) ? "seen" : optline) }
+          buf = ""; opt = 0
+        }
+        /^[[:space:]]*$/ { flush(); next }
+        { buf = buf " " $0
+          if (!opt && $0 ~ /Set [A-Z][A-Z0-9_]*_PATH \(you.ll be prompted/) { opt = 1; optline = NR } }
+        END { flush() }' "$f")
+    done < <(cmd_names "$root/$rel" | while IFS= read -r n; do cmd_file "$root/$rel" "$n"; done)
+  done
+  [ "$seen" -gt 0 ] || fail 23 "no command under $PLUGIN_RELS offers to set a path variable -- this check would examine nothing"
 }
 
 # ------------------------------------------------------------------ selftest
@@ -3479,7 +3545,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_pass_after "an opening \"Provide\" or \"Quote\" beside the prompted marker is accepted" \
     "printf -- '\nchoices: [\"Provide manual fix notes (you\047ll be prompted)\", \"Quote the sentence that binds (you\047ll be prompted)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "prompted labels are accepted" \
-    "printf -- '\nchoices: [\"Keep it whole (you\047ll be prompted for the reason)\", \"Set SPECS_PATH (you\047ll be prompted for the path)\", \"Another Epic from the list above (you\047ll be prompted for its key)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+    "printf -- '\nPer the *Required path environment variable unset* rule, where a path is asked for:\nchoices: [\"Keep it whole (you\047ll be prompted for the reason)\", \"Set SPECS_PATH (you\047ll be prompted for the path)\", \"Another Epic from the list above (you\047ll be prompted for its key)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "\"Name the clone's absolute path (you'll be prompted)\" is accepted" \
     "printf -- '\nchoices: [\"Name the clone\047s absolute path (you\047ll be prompted)\", \"Exclude it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "\"Just write the files — I'll handle git\" is accepted" \
@@ -4053,6 +4119,22 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '\n| pipenv | \`only-binary = :all:\`, \`no-binary = :all:\`, then \`PIP_CONFIG_FILE=<file> pipenv install\` |\n' >> $itc/install-time-code.md"
   expect_fail_msg "an install in the fixer agent is held too" 21 "without --ignore-scripts" \
     "mkdir -p $itca; printf -- '---\nname: vuln-fixer\n---\nThen run \`npm install\`.\n' >> $itca/vuln-fixer.md"
+  expect_fail_msg "a uv add without --no-build is rejected" 21 "without --no-build" \
+    "printf '\n- **uv**: \`uv add <package>==<version>\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a uv sync with flags first but no --no-build is rejected" 21 "without --no-build" \
+    "printf '\n\`\`\`bash\nuv --quiet sync --locked\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_pass_after "uv's --no-build and UV_NO_BUILD pass" \
+    "printf '\n\`\`\`bash\nuv lock --no-build\nUV_NO_BUILD=1 uv sync --locked\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_fail_msg "a Composer install without --no-plugins is rejected" 21 "without both --no-scripts and --no-plugins" \
+    "printf '\n\`\`\`bash\ncomposer install --no-scripts\n\`\`\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a Composer require without --no-scripts is rejected" 21 "without both --no-scripts and --no-plugins" \
+    "printf '\n- \`composer require --no-plugins vendor/pkg:1.2.3\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a Composer install after a flag's value is still held" 21 "without both --no-scripts and --no-plugins" \
+    "printf '\n\`\`\`bash\ncomposer -d app install\n\`\`\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a uv sync after a flag's value is still held" 21 "without --no-build" \
+    "printf '\n\`\`\`bash\nuv --directory app sync\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_pass_after "a Composer update carrying both flags passes" \
+    "printf '\n\`\`\`bash\ncomposer update --no-scripts --no-plugins vendor/pkg\n\`\`\`\n' >> $itc/upgrade/ecosystems.md"
   expect_fail_msg "a missing install reference is rejected" 21 "does not exist" \
     "rm $itc/install-time-code.md"
   expect_fail_msg "install references with no install line trip the empty-scan guard" 21 "would examine nothing" \
@@ -4075,11 +4157,28 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     printf 'skip  the vendored-copy cases (the fixture declares fewer than two VENDORED_COPIES pairs)\n'
   fi
 
+  # Check 23 -- a path question cites its rule. The fixture's second plugin's command carries one
+  # green site, its rule name wrapped across two lines, so the unmutated pass proves the
+  # whitespace collapse; each case appends to that command or strips the site.
+  local p23="${PLUGIN_RELS#* }"; p23="${p23%% *}"
+  local c23; c23=$(cmd_file "$p23" omega)
+  local o23="choices: [\\\"Set REPOS_PATH (you'll be prompted for the path)\\\", \\\"Cancel\\\"]"
+  expect_fail_msg "a path option carried locally, citing no rule, is rejected" 23 "without citing the" \
+    "printf '\n%s\n' \"If unset, stop: $o23 -- the answer is carried for the run.\" >> $c23"
+  expect_fail_msg "the rule cited in another paragraph of the file does not cover this one" 23 "without citing the" \
+    "printf '\n%s\n%s\n%s\n%s\n' 'Set the base:' '\`\`\`' \"$o23\" '\`\`\`' >> $c23"
+  expect_pass_after "a fenced path option whose paragraph names the rule passes" \
+    "printf '\n%s\n%s\n%s\n%s\n' 'Per the *Required path environment variable unset* rule:' '\`\`\`' \"$o23\" '\`\`\`' >> $c23"
+  expect_fail_msg "no path option anywhere trips the empty-scan guard" 23 "would examine nothing" \
+    "grep -v 'SPECS_PATH' $c23 > c.tmp; mv c.tmp $c23"
+  expect_pass_saying "an empty PATH_UNSET_RULE says check 23 does not apply" "PATH_UNSET_RULE=" \
+    "check 23 not applicable" "grep -v 'SPECS_PATH' $c23 > c.tmp; mv c.tmp $c23"
+
   # Every config name is set by the config block, and none is taken from the environment: the
   # block above `FAILURES=0` is sourced with each name exported as a sentinel, and no name may
   # come out holding it (or unset, which aborts under set -u). This reads THIS edition's own
   # block, so each edition's selftest proves its own. ASSERT_PUBLISHED is not config.
-  local cfg_names="PLUGIN_RELS CMD_DIR CMD_SUFFIX CMD_EXCLUDE REF_DIR REF_FLAT_EXTRA DOC_CMD_DIR CMD_FORM CLI CLI_VERBS CLI_REQUIRED HAS_COST HAS_CHOICE_CAP HAS_AUTO_OTHER CHANGELOG_GLOB NS_MAP_REL COST_PLUGIN_RELS HANDOFF_PLUGIN_RELS GUARD_PLUGIN_RELS ITC_PLUGIN_REL CORE_PLUGIN_REL LOADER_SKILL RUNTIME_VARS RUNTIME_VARS_FROZEN EDITION_FORBIDDEN_B64 VENDOR_NEUTRAL CHECK11_FAMILY CHECK11_PROSE CHECK11_OFFER_SCOPE INSTRUCTION_TIERS VENDORED_COPIES" leaked
+  local cfg_names="PLUGIN_RELS CMD_DIR CMD_SUFFIX CMD_EXCLUDE REF_DIR REF_FLAT_EXTRA DOC_CMD_DIR CMD_FORM CLI CLI_VERBS CLI_REQUIRED HAS_COST HAS_CHOICE_CAP HAS_AUTO_OTHER CHANGELOG_GLOB NS_MAP_REL COST_PLUGIN_RELS HANDOFF_PLUGIN_RELS GUARD_PLUGIN_RELS ITC_PLUGIN_REL CORE_PLUGIN_REL LOADER_SKILL RUNTIME_VARS RUNTIME_VARS_FROZEN EDITION_FORBIDDEN_B64 VENDOR_NEUTRAL CHECK11_FAMILY CHECK11_PROSE CHECK11_OFFER_SCOPE INSTRUCTION_TIERS VENDORED_COPIES PATH_UNSET_RULE" leaked
   leaked=$(env $(for n in $cfg_names; do printf '%s=env-sentinel ' "$n"; done) bash -c '
     eval "$(sed -n "1,/^FAILURES=0\$/p" "$1")"
     for n in $2; do [ "${!n}" = env-sentinel ] && printf "%s " "$n"; done; true' _ "$0" "$cfg_names" 2>&1)
@@ -4171,6 +4270,10 @@ check_edition_forbidden   "$ROOT"
 check_untrusted_content   "$ROOT"
 check_install_time_code   "$ROOT"
 check_vendored_copies     "$ROOT"
+
+# Check 23 sits outside the loop for check 17's reason: its vacuity guard is a claim about every
+# command under PLUGIN_RELS at once.
+check_path_rule_cited     "$ROOT"
 
 if [ "$FAILURES" -gt 0 ]; then
   echo "FAIL: $FAILURES problem(s) under $PLUGIN_RELS" >&2
