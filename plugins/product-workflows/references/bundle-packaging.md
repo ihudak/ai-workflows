@@ -1029,8 +1029,10 @@ baseline it prefixes being the same commit** — the note abbreviates, as a note
 does, so an equality test finds nothing and reports every correct note as carrying no pin at all.
 **A commit the note names is a run of 7 to 40 hexadecimal characters standing as a word of its own**
 — never one inside a filename or a path, such as `bundle-<YYYYMMDD>/` or a `-<YYYYMMDD>.md` name, and
-never the run's own `<YYYYMMDD>` stamp standing alone: a date is all digits, and so hexadecimal, and a
-check that read `20261012` as a pin reported a correct note as naming a commit no baseline holds.
+never one that reads as a valid `YYYYMMDD` date and prefixes no baseline commit: a date is all digits,
+and so hexadecimal, and a check that read `20261012` as a pin reported a correct note as naming a
+commit no baseline holds. An all-digit abbreviation that does prefix a baseline is a commit, as about
+one 7-character abbreviation in 27 is.
 **"Exactly one" is the wrong cardinality and fires on correct content**: a baselines document records
 one entry per repository *per run*, so a package pinned across two dated runs at unmoved commits
 holds the same SHA twice and a prefix legitimately matches both. What makes an abbreviation

@@ -512,8 +512,12 @@ cannot review, and they will not tell you that — they will review it anyway, b
     `Package reviewed:` line names this key and date** — a bundle built under a declined handoff,
     then renamed in place. Stop rather than overwrite either:
     `BRD_PACKAGE_BUNDLE_EXISTS: <BRD-dir>/self-review-<YYYYMMDD>.md belongs to a package built on this date (<committed at <sha> | its bundle now sits at <dir>>), whose directory is no longer at bundle-<YYYYMMDD>/. A dated package is never rewritten: package on the next date.`
-    **On no ref, it is an earlier run of today that stopped before assembling** —
-    `BRD_PACKAGE_PROMPT_LEAK`, `BRD_PACKAGE_UNDISPOSED`, an aborted disposition walk or an aborted tier choice — and nothing of
+    **On no ref, it is an earlier run of today that stopped before its bundle was moved into place** —
+    `BRD_PACKAGE_PROMPT_LEAK`, `BRD_PACKAGE_UNDISPOSED`, an aborted disposition walk or an aborted tier
+    choice, or a stop of *Assemble the bundle* before its move: `BRD_PACKAGE_DEAD_CITATION`,
+    `BRD_PACKAGE_CITATION_MISMATCH`, `BRD_PACKAGE_CORPUS_UNREADABLE`, `BRD_PACKAGE_SET_MISMATCH`,
+    `BRD_PACKAGE_SET_UNREADABLE`, or a hold at the bundle's ruling, each of which removes its working
+    directory — and nothing of
     it was committed. A bundle built under a declined handoff and then moved out of the folder looks
     the same here and cannot be told apart, which is why the stop's remedy above has the operator
     delete this date's files when they move a bundle out. **It is this date's scratch, and the one exception to the rule
@@ -1207,39 +1211,47 @@ wrote their own scan could scan one bundle differently, and a hand-written one h
 a commit and broken on a wrapped line.
 
 ```
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" tokens <file-or-directory>… [--prereq-key <KEY>]… [--captured <bundled name>]…
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" tokens <file-or-directory>… [--prereq-key <KEY>]… [--captured <bundled name>]… [--captured-path <path relative to brd/>]…
 ```
 
 Over the prompt, give it the prompt file this phase wrote; over the delivery note, the note's file;
-over the bundle (*Assemble the bundle* rule 7), the directory being assembled, with `--prereq-key`
-for each prerequisite whose package rule 5 copied in and `--captured` for the bundled filename of each
-file rule 2 copied byte for byte. It prints every token of the table's classes as JSON — each hit's
-file, line, class, token and the span its position places it in — and `groups`, one line per file,
-token and span with its count, which is the grouping §6.3 rule 4 asks of every report. **It finds and
-never rules**: an exit 2 stops the run, naming its one stderr line, and every hit is read by its
-`span`:
+over the bundle (*Assemble the bundle* rule 7), the directory being assembled. Give every run
+`--captured-path` for each captured file's path relative to `brd/` — `source/<basename>` and every
+path under `brd/source/` and `brd/source-external/` the capture holds, a name with spaces as it
+stands — since a locator is recognised by what it names, never by its shape (`bundle-packaging.md`
+§6.3); and give the bundle's run `--prereq-key` for each prerequisite whose package rule 5 copied in
+and `--captured` for the bundled filename of each file copied byte for byte, a prerequisite's
+captured files among them. It prints one line of JSON: `groups`, one entry per file, token, span,
+`prerequisite` and `image_row`, with its class, its count and its lines — the grouping §6.3 rule 4
+asks of every report — and `omitted_locator_sections`. Read the whole line; where the tool shows only
+a preview, read the file it saved the output to. **It finds and never rules**: any exit other than 0
+stops the run, naming its stderr, since empty output from a scanner that did not run is not a clean
+scan. Every group is read by its `span`:
 
-- `captured-file`, `anchor` and `locator` — a captured file whole, an inventory row's `source_anchor`,
-  and a captured path or a captured file's bundled name: the customer's own words or naming
-  (`bundle-packaging.md` §6.3), reported and put to the operator's ruling below, save a `locator` on a
-  `source/` or `source-external/` path naming no file the capture holds, which is this package's own
-  writing and a stop;
+- `captured-file`, `anchor`, `locator` and `locator-tail` — a captured file whole, an inventory row's
+  `source_anchor`, a captured path or a captured file's bundled name, and what follows that path's
+  ` › `: the customer's own words or naming (`bundle-packaging.md` §6.3), reported and put to the
+  operator's ruling below — save a `locator-tail` hit that the line shows is this package's own
+  sentence running on after a heading path rather than the path itself, which is a stop;
 - `inventory-text` and `ledger-text` — a row's `text` cell: verbatim whole where `image_row` is
   `false`; where it is `true`, or `null` (a ledger row, whose image-ness its inventory row's anchor
   says), verbatim only inside the element the row quotes, and a hit outside it is the plugin's own
   words and a stop;
-- `prerequisite` — a model id is named in the Final report and left as packaged (rule 7); every other
-  class stops;
 - `none` — a stop, save where the hit sits in a span §6.3 names that position alone cannot place: a
-  figures section's *Text*, *Says* or *Flow*; a `[CD#n]`'s quoted `argumentation`, or its `chosen`
-  where that quotes an answer; for a model id alone, a grounding block's `claim` or a value one of
-  its fields quotes; or a part of the prompt rendered from one of these or from an inventory or ledger
-  `text` cell. Read the line to tell.
+  figures section's *Text*, *Says* or *Flow*, or its heading or *Linked from* line; a manifest map
+  line; a `[CD#n]`'s quoted `argumentation`, or its `chosen` where that quotes an answer; for a model
+  id alone, a grounding block's `claim` or a value one of its fields quotes; or a part of the prompt
+  rendered from one of these or from an inventory or ledger `text` cell. Read the line to tell.
 
-A hit whose `certain` is `false` is a leading-slash name whose shape cannot tell a command from a
-route the customer's own code names — `/version` in a grounding finding's note: it is a slash command
-only where it names one. A `§` the scanner leaves out, counted in `omitted_locator_sections`, sits in
-§6.3 rule 1's fixed position and is no hit at all.
+**`prerequisite: true` changes one class and no span**: a model id in a prerequisite's file is named
+in the Final report and left as packaged (rule 7), whatever its span; every other class is read by
+its span exactly as anywhere else, so that package's own customer content is put to the ruling as
+this one's is. A group whose `certain` is `false` is a token whose shape cannot tell the family's
+vocabulary from ordinary text: a leading-slash name that may be a route the customer's own code
+names — `/version` in a grounding finding's note — or an agent's bare name that may be ordinary
+words. It is a hit of its class only where it names a command or an agent. A `§` the scanner leaves
+out, counted in `omitted_locator_sections`, sits in §6.3 rule 1's fixed position and is no hit at
+all.
 
 `BRD_PACKAGE_PROMPT_LEAK: <where> carries <token>, from <artifact> — <why>. Where <token> is a § quoting the customer's own section number with no captured path, write it as the path and the section, source/<basename> › § <n>, which bundle-packaging.md §6.3 rule 1 exempts. Where <token> is a model id that records what a run, a pass or a tool of yours ran on — a tier line, a note saying which model a pass used — remove the line or the clause naming it from <artifact> by hand: no field of the record holds that model, so nothing else changes, and workflows-core:grounding-format §2.3 sanctions the edit in a grounding file. Where it is a model the customer's own requirement, code, configuration or documents name, it is theirs and is never removed: in a grounding file, quote it beside the requirement id, or the path, it comes from, which bundle-packaging.md §6.3 puts to your ruling; anywhere else, reword the sentence around it to name the model by the record that names it. Either way, commit the edit to the specs repository's default branch, and re-run.`
 
@@ -1391,7 +1403,7 @@ they answer, and can paste the note into an email without opening a file.
 
 ## Phase 8 — Assemble the bundle
 
-Write `<BRD-dir>/bundle-<YYYYMMDD>/`. The bundle is a **rendered copy**, produced on the way out;
+The bundle is `<BRD-dir>/bundle-<YYYYMMDD>/`, built as below. It is a **rendered copy**, produced on the way out;
 the working documents keep their wikilinks and are never rewritten in place
 (`bundle-packaging.md` §2).
 
@@ -1583,7 +1595,7 @@ or not that line is there.
    is enumerated above is this command's contribution to the manifest, not its contents.
    The manifest is a bundle document; the delivery note is not.
 7. **Run the plugin-free scan over every document in the finished bundle** — the working directory, with
-   the scanner's `--prereq-key` and `--captured` as *The plugin-free scan* says — and stop on any hit
+   the scanner's arguments as *The plugin-free scan* says — and stop on any hit
    outside verbatim customer content and customer-derived locators — and, for a model id, outside
    the customer's naming a grounding block records — whose hits are the operator's
    to rule on exactly as `bundle-packaging.md` §6.3 disposes of them (*The plugin-free scan*,
@@ -1674,14 +1686,16 @@ or not that line is there.
    A source side that comes up empty while the restatement is not stops with:
    `BRD_PACKAGE_SET_UNREADABLE: <source> yielded zero records under <filter> while <part-or-document> restates some — that is a read failure, not an empty set, and passing it would certify a restatement against nothing.`
 
-**Then move it into place.** Test once more that `<BRD-dir>/bundle-<YYYYMMDD>` does not exist —
-another run can have written it since Phase 0 step 11 looked — and where it does, remove the working
-directory and stop with step 11's first `BRD_PACKAGE_BUNDLE_EXISTS`. Otherwise run
-`command mv -- "<the path mktemp printed>" "<BRD-dir>/bundle-<YYYYMMDD>"`. Where the move fails,
-remove whatever part of `<BRD-dir>/bundle-<YYYYMMDD>` it left — the move only ever creates that
-path, so nothing else is there to lose — and the working directory, and stop, naming the error: a
-move between file systems copies before it deletes, and a copy cut off part-way is the partial
-bundle this order exists to prevent.
+**Then move it into place.** Create the target first, with `command mkdir -- "<BRD-dir>/bundle-<YYYYMMDD>"`,
+which fails where the path exists: another run can have written it since Phase 0 step 11 looked, and
+a `mv` onto an existing directory would put the bundle inside it and report success. Where `mkdir`
+fails, remove the working directory and stop with step 11's first `BRD_PACKAGE_BUNDLE_EXISTS`.
+Otherwise move every entry of the working directory into the target — `command mv -- "<the path
+mktemp printed>"/* "<BRD-dir>/bundle-<YYYYMMDD>"/`, every bundled name starting with its key, so the
+glob misses none — and remove the now-empty working directory. Where the move fails, remove
+`<BRD-dir>/bundle-<YYYYMMDD>`, which this run's own `mkdir` created, so nothing of another run's is
+in it, and the working directory, and stop, naming the error: a move between file systems copies
+before it deletes, and a copy cut off part-way is the partial bundle this order exists to prevent.
 
 **The bundle is committed** (D18), through the handoff below. That serves both delivery routes with
 one artifact: a customer with repository access pulls it and needs nothing else, and everybody else
