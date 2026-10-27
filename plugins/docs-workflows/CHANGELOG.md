@@ -5,6 +5,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.27.0] — 2026-10-27
+
+Released with `workflows-core` 1.61.0, `dev-workflows` 4.42.0 and `product-workflows` 3.50.0, relying on none of them — to-fix LC8 (live checks of 2026-10-26).
+
+### Changed
+- `/document` Phase 7's `doc-fixer` brief, on both verdict paths, says that a finding whose suggested fix offers alternatives that differ in what the text means or requires (readings of a requirement, a scope line or a term), or whose fix takes a product or scope decision, is deferred as `DEFERRED — needs human decision`, naming each alternative, and never chosen: a `BLOCKER` so deferred reaches the user at the escalation, and a `MAJOR` goes to the Phase 9 report's `### Deferred items` with the alternatives. Alternatives that mean the same, such as two ways to mend one link, stay an edit it applies. In run 4 of the live checks `/epics`' `doc-fixer`, dispatched the same way, took one of two readings a `MAJOR` offered and wrote it into the Epic (LC8). The docs page says so.
+
+## [1.26.0] — 2026-10-27
+
+Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rule this release's review step cites, whose `commit-artifacts` push rule this release's session-cost page states, and whose `epic-picker` *The cap* states the description rule these pickers follow; released with `dev-workflows` 4.41.0 and `product-workflows` 3.49.0 — to-fix LC1, LC2, PR7 (live checks of 2026-10-26).
+
+### Changed
+- `/document` Phase 7: *Provide manual fix notes* gets the BLOCKER's notes as `escalation-rules`' *Manual fix notes — the run drafts them* says (a draft the run offers, or, for a `NEEDS HUMAN` BLOCKER whose fix needs a decision, a plain-text request naming the decision), then applies them through `doc-fixer`, as before. It asked for the notes in plain text, with nothing saying the run waited for them.
+- **Every picker built from a listing names what its array leaves out in the dialog.** `/docs-brand`'s repository and logo pickers, `/docs-serve`'s server and `--stop` pickers and `repo-resolution`'s rung 4 label their overflow option `Another repo`, `Another candidate`, `Another entry`, `Another server` or `Another directory` with its `(you'll be prompted …)` marker, no longer pointing at "the list above", and give it a `description` naming every item the array leaves out after `Not shown as an option:`. `/docs-init` Phase 2 and `/docs-audit`'s source-repository question, whose arrays carry no repository, put every candidate in the descriptions of *all of the listed repositories*, as their first option now reads, and of *Name the ones to include*. A typed answer is resolved against the items listed, the description's included. Run 1 of the live checks showed a prose list above a picker printed in none of eight Epic pickers, so an option pointing at it pointed at nothing (to-fix LC1).
+- `/docs-serve` cites `epic-picker` *The cap* for the typed-answer rule, where it named that file's closing paragraph, which does not state it.
+- `/document`'s docs-repository search (b): where more repositories match than fit, the array's last option is *Another repository (you'll be prompted for its path)*, its `description` naming every repository the array leaves out, and a typed answer is resolved against the matching repositories, per `epic-picker` *The cap* and `next-phase-offer`'s *overflow rule* (to-fix LC1).
+- `/document`'s missing-repositories gate, its proposed-locations question and its ambiguous-image-policy question give each option that stands for the missing repositories, the proposed targets or a target's screenshots a `description` naming every one, per `epic-picker` *The cap*; a slug typed for a different path is resolved against the missing ones (to-fix LC1).
+- **`/document` names in the dialog the set its other questions turn on**: the maintenance proposals behind *Apply all* and *Choose per proposal* (both modes), every add-list image candidate behind the *Use all* options, the edited pages behind *Add-list only*, the preferred clones, the remaining style violations and failing builds behind *Proceed … anyway*, and the dirty paths at its clean-tree check and at its base switch's failed pull; its and `/release-notes`' discrepancy batch question names every discrepancy, as `source-truth` §7.2 now does; `/docs-brand`, `/docs-init` and `/docs-profile` name the dirty paths at theirs, and `/document`'s and `/docs-audit`'s `DIRTY_TREE` escalation names the repository and its dirty paths, per `escalation-rules`' *Dirty working tree*; and `toolchain-preflight`'s prompt carries the missing tools and the gates they degrade in its own text (to-fix LC1).
+- `/docs-profile`'s space-mapping and branch-naming questions name, in *Accept proposed space mapping*'s and *Use repo convention if detected*'s descriptions, the content root with its proposed `id` and `base_path`, and the pattern the run would record (to-fix LC1).
+- `/docs-profile`'s prerequisites question and its field-level diff confirmation name, in *Record detected prerequisite(s)*'s and *Apply the diff*'s descriptions, every prerequisite detected and every field the diff changes or adds (to-fix LC1).
+
+### Fixed
+- `/document` Phase 8.5 and `finish-and-handoff` §3: the push is offered only where the squash's commit was made. Where git refused it, the run reports git's error or the hook's output and offers nothing: after the `reset --soft`, the branch stands at the squash base with the run's changes staged, so a push would publish it without them (to-fix LC2, live checks of 2026-10-26).
+- `/document` Phase 8.6 counts a refused squash commit among the ways Phase 8.5 can end: the run makes no commit in its place, so an accepted `CLAUDE.md` or knowledge-base edit rides only a commit you make, and only where you stage it; its *Cancel* names the same case, and the command's docs page offers the push only where git accepts the squash commit (to-fix LC2).
+- The session-cost reference page says `commit-artifacts` does not push a branch the plugin created that `origin` does not have yet (to-fix LC2).
+
 ## [1.25.0] — 2026-10-26
 
 Take with `workflows-core` 1.59.0 (batch B19).

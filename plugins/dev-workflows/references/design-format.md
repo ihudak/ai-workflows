@@ -97,6 +97,18 @@ reach.
    the fan-out ran, the losing takes fill this with real trade-offs and are named as such (take,
    constraint, why it lost); otherwise the author names alternatives by hand. An "alternative" that was
    never plausible ("we considered not having an interface") is theatre — see `design-reviewer`.
+   **Where the stack auto-configures behaviour a decision rests on, list the defaults** — as a
+   `### Framework defaults` block inside this section, scaled: present for `MODERATE`+ wherever a
+   framework, a runtime or a library turns a behaviour on unless configuration turns it off and a
+   decision in this design depends on it, else `_N/A — why_`. One line per default that bears on a
+   decision — transaction, session or connection scope, retries and timeouts, serialisation, caching,
+   a security filter, a thread pool — naming the default, the value it takes, **kept** or
+   **overridden**, the decision it bears on, and the `path:line` it was read at (§ Principle): the
+   configuration that overrides it, or the place that shows nothing does. An overridden default
+   names its new value, and the configuration change is part of the implementation. Spring's
+   `spring.jpa.open-in-view`, on unless set to `false`, is the example: it holds the persistence
+   session open for the whole request, so a decision about transaction or connection scope is false
+   under it until it is listed and kept or turned off.
 4. **## Interfaces / contracts** (core) — exact signatures, API shapes, schemas, events, config keys
    the change introduces or alters. Concrete types, not prose promises. **A boundary interface** is one the change introduces or alters on the producing side, which another component (`workflows-core:components` §1: a repository, or a module inside one) or a consumer outside the system calls or receives the messages of — an endpoint, a published event, a library's public API, a command-line tool's parsed output — and never one that only code inside the same component uses. It also states, here or against it under `## Error handling & edge cases`, the behaviour a schema does not carry, as concretely as the types: what a caller gets on each failure and what state the failure leaves, its side effects, and, wherever they apply, whether a repeated request or a redelivered message repeats a side effect, ordering, and timeouts. A change that introduces one states that behaviour whole; a change that alters one states the behaviour it changes, and that the rest is unchanged. The shape of an order request does not say whether retrying it creates a second order. On a multi-component PRD (`workflows-core:components` §3), also name each interface the Epic's `## Contract` produces — its `[AD#N]`, how this design meets that row's Rule, and, where this design implements its behaviour, its producer-side test in `## Test strategy` — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, or, where a contract Epic builds that interface as a code artifact (its ARD row's `Artifact`), that artifact as built, or, where the row's `Status` is `exists`, the interface as it already runs. **A consumer whose repository is not the artifact's** names how it gets the artifact: a published package pinned to a version, or a copy that records its source path and the revision it was taken at. The pin or the revision is recorded when the package is added or the copy taken, usually by `/implement`, since the artifact may not be built yet when this design is written. The copy is never edited in place: it changes only by being taken again from its source at a newer revision, which it records.
 5. **## Seams** (scaled) — where the change is exercised under test; prefer the **highest** seam that
@@ -190,6 +202,14 @@ reach.
       together trigger rolling back or turning the feature flag off, and who acts on it. It pairs
       with the rollout order in `## Migration / rollout / backward-compatibility`. "Roll back if
       errors rise" names no threshold, and is not one.
+      **A ratio names who feeds each side of it.** Wherever a post-release check, a baseline or the
+      rollback signal is a ratio — an error rate, a success share, a hit ratio — it names its
+      **numerator** and its **denominator** by the callers whose requests each counts, and every other
+      caller that feeds the same counter: a denominator shared with traffic this change does not touch
+      dilutes the ratio, and one the change's own retries inflate flatters it. It also names the
+      **window in which old and new clients coexist** — a rollout, a cache or a client release that
+      leaves both versions calling at once — and says whether the threshold holds across that window
+      or is read only after it closes.
 
     A `SIMPLE` change may need no more than one check and its rollback signal.
 12. **## Out of scope** (core) — what this design deliberately does not cover (bounds the
@@ -269,8 +289,8 @@ reach.
     a piece with a second `Contract:` line, or one before its `Files:` line; the same entry in two
     pieces' `Files:`; or any other non-blank line — prose, an indented `_N/A`, or a fenced block
     inside the section, whose lines are all read as the section's.
-    `pieces.py parse` is the check `/design` runs on the section it writes and `design-reviewer`
-    runs on the section it reviews; `pieces.py assign` is what `/implement` runs on the change's paths, and
+    `pieces.py parse` is the check `/design` runs on the design's section, whoever wrote it, and
+    `design-reviewer` runs on the section it reviews; `pieces.py assign` is what `/implement` runs on the change's paths, and
     `/design` on the target repository's files at the commit Phase 4 scanned, and it also reads the
     section as malformed where one of those paths is matched by two pieces' patterns — an overlap
     no entry's text shows — or, on a section that draws pieces, is not valid UTF-8. Its output is

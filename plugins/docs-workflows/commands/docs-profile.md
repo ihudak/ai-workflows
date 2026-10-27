@@ -145,14 +145,17 @@ Typical gaps:
   ```
   choices: ["Record detected prerequisite(s) (Recommended)", "Add a prerequisite (you'll be prompted to describe it)", "No prerequisites"]
   ```
+  *Record detected prerequisite(s)* carries a `description` naming every prerequisite detected, so each is named in the dialog whether or not the list was printed (`workflows-core:epic-picker` *The cap*).
 - **Ambiguous space mapping** (a content root with no obvious `id` / `base_path`):
   ```
   choices: ["Accept proposed space mapping (Recommended)", "Edit a space's id/base_path (you'll be prompted)", "Drop this space"]
   ```
+  *Accept proposed space mapping* carries a `description` naming the content root and the proposed `id` and `base_path`, so what it writes is named in the dialog whether or not it was printed (`workflows-core:epic-picker` *The cap*).
 - **Branch-naming convention** when none was documented (drives Phase 5):
   ```
   choices: ["Use repo convention if detected, else `<prefix>/docs-profile` (Recommended)", "Enter a different pattern (you'll be prompted)"]
   ```
+  *Use repo convention if detected* carries a `description` naming the pattern it records — the convention detected, with where it was found, or `<prefix>/docs-profile` with the prefix filled in — so it is named in the dialog whether or not it was printed.
 
 Each `(you'll be prompted…)` option above asks for its value in plain text — the command, the prerequisite, the space's `id` and `base_path`, the pattern — and records the answer as `user-supplied`.
 
@@ -173,7 +176,7 @@ Each `(you'll be prompted…)` option above asks for its value in plain text —
   "A docs-profile already exists. Apply these field-level changes?"
   choices: ["Apply the diff — change the listed fields, keep the rest (Recommended)", "Keep existing, write nothing", "Edit specific fields first (you'll be prompted)"]
   ```
-  "Apply the diff" changes exactly the fields listed as changed or added and nothing listed as kept. Do not overwrite without this confirmation. Where each choice goes:
+  *Apply the diff* carries a `description` naming every field the diff changes or adds, so they are named in the dialog whether or not the diff was printed (`workflows-core:epic-picker` *The cap*). "Apply the diff" changes exactly the fields listed as changed or added and nothing listed as kept. Do not overwrite without this confirmation. Where each choice goes:
   - **"Apply the diff — change the listed fields, keep the rest"** → Phase 5, which writes the existing profile with those changes applied.
   - **"Keep existing, write nothing"** → this run writes nothing. Skip Phase 5 entirely — no branch, no stash offer, no commit, and no CLAUDE.md additions — and go straight to Phase 6, whose report reads "kept — nothing written". In inline mode, which has no Phase 6 report of its own, control returns to `/document` with the existing profile unchanged and no branch or commit to hand back (Phase 6), and `/document` proceeds with that profile (its Phase 0 step 4(c)).
   - **"Edit specific fields first (you'll be prompted)"** → ask for the edits in plain text and fold them into the diff; where it now lists no change and no addition, end the run as the paragraph above says, and otherwise show the diff again and ask this question again.
@@ -205,6 +208,7 @@ Produce a reviewable PR in the **target repo** (never the plugin). **Never push 
    ```
    choices: ["Stash changes and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff", "Cancel"]
    ```
+   The question's own text names each dirty path, one `git -C <repo-root> status --short` line each, since both *Stash* and *Proceed anyway* turn on them (`workflows-core:epic-picker` *The cap*).
    A stash runs `workflows-core:escalation-rules` § *Stashing the user's changes*: named, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends.
    Then base the branch on the repo's default branch so the profile PR is cut from a clean base. `<base>` is that branch's **name**, never its `origin/<name>` ref, which `git switch` refuses: resolve it by `workflows-core:read-only-repos` §3's chain, run against `<repo-root>`, and its **A switch takes the name** rule — rung 1 prints `origin/<name>` and `<base>` is what follows `origin/`; where rung 1 fails — `origin/HEAD` unset, or naming a ref that no longer exists (§3 rung 1) — `<base>` is the literal `main` or `master` whose ref rungs 2–3 find. Run `git -C <repo-root> switch <base> && git -C <repo-root> pull --ff-only` (the clean-tree check above already ran; if the fast-forward pull fails, offer the same stash/proceed/cancel choices — a stash there records the branch `git -C <repo-root> branch --show-current` printed **before** the switch, which carried the changes here, so read it then). Where the chain is exhausted — no `origin`, or one holding neither branch — this command's own fallback applies: `<base>` is the local `main`, then `master`, whichever `git -C <repo-root> rev-parse --verify --quiet refs/heads/<name> >/dev/null` finds, switched to without the pull, there being no remote branch to bring it up to; with neither, `<base>` is the branch HEAD is on and nothing is switched. Then create the branch: `git -C <repo-root> switch -c <name>` (or, standalone, `git -C <repo-root> switch <name>` if it already exists, resuming this command's own branch — an inline run has already stopped on an existing one at Phase 0 step 2).
 

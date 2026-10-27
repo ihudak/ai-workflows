@@ -277,7 +277,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
      its *Resolve the round* phase's own test of what changed after the last round was generated — that
      phase's to state, and cited, never restated here — and where the test finds nothing it takes
      the no-new-round path, reaches its handoff phase with nothing staged, reports `nothing to
-     commit` and opens no pull request, while where it finds something the round it opens is handed
+     commit` and opens no pull request — save where the handoff re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch, and a re-publish pushes only commits already made, never the files on disk — while where it finds something the round it opens is handed
      off with its own record and not the earlier ones. Either way `handoff-to-main` stages only the
      paths *that* run declared, and the round records already
      on disk are not among them. What is needed is the register already written, landed:
@@ -1722,7 +1722,8 @@ absence is never read as a step that failed — and the
 condition the *Handoff* phase settled — the branch and the pull request whose merge the note waits
 on, every path that phase's outcome line reported declared but staged by nothing, which no merge
 makes the note true for, or, where it pushed nothing, what must happen first. **This item is the one
-place that condition is printed**, and the Final report points back to it rather than repeating it.
+place that condition is printed** — *Send it*'s `description` below repeats it in the dialog, which
+is not printed text — and the Final report points back to it rather than repeating it.
 
 The BRD-to-PRD route's next command is `/brd-reconcile`, which takes the returned review and turns
 each confirmed answer into a `[CD#n]` — and it is offered, named for what it needs, because it
@@ -1738,8 +1739,10 @@ on `/create-ard` and `/specify`, which read the architecture- and implementation
 alongside the same register. So the honest offer is the state this run actually leaves behind:
 
 ```
-choices: ["Stop here — the package is written and, if you handed it off, committed", "Send it — the delivery note is printed above, with whatever has to hold first where anything does", "Reconcile the review once it comes back — /product-workflows:brd-reconcile <BRD-KEY> <review-clause> <merge-clause>", "Package another BRD or slice"]
+choices: ["Stop here — the package is written and, if you handed it off, committed", "Send it — the delivery note, with whatever has to hold first where anything does", "Reconcile the review once it comes back — /product-workflows:brd-reconcile <BRD-KEY> <review-clause> <merge-clause>", "Package another BRD or slice"]
 ```
+
+*Send it*'s `description` names what it turns on, where the dialog shows it whether or not the note and the delivery-route item were printed (`workflows-core:epic-picker` *The cap*): the note it sends, `<BRD-dir>/customer-delivery-note-<YYYYMMDD>.md` by its path; the route; on the archive route, the archive command; on the repository route, the condition the delivery-route item states — the branch and the pull request whose merge the note waits on, each path declared but staged by nothing, or, where the handoff pushed nothing, what must happen first.
 
 `<review-clause>` is `@<review-file>` on the archive route, the review coming back as a file whose
 path only the operator will know; on the repository route it is `(once you merge the customer's

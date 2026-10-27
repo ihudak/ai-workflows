@@ -110,18 +110,26 @@ the run is byte-identical to one where this phase did not exist.
 
 NO mid-run interruption. After the Final Report
 is composed, present the qualifying follow-ups as a batch preview GROUPED BY
-TARGET FILE, then act on one confirmation:
+TARGET FILE, its rows numbered 1 to N across every group, then act on one confirmation:
 
     choices: ["approve-all", "Select some (you'll be prompted for the row numbers)", "cancel"]
+
+**The question's own text names every previewed row** — its number and its task line's action, the
+text before the line's ` — ` reason — so *approve-all* and *Select some* are answered over rows the
+dialog shows whether or not the preview was printed (`${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s
+*The cap*). That keeps a long preview proportionate: one short line per row in the question, the
+full rows in the preview.
 
 - **approve-all** → insert every previewed row.
 - **Select some** → ask at once, in plain text, for the row numbers to insert
   (`workflows-core:escalation-rules` §0, *A selection carries no text*); insert
   those rows, and ask again where an answer names no previewed row. A free-text
   answer to the array that already names row numbers is taken as that subset.
+  A typed number is resolved against the numbers the question listed, never
+  parsed out of other text.
 - **cancel** → write nothing; the follow-ups remain in the Final Report only.
 
-Each preview row shows: the source signal, the target file → section, and the
+Each preview row shows: its number, the source signal, the target file → section, and the
 rendered task line. Nothing is written without one confirmation.
 
 ## 8. Caller contract (what a wiring command passes in)

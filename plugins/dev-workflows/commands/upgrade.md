@@ -314,7 +314,7 @@ interactive tools, even when one is listed in their `tools:`. When it returns
 
 - **Name what the run has left unbuilt first.** The baseline was captured with the user's packages built. Every entry marked `restored unbuilt` that any return in this run has listed so far, and every entry this component's own list holds, is a package now on disk without its build, so a failing test that needs one may fail for that reason and not because of this change. List them above the failing tests, each with its rebuild command, and say so; the user can run those commands before answering.
 - Present the failing tests clearly (from the executor's `failing_tests` / `diagnosis`), and, where its `notes` explain an auto-fix it made before the second verify, that fix too, saying it is in the tree, unreviewed, and goes into the commit on *Keep the upgrade*.
-- Ask:
+- Ask, the question's own text naming each failing test and each package `restored unbuilt`, since *Keep the upgrade* turns on them (`workflows-core:epic-picker` *The cap*):
   ```
   choices: ["Keep the upgrade and leave the failing tests for you to fix", "Revert this upgrade and skip it", "Investigate further before deciding"]
   ```

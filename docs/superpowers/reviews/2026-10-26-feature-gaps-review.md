@@ -183,7 +183,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** no for now — the deferral's own ground (no measured Opus shortfall) still holds; keep it listed as deferred.
 - **Suggested scope:** revisit only with a measured case.
 
-### IMP-G4 — No gate checks that every `code-writer` / `review-fixer` dispatch in `implement.md` names a model — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### IMP-G4 — No gate checks that every `code-writer` / `review-fixer` dispatch in `implement.md` names a model — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Designed in:** `specs/2026-10-17-implement-coding-subagents-design.md` § Left to the builder: "**Verification beyond the live runs,** such as a scripted check that every dispatch in `implement.md` names a model." § Success: "every coding and fix dispatch with an explicit `model:`".
 - **Current state:** no such check in `scripts/check-docs.sh`, `validate-catalog.py` or `reference-parts.py` (grep). The text does name a model at every dispatch today (`implement.md:771`, `:906`, `:936`, `:1000`), and Ruling 74's motivating Sonnet run "dispatched the coding subagent with no `model:`" — a live failure, though of model-following rather than of the text.
 - **Still worth doing?:** marginal — it guards the text, not the run, and the run-time failure is addressed by Phase 0's session-model gate. Cheap if added.
@@ -433,21 +433,21 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `epics-no-offer-to-apply-open-findings` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B23 — MINOR — Gap: `/design` does not prompt for framework auto-configuration defaults
+### FBB-B23 — MINOR — Gap: `/design` does not prompt for framework auto-configuration defaults — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/design.md` Phase 4 (the scanner brief) and Phase 5 (the gap scan). A grep for `open-in-view|auto-configuration|framework default` in `design.md`, `design-format.md` and `design-reviewer.md` returns nothing.
 - **What is wrong:** Decisions resting on transaction and connection scope were false under Spring's default `open-in-view=true`. Only the Opus review caught it, at the cost of a fix cycle.
 - **Suggested fix:** Where the stack auto-configures, list the defaults that bear on the decisions, each marked kept or overridden.
 - **Source:** feedback `design-framework-defaults-unprompted` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B25 — NIT — Gap: `design-format`'s rollback-ratio rule ignores who else feeds the denominator and the mixed-client window
+### FBB-B25 — NIT — Gap: `design-format`'s rollback-ratio rule ignores who else feeds the denominator and the mixed-client window — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/references/design-format.md:169-187` (Post-release checks, Rollback signal).
 - **What is wrong:** Both design-reviewer passes raised a MAJOR in this class.
 - **Suggested fix:** Require each ratio to name its numerator and denominator callers, and the window in which old and new clients coexist.
 - **Source:** feedback `design-observability-ratio-contamination` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B26 — MINOR — Gap: `/conformance` does not group discrepancies that share a cause
+### FBB-B26 — MINOR — Gap: `/conformance` does not group discrepancies that share a cause — **Fixed in dev-workflows 4.43.0 / workflows-core 1.61.1 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/conformance.md:262` ("put one `AskUserQuestion` to the person per item"); `references/conformance-format.md` §3 (no `shared-cause` field).
 - **What is wrong:** One root cause restated in six places becomes six walk questions and six `fix-code` follow-ups for a one-line fix.
 - **Suggested fix:** Cluster discrepancies by evidence `file:line`, ask once per cluster (still splittable), and keep one entry per requirement plus one follow-up per cluster.
@@ -461,14 +461,14 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `conformance-push-refused-after-commit` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B31 — MINOR — Gap: `/implement` has no rule for a large test set (parallel `test-writer` dispatches) — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### FBB-B31 — MINOR — Gap: `/implement` has no rule for a large test set (parallel `test-writer` dispatches) — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:854` (Phase 3.5 step 1: one `test-writer` dispatch).
 - **What is wrong:** With 134 test cases, the orchestrator improvised five parallel writers and wrote the shared test support itself, with no rule to stop two writers sharing a file.
 - **Suggested fix:** Above a threshold, write the shared support first, then dispatch N writers that each own disjoint files and test-case ids, and run one verify.
 - **Source:** feedback `implement-parallel-test-writers` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B33 — MINOR — Gap: no route for a review survivor whose fix lies in a specs-repository document — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### FBB-B33 — MINOR — Gap: no route for a review survivor whose fix lies in a specs-repository document — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:987` (routes only another code repository's findings) and `:1018` (step 7.5: conformance gaps only).
 - **What is wrong:** A MAJOR in `design.md`'s rollback runbook had no rule, so it was handled by judgement.
 - **Suggested fix:** Hand it to no fixer, name it in the report and `body_facts`, and emit a Phase 6 follow-up for it.
@@ -482,7 +482,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `implement-spec-typecheck-before-review` in `BOOK-2-01-feedback.md`
 - **Confidence:** low (the fix is a design decision)
 
-### FBB-B37 — NIT — Gap: verbatim design markup is not checked against the target's CSS framework — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### FBB-B37 — NIT — Gap: verbatim design markup is not checked against the target's CSS framework — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/commands/implement.md` Phases 3A/3B; `agents/code-writer.md`.
 - **What is wrong:** A verbatim template rendered cramped under Bootstrap 5.3, and only the review caught it.
 - **Suggested fix:** Check verbatim markup against the target's CSS framework at implementation time, and raise any departure as a decision or an assumption.

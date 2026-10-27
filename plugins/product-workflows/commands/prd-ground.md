@@ -407,7 +407,7 @@ behaviour, not the behaviour.
    **`/brd-split` is not a way out here, so do not name it.** Re-running it **bare** on a parent whose ledger is fully
      allocated, whose children are non-empty and none of them out of step with it, is a no-op by its own Phase 0
      (`coverage-ledger-format.md` §4): it stages nothing, reports `nothing to commit` and opens no
-     pull request. Where some *other* child is out of step, the bare run is live, but it reconciles
+     pull request — save where the handoff re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch, and a re-publish pushes only commits already made, never these files on disk. Where some *other* child is out of step, the bare run is live, but it reconciles
      that child and declares only the files it changes (its Phase 6), and this slice — in step, by
      the case that brought the run here — is not one of them. `handoff-to-main` stages only the paths *that* run declared, so the slice's
      already-written files, which that run did not declare, can never reach main by that
@@ -682,11 +682,18 @@ the manual path:
    ```
    choices: ["Ground against all <K> listed (Recommended)", "Only some (you'll be prompted for their names)", "Cancel"]
    ```
+   The first two options' `description`s name the clones they mean — *Ground against all <K> listed*
+   the clones it grounds against, *Only some* the clones to choose from — slug and path each, in the
+   list's order, so the clones are named in the dialog whether or not the list was printed.
    Where it holds more, grounding all of them is rarely what is meant, and each multiplies the cost
    stated above, so no option is marked:
    ```
-   choices: ["Name the ones in scope from the list above (you'll be prompted)", "Ground against all <K> listed — each multiplies the cost above", "Cancel"]
+   choices: ["Name the ones in scope (you'll be prompted)", "Ground against all <K> listed — each multiplies the cost above", "Cancel"]
    ```
+   *Name the ones in scope* carries in its `description` every clone the list holds — slug and path
+   each, in the list's order, after `Not shown as an option:` — since this array carries none of
+   them (`workflows-core:epic-picker` *The cap*'s rule for a picker built from a listing), so each is
+   named in the dialog whether or not the list was printed.
    *Only some* and *Name the ones in scope* ask, in plain text, for short names, one per line or
    space-separated; a typed answer to the array is taken as that list. Names resolve by step 3 —
    a name the map does not hold is still a name, and step 3's zero-match escalation answers it.
@@ -997,6 +1004,9 @@ be given one. The digest is consumed by this orchestrator alone, in exactly two 
    ```
    choices: ["Add repositories for these leads (you'll be prompted for their names)", "Proceed on the record — claims no resolved repository covers may land as NOT-PROVABLE"]
    ```
+   *Add repositories for these leads* carries a `description` naming every lead — the page and the
+   subsystem it names, in the order listed — so the leads are named in the dialog whether or not the
+   list was printed (`workflows-core:epic-picker` *The cap*).
    No option is marked: whether a lead names code worth grounding is the operator's knowledge, not
    the run's. *Add repositories* asks at once, in plain text, for one or more repository names or
    absolute paths, one per line or space-separated; a free-text answer to the array that names them

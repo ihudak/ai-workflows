@@ -685,7 +685,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## dev-workflows — /implement
 
-### IMP-B1 — MINOR — Pre-Phase 3 step 3 hard-codes a branch name that contradicts steps 1–2 (convention discarded, key doubled) — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### IMP-B1 — MINOR — Pre-Phase 3 step 3 hard-codes a branch name that contradicts steps 1–2 (convention discarded, key doubled) — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:713`, `:715`, `:717` (at 0e02e28b)
 - **What is wrong:** Step 1 builds the name from the repository's documented convention, filling its segments, and only "when the repo documents no convention (§1.4) build `<prefix>/<slug>`". Step 2 then says "When `unit_key` is set and the chosen shape has no separate issue-key segment, prefix it: `<unit_key>-<slug>`." Step 3 then ignores both: "**Create and checkout** — `git checkout -b <prefix>/<unit_key>-<slug>` on a keyed run, `<prefix>/<slug>` in direct mode. If that name already exists, append the first 7 chars of HEAD's SHA: `<prefix>/<slug>-<short-sha>`."
 - **Failure scenario:** (a) A repository whose CONTRIBUTING.md documents `<initials>/<KEY>-<desc>`: step 1 produces `ih/BOOK-1-01-add-x`, step 3, read literally, runs `git checkout -b <prefix>/<unit_key>-<slug>`, a shape with a prefix segment the convention does not have. (b) No convention: step 2 already makes the slug `BOOK-1-01-add-x`, and step 3's `<prefix>/<unit_key>-<slug>` yields `feat/BOOK-1-01-BOOK-1-01-add-x`. (c) On a name collision in keyed mode the fallback form `<prefix>/<slug>-<short-sha>` is written without `<unit_key>`, so the key a reader of the branch name looks for (the docs say the branch "carries" the key) is present only by the accident of step 2's prefixing. Three live instructions disagree about one name; an agent running them literally picks one.
@@ -712,7 +712,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high (that the census is incomplete); low impact
 
-### IMP-B4 — NIT — the `/implement` docs page's agent census omits `defect-reporter` — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### IMP-B4 — NIT — the `/implement` docs page's agent census omits `defect-reporter` — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/docs/commands/implement.md:46`
 - **What is wrong:** "Eight named subagents are dispatched: … `workflows-core:impl-maintenance` (Phase 4). … `--enforce-model` overrides all eight." Under `--skip-feedback`, Phase 4 dispatches `workflows-core:defect-reporter` in Agent 4's place (`commands/implement.md:1059`), a ninth named subagent with its own model rule (`§2.1 Sonnet chain, or run_flags.enforced_model`). The page's synopsis paragraph names it, but the census and "all eight" do not.
 - **Failure scenario:** a reader checking which agents `--enforce-model` reaches is told eight.
@@ -723,7 +723,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## dev-workflows — /design, /ready, /conformance
 
-### DEV-B1 — MAJOR — `/ready` asks its "dirty or non-main checkout" question on every run in session-branch mode, and its re-check can never pass
+### DEV-B1 — MAJOR — `/ready` asks its "dirty or non-main checkout" question on every run in session-branch mode, and its re-check can never pass — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/ready.md:116-122`, `:757`; `plugins/dev-workflows/docs/commands/ready.md` ("A clean specs-repo checkout on `main`/`master`")
 - **What is wrong:** Phase 0 step 3 runs a bare `git -C $SPECS_PATH status --porcelain` and treats any output as dirty: "Not on `main`/`master`, or the tree is dirty → warn … and ask: `choices: ["I've switched to a clean main — re-check", "Proceed anyway on the current checkout (read-only; noted in the report)", "Cancel"]`". In session-branch mode, `workflows-core:specs-repo-git` §8.3 deliberately keeps the session branch's version of every session file in the working tree "wherever it differs from HEAD". The preflight also "ends with `put-back` in the mode". So whenever the session branch holds a session file the default branch lacks, the default-branch checkout always shows those paths in `--porcelain`.
 - **Failure scenario:** `workflows.sessionBranch=true` (or a recorded push refusal), with one earlier run's cost or feedback file on `session/<id>`. Every `/ready` run then warns that the checkout "may show unmerged, in-flight artifacts" and asks the question. *I've switched to a clean main — re-check* loops, because the overlay files come back. The operator can only take *Proceed anyway*, which marks the report as a non-main/dirty override. The same false prompt fires on every run after a declined handoff, since Phase 6a expects `_readiness.md` to be left as `??`/` M` (`ready.md:551-556`).
@@ -732,7 +732,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (worked out from §8.3's stated behaviour, not reproduced in a live session-branch repository)
 
-### DEV-B2 — MINOR — `/ready` says `specs-preflight` "creates no branch, a hard invariant", which is false in session-branch mode
+### DEV-B2 — MINOR — `/ready` says `specs-preflight` "creates no branch, a hard invariant", which is false in session-branch mode — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/ready.md:22`, `:167`, `:734-737`
 - **What is wrong:** "`specs-preflight` itself still creates none, switching `$SPECS_PATH` only between branches that already exist and are plugin-created (`workflows-core:specs-repo-git` §2.2)", and in the Invariants, "`specs-preflight` itself still creates no branch, a hard invariant". `specs-repo-git` §8.2 says the opposite. Where §3.4's flush would commit, the run calls `session-branch.py commit`, which "creates the session branch where it does not exist". §2.2, which `ready.md` cites, says "The session branch §8 creates is the plugin's too".
 - **Failure scenario:** a first `/ready` in session-branch mode with leftover session files. The preflight's flush creates `session/<identity>` while the command's own invariant says no branch can be created. An agent that checks its invariants, or a maintainer relying on them, is misled. Two live statements contradict each other.
@@ -741,7 +741,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DEV-B3 — MINOR — `/design`'s "Next Epic" loop skips Phase 1.5, so the next Epic is never classified or model-gated
+### DEV-B3 — MINOR — `/design`'s "Next Epic" loop skips Phase 1.5, so the next Epic is never classified or model-gated — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/design.md:462-468`, against `:160-195`
 - **What is wrong:** on *Next Epic*, "re-render the Phase 0 picker … then, on selection, loop back through Phases 2–7 for the selected Epic". Phase 1.5 is outside that range. Yet its classification "scales **grill depth**, `design.md` **section-inclusion** … and **`design-reviewer` rigor** together", and it owns the HARD gate for `SIGNIFICANT`/`HIGH-RISK` on a non-Opus session. Phase 1's resume-vs-fresh question for a ◐ Epic with its own `_design-session.md` is skipped too. Phase 0 step 5 / Phase 1 step 2 run only once.
 - **Failure scenario:** on a Sonnet session, the first Epic classifies `MODERATE` and gets the soft advisory. The user takes *Next Epic* and picks an auth-path Epic that is `HIGH-RISK`. The run designs it with no relaunch gate, on the `MODERATE` section set and reviewer depth. A ◐ Epic picked from the loop is never offered *Resume* or *Start fresh*.
@@ -750,7 +750,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DEV-B4 — MINOR — the `/design` docs page quotes a stop message the command no longer prints
+### DEV-B4 — MINOR — the `/design` docs page quotes a stop message the command no longer prints — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/docs/commands/design.md:58`, against `plugins/dev-workflows/commands/design.md:101`
 - **What is wrong:** the docs page says absence stops with "`no specification.md exists yet for this item — run /product-workflows:specify for it and merge it to the specs repo main first.`" The command's stop is `DESIGN_NO_SPEC: no specification.md on the specs repo's default branch for <ADDRESS> — run '/product-workflows:specify <ADDRESS>' and land it there first.` The docs page never names `DESIGN_NO_SPEC`, though it names every other `/design` stop code.
 - **Failure scenario:** a reader who searches the docs for the stop they hit finds neither the code nor the wording.
@@ -759,7 +759,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DEV-B5 — NIT — an author's note has leaked into `DESIGN_NO_SPEC`'s printed message
+### DEV-B5 — NIT — an author's note has leaked into `DESIGN_NO_SPEC`'s printed message — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/design.md:101`
 - **What is wrong:** the backticked stop message runs on: "`… and land it there first. <ADDRESS> is this run's own resolved address, one address and no second key (D4).`" The last sentence is guidance for the author. It sits inside the literal message, so a run that prints the message verbatim prints that sentence too.
 - **Failure scenario:** the user sees "BOOK-1-02 is this run's own resolved address, one address and no second key (D4)." in a stop message.
@@ -2407,7 +2407,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `epics-prose-style-nits-on-house-spelling` in `BOOK-2-01-feedback.md`
 - **Confidence:** low
 
-### FBB-B24 — MINOR — The `/design` fan-out brief carries no spec literals, surviving surface or settled values
+### FBB-B24 — MINOR — The `/design` fan-out brief carries no spec literals, surviving surface or settled values — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/design.md:360` (`problem_frame: [what the interface is for, the constraints any proposal must satisfy, the seam it sits at]`).
 - **What is wrong:** 1df8630c added a check of the recommendation against `problem_frame` and the `[AD#N]` Rules (`:378-386`). However, `problem_frame` is still not required to quote the `[Uxx]`/`[ACxx]`/`[TCxx]` lines, the public surface that must survive (with its callers), or the grill values the interface depends on. So that check cannot catch a take that breaks them.
 - **Failure scenario:** A take rendered "4" where `[TC02]` says "★ 4.0" and dropped `getRatingById`, which a caller still needs.
@@ -2416,21 +2416,21 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `design-fanout-brief-lacks-spec-literals` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B27 — NIT — The `/conformance` walk's question and rationale cadence is unstated
+### FBB-B27 — NIT — The `/conformance` walk's question and rationale cadence is unstated — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/conformance.md:262` (one call per item, then a rationale prompt after each decision). Compare `:116`, where up to four questions share a call.
 - **What is wrong:** It is unclear whether items may share a call and whether a rationale may be a note on the choice. Six items cost twelve round trips.
 - **Suggested fix:** State the rule explicitly either way.
 - **Source:** feedback `conformance-walk-batching-ambiguous` in `BOOK-2-01-feedback.md`
 - **Confidence:** low
 
-### FBB-B28 — MINOR — The `conformance-tracer` handoff has no file input or output for large runs, and its evidence may use loose ranges
+### FBB-B28 — MINOR — The `conformance-tracer` handoff has no file input or output for large runs, and its evidence may use loose ranges — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/references/handoff/conformance-tracer.md` (requirements inline only; no `requirements_path` or `output_path`; the evidence rule at `:47` allows any range).
 - **What is wrong:** With 77 or 88 requirements, the orchestrator scripted the input file and scraped the agent transcript to recover the output. The `## Satisfied` evidence used approximate ranges.
 - **Suggested fix:** Add `requirements_path` above a threshold, and `output_path`. Require exact `file:line` or a tight range.
 - **Source:** feedback `conformance-tracer-requirements-file`, `conformance-tracer-output-handoff` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B29 — MINOR — `not-checkable` requirements are count-only in `_conformance.md`, yet `/conformance` relies on them being recognisable later
+### FBB-B29 — MINOR — `not-checkable` requirements are count-only in `_conformance.md`, yet `/conformance` relies on them being recognisable later — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/references/conformance-format.md:27` (the header count only; the lists are `## Satisfied`, `## Unverified` and `## Discrepancies`); `plugins/dev-workflows/commands/conformance.md:136` (a later run traces a requirement that was "`not-checkable` there" in full).
 - **What is wrong:** A reader cannot tell which requirements were not checkable, or why.
 - **Evidence:** I read both files.
@@ -2438,28 +2438,28 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `conformance-not-checkable-unrecorded` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B32 — MINOR — Step 7.5 writes an open `- [ ]` note for a deferral the user decided in the same run — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### FBB-B32 — MINOR — Step 7.5 writes an open `- [ ]` note for a deferral the user decided in the same run — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:1018` (every unresolved `missing`/`contradicts` gets a note), against `plugins/dev-workflows/agents/code-review.md:245-247` (a `missing` with a recorded deferral is a `MINOR` flagged note).
 - **What is wrong:** A decided deferral (the plan's Out of scope, or an ARD deviation) raises the spec's Open questions from 0 to 1.
 - **Suggested fix:** Exempt a recorded deferral, or write a closed "deferred by decision" note that the open-question count does not include.
 - **Source:** feedback `implement-deferral-forced-open-note` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B34 — NIT — `risk-planner` acceptance checks are not required to use fixed-string grep — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### FBB-B34 — NIT — `risk-planner` acceptance checks are not required to use fixed-string grep — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/agents/risk-planner.md:119-120` (`### Acceptance checks` — "[concrete observable conditions that prove success]").
 - **What is wrong:** A `grep -c` on a literal containing `${…}` printed 0 against files that hold the line.
 - **Suggested fix:** Require `grep -F` for literal text, or a dry run of each check against the tree.
 - **Source:** feedback `implement-acceptance-grep-regex` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B36 — NIT — `test-baseliner` verify lists new failures by name only — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### FBB-B36 — NIT — `test-baseliner` verify lists new failures by name only — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/agents/test-baseliner.md:254-255` (`### New failures` — "one test identifier per line"); `:231` (the status does not count new failures).
 - **What is wrong:** The fix loop must re-run each failing spec to learn why it fails.
 - **Suggested fix:** Carry each failure's first assertion line, plus a `New failures: N` header field.
 - **Source:** feedback `implement-verify-status-ok-with-new-failures` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B38 — MINOR — A post-review departure from the literal `design.md` or spec text leaves the specs contradicting the code — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### FBB-B38 — MINOR — A post-review departure from the literal `design.md` or spec text leaves the specs contradicting the code — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:1018` (step 7.5 escalates only the review's `missing`/`contradicts`); no step covers edits made after the review. A grep for `depart` in `implement.md` hits only `:805` and `:971`, neither of which applies here.
 - **What is wrong:** Fixes chosen by the user after the review changed markup and validation that `design.md` states literally. Nothing amended the design or wrote a note, so a later `/conformance` flags both.
 - **Suggested fix:** When an edit after the review changes literally specified behaviour, amend the document and hand it off through Phase 4.5, or at least write a step-7.5-style note.
@@ -2782,7 +2782,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQD-B2 — MINOR — The `/implement` page's example promises a next step the command no longer offers — **Fixed in dev-workflows 4.41.0 (batch B21)**
+### DQD-B2 — MINOR — The `/implement` page's example promises a next step the command no longer offers — **Fixed in dev-workflows 4.44.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/docs/commands/implement.md:108`
 - **What is wrong:** "…closes with the four Phase 4 maintenance agents and the Final Report — recommending the next Epic, or `/docs-workflows:document` once every Epic under the PRD is implemented." The command's `### Next step` (`plugins/dev-workflows/commands/implement.md:1291`) follows the dev lane. That lane offers, before the pull request merges, `/dev-workflows:conformance <EPIC>` and then `/security-workflows:scan <EPIC>`, then the remaining Epics. Once every Epic has merged it offers the PE's `/dev-workflows:conformance <PRD>`, and only then `/docs-workflows:document <PRD>` (`next-phase-offer.md:318-319`). Nowhere on the `/implement` page does a user learn that `/conformance` and the security scan are the next step after an Epic. Its *See also* (`:110-`) does not link `/conformance` either.
 - **Failure scenario:** A Dev following the page goes straight to the next Epic or to `/document`. They skip the pre-merge conformance check and scan that the family's delivery assumes. `/dev-workflows:conformance`'s own page says `/implement` "offers this command as its next step" (`conformance.md:105`), so the two pages contradict each other.

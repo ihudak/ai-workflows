@@ -555,7 +555,7 @@ Confirm before anything is created:
 choices: ["Accept these slices as proposed (Recommended)", "Edit one or more slices — rename, merge, move a row (you'll be prompted)", "Replace with a different slice list entirely (you'll be prompted)", "Make this whole BRD one slice"]
 ```
 
-*Edit one or more slices* asks in plain text for the edits, and *Replace with a different slice list entirely* for the new list; either shows the proposal again and asks this question again.
+*Accept these slices as proposed* and *Edit one or more slices* each carry a `description` naming every proposed slice — its key or proposed name, and its rows' `[BR#n]`s — in the order presented, so the proposal is named in the dialog whether or not it was printed (`workflows-core:epic-picker` *The cap*). *Edit one or more slices* asks in plain text for the edits, and *Replace with a different slice list entirely* for the new list; either shows the proposal again and asks this question again.
 
 **Zero confirmed slices is not an outcome this phase can reach on an ordinary run.** A BRD is a container, never
 something implementable in its own right, so **this command always produces at least one slice** —
@@ -822,6 +822,8 @@ choices: ["Write covered-here on all <N> rows now (Recommended — every row thi
 choices: ["Re-point all <N> rows to <B-KEY> now — each was deferred by the slice that holds it", "Re-point all but some rows — those are walked one at a time (you'll be prompted for them)", "Walk every candidate one at a time — decide each row"]
 ```
 
+In each of the three, the first two options carry a `description` naming every row of the set by its `[BR#n]`, in the order the prose lists them, so the rows are named in the dialog whether or not the list was printed (`workflows-core:epic-picker` *The cap*); a row typed for the second is resolved against those, never parsed out of the answer.
+
 **Why one list carries a marker and the other two do not** — the same rule all three times, applied to what
 each picker already says. The `allocate-only` picker recommends `covered-here` on every row it
 shows, unconditionally and for a reason no instruction changes, so recommending it once here is that
@@ -899,8 +901,8 @@ than stylistic.** Which resolution is right is a fact about the row in front of 
 that clusters into a slice takes `covered-by`, one this BRD still owes takes `deferred-to`, one the
 customer has withdrawn takes `rejected` — and the list is shown once per row, so no marker could be
 true across the runs that reach it. `workflows-core:escalation-rules` covers
-exactly this under *When no option is safe to recommend*: omit the marker and say so in prose beside
-the list. **A conditional marker is not the alternative.** `(Recommended when nothing clusters)`
+exactly this under *When no option is safe to recommend*: omit the marker and say so beside
+the list, in the question's own text. **A conditional marker is not the alternative.** `(Recommended when nothing clusters)`
 reads as guidance and is malformed by that file's *The `(Recommended)` marker is unconditional*
 rule — it hands the operator the gate this phase was supposed to evaluate, and an orchestrator that
 must present the list verbatim cannot honour it either way. The condition belongs in the option's own
@@ -1394,7 +1396,7 @@ donors, how many were re-pointed and to which receivers, how many were left with
 how many other children's ledger rows the sweep re-pointed with them**, and whether this run
 was the no-op; emit its §4.1 outcome
 line in the final report. The no-op path reaches this phase with nothing staged, so it reports the
-`nothing to commit` line rather than opening a pull request.
+`nothing to commit` line rather than opening a pull request — save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch; its push row is then the line.
 
 **Why the re-cut facts are in that list, when `slices.md` already carries the same record.** The two are not alternatives. `slices.md` is inside the diff this pull request proposes, and the body is what a specs-repo reviewer reads *before* opening it — a re-cut moves requirements between siblings and rewrites `disposition` rows on ledgers the title does not name, so a body enumerating the offer that fired, the empty children resolved and the instruction's reading while saying nothing about a transfer between two BRDs describes the smallest change in the diff and omits the largest. It is also the only path on which a standing child's `coverage-ledger.md` appears in `deliverable_paths` because a row that child had **committed** to — its own ledger reading `deferred-to` against it — was taken **off** it. Writes on the other paths take a row off a standing child too, and none is that: Step 3 can withdraw a claim that was only ever provisional (a slice keyed by a run cancelled mid-walk, whose still-`unallocated` row the next run's walk gives to a sibling), and Phase 4.5's removal repair rewrites another standing child's orphan row on the ordinary and reconcile paths — but the first moves a row the child never settled, and the second always accompanies a folder this run is deleting and the removal block reports it, whereas here a donor's ledger changes with nothing added to it and no folder gone — which reads as a stray edit to anyone who has not been told a requirement moved.
 
@@ -1403,7 +1405,7 @@ path**: a removal there stages a folder deletion and the rewritten `slices.md`, 
 the files Step 3 rewrote for each child and the rewritten `slices.md`, and a "keep" that
 wrote or updated a `reason:` stages that child's `brd-link.md`, so it opens a pull request like any
 other run. A run on it that reconciled nothing and kept every empty child unchanged stages nothing
-and reports the same `nothing to commit` line.
+and reports the same `nothing to commit` line, save where `workflows-core:phase-handoff` §2.3 re-publishes the reused branch, as on the no-op.
 
 ---
 
@@ -1458,16 +1460,21 @@ this run's pull request. Grounding a child is possible only once that pull reque
 choices: ["Ground now — the children that gained a row, run here one after another (Recommended) <merge-clause>", "Ground each child later, one run per child — /product-workflows:prd-ground <CHILD-KEY><later-recommended> <merge-clause>", "Stop here — this BRD's own allocation is complete", "Split another BRD"]
 ```
 
+*Ground now* carries a `description` naming each child in that set by its key, so the children it grounds are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*).
+
 **_Ground now_ is the operator electing to ground the children here, in this session, rather than
 retyping a command whose arguments this run already knows.** It runs
 `/product-workflows:prd-ground` on the children chosen below — one complete run each, after this
 run's pull request has merged (*Ground now — the operator-elected continuation*, after the final
 report). **It is offered only where Phase 6's §4.1 outcome reaches the default branch by the
-operator's merge alone** — `PR opened` or `PR already existed`, or `nothing to commit`; on any other
-outcome (a declined handoff, no remote, a failed push, a pull request not opened) the children's
-files are not on their way to main, so it is dropped from the array and the run says what must
-happen first — that outcome line's own remedy, then `/product-workflows:prd-ground <CHILD-KEY>`
-by hand. *Ground each child later* is the guidance this phase always gave: it names the command
+operator's merge alone** — `PR opened` or `PR already existed` — or is there already — `nothing to
+commit` where its line says the deliverable is already on the default branch; on any other
+outcome (a declined handoff, no remote, a failed push, a pull request not opened, or `nothing to
+commit` where its line says the deliverable sits on a branch, unmerged, or changed on the default
+branch after that branch was cut or beyond a local default branch that is behind) the children's files are not known to be on their way to main, so
+it is dropped from the array and the run says what must happen first — that outcome line's own
+remedy, or, for a deliverable on a branch, that branch's merge, or the default branch's merge into
+it, or a pull of the local default branch — then `/product-workflows:prd-ground <CHILD-KEY>` by hand. *Ground each child later* is the guidance this phase always gave: it names the command
 and runs nothing. *Stop here* ends the run as it always did. **`<later-recommended>` is a placeholder
 this run resolves once**, as `workflows-core:escalation-rules` *The `(Recommended)` marker is
 unconditional* sanctions: ` (Recommended)` where *Ground now* is dropped, so the array still
@@ -1480,7 +1487,9 @@ On *Ground now*, record the commit Phase 6's handoff pushed — `git -C "$SPECS_
    ```
    choices: ["All <N> children (Recommended)", "Choose which (you'll be prompted)", "Stop here — ground later by hand"]
    ```
-   *Choose which* asks again with one option per child and `multiSelect: true` where there are at
+   *All <N> children* and *Choose which* each carry a `description` naming every child by its key, in
+   the order named, so the children are named in the dialog whether or not the list was printed
+   (`workflows-core:epic-picker` *The cap*). *Choose which* asks again with one option per child and `multiSelect: true` where there are at
    most four, and above four lists them and takes their keys in plain text — `AskUserQuestion`
    renders at most four options (`workflows-core:escalation-rules` §0) and pre-ticks none, which is
    why *All* is an answer of its own. A key naming no child of the set is asked about again.
@@ -1519,7 +1528,7 @@ command must also name the merge* rule — in the part loaded at the top of this
 the §4.1 outcome map and is not restated here.
 The rule governs **every** mention of the merge in this phase — both choice arrays and the prose
 below — because this command reaches three outcomes that open no pull request: the no-op, the
-reconcile path where Step 3 wrote nothing and every standing empty child was kept unchanged, and a declined handoff. It is a
+reconcile path where Step 3 wrote nothing and every standing empty child was kept unchanged — each save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch — and a declined handoff. It is a
 placeholder and not an instruction to reword an option, so the arrays are still presented verbatim
 per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
 
@@ -1709,7 +1718,8 @@ never merges (`workflows-core:specs-repo-git` §1 rule 4, `workflows-core:phase-
 this section waits for the operator's merge and checks it.
 
 1. **The merge gate**, read off Phase 6's §4.1 outcome:
-   - **`nothing to commit`** — nothing of this run's waits on a merge: go to step 2.
+   - **`nothing to commit`, its line saying the deliverable is already on the default branch** —
+     nothing of this run's waits on a merge: go to step 2.
    - **`PR opened` or `PR already existed`** — **Test before asking.** Run
      `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C "$SPECS_PATH" fetch --quiet origin` (`workflows-core:bounded-run`) and the merge test
      below: an operator may already have merged it while this run finished. Merged → step 2.

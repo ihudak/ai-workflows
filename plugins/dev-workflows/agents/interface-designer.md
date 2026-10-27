@@ -30,8 +30,15 @@ not spent here. Do not escalate it.
   - *Optimise for the most common caller* — make the dominant case trivial, even at the cost of the
     rare one.
   Follow it wholeheartedly. A take that quietly optimises for something else wastes the seat.
-- **`problem_frame`** (required) — what the interface is for, the constraints any proposal must satisfy,
-  and the seam it sits at.
+- **`problem_frame`** (required) — what the interface is for and the seam it sits at (`purpose`); the
+  specification's `[Uxx]`/`[ACxx]`/`[TCxx]` lines the interface serves, quoted literally (`spec_lines`);
+  the existing public surface at the seam that must survive, with its callers (`surviving_surface`);
+  the values the design interview has settled that the interface depends on (`settled_values`); and
+  any other constraint every proposal must satisfy (`constraints`). Every item binds your take: render
+  a value exactly as a `spec_lines` line writes it, keep every `surviving_surface` entry a listed
+  caller still needs or give that caller a migration, and use each `settled_values` value as settled.
+  A take that breaks one is checked by the caller before the comparison, and is not recommended as it
+  stands.
 - **`code_context`** (required) — the caller's Phase 4 `code-scanner` findings for the relevant repo(s):
   the existing shape, its callers, and what already depends on it. May arrive inline or as an absolute
   file path — `Read` the file first when given a path. On a read failure follow the **read-failure contract** in `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`: this is an *evidence* input — hard stop, return `status: BLOCKED` naming the unreadable path, and never reconstruct it by scanning on your own initiative.

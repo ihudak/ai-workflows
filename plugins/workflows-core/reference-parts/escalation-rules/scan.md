@@ -38,7 +38,9 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`
+- `A BLOCK review's other findings — folded into its fix cycle` → `review`
 - `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` → `review`
+- `Manual fix notes — the run drafts them` → `review`
 - `Review verdict BLOCK (unresolved after one fix cycle) — /document` → `review`
 - `Review verdict BLOCK (unresolved after one fix cycle) — /epics` → `review`
 - `The offer to apply what a review leaves open` → `review`
@@ -71,13 +73,17 @@ unfollowable.
    instead — see *Closed-vocabulary pickers must normalise the free-text answer*.
 2. **A fifth option must go somewhere else, not away.** Where an offer has more routes than four,
    `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s *overflow rule* applies: the prose carries
-   every route, the array carries the likeliest, and the run says the list is longer than the prompt.
+   every route, the array carries the likeliest, and the run says the list is longer than the prompt
+   where the dialog shows it, as that *overflow rule*'s step 3 says.
 
 **A selection carries no text.** Choosing an option returns its label and nothing else. An option
 that needs text from the operator — a name, a path, a key, a reason, a correction — is labelled
 `… (you'll be prompted)` or `… (you'll be prompted for <what>)`, whatever the rest of its wording,
-and choosing it is followed at once by one plain-text question asking for that text; the run never
-reads the bare selection as a refusal or as a promise the operator broke. Its label never words the
+and choosing it is followed at once by one plain-text question asking for that text (one exception:
+where *Manual fix notes — the run drafts them* has the run draft the notes, the prompt *Provide
+manual fix notes (you'll be prompted)* promises is that section's picker of the draft, whose *Write
+my own notes* asks the plain-text question); the run never reads the bare selection as a refusal
+or as a promise the operator broke. Its label never words the
 text as a promise or an instruction the selection itself would have to carry out (`— name it`,
 `I'll say which`, `give the reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
 the text is taken as given, and nothing is asked again. A question whose whole answer is text with
@@ -132,7 +138,8 @@ than printing the condition for the user to evaluate. What stays forbidden is th
 deciding a marker belongs somewhere the command did not put a placeholder.
 
 When no option is safe to recommend across the runs that reach a prompt, omit the marker and say so
-in prose beside the list (as `/document` Phase 5.6 does for its per-occurrence image review).
+beside the list, in the question's own text, where the dialog shows it — never only in prose printed
+before the prompt (`/document` Phase 5.6 omits it so for its per-occurrence image review).
 
 This rule binds every command in the family — this plugin's own and those of every plugin that depends on it — not only the ones `escalation-rules` documents.
 
@@ -203,13 +210,25 @@ capabilities, and skipping it leaves that repository's claims ungrounded rather 
 
 Used in `/idea` Phase 2.6 when the proposed theme → repo mapping is empty (no
 theme matches any mounted repo), in `/specify` Phase 3 step 1 when its candidate list is empty,
-and in `/epics` Phase 4 when the final resolved repo list is empty (every repo was skipped or
+and, in the form below, in `/epics` Phase 4 when the final resolved repo list is empty (every repo was skipped or
 missing — "Use case B with no repos derivable"). The `— /epics` suffix on this heading is
 historical — `/epics` was its first citer — not a scope restriction; the rule serves every
 command whose repo set comes up empty this way, `/idea`, `/specify` and `/epics` among them, and any future
 citer with the same empty-repo-set shape uses it too. *List repos to scan manually* is followed by one plain-text question for the
 repositories' names, each resolved as the citing command resolves a derived one. *Cancel* ends
-the run, on this list and on the `/prd-ground` form below.
+the run, on this list and on the `/epics` and `/prd-ground` forms below.
+
+In `/epics` Phase 4 step 3 the first entry asks no plain-text question but puts a picker:
+`choices: ["Choose repos to scan", "Proceed without code scan", "Cancel"]`
+
+*Choose repos to scan* is followed by `/epics` Phase 1's repository picker — the session's own
+repository first, recommended, where one stands, then the clones under `$REPOS_PATH`, capped as
+`workflows-core:epic-picker` *The cap* says of a picker built from a listing, beside *Turn code
+scan off*, which is this list's *Proceed without code scan* — and each name it takes, the
+harness's free-text option taking any other, is resolved as a derived one. In a live `/epics` run
+the plain-text question was easy to overlook from inside the very repository the run should have
+scanned. The label carries no `(you'll be prompted)`, since what follows it is a picker, not the
+plain-text question §0's marker promises.
 
 In `/prd-ground` Phase 1 step 4 the *Proceed without code scan* entry is omitted:
 `choices: ["List repos to check manually (you'll be prompted)", "Cancel"]`
@@ -271,6 +290,10 @@ Phase 7). `/implement` and `/upgrade` keep their own: each records a `stash_ref`
 ## Dirty working tree
 
 `choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]`
+
+The question's own text names the repository and each dirty path, one `git -C <repo> status --short`
+line each, read by the run itself since `DIRTY_TREE` carries no paths: every choice turns on them
+(`${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap*).
 
 Used in `/document` Phase 5 when a diff-summarizer returns `DIRTY_TREE`. `/create-ard`, `/design`,
 `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without reproducing the list,

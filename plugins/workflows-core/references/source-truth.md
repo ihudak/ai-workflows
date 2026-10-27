@@ -388,7 +388,7 @@ This table is informational — display it before asking decisions.
 
 ```
 ask_user(
-  question: "<N> discrepancies between the intended phrasing (spec when present, else the PRD) and the source code were found (see table above). How would you like to handle them?",
+  question: "<N> discrepancies between the intended phrasing (spec when present, else the PRD) and the source code were found:\n<one line per discrepancy: #<n> <claim> — <verdict>>\n\nHow would you like to handle them?",
   choices: [
     "Decide per discrepancy (Recommended)",
     "Document as intended (spec) for ALL",
@@ -396,6 +396,11 @@ ask_user(
     "Skip & report for ALL (drafts a bug report; no claims documented)"]
 )
 ```
+
+**The question's own text names every discrepancy, one line each** — its number, claim and verdict —
+since the three *for ALL* options act on every one, so they are named in the dialog whether or not
+the table was printed (`${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap*); §7.3's
+question names each in turn.
 
 (When no spec was provided, "Document as intended (spec)" uses the PRD
 phrasing — the original two-way behaviour.) **"Document as intended (spec)
