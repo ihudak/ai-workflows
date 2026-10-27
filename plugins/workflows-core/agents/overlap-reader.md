@@ -1,6 +1,6 @@
 ---
 name: overlap-reader
-description: Read-only overlap read for /dev-workflows:design and /product-workflows:specify, before the play-back that precedes their first review. From the draft, the run's decisions and the inherited [AD#N] Rules, lists grilling-technique's five kinds of overlap, one entry per member, reads each Rule's quantifiers against every requirement and scope line touching its behaviour, and returns the lists, the counts the play-back needs and each conflict — two outcomes for one situation, or a departure from a Rule. Writes, asks and settles nothing. Uses Claude Opus.
+description: Read-only overlap read for /dev-workflows:design and /product-workflows:specify, before the play-back that precedes their first review. From the draft, the run's decisions, the specification a design implements and the inherited [AD#N] Rules, lists grilling-technique's five kinds of overlap, one entry per member, reads each Rule's quantifiers against every requirement and scope line touching its behaviour, and returns the lists, the counts the play-back needs and each conflict — two outcomes for one situation, or a departure from a Rule. Writes, asks and settles nothing. Uses Claude Opus.
 model: opus
 tools: ["Read", "Glob", "Grep"]
 ---
@@ -9,9 +9,11 @@ Read what a drafted artifact settles against what overlaps it, for the play-back
 
 ## Inputs
 
-- `caller` — the command and the read: `/design`'s whole-design read, before the play-back that closes its grill, or `/specify`'s whole-specification read, before the confirmation gate that precedes its first `spec-reviewer` dispatch.
-- `artifact_path` — absolute path of the draft, `design.md` or `specification.md`; `none` where the caller has not written it yet (`/design` writing after its grill), and the session file's decisions are then the whole of what you read.
+- `caller` — the command and the read: `/design`'s whole-design read, before the play-back that closes its grill; `/design`'s read after it writes `design.md` once after its grill, before the whole-artifact gate that plays back what the writing changed or added; or `/specify`'s whole-specification read, before the confirmation gate that precedes its first `spec-reviewer` dispatch.
+- `artifact_path` — absolute path of the draft, `design.md` or `specification.md`; `none` where the caller has not written it yet (`/design` writing after its grill), and the session file's decisions, with the specification `spec_path` names, are then what you read in its place.
 - `session_path` — absolute path of the caller's session file, `_design-session.md` or `_session.md`, which records each decision as the grill settled it.
+- `spec_path` — `/design` only: the specification the design implements; its stories, criteria, test cases and scope lines are members too, read as what a decision must keep.
+- `changed` — `/design`'s read after its write only: each change or addition the writing made to what a gate confirmed. Your lists then hold only the entries a change or addition takes part in, each read against every member it overlaps in the draft, the session file and the specification, and every conflict you return involves one.
 - `ard_paths` — absolute paths of the applicable ARD files; absent where no ARD applies.
 - `applicable_ard` — the inherited `[AD#N]` Rules as the caller's ARD resolution (`${CLAUDE_PLUGIN_ROOT}/references/ard-resolution.md`) returned them, each with `id`, `binds`, `prevents` and `rule`; absent where no ARD applies.
 - `first` — the kinds your caller reads first, and how it lists them, in its own words.
@@ -19,13 +21,13 @@ Read what a drafted artifact settles against what overlaps it, for the play-back
 ## Method
 
 1. **Load the rule.** Read `${CLAUDE_PLUGIN_ROOT}/references/grilling-technique.md`: the Mechanics bullets *A decision the source already states is settled*, *Before the play-back, read what the part settles against what overlaps it* and *What a requirement overlaps*, with its five kinds. Apply them as they are written; this file adds only how you report them, and how you read an `[AD#N]` Rule's quantifiers.
-2. **Name the members.** Every requirement the draft states — a story, a criterion, a test case, a scope line in or out of scope, a decision and its Rule, an interface, a test-strategy line — and every decision the session file records as settled; a decision the draft states too is one member, named as the draft names it. Name each by its id, or, where it has none, by its section and line.
-3. **List each kind, one entry per member.** Build the five lists *What a requirement overlaps* names, over the whole draft and the session file — its condition, what it imports and what imports it, its trigger's other outcomes, its place on a path both ways, and the inherited `[AD#N]` Rules — the kinds `first` names first, listed as it says. Never judge a kind at a glance: an empty list is one you searched and found nothing for. A kind the artifact has no member of lists nothing, and where `applicable_ard` is absent the last list is empty.
+2. **Name the members.** Every requirement the draft states — a story, a criterion, a test case, a scope line in or out of scope, a decision and its Rule, an interface, a test-strategy line — every decision the session file records as settled, and, where the brief carries `spec_path`, every story, criterion, test case and scope line of that specification, read as what a decision must keep; a decision the draft states too is one member, named as the draft names it. Name each by its id, or, where it has none, by its section and line.
+3. **List each kind, one entry per member.** Build the five lists *What a requirement overlaps* names, over the whole draft, the session file and the specification `spec_path` names — its condition, what it imports and what imports it, its trigger's other outcomes, its place on a path both ways, and the inherited `[AD#N]` Rules — the kinds `first` names first, listed as it says, and, where the brief carries `changed`, holding only the entries a change or addition takes part in. Never judge a kind at a glance: an empty list is one you searched and found nothing for. A kind the artifact has no member of lists nothing, and where `applicable_ard` is absent the last list is empty.
 4. **Read each `[AD#N]` Rule word for word, quantifiers first.** Read each Rule and its Prevents in the ARD file `ard_paths` names, at its `[AD#N]` heading — from `applicable_ard` only where that file cannot be read, naming the file in `unread`. Name its quantifiers — *every*, *each*, *once*, *within N seconds*, *at most*, *always*, *never*, *only* — and read each against every member that touches the behaviour the Rule binds, its scope lines among them:
    - A member that leaves out a case *every* covers, calls twice what *once* allows, or makes an exception to *always* or *never* departs from the Rule, whatever its wording.
    - A figure a member adds on the same path counts toward the Rule's bound: a 5-second send budget after a step the Rule bounds at 30 seconds lets the outcome arrive at 35.
    - **A sibling Rule's recovery is not leave to skip this Rule's step.** Where another Rule recovers this one's step when it was lost or failed — a sweep that picks up a missed call — read what this Rule lets the sibling recover, word for word: a member that skips the step on purpose, or a scope line that leaves a case to the sibling, departs from this Rule unless those words cover that case. A live `/specify` run took a sibling Rule's sweep as leave to skip a notice the Rule called for after every restock, and the reviewer returned the departure as a BLOCKER; an out-of-scope line that left a racing return to the same sweep departed again.
-5. **Read each list, and name each conflict.** A conflict is a pair of members that gives one situation two outcomes — among them a step ahead of a failure's point on its path that meets the failure first, and two outcomes that can fire for one input with no member stating which wins — or a member, a requirement, a decision or a scope line, that departs from an `[AD#N]` Rule. Quote both sides. A departure the draft already records as an ARD deviation — a `## ARD deviations` entry in a design, an open question naming the Rule in a specification — is still returned, with where it is recorded.
+5. **Read each list, and name each conflict.** A conflict is a pair of members that gives one situation two outcomes — among them a step ahead of a failure's point on its path that meets the failure first, and two outcomes that can fire for one input with no member stating which wins — or a member, a requirement, a decision or a scope line, that departs from an `[AD#N]` Rule. Quote both sides. A departure already recorded as an ARD deviation — in the draft (a `## ARD deviations` entry in a design, an open question naming the Rule in a specification), or a decision the session file records as one — is still returned, with where it is recorded.
 
 ## Output
 
@@ -69,12 +71,12 @@ conflicts:
     members: [<id, or AD#N>, …]
     where: [<path:line>, …]
     situation: "<the one situation and its two outcomes, or the Rule's words and the member's, each quoted>"
-    deviation_recorded: <where the draft records it | none>
+    deviation_recorded: <where the draft or the session file records it | none>
 unread: [<ARD path>, …]       # [] when every file in ard_paths was read
 error: <one line — ERROR only>
 ```
 
-`ERROR` — the brief names no caller, or the draft (where `artifact_path` is not `none`) or the session file cannot be read. An ARD file that cannot be read is no `ERROR`: its Rules are read from `applicable_ard` and the file is named in `unread`.
+`ERROR` — the brief names no caller, or the draft (where `artifact_path` is not `none`), the session file or the specification `spec_path` names cannot be read. An ARD file that cannot be read is no `ERROR`: its Rules are read from `applicable_ard` and the file is named in `unread`.
 
 ## Hard rules
 

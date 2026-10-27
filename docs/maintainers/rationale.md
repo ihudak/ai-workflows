@@ -183,7 +183,7 @@ The code-oriented commands' not-clean-finish invariant cites `code-handoff`'s *A
 
 ## not-clean-finish-reask
 
-The same invariant has `code-handoff` §2.4's first re-ask trigger put the consent choice again where a run's `clean_finish` differs from the one the choice was answered under, **in either direction**. It was made symmetric because the commit that wrote it named the reverse case as equally wrong: a decline on a blocked first unit silently withholding the clean ones behind it. (Moved here from `.claude/rules/dev-workflows.md` to keep that file under its 20,000-character warning.)
+The code-oriented commands' not-clean-finish invariant (`.claude/rules/dev-workflows.md`) has `code-handoff` §2.4's first re-ask trigger put the consent choice again where a run's `clean_finish` differs from the one the choice was answered under, **in either direction**. It was made symmetric because the commit that wrote it named the reverse case as equally wrong: a decline on a blocked first unit silently withholding the clean ones behind it. (Moved here from `.claude/rules/dev-workflows.md` to keep that file under its 20,000-character warning.)
 
 ## implement-phase-3-5
 
