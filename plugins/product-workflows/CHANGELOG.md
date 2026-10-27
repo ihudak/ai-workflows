@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.52.0] — 2026-10-28
+
+Needs nothing newer than `workflows-core` 1.62.0 — to-fix D21.
+
+### Added
+- **`scripts/bundle-scan.py`, the plugin-free scan `/brd-package` runs over its prompt, its delivery note and its bundle**, with a `--selftest` the catalog workflow runs. It reports every token of `bundle-packaging.md` §1.2's classes, each with its file, line and the span its position places it in — a captured file, an inventory or ledger `text` cell, an inventory row's `source_anchor`, a captured path or a captured file's bundled name, a prerequisite's file — and leaves out a `§` in §6.3 rule 1's fixed position. It finds and never rules: the run still rules on the spans position cannot place, such as a transcription's quoted text or a decision's quoted argumentation. A leading-slash name it cannot tell from a route the customer's code names is reported as uncertain. Every run used to write its own scan, and two runs could scan one bundle differently.
+
+### Changed
+- **Phase 8 builds the bundle in a temporary directory outside the specs repository** and moves it to `bundle-<YYYYMMDD>/` only once its last check has passed; every stop before the move removes the directory. A build that stopped part-way used to leave a partial `bundle-<YYYYMMDD>/` that a re-run the same day refused, since a dated bundle is never rewritten. `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` no longer tells you to move a bundle aside: a held package has built none.
+
+### Fixed
+- **The set-resolution check's delivery-note relation could read a date as a commit**: `bundle-packaging.md` §7 now says a commit the note names is 7 to 40 hexadecimal characters standing as a word of its own, never one inside a filename such as `bundle-<YYYYMMDD>/` and never the run's own date. A hand-written check read `20261012` as a pin and reported a correct note as naming a commit no baseline holds.
+
 ## [3.51.0] — 2026-10-27
 
 Take with `workflows-core` 1.62.0, whose `overlap-reader` this release's `/specify` dispatches — to-fix PR5 (live checks of 2026-10-26, run 2).

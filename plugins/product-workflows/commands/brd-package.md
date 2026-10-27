@@ -1202,6 +1202,45 @@ the same table, and two copies of one list drift. The same stop serves the deliv
 (*Render the delivery note*) and the bundle's (*Assemble the bundle* rule 7), each naming where its
 hit landed.
 
+**Run it with the scanner this plugin ships, never with a pattern of your own**: two runs that each
+wrote their own scan could scan one bundle differently, and a hand-written one has matched a date as
+a commit and broken on a wrapped line.
+
+```
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" tokens <file-or-directory>… [--prereq-key <KEY>]… [--captured <bundled name>]…
+```
+
+Over the prompt, give it the prompt file this phase wrote; over the delivery note, the note's file;
+over the bundle (*Assemble the bundle* rule 7), the directory being assembled, with `--prereq-key`
+for each prerequisite whose package rule 5 copied in and `--captured` for the bundled filename of each
+file rule 2 copied byte for byte. It prints every token of the table's classes as JSON — each hit's
+file, line, class, token and the span its position places it in — and `groups`, one line per file,
+token and span with its count, which is the grouping §6.3 rule 4 asks of every report. **It finds and
+never rules**: an exit 2 stops the run, naming its one stderr line, and every hit is read by its
+`span`:
+
+- `captured-file`, `anchor` and `locator` — a captured file whole, an inventory row's `source_anchor`,
+  and a captured path or a captured file's bundled name: the customer's own words or naming
+  (`bundle-packaging.md` §6.3), reported and put to the operator's ruling below, save a `locator` on a
+  `source/` or `source-external/` path naming no file the capture holds, which is this package's own
+  writing and a stop;
+- `inventory-text` and `ledger-text` — a row's `text` cell: verbatim whole where `image_row` is
+  `false`; where it is `true`, or `null` (a ledger row, whose image-ness its inventory row's anchor
+  says), verbatim only inside the element the row quotes, and a hit outside it is the plugin's own
+  words and a stop;
+- `prerequisite` — a model id is named in the Final report and left as packaged (rule 7); every other
+  class stops;
+- `none` — a stop, save where the hit sits in a span §6.3 names that position alone cannot place: a
+  figures section's *Text*, *Says* or *Flow*; a `[CD#n]`'s quoted `argumentation`, or its `chosen`
+  where that quotes an answer; for a model id alone, a grounding block's `claim` or a value one of
+  its fields quotes; or a part of the prompt rendered from one of these or from an inventory or ledger
+  `text` cell. Read the line to tell.
+
+A hit whose `certain` is `false` is a leading-slash name whose shape cannot tell a command from a
+route the customer's own code names — `/version` in a grounding finding's note: it is a slash command
+only where it names one. A `§` the scanner leaves out, counted in `omitted_locator_sections`, sits in
+§6.3 rule 1's fixed position and is no hit at all.
+
 `BRD_PACKAGE_PROMPT_LEAK: <where> carries <token>, from <artifact> — <why>. Where <token> is a § quoting the customer's own section number with no captured path, write it as the path and the section, source/<basename> › § <n>, which bundle-packaging.md §6.3 rule 1 exempts. Where <token> is a model id that records what a run, a pass or a tool of yours ran on — a tier line, a note saying which model a pass used — remove the line or the clause naming it from <artifact> by hand: no field of the record holds that model, so nothing else changes, and workflows-core:grounding-format §2.3 sanctions the edit in a grounding file. Where it is a model the customer's own requirement, code, configuration or documents name, it is theirs and is never removed: in a grounding file, quote it beside the requirement id, or the path, it comes from, which bundle-packaging.md §6.3 puts to your ruling; anywhere else, reword the sentence around it to name the model by the record that names it. Either way, commit the edit to the specs repository's default branch, and re-run.`
 
 `<where>` is `the rendered prompt, in part <n>` here, `the delivery note` over the note, and the
@@ -1355,6 +1394,16 @@ they answer, and can paste the note into an email without opening a file.
 Write `<BRD-dir>/bundle-<YYYYMMDD>/`. The bundle is a **rendered copy**, produced on the way out;
 the working documents keep their wikilinks and are never rewritten in place
 (`bundle-packaging.md` §2).
+
+**Assemble it outside the specs repository and move it into place last.** Create a working
+directory with `command mktemp -d -t brd-package-XXXXXX` and build every rule below into it; the
+bundle is `<BRD-dir>/bundle-<YYYYMMDD>/` only once rule 9 has passed (*Then move it into place*,
+after rule 9). A dated bundle is never rewritten (Phase 0 step 11), so a build that stopped
+part-way inside the BRD folder would leave a directory a re-run on the same date refuses, for a
+bundle nobody sent. **Every stop from here to that move** — a rule's stop, *Hold the package* at
+the operator's ruling, an exit 2 of the scanner, a failed copy — removes the working directory,
+`command rm -rf -- "<the path mktemp printed>"` and no other path, before it reports, so a stopped
+build leaves nothing in the BRD folder.
 
 **What goes in is `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1's allow-list, applied
 verbatim** — the rendered prompt; the customer's own source document, every other markdown file
@@ -1533,7 +1582,8 @@ or not that line is there.
    package wrote while the customer's files are not. Work rule 6 with those two sections open: what
    is enumerated above is this command's contribution to the manifest, not its contents.
    The manifest is a bundle document; the delivery note is not.
-7. **Run the plugin-free scan over every document in the finished bundle**, and stop on any hit
+7. **Run the plugin-free scan over every document in the finished bundle** — the working directory, with
+   the scanner's `--prereq-key` and `--captured` as *The plugin-free scan* says — and stop on any hit
    outside verbatim customer content and customer-derived locators — and, for a model id, outside
    the customer's naming a grounding block records — whose hits are the operator's
    to rule on exactly as `bundle-packaging.md` §6.3 disposes of them (*The plugin-free scan*,
@@ -1623,6 +1673,15 @@ or not that line is there.
 
    A source side that comes up empty while the restatement is not stops with:
    `BRD_PACKAGE_SET_UNREADABLE: <source> yielded zero records under <filter> while <part-or-document> restates some — that is a read failure, not an empty set, and passing it would certify a restatement against nothing.`
+
+**Then move it into place.** Test once more that `<BRD-dir>/bundle-<YYYYMMDD>` does not exist —
+another run can have written it since Phase 0 step 11 looked — and where it does, remove the working
+directory and stop with step 11's first `BRD_PACKAGE_BUNDLE_EXISTS`. Otherwise run
+`command mv -- "<the path mktemp printed>" "<BRD-dir>/bundle-<YYYYMMDD>"`. Where the move fails,
+remove whatever part of `<BRD-dir>/bundle-<YYYYMMDD>` it left — the move only ever creates that
+path, so nothing else is there to lose — and the working directory, and stop, naming the error: a
+move between file systems copies before it deletes, and a copy cut off part-way is the partial
+bundle this order exists to prevent.
 
 **The bundle is committed** (D18), through the handoff below. That serves both delivery routes with
 one artifact: a customer with repository access pulls it and needs nothing else, and everybody else

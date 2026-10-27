@@ -274,7 +274,9 @@ attack.
   date is left by a run that stopped before assembling where the self-review is on no ref and no
   directory in the folder holds a prompt whose `Package reviewed:` line names this key and date — a
   committed self-review means the bundle was built and moved, such a prompt that it was built and
-  renamed in place, and either stops the run with `BRD_PACKAGE_BUNDLE_EXISTS`. The next run that day overwrites a stopped
+  renamed in place, and either stops the run with `BRD_PACKAGE_BUNDLE_EXISTS`. Phase 8 builds the
+  bundle in a temporary directory outside the specs repository and moves it to `bundle-<date>/` only
+  once its last check passes, so a build that stops leaves no directory for this gate to refuse. The next run that day overwrites a stopped
   run's files whole, never reads its self-review as a prior review, and says the disposition walk
   starts again.
 - **Phase 4 — the disposition gate.** No bundle is built while any `[SR#n]` is undisposed. The gate
@@ -334,7 +336,10 @@ attack.
   an example number against this package's own records — to a requirement or finding nobody meant,
   or to nothing.
 - **Phases 6, 7 and 8 — the plugin-free scan.** Run over the finished prompt, the finished note and
-  every bundle document. A hit stops the run with `BRD_PACKAGE_PROMPT_LEAK`, naming the token, where
+  every bundle document, by `scripts/bundle-scan.py tokens`, so every run finds the same tokens: it
+  reports each hit with its file, line and the span its position places it in — a captured file, an
+  inventory or ledger `text` cell, an inventory row's anchor, a captured path, a prerequisite's file —
+  and the run rules on the spans position cannot place, such as a transcription's quoted text. A hit stops the run with `BRD_PACKAGE_PROMPT_LEAK`, naming the token, where
   it landed — a part of the prompt, the note, or a bundle document and its line — and the artifact it
   came from. The scan stops on a model id too, which needs no plugin to read but, where it records
   what your tooling ran on, tells your customer which tooling produced the package: a grounding file
@@ -423,7 +428,9 @@ attack.
   BRD's, which the check leaves to review; a part writes `[AS#1]`–`[AS#4]` as a
   range rather than naming each; a manifest writes filenames with or without the extension and names
   images only sometimes; and a delivery note abbreviates its commits, against a baselines document
-  that records one entry per repository *per run* and so may hold the same commit twice. The obvious
+  that records one entry per repository *per run* and so may hold the same commit twice; and a commit
+  the note names is a run of 7 to 40 hexadecimal characters standing as a word of its own, never the
+  run's date or one inside a filename such as `bundle-<date>/`, since a date is hexadecimal too. The obvious
   form of each relation fires on a correct bundle. A mismatch stops with `BRD_PACKAGE_SET_MISMATCH`;
   an empty source side with `BRD_PACKAGE_SET_UNREADABLE`.
 

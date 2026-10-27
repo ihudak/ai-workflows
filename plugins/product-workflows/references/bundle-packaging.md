@@ -885,7 +885,7 @@ customer wrote, and its only repair would falsify the record — save the guard 
 in a grounding block's naming that records what the operator's tooling ran on, which the operator
 holds and removes by hand. *Ship it* continues the run. *Hold the package* stops it:
 
-`BRD_PACKAGE_CUSTOMER_CONTENT_HELD: you held <BRD-KEY>'s package over <n> hit(s) inside the customer's own words or naming — nothing was handed off. What the report names is the customer's, save a model id that records what your own tooling ran on, and is never edited here: take it up with the customer, then re-run. Such a model id is yours: remove it by hand from the file it came from, commit the edit to the specs repository's default branch, and re-run. Where this run already wrote bundle-<YYYYMMDD>/, it was never sent — move it aside first, or the re-run stops with BRD_PACKAGE_BUNDLE_EXISTS.`
+`BRD_PACKAGE_CUSTOMER_CONTENT_HELD: you held <BRD-KEY>'s package over <n> hit(s) inside the customer's own words or naming — nothing was handed off. What the report names is the customer's, save a model id that records what your own tooling ran on, and is never edited here: take it up with the customer, then re-run. Such a model id is yours: remove it by hand from the file it came from, commit the edit to the specs repository's default branch, and re-run.`
 
 A free-text answer is read onto one of the two, or the question is asked again; it never becomes a
 third outcome. **A hit an earlier ruling in this run already covered is listed under that ruling and
@@ -1027,6 +1027,10 @@ restates which repositories, at which commits; the bundle's baselines document i
 recorded. Same repositories, and **each commit the note names is a prefix of a baseline commit, with every
 baseline it prefixes being the same commit** — the note abbreviates, as a note written for a person
 does, so an equality test finds nothing and reports every correct note as carrying no pin at all.
+**A commit the note names is a run of 7 to 40 hexadecimal characters standing as a word of its own**
+— never one inside a filename or a path, such as `bundle-<YYYYMMDD>/` or a `-<YYYYMMDD>.md` name, and
+never the run's own `<YYYYMMDD>` stamp standing alone: a date is all digits, and so hexadecimal, and a
+check that read `20261012` as a pin reported a correct note as naming a commit no baseline holds.
 **"Exactly one" is the wrong cardinality and fires on correct content**: a baselines document records
 one entry per repository *per run*, so a package pinned across two dated runs at unmoved commits
 holds the same SHA twice and a prefix legitimately matches both. What makes an abbreviation
