@@ -145,6 +145,7 @@ Typical gaps:
   ```
   choices: ["Record detected prerequisite(s) (Recommended)", "Add a prerequisite (you'll be prompted to describe it)", "No prerequisites"]
   ```
+  *Record detected prerequisite(s)* carries a `description` naming every prerequisite detected, so each is named in the dialog whether or not the list was printed (`workflows-core:epic-picker` *The cap*).
 - **Ambiguous space mapping** (a content root with no obvious `id` / `base_path`):
   ```
   choices: ["Accept proposed space mapping (Recommended)", "Edit a space's id/base_path (you'll be prompted)", "Drop this space"]
@@ -173,7 +174,7 @@ Each `(you'll be prompted…)` option above asks for its value in plain text —
   "A docs-profile already exists. Apply these field-level changes?"
   choices: ["Apply the diff — change the listed fields, keep the rest (Recommended)", "Keep existing, write nothing", "Edit specific fields first (you'll be prompted)"]
   ```
-  "Apply the diff" changes exactly the fields listed as changed or added and nothing listed as kept. Do not overwrite without this confirmation. Where each choice goes:
+  *Apply the diff* carries a `description` naming every field the diff changes or adds, so they are named in the dialog whether or not the diff was printed (`workflows-core:epic-picker` *The cap*). "Apply the diff" changes exactly the fields listed as changed or added and nothing listed as kept. Do not overwrite without this confirmation. Where each choice goes:
   - **"Apply the diff — change the listed fields, keep the rest"** → Phase 5, which writes the existing profile with those changes applied.
   - **"Keep existing, write nothing"** → this run writes nothing. Skip Phase 5 entirely — no branch, no stash offer, no commit, and no CLAUDE.md additions — and go straight to Phase 6, whose report reads "kept — nothing written". In inline mode, which has no Phase 6 report of its own, control returns to `/document` with the existing profile unchanged and no branch or commit to hand back (Phase 6), and `/document` proceeds with that profile (its Phase 0 step 4(c)).
   - **"Edit specific fields first (you'll be prompted)"** → ask for the edits in plain text and fold them into the diff; where it now lists no change and no addition, end the run as the paragraph above says, and otherwise show the diff again and ask this question again.

@@ -378,7 +378,7 @@ Runs only when `--ground-code` was given; otherwise take the OFF branch at the e
   ```
   choices: ["Ground the proposed set (Recommended)", "Ground a different set (you'll be prompted)", "Ground nothing — continue without a code scan", "Cancel"]
   ```
-  *Ground a different set* asks in plain text for the repositories' names, each resolved against the directories just listed.
+  *Ground the proposed set* carries a `description` naming every repository it proposes, and *Ground a different set* one naming every directory the discovery listed, each in the listing's order, so they are named in the dialog whether or not the list was printed (`workflows-core:epic-picker` *The cap*). *Ground a different set* asks in plain text for the repositories' names, each resolved against the directories the discovery listed, never parsed out of the answer.
 - **Empty proposal — do not show that list.** When no theme matches any mounted repo its first option names a set that does not exist. Escalate instead per the `No repos derivable — /epics` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules scan")`. Every option in a shown list must name something that exists.
 - **"Ground nothing — continue without a code scan"** ends this phase for the run: no scanner is dispatched, Phase 4 writes no `## Feasibility grounding` section, and the Final report shows `code grounding: declined at the repo gate` — distinct from `code grounding: off`, which means the flag was never given at all.
 

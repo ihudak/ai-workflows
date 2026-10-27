@@ -7,29 +7,30 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.41.0] — 2026-10-27
 
-Take with `workflows-core` 1.60.0, whose `epic-picker` *The cap* these pickers cite (to-fix LC1, LC9, live checks of 2026-10-26).
+Take with `workflows-core` 1.60.0, whose `epic-picker` *The cap* these pickers cite (to-fix LC1, live checks of 2026-10-26).
 
 ### Changed
-- **`/design`, `/implement` and `/conformance`: an Epic picker's remainder option names the Epics the array leaves out.** It is `Another Epic (you'll be prompted for its key)`, its `description` naming each of them — marker, key and title in `/design` and `/implement`, key and title, marked where it covers the requirement, in `/conformance` — and a typed key is resolved against the keys the array and that description listed. It read *Another Epic from the list above*, pointing at a prose list run 1 of the live checks never saw printed (to-fix LC1).
-- **`/design` and `/implement`: the picker's first actionable row carries `(Recommended)`**, and no option does where every Epic is ●. `/implement` marks it beside the broad-slice choice too: its one-Epic question's unmarked array is that question's rule alone. Run 1 marked it in three of six `/implement` pickers (to-fix LC1).
+- **`/design`, `/implement` and `/conformance`: an Epic picker's remainder option names the Epics the array leaves out.** It is `Another Epic (you'll be prompted for its key)`, its `description` naming each of them — marker, key and title in `/design` and `/implement`; key and title in `/conformance`, whose Epic rows say in their own `description` whether they cover the requirement — and a typed key is resolved against the keys the array and that description listed. It read *Another Epic from the list above*, pointing at a prose list run 1 of the live checks never saw printed (to-fix LC1).
+- **`/design` and `/implement`: the picker's first actionable row carries `(Recommended)`**, and no option does where every Epic is ●, the question's own text saying so. `/implement` withholds it wherever its broad-slice choice stands, whatever the number of Epics, for its one-Epic question's reason: which unit the run implements is the operator's to say. Run 1 marked it in three of six `/implement` pickers (to-fix LC1).
+- **`/design` Phase 3 step 2**: *Confirm this set*, *Add repos* and *Remove repos* each carry a `description` naming the clones they mean, per `workflows-core:epic-picker` *The cap* (to-fix LC1).
 - The `/design` and `/implement` docs pages describe the remainder option and the marker.
 
 ## [4.40.0] — 2026-10-27
 
-Take with `workflows-core` 1.59.1 (batch B20).
+Take with `workflows-core` 1.59.1 (batch B20). Fix batch B22 of the 2026-10-26 review: the references `/vuln` and `/upgrade` consult, install-time code, and the two docs pages. Batch B22's entries need nothing newer than `workflows-core` 1.57.1.
 
 ### Changed
 - `/design`, `/ready` and `/conformance`: *Set SPECS_PATH* cites `escalation-rules`' *Required path environment variable unset* and carries the typed path only once it names an existing directory, asking again where it does not — it carried any path for the run (to-fix D5).
 
-### Fixed
-- The environment reference page lists `/epics` among the commands that stop on an unset `SPECS_PATH` and offer to set it, where it said `/epics` carried no such stop (PRD-B2).
+Batch B22:
 
-Fix batch B22 of the 2026-10-26 review: the references `/vuln` and `/upgrade` consult, install-time code, and the two docs pages. Needs nothing newer than `workflows-core` 1.57.1.
-
-### Changed
 - **uv and Composer install without their install-time code** (VU-G1). `install-time-code.md` gains a row for each: uv's `add`, `lock` and `sync` carry `--no-build`, and `uv sync --locked --no-build` installs exactly the lockfile; its `pip` interface carries `--only-binary :all:`. Measured on uv 0.13.5, `--no-build` refuses every source distribution, a git URL and a local path outside the project included, and builds only the project and its workspace members, so pip's "What the flags do not stop" does not apply to uv's project commands; its `pip` interface builds every editable requirement and follows pip's rule. Composer's `install`, `update` and `require` carry `--no-scripts --no-plugins`; the root `composer.json`'s scripts for the install's events then run as the project's own commands (`composer run-script --no-plugins <event>`), and each new `composer-plugin` package is named as skipped. Composer's rules follow its documentation and are not measured here. The allow forms: `uv pip install --only-binary :all: --no-binary <names>`, measured; nothing for uv's project commands, which have no per-package exception; `composer run-script <event>` for a root script; nothing for a plugin. `build-systems.md` and `ecosystems.md` write every uv and Composer install that way. **Poetry stays uncovered**: its only setting that refuses a source build, `installer.only-binary`, exists from Poetry 2.0.0 on, so on an older Poetry it would hold back nothing and say nothing; Bundler, PDM and Hatch stay uncovered too, and the reference says why for each. Check 21 now holds uv's project commands and Composer's installs to those flags.
 
 ### Fixed
+- The environment reference page lists `/epics` among the commands that stop on an unset `SPECS_PATH` and offer to set it, where it said `/epics` carried no such stop (PRD-B2).
+
+Batch B22:
+
 - **`nvd-api.md`'s worked example contradicted its own range rule**, concluding `5.16.7` for the ranges whose rule above it gives `5.15.16` for a `5.15.x` project; the safe version now depends on the current version's range. (VU-B6)
 - **`nvd-api.md`'s Maven Central query had no `core=gav`**, so it returned one document per artifact with only `latestVersion`, and its CPE vendor examples were Maven groupIds; it now lists versions, and the vendors read `apache` and `fasterxml`. (VU-B7)
 - **`build-systems.md` detected Cargo but had no Cargo section**; it gains one (`Cargo.lock` detection, `cargo update -p <crate> --precise <version>`, which moves a transitive pin as editing `Cargo.toml` does not), and *Confirming the fix* gains Cargo, pip and uv, NuGet and Bundler lines. (VU-B14)

@@ -145,11 +145,13 @@ folder and what it carries — and, where it holds an `idea.md` and no `prd.md`,
     own shape for a picker appending nothing of its own. Either way the remainder option's
     `description` names every Epic the array leaves out — marker, key and title each, in the picker's
     order — so a left-out Epic is named in the dialog whether or not the prose list was printed, and a
-    typed key is resolved against the keys the array and that description listed. **The first
-    actionable row carries `(Recommended)`, the broad-slice choice beside it or not**: the one-Epic
-    question above carries no marker by its own rule, which does not reach this picker; where every
-    Epic is ●, no option carries it, and the prose beside the list says so. *The cap* states the
-    description, typed-key and marker rules. **`/implement`'s
+    typed key is resolved against the keys the array and that description listed. **Where the
+    broad-slice choice stands, no option carries `(Recommended)`**, whatever the number of Epics, for
+    the one-Epic question's own reason above: a flat specification beside the Epics means more than one
+    unit was specified, and which one this run implements is the operator's to say. Where it does not
+    stand, the first actionable row carries it; and where every Epic is ●, no option carries it, and
+    the question's own text says so. *The cap* states the description, typed-key and marker rules.
+    **`/implement`'s
     done-predicate is now the artifacts present in each Epic folder**, which is the mechanism
     `/design`'s own Epic picker already uses:
     `specification.md` but no `design.md` → ○; `design.md` present, no record → ◐; a record → ●

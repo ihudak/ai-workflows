@@ -154,8 +154,9 @@ array carries every option.
   *(No `/dev-workflows:design` — no Epics yet.)*
 - `/product-workflows:create-ard <EPIC>` (Epic-level) → `/product-workflows:specify <EPIC>` (recommended) or Dev →
   `/dev-workflows:design <EPIC>` — the second only where the Epic's `specification.md` is on the default branch, since
-  `/dev-workflows:design` stops without one: its Phase 0 step 3's gate stops with `DESIGN_NO_SPEC` where the Epic has
-  no `specification.md`, and with `require-on-main`'s stop naming the branch or pull request where it is not yet merged.
+  `/dev-workflows:design` stops without one: its Phase 0 step 3's gate stops with `DESIGN_NO_SPEC` where no ref carries
+  the Epic's `specification.md` (none written, or written and never committed), and with `require-on-main`'s stop naming
+  the branch or pull request where a plugin branch carries it.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
 holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder

@@ -565,7 +565,12 @@ is the only command that writes one at all.
     every existing copy archived first, or a stop where it is published. In the prose list, label this
     row *done — selecting it rewrites it behind an archive*, the ● rule `epic-picker` defers to.
   Default cursor = the first actionable row (in-progress before not-started), and that row carries
-  `(Recommended)`; where every Epic is ●, no option carries it, and the prose beside the list says so. Render per
+  `(Recommended)` — **save on a multi-component PRD with no PRD-level `specification.md`**, which
+  `multi-component-test` decides on the PRD folder as in the one-Epic bullet above: there the
+  broad-spec choice carries it, as *"Author one broad PRD-level spec instead (Recommended)"*, and no
+  Epic row does, since that spec is what `/epics` splits and what `/implement` asks for, as the
+  one-Epic and zero-Epic branches say on the same shape. Where every Epic is ● and that exception does
+  not hold, no option carries it, and the question's own text says so. Render per
   `Skill(skill: "workflows-core:reference", args: "epic-picker")`: every Epic listed as prose above the prompt, and
   the array carrying the explicit **"Author one broad PRD-level spec instead"** choice beside the Epics —
   every Epic row (marker + key + title) where three or fewer stand, and otherwise **at most two** Epic

@@ -10,9 +10,10 @@ makes that pick**: `/epics`, `/document` and `/release-notes` operate on the PRD
 working for a PRD with no Epics at all.
 
 **A second, larger set consumes the *picker rules* without making that pick, and this file used to deny
-it existed**: every command that builds a picker from a listing of its own — directories, waiting
-files, or a PRD's Epics for some other purpose than choosing the unit to work on — and cites *The cap*,
-some of them the auto-select-at-one and typed-answer rules too. Several resolve no PRD folder at all,
+it existed**: every command or reference that builds a picker from a listing of its own —
+directories, repositories, waiting files, drafts, components, slices, ledger rows, or a PRD's Epics
+for some other purpose than choosing the unit to work on — and cites *The cap*, some of them the
+auto-select-at-one and typed-answer rules too. Several resolve no PRD folder at all,
 so *PRD-level commands never use it* was true of the Epic pick and false of the file. **This set is
 described rather than listed**, because a list of its members went stale twice as members joined.
 **Re-derive both sets** with `grep -rl epic-picker plugins/*/commands plugins/*/agents plugins/*/references`,
@@ -93,23 +94,29 @@ picker listed** — the array's rows and the remainder option's description — 
 out of the answer (`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §1).
 
 **The description rule binds every picker built from a listing, not only this one** — every member
-of the second set above. No option of such a picker points at "the list above": its remainder
-option is labelled `Another <item> (you'll be prompted for <what it asks>)`, and its `description`
-names every item the array leaves out, each as the prose list shows it and in the prose list's order, after
-`Not shown as an option:`. A picker whose array carries no item at all, only dispositions — *all of
-them*, *name the ones to include*, *none* — leaves every item out, so the option that asks for names
-carries all of them in its description. A typed answer is resolved against the items the picker
-listed, the description's included, never parsed out of the answer.
+of the second set above. No option of such a picker points at "the list above" or leans on a set
+named only in prose. Its remainder option is labelled `Another <item> (you'll be prompted for <what
+it asks>)`, and its `description` names every item the array leaves out, each as the prose list
+shows it and in the prose list's order, after `Not shown as an option:`. An option that stands for a
+set rather than one item — *all of them*, *these N*, *the proposed set*, *confirm this set* — names
+every item of that set in its `description`, and so does an option that asks for names from it —
+*name the ones to include*, *adjust the list*, *a different set* — each in the prose list's order.
+A typed answer is resolved against the items the picker listed, the descriptions' included, never
+parsed out of the answer.
 
-**The first actionable row carries `(Recommended)`**, whether or not the cap applied: the row the
-default cursor lands on (*The marker, and where it comes from*), ◐ before ○, as the example's first
-row does. A command's own rule recommends something else in two places, both questions of the
-one-Epic branch above rather than rows of this picker: `/specify` recommends the broad PRD-level spec
-over the one Epic of a multi-component PRD with no PRD-level `specification.md` (`/specify` Phase 2),
-and `/implement` recommends neither the one Epic nor the broad PRD-level slice where the PRD folder
-also holds a flat `specification.md` and the PRD is not multi-component (`/implement` Phase 0).
-**Where every Epic row is ●, nothing is actionable and no option carries the marker**: say so in
-prose beside the list (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`,
+**In the Epic pick, the first actionable row carries `(Recommended)`**, whether or not the cap
+applied: the row the default cursor lands on (*The marker, and where it comes from*), ◐ before ○, as
+the example's first row does. This rule binds the Epic pick only; a picker of the second set marks
+by its own command's rules. A command's own rule recommends something else, or nothing, in four
+places, two per command, and wins there. `/specify`, on a multi-component PRD with no PRD-level
+`specification.md`, recommends the broad PRD-level spec — over the one Epic in its one-Epic question
+and over every Epic row in this picker (`/specify` Phase 2). `/implement` recommends nothing wherever
+its broad PRD-level slice stands beside the Epics — in its one-Epic question and in this picker alike,
+which is where the PRD folder also holds a flat `specification.md` and the PRD is not
+multi-component (`/implement` Phase 0) — since which unit the run implements is the operator's to
+say. **Where every Epic row is ●, nothing is actionable and no Epic row carries the marker**, nor
+does any option save `/specify`'s broad spec where its rule above recommends it: say so in the
+question's own text (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`,
 *When no option is safe to recommend*).
 
 **A command that adds its own option to this picker counts it against the four.** `/specify`

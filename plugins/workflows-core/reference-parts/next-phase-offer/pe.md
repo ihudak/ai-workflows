@@ -157,8 +157,9 @@ array carries every option.
   one: on the PRD's address, its Phase 0 step 4 stops with the excluded-count report, naming
   `/product-workflows:specify <PRD>` for an Epic with no `specification.md` and the merge of the
   branch or pull request for one whose spec is not yet merged; on an Epic's own address, step 3's
-  gate stops with `DESIGN_NO_SPEC` where the Epic has no `specification.md`, and with
-  `require-on-main`'s stop naming the branch or pull request where it is not yet merged.
+  gate stops with `DESIGN_NO_SPEC` where no ref carries the Epic's `specification.md` (none written,
+  or written and never committed), and with `require-on-main`'s stop naming the branch or pull
+  request where a plugin branch carries it.
 - `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names

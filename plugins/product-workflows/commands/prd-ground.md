@@ -1004,6 +1004,9 @@ be given one. The digest is consumed by this orchestrator alone, in exactly two 
    ```
    choices: ["Add repositories for these leads (you'll be prompted for their names)", "Proceed on the record — claims no resolved repository covers may land as NOT-PROVABLE"]
    ```
+   *Add repositories for these leads* carries a `description` naming every lead — the page and the
+   subsystem it names, in the order listed — so the leads are named in the dialog whether or not the
+   list was printed (`workflows-core:epic-picker` *The cap*).
    No option is marked: whether a lead names code worth grounding is the operator's knowledge, not
    the run's. *Add repositories* asks at once, in plain text, for one or more repository names or
    absolute paths, one per line or space-separated; a free-text answer to the array that names them

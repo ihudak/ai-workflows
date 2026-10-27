@@ -535,7 +535,7 @@ Detected N near-empty Epic drafts under <KEY>:
   ...
 choices: ["Refine these N (partition the PRD across them) (Recommended)", "Generate net-new Epics (ignore the drafts)", "Both — refine the drafts and draft net-new for leftover scope", "Let me adjust which drafts to refine (you'll be prompted)"]
 ```
-*Let me adjust which drafts to refine* asks in plain text which drafts to take, each resolved against the drafts listed above. Record `mode` (`refine` | `generate` | `both`) and the confirmed `refinement_targets` (empty for `generate`).
+*Refine these N*, *Both* and *Let me adjust which drafts to refine* each carry a `description` naming every detected draft — its key and scope hint, in the order listed — so the drafts are named in the dialog whether or not the list was printed (`workflows-core:epic-picker` *The cap*). *Let me adjust which drafts to refine* asks in plain text which drafts to take, each resolved against the detected drafts, never parsed out of the answer. Record `mode` (`refine` | `generate` | `both`) and the confirmed `refinement_targets` (empty for `generate`).
 
 **Adaptive code-scan default (refine / both only).** Re-surface the code-examination choice now that the target count is known — the Phase 1 answer was given before detection. Default **ON when `len(refinement_targets) >= 2`** (a real scope boundary to draw), **OFF when == 1**:
 ```
@@ -633,6 +633,7 @@ Skip where Phase 2.5 supplied a known set.
    "This PRD touches <N> components. Each Epic will target exactly one of them."
    choices: ["Confirm these components (Recommended)", "Adjust the list (you'll be prompted)", "Cancel"]
    ```
+   *Confirm these components* and *Adjust the list* each carry a `description` naming every proposed component by its id, in the order shown, so the set is named in the dialog whether or not it was printed (`workflows-core:epic-picker` *The cap*).
    **Adjust** → take free text to keep, drop or add components, re-show the list, and ask again; grouping two modules into one component, or correcting a component's `kind` — a gitops repository §2 proposed as `code`, say — is recorded only in an ARD's `components:` (§5), so it is `/create-ard`'s to make, and the Phase 2.7 stop it then meets recommends exactly that. The confirmed list is the run's known set (§3, source `epics-run`). **Cancel** → stop.
 4. **None proposed** (no evidence path falls in any component) → no known set; Phase 9 says why.
 5. Where the confirmed set is multi-component (§3), run Phase 2.7 now, exactly as written there; with no ARD, its `ard_contract` row is `missing`.
