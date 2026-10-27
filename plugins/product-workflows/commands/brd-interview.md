@@ -1472,7 +1472,9 @@ choices: ["It puts again <candidate id> — <its statement>", "It puts again <ne
 One entry per candidate, **up to three**, and the `None` entry last, always; where one candidate
 exists the array is two entries. **Past three candidates, the overflow rule applies**
 (`Skill(skill: "workflows-core:reference", args: "next-phase-offer overflow")`, the *overflow rule*): the prose lists every one, the array carries the three whose
-`statement` is closest to the question's, and the harness's free-text option reaches the rest. A
+`statement` is closest to the question's, the question's own text names each candidate the array
+leaves out — its id and `statement`, after `Not shown as an option:` — and the harness's free-text
+option reaches the rest. A
 free-text answer is normalised to one candidate's id or to `None`, and re-asked where it names
 neither — never written through. The answer is held, and *Write the register and the round record*
 appends it to the round record under that question, before its state: `- **Re-puts:** [VD#n]`, or
@@ -1496,7 +1498,7 @@ one trailing entry for an option the operator supplies themselves and the two st
 choices: ["<the strongest option considered> (you'll be prompted for why)", "<the next strongest, where a second was weighed> (you'll be prompted for why)", "Defer this question (you'll be prompted for why it is not answerable yet)"]
 ```
 
-**The array is bounded at four and authors no escape of its own, like every other array in the plugin** (`workflows-core:escalation-rules` §0): `AskUserQuestion` renders `maxItems: 4`, so an uncapped `one entry per option considered` prompt cannot be presented at all once three options were weighed — and this phase is required to present its array verbatim. **The entries are two options at most, plus the defer entry: three, never four.** The two option slots are **one entry each**, substituted from the options weighed — not two entries per option, which is the reading that would put a four-option question past the cap on its own — and where only one was weighed the second slot is dropped, leaving two entries. **List every option considered as prose above the prompt**, in the order they were weighed and with the argumentation each carries, and let the harness's own free-text option carry the rest — §0 forbids an array from authoring that escape, and an authored `Another option from the list above` both duplicated it and spent a slot. Where one option was weighed, its entry is the only one beside defer.
+**The array is bounded at four and authors no escape of its own, like every other array in the plugin** (`workflows-core:escalation-rules` §0): `AskUserQuestion` renders `maxItems: 4`, so an uncapped `one entry per option considered` prompt cannot be presented at all once three options were weighed — and this phase is required to present its array verbatim. **The entries are two options at most, plus the defer entry: three, never four.** The two option slots are **one entry each**, substituted from the options weighed — not two entries per option, which is the reading that would put a four-option question past the cap on its own — and where only one was weighed the second slot is dropped, leaving two entries. **List every option considered as prose above the prompt**, in the order they were weighed and with the argumentation each carries, and let the harness's own free-text option carry the rest — §0 forbids an array from authoring that escape, and an authored `Another option from the list above` both duplicated it and spent a slot. **Where more options were weighed than the array carries, the question's own text names each one it leaves out**, after `Not shown as an option:`, so they are named in the dialog whether or not the prose was printed — the line `workflows-core:next-phase-offer`'s *overflow rule* puts there. Where one option was weighed, its entry is the only one beside defer.
 
 **There is no listed `Cancel` and no listed free-text entry.** The harness always supplies a free-text option, so both an abort and an option the operator names themselves are reachable without spending a slot on either; say what an aborted round costs where the round is introduced, not in an option.
 
@@ -2256,8 +2258,8 @@ reading `covered-here` never counts — is still `unallocated`, and at least one
 gate has already found no row `unallocated`, so the covered-here test is the one left to read.
 
 The routes below, with `Stop here`, do not fit in the prompt's four slots in either case, so apply the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the
-*PM — the BRD-to-PRD route* lane: print every route in prose, in the order below, then one line saying the list is
-longer than the prompt and that anything on it is reachable by typing it into the free-text option.
+*PM — the BRD-to-PRD route* lane: print every route in prose, in the order below, and put in the question's own text one line saying the list is
+longer than the prompt, naming each route the array leaves out, and that anything on it is reachable by typing it into the free-text option.
 Leave the PRD line out of both the prose and the array where the slice is not PRD-eligible, and say
 why. The array carries the forward routes first, as `/product-workflows:brd-reconcile`'s does, and
 keeps the lateral move — interviewing another BRD — in the prose only, because this run has just

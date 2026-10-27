@@ -2958,9 +2958,9 @@ handover, which an optional, ungated document must not displace. It carries no `
 its offer names is the PRD's own.
 
 **Reconciling another BRD is on the list and not in the array**, because it is the one lateral move
-among four forward ones and this run has just finished the slice it was given. Say so in the line
-under the prompt: the list above is longer than the options, and anything on it is reachable through
-the free-text option.
+among four forward ones and this run has just finished the slice it was given. Say so in the
+question's own text: the list is longer than the options, naming that route, and anything on it is
+reachable through the free-text option.
 
 **`advance_ready: no` — the three BRD-route options are left out rather than offered and
 consumed against an unsettled register**, and each remaining option appears only where its own
@@ -3018,8 +3018,8 @@ route checked.
 (the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane). Typically two or three
 options survive and every one of them fits. Where four re-entry options survive, the prose above
 still names all four and the array carries `Stop here` plus the three whose triggers this run's own
-outcome makes most pressing — say in one line that the list is longer than the options and that the
-one left out is reachable through the free-text option.
+outcome makes most pressing — say in the question's own text that the list is longer than the
+options, naming the one left out, and that it is reachable through the free-text option.
 
 **"Reconcile another BRD or slice" is on the `advance_ready: yes` list and not on the `advance_ready: no` one**, and the omission is
 the point rather than an oversight: it names work on a *different* key, and offering it to an

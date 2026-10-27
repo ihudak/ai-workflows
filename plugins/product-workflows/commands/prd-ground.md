@@ -682,6 +682,9 @@ the manual path:
    ```
    choices: ["Ground against all <K> listed (Recommended)", "Only some (you'll be prompted for their names)", "Cancel"]
    ```
+   The first two options' `description`s name the clones they mean — *Ground against all <K> listed*
+   the clones it grounds against, *Only some* the clones to choose from — slug and path each, in the
+   list's order, so the clones are named in the dialog whether or not the list was printed.
    Where it holds more, grounding all of them is rarely what is meant, and each multiplies the cost
    stated above, so no option is marked:
    ```
