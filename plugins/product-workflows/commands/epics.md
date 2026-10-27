@@ -655,7 +655,7 @@ The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1
    ```
    choices: ["Provide the missing input (you'll be prompted)", "Cancel"]
    ```
-   *Provide the missing input* asks for it in plain text. On a provided value, rewrite the handoff and re-dispatch once. Nothing is committed here; Phase 7.5 hands the drafts off.
+   *Provide the missing input* asks for it in plain text. On a provided value, rewrite the handoff and re-dispatch once. **Cancel** stops the run before Phase 7.5, so nothing is handed off. Nothing is committed here; Phase 7.5 hands the drafts off.
 
    Also record `coverage_file` (the `_coverage.md` path) and `clarifications_needed[]` for Phases 6.1 and 7.
 
@@ -1069,7 +1069,7 @@ follow-ups by invoking `Skill(skill: "workflows-core:reference", args: "followup
 2. **Filter** them with the reference's §6 qualifying predicate.
 3. **Resolve** the write target via the §2 ladder using `key` and `source`;
    render + place tasks and verbose notes per §1–§3; dedupe per §5.
-4. **Preview + confirm** per §7 (`approve-all | select | cancel`), then write.
+4. **Preview + confirm** per §7 (`approve-all | Select some (you'll be prompted for the row numbers) | cancel`), then write.
 
 ADDITIVE — the follow-ups also remain in the Phase 9 report. This phase NEVER
 fails the run, NEVER commits (still true — this phase only writes follow-up

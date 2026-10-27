@@ -213,6 +213,7 @@ write would re-ask a question already answered.
    ```
    choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
+   *Set SPECS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
    the same ordering `/brd-package` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
@@ -1102,11 +1103,18 @@ customer*, which is for an answer that is unclear; an answer outside the options
 `argumentation` is mandatory (`decision-register-format.md` §2) and on a `[CD#n]` it is the
 customer's own reason for their own decision. Where *Confirm* is chosen on such a candidate, or
 *Correct it* leaves the corrected row with no reason — and the row does not re-affirm its question's
-live record, which takes it out of this picker's reach (below) — exactly two resolutions follow:
+live record, which takes it out of this picker's reach (below) — exactly two resolutions are
+offered, beside one way back that resolves nothing:
 
 ```
-choices: ["Ask the customer for the reason — nothing is frozen; a held [C] stays held for the customer, and its round open, until it is answered or stops applying", "Freeze the answer as [CD#n] with status: open, naming the absent reason — nothing downstream may consume it until the reason arrives", "Cancel"]
+choices: ["Ask the customer for the reason — nothing is frozen; a held [C] stays held for the customer, and its round open, until it is answered or stops applying", "Freeze the answer as [CD#n] with status: open, naming the absent reason — nothing downstream may consume it until the reason arrives", "Cancel — return to this candidate's four options"]
 ```
+
+*Cancel — return to this candidate's four options* is not a third resolution and not an abort: it
+discards this candidate's *Confirm* or *Correct it* and puts the candidate back on the four-option
+array with nothing recorded for it, so an operator who sees the reason was in the quotation after all can take
+*Correct it* there. The walk goes on from that candidate; an abort stays the free-text option's, as
+*Aborting the walk* says.
 
 *Ask the customer for the reason* keeps a held question held save one whose question stops applying
 this run — its requirement withdrawn by another answer — and that carries no record of its own,

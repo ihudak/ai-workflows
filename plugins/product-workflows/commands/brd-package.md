@@ -141,6 +141,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    ```
    choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
+   *Set SPECS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
    the same ordering `/brd-interview` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
@@ -512,7 +513,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
     then renamed in place. Stop rather than overwrite either:
     `BRD_PACKAGE_BUNDLE_EXISTS: <BRD-dir>/self-review-<YYYYMMDD>.md belongs to a package built on this date (<committed at <sha> | its bundle now sits at <dir>>), whose directory is no longer at bundle-<YYYYMMDD>/. A dated package is never rewritten: package on the next date.`
     **On no ref, it is an earlier run of today that stopped before assembling** —
-    `BRD_PACKAGE_PROMPT_LEAK`, `BRD_PACKAGE_UNDISPOSED`, an aborted disposition walk — and nothing of
+    `BRD_PACKAGE_PROMPT_LEAK`, `BRD_PACKAGE_UNDISPOSED`, an aborted disposition walk or an aborted tier choice — and nothing of
     it was committed. A bundle built under a declined handoff and then moved out of the folder looks
     the same here and cannot be told apart, which is why the stop's remedy above has the operator
     delete this date's files when they move a bundle out. **It is this date's scratch, and the one exception to the rule
@@ -883,7 +884,7 @@ to. Then:
 - **Otherwise** → ask, once, for the whole bundle:
 
   ```
-  choices: ["Full — the customer gets the repositories pinned to the commits this package cites", "Partial — the customer gets the repositories, but not pinned (an archive of a moving branch)", "Documents only — the customer gets no repositories", "Cancel"]
+  choices: ["Full — the customer gets the repositories pinned to the commits this package cites", "Partial — the customer gets the repositories, but not pinned (an archive of a moving branch)", "Documents only — the customer gets no repositories"]
   ```
 
   **Not an escalation array either**: the three options are the three rows of `bundle-packaging.md`
@@ -894,7 +895,11 @@ to. Then:
   `workflows-core:escalation-rules`'s *Closed-vocabulary pickers must normalise the free-text answer* section names this picker among the arrays whose
   free-text answer is normalised into their own vocabulary rather than written through. Nobody is
   trapped: that free-text option is always present, and an answer that lands on none of the listed
-  values re-asks rather than inventing a value no consumer handles. No `(Recommended)` marker, and the reason is stated beside
+  values re-asks rather than inventing a value no consumer handles. **There is no listed `Cancel`**,
+  for the disposition gate's reason: an abort is reachable through that free-text option without
+  putting a fourth, unreadable value on a closed list. Aborting here stops the run before *Render
+  the customer prompt* writes anything, with the self-review and every disposition the gate took
+  still written on disk and not handed off. No `(Recommended)` marker, and the reason is stated beside
   the list per the `When no option is safe to recommend` guidance in `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: which
   tier is right is not a judgement at all, it is a fact about what this customer can be given, and a
   marker would invite the run to ship at Full because Full is better.

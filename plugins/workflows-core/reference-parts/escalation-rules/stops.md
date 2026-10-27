@@ -81,8 +81,16 @@ reads the bare selection as a refusal or as a promise the operator broke. Its la
 text as a promise or an instruction the selection itself would have to carry out (`— name it`,
 `I'll say which`, `give the reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
 the text is taken as given, and nothing is asked again. A question whose whole answer is text with
-no default — a name, a URL, a reason — is asked in plain text: never as a picker built for it, and
-never with an "I'll provide it" option.
+no default — a name, a URL, a reason — and no other way on is asked in plain text: never as a picker
+built for it, and never with an "I'll provide it" option. **An array whose other option is a real
+alternative is not built for the text, and stays** — a *Cancel* that ends the run the way the prose
+after the array states, a *Skip*, a way on without the text: its text option carries the marker
+above and is followed by the plain-text question, and the prose after the array — or the rule of
+this reference it cites, which states it for every citer — says what each other option does. An alternative no prose handles is not a real one: write its handling there.
+What this forbids is an array with no real alternative to offer, which is asked as a plain-text
+question instead. A plain-text question may still name its own way out in the question itself
+(`…, or type cancel`), as the *Branch prefix undetected* identity variant does, and needs no array
+for it.
 
 ## Choice lists are presented verbatim
 
@@ -164,7 +172,8 @@ This rule binds every command in the family — this plugin's own and those of e
 Used when the address resolved to no folder — `resolve-address` returned `status: absent`, or a
 folder that resolved earlier in the run is gone when a later phase reads it. *Re-enter key* is
 followed by one plain-text question for the key, which is read and resolved as the original address
-was (`workflows-core:addressing` §1, §3).
+was (`workflows-core:addressing` §1, §3). *Cancel* ends the run there, the stop standing as it
+would with no list.
 **A folder that is there is never this case, whatever it holds**: re-entering a key that resolved
 cannot help. A command that stops on what such a folder holds — a BRD container, a folder placed at
 no level, a PRD folder carrying no key, a PRD folder with no `prd.md` — raises a named stop of its
@@ -183,7 +192,8 @@ the run is missing, never a generic placeholder. *Set <VAR>* is followed at once
 question for the path (§0, *A selection carries no text*); the answer — for `REPOS_PATH` one
 directory or a colon-separated list — is carried as `$<VAR>` for the rest of the run once it names
 an existing directory (for a list, once one of its entries does), and the question is asked again
-where it does not.
+where it does not. *Cancel* ends the run there, the stop standing as it would with no list, save
+where a citer below says otherwise.
 
 `/brd-intake` (Phase 0 step 5), `/prd-ground` (Phase 0 step 3 for `SPECS_PATH` and Phase 0 step 7
 for `REPOS_PATH`), `/brd-split` (Phase 0 step 2, and for `REPOS_PATH` Phase 7's *Ground now*

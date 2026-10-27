@@ -456,7 +456,7 @@ command removes none of them; the next `/brd-interview` run does.
   named under what still needs a human as a conflicting answer, beside the one frozen in its place (or noting that the one kept went back to the customer for its reason); a later candidate onto a question the operator sent back to the customer goes back with it.
 - **Phase 4 — a reason nobody gave.** A confirmed candidate, or a corrected row, whose reason is
   `not stated` takes one of exactly two routes: ask the customer and freeze nothing, or freeze it `status: open`, which
-  puts the answer on the record and makes it unusable downstream until the reason arrives. Supplying
+  puts the answer on the record and makes it unusable downstream until the reason arrives. The picker's third option, *Cancel — return to this candidate's four options*, resolves nothing: it puts the candidate back on the four-option picker, so *Correct it* can be taken there. Supplying
   the reason is not on the list — a supplied reason is the delivery team's argument recorded as the
   customer's, and it will be defended later as theirs. A held question whose `[CD#n]` is `open` for
   want of its reason **keeps** its *held for the customer* state and its round stays open, so the

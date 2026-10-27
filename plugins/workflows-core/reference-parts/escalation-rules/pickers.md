@@ -81,8 +81,16 @@ reads the bare selection as a refusal or as a promise the operator broke. Its la
 text as a promise or an instruction the selection itself would have to carry out (`— name it`,
 `I'll say which`, `give the reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
 the text is taken as given, and nothing is asked again. A question whose whole answer is text with
-no default — a name, a URL, a reason — is asked in plain text: never as a picker built for it, and
-never with an "I'll provide it" option.
+no default — a name, a URL, a reason — and no other way on is asked in plain text: never as a picker
+built for it, and never with an "I'll provide it" option. **An array whose other option is a real
+alternative is not built for the text, and stays** — a *Cancel* that ends the run the way the prose
+after the array states, a *Skip*, a way on without the text: its text option carries the marker
+above and is followed by the plain-text question, and the prose after the array — or the rule of
+this reference it cites, which states it for every citer — says what each other option does. An alternative no prose handles is not a real one: write its handling there.
+What this forbids is an array with no real alternative to offer, which is asked as a plain-text
+question instead. A plain-text question may still name its own way out in the question itself
+(`…, or type cancel`), as the *Branch prefix undetected* identity variant does, and needs no array
+for it.
 
 ## Choice lists are presented verbatim
 
@@ -165,7 +173,7 @@ to assert against a reference that overrules it.
 **No operator is trapped, and the reason is no longer `Cancel`.** Three of the first nine carried a
 trailing `Cancel` until the four-option cap was enforced, and it was dropped from each — a fifth slot
 the harness would not render. The escape that replaces it is the free-text option, which is always
-present and, on these eleven, is normalised rather than frozen. The tenth keeps its `Cancel` within the cap. Where aborting has a consequence the
+present and, on these eleven, is normalised rather than frozen. The tenth keeps its `Cancel` within the cap. The second keeps one too, labelled for what it does: it returns the candidate to the first's four options rather than aborting, so it adds no value to that picker's vocabulary. Where aborting has a consequence the
 operator must see before choosing, the command states it in the prose introducing the walk rather
 than in an option: `/brd-package`'s and `/brd-reconcile`'s walks both do.
 

@@ -26,8 +26,19 @@ The **signal-positive** form. It answers *"which existing docs repository am I w
 1. **The first positional token**, if the invocation carries one. Taken as given; the operator named it.
 2. **Else the current working directory**, *when it carries ≥ 1 signal from §3*.
 3. **Else `${DOCS_PATH:-/workspace/docs}`**, *when it carries ≥ 1 signal from §3*. In a container the docs clone is mounted here, which makes this the common fast path rather than the exotic one.
-4. **Else search `${REPOS_PATH:-/workspace}` one level deep** for a directory carrying ≥ 1 signal. A single hit is taken. Several hits are offered as a choice.
-5. **Else ask.**
+4. **Else search `${REPOS_PATH:-/workspace}` one level deep** for a directory carrying ≥ 1 signal. The listing is unbounded and so is the hit count, so the choice takes `workflows-core:epic-picker` *The cap*'s shape (`Skill(skill: "workflows-core:reference", args: "epic-picker")`) and never one option per hit, which `AskUserQuestion` rejects past four. Print every hit as prose first, one line each, its absolute path, in the listing's byte-wise name order, then:
+   - **One hit** — no picker: take it, with a one-line notice naming it as the only directory under the search base that carries a signal.
+   - **Two or three hits** — `choices: ["<hit-1>", "<hit-2>", "Cancel"]` or `choices: ["<hit-1>", "<hit-2>", "<hit-3>", "Cancel"]`, one row per hit.
+   - **Four or more hits** — the first two plus the overflow row: `choices: ["<hit-1>", "<hit-2>", "Another directory from the list above (you'll be prompted for its name)", "Cancel"]`. Choosing the overflow row asks for the name in plain text; the answer, or a free-text answer to the array, is resolved against the hits just printed — a hit's name or its path — and never parsed out of the text; one that names none of them is asked again, and *Cancel* or a blank answer there resolves nothing (below).
+
+   No row is marked `(Recommended)`: which of several documentation repositories the operator means is theirs to know, and the byte-wise order says nothing about it. *Cancel* resolves nothing (below).
+5. **Else ask**, printing the directories rungs 2–4 tested — the working directory, `${DOCS_PATH:-/workspace/docs}` and `${REPOS_PATH:-/workspace}` — and that none carried a signal from §3:
+   ```
+   choices: ["Enter the documentation repository's path (you'll be prompted)", "Cancel"]
+   ```
+   *Enter the documentation repository's path* asks at once, in plain text, for an absolute path; a free-text answer to the array that is a path is taken the same way. The answer is **taken as given, as rung 1 takes a positional token** — rung 5 asks where to look and does not test what comes back — so long as it names an existing directory; a path that names none is asked for again. *Cancel*, or a blank answer, resolves nothing (below).
+
+**Where *Cancel* is chosen at rung 4 or rung 5, no repository is resolved, and the calling command takes its own stop route for that case** — the one its text states for a Cancel at this ladder (`/docs-audit` Phase 0 step 2 and `/docs-brand`'s stop route do), else its ordinary stop, its message `No documentation repository resolved.` A run handed its repository as rung 1 — as an `--inline` caller's contract requires of it — never reaches rung 4 or 5, so never meets this Cancel.
 
 Resolve the answer to an absolute path, and **print which rung answered**. A command that quietly works in an unexpected directory is expensive to unpick afterwards.
 
