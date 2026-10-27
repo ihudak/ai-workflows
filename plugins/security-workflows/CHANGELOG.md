@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.5.0] — 2026-10-27
+
+**Update `workflows-core` to 1.60.0 with this release**: its `security-register-format` §2 states the `reserved_moves` key this release's `register.py plan` prints. Fixes to-fix LC10 (live checks of 2026-10-26), and LC6's instance in this command.
+
+### Fixed
+- **A move a reserved record's merge will make is reported before the push.** `register.py plan --reserve-dir` numbered new findings past the run records other branches hold, but its `origins` and `renumbered` stay the checkout's, so it never said that a reserved record sorting earlier would move one of the checkout's own findings, while 7.1 said "a reserved record can renumber an existing finding" and ran `register.py rebase` for it, which had nothing to move. In run 6 a reserved record gave `[SEC#1]` to another finding, `plan` printed `"renumbered": []`, and the report named the move only from a dry rebuild no step asks for; on a *Fix* answer the follow-up line would have cited `[SEC#1]`, which after the merge is the other finding. `plan` now lists each such move as `reserved_moves`, `{origin, from, to, run}` — from the checkout's number to the number once the records merge, naming the reserved record that takes the old one — and leaves the checkout's own numbering as it was, so the answers keep their numbers. 7.1 says its `rebase` moves an answer only where the checkout itself gained a record, as on 7.2's `REGISTER_MOVED` path, and the report's `### Register` names each such move on a new *Moves on merge* line, provisional, once its record merges, with each line this run built that cites the old number, to correct after that merge (to-fix LC10, live checks of 2026-10-26).
+- **The false positive's evidence line is shown where the person reads it.** Phase 5 step 5 said to show the cited line, and in run 6 it appeared only in a command's output and the run's thinking; it now goes in the text of the reply before the next question, or in that question's own text (to-fix LC6, its `/security-workflows:scan` instance).
+
 ## [0.4.0] — 2026-10-26
 
 **Update `workflows-core` to 1.47.0 with this release**: its `security-register-format` states the checks and the follow-up clause `register.py` now applies. Fixes batch B04 of the 2026-10-26 review (`docs/superpowers/reviews/2026-10-26-fix-batches.md`).

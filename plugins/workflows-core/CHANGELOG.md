@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.60.0] — 2026-10-27
+
+Take with `security-workflows` 0.5.0, whose `register.py plan` prints the `reserved_moves` key this release's `security-register-format` states (to-fix LC10, live checks of 2026-10-26).
+
+### Added
+- **`security-register-format` §2: a reserved record's moves are reported apart.** `register.py plan --reserve-dir` numbers the checkout's own findings as the checkout holds them — its `origins`, every row's number and its `renumbered` — so a person's answers keep their numbers, and lists each move the reserved records' merge will make to one of them as `reserved_moves`, `{origin, from, to, run}`, naming the reserved record that takes `from`. Each is provisional: a follow-up line that cites `from` is corrected only after that record merges, when the first run that records anything reports the move as its own (to-fix LC10, live checks of 2026-10-26).
+
 ## [1.59.1] — 2026-10-27
 
 Take with `dev-workflows` 4.40.0 and `product-workflows` 3.48.0, whose *Set SPECS_PATH* sites this release's citer list names (batch B20).

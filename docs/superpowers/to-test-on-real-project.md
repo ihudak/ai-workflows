@@ -18,6 +18,12 @@ Sub-project A's Task 12 never merged the Epic's pull request (`docs/superpowers/
 - **SEC-A2 — `/dev-workflows:conformance` after the Epic merged.** Expect `unit-branch` to read `merged` and the Epic run to trace the default branch.
 - **SEC-A3 — the register in session-branch mode.** With `workflows.sessionBranch` set on the specs copy, run a change scan. Expect the register's paths, `runs/`, `scans/`, `register.json` and `register.md`, committed on `session/<identity>` with the run's session files and pushed there, the default branch untouched, and the next run's preflight finding them through the overlay.
 
+## `security-workflows` 0.5.0, `workflows-core` 1.60.0 — the move a reserved record's merge makes
+
+Install both together.
+
+- **LC10 — the triage report names the move before the push** (to-fix LC10, live checks of 2026-10-26). Setup: run 6's in `docs/superpowers/verification/2026-10-26-live-checks.md` — the seeded register's `[SEC#1]` CWE-79 and `[SEC#2]` CWE-319 on `main`, a record from a scratch clone, dated earlier, allocating `[SEC#1]` to CWE-601, pushed by the watcher once the run asks its first triage question — then `/security-workflows:scan <repo> --triage`, marking `[SEC#1]` a false positive. Expect 7.1's plan to print `reserved_moves` with CWE-79's move from 1 to 3, naming the planted record, beside `"renumbered": []`; and the report's `### Register` to name `[SEC#1]` → `[SEC#3]` as provisional, once that record merges, on its *Moves on merge* line, from `reserved_moves` and before the push, with no dry rebuild of the run's own. The false positive's evidence line is shown in the reply's text or in the next question's own, not only in a command's output.
+
 ## Live checks kept in `to-fix.md`
 
 These stay in `docs/superpowers/to-fix.md`, which holds their detail; they are named here so a test session sees every live check in one place.
@@ -26,4 +32,3 @@ These stay in `docs/superpowers/to-fix.md`, which holds their detail; they are n
 - **LC5** — after its fix, `/design` revising a `design.md` whose `## Pieces` holds a stale `_N/A` above two pieces should fix it with no question.
 - **LC6** — after its fix, the offer made after a re-review lists each open finding with its severity in its own question.
 - **LC9** — after its fix, `/specify`'s next step offers `/design <PRD>` on a multi-component PRD holding Epics only once an Epic's `specification.md` is merged. This replaces B16-6, whose single-component setup could not reach the case.
-- **LC10** — after its fix, with run 6's setup, the triage report names the move the reserved record's merge makes, before the push.
