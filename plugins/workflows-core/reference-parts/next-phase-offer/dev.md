@@ -106,6 +106,7 @@ So the merge is named by every next-step offer that names a downstream gate its 
 | No remote | `(once <branch> is merged into the default branch — this specs repo has no remote, so no pull request will do it)` |
 | Nothing to commit, the deliverable already on `<default>` | `(its inputs are already on the default branch — you can run it now)` |
 | Nothing to commit, the deliverable on `<branch>`, unmerged | `(its inputs sit on <branch>, unmerged — it waits until <branch> reaches the default branch)` |
+| Nothing to commit, the deliverable changed on `<default>` after `<branch>` was cut | `(the default branch changed its inputs after <branch> was cut — merge the default branch into <branch>, or run it from the default branch)` |
 | Commit failed | `(once the deliverable staged on <branch> is committed, pushed and its pull request merged)` |
 | Declined by the user | `(once this run's artifacts reach the default branch — they are written but not there)` |
 | Gate failed | `(once this run's artifacts reach the default branch — the handoff did not run)` |

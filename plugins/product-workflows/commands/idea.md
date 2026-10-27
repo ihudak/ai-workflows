@@ -610,7 +610,7 @@ dirty by construction rather than by a choice; a `status: refined` run whose han
 either, which is the *Gate failed* line §4.1 emits and which Phase 5 already names beside a decline;
 and one whose handoff was **taken** and whose §2.4 commit git then refused — a hook's rejection, a
 signature it cannot make — committed nothing too, and leaves the set staged on the branch §2.2 cut,
-which is the *Commit failed* line §4.1 emits. The third one is reachable rather than theoretical:
+which is the *Commit failed* line §4.1 emits and which Phase 5 names beside the other two. The third one is reachable rather than theoretical:
 §2.1 fails on path, repo or permission grounds
 **or** on either run-wide flag it names — `specs_git: blocked`, which Phase 0 carries for the whole
 run whenever its own preflight returns `workflows-core:specs-repo-git` §3.3's G0, and
@@ -688,10 +688,10 @@ the next phase — **adapted to status**:
   opened is still open that command stops on rows D/E — an unqualified recommendation sends the
   operator into a stop this run itself caused.
 
-  **On a decline, or where §4.1's *Gate failed* line was emitted, offer the `@<path>` route beside
-  it** — the one the draft branch below names for the same on-disk state:
-  `/product-workflows:create-prd <KEY> @<the absolute path of this idea.md>`. Neither outcome
-  committed anything. Where this run wrote a new brief, `idea.md` is written and on no ref, exactly as
+  **On a decline, or where §4.1's *Gate failed* or *Commit failed* line was emitted, offer the
+  `@<path>` route beside it** — the one the draft branch below names for the same on-disk state:
+  `/product-workflows:create-prd <KEY> @<the absolute path of this idea.md>`. None of the three
+  outcomes committed anything. Where this run wrote a new brief, `idea.md` is written and on no ref, exactly as
   a draft is, and `/create-prd <KEY>` with no path then finds it on no ref (row F), names it without
   reading it, and goes on down its idea ladder — which comes back to this brief only through its
   same-session rung or a path the operator types, and otherwise grills the PRD from scratch. Where it

@@ -10,8 +10,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Take with `workflows-core` 1.60.0, whose `phase-handoff` §4.1 *Nothing to commit* line says where the deliverable is, which this release's `/brd-split` reads (to-fix LC2, live checks of 2026-10-26).
 
 ### Fixed
-- `/brd-split` Phase 7 offers *Ground now* on *Nothing to commit* only where its line says the deliverable is already on the default branch, and the continuation's merge gate goes straight on only then; where the deliverable sits on the handoff branch, unmerged — a reused, stacked or local-only branch — *Ground now* is dropped and the run says that branch must merge first. It read every *Nothing to commit* as nothing waiting on a merge (to-fix LC2).
-- `/idea`: *What a run without a handoff therefore leaves behind* names a fourth route, a taken handoff whose commit git refused, which leaves the set staged on the handoff branch — `phase-handoff` §4.1's *Commit failed* (to-fix LC2).
+- `/brd-split` Phase 7 offers *Ground now* on *Nothing to commit* only where its line says the deliverable is already on the default branch, and the continuation's merge gate goes straight on only then; where the deliverable sits on a branch, unmerged — a reused, stacked or local-only branch — or the default branch changed it after that branch was cut, *Ground now* is dropped and the run says what must merge first. It read every *Nothing to commit* as nothing waiting on a merge (to-fix LC2).
+- `/idea`: *What a run without a handoff therefore leaves behind* names a fourth route, a taken handoff whose commit git refused, which leaves the set staged on the handoff branch — `phase-handoff` §4.1's *Commit failed* — and Phase 5 offers the `@<path>` route on that line too, as on a decline or *Gate failed* (to-fix LC2).
 - The session-cost and session-feedback reference pages say `commit-artifacts` does not push a branch the plugin created that `origin` does not have yet (to-fix LC2).
 
 ## [3.48.0] — 2026-10-27

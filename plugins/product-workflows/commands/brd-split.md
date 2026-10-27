@@ -1466,10 +1466,11 @@ report). **It is offered only where Phase 6's §4.1 outcome reaches the default 
 operator's merge alone** — `PR opened` or `PR already existed` — or is there already — `nothing to
 commit` where its line says the deliverable is already on the default branch; on any other
 outcome (a declined handoff, no remote, a failed push, a pull request not opened, or `nothing to
-commit` where its line says the deliverable sits on its branch, unmerged) the children's files are
-not known to be on their way to main, so it is dropped from the array and the run says what must
-happen first — that outcome line's own remedy, or, for a deliverable sitting on its branch, that
-branch's merge — then `/product-workflows:prd-ground <CHILD-KEY>` by hand. *Ground each child later* is the guidance this phase always gave: it names the command
+commit` where its line says the deliverable sits on a branch, unmerged, or changed on the default
+branch after that branch was cut) the children's files are not known to be on their way to main, so
+it is dropped from the array and the run says what must happen first — that outcome line's own
+remedy, or, for a deliverable on a branch, that branch's merge, or the default branch's merge into
+it — then `/product-workflows:prd-ground <CHILD-KEY>` by hand. *Ground each child later* is the guidance this phase always gave: it names the command
 and runs nothing. *Stop here* ends the run as it always did. **`<later-recommended>` is a placeholder
 this run resolves once**, as `workflows-core:escalation-rules` *The `(Recommended)` marker is
 unconditional* sanctions: ` (Recommended)` where *Ground now* is dropped, so the array still
