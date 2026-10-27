@@ -27,7 +27,7 @@ Read what a drafted artifact settles against what overlaps it, for the play-back
    - A member that leaves out a case *every* covers, calls twice what *once* allows, or makes an exception to *always* or *never* departs from the Rule, whatever its wording.
    - A figure a member adds on the same path counts toward the Rule's bound: a 5-second send budget after a step the Rule bounds at 30 seconds lets the outcome arrive at 35.
    - **A sibling Rule's recovery is not leave to skip this Rule's step.** Where another Rule recovers this one's step when it was lost or failed — a sweep that picks up a missed call — read what this Rule lets the sibling recover, word for word: a member that skips the step on purpose, or a scope line that leaves a case to the sibling, departs from this Rule unless those words cover that case. A live `/specify` run took a sibling Rule's sweep as leave to skip a notice the Rule called for after every restock, and the reviewer returned the departure as a BLOCKER; an out-of-scope line that left a racing return to the same sweep departed again.
-5. **Read each list, and name each conflict.** A conflict is a pair of members that gives one situation two outcomes — among them a step ahead of a failure's point on its path that meets the failure first, and two outcomes that can fire for one input with no member stating which wins — or a member, a requirement, a decision or a scope line, that departs from an `[AD#N]` Rule. Quote both sides. A departure already recorded as an ARD deviation — in the draft (a `## ARD deviations` entry in a design, an open question naming the Rule in a specification), or a decision the session file records as one — is still returned, with where it is recorded.
+5. **Read each list, and name each conflict.** A conflict is a pair of members that gives one situation two outcomes — among them a step ahead of a failure's point on its path that meets the failure first, and two outcomes that can fire for one input with no member stating which wins — or a member, a requirement, a decision or a scope line, that departs from an `[AD#N]` Rule. Quote both sides. A departure already recorded as an ARD deviation — a record naming this departure, not only its Rule: a `## ARD deviations` line or an open question in a specification whose *what deviates* is this member's, or a decision the session file records as that deviation — is still returned, with where it is recorded; a record of another departure from the same Rule leaves `deviation_recorded: none`.
 
 ## Output
 
@@ -71,7 +71,7 @@ conflicts:
     members: [<id, or AD#N>, …]
     where: [<path:line>, …]
     situation: "<the one situation and its two outcomes, or the Rule's words and the member's, each quoted>"
-    deviation_recorded: <where the draft or the session file records it | none>
+    deviation_recorded: <where the draft or the session file records this departure | none>
 unread: [<ARD path>, …]       # [] when every file in ard_paths was read
 error: <one line — ERROR only>
 ```
