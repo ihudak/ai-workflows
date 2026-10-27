@@ -524,6 +524,7 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
 
      choices: ["Mount the missing repo(s) now — I'll wait, then re-scan (Recommended)", "Proceed without them — PRD-only for the missing repos", "Cancel", "Specify a different absolute path for a missing repo (you'll be prompted)"]
      ```
+     *Mount the missing repo(s) now*, *Proceed without them* and *Specify a different absolute path for a missing repo* each carry a `description` naming every missing slug, in the order printed, so the missing set is named in the dialog whether or not that block was printed (`workflows-core:epic-picker` *The cap*); a slug typed for *Specify a different absolute path* is resolved against those, never parsed out of the answer.
      Choice semantics follow the `Repo unresolved (zero matches) — /document` rule in `workflows-core:escalation-rules`, applied to the whole missing set at once:
      - **Mount now & re-scan** (≈ the rule's "I'll clone it — wait") — pause until the user confirms the clones are present under `$REPOS_PATH`, then rebuild the map and run key discovery again (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*) and re-render this gate. Loop until `missing` is empty or the user picks another option. This is how the operator gets per-repo control: mount whichever repos are available, re-scan, then choose "Proceed" for whatever remains.
      - **Proceed without them** (≈ the rule's "Skip and continue without its refs") — record every currently-missing repo's refs as `unresolved`, out of scope; continue. Identical downstream state to the previous per-slug skip.
@@ -595,7 +596,7 @@ Handle the return:
   ```
   choices: ["Accept all proposed locations (Recommended)", "Adjust individual locations (you'll be prompted per item)", "Cancel"]
   ```
-  *Adjust individual locations*, here and below, walks the targets one at a time and asks in plain text for each one's correction — its `path`, `kind` or `section`, or to drop it.
+  *Accept all proposed locations* and *Adjust individual locations*, here and below, each carry a `description` naming every proposed target by its `path`, in the order returned, so the targets are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*). *Adjust individual locations*, here and below, walks the targets one at a time and asks in plain text for each one's correction — its `path`, `kind` or `section`, or to drop it.
 - **`status: LOW_CONFIDENCE`** — display `confidence_notes` alongside the targets so the user sees what was ambiguous:
   ```
   choices: ["Adjust individual locations (you'll be prompted per item) (Recommended)", "Accept all proposed locations", "Cancel"]
@@ -716,6 +717,7 @@ Handle the `status` and `gaps`:
   ```
   choices: ["Copy them into the repository beside the page", "Stage for manual upload to the repo's image-management tool", "Leave these screenshots off this page", "Cancel"]
   ```
+  The first three options each carry a `description` naming the target path and every screenshot planned for it, so the screenshots they act on are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*).
   - **Copy them into the repository beside the page** → record `local` for that target.
   - **Stage for manual upload to the repo's image-management tool** → record `cdn_upload_required` for that target. Where `<screenshot_staging_dir>` is null — Phase 1's **Not found** branch was skipped — first take an absolute staging directory from the user, rejecting `/tmp` and any path inside the docs repo as that branch does, and record it as `<screenshot_staging_dir>`.
   - **Leave these screenshots off this page** → once the checklist is final — after the re-invocation below, where there is one — remove that target's `screenshots:` entries from it; the writer places no screenshot on that page, and each screenshot is listed in Phase 9's `### Deferred items` as a user-declined screenshot.
