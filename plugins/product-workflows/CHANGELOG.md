@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.50.0] — 2026-10-27
+
+Take with `workflows-core` 1.61.0, whose `escalation-rules` holds the `/epics` form of *No repos derivable* this release's Phase 4 step 3 presents — to-fix LC7, LC8 (live checks of 2026-10-26).
+
+### Changed
+- **`/epics` Phase 1 tests whether any repository can be derived before it recommends deriving them** (LC7). Only where an `EPIC-` folder under the PRD holds an `implementation.md`, or the PRD folder holds an `ard.md` — file tests, Phase 2.5 still running later — does the code-examination question offer *Scan repos referenced by sibling/parent Epics under this PRD (Recommended — auto-derived)*. Where neither exists it asks a repository picker instead: the session's own repository first (`git rev-parse --show-toplevel`, never the specs repository), recommended, then the clones under `$REPOS_PATH` in Phase 4's listing order — one row each beside *Turn code scan off* up to three candidates, and past three the first two, *Another repository (you'll be prompted for its name)* with a `description` naming the rest, and *Turn code scan off*, per `workflows-core:epic-picker` *The cap*. A name typed into the harness's free-text option is taken as a manually listed one is, and Phase 4's slug→clone map takes in the session's repository. Run 4 of the live checks recommended deriving on a PRD with no Epic and no ARD, found nothing, and asked for the names in plain text, which the driver found easy to overlook from inside the `bookstore` repository.
+- `/epics` Phase 4 step 3, when the resolved list is empty, presents `escalation-rules`' `/epics` form, `["Choose repos to scan", "Proceed without code scan", "Cancel"]`, whose first option puts the same picker; it asked for the names in plain text (LC7).
+- **`/epics` Phase 7 holds a `MAJOR` whose fix needs a decision out of `doc-fixer`'s set** (LC8), as it holds an *Epic size* finding: one whose suggested fix offers alternative readings, or settles a product or scope question. It stays open, the offer to apply what the review leaves open names it as needing a decision, and it is written into its Epic as a `[NEEDS CLARIFICATION]` marker after the last review. In run 4, `doc-fixer` was handed a `MAJOR` offering two readings of a PRD criterion, took one, and wrote it into the Epic's *Out of scope*. A `BLOCKER` of that kind still goes to `doc-fixer`, which defers it, so the escalation puts it to the user.
+- `/epics` Phase 7's `doc-fixer` brief, on both verdict paths, says that a finding whose suggested fix offers alternatives, or whose fix takes a product or scope decision, is deferred as `DEFERRED — needs human decision`, naming each alternative, and never chosen (LC8). The Phase 9 report's `### Deferred items` lists such a `MAJOR`.
+- The `/epics` docs page describes the picker and the held-out `MAJOR`.
+
 ## [3.49.0] — 2026-10-27
 
 Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules this release's review steps cite, whose `phase-handoff` §4.1 *Nothing to commit* line says where the deliverable is, which this release's `/brd-split` reads, and whose `epic-picker` *The cap* this release's pickers cite — to-fix LC1, LC2, LC3, LC6, LC9, PR7 (live checks of 2026-10-26).
