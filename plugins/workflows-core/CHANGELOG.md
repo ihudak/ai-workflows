@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.61.0] — 2026-10-27
+
+Take with `dev-workflows` 4.42.0 and `product-workflows` 3.50.0, whose `/design` sends a change made while writing to this release's whole-artifact gate and whose `/design` and `/specify` hold that gate for the play-back their overlap reads precede — to-fix LC4 (live checks of 2026-10-26).
+
+### Changed
+- **`grilling-technique` *The confirmation gate*: the whole-artifact gate follows what was written, not how it was written** (LC4). It fires once more over the whole artifact, before the first reviewer dispatch, handoff or commit that follows the interview, whenever the writing changed anything a gate confirmed — a decision, a test, a criterion, a number, changed while its part was being written or by a part written after its gate — however many gates the run held, and whether the caller wrote its artifact section by section or once after the grill; its play-back names each such change and plays back only those. It fired only "where a caller wrote its artifact section by section", so a run that played the whole artifact back once and wrote it afterwards had no gate for a change made while writing. In all seven `/design` transcripts that wrote `design.md`, every grill question came before the first write, and three of them played the whole design back once and wrote it afterwards; run 3 of the live checks changed a confirmed decision while writing, said so in narration only and dispatched the reviewer. `/create-prd`'s one measured run wrote the same way: eight questions, then one write. The bullet also names a write-once caller's gate before its write, and says a change told only in narration has passed no gate; *At the gate, play the understanding back* says the whole-artifact play-back names each change with what the gate had confirmed.
+- The references page describes the gate.
+
 ## [1.60.0] — 2026-10-27
 
 Take with `dev-workflows` 4.41.0, `product-workflows` 3.49.0 and `docs-workflows` 1.26.0, whose review steps, handoffs, pickers and offers cite or restate this release's rules, and with `security-workflows` 0.5.0, whose `register.py` prints the `reserved_moves` key and `rebuild`'s `numbers` this release's `security-register-format` states — to-fix LC1, LC2, LC3, LC6, LC9, LC10, PR7 (live checks of 2026-10-26).

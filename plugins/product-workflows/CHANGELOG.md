@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.50.0] — 2026-10-27
+
+Take with `workflows-core` 1.61.0, whose `grilling-technique` fires the whole-artifact gate whenever the writing changed anything a gate confirmed, rather than after every section-by-section interview — to-fix LC4 (live checks of 2026-10-26).
+
+### Changed
+- **`/specify` holds its whole-specification play-back whatever the writing changed** (LC4). Its second overlap read, over the whole specification, precedes the confirmation gate before the first `spec-reviewer` dispatch, and its play-back carries the read's `Overlap read:` line. Under `workflows-core` 1.61.0 that whole-artifact gate fires only where the writing changed something a gate confirmed, so a run that changed nothing would have had no play-back to carry the line. `/specify` now holds the gate either way, its play-back naming each change or saying there was none — the behaviour it had before.
+
 ## [3.49.0] — 2026-10-27
 
 Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules this release's review steps cite, whose `phase-handoff` §4.1 *Nothing to commit* line says where the deliverable is, which this release's `/brd-split` reads, and whose `epic-picker` *The cap* this release's pickers cite — to-fix LC1, LC2, LC3, LC6, LC9, PR7 (live checks of 2026-10-26).
