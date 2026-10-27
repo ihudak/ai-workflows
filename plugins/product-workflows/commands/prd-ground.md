@@ -685,8 +685,12 @@ the manual path:
    Where it holds more, grounding all of them is rarely what is meant, and each multiplies the cost
    stated above, so no option is marked:
    ```
-   choices: ["Name the ones in scope from the list above (you'll be prompted)", "Ground against all <K> listed — each multiplies the cost above", "Cancel"]
+   choices: ["Name the ones in scope (you'll be prompted)", "Ground against all <K> listed — each multiplies the cost above", "Cancel"]
    ```
+   *Name the ones in scope* carries in its `description` every clone the list holds — slug and path
+   each, in the list's order, after `Not shown as an option:` — since this array carries none of
+   them (`workflows-core:epic-picker` *The cap*'s rule for a picker built from a listing), so each is
+   named in the dialog whether or not the list was printed.
    *Only some* and *Name the ones in scope* ask, in plain text, for short names, one per line or
    space-separated; a typed answer to the array is taken as that list. Names resolve by step 3 —
    a name the map does not hold is still a name, and step 3's zero-match escalation answers it.

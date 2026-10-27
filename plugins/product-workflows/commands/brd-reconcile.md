@@ -413,9 +413,11 @@ write would re-ask a question already answered.
      `<default-ref>`'s copy), else the date its name carries, and two of one date in the order of the
      commits that added them: `choices: ["<file-1>", "<file-2>", "None of these — stop"]`, with a
      third file before the decline where there is one; four or more, the two oldest, then
-     `choices: ["<file-1>", "<file-2>", "Another one from the list above (you'll be prompted for its name)", "None of these — stop"]`
+     `choices: ["<file-1>", "<file-2>", "Another one (you'll be prompted for its name)", "None of these — stop"]`
      — the decline being an option this picker adds, which `workflows-core:epic-picker`'s *The cap*
-     counts against the four and never drops. **Say above the question that the order matters**: a
+     counts against the four and never drops — *Another one*'s `description` naming every file the
+     array leaves out, oldest first, after `Not shown as an option:`, as *The cap* sets out for a
+     picker built from a listing, so each is named in the dialog whether or not the list was printed. **Say above the question that the order matters**: a
      review reconciled later supersedes an earlier one's answer wherever the two differ (*Confirm
      every candidate*), so the reviews go in the order the customer sent them, a corrected resend last —
      reconciled first, it would be superseded by the very answers it corrected. No option is marked
@@ -828,9 +830,10 @@ the package is resolved against it, reading section 1 as this command reads it f
    on file: every one, then the decline —
    `choices: ["<BRD-KEY> package <YYYYMMDD-1>", "<BRD-KEY> package <YYYYMMDD-2>", "Cannot tell — leave it undetermined"]`,
    with a third package before the decline where there is one. Four or more: the three most recent
-   and the overflow option, the full list staying in the prose above it as
-   `workflows-core:epic-picker`'s *The cap* sets out —
-   `choices: ["<BRD-KEY> package <YYYYMMDD-1>", "<BRD-KEY> package <YYYYMMDD-2>", "<BRD-KEY> package <YYYYMMDD-3>", "Another package from the list above (you'll be prompted for its date)"]`,
+   and the overflow option, the full list staying in the prose above it and the packages the array
+   leaves out named in the overflow option's `description`, most recent first, after
+   `Not shown as an option:`, as `workflows-core:epic-picker`'s *The cap* sets out —
+   `choices: ["<BRD-KEY> package <YYYYMMDD-1>", "<BRD-KEY> package <YYYYMMDD-2>", "<BRD-KEY> package <YYYYMMDD-3>", "Another package (you'll be prompted for its date)"]`,
    where declining is a free-text answer. No option is marked `(Recommended)`: which package the
    customer answered is theirs to know, and the run has nothing to rank by. *Another package* asks for
    its date in plain text; that answer, and a free-text one, is

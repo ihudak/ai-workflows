@@ -15,10 +15,11 @@ files, or a PRD's Epics for some other purpose than choosing the unit to work on
 some of them the auto-select-at-one and typed-answer rules too. Several resolve no PRD folder at all,
 so *PRD-level commands never use it* was true of the Epic pick and false of the file. **This set is
 described rather than listed**, because a list of its members went stale twice as members joined.
-**Re-derive both sets** with `grep -l epic-picker plugins/*/commands/*.md plugins/*/agents/*.md`,
-reading each hit for which of the two it is: the paragraphs a change to the
-`AskUserQuestion` arity constraint would touch — *The cap*, and the rule resolving a typed answer
-against the printed list — are read by every file that grep returns, not only by the three above.
+**Re-derive both sets** with `grep -rl epic-picker plugins/*/commands plugins/*/agents plugins/*/references`,
+reading each hit for which of the two it is, if either: the paragraphs a change to the
+`AskUserQuestion` arity constraint would touch — *The cap*, its remainder option's description, and
+the rule resolving a typed answer against the items listed — are read by every member of either set,
+not only by the three above.
 
 ## The picker
 
@@ -90,6 +91,15 @@ harness's free-text option is taken as given (`${CLAUDE_PLUGIN_ROOT}/references/
 §0, *A selection carries no text*); either way the run resolves the typed key **against the keys the
 picker listed** — the array's rows and the remainder option's description — never by parsing one
 out of the answer (`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §1).
+
+**The description rule binds every picker built from a listing, not only this one** — every member
+of the second set above. No option of such a picker points at "the list above": its remainder
+option is labelled `Another <item> (you'll be prompted for <what it asks>)`, and its `description`
+names every item the array leaves out, each as the prose list shows it and in the prose list's order, after
+`Not shown as an option:`. A picker whose array carries no item at all, only dispositions — *all of
+them*, *name the ones to include*, *none* — leaves every item out, so the option that asks for names
+carries all of them in its description. A typed answer is resolved against the items the picker
+listed, the description's included, never parsed out of the answer.
 
 **The first actionable row carries `(Recommended)`**, whether or not the cap applied: the row the
 default cursor lands on (*The marker, and where it comes from*), ◐ before ○, as the example's first

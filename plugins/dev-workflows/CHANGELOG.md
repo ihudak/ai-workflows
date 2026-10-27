@@ -23,7 +23,6 @@ Take with `workflows-core` 1.59.1 (batch B20).
 
 ### Fixed
 - The environment reference page lists `/epics` among the commands that stop on an unset `SPECS_PATH` and offer to set it, where it said `/epics` carried no such stop (PRD-B2).
-## [4.40.0] — 2026-10-26
 
 Fix batch B22 of the 2026-10-26 review: the references `/vuln` and `/upgrade` consult, install-time code, and the two docs pages. Needs nothing newer than `workflows-core` 1.57.1.
 

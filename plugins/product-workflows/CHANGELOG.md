@@ -12,9 +12,10 @@ Take with `workflows-core` 1.60.0, whose `epic-picker` *The cap* this release's 
 ### Changed
 - **`/specify` Phase 2's Epic picker: the remainder option names the Epics the array leaves out.** It is `Another Epic (you'll be prompted for its key)`, its `description` naming each of them by marker, key and title, and a typed key is resolved against the keys the array and that description listed; it read *Another Epic from the list above*, pointing at a prose list run 1 of the live checks never saw printed. The first actionable row carries `(Recommended)`, and no option does where every Epic is ● (to-fix LC1).
 - The `/specify` docs page describes the picker's cap, its remainder option and the marker; it said the picker shows one row per Epic.
+- **`/brd-reconcile`'s review-file and package pickers, and `/prd-ground`'s repository question past three clones, name in the dialog what their arrays leave out.** *Another one* and *Another package* no longer point at "the list above", and each `description` names every file or package the array leaves out; *Name the ones in scope* carries every clone, since that array carries none — per `workflows-core:epic-picker` *The cap*'s rule for a picker built from a listing (to-fix LC1).
 
 ### Fixed
-- **`/specify`'s `### Next step` names `/dev-workflows:design <PRD>` as designing the Epics of a multi-component PRD only where an Epic's `specification.md` is on the default branch**, as `next-phase-offer`'s *PE — breakdown & specification* lane does, since `/dev-workflows:design` stops without one; it named it there whatever the Epics held (to-fix LC9).
+- **`/specify`'s `### Next step` names `/dev-workflows:design <PRD>` as designing the Epics of a multi-component PRD only where an Epic's `specification.md` is on the default branch**, as `next-phase-offer`'s *PE — breakdown & specification* lane does, since `/dev-workflows:design` stops without one — its Phase 0 step 4, with the excluded-count report; it named it there whatever the Epics held (to-fix LC9).
 
 ## [3.48.0] — 2026-10-27
 

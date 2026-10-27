@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.26.0] — 2026-10-27
+
+Take with `workflows-core` 1.60.0, whose `epic-picker` *The cap* states the description rule these pickers follow (to-fix LC1, live checks of 2026-10-26).
+
+### Changed
+- **Every picker built from a listing names what its array leaves out in the dialog.** `/docs-brand`'s repository and logo pickers, `/docs-serve`'s server and `--stop` pickers and `repo-resolution`'s rung 4 label their overflow option `Another repo`, `Another candidate`, `Another entry`, `Another server` or `Another directory` with its `(you'll be prompted …)` marker, no longer pointing at "the list above", and give it a `description` naming every item the array leaves out after `Not shown as an option:`. `/docs-init` Phase 2 and `/docs-audit`'s source-repository question, whose arrays carry no repository, put every candidate in *Name the ones to include*'s description, and their first option reads *all of the listed repositories*. A typed answer is resolved against the items listed, the description's included. Run 1 of the live checks showed a prose list above a picker printed in none of eight Epic pickers, so an option pointing at it pointed at nothing (to-fix LC1).
+- `/docs-serve` cites `epic-picker` *The cap* for the typed-answer rule, where it named that file's closing paragraph, which does not state it.
+
 ## [1.25.0] — 2026-10-26
 
 Take with `workflows-core` 1.59.0 (batch B19).
