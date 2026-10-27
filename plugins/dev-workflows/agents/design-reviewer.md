@@ -122,6 +122,16 @@ working tree is at it, in the working tree, since no commit holds what that scan
   "alternative" nobody would have shipped — "we considered not having an interface") → `MAJOR`; it is
   worse than absent, because it satisfies the check while teaching the reader nothing. When the Phase 5
   fan-out ran, the losing takes should appear here named by constraint.
+- **Framework defaults:** where the stack auto-configures behaviour a decision rests on
+  (`design-format.md` section 3, `### Framework defaults`), read the repositories' configuration at the
+  commit given (§ Reading the repositories) for the defaults that bear on the design's decisions —
+  transaction, session and connection scope, retries and timeouts, serialisation, caching, security
+  filters, thread pools; Spring's `open-in-view` is one. A default that bears on a decision and is not
+  listed, or is listed **kept** where the decision is false under it → `MAJOR`; → `BLOCKER` where the
+  decision it falsifies is one `_design-session.md` records as settled, as *Claims about the existing
+  system* says. A listed default whose value or `path:line` the code contradicts falls to that check.
+  Missing `### Framework defaults` with no `_N/A — why_` on a `MODERATE`+ design whose stack
+  auto-configures such behaviour → `MINOR`.
 - **Risk coverage (SIGNIFICANT/HIGH-RISK):** a risky dimension named in the spec/classification with no
   entry in **Risks & mitigations** → `MAJOR` (`SIGNIFICANT`) / `BLOCKER` (`HIGH-RISK`).
 - **Release verification:** for a change to behaviour a deployed system runs (`design-format.md`
@@ -132,6 +142,10 @@ working tree is at it, in the working tree, since no commit holds what that scan
   design says does not exist yet, with no section adding it → `MAJOR`; a delivered acceptance
   criterion with neither a post-release check nor `n/a — <reason>` → `MINOR`; a baseline given as a
   bare value, with no source and no capture plan → `MINOR`.
+  A ratio — in a check, a baseline or the rollback signal — that does not name the callers feeding
+  its numerator and its denominator, or omits a caller the code shows feeding the same counter, or
+  names no window in which old and new clients coexist → `MAJOR` (`SIGNIFICANT`/`HIGH-RISK`) /
+  `MINOR` otherwise (`design-format.md` section 11, *Rollback signal*).
   A post-release check, or a test case run against a deployed system, whose state the running system
   cannot provide as the design deploys it — a fixture no component it runs can create and no step
   puts in place, a configuration change the rollout steps never bring to the process that reads it

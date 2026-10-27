@@ -106,7 +106,7 @@ above … There is no fourth disposition and no 'skip on my own judgement' path 
 | the customer-content ruling picker | ship the package, or hold it — the two outcomes `product-workflows:bundle-packaging` §6.3's *The operator's ruling* fixes | `/product-workflows:brd-package`, once per pass that reports a hit |
 | the `engagement_model` picker | `time-and-material` / `fixed-price` | `/product-workflows:prd-proposal` Phase 2, over the two shapes `product-workflows:proposal-format` §4 sections 16–18 fixes; `/product-workflows:brd-proposal` re-asks the same question over the same committed profile |
 | the conflicting-answer picker | freeze this candidate / keep the earlier one / ask the customer — the one not frozen set aside as a conflicting answer, never a second freeze | `/product-workflows:brd-reconcile`, *Confirm every candidate* |
-| the `/conformance` decision picker, with its PRD-run confirm form and its stale-entry form | `fix-code` / `amend-document` / `accept`; on the stale-entry form, mark it resolved or keep Dev's decision — never a fourth decision | `/dev-workflows:conformance`, *The walk* |
+| the `/conformance` decision picker, with its PRD-run confirm form, its stale-entry form and its cluster form | `fix-code` / `amend-document` / `accept`; on the stale-entry form, mark it resolved or keep Dev's decision; on the cluster form, one of the three for every item of the cluster, or *Split* into a question per item, or a typed `Cancel`, which ends the run as the array's *Cancel* does — never a fourth decision | `/dev-workflows:conformance`, *The walk* |
 | the plan-conflict ruling picker | the finding governs and the plan is revised to it / the fix is applied and the plan text kept, the deviation logged — the two rulings a `review-fixer` `DEFERRED — plan-conflict` finding waits on; never a third | `/dev-workflows:implement`, Phase 3B step 7's review-fixer sub-step |
 
 **The eighth is the one whose value is re-read as configuration by later runs of the same commands**,
@@ -147,7 +147,7 @@ to assert against a reference that overrules it.
 **No operator is trapped, and the reason is no longer `Cancel`.** Three of the first nine carried a
 trailing `Cancel` until the four-option cap was enforced, and it was dropped from each — a fifth slot
 the harness would not render. The escape that replaces it is the free-text option, which is always
-present and, on these eleven, is normalised rather than frozen. The tenth keeps its `Cancel` within the cap. The second keeps one too, labelled for what it does: it returns the candidate to the first's four options rather than aborting, so it adds no value to that picker's vocabulary. Where aborting has a consequence the
+present and, on these eleven, is normalised rather than frozen. The tenth keeps its `Cancel` within the cap on every form but its cluster form, whose four slots hold the three decisions and *Split*: there the exit is the free-text answer, a typed `Cancel`, which the walk's preamble names above the first question and which ends the run as the other forms' *Cancel* does. The second keeps one too, labelled for what it does: it returns the candidate to the first's four options rather than aborting, so it adds no value to that picker's vocabulary. Where aborting has a consequence the
 operator must see before choosing, the command states it in the prose introducing the walk rather
 than in an option: `/brd-package`'s and `/brd-reconcile`'s walks both do.
 
