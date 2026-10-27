@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.43.0] — 2026-10-27
+
+Take with `workflows-core` 1.62.0, whose `overlap-reader` this release's `/design` dispatches — to-fix PR5 (live checks of 2026-10-26, run 2).
+
+### Changed
+- **`/design`'s whole-design overlap read is `workflows-core:overlap-reader`'s, on Opus, in place of an inline read** (PR5). Phase 5 dispatches it before the play-back that closes the grill — once the last question is answered and, where the run writes section by section, its last section is written — with `design.md` as written (none where the run writes it after the grill), `_design-session.md`, Phase 2.5's `ard_paths` and invariants, and its place on a path as the kind it reads first. The orchestrator builds the play-back's `Overlap read:` line from the agent's counts, in the same format, and puts each conflict it returns to the user one question at a time before the gate, a departure from an inherited `[AD#N]` Rule only as an ARD deviation; on an `ERROR` or a failed dispatch it runs the read inline, and the play-back says so. An operational step is still read inline against everything its selector reaches, since the agent reads no repository, and so is what the writing changed or added after a write-once grill, with no second dispatch. `model_routing` records the agent under `review_model`. The live `/specify` run that triggered PR5 read three `[AD#N]` departures as kept, late in a long session; the same read now runs in a fresh Opus context.
+- The `/design` docs page and the agents page name the agent.
+
 ## [4.42.0] — 2026-10-27
 
 Take with `workflows-core` 1.61.0, whose `grilling-technique` fires the whole-artifact gate this release's `/design` sends a change or addition made while writing to — to-fix LC4, LC5, PR6 (live checks of 2026-10-26).

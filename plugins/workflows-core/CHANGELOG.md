@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.62.0] — 2026-10-27
+
+Take with `dev-workflows` 4.43.0 and `product-workflows` 3.51.0, whose `/design` and `/specify` dispatch this release's `overlap-reader` — to-fix PR5 (live checks of 2026-10-26, run 2).
+
+### Added
+- **`overlap-reader`, a read-only agent pinned to Opus, runs `/design`'s whole-design and `/specify`'s whole-specification overlap read** (PR5). Dispatched before the play-back that precedes the first review, with the draft (none where `/design` writes it after its grill), the session file's decisions, the applicable ARD files and the inherited `[AD#N]` Rules, it loads `grilling-technique` and lists each of *What a requirement overlaps*' five kinds, one entry per member, the kinds its caller names first listed first, and returns the lists, the counts the play-back's `Overlap read:` line needs and each conflict: a pair that gives one situation two outcomes, or a requirement, decision or scope line that departs from an `[AD#N]` Rule. Its Rule list reads each Rule's quantifiers — *every*, *once*, *within N seconds*, *always*, *never* — against every member touching the behaviour the Rule binds: a figure added on the same path counts toward the Rule's bound, and a sibling Rule's recovery of a step that was lost or failed is no leave to skip the step. It writes, asks and settles nothing; its callers put each conflict to the user. Run 2 of the live checks, `/specify BOOK-1-02`, fired both of PR5's triggers: the whole-specification play-back never reached the screen, and both reads printed `4 [AD#N] Rules — no conflict` beside three departures — a skipped notice and a racing-sale exclusion from [AD#4], read as kept because [AD#5]'s sweep would recover them, and a 5-second send budget past [AD#9]'s 30 seconds — which the reviewer found, the second after the cap was spent. The blind replay had shown agents in a fresh context reading the same rule correctly, so the read moves into one. `grilling-technique`'s overlap rule gains no words.
+- The agents page lists it, and the README, the docs index, the getting-started and the workflow pages count eleven agents.
+
 ## [1.61.0] — 2026-10-27
 
 Take with `dev-workflows` 4.42.0 and `product-workflows` 3.50.0, whose `/design` sends a change or addition made while writing to this release's whole-artifact gate and whose `/design` and `/specify` hold that gate for the play-back their overlap reads precede — to-fix LC4 (live checks of 2026-10-26).
