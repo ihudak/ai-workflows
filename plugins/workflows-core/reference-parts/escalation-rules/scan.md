@@ -273,6 +273,10 @@ Phase 7). `/implement` and `/upgrade` keep their own: each records a `stash_ref`
 
 `choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]`
 
+The question's own text names the repository and each dirty path, one `git -C <repo> status --short`
+line each, read by the run itself since `DIRTY_TREE` carries no paths: every choice turns on them
+(`${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap*).
+
 Used in `/document` Phase 5 when a diff-summarizer returns `DIRTY_TREE`. `/create-ard`, `/design`,
 `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without reproducing the list,
 so per the "Choice lists are presented verbatim" convention they use the list written under

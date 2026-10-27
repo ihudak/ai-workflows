@@ -611,7 +611,7 @@ Handle per-repo status after the batch returns:
 
 - `OK` / `PARTIAL` / `EMPTY` — store the output, continue.
 - `REPO_MISSING` — should not happen at this stage (Phase 4 already checked). If it does, escalate per the `Repo missing (after resolution)` rule in `workflows-core:escalation-rules`.
-- `DIRTY_TREE` — escalate per the `Dirty working tree` rule in `workflows-core:escalation-rules`, which says what each choice does:
+- `DIRTY_TREE` — escalate per the `Dirty working tree` rule in `workflows-core:escalation-rules`, which says what each choice does and that the question's own text names the repository and each dirty path:
   ```
   choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]
   ```

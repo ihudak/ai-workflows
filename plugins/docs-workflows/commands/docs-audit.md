@@ -126,7 +126,7 @@ model_routing:
      ```
      choices: ["Stash changes and retry this repo", "Skip this repo", "Cancel"]
      ```
-     Each choice does what that rule says, and the answer holds for a second scan round of the same repository.
+     Each choice does what that rule says, the question's own text naming the repository and each dirty path as it says, and the answer holds for a second scan round of the same repository.
    - **`REFRESH_BLOCKED`** — escalate per that file's *Refresh blocked*, on the same terms.
 
    A return whose `prep.read_only` is `true` and whose `prep.ref_committed_at` is more than 14 days old, or whose `prep.head_divergence.ahead` is greater than zero, additionally raises that file's *Read-only mount — ref stale or diverged*, per affected repository. A read-only mount is not a failure and never raises *Refresh blocked*: the scan proceeds at `prep.scanned_ref`, which is the ref `sources[]` records and the ref every later read of that repository is made at (`workflows-core:read-only-repos`).
