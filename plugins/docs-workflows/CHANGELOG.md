@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.27.0] — 2026-10-27
+
+Released with `workflows-core` 1.61.0, `dev-workflows` 4.42.0 and `product-workflows` 3.50.0, relying on none of them — to-fix LC8 (live checks of 2026-10-26).
+
+### Changed
+- `/document` Phase 7's `doc-fixer` brief, on both verdict paths, says that a finding whose suggested fix offers alternatives that differ in what the text means or requires (readings of a requirement, a scope line or a term), or whose fix takes a product or scope decision, is deferred as `DEFERRED — needs human decision`, naming each alternative, and never chosen: a `BLOCKER` so deferred reaches the user at the escalation, and a `MAJOR` goes to the Phase 9 report's `### Deferred items` with the alternatives. Alternatives that mean the same, such as two ways to mend one link, stay an edit it applies. In run 4 of the live checks `/epics`' `doc-fixer`, dispatched the same way, took one of two readings a `MAJOR` offered and wrote it into the Epic (LC8). The docs page says so.
+
 ## [1.26.0] — 2026-10-27
 
 Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rule this release's review step cites, whose `commit-artifacts` push rule this release's session-cost page states, and whose `epic-picker` *The cap* states the description rule these pickers follow; released with `dev-workflows` 4.41.0 and `product-workflows` 3.49.0 — to-fix LC1, LC2, PR7 (live checks of 2026-10-26).

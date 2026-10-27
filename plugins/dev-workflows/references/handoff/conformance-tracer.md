@@ -18,7 +18,9 @@ components:            # an Epic run whose epic.md names a target: only — omit
   others:              # each component of the ARD's components: that neither own nor a sibling is — [] where none is
     - id: <component id>
       paths: [<its paths>]
-requirements:
+requirements_path: <absolute path of a file holding the requirements list below, in the same YAML shape — handed in place of requirements where more than 30 requirements are routed to this repository; omitted otherwise>
+output_path: <absolute path of the file to write the output into — always handed>
+requirements:          # inline where 30 or fewer are routed to this repository; omitted where requirements_path is handed
   - key: <the folder key the requirement belongs to>
     id: <[U02]/[AC03], [AC#4], [FR#2], [AD#3] Rule, or epic.md:<the bullet's quoted text>>
     document: <specification.md | epic.md | prd.md | ard.md>
@@ -30,7 +32,11 @@ hints:
   paths: [<the target component's paths, where it has any>]
 ```
 
+**Where the requirements come from.** Exactly one of `requirements` and `requirements_path` is handed. The caller hands `requirements_path` where more than 30 requirements are routed to this repository, writing the list to that file in the shape above; read it first, whole. A `requirements_path` you cannot read, or one that does not parse as that list, is an *evidence* input under `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`'s read-failure contract: stop and return `status: BLOCKED` naming the path, and never reconstruct the list.
+
 ## Output
+
+**Write the output to `output_path`**, whole, replacing anything there, and reply with one line, `written: <output_path> — <n> sections`, followed only by any `Untrusted-content notice:` lines. Where the file cannot be written, reply with the sections themselves, after a first line `not written: <output_path> — <the error>`, so the caller still has them. The caller reads the file, never the transcript.
 
 One section per requirement, in input order, headed by the requirement's `key` and `id` as the input gives them — the `id` alone repeats on a PRD run, where the PRD-level `specification.md` and every Epic's carry their own `[U01]` and `[U01]/[AC01]`:
 
@@ -45,6 +51,8 @@ One section per requirement, in input order, headed by the requirement's `key` a
 ```
 
 **Every verdict cites evidence, `satisfied` included** — save `not-checkable`, which gives its `reason` instead, and `missing`, whose evidence is `evidence: none — searched …`, the searches that found nothing. A `satisfied` with no `file:line` is read by the caller as *unverified*.
+
+**Evidence is exact: a `file:line`, or a tight range `file:<first>-<last>`.** A range is tight where every line in it is part of the code the verdict relies on — one function body, one configuration block, one statement split over lines — and it spans at most 20 lines. A longer stretch, or code relied on in two places of one file, is cited as separate locations, each exact or tight. Never an approximate range, a range padded with surrounding lines, or a whole file: the caller re-checks each location before anyone is asked, a later run re-traces a `## Satisfied` requirement only where the code at its evidence changed, and `/dev-workflows:conformance` groups discrepancies that share an evidence location, each of which a loose range defeats.
 
 ## A requirement marked `own_part` — a sibling Epic's part is that Epic's
 

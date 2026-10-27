@@ -19,7 +19,7 @@ transition, against the rubric in `${CLAUDE_PLUGIN_ROOT}/references/workflow-sta
 `SUPPORTED` / `PARTIAL` / `NOT-SUPPORTED` with a requirement coverage roll-up and named gaps, gated on
 the Opus `readiness-reviewer`.
 
-Key distinction from every other pipeline command: `/ready` **authors nothing** in the PRD/Epic/ARD/spec/design sense — it never writes any of those, and it never writes a status. Its only authored write is an overwritten `_readiness.md` snapshot under `$SPECS_PATH`, and it branches only via the handoff's consent choice, at Phase 5 step 3, to hand that snapshot off, creating `ready/<KEY>-<slug>` — `specs-preflight` itself still creates none, switching `$SPECS_PATH` only between branches that already exist and are plugin-created (`workflows-core:specs-repo-git` §2.2). `_readiness.md` is likewise committed only through that same consent choice, never automatically — declining leaves it uncommitted; the terminal `commit-artifacts` step commits ONLY the run's bounded session-artifact paths (`workflows-core:specs-repo-git` §2.1), which `_readiness.md` is not. Where `/design`'s repo gate is a **strict, hard-stop** mount check because it is about to ground code decisions, `/ready`'s repo check is **best-effort presence only** — it never scans code, it only notes whether a needed repo is mounted.
+Key distinction from every other pipeline command: `/ready` **authors nothing** in the PRD/Epic/ARD/spec/design sense — it never writes any of those, and it never writes a status. Its only authored write is an overwritten `_readiness.md` snapshot under `$SPECS_PATH`, and it cuts a deliverable branch only via the handoff's consent choice, at Phase 5 step 3, to hand that snapshot off, creating `ready/<KEY>-<slug>` — `specs-preflight` itself still creates no deliverable branch, switching `$SPECS_PATH` only between branches that already exist and are plugin-created (`workflows-core:specs-repo-git` §2.2); in session-branch mode its flush may create `session/<identity>`, the branch §8 keeps session files on (§8.2), which holds no deliverable. `_readiness.md` is likewise committed only through that same consent choice, never automatically — declining leaves it uncommitted; the terminal `commit-artifacts` step commits ONLY the run's bounded session-artifact paths (`workflows-core:specs-repo-git` §2.1), which `_readiness.md` is not. Where `/design`'s repo gate is a **strict, hard-stop** mount check because it is about to ground code decisions, `/ready`'s repo check is **best-effort presence only** — it never scans code, it only notes whether a needed repo is mounted.
 
 Key distinction from every other consumer of the handoff gate, `require-on-main`, and of `workflows-core:ard-resolution`: every other caller's own gate stops it when a gated ARD/spec/design resolves off the specs repo's default branch (`/product-workflows:brd-reconcile` reads a stopping row without stopping at three sites — its cross-BRD write guard, a `--sent` run's redundancy check at Phase 0 step 6, which reads the gate inverted, and its ordinary Phase 0 gate on the most recent prompt while the package the review answers is undetermined, which tries each older prompt before it stops; the gate's own return contract names all three); `/ready` **never** stops. That state becomes a readiness finding — "authored but not handed off" — that caps the eventual verdict at `PARTIAL`; an artifact that is absent outright is recorded as missing in the coverage roll-up, exactly as before this feature. Reporting readiness is `/ready`'s whole function, so a run that stops instead of reporting has failed at the one thing it exists to do.
 
@@ -114,10 +114,35 @@ step skips on it.
 
 3. **Read from a clean specs-repo main — never a branch.** The specs repo's `main` (or `master`) branch
    is the handoff surface for every artifact `/ready` judges (per `/design`'s Phase 0 rule). Check
-   `git -C $SPECS_PATH branch --show-current` and `git -C $SPECS_PATH status --porcelain`:
+   `git -C "$SPECS_PATH" branch --show-current`, and test dirtiness with
+   `git -C "$SPECS_PATH" status --porcelain -z --untracked-files=all`, never the bare form: read
+   each NUL-terminated record as `workflows-core:specs-repo-git` §2.1 step 1 does — strip the two
+   status bytes and the space, and consume a rename or copy record's second field with it — and
+   classify each path with §2.1 step 2's classifier. **Two kinds of path are not dirt here**, and
+   the tree is dirty only where a path of any other kind is left:
+   - **A session file** — a path the classifier puts in ARTIFACT — wherever session-branch mode is
+     on: the preflight's `mode` call printed `mode: on` (`workflows-core:specs-repo-git` §8.1),
+     whether or not it carried `session_branch`. With an identity, the preflight ends with
+     `put-back`, which leaves the session branch's version of every session file in the working
+     tree wherever it differs from HEAD (§8.3); with none (§8.1 *No identity*, `branch` null, no
+     `session_branch` carried), the run commits nothing in the mode and its session files stay in
+     the working tree for the next run. Either way such paths show here on a clean default branch on
+     every run and come back after every switch, so a test that counted them could never pass.
+     They are bookkeeping, not documents whose handoff this step guards — including
+     `implementation.md`, whose session-branch blocks this run reads as the record, as every run in
+     the mode does. Outside the mode the preflight's flush commits them (§3.4), and one still dirty
+     counts.
+   - **This command's own `_readiness.md` at the resolved scope** — the file directly inside the
+     folder step 1 resolved, where Phase 5 step 2 writes it. A run whose handoff was declined leaves
+     it `??` or ` M` (Phase 6 step a), and it is the snapshot this run overwrites, never an input.
+
+   Then:
    - Not on `main`/`master`, or the tree is dirty → warn (a non-`main` or dirty checkout may show
-     unmerged, in-flight artifacts as if they were the handed-off truth) and ask:
+     unmerged, in-flight artifacts as if they were the handed-off truth), naming each path that made
+     it dirty, and ask:
      `choices: ["I've switched to a clean main — re-check", "Proceed anyway on the current checkout (read-only; noted in the report)", "Cancel"]`
+     *I've switched to a clean main — re-check* takes this whole test again, the two exceptions
+     included, so a checkout whose only changes are those paths passes it.
    - Clean `main`/`master` → proceed silently.
 
 4. **Map onto the specs repo (PRD dir + optional Epic subdir).** Resolve the PRD dir with
@@ -144,8 +169,10 @@ best-effort-checks repos under `$REPOS_PATH`; cwd need not be inside either.
    artifacts by resolving the same address, so there is no other folder to offer.
 
 2. **Artifact inventory (mechanical presence + handoff check — no content judgment yet).** By mode:
-   - **PRD-level** (`focus_key` null) — locate `<PRD-dir>/ard.md` (resolved via Phase 2.5, not here) and `<PRD-dir>/specification.md` (a PRD-level spec is optional per `workflow-states.md`, save on a multi-component PRD). **On a multi-component PRD** — `multi-component-test` (`Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) run on `<PRD-dir>` returns `multi_component: true` — that `specification.md` is a requirements source and not a slice (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, *Ready for Implementation*): no `design.md` is located for it, Phase 2 carries no slice row for it, and it counts instead among the PRD row's own expected artifacts. Carry `multi_component: true` to Phase 3, whose (0) and (b) read *Ready for Implementation*'s multi-component clause — **save where the PRD was built whole by the 0-Epic override** `/dev-workflows:design` and `/dev-workflows:implement` offer, which the PRD folder shows by holding a `design.md` or an `implementation.md` with at least one block: then set `multi_component: false` for the rest of this run, name the override on `_readiness.md`'s `- Derived phase:` line (`PRD=<phase> (built whole by the 0-Epic override)`) and in the terminal report's `### Derived phase` section, and carry the slice row exactly as on a single-component PRD, labelled `broad slice (multi-component override)` — every later phase, Phase 3(d) included, then reads the PRD as single-component. **Otherwise, where that `specification.md` is present, the PRD folder is a broad PRD-level slice beside its Epics** — the unit `/dev-workflows:design` designs and `/dev-workflows:implement` implements as one — so locate `<PRD-dir>/design.md` too: the slice is one more row of the per-Epic inventory, judged as an Epic's row is (Phase 2), never a check of its own. In either case, then enumerate **every** `EPIC-` folder directly under `<PRD-dir>` — a directory listing, the same Epic set Phase 2 judges, never a name matched against a key pattern — and for each locate `{ard.md, specification.md, design.md}` — this is per-Epic and plural, because a PRD's "Ready for Implementation" status requires **every in-scope Epic**, and the broad slice where one stands, to carry spec + design (`workflow-states.md`'s PRD row).
+   - **PRD-level** (`focus_key` null) — locate `<PRD-dir>/ard.md` (resolved via Phase 2.5, not here) and `<PRD-dir>/specification.md` (a PRD-level spec is optional per `workflow-states.md`, save on a multi-component PRD). **On a multi-component PRD** — `multi-component-test` (`Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) run on `<PRD-dir>` returns `multi_component: true` — that `specification.md` is a requirements source and not a slice (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, *Ready for Implementation*): no `design.md` is located for it, Phase 2 carries no slice row for it, and it counts instead among the PRD row's own expected artifacts. Carry `multi_component: true` to Phase 3, whose (0) and (b) read *Ready for Implementation*'s multi-component clause — **save where the PRD was built whole by the 0-Epic override** `/dev-workflows:design` and `/dev-workflows:implement` offer, which the PRD folder shows by holding a `design.md` or an `implementation.md` with at least one block: then set `multi_component: false` for the rest of this run, name the override on `_readiness.md`'s `- Derived phase:` line (`PRD=<phase> (built whole by the 0-Epic override)`) and in the terminal report's `### Derived phase` section, and carry the slice row exactly as on a single-component PRD, labelled `broad slice (multi-component override)` — every later phase, Phase 3(d) included, then reads the PRD as single-component. **Otherwise, where that `specification.md` is present, the PRD folder is a broad PRD-level slice beside its Epics** — the unit `/dev-workflows:design` designs and `/dev-workflows:implement` implements as one — so locate `<PRD-dir>/design.md` too: the slice is one more row of the per-Epic inventory, judged as an Epic's row is (Phase 2), never a check of its own. In either case, then enumerate **every** `EPIC-` folder directly under `<PRD-dir>` — a directory listing of the working tree and of `<default-ref>` (below), the same Epic set Phase 2 judges, never a name matched against a key pattern — and for each locate `{ard.md, specification.md, design.md}` — this is per-Epic and plural, because a PRD's "Ready for Implementation" status requires **every in-scope Epic**, and the broad slice where one stands, to carry spec + design (`workflow-states.md`'s PRD row).
    - **Epic-level** (`focus_key` set) — locate the PRD-level `<PRD-dir>/ard.md` (inherited invariants) plus the single focus Epic's `{ard.md, specification.md, design.md}` under `<PRD-dir>/EPIC-<EPIC>-<eslug>/`. For the PRD's rung, run the PRD-level bullet's `multi-component-test` on `<PRD-dir>` too, with its override rule, and carry the result the same way; on a multi-component PRD also locate `<PRD-dir>/specification.md`, which that rung expects.
+
+   **Locate in the working tree and on `<default-ref>`** — the ref `workflows-core:specs-repo-git` §3.2 resolves for the preflight, which `require-on-main` reads too — as `workflows-core:ard-resolution` collects its candidates. The Epic set is every `EPIC-` folder directly under `<PRD-dir>` in the working tree **or** in `git -C "$SPECS_PATH" ls-tree -d --name-only "<default-ref>" -- "./<PRD-dir, relative to $SPECS_PATH>/" 2>/dev/null`, placed by its prefix and keyed by the `key` its carrier asserts, read with `git -C "$SPECS_PATH" show "<default-ref>:./<folder>/epic.md"` for a folder only the ref holds; and every `specification.md` and `design.md` path this step names is located — handed to the gate below — whether or not the working tree holds it. A listing that fails — no git repository, or no `<default-ref>`, `require-on-main`'s rows H and G — adds nothing. A document, or a whole Epic folder, that reached the default branch after the branch this run stands on was cut is in no working-tree listing, so without the ref's it would be recorded missing, or its Epic left out of the PRD's readiness unseen; through the gate it meets row B′ on the run's own branch, and is recorded with B′'s ⚠ reason below. Where the PRD folder's flat `specification.md` is on `<default-ref>` and not in the working tree, the broad-slice and multi-component tests above read it as present.
 
    For each `specification.md` and `design.md` path located above (the `ard.md` files are handled by Phase 2.5's `workflows-core:ard-resolution`, not here), execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against its path relative to `$SPECS_PATH` (§3.2 there) and map its §3.7 return value by `stopped` first, never by `on_main` alone — never a stop, per this command's defining trait: `stopped: false` with `on_main: pass`/`pass_amending` → **present** (with its absolute path); `stopped: false` with `on_main: absent` → **missing**, exactly as before this feature (§3.4's `/ready` row — this is row F only, never rows D/E, which also read not-on-ref against `<default-ref>` (`workflows-core:phase-handoff` §3.2) but return `stopped: true`); `stopped: false` with `on_main: unmanaged` → fall back to a raw filesystem presence check, exactly as before this feature (row H's own silent-skip contract); `stopped: true` → still never a stop for `/ready` — map the row to exactly one of four ⚠ reasons, never conflating them, because they are four different states, not one: rows D/E → ⚠ **authored only on `<branch>`, not merged** (naming the branch and any open PR); rows B′, C′/C″, and row C where the repair it offered failed its one re-test or was declined (`Cancel`) → ⚠ **on `<default>` but your local checkout is stale or dirty, so it could not be confirmed** — B′ belongs here as the stale case: the branch this run stands on holds the copy it was cut with, or none where the document reached `<default>` only after the cut, or its own change to it made without `<default>`'s, and so misses what has merged on `<default>` since, and the finding carries B′'s own message, naming the merge that catches it up where it names one; C″ belongs here and not with G/I: it is a local divergence (an uncommitted edit, or since 3.21.0 a committed-but-unpushed one) on the default branch, which is the same *state* C′ and C describe and a different one from "no ref to verify against"; row C where it offered no repair — on a run carrying `specs_git: misrooted` (`workflows-core:phase-handoff` §3.3 row C), or on a read-only specs mount (§3.6 there) → ⚠ **on `<default>` but your checkout differs, and no repair was offered** (naming the files, and the flag or the read-only mount as the reason) — in both cases row C stops at once with no prompt and no retry. **The two row-C reasons split on whether a repair was offered**, never on how the offer ended: an accepted repair whose re-test fails and a declined one both had it put to the operator, while the flag and the mount never let it be, so every row-C stop lands in exactly one of the two, and neither is a ref problem. There are **eight** stopping rows and each must land in exactly one reason; mapping six left C″ with none, and the never-conflate rule forbids the obvious fallback; rows G/I (including the run's own `specs_git: blocked`) → ⚠ **could not be verified against any ref** (naming the returned `degraded` clause where present). Each is recorded verbatim as a readiness finding — `/ready` itself never asks a further question, retries, or stops on top of what came back: row C's own prompt-once-and-re-test-once (`workflows-core:phase-handoff` §3.3 row C and its prompt-once-then-re-test-once rule), a `Cancel` at that prompt included, or its immediate stop with no prompt where it offered no repair, and row C′'s own immediate stop naming the blocking files are `require-on-main`'s contract, already executed synchronously inside this very step; `/ready` only records whichever `stopped`/`degraded` state the call returned. Record each ARD as present (with its absolute path) or absent — its on-main state is Phase 2.5's job. Do not open/read file contents yet beyond what's needed for these checks — full reads happen in Phase 4 via the reviewer.
 
@@ -163,7 +190,7 @@ best-effort-checks repos under `$REPOS_PATH`; cwd need not be inside either.
    `$SPECS_PATH`; the artifact inventory table from step 2; and any `--claimed` value verbatim, marked
    as the operator's claim rather than as this run's finding.
 
-No branching context is shown — nothing here branches this run; the only branch `/ready` ever creates is `ready/<KEY>-<slug>`, and only later, at Phase 5's handoff, and only on its consent choice. `specs-preflight` itself still creates none, switching `$SPECS_PATH` only between branches that already exist and are plugin-created, per `workflows-core:specs-repo-git` §2.2.
+No branching context is shown — nothing here branches this run; the only deliverable branch `/ready` ever creates is `ready/<KEY>-<slug>`, and only later, at Phase 5's handoff, and only on its consent choice. `specs-preflight` itself still creates no deliverable branch, switching `$SPECS_PATH` only between branches that already exist and are plugin-created, per `workflows-core:specs-repo-git` §2.2; in session-branch mode its flush may create `session/<identity>` (§8.2), which holds session files and no deliverable, and which the checkout never stands on (§8.1).
 
 ---
 
@@ -202,9 +229,11 @@ falls to the Sonnet floor — record the degradation in `notes` and the final re
 ## Phase 2 — Read ground truth
 
 **Read the PRD folder** — `<PRD-dir>` (Phase 0 step 4), the resolved folder on a PRD-level run and
-its parent on an Epic-level one. Its `prd.md`, and every `EPIC-` folder directly under it — that
-listing is the Epic set this command judges, and each folder's `epic.md` supplies its title and its
-own `key`. **The broad PRD-level slice has neither** — it is the PRD folder, which holds no
+its parent on an Epic-level one. Its `prd.md`, and every `EPIC-` folder directly under it — the
+Epic set Phase 1 step 2 located, in the working tree and on `<default-ref>`, is the Epic set this
+command judges, and each folder's `epic.md` supplies its title and its own `key`, read at
+`<default-ref>` for a folder only the ref holds, whose row carries the ⚠ its gated documents
+returned. **The broad PRD-level slice has neither** — it is the PRD folder, which holds no
 `epic.md` and can hold none (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, Epic ladder) —
 so where Phase 2 carries a slice row, its label is the literal `broad slice` and its key is the PRD
 folder's own, taken from the folder's carrier (`workflows-core:addressing` §4) exactly as `<PRD>`
@@ -719,9 +748,9 @@ composed before this phase, **print its §6 outcome line here**, as the run's la
 
 ADDITIVE — this phase itself NEVER fails the run and touches neither `_readiness.md`'s commit nor its
 branch (whichever of those happened, happened earlier, in Phase 5 step 3, behind the §4.3 consent
-choice — `ready/<KEY>-<slug>` is the only branch `/ready` ever creates, and this terminal step neither
+choice — `ready/<KEY>-<slug>` is the only deliverable branch `/ready` ever creates, and this terminal step neither
 creates it nor undoes it; it only commits the bounded session-artifact paths in `$SPECS_PATH` onto
-whatever branch Phase 5 left checked out), and NEVER writes into
+whatever branch Phase 5 left checked out, or, in session-branch mode, onto `session/<identity>`, which its commit creates where it does not exist yet (`workflows-core:specs-repo-git` §8.2)), and NEVER writes into
 a code or docs repository, or the current working directory, where it is not the specs repository; no user name is ever written (§10 privacy).
 
 ---
@@ -730,10 +759,12 @@ a code or docs repository, or the current working directory, where it is not the
 
 - NEVER write a status anywhere — this command reports and never sets
 - NEVER write into a code or docs repository
-- Branches only via the Phase 5 step 3 `workflows-core:phase-handoff` §4.3 consent choice, creating
-  `ready/<KEY>-<slug>` — `specs-preflight` itself still creates no branch, a hard invariant: it only
+- Creates a deliverable branch only via the Phase 5 step 3 `workflows-core:phase-handoff` §4.3 consent choice, creating
+  `ready/<KEY>-<slug>` — `specs-preflight` itself still creates no deliverable branch, a hard invariant: it only
   switches `$SPECS_PATH` between branches that already exist, and only plugin-created ones, per
-  `workflows-core:specs-repo-git` §2.2
+  `workflows-core:specs-repo-git` §2.2; the one branch it may create is `session/<identity>`, in
+  session-branch mode, where its flush commits session files there (§8.2) — a branch that holds no
+  deliverable and that the checkout never stands on (§8.1)
 - NEVER auto-commit `_readiness.md` — the commit is offered at that same §4.3 choice, never automatic;
   declining leaves `_readiness.md` uncommitted (still true — `_readiness.md` is the deliverable, an
   OTHER path the terminal `commit-artifacts` step never stages, §2.1)
@@ -753,7 +784,7 @@ a code or docs repository, or the current working directory, where it is not the
 - the `emit-cost` phase (Phase 8) **ALWAYS runs** — unlike feedback, it never "writes nothing" — except under `run_flags.skip_costs`, where Phase 8 still runs but executes `skip-cost` in place of `emit-cost`, advancing the checkpoint and writing no cost entry
 - ALWAYS resolve one positional address (Phase 0) and stop when none is given
 - ALWAYS require `$SPECS_PATH` — stop naming it explicitly if unset (like `/design`)
-- ALWAYS read artifacts from the specs repo's clean **main** — never a branch
+- ALWAYS read artifacts from the specs repo's clean **main** — never a branch; clean as Phase 0 step 3 tests it, where a session file in session-branch mode and this command's own `_readiness.md` are not dirt
 - ALWAYS pass the Phase 3(0) derived phase to `readiness-reviewer` with the artifacts that placed it there, plus any `--claimed` value verbatim — never inferred,
   never re-derived, and never as a `declared_status` field, which has no producer anywhere in this command
 - ALWAYS resolve the `model_routing` block at Phase 1.5 and pin the detection steps to the §2.1 Sonnet chain;

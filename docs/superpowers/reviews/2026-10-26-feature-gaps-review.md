@@ -433,21 +433,21 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `epics-no-offer-to-apply-open-findings` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B23 — MINOR — Gap: `/design` does not prompt for framework auto-configuration defaults
+### FBB-B23 — MINOR — Gap: `/design` does not prompt for framework auto-configuration defaults — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/design.md` Phase 4 (the scanner brief) and Phase 5 (the gap scan). A grep for `open-in-view|auto-configuration|framework default` in `design.md`, `design-format.md` and `design-reviewer.md` returns nothing.
 - **What is wrong:** Decisions resting on transaction and connection scope were false under Spring's default `open-in-view=true`. Only the Opus review caught it, at the cost of a fix cycle.
 - **Suggested fix:** Where the stack auto-configures, list the defaults that bear on the decisions, each marked kept or overridden.
 - **Source:** feedback `design-framework-defaults-unprompted` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B25 — NIT — Gap: `design-format`'s rollback-ratio rule ignores who else feeds the denominator and the mixed-client window
+### FBB-B25 — NIT — Gap: `design-format`'s rollback-ratio rule ignores who else feeds the denominator and the mixed-client window — **Fixed in dev-workflows 4.43.0 (batch B05)**
 - **Where:** `plugins/dev-workflows/references/design-format.md:169-187` (Post-release checks, Rollback signal).
 - **What is wrong:** Both design-reviewer passes raised a MAJOR in this class.
 - **Suggested fix:** Require each ratio to name its numerator and denominator callers, and the window in which old and new clients coexist.
 - **Source:** feedback `design-observability-ratio-contamination` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B26 — MINOR — Gap: `/conformance` does not group discrepancies that share a cause
+### FBB-B26 — MINOR — Gap: `/conformance` does not group discrepancies that share a cause — **Fixed in dev-workflows 4.43.0 / workflows-core 1.61.1 (batch B05)**
 - **Where:** `plugins/dev-workflows/commands/conformance.md:262` ("put one `AskUserQuestion` to the person per item"); `references/conformance-format.md` §3 (no `shared-cause` field).
 - **What is wrong:** One root cause restated in six places becomes six walk questions and six `fix-code` follow-ups for a one-line fix.
 - **Suggested fix:** Cluster discrepancies by evidence `file:line`, ask once per cluster (still splittable), and keep one entry per requirement plus one follow-up per cluster.

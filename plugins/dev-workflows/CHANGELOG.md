@@ -5,13 +5,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.43.0] — 2026-10-27
+## [4.44.0] — 2026-10-27
 
 Take with `workflows-core` 1.62.0, whose `overlap-reader` this release's `/design` dispatches — to-fix PR5 (live checks of 2026-10-26, run 2).
 
 ### Changed
 - **`/design`'s whole-design overlap read is `workflows-core:overlap-reader`'s, on Opus, in place of an inline read** (PR5). Phase 5 dispatches it before the play-back that closes the grill — once the last question is answered and, where the run writes section by section, its last section is written — with `design.md` as written (none where the run writes it after the grill), `_design-session.md`, the specification — whose stories, criteria, test cases and scope lines it reads as what a decision must keep, since they live only there and a write-once run's session file holds none of them — Phase 2.5's `ard_paths` and invariants, and its place on a path as the kind it reads first. The orchestrator builds the play-back's `Overlap read:` line from the agent's counts, in the same format, and puts each conflict it returns to the user one question at a time before the gate, a departure from an inherited `[AD#N]` Rule only as an ARD deviation; a departure the agent returns as already recorded by a record of that departure, in the design or as a session decision — never by one of another departure from the same Rule — is named as settled by that record rather than asked again; on an `ERROR` or a failed dispatch it runs the read inline, and the play-back says so. Each play-back, its `Overlap read:` line among it, is the gate question's own text, never only narration before the question or only `_design-session.md`: run 2's whole-specification play-back never reached the screen, its line going only to `_session.md`. Where a write-once run's writing changed or added to anything a gate confirmed, a second dispatch, over `design.md` as written and naming each change and addition, precedes the whole-artifact gate that plays them back — on such a run the one overlap read that sees the written design before the review, which was the session's own, late in it. An operational step is still read inline against everything its selector reaches, since the agent reads no repository. `model_routing` records the agent under `review_model`. The live `/specify` run that triggered PR5 read three `[AD#N]` departures as kept, late in a long session; the same read now runs in a fresh Opus context.
 - The `/design` docs page and the agents page name the agent.
+
+## [4.43.0] — 2026-10-27
+
+Fix batch B05 of the 2026-10-26 review: `/ready`, `/design` and `/conformance`. Take with `workflows-core` 1.61.1, whose `escalation-rules` lists `/conformance`'s new cluster form.
+
+### Fixed
+- **`/ready`'s dirty-checkout question no longer fires on every run in session-branch mode, and its re-check can pass** (DEV-B1, reproduced: in a throwaway repository with `workflows.sessionBranch=true`, a cost file committed to `session/<id>` came back as `?? …/dev-workflows/` after `lift` and `put-back` on a clean `main`, every time). Phase 0 step 3 reads `status --porcelain -z --untracked-files=all` and classifies each path by `specs-repo-git` §2.1: a session file, wherever session-branch mode is on — with or without a resolved identity — and the command's own `_readiness.md` at the resolved scope are not dirt. The question names the paths that made the tree dirty.
+- **`/ready` no longer says `specs-preflight` "creates no branch, a hard invariant"** (DEV-B2): its three sites say it creates no deliverable branch, and that in session-branch mode its flush may create `session/<identity>` (`specs-repo-git` §8.2); the two "only branch `/ready` ever creates" sentences say *deliverable* branch, and the terminal step's says where its session commit lands in that mode.
+- **`/design`'s *Next Epic* loop re-enters Phase 0 step 5, Phase 1 step 2 and Phase 1.5** (DEV-B3): each Epic the loop takes is offered *Resume* or *Start fresh* where it has a design session of its own, and is classified and model-gated afresh, so a `HIGH-RISK` Epic after a `MODERATE` one meets the HARD gate. In the style of `/specify`'s fix of PRD2-SPEC-B1 (product-workflows 3.37.0).
+- **`DESIGN_NO_SPEC`'s message no longer prints an author's note** (DEV-B5), and the `/design` docs page quotes the message the command prints (DEV-B4). The `/ready` and `/conformance` pages name `READY_FOCUS_NOT_FOUND` and `CONFORMANCE_ARD_NOT_ON_MAIN`.
+- **`/ready`, `/design` and `/conformance` find a document or an Epic that merged after their branch was cut** (to-fix D3): each lists the PRD folder, and `/ready` and `/design` its flat specification, on `<default-ref>` as well as in the working tree, as `ard-resolution` does for the ARD, so such a document reaches `require-on-main` and meets row B′ instead of reading as missing or leaving an Epic out unseen. The same class in other commands is to-fix D24.
+- **`/design`'s interface fan-out brief carries what each take must keep** (FBB-B24): `problem_frame` quotes the specification's `[Uxx]`/`[ACxx]`/`[TCxx]` lines the interface serves, lists the public surface that must survive with its callers, and names the grill-settled values the interface depends on; each take is checked against every item before the comparison, and one that breaks an item is never recommended as it stands.
+- **The `conformance-tracer` handoff takes files on a large run** (FBB-B28): `requirements_path` in place of the inline list above 30 requirements per repository, and an `output_path` the tracer always writes and the command reads, never the transcript. Evidence is an exact `file:line` or a tight range — every line part of the code relied on, at most 20 lines.
+
+### Added
+- **`/design` lists framework defaults** (FBB-B23): where the stack auto-configures behaviour a decision rests on — Spring's `open-in-view` is the example — `design.md`'s `### Framework defaults` lists each, kept or overridden, with where it was read; the scanner brief asks for them and `design-reviewer` flags one missing.
+- **A ratio names who feeds it** (FBB-B25): `design-format`'s rollback signal, and any check or baseline that is a ratio, names the callers in its numerator and its denominator, every other caller feeding the same counter, and the window in which old and new clients coexist; `design-reviewer` checks it.
+- **`/conformance` asks once per shared cause** (FBB-B26): discrepancies whose evidence shares one location — the same `file:line` at one commit, or overlapping ranges in one file — are asked as one cluster naming that location, each item in one cluster at most and never a chain of overlaps, which can be split into a question per item or ended by a typed `Cancel`; a `Cancel` in a call leaves its other answers undecided, and a PRD run settles the Epic carrying a cluster's fix once, queuing one follow-up per Epic where they differ; the record keeps one entry per requirement, each with a new `shared-cause:` field, and a cluster decided *Fix the code* queues one follow-up.
+- **`/conformance` states its walk's cadence** (FBB-B27): up to four questions in one call, as Phase 1 does; the rationale rides on the answer's notes or free text, with one follow-up prompt only for an *Accept*, or a PRD run's overrule of a Dev decision, given without one.
+- **`_conformance.md` lists its `not-checkable` requirements** (FBB-B29): an optional `## Not checkable` section with the tracer's `reason`, which a later PRD run reads to trace each in full; a record written before 4.43.0 has only the count, which the same rule covers.
 
 ## [4.42.0] — 2026-10-27
 
@@ -454,7 +474,6 @@ Needs `workflows-core` 1.39.2, whose `followup-emission` §8 takes a unit folder
 
 ### Changed
 - **The model-routing reference names Claude Haiku 5.5 as the newest Haiku** — `claude-haiku-5-5`, so `haiku5.5` is the version-specific Haiku form a family-only harness accepts (`workflows-core` 1.34.0).
-
 
 ## [4.22.0] — 2026-10-07
 
