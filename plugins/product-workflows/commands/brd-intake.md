@@ -194,8 +194,12 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    the defect log holds, id and resolution unchanged (Phase 4) — and every child's `claims:`
    re-allocated. Then ask:
    ```
-   choices: ["Re-run over this folder — keeping and changing exactly what is listed above", "Cancel — leave this BRD as it stands"]
+   choices: ["Re-run over this folder — keeping and changing exactly what is listed", "Cancel — leave this BRD as it stands"]
    ```
+   *Re-run over this folder* carries a `description` naming what the re-run keeps and what it may
+   change, in the two lists' words and each changed file by path, and what it discards — each
+   terminal disposition with the `[BR#n]`s that carry it — so all of it is named in the dialog
+   whether or not the lists were printed (`workflows-core:epic-picker` *The cap*).
    **Neither option carries a `(Recommended)` marker, and the omission is deliberate** per the
    `When no option is safe to recommend` guidance in
    `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, as Phase 8's zero-row list
@@ -275,7 +279,10 @@ files reaches from the document, and leaves everything else `excluded` (`linked-
 every outside file, and **an inside file reachable only through an outside file — directly, or
 through other files that are themselves reachable only that way — which this answer drops** — it
 is neither copied nor logged. Name each such file by path beside the question, because the
-operator is otherwise never told. Phase 2 then logs each link a copied file makes to an excluded
+operator is otherwise never told. *Capture all* carries a `description` naming every outside file
+by path, and *Only the document's own folder* one naming every file it drops — the outside files and
+each such inside file — so each is named in the dialog whether or not the list was printed
+(`workflows-core:epic-picker` *The cap*). Phase 2 then logs each link a copied file makes to an excluded
 file, with its one reason — `absolute path` where the target as written begins with `/`,
 `outside the source directory` otherwise; by `linked-sources.md` §7 those are exactly a copied
 file's links to files outside the directory. A link sitting inside an excluded file is not logged,
@@ -289,7 +296,8 @@ and no later command of the route opens it — so an obligation stated inside it
 folder unseen and stays there, and converting it first is the one check that catches that.
 **Taking the recommendation therefore costs this run**: it ends having written nothing, and the
 operator who means to capture today answers *Proceed*, whose substance is recorded. Say both where
-the question is put, not only here.
+the question is put, not only here, and name every such file by path in the question's own text,
+since both options turn on them.
 
 ```
 choices: ["Stop and convert them first — this run ends here, having written nothing (Recommended)", "Proceed — none of them carries an obligation (recorded)", "Use a different key or path (you'll be prompted)"]

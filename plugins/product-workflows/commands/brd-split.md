@@ -555,7 +555,7 @@ Confirm before anything is created:
 choices: ["Accept these slices as proposed (Recommended)", "Edit one or more slices — rename, merge, move a row (you'll be prompted)", "Replace with a different slice list entirely (you'll be prompted)", "Make this whole BRD one slice"]
 ```
 
-*Edit one or more slices* asks in plain text for the edits, and *Replace with a different slice list entirely* for the new list; either shows the proposal again and asks this question again.
+*Accept these slices as proposed* and *Edit one or more slices* each carry a `description` naming every proposed slice — its key or proposed name, and its rows' `[BR#n]`s — in the order presented, so the proposal is named in the dialog whether or not it was printed (`workflows-core:epic-picker` *The cap*). *Edit one or more slices* asks in plain text for the edits, and *Replace with a different slice list entirely* for the new list; either shows the proposal again and asks this question again.
 
 **Zero confirmed slices is not an outcome this phase can reach on an ordinary run.** A BRD is a container, never
 something implementable in its own right, so **this command always produces at least one slice** —
@@ -822,6 +822,8 @@ choices: ["Write covered-here on all <N> rows now (Recommended — every row thi
 choices: ["Re-point all <N> rows to <B-KEY> now — each was deferred by the slice that holds it", "Re-point all but some rows — those are walked one at a time (you'll be prompted for them)", "Walk every candidate one at a time — decide each row"]
 ```
 
+In each of the three, the first two options carry a `description` naming every row of the set by its `[BR#n]`, in the order the prose lists them, so the rows are named in the dialog whether or not the list was printed (`workflows-core:epic-picker` *The cap*); a row typed for the second is resolved against those, never parsed out of the answer.
+
 **Why one list carries a marker and the other two do not** — the same rule all three times, applied to what
 each picker already says. The `allocate-only` picker recommends `covered-here` on every row it
 shows, unconditionally and for a reason no instruction changes, so recommending it once here is that
@@ -899,8 +901,8 @@ than stylistic.** Which resolution is right is a fact about the row in front of 
 that clusters into a slice takes `covered-by`, one this BRD still owes takes `deferred-to`, one the
 customer has withdrawn takes `rejected` — and the list is shown once per row, so no marker could be
 true across the runs that reach it. `workflows-core:escalation-rules` covers
-exactly this under *When no option is safe to recommend*: omit the marker and say so in prose beside
-the list. **A conditional marker is not the alternative.** `(Recommended when nothing clusters)`
+exactly this under *When no option is safe to recommend*: omit the marker and say so beside
+the list, in the question's own text. **A conditional marker is not the alternative.** `(Recommended when nothing clusters)`
 reads as guidance and is malformed by that file's *The `(Recommended)` marker is unconditional*
 rule — it hands the operator the gate this phase was supposed to evaluate, and an orchestrator that
 must present the list verbatim cannot honour it either way. The condition belongs in the option's own
@@ -1458,6 +1460,8 @@ this run's pull request. Grounding a child is possible only once that pull reque
 choices: ["Ground now — the children that gained a row, run here one after another (Recommended) <merge-clause>", "Ground each child later, one run per child — /product-workflows:prd-ground <CHILD-KEY><later-recommended> <merge-clause>", "Stop here — this BRD's own allocation is complete", "Split another BRD"]
 ```
 
+*Ground now* carries a `description` naming each child in that set by its key, so the children it grounds are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*).
+
 **_Ground now_ is the operator electing to ground the children here, in this session, rather than
 retyping a command whose arguments this run already knows.** It runs
 `/product-workflows:prd-ground` on the children chosen below — one complete run each, after this
@@ -1483,7 +1487,9 @@ On *Ground now*, record the commit Phase 6's handoff pushed — `git -C "$SPECS_
    ```
    choices: ["All <N> children (Recommended)", "Choose which (you'll be prompted)", "Stop here — ground later by hand"]
    ```
-   *Choose which* asks again with one option per child and `multiSelect: true` where there are at
+   *All <N> children* and *Choose which* each carry a `description` naming every child by its key, in
+   the order named, so the children are named in the dialog whether or not the list was printed
+   (`workflows-core:epic-picker` *The cap*). *Choose which* asks again with one option per child and `multiSelect: true` where there are at
    most four, and above four lists them and takes their keys in plain text — `AskUserQuestion`
    renders at most four options (`workflows-core:escalation-rules` §0) and pre-ticks none, which is
    why *All* is an answer of its own. A key naming no child of the set is asked about again.

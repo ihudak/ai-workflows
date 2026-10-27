@@ -341,7 +341,9 @@ predicted `DEGRADED`. The line is a prediction from the profile alone; Step 1 an
 Ledger (final) record what the run found. No question is asked twice either way, since Step 1 keeps
 the decision this prompt records.
 
-Then ask:
+Then ask, the question's own text carrying the consequence — each missing tool and each affected
+gate with the outcome it is predicted to record — since *Continue anyway* records exactly those
+(`workflows-core:epic-picker` *The cap*):
 
 ```
 choices: ["Cancel — re-run in the docs container (Recommended)", "Continue anyway — record the degraded gates"]

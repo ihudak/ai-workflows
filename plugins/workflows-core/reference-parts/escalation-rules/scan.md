@@ -138,7 +138,8 @@ than printing the condition for the user to evaluate. What stays forbidden is th
 deciding a marker belongs somewhere the command did not put a placeholder.
 
 When no option is safe to recommend across the runs that reach a prompt, omit the marker and say so
-in prose beside the list (as `/document` Phase 5.6 does for its per-occurrence image review).
+beside the list, in the question's own text, where the dialog shows it — never only in prose printed
+before the prompt (`/document` Phase 5.6 omits it so for its per-occurrence image review).
 
 This rule binds every command in the family — this plugin's own and those of every plugin that depends on it — not only the ones `escalation-rules` documents.
 
@@ -277,6 +278,10 @@ Phase 7). `/implement` and `/upgrade` keep their own: each records a `stash_ref`
 ## Dirty working tree
 
 `choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]`
+
+The question's own text names the repository and each dirty path, one `git -C <repo> status --short`
+line each, read by the run itself since `DIRTY_TREE` carries no paths: every choice turns on them
+(`${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap*).
 
 Used in `/document` Phase 5 when a diff-summarizer returns `DIRTY_TREE`. `/create-ard`, `/design`,
 `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without reproducing the list,

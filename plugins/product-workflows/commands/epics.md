@@ -535,7 +535,7 @@ Detected N near-empty Epic drafts under <KEY>:
   ...
 choices: ["Refine these N (partition the PRD across them) (Recommended)", "Generate net-new Epics (ignore the drafts)", "Both — refine the drafts and draft net-new for leftover scope", "Let me adjust which drafts to refine (you'll be prompted)"]
 ```
-*Let me adjust which drafts to refine* asks in plain text which drafts to take, each resolved against the drafts listed above. Record `mode` (`refine` | `generate` | `both`) and the confirmed `refinement_targets` (empty for `generate`).
+*Refine these N*, *Both* and *Let me adjust which drafts to refine* each carry a `description` naming every detected draft — its key and scope hint, in the order listed — so the drafts are named in the dialog whether or not the list was printed (`workflows-core:epic-picker` *The cap*). *Let me adjust which drafts to refine* asks in plain text which drafts to take, each resolved against the detected drafts, never parsed out of the answer. Record `mode` (`refine` | `generate` | `both`) and the confirmed `refinement_targets` (empty for `generate`).
 
 **Adaptive code-scan default (refine / both only).** Re-surface the code-examination choice now that the target count is known — the Phase 1 answer was given before detection. Default **ON when `len(refinement_targets) >= 2`** (a real scope boundary to draw), **OFF when == 1**:
 ```
@@ -572,6 +572,7 @@ If code scan is ON:
    ```
    choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll be prompted for the slug and the path)", "Cancel"]
    ```
+   *Use the preferred clones* carries a `description` naming each such slug with the clone it takes, and *Use another clone for a repository* one naming each such slug with its alternates, so they are named in the dialog whether or not they were printed (`workflows-core:epic-picker` *The cap*); a typed slug is resolved against those, never parsed out of the answer.
    *Use another* asks in plain text for `<slug> <path>`, one per change. A path that is not one of that slug's `alternates` is refused with one line naming them, and the question asked again. Each path named becomes the slug's resolved path, the clone it replaces taking its place among the `alternates`. *Cancel* → stop and summarise what was planned. No slug with `alternates` → nothing is asked.
 
 3. If the final resolved repo list is empty (every repo was skipped or missing), escalate per the `No repos derivable — /epics` rule in `workflows-core:escalation-rules`:
@@ -610,7 +611,7 @@ Handle per-repo status after the batch returns:
 
 - `OK` / `PARTIAL` / `EMPTY` — store the output, continue.
 - `REPO_MISSING` — should not happen at this stage (Phase 4 already checked). If it does, escalate per the `Repo missing (after resolution)` rule in `workflows-core:escalation-rules`.
-- `DIRTY_TREE` — escalate per the `Dirty working tree` rule in `workflows-core:escalation-rules`, which says what each choice does:
+- `DIRTY_TREE` — escalate per the `Dirty working tree` rule in `workflows-core:escalation-rules`, which says what each choice does and that the question's own text names the repository and each dirty path:
   ```
   choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]
   ```
@@ -633,6 +634,7 @@ Skip where Phase 2.5 supplied a known set.
    "This PRD touches <N> components. Each Epic will target exactly one of them."
    choices: ["Confirm these components (Recommended)", "Adjust the list (you'll be prompted)", "Cancel"]
    ```
+   *Confirm these components* and *Adjust the list* each carry a `description` naming every proposed component by its id, in the order shown, so the set is named in the dialog whether or not it was printed (`workflows-core:epic-picker` *The cap*).
    **Adjust** → take free text to keep, drop or add components, re-show the list, and ask again; grouping two modules into one component, or correcting a component's `kind` — a gitops repository §2 proposed as `code`, say — is recorded only in an ARD's `components:` (§5), so it is `/create-ard`'s to make, and the Phase 2.7 stop it then meets recommends exactly that. The confirmed list is the run's known set (§3, source `epics-run`). **Cancel** → stop.
 4. **None proposed** (no evidence path falls in any component) → no known set; Phase 9 says why.
 5. Where the confirmed set is multi-component (§3), run Phase 2.7 now, exactly as written there; with no ARD, its `ard_contract` row is `missing`.

@@ -138,7 +138,13 @@ never by silently deleting a route:
    applies to what survives it.
 3. **Say, in one line, that the prose list is longer than the prompt** and that anything on it is
    reachable through the harness's free-text option. A demoted route the operator cannot find is the
-   same defect as a deleted one.
+   same defect as a deleted one. **Put that line where the dialog shows it, naming every route the
+   array leaves out** — each with the command that runs it, in the prose's order, after
+   `Not shown as an option:` — because a run can skip the prose it prints before a prompt, and a
+   line in the prose would then point at nothing. It goes in the question's own text; where an
+   array carries an option naming the rest, it goes in that option's `description` instead, the
+   rule `${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap* states for a picker built
+   from a listing. No option's label sends the operator to the prose list.
 
 An offer whose options fit in four does none of this: the prose stays the universal minimum and the
 array carries every option.
@@ -150,8 +156,13 @@ array carries every option.
 - `/product-workflows:specify <PRD>` (PRD-level spec) → `/product-workflows:epics <PRD>`, or Dev → `/dev-workflows:design <PRD>` to design
   the spec whole rather than through Epics — on a multi-component PRD only as `/dev-workflows:design`'s override where the
   PRD folder holds no Epic folder, and, where it holds Epics, as designing those Epics — only where an
-  Epic's `specification.md` is on the default branch, since `/dev-workflows:design` stops with
-  `DESIGN_NO_SPEC` without one.
+  Epic's `specification.md` is on the default branch, since `/dev-workflows:design` stops without
+  one: on the PRD's address, its Phase 0 step 4 stops with the excluded-count report, naming
+  `/product-workflows:specify <PRD>` for an Epic with no `specification.md` and the merge of the
+  branch or pull request for one whose spec is not yet merged; on an Epic's own address, step 3's
+  gate stops with `DESIGN_NO_SPEC` where no ref carries the Epic's `specification.md` (none written,
+  or written and never committed), and with `require-on-main`'s stop naming the branch or pull
+  request where a plugin branch carries it.
 - `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
