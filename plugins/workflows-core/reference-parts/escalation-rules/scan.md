@@ -210,13 +210,25 @@ capabilities, and skipping it leaves that repository's claims ungrounded rather 
 
 Used in `/idea` Phase 2.6 when the proposed theme → repo mapping is empty (no
 theme matches any mounted repo), in `/specify` Phase 3 step 1 when its candidate list is empty,
-and in `/epics` Phase 4 when the final resolved repo list is empty (every repo was skipped or
+and, in the form below, in `/epics` Phase 4 when the final resolved repo list is empty (every repo was skipped or
 missing — "Use case B with no repos derivable"). The `— /epics` suffix on this heading is
 historical — `/epics` was its first citer — not a scope restriction; the rule serves every
 command whose repo set comes up empty this way, `/idea`, `/specify` and `/epics` among them, and any future
 citer with the same empty-repo-set shape uses it too. *List repos to scan manually* is followed by one plain-text question for the
 repositories' names, each resolved as the citing command resolves a derived one. *Cancel* ends
-the run, on this list and on the `/prd-ground` form below.
+the run, on this list and on the `/epics` and `/prd-ground` forms below.
+
+In `/epics` Phase 4 step 3 the first entry asks no plain-text question but puts a picker:
+`choices: ["Choose repos to scan", "Proceed without code scan", "Cancel"]`
+
+*Choose repos to scan* is followed by `/epics` Phase 1's repository picker — the session's own
+repository first, recommended, where one stands, then the clones under `$REPOS_PATH`, capped as
+`workflows-core:epic-picker` *The cap* says of a picker built from a listing, beside *Turn code
+scan off*, which is this list's *Proceed without code scan* — and each name it takes, the
+harness's free-text option taking any other, is resolved as a derived one. In a live `/epics` run
+the plain-text question was easy to overlook from inside the very repository the run should have
+scanned. The label carries no `(you'll be prompted)`, since what follows it is a picker, not the
+plain-text question §0's marker promises.
 
 In `/prd-ground` Phase 1 step 4 the *Proceed without code scan* entry is omitted:
 `choices: ["List repos to check manually (you'll be prompted)", "Cancel"]`
