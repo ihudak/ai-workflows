@@ -10,11 +10,6 @@ Install all three together.
 
 - **B16-5 — `/brd-package`'s next step on the repository route** (BRD3-B24). Setup: a BRD slice packaged on the repository route. Expect the offered reconcile line to read `/product-workflows:brd-reconcile <BRD-KEY>` with `@<review-file>` only as the alternative for a review sent back as a file — never a required path. The slice must be one whose interview has settled. Neither BOOK-2 slice on the e2e specs copy qualifies: BOOK-2-01's reconciliation of 2026-10-12 deferred four answers to another round, and BOOK-2-02 was never interviewed. So this item rides with the next live run of the BRD route, as its user decided on 2026-10-27, rather than costing an interview round of its own.
 
-## `dev-workflows` 4.33.0 — the fixes from the review of piece review (#85)
-
-- **433-2 — `/implement`'s split round verifies before it collapses** (F1). Setup: run C's — `/implement BOOK-3-01` on a design drawing two pieces at the parser contract, from the code start state of `docs/superpowers/verification/2026-10-25-implement-piece-review.md` §3. Expect two piece reviews and the overall review. In the run-state `triage` entries and the Phase 5 report, every finding of every review is verified on its own; a finding the overall review repeats at a piece review's location with the same claim is collapsed only where both got the same disposition, its triage line naming both reviews; where the two differ, each keeps its own. Compare cost with run C's $84.51: this change should move it little.
-- **433-3 — `pieces.py` output stays valid UTF-8** (F4). Setup: in a scratch clone, a file whose name holds a byte that is not UTF-8, changed on a run whose design draws no pieces. Expect one review and no `## Pieces unusable` line.
-
 ## `security-workflows` 0.4.0 — the paths sub-project A's end-to-end run never took
 
 Sub-project A's Task 12 never merged the Epic's pull request (`docs/superpowers/verification/2026-10-15-security-workflows-scan.md`), so these ran at script level only. Setup for each: the e2e copies, with a register seeded as for run 6 of `docs/superpowers/verification/2026-10-26-live-checks.md`, but from a real change scan, so that a `fixing` finding has a patch and a follow-up line.

@@ -142,3 +142,28 @@ B16-5 needs a BRD slice whose interview has settled, for `/brd-package` to packa
 **Also seen:**
 - The maintenance agent's lessons report said the false positive "may attach to the wrong finding" after the renumbering. The run corrected it in its report, rightly, since records name findings by origin. The run's own feedback entry records the `plan`/`rebuild` disagreement, which is LC10.
 - The planted record and the seed are synthetic scans written by `register.py` from the 2026-10-17 route-7 product templates. The final cleanup removes the specs copy's `security/` register with the rest.
+
+## Run 7 — `/dev-workflows:implement BOOK-3-01`, run C again (433-2)
+
+**Setup.** `~/e2e-live/one-writer/run-epic.sh D` reset both copies to run C's start, code `6942a24` and the specs tree of `24a1cbc`, committed as `6553763`. Arm D, added for this run, is run C's arm on the installed plugins. Run C's start is described in `docs/superpowers/verification/2026-10-25-implement-piece-review.md` §3: the test Epic's hand-written `## Pieces` draws two pieces, `csv-catalogue` and `import-runs`, which meet at the parser contract. One Opus session, `8a709149`, ran from the code copy. Its plugins had auto-updated just before: dev-workflows 4.39.2, workflows-core 1.59.0. The driver approved the plan, applied the open findings at both offers, took the re-review, and kept the commit local. The run took 3h16m and cost $74.59 by its own cost entry, against run C's $80.93 by the same measure: 8% less. It wrote `08b356e` on `feat/BOOK-3-01-csv-catalogue-import-books-service`, not pushed: 35 files, +4,581 lines. All 202 tests pass (Gradle 145, Karma 57, 136 of them new), and all 85 of the specification's test cases are implemented. Its specs commit is `588febe`. Afterwards the demo check printed `same` on all 18 lines.
+
+| Item | Expected | Seen | Result |
+|---|---|---|---|
+| The split | two piece reviews, then the overall review, in both rounds | `csv-catalogue` and `import-runs` in parallel, then the overall review; again in the re-review round | pass |
+| 433-2, each finding verified on its own | every finding of every review verified before any two are matched | one `triage` entry per review, per round. First round: csv 4 of 4 survived, import-runs 9 of 9, overall 2 of 2. Re-review: csv 3 of 4 (1 dismissed), import-runs 9 of 9 (1 carried), overall 4 of 4 | pass |
+| 433-2, the collapse | a finding repeated at a piece review's location with the same claim is collapsed only where both dispositions agree | not reached: the overall review raised no piece review's finding in either round ("The piece reviews' findings stand and are not repeated here") | not reached |
+| The cost | close to run C's | $74.59 against $80.93, entry against entry | pass |
+| LC6, the offer after the re-review | its list printed | all 12 findings listed with their severities above *Apply the 12 open findings listed above (1 MAJOR, 2 MINOR, 9 NIT)* | printed |
+
+**433-2: the half that runs every time passes; the collapse cannot be provoked.** `/dev-workflows:implement` Phase 3B step 7 verifies every finding of every review "before any two are matched". The run's report gives each review its own triage line, its own counts, and every survivor with its severity. The collapse rule acts only where a later review of the round raises a finding at a location, and with a claim, that an earlier review's finding holds. `code-review`'s overall scope tells that review to raise no finding a piece's review raised. The two piece reviews cover disjoint files, and in this run their two U+0000 findings sat at different locations. So the collapse happens only when the overall reviewer slips, and no setup can make it slip. That branch stays checked by reading alone, and 433-2 is deleted.
+
+**Also seen:** the run wrote three feedback entries. One is a bare `cd` that moved the working directory against Phase 1.4's rule; run 4's `/epics` hit a `cd` the same way. Another is the cost of copying six long review returns verbatim before triage. The third notes that two of the three MAJOR findings were test and input gaps that only the Opus review caught.
+
+## 433-3 — `pieces.py` output stays valid UTF-8 (no full run)
+
+In a scratch repository, a change added `src/a/caf\xe9.txt`, a name holding the byte `0xE9`, which is not valid UTF-8 on its own, beside an ordinary file. The path list was built with `/implement`'s Phase 3B step 5 recipe (`git diff --no-renames --name-only -z`) and handed to the installed `pieces.py assign` (dev-workflows 4.39.2).
+
+- **A design drawing no pieces, the item's case:** exit 0; output valid UTF-8 (150 bytes); `status: none`, `split: false`, the name listed as `src/a/caf\\xe9.txt`. So the run makes one review and prints no `## Pieces unusable` line. **Pass.**
+- **A design drawing two pieces, one of which matches that file:** exit 0; output valid UTF-8; `status: malformed` with the defect `the path src/a/caf\xe9.txt is not UTF-8`, and `split: false`. Phase 3B step 5 then makes one review and prints `design.md's ## Pieces unusable — the path src/a/caf\xe9.txt is not UTF-8 — reviewed as one piece`. That is the designed fallback, and its text is valid UTF-8 too.
+
+`pieces.py --selftest` passes 77 checks. 433-3 is deleted.
