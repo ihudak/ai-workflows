@@ -277,7 +277,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
      its *Resolve the round* phase's own test of what changed after the last round was generated — that
      phase's to state, and cited, never restated here — and where the test finds nothing it takes
      the no-new-round path, reaches its handoff phase with nothing staged, reports `nothing to
-     commit` and opens no pull request, while where it finds something the round it opens is handed
+     commit` and opens no pull request — save where the handoff re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch, and a re-publish pushes only commits already made, never the files on disk — while where it finds something the round it opens is handed
      off with its own record and not the earlier ones. Either way `handoff-to-main` stages only the
      paths *that* run declared, and the round records already
      on disk are not among them. What is needed is the register already written, landed:

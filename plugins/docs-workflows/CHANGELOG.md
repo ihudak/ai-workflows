@@ -9,8 +9,15 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rule this step cites — to-fix LC3, LC6, PR7 (live checks of 2026-10-26); this plugin takes PR7.
 
+Take with `workflows-core` 1.60.0, whose `commit-artifacts` push rule this release's session-cost page states; released with `dev-workflows` 4.41.0 and `product-workflows` 3.49.0 (to-fix LC2, live checks of 2026-10-26).
+
 ### Changed
 - `/document` Phase 7: *Provide manual fix notes* gets the BLOCKER's notes as `escalation-rules`' *Manual fix notes — the run drafts them* says (a draft the run offers, or, for a `NEEDS HUMAN` BLOCKER whose fix needs a decision, a plain-text request naming the decision), then applies them through `doc-fixer`, as before. It asked for the notes in plain text, with nothing saying the run waited for them.
+
+### Fixed
+- `/document` Phase 8.5 and `finish-and-handoff` §3: the push is offered only where the squash's commit was made. Where git refused it, the run reports git's error or the hook's output and offers nothing: after the `reset --soft`, the branch stands at the squash base with the run's changes staged, so a push would publish it without them (to-fix LC2, live checks of 2026-10-26).
+- `/document` Phase 8.6 counts a refused squash commit among the ways Phase 8.5 can end: the run makes no commit in its place, so an accepted `CLAUDE.md` or knowledge-base edit rides only a commit you make, and only where you stage it; its *Cancel* names the same case, and the command's docs page offers the push only where git accepts the squash commit (to-fix LC2).
+- The session-cost reference page says `commit-artifacts` does not push a branch the plugin created that `origin` does not have yet (to-fix LC2).
 
 ## [1.25.0] — 2026-10-26
 

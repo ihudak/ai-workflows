@@ -9,9 +9,15 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules these steps cite — to-fix LC3, LC6, PR7 (live checks of 2026-10-26).
 
+Take with `workflows-core` 1.60.0, whose `phase-handoff` §2.5 gives the reason this release's `code-handoff` §2.5 cites (to-fix LC2, live checks of 2026-10-26).
+
 ### Changed
 - `/design` Phase 6: a `BLOCK` whose review also leaves open a `MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit first asks whether to fold them into the fix cycle, per `escalation-rules`' *A BLOCK review's other findings — folded into its fix cycle* (LC3), and the manual fix notes of its escalation are drafted by the run, one BLOCKER at a time, or asked for in plain text where the BLOCKER's fix needs a decision, per *Manual fix notes — the run drafts them* (PR7). Its docs page describes the first.
 - `/implement` Phase 3B step 7: the offer to apply what a review leaves open lists the findings in the question's own text, one line per finding with its severity, where it is and what the edit would change, never pointing at a list printed elsewhere (LC6).
+
+### Fixed
+- `code-handoff` §2.5: the push runs only where the branch carries a commit this run made, as a command of its own run once the commit's exit status has been read. A call whose commit did not land, on a branch carrying no other commit of this run, ends on *Commit rejected* and pushes nothing — under a consent answer `/vuln` reuses from an earlier CVE too, which would otherwise push that CVE's branch with none of its fix on it (to-fix LC2, live checks of 2026-10-26).
+- The session-cost and session-feedback reference pages say `commit-artifacts` does not push a branch the plugin created that `origin` does not have yet, which `workflows-core` 1.60.0's `specs-repo-git` §4 step 5 states (to-fix LC2).
 
 ## [4.40.0] — 2026-10-27
 

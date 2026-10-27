@@ -2127,7 +2127,7 @@ The no-new-round path in *Resolve the round* — every round closed and nothing 
 phase with nothing staged where the register was already on file, it removed no torn write,
 *Resolve inputs and gate the grounded BRD* completed no re-disposition and `code-defect-log.md`
 carries no change an earlier run left uncommitted, so it reports the `nothing
-to commit` line rather than opening a pull request; otherwise it hands off what it wrote —
+to commit` line rather than opening a pull request (save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch); otherwise it hands off what it wrote —
 `decisions.md` where it wrote the register's header line, any file its torn-write removal changed,
 and `code-defect-log.md` where step 9 completed a re-disposition in it or an earlier run left one
 uncommitted. **The nothing-askable first run is not
@@ -2314,7 +2314,7 @@ until whoever owns the next round runs it.
 `<merge-clause>` in these lists is the placeholder that `workflows-core:next-phase-offer`'s *resolution table*, loaded at the top of this phase, resolves from
 this run's own `Phase handoff:` outcome line; it is never written as an unconditional "once the pull
 request above is merged", because the no-new-round path reaches the handoff with nothing to commit
-wherever the register was already on file, and then opens no pull request. **The lists that name
+wherever the register was already on file, and then opens no pull request, save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch. **The lists that name
 `/product-workflows:prd-ground <BRD-KEY>` — `rounds-unsettled`'s, and `nothing-to-review`'s prose and its not-PRD-eligible array — carry no clause on that option, and that asymmetry is deliberate:** that command gates on `coverage-ledger.md`
 (`commands/prd-ground.md` Phase 0 step 6), which this run never writes, so no handoff of this run's
 can hold it up and there is no wait to state. **The `defects-unasked` re-open, and the reopened-record list's round, carry none

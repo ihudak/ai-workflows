@@ -9,9 +9,17 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules these steps cite — to-fix LC3, LC6, PR7 (live checks of 2026-10-26).
 
+Take with `workflows-core` 1.60.0, whose `phase-handoff` §4.1 *Nothing to commit* line says where the deliverable is, which this release's `/brd-split` reads (to-fix LC2, live checks of 2026-10-26).
+
 ### Changed
 - `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/prd-proposal` and `/brd-proposal`: a `BLOCK` whose review also leaves open a `MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit (a surviving one in the two proposal commands, which triage; in `/create-prd`, `/update-prd` and `/create-ard`, also one that needs a decision) first asks whether to fold them into the fix cycle, per `escalation-rules`' *A BLOCK review's other findings — folded into its fix cycle* (LC3), listing each, a decision-needing one marked so; on *Fold*, `/create-prd`, `/update-prd` and `/create-ard` put each decision to the user in that cycle, and the other three leave it open. Each docs page says so.
 - `/create-prd`, `/update-prd`, `/create-ard`, `/specify` and `/epics`: the manual fix notes of a `BLOCK` escalation are drafted by the run, one BLOCKER at a time, or asked for in plain text where the BLOCKER's fix needs a decision, per *Manual fix notes — the run drafts them* (PR7). `/epics` took free text from the user; it now applies the draft or the user's own notes through `doc-fixer`, as before. The `/create-prd`, `/create-ard` and `/specify` docs pages say so.
+
+### Fixed
+- `/brd-split` Phase 7 offers *Ground now* on *Nothing to commit* only where its line says the deliverable is already on the default branch, and the continuation's merge gate goes straight on only then; where the deliverable sits on a branch, unmerged — a reused, stacked or local-only branch — or the default branch changed it after that branch was cut, *Ground now* is dropped and the run says what must merge first. It read every *Nothing to commit* as nothing waiting on a merge (to-fix LC2).
+- `/brd-split`, `/brd-interview`, `/brd-package` and `/prd-ground`, with `/brd-split`'s docs page: each sentence saying a handoff that stages nothing reports *Nothing to commit* and opens no pull request now names the exception, a reused branch `workflows-core` 1.60.0's `phase-handoff` §2.3 re-publishes; `/brd-split` also drops *Ground now* where a local default branch is behind (to-fix LC2).
+- `/idea`: *What a run without a handoff therefore leaves behind* names a fourth route, a taken handoff whose commit git refused, which leaves the set staged on the handoff branch — `phase-handoff` §4.1's *Commit failed* — and Phase 5 offers the `@<path>` route on that line too, as on a decline or *Gate failed* (to-fix LC2).
+- The session-cost and session-feedback reference pages say `commit-artifacts` does not push a branch the plugin created that `origin` does not have yet (to-fix LC2).
 
 ## [3.48.0] — 2026-10-27
 

@@ -132,6 +132,8 @@ There is deliberately no `Cancel`: the commit has already happened, so there is 
 
 ### 2.5 Push
 
+**Only where the branch carries a commit this run made** — §2.3's, or an earlier call's (§2.2, §2.12) — and as a command of its own, run once the commit's exit status has been read: never chained after the commit in one command line, and never after a construct that swallows its failure (`rc=$?`, `|| true`, `;`), for the reason `workflows-core:phase-handoff` §2.5 gives. Where this call's commit did not land (§2.2, §2.3) and the branch carries no other commit of this run, the call ends on §3.1's *Commit rejected* row and nothing is pushed — under a §2.4 answer reused from an earlier call too, which would otherwise push a branch holding none of this call's work.
+
 `git -C "<repo>" push -u origin <branch>`. Never force. Where git cannot write the repository's `.git/config` — a container that mounts it read-only — `-u` cannot record the upstream: git exits 0, prints `could not write config file` or `could not lock config file` (and may still announce that the branch is "set up to track"), and records no upstream. That is not a failed push and needs no investigation: the exit status and the `-> <branch>` line are the outcome §3.1 reports, and nothing in this reference reads the upstream.
 
 - **No `origin` remote** → nothing to push; the call ends and §3.1's `no origin remote` row is the line (§2.1 already established this is not a failure).

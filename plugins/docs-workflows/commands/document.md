@@ -1233,6 +1233,8 @@ Fold the run into clean history before handoff, every git call as `git -C <docs_
 
 ### Step 2 — Offer push
 
+Only where Step 1's commit was made: where git refused it, report git's error or the hook's output and offer nothing, since after the `reset --soft` the branch stands at the squash base with the run's changes staged, and a push would publish it without them (`${CLAUDE_PLUGIN_ROOT}/references/finish-and-handoff.md` §3).
+
 ```
 choices: ["Push <branch> to origin now", "Skip — I'll push later", "Cancel"]
 ```
@@ -1254,7 +1256,7 @@ Carry the squash result, push outcome, and PR-draft path into the Phase 9 report
 
 ## Phase 8.6 — Maintenance proposals
 
-Runs **after** Phase 8.5 — never before. The ordering is the whole safety property, and it holds whether or not Phase 8.5 ran: once this phase starts, **the run will create no further commit in the docs write target** — either Phase 8.5 sealed the docs commit, or the docs write target takes no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval, per the Phase 6.3 branch/commit table — which governs the docs write target only, never `$SPECS_PATH`). Either way an accepted `CLAUDE.md` (or knowledge-base) edit has no commit left to ride. What still commits after this point is the terminal `commit-artifacts` step, which stages ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1) — it can never pick up a `CLAUDE.md` or knowledge-base edit, so the safety property holds unchanged.
+Runs **after** Phase 8.5 — never before. The ordering is the whole safety property, and it holds whether or not Phase 8.5 ran: once this phase starts, **the run will create no further commit in the docs write target** — either Phase 8.5 sealed the docs commit, or git refused Phase 8.5's squash commit and the run makes none in its place (Step 2), leaving its changes staged for you to commit, or the docs write target takes no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval, per the Phase 6.3 branch/commit table — which governs the docs write target only, never `$SPECS_PATH`). In each case an accepted `CLAUDE.md` (or knowledge-base) edit has no commit of the run's left to ride; after a refused squash commit, the commit you make of the staged changes carries the edit only where you stage it too. What still commits after this point is the terminal `commit-artifacts` step, which stages ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1) — it can never pick up a `CLAUDE.md` or knowledge-base edit, so the safety property holds unchanged.
 
 Skip this phase with no prompt when both Phase 8 Agent 2 and Agent 3 returned `'no update required'`.
 
@@ -1271,7 +1273,7 @@ choices: ["Skip — report only (Recommended)", "Apply all", "Choose per proposa
 - **Skip — report only** — apply nothing; every proposal's disposition is `proposed` for the Phase 9 report.
 - **Apply all** — apply every proposal via the mechanism below; every proposal's disposition is `applied-uncommitted`.
 - **Choose per proposal** — ask accept/decline for each proposal; apply the accepted ones (`applied-uncommitted`), leave the rest `declined`.
-- **Cancel** — apply nothing; every proposal's disposition is `proposed`. Unlike every other "Cancel" in this command, **Cancel here does not abort the run**: by the time this phase runs there is nothing upstream left to unwind — Phase 8.5's squash (and any push / PR draft) is already done, or the docs write target took no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval) (still true — what still commits after this point is the terminal `commit-artifacts` step, bounded to `$SPECS_PATH`'s artifact paths per `workflows-core:specs-repo-git` §2.1, and therefore never able to carry a proposal from this phase). Cancel only declines this phase's proposals; the run proceeds to Phase 9 and the Final Report is produced exactly as it would be after Skip.
+- **Cancel** — apply nothing; every proposal's disposition is `proposed`. Unlike every other "Cancel" in this command, **Cancel here does not abort the run**: by the time this phase runs there is nothing upstream left to unwind — Phase 8.5's squash (and any push / PR draft) is already done, or git refused its squash commit and the run made none in its place, or the docs write target took no commit on this run (`obsidian` / `plain_dir`, or no branch chosen at plan approval) (still true — what still commits after this point is the terminal `commit-artifacts` step, bounded to `$SPECS_PATH`'s artifact paths per `workflows-core:specs-repo-git` §2.1, and therefore never able to carry a proposal from this phase). Cancel only declines this phase's proposals; the run proceeds to Phase 9 and the Final Report is produced exactly as it would be after Skip.
 
 **Apply mechanism.** For each accepted proposal, re-dispatch the agent that produced it — Agent 2 or Agent 3, same general-purpose agent and model as Phase 8, no new agent type — in apply mode, carrying its own proposal back verbatim:
 
