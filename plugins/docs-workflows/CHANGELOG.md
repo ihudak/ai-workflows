@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rule this step cites — to-fix LC3, LC6, PR7 (live checks of 2026-10-26); this plugin takes PR7.
 
 ### Changed
-- `/document` Phase 7: *Provide manual fix notes* drafts the notes and asks, per `escalation-rules`' *Manual fix notes — the run drafts them*, then applies the draft or the user's own notes through `doc-fixer`, as before. It asked for the notes in plain text, with nothing saying the run waited for them.
+- `/document` Phase 7: *Provide manual fix notes* gets the BLOCKER's notes as `escalation-rules`' *Manual fix notes — the run drafts them* says (a draft the run offers, or, for a `NEEDS HUMAN` BLOCKER whose fix needs a decision, a plain-text request naming the decision), then applies them through `doc-fixer`, as before. It asked for the notes in plain text, with nothing saying the run waited for them.
 
 ## [1.25.0] — 2026-10-26
 

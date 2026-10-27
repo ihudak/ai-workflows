@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules these steps cite — to-fix LC3, LC6, PR7 (live checks of 2026-10-26).
 
 ### Changed
-- `/design` Phase 6: a `BLOCK` whose review also leaves open a `MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit first asks whether to fold them into the fix cycle, per `escalation-rules`' *A BLOCK review's other findings — folded into its fix cycle* (LC3), and the manual fix notes of its escalation are drafted by the run and asked about, per *Manual fix notes — the run drafts them* (PR7). Its docs page describes the first.
+- `/design` Phase 6: a `BLOCK` whose review also leaves open a `MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit first asks whether to fold them into the fix cycle, per `escalation-rules`' *A BLOCK review's other findings — folded into its fix cycle* (LC3), and the manual fix notes of its escalation are drafted by the run, one BLOCKER at a time, or asked for in plain text where the BLOCKER's fix needs a decision, per *Manual fix notes — the run drafts them* (PR7). Its docs page describes the first.
 - `/implement` Phase 3B step 7: the offer to apply what a review leaves open lists the findings in the question's own text, one line per finding with its severity, where it is and what the edit would change, never pointing at a list printed elsewhere (LC6).
 
 ## [4.40.0] — 2026-10-27

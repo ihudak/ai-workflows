@@ -73,13 +73,18 @@ unfollowable.
    instead — see *Closed-vocabulary pickers must normalise the free-text answer*.
 2. **A fifth option must go somewhere else, not away.** Where an offer has more routes than four,
    `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s *overflow rule* applies: the prose carries
-   every route, the array carries the likeliest, and the run says the list is longer than the prompt.
+   every route, the array carries the likeliest, and the run says the list is longer than the prompt
+   in the question's own text, after `Not shown as an option:`, naming every option the array leaves
+   out; it never says so only in text printed before the question.
 
 **A selection carries no text.** Choosing an option returns its label and nothing else. An option
 that needs text from the operator — a name, a path, a key, a reason, a correction — is labelled
 `… (you'll be prompted)` or `… (you'll be prompted for <what>)`, whatever the rest of its wording,
-and choosing it is followed at once by one plain-text question asking for that text; the run never
-reads the bare selection as a refusal or as a promise the operator broke. Its label never words the
+and choosing it is followed at once by one plain-text question asking for that text (one exception:
+where *Manual fix notes — the run drafts them* has the run draft the notes, the prompt *Provide
+manual fix notes (you'll be prompted)* promises is that section's picker of the draft, whose *Write
+my own notes* asks the plain-text question); the run never reads the bare selection as a refusal
+or as a promise the operator broke. Its label never words the
 text as a promise or an instruction the selection itself would have to carry out (`— name it`,
 `I'll say which`, `give the reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
 the text is taken as given, and nothing is asked again. A question whose whole answer is text with
@@ -414,26 +419,31 @@ question, in a wording of its own, when a first review returned `BLOCK` with `MA
 
 **So, where a command that fixes inline — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`,
 `/design`, `/prd-proposal` and `/brd-proposal` — has a review return `BLOCK` and go to its fix cycle,
-and that review also leaves open at least one `MAJOR`, `MINOR` or `NIT` finding whose fix is only an
-edit, ask once, before the fix cycle starts:**
+ask once, before the fix cycle starts, where that `BLOCK` review also leaves open at least one
+`MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit, or, in `/create-prd`, `/update-prd` and
+`/create-ard`, which settle decisions as they apply, at least one whose fix needs a decision the run
+does not have:**
 
-`choices: ["Fold them into this fix cycle (Recommended)", "Fix the BLOCKERs only — the re-review's offer carries the rest"]`
+`choices: ["Fold them into this fix cycle (Recommended)", "Fix the BLOCKERs only — the rest wait for the re-review"]`
+
+Where the command triages, a finding counts only as a survivor of its triage: one the triage
+marked unverified never counts, and is never listed or folded in.
 
 The question's own text lists the findings as *Findings a review leaves open — the offer to apply
 them* says its own question does: one line per finding, with its severity, where it is and what the
-edit would change. Where the command triages, the question follows the triage and lists survivors
-only; a finding the triage marked unverified is never listed or folded in.
+edit would change. A finding whose fix needs a decision the run does not have is listed too, marked
+as needing one, with the decision it needs in place of the edit.
 
-- **Fold them into this fix cycle** — each is applied in the same fix cycle as the BLOCKER fixes,
-  read against what it overlaps (*An inline fix is read against what it overlaps*), so the one
-  re-review covers them. A finding whose fix needs a decision the run does not have is no edit, and
-  goes as *Findings a review leaves open — the offer to apply them* says: a command that settles
-  such decisions as it applies (`/create-prd`, `/update-prd`, `/create-ard`) puts it to the user one
-  question at a time in this fix cycle, as the grill asks, and every other leaves it open.
-- **Fix the BLOCKERs only** — the findings stay open, and the re-review's offer carries them, as
-  *Findings a review leaves open — the offer to apply them* says of every finding of the first
-  review still open; a re-review that returns `BLOCK`, or stays blocked where the command triages,
-  makes no offer, and they stay in the final report and the pull request.
+- **Fold them into this fix cycle** — each finding whose fix is only an edit is applied in the same
+  fix cycle as the BLOCKER fixes, read against what it overlaps (*An inline fix is read against what
+  it overlaps*), so the one re-review covers it. A finding whose fix needs a decision is no edit:
+  `/create-prd`, `/update-prd` and `/create-ard` put each to the user one question at a time in this
+  fix cycle, as the grill asks, and apply the answer with the fixes; every other command leaves it
+  open, as *Findings a review leaves open — the offer to apply them* says of such a finding.
+- **Fix the BLOCKERs only** — the findings stay open and wait for the re-review: its offer carries
+  them, as *Findings a review leaves open — the offer to apply them* says of every finding of the
+  first review still open, and a re-review that returns `BLOCK`, or stays blocked where the command
+  triages, makes no offer, so they stay in the final report and the pull request.
 
 A free-text answer naming some of the findings folds those in, and leaves the rest open.
 
@@ -450,7 +460,7 @@ in `/document`.
 `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
 Used by the commands that fix their own reviewer's findings inline, with no delegated writer — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` — when the one re-review returns `BLOCK`, whether it followed a `BLOCK`'s fix cycle or was the unspent re-review offered after a verdict that was not (*Edits after a verdict that is not BLOCK — the unspent re-review*); for `/prd-proposal` and `/brd-proposal`, which triage their re-review, when the review stayed blocked (`workflows-core:finding-triage` § On re-review). The other five do not triage their re-review, so their re-review's `BLOCK` verdict itself is what takes this rule.
-Escalate per unresolved BLOCKER individually. "Manual fix notes" → draft the notes and ask, per *Manual fix notes — the run drafts them*, then apply them inline in one bounded pass, with no further re-review, reading them first per `An inline fix is read against what it overlaps`. "Defer" → record the finding as deferred in the run's final report; `/specify` also appends it to a `## Refinement notes` section of `specification.md`, as one plain `- ` bullet per finding. Never a `- [ ]` item there: `pre-lint` counts every `- [ ]` in the file against the header's `Open questions` count, while `specification-format.md` counts only those under its Open questions sub-headings, so a checkbox in the notes would put the two at odds. "Override" → ask for the user's rationale in plain text and record the finding, with it, in the run's final report. "Cancel" aborts the run.
+Escalate per unresolved BLOCKER individually. "Manual fix notes" → get the BLOCKER's notes as *Manual fix notes — the run drafts them* says, then apply them inline in one bounded pass, with no further re-review, reading them first per `An inline fix is read against what it overlaps`. "Defer" → record the finding as deferred in the run's final report; `/specify` also appends it to a `## Refinement notes` section of `specification.md`, as one plain `- ` bullet per finding. Never a `- [ ]` item there: `pre-lint` counts every `- [ ]` in the file against the header's `Open questions` count, while `specification-format.md` counts only those under its Open questions sub-headings, so a checkbox in the notes would put the two at odds. "Override" → ask for the user's rationale in plain text and record the finding, with it, in the run's final report. "Cancel" aborts the run.
 
 ### Manual fix notes — the run drafts them
 
@@ -458,31 +468,41 @@ Escalate per unresolved BLOCKER individually. "Manual fix notes" → draft the n
 *Provide manual fix notes* — `/design` and `/specify` — the follow-up was a plain-text request that
 never said the run was waiting, and each user typed "done?" minutes later.
 
-**So the option drafts before it asks.** For each BLOCKER it was chosen for, the run drafts notes of
-its own from the finding's suggested fix and the artifact, and asks:
+**So the option drafts before it asks, one BLOCKER at a time.** The escalation asks about each
+unresolved BLOCKER on its own, so the drafted-notes question is asked straight after a BLOCKER's
+*Provide manual fix notes* answer and carries that BLOCKER's draft alone: notes the run drafts from the
+finding's suggested fix and the artifact, in the question's own text, never in text printed before
+it, for the reason *Findings a review leaves open — the offer to apply them* gives for its list:
 
 `choices: ["Apply these notes (Recommended)", "Write my own notes (you'll be prompted)"]`
 
-The question's own text carries the drafted notes, under the BLOCKER each answers — never notes
-printed elsewhere, for the reason *Findings a review leaves open — the offer to apply them* gives
-for its list.
+This picker is the prompt *Provide manual fix notes (you'll be prompted)* promises, the one exception
+§0's *A selection carries no text* names; *Write my own notes* asks that rule's plain-text question.
 
-- **Apply these notes** — the draft is taken as the notes.
+- **Apply these notes** — the draft is that BLOCKER's notes.
 - **Write my own notes** — the run asks for them in plain text, and the prompt's first line says
   that the run waits for the notes and does nothing until they arrive.
 
-A free-text answer to the dialog is taken as the user's own notes. Everything after is unchanged:
-the notes are applied in one bounded pass, with no further re-review — read first per *An inline fix
-is read against what it overlaps* in a command that fixes inline, and applied through `doc-fixer` in
-`/epics` and `/document`, as their commands say.
+A free-text answer to the picker is that BLOCKER's notes.
+
+**A BLOCKER whose fix needs a decision the run does not have gets no draft** (as a BLOCKER
+`doc-fixer` deferred with `Stop condition flag: NEEDS HUMAN` in `/document` or `/epics` does), since a
+draft would take that decision for the user. The run drafts nothing and asks in plain text, as §0
+asks: the prompt's first line says that the run waits for the notes and does nothing until they
+arrive, and the prompt then names the decision the notes must settle and the options the finding
+names, recommending none.
+
+Everything after is unchanged: the notes are applied in one bounded pass, with no further
+re-review — read first per *An inline fix is read against what it overlaps* in a command that fixes
+inline, and applied through `doc-fixer` in `/epics` and `/document`, as their commands say.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /document
 
 `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
 Used in `/document` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`workflows-core:finding-triage` § On re-review).
-Escalate per unresolved BLOCKER individually. "Manual fix notes" drafts the notes and asks, per
-*Manual fix notes — the run drafts them*. "Override" asks for the rationale in plain text, which
+Escalate per unresolved BLOCKER individually. "Manual fix notes" gets the BLOCKER's notes as
+*Manual fix notes — the run drafts them* says. "Override" asks for the rationale in plain text, which
 `/document` records with the finding in `### Deferred items`.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /epics
@@ -490,8 +510,8 @@ Escalate per unresolved BLOCKER individually. "Manual fix notes" drafts the note
 `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
 Used in `/epics` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`workflows-core:finding-triage` § On re-review).
-Escalate per unresolved BLOCKER individually. "Manual fix notes" drafts the notes and asks, per
-*Manual fix notes — the run drafts them*. "Override" asks for the rationale in plain text, which
+Escalate per unresolved BLOCKER individually. "Manual fix notes" gets the BLOCKER's notes as
+*Manual fix notes — the run drafts them* says. "Override" asks for the rationale in plain text, which
 the Phase 9 report records with the finding. "Defer" means the finding goes
 into an Epic-refinement note in the draft itself (appended as a
 `## Refinement notes` section, one plain `- ` bullet per finding) in addition to the Phase 9 report;

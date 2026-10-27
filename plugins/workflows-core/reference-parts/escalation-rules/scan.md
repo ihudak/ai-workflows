@@ -73,13 +73,18 @@ unfollowable.
    instead — see *Closed-vocabulary pickers must normalise the free-text answer*.
 2. **A fifth option must go somewhere else, not away.** Where an offer has more routes than four,
    `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s *overflow rule* applies: the prose carries
-   every route, the array carries the likeliest, and the run says the list is longer than the prompt.
+   every route, the array carries the likeliest, and the run says the list is longer than the prompt
+   in the question's own text, after `Not shown as an option:`, naming every option the array leaves
+   out; it never says so only in text printed before the question.
 
 **A selection carries no text.** Choosing an option returns its label and nothing else. An option
 that needs text from the operator — a name, a path, a key, a reason, a correction — is labelled
 `… (you'll be prompted)` or `… (you'll be prompted for <what>)`, whatever the rest of its wording,
-and choosing it is followed at once by one plain-text question asking for that text; the run never
-reads the bare selection as a refusal or as a promise the operator broke. Its label never words the
+and choosing it is followed at once by one plain-text question asking for that text (one exception:
+where *Manual fix notes — the run drafts them* has the run draft the notes, the prompt *Provide
+manual fix notes (you'll be prompted)* promises is that section's picker of the draft, whose *Write
+my own notes* asks the plain-text question); the run never reads the bare selection as a refusal
+or as a promise the operator broke. Its label never words the
 text as a promise or an instruction the selection itself would have to carry out (`— name it`,
 `I'll say which`, `give the reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
 the text is taken as given, and nothing is asked again. A question whose whole answer is text with
