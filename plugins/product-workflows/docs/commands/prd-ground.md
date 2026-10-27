@@ -64,7 +64,7 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
 ## Synopsis
 
 ```
-/prd-ground <KEY> [--repos <name>[,<name>…]] [--from-split <BRD-KEY>] [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
+/prd-ground <KEY> [--repos <name>[,<name>…]] [--repos-path <dir>[:<dir>…]] [--from-split <BRD-KEY>] [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<KEY>`** (mandatory) — the folder to ground, on either route. `resolve-address` searches every
@@ -78,6 +78,9 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   them; without it the run lists the clones under `$REPOS_PATH` as candidates and asks — all but
   the specs repository and the documentation root, which are no code, though either may still be
   named.
+- **`--repos-path <dir>[:<dir>…]`** (optional) — the `$REPOS_PATH` this run uses in place of the
+  environment's. [`/brd-split`](brd-split.md)'s *Ground now* passes it where you answered its
+  `REPOS_PATH` question, so a child run does not ask again.
 - **`--from-split <BRD-KEY>`** (set by [`/brd-split`](brd-split.md)'s *Ground now*) — the root that
   run split. This command runs only when you type it, or from that continuation: a run the model
   starts on its own, without this flag, stops with `PRD_GROUND_TYPED_ONLY`. Wherever the flag is
@@ -162,8 +165,8 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
 - **`<KEY>`** — mandatory; absent or malformed stops the run with `PRD_GROUND_NEEDS_KEY`.
 - **Not a root, and not an Epic folder.** `PRD_GROUND_ROOT_LEVEL` and `PRD_GROUND_EPIC_LEVEL`, per
   "Which route" above.
-- **`$REPOS_PATH`** — required, on either route; resolved as one directory or a colon-separated
-  list. No resolvable entry stops the run naming `REPOS_PATH`.
+- **`$REPOS_PATH`** — required, on either route, unless `--repos-path` names it; resolved as one
+  directory or a colon-separated list. No resolvable entry stops the run naming `REPOS_PATH`.
 - **`$DOCS_PATH`** (optional, default `/workspace/docs`) — documentation grounding, resolved once
   in Phase 1 alongside the repo prompt and consumed **lead-only** in Phase 4.5. Missing,
   unreadable, or carrying no markdown file is a silent, non-blocking skip. Turned off with
@@ -451,7 +454,14 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   two this run resolved at the same `HEAD`, or one whose `HEAD` is a pin `grounding/baselines.md`
   records for another, stop the run before any grounding. A finding records a commit and never a repository, so this is what lets every
   later phase read a finding's repository off its commit. Two clones of one project at one commit
-  are the usual cause, and the stop names both and the re-run that separates them. The one case it
+  are the usual cause, and the stop names both and the re-run that separates them — or, where the
+  file records the other under a name no clone you have carries, asks you to check out another
+  commit, since naming it would resolve nothing. A clone with no readable `origin` is named by its
+  directory's basename, so before that check, where the file records no entry under that basename
+  but records a name no clone carries at this clone's commit, an ancestor of it or a descendant of it — a renamed
+  directory, or an entry written before 3.33.3 — the run asks whether it is the same repository,
+  and on *Same repository* records it under the earlier name, so one repository is never recorded
+  under two. The one case it
   does not cover is the earlier pin of a repository a `--rebaseline` pass re-pins, where
   `grounding/baselines.md` already records a second repository at that pin from a run before this
   check existed: that pass retires every finding at the pin, whichever repository ground it, and

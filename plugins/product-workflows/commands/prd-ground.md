@@ -18,7 +18,7 @@ finding is independently re-derived by a different agent before it counts as evi
 (`workflows-core:grounding-format` §8) — this command's whole job is to make
 that discipline happen, not to ground anything itself.
 
-Usage: `/prd-ground <KEY> [--repos <name>[,<name>…]] [--from-split <BRD-KEY>] [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+Usage: `/prd-ground <KEY> [--repos <name>[,<name>…]] [--repos-path <dir>[:<dir>…]] [--from-split <BRD-KEY>] [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 `<BRD-KEY>` still resolves through `resolve-address`, which searches every level
 `workflows-core:addressing` §3 bounds — three below `specifications/` — and so returns a BRD that owns
@@ -58,7 +58,7 @@ behaviour, not the behaviour.
 
    **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
-   Parse the first token that is neither a flag nor a flag's value — `--depends-on`, `--docs`, `--repos` and `--from-split` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
+   Parse the first token that is neither a flag nor a flag's value — `--depends-on`, `--docs`, `--repos`, `--repos-path` and `--from-split` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
    (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. On `needs-tree` (`$SPECS_PATH` unset), take step 3's `$SPECS_PATH` stop now — answered with a path, read the token again from the top of this step. If absent or invalid, stop:
    `PRD_GROUND_NEEDS_KEY: /prd-ground needs a key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:prd-ground <KEY>'.`
 2. **Flags.** `--depends-on <BRD-KEY>` — repeatable, each consuming the next token; read each with `read-key`, carry the key each reads and never the token typed, and drop (warn, do not stop the run) any that fail shape — a `needs-tree` value is read again once step 3 has settled `$SPECS_PATH`, and dropped with a warning if it still fails. **Refused outright on
@@ -76,7 +76,14 @@ behaviour, not the behaviour.
    to the next flag, so the key typed after it is never taken for a repository; **an entry beginning
    `/` is an absolute path to a clone**, taken as step 3's *Specify a different absolute path for
    this repo* answer is, and named by its remote slug, or by its directory's basename where its
-   `origin` does not read.
+   `origin` does not read — save the one exception Phase 1 step 3 names.
+   `--repos-path <dir>[:<dir>…]` — consumes the next token: the `$REPOS_PATH` this run uses, one
+   directory or a colon-separated list, in place of the environment's, one token with no
+   whitespace; step 7 takes it, resolving each entry with `realpath` — so a relative entry is read
+   against this run's working directory, and one that does not resolve counts as no existing
+   directory.
+   `/product-workflows:brd-split`'s *Ground now* passes it where its operator answered the
+   `REPOS_PATH` question, so a child run does not ask again; an operator may type it too.
    `--from-split <BRD-KEY>` — consumes the next token, read with `read-key`: the root
    `/product-workflows:brd-split`'s *Ground now* ran this command from (step 0). It changes nothing
    else in the run; step 9 checks it.
@@ -525,8 +532,10 @@ behaviour, not the behaviour.
       `/product-workflows:create-prd`** — re-running it would author a second PRD over the one
       already written rather than land it:
       `PRD_GROUND_PRD_NOT_HANDED_OFF: <KEY>'s prd.md is written at <path> but is on no branch — its handoff was declined, so nothing is missing but the commit. Commit and merge it to the specs repo's default branch, then re-run '/product-workflows:prd-ground <KEY>'. Do not re-run /product-workflows:create-prd, which would rewrite the PRD rather than land the one on disk.`
-7. **Require `$REPOS_PATH`.** Resolve `${REPOS_PATH:-/workspace}` (`docs/reference/environment.md`)
-   as one directory or a colon-separated list. If no entry resolves to an existing directory,
+7. **Require `$REPOS_PATH`.** Resolve `--repos-path`'s value where step 2 read one, else
+   `${REPOS_PATH:-/workspace}` (`docs/reference/environment.md`), as one directory or a
+   colon-separated list, resolving each entry with `realpath`; a `--repos-path` value is carried as `$REPOS_PATH` for the rest of the run,
+   as an answer to the question below is. If no entry resolves to an existing directory,
    stop naming `REPOS_PATH`, per the `Required path environment variable unset` rule in
    `workflows-core:escalation-rules` — grounding has nothing to check a claim
    against without at least one mounted repository:
@@ -675,7 +684,11 @@ the manual path:
    layout confirms a list rather than recalling names. **Leave two of them off the list, and say so
    beside it**: the specs repository (`git -C "$SPECS_PATH" rev-parse --show-toplevel`) and the
    documentation root (`--docs <path>`, else `${DOCS_PATH:-/workspace/docs}`, under `--no-docs`
-   too). Both sit under the default `$REPOS_PATH` in the recommended layout, and neither is code:
+   too). Match each by `realpath`, never by the path as written: a clone is left off where its
+   directory's `realpath` is the `realpath` of the directory `git -C "$SPECS_PATH" rev-parse
+   --show-toplevel` prints, or of the documentation root — so a symlinked mount, a trailing `/` or
+   a `..` in either variable does not put it back on the list. Where `realpath` fails on either —
+   no work tree, or a documentation root that does not exist — that one excludes nothing. Both sit under the default `$REPOS_PATH` in the recommended layout, and neither is code:
    the specs tree holds the requirements' own text, which would confirm each claim by itself, and a document is never
    evidence for a `[CG#n]` (this file's standing rule, above Phase 0). Either is still a name the
    operator may type, here or in `--repos`. Where the list holds one to three clones:
@@ -715,7 +728,9 @@ the manual path:
    this phase resolves a clone with no readable `origin` — it is named by its directory's basename,
    however the path reached this phase, and never by a name typed beside it: `/brd-split`'s *Ground
    now* passes such a clone to `--repos` as its bare path, so a typed run and that one name it alike. That name is the slug Phase 3 compares and Phase 8 records in
-   `grounding/baselines.md` (`workflows-core:grounding-format` §4 step 1).
+   `grounding/baselines.md` (`workflows-core:grounding-format` §4 step 1) — save where Phase 3's
+   rename test (*A clone with no readable `origin`, renamed*) finds the file recording the clone
+   under an earlier name and the operator confirms it, when that earlier name is the slug.
 4. Empty final list (every repo skipped or missing) → escalate per the `No repos derivable — /epics`
    rule in `workflows-core:escalation-rules`, whose `/prd-ground` variant
    this is:
@@ -823,6 +838,36 @@ alone would let a repository whose working tree is dirty *around* an otherwise-m
 pass silently — the content-diff and line-count checks above are what this phase adds, and they
 run before Phase 5's first dispatch, not inside it.
 
+**A clone with no readable `origin`, renamed.** Phase 1 step 3 names such a clone by its directory's
+basename, so renaming the directory — or an entry a run before 3.33.3 wrote under another name for
+it — leaves `grounding/baselines.md` recording the repository under a name no clone now carries.
+Read as it stands, a run whose `HEAD` is still at the recorded pin stops with
+`PRD_GROUND_AMBIGUOUS_PIN` below, whose remedy names a repository no clone resolves to, so naming
+it puts Phase 1's path question, whose answer is the basename again; and one whose `HEAD` has
+moved records the one repository under a second name. So,
+before the bullets below read the file, test each repository this run named by basename where no
+entry records that basename: **a candidate** is a slug an entry records that is neither a
+repository this run resolved, nor a slug in Phase 1 step 2's map, nor the basename of a top-level
+directory carrying `.git` under an entry of `$REPOS_PATH` — so an origin-less clone this run left
+unnamed, which that map skips, is never one — and for which some entry records a `commit` that is
+this clone's pinned commit, an ancestor of it or a descendant of it in this clone
+(`git -C "<repo>" merge-base --is-ancestor <commit> HEAD` or
+`git -C "<repo>" merge-base --is-ancestor HEAD <commit>`, either exiting 0, so a clone checked out
+at a commit older than the recorded pin is found too). Where there is one, ask, naming
+the clone's path, and each candidate with its latest recorded commit, in the question's own text:
+```
+choices: ["Same repository — record it as <candidate>", "A different repository — keep <basename>"]
+```
+One option per candidate, up to three, before *A different repository*; past three, the first is
+`Same repository as one recorded (you'll be prompted for its name)`, its `description` naming every
+candidate (`workflows-core:epic-picker` *The cap*), and a typed name is resolved against them. On
+*Same repository*, the clone carries that slug for the rest of the run — the bullets below, the pin
+comparison after them, Phase 5's *answers* test and Phase 8's entry — so one repository keeps one
+name in the file, as `workflows-core:grounding-format` §4 step 1 allows. On *A different
+repository*, the basename stands. A typed answer is acted on as the option it expresses; a typed
+*cancel* ends the run before anything is written, as Phase 1's *Cancel* does; anything else is
+asked again. Ask nothing where no candidate qualifies.
+
 **`--rebaseline`, and a plain re-run against moved code.** If `<BRD-dir>/grounding/baselines.md`
 already records a pin for a repository:
 - **Its `HEAD` still matches the recorded pin** → nothing moved; this is a harmless re-run. Skip
@@ -856,6 +901,12 @@ Each repository is named by its slug. `<repo-a>` is always a repository this run
 - **`grounding/baselines.md` records both there** — an earlier run ground both at one commit, before
   this check existed, so no choice of repositories separates them:
   `Check out another commit in <repo-a> — the plugin will not do it for you — then re-run '/product-workflows:prd-ground <KEY> --rebaseline' without <repo-b> and without --no-code, which refuses that flag: <repo-a>'s HEAD will have left the pin the file records for it, and no repository can stand at <commit> again.`
+- **It records one of the two there, under a slug no clone this run can see carries** — neither a
+  repository this run resolved, nor a slug in Phase 1 step 2's map, nor the basename of a top-level
+  directory carrying `.git` under an entry of `$REPOS_PATH`, as where the rename test above
+  was answered *A different repository*. Naming that slug resolves to no clone, so the next
+  remedy would only put Phase 1's path question again:
+  `Check out another commit in <repo-a> — the plugin will not do it for you — then re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given: <repo-b> names no clone this run can see, so no choice of repositories separates them.`
 - **It records one of the two there:**
   `Re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given, naming <the one it records there> and not <the other> — adding --rebaseline, without --no-code, where <the one it records there>'s HEAD has left the pin the file records for it — or check out another commit in <the other> first; the plugin will not do it for you.`
 - **It records neither** — both are pinned by this run:

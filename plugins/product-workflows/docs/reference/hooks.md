@@ -14,7 +14,7 @@ Two sibling plugins each ship a `preload-context` hook of their own: `dev-workfl
 
 Runs on every `UserPromptSubmit` event. It reads the submitted prompt from stdin JSON (trying the `prompt`, `user_prompt`, and `message` keys in turn for compatibility across Claude Code versions) and matches it against `^/(product-workflows:)?(epics)[[:space:]]+[^[:space:]-]` — `/epics`, bare or prefixed with this plugin's own namespace, followed by at least one non-flag argument. Anything else, including a bare `/epics` with no argument or `/epics --help`, exits immediately with no output, so a misfire never injects noise.
 
-For a match it injects specs context: `$REPOS_PATH` (or its `/workspace` default, noted as such), `$SPECS_PATH` (or a note that it is unset and the command will ask), and the current git branch when the working directory is inside a git repository. `/epics` is the one command this plugin ships that this hook covers — the other thirteen are keyed but resolve their own address through `resolve-address` without needing a pre-injected hint, and none of them was added to the regex.
+For a match it injects specs context: `$REPOS_PATH` (or its `/workspace` default, noted as such), `$SPECS_PATH` (or a note that it is unset and that a command that needs it asks for it), and the current git branch when the working directory is inside a git repository. `/epics` is the one command this plugin ships that this hook covers — the other thirteen are keyed but resolve their own address through `resolve-address` without needing a pre-injected hint, and none of them was added to the regex.
 
 ## Why this never blocks you
 
