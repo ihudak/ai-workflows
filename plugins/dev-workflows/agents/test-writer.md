@@ -24,6 +24,8 @@ The caller passes a structured brief:
 - **Project root** — absolute path so files can be opened
 - **Baseline** — the `## Test Baseline` block captured by `test-baseliner` in Pre-Phase 3.5 (identifies the detected framework + the command used + the set of pre-existing passing / failing tests). It is the sole source of framework and command here, and the list of test names already taken
 
+- **Owns** (optional) — on a test set the caller split across several writers: `shared support`, which means write only the fixtures, factories and helpers the tests have in common and no test case, or a list of test files and test-case ids that are yours alone. Write and edit only what you own; the shared support, and every file another writer owns, is read-only to you — use what the support provides rather than writing a second copy. Without the line, every test the diff calls for is yours. **With it, report only on what you own**: `### Tests added` and `### Notes` name only behaviour in your files and your test-case ids, never one another writer owns; the shared-support writer names no behaviour as untested, since it writes no test case.
+
 Refuse to write tests without a diff and a baseline — ask the caller to supply them.
 
 ## Steps

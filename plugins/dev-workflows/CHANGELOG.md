@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.41.0] — 2026-10-27
+
+Fix batch B21 of the 2026-10-26 review: `/implement` and the agents it dispatches. Needs nothing newer than `workflows-core` 1.59.0.
+
+### Added
+- **A large test set is split across writers** (FBB-B31). Above 40 test cases or eight test files, `/implement` dispatches one `test-writer` for the shared support first, then up to four in parallel, each owning disjoint files and test-case ids through a new `Owns:` line, and verifies once. `test-writer` writes only what its `Owns:` names and reads the rest.
+- **A review finding whose fix lies in a specs-repository document** — `design.md`, the specification, `epic.md`, the ARD — is handed to no fixer, carried as a deferred item naming the document's owner, and emitted by Phase 6 as a follow-up for that command; a `BLOCKER` of that kind stops the run as another repository's does, naming the document's owner (FBB-B33).
+- **A departure from `design.md` or the specification made after the review** — a user-applied finding, a Phase 3.5 fix, a plan-conflict fix with the plan text kept — gets a step 7.5-style `## Engineering review` note at that edit, so the departure is on the document for whoever settles a later `/conformance` discrepancy (FBB-B38).
+- **`code-writer` checks markup a design gives verbatim against the target's CSS framework** before writing it, and returns `needs_decision` where following the framework would change what the user sees (FBB-B37).
+- **`validate-catalog.py` checks that every `code-writer` and `review-fixer` dispatch line in a command names its `model:`** right after the agent, never vacuously, with five selftest cases (IMP-G4).
+
+### Changed
+- **A deferral the run recorded is written closed**: step 7.5's note for a `missing` requirement flagged as a recorded deferral is ticked, `- [x] Deferred by decision — …`, so it no longer raises the document's open questions (FBB-B32).
+- **`test-baseliner`'s verify report carries a `New failures: [n]` count, and each new failure its first failure line**, so a fix attempt needs no re-run to learn why a test fails (FBB-B36).
+- **`risk-planner`'s acceptance checks search literal text with `grep -F`**, never a pattern (FBB-B34).
+
+### Fixed
+- **Pre-Phase 3 step 3 hard-coded a branch name** that contradicted steps 1–2, discarding a documented convention or doubling the key; it now creates the name steps 1–2 resolved, a collision appending the short SHA to that name (IMP-B1).
+- **The `/implement` page counted eight subagents**, leaving out `defect-reporter`, which takes `impl-maintenance`'s place under `--skip-feedback` (IMP-B4); and **its example promised the next Epic or `/document` as the next step**, where the command offers `/dev-workflows:conformance` and `/security-workflows:scan` before the pull request merges (DQD-B2).
+
 ## [4.39.2] — 2026-10-26
 
 Take with `workflows-core` 1.59.0 (batch B19).

@@ -117,7 +117,7 @@ _or_ "Ranking withheld — no red-capable repro. Tried: [what you tried, and wha
 - [explicit non-goals]
 
 ### Acceptance checks
-- [concrete observable conditions that prove success]
+- [concrete observable conditions that prove success — a check that looks for literal text uses a fixed-string search, `grep -F` (`grep -cF` to count), never a pattern, since `${…}`, `.`, `[` and `*` in a literal are pattern syntax and a pattern search for one can print 0 against a file that holds it]
 
 ### Review focus
 1. [an input class or failure mode the task implies and no step's tests

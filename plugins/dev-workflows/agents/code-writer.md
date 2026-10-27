@@ -51,6 +51,7 @@ The caller passes a `## Code Writer Request` block; that file defines each field
 6. **Follow the code's existing style** — its naming, formatting, error handling and idioms, and the conventions the repository's own `CLAUDE.md`, `AGENTS.md` and `CONTRIBUTING.md` set — **and write LF line endings.**
 7. **Avoid unnecessary stops.** Return only on the conditions below; everything else, you settle and carry on.
 8. **Re-read each changed file end to end after its last edit**, to confirm it parses and reads as one change.
+9. **Check markup a design gives verbatim against the target's CSS framework before you write it.** Where `spec_paths`' `design.md` gives a template or markup to copy as written, find the framework the repository's own templates use — its stylesheet imports, a `bootstrap`, `tailwindcss` or like dependency, the classes the neighbouring templates carry — and check the given markup's classes and structure against it: a class the framework does not define, a heading where the framework styles a legend or a label, another framework's spacing classes. Where they conflict and following the framework changes what the user would see, return `needs_decision` with the departure as its question; where it changes nothing the user would see, write the markup as the framework needs it and name the departure under `### Settled by the run`.
 
 ## When something new emerges
 

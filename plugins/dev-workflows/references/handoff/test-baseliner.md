@@ -264,7 +264,7 @@ it:** whatever else a caller sends, the `verify` call gets the whole block.
 - **Command**: `./mvnw test -q`
 - **Comparison status**: exact         <!-- exact | best-effort | invalid -->
 - **Total**: 47 | **Passing**: 46 | **Failing**: 1 | **Skipped**: 0
-- **Baseline passing**: 47 | **Regressions**: 1 | **Missing from run**: 0
+- **Baseline passing**: 47 | **Regressions**: 1 | **Missing from run**: 0 | **New failures**: 0
 
 ### Regressions (previously passing, now failing)
 [Maven] com.example.FooTest#testCreate
