@@ -42,7 +42,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    **The key is an argument because there is nowhere keyless to write.** `idea.md` lands in its final
    folder on the first write — `PRD-<KEY>-<slug>/` under `$SPECS_PATH/specifications/`. **So `$SPECS_PATH`
    comes first:** if it is unset, stop naming it (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`,
-   `workflows-core:escalation-rules` *Required path environment variable unset*) — resolution and Phase 4's
+   `workflows-core:escalation-rules` *Required path environment variable unset*; *Cancel* ends the run) — resolution and Phase 4's
    write both need it, and an empty one would aim `idea.md` at `/specifications/` under the filesystem root.
    **Then run the specs-repo preflight below**, its run key set the one key this step read (`workflows-core:specs-repo-git` §3.2), before the folder is resolved or anything in it is read. (A key typed as a folder's whole name is the one exception: `read-key` has read that folder's carrier already, and `workflows-core:addressing` §1 says what keeps it safe.) The preflight goes first because a
    stale plugin branch it switches away from would otherwise hide the `brd-link.md`, `prd.md` or
@@ -311,7 +311,7 @@ Wait for the digest. If `status: NOT_FOUND` (a missing or unreadable file), surf
 ```
 choices: ["Re-enter the source (you'll be prompted)", "Cancel"]
 ```
-*Re-enter the source* asks for it in plain text and runs Phase 1's classification on the answer again. This is an environment/user halt — do NOT `emit-block`. On `OK`, carry forward `raw_context`,
+*Re-enter the source* asks for it in plain text and runs Phase 1's classification on the answer again; *Cancel* ends the run. This is an environment/user halt — do NOT `emit-block`. On `OK`, carry forward `raw_context`,
 `stated_scope` (the settled scope Phase 3 grills against), `signals`, `images`, `candidate_title`, `candidate_slug`, `source_refs`, `provenance`, `tracked` (a
 `prd` source only), all three wikilink lists — `wikilinks_followed`, `wikilinks_not_followed`,
 `wikilinks_broken` — and `links_other`. `source_refs`/`provenance` feed the `sources:` frontmatter

@@ -38,7 +38,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
    **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
    Parse the **single positional address** from the stripped `$ARGUMENTS` — a `<KEY>`, or an
-   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
+   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`; *Cancel* ends the run) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
    - `<PRD>` — the resolved **PRD folder's** `key`: the folder itself when the address named a
      `PRD-` folder, its parent when the address named an `EPIC-` folder.
    - `<EPIC>` — the resolved `EPIC-` folder's `key`, or `null` when the address named a `PRD-`
@@ -81,7 +81,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
 
 2. **Resolve `$SPECS_PATH`.** `/design` reads `specification.md` and writes `design.md` under
    `$SPECS_PATH/specifications/`. If `$SPECS_PATH` is unset, stop with a clear error naming `SPECS_PATH`
-   (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run). **Take this test before step 1
+   (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run; *Cancel* ends the run). **Take this test before step 1
    resolves anything**: a key is found only by searching the specs tree, and the preflight step 1
    ends with needs the variable.
 
@@ -148,7 +148,7 @@ scans repos under `$REPOS_PATH`; cwd need not be inside either.
    per the `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
    `choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set REPOS_PATH* asks
    for the path in plain text and carries the answer as `$REPOS_PATH` once an entry of it is an
-   existing directory.
+   existing directory; *Cancel* ends the run, since a design is not written without code.
    - **Resolve architecture grounding next, then show its line.** Run `resolve-architecture-grounding design` per `Skill(skill: "workflows-core:reference", args: "architecture-grounding resolve-architecture-grounding")` and show the `architecture grounding:` and `team decisions:` lines from what it returns, verbatim, in the form that reference fixes (off switch: --no-arch). This is the run's one resolution; Phase 4 dispatches `architecture-grounder` on the state it returns without resolving again.
 
 Also display (context): `Feature folder: <path>`; resolved `<PRD>` / `<EPIC>` (or 'none — PRD-level');

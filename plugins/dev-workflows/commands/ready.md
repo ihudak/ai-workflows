@@ -40,7 +40,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 
    Parse the **single positional address** from what is left — a `<KEY>`, or an `@<path>` naming a
    folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind`
-   and `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `READY_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   and `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `READY_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`; *Cancel* ends the run) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
@@ -102,7 +102,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 2. **Resolve `$SPECS_PATH`.** `/ready` reads the ARD/spec/design artifacts and writes `_readiness.md`
    under `$SPECS_PATH/specifications/`. If `$SPECS_PATH` is unset, stop with a clear error naming
    `SPECS_PATH`: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for
-   the path in plain text and carries it as `$SPECS_PATH` for the run. **Take this test before
+   the path in plain text and carries it as `$SPECS_PATH` for the run; *Cancel* ends the run. **Take this test before
    step 1 resolves anything**: a key is found only by searching the specs tree, so with no tree
    step 1's `absent` stop would name the wrong cause, and the preflight step 1 ends with needs the
    variable.
@@ -667,7 +667,7 @@ the run's manual-step / out-of-scope follow-ups by invoking `Skill(skill: "workf
    qualifies **nothing**; this phase is then a silent no-op (byte-identical to a run without it).
 3. **Resolve** the write target via the §2 ladder using `key` and `source`; render + place tasks
    and verbose notes per §1–§3; dedupe per §5.
-4. **Preview + confirm** per §7 (`approve-all | select | cancel`), then write.
+4. **Preview + confirm** per §7 (`approve-all | Select some (you'll be prompted for the row numbers) | cancel`), then write.
 
 Emit this phase's own short output:
 

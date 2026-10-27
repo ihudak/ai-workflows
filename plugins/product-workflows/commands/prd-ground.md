@@ -125,6 +125,7 @@ behaviour, not the behaviour.
    ```
    choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
+   *Set SPECS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort
    one, the same ordering `/design` Phase 0 uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
@@ -532,6 +533,7 @@ behaviour, not the behaviour.
    ```
    choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
+   *Set REPOS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
 8. **On `route: brd`, read the claim list, and stop if there is none.** (The idea route's own claim
    list is step 8i, immediately below — this whole step is the `route: brd` branch, unchanged.)
    From the gated
@@ -713,6 +715,8 @@ the manual path:
    ```
    choices: ["List repos to check manually (you'll be prompted)", "Cancel"]
    ```
+   *List repos to check manually* asks in plain text for the repositories' short names, each
+   resolved by step 3; *Cancel* ends the run before anything is written.
 
 Read-only throughout (`workflows-core:read-only-repos`) — this command never
 switches a branch, fetches, or pulls any repository it resolves here; Phase 3 reads whatever
@@ -988,9 +992,22 @@ be given one. The digest is consumed by this orchestrator alone, in exactly two 
 
 1. **As a lead — where to look.** A `docs_references` page naming a subsystem, service, or module
    that **no repository resolved in Phase 1 covers** is surfaced now, before Phase 5 dispatches
-   anything, with one choice: add that repository and re-resolve it through Phase 1 step 2–3 (then
-   pin it through Phase 3 like any other), or proceed on the record and let the affected claims
-   land as `NOT-PROVABLE`. A lead is a question about coverage, never an answer about behaviour.
+   anything. List every such lead — the page, and the subsystem it names — then ask once for them
+   all:
+   ```
+   choices: ["Add repositories for these leads (you'll be prompted for their names)", "Proceed on the record — claims no resolved repository covers may land as NOT-PROVABLE"]
+   ```
+   No option is marked: whether a lead names code worth grounding is the operator's knowledge, not
+   the run's. *Add repositories* asks at once, in plain text, for one or more repository names or
+   absolute paths, one per line or space-separated; a free-text answer to the array that names them
+   is taken as that list. Each is resolved by Phase 1 step 3, its zero-match escalation included,
+   and joins the run's repository set. Then, before Phase 5: **re-print Phase 1's cost statement**
+   with the new K, since the one printed first understates the run; where the set now holds more than one repository, apply Phase 2's SIGNIFICANT floor and update the `model_routing` block's `classification` and `reason` to say so; run Phase 3's steps 1–3 and the
+   bullets that follow them on each added repository; and **re-run *No two repositories share a pin*
+   over the whole set**, the added repositories with the rest. Phase 4 is not re-run — it reads
+   prerequisites, not repositories — and this question is not asked again on this run. *Proceed on
+   the record* goes on to Phase 5 with the set Phase 1 resolved. A lead is a question about
+   coverage, never an answer about behaviour.
 2. **As a divergence — recorded in Phase 8, after verification, never before.** See below.
 
 ### A doc-versus-code divergence gets no identifier of its own

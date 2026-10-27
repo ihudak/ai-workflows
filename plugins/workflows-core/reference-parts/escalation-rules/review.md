@@ -81,8 +81,16 @@ reads the bare selection as a refusal or as a promise the operator broke. Its la
 text as a promise or an instruction the selection itself would have to carry out (`— name it`,
 `I'll say which`, `give the reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
 the text is taken as given, and nothing is asked again. A question whose whole answer is text with
-no default — a name, a URL, a reason — is asked in plain text: never as a picker built for it, and
-never with an "I'll provide it" option.
+no default — a name, a URL, a reason — and no other way on is asked in plain text: never as a picker
+built for it, and never with an "I'll provide it" option. **An array whose other option is a real
+alternative is not built for the text, and stays** — a *Cancel* that ends the run the way the prose
+after the array states, a *Skip*, a way on without the text: its text option carries the marker
+above and is followed by the plain-text question, and the prose after the array — or the rule of
+this reference it cites, which states it for every citer — says what each other option does. An alternative no prose handles is not a real one: write its handling there.
+What this forbids is an array with no real alternative to offer, which is asked as a plain-text
+question instead. A plain-text question may still name its own way out in the question itself
+(`…, or type cancel`), as the *Branch prefix undetected* identity variant does, and needs no array
+for it.
 
 ## Choice lists are presented verbatim
 

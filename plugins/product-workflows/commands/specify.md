@@ -209,7 +209,7 @@ nothing.
 2. **Resolve `$SPECS_PATH`.** `/specify` writes specifications under `$SPECS_PATH/specifications/`
    (exact layout resolved in step 3) — the specs repo. If `$SPECS_PATH` is unset, stop
    with a clear error naming `SPECS_PATH` (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`;
-   *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run) —
+   *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run; *Cancel* ends the run) —
    there is no fallback for this write target the way there is for reads.
 
 3. **Resolve the feature folder.** Derive provisional kebab-case slugs from the relevant
@@ -523,7 +523,7 @@ own frontmatter (`workflows-core:addressing` §4).
 
 **A missing folder and a folder holding no `prd.md` are two different states, and only the first is a
 stop.** If the folder is missing, surface the `key dir not found` rule in
-`workflows-core:escalation-rules` (`["Re-enter key (you'll be prompted)", "Cancel"]`) — reachable only
+`workflows-core:escalation-rules` (`["Re-enter key (you'll be prompted)", "Cancel"]`; *Cancel* ends the run) — reachable only
 through a folder deleted between Phase 0 and here, since Phase 0 step 3 already stopped on `absent`. If
 the folder is there but holds **no `prd.md`**, do not stop and do not re-report: the Phase 0 gate has
 already returned `absent` and printed the line naming the folder this run specifies from instead. That is
@@ -634,7 +634,7 @@ PRD is thin the grill has less to work from and must ask more; that is a real ch
 detail comes from, and it belongs to the operator's answers rather than to an import.
 
 The same two states apply here as in Step A: a **missing** folder surfaces the `key dir not found` rule
-in `workflows-core:escalation-rules` (`["Re-enter key (you'll be prompted)", "Cancel"]`); a folder holding
+in `workflows-core:escalation-rules` (`["Re-enter key (you'll be prompted)", "Cancel"]`; *Cancel* ends the run); a folder holding
 **no `prd.md`** is not a stop — the Phase 0 gate reported it already, and the grill works from what the
 folder does hold. Then:
 

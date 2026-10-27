@@ -74,7 +74,7 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
     The seed is **grounding, not content** (Phase 3 adapts it; it is never copied wholesale).
 
 2b. **`$SPECS_PATH`, then the specs-repo preflight — both before step 3's gate.** If `$SPECS_PATH` is
-    unset, stop naming it (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run). Then invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point
+    unset, stop naming it (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run; *Cancel* ends the run). Then invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point
     (§3) inline: flush any leftover session artifacts from an earlier run, retry an artifact commit
     that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts` step skips on it.
 
@@ -383,6 +383,11 @@ Use `choices` arrays; 2–4 options, and never author an "Other" option — the 
 
 1. **Confirm** the feature folder, the profile, and the resolved `idea.md` (or "none — grill from scratch"); on the BRD route, the resolved `PRD-` slice folder, the profile (`--full` unless a flag overrode it), and — instead of an idea — a `from BRD:` line naming `<SLICE-KEY>` and the `parent:` its `brd-link.md` records (always present — step 5a refuses the container), its `depends-on:` if any, how many of its gate-set rows (Phase 0 step 7) are `covered-here` out of how many, and whether `prd-seed.md` and `decisions.md` were found.
    - **Resolve documentation grounding here, then show its line.** Run `resolve-docs-grounding create-prd` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — its step 3.5 index prompt included — and show the `docs grounding:` line from what it returns, in the form that reference fixes — `ON <root> (retrieval: …)` or `OFF (<reason>)` — verbatim, including any index-build, staleness, or shadowing clause it carries (off switch: --no-docs). It runs here, before any agent is dispatched, because step 3.5 asks its one-time index question before the run's real work; this is the run's one resolution (`workflows-core:docs-grounding`, *Invariants*), and Phase 2.5 dispatches on the state it returns without resolving again.
+   - **Then ask, below what this step shows:**
+     ```
+     choices: ["Proceed (Recommended)", "Change the profile (you'll be prompted for --lean, --hybrid or --full)", "Cancel"]
+     ```
+     *Change the profile* asks at once, in plain text, for one of `--lean`, `--hybrid` or `--full`, asks again where the answer names none of the three, and shows this confirmation again with the new profile; a free-text answer to the array that names one is taken as that profile. *Cancel* ends the run. The feature folder and the idea source are not corrected here: they follow from the address and any `@idea.md` the run was given, so a different one is a re-run with another address or `@idea.md`, and the run says so beside the list.
 2. **Existing-PRD handling** (only if Phase 0 step 6 found a PRD for `<KEY>`): **Where that `prd.md` cannot be read at all, stop here instead of offering a choice**: no option
    below can succeed on it — the recommended one points at `/update-prd`, which must read it as its
    base, and Overwrite must copy it into `revisions/` before the first write — so stop before any

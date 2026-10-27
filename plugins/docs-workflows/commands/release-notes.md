@@ -23,7 +23,7 @@ user to paste wherever their release notes are published.
 Usage: `/release-notes <ADDRESS> [--version <v>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`. `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. Here `<ADDRESS>` is a key or an
 `@<path>` naming a folder in the specs tree.
 
-- **`--version <v>`** (optional) — the release this note belongs to. Absent, the grill asks once;
+- **`--version <v>`** (optional) — the release this note belongs to. Absent, Phase 1 asks once;
   declined, the draft files under `# Unreleased`. Never invented.
 
 For full feature documentation use `/document`; for Epic drafting use `/epics`.
@@ -47,11 +47,11 @@ This command makes **no external API calls but two**: key discovery's optional, 
    folder or a file inside one. **On an address that is not an `@<path>`, `$SPECS_PATH` comes first:** if it is unset, stop
    naming it before resolving anything or running the specs-repo preflight below
    (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`, `workflows-core:escalation-rules`
-   *Required path environment variable unset*) — a key is found only by searching the specs tree, so
+   *Required path environment variable unset*; *Cancel* ends the run) — a key is found only by searching the specs tree, so
    with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
    succeed. An `@<path>` address needs no specs tree to resolve and runs on, exactly as `/document`'s
    *Mode detection* does. Then resolve the address with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Carry the resolved `path`, `kind` and
-   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token `read-key` (§1) did not read — a key, a key behind its folder's kind prefix, or a folder's whole name — which the `$SPECS_PATH` test above has already let through. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token `read-key` (§1) did not read — a key, a key behind its folder's kind prefix, or a folder's whole name — which the `$SPECS_PATH` test above has already let through. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`; *Cancel* ends the run) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
@@ -233,6 +233,11 @@ run — the terminal `commit-artifacts` step skips on it.
   folder is in `$SPECS_PATH` — always on a `<KEY>`, and on an `@<path>` that leads there — which is where Phase 8's handoff commits it, on a `prd/` branch with a
   pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses, or `$SPECS_PATH` is unset on an `@<path>` run or the `@<path>` leads outside its work tree, when none is offered (Phase 8 step 1a); either way it is written and not committed.
 
+- **Release version** — **asked only where `--version` was not given**; the flag's value is the version, and nothing is asked:
+  ```
+  choices: ["Enter the release version (you'll be prompted)", "File under # Unreleased"]
+  ```
+  *Enter the release version* asks at once, in plain text, for the release as its heading should read (`1.24.0`); a free-text answer to the array that names a release is taken as it. *File under # Unreleased* is the decline: the draft files under `# Unreleased`. No option is marked, since only the operator knows whether the release is named yet. **Never invent one** — the answer is not parsed from anything, and the PRD's `release_versions` is not read. Phase 3 takes the version resolved here.
 
 - **Style check** (default ON):
   ```
@@ -251,12 +256,12 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 
 ## Phase 2 — Plan + approval
 
-1. **Plan.** Before presenting the plan, run `resolve-docs-grounding release-notes` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — this is the run's only consent-bearing step (an index build or a capped refresh), so it must resolve here, before Phase 3's folder read and Phase 4/5's diff resolution do any of the run's real work. Present: resolved `key`, destination, diff-grounding on/off (+ `$REPOS_PATH` and repos to scan when on), style-check choice, and the `docs grounding:` line that `resolve-docs-grounding` returned, verbatim — including its `retrieval:` value and any index-build, staleness, or shadowing clause (off switch: --no-docs). Ask:
+1. **Plan.** Before presenting the plan, run `resolve-docs-grounding release-notes` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — this is the run's only consent-bearing step (an index build or a capped refresh), so it must resolve here, before Phase 3's folder read and Phase 4/5's diff resolution do any of the run's real work. Present: resolved `key`, destination, the version this draft will be filed under (or `# Unreleased`), diff-grounding on/off (+ `$REPOS_PATH` and repos to scan when on), style-check choice, and the `docs grounding:` line that `resolve-docs-grounding` returned, verbatim — including its `retrieval:` value and any index-build, staleness, or shadowing clause (off switch: --no-docs). Ask:
    ```
    choices: ["Approve & continue (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]
    ```
    - **Approve** → proceed to Phase 3.
-   - **Revise** → ask in plain text what to change — diff grounding, the repos base (taken as Phase 1 takes a base set through *Set REPOS_PATH*), the style check, the version — update the plan, re-show it and ask again.
+   - **Revise** → ask in plain text what to change — diff grounding, the repos base (taken as Phase 1 takes a base set through *Set REPOS_PATH*), the style check, the version (asked again as Phase 1 asks it) — update the plan, re-show it and ask again.
    - **Cancel** → stop and summarise what was planned.
 
 ---
@@ -358,8 +363,9 @@ dropdowns set outside the plugin and returned by an import, so this step used to
 was told explicitly *not* to read the authored PRD. Nothing returns them now, and the PRD is the only
 place either can be authored (`workflows-core:prd-format`).
 
-**`release_versions` — `--version <v>`, else ask.** The flag takes the release this note belongs to.
-Absent, the grill asks once; declined, the draft files under `# Unreleased`. **Never invent one.** It is not parsed
+**`release_versions` — the version Phase 1 resolved.** `--version <v>` where the flag was given,
+else the answer to Phase 1's *Release version* question, as Phase 2's plan approved it; declined
+there, the draft files under `# Unreleased`. Nothing is asked here. **Never invent one.** It is not parsed
 from anything, and the PRD's `release_versions`, where `/create-prd` wrote one, is not read.
 
 ---
@@ -697,7 +703,7 @@ invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")` a
 3. **Resolve** the write target via the §2 ladder using `key` and `source`;
    render + place tasks and verbose notes per §1–§3; dedupe per §5. The task
    references the draft file written in Phase 8 rather than duplicating it.
-4. **Preview + confirm** per §7 (`approve-all | select | cancel`), then write.
+4. **Preview + confirm** per §7 (`approve-all | Select some (you'll be prompted for the row numbers) | cancel`), then write.
 
 ADDITIVE — the follow-ups also remain in the Phase 8 report. This phase NEVER
 fails the run, NEVER commits (still true — this phase only writes follow-up

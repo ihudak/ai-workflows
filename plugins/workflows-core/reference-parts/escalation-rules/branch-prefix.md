@@ -81,8 +81,16 @@ reads the bare selection as a refusal or as a promise the operator broke. Its la
 text as a promise or an instruction the selection itself would have to carry out (`— name it`,
 `I'll say which`, `give the reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
 the text is taken as given, and nothing is asked again. A question whose whole answer is text with
-no default — a name, a URL, a reason — is asked in plain text: never as a picker built for it, and
-never with an "I'll provide it" option.
+no default — a name, a URL, a reason — and no other way on is asked in plain text: never as a picker
+built for it, and never with an "I'll provide it" option. **An array whose other option is a real
+alternative is not built for the text, and stays** — a *Cancel* that ends the run the way the prose
+after the array states, a *Skip*, a way on without the text: its text option carries the marker
+above and is followed by the plain-text question, and the prose after the array — or the rule of
+this reference it cites, which states it for every citer — says what each other option does. An alternative no prose handles is not a real one: write its handling there.
+What this forbids is an array with no real alternative to offer, which is asked as a plain-text
+question instead. A plain-text question may still name its own way out in the question itself
+(`…, or type cancel`), as the *Branch prefix undetected* identity variant does, and needs no array
+for it.
 
 ## Choice lists are presented verbatim
 
@@ -163,7 +171,7 @@ This rule binds every command in the family — this plugin's own and those of e
 
 Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/upgrade`, `/vuln`) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
 
-**Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it, in one prompt whose opening line names the convention:
+**Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text, its way out named in the question (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it, in one prompt whose opening line names the convention:
 
 `"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`), or type `cancel`:"`
 

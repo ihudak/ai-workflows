@@ -88,7 +88,8 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
 1. **`$SPECS_PATH` (required).** If unset, stop naming `SPECS_PATH`, per the
    `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
-   `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`.
+   `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`. *Set SPECS_PATH* asks for
+   the path in plain text, as that rule says; *Cancel* ends the run.
 
 2. **Resolve the address.** Resolve the single positional `<ADDRESS>` — a `<KEY>`, or an `@<path>`
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).

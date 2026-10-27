@@ -112,10 +112,13 @@ NO mid-run interruption. After the Final Report
 is composed, present the qualifying follow-ups as a batch preview GROUPED BY
 TARGET FILE, then act on one confirmation:
 
-    choices: ["approve-all", "select", "cancel"]
+    choices: ["approve-all", "Select some (you'll be prompted for the row numbers)", "cancel"]
 
 - **approve-all** → insert every previewed row.
-- **select** → let the user pick a subset by row number, then insert those.
+- **Select some** → ask at once, in plain text, for the row numbers to insert
+  (`workflows-core:escalation-rules` §0, *A selection carries no text*); insert
+  those rows, and ask again where an answer names no previewed row. A free-text
+  answer to the array that already names row numbers is taken as that subset.
 - **cancel** → write nothing; the follow-ups remain in the Final Report only.
 
 Each preview row shows: the source signal, the target file → section, and the

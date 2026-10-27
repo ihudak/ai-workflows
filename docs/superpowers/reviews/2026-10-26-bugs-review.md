@@ -552,7 +552,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### CORE-B6 — MINOR — `followup-emission` §7's `select` option needs text from the user but is not labelled `(you'll be prompted …)`, against `escalation-rules` §0
+### CORE-B6 — MINOR — `followup-emission` §7's `select` option needs text from the user but is not labelled `(you'll be prompted …)`, against `escalation-rules` §0 — **Fixed in workflows-core 1.59.0 (batch B19)**
 - **Where:** `plugins/workflows-core/references/followup-emission.md:115-118`; restated by `plugins/dev-workflows/commands/implement.md:1330`, `ready.md:670`, `plugins/docs-workflows/commands/document.md:1424`, `:1888`, `release-notes.md:696`, `plugins/product-workflows/commands/epics.md:1070`
 - **What is wrong:** `choices: ["approve-all", "select", "cancel"]`, then "**select** → let the user pick a subset by row number". §0 (*A selection carries no text*) requires any option that needs text from the operator to be "labelled `… (you'll be prompted)` or `… (you'll be prompted for <what>)` … and choosing it is followed at once by one plain-text question". The `select` label carries no marker. The rule's mechanism, one plain-text question for the row numbers, is never stated.
 - **Failure scenario:** in every one of the twelve follow-up callers, a user picks `select`. Nothing tells the run to ask the follow-up question in plain text. The agent may read the bare selection as the subset, ask with a second picker that cannot hold arbitrary row lists, or improvise. This is the inconsistency the §0 rule exists to remove. The commands must present the array verbatim (*Choice lists are presented verbatim*), so they cannot fix the label locally.
@@ -1542,7 +1542,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD2-B6 — MINOR — `/prd-ground` Phase 4.5's documentation-lead question has no choices array, and its "re-resolve through Phase 1, then pin through Phase 3" has no defined return path
+### BRD2-B6 — MINOR — `/prd-ground` Phase 4.5's documentation-lead question has no choices array, and its "re-resolve through Phase 1, then pin through Phase 3" has no defined return path — **Fixed in product-workflows 3.47.0 (batch B19)**
 - **Where:** `plugins/product-workflows/commands/prd-ground.md:988-992`
 - **What is wrong:** The text says a lead "is surfaced now, before Phase 5 dispatches anything, with one choice: add that repository and re-resolve it through Phase 1 step 2–3 (then pin it through Phase 3 like any other), or proceed on the record". Nothing defines the array, the option strings or which option is recommended. Every other question in this command presents a verbatim array, and `escalation-rules core`, which Phase 0 loads, binds that. The detour back through Phase 1 and Phase 3 is also unspecified:
   - It does not say whether Phase 1's cost statement (K repositories) is re-printed.
@@ -1662,7 +1662,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high.
 
-### BRD3-B7 — MINOR — The missing-reason picker offers `Cancel` that no prose handles, under a sentence that says "exactly two resolutions follow"
+### BRD3-B7 — MINOR — The missing-reason picker offers `Cancel` that no prose handles, under a sentence that says "exactly two resolutions follow" — **Fixed in product-workflows 3.47.0 (batch B19)**
 - **Where:** `plugins/product-workflows/commands/brd-reconcile.md:1050-1053`; the docs page agrees with the prose and not with the array: `plugins/product-workflows/docs/commands/brd-reconcile.md:399-400` ("takes one of exactly two routes").
 - **What is wrong:** "exactly two resolutions follow:" is followed by `choices: ["Ask the customer for the reason — …", "Freeze the answer as [CD#n] with status: open, …", "Cancel"]`. Nothing in Phase 4 (`grep -n Cancel` over `:898-1294` finds only `:978` and `:1053`) says what `Cancel` does. It could abort the run (the *Aborting the walk* paragraph, `:977-986`, is about the four-option array and says that array deliberately has no `Cancel`), return the candidate to the four-option picker, or leave it unconfirmed so that `BRD_RECONCILE_UNCONFIRMED` fires at the gate.
 - **Failure scenario:** The operator realises the reason is in the quotation and picks `Cancel` to go back and take *Correct it*. The agent has no instruction. It may stop the run, losing every confirmation taken, or treat the pick as a third resolution and drop the candidate silently, which `:1001-1002` forbids.
@@ -1786,7 +1786,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high (Phase 3 is outside this slice's phase range; found through Phase 11's list)
 
-### BRD3-B17 — MINOR — Phase 5's tier picker lists a fourth option, `Cancel`, that no prose handles, while the paragraph under it says "a fourth would be a tier nothing downstream can read"
+### BRD3-B17 — MINOR — Phase 5's tier picker lists a fourth option, `Cancel`, that no prose handles, while the paragraph under it says "a fourth would be a tier nothing downstream can read" — **Fixed in product-workflows 3.47.0 (batch B19)**
 - **Where:** `plugins/product-workflows/commands/brd-package.md:863` (the array ends with `"Cancel"`), `:866-869` ("the three options are the three rows of `bundle-packaging.md` §3's own table… a fourth would be a tier nothing downstream can read").
 - **What is wrong:** *Cancel* has no consequence anywhere in the command. Phase 4 avoids a listed Cancel for this reason (`:690-694`), and Phase 7 defines its own (`:1268-1270`). The sentence about four options contradicts the array beneath which it stands.
 - **Failure scenario:** The operator picks *Cancel*. The agent must guess whether to stop the run, which leaves an uncommitted `self-review-<date>.md` and skips or runs the tail, or to re-ask. It may also treat *Cancel* as a tier.
@@ -2043,7 +2043,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-B-B4 — MINOR — The release-version question has no step and no array, and is displayed before it is asked
+### DOC-B-B4 — MINOR — The release-version question has no step and no array, and is displayed before it is asked — **Fixed in docs-workflows 1.25.0 (batch B19)**
 - **Where:** `plugins/docs-workflows/commands/release-notes.md:26-27`, `:242`, `:254`, `:259`, `:361-363`
 - **What is wrong:** `--version` is "Absent, the grill asks once" (`:26`), and the only place that asks is Phase 3: "`release_versions` — `--version <v>`, else ask" (`:361`). Phase 3 runs after Phase 2's plan approval. But Phase 1 already says "Also display: … and the version this draft will be filed under" (`:242`). Phase 2's *Revise* lists "the version" among the things to change (`:259`), while Phase 2's plan list (`:254`) does not present it. No question text and no `choices:` array say how the user declines into `# Unreleased`, which the invariant at `:765` (ALWAYS use `choices` arrays) expects.
 - **Failure scenario:** A run without `--version` either shows Phase 1 a version it has not asked for, or asks out of order and improvises the decline option. The operator then approves a plan in Phase 2 that does not show the version the draft will be filed under.
@@ -2118,7 +2118,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium-high. An agent might run the tail anyway, but the text never tells it to.
 
-### DOC-C-B3 — MINOR — `resolve-docs-repo` rung 4's choice is uncapped and has no stated shape, yet `/docs-audit` relies on a Cancel there
+### DOC-C-B3 — MINOR — `resolve-docs-repo` rung 4's choice is uncapped and has no stated shape, yet `/docs-audit` relies on a Cancel there — **Fixed in docs-workflows 1.25.0 (batch B19)**
 - **Where:** `plugins/docs-workflows/references/docs-workflow/repo-resolution.md:29` ("A single hit is taken. Several hits are offered as a choice."), `:30` ("Else ask."); `plugins/docs-workflows/commands/docs-audit.md:32`
 - **What is wrong:** Rung 4 searches the unbounded `${REPOS_PATH:-/workspace}` listing, and every hit becomes a choice. No arity rule, cap or overflow row is given, although every other picker over that listing in this plugin applies `workflows-core:epic-picker` *The cap* (`docs-init.md:82`, `docs-brand.md:82-87`, `docs-audit.md:59`, `docs-serve.md:122`). Rung 5's question has no wording at all. `/docs-audit` Phase 0 step 2 says "Where the operator cancels at the ladder's rung 4 choice or its rung 5 question", but neither is defined to carry a Cancel.
 - **Failure scenario:** A workspace has five directories carrying a §3 signal. The signal set is deliberately generous: a `*:build` script, `_snippets/`, any Vale config. `/docs-profile`, `/docs-brand`, `/docs-serve` or `/docs-audit` then renders a 5-option `AskUserQuestion`, which the harness rejects (`maxItems: 4`). Separately, `/docs-audit`'s cancel branch depends on an option nobody defined.
@@ -2329,7 +2329,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `create-prd-ac-grouping-unspecified` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B6 — NIT — `/create-prd` Phase 1 step 1 says "Confirm" but gives no choices array
+### FBB-B6 — NIT — `/create-prd` Phase 1 step 1 says "Confirm" but gives no choices array — **Fixed in product-workflows 3.47.0 (batch B19)**
 - **Where:** `plugins/product-workflows/commands/create-prd.md:384` (Phase 1 step 1).
 - **What is wrong:** The run improvises the confirmation picker, and a bare "Correct something" answer comes back carrying no text.
 - **Failure scenario:** Three question rounds were needed to learn that the correction was the profile.
