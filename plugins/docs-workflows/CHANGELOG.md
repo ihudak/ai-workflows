@@ -7,11 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.26.0] — 2026-10-27
 
-Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rule this step cites — to-fix LC3, LC6, PR7 (live checks of 2026-10-26); this plugin takes PR7.
-
-Take with `workflows-core` 1.60.0, whose `commit-artifacts` push rule this release's session-cost page states; released with `dev-workflows` 4.41.0 and `product-workflows` 3.49.0 (to-fix LC2, live checks of 2026-10-26).
-
-Take with `workflows-core` 1.60.0, whose `epic-picker` *The cap* states the description rule these pickers follow (to-fix LC1, live checks of 2026-10-26).
+Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rule this release's review step cites, whose `commit-artifacts` push rule this release's session-cost page states, and whose `epic-picker` *The cap* states the description rule these pickers follow; released with `dev-workflows` 4.41.0 and `product-workflows` 3.49.0 — to-fix LC1, LC2, PR7 (live checks of 2026-10-26).
 
 ### Changed
 - `/document` Phase 7: *Provide manual fix notes* gets the BLOCKER's notes as `escalation-rules`' *Manual fix notes — the run drafts them* says (a draft the run offers, or, for a `NEEDS HUMAN` BLOCKER whose fix needs a decision, a plain-text request naming the decision), then applies them through `doc-fixer`, as before. It asked for the notes in plain text, with nothing saying the run waited for them.

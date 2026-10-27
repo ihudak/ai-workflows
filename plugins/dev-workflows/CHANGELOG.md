@@ -7,11 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.41.0] — 2026-10-27
 
-Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules these steps cite — to-fix LC3, LC6, PR7 (live checks of 2026-10-26).
-
-Take with `workflows-core` 1.60.0, whose `phase-handoff` §2.5 gives the reason this release's `code-handoff` §2.5 cites (to-fix LC2, live checks of 2026-10-26).
-
-Take with `workflows-core` 1.60.0, whose `epic-picker` *The cap* these pickers cite (to-fix LC1, live checks of 2026-10-26).
+Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules this release's review steps cite, whose `phase-handoff` §2.5 gives the reason this release's `code-handoff` §2.5 cites, and whose `epic-picker` *The cap* these pickers cite — to-fix LC1, LC2, LC3, LC6, PR7 (live checks of 2026-10-26).
 
 ### Changed
 - `/design` Phase 6: a `BLOCK` whose review also leaves open a `MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit first asks whether to fold them into the fix cycle, per `escalation-rules`' *A BLOCK review's other findings — folded into its fix cycle* (LC3), and the manual fix notes of its escalation are drafted by the run, one BLOCKER at a time, or asked for in plain text where the BLOCKER's fix needs a decision, per *Manual fix notes — the run drafts them* (PR7). Its docs page describes the first.

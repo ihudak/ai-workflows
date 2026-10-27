@@ -7,11 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.49.0] — 2026-10-27
 
-Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules these steps cite — to-fix LC3, LC6, PR7 (live checks of 2026-10-26).
-
-Take with `workflows-core` 1.60.0, whose `phase-handoff` §4.1 *Nothing to commit* line says where the deliverable is, which this release's `/brd-split` reads (to-fix LC2, live checks of 2026-10-26).
-
-Take with `workflows-core` 1.60.0, whose `epic-picker` *The cap* this release's picker cites (to-fix LC1, LC9, live checks of 2026-10-26).
+Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules this release's review steps cite, whose `phase-handoff` §4.1 *Nothing to commit* line says where the deliverable is, which this release's `/brd-split` reads, and whose `epic-picker` *The cap* this release's pickers cite — to-fix LC1, LC2, LC3, LC6, LC9, PR7 (live checks of 2026-10-26).
 
 ### Changed
 - `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/prd-proposal` and `/brd-proposal`: a `BLOCK` whose review also leaves open a `MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit (a surviving one in the two proposal commands, which triage; in `/create-prd`, `/update-prd` and `/create-ard`, also one that needs a decision) first asks whether to fold them into the fix cycle, per `escalation-rules`' *A BLOCK review's other findings — folded into its fix cycle* (LC3), listing each, a decision-needing one marked so; on *Fold*, `/create-prd`, `/update-prd` and `/create-ard` put each decision to the user in that cycle, and the other three leave it open. Each docs page says so.
