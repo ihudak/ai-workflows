@@ -178,7 +178,8 @@ than printing the condition for the user to evaluate. What stays forbidden is th
 deciding a marker belongs somewhere the command did not put a placeholder.
 
 When no option is safe to recommend across the runs that reach a prompt, omit the marker and say so
-in prose beside the list (as `/document` Phase 5.6 does for its per-occurrence image review).
+beside the list, in the question's own text, where the dialog shows it — never only in prose printed
+before the prompt (`/document` Phase 5.6 omits it so for its per-occurrence image review).
 
 This rule binds every command in the family — this plugin's own and those of every plugin that depends on it — not only the ones `escalation-rules` documents.
 

@@ -150,10 +150,12 @@ Typical gaps:
   ```
   choices: ["Accept proposed space mapping (Recommended)", "Edit a space's id/base_path (you'll be prompted)", "Drop this space"]
   ```
+  *Accept proposed space mapping* carries a `description` naming the content root and the proposed `id` and `base_path`, so what it writes is named in the dialog whether or not it was printed (`workflows-core:epic-picker` *The cap*).
 - **Branch-naming convention** when none was documented (drives Phase 5):
   ```
   choices: ["Use repo convention if detected, else `<prefix>/docs-profile` (Recommended)", "Enter a different pattern (you'll be prompted)"]
   ```
+  *Use repo convention if detected* carries a `description` naming the pattern it records — the convention detected, with where it was found, or `<prefix>/docs-profile` with the prefix filled in — so it is named in the dialog whether or not it was printed.
 
 Each `(you'll be prompted…)` option above asks for its value in plain text — the command, the prerequisite, the space's `id` and `base_path`, the pattern — and records the answer as `user-supplied`.
 

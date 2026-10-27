@@ -196,9 +196,10 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    ```
    choices: ["Re-run over this folder — keeping and changing exactly what is listed", "Cancel — leave this BRD as it stands"]
    ```
-   *Re-run over this folder* carries a `description` naming what it discards — each terminal
-   disposition with the `[BR#n]`s that carry it — so it is named in the dialog whether or not the
-   list was printed (`workflows-core:epic-picker` *The cap*).
+   *Re-run over this folder* carries a `description` naming what the re-run keeps and what it may
+   change, in the two lists' words and each changed file by path, and what it discards — each
+   terminal disposition with the `[BR#n]`s that carry it — so all of it is named in the dialog
+   whether or not the lists were printed (`workflows-core:epic-picker` *The cap*).
    **Neither option carries a `(Recommended)` marker, and the omission is deliberate** per the
    `When no option is safe to recommend` guidance in
    `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, as Phase 8's zero-row list

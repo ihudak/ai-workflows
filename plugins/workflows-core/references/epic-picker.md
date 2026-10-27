@@ -102,7 +102,15 @@ set rather than one item — *all of them*, *these N*, *the proposed set*, *conf
 every item of that set in its `description`, and so does an option that asks for names from it —
 *name the ones to include*, *adjust the list*, *a different set* — each in the prose list's order.
 A typed answer is resolved against the items the picker listed, the descriptions' included, never
-parsed out of the answer.
+parsed out of the answer. **The question's own text may name the set instead of each option's
+`description`**, where several options turn on the one set or the set is the question's whole
+subject, as `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s *overflow rule* names in its
+step 3 the routes an array leaves out; either way the set is named where the dialog shows it, never
+only in prose printed before the prompt. **A question over a set the run itself produced** — a
+review's findings, the failures a check left, the follow-up tasks a read-back found — names that set
+as its own rule says (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`'s *Findings a review
+leaves open — the offer to apply them*, for a review's findings), and, where no rule says, in the
+question's own text.
 
 **In the Epic pick, the first actionable row carries `(Recommended)`**, whether or not the cap
 applied: the row the default cursor lands on (*The marker, and where it comes from*), ◐ before ○, as

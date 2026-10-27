@@ -901,8 +901,8 @@ than stylistic.** Which resolution is right is a fact about the row in front of 
 that clusters into a slice takes `covered-by`, one this BRD still owes takes `deferred-to`, one the
 customer has withdrawn takes `rejected` — and the list is shown once per row, so no marker could be
 true across the runs that reach it. `workflows-core:escalation-rules` covers
-exactly this under *When no option is safe to recommend*: omit the marker and say so in prose beside
-the list. **A conditional marker is not the alternative.** `(Recommended when nothing clusters)`
+exactly this under *When no option is safe to recommend*: omit the marker and say so beside
+the list, in the question's own text. **A conditional marker is not the alternative.** `(Recommended when nothing clusters)`
 reads as guidance and is malformed by that file's *The `(Recommended)` marker is unconditional*
 rule — it hands the operator the gate this phase was supposed to evaluate, and an orchestrator that
 must present the list verbatim cannot honour it either way. The condition belongs in the option's own

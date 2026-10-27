@@ -14,6 +14,7 @@ Take with `workflows-core` 1.60.0, whose `epic-picker` *The cap* states the desc
 - `/docs-serve` cites `epic-picker` *The cap* for the typed-answer rule, where it named that file's closing paragraph, which does not state it.
 - `/document`'s docs-repository search (b): where more repositories match than fit, the array's last option is *Another repository (you'll be prompted for its path)*, its `description` naming every repository the array leaves out, and a typed answer is resolved against the matching repositories, per `epic-picker` *The cap* and `next-phase-offer`'s *overflow rule* (to-fix LC1).
 - `/document`'s missing-repositories gate, its proposed-locations question and its ambiguous-image-policy question give each option that stands for the missing repositories, the proposed targets or a target's screenshots a `description` naming every one, per `epic-picker` *The cap*; a slug typed for a different path is resolved against the missing ones (to-fix LC1).
+- `/docs-profile`'s space-mapping and branch-naming questions name, in *Accept proposed space mapping*'s and *Use repo convention if detected*'s descriptions, the content root with its proposed `id` and `base_path`, and the pattern the run would record (to-fix LC1).
 - `/docs-profile`'s prerequisites question and its field-level diff confirmation name, in *Record detected prerequisite(s)*'s and *Apply the diff*'s descriptions, every prerequisite detected and every field the diff changes or adds (to-fix LC1).
 
 ## [1.25.0] — 2026-10-26
