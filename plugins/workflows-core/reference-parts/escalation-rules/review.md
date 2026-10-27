@@ -441,9 +441,10 @@ as needing one, with the decision it needs in place of the edit.
   open, as *Findings a review leaves open — the offer to apply them* says of such a finding.
 - **Fix the BLOCKERs only** — the findings stay open and wait for the re-review: its offer carries
   them where it makes one, as *Findings a review leaves open — the offer to apply them* says of every
-  finding of the first review still open. A finding that needs a decision makes no offer on its own,
-  and goes into the artifact as *A finding left open that needs a decision is recorded in the
-  artifact* says. A re-review that returns `BLOCK`, or stays blocked where the command triages,
+  finding of the first review still open. A finding that needs a decision makes no offer on its own;
+  it is recorded where *A finding left open that needs a decision is recorded in the artifact* names
+  the command, and otherwise listed in the final report and the pull request. A re-review that
+  returns `BLOCK`, or stays blocked where the command triages,
   makes no offer, so the findings stay in the final report and the pull request.
 
 A free-text answer naming some of the findings folds those in, and leaves the rest open.
