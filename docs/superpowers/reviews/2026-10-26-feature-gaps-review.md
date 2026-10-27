@@ -213,7 +213,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## dev-workflows — /vuln, /upgrade
 
-### VU-G1 — Poetry, uv, PDM, Hatch, Composer and Bundler still install with their install-time code
+### VU-G1 — Poetry, uv, PDM, Hatch, Composer and Bundler still install with their install-time code — **Fixed in dev-workflows 4.40.0 (batch B22)**
 - **Designed in:** `plugins/dev-workflows/references/install-time-code.md:18` ("Bundler builds native extensions as a matter of course, and Poetry, uv, PDM, Hatch and Composer have their own no-build or no-scripts settings that this file does not yet adopt"); CHANGELOG 4.14.0 ("Bundler, Poetry, uv, PDM, Hatch, Composer … install unchanged"). There is no design spec for install-time code (none in `docs/superpowers/specs/`), so this deferral is the only record.
 - **Current state:** `ecosystems.md:184` (`poetry add` / `poetry install`), `:286` (`bundle install`), `:347-368` (`composer require`/`update`/`install`, which run Composer plugins and root scripts), and `build-systems.md:167`/`:245`. None of these stops install-time code. Check 21 holds only npm, pnpm, yarn, pip and pipenv.
 - **Still worth doing?:** yes. Composer plugins and scripts and Poetry/uv source builds are the same supply-chain path the 4.14.0 entry calls "the supply-chain path these two commands open themselves". The fix is partly cheap: `composer … --no-scripts --no-plugins`, `uv … --no-build` / `--only-binary :all:`, and Poetry's `installer.no-binary` / `only-binary` configuration.
