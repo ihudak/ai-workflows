@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.53.0] — 2026-10-27
+
+Take with `workflows-core` 1.64.0, whose `session-hygiene` §6 `/specify` now runs — to-fix PR8 (live checks of 2026-10-26).
+
+### Changed
+
+- **`/specify` checks the environment its session file recorded.** `_session.md` opens with a `## Run environment` section, which whichever step first writes the file records, and the run compares it on a resume (Phase 1's or the Epic picker's), before Phase 7's write and handoff, and before Phase 8's first terminal write, asking on a mismatch rather than going on in another repository; *Stop* sets `specs_git: misrooted`, so nothing more is handed off or committed (`workflows-core:session-hygiene` §6).
+
 ## [3.51.0] — 2026-10-27
 
 Take with `workflows-core` 1.62.0, whose `overlap-reader` this release's `/specify` dispatches — to-fix PR5 (live checks of 2026-10-26, run 2).

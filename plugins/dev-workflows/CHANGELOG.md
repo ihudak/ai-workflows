@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.47.0] — 2026-10-27
+
+Take with `workflows-core` 1.64.0, whose `session-hygiene` §6 `/design` now runs — to-fix PR4 and PR8 (live checks of 2026-10-26).
+
+### Changed
+
+- **`design-reviewer` flags a test double for the behaviour under test** (PR4). A `## Test strategy` line that, for a criterion it covers, puts a mock, stub, fake or replacing spy in place of the component performing the behaviour the criterion names — a mocked writer for a criterion about rollback — is a `MAJOR`, graded as a missing producer-side test is: the test holds whatever the code does. A double that only provokes the condition — a true-external mock adapter or a consumed interface's stub, where the criterion names this design's own response — or a spy that wraps the real component and lets the genuine failure happen, is sound. It ships on the one recorded instance, by the user's decision, rather than waiting for a second. `design-format.md` section 8 states the rule, and `/design` Phase 5 grills by it.
+- **`/design` checks the environment its session file recorded** (PR8). `_design-session.md` opens with a `## Run environment` section — `$SPECS_PATH`'s real path, the specs repository's `origin`, `$REPOS_PATH`, the reference loader's install — which whichever step first writes the file records, and the run compares it on a resume, before Phase 7's write and handoff, and before Phase 8's first terminal write, asking on a mismatch rather than going on in another repository; *Stop* sets `specs_git: misrooted`, so nothing more is handed off or committed (`workflows-core:session-hygiene` §6).
+
 ## [4.45.0] — 2026-10-27
 
 Fix batch B21 of the 2026-10-26 review: `/implement` and the agents it dispatches. Its own changes need nothing newer than `workflows-core` 1.59.0; take 1.62.0, which 4.44.0 needs.
