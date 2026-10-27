@@ -222,7 +222,7 @@ In `/epics` Phase 4 step 3 the first entry asks no plain-text question but puts 
 `choices: ["Choose repos to scan", "Proceed without code scan", "Cancel"]`
 
 *Choose repos to scan* is followed by `/epics` Phase 1's repository picker — the session's own
-repository first, recommended, then the clones under `$REPOS_PATH`, capped as
+repository first, recommended, where one stands, then the clones under `$REPOS_PATH`, capped as
 `workflows-core:epic-picker` *The cap* says of a picker built from a listing, beside *Turn code
 scan off*, which is this list's *Proceed without code scan* — and each name it takes, the
 harness's free-text option taking any other, is resolved as a derived one. In a live `/epics` run

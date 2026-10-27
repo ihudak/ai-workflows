@@ -340,7 +340,7 @@ In `/epics` Phase 4 step 3 the first entry asks no plain-text question but puts 
 `choices: ["Choose repos to scan", "Proceed without code scan", "Cancel"]`
 
 *Choose repos to scan* is followed by `/epics` Phase 1's repository picker — the session's own
-repository first, recommended, then the clones under `$REPOS_PATH`, capped as
+repository first, recommended, where one stands, then the clones under `$REPOS_PATH`, capped as
 `workflows-core:epic-picker` *The cap* says of a picker built from a listing, beside *Turn code
 scan off*, which is this list's *Proceed without code scan* — and each name it takes, the
 harness's free-text option taking any other, is resolved as a derived one. In a live `/epics` run
@@ -762,8 +762,8 @@ A free-text answer naming some of the findings folds those in, and leaves the re
 **It is not the offer to apply what a review leaves open** — it follows a `BLOCK`, never a verdict
 that is not — **and it raises no cap**: what it folds in is applied in the fix cycle the cap already
 allows and is checked by that cycle's one re-review. `/epics`, `/document` and `/implement` are
-outside it, since their `BLOCK` path dispatches a fixer: it takes the `MAJOR` survivors with the
-BLOCKERs — in `/epics` those whose fix is only an edit — and `/implement`'s `review-fixer` the `MINOR` ones too, and the rest go where each command
+outside it, since their `BLOCK` path dispatches a fixer: it takes the BLOCKERs with the `MAJOR`
+survivors — in `/epics` the `MAJOR`s whose fix is only an edit — and `/implement`'s `review-fixer` the `MINOR` ones too, and the rest go where each command
 says — to the re-review's offer in `/epics` and `/implement`, and to Phase 9's `### Deferred items`
 in `/document`.
 

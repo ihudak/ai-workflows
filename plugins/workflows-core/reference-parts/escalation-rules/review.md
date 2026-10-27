@@ -454,8 +454,8 @@ A free-text answer naming some of the findings folds those in, and leaves the re
 **It is not the offer to apply what a review leaves open** — it follows a `BLOCK`, never a verdict
 that is not — **and it raises no cap**: what it folds in is applied in the fix cycle the cap already
 allows and is checked by that cycle's one re-review. `/epics`, `/document` and `/implement` are
-outside it, since their `BLOCK` path dispatches a fixer: it takes the `MAJOR` survivors with the
-BLOCKERs — in `/epics` those whose fix is only an edit — and `/implement`'s `review-fixer` the `MINOR` ones too, and the rest go where each command
+outside it, since their `BLOCK` path dispatches a fixer: it takes the BLOCKERs with the `MAJOR`
+survivors — in `/epics` the `MAJOR`s whose fix is only an edit — and `/implement`'s `review-fixer` the `MINOR` ones too, and the rest go where each command
 says — to the re-review's offer in `/epics` and `/implement`, and to Phase 9's `### Deferred items`
 in `/document`.
 

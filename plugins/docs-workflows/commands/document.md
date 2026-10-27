@@ -1114,7 +1114,7 @@ Act on the verdict:
     > Reviewer or style-checker output: [paste the triaged survivor list from the triage sub-step above — the surviving `doc-reviewer` findings only, never the dismissed or unverified ones]
     > Project root: [the resolved docs_repo_path (Phase 0)]
     > Severities to fix: BLOCKER and MAJOR
-    > Decisions: a finding whose suggested fix offers alternatives, or whose fix takes a product or scope decision, is not yours to take — defer it as `DEFERRED — needs human decision`, naming each alternative in the reason, and never choose one."
+    > Decisions: a finding whose suggested fix offers alternatives that differ in what the text means or requires (readings of a requirement, a scope line or a term), or whose fix takes a product or scope decision, is not yours to take — defer it as `DEFERRED — needs human decision`, naming each alternative in the reason, and never choose one. Alternatives that mean the same — two wordings, two ways to mend one link — are an edit: apply one."
 
   MINOR / NIT findings are deferred to the Phase 9 report, and so is a MAJOR `doc-fixer` defers as needing a decision, with the alternatives it names. Write `doc-fixer`'s Fix Report to `claims_file` as the BLOCK path does: its edits answer a verdict that was not BLOCK, so the re-review the cap still holds is offered before Phase 8, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`, and, taken, is dispatched with that `claims_file` and triaged like the BLOCK path's re-review.
 
