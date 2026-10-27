@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.60.0] — 2026-10-27
+
+Take with `dev-workflows` 4.41.0, whose `code-handoff` §2.5 cites this release's `phase-handoff` §2.5 for its reason; `docs-workflows` 1.26.0 applies the same rule to `/document`'s push (to-fix LC2, live checks of 2026-10-26).
+
+### Fixed
+- `phase-handoff` `handoff-to-main`: §2.5's push runs only where §2.4 made the commit, as a shell command of its own run once the commit's exit status has been read — never chained after the commit, and never after a construct that swallows its failure (`rc=$?`, `|| true`, `;`) — and §2.6 is skipped with it. A live `/specify` handoff chained the switch, the add, the commit and the push in one command that kept the commit's status in `rc=$?`, and when a `pre-commit` hook refused the commit it still pushed an empty `spec/` branch at the default branch's tip. §4.1's *Commit failed* line now says that nothing was pushed and no pull request was opened. §2.3's *Nothing to commit* skips §2.5 and §2.6, so an empty branch is never pushed — on a reused branch already on `origin`, its pull request stands as it was — and its §4.1 line ends, as the *Commit failed* line now does, `Nothing was pushed, and no pull request was opened.` (to-fix LC2, live checks of 2026-10-26).
+- `specs-repo-git` `commit-artifacts`: §4 step 5 pushes only where step 4 made its commit, as a command of its own run once the commit's exit status has been read; §3.4's flush takes that precondition with the step, while its pushes of what an earlier run left — the retry, other plugin branches, the session branch — keep the step's three conditions alone (to-fix LC2).
+
 ## [1.59.1] — 2026-10-27
 
 Take with `dev-workflows` 4.40.0 and `product-workflows` 3.48.0, whose *Set SPECS_PATH* sites this release's citer list names (batch B20).

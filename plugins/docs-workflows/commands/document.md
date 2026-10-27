@@ -1233,6 +1233,8 @@ Fold the run into clean history before handoff, every git call as `git -C <docs_
 
 ### Step 2 — Offer push
 
+Only where Step 1's commit was made: where git refused it, report git's error or the hook's output and offer nothing, since after the `reset --soft` the branch stands at the squash base with the run's changes staged, and a push would publish it without them (`${CLAUDE_PLUGIN_ROOT}/references/finish-and-handoff.md` §3).
+
 ```
 choices: ["Push <branch> to origin now", "Skip — I'll push later", "Cancel"]
 ```

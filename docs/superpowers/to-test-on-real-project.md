@@ -18,6 +18,12 @@ Sub-project A's Task 12 never merged the Epic's pull request (`docs/superpowers/
 - **SEC-A2 — `/dev-workflows:conformance` after the Epic merged.** Expect `unit-branch` to read `merged` and the Epic run to trace the default branch.
 - **SEC-A3 — the register in session-branch mode.** With `workflows.sessionBranch` set on the specs copy, run a change scan. Expect the register's paths, `runs/`, `scans/`, `register.json` and `register.md`, committed on `session/<identity>` with the run's session files and pushed there, the default branch untouched, and the next run's preflight finding them through the overlay.
 
+## Fix LC2 — `workflows-core` 1.60.0, `dev-workflows` 4.41.0, `docs-workflows` 1.26.0
+
+Install all three together. The item exercises `workflows-core`'s half.
+
+- **LC2 — a handoff whose commit git refuses pushes nothing** (`phase-handoff` §2.5, `specs-repo-git` §4 step 5). Setup: the e2e specs copy with a `pre-commit` hook that refuses every commit — B16-4's refused only a commit staging a `specification.md`, and this one must refuse `commit-artifacts`' commit too — then a producer's handoff, such as `/product-workflows:specify <KEY>` answering *Branch + commit + push + open PR to main*. Expect the `Phase handoff:` *Commit failed* line to end `Nothing was pushed, and no pull request was opened.`, the `Specs repo:` line to be its *Commit failed* row, and no branch of the run's on `origin`: `git ls-remote --heads origin refs/heads/<the branch that line names>` prints nothing. Under B16-4's narrower hook `commit-artifacts` commits the session files on the local branch and pushes it, as `specs-repo-git` §4.1 says, which is not this item's failure.
+
 ## Live checks kept in `to-fix.md`
 
 These stay in `docs/superpowers/to-fix.md`, which holds their detail; they are named here so a test session sees every live check in one place.

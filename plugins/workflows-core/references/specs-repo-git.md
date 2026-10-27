@@ -740,6 +740,18 @@ spend before it is the conversation's.
    commit and its index restore, with the same message; its `committed` and
    `files` fill §6's line.
 5. **Push — only session-file commits, and only to a branch it may push.**
+   **After step 4, this step pushes only where step 4 made its commit** —
+   in session-branch mode, where §8.2's `commit` printed a `committed` that
+   is not `null` — and the push is a command of its own, run once the
+   commit's exit status has been read: never chained after the commit in
+   one command line, and never after a construct that swallows its failure
+   (`rc=$?`, `|| true`, `;`), the live case `phase-handoff.md` §2.5 records.
+   Where step 4 made none — step 3's *nothing to commit*, or a commit git
+   refused (step 6) — nothing is pushed. §3.4's flush outside session-branch
+   mode runs this step after its own commit, this precondition included;
+   §3.4's retry, its pushes of other plugin branches and, in session-branch
+   mode, its push of the session branch push what an earlier run left, and
+   take this step's three conditions, never this precondition.
    In session-branch mode the branch is the session branch, under §8.4's
    differences. Push only where all three conditions below hold, tested in order. Where one
    fails, no push is attempted and the commit stays local: step 7 emits §6's

@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.41.0] — 2026-10-27
+
+Take with `workflows-core` 1.60.0, whose `phase-handoff` §2.5 gives the reason this release's `code-handoff` §2.5 cites (to-fix LC2, live checks of 2026-10-26).
+
+### Fixed
+- `code-handoff` §2.5: the push runs only where the branch carries a commit this run made, as a command of its own run once the commit's exit status has been read. A call whose commit did not land, on a branch carrying no other commit of this run, ends on *Commit rejected* and pushes nothing — under a consent answer `/vuln` reuses from an earlier CVE too, which would otherwise push that CVE's branch with none of its fix on it (to-fix LC2, live checks of 2026-10-26).
+
 ## [4.40.0] — 2026-10-27
 
 Take with `workflows-core` 1.59.1 (batch B20).

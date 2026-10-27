@@ -91,7 +91,7 @@ a set of files rather than one (`/idea` vendors its sources into `attachments/` 
 classified OTHER, never staged, and never reaches the default branch, while the deliverable that links
 it lands there pointing at a path on no ref.
 
-Nothing staged → no commit. Emit the §4.1 `nothing to commit` line. This is not an error: a re-run that changed nothing is a legitimate outcome.
+Nothing staged → no commit. Emit the §4.1 `nothing to commit` line, and skip §2.5 and §2.6, so an empty branch is never pushed; where the branch is a reused one (§2.2 rule 3) already on `origin`, its pull request stands as it was. This is not an error: a re-run that changed nothing is a legitimate outcome.
 
 ### 2.4 Commit
 
@@ -100,6 +100,8 @@ Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary
 **Commit by pathspec, never the index** — the paths §2.3 step 3 staged that git still lists as staged, and nothing else, listed, committed and followed by the index restore exactly as `specs-repo-git.md` §4 step 4 does, with this phase's message. A plain `git commit` takes whatever the index holds, and a change the user had staged in the specs repository rides §2.2's switch onto this branch and would land in the deliverable's commit; where the list is empty, there is nothing to commit, and §4.1's *Nothing to commit* row is the line. Once the list holds a path, write the message to a `command mktemp -t dw-handoff-msg-XXXXXX` file outside any repository and commit with `-F <msg-path>` rather than `-m`, because `<summary>` is free text and a double-quoted `-m` command-substitutes its backticks and `$(…)` before git sees it; remove the file once the commit has been made or has failed, with `command rm -f -- "<msg-path>"`. A commit git refuses — a hook's rejection, a signature it cannot make, a merge in progress — is reported through §4.1's *Commit failed* row, never retried and never run with `--no-verify`.
 
 ### 2.5 Push
+
+**This step runs only where §2.4 made the commit.** The push is a shell command of its own, run once the commit's exit status has been read — never chained after the commit in one command line, and never after a construct that swallows the commit's failure (`rc=$?`, `|| true`, `;`). A live `/specify` handoff ran the switch, the add, the commit and the push as one command that kept the commit's status in `rc=$?`, so when a `pre-commit` hook refused the commit, it still pushed an empty `spec/` branch at the default branch's tip. Where §2.4 made no commit — nothing to commit (§2.3, or §2.4's empty list), or a commit git refused (§4.1's *Commit failed*) — nothing is pushed, and §2.6 is skipped with it: a pull request needs a pushed head.
 
 `git -C "$SPECS_PATH" push -u origin <branch>`. Never force. A non-fast-forward rejection is reported, never resolved by rebasing or forcing mid-run.
 
@@ -111,7 +113,7 @@ Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary
 
 ### 2.6 Open the pull request
 
-Not reached where §2.1 set `remote: none` — §2.5 pushed nothing, and `gh` has no head branch to open a pull request from.
+Not reached where §2.1 set `remote: none` — §2.5 pushed nothing, and `gh` has no head branch to open a pull request from — nor where §2.4 made no commit (§2.5): this run pushed nothing, and a reused branch already on `origin` keeps the pull request it has (§2.3).
 
 **First, derive `$OWNER_REPO`**, by §2.6.1's `owner-repo`; where it finds the remote no `gh` target, skip to §4.2 without calling `gh`.
 
@@ -451,8 +453,8 @@ one, and two lines on a run whose reader expected one.
 | Push failed | `Phase handoff: committed <sha7> on <branch> — push FAILED (<reason>). The phase is NOT handed off.` |
 | Push refused for access (§2.5) | `Phase handoff: committed <sha7> on <branch> — push REFUSED: this identity may not push to origin (<git's first error line>). The phase is NOT handed off; <sha7> stays on local <branch>. Once you have push access, run git -C "<SPECS_PATH>" push -u origin <branch>, then open its pull request into <default>.` |
 | No remote | `Phase handoff: committed <sha7> on <branch> — this specs repo has no origin remote, so nothing was pushed and no PR was opened. The phase is NOT handed off.` |
-| Nothing to commit | `Phase handoff: no deliverable changes to commit on <branch>` |
-| Commit failed | `Phase handoff: NOT handed off — the commit failed (<the first line of git's error or the hook's output>). The deliverable is staged on <branch>, not committed.` |
+| Nothing to commit | `Phase handoff: no deliverable changes to commit on <branch>. Nothing was pushed, and no pull request was opened.` |
+| Commit failed | `Phase handoff: NOT handed off — the commit failed (<the first line of git's error or the hook's output>). The deliverable is staged on <branch>, not committed. Nothing was pushed, and no pull request was opened.` |
 | Branch name substituted | append `; branch name <intended> was taken, used <actual>` |
 | Stacked on another phase's branch | append `; cut from <HEAD's branch>, whose unmerged commits this pull request carries — <it changed <path>, which this run builds on \| git refused the switch to <default-ref>: <git's first line>>` (§2.2, *Where a new branch is cut*), naming, where it stacked on purpose, the first path `git -C "$SPECS_PATH" diff --name-only <default-ref>...HEAD -- <the tested paths>` prints |
 | Declaration unaccounted for | append `; <path> was declared but staged by nothing — this run put nothing on <branch> for it` (§2.3 step 4), one clause per path |
