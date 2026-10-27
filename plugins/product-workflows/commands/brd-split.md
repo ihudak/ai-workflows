@@ -1394,7 +1394,7 @@ donors, how many were re-pointed and to which receivers, how many were left with
 how many other children's ledger rows the sweep re-pointed with them**, and whether this run
 was the no-op; emit its §4.1 outcome
 line in the final report. The no-op path reaches this phase with nothing staged, so it reports the
-`nothing to commit` line rather than opening a pull request — save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a commit an earlier handoff could not push, whose push row is then the line.
+`nothing to commit` line rather than opening a pull request — save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch; its push row is then the line.
 
 **Why the re-cut facts are in that list, when `slices.md` already carries the same record.** The two are not alternatives. `slices.md` is inside the diff this pull request proposes, and the body is what a specs-repo reviewer reads *before* opening it — a re-cut moves requirements between siblings and rewrites `disposition` rows on ledgers the title does not name, so a body enumerating the offer that fired, the empty children resolved and the instruction's reading while saying nothing about a transfer between two BRDs describes the smallest change in the diff and omits the largest. It is also the only path on which a standing child's `coverage-ledger.md` appears in `deliverable_paths` because a row that child had **committed** to — its own ledger reading `deferred-to` against it — was taken **off** it. Writes on the other paths take a row off a standing child too, and none is that: Step 3 can withdraw a claim that was only ever provisional (a slice keyed by a run cancelled mid-walk, whose still-`unallocated` row the next run's walk gives to a sibling), and Phase 4.5's removal repair rewrites another standing child's orphan row on the ordinary and reconcile paths — but the first moves a row the child never settled, and the second always accompanies a folder this run is deleting and the removal block reports it, whereas here a donor's ledger changes with nothing added to it and no folder gone — which reads as a stray edit to anyone who has not been told a requirement moved.
 
@@ -1522,7 +1522,7 @@ command must also name the merge* rule — in the part loaded at the top of this
 the §4.1 outcome map and is not restated here.
 The rule governs **every** mention of the merge in this phase — both choice arrays and the prose
 below — because this command reaches three outcomes that open no pull request: the no-op, the
-reconcile path where Step 3 wrote nothing and every standing empty child was kept unchanged — each save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a commit an earlier handoff could not push — and a declined handoff. It is a
+reconcile path where Step 3 wrote nothing and every standing empty child was kept unchanged — each save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch — and a declined handoff. It is a
 placeholder and not an instruction to reword an option, so the arrays are still presented verbatim
 per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
 

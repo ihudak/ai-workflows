@@ -407,7 +407,7 @@ behaviour, not the behaviour.
    **`/brd-split` is not a way out here, so do not name it.** Re-running it **bare** on a parent whose ledger is fully
      allocated, whose children are non-empty and none of them out of step with it, is a no-op by its own Phase 0
      (`coverage-ledger-format.md` §4): it stages nothing, reports `nothing to commit` and opens no
-     pull request — save where the handoff re-publishes a reused branch carrying a commit an earlier handoff could not push, which pushes only commits already made, never these files on disk. Where some *other* child is out of step, the bare run is live, but it reconciles
+     pull request — save where the handoff re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch, and a re-publish pushes only commits already made, never these files on disk. Where some *other* child is out of step, the bare run is live, but it reconciles
      that child and declares only the files it changes (its Phase 6), and this slice — in step, by
      the case that brought the run here — is not one of them. `handoff-to-main` stages only the paths *that* run declared, so the slice's
      already-written files, which that run did not declare, can never reach main by that
