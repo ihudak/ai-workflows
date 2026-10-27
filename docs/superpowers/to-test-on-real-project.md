@@ -6,20 +6,9 @@ Before the first item, install the releases each section names — `claude plugi
 
 ## Fix batch B16 — `workflows-core` 1.52.0, `product-workflows` 3.43.0, `dev-workflows` 4.35.0
 
-Install all three together: `/epics`' offer and the `/specify` and `/implement` picker caps rely on 1.52.0.
+Install all three together.
 
-- **B16-1 — `/epics` offers to apply the MINOR and NIT findings a review leaves open** (FBB-B21). Setup: a PRD whose `epic-reviewer` verdict comes back `PASS WITH RECOMMENDATIONS` with at least one surviving MINOR or NIT finding whose fix is only an edit — a vague criterion wording is the usual one. Expect, in order:
-  - `doc-fixer` takes the MAJOR findings only;
-  - the offer `Apply them (Recommended)` / `Go on without applying them …` lists each MINOR and NIT with its severity, and says a re-review remains;
-  - on **Apply them**, the orchestrator edits the Epic itself, never `doc-fixer`, and reads each edit against what it overlaps;
-  - the unspent re-review is offered next;
-  - after the re-review, where it is not `BLOCK`, the offer is made once more for what is left open, and no review follows it;
-  - the final report's version line names those edits.
-
-  Also check that no *Epic size* finding, unverified finding or user-resolved text appears in the offer.
-- **B16-2 — the version line names by id what changed in substance, in the pull request body** (FBB-B15). The final report and the session record passed on run 2 of `docs/superpowers/verification/2026-10-26-live-checks.md`. On run 3 the pull request body carried the line, naming sections for edits to text with no id. No run has yet put an id there. Setup: any authoring run that opens its specs pull request, where you apply a finding after the verdict that changes a criterion's meaning, not only its wording. B16-1's `/epics` run can serve, if its offer applies such a finding. Expect `Changed in substance since: [ACxx]` (the criterion's own id) beside the verdict in the pull request's body. A wording-only edit should be counted among the edits but appear in no such list.
-- **B16-5 — `/brd-package`'s next step on the repository route** (BRD3-B24). Setup: a BRD slice packaged on the repository route. Expect the offered reconcile line to read `/product-workflows:brd-reconcile <BRD-KEY>` with `@<review-file>` only as the alternative for a review sent back as a file — never a required path.
-- **B16-6 — the PE lane's `/design <PRD>` offer** (D17 nit). Setup: `/specify <PRD>` at PRD level on a single-component PRD whose Epic folders hold no `specification.md` on the default branch. Expect no offer of `/dev-workflows:design <PRD>` as designing those Epics; with one Epic's `specification.md` merged, expect it.
+- **B16-5 — `/brd-package`'s next step on the repository route** (BRD3-B24). Setup: a BRD slice packaged on the repository route. Expect the offered reconcile line to read `/product-workflows:brd-reconcile <BRD-KEY>` with `@<review-file>` only as the alternative for a review sent back as a file — never a required path. The slice must be one whose interview has settled. Neither BOOK-2 slice on the e2e specs copy qualifies: BOOK-2-01's reconciliation of 2026-10-12 deferred four answers to another round, and BOOK-2-02 was never interviewed. So this item rides with the next live run of the BRD route, as its user decided on 2026-10-27, rather than costing an interview round of its own.
 
 ## `dev-workflows` 4.33.0 — the fixes from the review of piece review (#85)
 
@@ -32,3 +21,5 @@ These stay in `docs/superpowers/to-fix.md`, which holds their detail; they are n
 
 - **PR2** — measure the first `/implement` of a design drawing more than two pieces.
 - **LC5** — after its fix, `/design` revising a `design.md` whose `## Pieces` holds a stale `_N/A` above two pieces should fix it with no question.
+- **LC6** — after its fix, the offer made after a re-review lists each open finding with its severity in its own question.
+- **LC9** — after its fix, `/specify`'s next step offers `/design <PRD>` on a multi-component PRD holding Epics only once an Epic's `specification.md` is merged. This replaces B16-6, whose single-component setup could not reach the case.
