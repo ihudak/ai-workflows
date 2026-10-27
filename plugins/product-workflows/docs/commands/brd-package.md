@@ -222,7 +222,7 @@ when the handoff's pull request merges: on the repository route the run prints, 
 before it offers to send it, the branch and pull request the handoff pushed and says the note is
 true once that pull request merges — or, where nothing was pushed, what must happen first, and
 where the handoff declared a path and staged nothing for it, that the note is not true for that file
-on any outcome; the *Send it* next step waits on the same condition. The archive command is printed
+on any outcome; the *Send it* next step waits on the same condition, and names it under its own label in the prompt. The archive command is printed
 only on the archive route. **The prompt itself
 names no route** — it is handed on to a reader the run cannot see, and a path is correct exactly
 once, so only the delivery note names where the bundle is.

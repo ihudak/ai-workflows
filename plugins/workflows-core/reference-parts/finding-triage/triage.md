@@ -121,7 +121,10 @@ triage. The disposition, in order:
    own word.
 3. **Surface it and let the user settle the verdict.** Report the verdict, the fact that nothing
    survived, every dismissal with its reason and every unverified finding with what would settle it,
-   then ask:
+   then ask, the question's own text carrying the verdict and naming each dismissal, each
+   unverified finding and each survivor where any stands, one line each, since every option
+   settles the verdict over them
+   (`${CLAUDE_PLUGIN_ROOT}/references/epic-picker.md`'s *The cap*):
    ```
    choices: ["Proceed as if the verdict were PASS — every disposition is recorded (Recommended)", "Re-review, supplying every disposition's reason", "Keep the verdict and stop for a human decision", "Cancel"]
    ```
@@ -135,7 +138,7 @@ triage. The disposition, in order:
    and a caller whose stop for a review that stayed blocked is an escalation ends the run instead — or,
    working unit by unit, the unit — as its own Cancel does. **Cancel** is the caller's own cancel.
    Where findings still survive — the `BLOCK` case below, whose survivors the caller's fixer does not
-   take — **Proceed** reads its label as *not `BLOCK`*, not as *`PASS`*: say beside the prompt that it
+   take — **Proceed** reads its label as *not `BLOCK`*, not as *`PASS`*: say in the question's own text that it
    goes on as from a verdict that is not `BLOCK`, the survivors left standing and, in a caller that
    makes one, `escalation-rules`' offer to apply what a review leaves open made over them.
    **Never** promote a non-`PASS` verdict to `PASS` silently. The orchestrator's authority under this

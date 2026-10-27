@@ -289,8 +289,8 @@ reach.
     a piece with a second `Contract:` line, or one before its `Files:` line; the same entry in two
     pieces' `Files:`; or any other non-blank line — prose, an indented `_N/A`, or a fenced block
     inside the section, whose lines are all read as the section's.
-    `pieces.py parse` is the check `/design` runs on the section it writes and `design-reviewer`
-    runs on the section it reviews; `pieces.py assign` is what `/implement` runs on the change's paths, and
+    `pieces.py parse` is the check `/design` runs on the design's section, whoever wrote it, and
+    `design-reviewer` runs on the section it reviews; `pieces.py assign` is what `/implement` runs on the change's paths, and
     `/design` on the target repository's files at the commit Phase 4 scanned, and it also reads the
     section as malformed where one of those paths is matched by two pieces' patterns — an overlap
     no entry's text shows — or, on a section that draws pieces, is not valid UTF-8. Its output is

@@ -39,7 +39,7 @@ Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/architecture-harvest.py" --specs "$S
 
 ## Phase 2 — Apply
 
-`choices: ["Apply", "Cancel"]`. **Cancel** → stop; nothing written. **Apply** → run the script again without `--dry-run`, with `--ref <sha> --layout prd` — the dry run's commit, so the plan it writes is the one shown, by construction. Exit 2 → stop with its stderr line. The written paths are the plan's `files`.
+`choices: ["Apply", "Cancel"]`, the question's own text carrying the plan's change lines — each change kind with its count and ids — and the number of problems, since *Apply* writes exactly that plan (`workflows-core:epic-picker` *The cap*). **Cancel** → stop; nothing written. **Apply** → run the script again without `--dry-run`, with `--ref <sha> --layout prd` — the dry run's commit, so the plan it writes is the one shown, by construction. Exit 2 → stop with its stderr line. The written paths are the plan's `files`.
 
 ## Phase 3 — Hand off
 

@@ -126,7 +126,7 @@ Act on the returned `Status` before dispatching anything:
 
 - `OK` or `NO_TESTS` → proceed. **A `NO_TESTS` capture is not a failure and is not asked about**: every suite ran cleanly and the repository holds no tests (`dev-workflows:test-baseliner` capture step 4), so nothing was lost and no CVE's finish is marked down for it.
 - `PARTIAL` → proceed, and name the suites `### Suites` does not mark `OK` or `NO_TESTS`, each with the command that failed, in **every** CVE's `Notes` cell in the Step 4 table — the capture is the run's, so a suite it could not cover is uncovered for every CVE in it. A runner that is not installed for one language is not a reason to leave a CVE in another unfixed.
-- `RUN_FAILED` or `COMMAND_NOT_FOUND` → **nothing was captured, and what to do about it is the operator's decision rather than this command's.** Surface the block's `### Suites` rows and its `### Notes` lines first — a hint has an answer to give wherever a note names the runner's own command — then ask:
+- `RUN_FAILED` or `COMMAND_NOT_FOUND` → **nothing was captured, and what to do about it is the operator's decision rather than this command's.** Surface the block's `### Suites` rows and its `### Notes` lines first — a hint has an answer to give wherever a note names the runner's own command — then ask, the question's own text naming each suite with its status, since *Apply the fixes unverified* turns on them (`workflows-core:epic-picker` *The cap*):
 
   `choices: ["Specify test command to use (you'll be prompted)", "Apply the fixes unverified (every pull request opens as a draft carrying the DO-NOT-MERGE banner)", "Cancel this run"]`
 
@@ -367,7 +367,7 @@ interactive tools, even when one is listed in their `tools:`. When it returns
 
 - **Name what the run has left unbuilt first.** The baseline was captured with the user's packages built. Every entry marked `restored unbuilt` that any return in this run has listed so far, and every entry this CVE's own list holds, is a package now on disk without its build, so a failing test that needs one may fail for that reason and not because of this change. List them above the failing tests, each with its rebuild command, and say so; the user can run those commands before answering.
 - Present the failing tests clearly (from the fixer's `failing_tests` / `diagnosis`), and, where its `notes` describe an auto-fix it made before the second verify, that fix too, saying it is in the tree, unreviewed, and goes into the commit on *Apply the fix anyway*.
-- Ask — no option is safe to recommend across arbitrary regressions, so this list carries no `(Recommended)` marker and the qualifying condition sits in the option's own description (per the marker rule, *The `(Recommended)` marker is unconditional*, in `workflows-core:escalation-rules`):
+- Ask, the question's own text naming each failing test and each package `restored unbuilt`, since *Apply the fix anyway* turns on them (`workflows-core:epic-picker` *The cap*) — no option is safe to recommend across arbitrary regressions, so this list carries no `(Recommended)` marker and the qualifying condition sits in the option's own description (per the marker rule, *The `(Recommended)` marker is unconditional*, in `workflows-core:escalation-rules`):
   ```
   choices: ["Apply the fix anyway and flag the failures in the PR — for flaky tests", "Revert this fix and skip it", "Investigate further"]
   ```

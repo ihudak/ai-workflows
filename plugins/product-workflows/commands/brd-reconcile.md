@@ -413,9 +413,11 @@ write would re-ask a question already answered.
      `<default-ref>`'s copy), else the date its name carries, and two of one date in the order of the
      commits that added them: `choices: ["<file-1>", "<file-2>", "None of these — stop"]`, with a
      third file before the decline where there is one; four or more, the two oldest, then
-     `choices: ["<file-1>", "<file-2>", "Another one from the list above (you'll be prompted for its name)", "None of these — stop"]`
+     `choices: ["<file-1>", "<file-2>", "Another one (you'll be prompted for its name)", "None of these — stop"]`
      — the decline being an option this picker adds, which `workflows-core:epic-picker`'s *The cap*
-     counts against the four and never drops. **Say above the question that the order matters**: a
+     counts against the four and never drops — *Another one*'s `description` naming every file the
+     array leaves out, oldest first, after `Not shown as an option:`, as *The cap* sets out for a
+     picker built from a listing, so each is named in the dialog whether or not the list was printed. **Say above the question that the order matters**: a
      review reconciled later supersedes an earlier one's answer wherever the two differ (*Confirm
      every candidate*), so the reviews go in the order the customer sent them, a corrected resend last —
      reconciled first, it would be superseded by the very answers it corrected. No option is marked
@@ -828,9 +830,10 @@ the package is resolved against it, reading section 1 as this command reads it f
    on file: every one, then the decline —
    `choices: ["<BRD-KEY> package <YYYYMMDD-1>", "<BRD-KEY> package <YYYYMMDD-2>", "Cannot tell — leave it undetermined"]`,
    with a third package before the decline where there is one. Four or more: the three most recent
-   and the overflow option, the full list staying in the prose above it as
-   `workflows-core:epic-picker`'s *The cap* sets out —
-   `choices: ["<BRD-KEY> package <YYYYMMDD-1>", "<BRD-KEY> package <YYYYMMDD-2>", "<BRD-KEY> package <YYYYMMDD-3>", "Another package from the list above (you'll be prompted for its date)"]`,
+   and the overflow option, the full list staying in the prose above it and the packages the array
+   leaves out named in the overflow option's `description`, most recent first, after
+   `Not shown as an option:`, as `workflows-core:epic-picker`'s *The cap* sets out —
+   `choices: ["<BRD-KEY> package <YYYYMMDD-1>", "<BRD-KEY> package <YYYYMMDD-2>", "<BRD-KEY> package <YYYYMMDD-3>", "Another package (you'll be prompted for its date)"]`,
    where declining is a free-text answer. No option is marked `(Recommended)`: which package the
    customer answered is theirs to know, and the run has nothing to rank by. *Another package* asks for
    its date in plain text; that answer, and a free-text one, is
@@ -1379,7 +1382,7 @@ both modes; a `conflict` flag the reader raised on the pair is
 shown beside them and is not required. **This picker is put before the re-affirmation test and the
 missing-reason picker**, and they only to the candidate this one leaves to be frozen; a candidate
 the missing-reason picker has already sent back to the customer is not *left on* *Confirm* or
-*Correct it*, and so triggers nothing here. Show the two together, each with its quotation, and put:
+*Correct it*, and so triggers nothing here. Show the two together, each with its quotation, and put — the question's own text quoting both, the earlier first, since every option says which of the two it keeps:
 
 ```
 choices: ["Freeze this one — the earlier candidate is set aside as a conflicting answer, for a human", "Keep the earlier one — this one is set aside as a conflicting answer, for a human", "Ask the customer — freeze neither; both take Ask the customer and the question is left as it stands"]
@@ -2955,9 +2958,9 @@ handover, which an optional, ungated document must not displace. It carries no `
 its offer names is the PRD's own.
 
 **Reconciling another BRD is on the list and not in the array**, because it is the one lateral move
-among four forward ones and this run has just finished the slice it was given. Say so in the line
-under the prompt: the list above is longer than the options, and anything on it is reachable through
-the free-text option.
+among four forward ones and this run has just finished the slice it was given. Say so in the
+question's own text: the list is longer than the options, naming that route, and anything on it is
+reachable through the free-text option.
 
 **`advance_ready: no` — the three BRD-route options are left out rather than offered and
 consumed against an unsettled register**, and each remaining option appears only where its own
@@ -3015,8 +3018,8 @@ route checked.
 (the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane). Typically two or three
 options survive and every one of them fits. Where four re-entry options survive, the prose above
 still names all four and the array carries `Stop here` plus the three whose triggers this run's own
-outcome makes most pressing — say in one line that the list is longer than the options and that the
-one left out is reachable through the free-text option.
+outcome makes most pressing — say in the question's own text that the list is longer than the
+options, naming the one left out, and that it is reachable through the free-text option.
 
 **"Reconcile another BRD or slice" is on the `advance_ready: yes` list and not on the `advance_ready: no` one**, and the omission is
 the point rather than an oversight: it names work on a *different* key, and offering it to an

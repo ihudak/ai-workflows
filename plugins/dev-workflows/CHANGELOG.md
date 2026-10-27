@@ -5,11 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.41.0] — 2026-10-27
+## [4.43.0] — 2026-10-27
 
-Fix batch B05 of the 2026-10-26 review: `/ready`, `/design` and `/conformance`. Take with `workflows-core` 1.59.2, whose `escalation-rules` lists `/conformance`'s new cluster form.
-
-4.40.0 was published twice under one number — batch B22's section (2026-10-26), then batch B20's (2026-10-27) — so a machine that updated between the two holds B22's changes without B20's; this release carries both, and updating to it brings that machine level.
+Fix batch B05 of the 2026-10-26 review: `/ready`, `/design` and `/conformance`. Take with `workflows-core` 1.61.1, whose `escalation-rules` lists `/conformance`'s new cluster form.
 
 ### Fixed
 - **`/ready`'s dirty-checkout question no longer fires on every run in session-branch mode, and its re-check can pass** (DEV-B1, reproduced: in a throwaway repository with `workflows.sessionBranch=true`, a cost file committed to `session/<id>` came back as `?? …/dev-workflows/` after `lift` and `put-back` on a clean `main`, every time). Phase 0 step 3 reads `status --porcelain -z --untracked-files=all` and classifies each path by `specs-repo-git` §2.1: a session file, wherever session-branch mode is on — with or without a resolved identity — and the command's own `_readiness.md` at the resolved scope are not dirt. The question names the paths that made the tree dirty.
@@ -25,28 +23,54 @@ Fix batch B05 of the 2026-10-26 review: `/ready`, `/design` and `/conformance`. 
 - **A ratio names who feeds it** (FBB-B25): `design-format`'s rollback signal, and any check or baseline that is a ratio, names the callers in its numerator and its denominator, every other caller feeding the same counter, and the window in which old and new clients coexist; `design-reviewer` checks it.
 - **`/conformance` asks once per shared cause** (FBB-B26): discrepancies whose evidence shares one location — the same `file:line` at one commit, or overlapping ranges in one file — are asked as one cluster naming that location, each item in one cluster at most and never a chain of overlaps, which can be split into a question per item or ended by a typed `Cancel`; a `Cancel` in a call leaves its other answers undecided, and a PRD run settles the Epic carrying a cluster's fix once, queuing one follow-up per Epic where they differ; the record keeps one entry per requirement, each with a new `shared-cause:` field, and a cluster decided *Fix the code* queues one follow-up.
 - **`/conformance` states its walk's cadence** (FBB-B27): up to four questions in one call, as Phase 1 does; the rationale rides on the answer's notes or free text, with one follow-up prompt only for an *Accept*, or a PRD run's overrule of a Dev decision, given without one.
-- **`_conformance.md` lists its `not-checkable` requirements** (FBB-B29): an optional `## Not checkable` section with the tracer's `reason`, which a later PRD run reads to trace each in full; a record written before 4.41.0 has only the count, which the same rule covers.
+- **`_conformance.md` lists its `not-checkable` requirements** (FBB-B29): an optional `## Not checkable` section with the tracer's `reason`, which a later PRD run reads to trace each in full; a record written before 4.43.0 has only the count, which the same rule covers.
+
+## [4.42.0] — 2026-10-27
+
+Take with `workflows-core` 1.61.0, whose `grilling-technique` fires the whole-artifact gate this release's `/design` sends a change or addition made while writing to — to-fix LC4, LC5, PR6 (live checks of 2026-10-26).
+
+### Changed
+- **`/design` Phase 5 says what its runs do** (LC4): the grill settles the decisions, then the run writes `design.md` behind the confirmation gates — a gate before each section where it writes section by section, the whole-design play-back where it writes the design once after the grill — and a change or addition the writing makes to anything a gate confirmed goes to `workflows-core:grilling-technique`'s whole-artifact gate before Phase 5.5, each one named, never to narration alone. It said it authored `design.md` live, clearing a gate before each section; in all seven transcripts that wrote `design.md`, every grill question came before the first write, and run 3 of the live checks changed D4 while writing — a `RANDOM_PORT` context and a real-HTTP database-failure test — said so in narration only, and dispatched the reviewer. One play-back closes the grill and carries the whole-design overlap read and its `Overlap read:` line: the whole-design play-back before the write, or, where the run writes section by section, the whole-artifact gate's after the last section, held there even where the writing changed or added nothing. Where the run writes after the grill, the whole-artifact gate over what the writing changed or added is preceded by the same overlap read over each change and addition and carries its own `Overlap read:` line, since run 3's added test answered a failure, a decision whose place on a path that read exists for. The Phase 5 lead-in names its tracks again. The interface fan-out's chosen interface and losing takes go to `_design-session.md`, and reach `design.md` when the run writes it.
+- **`/design` Phase 4 reads the deploy surface of a deployed change** (PR6). For each confirmed repository whose change is deployed — `design-format.md` section 11's test — the `code-scanner` brief also carries deploy-surface themes: which workflow or script builds the image the deploy manifests pull, under what name and tag; what publishing does to shared tags; the pull policy; the stateful workloads and side-effecting containers a restart or rollout of the changed workload reaches; and any script that rewrites images or restarts workloads by selector. For those themes `search_hints.paths` also carries the repository's deploy directories (`workflows-core:components` §2's *Deploy or config* row) and its top-level build, CI and script files, since a targeted Epic's module paths never reach them. Phase 5's *Release verification* then settles the rollout as one decision: it plays back, as premises read from those themes and cited, what the rollout does to the running pods and their data, and asks how the design's rollout handles them — its steps and their order, what it accepts losing or re-seeds — its recommendation naming the rollback target as an immutable reference, an image digest or a version tag no publish moves, wherever the scan shows that publishing moves the tags the manifests pull; the answer goes under `## Migration / rollout / backward-compatibility`. Both measured `/design` runs on a deployed service, BOOK-1-01 and BOOK-4-01, drew MAJOR findings in their rollout on facts no step read: which workflow builds the image the manifests pull, a script that rewrites `:latest`, a sidecar that wipes data after a pod restart, a publish that moves shared tags. No reviewer rule is added.
+- The `/design` docs page describes the gates, the deploy-surface read and the rollout question, and the pieces fix below.
+
+### Fixed
+- **`/design` Phase 5.5's pieces check decides, and never asks** (LC5). The check and its one fix apply to the `## Pieces` section whoever wrote it — this run, an earlier run of a design this run revises, or a hand edit — and the fix decides by Phase 5's **Pieces** bullet's own test of what this design draws: of readings that cannot both stand, such as an `_N/A` line beside a `Reason:` line and pieces, it keeps the `_N/A` line where the design draws no pieces and the pieces where it draws them. The Final report quotes every line the fix dropped, and every line a removal after a failed fix dropped, so an author can restore a hand-drawn piece. The **Pieces** bullet said Phase 5.5 checks "the section the run wrote", and in run 3 the run asked which reading of a planted section to keep, though the check "asks nothing". `design-format.md` §14 says `/design` runs the parse on the design's section, whoever wrote it.
+
+## [4.41.0] — 2026-10-27
+
+Take with `workflows-core` 1.60.0, whose `escalation-rules` holds the rules this release's review steps cite, whose `phase-handoff` §2.5 gives the reason this release's `code-handoff` §2.5 cites, and whose `epic-picker` *The cap* these pickers cite — to-fix LC1, LC2, LC3, LC6, PR7 (live checks of 2026-10-26).
+
+### Changed
+- `/design` Phase 6: a `BLOCK` whose review also leaves open a `MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit first asks whether to fold them into the fix cycle, per `escalation-rules`' *A BLOCK review's other findings — folded into its fix cycle* (LC3), and the manual fix notes of its escalation are drafted by the run, one BLOCKER at a time, or asked for in plain text where the BLOCKER's fix needs a decision, per *Manual fix notes — the run drafts them* (PR7). Its docs page describes the first.
+- `/implement` Phase 3B step 7: the offer to apply what a review leaves open lists the findings in the question's own text, one line per finding with its severity, where it is and what the edit would change, never pointing at a list printed elsewhere (LC6).
+- **`/design`, `/implement` and `/conformance`: an Epic picker's remainder option names the Epics the array leaves out.** It is `Another Epic (you'll be prompted for its key)`, its `description` naming each of them — marker, key and title in `/design` and `/implement`; key and title in `/conformance`, whose Epic rows say in their own `description` whether they cover the requirement — and a typed key is resolved against the keys the array and that description listed. It read *Another Epic from the list above*, pointing at a prose list run 1 of the live checks never saw printed (to-fix LC1).
+- **`/design` and `/implement`: the picker's first actionable row carries `(Recommended)`**, and no option does where every Epic is ●, the question's own text saying so. `/implement` withholds it wherever its broad-slice choice stands, whatever the number of Epics, for its one-Epic question's reason: which unit the run implements is the operator's to say. Run 1 marked it in three of six `/implement` pickers (to-fix LC1).
+- **`/design` Phase 3 step 2**: *Confirm this set*, *Add repos* and *Remove repos* each carry a `description` naming the clones they mean, per `workflows-core:epic-picker` *The cap*; a name typed for *Remove repos* is resolved against the derived candidates and asked about again where it matches none (to-fix LC1).
+- **`/implement`, `/upgrade` and `/vuln` name in the question's own text the set an answer turns on**: `/implement`'s follow-up tasks in its companion and `(not given)` questions, the failures *Accept the remaining failures* would accept with their reasons, the suites *Accept an unverified run* leaves unverified, the plan-conflict findings, and the dirty paths at its clean-tree check; `/upgrade`'s failing tests and packages restored unbuilt; `/vuln`'s suites before *Apply the fixes unverified*, and its failing tests and packages restored unbuilt before *Apply the fix anyway* (to-fix LC1).
+- The follow-ups reference page says the preview's question names every row by its number (to-fix LC1).
+- The `/design` and `/implement` docs pages describe the remainder option and the marker.
+
+### Fixed
+- `code-handoff` §2.5: the push runs only where the branch carries a commit this run made, as a command of its own run once the commit's exit status has been read. A call whose commit did not land, on a branch carrying no other commit of this run, ends on *Commit rejected* and pushes nothing — under a consent answer `/vuln` reuses from an earlier CVE too, which would otherwise push that CVE's branch with none of its fix on it (to-fix LC2, live checks of 2026-10-26).
+- The session-cost and session-feedback reference pages say `commit-artifacts` does not push a branch the plugin created that `origin` does not have yet, which `workflows-core` 1.60.0's `specs-repo-git` §4 step 5 states (to-fix LC2).
 
 ## [4.40.0] — 2026-10-27
 
-Shipped under the same number as the 2026-10-26 section below, batch B22's; 4.41.0 carries both.
-
-Take with `workflows-core` 1.59.1 (batch B20).
+Take with `workflows-core` 1.59.1 (batch B20). Fix batch B22 of the 2026-10-26 review: the references `/vuln` and `/upgrade` consult, install-time code, and the two docs pages. Batch B22's entries need nothing newer than `workflows-core` 1.57.1.
 
 ### Changed
 - `/design`, `/ready` and `/conformance`: *Set SPECS_PATH* cites `escalation-rules`' *Required path environment variable unset* and carries the typed path only once it names an existing directory, asking again where it does not — it carried any path for the run (to-fix D5).
 
-### Fixed
-- The environment reference page lists `/epics` among the commands that stop on an unset `SPECS_PATH` and offer to set it, where it said `/epics` carried no such stop (PRD-B2).
+Batch B22:
 
-## [4.40.0] — 2026-10-26
-
-Fix batch B22 of the 2026-10-26 review: the references `/vuln` and `/upgrade` consult, install-time code, and the two docs pages. Needs nothing newer than `workflows-core` 1.57.1.
-
-### Changed
 - **uv and Composer install without their install-time code** (VU-G1). `install-time-code.md` gains a row for each: uv's `add`, `lock` and `sync` carry `--no-build`, and `uv sync --locked --no-build` installs exactly the lockfile; its `pip` interface carries `--only-binary :all:`. Measured on uv 0.13.5, `--no-build` refuses every source distribution, a git URL and a local path outside the project included, and builds only the project and its workspace members, so pip's "What the flags do not stop" does not apply to uv's project commands; its `pip` interface builds every editable requirement and follows pip's rule. Composer's `install`, `update` and `require` carry `--no-scripts --no-plugins`; the root `composer.json`'s scripts for the install's events then run as the project's own commands (`composer run-script --no-plugins <event>`), and each new `composer-plugin` package is named as skipped. Composer's rules follow its documentation and are not measured here. The allow forms: `uv pip install --only-binary :all: --no-binary <names>`, measured; nothing for uv's project commands, which have no per-package exception; `composer run-script <event>` for a root script; nothing for a plugin. `build-systems.md` and `ecosystems.md` write every uv and Composer install that way. **Poetry stays uncovered**: its only setting that refuses a source build, `installer.only-binary`, exists from Poetry 2.0.0 on, so on an older Poetry it would hold back nothing and say nothing; Bundler, PDM and Hatch stay uncovered too, and the reference says why for each. Check 21 now holds uv's project commands and Composer's installs to those flags.
 
 ### Fixed
+- The environment reference page lists `/epics` among the commands that stop on an unset `SPECS_PATH` and offer to set it, where it said `/epics` carried no such stop (PRD-B2).
+
+Batch B22:
+
 - **`nvd-api.md`'s worked example contradicted its own range rule**, concluding `5.16.7` for the ranges whose rule above it gives `5.15.16` for a `5.15.x` project; the safe version now depends on the current version's range. (VU-B6)
 - **`nvd-api.md`'s Maven Central query had no `core=gav`**, so it returned one document per artifact with only `latestVersion`, and its CPE vendor examples were Maven groupIds; it now lists versions, and the vendors read `apache` and `fasterxml`. (VU-B7)
 - **`build-systems.md` detected Cargo but had no Cargo section**; it gains one (`Cargo.lock` detection, `cargo update -p <crate> --precise <version>`, which moves a transitive pin as editing `Cargo.toml` does not), and *Confirming the fix* gains Cargo, pip and uv, NuGet and Bundler lines. (VU-B14)
@@ -442,7 +466,6 @@ Needs `workflows-core` 1.39.2, whose `followup-emission` §8 takes a unit folder
 
 ### Changed
 - **The model-routing reference names Claude Haiku 5.5 as the newest Haiku** — `claude-haiku-5-5`, so `haiku5.5` is the version-specific Haiku form a family-only harness accepts (`workflows-core` 1.34.0).
-
 
 ## [4.22.0] — 2026-10-07
 
