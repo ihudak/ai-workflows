@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.44.0] — 2026-10-27
+## [4.45.0] — 2026-10-27
 
-Fix batch B21 of the 2026-10-26 review: `/implement` and the agents it dispatches. Its own changes need nothing newer than `workflows-core` 1.59.0; take 1.61.1, which 4.43.0 needs.
+Fix batch B21 of the 2026-10-26 review: `/implement` and the agents it dispatches. Its own changes need nothing newer than `workflows-core` 1.59.0; take 1.62.0, which 4.44.0 needs.
 
 ### Added
 - **A large test set is split across writers** (FBB-B31). Above 40 test cases or eight test files, `/implement` dispatches one `test-writer` for the shared support first, then up to four in parallel, each owning disjoint files and test-case ids through a new `Owns:` line, and verifies once. `test-writer` writes only what its `Owns:` names and reads the rest.
@@ -24,6 +24,14 @@ Fix batch B21 of the 2026-10-26 review: `/implement` and the agents it dispatche
 ### Fixed
 - **Pre-Phase 3 step 3 hard-coded a branch name** that contradicted steps 1–2, discarding a documented convention or doubling the key; it now creates the name steps 1–2 resolved, a collision appending the short SHA to that name (IMP-B1).
 - **The `/implement` page counted eight subagents**, leaving out `defect-reporter`, which takes `impl-maintenance`'s place under `--skip-feedback` (IMP-B4); and **its example promised the next Epic or `/document` as the next step**, where the command offers `/dev-workflows:conformance` and `/security-workflows:scan` before the pull request merges (DQD-B2).
+
+## [4.44.0] — 2026-10-27
+
+Take with `workflows-core` 1.62.0, whose `overlap-reader` this release's `/design` dispatches — to-fix PR5 (live checks of 2026-10-26, run 2).
+
+### Changed
+- **`/design`'s whole-design overlap read is `workflows-core:overlap-reader`'s, on Opus, in place of an inline read** (PR5). Phase 5 dispatches it before the play-back that closes the grill — once the last question is answered and, where the run writes section by section, its last section is written — with `design.md` as written (none where the run writes it after the grill), `_design-session.md`, the specification — whose stories, criteria, test cases and scope lines it reads as what a decision must keep, since they live only there and a write-once run's session file holds none of them — Phase 2.5's `ard_paths` and invariants, and its place on a path as the kind it reads first. The orchestrator builds the play-back's `Overlap read:` line from the agent's counts, in the same format, and puts each conflict it returns to the user one question at a time before the gate, a departure from an inherited `[AD#N]` Rule only as an ARD deviation; a departure the agent returns as already recorded by a record of that departure, in the design or as a session decision — never by one of another departure from the same Rule — is named as settled by that record rather than asked again; on an `ERROR` or a failed dispatch it runs the read inline, and the play-back says so. Each play-back, its `Overlap read:` line among it, is the gate question's own text, never only narration before the question or only `_design-session.md`: run 2's whole-specification play-back never reached the screen, its line going only to `_session.md`. Where a write-once run's writing changed or added to anything a gate confirmed, a second dispatch, over `design.md` as written and naming each change and addition, precedes the whole-artifact gate that plays them back — on such a run the one overlap read that sees the written design before the review, which was the session's own, late in it. An operational step is still read inline against everything its selector reaches, since the agent reads no repository. `model_routing` records the agent under `review_model`. The live `/specify` run that triggered PR5 read three `[AD#N]` departures as kept, late in a long session; the same read now runs in a fresh Opus context.
+- The `/design` docs page and the agents page name the agent.
 
 ## [4.43.0] — 2026-10-27
 
