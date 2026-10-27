@@ -1078,7 +1078,7 @@ Each needs an answer more than work. Where the answer is "record it", the record
 
 | ID | Question | Recommended answer |
 |---|---|---|
-| **SEC-G3** | Write the sub-project A verification record now, or after another live run? | Write it from the Task 12 session notes now, and run route 7 and the clean install where they were not run. Pair the live part with B04's L2 check. |
+| **SEC-G3** | Write the sub-project A verification record now, or after another live run? | Write it from the Task 12 session notes now, and run route 7 and the clean install where they were not run. Pair the live part with B04's L2 check. *Done 2026-10-27: both had run; the record is `docs/superpowers/verification/2026-10-15-security-workflows-scan.md`. The L2 check was not paired.* |
 | **VU-G2** | When to run the `/vuln` baseline-symmetry change live? | After B06 and B22: one `/vuln` and one `/upgrade` against the bookstore fixture with a breaking bump, a stale local `main` and an annotated-tag pin. It verifies VU-B1, VU-B2, VU-B4 and VU-B8 at once. |
 | **VU-G3** | Give `/upgrade` an `ADDRESS:` token, or drop the prose that assumes one? | Drop the dead prose (it is VU-B10's fix in B06). Add the token only when a user asks to tie an upgrade to a unit. |
 | **DOC-D-G4** | Run the increment-2 docs commands end to end? | Yes, after B14: one bookstore pass through the route's steps 1–4 and 7, recording what fails in a verification record. |
