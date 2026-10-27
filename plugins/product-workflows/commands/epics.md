@@ -792,7 +792,8 @@ Act on the verdict (same shape as `/document` keyed mode Phase 7):
   ```
   choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]
   ```
-  "Manual fix notes" → take free-text from the user, then apply it via `doc-fixer`
+  "Manual fix notes" → get the BLOCKER's notes as the `Manual fix notes — the run drafts them`
+  rule in `workflows-core:escalation-rules` says (the run's draft, or the user's own), then apply them via `doc-fixer`
   (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) in a bounded one-shot pass, with no further
   re-review cycle — the same resolution `/document`'s identical option takes. Stating it is not
   redundant: every other option in this array has a resolution line and this one had none, so an

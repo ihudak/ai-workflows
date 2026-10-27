@@ -735,8 +735,16 @@ that file describes the archived revision and not this one.
    Verify each finding's claimed consequence at the location it names; keep it, mark it unverified, or
    dismiss it; record every dismissal with a reason that disposes of that finding's own claim and every
    unverified finding with what would settle it; and raise a grade only by effect. There is no
-   silent-drop disposition. Fix the surviving BLOCKERs inline (the orchestrator edits both artifacts —
-   there is no delegated writer), read the fix against what it overlaps — everything that overlaps it, as `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it, each figure it changes against every total and brief line computed from it and each total against the figures it is computed from among them — per the `An inline fix is read against what
+   silent-drop disposition. Where a `BLOCK` goes to its fix cycle and triage leaves open at least one
+   surviving `MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit (one triage marked
+   unverified never counts), first ask once whether to fold them into the fix cycle, per the
+   `A BLOCK review's other findings — folded into its fix cycle` rule in
+   `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`
+   (`choices: ["Fold them into this fix cycle (Recommended)", "Fix the BLOCKERs only — the rest wait for the re-review"]`),
+   the question's own text listing each surviving finding with its severity, where it is and what
+   the edit would change, and marking each surviving finding whose fix needs a decision, which stays
+   open whatever the answer. Fix the surviving BLOCKERs inline, and the findings folded in with them
+   (the orchestrator edits both artifacts — there is no delegated writer), read the fix against what it overlaps — everything that overlaps it, as `workflows-core:grilling-technique`'s *What a requirement overlaps* lists it, each figure it changes against every total and brief line computed from it and each total against the figures it is computed from among them — per the `An inline fix is read against what
    it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`, and
    re-review **once**, triaging that re-review — and one you chose
    at the first settle prompt — under `workflows-core:finding-triage` § On re-review. If the review **stayed
