@@ -26,7 +26,7 @@
 
 ## Reference
 
-- [Agents](reference/agents.md) — the ten agents this plugin bundles, and which commands dispatch them.
+- [Agents](reference/agents.md) — the eleven agents this plugin bundles, and which commands dispatch them.
 - [References](reference/references.md) — the reference corpus under `references/`, which the whole plugin family reads.
 - [Skills](reference/references.md#skills) — the two bundled skills, `model-routing` and `reference`: what each is for, and whether it is user-invocable.
 - [Environment](reference/environment.md) — every environment variable this plugin reads, and what it configures.
@@ -37,4 +37,4 @@
 
 ## Status
 
-This plugin ships 7 slash commands, 10 agents, and 38 reference files. Most of what it carries is not a command: it is the shared corpus and the agents the sibling plugins in this family — `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` — read and dispatch, extracted here so more than one plugin can depend on one copy. All four declare it, which is what makes it shared rather than merely reused.
+This plugin ships 7 slash commands, 11 agents, and 38 reference files. Most of what it carries is not a command: it is the shared corpus and the agents the sibling plugins in this family — `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` — read and dispatch, extracted here so more than one plugin can depend on one copy. All four declare it, which is what makes it shared rather than merely reused.
