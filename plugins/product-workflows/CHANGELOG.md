@@ -11,6 +11,7 @@ Take with `workflows-core` 1.60.0, whose `phase-handoff` §4.1 *Nothing to commi
 
 ### Fixed
 - `/brd-split` Phase 7 offers *Ground now* on *Nothing to commit* only where its line says the deliverable is already on the default branch, and the continuation's merge gate goes straight on only then; where the deliverable sits on a branch, unmerged — a reused, stacked or local-only branch — or the default branch changed it after that branch was cut, *Ground now* is dropped and the run says what must merge first. It read every *Nothing to commit* as nothing waiting on a merge (to-fix LC2).
+- `/brd-split`, `/brd-interview`, `/brd-package` and `/prd-ground`, with `/brd-split`'s docs page: each sentence saying a handoff that stages nothing reports *Nothing to commit* and opens no pull request now names the exception, a reused branch `workflows-core` 1.60.0's `phase-handoff` §2.3 re-publishes; `/brd-split` also drops *Ground now* where a local default branch is behind (to-fix LC2).
 - `/idea`: *What a run without a handoff therefore leaves behind* names a fourth route, a taken handoff whose commit git refused, which leaves the set staged on the handoff branch — `phase-handoff` §4.1's *Commit failed* — and Phase 5 offers the `@<path>` route on that line too, as on a decline or *Gate failed* (to-fix LC2).
 - The session-cost and session-feedback reference pages say `commit-artifacts` does not push a branch the plugin created that `origin` does not have yet (to-fix LC2).
 
