@@ -105,7 +105,9 @@ a false positive or an accepted risk as awaiting security review; --role sec con
 nobody decided is recorded open with default: true, a decision the replay skips where the allocation gave
 way to an earlier one, since the finding already holds a status.
 rebuild: regenerates register.json and register.md from the run records; prints the moves no run
-record holds yet, each marked provisional.
+record holds yet, each marked provisional -- the moves the first run that records anything reports -- and, as numbers,
+the [SEC#n] of every origin a record allocated, another name for a finding included: register.json names each finding
+by one origin only.
 verify-scope: prints, of the findings being fixed: as files, the file of each one --ref is later than the last
 sighting of, where its blob at --ref differs from the one last seen -- or, where no blob was recorded, git diff
 shows it changed between the last-seen commit and --ref; a file whose change cannot be told is not listed; as
@@ -2463,7 +2465,8 @@ def case_main_exits_2_with_the_stop_code_leading_stderr(tmp):
     r = run("commit", *args, "--decisions", os.path.join(tmp, "empty.json"))
     assert r.returncode == 0, r.stderr
     r = run("rebuild", *base)
-    assert r.returncode == 0 and json.loads(r.stdout) == {"findings": 1, "runs": 1, "renumbered": []}, r.stdout
+    assert r.returncode == 0 and json.loads(r.stdout) == {"findings": 1, "runs": 1, "renumbered": [],
+                                                          "numbers": {"s1:v3:aa": 1}}, r.stdout
 
 
 def case_squash_merge_closes_a_units_finding(tmp):
@@ -4157,9 +4160,57 @@ def case_reserved_move_a_reserved_record_already_holds_is_never_reported_again(t
     _copy_register(b, a)  # B's branch merges
     assert {n: g["origin"] for n, g in rebuild(a, "code")["findings"].items()} == {
         1: "sB:v3:p601", 2: "sA:v3:p319", 3: "sA:v3:p79"}
+    # The check after the merge: rebuild says CWE-79 is [SEC#3] and lists no move of it from [SEC#1], so no run will
+    # list the line -- it is corrected by hand.
+    out = _rebuild_cli(a)
+    assert out["numbers"]["sA:v3:p79"] == 3 and not [m for m in out["renumbered"] if (m["from"], m["to"]) == (1, 3)], out
     p2 = plan(a, "code", repo, None, None, "2026-10-16")
     assert p2["renumbered"] == [] and commit(a, "code", p2, {}, "S", "triage", None, "2026-10-16T11:00:00Z")[
         "renumbered"] == [], p2
+
+
+def _rebuild_cli(specs):
+    """What `register.py rebuild` prints for specs' register, run as the command runs it."""
+    r = subprocess.run([sys.executable, "-I", os.path.realpath(__file__), "rebuild", "--specs", specs, "--slug", "code"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
+def case_a_move_made_before_every_reserved_record_merges_is_checked_after_the_merge(tmp):
+    # The checkout holds x [SEC#2]. Branch C holds C1 (08:55: [SEC#2], [SEC#3], [SEC#4]) and C2 (09:05: cD [SEC#2]);
+    # branch B holds B1 (09:20), which reported x's plugin ID as new as [SEC#5]. plan says x moves 2->5 once C1 merges:
+    # that is its number once every reserved record has merged. C merges first: x is [SEC#6] and [SEC#5] is cD, so a
+    # line corrected to [SEC#5] would name another finding. rebuild shows where x stands and that the move is no record's
+    # yet, and the first run that records reports it, with the line to correct.
+    repo, c1 = _repo(tmp)
+    a, reserve = os.path.join(tmp, "a"), os.path.join(tmp, "reserve")
+    os.makedirs(a)
+    _scan(a, "s0", c1, [("v3:p0", "src/b.py", 1, "CWE-79", "LOW")])
+    commit(a, "code", plan(a, "code", repo, "s0", None, "2026-10-16"), {}, "Z", "scan", None, "2026-10-16T08:00:00Z")
+    _scan(a, "sA", c1, [("v3:px", "src/a.py", 23, "CWE-89", "HIGH")])
+    commit(a, "code", plan(a, "code", repo, "sA", None, "2026-10-16"), {}, "A", "scan", None, "2026-10-16T09:10:00Z")
+    rc1 = _reserved_record(reserve, "0002-20261016T085500Z-0000000c.json", 2, "08:55",
+                           [{"plugin_id": "v3:c%s" % k, "id": n, "origin": "sC1:v3:c%s" % k} for k, n in (("a", 2), ("b", 3),
+                                                                                                        ("c", 4))])
+    rc2 = _reserved_record(reserve, "0002-20261016T090500Z-0000000d.json", 2, "09:05",
+                           [{"plugin_id": "v3:cd", "id": 2, "origin": "sC2:v3:cd"}])
+    _reserved_record(reserve, "0002-20261016T092000Z-0000000b.json", 2, "09:20",
+                     [{"plugin_id": "v3:px", "id": 5, "origin": "sB1:v3:px"}])
+    p = plan(a, "code", repo, None, None, "2026-10-16", reserve)
+    assert p["reserved_moves"] == [{"origin": "sA:v3:px", "from": 2, "to": 5, "run": rc1, "held_by": None}], p
+    res = commit(a, "code", p, {"decisions": [{"target": "id:2", "status": "fix"}]}, "A", "triage", None,
+                 "2026-10-16T10:00:00Z", "sec", "code")
+    assert [SEC_RE.findall(line) for line in res["followups"]] == [["2"]], res
+    for name in (rc1, rc2):  # branch C merges; B does not yet
+        _wf(os.path.join(a, "security", "code", "runs"), name, open(os.path.join(reserve, name), encoding="utf-8").read())
+    out = _rebuild_cli(a)
+    assert (out["numbers"]["sA:v3:px"], out["numbers"]["sC2:v3:cd"]) == (6, 5), out["numbers"]
+    assert [(m["origin"], m["from"], m["to"]) for m in out["renumbered"] if m["from"] == 2 and m["to"] == 6] == [
+        ("sA:v3:px", 2, 6)], out["renumbered"]
+    nxt = commit(a, "code", plan(a, "code", repo, None, None, "2026-10-16"), {}, "S", "triage", None,
+                 "2026-10-16T11:00:00Z")
+    assert ("sA:v3:px", 2, 6) in [(m["origin"], m["from"], m["to"]) for m in nxt["renumbered"]], nxt
 
 
 def case_one_plugin_id_from_two_scans_is_one_finding(tmp):
@@ -4607,8 +4658,10 @@ HELP = {
               " the record now holds, each marked provisional: false.",
     "rebase": "Print the decisions file with every [SEC#n] it names moved from --answered-plan's numbering to --plan's,"
               " through each finding's origin; TRIAGE_INVALID names a number whose finding the register no longer holds.",
-    "rebuild": "Rebuild register.json and register.md. Prints {findings, runs, renumbered}: renumbered holds the moves no"
-               " run record holds yet, each marked provisional: true.",
+    "rebuild": "Rebuild register.json and register.md. Prints {findings, runs, renumbered, numbers}: renumbered holds the"
+               " moves no run record holds yet, each marked provisional: true, which the first run that records anything"
+               " reports; numbers maps every origin a record allocated -- another name for a finding included, which"
+               " register.json does not carry -- to its finding's [SEC#n].",
     "verify-scope": "Print {files, gone, unverifiable, unreachable}: files, of the findings being fixed at a --ref later"
                     " than their last sighting, whose file changed by --ref (by blob, or by git diff where no blob was"
                     " recorded); gone, an {id} entry for each whose file is gone at a --ref later than its last"
@@ -4663,7 +4716,8 @@ def main(argv):
         elif a.command == "rebuild":
             st = rebuild(specs, a.slug)
             recs = records(specs, a.slug)
-            out = {"findings": len(st["findings"]), "runs": len(recs), "renumbered": _unacked(recs, True)}
+            out = {"findings": len(st["findings"]), "runs": len(recs), "renumbered": _unacked(recs, True),
+                   "numbers": dict(sorted(_numbering(recs)[0].items()))}
         elif a.command == "verify-scope":
             out = verify_scope(specs, a.slug, _dir(a.repo, "--repo"), a.ref, a.unit)
         else:
