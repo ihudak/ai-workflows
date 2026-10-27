@@ -63,10 +63,17 @@ row per Epic is a picker that stops working on a perfectly ordinary PRD, which i
 of the picker rather than advice beside it.
 
 **Print every Epic as prose above the prompt** — marker, key and title, one line each, in the
-ordering above. **Where the Epics and the option the command adds, if any, fit in four, the array
-carries them all**, and the prose list is still printed because a greyed ● row reads better there.
-**Otherwise the cap applies**: the array carries **at most three Epic rows plus one option naming the
-remainder**, fewer where the command adds its own option (below). Five Epics, with no option added:
+ordering above — because a greyed ● row reads better there than in an option. **The picker does not
+depend on that list being seen, though**: what guarantees that every Epic is named is the remainder
+option's description, below, which the dialog shows whatever else the run prints. **Where the Epics
+and the option the command adds, if any, fit in four, the array carries them all**, and the prose
+list is still printed. **Otherwise the cap applies**: the array carries **at most three Epic rows plus
+one remainder option**, fewer Epic rows where the command adds its own option (below). **The
+remainder option is labelled `Another Epic (you'll be prompted for its key)`, and its `description`
+names every Epic the array leaves out** — marker, key and title each, in the picker's order, after
+`Not shown as an option:` — because `AskUserQuestion` renders each option's description under its
+label, so an Epic the array leaves out reaches the user even where the prose list was never
+printed. Five Epics, with no option added:
 
     Epics under PRD-ACME-77 orders:
       ◐ EPIC-ACME-77-02  order intake       (in progress)
@@ -75,13 +82,25 @@ remainder**, fewer where the command adds its own option (below). Five Epics, wi
       ○ EPIC-ACME-77-04  tax rules
       ● EPIC-ACME-77-01  catalogue sync     (done — selecting it does what the command's ● rule says)
 
-    choices: ["◐ EPIC-ACME-77-02 order intake (Recommended)", "○ EPIC-ACME-77-03 billing hand-off", "○ EPIC-ACME-77-05 refund path", "Another Epic from the list above (you'll be prompted for its key)"]
+    choices: ["◐ EPIC-ACME-77-02 order intake (Recommended)", "○ EPIC-ACME-77-03 billing hand-off", "○ EPIC-ACME-77-05 refund path", "Another Epic (you'll be prompted for its key)"]
+    description of the last option: "Not shown as an option: ○ EPIC-ACME-77-04 tax rules; ● EPIC-ACME-77-01 catalogue sync (done)"
 
 Choosing the last option asks for the key in plain text, and a key typed straight into the
 harness's free-text option is taken as given (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`
-§0, *A selection carries no text*); either way the run resolves the typed key **against the keys it
-just listed** — never by parsing one out of the answer
-(`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §1).
+§0, *A selection carries no text*); either way the run resolves the typed key **against the keys the
+picker listed** — the array's rows and the remainder option's description — never by parsing one
+out of the answer (`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §1).
+
+**The first actionable row carries `(Recommended)`**, whether or not the cap applied: the row the
+default cursor lands on (*The marker, and where it comes from*), ◐ before ○, as the example's first
+row does. A command's own rule recommends something else in two places, both questions of the
+one-Epic branch above rather than rows of this picker: `/specify` recommends the broad PRD-level spec
+over the one Epic of a multi-component PRD with no PRD-level `specification.md` (`/specify` Phase 2),
+and `/implement` recommends neither the one Epic nor the broad PRD-level slice where the PRD folder
+also holds a flat `specification.md` and the PRD is not multi-component (`/implement` Phase 0).
+**Where every Epic row is ●, nothing is actionable and no option carries the marker**: say so in
+prose beside the list (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`,
+*When no option is safe to recommend*).
 
 **A command that adds its own option to this picker counts it against the four.** `/specify`
 appends *"Author one broad PRD-level spec instead"* on every run — it is the command that authors

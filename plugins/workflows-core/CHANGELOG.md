@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.60.0] — 2026-10-27
+
+Take with `dev-workflows` 4.41.0 and `product-workflows` 3.49.0, whose Epic pickers restate this release's remainder option and marker rule (to-fix LC1, LC9, live checks of 2026-10-26).
+
+### Changed
+- **`epic-picker` *The cap*: the remainder option names the Epics the array leaves out.** It is labelled `Another Epic (you'll be prompted for its key)`, and its `description` names every Epic the array leaves out — marker, key and title each, in the picker's order, after `Not shown as an option:` — since the dialog shows each option's description under its label. It read *Another Epic from the list above*, and run 1 of the live checks printed that list in none of eight pickers, so in the four that overflowed a left-out Epic was named nowhere. The prose list stays, as the place a greyed ● row reads best, but nothing depends on it now; a typed key is resolved against the array's rows and the description's. The worked example shows the label and the description (to-fix LC1).
+- **`epic-picker` *The cap* states the `(Recommended)` marker rule**, which only its example carried: the first actionable row carries it, ◐ before ○, whether or not the cap applied; `/specify`'s and `/implement`'s one-Epic questions keep their own rules; and where every Epic row is ●, no option carries it, per `escalation-rules`' *When no option is safe to recommend*. Run 1 marked the first row in three of six `/implement` pickers and not in the other three (to-fix LC1).
+
 ## [1.59.1] — 2026-10-27
 
 Take with `dev-workflows` 4.40.0 and `product-workflows` 3.48.0, whose *Set SPECS_PATH* sites this release's citer list names (batch B20).

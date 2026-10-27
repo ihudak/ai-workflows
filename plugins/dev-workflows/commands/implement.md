@@ -139,10 +139,17 @@ folder and what it carries — and, where it holds an `idea.md` and no `prd.md`,
     gate below does not catch that, an absent in-scope spec being `absent` rather than a stop. So:
     every Epic listed as prose, and, where the flat `specification.md` stands, the array carrying that
     broad-slice choice beside every Epic row where three or fewer stand, and otherwise **at most two**
-    Epic rows and *"Another Epic from the list above (you'll be prompted for its key)"*; where it does
+    Epic rows and *"Another Epic (you'll be prompted for its key)"*; where it does
     not, the choice is omitted and the freed row goes back to the Epics — every Epic row where four or
     fewer stand, and otherwise **at most three** plus that same remainder option, which is *The cap*'s
-    own shape for a picker appending nothing of its own. **`/implement`'s
+    own shape for a picker appending nothing of its own. Either way the remainder option's
+    `description` names every Epic the array leaves out — marker, key and title each, in the picker's
+    order — so a left-out Epic is named in the dialog whether or not the prose list was printed, and a
+    typed key is resolved against the keys the array and that description listed. **The first
+    actionable row carries `(Recommended)`, the broad-slice choice beside it or not**: the one-Epic
+    question above carries no marker by its own rule, which does not reach this picker; where every
+    Epic is ●, no option carries it, and the prose beside the list says so. *The cap* states the
+    description, typed-key and marker rules. **`/implement`'s
     done-predicate is now the artifacts present in each Epic folder**, which is the mechanism
     `/design`'s own Epic picker already uses:
     `specification.md` but no `design.md` → ○; `design.md` present, no record → ◐; a record → ●

@@ -18,6 +18,13 @@ Sub-project A's Task 12 never merged the Epic's pull request (`docs/superpowers/
 - **SEC-A2 — `/dev-workflows:conformance` after the Epic merged.** Expect `unit-branch` to read `merged` and the Epic run to trace the default branch.
 - **SEC-A3 — the register in session-branch mode.** With `workflows.sessionBranch` set on the specs copy, run a change scan. Expect the register's paths, `runs/`, `scans/`, `register.json` and `register.md`, committed on `session/<identity>` with the run's session files and pushed there, the default branch untouched, and the next run's preflight finding them through the overlay.
 
+## To-fix LC1 and LC9 — `workflows-core` 1.60.0, `dev-workflows` 4.41.0, `product-workflows` 3.49.0
+
+Install all three together.
+
+- **LC1 — every Epic a picker leaves out is named in the dialog.** Setup: run 1's six PICK PRDs on the specs copy (`~/e2e-live/b16/setup-pickers.sh` on the test machine), and run 1's eight commands typed in turn as run 1 of `docs/superpowers/verification/2026-10-26-live-checks.md` did. Expect each picker that overflows (cases 3, 4, 6 and 8) to label its last option *Another Epic (you'll be prompted for its key)* and to name, in that option's description, every Epic the array leaves out by marker, key and title, whatever the run prints above the prompt. Expect the first actionable row marked `(Recommended)` in all six `/implement` pickers, beside the broad-slice choice too, and no row marked in the two `/specify` pickers, whose Epics are all ●, with the prose beside the list saying so.
+- **LC9 — `/specify`'s next step offers `/design <PRD>` on a multi-component PRD holding Epics only once an Epic's `specification.md` is merged.** Setup: a multi-component PRD (an ARD whose `components:` holds two `kind: code` entries) with Epic folders and no PRD-level `specification.md`, and `/specify <PRD>` at PRD level, choosing the broad PRD-level spec at Phase 2's Step A. Expect no offer of `/dev-workflows:design <PRD>` where no Epic folder holds a merged `specification.md`, and, with one Epic's `specification.md` merged, the offer named as designing the Epics. This replaces B16-6, whose single-component setup could not reach the case.
+
 ## Live checks kept in `to-fix.md`
 
 These stay in `docs/superpowers/to-fix.md`, which holds their detail; they are named here so a test session sees every live check in one place.
@@ -25,5 +32,4 @@ These stay in `docs/superpowers/to-fix.md`, which holds their detail; they are n
 - **PR2** — measure the first `/implement` of a design drawing more than two pieces.
 - **LC5** — after its fix, `/design` revising a `design.md` whose `## Pieces` holds a stale `_N/A` above two pieces should fix it with no question.
 - **LC6** — after its fix, the offer made after a re-review lists each open finding with its severity in its own question.
-- **LC9** — after its fix, `/specify`'s next step offers `/design <PRD>` on a multi-component PRD holding Epics only once an Epic's `specification.md` is merged. This replaces B16-6, whose single-component setup could not reach the case.
 - **LC10** — after its fix, with run 6's setup, the triage report names the move the reserved record's merge makes, before the push.

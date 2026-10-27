@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.41.0] — 2026-10-27
+
+Take with `workflows-core` 1.60.0, whose `epic-picker` *The cap* these pickers cite (to-fix LC1, LC9, live checks of 2026-10-26).
+
+### Changed
+- **`/design`, `/implement` and `/conformance`: an Epic picker's remainder option names the Epics the array leaves out.** It is `Another Epic (you'll be prompted for its key)`, its `description` naming each of them — marker, key and title in `/design` and `/implement`, key and title, marked where it covers the requirement, in `/conformance` — and a typed key is resolved against the keys the array and that description listed. It read *Another Epic from the list above*, pointing at a prose list run 1 of the live checks never saw printed (to-fix LC1).
+- **`/design` and `/implement`: the picker's first actionable row carries `(Recommended)`**, and no option does where every Epic is ●. `/implement` marks it beside the broad-slice choice too: its one-Epic question's unmarked array is that question's rule alone. Run 1 marked it in three of six `/implement` pickers (to-fix LC1).
+- The `/design` and `/implement` docs pages describe the remainder option and the marker.
+
 ## [4.40.0] — 2026-10-27
 
 Take with `workflows-core` 1.59.1 (batch B20).
