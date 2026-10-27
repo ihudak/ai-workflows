@@ -171,7 +171,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes — it is the user's queued next sub-project and E4's port is blocked on it. The evidence it rests on is recorded: 17 `code-writer` groups duplicating helpers (Ruling 43), route 3's five dispatches for one coupled three-file change (Ruling 60), and IMP-G2's unmet cost bar.
 - **Suggested scope:** brainstorm → spec covering (a) one `code-writer` dispatch per approved plan (or per `/design`-declared loosely coupled part), with the compaction risk the spec's *One coding subagent per plan step* decision guarded against re-argued; (b) `/epics` sizing by coupling with `size_limit` as a warning; (c) the open PRD-level `/specify` question; (d) the A/B on the e2e copies with a blind judge and cost measurement as acceptance.
 
-### IMP-G2 — implement-coding-subagents' *Success* cost bar was never met, and no verification record closes it
+### IMP-G2 — implement-coding-subagents' *Success* cost bar was never met, and no verification record closes it — **Decided 2026-10-27: retired by the user's ruling (`docs/superpowers/to-fix.md`, *Accepted*)**
 - **Designed in:** `docs/superpowers/specs/2026-10-17-implement-coding-subagents-design.md` § Success: "the entry's total no higher than route 3's $15.63 for comparable work … a costlier run there is the anti-goal *a costlier run that is no better*", and "the orchestrator's own transcript with materially fewer cache-read tokens than route 3's whole run, 36.6M".
 - **Current state:** the like-for-like route-3 re-run cost **$33.42** (calc $35.31) against $15.63, 184 main turns against 121, median context 446k against 324k (`verification/2026-10-17-implement-coding-subagents-ledger.md:276`); the Epic run cost $93.92 with 114.0M main cache-read (`:229`, marked "not comparable"). The blind A/B judged the new run better (ledger, fix round 2 header), so the anti-goal is arguably avoided, and Ruling 54 attacked one cause (44 run-state-only turns, ~20.8M cache-read). But no re-measurement after Rulings 54–89 is recorded, and there is no `verification/2026-10-17-implement-coding-subagents.md` record — only the ledger and rulings — so the Success section has no stated disposition.
 - **Still worth doing?:** yes, as part of IMP-G1's A/B rather than separately.
@@ -234,7 +234,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## product-workflows — idea → PRD → ARD → spec → epics, decisions, proposals
 
-### PRD-G2 — the live calibration of the Epic size limit was never recorded
+### PRD-G2 — the live calibration of the Epic size limit was never recorded — **Decided 2026-10-27: dropped by the user's ruling (`docs/superpowers/to-fix.md`, *Accepted*)**
 - **Designed in:** `docs/superpowers/specs/2026-10-12-epic-sizing-design.md` §4 (*"Calibration, live: `/epics` on the BOOK-2-01 demo PRD, then its `/conformance` results — discrepancies per Epic against Epic size — to confirm or move the limit"*) and §5 (*"The limit is a guess until calibrated"*).
 - **Current state:**
   - The spec has no verification record. `docs/superpowers/verification/` holds none for epic-sizing.
