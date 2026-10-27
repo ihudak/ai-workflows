@@ -512,6 +512,36 @@ def check_typed_only(root: Path) -> tuple[int, int]:
     return errors, 0
 
 
+# A coding dispatch names its model. /implement codes through `code-writer` and fixes through
+# `review-fixer` on a model its routing chose, and a dispatch line that names none runs on whatever
+# the harness defaults to -- a live run once dispatched the coding subagent with no `model:` at all
+# (IMP-G4, the 2026-10-26 feature-gaps review). The check holds the text; Phase 0's session-model
+# gate holds the run.
+CODING_DISPATCH = re.compile(r'subagent_type:\s*"[^"\s:]+:(code-writer|review-fixer)"(\s*,\s*model:)?')
+CODING_COMMAND = Path("plugins") / "dev-workflows" / "commands" / "implement.md"
+
+
+def check_coding_dispatch_models(root: Path) -> tuple[int, int]:
+    """Every `code-writer` or `review-fixer` dispatch line in a command names its `model:`."""
+    errors, seen = 0, 0
+    for path in sorted((root / "plugins").glob("*/commands/*.md")):
+        for n, line in enumerate(path.read_text(encoding="utf-8").split("\n"), 1):
+            m = CODING_DISPATCH.search(line)
+            if not m:
+                continue
+            seen += 1
+            if not m.group(2):
+                print(f"  ERROR {path.relative_to(root)}:{n}: dispatches `{m.group(1)}` naming no "
+                      f"`model:` beside it -- it would run on whatever the harness defaults to, not on the "
+                      f"model the run's routing chose")
+                errors += 1
+    if seen == 0 and (root / CODING_COMMAND).is_file():
+        print(f"  ERROR {CODING_COMMAND}: no `code-writer` or `review-fixer` dispatch line found -- "
+              f"the coding-dispatch check would examine nothing")
+        errors += 1
+    return errors, 0
+
+
 def validate_repo(root: Path) -> tuple[int, int]:
     print(f"\n=== {root}")
     errors = 0
@@ -619,6 +649,10 @@ def validate_repo(root: Path) -> tuple[int, int]:
     errors += e
     warnings += w
 
+    e, w = check_coding_dispatch_models(root)
+    errors += e
+    warnings += w
+
     e, w = check_instruction_sizes(root)
     errors += e
     warnings += w
@@ -641,7 +675,8 @@ def _selftest() -> int:
               second_plugin_name: str | None = None,
               duplicate_at: str | None = None,
               claude_md: str | None = None, rules: dict[str, str] | None = None,
-              empty_dirs: tuple[str, ...] = (), entries: dict[str, str] | None = None) -> None:
+              empty_dirs: tuple[str, ...] = (), entries: dict[str, str] | None = None,
+              files: dict[str, str] | None = None) -> None:
         plugin = root / "plugins" / "fixture" / ".claude-plugin"
         plugin.mkdir(parents=True)
         (plugin / "plugin.json").write_text(json.dumps(
@@ -695,6 +730,11 @@ def _selftest() -> int:
         for rel, text in (entries or {}).items():
             # A command, agent or skill file inside the fixture plugin, by its path there.
             path = root / "plugins" / "fixture" / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+        for rel, text in (files or {}).items():
+            # Any file, by its path from the repository root.
+            path = root.joinpath(*rel.split("/"))
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding="utf-8")
         for rel, text in (rules or {}).items():
@@ -752,6 +792,26 @@ def _selftest() -> int:
     case("an escaped quote in a quoted description counts once", True, "OK",
          entries={"commands/q.md": "---\ndescription: \"" + "x" * (ENTRY_DESC_WARN - 3)
                                    + "\\\"y\\\"\"\n" + TYPED + "---\n"})
+
+    # Coding dispatches name their model (IMP-G4).
+    case("a coding dispatch naming its model passes", True, "OK",
+         entries={"commands/c.md": "---\ndescription: d\n" + TYPED + "---\n→ Agent (subagent_type: "
+                                   "\"fixture:code-writer\", model: `<implementation_model>`):\n"})
+    case("a code-writer dispatch naming no model is rejected", False,
+         "dispatches `code-writer` naming no `model:`",
+         entries={"commands/c.md": "---\ndescription: d\n" + TYPED + "---\n→ Agent (subagent_type: "
+                                   "\"fixture:code-writer\"):\n"})
+    case("a review-fixer dispatch naming no model is rejected", False,
+         "dispatches `review-fixer` naming no `model:`",
+         entries={"commands/c.md": "---\ndescription: d\n" + TYPED + "---\n→ Agent (subagent_type: "
+                                   "\"fixture:review-fixer\"):\n  > \"Fix the findings.\"\n"})
+
+    case("a model named later on the line is not the dispatch's", False,
+         "dispatches `code-writer` naming no `model:`",
+         entries={"commands/c.md": "---\ndescription: d\n" + TYPED + "---\n→ Agent (subagent_type: "
+                                   "\"fixture:code-writer\") -- its model: is said elsewhere.\n"})
+    case("an implement.md with no coding dispatch is rejected", False, "would examine nothing",
+         files={"plugins/dev-workflows/commands/implement.md": "No dispatch here.\n"})
 
     # Typed-only commands. A command the user types carries `disable-model-invocation: true`,
     # which keeps it out of the model's skill listing; the Skill tool refuses a flagged command,

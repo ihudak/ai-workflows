@@ -685,7 +685,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## dev-workflows — /implement
 
-### IMP-B1 — MINOR — Pre-Phase 3 step 3 hard-codes a branch name that contradicts steps 1–2 (convention discarded, key doubled)
+### IMP-B1 — MINOR — Pre-Phase 3 step 3 hard-codes a branch name that contradicts steps 1–2 (convention discarded, key doubled) — **Fixed in dev-workflows 4.45.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:713`, `:715`, `:717` (at 0e02e28b)
 - **What is wrong:** Step 1 builds the name from the repository's documented convention, filling its segments, and only "when the repo documents no convention (§1.4) build `<prefix>/<slug>`". Step 2 then says "When `unit_key` is set and the chosen shape has no separate issue-key segment, prefix it: `<unit_key>-<slug>`." Step 3 then ignores both: "**Create and checkout** — `git checkout -b <prefix>/<unit_key>-<slug>` on a keyed run, `<prefix>/<slug>` in direct mode. If that name already exists, append the first 7 chars of HEAD's SHA: `<prefix>/<slug>-<short-sha>`."
 - **Failure scenario:** (a) A repository whose CONTRIBUTING.md documents `<initials>/<KEY>-<desc>`: step 1 produces `ih/BOOK-1-01-add-x`, step 3, read literally, runs `git checkout -b <prefix>/<unit_key>-<slug>`, a shape with a prefix segment the convention does not have. (b) No convention: step 2 already makes the slug `BOOK-1-01-add-x`, and step 3's `<prefix>/<unit_key>-<slug>` yields `feat/BOOK-1-01-BOOK-1-01-add-x`. (c) On a name collision in keyed mode the fallback form `<prefix>/<slug>-<short-sha>` is written without `<unit_key>`, so the key a reader of the branch name looks for (the docs say the branch "carries" the key) is present only by the accident of step 2's prefixing. Three live instructions disagree about one name; an agent running them literally picks one.
@@ -712,7 +712,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high (that the census is incomplete); low impact
 
-### IMP-B4 — NIT — the `/implement` docs page's agent census omits `defect-reporter`
+### IMP-B4 — NIT — the `/implement` docs page's agent census omits `defect-reporter` — **Fixed in dev-workflows 4.45.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/docs/commands/implement.md:46`
 - **What is wrong:** "Eight named subagents are dispatched: … `workflows-core:impl-maintenance` (Phase 4). … `--enforce-model` overrides all eight." Under `--skip-feedback`, Phase 4 dispatches `workflows-core:defect-reporter` in Agent 4's place (`commands/implement.md:1059`), a ninth named subagent with its own model rule (`§2.1 Sonnet chain, or run_flags.enforced_model`). The page's synopsis paragraph names it, but the census and "all eight" do not.
 - **Failure scenario:** a reader checking which agents `--enforce-model` reaches is told eight.
@@ -2438,28 +2438,28 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `conformance-not-checkable-unrecorded` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B32 — MINOR — Step 7.5 writes an open `- [ ]` note for a deferral the user decided in the same run
+### FBB-B32 — MINOR — Step 7.5 writes an open `- [ ]` note for a deferral the user decided in the same run — **Fixed in dev-workflows 4.45.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:1018` (every unresolved `missing`/`contradicts` gets a note), against `plugins/dev-workflows/agents/code-review.md:245-247` (a `missing` with a recorded deferral is a `MINOR` flagged note).
 - **What is wrong:** A decided deferral (the plan's Out of scope, or an ARD deviation) raises the spec's Open questions from 0 to 1.
 - **Suggested fix:** Exempt a recorded deferral, or write a closed "deferred by decision" note that the open-question count does not include.
 - **Source:** feedback `implement-deferral-forced-open-note` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B34 — NIT — `risk-planner` acceptance checks are not required to use fixed-string grep
+### FBB-B34 — NIT — `risk-planner` acceptance checks are not required to use fixed-string grep — **Fixed in dev-workflows 4.45.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/agents/risk-planner.md:119-120` (`### Acceptance checks` — "[concrete observable conditions that prove success]").
 - **What is wrong:** A `grep -c` on a literal containing `${…}` printed 0 against files that hold the line.
 - **Suggested fix:** Require `grep -F` for literal text, or a dry run of each check against the tree.
 - **Source:** feedback `implement-acceptance-grep-regex` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B36 — NIT — `test-baseliner` verify lists new failures by name only
+### FBB-B36 — NIT — `test-baseliner` verify lists new failures by name only — **Fixed in dev-workflows 4.45.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/agents/test-baseliner.md:254-255` (`### New failures` — "one test identifier per line"); `:231` (the status does not count new failures).
 - **What is wrong:** The fix loop must re-run each failing spec to learn why it fails.
 - **Suggested fix:** Carry each failure's first assertion line, plus a `New failures: N` header field.
 - **Source:** feedback `implement-verify-status-ok-with-new-failures` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B38 — MINOR — A post-review departure from the literal `design.md` or spec text leaves the specs contradicting the code
+### FBB-B38 — MINOR — A post-review departure from the literal `design.md` or spec text leaves the specs contradicting the code — **Fixed in dev-workflows 4.45.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:1018` (step 7.5 escalates only the review's `missing`/`contradicts`); no step covers edits made after the review. A grep for `depart` in `implement.md` hits only `:805` and `:971`, neither of which applies here.
 - **What is wrong:** Fixes chosen by the user after the review changed markup and validation that `design.md` states literally. Nothing amended the design or wrote a note, so a later `/conformance` flags both.
 - **Suggested fix:** When an edit after the review changes literally specified behaviour, amend the document and hand it off through Phase 4.5, or at least write a step-7.5-style note.
@@ -2782,7 +2782,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQD-B2 — MINOR — The `/implement` page's example promises a next step the command no longer offers
+### DQD-B2 — MINOR — The `/implement` page's example promises a next step the command no longer offers — **Fixed in dev-workflows 4.45.0 (batch B21)**
 - **Where:** `plugins/dev-workflows/docs/commands/implement.md:108`
 - **What is wrong:** "…closes with the four Phase 4 maintenance agents and the Final Report — recommending the next Epic, or `/docs-workflows:document` once every Epic under the PRD is implemented." The command's `### Next step` (`plugins/dev-workflows/commands/implement.md:1291`) follows the dev lane. That lane offers, before the pull request merges, `/dev-workflows:conformance <EPIC>` and then `/security-workflows:scan <EPIC>`, then the remaining Epics. Once every Epic has merged it offers the PE's `/dev-workflows:conformance <PRD>`, and only then `/docs-workflows:document <PRD>` (`next-phase-offer.md:318-319`). Nowhere on the `/implement` page does a user learn that `/conformance` and the security scan are the next step after an Epic. Its *See also* (`:110-`) does not link `/conformance` either.
 - **Failure scenario:** A Dev following the page goes straight to the next Epic or to `/document`. They skip the pre-merge conformance check and scan that the family's delivery assumes. `/dev-workflows:conformance`'s own page says `/implement` "offers this command as its next step" (`conformance.md:105`), so the two pages contradict each other.
