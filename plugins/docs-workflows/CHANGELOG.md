@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.27.0] — 2026-10-27
 
-Released with `workflows-core` 1.61.0 and `product-workflows` 3.50.0, relying on neither — to-fix LC8 (live checks of 2026-10-26).
+Released with `workflows-core` 1.61.0, `dev-workflows` 4.42.0 and `product-workflows` 3.50.0, relying on none of them — to-fix LC8 (live checks of 2026-10-26).
 
 ### Changed
 - `/document` Phase 7's `doc-fixer` brief, on both verdict paths, says that a finding whose suggested fix offers alternatives that differ in what the text means or requires (readings of a requirement, a scope line or a term), or whose fix takes a product or scope decision, is deferred as `DEFERRED — needs human decision`, naming each alternative, and never chosen: a `BLOCKER` so deferred reaches the user at the escalation, and a `MAJOR` goes to the Phase 9 report's `### Deferred items` with the alternatives. Alternatives that mean the same, such as two ways to mend one link, stay an edit it applies. In run 4 of the live checks `/epics`' `doc-fixer`, dispatched the same way, took one of two readings a `MAJOR` offered and wrote it into the Epic (LC8). The docs page says so.
