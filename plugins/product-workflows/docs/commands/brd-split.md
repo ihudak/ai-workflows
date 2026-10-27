@@ -225,7 +225,7 @@ allocated ledger satisfies the front of two of them and only one is the run the 
   resolves both in the same run.
 - **The no-op** — no row `unallocated`, no child standing empty, no child out of step with the
   parent's ledger, and no re-cuttable row: the run skips straight from Phase 0 to Phase 6, which
-  reports nothing to commit — unless its branch holds a deliverable commit an earlier run could not push, or a merge of the default branch you made, which
+  reports nothing to commit — unless its branch holds a deliverable commit an earlier run could not push, or a merge of the default branch you made and have not pushed, which
   it pushes then. A child is **in step** where its `brd-link.md` `claims:`, the rows of
   its `brd/brd-inventory.md`, and the parent's rows reading `covered-by: <that child>` name the same
   `[BR#n]` ids — the same test [`/prd-ground`](prd-ground.md) applies before grounding a slice. A
@@ -420,7 +420,7 @@ so no child folder is created.
 
 Behind Phase 6's consent choice, these are committed, pushed, and a pull request opened against
 the specs repo's default branch under the shared `brd/<BRD-KEY>-<slug>` branch prefix — skipped
-with a "nothing to commit" report on the no-op path, and on a reconcile-path run that reconciled nothing and kept every empty child unchanged — unless the branch holds a deliverable commit an earlier run could not push, or a merge of the default branch you made, which is pushed then.
+with a "nothing to commit" report on the no-op path, and on a reconcile-path run that reconciled nothing and kept every empty child unchanged — unless the branch holds a deliverable commit an earlier run could not push, or a merge of the default branch you made and have not pushed, which is pushed then.
 
 ## Gates
 

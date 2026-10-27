@@ -822,7 +822,7 @@ spend before it is the conversation's.
        with no pull request beside it. The commits stay on local
        `<branch>` until a later handoff of the branch pushes it, carrying
        every commit on it — one that commits the deliverable, or re-publishes
-       one (`phase-handoff.md` §2.3) — or until the operator runs
+       the branch (`phase-handoff.md` §2.3) — or until the operator runs
        `git -C "<SPECS_PATH>" push -u origin <branch>`.
    - **`push-scope`: every commit the push would publish is a session-file
      commit.** First the base the push is measured against:
