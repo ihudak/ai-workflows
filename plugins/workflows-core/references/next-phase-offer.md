@@ -117,7 +117,8 @@ So the merge is named by every next-step offer that names a downstream gate its 
 | Push failed | `(once <branch> is pushed, its pull request opened, and merged)` |
 | Push refused for access | `(once <branch> is pushed — this identity may not push to origin — its pull request opened, and merged)` |
 | No remote | `(once <branch> is merged into the default branch — this specs repo has no remote, so no pull request will do it)` |
-| Nothing to commit | `(its inputs are already on the default branch — you can run it now)` |
+| Nothing to commit, the deliverable already on `<default>` | `(its inputs are already on the default branch — you can run it now)` |
+| Nothing to commit, the deliverable on `<branch>`, unmerged | `(its inputs sit on <branch>, unmerged — it waits until <branch> reaches the default branch)` |
 | Commit failed | `(once the deliverable staged on <branch> is committed, pushed and its pull request merged)` |
 | Declined by the user | `(once this run's artifacts reach the default branch — they are written but not there)` |
 | Gate failed | `(once this run's artifacts reach the default branch — the handoff did not run)` |

@@ -1463,11 +1463,13 @@ retyping a command whose arguments this run already knows.** It runs
 `/product-workflows:prd-ground` on the children chosen below — one complete run each, after this
 run's pull request has merged (*Ground now — the operator-elected continuation*, after the final
 report). **It is offered only where Phase 6's §4.1 outcome reaches the default branch by the
-operator's merge alone** — `PR opened` or `PR already existed`, or `nothing to commit`; on any other
-outcome (a declined handoff, no remote, a failed push, a pull request not opened) the children's
-files are not on their way to main, so it is dropped from the array and the run says what must
-happen first — that outcome line's own remedy, then `/product-workflows:prd-ground <CHILD-KEY>`
-by hand. *Ground each child later* is the guidance this phase always gave: it names the command
+operator's merge alone** — `PR opened` or `PR already existed` — or is there already — `nothing to
+commit` where its line says the deliverable is already on the default branch; on any other
+outcome (a declined handoff, no remote, a failed push, a pull request not opened, or `nothing to
+commit` where its line says the deliverable sits on its branch, unmerged) the children's files are
+not known to be on their way to main, so it is dropped from the array and the run says what must
+happen first — that outcome line's own remedy, or, for a deliverable sitting on its branch, that
+branch's merge — then `/product-workflows:prd-ground <CHILD-KEY>` by hand. *Ground each child later* is the guidance this phase always gave: it names the command
 and runs nothing. *Stop here* ends the run as it always did. **`<later-recommended>` is a placeholder
 this run resolves once**, as `workflows-core:escalation-rules` *The `(Recommended)` marker is
 unconditional* sanctions: ` (Recommended)` where *Ground now* is dropped, so the array still
@@ -1709,7 +1711,8 @@ never merges (`workflows-core:specs-repo-git` §1 rule 4, `workflows-core:phase-
 this section waits for the operator's merge and checks it.
 
 1. **The merge gate**, read off Phase 6's §4.1 outcome:
-   - **`nothing to commit`** — nothing of this run's waits on a merge: go to step 2.
+   - **`nothing to commit`, its line saying the deliverable is already on the default branch** —
+     nothing of this run's waits on a merge: go to step 2.
    - **`PR opened` or `PR already existed`** — **Test before asking.** Run
      `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C "$SPECS_PATH" fetch --quiet origin` (`workflows-core:bounded-run`) and the merge test
      below: an operator may already have merged it while this run finished. Merged → step 2.

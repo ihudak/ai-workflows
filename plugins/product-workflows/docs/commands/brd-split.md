@@ -600,7 +600,7 @@ offered here. It is each such child's own re-entry at `/prd-ground` and then, in
 `/brd-split` run is what offers `/brd-interview` next, on the child's own key.
 
 **_Ground now_ runs that grounding for you, in the same session — only when you choose it.** It is
-the recommended option on a root run whose pull request is open (or that had nothing to commit):
+the recommended option on a root run whose pull request is open (or that had nothing to commit, its files already on the default branch):
 you pick the children — all of them by default, or the ones you will work on soon, since grounding
 a slice nobody touches for weeks spends Opus time on a baseline that goes stale — name the
 repositories once, from the clones it lists, and see each child's cost before you confirm. The

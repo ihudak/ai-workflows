@@ -91,7 +91,7 @@ a set of files rather than one (`/idea` vendors its sources into `attachments/` 
 classified OTHER, never staged, and never reaches the default branch, while the deliverable that links
 it lands there pointing at a path on no ref.
 
-Nothing staged → no commit. Emit the §4.1 `nothing to commit` line, and skip §2.5 and §2.6, so an empty branch is never pushed; where the branch is a reused one (§2.2 rule 3) already on `origin`, its pull request stands as it was. This is not an error: a re-run that changed nothing is a legitimate outcome.
+Nothing staged → no commit. Emit the §4.1 `nothing to commit` line, and skip §2.5 and §2.6, so an empty branch is never pushed; where the branch is a reused one (§2.2 rule 3) already on `origin`, its pull request stands as it was. The line says where the deliverable is, which is what the next phase's gate tests (§3): already on `<default>` where every declared path matches `<default-ref>` — `git -C "$SPECS_PATH" diff --quiet <default-ref> -- <the declared paths>` exits 0, as on a branch cut from the default branch — and otherwise on `<branch>`, unmerged: a reused branch, one stacked on another phase's (§2.2), or one only this clone holds. This is not an error: a re-run that changed nothing is a legitimate outcome.
 
 ### 2.4 Commit
 
@@ -453,7 +453,7 @@ one, and two lines on a run whose reader expected one.
 | Push failed | `Phase handoff: committed <sha7> on <branch> — push FAILED (<reason>). The phase is NOT handed off.` |
 | Push refused for access (§2.5) | `Phase handoff: committed <sha7> on <branch> — push REFUSED: this identity may not push to origin (<git's first error line>). The phase is NOT handed off; <sha7> stays on local <branch>. Once you have push access, run git -C "<SPECS_PATH>" push -u origin <branch>, then open its pull request into <default>.` |
 | No remote | `Phase handoff: committed <sha7> on <branch> — this specs repo has no origin remote, so nothing was pushed and no PR was opened. The phase is NOT handed off.` |
-| Nothing to commit | `Phase handoff: no deliverable changes to commit on <branch>. Nothing was pushed, and no pull request was opened.` |
+| Nothing to commit | `Phase handoff: no deliverable changes to commit on <branch>, and the deliverable <is already on <default> \| sits on <branch>, unmerged>. Nothing was pushed, and no pull request was opened.` (§2.3) |
 | Commit failed | `Phase handoff: NOT handed off — the commit failed (<the first line of git's error or the hook's output>). The deliverable is staged on <branch>, not committed. Nothing was pushed, and no pull request was opened.` |
 | Branch name substituted | append `; branch name <intended> was taken, used <actual>` |
 | Stacked on another phase's branch | append `; cut from <HEAD's branch>, whose unmerged commits this pull request carries — <it changed <path>, which this run builds on \| git refused the switch to <default-ref>: <git's first line>>` (§2.2, *Where a new branch is cut*), naming, where it stacked on purpose, the first path `git -C "$SPECS_PATH" diff --name-only <default-ref>...HEAD -- <the tested paths>` prints |

@@ -395,8 +395,10 @@ Always runs when stage 1 matched nothing **and the run does not carry `specs_git
   upstream, so `git rev-parse --abbrev-ref '@{u}'` and
   `git rev-list --count '@{u}..HEAD'` both exit 128 with `fatal: no upstream
   configured` — the condition is not false but *unevaluable*, and precisely in
-  the state the retry exists for: the local-only branch a failed `push -u` leaves
-  behind, which strands an artifact commit with nothing to retry it.
+  a state a retry exists for: a branch a failed `push -u` left with no
+  upstream — the default branch, or the session branch (§8.4), since a plugin
+  branch `origin` does not have is never pushed (§4 step 5) — which strands an
+  artifact commit with nothing to retry it.
   Step 5's base reads no upstream at all: it tests
   `refs/remotes/origin/<branch>`, which a failed `push -u` leaves absent, and
   falls through to the remote's refs. Without a test that answers there, a push that
@@ -767,7 +769,7 @@ spend before it is the conversation's.
    - **There is somewhere to push.** The remote is `origin`, the one every
      other step of this reference and of `phase-handoff.md` reads (its §2.1
      says why `origin` specifically), and it must exist:
-     `git -C "$SPECS_PATH" remote get-url origin` exits 0. Three more states
+     `git -C "$SPECS_PATH" remote get-url origin` exits 0. Four more states
      leave nowhere to push, each with its own §6 line:
      - **The user's git configuration pushes this branch elsewhere:**
        `git -C "$SPECS_PATH" config --get branch.<branch>.pushRemote`, or,
@@ -795,7 +797,8 @@ spend before it is the conversation's.
        branch on merge* — while this run was still finishing included — both
        leave this state, and a push would recreate the branch the remote
        removed. A branch with no upstream whose remote-tracking ref was pruned
-       reads as never pushed, and is pushed. Any other exit, an unreachable
+       reads as never pushed: the default branch is then pushed, and a plugin
+       branch meets the last state below. Any other exit, an unreachable
        remote included, does not count here; the push then reports its own
        failure (step 6).
      - **The remote refused this branch before:** its push-refusal record
@@ -803,12 +806,30 @@ spend before it is the conversation's.
        `git -C "$SPECS_PATH" config --get branch.<branch>.workflowsPushRefused`
        prints a date. The date the rows name is the file's content, or the
        key's; where the file is empty, `<date>` is `an earlier run`.
+     - **`origin` does not have this plugin branch:** the branch is a plugin
+       branch (§2.2) — never the default branch, nor §8's session branch,
+       which §8.4 pushes where `origin` lacks it — and the test above reads it
+       as never pushed: no upstream on `origin` under its own name, and no
+       `refs/remotes/origin/<branch>`. Where either is there, the test above
+       has already asked the host, as `phase-handoff.md` §2.2 rule 1 confirms
+       a remote-tracking ref, and the branch is on `origin` unless the host
+       said it is gone. This step never creates a plugin branch on `origin`:
+       only `phase-handoff.md` §2.5 publishes one, with the deliverable its
+       pull request is for. A handoff whose commit git refused, or that had
+       nothing to commit on a branch it cut, leaves such a branch, and a
+       session-file push would put it on `origin` with no pull request beside
+       it. The commits stay on local `<branch>` and go out with its next
+       push — the next handoff of it, whose §2.5 push carries every commit
+       on the branch.
    - **`push-scope`: every commit the push would publish is a session-file
      commit.** First the base the push is measured against:
      `refs/remotes/origin/<branch>`, the ref this push updates, where
      `git -C "$SPECS_PATH" show-ref --verify -q refs/remotes/origin/<branch>`
-     finds it; else none, as on the local-only branch a failed `push -u` leaves
-     behind, or one whose remote ref was pruned. The commits the push would
+     finds it; else none, as on the local-only session branch a failed
+     `push -u` leaves behind (§8.4), or a default branch whose remote ref was
+     pruned — a plugin branch that reads as never pushed stops at the last
+     state above.
+     The commits the push would
      publish are
      `git -C "$SPECS_PATH" rev-list --reverse refs/heads/<branch> --not <base>`,
      or, with no base,
@@ -914,7 +935,7 @@ spend before it is the conversation's.
 - **In session-branch mode** (§8) — on the session branch, whatever the
   checkout stands on, and a deliverable branch carries no session file. The
   bullets below hold outside the mode.
-- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, `/harvest-decisions`, `/promote-decisions`, `/conformance`, `/docs-workflows:release-notes`, and every `/brd-*` command — every command that offers `phase-handoff.md`'s `handoff-to-main`, `/promote-decisions` through `architecture-promotion.md` §11.2) — on that `idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the deliverable's commit failed (`phase-handoff.md` §4.1's *Commit failed*), when the artifacts' commit alone lands on that branch and its push opens no pull request. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd`, `/prd-proposal` and `/docs-workflows:release-notes`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
+- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, `/harvest-decisions`, `/promote-decisions`, `/conformance`, `/docs-workflows:release-notes`, and every `/brd-*` command — every command that offers `phase-handoff.md`'s `handoff-to-main`, `/promote-decisions` through `architecture-promotion.md` §11.2) — on that `idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the handoff committed nothing (`phase-handoff.md` §4.1's *Commit failed* or *Nothing to commit*), when the artifacts' commit alone lands on that branch, and, where `origin` does not have the branch, stays there unpushed until a later handoff of it publishes the branch (§4 step 5). Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd`, `/prd-proposal` and `/docs-workflows:release-notes`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
 - **The same command when the user declined git at handoff** ("just write the
   files — I'll handle git") — the repo is still on the default branch and the
   deliverable is uncommitted there. `commit-artifacts` still runs and commits
@@ -1056,6 +1077,7 @@ follow the report.
 | Committed, not pushed — no remote to push to (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this specs repo has no origin remote` |
 | Committed, not pushed — the user's git configuration pushes the branch elsewhere (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: your git configuration pushes <branch> to <remote>, not to origin, which is the remote this plugin reads; push it where it belongs yourself` |
 | Committed, not pushed — the remote deleted the branch (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: origin has no <branch> any more, so it was renamed or deleted there, and this step does not recreate it; the commit stays on local <branch>` — and, where `<branch>` is the default branch, `; if origin renamed it, git -C "<SPECS_PATH>" remote set-head origin --auto names the new one` |
+| Committed, not pushed — `origin` does not have this plugin branch (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: origin has no <branch>, and this plugin puts a branch of its own there only by handing off its deliverable; the commit stays on local <branch> and goes out with its next push, the next handoff of <branch> or yours` |
 | Committed, not pushed — origin refused the branch before (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: origin refused pushes to <branch> on <date> (<record>), and every commit since stays on local <branch>; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, rm "<record>"` |
 | Committed, push refused by origin (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REFUSED by origin (<the reason in parentheses>): a rule there takes no push of <branch>, so this is recorded and no later run pushes it; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, rm "<record>"` |
 | Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish commits that are not this plugin's session-file commits, the oldest <sha7> <subject>, which carries <path>; push <branch> once they are ready to go, and the artifacts go with them` — or, where that oldest commit is this run's own, `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: a pre-commit hook added <path>[, and <M-1> more] to this commit, so it carries more than this plugin's session files; check what the hook added before you push <branch>` |

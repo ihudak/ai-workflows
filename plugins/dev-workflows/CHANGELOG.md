@@ -11,6 +11,7 @@ Take with `workflows-core` 1.60.0, whose `phase-handoff` §2.5 gives the reason 
 
 ### Fixed
 - `code-handoff` §2.5: the push runs only where the branch carries a commit this run made, as a command of its own run once the commit's exit status has been read. A call whose commit did not land, on a branch carrying no other commit of this run, ends on *Commit rejected* and pushes nothing — under a consent answer `/vuln` reuses from an earlier CVE too, which would otherwise push that CVE's branch with none of its fix on it (to-fix LC2, live checks of 2026-10-26).
+- The session-cost and session-feedback reference pages say `commit-artifacts` does not push a branch the plugin created that `origin` does not have yet, which `workflows-core` 1.60.0's `specs-repo-git` §4 step 5 states (to-fix LC2).
 
 ## [4.40.0] — 2026-10-27
 
