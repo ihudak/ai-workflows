@@ -1,0 +1,83 @@
+git version 2.43.0
+
+### 7a — A: session commit, a hand commit of the deliverable, session commit; B pushed first
+(push-scope's base before the fetch — what the rejected push measured)
+$ git -C <measure-root>/work/s7a/A log --oneline origin/main..main
+fbf7cb0 PRD-A-1 Add dev-workflows session artifacts (/a2)
+e2c70f1 PRD-A-1 tweak the goal
+20b98d0 PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 0]
+$ python3 -I <measure-root>/push_scope.py <measure-root>/work/s7a/A main refs/remotes/origin/main
+20b98d0 PRD-A-1 Add dev-workflows session artifacts (/a1)  session
+e2c70f1 PRD-A-1 tweak the goal  NOT-session: specifications/PRD-A-1-x/prd.md
+push-scope: FAIL -> no rebase; today's lines
+[exit 1]
+$ git -C <measure-root>/work/s7a/A push --porcelain origin main
+error: failed to push some refs to '<measure-root>/work/s7a/origin.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+To <measure-root>/work/s7a/origin.git
+!	refs/heads/main:refs/heads/main	[rejected] (fetch first)
+Done
+[exit 1]
+$ git -C <measure-root>/work/s7a/A fetch -q origin
+[exit 0]
+(after the fetch: the same commits — B's are on origin/main, not on main)
+$ git -C <measure-root>/work/s7a/A log --oneline origin/main..main
+fbf7cb0 PRD-A-1 Add dev-workflows session artifacts (/a2)
+e2c70f1 PRD-A-1 tweak the goal
+20b98d0 PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 0]
+$ python3 -I <measure-root>/push_scope.py <measure-root>/work/s7a/A main refs/remotes/origin/main
+20b98d0 PRD-A-1 Add dev-workflows session artifacts (/a1)  session
+e2c70f1 PRD-A-1 tweak the goal  NOT-session: specifications/PRD-A-1-x/prd.md
+push-scope: FAIL -> no rebase; today's lines
+[exit 1]
+=> the rule skips the rebase and prints today's lines; nothing in the checkout moved:
+$ git -C <measure-root>/work/s7a/A status -sb
+## main...origin/main [ahead 3, behind 1]
+[exit 0]
+
+### 7b — a local merge commit among A's unpushed commits
+$ git -C <measure-root>/work/s7b/A log --oneline --graph origin/main..main
+*   2a3228e merge side
+|\  
+| * f19ec10 side
+* 20b98d0 PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 0]
+$ python3 -I <measure-root>/push_scope.py <measure-root>/work/s7b/A main refs/remotes/origin/main
+f19ec10 side  session
+20b98d0 PRD-A-1 Add dev-workflows session artifacts (/a1)  session
+2a3228e merge side  merge
+push-scope: FAIL -> no rebase; today's lines
+[exit 1]
+(note: rev-list --reverse lists the side commit before the merge; a session-only side branch passes until the merge itself)
+
+### 7c — every commit the run's own: the rule rebases; afterwards the set to publish is A's rebased commits alone
+$ python3 -I <measure-root>/push_scope.py <measure-root>/work/s7c/A main refs/remotes/origin/main
+20b98d0 PRD-A-1 Add dev-workflows session artifacts (/a1)  session
+push-scope: PASS (every commit is the run's own) -> rebase allowed
+[exit 0]
+$ git -C <measure-root>/work/s7c/A rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ python3 -I <measure-root>/push_scope.py <measure-root>/work/s7c/A main refs/remotes/origin/main
+cdabd99 PRD-A-1 Add dev-workflows session artifacts (/a1)  session
+push-scope: PASS (every commit is the run's own) -> rebase allowed
+[exit 0]
+
+### 7d — B pushes again between A's fetch+rebase and A's push: the second push is rejected too
+$ git -C <measure-root>/work/s7c/A push --porcelain origin main
+error: failed to push some refs to '<measure-root>/work/s7c/origin.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+To <measure-root>/work/s7c/origin.git
+!	refs/heads/main:refs/heads/main	[rejected] (fetch first)
+Done
+[exit 1]

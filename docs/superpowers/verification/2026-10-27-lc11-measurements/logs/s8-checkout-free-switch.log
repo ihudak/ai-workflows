@@ -1,0 +1,83 @@
+git version 2.43.0
+
+### 8a — the user's dirty files (MM, AM, staged new, unstaged, untracked), none touched by B; register conflict settled off-checkout
+$ git -C <measure-root>/work/s8a/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+AM specifications/PRD-A-1-x/design-notes.md
+MM specifications/PRD-A-1-x/prd.md
+?? notes/scratch.txt
+[exit 0]
+replay.py: {"tip": "d0ff9e940b7c642ed8c8e5f20a9781f6ccb4fc8f", "replayed": 1, "dropped": []}  (48 ms; checkout untouched so far)
+$ git -C <measure-root>/work/s8a/A switch -C main d0ff9e940b7c642ed8c8e5f20a9781f6ccb4fc8f
+Reset branch 'main'
+A	notes/staged-new.md
+M	notes/team.md
+A	specifications/PRD-A-1-x/design-notes.md
+M	specifications/PRD-A-1-x/prd.md
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+[exit 0]
+(move by switch: 1 ms)
+$ git -C <measure-root>/work/s8a/A push --porcelain origin main
+To <measure-root>/work/s8a/origin.git
+ 	refs/heads/main:refs/heads/main	09f7f41..d0ff9e9
+Done
+[exit 0]
+$ git -C <measure-root>/work/s8a/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+AM specifications/PRD-A-1-x/design-notes.md
+MM specifications/PRD-A-1-x/prd.md
+?? notes/scratch.txt
+[exit 0]
+SNAPSHOT IDENTICAL
+-- origin/main now: d0ff9e9 PRD-A-1 Add dev-workflows session artifacts (/a1)|09f7f41 PRD-A-1 Add dev-workflows session artifacts (/b1)|429b213 NOISSUE base|
+-- register at origin == rebuild? yes
+# Feedback
+- base entry
+- b1 entry
+- a1 entry
+
+### 8b — a dirty file B also changed (prd.md): the move refuses, nothing changes
+replay.py: {"tip": "4e16b61bf9cd653907728aaed45e6dcf14bc3cd1", "replayed": 1, "dropped": []}  (50 ms; checkout untouched so far)
+$ git -C <measure-root>/work/s8b/A switch -C main 4e16b61bf9cd653907728aaed45e6dcf14bc3cd1
+error: Your local changes to the following files would be overwritten by checkout:
+	specifications/PRD-A-1-x/prd.md
+Please commit your changes or stash them before you switch branches.
+Aborting
+[exit 1]
+(move by switch: 2 ms)
+=> the checkout refused the move; nothing changed; print today's lines
+SNAPSHOT IDENTICAL
+
+### 8c — an untracked file where B adds one
+replay.py: {"tip": "f2329d8f76019f33c1fc38fb4b2ac7857f71b7e1", "replayed": 1, "dropped": []}  (48 ms; checkout untouched so far)
+$ git -C <measure-root>/work/s8c/A switch -C main f2329d8f76019f33c1fc38fb4b2ac7857f71b7e1
+error: The following untracked working tree files would be overwritten by checkout:
+	notes/new.md
+Please move or remove them before you switch branches.
+Aborting
+[exit 1]
+(move by switch: 1 ms)
+=> the checkout refused the move; nothing changed; print today's lines
+SNAPSHOT IDENTICAL
+
+### 8d — another conflict (resume.md): refused before the checkout is touched
+replay.py: {"refused": "conflict in specifications/PRD-A-1-x/dev-workflows/resume.md replaying aaa30bc"}  (50 ms; checkout untouched so far)
+=> refused before touching anything; print today's lines
+SNAPSHOT IDENTICAL
+
+### 8e — a commit lands on main (another session) between the replay and the move
+(i) git switch -C main <tip>:
+$ git -C <measure-root>/work/s8e/A switch -C main 31299b7da6be260d2a7b338e2d91551d78ea2a5c
+Reset branch 'main'
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+[exit 0]
+   the other session's commit on a branch now? 0
+(ii) compare-and-swap first: update-ref main <tip> <old>, then read-tree -m -u <old> <tip>:
+$ git -C <measure-root>/work/s8e2/A update-ref -m settle refs/heads/main 31299b7da6be260d2a7b338e2d91551d78ea2a5c 93fc12e50f125b5cef9159d84c1fea0c19cb44d8
+fatal: update_ref failed for ref 'refs/heads/main': cannot lock ref 'refs/heads/main': is at 9982de1d14c5eb8fc6f9bb401e1beb4ebc71b97f but expected 93fc12e50f125b5cef9159d84c1fea0c19cb44d8
+[exit 128]
+SNAPSHOT IDENTICAL

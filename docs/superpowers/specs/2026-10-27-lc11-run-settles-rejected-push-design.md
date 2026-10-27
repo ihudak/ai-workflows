@@ -1,0 +1,179 @@
+# LC11: the run settles its own rejected session-file push — design
+
+**Date:** 2026-10-27 · **Plugins:** workflows-core (`specs-repo-git`, `scripts/session-branch.py`), security-workflows (`/security-workflows:scan`) · **Status:** reviewed (four rounds, READY WITH CHANGES; the changes are folded in), for the user's approval · **Tracker:** to-fix LC11
+
+**Who decided what.**
+- **The user decided the behaviour: option (c), the broad form** (2026-10-27, recorded in `docs/superpowers/to-fix.md` LC11 by PR #111). When a session-file push is rejected because the remote branch moved on, the run takes the remote's commits in and pushes, instead of handing the user git commands. It merges the append-type session files, and settles `register.json` and `register.md` by `register.py rebuild`. On any other conflict it leaves everything as it was and prints a remedy. Option (b), settling only the security register, was set aside because most session files are append-type.
+- **The user decided the mechanism: a checkout-free replay, not `git rebase`** (2026-10-27, after the measurements in §1). (c) was worded as a rebase, and an in-checkout rebase turned out unsafe in a shared specs checkout.
+- **After the first review the user decided three more points** (2026-10-27):
+  - **Strict append replaces git's `union` merge** for block-shaped session files, in the replay **and in session-branch mode's own merges** (§3.3, §3.8), because `union` silently corrupts the family's real multi-line records (§1).
+  - **The remedy line drops `--autostash`** (§3.5): measured harmful in exactly the state where the run refuses.
+  - **Plugin branches are in scope**, not only the default branch (§3.1).
+- Everything marked **(Claude's call)** was decided by Claude and is open to the user's correction.
+
+## 1. Why
+
+**The defect (run 6, `docs/superpowers/verification/2026-10-26-live-checks.md`).** `/security-workflows:scan` committed its record, and its push of the default branch was rejected because a teammate had pushed first. `commit-artifacts` never merges or rebases (§4 step 6). It printed `pull --rebase --autostash`, the push, and the `register.py rebuild` lines for the user to run. The only conflicts were the two register files, which the run could rebuild exactly from its records. The user asked why the run does not do this itself.
+
+**The refusal being retired** (`docs/maintainers/rationale.md#specs-push-scope`): *Rebasing the plugin's session-file commits onto a diverged default branch* — "two writers appending to the same `implementation.md` conflict, and a rebase stopped on a conflict in a shared checkout is worse than a line naming the two commands". Both halves were measured (git 2.43.0, scratch repositories; scripts, logs and a summary in `docs/superpowers/verification/2026-10-27-lc11-measurements/` (s1–s9; t2–t5 are the first review's reproductions, described in its `review-of-first-draft.md`)):
+
+- **A stop in a shared checkout is worse than the refusal said.** An in-checkout `git rebase`:
+  - with `--autostash` collapses the index — a staged-then-edited file (`MM`) comes back unstaged (` M`), a new file staged then edited (`AM`) comes back fully staged — and where its re-apply conflicts it still exits 0 (`Successfully rebased`), leaving conflict markers in the user's own file and a kept `stash@{0}` (s1);
+  - without autostash refuses up front on any dirty tracked path — clean, but the plugin commits beside dirty unrelated paths (§3.3 G1), so it would refuse often (s2);
+  - during a stop detaches HEAD, so a concurrent family run's preflight hits G0 and is blocked, and its catch-up fails on unmerged files (s6);
+  - destroys, at the abort, any edit made to a tracked file during the stop (s6b, s6c), stays stuck with HEAD detached where an `index.lock` is held at the abort (s6e), and publishes or orphans a commit made outside the family during the stop (s6d).
+- **The append conflict is real, and git's `union` driver is not the answer.** Without `union`, two writers appending to one file conflict (s3b). With it — the rule session-branch mode applies today (§8.2 step 3) — pure appends merge in order (s3a), **but `union` matches lines, not entries, so two distinct entries that share lines become one** (t2–t3, reproduced with the family's real formats, git exits 0):
+  - `implementation.md`: two same-day `/implement` runs on one unit, each `pushed: true` (`implementation-format` §1), become one block — this run's header is gone, and the teammate's entry has lost its `pushed: true` line.
+  - `<KEY>-feedback.md`: two entries with the same date, command and category become one, its YAML block holding `id:` twice and `author:` twice, the second heading gone.
+  - `_security.md` has the same block shape (a scan's header and last line repeat for two same-day scans of one unit and repository).
+  - **This is live today in session-branch mode** (§8.2 step 3, and `session-branch.py`'s `union_copy`), where the result at least passes through a pull request.
+- **A checkout-free replay avoids every hazard of the stop.** Each commit is replayed with `git merge-tree --write-tree --merge-base=<parent> <onto> <commit>`, conflicts settled as §3.3 says, the register rebuilt in a temporary directory, and the commit written with `commit-tree`. The checkout is touched once, at the end, in one locked transaction (§3.4). On every dirty state measured — `A`, ` M`, `AM`, `MM`, untracked — a successful move kept every one of the user's files with its exact status letters and bytes, and a dirty or untracked path the change would overwrite refused the move with HEAD, index and every byte identical (s8, s9-1).
+
+**Population.** Every specs repository with more than one writer that does not run session-branch mode: two people, or one person on two machines, committing session files to the same default branch; and any plugin branch someone else updated — GitHub's *Update branch* button or a reviewer's push to a `spec/` or `design/` pull-request branch rejects the next session-file push to it. Session-branch mode (§8) avoids the default-branch case for a team that turns it on, but switches on by itself only at a *refused* push, never at a non-fast-forward one — option (a), which the user declined. The union defect's population is every team with session-branch mode on and two same-day entries in one appended file.
+
+## 2. Goals, non-goals, anti-goals
+
+**Goals.**
+- Where the remote branch moved on and every commit the push would publish is this plugin's own session-file commit, the run takes the remote's commits in, keeps both sides' appended entries intact, rebuilds a security register both sides changed, and pushes — with no command for the user to run.
+- Session-branch mode's merges keep both sides' entries intact too (strict append replaces `union` there).
+- The user's working tree, index, stash and branches are exactly as they were wherever the run cannot settle the push.
+- One line says what happened, including any finding a register rebuild renumbered.
+
+**Non-goals.**
+- The deliverable push of `phase-handoff` §2.5: a deliverable is reviewed through its pull request, and its rejection is not this design's.
+- `[remote rejected]` (a refusal): recorded as today, never replayed.
+- Session-branch mode's own rejection (another clone pushed the session branch under the same identity): the next run already fetches and merges it (§8.4; measured, s9-5). The replay never targets the session branch.
+- Detecting an in-place edit inside a line-set file (§3.3's `follow-ups.md` bullet).
+
+**Anti-goals — the design has failed if any of these happens, even where the push succeeds:**
+- The user's file holds conflict markers, or a staged change comes back unstaged, or the reverse.
+- An entry a teammate or this run appended is lost, merged into another, or doubled on `origin`.
+- A commit that is not the plugin's session-file commit is published, or a commit nobody measured.
+- The run leaves a rebase or merge in progress, a detached HEAD, a lock file, or a checkout that does not match its branch.
+- A tip is pushed that the local branch does not hold (measured: this doubles entries two runs later, s9-2).
+
+## 3. The design
+
+### 3.1 When the replay runs
+
+At §4 step 6's **non-fast-forward rejection** (`[rejected]`), wherever step 5 pushed — at the end of a run, and inside §3.4's flush and its retry of other local plugin branches — and only where all of these hold; otherwise the step reports as today:
+
+1. The rejected branch is the default branch or a plugin branch (§2.2), never §8's session branch.
+2. Session-branch mode is `off` (§8.1). `unsupported` counts as off, and condition 3 then decides **(Claude's call)**.
+3. This git can replay without a checkout: `merge-tree` accepts `--write-tree` and `--merge-base`.
+4. `git -C "$SPECS_PATH" fetch origin "+refs/heads/<branch>:refs/remotes/origin/<branch>"` succeeds, bounded in time (`workflows-core:bounded-run`).
+5. No rebase, merge, cherry-pick or revert is in progress, and no `index.lock` is present.
+6. **`push-scope` passes again after the fetch**: every commit in `rev-list --reverse refs/heads/<branch> --not refs/remotes/origin/<branch>` is a non-merge session-file commit (§4 step 5's test, unchanged), and none is a root commit. **Where that list is empty** — the remote already holds every local commit — nothing is replayed: a branch strictly behind is moved onto `refs/remotes/origin/<branch>` by §3.4's move, and the row says the commits were already there.
+7. **No other worktree has the branch checked out** — `git worktree list --porcelain` names it nowhere but this checkout, as `session-branch.py`'s `refuse_checked_out` tests. Moving a branch under another worktree leaves that worktree's HEAD on the new tip and its index and files on the old one (measured, second review). The refusal names the worktree, and §3.4's retry goes on to its other branches.
+
+### 3.2 The replay
+
+`<old>` is the branch's value read before the replay; `onto` starts at `refs/remotes/origin/<branch>`. For each commit `c` of condition 6's list, oldest first:
+
+1. `git -c core.attributesFile=<a temporary file holding the replay's block (§3.3's opening)> merge-tree --write-tree -z --name-only --no-messages --merge-base=<c's parent> <onto> <c>`. The block is passed on the call and never written into `info/attributes` outside session-branch mode **(Claude's call: measured equivalent, s3i; writing it would change the user's own merges)**. No `-X`: a side is taken only for the paths §3.3 names (`-X theirs` also silenced a same-named `runs/` record's add/add conflict, s9-4).
+2. Settle the conflicts and the register by §3.3, or **refuse** (§3.5).
+3. Where the resulting tree equals `onto`'s tree, `c` is already on the remote: drop it and say so (§3.7).
+4. Otherwise write the commit: `git commit-tree <tree> -p <onto>` with `c`'s author, author date and message, the committer now, signed where `commit.gpgSign` is set, as §8.2 builds its commits. `onto` becomes it.
+
+The result is `<tip>`. Nothing in the checkout, the index or any ref has moved. **No `pre-commit` or `commit-msg` hook runs**, as in §8.2: the replayed tree holds only content `c` carried (which passed them when `c` was made), content the remote already holds, and `register.py`'s canonical rebuild — strict append adds no other bytes.
+
+### 3.3 How each kind of file is settled
+
+`core.attributesFile` is the lowest-precedence attribute source: a repository `.gitattributes` overrides the passed block (t4: `* merge=text` gives `merge: text` for `implementation.md`, `resume.md` and `register.json`). So the replay classifies each path both sides changed by §2.1's shapes itself, and settles it from the three blobs — `base`, `o` and `t`, the file at `c`'s parent, at `onto` and at `c` — never trusting git's own merge of it **(Claude's call)**. The block the replay passes (§3.2 step 1) carries only `union` for `follow-ups.md` and `-merge` for the overwritten shapes and the register files, so a block-shaped file is never union-merged by git, wherever it is merged:
+
+- **A block-shaped appended file** — `implementation.md`, `_security.md`, the feedback and cost files (pending ones included) under `dev-workflows/`, `dev-workflows-feedback/` and `dev-workflows-cost/` — changed on both sides: **settled as a set of entries** **(Claude's call, from the second and third reviews' tests)**. Each such file is a **header** followed by **entries**; an entry starts at a heading line of its format's own shape (every appended format opens its entries with `## `, confirmed by the third review — implementation, feedback, `_security.md`, cost and pending cost — and the build pins each format's heading shape from the reference that defines it, so a `## ` line of another shape inside an entry's body stays in that entry) and runs to the next such line or the end of the file. Headers and entries are compared byte for byte **with their trailing blank lines stripped**, so an entry that was last on one side matches itself on the other.
+  - **Refuse** where `o`'s and `t`'s headers differ, or where any entry of `base` is missing from `o` or from `t` — an edit, a removal, or an addition to the last entry.
+  - **Otherwise the result is `o` followed by each entry of `t` that `o` lacks, in `t`'s order**, separated as the format separates entries (one blank line), never adding to or removing from an entry's own bytes. `base` decides only the refusal; it need not be a prefix of either side, so a file a merge already reordered (`E1 B1` on one side, `B1` on the other) settles.
+  - **Both sides created the file** (no `base`): the same rule with no `base` — the headers must match. Same-day per-date feedback files make this routine.
+  - This keeps an entry once wherever both sides hold it — two `commit` calls in a row, a squash-merged session pull request, a session branch that already merged the default branch, a second sync, two local commits replayed onto a remote that appended to the same file — and keeps two same-day entries that share every line but one as two. The third review ran this rule on ten such cases: every merge settled with nothing doubled, nothing fused and one header, and both edit cases refused.
+  - A format whose entries the build cannot confirm begin with a heading of a known shape is settled as **anything else** (refused) until its own rule is written. Where only one side changed the file, git's result stands.
+- **`follow-ups.md`** — one task per line, ticked in place as tasks close: `union` stays **(Claude's call)**. Each line is one whole entry, so `union` cannot merge two entries into one; a line ticked on one side beside the other side's append can come back beside an open copy (s3d), which `followup-emission` already treats as one task.
+- **An overwritten shape** — `dev-workflows/resume.md`, `pr-draft.md`, and `*-implementation-gaps.md`, which is regenerated whole rather than appended (so the replay's block and §8's `ATTRIBUTES` mark it `-merge`, as they mark the other two) — changed on both sides: `c`'s version whole, a deletion included, as §8.2 step 3 keeps "this run's version whole". Without this, any two runs on one PRD abort on `resume.md` (s4b).
+- **The security register** — wherever both sides changed anything under `security/<slug>/` (not only where git reports `register.json` or `register.md` conflicted, which a repository attribute can hide, t4): rebuild both files from the merged tree's `security/<slug>/` — `runs/` and `scans/` of both sides are in it (s4a, s4g) — in a temporary directory filled by `git archive <tree> security/<slug>`, with the caller's `register.py` (§3.6): `python3 -I <register.py> rebuild --specs <temp root> --slug <slug>`; write the two files back into the tree through a temporary index. Where the caller supplied no `register.py`, or the rebuild exits non-zero (a `runs/` record conflicted, for one: `JSONDecodeError`, s4c), refuse.
+- **Anything else** git reports conflicted — a modify/delete (a pending cost file one side relocated, s3g), an add/add of different content, any other path: refuse.
+
+### 3.4 Moving the branch, and only then pushing
+
+1. **A branch the checkout stands on moves in one locked transaction**, the only order measured (s9-1) that never leaves the index differing from HEAD on paths the user did not touch, or a branch the working tree does not match:
+   - `git -C "$SPECS_PATH" update-index -q --refresh` first: a file rewritten with the same bytes otherwise fails `read-tree` as `not uptodate` (t5);
+   - `update-ref --stdin` with `start`, `update refs/heads/<branch> <tip> <old>`, `prepare` — which takes `HEAD.lock` and the branch's lock and fails where the branch is no longer `<old>`;
+   - `read-tree -m -u <old> <tip>` — a two-tree merge that refuses where a dirty or untracked path would be overwritten;
+   - then `commit`, or `abort` where `read-tree` refused.
+
+   A commit landing meanwhile fails `prepare` with nothing touched; a commit attempted inside the window fails on the held `HEAD.lock`; a held `index.lock` fails `read-tree` and the transaction aborts; a driver that dies while prepared closes stdin, and git aborts and removes both locks. The user's staged and unstaged changes keep their exact status letters. **Where `commit` fails after `read-tree` succeeded**, run `read-tree -m -u <tip> <old>` to put the index and the working tree back, and report it. **Accepted, and named:** a driver killed outright (SIGKILL) between `read-tree` and `commit` leaves the index and files on `<tip>` with the branch on `<old>`, or leaves `HEAD.lock` and the branch's lock, which this reference never deletes; the window is milliseconds, and the run's Bash call that runs the script carries a timeout longer than the script's own bounded fetches and pushes (§3.4 step 4's three attempts), so the harness never kills it there.
+2. **A branch the checkout does not stand on** (§3.4's retry of other plugin branches, and checked out nowhere, §3.1 condition 7) moves by `update-ref refs/heads/<branch> <tip> <old>` alone.
+3. **Push only after the move succeeded, and push the measured tip:** `git -C "$SPECS_PATH" push --porcelain origin <tip>:refs/heads/<branch>`, bounded in time. A push from a commit id sets no upstream even with `-u` (measured, second review), so where step 5 would have set one, the script sets it after a successful push: `git -C "$SPECS_PATH" branch --set-upstream-to=origin/<branch> <branch>`, a failure of which — a `.git/config` a hardened container mounts read-only, say — is reported and changes nothing else. It is a configuration write, the one step 5's `-u` already made, so §1 rule 8's list of this reference's own state names it (§3.9). **Never push a tip the local branch does not hold**: pushing first and failing the move left the local branch on the pre-replay commits, and two runs later the published entries were doubled (s9-2).
+4. **The push race.** A `[rejected]` again means another writer pushed meanwhile: fetch, re-check §3.1, replay from the moved local branch, move, push — **at most three attempts in all** (s9-3: two races settled on the third; after three, the local branch stands consistently on the last replay, and the next run's push carries it).
+
+### 3.5 Refusal, and a branch moved but not pushed
+
+- **Nothing moved** — §3.1 does not hold, §3.3 refuses, or the first move is refused: report as today (§6's *push rejected* row, or §3.4's flush line), with one clause naming why the run did not settle it — the path whose conflict it could not settle, the path git would not overwrite, `this git cannot replay without a checkout`, the lock it met — and **a remedy that never stashes**: `git -C "<SPECS_PATH>" pull --rebase --no-autostash origin <branch>`, then the push (a branch the run is not standing on: the switch first, as §3.4's flush line names it today). It refuses up front, with the user's files untouched, while anything is dirty (s2); `--no-autostash` is spelled out because a `rebase.autoStash=true` setting otherwise turns a bare `--rebase` back into the autostash of s1 (measured, second review: exit 0, `UU` with markers in the user's file, a stash left behind). Where the blocking path is the user's own dirty or untracked file, the line names it and says that the next run that commits session files settles the push once that path is clear. `/security-workflows:scan`'s own register line after the `Specs repo:` line still applies where the refusal left the register unsettled.
+- **Moved, not pushed** — a later attempt's replay refused, or its push failed with anything but `[rejected]`, after an earlier attempt moved the branch: the local branch holds the replayed commits, which is consistent, and the next run's push carries them. Its own §6 row says so, naming the replayed commit.
+- **The push's outcome is classified by step 6 as today**: the script returns git's `--porcelain` status line for the last push it made, and step 6 reads it — a `[remote rejected]` writes the push-refusal record as for any push **(Claude's call: one place classifies push outcomes)**.
+
+### 3.6 How `commit-artifacts` reaches `register.py`
+
+`register.py` is `security-workflows`'; a `workflows-core` reference cannot resolve another plugin's `${CLAUDE_PLUGIN_ROOT}`. **The caller hands it over** **(Claude's call)**:
+- `specs-preflight` and `commit-artifacts` gain one optional input, `register_rebuild: <absolute path to register.py>`. `/security-workflows:scan` passes `${CLAUDE_PLUGIN_ROOT}/scripts/register.py` at both calls; that variable expands in a command body (`CLAUDE.md`, Internal reference convention).
+- The replay script receives it as `--register-rebuild <path>` and runs it only as §3.3 says.
+- Any other command's run that meets a register both sides changed — a `/dev-workflows:implement` whose preflight flushes a scan's leftover commit, say — passes nothing and refuses (§3.5). That population is small: a scan pushes its own record at its own end.
+
+### 3.7 The outcome lines
+
+New §6 rows **(wording left to the builder within this content)**:
+- **Pushed after a replay:** `Specs repo: committed <sha7> (<N> files) on <branch> — origin's <branch> had moved on, so the run replayed its <K> commit(s) onto it[, <D> already there and dropped][; rebuilt security/<slug>/: <each move>] and pushed`. `<sha7>` is the replayed commit of this run's own commit, or, where that was dropped, `onto`'s tip at the end of the replay.
+- **Moved, not pushed:** the same, ending `— moved onto origin's <branch>, but the push <failed as step 6 reads it>; the next run pushes it`.
+- **A register move.** A rebuild can renumber a finding a teammate already pushed (s4g: B's `[SEC#2]` became `[SEC#3]` because A's record sorts first), and it can renumber this run's own findings, whose numbers this run's report and follow-up lines already cite. That is the register's ordering rule, and today's manual rebuild does the same; but the run did it unasked, so the line names each move on either side as `[SEC#<from>] → [SEC#<to>] (<origin>)`. It is computed from `rebuild`'s `numbers` map (every allocated origin's number, aliases included) run three times — on `onto`'s tree, on `c`'s and on the rebuilt one — since `register.json` names each finding by one origin only and misses aliases — not from `rebuild`'s `renumbered`, which lists every move no record holds yet, not only this replay's. It adds that the next run that records anything lists the lines citing an old number (`security-register-format` §2, LC10's machinery).
+- Inside §3.4's flush and retry, the same in their `Specs preflight:` form.
+
+### 3.8 Where it lives
+
+- **A `replay` subcommand of `scripts/session-branch.py`** **(Claude's call)**: it already holds the attribute block, the `merge-tree` capability test and the `commit-tree` signing, and §8's rule that the reference and the script change together carries over. It runs fetch, replay, move and push, and prints one JSON object — `{moved, pushed, attempts, replayed, dropped, tip, porcelain, moves, refused: {reason, path}}` — so the reference's step 6 makes one call. Exit 2 means it could not run, reported with the first line of its stderr; where it exits 2 after a move, `moved` is printed first, so the row says what stands.
+- **Strict append is one function**, used by the replay and by §8: `union_copy` (§8.2 step 2's merge of a working copy with the branch's version) and §8.2 step 3's and §8.3 `put-back`'s merges of `<default-ref>` and `origin`'s session branch into the session branch. `follow-ups.md` keeps `union` there too. Where strict append cannot settle a block-shaped file in §8 **(Claude's calls)**:
+  - **In the merges of step 3 and `put-back`, every block-shaped path both sides changed is settled from its three blobs by the same function, whatever `merge-tree -X ours` produced for it**: with `union` gone, `-X ours` would otherwise resolve a block file both sides appended to in the session branch's favour, silently, and the session pull request would then delete the teammate's entry from the default branch (third review). The merge still runs with `-X ours` (an option of the whole merge), which keeps the overwritten shapes whole as today; the block-shaped paths are then replaced in the merged tree by the function's result, through a temporary index. Where the function refuses, or git reports any other path conflicted (none does today), the merge of that source is not made at all — no merge commit — and the path is listed in `sync.conflict`; the next run tries again. The session branch's own push goes ahead as today. Where `put-back` merges a working copy with the branch's version and the function refuses, the copy is left as it is and listed in `skipped`, as `put-back` already lists a copy it cannot merge.
+  - **In `commit` (step 2):** where the session branch still holds the version this worktree was last given (`session-branch-placed.json`), only the working copy changed, so it is committed as it is — a hand edit, such as `implementation-format` §1's sanctioned move of a pre-4.1.2 block out of the PRD folder's `implementation.md`, which the entry-set rule would refuse as a removal (fourth review), goes through. The function is used only where the branch has moved on since this worktree was given its version. Where it refuses to settle a working copy with the branch's version — an in-place edit, which the entry-set rule makes rare — the working copy is left out of the commit and stays as it is in the working tree; nothing the branch holds and nothing the working copy holds is lost. It is reported in a field of its own, `unsettled`, with its own §6 line naming the path and saying that it holds an edit the session branch's version does not, that `git -C "<SPECS_PATH>" show <session branch>:<path>` shows the branch's version, and that the next run commits it once the user has made the working copy hold every entry of both; until then `lift` counts it unpreserved and skips each move of the checkout, which the line says too. It is not `sync.conflict`, whose §6 text points at the pull request. Committing the working copy as it is would drop the branch-only entries; `union` would fuse them.
+- **The attribute block `session-branch.py` writes** (`ATTRIBUTES`, the marked block in `info/attributes`) drops `merge=union` for the block-shaped files and keeps it for `follow-ups.md`. The script rewrites its own marked block whenever it writes it, so existing session-mode clones change on their next run **(Claude's call)**: a user's own `git merge` or `pull` of those files then stops on a conflict instead of fusing two entries silently. `union_shaped` and the selftest that asserts the old block change with it.
+- **`specs-repo-git` §4 step 6:** its non-fast-forward bullet runs the replay under §3.1's conditions and keeps today's report, minus `--autostash`, for every other case. §3.4's flush lines and §6 gain the forms above. **§1 rule 4 gains a named exception** beside §8's checkout-free merges: the replay moves the checkout, by `read-tree` inside the transaction, and that is the one move of a branch the plugin did not ask git to switch to.
+- **The rationale:** the refused bullet *Rebasing the plugin's session-file commits onto a diverged default branch* is retired in place, replaced by the measured reasons the replay is safe and the in-checkout rebase is not; and `#session-branch`'s account of `union` is corrected.
+
+### 3.9 What it changes elsewhere (the claim-expiry sweep)
+
+Every sentence that says the plugin never takes in the remote's commits, never rebases, that a diverged branch is the user's to bring up to date, or that `union` keeps both sides' entries, becomes false and must be rewritten against what the code enforces — by phrase and by subject, across `plugins/` (every `CHANGELOG.md` included), the root `README.md`, `CLAUDE.md`, `.claude/rules/` and `docs/maintainers/` (`.claude/rules/claim-sweep.md`). Known starting points, not the population:
+- `specs-repo-git`: §1 rule 4 and the hard-rule list, and §1 rule 8's list of this reference's own state (the upstream §3.4 sets); §3.4 ("Nothing else here brings the default branch up to date…"); §4 step 2 ("step 6 says what to run"); step 6's "never auto-rebase mid-run" and "this reference never rebases"; §6's *push rejected* row ("no run takes them in for you", `--autostash`); §8's account of `union`.
+- `docs/maintainers/rationale.md`: `#specs-push-scope` (the refused bullet, and line 425's "A branch that has already diverged is not rebased"), `#session-branch`.
+- `.claude/rules/workflows-core-git.md` (the authority paragraph and the invariants' "never merge/rebase/reset").
+- `workflows-core:security-register-format` §1 and §2, `scan.md`'s rejected-push paragraph, and the two `security-workflows` docs pages that state it.
+- The `workflows-core` references page, and each dependent's pages that state the push rule.
+- `phase-handoff`'s inheritance of the hard rules for the deliverable push stays as it is.
+
+## 4. Proof
+
+- **Selftests in `session-branch.py`** (`--selftest`, which CI runs), built in temporary repositories as its existing cases are, **with the family's real formats** — `implementation-format` §1's block, `feedback-emission` §1's YAML entry, scan.md §7.3's `_security.md` block — never one-line stand-ins (the s3 measurement missed the union defect because every line carried its writer's tag):
+  - strict append: two same-day entries sharing every line but one both kept, intact and in order; identical entries kept once; one side's addition already holding the other's (a squash-merged session pull request, a branch that already merged the default branch, two `commit` calls in a row) kept once, never doubled; both sides creating the file with an identical header settled, with different headers refused; an entry ending in a blank line on one side and not on the other matched; an addition to the last entry, an edit before the end and a removal each refused; a `## ` line of another shape inside an entry kept in it;
+  - the same formats through §8.2 step 2's `commit` (a working copy the rule refuses stays out of the commit, in `unsettled`) and step 3's and `put-back`'s merges (both entries intact whatever `-X ours` produced, or that source not merged — no merge commit — and the file in `sync.conflict`); the rewritten attribute block;
+  - a hand edit committed as it is where the branch has not moved since this worktree was given its version (`implementation-format` §1's block move), and refused into `unsettled` where it has;
+  - the third review's three flows: two local commits replayed onto a remote that appended to the same file; a `commit` after a sync merged a teammate's entry (`E1 B1` beside `B1`); a second sync — each settled with nothing doubled;
+  - `follow-ups.md` unions; `resume.md` takes `c`'s version; a deletion of `resume.md` by `c` stands;
+  - a register both sides changed, rebuilt by a stub rebuild script, and refused with no `--register-rebuild`; a repository `.gitattributes` of `* merge=text` changes none of it;
+  - a modify/delete refused; a `runs/` add/add refused; a root commit refused at §3.1;
+  - the dirty set of s1 kept with exact status letters; a dirty collision and an untracked collision refuse the move with nothing changed; a concurrent commit fails `prepare` with nothing changed; a same-bytes rewrite moves after the refresh;
+  - a plugin branch the run does not stand on, moved by `update-ref` alone; a branch another worktree has checked out, refused, the retry going on to the next branch;
+  - an empty list after the fetch: a branch strictly behind moved onto the remote's, nothing replayed;
+  - the upstream set after a push from a commit id where step 5 would have set it;
+  - a race settled on the third attempt; three races leave the branch moved and `pushed: false`;
+  - the refusal's remedy under `rebase.autoStash=true` never stashes (`--no-autostash`).
+- **`register.py`** needs no change: `rebuild --specs <root> --slug <slug>` reads `runs/` and writes both files under any root, and prints `numbers` (s4g ran the real script against a temporary root). The timings in §1 used a stub rebuild; the real one's cost grows with the records.
+- **A live re-test** in `docs/superpowers/to-test-on-real-project.md`: run 6's setup with a teammate's push landing before the scan's push — expect the new §6 row, both records on `origin`, the register equal to a rebuild of them, and a renumbered teammate finding named in the line; and two same-day `/implement` entries on one unit through a rejected push — expect both blocks intact.
+
+## 5. Constraints
+
+- Every git call is `git -C "$SPECS_PATH"`; never a `cd`, a force-push, `reset`, `rebase`, or deleting a lock file; never fatal (`specs-repo-git` §1).
+- The pushed set is what `push-scope` measured, replayed: the replay adds no path a session-file commit did not carry, save the two register files it rebuilt.
+- `workflows-core` and `security-workflows` each take a minor version, with coupling bullets (`.claude/rules/plugin-updates-coupling.md`); any dependent whose docs page changes takes one too.
+
+## 6. Left to the builder
+
+- The exact wording of the §6 rows and the flush lines, within §3.5 and §3.7.
+- How the script captures `read-tree`'s refusal for the reason clause.
+- Whether the `--merge-base` capability check extends `merge_tree_ok` or is a second test.
+- The time bounds on fetch and push, within `workflows-core:bounded-run`.

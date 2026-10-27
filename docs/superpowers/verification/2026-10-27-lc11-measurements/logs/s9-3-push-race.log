@@ -1,0 +1,30 @@
+git version 2.43.0
+
+### R1 — B races A twice; the third attempt pushes (max 3); the user's dirty files in place throughout
+attempt 1: [rejected] (fetch first) — fetch+push-scope+replay+move 142 ms, total 182 ms (replay: {"tip": "5f64bad152668e8196e37cd6aaf572ae99c4cd94", "replayed": 1, "dropped": []})
+attempt 2: [rejected] (fetch first) — fetch+push-scope+replay+move 133 ms, total 174 ms (replay: {"tip": "6146b3a5b986ee246057c7291fd509f1566dad30", "replayed": 1, "dropped": []})
+attempt 3: pushed f4158ae..ac4dd19 — fetch+push-scope+replay+move 132 ms, total 141 ms (replay: {"tip": "ac4dd19fe706a045641967985cec3730d4fc9de8", "replayed": 1, "dropped": []})
+   origin feedback.md entries: 5 lines, duplicates: 0
+   origin register.json == rebuild(runs): yes
+   local vs origin: ## main...origin/main
+   user files' bytes unchanged: yes; status letters unchanged: yes
+
+### R2 — B races A on all three attempts: the run gives up
+attempt 1: [rejected] (fetch first) — fetch+push-scope+replay+move 129 ms, total 168 ms (replay: {"tip": "5f64bad152668e8196e37cd6aaf572ae99c4cd94", "replayed": 1, "dropped": []})
+attempt 2: [rejected] (fetch first) — fetch+push-scope+replay+move 134 ms, total 174 ms (replay: {"tip": "6e0dcfada76ea88874208b4e2732b05a9699da27", "replayed": 1, "dropped": []})
+attempt 3: [rejected] (fetch first) — fetch+push-scope+replay+move 132 ms, total 173 ms (replay: {"tip": "89e5231d98e1ea96326bbd666ae3e51e99551e2f", "replayed": 1, "dropped": []})
+gave up after 3 attempts -> today's lines (local main stays moved onto the last replay)
+   origin feedback.md entries: 5 lines, duplicates: 0
+   origin register.json == rebuild(runs): yes
+   local vs origin: ## main...origin/main [ahead 1, behind 1]
+-- the next run's settle (no race):
+attempt 1: pushed 18b5f1e..abcf3f8 — fetch+push-scope+replay+move 130 ms, total 139 ms (replay: {"tip": "abcf3f816f9b2f511d6ad502d3a31f3ea8dfb8ad", "replayed": 1, "dropped": []})
+   origin feedback.md entries: 6 lines, duplicates: 0
+   origin register.json == rebuild(runs): yes
+   local vs origin: ## main...origin/main
+
+### R0 — no race: one attempt
+attempt 1: pushed 3ddd403..8e74bee — fetch+push-scope+replay+move 129 ms, total 138 ms (replay: {"tip": "8e74beeeac5c95453fb25c52e3770933430f23a1", "replayed": 1, "dropped": []})
+   origin feedback.md entries: 3 lines, duplicates: 0
+   origin register.json == rebuild(runs): yes
+   local vs origin: ## main...origin/main
