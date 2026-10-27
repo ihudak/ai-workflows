@@ -2547,6 +2547,13 @@ check_untrusted_content() {
 #     for only-binary, which turns that off, and never
 #     :all: anywhere in a no-binary value, which builds every package from source -- a named
 #     --no-binary=<names> beside --only-binary=:all: is the allow path;
+#   - uv add, sync or lock (flags, and a flag's value, may come first) carry --no-build (or UV_NO_BUILD=1 / true):
+#     uv's project interface has no other way to refuse a source build, and uv pip is held by
+#     the pip rule above;
+#   - composer install, update, require and remove, and their aliases (i, u, upgrade, r, rm,
+#     uninstall), and create-project -- flags, and a flag's value, may come first -- carry both
+#     --no-scripts and --no-plugins: the first skips the root
+#     composer.json's scripts, the second keeps an installed composer-plugin from loading;
 #   - setup.py install or develop is refused whatever it carries: it runs a setup.py.
 # VACUITY: no install command at all.
 ITC_FILES="$REF_DIR/fix-vuln/build-systems.md $REF_DIR/upgrade/ecosystems.md $REF_DIR/install-time-code.md"
@@ -2554,6 +2561,8 @@ ITC_OPTIONAL="agents/vuln-fixer.md agents/upgrade-executor.md $CMD_DIR/vuln$CMD_
 ITC_NODE='(^|[^[:alnum:]_.-])(npm|pnpm)([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+(install|i|in|ins|inst|insta|instal|isnt|isnta|isntal|isntall|add|it|ci|cit|clean-install|ic|install-clean|isntall-clean|install-test|install-ci-test|update|up|upgrade|udpate|dedupe|ddp|link|ln|audit[[:space:]]+fix)([^[:alnum:]_-]|$)|(^|[^[:alnum:]_.-])yarn([[:space:]]+(workspace[[:space:]]+[^[:space:]]+|-[^[:space:]]+))*[[:space:]]+(install|add|upgrade|up|upgrade-interactive|dedupe|global[[:space:]]+add)([^[:alnum:]_-]|$)|^[[:space:]]*yarn([[:space:]]*$|[[:space:]]*\)|[[:space:]]+-)'
 ITC_PY='(^|[^[:alnum:]_.-])pip[0-9.]*[[:space:]]+(install|download|wheel|sync)([^[:alnum:]_-]|$)|(^|[^[:alnum:]_.-])pip-sync([^[:alnum:]_-]|$)|(^|[^[:alnum:]_.-])pipenv[[:space:]]+(install|sync|update|upgrade|lock)([^[:alnum:]_-]|$)'
 ITC_SETUP='(^|[^[:alnum:]_.-])setup\.py[[:space:]]+(install|develop)([^[:alnum:]_-]|$)'
+ITC_UV='(^|[^[:alnum:]_.-])uv([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+(add|sync|lock)([^[:alnum:]_-]|$)'
+ITC_COMPOSER='(^|[^[:alnum:]_.-])composer([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+(install|i|update|u|upgrade|require|r|remove|rm|uninstall|create-project)([^[:alnum:]_-]|$)'
 check_install_time_code() {
   local root="$1" rel f n=0 ln line seg cmd req
   for rel in $ITC_FILES $ITC_OPTIONAL; do
@@ -2573,6 +2582,16 @@ check_install_time_code() {
           { grep -qE -- '--ignore-scripts([[:space:]]|$|=true)|--mode=skip-build' <<<"$cmd" \
             && ! grep -qE -- '--ignore-scripts=false' <<<"$cmd"; } \
             || fail 21 "$ITC_PLUGIN_REL/$rel:$ln installs a Node.js dependency without --ignore-scripts (yarn berry: --mode=skip-build) -- a new release's install script would run with the user's permissions"
+        fi
+        if grep -qE -- "$ITC_UV" <<<"$seg"; then
+          n=$((n + 1))
+          grep -qE -- '--no-build([[:space:]]|$)|UV_NO_BUILD=(1|true)([[:space:]]|$)' <<<"$cmd" \
+            || fail 21 "$ITC_PLUGIN_REL/$rel:$ln runs uv's project install without --no-build (or UV_NO_BUILD=1) -- a source distribution's build would run its backend with the user's permissions"
+        fi
+        if grep -qE -- "$ITC_COMPOSER" <<<"$seg"; then
+          n=$((n + 1))
+          { grep -qE -- '--no-scripts([[:space:]]|$)' <<<"$cmd" && grep -qE -- '--no-plugins([[:space:]]|$)' <<<"$cmd"; } \
+            || fail 21 "$ITC_PLUGIN_REL/$rel:$ln runs a Composer install without both --no-scripts and --no-plugins -- the root's scripts or an installed plugin's code would run with the user's permissions"
         fi
         if grep -qE -- "$ITC_SETUP" <<<"$seg"; then
           n=$((n + 1))
@@ -4053,6 +4072,22 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '\n| pipenv | \`only-binary = :all:\`, \`no-binary = :all:\`, then \`PIP_CONFIG_FILE=<file> pipenv install\` |\n' >> $itc/install-time-code.md"
   expect_fail_msg "an install in the fixer agent is held too" 21 "without --ignore-scripts" \
     "mkdir -p $itca; printf -- '---\nname: vuln-fixer\n---\nThen run \`npm install\`.\n' >> $itca/vuln-fixer.md"
+  expect_fail_msg "a uv add without --no-build is rejected" 21 "without --no-build" \
+    "printf '\n- **uv**: \`uv add <package>==<version>\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a uv sync with flags first but no --no-build is rejected" 21 "without --no-build" \
+    "printf '\n\`\`\`bash\nuv --quiet sync --locked\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_pass_after "uv's --no-build and UV_NO_BUILD pass" \
+    "printf '\n\`\`\`bash\nuv lock --no-build\nUV_NO_BUILD=1 uv sync --locked\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_fail_msg "a Composer install without --no-plugins is rejected" 21 "without both --no-scripts and --no-plugins" \
+    "printf '\n\`\`\`bash\ncomposer install --no-scripts\n\`\`\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a Composer require without --no-scripts is rejected" 21 "without both --no-scripts and --no-plugins" \
+    "printf '\n- \`composer require --no-plugins vendor/pkg:1.2.3\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a Composer install after a flag's value is still held" 21 "without both --no-scripts and --no-plugins" \
+    "printf '\n\`\`\`bash\ncomposer -d app install\n\`\`\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a uv sync after a flag's value is still held" 21 "without --no-build" \
+    "printf '\n\`\`\`bash\nuv --directory app sync\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_pass_after "a Composer update carrying both flags passes" \
+    "printf '\n\`\`\`bash\ncomposer update --no-scripts --no-plugins vendor/pkg\n\`\`\`\n' >> $itc/upgrade/ecosystems.md"
   expect_fail_msg "a missing install reference is rejected" 21 "does not exist" \
     "rm $itc/install-time-code.md"
   expect_fail_msg "install references with no install line trip the empty-scan guard" 21 "would examine nothing" \

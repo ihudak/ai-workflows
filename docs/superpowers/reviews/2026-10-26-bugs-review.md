@@ -806,7 +806,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B5 — MINOR — Both docs pages still say a revert leaves `node_modules` as the upgrade left it; since 4.14.0 the run restores it
+### VU-B5 — MINOR — Both docs pages still say a revert leaves `node_modules` as the upgrade left it; since 4.14.0 the run restores it — **Fixed in dev-workflows 4.40.0 (batch B22)**
 - **Where:** `plugins/dev-workflows/docs/commands/vuln.md:54`, `plugins/dev-workflows/docs/commands/upgrade.md:56`
 - **What is wrong:** both pages say "It restores files, not installed packages: a package installed into an ignored directory such as `node_modules` stays until the next install." `install-time-code.md:49` ("After a revert") requires the opposite: "after any revert in a Node project … restore `node_modules` to the lockfile … run the install from the first section again". The agents (`vuln-fixer.md:212`, `:232`; `upgrade-executor.md:115`, `:135`) and both commands' *After a revert* paragraphs (`vuln.md:140`, `upgrade.md:156`) do this, and list each package put back as `restored unbuilt`.
 - **Failure scenario:** a reader trusts the page, reinstalls by hand, and is surprised by the `restored unbuilt` entries. The page also hides that the revert reinstalls packages. This is a claim-expiry miss from `df4e9e38`. The lines are blamed to `dd72b9eb`, which predates the "After a revert" rule.
@@ -815,7 +815,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B6 — MINOR — `nvd-api.md`'s worked example contradicts its own range rule
+### VU-B6 — MINOR — `nvd-api.md`'s worked example contradicts its own range rule — **Fixed in dev-workflows 4.40.0 (batch B22)**
 - **Where:** `plugins/dev-workflows/references/fix-vuln/nvd-api.md:79` against `:49-51`
 - **What is wrong:** step 4 says to take the range containing the current version: "a project on `5.15.3` with ranges `[5.0.0, 5.15.16)` and `[5.16.0, 5.16.7)` — … the safe floor is `5.15.16`", and it warns that the global maximum "may push a `5.15.x` project to `5.16.7`". The example directly below, with those same two ranges, concludes "Safe version: `5.16.7` (or the latest 5.x patch release >= that bound)". The handoff examples (`handoff/vuln-research.md:37`) use `5.15.16` for `5.15.5`.
 - **Failure scenario:** an agent anchoring on the worked example picks `5.16.7` (a minor jump) for a 5.15.x project. That over-classifies the CVE and widens the change.
@@ -824,7 +824,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B7 — MINOR — `nvd-api.md`'s Maven Central query cannot list versions, and its CPE vendor examples are Maven group IDs
+### VU-B7 — MINOR — `nvd-api.md`'s Maven Central query cannot list versions, and its CPE vendor examples are Maven group IDs — **Fixed in dev-workflows 4.40.0 (batch B22)**
 - **Where:** `plugins/dev-workflows/references/fix-vuln/nvd-api.md:95`, `:37`
 - **What is wrong:** (a) `https://search.maven.org/solrsearch/select?q=g:<groupId>+AND+a:<artifactId>&rows=20&wt=json` has no `core=gav`. The default core returns one document per group:artifact pair, carrying only `latestVersion`, so "confirm the version exists and find the latest patch in that line" cannot be done from it. `upgrade/ecosystems.md:64` has `core=gav` correctly. (b) ":37 `vendor` and `product` together identify the library (e.g., `org.apache.activemq` / `activemq`, `com.fasterxml.jackson.core` / `jackson-databind`)" is wrong: CPE vendors are `apache` and `fasterxml`, as this file's own example at `:64` shows (`cpe:2.3:a:apache:activemq`).
 - **Failure scenario:** research gets one latest version, which may be a new major, and either picks it or cannot confirm the patch line. An agent that matches a CPE vendor against a Maven groupId misses the match and returns `NOT_IN_REPO` or `LOOKUP_FAILED`.
@@ -833,7 +833,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high for (b); medium-high for (a)
 
-### VU-B8 — MINOR — The GitHub Actions SHA-pin update writes a tag object's SHA for an annotated tag
+### VU-B8 — MINOR — The GitHub Actions SHA-pin update writes a tag object's SHA for an annotated tag — **Fixed in dev-workflows 4.40.0 (batch B22)**
 - **Where:** `plugins/dev-workflows/references/upgrade/ecosystems.md:427-430`
 - **What is wrong:** "If pinned to a SHA … also update the SHA to the commit at the new tag: `git ls-remote https://github.com/<owner>/<repo>.git refs/tags/<tag>`". For an annotated tag this prints the tag object's id, not the commit's. The peeled commit is on the `refs/tags/<tag>^{}` line, which an exact-tail pattern does not print.
 - **Failure scenario:** an action whose release tags are annotated gets `uses: owner/repo@<tag-object-sha>`. That is not a commit, so the workflow fails to resolve the action, or pins something other than the intended commit.
@@ -887,7 +887,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B14 — MINOR — `fix-vuln/build-systems.md` lists Cargo in its detection table but has no Cargo section
+### VU-B14 — MINOR — `fix-vuln/build-systems.md` lists Cargo in its detection table but has no Cargo section — **Fixed in dev-workflows 4.40.0 (batch B22)**
 - **Where:** `plugins/dev-workflows/references/fix-vuln/build-systems.md:16` (detection row `Cargo.toml | Rust / Cargo`); no `## Cargo` section; "Confirming the fix" (`:282-298`) covers Gradle, Maven, npm and Go only.
 - **What is wrong:** `vuln-fixer` step 3 ("Use the ecosystem-appropriate update command (see build-systems.md)") and `vuln-research` step 3 ("per-ecosystem library detection") get nothing for Cargo. Nor is there anything for confirming a NuGet, pip or Bundler fix. `upgrade/ecosystems.md:304-331` does have a Cargo section (`cargo update -p <crate> --precise <version>`).
 - **Failure scenario:** a RustSec CVE in `Cargo.lock` gets an improvised fix. The likely one is editing `Cargo.toml`, which does not move a transitive pin, where the right fix is `cargo update -p <crate> --precise <ver>`.
@@ -895,7 +895,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B15 — MINOR — `ecosystems.md`'s NuGet query says the last version is the latest stable
+### VU-B15 — MINOR — `ecosystems.md`'s NuGet query says the last version is the latest stable — **Fixed in dev-workflows 4.40.0 (batch B22)**
 - **Where:** `plugins/dev-workflows/references/upgrade/ecosystems.md:253-255`
 - **What is wrong:** "`GET https://api.nuget.org/v3-flatcontainer/<package_lower>/index.json` … `.versions` — list of all versions (last is latest stable)." The flat-container index lists prerelease versions too, in SemVer order, so the last entry is a prerelease whenever one is newer than the latest stable release (for example `9.0.0-preview.7` after `8.0.8`).
 - **Failure scenario:** `/upgrade SomePackage:latest` resolves to a preview build.
@@ -910,7 +910,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B17 — NIT — The install references say `install-time-code.md` "says why" Poetry and the others install unchanged; it gives no reason
+### VU-B17 — NIT — The install references say `install-time-code.md` "says why" Poetry and the others install unchanged; it gives no reason — **Fixed in dev-workflows 4.40.0 (batch B22)**
 - **Where:** `references/fix-vuln/build-systems.md:167` ("by its own command, unchanged (`install-time-code.md` says why)"), `references/upgrade/ecosystems.md:184` ("Poetry installs unchanged (`install-time-code.md` says why)") against `install-time-code.md:18` ("…have their own no-build or no-scripts settings that this file does not yet adopt")
 - **What is wrong:** the referenced text states that these ecosystems are not yet covered, which is not a reason. A reader following the pointer finds no justification.
 - **Suggested fix:** write "(`install-time-code.md`: not yet covered)", or close the gap (VU-G1).
@@ -2839,7 +2839,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high (that the text is there); the impact is reader confusion, not a wrong run
 
-### DQD-B8 — MINOR — The `/vuln` and `/upgrade` diagrams leave out the commit, push and pull request step, and the per-unit loop
+### DQD-B8 — MINOR — The `/vuln` and `/upgrade` diagrams leave out the commit, push and pull request step, and the per-unit loop — **Fixed in dev-workflows 4.40.0 (batch B22)**
 - **Where:** `plugins/dev-workflows/docs/commands/vuln.md:25-35`, `plugins/dev-workflows/docs/commands/upgrade.md:23-35`
 - **What is wrong:** `/vuln`'s diagram ends `tv --> s4["Step 4 — Summarise"]`. `/upgrade`'s ends `tv --> done["Collect results → Post-batch maintenance"]`. Neither draws the commit `code-handoff` makes per CVE (Step 3.9) or per component (step 6.5), nor the consent-gated push and pull request (per CVE, or once for the batch at step 7.5). Neither draws the loop back for the next CVE or component, nor the rule that a commit that does not land ends the loop (workflow map in `.claude/rules/dev-workflows.md`). These steps are the user-visible result of both commands, and the only point where the user is asked a question after the plan.
 - **Failure scenario:** A reader of either diagram cannot tell that one pull request is opened per CVE and one per upgrade batch, or that they will be asked about pushing. The prose under each diagram says so only in the example paragraph.
