@@ -4213,6 +4213,48 @@ def case_a_move_made_before_every_reserved_record_merges_is_checked_after_the_me
     assert ("sA:v3:px", 2, 6) in [(m["origin"], m["from"], m["to"]) for m in nxt["renumbered"]], nxt
 
 
+def _check(out, origin, frm):
+    """7.1's check on what `register.py rebuild` printed: (step, the finding's number now)."""
+    now = out["numbers"][origin]
+    if now == frm:
+        return 2, now
+    return (3 if any(m["from"] == frm and m["to"] == now for m in out["renumbered"]) else 4), now
+
+
+def case_a_held_move_reads_step_4_only_once_its_holder_merges(tmp):
+    # Run 6 one step on, its merge split: B1 (CWE-601 [SEC#1]) reaches the checkout first, through main; B2, which holds
+    # CWE-79's move 1->3, later, with B's session branch. After B1 the check reads step 3 with CWE-79 already under
+    # [SEC#3] -- a stop under [SEC#<to>] alone would end here -- and only after B2 does it read step 4, the move held
+    # and no run reporting it: why 7.1 stops only once the held_by record is in runs/ as well.
+    repo, c1 = _repo(tmp)
+    a, b = os.path.join(tmp, "a"), os.path.join(tmp, "b")
+    os.makedirs(a)
+    os.makedirs(b)
+    _scan(b, "sB", c1, [("v3:p601", "src/b.py", 1, "CWE-601", "MEDIUM")])
+    rb1 = commit(b, "code", plan(b, "code", repo, "sB", None, "2026-10-16"), {}, "B", "scan", None, "2026-10-16T09:00:30Z")
+    _scan(a, "sA", c1, [("v3:p79", "src/a.py", 23, "CWE-79", "MEDIUM"), ("v3:p319", "srcx/a.py", 1, "CWE-319", "MEDIUM")])
+    commit(a, "code", plan(a, "code", repo, "sA", None, "2026-10-16"), {}, "A", "scan", None, "2026-10-16T09:05:30Z")
+    _copy_register(a, b)  # B pulls main
+    rb2 = commit(b, "code", plan(b, "code", repo, None, None, "2026-10-16"), {}, "B", "triage", None, "2026-10-16T09:30:00Z")
+    reserve = os.path.join(tmp, "reserve")
+    for res in (rb1, rb2):
+        _wf(reserve, os.path.basename(res["record"]), open(os.path.join(b, res["record"]), encoding="utf-8").read())
+    p = plan(a, "code", repo, None, None, "2026-10-16", reserve)
+    m = p["reserved_moves"][0]
+    assert (m["from"], m["to"], m["run"], m["held_by"]) == (1, 3, os.path.basename(rb1["record"]),
+                                                            os.path.basename(rb2["record"])), m
+    commit(a, "code", p, {"decisions": [{"target": "id:1", "status": "fix"}]}, "A", "triage", None,
+           "2026-10-16T10:00:00Z", "sec", "code")
+    _copy_register(b, a, ("scans",))
+    seen = []
+    for res in (rb1, rb2):
+        _wf(os.path.join(a, "security", "code", "runs"), os.path.basename(res["record"]),
+            open(os.path.join(b, res["record"]), encoding="utf-8").read())
+        seen.append(_check(_rebuild_cli(a), m["origin"], m["from"]))
+    assert seen == [(3, 3), (4, 3)], seen
+    assert plan(a, "code", repo, None, None, "2026-10-16")["renumbered"] == []
+
+
 def case_one_plugin_id_from_two_scans_is_one_finding(tmp):
     repo, c1 = _repo(tmp)
     a, b = os.path.join(tmp, "a"), os.path.join(tmp, "b")
