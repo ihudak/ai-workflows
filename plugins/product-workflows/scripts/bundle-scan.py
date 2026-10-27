@@ -18,7 +18,9 @@ and the caller rules on the rest:
   anchor          the source_anchor cell of an inventory row
   locator         a --captured-path (a captured file's path relative to brd/) or a --captured name
   locator-tail    what follows a --captured-path's " > " separator (U+203A), segment by segment, up
-                  to the end of the line, a delimiting "|", a backtick, ")" or "]"
+                  to the end of the line, a delimiting "|", a backtick, ")" or "]" -- save a certain
+                  path, citation, command or agent name there, which a customer's heading is taken
+                  never to hold, and which is placed as if no tail were there
   none            none of these
 
 and prerequisite: true where the file's name begins with a --prereq-key key and "-". An inventory
@@ -30,10 +32,11 @@ omitted_locator_sections and reported nowhere else.
 
 The family's names are read from the plugins installed beside this one -- every sibling directory
 holding .claude-plugin/plugin.json, in the source tree (plugins/<name>/) and in the install cache
-(<marketplace>/<name>/<version>/) alike: each plugin's name, its commands, its agents and its skills.
-A slash command is certain where it names a family command or is namespaced by a family plugin, or
-by any *workflows* name a later split adds; any other leading-slash name is uncertain, since its
-shape cannot tell a command from a route the customer's own code names. An agent's filename and a
+(<marketplace>/<name>/<version>/) alike: each plugin's name, its commands and its agents. A slash
+command is certain where it is namespaced by a family plugin, or by any *workflows* name a later
+split adds, or names a hyphenated family command; any other leading-slash name, a one-word family
+command such as /ready among them, is uncertain, since its shape cannot tell a command from a route
+the customer's own code names. An agent's filename and a
 namespaced name are certain; an agent's bare name is uncertain, since some read as ordinary words.
 A path rooted at the install directory is the variable's name, any ".claude/plugins/" path, or the
 absolute path of the directory the family's plugins sit in. A namespace or a Skill( call that ends
@@ -72,6 +75,8 @@ IMAGE_EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".tif", "
 DOC_EXT = (".md", ".markdown")
 INVENTORY_HEADER = ["id", "text", "source_anchor", "defects"]
 LEDGER_HEADER = ["id", "text", "disposition", "defects", "evidence"]
+# classes a customer's heading path is taken never to hold where the token is certain
+PLUGIN_VOCABULARY = ("plugin-root-path", "reference-citation", "slash-command", "agent-or-skill")
 SEPARATOR_RE = re.compile(r"[ \t]*\|(?:[ \t]*:?-+:?[ \t]*\|)+[ \t]*$")
 
 
@@ -90,7 +95,7 @@ def _stems(d, dirs=False):
 
 
 def family(root=PLUGIN_ROOT):
-    """The plugins beside this one: {names, commands, agents, skills, homes}."""
+    """The plugins beside this one: {names, commands, agents, homes}."""
     found = {}
     parent = os.path.dirname(root)
     candidates = []
@@ -103,7 +108,7 @@ def family(root=PLUGIN_ROOT):
         pj = os.path.join(d, ".claude-plugin", "plugin.json")
         if os.path.isfile(pj):
             found.setdefault(os.path.realpath(d), d)
-    fam = {"names": set(), "commands": set(), "agents": set(), "skills": set(), "homes": set()}
+    fam = {"names": set(), "commands": set(), "agents": set(), "homes": set()}
     for d in found.values():
         try:
             with open(os.path.join(d, ".claude-plugin", "plugin.json"), encoding="utf-8") as f:
@@ -114,7 +119,6 @@ def family(root=PLUGIN_ROOT):
             fam["names"].add(name)
         fam["commands"].update(_stems(os.path.join(d, "commands")))
         fam["agents"].update(_stems(os.path.join(d, "agents")))
-        fam["skills"].update(_stems(os.path.join(d, "skills"), dirs=True))
         for home in (os.path.dirname(d), os.path.realpath(os.path.dirname(d))):
             if len(home) > 1:
                 fam["homes"].add(home)
@@ -148,9 +152,10 @@ def _patterns(fam):
     ]
     if fam["homes"]:
         pats.append(("plugin-root-path", re.compile("(?:" + _alt(fam["homes"]) + r")(?=/|$)"), True))
-    if fam["commands"]:
+    hyphenated = {c for c in fam["commands"] if "-" in c}
+    if hyphenated:
         pats.append(("slash-command", re.compile(
-            cmd_lb + "/(?:" + _alt(fam["commands"]) + r")(?![\w/-])(?!\.\w)"), True))
+            cmd_lb + "/(?:" + _alt(hyphenated) + r")(?![\w/-])(?!\.\w)"), True))
     pats.append(("slash-command", re.compile(cmd_lb + r"/[a-z][a-z0-9-]*(?![\w/:-])(?!\.\w)"), False))
     if fam["agents"]:
         alt = _alt(fam["agents"])
@@ -269,7 +274,7 @@ def scan_text(name, text, pats, prereq_keys, captured, paths):
                 span = "captured-file"
             elif any(s <= a < e for s, e in locs):
                 span = "locator"
-            elif any(s <= a < e for s, e in tails):
+            elif any(s <= a < e for s, e in tails) and not (certain and cls in PLUGIN_VOCABULARY):
                 span = "locator-tail"
             elif row:
                 kind, cells = row
@@ -339,7 +344,7 @@ def selftest():
 
     fam = {"names": {"product-workflows", "workflows-core", "prose-style"},
            "commands": {"brd-package", "brd-intake", "design"}, "agents": {"brd-reader", "impl-maintenance"},
-           "skills": set(), "homes": {"/opt/mkt/plugins"}}
+           "homes": {"/opt/mkt/plugins"}}
 
     def run(text, name="K-1-doc.md", **kw):
         kw.setdefault("fam", fam)
@@ -362,8 +367,8 @@ def selftest():
           got(r, "token") == [("Skill(skill:",), ("workflows-core:reference",), ("subagent_type",),
                               ("prose-style:prose-style-checker",)])
     r = run("Run /brd-package, /design, /prose-style:check; see brd-reader.md, impl-maintenance.md.\n")
-    check("family commands, namespaced commands and agent filenames are certain",
-          got(r, "token", "certain") == [("/brd-package", True), ("/design", True),
+    check("hyphenated family commands, namespaced commands and agent filenames are certain; a one-word command is not",
+          got(r, "token", "certain") == [("/brd-package", True), ("/design", False),
                                          ("/prose-style:check", True), ("brd-reader.md", True),
                                          ("impl-maintenance.md", True)])
     r = run("The brd-reader and impl-maintenance agents.\n")
@@ -391,6 +396,10 @@ def selftest():
     check("a captured path with a space: its tail's opening section omitted, the rest of the tail placed",
           got(r, "token", "span") == [(S, "none"), (S, "locator-tail"), ("D3", "locator-tail"),
                                       ("D4", "none")] and r["omitted_locator_sections"] == 1)
+    r = run("In source/Customer BRD v2.md › " + S + " 3 Totals, should D3 hold? Run /brd-package; see brd-reader.md.\n",
+            captured_paths=cp)
+    check("a certain command or agent name in a tail is placed as if no tail were there",
+          got(r, "token", "span") == [("D3", "locator-tail"), ("/brd-package", "none"), ("brd-reader.md", "none")])
     r = run("source/other.md › " + S + " 2\n", captured_paths=cp)
     check("a source/ path naming no captured file is no locator",
           got(r, "token", "span") == [(S, "none")] and r["omitted_locator_sections"] == 0)
@@ -457,10 +466,11 @@ def selftest():
         os.makedirs(os.path.join(d, "cache/m/c/1.0/.claude-plugin"))
         with open(os.path.join(d, "cache/m/c/1.0/.claude-plugin/plugin.json"), "w") as f:
             f.write('{"name": "c"}')
+        open(os.path.join(d, "plugins/b/agents/x.md"), "w").close()
         src = family(os.path.join(d, "plugins/a-workflows"))
         cache = family(os.path.join(d, "cache/m/c/1.0"))
         check("the family is read from the source tree and from the install cache",
-              src["names"] == {"a-workflows", "b"} and src["agents"] == {"b-agent"}
+              src["names"] == {"a-workflows", "b"} and src["agents"] == {"b-agent", "x"}
               and "c" in cache["names"])
     buf = io.StringIO()
     with tempfile.TemporaryDirectory() as d:

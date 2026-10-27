@@ -1218,7 +1218,8 @@ Over the prompt, give it the prompt file this phase wrote; over the delivery not
 over the bundle (*Assemble the bundle* rule 7), the directory being assembled. Give every run
 `--captured-path` for each captured file's path relative to `brd/` — `source/<basename>` and every
 path under `brd/source/` and `brd/source-external/` the capture holds, a name with spaces as it
-stands — since a locator is recognised by what it names, never by its shape (`bundle-packaging.md`
+stands, and on the bundle's run every path each copied prerequisite's manifest map names too (rule 6
+carries them) — since a locator is recognised by what it names, never by its shape (`bundle-packaging.md`
 §6.3); and give the bundle's run `--prereq-key` for each prerequisite whose package rule 5 copied in
 and `--captured` for the bundled filename of each file copied byte for byte, a prerequisite's
 captured files among them. It prints one line of JSON: `groups`, one entry per file, token, span,
@@ -1232,7 +1233,9 @@ scan. Every group is read by its `span`:
   `source_anchor`, a captured path or a captured file's bundled name, and what follows that path's
   ` › `: the customer's own words or naming (`bundle-packaging.md` §6.3), reported and put to the
   operator's ruling below — save a `locator-tail` hit that the line shows is this package's own
-  sentence running on after a heading path rather than the path itself, which is a stop;
+  sentence running on after a heading path rather than the path itself, which is a stop. A certain
+  path, citation, command or agent name never lands in a tail: the scanner places it as if no tail
+  were there;
 - `inventory-text` and `ledger-text` — a row's `text` cell: verbatim whole where `image_row` is
   `false`; where it is `true`, or `null` (a ledger row, whose image-ness its inventory row's anchor
   says), verbatim only inside the element the row quotes, and a hit outside it is the plugin's own
@@ -1689,7 +1692,8 @@ or not that line is there.
 **Then move it into place.** Create the target first, with `command mkdir -- "<BRD-dir>/bundle-<YYYYMMDD>"`,
 which fails where the path exists: another run can have written it since Phase 0 step 11 looked, and
 a `mv` onto an existing directory would put the bundle inside it and report success. Where `mkdir`
-fails, remove the working directory and stop with step 11's first `BRD_PACKAGE_BUNDLE_EXISTS`.
+fails, remove the working directory and stop — with step 11's first `BRD_PACKAGE_BUNDLE_EXISTS` where
+the path now exists, and otherwise naming `mkdir`'s error.
 Otherwise move every entry of the working directory into the target — `command mv -- "<the path
 mktemp printed>"/* "<BRD-dir>/bundle-<YYYYMMDD>"/`, every bundled name starting with its key, so the
 glob misses none — and remove the now-empty working directory. Where the move fails, remove
