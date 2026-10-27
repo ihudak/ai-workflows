@@ -24,8 +24,9 @@ confirmed match never changes. Every record entry that names a finding carries i
 renumbering can never point a record at another finding. The register is bookkeeping, committed by the
 specs repository's own session-file commit, so two runs on two machines can record before either has
 seen the other: --reserve-dir hands plan the run records other branches hold, and plan numbers past
-them and past every move their merge will make. It numbers the checkout's own findings as the checkout holds
-them, and reports each move that merge will make to one of them apart, as reserved_moves. A number is published
+them and past every move their merge will make, with the record this run's commit writes. It numbers the checkout's
+own findings as the checkout holds them, and reports each move that merge will make to one of them apart, as
+reserved_moves. A number is published
 for an allocation by the record that allocated it and by every record whose renumbered moves that allocation to it. A number belongs to the
 finding the earliest-sorting record published it for, and is held for that finding for good, a number that
 gave way included: none is ever handed out again. An allocation's number is the one it was last published
@@ -74,14 +75,13 @@ repository, carries under a number held for it or as its own line, as its run wr
 closes or proposes fixed, the accepted risks past their review-by date, as renumbered the moves no run record holds
 yet,
 each marked provisional, as reserved_moves each move the merge of the --reserve-dir records will make to a finding
-the checkout holds -- {origin, from, to, run, held_by}: from its number here to its number once they merge; run the
-reserved record the move waits on: the one whose publication of from comes first, where it published from for
-another finding or for none, or, where no record publishes from, the earliest-sorting one allocating a finding that
-will stand on it and is none of the checkout's; else the earliest-sorting one that gives the moved finding its new
-number, moving one of its allocations off from, or else publishing to for it; else the record that the move of the
-checkout's finding that will stand on from waits on; else the earliest-sorting one publishing any number for the
-moved finding; else null; and held_by the reserved record whose renumbered already holds that very move, so that no
-run reports it once it is made, or null -- provisional too, since those records have not merged, and
+the checkout holds, numbered with the record this run's commit writes, which holds those moves no record holds yet and
+sorts last -- {origin, from, to, run, held_by}: from its number here to its number once they merge; run the reserved
+record the move waits on: the one whose publication of from comes first, where it published from for another finding
+or for none; else the earliest-sorting one that gives the moved finding its new number, moving one of its allocations
+off from, or else publishing to for it; else the earliest-sorting one publishing any number for the moved finding;
+else null; and held_by the reserved record whose renumbered already holds that very move, so that no run reports it
+once it is made, or null -- provisional too, since those records have not merged, and
 as origins the origin of every [SEC#n] it saw, numbered as the checkout holds it, through which commit names the findings decided on.
 Git is run on --repo, which must hold the scan's commit, for ancestry, a squash commit, the finding's
 file blob, and, with --default-ref, the scan's base: the commit it shares with the default branch (git
@@ -762,32 +762,29 @@ def _unacked(recs, provisional):
 
 def _reserved_moves(fs, merged, reserved, local):
     """The moves the merge of the reserved records will make to the checkout's findings fs: for each one whose number in
-    `merged` -- _numbering of the checkout's records with the reserved ones -- differs from its number here,
+    `merged` -- _numbering of the checkout's records, the reserved ones and the record this run's commit writes, which
+    holds `local`, the checkout's moves no record holds yet, and sorts last -- differs from its number here,
     {origin, from, to, run, held_by}: from its number here to its number once they merge; run the reserved record the
     move waits on, the first of these that names one:
       1. the record that takes from from another finding: the one whose publication of from comes first, where that is
-         a reserved record that published it for another finding (or for none); or, where no record publishes from,
-         the earliest-sorting reserved record allocating a finding that will stand on it and is none of the checkout's;
+         a reserved record that published it for another finding (or for none);
       2. the earliest-sorting reserved record that gives the finding its new number: one whose renumbered moves one of
          its allocations off from, else one publishing to for it -- allocating an origin the merged numbering names it
          by, or writing a renumbered move of one of its allocations;
-      3. where another finding of the checkout will stand on from, the record that finding's own move waits on;
-      4. the earliest-sorting reserved record publishing any number for the finding;
-      5. none: None;
-    and held_by the reserved record whose renumbered already holds that very move, from from to to, for every
+      3. the earliest-sorting reserved record publishing any number for the finding;
+      4. none: None.
+    In that numbering every number a finding of the checkout stands on is published -- a walk no record held, this run's
+    own record publishes -- so from always has a first publisher, and no other finding stands on it unpublished.
+    held_by is the reserved record whose renumbered already holds that very move, from from to to, for every
     allocation of the finding a later run would report it for -- each published under from, by a record or by this run's
-    own, which writes `local`, the checkout's moves no record holds -- the earliest-sorting where several, else None.
-    Where held_by names one, no run that records once the move is made reports it, or the lines that cite from.
+    own -- the earliest-sorting where several, else None. Where held_by names one, no run that records once the move is
+    made reports it, or the lines that cite from.
     Each is provisional: the records have not merged, so no record the checkout holds has the move yet, and no follow-up
     line is corrected on its strength."""
     num, canon, _, _, allocs, _, first = merged
     mine = {r["_file"] for r in reserved}
     order = [r["_file"] for r in reserved]  # in replay order
     keys = {(run, o) for run, o, _, _ in allocs}
-    here = {canon[g["origin"]]: n for n, g in fs.items()}  # each finding of the checkout, as merged, to its number here
-    standing = {}  # each number to the allocations whose finding will stand on it, (run, finding), in replay order
-    for run, o, _, now in allocs:
-        standing.setdefault(now, []).append((run, canon[o]))
     holds = {}  # each move a reserved record's renumbered holds, (run, origin, from, to), to the earliest-sorting one
     for r in reserved:
         for m in r.get("renumbered") or []:
@@ -800,14 +797,10 @@ def _reserved_moves(fs, merged, reserved, local):
         by = [holds.get((run, o, n, num[f])) for run, o in shown]
         return min(by, key=order.index) if by and all(by) else None
 
-    def waits_on(n, f, seen):
+    def waits_on(n, f):
         w = first.get(n)
         if w is not None and w[0] in mine and w[1] != f:
             return w[0]
-        if w is None:
-            takers = [run for run, h in standing.get(n, []) if run in mine and h not in here]
-            if takers:
-                return takers[0]
         pubs = []  # (record, number, the number a move took it off) for each number a reserved record publishes for f
         for r in reserved:
             pubs += [(r["_file"], e["id"], None) for e in r.get("allocated", []) if canon[e["origin"]] == f]
@@ -815,18 +808,13 @@ def _reserved_moves(fs, merged, reserved, local):
                      and (m.get("run"), m.get("origin")) in keys and canon[m["origin"]] == f
                      and isinstance(m.get("to"), int) and not isinstance(m.get("to"), bool)]
         gives = [run for run, _, off in pubs if off == n] or [run for run, x, _ in pubs if x == num[f]]
-        if gives:
-            return gives[0]
-        for _, h in standing.get(n, []):
-            if h != f and h in here and h not in seen:
-                return waits_on(here[h], h, seen | {f})
-        return pubs[0][0] if pubs else None
+        return (gives or [run for run, _, _ in pubs] or [None])[0]
 
     out = []
     for n, g in sorted(fs.items()):
         f = canon[g["origin"]]
         if num[f] != n:
-            out.append({"origin": g["origin"], "from": n, "to": num[f], "run": waits_on(n, f, frozenset()),
+            out.append({"origin": g["origin"], "from": n, "to": num[f], "run": waits_on(n, f),
                         "held_by": held_by(n, f)})
     return out
 
@@ -930,17 +918,22 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_
     st = _replay(specs, slug, recs)
     fs = st["findings"]
     # Run records another branch holds and this checkout lacks: their numbers are taken already, and so is every
-    # number their merge will move a finding to. Number them with this checkout's, as the replay will. The checkout's
-    # own findings keep the numbers the checkout gives them; the moves that merge will make to them are reported apart.
+    # number their merge will move a finding to. Number them with this checkout's, as the replay will, and with the
+    # record this run's commit writes: it holds the checkout's moves no record holds yet, in its renumbered, and sorts
+    # after every other record, so it publishes the numbers those moves took. The checkout's own findings keep the
+    # numbers the checkout gives them; the moves that merge will make to them are reported apart.
     local = {r["_file"] for r in recs}
     reserved = [r for r in _load_records(reserve_dir) if r["_file"] not in local] if reserve_dir else []
-    merged = _numbering(sorted(recs + reserved, key=lambda r: (r["seq"], r["at"], r["_file"])))
-    next_id = max(st["next_id"], _next_id(merged[0], merged[3]))
     next_seq = max([st["next_seq"]] + [r["seq"] + 1 for r in reserved])
     renumbered = _unacked(recs, True)
+    own = {"seq": next_seq, "at": "9999-12-31T23:59:59Z", "_file": "~this-run", "allocated": [], "matched": [],
+           "renumbered": [{k: m[k] for k in ("run", "origin", "from", "to")} for m in renumbered]}
+    merged = _numbering(sorted(recs + reserved, key=lambda r: (r["seq"], r["at"], r["_file"])))
+    ahead = _numbering(sorted(recs + reserved + [own], key=lambda r: (r["seq"], r["at"], r["_file"])))
+    next_id = max(st["next_id"], _next_id(merged[0], merged[3]), _next_id(ahead[0], ahead[3]))
     out = {"format": 1, "repo": slug, "unit": unit, "today": today, "base_id": st["next_id"],
            "base_seq": st["next_seq"], "next_id": next_id, "next_seq": next_seq, "reserved": len(reserved),
-           "renumbered": renumbered, "reserved_moves": _reserved_moves(fs, merged, reserved, renumbered),
+           "renumbered": renumbered, "reserved_moves": _reserved_moves(fs, ahead, reserved, renumbered),
            "origins": {str(n): g["origin"] for n, g in sorted(fs.items())},
            "scan": None, "already_recorded": False, "recorded_on": None, "id_version_changed": False,
            "new": [], "again": [], "possibly_same": [], "closable": [], "not_reported": [], "reopen": [],
@@ -3931,10 +3924,11 @@ def case_reserved_move_names_the_record_that_published_the_number_not_its_alloca
     assert _merged_alone(tmp, a, m, rm["record"]) == {"sX:v3:q": 1, "sA:v3:o": 3}
 
 
-def case_reserved_move_through_a_walk_names_the_record_that_set_it_off(tmp):
-    # Three clones each allocated [SEC#1] (09:00, 09:10, 09:20); the checkout holds all three, so q walked to [SEC#2] and
-    # s to [SEC#3], numbers no record publishes. R, reserved, allocated [SEC#1] at 09:05: merged, r walks to 2, q to 3
-    # and s to 4. R's allocation stands on q's number, and q's own move stands on s's: both moves are R's.
+def case_reserved_moves_count_the_record_this_run_writes(tmp):
+    # The walk case carried through a recording run. The checkout's q walked to [SEC#2] and s to [SEC#3], moves no
+    # record holds yet; R, reserved, allocated [SEC#1] at 09:05. This run's commit writes q 1->2 and s 1->3 into its own
+    # renumbered, which sorts last and publishes 2 and 3 for them, so once R merges r walks past them to [SEC#4] and
+    # neither moves: plan reports no move, and the line this run builds under [SEC#2] stays right.
     repo, c1 = _repo(tmp)
     a, reserve = os.path.join(tmp, "a"), os.path.join(tmp, "reserve")
     for name, pid, at in (("c1", "v3:p", "09:00"), ("c2", "v3:q", "09:10"), ("c3", "v3:s", "09:20"), ("r", "v3:r", "09:05")):
@@ -3944,24 +3938,25 @@ def case_reserved_move_through_a_walk_names_the_record_that_set_it_off(tmp):
         res = commit(d, "code", plan(d, "code", repo, "s" + name, None, "2026-10-16"), {}, "X", "scan", None,
                      "2026-10-16T%s:00Z" % at)
         if name == "r":
-            run_r = os.path.basename(res["record"])
-            _wf(reserve, run_r, open(os.path.join(d, res["record"]), encoding="utf-8").read())
+            run_r = res["record"]
+            _wf(reserve, os.path.basename(run_r), open(os.path.join(d, run_r), encoding="utf-8").read())
         else:
             _copy_register(d, a)
     _unrelated_reserved(reserve)
     p = plan(a, "code", repo, None, None, "2026-10-16", reserve)
-    assert p["origins"] == {"1": "sc1:v3:p", "2": "sc2:v3:q", "3": "sc3:v3:s"}, p["origins"]
-    assert p["reserved_moves"] == [{"origin": "sc2:v3:q", "from": 2, "to": 3, "run": run_r, "held_by": None},
-                                   {"origin": "sc3:v3:s", "from": 3, "to": 4, "run": run_r, "held_by": None}], \
-        p["reserved_moves"]
-    assert _merged_alone(tmp, a, os.path.join(tmp, "r"), os.path.join("security", "code", "runs", run_r)) == {
-        "sc1:v3:p": 1, "sr:v3:r": 2, "sc2:v3:q": 3, "sc3:v3:s": 4}
+    assert [(m["origin"], m["from"], m["to"]) for m in p["renumbered"]] == [("sc2:v3:q", 1, 2), ("sc3:v3:s", 1, 3)], p
+    assert p["reserved_moves"] == [], p["reserved_moves"]
+    res = commit(a, "code", p, {"decisions": [{"target": "id:2", "status": "fix"}]}, "A", "triage", None,
+                 "2026-10-16T10:00:00Z", "sec", "code")
+    assert [SEC_RE.findall(line) for line in res["followups"]] == [["2"]], res
+    assert _merged_alone(tmp, a, os.path.join(tmp, "r"), run_r) == {
+        "sc1:v3:p": 1, "sc2:v3:q": 2, "sc3:v3:s": 3, "sr:v3:r": 4}
 
 
-def case_reserved_move_past_a_number_a_reserved_record_moved_it_to(tmp):
-    # f collided with p on [SEC#1]; the checkout, which never saw Q's [SEC#2], walked it to [SEC#2]. M, holding Q, wrote
-    # f's move 1->3, but G's record, which only the checkout holds, published [SEC#3] first. Merged, f walks past 3 to 4:
-    # neither the number it leaves nor the one it reaches is any reserved record's, and the move is M's.
+def _past_a_moved_number(tmp):
+    """f collided with p on [SEC#1]; the checkout, which never saw Q's [SEC#2], walked it to [SEC#2]. M, holding Q,
+    wrote f's move 1->3, but G's record, which only the checkout holds, published [SEC#3] first. Returns the code
+    repository, the checkout, M's clone, M's commit result and a reservation holding M's record."""
     repo, c1 = _repo(tmp)
     a, g, cp, cf, q, m = (os.path.join(tmp, n) for n in ("a", "g", "cp", "cf", "q", "m"))
     for d in (g, cp, cf):
@@ -3985,13 +3980,39 @@ def case_reserved_move_past_a_number_a_reserved_record_moved_it_to(tmp):
     assert [(e["origin"], e["from"], e["to"]) for e in rm["renumbered"]] == [("sF:v3:f", 1, 3)], rm
     for d in (g, cp, cf):
         _copy_register(d, a)
-    reserve, run_m = os.path.join(tmp, "reserve"), os.path.basename(rm["record"])
+    reserve = os.path.join(tmp, "reserve")
     _unrelated_reserved(reserve)
-    _wf(reserve, run_m, open(os.path.join(m, rm["record"]), encoding="utf-8").read())
+    _wf(reserve, os.path.basename(rm["record"]), open(os.path.join(m, rm["record"]), encoding="utf-8").read())
+    return repo, a, m, rm, reserve
+
+
+def case_this_runs_record_keeps_a_walked_finding_where_the_checkout_shows_it(tmp):
+    # f's walk to [SEC#2] is a move no record holds yet, so this run's own record writes it and publishes [SEC#2] for f.
+    # Merged with M, f's last publication is that one, its own: f stays on [SEC#2], though without this run's record it
+    # would walk past M's [SEC#3], which G published first, to [SEC#4]. plan reports no move, and none happens.
+    repo, a, m, rm, reserve = _past_a_moved_number(tmp)
     p = plan(a, "code", repo, None, None, "2026-10-16", reserve)
     assert p["origins"] == {"1": "sP:v3:p", "2": "sF:v3:f", "3": "sG:v3:g"}, p["origins"]
-    assert p["reserved_moves"] == [{"origin": "sF:v3:f", "from": 2, "to": 4, "run": run_m, "held_by": None}], \
-        p["reserved_moves"]
+    assert [(e["origin"], e["from"], e["to"]) for e in p["renumbered"]] == [("sF:v3:f", 1, 2)], p["renumbered"]
+    assert p["reserved_moves"] == [], p["reserved_moves"]
+    commit(a, "code", p, {}, "A", "triage", None, "2026-10-16T10:00:00Z")
+    assert _merged_alone(tmp, a, m, rm["record"]) == {"sP:v3:p": 1, "sF:v3:f": 2, "sG:v3:g": 3}
+
+
+def case_reserved_move_named_by_a_number_the_record_publishes_for_the_finding(tmp):
+    # As above, but an earlier run of the checkout (09:10, before M sorts) wrote f's walk to [SEC#2] already. M's move
+    # of f to [SEC#3] then comes later, and [SEC#3] is G's, so once M merges f walks to [SEC#4]. M takes no number from
+    # another finding, moves no allocation off [SEC#2] and publishes no [SEC#4]: it is named as the one record
+    # publishing a number for f, and merging it alone makes the move.
+    repo, a, m, rm, reserve = _past_a_moved_number(tmp)
+    w = commit(a, "code", plan(a, "code", repo, None, None, "2026-10-16"), {}, "W", "triage", None,
+               "2026-10-16T09:10:00Z")
+    assert [(e["origin"], e["from"], e["to"]) for e in w["renumbered"]] == [("sF:v3:f", 1, 2)], w
+    p = plan(a, "code", repo, None, None, "2026-10-16", reserve)
+    assert p["renumbered"] == [], p["renumbered"]
+    assert p["reserved_moves"] == [{"origin": "sF:v3:f", "from": 2, "to": 4, "run": os.path.basename(rm["record"]),
+                                    "held_by": None}], p["reserved_moves"]
+    commit(a, "code", p, {}, "A", "triage", None, "2026-10-16T10:00:00Z")
     assert _merged_alone(tmp, a, m, rm["record"]) == {"sP:v3:p": 1, "sG:v3:g": 3, "sF:v3:f": 4}
 
 
@@ -4072,11 +4093,11 @@ def case_reserved_move_off_a_number_names_the_record_that_moved_the_allocation(t
     assert [_number_once_merged(a, reserve, n, "sC2:v3:f") for n in (ra, rb)] == [2, 3]
 
 
-def case_reserved_move_behind_another_findings_move_names_that_moves_record(tmp):
-    # The checkout's p3 walked to [SEC#3] and p6 to [SEC#4], numbers no record publishes. Reserved: R1 and R2 allocate
-    # p3's and p6's plugin IDs again, after the checkout did (other names for its own findings), and R3 publishes
-    # [SEC#3] for p0. Merged, p3 walks to 4 and p6, behind it, to 5: both moves are R3's, never R1's, whose allocation
-    # of p3 stands on [SEC#4] only as the checkout's own finding, nor R2's.
+def case_reserved_record_first_to_publish_a_walked_number_takes_it(tmp):
+    # The checkout's p3 walked to [SEC#3] and p6 to [SEC#4], moves no record holds yet, which this run's own record
+    # writes. Reserved: R1 and R2 allocate p3's and p6's plugin IDs again, after the checkout did (other names for its
+    # own findings), and R3 publishes [SEC#3] for p0 -- before this run's record publishes it for p3. Once R3 merges p3
+    # walks on, past [SEC#4], which this run's record holds for p6, to [SEC#5]; p6 stays. The move is R3's.
     repo, c1 = _repo(tmp)
     a, k0, k1 = (os.path.join(tmp, n) for n in ("a", "k0", "k1"))
     for d in (k0, k1):
@@ -4099,10 +4120,12 @@ def case_reserved_move_behind_another_findings_move_names_that_moves_record(tmp)
                           [{"plugin_id": "v3:p0", "id": 3, "origin": "sR3:v3:p0"}])
     p = plan(a, "code", repo, None, None, "2026-10-16", reserve)
     assert p["origins"] == {"1": "sC0:v3:p1", "2": "sC0:v3:p5", "3": "sC1:v3:p3", "4": "sC2:v3:p6"}, p["origins"]
-    assert p["reserved_moves"] == [{"origin": "sC1:v3:p3", "from": 3, "to": 4, "run": r3, "held_by": None},
-                                   {"origin": "sC2:v3:p6", "from": 4, "to": 5, "run": r3, "held_by": None}], \
+    assert [(e["origin"], e["from"], e["to"]) for e in p["renumbered"]] == [("sC1:v3:p3", 1, 3), ("sC2:v3:p6", 2, 4)], p
+    assert p["reserved_moves"] == [{"origin": "sC1:v3:p3", "from": 3, "to": 5, "run": r3, "held_by": None}], \
         p["reserved_moves"]
-    assert [_number_once_merged(a, reserve, n, "sC2:v3:p6") for n in (r1, r2, r3)] == [4, 4, 5]
+    commit(a, "code", p, {}, "A", "triage", None, "2026-10-16T10:00:00Z")
+    assert [(_number_once_merged(a, reserve, n, "sC1:v3:p3"), _number_once_merged(a, reserve, n, "sC2:v3:p6"))
+            for n in (r1, r2, r3)] == [(3, 4), (3, 4), (5, 4)]
 
 
 def case_reserved_move_a_reserved_record_already_holds_is_never_reported_again(tmp):
@@ -4551,16 +4574,15 @@ HELP = {
     "plan": "Print what a scan means for the register, or plan a triage without --scan. Keys: base_id, base_seq, next_id,"
             " next_seq, reserved; renumbered (each move no run record holds yet, from every number its allocation was"
             " published under to the one it has now, marked provisional: plan records nothing); reserved_moves (each"
-            " move the merge of the --reserve-dir records will make to a finding this checkout holds, {origin, from, to,"
+            " move the merge of the --reserve-dir records will make to a finding this checkout holds, numbered with the"
+            " record this run's commit writes, which holds the moves renumbered lists and sorts last; {origin, from, to,"
             " run, held_by}: from its number here, which origins and every other key keep, to its number once they"
             " merge; run the reserved record the move waits on -- the one whose publication of from comes first, where"
-            " it published from for another finding or for none, or, where no record publishes from, the"
-            " earliest-sorting one allocating a finding that will stand on it and is none of the checkout's; else the"
-            " earliest-sorting one that gives the moved finding its new number, moving one of its allocations off from,"
-            " or else publishing to for it; else the record that the move of the checkout's finding that will stand on"
-            " from waits on; else the earliest-sorting one publishing any number for the moved finding; else null; and"
-            " held_by the reserved record whose renumbered already holds that very move, so that no run reports it"
-            " once it is made, or null; provisional,"
+            " it published from for another finding or for none; else the earliest-sorting one that gives the moved"
+            " finding its new number, moving one of its allocations off from, or else publishing to for it; else the"
+            " earliest-sorting one publishing any number for the moved finding; else null; and held_by the reserved"
+            " record whose renumbered already holds that very move, so that no run reports it once it is made, or"
+            " null; provisional,"
             " since those records have not merged; [] where none); scan (with base: the"
             " commit it shares with --default-ref, or null without the flag"
             " or where the ref shares no history with it; a ref naming no commit stops the run), already_recorded,"
