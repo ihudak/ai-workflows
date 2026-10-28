@@ -27,3 +27,45 @@ The design's mechanism rests on these measurements. Every case runs in fresh scr
 ## Helpers
 
 `lib.sh`, `lib9.sh` (setup), `rebuild.py` (a stub register rebuild), `real_register.py` (drives the real `register.py` read-only), `push_scope.py` (§4 step 5's test as written), `replay.py` (the checkout-free replay), `move.py` (the move strategies), `block.attributes` (§8's attribute block, copied from `session-branch.py`).
+
+## Build results (2026-10-28)
+
+The design was built on branch `iv-gu/lc11-design` with `superpowers:subagent-driven-development`, in the plan's six tasks (`docs/superpowers/plans/2026-10-28-lc11-checkout-free-replay.md`). Each task had an Opus implementer and an independent Opus task reviewer, with fix rounds until the reviewer approved. A whole-branch Opus review of the merged result followed, and its findings were fixed and re-reviewed until it returned *Ready to merge* at `1922b045`. Every ruling the controller made is in `../2026-10-28-lc11-checkout-free-replay-rulings.md`, and the ledger itself, unchanged, in `../2026-10-28-lc11-checkout-free-replay-ledger.md`.
+
+| Task | What | First commit → approved at | Selftest checks at approval | Review |
+|---|---|---|---|---|
+| 1 | `entry_set_merge` | `f35ebae7` → `b5f1947e` | 215 | Needs fixes, one round, approved |
+| 2 | Session-branch mode adopts it (`commit`, `sync`, `put-back`; `union` kept for `follow-ups.md`) | `20e372fd` → `ba47f7c8` | 302 | five rounds and a breaker ruling; a fresh implementer from round 4 |
+| 3 | `replay_commits` | `4d5bfa5e` → `8159b87f` | 754 | three rounds |
+| 4 | The `replay` command: the move, the push and the race | `63ab29f9` → `8daecc12` | 826 | three rounds |
+| 5 | `specs-repo-git` §1, §3.4, §4, §6, §7; the rules file; `CLAUDE.md`; `/scan`; `security-register-format` | `f54855fb` → `34ac2448` | 828 | approved with Minors, two rounds |
+| 6 | The sweep, the rationale, the docs pages and the release; to-fix D27 and the README's git note, taken on | `892dbf12` → `5224b553` | 828 | Needs fixes, two rounds |
+| Final | Whole-branch review over `2430bfa3..4c06b91c` | `938fef49`, `428980c5`, `ca4aa3d8`, `1922b045` | 842 | *Ready with fixes* → *Ready to merge* |
+
+- **Selftest.** `python3 plugins/workflows-core/scripts/session-branch.py --selftest` passes at `1922b045` on git 2.43.0, the only git it was run on. It ran 842 checks there, against 138 on `main` at `2430bfa3`. Both counts come from a scratch copy of each revision whose `check()` counts its own calls. The script prints only `PASS`.
+- **Gates.** Every `run:` step of `.github/workflows/validate-catalog.yml`, 27 of them, in order as one `&&` chain, exits 0, and so does `ASSERT_PUBLISHED=1 ./scripts/check-docs.sh --root .`.
+- **Release.** `workflows-core` 1.67.0, `security-workflows` 0.7.0, `dev-workflows` 4.49.0 and `product-workflows` 3.59.0, renumbered from 1.66.0 and 3.58.0 when `main`'s batch B25 took those numbers.
+
+### Where the build refines the design
+
+The shipped text is the authority; these are the places a ruling moved it from the design's first wording.
+
+- **The entry-set rule (design §3.3).** It refuses only where a base entry is missing from *one* side, so a removal both sides agree on is accepted. Where both sides edit one entry differently, it keeps both, as a visible duplicate. It refuses where the two sides' line endings differ, and it reads a file with no final newline as LF. `union_lines` completes a last line that has no newline, which git's `union` would otherwise double.
+- **The replay's guards.**
+  - The final tree may hold only the paths the replayed commit wrote, plus the rebuilt register files. This stops git's rename detection from publishing a file at a path the run never wrote.
+  - A commit that adds a file under a spec folder `origin` removed is refused.
+  - A session file `origin` deleted and the commit changed is refused, not taken in the commit's version.
+- **New refusal reasons and rows.** Beyond the design's set, there are two new refusal reasons: `cannot-move`, where git cannot move the checkout and nothing moved, and `checkout-moved`, where another session switched the checkout while it was being moved. There is also an *already there* row, for a replay that finds every commit already on `origin`.
+- **Time.** Three attempts of a 60 s fetch and a 60 s push, each with `bounded-run`'s 2 s kill grace, come to 372 s. The Bash timeout of 420 s adds room for the replays and the register rebuilds, which have no bound of their own.
+- **Re-checks before the move.** The replay re-reads where the checkout stands immediately before it moves. Where the checkout stands on the branch, it checks HEAD again under `HEAD.lock`. This closes the final review's measured case, a checkout switched during the replay that then received `origin`'s changes as staged edits on another branch.
+
+### Accepted residues
+
+- **Folder renames outside the spec folders** rely on git's rename handling. For example, a teammate deletes a whole `security/<slug>/` while a scan adds a record there, and the replay brings the folder back holding only the run's record.
+- **`worktree_blob` in session-branch mode's code** reads a session file that is a symbolic link as a deletion. No run writes a session file as a link.
+- **A switch *onto* the branch** in the instant between the move's last check and its ref write, where the checkout did not stand on the branch, moves the branch under that checkout. A switch takes HEAD's lock and never the branch's, so git offers no lock that holds it off. `move_branch`'s docstring and `specs-repo-git` §1 rule 4 state the window.
+- **A SIGKILL between `read-tree` and the ref transaction's `commit`** leaves git's locks behind, as the design's §3.4 step 1 states.
+
+### Still to verify live
+
+`docs/superpowers/to-test-on-real-project.md`, section *Live-check fix LC11*, holds the design's two live re-tests, LC11-1 and LC11-2, run on the e2e copies. The replay has so far run only in the selftest's temporary repositories.
