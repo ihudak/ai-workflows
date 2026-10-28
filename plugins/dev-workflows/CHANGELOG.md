@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.46.0] — 2026-10-27
+
+Take with `product-workflows` 3.52.0 and `docs-workflows` 1.28.0, which carry the same hook wording; this release relies on neither — to-fix D23.
+
+### Fixed
+- The `preload-context` hook prints `SPECS_PATH: (not set — a command that needs it asks for it)` where `$SPECS_PATH` is unset, the wording its `docs-workflows` and `product-workflows` copies now print. No behaviour changed: this hook prints the line only for `/implement` with a key-shaped argument, which does ask.
+
 ## [4.45.0] — 2026-10-27
 
 Fix batch B21 of the 2026-10-26 review: `/implement` and the agents it dispatches. Its own changes need nothing newer than `workflows-core` 1.59.0; take 1.62.0, which 4.44.0 needs.

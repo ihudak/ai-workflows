@@ -542,7 +542,11 @@ git -C "<repo>" status --porcelain                  # any entry -> line-count co
    readable `origin`, which Phase 1 reaches only through an absolute path (its zero-match
    escalation's *Specify a different absolute path* option, or a path `--repos` or its repo prompt
    gave), the basename of that clone's directory, the one name a typed run and `product-workflows:brd-split`'s
-   *Ground now*, which passes the bare path, both have for it. Otherwise never a directory name, and never a path: a slug
+   *Ground now*, which passes the bare path, both have for it — save where an earlier entry
+   records that clone under another name, a renamed directory's or one a run before
+   `product-workflows` 3.33.3 wrote, and the operator confirms it at that command's Phase 3
+   (*A clone with no readable `origin`, renamed*): the entry's name is then the slug, so one
+   repository is never recorded under two. Otherwise never a directory name, and never a path: a slug
    is the same in every clone of a repository and at every mount point, so an entry still names its
    repository after the clone moves, and two entries name one repository exactly where their slugs
    are equal. Every reader that compares entries, or an entry with a resolved repository, compares

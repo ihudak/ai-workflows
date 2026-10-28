@@ -263,7 +263,7 @@ step 1, on a `<KEY>` address only, and for `REPOS_PATH` Phase 1, with diff groun
 step 2, and Phase 1 step 4), `/specify` (Phase 0 step 2, and Phase 1 step 4), `/create-ard` (Phase 0
 step 2, and Phase 1 step 3) and `/epics` (Phase 0 step 0a, and Phase 1, with code examination on)
 cite this rule by name. **`REPOS_PATH` is
-asked for only where no entry of `${REPOS_PATH:-/workspace}` is an existing directory**: a value
+asked for only where no entry of `${REPOS_PATH:-/workspace}` — for `/prd-ground`, of its `--repos-path` value where one is given — is an existing directory**: a value
 that resolves is used without a question, and `/design`, `/specify`, `/create-ard`, `/epics`,
 `/document` and `/release-notes` print it on a `Repos:` line instead. **Where a citer's run can go on
 without code, its array carries that run's own way on between the two options** — `/specify` *Proceed without code scan*, `/create-ard` *Ground only the
@@ -614,7 +614,7 @@ fixer ran spent neither half, and is offered the re-review as above. **Which com
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
 edit the reviewed artifact on the way.** The seven commands that fix inline edit it through the offer
 above; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
-finding's rewording in itself, under any verdict, where the user takes it for text they chose —
+finding's rewording in itself, under any verdict, where the user takes it for text they chose, and splits, at its last count, an Epic an *Epic size* finding named —
 and `/implement` `review-fixer`, over the findings and over those the user applies at the offer above. The open questions `A finding left open that needs a decision is
 recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
 fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and
