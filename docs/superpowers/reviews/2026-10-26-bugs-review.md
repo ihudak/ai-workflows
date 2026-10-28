@@ -950,7 +950,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD-B3 — MINOR — `/epics` reads a `refinement_candidate` frontmatter flag that nothing writes or defines, attributing it to a retired reader
+### PRD-B3 — MINOR — `/epics` reads a `refinement_candidate` frontmatter flag that nothing writes or defines, attributing it to a retired reader — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:520` (*"read each `epic.md`'s `refinement_candidate` and `scope_hint` (emitted by the folder read at `prd-plus-epics`)"*), `:526-537` (the Phase 3.5 detected-drafts branch), `:1155` and `:1160`; also `plugins/dev-workflows/references/workflow-states.md:63`.
 - **What is wrong:** `grep -rn refinement_candidate plugins --include=*.md` finds only readers. No format reference defines the field, `epic-writer`'s frontmatter template does not write it, and no command does. The "folder read at `prd-plus-epics`" was an agent. `epics.md:487-491` says that agent was deleted and replaced by a direct read, and `:501` says *"nothing creates an empty Epic"*.
 - **Failure scenario:** Phase 3.5's "Detected N near-empty Epic drafts" branch, its mode question and the leftover gate can be reached only through a hand-written field. A reader trusting the invariant at `:1155` believes detection runs, when the branch is dead. An operator who hand-writes `refinement_candidate: true` meets a mode that no format documents.
@@ -979,7 +979,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD-B6 — MINOR (low confidence) — `/epics` Phase 8's Instructions agent still edits files after the handoff, the reason Agent 1 was changed to report only
+### PRD-B6 — MINOR (low confidence) — `/epics` Phase 8's Instructions agent still edits files after the handoff, the reason Agent 1 was changed to report only — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:899-907` against `:881`.
 - **What is wrong:** Agent 1 is told *"do NOT edit the file — this run has already handed its drafts off, and an edit made now would sit uncommitted"*. Agent 3 is told to check `CLAUDE.md` in the project root (the resolved PRD folder) and `~/.claude/CLAUDE.md`, and *"If YES: apply minimal, additive, scoped changes only"*. The same reasoning applies to Agent 3.
 - **Failure scenario:** A run leaves an edited `CLAUDE.md` uncommitted in the specs repository after Phase 7.5 has already committed. That file is an OTHER path, so §3.3's G1 advisory fires on every later run. A global `~/.claude/CLAUDE.md` edit also lands with no review.
@@ -1004,7 +1004,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD-B9 — NIT — `/epics` Phase 3.5's adaptive code-scan array can show the same setting twice
+### PRD-B9 — NIT — `/epics` Phase 3.5's adaptive code-scan array can show the same setting twice — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:541`.
 - **What is wrong:** The array is `choices: ["<adaptive default> (Recommended)", "<the other setting>", "Keep my Phase 1 choice"]`. Where the Phase 1 answer equals the adaptive default, which is the common case, options 1 and 3 do the same thing. *When a choice list fires* then calls for no list, or for a two-option one.
 - **Failure scenario:** Phase 1 leaves the scan ON (its default) and there are two or more refinement targets, so the adaptive default is ON. The operator is asked a three-option question in which two options do the same thing.
@@ -2366,7 +2366,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `create-ard-post-cap-decision-edits-unreviewed`, `specify-post-verdict-edits-unlisted`, `design-post-recommendation-edits-unreviewed` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B17 — MINOR — `/epics` asks keep-whole only after `epic-writer` has already split by size
+### FBB-B17 — MINOR — `/epics` asks keep-whole only after `epic-writer` has already split by size — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:648` (step 1's handoff carries `scope` from Phase 2 only), `:662-672` (step 4's split / keep-whole question comes after the writer returns).
 - **What is wrong:** The writer splits over-limit work unless `scope` carries keep-whole, which only a Phase 2 *Revise* supplies. So the planned "split or keep whole" question is moot by the time it is asked.
 - **Failure scenario:** On a two-component PRD with 62 folded criteria, both Epics would have been split before the operator was asked.
@@ -2392,7 +2392,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `epics-pre-lint-autolink-flags-specs-keys` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B20 — MINOR — `/epics` `body_facts` makes a false claim on the falling-back handoff
+### FBB-B20 — MINOR — `/epics` `body_facts` makes a false claim on the falling-back handoff — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:836` (`body_facts` … "the next command — `/product-workflows:specify <EPIC>`, which will not run until this pull request is merged"), against `:831` (the stopping array applies only where the run edited a merged `epic.md`).
 - **What is wrong:** For all-new Epics, the class is gated — falling back. `/specify` then reads the working copy, so the sentence written into every pull request is false.
 - **Evidence:** I read `:825-838`.
@@ -2400,7 +2400,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `epics-handoff-body-next-command-claim` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B22 — NIT — `/epics` does not pass house style to `prose-style-checker`
+### FBB-B22 — NIT — `/epics` does not pass house style to `prose-style-checker` — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:713-753` (Phase 6.2). `prose-style-checker` accepts `rules_path` (`plugins/prose-style/agents/prose-style-checker.md:32`), but `/epics` passes none.
 - **What is wrong:** The tree's house spellings ("e-mail", "catalogue") generated 18 NITs that nothing acts on.
 - **Suggested fix:** Pass the specs repository's overlay, or the PRD folder's conventions.

@@ -15,7 +15,7 @@ Do NOT invoke for PASS verdicts. Only invoke when the verdict is BLOCK or PASS W
 The caller passes:
 
 - **Task description** — what was being written (feature doc / Epic drafts / style-fixing)
-- **Reviewer or style-checker output** — the full structured output, including all findings with severity, location (`path:line`), observation, and suggestion.
+- **Reviewer or style-checker output** — the full structured output, including all findings with severity, location (`path:line`), observation, and suggestion — or the absolute path of a file holding it, which a caller passes where pasting the output would cost its own context (`/epics` does): Read that file whole before parsing a finding. A file that cannot be read is no output, and you refuse as below.
   When the source is `doc-reviewer` or `epic-reviewer`, this list has already been triaged by the
   caller — every finding is a **survivor**; do not re-triage and do not dismiss. When the source is
   a style checker, no triage step ran (a linter violation is not a claim about consequence) and the

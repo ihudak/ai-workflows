@@ -1109,8 +1109,11 @@ On **"Next Epic"**, **re-render the Phase 2 Step A progress-aware picker minus t
 
 **The one step between them is merging `/epics`' pull request.** `/epics` writes into the tree this
 command reads and hands its drafts off on an `epics/` branch behind its consent choice; Phase 0's
-*Gate the Epic* stops this command while an Epic sits on that branch unmerged, and reads one that was
-never handed off from the folder as it stands. There is no creating it anywhere else, and nothing to
+*Gate the Epic* stops this command on a new Epic that sits only on that branch, unmerged (rows D and
+E); on an Epic the default branch already holds, which that run edited, it meets the default branch's
+copy without the edit and stops on the difference, or, once switched to the default branch, reads that
+earlier copy (rows A and C), until the pull request merges; and it reads an Epic that was never handed
+off from the folder as it stands. There is no creating it anywhere else, and nothing to
 import. That gap used to be a manual export-and-re-import through a tracker, and removing it is most
 of what this increment is for.
 
