@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.64.0] — 2026-10-27
+
+Take with `dev-workflows` 4.47.0 and `product-workflows` 3.53.0, whose `/design` and `/specify` cite this release's `session-hygiene` §6 — to-fix PR8 (live checks of 2026-10-26).
+
+### Added
+
+- **`session-hygiene` §6, the resume-environment check, in a part of its own (`resume-environment`).** A command that keeps a session file it resumes from records `$SPECS_PATH`'s real path, the specs repository's `origin`, `$REPOS_PATH` and the reference loader's install as the file's `## Run environment` section, and compares them on a resume, before the deliverable write that leads to the handoff, and before the first write of its emitter tail. On a mismatch it asks — on a resume, go on in the current environment (recommended unless `origin` differs) or stop; later, stop or go on pinned to the recorded environment where it still exists — and never goes on silently. *Stop* sets `specs_git: misrooted`, reusing that flag's handling, since the run's specs root is not the one it recorded. §1–§5 stay guidance-only; §6 is outside their contract.
+
 ## [1.63.0] — 2026-10-27
 
 Take with `product-workflows` 3.52.0, whose `/prd-ground` Phase 3 asks the question this release's `grounding-format` §4 cites, and whose `--repos-path` flag and `/epics` re-review offer this release's `escalation-rules` names — to-fix D7, D8, D9 (batches B24, B26).

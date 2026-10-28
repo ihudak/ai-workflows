@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.53.0] — 2026-10-27
+
+Take with `workflows-core` 1.64.0, whose `session-hygiene` §6 `/specify` now runs — to-fix PR8 (live checks of 2026-10-26).
+
+### Changed
+
+- **`/specify` checks the environment its session file recorded.** `_session.md` opens with a `## Run environment` section, which whichever step first writes the file records, and the run compares it on a resume (Phase 1's or the Epic picker's), before Phase 7's write and handoff, and before Phase 8's first terminal write, asking on a mismatch rather than going on in another repository; *Stop* sets `specs_git: misrooted`, so nothing more is handed off or committed (`workflows-core:session-hygiene` §6).
+
 ## [3.52.0] — 2026-10-27
 
 Take with `workflows-core` 1.63.0, whose `grounding-format` §4 lets an origin-less clone keep the name an earlier entry records it by, which this release's `/prd-ground` Phase 3 records, and whose `escalation-rules` names this release's `--repos-path` and `/epics` re-review offer; `dev-workflows` 4.46.0 and `docs-workflows` 1.28.0 carry the same hook wording and rely on nothing here — to-fix D7, D8, D9, D10, D11, D23 (batches B24 and B26).
