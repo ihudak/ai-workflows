@@ -179,13 +179,16 @@ def entry_set_merge(base, ours, theirs):
     versions; base is None where both sides created it. None (refuse) where the non-empty versions
     are not all in one line-ending form (_line_ending_form: an entry in \\r\\n never matches its copy
     in \\n, so it would be added twice), where the two headers differ, or where an entry of base is
-    missing from either side: an edit, a removal, or an addition to the last entry. Otherwise ours,
-    given a final line ending where it lacks one, then each entry of theirs that ours lacks, once, in
-    theirs' order, after one empty line (none where ours already ends with a blank line, or is
-    empty), with its trailing blank lines dropped and one line ending, its own lines unchanged. Each
-    line ending added is \\r\\n where the entry's first line ends \\r\\n (for the one added to ours,
-    where ours' last line ending is \\r\\n), else \\n. Base decides only the refusal; it need not be a
-    prefix of either side. A caller decides a deleted side."""
+    missing from one side while the other still holds it: an edit, a removal, or an addition to the
+    last entry, made on one side alone. An entry of base missing from both sides is an agreed change,
+    as a three-way merge takes one: removed on both, it stays removed; edited alike, it is kept once;
+    edited differently, both edited versions stay -- a visible duplicate, never a lost edit. Otherwise
+    ours, given a final line ending where it lacks one, then each entry of theirs that ours lacks,
+    once, in theirs' order, after one empty line (none where ours already ends with a blank line, or
+    is empty), with its trailing blank lines dropped and one line ending, its own lines unchanged.
+    Each line ending added is \\r\\n where the entry's first line ends \\r\\n (for the one added to
+    ours, where ours' last line ending is \\r\\n), else \\n. Base decides only the refusal; it need not
+    be a prefix of either side. A caller decides a deleted side."""
     if len({_line_ending_form(x) for x in (base, ours, theirs) if x}) > 1:
         return None
     head_o, ents_o = split_entries(ours)
@@ -195,7 +198,7 @@ def entry_set_merge(base, ours, theirs):
     have_o = {entry_key(e) for e in ents_o}
     if base is not None:
         have_t = {entry_key(e) for e in ents_t}
-        if any(entry_key(e) not in have_o or entry_key(e) not in have_t for e in split_entries(base)[1]):
+        if any((entry_key(e) in have_o) != (entry_key(e) in have_t) for e in split_entries(base)[1]):
             return None
     out = ours
     if out and not out.endswith(b"\n"):
@@ -1258,6 +1261,20 @@ def selftest():
                 got = esm(base, ours, theirs)
                 check(got is None, "%s refuses (%r)" % (what, got))
 
+        # a base entry missing from both sides is an agreed removal or edit, as a three-way merge
+        # takes one: it stays removed, an identical edit is kept once, two different edits both stay
+        B3 = IMPL_2P.replace("7be0d41", "b3b3b3b")
+        got = esm(base, IMPL_HEAD + IMPL_2 + "\n" + IMPL_2P, IMPL_HEAD + IMPL_2 + "\n" + B3)
+        check(got == IMPL_HEAD + IMPL_2 + "\n" + IMPL_2P + "\n" + B3,
+              "an entry both sides removed stays removed, and each side's addition is kept (%r)" % got)
+        fixed = base.replace("commit:  a3f91c2", "commit:  a3f91c3")
+        got = esm(base, fixed + "\n" + IMPL_2P, fixed + "\n" + B3)
+        check(got == fixed + "\n" + IMPL_2P + "\n" + B3, "the same edit on both sides is kept once (%r)" % got)
+        other = base.replace("commit:  a3f91c2", "commit:  a3f91c4")
+        got = esm(base, fixed, other)
+        check(got == fixed + "\n" + IMPL_1.replace("commit:  a3f91c2", "commit:  a3f91c4"),
+              "two different edits of one entry both stay, a visible duplicate rather than a lost edit (%r)" % got)
+
         # merge_class: by path, for every path the classifier table holds and the shapes it lacks
         want_class = {
             "specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md": "block",
@@ -2106,6 +2123,22 @@ def selftest():
                   "a refused merge of origin's copy of the session branch names that copy as its source (%r)" % got)
             check(b.read(FB) == mine and b.git("show", "session/aa:" + FB) == mine.rstrip("\n"),
                   "…the removal committed as it is and the working copy left as it was (%r)" % b.read(FB))
+            check("[rejected]" in b.git("push", "--porcelain", "origin", "session/aa", check=False),
+                  "…so the push of the session branch is rejected")
+            # §6's remedy: the same removal on the other clone; both then merge and push
+            a.write(FB, SEED[:SEED.index("## ")] + today("a1 from clone a"))
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            check(got.get("committed") and got.get("unsettled") == [], "clone a commits the same removal (%r)" % got)
+            a.git("push", "-q", "origin", "session/aa")
+            b.git("fetch", "-q", "origin")
+            got = b.run("commit", "--branch", "session/aa", *CM)
+            check(got["sync"].get("merged") is True and got["sync"].get("conflicts") == []
+                  and b.git("show", "session/aa:" + FB) == (mine + "\n" + today("a1 from clone a")).rstrip("\n"),
+                  "with the same removal on both clones, clone b merges clone a's copy, the entry gone (%r)" % got)
+            out = b.git("push", "--porcelain", "origin", "session/aa", check=False)
+            check("[rejected]" not in out and b.git("rev-parse", "session/aa")
+                  == b.git("ls-remote", "origin", "refs/heads/session/aa").split()[0],
+                  "…and its push goes through (%r)" % out)
         # Review Focus 3: implementation-format §1's block move, a removal, is committed as it is where
         # the branch has not moved since this worktree was given its version -- by its record, or after
         # a lift cleared the records -- and left out, in unsettled, where another worktree moved it on
