@@ -11,9 +11,10 @@
 #                                         via resolve-address.
 #
 # emit_specs_context surfaces $SPECS_PATH alongside $REPOS_PATH. The function
-# is already byte-identical across dev-workflows and docs-workflows (verified
-# by diff); this is the third copy, following established precedent rather
-# than a new design decision. Sharing it is not available: a hook runs as
+# is byte-identical to docs-workflows' copy; dev-workflows' copy differs only by
+# omitting the REPOS_PATH lines, since /implement reads no $REPOS_PATH. This is
+# the third copy, following established precedent rather than a new design
+# decision. Sharing it is not available: a hook runs as
 # `bash "${CLAUDE_PLUGIN_ROOT}/hooks/<script>"`, and that variable resolves to
 # the reading plugin, so a hook cannot source a sibling plugin's file — a
 # dependency grants installation, never file access.
@@ -73,7 +74,7 @@ emit_specs_context() {
     if [[ -n "${SPECS_PATH:-}" ]]; then
         echo "SPECS_PATH: $SPECS_PATH"
     else
-        echo "SPECS_PATH: (not set — the command will ask)"
+        echo "SPECS_PATH: (not set — a command that needs it asks for it)"
     fi
     emit_git_branch_if_repo
 }

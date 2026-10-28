@@ -115,6 +115,17 @@ working tree is at it, in the working tree, since no commit holds what that scan
   version they use) — missing → `MINOR`. A stub for a consumed
   interface that models only the success shape, where its `[AD#N]` Rule in `applicable_ard` or
   `## Interfaces / contracts` states failures for it → `MINOR`.
+  **A double for the behaviour under test** (`design-format.md` section 8): a **Test strategy** line
+  that, for an `[ACxx]` or `[TCxx]` it covers, puts a mock, a stub, a fake or a spy that replaces the
+  call in place of the component performing the behaviour that criterion names — a mocked writer for a
+  criterion about rollback — → `MAJOR`, as a missing producer-side test is: the test holds whatever
+  the code does, so the criterion is covered on paper and checked by nothing. Its fix names the real
+  component, or a double one step further out that only provokes the condition. **Not a finding:** a
+  double that provokes the condition while the real component performs the behaviour, or a spy that
+  wraps the real component and lets the genuine failure happen — a spy on the real repository so the
+  database raises a genuine refusal; nor a true-external seam's mock adapter, or a consumed
+  interface's stub, where the behaviour the criterion names is this design's own response to what
+  it answers.
 - **Architecture coherence:** components and data flow are consistent; an interface referenced by no
   component (or vice-versa) → `MAJOR`.
   **Alternatives considered** is present and **substantive**: at least one genuinely plausible

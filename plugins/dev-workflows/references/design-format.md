@@ -159,6 +159,14 @@ reach.
    it changes an artifact consumers already use, that it stays compatible with the version they use.
    A stub or test double for a consumed interface models the failures its `[AD#N]` Rule or section 4
    states, as well as the success shape.
+   **A test never doubles the behaviour its criterion names.** For each `[ACxx]` / `[TCxx]` a line
+   covers, the component that performs the behaviour the criterion names — the rollback, the retry,
+   the refusal — runs for real: a mock, stub, fake or replacing spy in its place makes the test hold
+   whatever the code does (a mocked writer for a criterion about rollback). A double may provoke the
+   condition that behaviour answers — a true-external seam's mock adapter, or a consumed interface's
+   stub, does where the criterion names this design's own response to it — and a spy may wrap the real component, so long as the genuine
+   failure still happens — a spy on the real repository that makes the database raise a genuine
+   refusal is sound.
    A test case run against a deployed system, rather than against what the test sets up itself,
    names the state it relies on and shows the running system provides it, as section 11's
    *Post-release checks* do.
