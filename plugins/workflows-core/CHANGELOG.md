@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.65.1] — 2026-10-28
+
+Take with `product-workflows` 3.57.0, whose `/epics` hands off the files this release classifies, names the next command per Epic as §2.7 now says and hands `doc-fixer` a file path — batch B24 (PRD-B6, FBB-B20, FBA-G2, FBA-G4).
+
+### Changed
+- **`phase-handoff` §4.0 classifies a PRD folder's `CLAUDE.md` as advisory and a PRD folder's Epic index page as unread** — what `/epics`' maintenance agents now edit before its handoff and declare in it; the harness loads the first, and no command opens the second. No array moves: the set takes its gated `epic.md`'s class. §4.3's falling-back bullet no longer says `/epics`' set holds `_coverage.md` beside its Epics and nothing else, and names its run as one whose Epics are all new or unchanged.
+- **`doc-fixer` takes its reviewer or style-checker output as the absolute path of a file holding it**, as well as pasted, reading the file whole first and refusing where it cannot be read. `/epics` passes a path; `/document` still pastes.
+- **`components`' consumer note names `/epics` Phase 5's use of `component-of`**, placing each scanned cross-component call's caller for its contract-omission check.
+- **`phase-handoff` §2.7's next-command sentence is true of an edit** (FBB-B20). The body said the next command *will not run* until the pull request merges, false where the artifact is an edit of one the default branch already carries: the next command runs there, on the default branch's copy, or stops on the difference. It now says the next command will not run on what the pull request carries until it merges — a new artifact stops it at rows D and E, the branch's owner included, while on an edited one it meets the default branch's copy, save a consumer sharing the producer's prefix and key, which row B lets read the branch's copy — and that a producer whose set may hold either says which per artifact by the test that picks its consent array, as `/epics` does.
+
 ## [1.65.0] — 2026-10-27
 
 Take with `dev-workflows` 4.48.0 and `security-workflows` 0.6.0, whose `/implement`, `/conformance` and `/scan` say the merge rests on the subject alone in the new left-behind case, and whose pages describe the merged test below; each runs §5 from the loaded reference, so an older one still runs. Closes to-fix C10.

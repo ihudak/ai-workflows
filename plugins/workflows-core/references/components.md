@@ -125,7 +125,7 @@ coverage_gaps: [{kind: unknown_ad | consumed_unproduced | produced_off_target | 
 ## Consumers (informative)
 
 - `/create-ard` — Phase 3 proposes theme→component with §2 and writes the confirmed list to `components:` (§5); Phase 4 authors `## Contracts` when two or more are `kind: code`.
-- `/epics` — §3 for the known set; Phase 5.5 with §2 and §1.1 where no ARD supplies one; §6 at `epics` scope for its prerequisites stop; §4 in `epic-writer`'s rules.
+- `/epics` — §3 for the known set; Phase 5.5 with §2 and §1.1 where no ARD supplies one; Phase 5's *Contract omissions* with §1.1's `component-of`, placing each scanned cross-component call's caller where the ARD has contracts; §6 at `epics` scope for its prerequisites stop; §4 in `epic-writer`'s rules.
 - `/specify`, `/design` — the Epic's target narrows the repositories and the scan; §3 decides whether `/design <PRD>` designs a flat spec and how `/specify`'s Phase 2 offers a PRD-level spec; `/design` passes §2's enumeration of the target's repository to `design-reviewer`.
 - `/ready` — §6 at `ready` scope for its targets and contract-coverage tables.
 - `/conformance` — §1's `<repo-slug>` to resolve each target's clone (its Phase 1 (a)); on an Epic run, §3's reading of each Epic's `target:`, and §1 and §5 for each handed component's `paths`, with its tracer handoff restating §1.1's `component-of` (its Phase 2).
