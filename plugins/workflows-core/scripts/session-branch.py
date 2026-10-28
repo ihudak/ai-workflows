@@ -504,12 +504,16 @@ def union_lines(root, path, base, ours, theirs):
     """git's union of a one-task-per-line file (follow-ups.md) from three versions, ours' lines first.
     Each line is one whole task, so union cannot fuse two; base None is an empty base. None (refuse)
     where the non-empty versions are not all in one line-ending form (_forms_differ): union matches
-    lines byte for byte, so every task in \\r\\n would stand beside its copy in \\n."""
+    lines byte for byte, so every task in \\r\\n would stand beside its copy in \\n. A version whose
+    last line has no line ending is given one first, in its own form (_line_ending): git's merge-file
+    matches such a line with neither its \\n nor its \\r\\n copy, and would keep it twice."""
     if _forms_differ(base, ours, theirs):
         return None
     with tempfile.TemporaryDirectory() as td:
         names = []
         for name, data in (("ours", ours), ("base", base or b""), ("theirs", theirs)):
+            if data and not data.endswith(b"\n"):
+                data += _line_ending(data, last=True)
             names.append(os.path.join(td, name))
             with open(names[-1], "wb") as fh:
                 fh.write(data)
@@ -2362,7 +2366,9 @@ def selftest():
                 ("- [ ] zero\n- [ ] one\n- [ ] mid\n", "- [ ] one\n- [ ] mid\n",
                  "- [ ] one\n- [ ] mid\n- [ ] two (session only)"),
                 ("- [ ] one\n", "- [x] one\n", "- [ ] one\n- [ ] two (session only)\n- [x] one"),
-                ("- [ ] one\n", "- [x] one\n- [ ] two (session only)\n", "- [x] one\n- [ ] two (session only)")):
+                ("- [ ] one\n", "- [x] one\n- [ ] two (session only)\n", "- [x] one\n- [ ] two (session only)"),
+                ("- [ ] one\n", "- [ ] zero\n- [ ] one",  # its last line's newline stripped: still one task
+                 "- [ ] zero\n- [ ] one\n- [ ] two (session only)")):
             with tempfile.TemporaryDirectory() as tmp:
                 remote, a, b = world(tmp)
                 a.write(fu, top)
@@ -2501,6 +2507,35 @@ def selftest():
             on = a.git("show", "session/aa:" + fu)
             check(got.get("merged") is True and got.get("conflict") == [] and on == "- [ ] one\n- [ ] mine\n- [ ] team",
                   "a sync settles follow-ups.md whose merge base has no final newline (%r, %r)" % (got, on))
+        # a last line with no newline matches its copy on the other sides: union_lines ends each
+        # version with a line ending in its own form first, where git's merge-file matches it with
+        # neither its LF nor its CRLF copy and keeps it twice
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(["git", "init", "-q", tmp], check=True)
+            for form, eol in (("LF", "\n"), ("CRLF", "\r\n")):
+                for b_, o_, t_, want in (("p\nx\n", "a\np\nx", "p\nx\nb\n", "a\np\nx\nb\n"),
+                                         ("p\nx", "p\na\nx\n", "p\nx\nb\n", "p\na\nx\nb\n")):
+                    got = union_lines(tmp, fu, *(s.replace("\n", eol).encode() for s in (b_, o_, t_)))
+                    check(got == want.replace("\n", eol).encode(),
+                          "[%s] a last line with no newline, in ours or in base, is kept once by union_lines (%r)"
+                          % (form, got))
+            got = keep_branch_only_lines(tmp, fu, b"- [ ] one\n", b"- [ ] one\n- [ ] two\n", b"- [ ] zero\n- [ ] one")
+            check(got == b"- [ ] zero\n- [ ] one\n- [ ] two\n",
+                  "keep_branch_only_lines puts a task back after a last line with no newline, each once (%r)" % got)
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(fu, "- [ ] one\n")
+            push_main(a, "follow-ups")
+            b.git("pull", "-q", "--ff-only", "--no-rebase", "origin", "main")
+            a.write(fu, "- [ ] zero\n- [ ] one")
+            a.run("commit", "--branch", "session/aa", *CM)
+            b.write(fu, "- [ ] one\n- [ ] team\n")
+            push_main(b)
+            a.git("fetch", "-q", "origin")
+            got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
+            on = a.git("show", "session/aa:" + fu)
+            check(got.get("merged") is True and on == "- [ ] zero\n- [ ] one\n- [ ] team",
+                  "a sync keeps a session-side last line with no newline once (%r, %r)" % (got, on))
 
         # an unexpected exception is "not run" on one line, exit 2: §6 quotes the first stderr line
         with tempfile.TemporaryDirectory() as tmp:
