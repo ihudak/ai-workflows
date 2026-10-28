@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.48.0] — 2026-10-27
+
+Take with `workflows-core` 1.65.0, whose `implementation-format` §5 merged test this release's pages describe and whose left-behind case its `/implement` and `/conformance` name (to-fix C10).
+
+### Changed
+- `/implement` Phase 1.4 prints, and `/conformance`'s Epic and PRD runs put in *Scope*, a line of its own where §5's merged test passed in its left-behind case: `tip conflicts and origin/<branch> is gone — the merge state rests on the commit subject alone`, beside the existing *tip not compared* line for an older git or a comparison that compared nothing.
+- The `/conformance` page says how the merged test now works: it looks along the branch's own commits, from the recorded work up and at most twenty, and a conflict does not count. The key alone counts only where the clone holds neither the commit nor the branch, where git is too old to compare or a comparison could not be made, and where a pushed local branch can show only a conflict once its remote copy is gone. The `/implement` page names that last case.
+
+## [4.47.0] — 2026-10-27
+
+Take with `workflows-core` 1.64.0, whose `session-hygiene` §6 `/design` now runs — to-fix PR4 and PR8 (live checks of 2026-10-26).
+
+### Changed
+
+- **`design-reviewer` flags a test double for the behaviour under test** (PR4). A `## Test strategy` line that, for a criterion it covers, puts a mock, stub, fake or replacing spy in place of the component performing the behaviour the criterion names — a mocked writer for a criterion about rollback — is a `MAJOR`, graded as a missing producer-side test is: the test holds whatever the code does. A double that only provokes the condition — a true-external mock adapter or a consumed interface's stub, where the criterion names this design's own response — or a spy that wraps the real component and lets the genuine failure happen, is sound. It ships on the one recorded instance, by the user's decision, rather than waiting for a second. `design-format.md` section 8 states the rule, and `/design` Phase 5 grills by it.
+- **`/design` checks the environment its session file recorded** (PR8). `_design-session.md` opens with a `## Run environment` section — `$SPECS_PATH`'s real path, the specs repository's `origin`, `$REPOS_PATH`, the reference loader's install — which whichever step first writes the file records, and the run compares it on a resume, before Phase 7's write and handoff, and before Phase 8's first terminal write, asking on a mismatch rather than going on in another repository; *Stop* sets `specs_git: misrooted`, so nothing more is handed off or committed (`workflows-core:session-hygiene` §6).
+
 ## [4.46.0] — 2026-10-27
 
 Take with `product-workflows` 3.52.0 and `docs-workflows` 1.28.0, which carry the same hook wording; this release relies on neither — to-fix D23.

@@ -19,9 +19,12 @@ Every rule name in `session-hygiene`, with the part that holds it; `core` comes 
 - `§3` → `guidance`
 - `§4` → `guidance`
 - `§5` → `guidance`
+- `6. Resume environment — the session file records where the run stands, and a resumed run compares it` → `resume-environment`
+- `§6` → `resume-environment`
 
 ## Parts of `session-hygiene`
 
 - `core` — comes with every part
 - `resume-pointer`
 - `guidance`
+- `resume-environment`

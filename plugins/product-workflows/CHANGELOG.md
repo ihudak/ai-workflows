@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.53.0] — 2026-10-28
+## [3.54.0] — 2026-10-28
 
-Its own changes need nothing newer than `workflows-core` 1.62.0; take 1.63.0, which 3.52.0 needs — to-fix D21.
+Its own changes need nothing newer than `workflows-core` 1.62.0; take 1.64.0, which 3.53.0 needs — to-fix D21.
 
 ### Added
 - **`scripts/bundle-scan.py`, the plugin-free scan `/brd-package` runs over its prompt, its delivery note and its bundle**, with a `--selftest` the catalog workflow runs. It reports every token of `bundle-packaging.md` §1.2's classes, grouped as §6.3 rule 4 asks, each with the span its position places it in — a captured file, an inventory or ledger `text` cell, an inventory row's `source_anchor`, a captured path (matched as the capture names it, spaces included) and the heading path after its ` › `, a captured file's bundled name — and whether it sits in a prerequisite's file, and leaves out a `§` in §6.3 rule 1's fixed position. It reads the family's plugin names, commands and agents from the plugins installed beside it, and catches an expanded install path as well as the variable. It finds and never rules: the run still rules on the spans position cannot place, such as a transcription's quoted text or a decision's quoted argumentation, and on a leading-slash name or a bare agent name whose shape cannot tell the family's vocabulary from the customer's. Every run used to write its own scan, and two runs could scan one bundle differently.
@@ -17,6 +17,14 @@ Its own changes need nothing newer than `workflows-core` 1.62.0; take 1.63.0, wh
 
 ### Fixed
 - **The set-resolution check's delivery-note relation could read a date as a commit**: `bundle-packaging.md` §7 now says a commit the note names is 7 to 40 hexadecimal characters standing as a word of its own, never one inside a filename such as `bundle-<YYYYMMDD>/`, and never one that reads as a valid date and prefixes no baseline commit. A hand-written check read `20261012` as a pin and reported a correct note as naming a commit no baseline holds.
+
+## [3.53.0] — 2026-10-27
+
+Take with `workflows-core` 1.64.0, whose `session-hygiene` §6 `/specify` now runs — to-fix PR8 (live checks of 2026-10-26).
+
+### Changed
+
+- **`/specify` checks the environment its session file recorded.** `_session.md` opens with a `## Run environment` section, which whichever step first writes the file records, and the run compares it on a resume (Phase 1's or the Epic picker's), before Phase 7's write and handoff, and before Phase 8's first terminal write, asking on a mismatch rather than going on in another repository; *Stop* sets `specs_git: misrooted`, so nothing more is handed off or committed (`workflows-core:session-hygiene` §6).
 
 ## [3.52.0] — 2026-10-27
 

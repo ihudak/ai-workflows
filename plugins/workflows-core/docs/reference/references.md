@@ -59,7 +59,7 @@ The bookkeeping every long-running command emits around its actual work.
 - `feedback-emission.md` — the session-feedback emitter every long-running command's automatic maintenance phase cites to capture friction about the plugin itself.
 - `followup-emission.md` — the follow-up task and verbose-note emitter a terminal "Emit follow-up tasks" phase cites.
 - `session-diagnosis.md` — the rules `/diagnose-session` and its `session-analyst` agents follow to read a session's transcripts on disk: context safety, locating a session, the case file, the seven dimensions, the findings shape, the report, and the family-involvement statement that names a location and proposes no fix.
-- `session-hygiene.md` — the family-wide contract for session-hygiene suggestions: flush resume-critical state to disk, then suggest the right context action, after a big command finishes or a long run checkpoints.
+- `session-hygiene.md` — the family-wide contract for session-hygiene suggestions: flush resume-critical state to disk, then suggest the right context action, after a big command finishes or a long run checkpoints; and (§6) the environment a command that resumes from a session file records there and compares on a resume, before its handoff and before its terminal writes, stopping on a mismatch.
 
 ## Environment and routing
 
