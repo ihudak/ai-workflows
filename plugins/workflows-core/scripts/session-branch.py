@@ -162,8 +162,11 @@ def _line_ending(chunk, last=False):
 
 
 def _line_ending_form(data):
-    """Whether the bytes hold a \\r\\n, and whether they hold a \\n with no \\r before it."""
-    return b"\r\n" in data, re.search(rb"(?<!\r)\n", data) is not None
+    """Whether the bytes hold a \\r\\n, and whether they hold a \\n with no \\r before it. Bytes with
+    no line ending at all (one line, its final newline stripped) read as the LF form: a merge that
+    adds a line after that one completes it with \\n (_line_ending; git's merge-file too, where no
+    other line tells it \\r\\n), so it merges with LF versions and is refused beside CRLF ones."""
+    return b"\r\n" in data, b"\n" not in data or re.search(rb"(?<!\r)\n", data) is not None
 
 
 def _forms_differ(*versions):
@@ -1283,6 +1286,14 @@ def selftest():
                            (IMPL_HEAD, crlf(base), crlf(IMPL_HEAD + IMPL_2))):
             got = esm(b_, o_, t_)
             check(got is None, "three versions not all in one line-ending form refuse (%r)" % got)
+        # a version with no line ending at all reads as LF, the ending its last line is completed with
+        top = IMPL_HEAD.rstrip("\n")
+        got = esm(None, top, IMPL_HEAD + IMPL_1)
+        check(got == IMPL_HEAD + IMPL_1, "a header with no line ending at all merges with an LF side, in LF (%r)" % got)
+        got = esm(top, IMPL_HEAD + IMPL_1, IMPL_HEAD + IMPL_2)
+        check(got == IMPL_HEAD + IMPL_1 + "\n" + IMPL_2, "…as a base too (%r)" % got)
+        got = esm(None, top, crlf(IMPL_HEAD + IMPL_1)), esm(top, crlf(base), crlf(both))
+        check(got == (None, None), "…and refuses beside a CRLF one (%r)" % (got,))
 
         # each entry is kept once, and an empty line already ending ours is the separator
         got = esm(base, base + "\n" + IMPL_2, base + "\n" + IMPL_2P + "\n" + IMPL_2P)
@@ -2468,6 +2479,28 @@ def selftest():
                   "keep_branch_only_lines leaves a CRLF copy holding every task of LF versions as it is")
             check(klo(tmp, fu, head, given, b"- [ ] one\r\n- [ ] three\r\n") is None,
                   "…and refuses one that must have a task put back")
+            # a version with no line ending at all (an editor that strips the final newline) reads as
+            # LF: it unites with LF versions and still refuses beside CRLF ones
+            got = union_lines(tmp, fu, b"- [ ] one", given, b"- [ ] one\n- [ ] team\n")
+            check(got == b"- [ ] one\n- [ ] two\n- [ ] team\n",
+                  "a base with no line ending unites with LF versions (%r)" % got)
+            got = settle(tmp, fu, b"- [ ] one", crlf("- [ ] one\n- [ ] two\n").encode(), cr)
+            check(got is None, "…and is refused beside CRLF ones (%r)" % got)
+        # …and in a sync: main's follow-ups.md held one task with no final newline
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(fu, "- [ ] one")
+            push_main(a, "follow-ups")
+            b.git("pull", "-q", "--ff-only", "--no-rebase", "origin", "main")
+            a.write(fu, "- [ ] one\n- [ ] mine\n")
+            a.run("commit", "--branch", "session/aa", *CM)
+            b.write(fu, "- [ ] one\n- [ ] team\n")
+            push_main(b)
+            a.git("fetch", "-q", "origin")
+            got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
+            on = a.git("show", "session/aa:" + fu)
+            check(got.get("merged") is True and got.get("conflict") == [] and on == "- [ ] one\n- [ ] mine\n- [ ] team",
+                  "a sync settles follow-ups.md whose merge base has no final newline (%r, %r)" % (got, on))
 
         # an unexpected exception is "not run" on one line, exit 2: §6 quotes the first stderr line
         with tempfile.TemporaryDirectory() as tmp:
