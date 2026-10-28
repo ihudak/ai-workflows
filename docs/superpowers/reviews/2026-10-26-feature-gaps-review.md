@@ -318,21 +318,21 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Suggested scope:** With no overlay configured, have the callers (or the checker) skip `Prose.WordList.SpellingVariant` and the dash-spacing rule, or infer the variant from the artifact's sources. Say so in the report.
 - **Source:** feedback `BOOK-1-epics-style-check-baseline-dialect-noise` in F1
 
-### FBA-G2 — `/epics` review and fixer briefs still "paste" large prior outputs instead of passing a file path
+### FBA-G2 — `/epics` review and fixer briefs still "paste" large prior outputs instead of passing a file path — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Designed in:** feedback `BOOK-1-epics-paste-full-output-slots` in F1
 - **Current state:** The writer handoff is already a temp file (`epics.md:645`). The `epic-reviewer` brief still says "`code-scanner output: [paste array of per-repo scanner outputs from Phase 5 …]`" and "`requirements: [paste the requirements[] array from Phase 3]`" (`epics.md:774-775`). The `doc-fixer` briefs say "`[paste the full prose-style-checker output …]`" (`:736`) and "`[paste the triaged survivor list …]`" (`:807`). On BOOK-1 that was about 25 KB of YAML plus 99 rows, which the orchestrator worked around with scratchpad paths.
 - **Still worth doing?:** yes. Pasting costs orchestrator context on the most expensive command.
 - **Suggested scope:** Let each slot take a `mktemp` path, as the writer handoff does, and name one temp file per intermediate (scanner outputs, requirements, survivors).
 - **Source:** feedback `BOOK-1-epics-paste-full-output-slots` in F1
 
-### FBA-G3 — No check of an ARD's landing order against its own contract rows
+### FBA-G3 — No check of an ARD's landing order against its own contract rows — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Designed in:** feedback `BOOK-1-epics-landing-order-producer-after-consumers` in F1
 - **Current state:** Partly addressed by `2cafd00b` (merge `5a4b1b70`). `epic-writer.md:43-44` allows the one forward dependency "a consumer of a `new` or `changed` interface whose `artifact` is null". Nothing in `/epics`, `ard-resolution`, `components` or `ard-reviewer` tests whether the landing order places a producer after a consumer when the artifact is not null (`grep -i "landing order"` finds no such test). No report or refine pointer is emitted for it.
 - **Still worth doing?:** yes, low priority. Where the artifact is not null, epic-writer's "none depends on a later one" and the ARD's landing order cannot both hold.
 - **Suggested scope:** In `/epics` Phase 2.5, compare `landing_order` with the producer and consumer of each contract row. Name each inversion in the plan and the final report, with `/product-workflows:create-ard <PRD>` (refine) as the remedy.
 - **Source:** feedback `BOOK-1-epics-landing-order-producer-after-consumers` in F1
 
-### FBA-G4 — `/epics` has no step for a cross-component call missing from the ARD's Contracts table
+### FBA-G4 — `/epics` has no step for a cross-component call missing from the ARD's Contracts table — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Designed in:** feedback `BOOK-1-epics-ard-contract-omission-handling` in F1
 - **Current state:** No phase in `epics.md` (Phases 2.5, 5 and 6) lists calls that the code scan shows but `## Contracts` lacks. `epic-writer` and `epic-reviewer` receive no "known omissions". The orchestrator told the writer ad hoc not to invent `[AD#N]` rows.
 - **Still worth doing?:** yes. An ARD that omits `exists` rows is common, and the writer is otherwise free to invent rows.
@@ -376,7 +376,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## field feedback — BOOK-2-01 runs
 
-### FBB-B7 — MINOR — Gap: `/create-prd` has no rule for a customer decision taken outside the register, or one already carried out
+### FBB-B7 — MINOR — Gap: `/create-prd` has no rule for a customer decision taken outside the register, or one already carried out — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where:** the contradiction paragraph at `plugins/product-workflows/commands/create-prd.md:640-649`.
 - **What is wrong:** It covers only a contradiction the run believes. It does not cover a decision taken in a meeting, or an outcome that has already happened in production.
 - **Failure scenario:** The operator reports a reversal from a meeting. The run improvises, and the operator's position shifts three times.

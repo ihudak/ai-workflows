@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.48.1] — 2026-10-28
+
+Take with `product-workflows` 3.57.0, which retires the detected refinement this release stops describing — batch B24 (PRD-B3).
+
+### Fixed
+- **`workflow-states`' *Refine* note describes one way in**: addressing the `EPIC-` folder. The detected way — `/epics <PRD>` offering to fill in Epics flagged `refinement_candidate: true` — read a flag no Epic format defines and nothing writes, and `product-workflows` 3.57.0 retires it.
+- **`/ready` Phase 6 no longer says it mirrors `/epics` Phase 8**: it runs the same four maintenance roles, while `/epics` now runs the two that edit specs-repository files before its handoff (product-workflows 3.57.0); `/ready` still runs all four after its own, which to-fix D30 records.
+
 ## [4.48.0] — 2026-10-27
 
 Take with `workflows-core` 1.65.0, whose `implementation-format` §5 merged test this release's pages describe and whose left-behind case its `/implement` and `/conformance` name (to-fix C10).

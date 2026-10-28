@@ -27,6 +27,7 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   [`/brd-split`](brd-split.md) as the way to carve one, and an idea-route PRD folder — a `PRD-`
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_INTERVIEW_NOT_A_SLICE`, naming
   [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on. An `EPIC-` folder stops with `BRD_INTERVIEW_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one.
+- **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_INTERVIEW_TWO_ADDRESSES`.
 - **`--round N`** (optional) — target one round: resume it if it is open, or re-open it if it is
   closed, recorded as a re-open with its cause. Naming the next round opens it only where every
   round is closed: beside an open round it stops with `BRD_INTERVIEW_ROUND_STILL_OPEN`, naming the
@@ -187,7 +188,7 @@ subagent is dispatched — every finding this command reads was already independ
 
 ## What it needs
 
-- **`<BRD-KEY>`** — mandatory; absent or malformed stops the run with `BRD_INTERVIEW_NEEDS_KEY`. A
+- **`<BRD-KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `BRD_INTERVIEW_NEEDS_KEY`. A
   malformed `--round` value stops with `BRD_INTERVIEW_BAD_ROUND` rather than quietly running a
   different round from the one asked for.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its

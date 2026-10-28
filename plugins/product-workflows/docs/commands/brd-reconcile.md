@@ -44,6 +44,7 @@ withdrew.
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_RECONCILE_NOT_A_SLICE`, naming
   [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one. `--sent`
   does not lift it.
+- **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_RECONCILE_TWO_ADDRESSES`. Any other `@` token is the review file, which is never a directory.
 - **`@<review-file>`** (optional) — the file the customer sent back, **at whatever path it arrived
   on**, when the package went out as an archive and the review came back as a file. It does not
   have to be inside `$SPECS_PATH`. **Leave it off when the customer pulled the specs repository and
@@ -144,7 +145,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 
 ## What it needs
 
-- **`<BRD-KEY>`, and a review** — a key absent or malformed stops with `BRD_RECONCILE_NEEDS_KEY`; an
+- **`<BRD-KEY>`, and a review** — a key absent — with no `@<path>` address naming the folder — or malformed stops with `BRD_RECONCILE_NEEDS_KEY`; an
   `@<review-file>` that is not a readable file, or no path and no review committed beside the
   bundle, stops with `BRD_RECONCILE_NEEDS_REVIEW`.
 - **What else a committed review's pull request changed.** Where the review came in by the

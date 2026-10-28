@@ -19,6 +19,8 @@ The argument after the key is classified into one of **two** source forms (Phase
 
 There is no third classification and no tracker-export source form; a path that looks like one but resolves to no file is caught and put back to you rather than ingested as prose.
 
+**The key may be given as an `@<path>` instead.** An `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address, not the source: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. Every bare token is then the prompt, save the first bare token, where it is the first and names the same key, which is dropped as the same address typed twice; a key inside the text stays text. Any other `@` token is the source file.
+
 With no source after the key and its flags — or only an unfilled placeholder such as `<idea>` — the run asks you for the idea before it classifies the source, rather than grilling the placeholder.
 
 Four flags: `--deep` switches the grill from bounded (≤10 questions) to relentless (runs to convergence, no cap); `--ground-code` adds an optional code-grounding pass; `--no-docs` turns documentation grounding off; `--docs <path>` points documentation grounding at a specific docs root instead of the resolved default.

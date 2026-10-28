@@ -35,6 +35,7 @@ off. Every command of the route runs as pm,
 - **`<BRD-KEY>`** (mandatory) — a short stable identifier for the BRD. Format-validated only
   (`^[A-Z][A-Z0-9_]*(-\d+)+$`); a BRD is a markdown file in `$SPECS_PATH`, never checked against a
   tracker.
+- **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_INTAKE_TWO_ADDRESSES`. Any other `@` token is the source file, which is always a markdown file and never a directory.
 - **`@<brd-file>`** (mandatory) — the customer's source document. Must already be markdown — a PDF,
   a Word document, or a slide deck is rejected rather than converted.
 - **`[--sort-existing <dir>]`** (optional) — additionally migrate an already-hand-written package
@@ -71,7 +72,7 @@ ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-
 
 ## What it needs
 
-- **`<BRD-KEY>`** — mandatory; absent or malformed stops the run with `BRD_INTAKE_NEEDS_KEY`, which
+- **`<BRD-KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `BRD_INTAKE_NEEDS_KEY`, which
   lists beneath it the keys the specs tree already holds — one line per prefix, its highest top-level
   key and how many top-level and nested keys use it, ten prefixes at most — so the next one is easy to pick; it proposes
   none. A key

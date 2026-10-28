@@ -950,7 +950,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD-B3 — MINOR — `/epics` reads a `refinement_candidate` frontmatter flag that nothing writes or defines, attributing it to a retired reader
+### PRD-B3 — MINOR — `/epics` reads a `refinement_candidate` frontmatter flag that nothing writes or defines, attributing it to a retired reader — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:520` (*"read each `epic.md`'s `refinement_candidate` and `scope_hint` (emitted by the folder read at `prd-plus-epics`)"*), `:526-537` (the Phase 3.5 detected-drafts branch), `:1155` and `:1160`; also `plugins/dev-workflows/references/workflow-states.md:63`.
 - **What is wrong:** `grep -rn refinement_candidate plugins --include=*.md` finds only readers. No format reference defines the field, `epic-writer`'s frontmatter template does not write it, and no command does. The "folder read at `prd-plus-epics`" was an agent. `epics.md:487-491` says that agent was deleted and replaced by a direct read, and `:501` says *"nothing creates an empty Epic"*.
 - **Failure scenario:** Phase 3.5's "Detected N near-empty Epic drafts" branch, its mode question and the leftover gate can be reached only through a hand-written field. A reader trusting the invariant at `:1155` believes detection runs, when the branch is dead. An operator who hand-writes `refinement_candidate: true` meets a mode that no format documents.
@@ -959,7 +959,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD-B4 — MINOR — `/update-prd` Phase 1 asks a Refresh-or-Re-do question whose answer nothing reads
+### PRD-B4 — MINOR — `/update-prd` Phase 1 asks a Refresh-or-Re-do question whose answer nothing reads — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where:** `plugins/product-workflows/commands/update-prd.md:106`.
 - **What is wrong:** The command asks `choices: ["Refresh (incorporate new info / comments / transcript) (Recommended)", "Re-do (substantive re-scope driven by an ARD/spec obstacle)", "Cancel"]`, but no later phase branches on the answer. `grep -n 'Re-do\|re-scope'` over the command and its docs page finds only this line. `escalation-rules`' *When a choice list fires* calls a list whose answer changes nothing a defect.
 - **Failure scenario:** An operator who picks *Re-do* expects a re-scope mode, gets exactly the same grill as *Refresh*, and is never told so.
@@ -979,7 +979,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD-B6 — MINOR (low confidence) — `/epics` Phase 8's Instructions agent still edits files after the handoff, the reason Agent 1 was changed to report only
+### PRD-B6 — MINOR (low confidence) — `/epics` Phase 8's Instructions agent still edits files after the handoff, the reason Agent 1 was changed to report only — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:899-907` against `:881`.
 - **What is wrong:** Agent 1 is told *"do NOT edit the file — this run has already handed its drafts off, and an edit made now would sit uncommitted"*. Agent 3 is told to check `CLAUDE.md` in the project root (the resolved PRD folder) and `~/.claude/CLAUDE.md`, and *"If YES: apply minimal, additive, scoped changes only"*. The same reasoning applies to Agent 3.
 - **Failure scenario:** A run leaves an edited `CLAUDE.md` uncommitted in the specs repository after Phase 7.5 has already committed. That file is an OTHER path, so §3.3's G1 advisory fires on every later run. A global `~/.claude/CLAUDE.md` edit also lands with no review.
@@ -1004,7 +1004,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD-B9 — NIT — `/epics` Phase 3.5's adaptive code-scan array can show the same setting twice
+### PRD-B9 — NIT — `/epics` Phase 3.5's adaptive code-scan array can show the same setting twice — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:541`.
 - **What is wrong:** The array is `choices: ["<adaptive default> (Recommended)", "<the other setting>", "Keep my Phase 1 choice"]`. Where the Phase 1 answer equals the adaptive default, which is the common case, options 1 and 3 do the same thing. *When a choice list fires* then calls for no list, or for a two-option one.
 - **Failure scenario:** Phase 1 leaves the scan ON (its default) and there are two or more refinement targets, so the adaptive default is ON. The operator is asked a three-option question in which two options do the same thing.
@@ -1014,7 +1014,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## product-workflows — /create-prd, /create-ard, /specify, proposals (second pass)
 
-### PRD2-B1 — MINOR — `/create-prd` never says to write `brd_key`, `brd_parent`, `depends_on` or the BRD-route `sources`, although its final report, its cost step and its docs page all say it does
+### PRD2-B1 — MINOR — `/create-prd` never says to write `brd_key`, `brd_parent`, `depends_on` or the BRD-route `sources`, although its final report, its cost step and its docs page all say it does — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where:**
   - `plugins/product-workflows/commands/create-prd.md:572`. The spine's frontmatter item lists only *"`sources` (propagated), `derived_from`, `seeded_from_prd` (only when `--from-prd` was used), and `key`"*.
   - `:891` (cost step): *"which is also the value this run writes as the PRD's `brd_key`"*.
@@ -1037,7 +1037,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-B2 — MINOR — `/create-prd` cannot take an `@<path>` address, but its docs page offers one, and the resolver's `ambiguous` stop sends the operator there
+### PRD2-B2 — MINOR — `/create-prd` cannot take an `@<path>` address, but its docs page offers one, and the resolver's `ambiguous` stop sends the operator there — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where:**
   - `plugins/product-workflows/commands/create-prd.md:44`: it parses the first non-flag token *"and read[s] it with `read-key`"*, and a token `read-key` finds `invalid` stops with `CREATE_PRD_NEEDS_KEY` (`:54-55`).
   - `:20`: the usage line, `<ADDRESS> [@idea.md]`, uses an `@` token for the idea.
@@ -1053,7 +1053,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (the `ambiguous` dead end is certain; whether the docs line was meant for the address or only for other commands is not)
 
-### PRD2-B3 — MINOR — `--from-prd` on the BRD route: Phase 0 reads the seed and Phase 1 offers two arrays, but Phase 2 says "exactly two files … and no other seed"
+### PRD2-B3 — MINOR — `--from-prd` on the BRD route: Phase 0 reads the seed and Phase 1 offers two arrays, but Phase 2 says "exactly two files … and no other seed" — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where:**
   - `plugins/product-workflows/commands/create-prd.md:59-73` (step 2a resolves and reads the `--from-prd` seed, and stops on an unreadable one, on every route);
   - `:236` (*"redirect … unless `--from-prd` **or the BRD route** is present"*);
@@ -1070,14 +1070,14 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-B4 — NIT — `prd-reviewer` still calls the BRD-route key `<BRD-KEY>`
+### PRD2-B4 — NIT — `prd-reviewer` still calls the BRD-route key `<BRD-KEY>` — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where:** `plugins/product-workflows/agents/prd-reviewer.md:26`: *"`key` is required on every route, including the BRD route, where it is the `<BRD-KEY>` naming this PRD's own folder"*.
 - **What is wrong:** On the BRD route the PRD's folder is the `PRD-` slice, and its key is the slice key (`create-prd.md:572`; `prd-format.md` *"the `PRD-` slice's own key"*). A `BRD-` key names the container, which the command refuses. A reviewer that takes the placeholder literally may expect `key` to equal the parent BRD's key, which is `brd_parent`'s value.
 - **Suggested fix:** Change it to "where it is the `<SLICE-KEY>` of the `PRD-` slice folder this PRD is written into".
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-B5 — NIT — small text defects in `/create-prd` and its docs page
+### PRD2-B5 — NIT — small text defects in `/create-prd` and its docs page — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where and what:**
   - `create-prd.md:866`: *"Handing to PA (`/product-workflows:create-ard <PRD>`) or PE (`/product-workflows:epics <PRD>`)"* uses `<PRD>`, while the paragraph at `:829` insists that every option takes the one `<ADDRESS>`.
   - `create-prd.md:921`: *"All three the BRD route refusals are Phase 0 stops"* is garbled. Phase 0 now has five route-independent and BRD-route refusals (5a, 5b, 7's two, and 7a's two), so "three" is also stale.
@@ -2366,7 +2366,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `create-ard-post-cap-decision-edits-unreviewed`, `specify-post-verdict-edits-unlisted`, `design-post-recommendation-edits-unreviewed` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B17 — MINOR — `/epics` asks keep-whole only after `epic-writer` has already split by size
+### FBB-B17 — MINOR — `/epics` asks keep-whole only after `epic-writer` has already split by size — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:648` (step 1's handoff carries `scope` from Phase 2 only), `:662-672` (step 4's split / keep-whole question comes after the writer returns).
 - **What is wrong:** The writer splits over-limit work unless `scope` carries keep-whole, which only a Phase 2 *Revise* supplies. So the planned "split or keep whole" question is moot by the time it is asked.
 - **Failure scenario:** On a two-component PRD with 62 folded criteria, both Epics would have been split before the operator was asked.
@@ -2392,7 +2392,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `epics-pre-lint-autolink-flags-specs-keys` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B20 — MINOR — `/epics` `body_facts` makes a false claim on the falling-back handoff
+### FBB-B20 — MINOR — `/epics` `body_facts` makes a false claim on the falling-back handoff — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:836` (`body_facts` … "the next command — `/product-workflows:specify <EPIC>`, which will not run until this pull request is merged"), against `:831` (the stopping array applies only where the run edited a merged `epic.md`).
 - **What is wrong:** For all-new Epics, the class is gated — falling back. `/specify` then reads the working copy, so the sentence written into every pull request is false.
 - **Evidence:** I read `:825-838`.
@@ -2400,7 +2400,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `epics-handoff-body-next-command-claim` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B22 — NIT — `/epics` does not pass house style to `prose-style-checker`
+### FBB-B22 — NIT — `/epics` does not pass house style to `prose-style-checker` — **Fixed in product-workflows 3.57.0 (batch B24)**
 - **Where:** `plugins/product-workflows/commands/epics.md:713-753` (Phase 6.2). `prose-style-checker` accepts `rules_path` (`plugins/prose-style/agents/prose-style-checker.md:32`), but `/epics` passes none.
 - **What is wrong:** The tree's house spellings ("e-mail", "catalogue") generated 18 NITs that nothing acts on.
 - **Suggested fix:** Pass the specs repository's overlay, or the PRD folder's conventions.
@@ -2895,7 +2895,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B3 — MINOR — The BRD-route parameter table lists `@<idea.md>` as an optional argument of `/create-prd` on that route; the command skips the idea ladder there entirely
+### DQP-B3 — MINOR — The BRD-route parameter table lists `@<idea.md>` as an optional argument of `/create-prd` on that route; the command skips the idea ladder there entirely — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where:** `plugins/product-workflows/docs/brd-workflow.md:284` (`/create-prd` row, Optional: *"`--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<idea.md>`"*), in a table whose last three rows are *"shown in their the BRD route form only"* (`:273`)
 - **What is wrong:** `commands/create-prd.md:90` says *"Resolve `idea.md` … **Skipped entirely on the BRD route**, where `prd-seed.md` is the seed and there is no `idea.md` to find"*. The rules file puts it the same way: *"no idea ladder"* (`.claude/rules/brd-route.md` BRD route tail). `workflow.md:162` gives the same row without `@<idea.md>`, so the two copies of the table disagree.
 - **Failure scenario:** A PM hands a slice an idea file through `@`, expecting it to seed the PRD. It is never read on that route.
@@ -2904,7 +2904,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B4 — MINOR — The `/create-prd` page says the BRD route seeds from `prd-seed.md`, which a normal BRD route never has
+### DQP-B4 — MINOR — The `/create-prd` page says the BRD route seeds from `prd-seed.md`, which a normal BRD route never has — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where:** `plugins/product-workflows/docs/commands/create-prd.md:3` (*"a decided BRD slice's register and seed"*), `:17` (*"the run seeds the PRD from that BRD's `prd-seed.md` and `decisions.md`"*)
 - **What is wrong:** `brd-workflow.md:421-426` says `--sort-existing` is *"the only writer of any of the three"* seeds and that *"a reconciled BRD normally holds no seed at all, so each of those runs reports its seed absent as the **ordinary** case"*. `.claude/rules/brd-route.md` warns against wording that sends a reader after a seed file that does not exist. A PM reading the `/create-prd` page expects a `prd-seed.md` and goes looking for it. The two pages contradict each other.
 - **Failure scenario:** A PM sees "prd-seed absent" in the run and thinks the route lost content.

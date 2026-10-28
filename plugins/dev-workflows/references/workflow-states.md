@@ -56,17 +56,15 @@ folder: `/epics` is the only command that creates an `epic.md` and it creates on
 *Refined*, not the lower rung the straddle rule would otherwise name. Nothing else about the ladder
 changes for it, and an Epic, which can hold an `epic.md`, is read from `Open` as before.
 
-> **Refine — two ways in, one mode.** `/epics` re-refines an Epic that already exists rather than
-> partitioning the PRD again, and it reaches that mode from either end. **Named:** address the
+> **Refine — one way in.** `/epics` re-refines an Epic that already exists rather than
+> partitioning the PRD again: address the
 > `EPIC-` folder itself (`/epics <EPIC-KEY>`) and the run re-grounds and sharpens that one Epic's
-> `epic.md` in place — or, where the user names work that moves to another component at its plan approval, or the Epic's scope already spans components, splits it into one Epic per component; and, where the Epic is over `/epics`' size limit and its folder holds no `specification.md`, `design.md`, `implementation.md`, or Epic-level ARD (`ard.md` or an `ard-<area>.md`), splits it along its stories into Epics on the same component, the operator choosing. **Detected:** run `/epics <PRD>` where Epics under that PRD carry
-> `refinement_candidate: true` — near-empty drafts left as placeholders — and the run offers
-> to fill them in and partition the PRD's scope across them, instead of drafting net-new; the offer
-> is confirmable, and declining it gives the ordinary net-new run. Either way it is the same
-> `Open → Epic draft` transition and the same `EPIC-<PRD-KEY>-NN-<eslug>/epic.md` shape: refine
+> `epic.md` in place — or, where the user names work that moves to another component at its plan approval, or the Epic's scope already spans components, splits it into one Epic per component; and, where the Epic is over `/epics`' size limit and its folder holds no `specification.md`, `design.md`, `implementation.md`, or Epic-level ARD (`ard.md` or an `ard-<area>.md`), splits it along its stories into Epics on the same component, the operator choosing. A run on the PRD (`/epics <PRD>`) detects no refinement targets: an earlier version offered to fill in Epics carrying a `refinement_candidate: true` flag, which no Epic format defines and nothing writes, so it is retired. It is the
+> `Open → Epic draft` transition, and the
+> `EPIC-<PRD-KEY>-NN-<eslug>/epic.md` shape: refine
 > iterates on a draft this command wrote, since **`/epics` is the only command that creates an
 > `EPIC-` folder** (D6) and every one of them sits under a PRD folder. There is no `<EPIC-KEY>.md`
-> file at either end — the folder carries the key, the filename carries the kind.
+> file — the folder carries the key, the filename carries the kind.
 
 ## Readiness targets (for `/ready`)
 

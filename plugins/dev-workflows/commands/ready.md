@@ -573,7 +573,7 @@ report; they do not reopen or restate it.
 
 ## Phase 6 — Post-run maintenance & feedback
 
-Mirrors `epics.md` Phase 8, run as a genuinely **terminal** phase (unlike `/epics`, where maintenance
+Runs the same four maintenance roles `epics.md` runs in its Phases 7.4 and 8 — documentation, knowledge base, instructions and `impl-maintenance` — all four here as one genuinely **terminal** phase, after this run's handoff (unlike `/epics`, which runs the two that edit specs-repository files before its handoff, so their edits ride its pull request, and whose maintenance
 feeds the still-to-come final report — here the readiness report already printed in Phase 5).
 
 a. `project_root` = `$SPECS_PATH` for this run (where `_readiness.md` was written). Run
