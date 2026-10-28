@@ -105,6 +105,98 @@ def classify(path):
     return any(p.search(path) for p in _ARTIFACT_RE) and not _EXCLUDED_RE.search(path)
 
 
+# The heading that opens an entry of every block-shaped appended format, pinned from the references
+# that define them: implementation-format §1 "## <YYYY-MM-DD> — /implement", feedback-emission §1
+# "## <YYYY-MM-DD> — <command> — <category>", /security-workflows:scan §7.3
+# "## <YYYY-MM-DD> — /security-workflows:scan", cost-emission §6
+# "## <YYYY-MM-DDTHH:MM:SSZ> — <command> — <phase>" (the em dash in UTF-8). A "## " line of any other
+# shape inside an entry's body stays in that entry. Never loosened to make a test pass.
+ENTRY_HEAD = re.compile(rb"^## \d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}Z)? \xe2\x80\x94 ", re.M)
+
+# How a session file both sides changed is settled (spec §3.3), by path and never by check-attr: a
+# repository .gitattributes outranks any block this script passes. A runs/ or scans/ record has no
+# class: where it conflicts, it is refused as anything else is.
+_RECORD_RE = re.compile(r"^security/[^/]+/(runs|scans)/")
+_REGISTER_RE = re.compile(r"^security/[^/]+/register\.(json|md)$")
+_LINES_RE = re.compile(r"(^|/)follow-ups\.md$")
+_WHOLE_RE = re.compile(r"(^|/)(dev-workflows/resume|pr-draft|[^/]+-implementation-gaps)\.md$")
+_BLOCK_RE = re.compile(r"(^|/)(implementation|_security)\.md$|(^|/)dev-workflows/|^dev-workflows-(feedback|cost)/")
+
+
+def merge_class(path):
+    """The class of a session file: "block" (an appended file, settled as a set of entries), "lines"
+    (follow-ups.md, one task per line: git's union), "whole" (an overwritten file: one side's version
+    whole), "register" (a security register, rebuilt), or None (not a session file, or a runs/ or
+    scans/ record)."""
+    if not classify(path) or _RECORD_RE.search(path):
+        return None
+    if _REGISTER_RE.search(path):
+        return "register"
+    if _LINES_RE.search(path):
+        return "lines"
+    if _WHOLE_RE.search(path):
+        return "whole"
+    if _BLOCK_RE.search(path):
+        return "block"
+    return None
+
+
+def split_entries(data):
+    """The header (the bytes before the first ENTRY_HEAD line) and the entries, each from an
+    ENTRY_HEAD line to the next one or the end."""
+    starts = [m.start() for m in ENTRY_HEAD.finditer(data)]
+    if not starts:
+        return data, []
+    return data[:starts[0]], [data[a:b] for a, b in zip(starts, starts[1:] + [len(data)])]
+
+
+def entry_key(chunk):
+    """What a header or an entry is compared by: its bytes with every trailing space, tab and line
+    ending removed (its trailing blank lines with them), so an entry last on one side, with or without
+    a newline or a blank line after it, matches itself on the other."""
+    return chunk.rstrip(b" \t\r\n")
+
+
+def _line_ending(chunk, last=False):
+    """\\r\\n where the chunk's first line ending (with last, its last one) is \\r\\n, else \\n."""
+    i = chunk.rfind(b"\n") if last else chunk.find(b"\n")
+    return b"\r\n" if i > 0 and chunk[i - 1:i] == b"\r" else b"\n"
+
+
+def entry_set_merge(base, ours, theirs):
+    """Spec §3.3's settlement of a block-shaped appended file both sides changed, from three
+    versions; base is None where both sides created it. None (refuse) where the two headers differ,
+    or where an entry of base is missing from either side: an edit, a removal, or an addition to the
+    last entry. Otherwise ours, given a final line ending where it lacks one, then each entry of
+    theirs that ours lacks, in theirs' order, after one empty line, with its trailing blank lines
+    dropped and one line ending, its own lines unchanged. Each line ending added is \\r\\n where the
+    entry's first line ends \\r\\n (for the one added to ours, where ours' last line ending is
+    \\r\\n), else \\n. Base decides only the refusal; it need not be a prefix of either side. A
+    caller decides a deleted side."""
+    head_o, ents_o = split_entries(ours)
+    head_t, ents_t = split_entries(theirs)
+    if entry_key(head_o) != entry_key(head_t):
+        return None
+    have_o = {entry_key(e) for e in ents_o}
+    if base is not None:
+        have_t = {entry_key(e) for e in ents_t}
+        if any(entry_key(e) not in have_o or entry_key(e) not in have_t for e in split_entries(base)[1]):
+            return None
+    out = ours
+    if out and not out.endswith(b"\n"):
+        out += _line_ending(out, last=True)
+    for e in ents_t:
+        k = entry_key(e)
+        if k in have_o:
+            continue
+        end = len(k)
+        while e[end:end + 1] in (b" ", b"\t"):  # the last line's own trailing spaces are the entry's
+            end += 1
+        eol = _line_ending(e)
+        out += (eol if out else b"") + e[:end] + eol
+    return out
+
+
 def rev(root, ref):
     """The commit <ref> names, or None where it names none."""
     r = git(root, "rev-parse", "--verify", "--quiet", ref + "^{commit}", check=False)
@@ -710,7 +802,7 @@ def selftest():
 
     def scenarios():
         # ---- the classifier, and its parity with specs-repo-git §2.1 --------------------------
-        for path, want in [
+        CLASSIFIED = [
             ("specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md", True),
             ("specifications/PRD-A-1-x/EPIC-A-1-1-y/implementation.md", True),
             ("specifications/PRD-A-1-x/follow-ups.md", True),
@@ -730,7 +822,8 @@ def selftest():
             ("specifications/PRD-A-1-x/Doc screenshots/release-notes.md", False),
             ("specifications/PRD-A-1-x/prd.md", False),
             ("README.md", False),
-        ]:
+        ]
+        for path, want in CLASSIFIED:
             check(classify(path) == want, "classify(%r) should be %s" % (path, want))
         with open(SPECS_REPO_GIT, encoding="utf-8") as fh:
             ref_text = fh.read()
@@ -738,6 +831,237 @@ def selftest():
         pats = re.findall(r"`(\^[^`]+)`", ref_text[start:ref_text.index("**OTHER** otherwise.", start)])
         check(pats[:-1] == ARTIFACT, "the script's ARTIFACT patterns equal specs-repo-git §2.1's (%r)" % pats[:-1])
         check(pats[-1:] == [EXCLUDED], "the script's EXCLUDED pattern equals specs-repo-git §2.1's (%r)" % pats[-1:])
+
+        # ---- entry_set_merge -------------------------------------------------------------------
+        # Spec §3.3's entry-set rule, on the real formats: implementation-format §1's two example
+        # blocks, feedback-emission §1's entry, /security-workflows:scan §7.3's _security.md block
+        # and a cost-emission §6 entry, each as its reference writes it.
+        IMPL_HEAD = "# Implementation — ACME-77-01 order intake\n\n"
+        IMPL_1 = ("## 2026-08-31 — /implement\n"
+                  "- repo:    orders-service\n"
+                  "  branch:  feat/ACME-77-01-order-intake\n"
+                  "  base:    main\n"
+                  "  commit:  a3f91c2\n"
+                  "  pushed:  true\n")
+        IMPL_2 = ("## 2026-09-02 — /implement\n"
+                  "- repo:    billing-api\n"
+                  "  branch:  feat/ACME-77-01-order-intake\n"
+                  "  base:    main\n"
+                  "  commit:  7be0d41\n"
+                  "  pushed:  false            # local only — resolvable on this machine\n")
+        # The same day's run recorded again, differing in one line: git's union fuses these two.
+        IMPL_2P = IMPL_2.replace("  pushed:  false            # local only — resolvable on this machine\n",
+                                 "  pushed:  true\n")
+        FB_HEAD = "---\ntype: dev-workflows-feedback\nprd: PRODUCT-1234\nslug: env-ag-update-window\n---\n\n"
+        FB_1 = ("## 2026-07-09 — /document — missing-capability\n"
+                "\n"
+                "```yaml\n"
+                "id: PRODUCT-1234-document-cloud-self-hosted-split\n"
+                "date: 2026-07-09\n"
+                "command: /document           # controlled: exact command name, or n/a\n"
+                "plugin_version: 2.9.0\n"
+                "origin: auto                 # auto | manual | prompt\n"
+                "author: jane.doe@example.com\n"
+                "category: missing-capability # controlled, extensible, reuse-first\n"
+                "impact: friction             # blocker | friction | polish\n"
+                "```\n"
+                "\n"
+                "**Friction:** One page covered both Cloud and Self-hosted; the Cloud half got pushed\n"
+                "back in review because the two products differ here.\n"
+                "\n"
+                "**Suggested improvement:** Add an optional `cloud|self-hosted` parameter to\n"
+                "`/document` so the run scopes to one product.\n")
+        FB_2 = (FB_1.replace("— missing-capability\n", "— docs-ux\n")
+                .replace("cloud-self-hosted-split", "docs-ux-split-page")
+                .replace("category: missing-capability #", "category: docs-ux            #"))
+        SEC_HEAD = "# Security — ACME-77-01 order intake\n\n"
+        SEC_1 = ("## 2026-10-16 — /security-workflows:scan\n"
+                 "- repo:     orders-service\n"
+                 "  commit:   eb694d0\n"
+                 "  scan:     change scan, effort medium — security/orders-service/scans/20261016T091200Z-eb694d0/\n"
+                 "  kind:     scan, role dev\n"
+                 "  findings: 0 CRITICAL · 1 HIGH · 1 MEDIUM · 0 LOW\n"
+                 "  raised:   [SEC#1], [SEC#2]\n"
+                 "  again:    none\n"
+                 "  closed:   none\n"
+                 "  register: security/orders-service/register.md\n")
+        SEC_2 = (SEC_1.replace("eb694d0", "1c0ffee").replace("20261016T091200Z", "20261016T143000Z")
+                 .replace("kind:     scan,", "kind:     verify,").replace("1 HIGH · 1 MEDIUM", "0 HIGH · 1 MEDIUM")
+                 .replace("raised:   [SEC#1], [SEC#2]", "raised:   none").replace("closed:   none", "closed:   [SEC#1]"))
+        SEC_3 = SEC_2.replace("1c0ffee", "d15ea5e").replace("20261016T143000Z", "20261016T170500Z")
+        COST_HEAD = "---\ntype: dev-workflows-cost\nprd: PRODUCT-1234\nsession: 5e55a0d1\n---\n\n"
+        COST = ("## 2026-07-09T14:22:33Z — /implement — implementation\n"
+                "\n"
+                "```yaml\n"
+                "id: PRODUCT-1234-98760-implement-2026-07-09T14:22:33Z   # timestamp => unique\n"
+                "date: 2026-07-09T14:22:33Z\n"
+                "command: /implement\n"
+                "phase: implementation\n"
+                "role: dev\n"
+                "prd: PRODUCT-1234\n"
+                "epic: EPIC-98760            # present only when an Epic key is in scope\n"
+                "plugin_version: 2.10.0\n"
+                "duration_s: 1284\n"
+                "cost_computed_usd: 3.4821\n"
+                "cost_statusline_usd: 3.5102   # present only when the plugin statusline is installed\n"
+                "compactions: 1               # present only when the window held a compaction (§2)\n"
+                "models:\n"
+                "  - {model: claude-opus-5, cost_usd: 2.9114, input_tokens: 12043, output_tokens: 88210,"
+                " cache_read_tokens: 2109887, cache_write_tokens: 145002}\n"
+                "  - {model: claude-sonnet-5, cost_usd: 0.5707, input_tokens: 45120, output_tokens: 210334,"
+                " cache_read_tokens: 880122, cache_write_tokens: 42011}\n"
+                "```\n")
+
+        def cost(ts):
+            return COST.replace("2026-07-09T14:22:33Z", ts)
+
+        def esm(base, ours, theirs):
+            got = entry_set_merge(None if base is None else base.encode(), ours.encode(), theirs.encode())
+            return None if got is None else got.decode()
+
+        # split_entries and entry_key
+        head, ents = split_entries((IMPL_HEAD + IMPL_1 + "\n" + IMPL_2).encode())
+        check(head == IMPL_HEAD.encode() and ents == [(IMPL_1 + "\n").encode(), IMPL_2.encode()],
+              "split_entries cuts implementation-format §1's example into its header and two blocks (%r, %r)"
+              % (head, ents))
+        for fmt, head, entry in (("feedback", FB_HEAD, FB_1), ("_security.md", SEC_HEAD, SEC_1),
+                                 ("cost", COST_HEAD, COST)):
+            got = split_entries((head + entry).encode())
+            check(got == (head.encode(), [entry.encode()]), "split_entries finds the %s entry's heading (%r)" % (fmt, got))
+        check(entry_key(b"## x\r\n  a  \r\n\r\n \t\n\n") == b"## x\r\n  a",
+              "entry_key drops trailing blank lines and line endings, and nothing before them")
+        noted = IMPL_2P + "\n## Notes\nThe billing half waits on the ledger change.\n## 2026-09-03 - retro, not an entry\n"
+        head, ents = split_entries((IMPL_HEAD + IMPL_1 + "\n" + noted).encode())
+        check(ents == [(IMPL_1 + "\n").encode(), noted.encode()],
+              "a ## Notes line, or a dated ## line of another shape, stays inside its entry (%r)" % (ents,))
+
+        # two same-day /implement entries differing in one line stay two, in order, under one header
+        base = IMPL_HEAD + IMPL_1
+        ours, theirs = base + "\n" + IMPL_2P, base + "\n" + IMPL_2
+        got = esm(base, ours, theirs)
+        check(got == ours + "\n" + IMPL_2,
+              "two same-day /implement entries differing in one line are kept as two, in order (%r)" % got)
+        check(got is not None and got.count("# Implementation —") == 1, "…under one header (%r)" % got)
+        got = esm(base, base + "\n" + IMPL_2, base + "\n" + noted)
+        check(got == base + "\n" + IMPL_2 + "\n" + noted, "an entry holding a ## Notes line is carried whole (%r)" % got)
+
+        # an entry both sides hold is kept once
+        base = FB_HEAD + FB_1
+        ours = base + "\n" + FB_2
+        got = esm(base, ours, ours)
+        check(got == ours, "an entry both sides appended leaves ours byte-unchanged (%r)" % got)
+
+        # base need not be a prefix of either side: a merge that reordered them still settles
+        C0, E1, B1, E2 = (cost(t) for t in ("2026-07-09T14:22:33Z", "2026-07-10T08:00:00Z",
+                                            "2026-07-10T09:30:00Z", "2026-07-11T16:45:10Z"))
+        base = COST_HEAD + C0
+        ours = base + "\n" + E1 + "\n" + B1
+        got = esm(base, ours, base + "\n" + B1)
+        check(got == ours, "E1 B1 against B1 leaves ours unchanged (%r)" % got)
+        got = esm(base, ours, base + "\n" + B1 + "\n" + E2)
+        check(got == ours + "\n" + E2, "E1 B1 against B1 E2 is ours, a blank line, then E2 (%r)" % got)
+
+        # Review Focus 1: an entry with and without its final newline is one entry; ours' last line
+        # is never glued to an appended entry
+        base = IMPL_HEAD + IMPL_1
+        bare = base + "\n" + IMPL_2.rstrip("\n")
+        for other in (base + "\n" + IMPL_2, base + "\n" + IMPL_2 + "\n", base + "\n" + IMPL_2 + "\n \n\n"):
+            got = esm(base, bare, other)
+            check(got == bare + "\n",
+                  "an entry last without a final newline matches its copy with one: ours given a newline (%r)" % got)
+            got = esm(base, other, bare)
+            check(got == other, "…and from the other side, ours unchanged (%r)" % got)
+        got = esm(IMPL_HEAD + IMPL_1.rstrip("\n"), IMPL_HEAD + IMPL_1 + "\n" + IMPL_2,
+                  IMPL_HEAD + IMPL_1 + "\n" + IMPL_2P)
+        check(got == IMPL_HEAD + IMPL_1 + "\n" + IMPL_2 + "\n" + IMPL_2P,
+              "a base entry that lacked a final newline is not read as edited (%r)" % got)
+        got = esm(base, bare, base + "\n" + IMPL_2P)
+        check(got == bare + "\n\n" + IMPL_2P,
+              "ours ending without a newline keeps its last line whole: a newline, an empty line, the entry (%r)" % got)
+        got = esm(base, base + "\n" + IMPL_2, base + "\n" + IMPL_2P.rstrip("\n"))
+        check(got == base + "\n" + IMPL_2 + "\n" + IMPL_2P, "an appended entry lacking a final newline is given one (%r)" % got)
+        got = esm(base, base + "\n" + IMPL_2, base + "\n" + IMPL_2P + "\n \n\n")
+        check(got == base + "\n" + IMPL_2 + "\n" + IMPL_2P, "an appended entry's trailing blank lines are dropped (%r)" % got)
+        hard = IMPL_2P.rstrip("\n") + "  \n"
+        got = esm(base, base + "\n" + IMPL_2, base + "\n" + hard + "\n")
+        check(got == base + "\n" + IMPL_2 + "\n" + hard,
+              "…but its last line's own trailing spaces are its bytes, and kept (%r)" % got)
+
+        # Review Focus 2: CRLF content merges in CRLF, with no bare \n added
+        def crlf(s):
+            return s.replace("\n", "\r\n")
+
+        def bare_lf(s):
+            return s is not None and re.search(r"(?<!\r)\n", s) is not None
+        base = crlf(SEC_HEAD + SEC_1)
+        ours, theirs = base + crlf("\n" + SEC_2), base + crlf("\n" + SEC_3)
+        got = esm(base, ours, theirs)
+        check(got == crlf(SEC_HEAD + SEC_1 + "\n" + SEC_2 + "\n" + SEC_3) and not bare_lf(got),
+              "CRLF sides merge with \\r\\n endings throughout (%r)" % got)
+        got = esm(base, ours[:-2], theirs)
+        check(got == ours[:-2] + "\r\n\r\n" + crlf(SEC_3) and not bare_lf(got),
+              "a CRLF ours lacking its final ending is given \\r\\n, then an empty line, then the entry (%r)" % got)
+        got = esm(base, ours, base + crlf("\n" + SEC_3)[:-2])
+        check(got == ours + "\r\n" + crlf(SEC_3) and not bare_lf(got),
+              "an appended CRLF entry lacking its final ending is given \\r\\n (%r)" % got)
+
+        # both sides created the file: the headers decide
+        got = esm(None, FB_HEAD + FB_1, FB_HEAD + FB_2)
+        check(got == FB_HEAD + FB_1 + "\n" + FB_2, "add/add with identical headers merges (%r)" % got)
+        got = esm(None, FB_HEAD + FB_1, FB_HEAD.rstrip("\n") + "\n" + FB_2)
+        check(got == FB_HEAD + FB_1 + "\n" + FB_2, "headers differing only in trailing blank lines match (%r)" % got)
+        keyless = "---\ntype: dev-workflows-feedback\nprd: n/a\nslug: 2026-07-09\n---\n\n"
+        got = esm(None, FB_HEAD + FB_1, keyless + FB_2)
+        check(got is None, "add/add with different headers refuses (%r)" % got)
+        got = esm(None, "", COST), esm(None, "", "")
+        check(got == (COST, ""), "an empty ours gains no leading empty line and no line ending of its own (%r)" % (got,))
+
+        # an edit, an addition to the last base entry, a removal, a header edit: each refuses
+        base = IMPL_HEAD + IMPL_1 + "\n" + IMPL_2
+        grown = base + "\n" + IMPL_2P
+        for what, changed in (
+                ("an edit inside a base entry", base.replace("commit:  a3f91c2", "commit:  a3f91c3")),
+                ("an addition to the last base entry", base + "  note:    amended by hand\n"),
+                ("a removal of a base entry", IMPL_HEAD + IMPL_2),
+                ("an edit of the header", base.replace("order intake", "order intake (renamed)"))):
+            for ours, theirs in ((grown, changed), (changed, grown)):
+                got = esm(base, ours, theirs)
+                check(got is None, "%s refuses (%r)" % (what, got))
+
+        # merge_class: by path, for every path the classifier table holds and the shapes it lacks
+        want_class = {
+            "specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md": "block",
+            "specifications/PRD-A-1-x/EPIC-A-1-1-y/implementation.md": "block",
+            "specifications/PRD-A-1-x/follow-ups.md": "lines",
+            "specifications/PRD-A-1-x/PRD-A-1-implementation-gaps.md": "whole",
+            "documentation/acme-docs/dev-workflows/cost/s.md": "block",
+            "dev-workflows-cost/pending-2026-10-06-abcd1234.md": "block",
+            "security/acme-api/runs/0001-20261016T091200Z.json": None,
+            "security/acme-api/scans/20261016T091200Z-eb694d0/patches/F1.patch": None,
+            "security/acme-api/register.json": "register",
+            "security/acme-api/dev-workflows/cost/s.md": "block",
+            "security/threat-models/policy.md": None,
+            "security/acme-api/register.json.orig": None,
+            "specifications/PRD-A-1-x/EPIC-A-1-1-y/_security.md": "block",
+            "specifications/BRD-B-1-y/brd/source/implementation.md": None,
+            "specifications/PRD-A-1-x/release-notes.md": None,
+            "specifications/PRD-A-1-x/attachments/release-notes.md": None,
+            "specifications/PRD-A-1-x/Doc screenshots/release-notes.md": None,
+            "specifications/PRD-A-1-x/prd.md": None,
+            "README.md": None,
+            "specifications/PRD-A-1-x/dev-workflows/resume.md": "whole",
+            "specifications/BRD-B-1-y/dev-workflows/resume.md": "whole",
+            "specifications/PRD-A-1-x/pr-draft.md": "whole",
+            "specifications/PRD-A-1-x/dev-workflows/cost/5e55a0d1.md": "block",
+            "dev-workflows-feedback/2026-07-09.md": "block",
+            "security/acme/register.md": "register",
+            "security/acme/runs/0001-x.json": None,
+            "security/acme/scans/20261016T091200Z-eb694d0/implementation.md": None,
+        }
+        missing = [p for p, _ in CLASSIFIED if p not in want_class]
+        check(not missing, "merge_class is checked for every path the classifier table holds (%r)" % missing)
+        for path, want in want_class.items():
+            check(merge_class(path) == want, "merge_class(%r) should be %r" % (path, want))
 
         # ---- dirty_session_paths -----------------------------------------------------------
         with tempfile.TemporaryDirectory() as tmp:
