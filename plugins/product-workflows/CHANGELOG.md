@@ -12,6 +12,19 @@ Its own changes need nothing newer than `workflows-core` 1.63.0; take 1.64.0, wh
 ### Changed
 - **`/brd-reconcile`'s open pass records its progress, so a re-run over the same review finishes what a stopped run left without asking a human.** The pass opens with a `- **Mode:**` line and an `- **Effects:**` line listing every supersession and reopening the freeze is about to write, with each record's status before the freeze; *Apply the required corrections* appends a `- **Correction <n>:**` line per row, and *The propagation sweep* a `- **Swept:**` line per item, each once its write lands. A re-run adopting a pass interrupted while `freezing` checks each planned effect against `decisions.md` and writes only the missing ones, where it used to send every adopted record to *what still needs a human*; where the review was read in schema mode it takes the corrections a stopped run already disposed rather than putting every row again, and in free-text mode shows that run's dispositions beside each row to match; and it no longer re-asks an `inherited-unchanged` sweep item, which writes nothing. A pass opened by an earlier release is adopted as before.
 
+## [3.54.0] — 2026-10-28
+
+Its own changes need nothing newer than `workflows-core` 1.62.0; take 1.64.0, which 3.53.0 needs — to-fix D21.
+
+### Added
+- **`scripts/bundle-scan.py`, the plugin-free scan `/brd-package` runs over its prompt, its delivery note and its bundle**, with a `--selftest` the catalog workflow runs. It reports every token of `bundle-packaging.md` §1.2's classes, grouped as §6.3 rule 4 asks, each with the span its position places it in — a captured file, an inventory or ledger `text` cell, an inventory row's `source_anchor`, a captured path (matched as the capture names it, spaces included) and the heading path after its ` › `, a captured file's bundled name — and whether it sits in a prerequisite's file, and leaves out a `§` in §6.3 rule 1's fixed position. It reads the family's plugin names, commands and agents from the plugins installed beside it, and catches an expanded install path as well as the variable. It finds and never rules: the run still rules on the spans position cannot place, such as a transcription's quoted text or a decision's quoted argumentation, and on a leading-slash name or a bare agent name whose shape cannot tell the family's vocabulary from the customer's. Every run used to write its own scan, and two runs could scan one bundle differently.
+
+### Changed
+- **Phase 8 builds the bundle in a temporary directory outside the specs repository** and moves it to `bundle-<YYYYMMDD>/` only once its last check has passed; every stop before the move removes the directory. A build that stopped part-way used to leave a partial `bundle-<YYYYMMDD>/` that a re-run the same day refused, since a dated bundle is never rewritten. `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` no longer tells you to move a bundle aside: a held package has built none.
+
+### Fixed
+- **The set-resolution check's delivery-note relation could read a date as a commit**: `bundle-packaging.md` §7 now says a commit the note names is 7 to 40 hexadecimal characters standing as a word of its own, never one inside a filename such as `bundle-<YYYYMMDD>/`, and never one that reads as a valid date and prefixes no baseline commit. A hand-written check read `20261012` as a pin and reported a correct note as naming a commit no baseline holds.
+
 ## [3.53.0] — 2026-10-27
 
 Take with `workflows-core` 1.64.0, whose `session-hygiene` §6 `/specify` now runs — to-fix PR8 (live checks of 2026-10-26).

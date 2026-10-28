@@ -212,6 +212,14 @@ jobs:
         # customer's requirement text. Fixtures are built at run time.
         run: python3 plugins/product-workflows/scripts/ledger-evidence.py --selftest
 
+      - name: Self-test the bundle scanner
+        # /product-workflows:brd-package runs its plugin-free scan with it, over the prompt, the
+        # delivery note and the bundle. Its failure modes are silent: a class it stops matching ships a
+        # plugin-internal token to the customer, and a span it misplaces either stops a correct package
+        # or puts the plugin's own words to the operator as the customer's. Fixtures are built at run
+        # time.
+        run: python3 plugins/product-workflows/scripts/bundle-scan.py --selftest
+
       - name: Self-test the security register
         # /security-workflows:scan records Claude Security scans in SPECS with it. Its failure modes
         # are silent: a change scan that closes a finding it never re-checked, a rebuild that
