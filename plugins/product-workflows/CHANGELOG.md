@@ -13,6 +13,23 @@ Take with `workflows-core` 1.64.0, whose `session-hygiene` §6 `/specify` now ru
 
 - **`/specify` checks the environment its session file recorded.** `_session.md` opens with a `## Run environment` section, which whichever step first writes the file records, and the run compares it on a resume (Phase 1's or the Epic picker's), before Phase 7's write and handoff, and before Phase 8's first terminal write, asking on a mismatch rather than going on in another repository; *Stop* sets `specs_git: misrooted`, so nothing more is handed off or committed (`workflows-core:session-hygiene` §6).
 
+## [3.52.0] — 2026-10-27
+
+Take with `workflows-core` 1.63.0, whose `grounding-format` §4 lets an origin-less clone keep the name an earlier entry records it by, which this release's `/prd-ground` Phase 3 records, and whose `escalation-rules` names this release's `--repos-path` and `/epics` re-review offer; `dev-workflows` 4.46.0 and `docs-workflows` 1.28.0 carry the same hook wording and rely on nothing here — to-fix D7, D8, D9, D10, D11, D23 (batches B24 and B26).
+
+### Added
+- **`/prd-ground --repos-path <dir>[:<dir>…]`**: the `$REPOS_PATH` the run uses in place of the environment's. `/brd-split`'s *Ground now* passes it to every child run where you answered its `REPOS_PATH` question, and prints it in the commands it gives you to type, so a child no longer asks again (D7). The docs pages, the BRD workflow page's parameter table and the environment page say so.
+
+### Fixed
+- **`/prd-ground` asks whether a clone with no readable `origin` is a repository `grounding/baselines.md` records under another name** (D9). Such a clone is named by its directory's basename, so renaming the directory left the file recording it under a name no clone carries: at an unmoved pin the run stopped with `PRD_GROUND_AMBIGUOUS_PIN`, whose remedy named that old name, which resolves to no clone and so put the path question again, whose answer was the basename again; at a moved pin it recorded the one repository under a second name. Phase 3 now asks, where no entry records the basename and an entry records a name no visible clone carries at this clone's commit, an ancestor of it or a descendant of it; *Same repository* records the clone under the earlier name. Where the stop still fires on a recorded name no clone carries, its remedy says to check out another commit rather than to name it.
+- **`/prd-ground` leaves the specs repository and the documentation root off its candidate list by `realpath`**, as `/release-notes` compares paths, so a symlinked mount, a trailing `/` or a `..` in either variable no longer lists them (D10).
+- **`/epics` offers the re-review the cap still holds where its last count splits an Epic an *Epic size* finding named** and the run has neither re-reviewed nor offered to, per `escalation-rules`' *Edits after a verdict that is not BLOCK — the unspent re-review* (D8). The split used to reach the handoff unreviewed, named only in the version line. The docs page says so.
+- **`epic-writer`'s `kept_whole` rule says "never split it by size"** and that the line answers the size limit alone, so it no longer reads as keeping another component's work in the Epic (D11).
+- The `preload-context` hook prints `SPECS_PATH: (not set — a command that needs it asks for it)`, and its header no longer says the `dev-workflows` and `docs-workflows` copies are byte-identical: the `docs-workflows` copy is, and the `dev-workflows` copy leaves out the `REPOS_PATH` lines (D23). The hooks page says the same.
+
+### Upgrade note
+- A `grounding/baselines.md` written before 3.33.3 may record a clone with no readable `origin` under a name other than its directory's basename. The first run after upgrading that resolves the clone asks whether it is that repository; answer *Same repository* to keep the recorded name, so the folder holds one repository per pin.
+
 ## [3.51.0] — 2026-10-27
 
 Take with `workflows-core` 1.62.0, whose `overlap-reader` this release's `/specify` dispatches — to-fix PR5 (live checks of 2026-10-26, run 2).

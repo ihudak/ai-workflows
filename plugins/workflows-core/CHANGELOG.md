@@ -13,6 +13,15 @@ Take with `dev-workflows` 4.47.0 and `product-workflows` 3.53.0, whose `/design`
 
 - **`session-hygiene` §6, the resume-environment check, in a part of its own (`resume-environment`).** A command that keeps a session file it resumes from records `$SPECS_PATH`'s real path, the specs repository's `origin`, `$REPOS_PATH` and the reference loader's install as the file's `## Run environment` section, and compares them on a resume, before the deliverable write that leads to the handoff, and before the first write of its emitter tail. On a mismatch it asks — on a resume, go on in the current environment (recommended unless `origin` differs) or stop; later, stop or go on pinned to the recorded environment where it still exists — and never goes on silently. *Stop* sets `specs_git: misrooted`, reusing that flag's handling, since the run's specs root is not the one it recorded. §1–§5 stay guidance-only; §6 is outside their contract.
 
+## [1.63.0] — 2026-10-27
+
+Take with `product-workflows` 3.52.0, whose `/prd-ground` Phase 3 asks the question this release's `grounding-format` §4 cites, and whose `--repos-path` flag and `/epics` re-review offer this release's `escalation-rules` names — to-fix D7, D8, D9 (batches B24, B26).
+
+### Changed
+- **`grounding-format` §4 step 1: a clone with no readable `origin` keeps the name an earlier `baselines.md` entry records it by** where the operator confirms, at `/prd-ground` Phase 3, that it is the same repository — a renamed directory, or an entry a run before `product-workflows` 3.33.3 wrote. It said the basename alone, so a renamed clone was recorded under two names.
+- `escalation-rules`' *Required path environment variable unset* says `/prd-ground` tests its `--repos-path` value, where one is given, in place of `${REPOS_PATH:-/workspace}` (product-workflows 3.52.0, D7).
+- `escalation-rules`' *Edits after a verdict that is not BLOCK — the unspent re-review* names `/epics`' split at its last count of an Epic an *Epic size* finding named among the ways it edits the reviewed artifact (product-workflows 3.52.0, D8).
+
 ## [1.62.0] — 2026-10-27
 
 Take with `dev-workflows` 4.44.0 and `product-workflows` 3.51.0, whose `/design` and `/specify` dispatch this release's `overlap-reader` — to-fix PR5 (live checks of 2026-10-26, run 2).

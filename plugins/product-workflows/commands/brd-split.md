@@ -1498,7 +1498,11 @@ On *Ground now*, record the commit Phase 6's handoff pushed — `git -C "$SPECS_
 2. **The repositories, once.** Resolve `${REPOS_PATH:-/workspace}` first, exactly as
    `${CLAUDE_PLUGIN_ROOT}/commands/prd-ground.md` Phase 0 step 7 resolves it — the one place this
    command reads that variable — putting that step's `REPOS_PATH` question where no entry resolves
-   to an existing directory. Then build the slug→clone map and put the repository question exactly as
+   to an existing directory. A path answered there is this run's `$REPOS_PATH` and is held for the
+   continuation, which passes it to every child run as `--repos-path`, so no child asks again: held
+   as the `realpath` of each colon-separated entry, rejoined with `:`, and **an answer containing
+   whitespace is refused and asked for again**, naming why — the Skill tool's `args` are split on
+   whitespace, so such a path would reach the child as two tokens. Then build the slug→clone map and put the repository question exactly as
    that file's Phase 1 steps 1–4 build and put them — its
    candidate list, its two arrays and its zero-match escalation — once for every child chosen:
    they are slices of one root, ground against the same code. **Borrowed into this run, every
@@ -1517,7 +1521,7 @@ On *Ground now*, record the commit Phase 6's handoff pushed — `git -C "$SPECS_
 later* would — Phase 8 included. On *Ground now — <S> slice(s)*, tell the operator to **merge it only
 when this run asks**: its own session commit (Phase 8) rides in the same pull request, and a merge
 before it strands that commit on a merged branch. A typed answer is acted on as the option it expresses; anything else is asked again.
-Hold what was confirmed — the children, the repositories' names (a slug each, or the absolute path a clone was named by), and this run's own run flags — for
+Hold what was confirmed — the children, the repositories' names (a slug each, or the absolute path a clone was named by), the `REPOS_PATH` answered at step 2 where that question was put, and this run's own run flags — for
 the continuation.
 
 **A donor that gained no row is not in that set and is not offered anything here — and that is the condition, not "being a donor".** It lost a row and gained none, so its remaining findings still cover everything it still claims, and the findings it holds about the row it gave up stay on file as a record of what it saw (`workflows-core:grounding-format` §8) — they are not stale grounding to repair, and re-running `/prd-ground` on it would re-derive work nothing asked for. **A donor that also gained a row is in the set like any other receiver**, which is reachable whenever two donors are involved: A's row lands on C while C's own row goes elsewhere, and C is then a child that gained a row and needs its grounding re-derived for it. Stating the rule as "a donor is never offered" would drop C out of the offer on the strength of a label. A donor left claiming nothing at all was resolved in Phase 4.5 and is not here either.
@@ -1739,14 +1743,17 @@ this section waits for the operator's merge and checks it.
      reading unmerged for ever (§3.5: a commit made after the merge). Merged → step 2. Not merged → say so, name the pull request again,
      and put the same question again: never re-check silently in a loop, and never take an answer
      for a merge the test did not find. *Stop here* ends the continuation, printing
-     `/product-workflows:prd-ground <CHILD-KEY> --repos <name>,…` for each chosen child, to type once
+     `/product-workflows:prd-ground <CHILD-KEY> --repos <name>,…` for each chosen child — with
+     `--repos-path <path>` after it, the held value, where Phase 7 step 2's `REPOS_PATH` question was answered — to type once
      the pull request merges.
 
    Phase 7 offered *Ground now* on no other outcome.
 2. **Run `/product-workflows:prd-ground` once per chosen child, in the order Phase 7 named them, one after
    another**, each through the Skill tool:
-   `Skill(skill: "product-workflows:prd-ground", args: "<CHILD-KEY> --repos <name>,… --from-split <BRD-KEY> <this run's run flags>")`
-   — the repositories as their names, slugs or absolute paths, in one comma-separated token, and the run flags this run was
+   `Skill(skill: "product-workflows:prd-ground", args: "<CHILD-KEY> --repos <name>,… [--repos-path <path>] --from-split <BRD-KEY> <this run's run flags>")`
+   — the repositories as their names, slugs or absolute paths, in one comma-separated token;
+   `--repos-path` with the value Phase 7 step 2 held — each entry's `realpath`, no whitespace —
+   where that `REPOS_PATH` question was put, and left out otherwise, since the child then resolves the variable as this run did; and the run flags this run was
    given (`--skip-costs`, `--skip-feedback`, `--enforce-model=<model>`) passed through as typed, so a
    grounding run honours what the operator asked of this one. **Each is a complete run, never an
    `--inline` one**: its own Phase 0 gates — its preflight's B2 row — or B4, after an early merge — switches the specs repository off
@@ -1765,4 +1772,4 @@ this section waits for the operator's merge and checks it.
    answer ends the children not yet ground.
 3. **A run that stops ends the continuation.** Say which children were ground, which run stopped or ended it, and
    with what, and print `/product-workflows:prd-ground <CHILD-KEY> --repos <name>,…` for every chosen
-   child not yet ground.
+   child not yet ground, with `--repos-path <path>` as step 1's *Stop here* prints it.

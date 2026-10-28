@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.28.0] — 2026-10-27
+
+Take with `product-workflows` 3.52.0 and `dev-workflows` 4.46.0, which carry the same hook wording; this release relies on neither — to-fix D23.
+
+### Fixed
+- The `preload-context` hook prints `SPECS_PATH: (not set — a command that needs it asks for it)` where `$SPECS_PATH` is unset. It said the command will ask, which misled one case: `/docs-workflows:release-notes` given a folder in the specs tree, which asks only on a `<KEY>` address. `/document` gets the line only on a key-shaped address, where it does ask.
+
 ## [1.27.0] — 2026-10-27
 
 Released with `workflows-core` 1.61.0, `dev-workflows` 4.42.0 and `product-workflows` 3.50.0, relying on none of them — to-fix LC8 (live checks of 2026-10-26).
