@@ -163,16 +163,33 @@ def _line_ending(chunk, last=False):
     return b"\r\n" if i > 0 and chunk[i - 1:i] == b"\r" else b"\n"
 
 
+def _line_ending_form(data):
+    """Whether the bytes hold a \\r\\n, and whether they hold a \\n with no \\r before it."""
+    return b"\r\n" in data, re.search(rb"(?<!\r)\n", data) is not None
+
+
+def _ends_blank(data):
+    """True where the last line of <data>, which ends with a line ending, is empty or whitespace-only."""
+    body = data[:-1]
+    if body.endswith(b"\r"):
+        body = body[:-1]
+    return not body[body.rfind(b"\n") + 1:].strip(b" \t")
+
+
 def entry_set_merge(base, ours, theirs):
     """Spec §3.3's settlement of a block-shaped appended file both sides changed, from three
-    versions; base is None where both sides created it. None (refuse) where the two headers differ,
-    or where an entry of base is missing from either side: an edit, a removal, or an addition to the
-    last entry. Otherwise ours, given a final line ending where it lacks one, then each entry of
-    theirs that ours lacks, in theirs' order, after one empty line, with its trailing blank lines
-    dropped and one line ending, its own lines unchanged. Each line ending added is \\r\\n where the
-    entry's first line ends \\r\\n (for the one added to ours, where ours' last line ending is
-    \\r\\n), else \\n. Base decides only the refusal; it need not be a prefix of either side. A
-    caller decides a deleted side."""
+    versions; base is None where both sides created it. None (refuse) where the non-empty versions
+    are not all in one line-ending form (_line_ending_form: an entry in \\r\\n never matches its copy
+    in \\n, so it would be added twice), where the two headers differ, or where an entry of base is
+    missing from either side: an edit, a removal, or an addition to the last entry. Otherwise ours,
+    given a final line ending where it lacks one, then each entry of theirs that ours lacks, once, in
+    theirs' order, after one empty line (none where ours already ends with a blank line, or is
+    empty), with its trailing blank lines dropped and one line ending, its own lines unchanged. Each
+    line ending added is \\r\\n where the entry's first line ends \\r\\n (for the one added to ours,
+    where ours' last line ending is \\r\\n), else \\n. Base decides only the refusal; it need not be a
+    prefix of either side. A caller decides a deleted side."""
+    if len({_line_ending_form(x) for x in (base, ours, theirs) if x}) > 1:
+        return None
     head_o, ents_o = split_entries(ours)
     head_t, ents_t = split_entries(theirs)
     if entry_key(head_o) != entry_key(head_t):
@@ -193,7 +210,8 @@ def entry_set_merge(base, ours, theirs):
         while e[end:end + 1] in (b" ", b"\t"):  # the last line's own trailing spaces are the entry's
             end += 1
         eol = _line_ending(e)
-        out += (eol if out else b"") + e[:end] + eol
+        out += (eol if out and not _ends_blank(out) else b"") + e[:end] + eol
+        have_o.add(k)
     return out
 
 
@@ -1015,6 +1033,32 @@ def selftest():
         check(got is None, "add/add with different headers refuses (%r)" % got)
         got = esm(None, "", COST), esm(None, "", "")
         check(got == (COST, ""), "an empty ours gains no leading empty line and no line ending of its own (%r)" % (got,))
+        both = IMPL_HEAD + IMPL_1 + "\n" + IMPL_2
+        got = esm(None, both, IMPL_HEAD + IMPL_1), esm(None, IMPL_HEAD + IMPL_1, both)
+        check(got == (both, both), "add/add where both sides hold an entry keeps it once, from either side (%r)" % (got,))
+        got = esm(None, crlf(IMPL_HEAD + IMPL_1), crlf(both))
+        check(got == crlf(both) and not bare_lf(got), "add/add of two CRLF sides still merges (%r)" % got)
+
+        # sides in different line-ending forms refuse: no entry of one matches its copy in the other
+        got = esm(None, crlf(IMPL_HEAD + IMPL_1), both)
+        check(got is None, "add/add of a CRLF side and an LF side refuses (%r)" % got)
+        base = IMPL_HEAD + IMPL_1
+        for b_, o_, t_ in ((crlf(base), crlf(both), base + "\n" + IMPL_2P),
+                           (base, crlf(both), crlf(base + "\n" + IMPL_2P)),
+                           (base, both, both.replace("\n", "\r\n", 1)),
+                           (IMPL_HEAD, crlf(base), crlf(IMPL_HEAD + IMPL_2))):
+            got = esm(b_, o_, t_)
+            check(got is None, "three versions not all in one line-ending form refuse (%r)" % got)
+
+        # each entry is kept once, and an empty line already ending ours is the separator
+        got = esm(base, base + "\n" + IMPL_2, base + "\n" + IMPL_2P + "\n" + IMPL_2P)
+        check(got == base + "\n" + IMPL_2 + "\n" + IMPL_2P, "a new entry theirs holds twice is added once (%r)" % got)
+        for ours in (base + "\n" + IMPL_2 + "\n", base + "\n" + IMPL_2 + "\n \n"):
+            got = esm(base, ours, base + "\n" + IMPL_2P)
+            check(got == ours + IMPL_2P, "ours ending in a blank line gains no second one before the entry (%r)" % got)
+        ours = crlf(base + "\n" + IMPL_2 + "\n")
+        got = esm(crlf(base), ours, crlf(base + "\n" + IMPL_2P))
+        check(got == ours + crlf(IMPL_2P), "…in CRLF too (%r)" % got)
 
         # an edit, an addition to the last base entry, a removal, a header edit: each refuses
         base = IMPL_HEAD + IMPL_1 + "\n" + IMPL_2
