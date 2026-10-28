@@ -1197,15 +1197,21 @@ run superseded or reopened — in the changed-id set (*The propagation sweep*), 
 reopened one, as one this run reopened throughout *Next steps*, its `advance_ready` among it — its write reported as
 already made and never written twice. **On an adopted pass carrying an `- **Effects:**` line, that
 line says what its freeze was to write.** Take each `- **Effects:**` entry with the causes on it whose
-`- **Frozen:**` entry was written: a `- **Frozen:**` entry that was not written causes nothing, and an
+`- **Frozen:**` entry was written — on the `- **Frozen:**` list of the pass that entry names, which for
+a `(catch-up for <pass>)` entry is that pass and otherwise the pass carrying the line — and take each
+effect once: where several adopted passes' lines carry one effect, a later pass's catch-up of an
+earlier one's, the earliest pass's entry stands and the others are passed over. A `- **Frozen:**`
+entry that was not written causes nothing, and an
 `- **Effects:**` entry left with no cause is void, since its target is reconciled afresh. An entry
 **landed** where the record holds the status the entry moves it to and `decisions.md` carries the
 `Superseded <YYYYMMDD>: by [CD#m]` or `Reopened <YYYYMMDD>:` paragraph it names, naming those causes
 and dated the adopted pass's date or the date of a pass whose `- **Adopts:**` line names that pass;
 it counts as one on a `frozen` pass does (above), and on a pass reading `frozen` every entry landed.
 **On a pass reading `freezing` the freeze was interrupted, so an entry may not have landed**: where
-the record still holds the status the entry gives, *Freeze the customer decisions* writes it, before
-anything else it writes — its *catch-up* — and the record counts, for every later phase, as one this
+the record still holds the status the entry gives, *Freeze the customer decisions* writes it, after
+its pass's opening lines and before anything else it writes — its *catch-up* — writing only the move
+of the status where the entry's paragraph is already on file, as a write cut off between the two
+leaves it, and the paragraph and the move otherwise; the record counts, for every later phase, as one this
 run superseded or reopened; where the record has moved since, nothing is written, and it is named
 under *what still needs a human* with the entry. On any adopted pass, every `left` entry, and every
 entry naming more than one cause, is named under *what still needs a human* as *Freeze the customer
@@ -1439,8 +1445,8 @@ every record this phase is about to
 freeze, complete from `open` or re-decide in place, each with what it answers — a `[C]` by round and
 position, an `[AS#n]`, or an `[SR#n]` with the self-review file named — new ids assigned now by the
 `id` row below, or `none`. Then `- **Effects:**`, listing every write steps 2 and 3 below are about to
-make on a record already in the register, each with the status the record holds before this phase
-writes anything and every `[CD#n]` that causes it — `[AS#3] open → superseded by [CD#7]`,
+make on a record already in the register, each with the status the record holds once the catch-up
+below, where there is one, is applied, and every `[CD#n]` that causes it — `[AS#3] open → superseded by [CD#7]`,
 `[CD#2] decided → superseded by [CD#5]`, `[VD#4] decided → reopened by [CD#5], [CD#6]` — and every
 record step 3 leaves at its status, with what constrains it, `[CD#9] open — left, constrained by
 [CD#5]`; or `none`. Steps 2 and 3 read the register as it stood before this phase wrote anything, so
@@ -1449,7 +1455,7 @@ finish a freeze cut off part-way (*A pass an interrupted run left is adopted*). 
 adopts a pass reading `freezing`**, the line opens with every entry of that pass the catch-up is to
 write (*A pass an interrupted run left is adopted*), each as that pass's line gives it, followed by
 `(catch-up for <that pass's file and heading>)`, and the catch-up writes them, dated this run's date,
-before anything else this phase writes. **The register steps 2 and 3 read** — the register *as it
+after these opening lines and before anything else this phase writes. **The register steps 2 and 3 read** — the register *as it
 stood before this phase wrote anything* — **is the register with the catch-up applied**, so this
 run's own answers act on a record the catch-up has just moved by its new status, and never reopen it
 a second time. **Write every `[CD#n]` this phase mints, completes or re-decides before any step-2 or
