@@ -1452,17 +1452,43 @@ def _undo_partial(root, old, tip):
     were written (measured), and it writes the index only where it succeeds, so the index still holds
     <old>'s entries. Every path <old> and <tip> differ on was clean before it ran (_would_overwrite named
     none), so each whose working copy is now <tip>'s version -- or now missing, where <tip> lacks it --
-    was written there by read-tree, and is written back as <old> holds it, or removed where <old> lacks
-    it (write_from); a working copy holding anything else is left as it is. A write that fails raises
-    NotRun."""
-    for p in nul_list(git(root, "diff-tree", "-r", "-z", "--name-only", "--no-renames", old, tip)):
-        have = worktree_blob(root, p)
-        if have == blob(root, tip, p) and (have is not None or blob(root, old, p) is not None):
-            try:
-                write_from(root, old, p)
-            except OSError as e:
-                raise NotRun("read-tree stopped partway from %s to %s, and %s could not be put back (%s)"
-                             % (old, tip, p, e.strerror or e))
+    was written there by read-tree, and is put back as <old> holds it (_put_back); a working copy
+    holding anything else is left as it is. A write that fails raises NotRun. Only where read-tree
+    stopped before it wrote the index: move_branch tells the two apart."""
+    paths = nul_list(git(root, "diff-tree", "-r", "-z", "--name-only", "--no-renames", old, tip))
+    back = [p for p in paths if worktree_blob(root, p) == blob(root, tip, p)]  # each path is on one side at least
+    modes = {p: mode for p, (mode, _sha) in _tree_entries(root, old, back).items()}
+    for p in back:
+        try:
+            _put_back(root, old, p, modes.get(p))
+        except OSError as e:
+            raise NotRun("read-tree stopped partway from %s to %s, and %s could not be put back (%s)"
+                         % (old, tip, p, e.strerror or e))
+
+
+def _put_back(root, old, path, mode):
+    """<path> as <old> holds it, in <mode> (<old>'s, as ls-tree prints it): a symbolic link as a link, a
+    file executable exactly where its mode is 100755 -- write_from writes the default mode, and an
+    executable put back without its bit reads as the user's change. <mode> None: <old> lacks the path,
+    so it is removed, and with it each folder <old> lacks that it leaves empty."""
+    full = os.path.join(root, path)
+    if mode in (None, "120000") or os.path.islink(full):  # never write through a link the tip made
+        if os.path.lexists(full):
+            os.remove(full)
+    if mode is None:
+        d = os.path.dirname(path)
+        while d and blob(root, old, d) is None and os.path.isdir(os.path.join(root, d)) \
+                and not os.listdir(os.path.join(root, d)):
+            os.rmdir(os.path.join(root, d))
+            d = os.path.dirname(d)
+        return
+    if mode == "120000":
+        os.makedirs(os.path.dirname(full) or root, exist_ok=True)
+        os.symlink(git(root, "cat-file", "blob", "%s:%s" % (old, path)).stdout, full)
+        return
+    write_from(root, old, path)
+    bits = os.stat(full).st_mode
+    os.chmod(full, bits | (bits & 0o444) >> 2 if mode == "100755" else bits & ~0o111)
 
 
 def move_branch(root, branch, old, tip, here):
@@ -1477,8 +1503,10 @@ def move_branch(root, branch, old, tip, here):
     branch's locks and fails where the branch is no longer <old> or a lock stands (_ref_refusal); then
     read-tree -m -u <old> <tip>, the two-tree merge that carries the checkout's index and files to <tip>
     and keeps the user's staged, unstaged and untracked changes as they are, then commit. Where read-tree
-    fails, what it wrote is put back (_undo_partial) while the transaction still holds its locks, then
-    abort, and the reason is what the checkout shows: "locked" where the index.lock stands,
+    exits non-zero, what it wrote is put back while the transaction still holds its locks -- by
+    read-tree -m -u <tip> <old> where the index already moved on a path the move changes (diff-index
+    --cached <old>: read-tree killed after its index write), else by _undo_partial -- then abort, and
+    the reason is what the checkout shows: "locked" where the index.lock stands,
     "would-overwrite" where a path is in the way, else "cannot-move". Where commit fails after read-tree
     succeeded -- its answer is not "ok" and the branch does not hold <tip> -- read-tree -m -u <tip> <old>
     puts the index and files back: "branch-moved".
@@ -1504,7 +1532,17 @@ def move_branch(root, branch, old, tip, here):
             txn.wait()  # its locks released before they are looked for
             return _ref_refusal(root, branch, old, here)
         if git(root, "read-tree", "-m", "-u", old, tip, check=False).returncode != 0:
-            _undo_partial(root, old, tip)  # under the transaction's locks, so no commit lands meanwhile
+            # under the transaction's locks, so no commit lands meanwhile; by evidence, not the exit code:
+            # a read-tree killed just after it wrote the index (it writes the files first) has carried
+            # both to <tip>, and only the reverse merge puts both back -- _undo_partial alone would leave
+            # the files on <old> and the index on <tip>
+            changed = set(nul_list(git(root, "diff-tree", "-r", "-z", "--name-only", "--no-renames", old, tip)))
+            if changed & set(nul_list(git(root, "diff-index", "--cached", "-z", "--name-only", "--no-renames", old))):
+                if git(root, "read-tree", "-m", "-u", tip, old, check=False).returncode != 0:
+                    raise NotRun("%s stays at %s, but the checkout's index and files moved to %s and could not be "
+                                 "put back" % (branch, old, tip))
+            else:
+                _undo_partial(root, old, tip)
             _tell(txn, "abort")
             if os.path.lexists(lock_full):
                 return {"reason": "locked", "path": lock}
@@ -4388,28 +4426,74 @@ def selftest():
 
                 # read-tree stopping partway for a reason no file names -- a read-only folder -- after it
                 # wrote other files: what it wrote is put back, and the reason is cannot-move, nothing moved
+                # (read-tree removes before it writes: an executable the tip deletes is removed, and a file the
+                # tip adds in new folders is written, before prd.md fails; each is put back in its own mode,
+                # and the new folders go with the file)
                 def read_only_folder():
                     a, b, stub, remote = pworld(where("read-only-folder"))
+                    tool, added = "notes/run.sh", "notes/new-folder/deep/added.md"
+                    b.write(tool, "#!/bin/sh\necho run\n")
+                    os.chmod(os.path.join(b.path, tool), 0o755)
+                    b.commit_all("a tool")
+                    b.git("push", "-q", "origin", "main")
+                    a.git("pull", "-q", "--ff-only")
 
                     def team(r):
                         r.add(FB, TEAM_T)
                         r.write(NOTE, "team notes, edited\n")
                         r.write(PRD, "# PRD, the teammate's\n")
+                        r.write(added, "the teammate's, in new folders\n")
+                        os.remove(os.path.join(r.path, tool))
                     diverge(a, b, team)
                     old, folder = a.git("rev-parse", "main"), os.path.join(a.path, os.path.dirname(PRD))
-                    before = (a.state(), [a.read(p) for p in (NOTE, FB, PRD)])
+                    before = (a.state(), [a.read(p) for p in (NOTE, FB, PRD, tool)])
                     os.chmod(folder, 0o555)  # prd.md cannot be replaced; notes/ and dev-workflows/ can
                     try:
                         got = replay_cli(a, "--branch", "main")
                     finally:
                         os.chmod(folder, 0o755)
                     check(got.get("refused") == {"reason": "cannot-move", "path": None} and got.get("moved") is False
-                          and (a.state(), [a.read(p) for p in (NOTE, FB, PRD)]) == before
+                          and (a.state(), [a.read(p) for p in (NOTE, FB, PRD, tool)]) == before
                           and a.git("rev-parse", "main") == old,
                           "[move: read-only folder] cannot-move, every file read-tree wrote put back (%r, %r)"
                           % (got, letters(a)))
+                    check(os.access(os.path.join(a.path, tool), os.X_OK)
+                          and not os.path.exists(os.path.join(a.path, "notes/new-folder")),
+                          "[move: read-only folder] the executable comes back executable, the new folders go (%r, %r)"
+                          % (letters(a), os.path.exists(os.path.join(a.path, "notes/new-folder"))))
                 if os.geteuid() != 0:  # root writes through any mode
                     guarded("read-only folder", read_only_folder)
+
+                # read-tree killed just after it wrote the index (exit non-zero, the index and the files on
+                # the tip): the evidence, not the exit code, decides -- the reverse merge puts both back, never
+                # MM on paths the user did not touch. The fake git runs the real read-tree, then signals the
+                # replay (held during the move) and itself
+                def killed_after_index():
+                    a, b, stub, remote = pworld(where("killed-after-index"))
+
+                    def team(r):
+                        r.add(FB, TEAM_T)
+                        r.write(NOTE, "team notes, edited\n")
+                    diverge(a, b, team)
+                    old = a.git("rev-parse", "main")
+                    before = (a.state(), [a.read(p) for p in (NOTE, FB)])
+                    fake, fired = where("killed-after-index-git"), os.path.join(tmp, "killed-after-index-fired")
+                    with open(os.path.join(fake, "git"), "w") as fh:
+                        fh.write('#!/bin/sh\ncase "$*" in *"read-tree -m -u"*)\n'
+                                 '  if [ ! -e %(f)s ]; then : > %(f)s; %(g)s "$@"; kill -TERM $PPID; kill -TERM $$; fi;;\n'
+                                 'esac\nexec %(g)s "$@"\n' % {"f": sh_quote(fired), "g": sh_quote(REAL_GIT)})
+                    os.chmod(os.path.join(fake, "git"), 0o755)
+                    r = subprocess.run([sys.executable, me, "--specs", a.path, "replay", "--branch", "main"],
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                       env=dict(os.environ, PATH=fake + os.pathsep + os.environ.get("PATH", "")))
+                    err = r.stderr.decode("utf-8", "replace").splitlines()
+                    check(os.path.exists(fired) and r.returncode == 2 and err == ["session-branch: not run (ended by signal %d)"
+                                                                                  % int(signal.SIGTERM)]
+                          and a.git("rev-parse", "main") == a.git("rev-parse", "HEAD") == old
+                          and (a.state(), [a.read(p) for p in (NOTE, FB)]) == before,
+                          "[move: read-tree killed after its index write] index and files back on the old commit, no "
+                          "MM (%r, %r, %r)" % (r.returncode, err, letters(a)))
+                guarded("read-tree killed after its index write", killed_after_index)
 
                 # a signal after a move, outside git_bounded -- during attempt 2's register rebuild -- still
                 # prints the partial result and exits 2, SIGINT as well as SIGTERM, with no traceback
