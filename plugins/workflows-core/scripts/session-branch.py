@@ -1255,8 +1255,11 @@ def replay_commits(root, onto, commits, register_rebuild):
 # fetch's. A closed set: the caller's outcome lines are written against it. cannot-move: read-tree could
 # not carry the checkout to the tip for a reason no file shows -- no lock stands and no path is in its
 # way (a read-only folder, say); whatever it wrote before it stopped is put back, so nothing moved.
+# checkout-moved: the checkout at <root> switched to or from the branch while the move was under way --
+# another session's preflight or handoff, say -- so the branch was not moved, under a checkout that no
+# longer stood on it or onto one that had just come to stand on it.
 REFUSALS = ("conflict", "register-rebuild", "would-overwrite", "cannot-replay", "in-progress", "locked",
-            "push-scope", "checked-out", "fetch-failed", "branch-moved", "cannot-move")
+            "push-scope", "checked-out", "fetch-failed", "branch-moved", "cannot-move", "checkout-moved")
 
 # The markers of a rebase, merge, cherry-pick or revert in progress (spec §3.1 condition 5), each found
 # where rev-parse --git-path puts it, so a linked worktree's own are the ones read (Review Focus 9).
@@ -1521,15 +1524,50 @@ def move_branch(root, branch, old, tip, here):
     "would-overwrite" where a path is in the way, else "cannot-move". Where commit fails after read-tree
     succeeded -- its answer is not "ok" and the branch does not hold <tip> -- read-tree -m -u <tip> <old>
     puts the index and files back: "branch-moved".
-    Not <here>: refused "checked-out" where a worktree has the branch checked out, naming it; else
-    update-ref <tip> <old> alone, its failure read as _ref_refusal reads it."""
+    <here> is the caller's word that the checkout stands on the branch, which it checks twice: HEAD must
+    be refs/heads/<branch> (symbolic-ref -q HEAD) before anything is looked at, and again once prepare
+    succeeded -- which locks HEAD exactly where HEAD names the branch, so that second look cannot race
+    a switch. Where either look finds another branch or a detached HEAD: "checkout-moved", aborted with
+    nothing moved, never read-tree on a checkout the branch is not under.
+    Not <here>: refused "checked-out" where a worktree has the branch checked out, naming it; else the
+    same transaction without read-tree -- start, update, prepare (its failure read by _ref_refusal), then
+    checked_out_at once more, under the branch's lock, before commit: where a worktree now has the
+    branch checked out, abort, "checkout-moved" where that worktree is this checkout, else
+    "checked-out" naming it. What remains is the window between that last look and commit, one pipe
+    write wide, in which a switch onto the branch would leave that checkout's HEAD on <tip> with its
+    index and files on <old>: a switch takes HEAD's lock, never the branch's, so nothing here can hold
+    it off."""
     ref = "refs/heads/" + branch
     if not here:
         where = checked_out_at(root, branch)
         if where:
             return {"reason": "checked-out", "path": where[0]}
-        r = git(root, "update-ref", "-m", "session-branch: replayed onto origin/" + branch, ref, tip, old, check=False)
-        return None if r.returncode == 0 else _ref_refusal(root, branch, old, here)
+        top = os.path.realpath(text(git(root, "rev-parse", "--show-toplevel")))
+        txn = ref_transaction(root, branch)
+        try:
+            if _tell(txn, "start") != "start: ok" or _tell(txn, "update %s %s %s\nprepare" % (ref, tip, old)) != "prepare: ok":
+                txn.stdin.close()
+                txn.wait()  # its locks released before they are looked for
+                return _ref_refusal(root, branch, old, here)
+            where = checked_out_at(root, branch)
+            if where:
+                _tell(txn, "abort")
+                if any(os.path.realpath(w) == top for w in where):
+                    return {"reason": "checkout-moved", "path": None}
+                return {"reason": "checked-out", "path": where[0]}
+            if _tell(txn, "commit") != "commit: ok" and rev(root, ref) != tip:
+                txn.stdin.close()
+                txn.wait()
+                return _ref_refusal(root, branch, old, here)
+            return None
+        finally:
+            try:
+                txn.stdin.close()
+            except OSError:
+                pass
+            txn.wait()
+    if git(root, "symbolic-ref", "-q", "HEAD", check=False).stdout.strip() != ref.encode():
+        return {"reason": "checkout-moved", "path": None}
     lock, lock_full = git_paths(root, "index.lock")[0]
     if git(root, "update-index", "-q", "--refresh", check=False).returncode != 0:
         return {"reason": "locked", "path": lock}
@@ -1542,6 +1580,9 @@ def move_branch(root, branch, old, tip, here):
             txn.stdin.close()
             txn.wait()  # its locks released before they are looked for
             return _ref_refusal(root, branch, old, here)
+        if git(root, "symbolic-ref", "-q", "HEAD", check=False).stdout.strip() != ref.encode():
+            _tell(txn, "abort")  # HEAD names another branch, or none: prepare locked no HEAD, nothing is moved
+            return {"reason": "checkout-moved", "path": None}
         if git(root, "read-tree", "-m", "-u", old, tip, check=False).returncode != 0:
             # under the transaction's locks, so no commit lands meanwhile; by evidence, not the exit code:
             # a read-tree killed just after it wrote the index (it writes the files first) has carried
@@ -1633,7 +1674,8 @@ def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, 
     origin's holds every commit of the branch, a branch strictly behind is moved onto origin's and
     nothing is pushed. Otherwise the commits are replayed onto origin's (replay_commits; its refusal
     stands) and the branch moved onto the tip (move_branch; the checkout with it where it stands on
-    the branch); where every commit was dropped, that tip is origin's and nothing is pushed; else,
+    the branch, which is read again just before the move, never trusted from before the replay); where
+    every commit was dropped, that tip is origin's and nothing is pushed; else,
     only then, the tip is pushed (git_bounded, <push_seconds>): pushed where push exits 0; a
     "[rejected]" status line, origin having moved on meanwhile, starts the next attempt from the moved
     branch; anything else -- "[remote rejected]" included (Review Focus 7) -- ends the run, its line
@@ -1651,7 +1693,7 @@ def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, 
     (".git/MERGE_HEAD", ".git/index.lock", ".git/refs/heads/<b>.lock") and absolute where it does not (a
     linked worktree's own git directory, or the common one); for push-scope the commit; for checked-out
     the other worktree's path; for conflict and register-rebuild what replay_commits names; None for
-    fetch-failed, cannot-replay, branch-moved and cannot-move.
+    fetch-failed, cannot-replay, branch-moved, cannot-move and checkout-moved.
     moves: one entry {slug, origin, side, from, to} per finding a register rebuild renumbered (spec
     §3.7, _moves). Across a race, from is the number the finding had when this run first met it, never
     a later attempt's: a teammate's ("remote") as origin's register numbered it at the first attempt
@@ -1709,6 +1751,10 @@ def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, 
                 tip = got["tip"]
                 with _signals_held():  # a signal waits until the branch and the checkout agree, and the result says so
                     if tip != old:
+                        # where the checkout stands is read again here, not trusted from before the replay,
+                        # which a register rebuild can stretch to seconds: a checkout another session switched
+                        # off the branch meanwhile leaves it to update-ref alone (move_branch checks HEAD too)
+                        here = any(os.path.realpath(w) == top for w in checked_out_at(root, branch))
                         refused = move_branch(root, branch, old, tip, here)
                         if refused is None:
                             result["moved"] = True
@@ -3976,6 +4022,37 @@ def selftest():
                           "[move] %s refuses cannot-replay, moving nothing (%r)" % (what, got))
         guarded("cannot-replay", cannot_replay)
 
+        # spec §4: the push rejected row's remedy never stashes. Under rebase.autoStash=true, beside a dirty
+        # tracked file and a clone diverged from origin, git pull --rebase --no-autostash refuses up front:
+        # non-zero, HEAD, index and bytes as they were, no stash entry. Without --no-autostash the same
+        # pull stashes and rebases -- the control, which shows the setting is in force on this git
+        def no_autostash():
+            with tempfile.TemporaryDirectory() as tmp:
+                remote, a, b = world(tmp)
+                b.add(FB, today("team, before the user's pull"))
+                b.commit_all("team")
+                b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+                a.write("specifications/PRD-A-1-x/follow-ups.md", "- [ ] mine\n")  # rebases cleanly: the control
+                a.commit_all("A-1 Add dev-workflows session artifacts (implement)")
+                a.git("config", "rebase.autoStash", "true")
+                prd = "specifications/PRD-A-1-x/prd.md"
+                a.write(prd, "# PRD, the user's own edit\n")
+                before = (a.state(), a.read(prd), a.read(FB))
+                r = subprocess.run(["git", "-C", a.path, "pull", "--rebase", "--no-autostash", "origin", "main"],
+                                   stdout=devnull, stderr=devnull)
+                stashes = a.git("stash", "list")
+                check(r.returncode != 0 and (a.state(), a.read(prd), a.read(FB)) == before and stashes == "",
+                      "[remedy] pull --rebase --no-autostash under rebase.autoStash=true refuses, touching nothing, "
+                      "leaving no stash (%r, %r)" % (r.returncode, stashes))
+                head = a.git("rev-parse", "HEAD")
+                r = subprocess.run(["git", "-C", a.path, "pull", "--rebase", "origin", "main"], stdout=devnull,
+                                   stderr=devnull)
+                check(r.returncode == 0 and a.git("rev-parse", "HEAD") != head
+                      and a.read(prd) == "# PRD, the user's own edit\n",
+                      "[remedy] the control: without --no-autostash the same pull autostashes and rebases (%r)"
+                      % r.returncode)
+        guarded("the remedy never stashes", no_autostash)
+
         def move_cases():
             with tempfile.TemporaryDirectory() as tmp:
                 def where(name):
@@ -4125,6 +4202,143 @@ def selftest():
                           and frozen(a) == before and locks == [],
                           "[move: concurrent commit] prepare fails, nothing touched, no lock left (%r, %r)" % (got, locks))
                 guarded("concurrent commit", concurrent)
+
+                # the checkout switched while the run replays (another session's preflight or handoff): the
+                # move never carries main's change into the checkout another branch now stands on
+                def switch_world(label, plugin_diverged=False):
+                    """pworld, with main diverged and PLUGIN on origin and local (no upstream); with
+                    <plugin_diverged>, PLUGIN diverged too and main left alone."""
+                    a, b, stub, remote = pworld(where(label))
+                    b.git("switch", "-q", "-c", PLUGIN)
+                    b.git("push", "-q", "origin", PLUGIN)
+                    a.git("fetch", "-q", "origin")
+                    a.git("branch", "-q", "--no-track", PLUGIN, "origin/" + PLUGIN)
+                    if plugin_diverged:
+                        a.git("switch", "-q", PLUGIN)
+                        a.add(FB, MINE_T)
+                        a.git("commit", "-q", "-am", RUN_MSG)
+                        a.git("switch", "-q", "main")
+                        b.add(FB, TEAM_T)
+                        b.commit_all("team")
+                        b.git("push", "-q", "origin", PLUGIN)
+                    else:
+                        b.git("switch", "-q", "main")
+                        diverge(a, b)
+                    return a, b, remote
+
+                def switching_git(label, trigger, command):
+                    """A git first on PATH that, the first time its arguments hold <trigger>, runs the real
+                    git with <command> (a list) first."""
+                    fake, fired = where(label + "-git"), os.path.join(tmp, label + "-fired")
+                    with open(os.path.join(fake, "git"), "w") as fh:
+                        fh.write('#!/bin/sh\ncase "$*" in *%(t)s*)\n  if [ ! -e %(f)s ]; then : > %(f)s; %(g)s %(c)s '
+                                 '>/dev/null 2>&1; fi;;\nesac\nexec %(g)s "$@"\n'
+                                 % {"t": sh_quote(trigger), "f": sh_quote(fired), "g": sh_quote(REAL_GIT),
+                                    "c": " ".join(sh_quote(x) for x in command)})
+                    os.chmod(os.path.join(fake, "git"), 0o755)
+                    return fake, fired
+
+                # move_branch with a here the checkout has since left, switched or detached: refused before
+                # anything moves -- and, with here true again, the here-path still moves
+                def stale_here():
+                    for label, switch in (("stale-here-switched", ("switch", "-q", PLUGIN)),
+                                          ("stale-here-detached", ("switch", "-q", "--detach"))):
+                        a, b, remote = switch_world(label)
+                        a.git("fetch", "-q", "origin")
+                        old, onto = a.git("rev-parse", "main"), a.git("rev-parse", "origin/main")
+                        commits, bad = push_scope(a.path, old, onto)
+                        res = replay_commits(a.path, onto, commits, None)
+                        a.git(*switch)
+                        before = (frozen(a), a.git("symbolic-ref", "-q", "HEAD", check=False), a.read(FB))
+                        got = move_branch(a.path, "main", old, res.get("tip"), True)
+                        check(got == {"reason": "checkout-moved", "path": None}
+                              and (frozen(a), a.git("symbolic-ref", "-q", "HEAD", check=False), a.read(FB)) == before
+                              and a.git("rev-parse", "main") == old,
+                              "[move: %s] a here the checkout left refuses checkout-moved, HEAD, index and bytes as "
+                              "they were (%r, %r)" % (label, got, letters(a)))
+                        a.git("switch", "-q", "main")
+                        got = move_branch(a.path, "main", old, res.get("tip"), True)
+                        check(got is None and a.git("rev-parse", "HEAD") == a.git("rev-parse", "main") == res.get("tip")
+                              and letters(a) == {} and a.read(FB) == at(a, res.get("tip"), FB),
+                              "[move: %s] back on main, the here-path moves (%r, %r)" % (label, got, letters(a)))
+                guarded("a here the checkout left", stale_here)
+
+                # …and the first look comes before the overwrite check, so a checkout switched to another branch
+                # and dirty where the move would write is refused for what happened, never as would-overwrite
+                def stale_here_dirty():
+                    a, b, remote = switch_world("stale-here-dirty")
+                    a.git("fetch", "-q", "origin")
+                    old, onto = a.git("rev-parse", "main"), a.git("rev-parse", "origin/main")
+                    commits, bad = push_scope(a.path, old, onto)
+                    res = replay_commits(a.path, onto, commits, None)
+                    a.git("switch", "-q", PLUGIN)
+                    a.add(FB, today("mine, on the plugin branch, uncommitted"))
+                    before = (frozen(a), a.read(FB))
+                    got = move_branch(a.path, "main", old, res.get("tip"), True)
+                    check(got == {"reason": "checkout-moved", "path": None} and (frozen(a), a.read(FB)) == before,
+                          "[move: a here the checkout left, dirty there] checkout-moved, not would-overwrite (%r)" % got)
+                guarded("a here the checkout left, dirty there", stale_here_dirty)
+
+                # the checkout switched after move_branch's first look but before prepare: the check under
+                # the lock prepare holds catches it, abort, nothing moved
+                def switched_before_prepare():
+                    a, b, remote = switch_world("switched-before-prepare")
+                    a.git("fetch", "-q", "origin")
+                    old, onto = a.git("rev-parse", "main"), a.git("rev-parse", "origin/main")
+                    commits, bad = push_scope(a.path, old, onto)
+                    res = replay_commits(a.path, onto, commits, None)
+                    fake, fired = switching_git("switched-before-prepare", "update-ref --stdin",
+                                                ["-C", a.path, "switch", "-q", PLUGIN])
+                    path = os.environ.get("PATH", "")
+                    os.environ["PATH"] = fake + os.pathsep + path
+                    try:
+                        got = move_branch(a.path, "main", old, res.get("tip"), True)
+                    finally:
+                        os.environ["PATH"] = path
+                    locks = [p for p in ("HEAD.lock", "refs/heads/main.lock", "index.lock")
+                             if os.path.exists(os.path.join(a.path, ".git", p))]
+                    check(os.path.exists(fired) and got == {"reason": "checkout-moved", "path": None}
+                          and a.git("symbolic-ref", "-q", "HEAD") == "refs/heads/" + PLUGIN and letters(a) == {}
+                          and a.read(FB) == SEED and a.git("rev-parse", "main") == old and locks == [],
+                          "[move: switched before prepare] the check under the lock refuses checkout-moved, nothing "
+                          "moved, no lock left (%r, %r, %r)" % (got, letters(a), locks))
+                guarded("switched before prepare", switched_before_prepare)
+
+                # the switch lands during the replay itself: replay looks again just before the move, so a
+                # branch the checkout left is moved by update-ref alone and pushed, the checkout untouched
+                def left_during_replay():
+                    for label, command, head, fb in (
+                            ("left-during-replay-switched", ["switch", "-q", PLUGIN], "refs/heads/" + PLUGIN, SEED),
+                            ("left-during-replay-detached", ["switch", "-q", "--detach"], "",
+                             SEED + "\n" + MINE_T)):
+                        a, b, remote = switch_world(label)
+                        old = a.git("rev-parse", "main")
+                        fake, fired = switching_git(label, "merge-tree --write-tree", ["-C", a.path] + command)
+                        got = replay_cli(a, "--branch", "main",
+                                         env={"PATH": fake + os.pathsep + os.environ.get("PATH", "")})
+                        check(os.path.exists(fired) and got.get("moved") is True and got.get("pushed") is True
+                              and got.get("tip") == a.git("rev-parse", "main") == origin_rev(remote, "main")
+                              and a.git("symbolic-ref", "-q", "HEAD", check=False) == head
+                              and (head or a.git("rev-parse", "HEAD") == old)
+                              and letters(a) == {} and a.read(FB) == fb,
+                              "[move: %s] main moved by update-ref alone and pushed, the checkout as the switch left it "
+                              "(%r, %r)" % (label, got, letters(a)))
+                guarded("the checkout left during the replay", left_during_replay)
+
+                # the not-here path: a switch onto the branch after move_branch's own look is caught under the
+                # prepared transaction, abort, nothing moved
+                def switched_onto():
+                    a, b, remote = switch_world("switched-onto", plugin_diverged=True)
+                    old = a.git("rev-parse", PLUGIN)
+                    fake, fired = switching_git("switched-onto", "update-ref --stdin", ["-C", a.path, "switch", "-q", PLUGIN])
+                    got = replay_cli(a, "--branch", PLUGIN, env={"PATH": fake + os.pathsep + os.environ.get("PATH", "")})
+                    check(os.path.exists(fired) and got.get("refused") == {"reason": "checkout-moved", "path": None}
+                          and got.get("moved") is False and a.git("rev-parse", PLUGIN) == old
+                          and a.git("symbolic-ref", "-q", "HEAD") == "refs/heads/" + PLUGIN and letters(a) == {}
+                          and a.read(FB) == SEED + "\n" + MINE_T,
+                          "[move: switched onto the branch] refused checkout-moved under the prepared transaction, "
+                          "nothing moved (%r, %r)" % (got, letters(a)))
+                guarded("switched onto the branch", switched_onto)
 
                 # a plugin branch the checkout does not stand on, checked out nowhere: update-ref alone; the
                 # upstream a push from a commit id does not set, set after it
