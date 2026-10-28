@@ -760,6 +760,8 @@ Entries:
 
 **to-fix.md items:** D8, D11.
 
+Done ahead of the batch on branch `fix/to-fix-product`: D8 and D11 in product-workflows 3.52.0, D8's `escalation-rules` edit-route line in workflows-core 1.63.0 (with D23, the `preload-context` hook wording, in product-workflows 3.52.0, dev-workflows 4.46.0 and docs-workflows 1.28.0). The batch's review entries are still to do.
+
 **Confirm first:** FBB-B17 (medium); PRD-B6 (low); PRD-B9 (medium); FBB-B20 (medium); FBB-B22 (low).
 
 **Notes:** Run after B16, which adds `/epics`' apply-open-findings offer (FBB-B21) to the same review phase.
@@ -815,6 +817,8 @@ Entries:
 - **FBB-B41** (MINOR) — tail after stop, prose evidence, answer reuse, assets
 
 **to-fix.md items:** D7, D9, D10.
+
+Done ahead of the batch on branch `fix/to-fix-product`: D7, D9 and D10 in product-workflows 3.52.0, D9's `grounding-format` §4 change and D7's `escalation-rules` `--repos-path` qualifier in workflows-core 1.63.0, and D9's upgrade note in the 3.52.0 changelog. The batch's review entries are still to do.
 
 **Confirm first:** BRD-B2 (medium); BRD-B3 (medium); BRD3-B20 (medium); FBA-B6 (medium); FBB-B41 (medium).
 

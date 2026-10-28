@@ -1177,7 +1177,9 @@ that adopted one stopped too. Its `- **Frozen:**` list is that pass's list for t
 above — no candidate it names is offered again, and the chain starts that name an earlier record's
 list (an answer frozen `open`, an `[SR#n]`'s answer) find their records on it, less what a later
 pass names as not written (the same-review rule above). **A listed entry was not written** where `decisions.md` does not carry the id, or, for a record
-listed as completed from `open`, where it still reads `open` for want of its reason: the run
+listed as completed from `open`, where it still reads `open` for want of its reason, or, for a record
+listed as re-decided in place, where it still reads `reopened` — a re-decided record is always
+written `decided` or `open`: the run
 stopped inside the freeze, so its target is reconciled afresh, and an unwritten new id is free for
 this run's `id` rule, which continues from the register. Every other listed record counts, for
 every later phase, as one this run froze, completed or re-decided in place: the *Freeze the customer
@@ -1193,10 +1195,30 @@ dated the adopted pass's date and names an adopted id: each counts, for every la
 run superseded or reopened — in the changed-id set (*The propagation sweep*), among the records
 *Write the reconciliation record* and the Final report list as reopened or superseded here, and, a
 reopened one, as one this run reopened throughout *Next steps*, its `advance_ready` among it — its write reported as
-already made and never written twice. On a pass reading `freezing` the freeze itself was interrupted, so beyond step
-1's lines this run cannot tell which of that phase's step-3 writes on the record an adopted one
-answered landed: each adopted record is named under *what still needs a human* for an operator to
-check its step-3 effect in `decisions.md`. **An adopted pass is never edited** — it sits in a dated
+already made and never written twice. **On an adopted pass carrying an `- **Effects:**` line, that
+line says what its freeze was to write.** Take each `- **Effects:**` entry with the causes on it whose
+`- **Frozen:**` entry was written — on the `- **Frozen:**` list of the pass that entry names, which for
+a `(catch-up for <pass>)` entry is that pass and otherwise the pass carrying the line — and take each
+effect once: where several adopted passes' lines carry one effect, a later pass's catch-up of an
+earlier one's, the earliest pass's entry stands and the others are passed over. A `- **Frozen:**`
+entry that was not written causes nothing, and an
+`- **Effects:**` entry left with no cause is void, since its target is reconciled afresh. An entry
+**landed** where the record holds the status the entry moves it to and `decisions.md` carries the
+`Superseded <YYYYMMDD>: by [CD#m]` or `Reopened <YYYYMMDD>:` paragraph it names, naming those causes
+and dated the adopted pass's date or the date of a pass whose `- **Adopts:**` line names that pass;
+it counts as one on a `frozen` pass does (above), and on a pass reading `frozen` every entry landed.
+**On a pass reading `freezing` the freeze was interrupted, so an entry may not have landed**: where
+the record still holds the status the entry gives, *Freeze the customer decisions* writes it, after
+its pass's opening lines and before anything else it writes — its *catch-up* — writing only the move
+of the status where the entry's paragraph is already on file, as a write cut off between the two
+leaves it, and the paragraph and the move otherwise; the record counts, for every later phase, as one this
+run superseded or reopened; where the record has moved since, nothing is written, and it is named
+under *what still needs a human* with the entry. On any adopted pass, every `left` entry, and every
+entry naming more than one cause, is named under *what still needs a human* as *Freeze the customer
+decisions* step 3 names such a record. **A pass reading `freezing` with no `- **Effects:**` line**,
+opened by a release before 3.55.0, cannot say which step-3 writes landed beyond step 1's lines: each
+adopted record from it is named under *what still needs a human* for an operator to check its step-3
+effect in `decisions.md`. **An adopted pass is never edited** — it sits in a dated
 record this run did not write, which nothing here rewrites (*Resolve inputs and gate the sent
 package*, step 8). This run's own pass records the adoption instead, on its `- **Adopts:**` line
 (*Freeze the customer decisions*), and lists every adopted record under *What changed*.
@@ -1416,17 +1438,38 @@ heading (*Write the reconciliation record*) naming the canonicalised review, and
 lines. Where this run adopts an unfinished pass (*Confirm every candidate*, *A pass an interrupted
 run left is adopted*), first `- **Adopts:**`, naming each adopted pass by its file and heading and,
 for each, every listed entry that was not written — written here, before any id is assigned, so an
-id this run reuses is never read as the adopted pass's. Then `- **Status:** freezing`, and
-`- **Frozen:**`, listing every record this phase is about to
+id this run reuses is never read as the adopted pass's. Then `- **Status:** freezing`;
+`- **Mode:** schema` or `- **Mode:** free-text`, the mode *Ingest the review* read the review in, which
+*Apply the required corrections* needs to match a row by its position; and `- **Frozen:**`, listing
+every record this phase is about to
 freeze, complete from `open` or re-decide in place, each with what it answers — a `[C]` by round and
 position, an `[AS#n]`, or an `[SR#n]` with the self-review file named — new ids assigned now by the
-`id` row below, or `none`. **This is the commit point a re-run reads**: it lands before the register,
+`id` row below, or `none`. Then `- **Effects:**`, listing every write steps 2 and 3 below are about to
+make on a record already in the register, each with the status the record holds once the catch-up
+below, where there is one, is applied, and every `[CD#n]` that causes it — `[AS#3] open → superseded by [CD#7]`,
+`[CD#2] decided → superseded by [CD#5]`, `[VD#4] decided → reopened by [CD#5], [CD#6]` — and every
+record step 3 leaves at its status, with what constrains it, `[CD#9] open — left, constrained by
+[CD#5]`; or `none`. Steps 2 and 3 read the register as it stood before this phase wrote anything, so
+settle every outcome of both before the first write, and the list is known: it is what lets a re-run
+finish a freeze cut off part-way (*A pass an interrupted run left is adopted*). **Where this run
+adopts a pass reading `freezing`**, the line opens with every entry of that pass the catch-up is to
+write (*A pass an interrupted run left is adopted*), each as that pass's line gives it, followed by
+`(catch-up for <that pass's file and heading>)`, and the catch-up writes them, dated this run's date,
+after these opening lines and before anything else this phase writes. **The register steps 2 and 3 read** — the register *as it
+stood before this phase wrote anything* — **is the register with the catch-up applied**, so this
+run's own answers act on a record the catch-up has just moved by its new status, and never reopen it
+a second time. **Write every `[CD#n]` this phase mints, completes or re-decides before any step-2 or
+step-3 paragraph naming it**, so no such paragraph ever lands without its cause. **This is the commit
+point a re-run reads**: it lands before the register,
 the round records and every later phase's writes, so a run that stops anywhere after it leaves its
 freezes findable by the same-review rule and its pass adoptable (*Confirm every candidate*, *A pass
 an interrupted run left is adopted*). Once this phase's last write lands, set the line to
-`- **Status:** frozen`; *Write the reconciliation record* finishes the pass. These are the only
-lines of a pass written before *Write the reconciliation record*, and the status line the only one
-rewritten — in this run's own pass, in a file this run is writing.
+`- **Status:** frozen`; *Write the reconciliation record* finishes the pass. **Two later phases
+append to the open pass as they go**, each line written once the write it records has landed and
+never edited: *Apply the required corrections* a `- **Correction <n>:**` line for each row it
+disposes, and *The propagation sweep* a `- **Swept:**` line for each item. Those and the lines above
+are the only lines of a pass written before *Write the reconciliation record*, and the status line
+the only one rewritten — in this run's own pass, in a file this run is writing.
 
 Write one `[CD#n]` per confirmed candidate **that is not completing a record that already exists**,
 none for one that re-affirms its question's live record, and none for one the *Confirm every
@@ -1759,7 +1802,8 @@ Then, in the same phase and from the same confirmed set:
      withdrawal, so its round can close.
 
    **Every status this step and the mint rule above read is the register's as it stood before this
-   phase wrote anything**, never one an earlier candidate's write in this same phase left — so the
+   phase wrote anything** — after the catch-up, where this run adopts a pass reading `freezing` (the
+   opening of this phase) — never one an earlier candidate's write in this same phase left — so the
    outcome does not depend on the order the confirmed candidates are taken in. That matters where
    one run's answers reach one record more than once. **Where one candidate's entry names the record
    on a `- **Re-puts:**` line** — or a record the chain from it reaches — and any other answer also
@@ -1842,10 +1886,26 @@ pass whose record the operator did not point to. That is what makes re-running a
 recorded-not-written dependent, or to close the questions the *Resolve the defects the review
 settled* phase's last step closes — an ordinary step.
 
-**A run adopting an interrupted pass** (*Confirm every candidate*) finds no dispositions recorded for
-it — the pass stopped before its record was written — so every row is put again, and one whose
-target already carries the correction, written by the run that stopped, is disposed `applied` and
-reported so, never applied twice.
+**Record each disposition on this run's open pass as it is taken.** Once a row's disposition has
+landed — its edit made, or its refusal or deferral decided — append to the pass *Freeze the customer
+decisions* opened `- **Correction <n>:** <disposition> — <document> › <section>`, `<n>` the row's
+position in the review's section 12 and the document and section the ones the row names, followed for
+`applied-with-deviation` by what was done instead, for `refused-with-reason` by the reason, and for
+`deferred-to-next-round` by what blocks it; a row reported *already disposed* takes one too, its
+disposition followed by `already disposed by <the pass that disposed it>`, and, where the operator
+matched it, by the listing the operator pointed to. Each line is written
+once and never edited, so a run that stops leaves every disposition it reached on file.
+
+**A run adopting an interrupted pass** (*Confirm every candidate*) reads that pass's
+`- **Correction <n>:**` lines as it reads an earlier pass's record, by the position rule above,
+the adopted pass's `- **Mode:**` line giving the mode it read the review in: a row a line names is
+*already disposed* with that line's disposition, or put again where the line reads
+`deferred-to-next-round`. A row no line names is put again, and one whose target already carries the
+correction — written by the run that stopped after its edit and before its line — is disposed
+`applied` and reported so, never applied twice. In free-text mode the position rule names no row,
+so every row is put with the adopted pass's lines printed beside it, for the operator to match, as
+for any earlier pass. A pass opened by a release before 3.55.0 carries no
+such lines and no `- **Mode:**` line, so every row of it is put again, under the same test.
 
 Any row still undisposed when this phase would end → stop:
 `BRD_RECONCILE_UNDISPOSED_CORRECTION: N required changes from the review are still undisposed — every row takes applied | applied-with-deviation | refused-with-reason | deferred-to-next-round. The records this run froze stay frozen under the pass it opened in reconciliation-<YYYYMMDD>.md; re-run '/product-workflows:brd-reconcile <BRD-KEY> @<review-file>' on this same review to adopt that pass and finish it.`
@@ -2271,7 +2331,8 @@ Two consequences bind this phase:
 run reopened or superseded; every `[AS#n]` superseded; every `[SR#n]`
 answered; every `[BR#n]` whose ledger row moved; and every `[DEF#n]` that gained a resolution —
 each of those counting a record an adopted pass froze, completed or re-decided as this run's, and,
-from a pass reading `frozen`, one that pass superseded or reopened because of it
+from a pass reading `frozen`, or from a `freezing` one's `- **Effects:**` entries that landed, one
+that pass superseded or reopened because of it
 (*Confirm every candidate*, *A pass an interrupted run left is adopted*). **For a dependent an earlier
 pass over this same review recorded not written**, that pass's changed-id set, as its *The sweeps*
 recorded it, is carried in beside this run's for that dependent's sweep alone, and an id carried so
@@ -2502,6 +2563,12 @@ decision the finding names (`workflows-core:grounding-format` §5) — and carri
 needs a human*. A finding this command marked `SUPERSEDED` would be a
 supersession with nothing on the other side of it.
 
+**Record each item on this run's open pass as it is disposed.** Once its write lands — at once for
+`inherited-unchanged`, which writes nothing, and for an item of a dependent recorded-not-written —
+append to the pass *Freeze the customer decisions* opened `- **Swept:** <DEPENDENT-KEY> <record id> —
+<disposition> — <changed id> — <reason> — written` or `— recorded-not-written`, each id in the
+qualified prose form this phase fixes. Each line is written once and never edited.
+
 **A re-run re-sweeps what was recorded and not written, and only that.** An item an earlier pass
 over this same review **disposed and wrote** is skipped and reported as already swept. A dependent
 BRD that pass could only **record** — its register was in flight — is swept again in full, because
@@ -2510,9 +2577,13 @@ permanent: the operator merges the dependent's pull request exactly so the sweep
 re-run that skipped it would silently refuse to. It is swept against the earlier pass's changed-id
 set carried in beside this run's (*Fix the changed-id set first*), the dispositions that pass
 recorded for it shown beside each item as what it would have written. **On a run adopting an
-interrupted pass**, an item whose record already carries the closing paragraph a disposition writes,
-naming the same changed id, was written by the run that stopped: it is reported as already swept,
-and never written twice.
+interrupted pass**, an item a `- **Swept:**` line of that pass names — the dependent, the record and
+the changed id — reading `written` was disposed by the run that stopped, `inherited-unchanged` among
+them: it is reported as already swept, with that line's disposition, and never written or asked
+twice. One reading `recorded-not-written` is swept again in full, as above. An item no line names
+whose record already carries the closing paragraph a disposition writes, naming the same changed
+id, was written by that run after its write and before its line: it is reported as already swept
+too. Any other is put again.
 
 **The gate.** Any swept item still undisposed when this phase would end → stop:
 `BRD_RECONCILE_UNSWEPT: N positions in dependent BRDs are still undisposed — every one takes inherited-unchanged | reverted | reopened | withdrawn. The records this run froze stay frozen under the pass it opened in reconciliation-<YYYYMMDD>.md; re-run '/product-workflows:brd-reconcile <BRD-KEY> @<review-file>' on this same review to adopt that pass and finish it.`
@@ -2644,7 +2715,7 @@ exactly the write two other rules forbid.
 
 Write `<BRD-dir>/reconciliation-<YYYYMMDD>.md`, stamped with **this run's** date — **finishing the
 pass the *Freeze the customer decisions* phase opened in it**: everything below is written beneath
-that pass's heading and its `- **Frozen:**` list, and its `- **Status:**` line is set to `complete`
+that pass's heading, its opening lines and the progress lines the later phases appended to it, and its `- **Status:**` line is set to `complete`
 last, once the rest is written. An adopted pass is not touched: this pass's `- **Adopts:**` line,
 written when the pass opened, is what marks it finished (*Confirm every candidate*). It says what
 changed, why, which ids, and what still needs a human:
@@ -2688,11 +2759,14 @@ changed, why, which ids, and what still needs a human:
   the `[CD#n]` that contradicts or constrains it; every correction with its disposition, each by its
   position in the review's section 12 with the document and section it names, and every row reported
   *already disposed* by an earlier pass over this review, by its position, with that pass's
-  disposition and, where the operator matched it, the listing the operator pointed to; every banner added; every defect
+  disposition and, where the operator matched it, the listing the operator pointed to — the
+  `- **Correction <n>:**` lines already under this pass are that list, and it is not written again;
+  every banner added; every defect
   resolution, with the log's path; every ledger row moved.
 - **The sweeps** — the changed-id set as fixed, and, per dependent it was carried for, the earlier
   pass's set carried in beside it; per dependent BRD, every `conditional_on` position
-  and every citing item with its disposition and reason, each id in the qualified prose form the
+  and every citing item with its disposition and reason — the `- **Swept:**` lines already under this
+  pass are that list, and it is not written again — each id in the qualified prose form the
   propagation sweep fixes, and every dependent recorded-not-written
   with its state; per stale-reference hit, the file, what was found, and its outcome.
 - **What still needs a human** — every `[SR#n]` answer carried `unmatched` because the package the
@@ -2712,8 +2786,11 @@ changed, why, which ids, and what still needs a human:
   required corrections* phase names as its fix; every code and design challenge, with `/prd-ground`
   as the fix; every `will-change` finding needing a rebaseline, with
   `/product-workflows:prd-ground <DEPENDENT-KEY> --rebaseline` naming the dependent BRD whose
-  grounding holds it (*The propagation sweep*); every record adopted from a pass reading `freezing`,
-  for its step-3 effect to be checked (*Confirm every candidate*); every `[CD#n]` the will-change rule
+  grounding holds it (*The propagation sweep*); every record adopted from a pass reading `freezing`
+  that carries no `- **Effects:**` line, for its step-3 effect to be checked, and every
+  `- **Effects:**` entry of an adopted pass this run did not write because its record had moved since,
+  with the entry, and every `left` entry and every entry naming more than one cause on an adopted
+  pass's `- **Effects:**` line, with its causes (*Confirm every candidate*); every `[CD#n]` the will-change rule
   (*Freeze the customer decisions*) wrote conditional or held open, with its findings, the
   prerequisite decision or decisions they name, the resolution taken, and, for one held open, the
   sequence that rule names as what closes it — and, where it was held open because a finding's
@@ -2880,7 +2957,7 @@ rather than a judgement:
 
 | Trigger | Why it blocks advancing |
 |---|---|
-| this run **reopened** a `[VD#n]` or `[CD#n]`, an adopted `frozen` pass's reopening counted as this run's (*Confirm every candidate*) | a `reopened` record "may not be consumed downstream" while it stands (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §3), and all three BRD-route runs consume the register |
+| this run **reopened** a `[VD#n]` or `[CD#n]`, an adopted pass's reopening counted as this run's (*Confirm every candidate*) | a `reopened` record "may not be consumed downstream" while it stands (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §3), and all three BRD-route runs consume the register |
 | a `[C]` is still **held for the customer** | the customer has not answered it, so a PRD authored now states a scope they were never asked about |
 | the review **challenged a code claim**, leaving a finding to re-derive | the findings a downstream artifact would cite are known-stale, and only a `--rebaseline` pass replaces them |
 | a dependent BRD's sweep could only be **recorded, not written** | another BRD still carries a position this run's `[CD#n]` overturns, and nothing in it says so yet |

@@ -5,6 +5,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.65.0] — 2026-10-27
+
+Take with `dev-workflows` 4.48.0 and `security-workflows` 0.6.0, whose `/implement`, `/conformance` and `/scan` say the merge rests on the subject alone in the new left-behind case, and whose pages describe the merged test below; each runs §5 from the loaded reference, so an older one still runs. Closes to-fix C10.
+
+### Fixed
+- **`implementation-format` §5's corroborated subject leg walks the branch for the merged pull request's head** (C10). `<floor>` is the commit the earliest earlier block on the same branch records, where it is an ancestor of the tip and not of `<ref>` — never an earlier pull request's merged commit under a branch name cut again — or else the block's recorded commit, where it is an ancestor of the tip. The leg tries the tip's first-parent commits down to `<floor>`, at most twenty and never into `<ref>`'s history (`^<fork>`), then `<floor>`, then the recorded commit. Where neither commit is an ancestor of the tip, as after a rebase, it tries the tip and the recorded commit alone. Each candidate is tested against `S` and then `<ref>`, and the leg passes on the first that adds nothing. The walk never goes below the block's own work, so an empty first commit, a stacked branch's base or a cherry-picked first commit cannot stand for the pull request.
+- **A conflict no longer passes the leg.** An open pull request whose work conflicts with another `[<key>]` commit — a teammate's, or an earlier run's from a branch this run did not continue — now reads as open, not as `after_merge`. One conflict still passes on the subject alone, the **left-behind case**: the tip is the local branch, `origin/<branch>` does not resolve, and the block records `pushed: true`. That case is stated by what the clone holds, not by which run removed the ref, and each consumer says so in a line of its own — the tip conflicts and `origin/<branch>` is gone — not that the tip was not compared. A call that compared nothing, or an empty walk, still passes on the subject alone.
+- **The timing case is fixed where it can be.** A later run's commit on the same branch, committed before the squash but pushed after it, now reads `after_merge` true, since the earlier run's commit is the squash's head. Where that commit was made after the squash, `--since` excludes `S`, and the leg finds no commit to corroborate, as before.
+- **Remaining misses.** Past twenty commits the leg errs toward open. A teammate's cherry-pick of an earlier same-branch run's commit is the remaining miss toward merged.
+- §5's misses, `after_merge`, step 2's consumer note and the rules summary are rewritten to match.
+- `implementation-format` §4 no longer calls the widened key boundary a change still to make: CORE-G2 was measured and closed as not taken, and the paragraph gives the reasons (no known set to resolve a branch name against, the boundary every reader shares, and a squash normally carrying its keys).
+
+## [1.64.0] — 2026-10-27
+
+Take with `dev-workflows` 4.47.0 and `product-workflows` 3.53.0, whose `/design` and `/specify` cite this release's `session-hygiene` §6 — to-fix PR8 (live checks of 2026-10-26).
+
+### Added
+
+- **`session-hygiene` §6, the resume-environment check, in a part of its own (`resume-environment`).** A command that keeps a session file it resumes from records `$SPECS_PATH`'s real path, the specs repository's `origin`, `$REPOS_PATH` and the reference loader's install as the file's `## Run environment` section, and compares them on a resume, before the deliverable write that leads to the handoff, and before the first write of its emitter tail. On a mismatch it asks — on a resume, go on in the current environment (recommended unless `origin` differs) or stop; later, stop or go on pinned to the recorded environment where it still exists — and never goes on silently. *Stop* sets `specs_git: misrooted`, reusing that flag's handling, since the run's specs root is not the one it recorded. §1–§5 stay guidance-only; §6 is outside their contract.
+
+## [1.63.0] — 2026-10-27
+
+Take with `product-workflows` 3.52.0, whose `/prd-ground` Phase 3 asks the question this release's `grounding-format` §4 cites, and whose `--repos-path` flag and `/epics` re-review offer this release's `escalation-rules` names — to-fix D7, D8, D9 (batches B24, B26).
+
+### Changed
+- **`grounding-format` §4 step 1: a clone with no readable `origin` keeps the name an earlier `baselines.md` entry records it by** where the operator confirms, at `/prd-ground` Phase 3, that it is the same repository — a renamed directory, or an entry a run before `product-workflows` 3.33.3 wrote. It said the basename alone, so a renamed clone was recorded under two names.
+- `escalation-rules`' *Required path environment variable unset* says `/prd-ground` tests its `--repos-path` value, where one is given, in place of `${REPOS_PATH:-/workspace}` (product-workflows 3.52.0, D7).
+- `escalation-rules`' *Edits after a verdict that is not BLOCK — the unspent re-review* names `/epics`' split at its last count of an Epic an *Epic size* finding named among the ways it edits the reviewed artifact (product-workflows 3.52.0, D8).
+
 ## [1.62.0] — 2026-10-27
 
 Take with `dev-workflows` 4.44.0 and `product-workflows` 3.51.0, whose `/design` and `/specify` dispatch this release's `overlap-reader` — to-fix PR5 (live checks of 2026-10-26, run 2).

@@ -343,8 +343,8 @@ reads was already independently verified by `/prd-ground`'s own agents.
   that turns a re-run into the idea-route refusal above.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.
 - **`$REPOS_PATH`** (*Ground now* only) — resolved as [`/prd-ground`](prd-ground.md) resolves it,
-  to list the clones once for every child; where no entry resolves, the run asks for it, and
-  *Cancel* there drops the continuation, not the split.
+  to list the clones once for every child; where no entry resolves, the run asks for it, passes the path you type to each child run as `--repos-path` — each entry's real path; a path containing whitespace is refused and asked for again, since it cannot pass to a child run — so no child asks again, and *Cancel* there
+  drops the continuation, not the split.
 
 ## What it produces
 

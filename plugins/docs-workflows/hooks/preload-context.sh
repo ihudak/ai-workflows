@@ -84,7 +84,7 @@ emit_specs_context() {
     if [[ -n "${SPECS_PATH:-}" ]]; then
         echo "SPECS_PATH: $SPECS_PATH"
     else
-        echo "SPECS_PATH: (not set — the command will ask)"
+        echo "SPECS_PATH: (not set — a command that needs it asks for it)"
     fi
     emit_git_branch_if_repo
 }
