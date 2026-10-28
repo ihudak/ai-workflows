@@ -105,6 +105,10 @@ to prefer.
 **A `[G]` that grounding cannot settle does not silently become a question.** It becomes a
 `NOT-PROVABLE` finding — a complete and legitimate terminal verdict, per
 `workflows-core:grounding-format` §3 — and the question is then **re-tagged**, usually to `[V]`.
+**A finding whose verifier outcome is `unprovable` is the same case, whatever verdict it keeps**:
+the verifier could not settle the claim either way (`workflows-core:grounding-format` §8), so the
+finding settles nothing a question could rest on, and everything below said of a `NOT-PROVABLE`
+finding holds of it, the re-tag naming it with its verdict and that outcome.
 
 Usually `[V]`, because of what a `NOT-PROVABLE` verdict actually reports: the repository does not
 answer this, so somebody must now choose. Choosing, with reasons, in a domain the delivery team

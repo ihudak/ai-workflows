@@ -48,7 +48,7 @@ Sub-project A's Task 12 never merged the Epic's pull request (`docs/superpowers/
 - **SEC-A2 — `/dev-workflows:conformance` after the Epic merged.** Expect `unit-branch` to read `merged` and the Epic run to trace the default branch.
 - **SEC-A3 — the register in session-branch mode.** With `workflows.sessionBranch` set on the specs copy, run a change scan. Expect the register's paths, `runs/`, `scans/`, `register.json` and `register.md`, committed on `session/<identity>` with the run's session files and pushed there, the default branch untouched, and the next run's preflight finding them through the overlay.
 
-## Live-check fix LC11 — `workflows-core` 1.66.0, `security-workflows` 0.7.0
+## Live-check fix LC11 — `workflows-core` 1.67.0, `security-workflows` 0.7.0
 
 Install both together. The replay ran at script level only, in `session-branch.py --selftest`'s temporary repositories (design: `docs/superpowers/specs/2026-10-27-lc11-run-settles-rejected-push-design.md` §4). Session-branch mode must be off on the specs copy — no `workflows.sessionBranch`, and no push-refusal record for `main` — save in LC11-2's repeat, which turns it on.
 

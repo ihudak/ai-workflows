@@ -914,7 +914,7 @@ of these resolutions:
 |---|---|
 | `customer-amended <SLICE-KEY> <date>` | the customer supplied corrected text; the amendment is in the returned review `/brd-reconcile` read it from — the review of the slice the value names, dated `<date>` (`commands/brd-reconcile.md`, *Resolve the defects the review settled*) — never written back into `brd/source/`, and never into the inventory's or the ledger's `text`, which stay the customer's original |
 | `withdrawn` | the customer withdrew the requirement the defect was raised against |
-| `resolved-by: <SLICE-KEY>/[CG#n]` · `resolved-by: <SLICE-KEY>/[CD#n]` | a code- or design-grounding finding settled the defect (typically closing an `unsourced` entry), or a customer decision did — the answer to the question the defect raised, or to a rejected row's question that carries it (`commands/brd-interview.md`, *Round 1 is generated from the grounding*), frozen by `/brd-reconcile` |
+| `resolved-by: <SLICE-KEY>/[CG#n]` · `resolved-by: <SLICE-KEY>/[CD#n]` | a code- or design-grounding finding settled the defect (typically closing an `unsourced` entry — `commands/brd-interview.md` offers to write the `[CG#n]` form for one a verified finding of the slice building its row settles, and any other is written by hand), or a customer decision did — the answer to the question the defect raised, or to a rejected row's question that carries it (`commands/brd-interview.md`, *Round 1 is generated from the grounding*), frozen by `/brd-reconcile` |
 | `open` | none of the above has happened yet |
 
 **`resolved-by` and `customer-amended` name their slice, each in one spelling.** Grounding, deciding
@@ -983,7 +983,9 @@ while standing on a slice — `/brd-split`'s `rejected: [DEF#n]` resolution when
 ledger (`commands/brd-split.md` Phase 4), `/brd-reconcile` writing the
 `customer-amended <SLICE-KEY> <date>`, `withdrawn` and `resolved-by: <SLICE-KEY>/[CD#n]` resolutions
 a returned customer review settles (`commands/brd-reconcile.md`), `/brd-interview` reading the open
-entries its requirement-defect question source asks (`commands/brd-interview.md`), or any reader
+entries its requirement-defect question source asks and writing, on the operator's confirmation, the
+`resolved-by: <SLICE-KEY>/[CG#n]` an `unsourced` entry takes where a verified finding of the slice
+settles it (`commands/brd-interview.md`, *Handoff*), or any reader
 following the `defects` column of the slice's copied inventory row — therefore looks it up in, and
 writes it to, the parent's log. That lookup is always **exactly one hop**: nesting is capped at one
 level (`workflows-core:addressing` §6), so a slice's parent always owns the source document and the

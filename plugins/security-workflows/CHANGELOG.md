@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [0.7.0] — 2026-10-28
 
-**Update `workflows-core` to 1.66.0 with this release**: its `specs-repo-git` reads the `register_rebuild` input this release's scan passes, and replays a rejected push. Fixes to-fix LC11 (live checks of 2026-10-26, run 6).
+**Update `workflows-core` to 1.67.0 with this release**: its `specs-repo-git` reads the `register_rebuild` input this release's scan passes, and replays a rejected push. Fixes to-fix LC11 (live checks of 2026-10-26, run 6).
 
 ### Changed
 - **A scan whose closing push is rejected because another clone pushed first settles it itself**, outside session-branch mode. Phase 0's `specs-preflight` and 7.6's `commit-artifacts` — and the one *Ending early* runs — pass `register_rebuild: ${CLAUDE_PLUGIN_ROOT}/scripts/register.py`, so `workflows-core:specs-repo-git` §4 step 6's replay takes `origin`'s commits in, rebuilds `register.json` and `register.md` from both sides' run records where both sides changed the register, keeps both sides' blocks in a unit's `_security.md` and both sides' lines in its `follow-ups.md`, and pushes, with nothing for you to run. In run 6 the run printed `pull --rebase`, the push and the `register.py rebuild` lines instead, and the only conflicts were the two register files.

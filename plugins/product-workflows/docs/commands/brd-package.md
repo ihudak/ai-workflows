@@ -465,10 +465,10 @@ attack.
 
 ## Example
 
-Package a synthetic customer BRD once its interview round has settled, declaring one prerequisite:
+Package a slice of a synthetic customer BRD once its interview round has settled, declaring one prerequisite:
 
 ```
-/product-workflows:brd-package EPIC-008 --depends-on EPIC-014
+/product-workflows:brd-package EPIC-008-01 --depends-on EPIC-014
 ```
 
 The run gates on `decisions.md` being merged and on every question carrying a terminal disposition or
