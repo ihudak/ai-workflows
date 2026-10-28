@@ -1000,11 +1000,20 @@ def _fill(root, tree, prefix, dest):
     return len(blobs)
 
 
+# A specification folder, the one population a removal or rename of which the replay must not follow
+# blindly: a directory below specs/, specifications/ or vis/ that is not a dev-workflows/ directory or
+# below one. A folder holding session files only (dev-workflows-cost/, dev-workflows-feedback/,
+# documentation/<slug>/..., security/<slug>/..., a dev-workflows/ folder) is emptied by a teammate's
+# run in the ordinary course -- cost-emission §9 relocates a pending cost file -- and is no rename.
+_SPEC_DIR_RE = re.compile(r"^(specs|specifications|vis)/")
+
+
 def _directories_gone(root, p, onto, added):
-    """Of <added> (paths a commit on <p> adds), sorted, each with an ancestor directory that <p> holds
-    and <onto> does not: a folder the other side removed, or renamed away. One cat-file --batch-check
-    per commit answers every directory at once."""
-    dirs = sorted({x.rsplit("/", i)[0] for x in added for i in range(1, x.count("/") + 1)})
+    """Of <added> (paths a commit on <p> adds), sorted, each with an ancestor specification folder
+    (_SPEC_DIR_RE, outside any dev-workflows/) that <p> holds and <onto> does not: a folder the other
+    side removed, or renamed away. One cat-file --batch-check per commit answers every folder at once."""
+    dirs = sorted({d for d in (x.rsplit("/", i)[0] for x in added for i in range(1, x.count("/") + 1))
+                   if _SPEC_DIR_RE.match(d) and "dev-workflows" not in d.split("/")})
     if not dirs:
         return []
 
@@ -1060,11 +1069,12 @@ def replay_commits(root, onto, commits, register_rebuild):
     onto, any path c did not change but a rebuilt register's two files is refused (measured before
     the rebuild, which writes those two and nothing else): merge-tree follows renames, so a
     teammate's folder rename would otherwise publish c's content at a path c never wrote. So is a
-    file c adds under a directory p held and onto holds nothing under (removed, or renamed away),
-    where git moves nothing and the old folder would come back holding that file. A merged tree
-    equal to onto's drops c, its change being there already; otherwise c is committed on onto with
-    its author, author date and message byte for byte (commit_tree), each file in the mode the
-    merged tree gives it, and onto becomes that commit.
+    file c adds under a specification folder (below specs/, specifications/ or vis/, outside any
+    dev-workflows/) that p held and onto holds nothing under (removed, or renamed away), where git
+    moves nothing and the old folder would come back holding that file. A merged tree equal to
+    onto's drops c, its change being there already; otherwise c is committed on onto with its
+    author, author date and message byte for byte (commit_tree), each file in the mode the merged
+    tree gives it, and onto becomes that commit.
     Returns {tip, replayed: the new commits, dropped: the commits already there, numbers:
     {before_remote, before_run, after}, each slug -> the numbers map rebuild printed on the first
     onto, on the last of <commits> and on the tip, for every register rebuilt, refused: None}. On a
@@ -1153,8 +1163,9 @@ def replay_commits(root, onto, commits, register_rebuild):
             if stray:
                 return refusal("conflict", sorted(stray)[0])
             # …and where git moves nothing (a file c added in a subfolder of a renamed folder), the old
-            # folder would come back holding it: a file c adds under a directory p held and onto holds
-            # nothing under -- removed, or renamed away -- is refused, by no rename heuristic of git's
+            # folder would come back holding it: a file c adds under a specification folder p held and
+            # onto holds nothing under -- removed, or renamed away -- is refused, by no rename heuristic
+            # of git's (_directories_gone)
             gone = _directories_gone(root, p, tip, nul_list(git(root, "diff-tree", "-r", "-z", "--no-renames",
                                                                "--name-only", "--diff-filter=A", p, c)))
             if gone:
@@ -2815,6 +2826,7 @@ def selftest():
         R_RS = "specifications/PRD-A-1-x/dev-workflows/resume.md"
         R_PEND = "dev-workflows-cost/pending-2026-10-28-abcd1234.md"
         R_ACC = "specifications/PRD-A-2-café/dev-workflows/A-2-feedback.md"
+        R_COST = "specifications/PRD-A-2-café/dev-workflows/cost/5e55a0d1.md"  # PRD-A-1-x holds no cost/ at p
         R_DOCS = "documentation/acme-docs/dev-workflows/feedback/2026-10-28.md"
         DOCS_HEAD = "---\ntype: dev-workflows-feedback\nprd: n/a\nslug: 2026-10-28\n---\n\n"
         SLUG = "acme-api"
@@ -2875,6 +2887,7 @@ def selftest():
             seed.write(R_FU, "- [ ] one\n")
             seed.write(R_RS, "pos: base\n")
             seed.write(R_PEND, COST_HEAD + cost("2026-10-27T08:00:00Z"))
+            seed.write(R_COST, COST_HEAD + cost("2026-10-26T15:00:00Z"))
             seed.write(R_ACC, SEED)
             seed.write(RUN1, run_record(1, "2026-10-16T09:12:00Z", "s1:v3:aa"))
             write_register(seed, [RUN1])
@@ -3163,6 +3176,33 @@ def selftest():
                           "[replay: a folder the run created, %s] a file in folders neither p nor onto holds is "
                           "replayed (%r)" % (tag, got))
                 guarded("a folder the run created, " + tag, folder_the_run_made)
+
+                # the rule is for renamed or removed specification folders alone: a folder that holds
+                # session files only, emptied by a teammate's run, is no rename to follow
+                def pending_relocated():
+                    NEW_PEND = "dev-workflows-cost/pending-2026-10-28-feedbeef.md"
+
+                    def team(r):  # cost-emission §9: the last pending file moved into its PRD's folder
+                        r.add(R_COST, cost("2026-10-27T08:00:00Z"))
+                        os.remove(os.path.join(r.path, R_PEND))
+                    a, (got,) = replay_run("pending file relocated, " + tag, where("pending-relocated"), attrs, team,
+                                           [lambda r: r.write(NEW_PEND, COST_NEW)])
+                    tip = got.get("tip")
+                    check(got.get("refused") is None and at(a, tip, NEW_PEND) == COST_NEW and at(a, tip, R_PEND) is None,
+                          "[replay: pending file relocated, %s] a new pending file after a teammate relocated the last "
+                          "one is replayed (%r)" % (tag, got))
+                guarded("pending file relocated, " + tag, pending_relocated)
+
+                def cost_folder_emptied():
+                    added = R_COST.rsplit("/", 1)[0] + "/s9.md"
+                    a, (got,) = replay_run("dev-workflows/cost/ emptied, " + tag, where("cost-emptied"), attrs,
+                                           lambda r: os.remove(os.path.join(r.path, R_COST)),
+                                           [lambda r: r.write(added, COST_NEW)])
+                    tip = got.get("tip")
+                    check(got.get("refused") is None and at(a, tip, added) == COST_NEW and at(a, tip, R_COST) is None,
+                          "[replay: dev-workflows/cost/ emptied, %s] a cost file added where a teammate emptied the PRD "
+                          "folder's cost/ is replayed (%r)" % (tag, got))
+                guarded("dev-workflows/cost/ emptied, " + tag, cost_folder_emptied)
 
                 # follow-ups.md appended on both sides: git's union, onto's lines first
                 def follow_ups():
