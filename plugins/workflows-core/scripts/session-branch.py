@@ -1000,6 +1000,22 @@ def _fill(root, tree, prefix, dest):
     return len(blobs)
 
 
+def _directories_gone(root, p, onto, added):
+    """Of <added> (paths a commit on <p> adds), sorted, each with an ancestor directory that <p> holds
+    and <onto> does not: a folder the other side removed, or renamed away. One cat-file --batch-check
+    per commit answers every directory at once."""
+    dirs = sorted({x.rsplit("/", i)[0] for x in added for i in range(1, x.count("/") + 1)})
+    if not dirs:
+        return []
+
+    def trees(commit):
+        r = git(root, "cat-file", "--batch-check=%(objecttype)",
+                data="".join("%s:%s\n" % (commit, d) for d in dirs).encode("utf-8", "surrogateescape"))
+        return {d for d, kind in zip(dirs, r.stdout.decode("utf-8", "surrogateescape").split("\n")) if kind == "tree"}
+    gone = trees(p) - trees(onto)
+    return sorted(x for x in added if any(x.startswith(d + "/") for d in gone))
+
+
 def _rebuild(root, tree, slug, register_rebuild):
     """`<register_rebuild> rebuild` over <tree>'s security/<slug>/, copied into a temporary root
     (spec §3.3): (the numbers map it printed, {"register.json": bytes, "register.md": bytes}); None
@@ -1041,11 +1057,14 @@ def replay_commits(root, onto, commits, register_rebuild):
     something under security/<slug>/ that the other side does not hold alike: <register_rebuild>'s
     rebuild over the merged tree's security/<slug>/, its two files written back through a temporary
     index; refused where no script was handed over or it fails. A merged tree that changes, against
-    onto, any path c did not change but a rebuilt register's two files is refused: merge-tree follows
-    renames, so a teammate's folder rename would otherwise publish c's content at a path c never
-    wrote. A merged tree equal to onto's drops c, its change being there already; otherwise c is
-    committed on onto with its author, author date and message byte for byte (commit_tree), each
-    file in the mode the merged tree gives it, and onto becomes that commit.
+    onto, any path c did not change but a rebuilt register's two files is refused (measured before
+    the rebuild, which writes those two and nothing else): merge-tree follows renames, so a
+    teammate's folder rename would otherwise publish c's content at a path c never wrote. So is a
+    file c adds under a directory p held and onto holds nothing under (removed, or renamed away),
+    where git moves nothing and the old folder would come back holding that file. A merged tree
+    equal to onto's drops c, its change being there already; otherwise c is committed on onto with
+    its author, author date and message byte for byte (commit_tree), each file in the mode the
+    merged tree gives it, and onto becomes that commit.
     Returns {tip, replayed: the new commits, dropped: the commits already there, numbers:
     {before_remote, before_run, after}, each slug -> the numbers map rebuild printed on the first
     onto, on the last of <commits> and on the tip, for every register rebuilt, refused: None}. On a
@@ -1125,6 +1144,21 @@ def replay_commits(root, onto, commits, register_rebuild):
                 return refusal("conflict", sorted(refused)[0])
             if entries:
                 tree = tree_with(root, tree, entries)
+            # merge-tree follows a rename (a teammate's folder rename, and with merge.directoryRenames=true
+            # a file c added there) and no option turns that off: a path the tree changes that c never
+            # changed is refused rather than published. Measured before the register rebuild below, which
+            # writes a rebuilt register's two files and nothing else: until then a path c never changed
+            # holds onto's version wherever merge-tree followed no rename, the register's files included
+            stray = changed(tip, tree) - theirs
+            if stray:
+                return refusal("conflict", sorted(stray)[0])
+            # …and where git moves nothing (a file c added in a subfolder of a renamed folder), the old
+            # folder would come back holding it: a file c adds under a directory p held and onto holds
+            # nothing under -- removed, or renamed away -- is refused, by no rename heuristic of git's
+            gone = _directories_gone(root, p, tip, nul_list(git(root, "diff-tree", "-r", "-z", "--no-renames",
+                                                               "--name-only", "--diff-filter=A", p, c)))
+            if gone:
+                return refusal("conflict", gone[0])
             if regs and not register_rebuild:
                 return refusal("register-rebuild", "security/%s/" % regs[0])
             reg_entries = []
@@ -1140,13 +1174,6 @@ def replay_commits(root, onto, commits, register_rebuild):
                 rebuilt.add(s)
             if reg_entries:
                 tree = tree_with(root, tree, reg_entries)
-            # merge-tree follows a rename (a teammate's folder rename, and with merge.directoryRenames=true
-            # a file c added there) and no option turns that off: a path the tree changes that c never
-            # changed, save a rebuilt register's two files, is refused rather than published
-            stray = changed(tip, tree) - theirs - {"security/%s/%s" % (s, n) for s in regs
-                                                  for n in ("register.json", "register.md")}
-            if stray:
-                return refusal("conflict", sorted(stray)[0])
             if tree == text(git(root, "rev-parse", tip + "^{tree}")):
                 dropped.append(c)
                 continue
@@ -3100,6 +3127,42 @@ def selftest():
                               "[replay: %s] a file the run added under the old folder refuses, never relocated (%r)"
                               % (label, got))
                     guarded("folder renamed, a new file, " + tag, renamed_new_file)
+
+                # git moves no file the run added in a subfolder it created under the renamed folder, and
+                # reports none, so the tree would bring the old folder back holding that one file: a file
+                # c adds under a directory p held and onto holds nothing under (removed, or renamed away)
+                # is refused, whatever git's rename heuristics found. A directory onto still holds, and
+                # one the run created, are not
+                NEW_COST = "specifications/PRD-A-1-x/dev-workflows/cost/s9.md"
+                NEW_PRD = "specifications/PRD-A-9-new/dev-workflows/cost/s1.md"
+                COST_NEW = COST_HEAD + cost("2026-10-28T09:00:00Z")
+
+                def renamed_subfolder():
+                    a, (got,) = replay_run("folder renamed, a new subfolder, " + tag, where("renamed-subfolder"), attrs,
+                                           folder_rename, [lambda r: r.write(NEW_COST, COST_NEW)])
+                    check(got.get("refused") == {"reason": "conflict", "path": NEW_COST},
+                          "[replay: folder renamed, a new subfolder, %s] a file the run added in a subfolder of the "
+                          "renamed folder refuses (%r)" % (tag, got))
+                guarded("folder renamed, a new subfolder, " + tag, renamed_subfolder)
+
+                def folder_still_held():
+                    a, (got,) = replay_run("a folder onto still holds, " + tag, where("still-held"), attrs,
+                                           lambda r: os.remove(os.path.join(r.path, R_RS)),
+                                           [lambda r: r.write(NEW_COST, COST_NEW)])
+                    check(got.get("refused") is None and at(a, got.get("tip"), NEW_COST) == COST_NEW
+                          and at(a, got.get("tip"), R_RS) is None,
+                          "[replay: a folder onto still holds, %s] a file added where the teammate removed another "
+                          "is replayed (%r)" % (tag, got))
+                guarded("a folder onto still holds, " + tag, folder_still_held)
+
+                def folder_the_run_made():
+                    a, (got,) = replay_run("a folder the run created, " + tag, where("run-made"), attrs,
+                                           lambda r: r.add(FB, today("team, elsewhere")),
+                                           [lambda r: r.write(NEW_PRD, COST_NEW)])
+                    check(got.get("refused") is None and at(a, got.get("tip"), NEW_PRD) == COST_NEW,
+                          "[replay: a folder the run created, %s] a file in folders neither p nor onto holds is "
+                          "replayed (%r)" % (tag, got))
+                guarded("a folder the run created, " + tag, folder_the_run_made)
 
                 # follow-ups.md appended on both sides: git's union, onto's lines first
                 def follow_ups():
