@@ -3,7 +3,8 @@
 where its default branch takes no direct push.
 
 Run by workflows-core:specs-repo-git §8 (session-branch mode), and around each move of the
-specs checkout by that reference and by workflows-core:phase-handoff. The rules are that
+specs checkout by that reference and by workflows-core:phase-handoff; and, as replay, by its
+§4 step 6 where origin rejected a push of the run's session-file commits. The rules are that
 reference's; this script is their plumbing, and a change to either is a change to both.
 Python standard library only.
 
@@ -22,7 +23,11 @@ save replay (specs-repo-git §4 step 6, outside session-branch mode): it moves t
 a plugin branch onto the run's commits replayed onto origin's, in one locked transaction --
 where the checkout stands on that branch, HEAD moves with it, and read-tree -m -u carries the
 checkout's index and files to the new tip, refusing before anything moves where that would
-write over a path the user changed or left untracked -- and only then pushes that tip.
+write over a path the user changed, left untracked or ignores -- and only then pushes that tip.
+Its time is one figure with the reference's Bash timeout for the call, 420 s: the CLI defaults'
+3 attempts x (fetch 60 s + push 60 s, each with the 2 s from SIGTERM to SIGKILL) = 372 s of
+capped git at most, leaving 48 s for the replays and register rebuilds, under the Bash tool's
+600 s ceiling.
 The session branch moves only by update-ref with its old value, so a concurrent run fails
 instead of overwriting. Output is one JSON object on stdout.
 Exit 0: it ran, whatever it found. Exit 2: it could not run (usage, not a repository's top
@@ -1247,25 +1252,62 @@ def replay_commits(root, onto, commits, register_rebuild):
 # ---- the move and the push (spec §3.1, §3.4, §3.5): the replay subcommand ------------------------------
 
 # Every refused.reason replay prints: replay_commits' two, then the move's, the conditions' and the
-# fetch's. A closed set: the caller's outcome lines are written against it.
+# fetch's. A closed set: the caller's outcome lines are written against it. cannot-move: read-tree could
+# not carry the checkout to the tip for a reason no file shows -- no lock stands and no path is in its
+# way (a read-only folder, say); whatever it wrote before it stopped is put back, so nothing moved.
 REFUSALS = ("conflict", "register-rebuild", "would-overwrite", "cannot-replay", "in-progress", "locked",
-            "push-scope", "checked-out", "fetch-failed", "branch-moved")
+            "push-scope", "checked-out", "fetch-failed", "branch-moved", "cannot-move")
 
 # The markers of a rebase, merge, cherry-pick or revert in progress (spec §3.1 condition 5), each found
 # where rev-parse --git-path puts it, so a linked worktree's own are the ones read (Review Focus 9).
 IN_PROGRESS = ("rebase-merge", "rebase-apply", "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "sequencer")
-KILL_AFTER = 10  # seconds from git_bounded's SIGTERM to its SIGKILL
+KILL_AFTER = 2  # seconds from git_bounded's SIGTERM to its SIGKILL, as workflows-core:bounded-run's
 
 
 def git_paths(root, *names):
-    """Each of <names> where rev-parse --git-path puts it for the worktree at <root>, joined to <root>
-    where git prints it relative."""
-    out = text(git(root, "rev-parse", *[x for n in names for x in ("--git-path", n)])).split("\n")
-    return [os.path.join(root, p) for p in out]
+    """Each of <names> where rev-parse --git-path puts it for the worktree at <root>, as (shown, full):
+    full joined to <root>; shown relative to <root> where it lies inside the checkout
+    (".git/index.lock"), else absolute -- a linked worktree's own git directory, or the common one,
+    lies outside it."""
+    out = []
+    for p in text(git(root, "rev-parse", *[x for n in names for x in ("--git-path", n)])).split("\n"):
+        full = os.path.normpath(os.path.join(root, p))
+        rel = os.path.relpath(full, root)
+        out.append((full if rel == os.pardir or rel.startswith(os.pardir + os.sep) else rel, full))
+    return out
 
 
 class _Signalled(Exception):
     pass
+
+
+# replay's own handling of SIGTERM, SIGHUP and SIGINT, installed for the whole call: each raises
+# _Signalled, which replay turns into its partial result once a branch moved -- except while a step that
+# takes a lock runs (_signals_held), where it waits until the step is done: subprocess.run kills its
+# child on any exception, and a git killed there leaves a lock, or the checkout's index and files on
+# the tip while the branch stays on the old commit.
+_SIGNALS = (signal.SIGTERM, signal.SIGHUP, signal.SIGINT)
+_held, _pending = [0], []
+
+
+def _on_signal(signum, _frame):
+    if _held[0]:
+        _pending.append(signum)
+    else:
+        raise _Signalled(signum)
+
+
+@contextlib.contextmanager
+def _signals_held():
+    """Hold replay's signals while the block runs; a signal that came meanwhile is raised once it is done
+    (not where it raised an exception of its own, which goes on instead)."""
+    _held[0] += 1
+    try:
+        yield
+    finally:
+        _held[0] -= 1
+    if not _held[0] and _pending:
+        raise _Signalled(_pending.pop(0))
 
 
 def _group_alive(pgid):
@@ -1345,9 +1387,10 @@ def git_bounded(root, seconds, *args):
 
 def ref_transaction(root, branch):
     """git update-ref --stdin, one transaction on <branch> whose reflog entry names the replay, which
-    move_branch drives line by line -- start, update, prepare, then commit or abort -- each verb
-    answered "<verb>: ok" on stdout. Its stderr is never read: no reason is taken from git's text.
-    Where the driver goes away while prepared, stdin closes and git aborts, releasing both locks."""
+    move_branch drives line by line -- start, update, prepare, then commit or abort. start, prepare,
+    commit and abort are each answered "<verb>: ok" on stdout; update draws no answer. Its stderr is
+    never read: no reason is taken from git's text. Where the driver goes away while prepared, stdin
+    closes and git aborts, releasing both locks."""
     return subprocess.Popen(["git", "-C", root, "-c", "core.quotePath=false", "update-ref", "--stdin", "-m",
                              "session-branch: replayed onto origin/" + branch],
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -1364,11 +1407,15 @@ def _tell(txn, lines):
 
 
 def _would_overwrite(root, old, tip):
-    """The paths of the checkout at <root> that read-tree -m -u <old> <tip> would refuse to write over,
-    found from status --porcelain -z --untracked-files=all --ignored (every modified, staged, untracked
-    and ignored path, a rename's original too) and diff-tree <old> <tip>, never from git's text: each
-    such path the tip changes, each that stands where the tip needs a directory, and each inside a
-    directory where the tip changes a file of that name. Sorted."""
+    """The paths of the checkout at <root> that the move from <old> to <tip> must not write over, found
+    from status --porcelain -z --untracked-files=all --ignored (every modified, staged, untracked and
+    ignored path, a rename's original too) and diff-tree <old> <tip>, never from git's text: each such
+    path the tip changes, each that stands where the tip needs a directory, and each inside a directory
+    where the tip changes a file of that name. Sorted. read-tree -m -u refuses a modified or untracked
+    path, but writes over an ignored file at a path the tip adds (git 2.43, measured): this check
+    refuses ignored files too, on purpose, before anything moves, and is the only guard there. It is
+    stricter than read-tree in one place, conservatively: a path whose staged or unstaged change
+    already equals the tip's is refused too."""
     changed = set(nul_list(git(root, "diff-tree", "-r", "-z", "--name-only", "--no-renames", old, tip)))
     recs = nul_list(git(root, "status", "--porcelain", "-z", "--untracked-files=all", "--ignored"))
     dirty, i = set(), 0
@@ -1387,31 +1434,64 @@ def _would_overwrite(root, old, tip):
     return sorted(d for d in dirty if d in changed or d in needed or above(d) & changed)
 
 
+def _ref_refusal(root, branch, old, here):
+    """Why a move of <branch> from <old> failed, read from refs and files: "branch-moved" where the branch
+    no longer holds <old>; else "locked" naming the first that stands of HEAD.lock (where the checkout
+    stands on the branch, the move locks HEAD too) and refs/heads/<branch>.lock -- the locks a driver
+    killed outright leaves (spec §3.4); else "branch-moved"."""
+    if rev(root, "refs/heads/" + branch) == old:
+        for shown, full in git_paths(root, *(["HEAD.lock"] if here else []), "refs/heads/%s.lock" % branch):
+            if os.path.lexists(full):
+                return {"reason": "locked", "path": shown}
+    return {"reason": "branch-moved", "path": None}
+
+
+def _undo_partial(root, old, tip):
+    """After read-tree -m -u <old> <tip> failed, put back what it wrote before it stopped: it checks every
+    path before it writes one, but a write can still fail midway -- a read-only folder -- after others
+    were written (measured), and it writes the index only where it succeeds, so the index still holds
+    <old>'s entries. Every path <old> and <tip> differ on was clean before it ran (_would_overwrite named
+    none), so each whose working copy is now <tip>'s version -- or now missing, where <tip> lacks it --
+    was written there by read-tree, and is written back as <old> holds it, or removed where <old> lacks
+    it (write_from); a working copy holding anything else is left as it is. A write that fails raises
+    NotRun."""
+    for p in nul_list(git(root, "diff-tree", "-r", "-z", "--name-only", "--no-renames", old, tip)):
+        have = worktree_blob(root, p)
+        if have == blob(root, tip, p) and (have is not None or blob(root, old, p) is not None):
+            try:
+                write_from(root, old, p)
+            except OSError as e:
+                raise NotRun("read-tree stopped partway from %s to %s, and %s could not be put back (%s)"
+                             % (old, tip, p, e.strerror or e))
+
+
 def move_branch(root, branch, old, tip, here):
     """Spec §3.4 steps 1 and 2: move refs/heads/<branch> from <old> to <tip>. None where it moved, else
-    the refusal, with nothing moved -- its reason read from exit codes and files, never from git's text
-    (Review Focus 8).
+    the refusal, with nothing moved -- its reason read from exit codes, refs and files, never from git's
+    text (Review Focus 8). A path named is given as git_paths shows it.
     <here>, the checkout at <root> standing on the branch: update-index -q --refresh first, so a file
     rewritten with the same bytes does not fail read-tree as not up to date (a failure: "locked", the
     index.lock named); then "would-overwrite" where _would_overwrite names any path, before anything
-    moves; then one transaction (ref_transaction): start, update <tip> <old>, prepare -- which takes
-    HEAD's and the branch's locks and fails where the branch is no longer <old>: "branch-moved" --
-    then read-tree -m -u <old> <tip>, the two-tree merge that carries the checkout's index and files to
-    <tip> and keeps the user's staged, unstaged and untracked changes as they are: commit where it
-    succeeded; abort where it failed, "locked" where the index.lock stands, else "would-overwrite" with
-    the paths found again. Where commit fails after read-tree succeeded -- its answer is not "ok" and
-    the branch does not hold <tip> -- read-tree -m -u <tip> <old> puts the index and files back:
-    "branch-moved".
+    moves -- the one guard of an ignored file, which read-tree -m -u would write over; then one
+    transaction (ref_transaction): start, update <tip> <old>, prepare, which takes HEAD's and the
+    branch's locks and fails where the branch is no longer <old> or a lock stands (_ref_refusal); then
+    read-tree -m -u <old> <tip>, the two-tree merge that carries the checkout's index and files to <tip>
+    and keeps the user's staged, unstaged and untracked changes as they are, then commit. Where read-tree
+    fails, what it wrote is put back (_undo_partial) while the transaction still holds its locks, then
+    abort, and the reason is what the checkout shows: "locked" where the index.lock stands,
+    "would-overwrite" where a path is in the way, else "cannot-move". Where commit fails after read-tree
+    succeeded -- its answer is not "ok" and the branch does not hold <tip> -- read-tree -m -u <tip> <old>
+    puts the index and files back: "branch-moved".
     Not <here>: refused "checked-out" where a worktree has the branch checked out, naming it; else
-    update-ref <tip> <old> alone, "branch-moved" where it fails."""
+    update-ref <tip> <old> alone, its failure read as _ref_refusal reads it."""
     ref = "refs/heads/" + branch
     if not here:
         where = checked_out_at(root, branch)
         if where:
             return {"reason": "checked-out", "path": where[0]}
         r = git(root, "update-ref", "-m", "session-branch: replayed onto origin/" + branch, ref, tip, old, check=False)
-        return None if r.returncode == 0 else {"reason": "branch-moved", "path": None}
-    lock = git_paths(root, "index.lock")[0]
+        return None if r.returncode == 0 else _ref_refusal(root, branch, old, here)
+    lock, lock_full = git_paths(root, "index.lock")[0]
     if git(root, "update-index", "-q", "--refresh", check=False).returncode != 0:
         return {"reason": "locked", "path": lock}
     paths = _would_overwrite(root, old, tip)
@@ -1420,13 +1500,18 @@ def move_branch(root, branch, old, tip, here):
     txn = ref_transaction(root, branch)
     try:
         if _tell(txn, "start") != "start: ok" or _tell(txn, "update %s %s %s\nprepare" % (ref, tip, old)) != "prepare: ok":
-            return {"reason": "branch-moved", "path": None}
+            txn.stdin.close()
+            txn.wait()  # its locks released before they are looked for
+            return _ref_refusal(root, branch, old, here)
         if git(root, "read-tree", "-m", "-u", old, tip, check=False).returncode != 0:
+            _undo_partial(root, old, tip)  # under the transaction's locks, so no commit lands meanwhile
             _tell(txn, "abort")
-            if os.path.exists(lock):
+            if os.path.lexists(lock_full):
                 return {"reason": "locked", "path": lock}
             paths = _would_overwrite(root, old, tip)
-            return {"reason": "would-overwrite", "path": paths[0] if paths else None, "paths": paths}
+            if paths:
+                return {"reason": "would-overwrite", "path": paths[0], "paths": paths}
+            return {"reason": "cannot-move", "path": None}
         if _tell(txn, "commit") != "commit: ok" and rev(root, ref) != tip:  # the ref decides, not an answer lost
             if git(root, "read-tree", "-m", "-u", tip, old, check=False).returncode != 0:
                 raise NotRun("%s stays at %s, but the checkout's index and files moved to %s and could not be "
@@ -1445,15 +1530,17 @@ def _in_progress(root):
     """Spec §3.1 condition 5 for the worktree at <root>: "in-progress" naming the first marker of a
     rebase, merge, cherry-pick or revert that stands (IN_PROGRESS), or the first path an unmerged index
     holds -- a stash pop that stopped on a conflict leaves no marker, and its unmerged index fails the
-    refresh as no lock does; "locked" naming the index.lock where one stands; else None."""
-    *markers, lock = git_paths(root, *IN_PROGRESS, "index.lock")
-    for m in markers:
-        if os.path.lexists(m):
-            return {"reason": "in-progress", "path": m}
+    refresh as no lock does; "locked" naming the index.lock where one stands; else None. Each path is
+    relative to the checkout's top level where it lies inside it (".git/MERGE_HEAD", an unmerged
+    file's own path), else absolute (git_paths)."""
+    *markers, (lock, lock_full) = git_paths(root, *IN_PROGRESS, "index.lock")
+    for shown, full in markers:
+        if os.path.lexists(full):
+            return {"reason": "in-progress", "path": shown}
     unmerged = nul_list(git(root, "ls-files", "-u", "-z"))
     if unmerged:
         return {"reason": "in-progress", "path": unmerged[0].split("\t", 1)[1]}
-    if os.path.lexists(lock):
+    if os.path.lexists(lock_full):
         return {"reason": "locked", "path": lock}
     return None
 
@@ -1490,7 +1577,7 @@ def _moves(recorded):
 def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, fetch_seconds=60, push_seconds=60):
     """Spec §3.1, §3.4 and §3.5: settle a rejected session-file push of <branch>, the default branch or
     a plugin branch, in session-branch mode off (the caller's conditions 1 and 2). At most <attempts>
-    attempts, each: fetch origin's <branch> into refs/remotes/origin/<branch> (git_bounded,
+    attempts, each: fetch origin's <branch> into refs/remotes/origin/<branch>, no tags (git_bounded,
     <fetch_seconds>; "fetch-failed"); refuse "cannot-replay" where replay_ok says no, as _in_progress
     says, "push-scope" naming the first commit push_scope fails among those the branch holds and
     origin's lacks, and "checked-out" naming another worktree that has the branch checked out. Where
@@ -1506,79 +1593,115 @@ def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, 
     Returns {moved: an attempt moved the branch; pushed; attempts: how many began; replayed, dropped:
     those of the replay the branch was last moved onto; tip: the commit it was last moved onto, or the
     one it stood on where origin's already held it, else None; porcelain: the push's status line for
-    the branch, or None; moves (_moves); upstream_error: None or git's first line; refused: None, or
-    {reason (REFUSALS), path} and for would-overwrite paths}. Any exception once the branch moved is
-    raised as Partial carrying that result."""
+    the branch, or None; moves; upstream_error: None or git's first line; refused: None, or {reason
+    (REFUSALS), path} and for would-overwrite paths}.
+    refused.path: for would-overwrite, a path of the checkout; for in-progress and locked, a marker,
+    lock or unmerged file, relative to the checkout's top level where it lies inside it
+    (".git/MERGE_HEAD", ".git/index.lock", ".git/refs/heads/<b>.lock") and absolute where it does not (a
+    linked worktree's own git directory, or the common one); for push-scope the commit; for checked-out
+    the other worktree's path; for conflict and register-rebuild what replay_commits names; None for
+    fetch-failed, cannot-replay, branch-moved and cannot-move.
+    moves: one entry {slug, origin, side, from, to} per finding a register rebuild renumbered (spec
+    §3.7, _moves). Across a race, from is the number the finding had when this run first met it, never
+    a later attempt's: a teammate's ("remote") as origin's register numbered it at the first attempt
+    whose fetch brought it, and this run's own ("run") as its own commits numbered it before any replay
+    -- the number this run's report already cites; to is its number on the tip the branch stands on.
+    SIGTERM, SIGHUP and SIGINT are handled for the whole call (_on_signal), held while a move or the
+    upstream's configuration write runs (_signals_held). Any exception once the branch moved, a signal
+    included, is raised as Partial carrying that result; a signal before any move as NotRun."""
+    previous = {}
+    for s in _SIGNALS:
+        try:
+            previous[s] = signal.signal(s, _on_signal)
+        except ValueError:  # not the main thread: the caller's own handling stands
+            pass
+    del _pending[:]
     ref, remote = "refs/heads/" + branch, "refs/remotes/origin/" + branch
-    if rev(root, ref) is None:
-        raise NotRun("no such branch: %s" % branch)
-    top = os.path.realpath(text(git(root, "rev-parse", "--show-toplevel")))
     result = {"moved": False, "pushed": False, "attempts": 0, "replayed": [], "dropped": [], "tip": None,
               "porcelain": None, "moves": [], "upstream_error": None, "refused": None}
     recorded = []
     try:
-        for attempt in range(1, attempts + 1):
-            result["attempts"] = attempt
-            if git_bounded(root, fetch_seconds, "fetch", "origin", "+%s:%s" % (ref, remote)).returncode != 0:
-                result["refused"] = {"reason": "fetch-failed", "path": None}
-                break
-            refused = None if replay_ok(root) else {"reason": "cannot-replay", "path": None}
-            refused = refused or _in_progress(root)
-            old, onto = rev(root, ref), rev(root, remote)
-            if refused is None:
-                commits, failed = push_scope(root, old, onto)
-                if failed:
-                    refused = {"reason": "push-scope", "path": failed}
-            if refused is None:
-                where = checked_out_at(root, branch)
-                here = any(os.path.realpath(w) == top for w in where)
-                others = [w for w in where if os.path.realpath(w) != top]
-                if others:
-                    refused = {"reason": "checked-out", "path": others[0]}
-            if refused:
-                result["refused"] = refused
-                break
-            if commits:
-                got = replay_commits(root, onto, commits, register_rebuild)
-                if got["refused"]:
-                    result["refused"] = got["refused"]
+        try:
+            if rev(root, ref) is None:
+                raise NotRun("no such branch: %s" % branch)
+            top = os.path.realpath(text(git(root, "rev-parse", "--show-toplevel")))
+            for attempt in range(1, attempts + 1):
+                result["attempts"] = attempt
+                fetched = git_bounded(root, fetch_seconds, "fetch", "--no-tags", "origin", "+%s:%s" % (ref, remote))
+                if fetched.returncode != 0:
+                    result["refused"] = {"reason": "fetch-failed", "path": None}
                     break
-            else:  # origin's holds every commit the branch does
-                got = {"tip": onto, "replayed": [], "dropped": [], "numbers": None}
-            tip = got["tip"]
-            if tip != old:
-                refused = move_branch(root, branch, old, tip, here)
+                refused = None if replay_ok(root) else {"reason": "cannot-replay", "path": None}
+                refused = refused or _in_progress(root)
+                old, onto = rev(root, ref), rev(root, remote)
+                if refused is None:
+                    commits, failed = push_scope(root, old, onto)
+                    if failed:
+                        refused = {"reason": "push-scope", "path": failed}
+                if refused is None:
+                    where = checked_out_at(root, branch)
+                    here = any(os.path.realpath(w) == top for w in where)
+                    others = [w for w in where if os.path.realpath(w) != top]
+                    if others:
+                        refused = {"reason": "checked-out", "path": others[0]}
                 if refused:
                     result["refused"] = refused
                     break
-                result["moved"] = True
-                if got["numbers"]:
-                    recorded.append(got["numbers"])
-            result.update(tip=tip, replayed=got["replayed"], dropped=got["dropped"])
-            if tip == onto:  # nothing is left that origin's lacks
-                break
-            p = git_bounded(root, push_seconds, "push", "--porcelain", "origin", "%s:%s" % (tip, ref))
-            result["porcelain"] = _porcelain_line(p.stdout, ref)
-            if p.returncode == 0:
-                result["pushed"] = True
-                break
-            fields = (result["porcelain"] or "").split("\t")
-            if len(fields) < 3 or not fields[2].startswith("[rejected]"):
-                break
-        if result["pushed"] and set_upstream:
-            r = git(root, "branch", "--set-upstream-to=origin/" + branch, branch, check=False)
-            if r.returncode != 0:
-                lines = r.stderr.decode("utf-8", "replace").strip().splitlines()
-                result["upstream_error"] = lines[0] if lines else "git branch exited %d" % r.returncode
-        result["moves"] = _moves(recorded)
-    except Exception as e:
-        if not result["moved"]:
-            raise
-        try:
+                if commits:
+                    got = replay_commits(root, onto, commits, register_rebuild)
+                    if got["refused"]:
+                        result["refused"] = got["refused"]
+                        break
+                else:  # origin's holds every commit the branch does
+                    got = {"tip": onto, "replayed": [], "dropped": [], "numbers": None}
+                tip = got["tip"]
+                with _signals_held():  # a signal waits until the branch and the checkout agree, and the result says so
+                    if tip != old:
+                        refused = move_branch(root, branch, old, tip, here)
+                        if refused is None:
+                            result["moved"] = True
+                            if got["numbers"]:
+                                recorded.append(got["numbers"])
+                    if refused is None:
+                        result.update(tip=tip, replayed=got["replayed"], dropped=got["dropped"])
+                if refused:
+                    result["refused"] = refused
+                    break
+                if tip == onto:  # nothing is left that origin's lacks
+                    break
+                p = git_bounded(root, push_seconds, "push", "--porcelain", "origin", "%s:%s" % (tip, ref))
+                result["porcelain"] = _porcelain_line(p.stdout, ref)
+                if p.returncode == 0:
+                    result["pushed"] = True
+                    break
+                fields = (result["porcelain"] or "").split("\t")
+                if len(fields) < 3 or not fields[2].startswith("[rejected]"):
+                    break
+            if result["pushed"] and set_upstream:
+                with _signals_held():  # a configuration write: a git killed midway leaves config.lock
+                    r = git(root, "branch", "--set-upstream-to=origin/" + branch, branch, check=False)
+                    if r.returncode != 0:
+                        lines = r.stderr.decode("utf-8", "replace").strip().splitlines()
+                        result["upstream_error"] = lines[0] if lines else "git branch exited %d" % r.returncode
             result["moves"] = _moves(recorded)
-        except Exception:
-            pass
-        raise Partial(str(e) if isinstance(e, NotRun) else "%s: %s" % (type(e).__name__, e), result) from e
+        except Exception as e:
+            with _signals_held():  # the partial result is built whole; the exception raised goes on
+                if isinstance(e, _Signalled):
+                    message = "ended by signal %d" % e.args[0]
+                else:
+                    message = str(e) if isinstance(e, NotRun) else "%s: %s" % (type(e).__name__, e)
+                if not result["moved"]:
+                    if isinstance(e, _Signalled):
+                        raise NotRun(message) from e
+                    raise
+                try:
+                    result["moves"] = _moves(recorded)
+                except Exception:
+                    pass
+                raise Partial(message, result) from e
+    finally:
+        for s, h in previous.items():
+            signal.signal(s, signal.SIG_DFL if h is None else h)
     return result
 
 
@@ -3811,6 +3934,8 @@ def selftest():
                 def dirty_set():
                     a, b, stub, remote = pworld(where("dirty-set"))
                     diverge(a, b)
+                    b.git("tag", "team-release")  # a tag on the fetched history: --no-tags keeps it out
+                    b.git("push", "-q", "origin", "team-release")
                     design = "specifications/PRD-A-1-x/design-notes.md"
                     users = [NOTE, "notes/scratch.txt", PRD, "notes/staged-new.md", design]
                     a.write(NOTE, "user edit, unstaged\n", append=True)
@@ -3840,22 +3965,33 @@ def selftest():
                     check(on_origin(remote, "main", FB) == both and a.read(FB) == both,
                           "[move: dirty set] origin and the checkout hold both sides' entries, once each (%r)"
                           % on_origin(remote, "main", FB))
+                    check(a.git("tag", "-l") == "", "[move: dirty set] the fetch takes no tag (--no-tags): %r"
+                          % a.git("tag", "-l"))
                 guarded("dirty set", dirty_set)
 
-                # a dirty file and an untracked one where the tip writes: refused before anything moves,
-                # the paths named from status and diff-tree, never from git's text, whatever the locale
+                # a dirty file, an untracked one and an ignored one where the tip writes: refused before
+                # anything moves, the paths named from status and diff-tree, never from git's text, whatever
+                # the locale. read-tree -m -u itself overwrites an ignored file (git 2.43, measured): this
+                # check is the only guard there
                 def would_overwrite():
                     a, b, stub, remote = pworld(where("would-overwrite"))
+                    log = "notes/build.log"
 
                     def team(r):
                         r.add(FB, TEAM_T)
                         r.write(PRD, "# PRD, the teammate's\n")
                         r.write("notes/new.md", "the teammate's\n")
+                        r.write(log, "the teammate's log\n")
                     diverge(a, b, team)
                     a.write(PRD, "# PRD, mine, unstaged\n")
                     a.write("notes/new.md", "mine, untracked\n")
+                    def message(env):
+                        return subprocess.run(["git", "-C", a.path, "rev-parse", "--verify", "no-such-ref"], stdout=devnull,
+                                              stderr=subprocess.PIPE, env=dict(os.environ, **(env or {}))).stderr
+                    german = ("de_DE, git's messages in German" if message(GERMAN) != message(None) else
+                              "de_DE, no German messages on this host: it holds by construction")
                     before = (a.state(), a.git("rev-parse", "main"), a.read(PRD), a.read("notes/new.md"), a.read(FB))
-                    for label, env in (("C", None), ("de_DE", GERMAN)):
+                    for label, env in (("C", None), (german, GERMAN)):
                         got = replay_cli(a, "--branch", "main", env=env)
                         after = (a.state(), a.git("rev-parse", "main"), a.read(PRD), a.read("notes/new.md"), a.read(FB))
                         check(got.get("moved") is False and got.get("pushed") is False and got.get("tip") is None
@@ -3863,6 +3999,19 @@ def selftest():
                                                          "paths": ["notes/new.md", PRD]} and after == before,
                               "[move: would-overwrite, %s] refused naming both paths, HEAD, index and bytes as they were (%r)"
                               % (label, got))
+                    # the ignored file alone: what read-tree would have replaced silently
+                    a.git("checkout", "-q", "--", PRD)
+                    os.remove(os.path.join(a.path, "notes/new.md"))
+                    with open(os.path.join(a.path, a.git("rev-parse", "--git-path", "info/exclude")), "a") as fh:
+                        fh.write(log + "\n")
+                    a.write(log, "mine, ignored\n")
+                    before = (a.state(), a.git("rev-parse", "main"), a.read(log))
+                    got = replay_cli(a, "--branch", "main")
+                    check(got.get("moved") is False and got.get("refused") == {"reason": "would-overwrite", "path": log,
+                                                                               "paths": [log]}
+                          and (a.state(), a.git("rev-parse", "main"), a.read(log)) == before,
+                          "[move: would-overwrite, an ignored file] refused naming it, its bytes and HEAD as they were (%r)"
+                          % got)
                 guarded("would-overwrite", would_overwrite)
 
                 # a file rewritten with the same bytes is stat-dirty: the refresh lets read-tree through.
@@ -3883,6 +4032,28 @@ def selftest():
                           and letters(a) == {},
                           "[move: same bytes] a same-bytes rewrite of a file the tip changes moves after the refresh (%r)" % got)
                 guarded("same bytes", same_bytes)
+
+                # the locks a driver killed outright leaves (spec §3.4), and a marker, in the checkout the
+                # branch stands on: each refused, its path given relative to the checkout's top level
+                def stale_locks():
+                    a, b, stub, remote = pworld(where("stale-locks"))
+                    diverge(a, b)
+                    old = a.git("rev-parse", "main")
+                    for name, reason in (("HEAD.lock", "locked"), ("refs/heads/main.lock", "locked"),
+                                         ("MERGE_HEAD", "in-progress")):
+                        shown = a.git("rev-parse", "--git-path", name)
+                        with open(os.path.join(a.path, shown), "w") as fh:
+                            fh.write(old + "\n" if name == "MERGE_HEAD" else "")
+                        before = a.state()
+                        got = replay_cli(a, "--branch", "main")
+                        os.remove(os.path.join(a.path, shown))
+                        check(shown == ".git/" + name and got.get("refused") == {"reason": reason, "path": shown}
+                              and got.get("moved") is False and a.state() == before and a.git("rev-parse", "main") == old,
+                              "[move: a stale %s] refused %s, naming %s, nothing moved (%r)" % (name, reason, shown, got))
+                    got = replay_cli(a, "--branch", "main")
+                    check(got.get("moved") is True and got.get("pushed") is True,
+                          "[move: stale locks] once they are gone, the replay goes through (%r)" % got)
+                guarded("stale locks", stale_locks)
 
                 # a commit landing between the replay and the move fails prepare: nothing touched
                 def concurrent():
@@ -3919,6 +4090,15 @@ def selftest():
                     b.commit_all("team")
                     b.git("push", "-q", "origin", PLUGIN)
                     before = a.state()
+                    # a stale lock on the branch (a driver killed outright leaves one): locked, not branch-moved
+                    stale = a.git("rev-parse", "--git-path", "refs/heads/%s.lock" % PLUGIN)
+                    old = a.git("rev-parse", PLUGIN)
+                    open(os.path.join(a.path, stale), "w").close()
+                    got = replay_cli(a, "--branch", PLUGIN)
+                    os.remove(os.path.join(a.path, stale))
+                    check(got.get("refused") == {"reason": "locked", "path": stale} and got.get("moved") is False
+                          and a.git("rev-parse", PLUGIN) == old,
+                          "[move: plugin branch] a stale %s refuses locked, naming it (%r)" % (stale, got))
                     got = replay_cli(a, "--branch", PLUGIN, "--set-upstream")
                     check(got.get("moved") is True and got.get("pushed") is True and got.get("attempts") == 1
                           and got.get("tip") == a.git("rev-parse", PLUGIN) == origin_rev(remote, PLUGIN)
@@ -4157,23 +4337,26 @@ def selftest():
 
                 # spec §3.7: each finding a rebuild renumbered, from its number before the first attempt
                 # to its number on the last tip, across two attempts
+                run2e = REG + "runs/0002-20261028T090000Z-e9e9e9e9.json"  # a race's record, sorting first
+
+                def reg_team(r):
+                    r.write(RUN2T, run_record(2, "2026-10-28T11:00:00Z", "s2:v3:tt"))
+                    write_register(r, [RUN1, RUN2T])
+
+                def reg_mine(r):
+                    r.write(RUN2M, run_record(2, "2026-10-28T10:00:00Z", "s2:v3:mm"))
+                    write_register(r, [RUN1, RUN2M])
+
+                def reg_race():
+                    js, md, _ = stub_register([RUN1, run2e, RUN2T])
+                    return {run2e: run_record(2, "2026-10-28T09:00:00Z", "s2:v3:ee"), REG + "register.json": js,
+                            REG + "register.md": md}
+
                 def moves():
                     a, b, stub, remote = pworld(where("moves"))
-                    run2e = REG + "runs/0002-20261028T090000Z-e9e9e9e9.json"  # a race's record, sorting first
-
-                    def team(r):
-                        r.write(RUN2T, run_record(2, "2026-10-28T11:00:00Z", "s2:v3:tt"))
-                        write_register(r, [RUN1, RUN2T])
-
-                    def mine(r):
-                        r.write(RUN2M, run_record(2, "2026-10-28T10:00:00Z", "s2:v3:mm"))
-                        write_register(r, [RUN1, RUN2M])
-                    diverge(a, b, team, mine)
-                    js, md, _ = stub_register([RUN1, run2e, RUN2T])
-                    race = {run2e: run_record(2, "2026-10-28T09:00:00Z", "s2:v3:ee"), REG + "register.json": js,
-                            REG + "register.md": md}
+                    diverge(a, b, reg_team, reg_mine)
                     got = replay_cli(a, "--branch", "main", "--register-rebuild", stub,
-                                     env=racing(where("moves-git"), b, [race]))
+                                     env=racing(where("moves-git"), b, [reg_race()]))
 
                     def origin(path):
                         return "origin-" + os.path.basename(path)[:-5]
@@ -4185,20 +4368,101 @@ def selftest():
                 guarded("moves", moves)
 
                 # the push is bounded: a push origin holds past the cap is ended, and nothing more tried
+                # (a hook that ignores SIGTERM, as its sleep then does too: only the SIGKILL ends the group,
+                # KILL_AFTER seconds after the cap)
                 def push_bound():
                     a, b, stub, remote = pworld(where("push-bound"))
                     diverge(a, b)
                     hook = os.path.join(remote, "hooks", "pre-receive")
                     with open(hook, "w") as fh:
-                        fh.write("#!/bin/sh\nsleep 30\n")
+                        fh.write("#!/bin/sh\ntrap '' TERM\nsleep 30\n")
                     os.chmod(hook, 0o755)
                     started = time.monotonic()
                     got = replay_cli(a, "--branch", "main", "--push-seconds", "1")
                     took = time.monotonic() - started
                     check(got.get("attempts") == 1 and got.get("moved") is True and got.get("pushed") is False
-                          and got.get("porcelain") is None and took < 15,
-                          "[move: push bound] a push past its cap is ended, no second attempt (%r, %.1f s)" % (got, took))
+                          and got.get("porcelain") is None and took < 8,
+                          "[move: push bound] a push past its 1 s cap is ended, SIGKILL 2 s after SIGTERM, no second "
+                          "attempt (%r, %.1f s)" % (got, took))
                 guarded("push bound", push_bound)
+
+                # read-tree stopping partway for a reason no file names -- a read-only folder -- after it
+                # wrote other files: what it wrote is put back, and the reason is cannot-move, nothing moved
+                def read_only_folder():
+                    a, b, stub, remote = pworld(where("read-only-folder"))
+
+                    def team(r):
+                        r.add(FB, TEAM_T)
+                        r.write(NOTE, "team notes, edited\n")
+                        r.write(PRD, "# PRD, the teammate's\n")
+                    diverge(a, b, team)
+                    old, folder = a.git("rev-parse", "main"), os.path.join(a.path, os.path.dirname(PRD))
+                    before = (a.state(), [a.read(p) for p in (NOTE, FB, PRD)])
+                    os.chmod(folder, 0o555)  # prd.md cannot be replaced; notes/ and dev-workflows/ can
+                    try:
+                        got = replay_cli(a, "--branch", "main")
+                    finally:
+                        os.chmod(folder, 0o755)
+                    check(got.get("refused") == {"reason": "cannot-move", "path": None} and got.get("moved") is False
+                          and (a.state(), [a.read(p) for p in (NOTE, FB, PRD)]) == before
+                          and a.git("rev-parse", "main") == old,
+                          "[move: read-only folder] cannot-move, every file read-tree wrote put back (%r, %r)"
+                          % (got, letters(a)))
+                if os.geteuid() != 0:  # root writes through any mode
+                    guarded("read-only folder", read_only_folder)
+
+                # a signal after a move, outside git_bounded -- during attempt 2's register rebuild -- still
+                # prints the partial result and exits 2, SIGINT as well as SIGTERM, with no traceback
+                def signal_after_move():
+                    for name, signum in (("SIGTERM", int(signal.SIGTERM)), ("SIGINT", int(signal.SIGINT))):
+                        a, b, stub, remote = pworld(where("signal-" + name))
+                        diverge(a, b, reg_team, reg_mine)
+                        counter, script = os.path.join(tmp, "count-" + name), os.path.join(tmp, "signalling-%s.py" % name)
+                        with open(script, "w", encoding="utf-8") as fh:  # rebuild calls: 4 on attempt 1, the 5th on 2
+                            fh.write("import os, time\nc = %r\nn = (int(open(c).read()) if os.path.exists(c) else 0) + 1\n"
+                                     "open(c, 'w').write(str(n))\nif n == 5:\n    os.kill(os.getppid(), %d)\n"
+                                     "    time.sleep(10)\n" % (counter, signum) + STUB)
+                        race = racing(where("signal-%s-git" % name), b, [reg_race()])
+                        r = subprocess.run([sys.executable, me, "--specs", a.path, "replay", "--branch", "main",
+                                            "--register-rebuild", script], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                           env=dict(os.environ, **race))
+                        try:
+                            out = json.loads(r.stdout)
+                        except ValueError:
+                            out = {}
+                        err = r.stderr.decode("utf-8", "replace").splitlines()
+                        check(r.returncode == 2 and out.get("moved") is True and out.get("pushed") is False
+                              and out.get("attempts") == 2 and out.get("tip") == a.git("rev-parse", "main")
+                              and err == ["session-branch: not run (ended by signal %d)" % signum],
+                              "[move: %s after a move] the partial result, then one 'not run' line (%r, %r, %r)"
+                              % (name, r.returncode, out, err))
+                guarded("a signal after a move", signal_after_move)
+
+                # a signal inside the move is held until the move is done, so the branch, the index and the
+                # files never part: here SIGTERM lands while read-tree -m -u runs
+                def signal_in_move():
+                    a, b, stub, remote = pworld(where("signal-in-move"))
+                    diverge(a, b)
+                    fake, fired = where("signal-in-move-git"), os.path.join(tmp, "signal-in-move-fired")
+                    with open(os.path.join(fake, "git"), "w") as fh:
+                        fh.write('#!/bin/sh\ncase "$*" in *"read-tree -m -u"*)\n'
+                                 '  if [ ! -e %(f)s ]; then : > %(f)s; kill -TERM $PPID; fi;;\nesac\nexec %(g)s "$@"\n'
+                                 % {"f": sh_quote(fired), "g": sh_quote(REAL_GIT)})
+                    os.chmod(os.path.join(fake, "git"), 0o755)
+                    r = subprocess.run([sys.executable, me, "--specs", a.path, "replay", "--branch", "main"],
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                       env=dict(os.environ, PATH=fake + os.pathsep + os.environ.get("PATH", "")))
+                    try:
+                        out = json.loads(r.stdout)
+                    except ValueError:
+                        out = {}
+                    tip = out.get("tip")
+                    check(os.path.exists(fired) and r.returncode == 2 and out.get("moved") is True
+                          and out.get("pushed") is False and tip == a.git("rev-parse", "main") == a.git("rev-parse", "HEAD")
+                          and letters(a) == {} and a.read(FB) == at(a, tip, FB),
+                          "[move: a signal inside the move] held until the move is done: moved, branch, index and files "
+                          "agree (%r, %r, %r)" % (r.returncode, out, letters(a)))
+                guarded("a signal inside the move", signal_in_move)
 
         if can_replay:
             move_cases()
