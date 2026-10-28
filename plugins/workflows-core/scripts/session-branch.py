@@ -231,22 +231,27 @@ def keep_branch_only(head, given, working):
     <working> nor HEAD's version (<head>, None where HEAD lacks the file) holds, in <given>'s order,
     as entry_set_merge appends one. An entry HEAD holds that the working copy dropped is a deliberate
     removal (implementation-format §1's move of a block) and stays removed; an entry only the session
-    branch held, lost by a restore of HEAD's version, is put back. The cost: a hand edit of an entry
-    only the session branch holds keeps its old version beside the edited one -- a visible duplicate,
-    never a lost entry. <working> unchanged where nothing is missing; None (refuse) where the non-empty
-    versions are not all in one line-ending form, as entry_set_merge refuses."""
-    if len({_line_ending_form(x) for x in (head, given, working) if x}) > 1:
-        return None
-    have = {entry_key(e) for e in split_entries(working)[1]}
+    branch holds is put back whatever dropped it -- a restore of HEAD's version, a removal by hand, or
+    an edit, whose old version then stays beside the edited one -- so no working copy removes or
+    replaces one until the session pull request merges: a visible duplicate, never a lost entry.
+    Entries are compared with their line endings taken as \\n, so a copy an editor
+    saved in CRLF over LF blobs (core.autocrlf=input smudges nothing) misses nothing. <working>
+    unchanged where nothing is missing; None (refuse) where something is, and the non-empty versions
+    are not all in one line-ending form, as entry_set_merge refuses."""
+    def key(e):
+        return entry_key(e).replace(b"\r\n", b"\n")
+    held = {key(e) for e in split_entries(working)[1]}
     if head is not None:
-        have |= {entry_key(e) for e in split_entries(head)[1]}
-    missing = [e for e in split_entries(given)[1] if entry_key(e) not in have]
+        held |= {key(e) for e in split_entries(head)[1]}
+    missing = [e for e in split_entries(given)[1] if key(e) not in held]
     if not missing:
         return working
+    if len({_line_ending_form(x) for x in (head, given, working) if x}) > 1:
+        return None
     out = working
     if out and not out.endswith(b"\n"):
         out += _line_ending(out, last=True)
-    return _append_entries(out, missing, have)
+    return _append_entries(out, missing, set())
 
 
 def rev(root, ref):
@@ -573,8 +578,8 @@ def settle_merge(root, tree, tip, c, conflicted):
     settled, refused = {}, []
     for p in sorted(changed(tip, c) if mb is None else changed(mb, tip) & changed(mb, c)):
         b0, b1, b2 = blob(root, mb, p), blob(root, tip, p), blob(root, c, p)
-        if b0 in (b1, b2):
-            continue  # one side's change alone, which merge-tree took
+        if b0 in (b1, b2) or b1 == b2:
+            continue  # one side's change alone, or the same change on both, which merge-tree took
         data = settle(root, p, read(b0), read(b1), read(b2))
         if data is None:
             refused.append(p)
@@ -732,7 +737,9 @@ def commit(root, branch, default_ref, message, include_ahead=False):
     A block-shaped working copy, or follow-ups.md, that differs from the tip's version is committed
     as it is where the tip still holds the version this worktree was last given (its record, else
     HEAD's), so a hand edit goes through -- a block-shaped one with every entry of that version that
-    neither it nor HEAD's version holds put back after it (keep_branch_only); where the tip holds
+    neither it nor HEAD's version holds put back after it (keep_branch_only), follow-ups.md united
+    with that version over HEAD's (union_lines), so a line only the session branch held returns while
+    a HEAD line the copy dropped stays dropped; where the tip holds
     another version, the working copy is first settled with it (settle_copy). Either is written back,
     or, where it refuses, the file is left out of the commit and as it is in the working tree, and
     listed in unsettled. A file the tip has no version of, any other shape, and a deletion are
@@ -776,8 +783,9 @@ def commit(root, branch, default_ref, message, include_ahead=False):
                     elif cls == "block":  # as it is, with any entry only the session branch held
                         head = worktree_form(root, "HEAD", p)
                         settled = keep_branch_only(head, worktree_form(root, tip, p), working)
-                    else:
-                        settled = working
+                    else:  # follow-ups.md: a HEAD line the copy dropped stays dropped, a session-only one returns
+                        settled = union_lines(root, p, worktree_form(root, "HEAD", p), worktree_form(root, tip, p),
+                                              working)
                     if settled is None:
                         unsettled.append(p)
                         continue
@@ -1274,6 +1282,14 @@ def selftest():
         got = esm(base, fixed, other)
         check(got == fixed + "\n" + IMPL_1.replace("commit:  a3f91c2", "commit:  a3f91c4"),
               "two different edits of one entry both stay, a visible duplicate rather than a lost edit (%r)" % got)
+        # …and the two consequences §8.2 step 3 and spec §3.3 name: a removal on one side against an
+        # edit on the other keeps the edit; both sides extending the last entry keep it twice
+        got = esm(base, IMPL_HEAD + IMPL_2, fixed)
+        check(got == IMPL_HEAD + IMPL_2 + "\n" + IMPL_1.replace("commit:  a3f91c2", "commit:  a3f91c3"),
+              "a removal against an edit of one entry keeps the edit, the removal lost (%r)" % got)
+        got = esm(base, base + "  note:    ours\n", base + "  note:    theirs\n")
+        check(got == base + "  note:    ours\n\n" + IMPL_2 + "  note:    theirs\n",
+              "both sides extending the last entry keep it twice, once with each tail (%r)" % got)
 
         # merge_class: by path, for every path the classifier table holds and the shapes it lacks
         want_class = {
@@ -2253,6 +2269,9 @@ def selftest():
         kbo = keep_branch_only
         check(kbo(b"", given.encode(), given.encode()) == given.encode(),
               "keep_branch_only leaves a copy that holds every entry as it is")
+        got = kbo(IMPL_HEAD.encode(), given.encode(), crlf(given + "\n" + B3).encode())
+        check(got == crlf(given + "\n" + B3).encode(),
+              "…a CRLF copy holding every entry of an LF version too: nothing to put back, no refusal (%r)" % got)
         got = kbo((IMPL_HEAD + IMPL_1).encode(), given.encode(), (IMPL_HEAD + "\n").encode())
         check(got == (IMPL_HEAD + "\n" + IMPL_2 + "\n" + IMPL_2P).encode(),
               "keep_branch_only keeps HEAD's dropped entry removed and puts back the branch-only ones (%r)" % got)
@@ -2268,6 +2287,77 @@ def selftest():
             a.add(FB, today("a1"))
             check(worktree_blob(a.path, FB) != a.git("rev-parse", "HEAD:" + FB),
                   "an assume-unchanged working copy that changed is hashed, not read from the index")
+        # LF blobs under core.autocrlf=input, which smudges nothing: an editor saves the copy in CRLF and
+        # a run appends; the branch has not moved and nothing needs putting back, so it is committed
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.git("config", "core.autocrlf", "input")
+            a.write(IM, IMPL_HEAD + IMPL_1)
+            push_main(a, "record")
+            a.add(IM, IMPL_2)
+            a.run("commit", "--branch", "session/aa", *CM)
+            a.write(IM, crlf(IMPL_HEAD + IMPL_1 + "\n" + IMPL_2))
+            a.add(IM, IMPL_2P, eol="\r\n")
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            check(got.get("committed") and got.get("unsettled") == []
+                  and a.git("show", "session/aa:" + IM) == (IMPL_HEAD + IMPL_1 + "\n" + IMPL_2 + "\n" + IMPL_2P).rstrip("\n"),
+                  "a CRLF copy of LF blobs, appended to, is committed with every entry (%r)" % got)
+            got = a.run("lift", "--branch", "session/aa")
+            check(got.get("unpreserved") == [] and IM in got.get("lifted", []), "…and lift then moves on (%r)" % got)
+        # follow-ups.md restored by hand, then edited, where the branch has not moved: a session-only
+        # task comes back; a HEAD task the copy dropped stays dropped; a ticked HEAD task next to a
+        # session-only one comes back beside its open copy, as git's union keeps an adjacent pair
+        fu = "specifications/PRD-A-1-x/follow-ups.md"
+        for top, edit, want in (
+                ("- [ ] zero\n- [ ] one\n- [ ] mid\n", "- [ ] one\n- [ ] mid\n",
+                 "- [ ] one\n- [ ] mid\n- [ ] two (session only)"),
+                ("- [ ] one\n", "- [x] one\n", "- [ ] one\n- [ ] two (session only)\n- [x] one")):
+            with tempfile.TemporaryDirectory() as tmp:
+                remote, a, b = world(tmp)
+                a.write(fu, top)
+                push_main(a, "follow-ups")
+                a.write(fu, "- [ ] two (session only)\n", append=True)
+                a.run("commit", "--branch", "session/aa", *CM)
+                a.git("checkout", "--", fu)
+                a.write(fu, edit)
+                got = a.run("commit", "--branch", "session/aa", *CM)
+                check(got.get("unsettled") == [] and a.git("show", "session/aa:" + fu) == want and a.read(fu) == want + "\n",
+                      "a restored follow-ups.md keeps the session-only task (%r, %r)" % (edit, a.git("show", "session/aa:" + fu)))
+        # §6's unsettled remedy: the branch's version dropped an entry of the merge base (a teammate's
+        # removal another worktree synced in) that the copy still holds; once the copy is the branch's
+        # version with this run's entry after it, the next run commits it
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(IM, IMPL_HEAD + IMPL_1 + "\n" + IMPL_2)
+            push_main(a, "record")
+            a.add(FB, today("a1"))
+            a.run("commit", "--branch", "session/aa", *CM)
+            b.git("pull", "-q", "--ff-only", "--no-rebase", "origin", "main")
+            b.write(IM, IMPL_HEAD + IMPL_1)  # implementation-format §1's move, made on main
+            push_main(b, "move")
+            a.git("fetch", "-q", "origin")
+            w2 = Repo(os.path.join(tmp, "w2"))
+            a.git("worktree", "add", "-q", "-b", "prd/A-1-x", w2.path)
+            w2.run(*PB)  # merges the move into the session branch
+            mine = block("d4d4d4d")
+            a.add(IM, mine)
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            check(got.get("unsettled") == [IM], "the copy the move left behind is unsettled (%r)" % got)
+            a.write(IM, IMPL_HEAD + IMPL_1 + "\n" + mine)  # the branch's version, this run's entry after it
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            check(got.get("unsettled") == [] and a.git("show", "session/aa:" + IM)
+                  == (IMPL_HEAD + IMPL_1 + "\n" + mine).rstrip("\n"), "…and the remedy §6 names commits it (%r)" % got)
+        # both sides changed a file identically (here a renormalisation to CRLF): git's merge stands
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(FB, SEED.replace("\n", "\r\n"))
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            b.write(FB, SEED.replace("\n", "\r\n"))
+            push_main(b, "crlf")
+            a.git("fetch", "-q", "origin")
+            got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("merged") is True and got.get("conflicts") == [],
+                  "an identical change on both sides merges, never refused (%r)" % got)
         # a CRLF blob under core.autocrlf=input: a clean checkout is the index's blob, never a foreign copy
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
