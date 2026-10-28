@@ -73,6 +73,7 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   folder is ground**: a resolved `BRD-` root stops with `PRD_GROUND_ROOT_LEVEL`, naming
   [`/brd-split`](brd-split.md) as the way to carve one; a resolved `EPIC-` folder stops with
   `PRD_GROUND_EPIC_LEVEL`, naming the PRD folder it sits in.
+- **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `PRD_GROUND_TWO_ADDRESSES`.
 - **`--repos <name>[,<name>…]`** (optional) — the repositories to ground against, as one
   comma-separated token — a slug, or an absolute path to a clone — so the run asks nothing about
   them; without it the run lists the clones under `$REPOS_PATH` as candidates and asks — all but
@@ -162,7 +163,7 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
 
 ## What it needs
 
-- **`<KEY>`** — mandatory; absent or malformed stops the run with `PRD_GROUND_NEEDS_KEY`.
+- **`<KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `PRD_GROUND_NEEDS_KEY`.
 - **Not a root, and not an Epic folder.** `PRD_GROUND_ROOT_LEVEL` and `PRD_GROUND_EPIC_LEVEL`, per
   "Which route" above.
 - **`$REPOS_PATH`** — required, on either route, unless `--repos-path` names it; resolved as one

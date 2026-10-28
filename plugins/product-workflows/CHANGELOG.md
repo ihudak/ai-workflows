@@ -5,6 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.56.0] — 2026-10-28
+
+Take with `workflows-core` 1.64.0, which 3.53.0 needs; this release's own changes rely on nothing newer — batch B23 (PRD2-B1 to PRD2-B5, PRD-B4, FBB-B7, DQP-B3, DQP-B4).
+
+### Added
+- **An `@<path>` address on every `product-workflows` command that read its address as a key first.** `/create-prd`, `/update-prd`, `/idea`, `/brd-intake`, `/brd-split`, `/brd-interview`, `/brd-package`, `/brd-reconcile` and `/prd-ground` read the positional address with `read-key`, which reads no path, so an `@<path>` stopped as a malformed key — and `resolve-address`'s `ambiguous` stop, which names `@<path>` as the way through two folders asserting one key, was a dead end for all nine. An `@` token that is not a flag's value and names an existing directory under `$SPECS_PATH/specifications/` is now the address, in any position: its key is read off the folder's carrier, the token is handed to `resolve-address` as typed in each command's resolve step, and no bare token is then read as the key. Any other `@` token keeps the meaning it had — `/create-prd`'s idea, `/update-prd`'s transcripts, `/idea`'s and `/brd-intake`'s source, `/brd-reconcile`'s review file — since none of those is ever a directory. A bare key beside it naming the same folder is dropped as the same address typed twice; on `/idea` and `/brd-split` every other bare token is the prompt or the instruction, and on the other seven any other bare token stops with that command's `*_TWO_ADDRESSES` stop. `/conformance`, `/vuln` and `/security-workflows:scan` share the dead end and are listed for a later fix (to-fix D28).
+- **`/create-prd` handles a customer decision the operator reports from outside the register, or an outcome already carried out in production** (BRD route only, the one route with a register). Where the decision answers something a package put to the customer — an open `[C]`, `[AS#n]` or `[SR#n]`, or a re-answer of a decided `[C]` — and the operator holds the customer's own written answer, it recommends stopping to reconcile that answer with `/brd-reconcile <SLICE-KEY> @<answer-file> --free-text`, the one case that command can freeze; otherwise, and for every outcome already in production, it records the operator's final position, once, as a new `[AS#n]` that `/brd-package` carries to the customer — a production outcome as a fact the customer must be told, also listed under `Customer must be told:` in the final report. Never written as the customer's decision; the `[CD#n]` it departs from is never edited.
+
+### Changed
+- **`/create-prd` refuses `--from-prd` on the BRD route** with `CREATE_PRD_FROM_PRD_ON_BRD_ROUTE`, before the seed is read: a slice's PRD is seeded by its register, never by another PRD. Phase 0 used to read and gate the seed while Phase 2's BRD section forbade reading it, and Phase 1 offered two arrays for the same existing-PRD question; Phase 1 step 2 now states its order and step 6 points to it.
+- **The BRD-route parameter tables list `@<path>` for `/create-prd` as extra grounding, never the seed** (`brd-workflow.md`, `workflow.md`).
+- **`/update-prd` Phase 1 asks *Proceed* or *Cancel*.** Its *Refresh* or *Re-do* question was read by no later phase — both run the same grill against the same base — so it is retired.
+
+### Fixed
+- **`/create-prd` writes the BRD-route provenance it reports.** Spine item 1 now says to write `brd_key` (the slice key), `brd_parent` (`brd-link.md`'s `parent:`), `depends_on` (its `depends-on:`, omitted when empty) and `sources` (the customer document the slice inventory's `source:` names), and no `derived_from` or `seeded_from_prd`; the final report and the cost step already named these as written.
+- **`prd-reviewer` names the BRD-route `key` as the `PRD-` slice's own key**, never the parent BRD's (`<BRD-KEY>` was the placeholder).
+- **Text defects in `/create-prd` and its page**: the PA and PE hygiene line takes `<ADDRESS>`, not `<PRD>`; the final report's closing sentence lists every Phase 0 refusal; the capture-at-block list names `CREATE_PRD_SEED_NOT_FOUND`; the page's example no longer speaks of a ticket, and places a slice two levels under `specifications/`.
+- **The `/create-prd` page and command description say the BRD route seeds from `decisions.md`**, a `prd-seed.md` existing only after a `/brd-intake --sort-existing` migration; and the BRD-route parameter table in `brd-workflow.md` no longer offers `@<idea.md>` or says `--from-prd` is accepted there.
+
 ## [3.55.0] — 2026-10-28
 
 Its own changes need nothing newer than `workflows-core` 1.63.0; take 1.64.0, which 3.53.0 needs — to-fix D20.

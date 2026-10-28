@@ -376,7 +376,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## field feedback — BOOK-2-01 runs
 
-### FBB-B7 — MINOR — Gap: `/create-prd` has no rule for a customer decision taken outside the register, or one already carried out
+### FBB-B7 — MINOR — Gap: `/create-prd` has no rule for a customer decision taken outside the register, or one already carried out — **Fixed in product-workflows 3.56.0 (batch B23)**
 - **Where:** the contradiction paragraph at `plugins/product-workflows/commands/create-prd.md:640-649`.
 - **What is wrong:** It covers only a contradiction the run believes. It does not cover a decision taken in a meeting, or an outcome that has already happened in production.
 - **Failure scenario:** The operator reports a reversal from a meeting. The run improvises, and the operator's position shifts three times.
