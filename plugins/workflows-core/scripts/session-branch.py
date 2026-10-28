@@ -1641,8 +1641,10 @@ def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, 
     push from a commit id does not set; a failure is reported and changes nothing else.
     Returns {moved: an attempt moved the branch; pushed; attempts: how many began; replayed, dropped:
     those of the replay the branch was last moved onto; tip: the commit it was last moved onto, or the
-    one it stood on where origin's already held it, else None; porcelain: the push's status line for
-    the branch, or None; moves; upstream_error: None or git's first line; refused: None, or {reason
+    one it stood on where origin's already held it, else None; porcelain: the status line the last
+    attempt's push printed for the branch, or None where that attempt made no push or its push printed
+    none -- each attempt starts it at None, so an earlier attempt's "[rejected]" never outlives a later
+    attempt that found nothing left to push; moves; upstream_error: None or git's first line; refused: None, or {reason
     (REFUSALS), path} and for would-overwrite paths}.
     refused.path: for would-overwrite, a path of the checkout; for in-progress and locked, a marker,
     lock or unmerged file, relative to the checkout's top level where it lies inside it
@@ -1676,6 +1678,7 @@ def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, 
             top = os.path.realpath(text(git(root, "rev-parse", "--show-toplevel")))
             for attempt in range(1, attempts + 1):
                 result["attempts"] = attempt
+                result["porcelain"] = None  # the last attempt's push alone: see the docstring
                 fetched = git_bounded(root, fetch_seconds, "fetch", "--no-tags", "origin", "+%s:%s" % (ref, remote))
                 if fetched.returncode != 0:
                     result["refused"] = {"reason": "fetch-failed", "path": None}
@@ -4298,6 +4301,24 @@ def selftest():
                           and a.read(FB) == at(a, tip, FB),
                           "[move: three races] the branch stands moved on the last replay, not pushed (%r)" % got)
                 guarded("three races", race_thrice)
+
+                # a race in which the teammate pushed the very change the run's replay made: the first
+                # attempt's push is rejected, the second finds nothing left to push, and porcelain is the
+                # second attempt's -- None -- never the first's "[rejected]"
+                def race_then_nothing():
+                    a, b, stub, remote = pworld(where("race-then-nothing"))
+                    diverge(a, b)
+                    same = SEED + "\n" + TEAM_T + "\n" + MINE_T
+                    got = replay_cli(a, "--branch", "main",
+                                     env=racing(where("race-then-nothing-git"), b, [{FB: same}]))
+                    check(got.get("attempts") == 2 and got.get("moved") is True and got.get("pushed") is False
+                          and got.get("replayed") == [] and len(got.get("dropped", [])) == 1
+                          and got.get("porcelain") is None and got.get("refused") is None
+                          and got.get("tip") == a.git("rev-parse", "main") == origin_rev(remote, "main")
+                          and a.read(FB) == same == on_origin(remote, "main", FB),
+                          "[move: a race, then nothing left] stands on origin's, porcelain the last attempt's (%r)"
+                          % got)
+                guarded("a race, then nothing left", race_then_nothing)
 
                 # Review Focus 7: a refusal by origin itself is no race: one attempt, the line returned
                 def remote_rejected():
