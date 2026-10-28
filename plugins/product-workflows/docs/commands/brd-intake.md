@@ -13,17 +13,21 @@ phase `brd-to-prd` — the phase shared by every command of the BRD-to-PRD route
 `/create-prd` share `prd-creation`. It is the route's entry point, and the only command in it that
 is handed a customer-supplied source document: later commands read the copies and the inventory this
 run made, and none extracts requirements from the customer's files again. Downstream, each command
-of the route gates on what an earlier command in the chain produced, and only one on anything this
-command wrote. Nothing gates on this command's own inventory and ledger at all: `/brd-split`, run on
-the root, reads both from the working tree and stops on what they contain rather than on where they
-have been merged. Every command after that gates on a later hop (`/prd-ground` on the slice's own
-ledger `/brd-split` copied, `/brd-split` again on `/prd-ground`'s findings, `/brd-interview` on that
-ledger and those findings, `/brd-package` on `/brd-interview`'s register, and `/brd-reconcile` on
-`/brd-package`'s sent prompt). The one exception is this command's defect log: each slice's
-[`/brd-reconcile`](brd-reconcile.md) writes its defect resolutions into `brd/brd-defect-log.md`, so
-it gates on that log too, before it confirms any answer from the customer's review, and waits while
-the log is anywhere but the specs repo's default branch, or edited in the checkout and not handed
-off. Every command of the route runs as pm,
+of the route gates on what an earlier command in the chain produced, and on anything this command
+wrote only where it writes into it. Nothing gates on this command's own inventory and ledger at
+all: `/brd-split`, run on the root, reads both from the working tree and stops on what they contain
+rather than on where they have been merged. Every command after that gates on a later hop
+(`/prd-ground` on the slice's own ledger `/brd-split` copied, `/brd-split` again on `/prd-ground`'s
+findings, `/brd-interview` on those findings — it reads the ledger from the working tree for its
+allocation gate — `/brd-package` on `/brd-interview`'s register, and `/brd-reconcile` on
+`/brd-package`'s sent prompt). The exception is this command's defect log, which two commands write
+into. Each slice's [`/brd-reconcile`](brd-reconcile.md) writes its defect resolutions into
+`brd/brd-defect-log.md`, so it gates on that log too, before it confirms any answer from the
+customer's review, and waits while the log is anywhere but the specs repo's default branch, or
+edited in the checkout and not handed off. Each slice's [`/brd-interview`](brd-interview.md) gates
+on it before the one resolution it may write, `resolved-by` for an `unsourced` defect a verified
+finding settles, on the operator's confirmation — and where the log is unsettled it writes nothing
+there and prints the value to write by hand. Every command of the route runs as pm,
 [`/prd-ground`](prd-ground.md) included.
 
 ## Synopsis

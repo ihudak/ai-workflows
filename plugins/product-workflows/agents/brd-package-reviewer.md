@@ -82,7 +82,9 @@ deliberately, in this order, and record the class on every finding.
    puts on it. The characteristic failure is not a fabricated citation; it is a real finding about a
    nearby question, cited for a decision it does not settle — a `CONFIRMED` finding about *how* the
    system does something, cited for a decision about *whether* it should. A `FALSE-FRIEND` or
-   `NOT-PROVABLE` finding read as support is the same failure in its most direct form. Check the
+   `NOT-PROVABLE` finding read as support is the same failure in its most direct form, and so is a
+   finding whose verifier `outcome` is `unprovable`, which settled nothing whatever verdict it keeps
+   (`workflows-core:grounding-format` §8) — read the outcome beside the verdict. Check the
    `will-change` rule (`decision-register-format.md` §6) while you are in the list: a decision the
    register closed in violation of a rule the register itself declares is a finding about the
    package's discipline, not only about that decision.

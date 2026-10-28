@@ -259,7 +259,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## product-workflows — BRD route
 
-### BRD-G1 — `/brd-interview` has no carry-forward for a `needs-a-human` item that `/brd-reconcile`'s sweep raises (follow-up E-8, still open, not in to-fix.md)
+### BRD-G1 — `/brd-interview` has no carry-forward for a `needs-a-human` item that `/brd-reconcile`'s sweep raises (follow-up E-8, still open, not in to-fix.md) — **Fixed in product-workflows 3.58.0 (batch B25)** — **its remainder recorded as D31 in `docs/superpowers/to-fix.md`**
 - **Designed in:** `docs/superpowers/brd-route-follow-ups.md` § E-8: "`/brd-interview` does not read the reconciliation record … So the operator carries it between runs by reading a report … Whether a report line is a strong enough guarantee that a `conditional` `[CDF#n]` is re-settled before packaging — or whether the trigger should widen to include an entry the last reconciliation flagged."
 - **Current state:** Still undecided and unimplemented. `/brd-interview` reads no `reconciliation-<date>.md`: `grep -n "reconciliation-" plugins/product-workflows/commands/brd-interview.md` returns nothing. Its only "what still needs a human" uses are its own (`brd-interview.md:1620`, `:1884`). to-fix.md's coverage line says `brd-route-follow-ups.md` was never swept, and E-8 is not listed there.
 - **Still worth doing?:** Yes, at least as a recorded decision. The entry names the risky case: no interview round is planned before packaging, and an item carried only in a report is lost.
@@ -499,7 +499,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `prd-ground-baselines-layout-unspecified` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B44 — NIT — Gap: no command closes `unsourced` defects that a verified finding settles
+### FBB-B44 — NIT — Gap: no command closes `unsourced` defects that a verified finding settles — **Fixed in product-workflows 3.58.0 (batch B25)**
 - **Where:** `plugins/product-workflows/commands/brd-interview.md:878` ("stays `open` until a person resolves it"); `references/brd-format.md:917`.
 - **What is wrong:** `[DEF#2]` and `[DEF#15]` stay `open` in the log the customer receives, although `[CG#2]` and `[CG#12]` settle them.
 - **Suggested fix:** Offer, with confirmation, to write `resolved-by: <SLICE-KEY>/[CG#n]`, or print the exact line to write by hand.

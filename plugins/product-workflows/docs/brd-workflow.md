@@ -339,7 +339,7 @@ specifications/BRD-<BRD-KEY>-<slug>/
 │   ├── brd-inventory.md         # [BR#n] rows, /brd-intake
 │   ├── brd-link-log.md          # captured files' uncaptured links, with reasons, and the as-written map, /brd-intake
 │   ├── brd-figures.md           # each captured image's transcription and the rows it yields, /brd-intake; /brd-reconcile applies a customer's correction
-│   └── brd-defect-log.md        # confirmed [DEF#n] entries, /brd-intake and /brd-reconcile
+│   └── brd-defect-log.md        # confirmed [DEF#n] entries, /brd-intake; resolutions /brd-reconcile, and /brd-interview for an unsourced one
 ├── coverage-ledger.md           # one row per [BR#n]; /brd-intake writes it, /brd-split resolves it
 ├── slices.md                    # slice rationale and deferral notes, /brd-split
 ├── design/                      # exported frame sets — one subdirectory each, images + an index; /frames indexes it, no grounding reads it (a root is never ground)
