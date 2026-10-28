@@ -6,7 +6,9 @@ The canonical shape of the BRD→PRD workflow's **decision register**: the recor
 (delivery-team decision) and `[CD#n]` (customer decision) carries, the five statuses one can hold,
 the rule that makes `argumentation` mandatory, the rule that makes reopening explicit, what
 `conditional_on` means and what it buys, the prohibition on a decision resting solely on a
-`will-change` finding, and the `[AS#n]` assumption record that must reach the customer. Design
+`will-change` finding, and the `[AS#n]` assumption record that must reach the customer — and,
+beside the register, the torn write no reader counts (§8) and a worked round record and question-set
+entry in the layout `commands/brd-interview.md` writes them (§9). Design
 authority: `docs/superpowers/specs/2026-08-29-brd-to-prd-workflow-design.md` §6.2 and decision rows
 D14 and D19 in §3 (removed from the tree 2026-09-23; `git show 62e791e8:docs/superpowers/specs/2026-08-29-brd-to-prd-workflow-design.md` retrieves it).
 
@@ -657,3 +659,153 @@ gap. That gap is the only break in §1's contiguity, and in `references/code-def
 count. They are simply on no ref — the state a declined handoff leaves, with the same remedy, which
 `commands/brd-package.md` names where it gates the register, the question set and log, and the
 round records (Phase 0 steps 6, 6b and 7).
+
+## 9. The round record and the question set, worked
+
+`commands/brd-interview.md` writes two files beside the register whose lines other commands read:
+`interview/round-<N>.md`, the round record §8 makes the commit point, and
+`interview/customer-questions.md`, the `[C]` questions held for the customer. What each line carries
+is the command's to fix — its *Write the register and the round record* phase for the record, its
+*Hold every `[C]`* phase for an entry — and where this section and the command differ, the command
+governs. This section shows one of each as written, so that every run writes the same layout and
+every reader meets it, and says after them what the readers take from each. **Each example sits
+in a four-backtick fence, so its `#` and `##` lines are the example's, never this file's sections**:
+the tree's heading scanners skip fenced blocks — `scripts/check-docs.sh` strips them before it reads
+a heading, and `scripts/reference-parts.py` reads headings outside them — and a reader of this file
+takes its sections from its own `##` lines alone.
+
+A round record after its first write, on `EPIC-008-01`, a slice of the synthetic BRD `EPIC-008`:
+
+````markdown
+# Interview round 1: EPIC-008-01
+
+generated against: [CG#1]=CONFIRMED/agree, [CG#2]=AMENDED/extend, [CG#3]=CONFIRMED/unprovable, [CG#4]=CONFIRMED/agree
+
+## Scope
+
+This round covers 4 rows, [BR#1] to [BR#4], each `covered-here`. No row was left to another BRD, and no orphan row was passed over.
+
+## Questions
+
+### 1. [G] — [BR#2]
+
+Does the export write one row per settled transaction today, as requirement 4.1 says?
+
+- **State:** answered from findings — [CG#2] AMENDED: one row per settlement batch, its transactions summed into it
+
+### 2. [V] — [BR#2]
+
+How does the export reach one row per transaction: by splitting each batch as it exports, or by recording each transaction as it settles?
+
+- **Re-puts:** none
+- **State:** decided — [VD#1]
+
+### 3. [V] — [BR#3]
+
+[CG#3] reads CONFIRMED, but its verifier outcome is `unprovable`: its two blind re-derivations disagreed about which clock the nightly cut-off reads. Which clock does the cut-off use?
+
+- **Re-puts:** none
+- **State:** deferred — waiting on the hosting team to say which timezone the job host runs in
+
+### 4. [C] — [BR#4]
+
+Which invoices should one month's export cover?
+
+- **State:** held for the customer — `interview/customer-questions.md`, Round 1, question 4
+
+## Account
+
+requirement defects: [DEF#3] asked
+code defects: raised [CDF#1]
+Status: open — waiting on deferred, held for the customer
+````
+
+Question 2's decision turned on a code defect, so the first write raised `[CDF#1]`, `conditional` on
+a decision of the sibling slice `EPIC-008-02`. That sibling's reconciliation then moved the decision,
+and its record flagged the entry: `- **Hit:** PRD-EPIC-008-01-export/code-defect-log.md › [CDF#1] —
+blocked_on names EPIC-008-02/[CD#2], which this pass superseded — needs-a-human`, under the heading
+of its pass over `customer-review-20261103.md`. A later run resumes the round at question 3, the
+first question carrying no terminal disposition, puts the flagged entry to the operator, who moves
+it to `in-scope`, and appends a line beneath question 3's last one, then two at the end of the file —
+applying the move to the log only after that write:
+
+````markdown
+- **State:** decided — [VD#2]
+````
+
+````markdown
+code defects: re-dispositioned [CDF#1] #1 conditional → in-scope; flag answered [CDF#1] PRD-EPIC-008-02-refunds/reconciliation-20261103.md › customer-review-20261103.md
+Status: open — waiting on held for the customer
+````
+
+And `commands/brd-reconcile.md`, once the customer's answer to question 4 is confirmed, appends
+beneath that question, and at the end the closing line its *Freeze the customer decisions* phase
+writes where its answers leave every question in the round with a terminal disposition:
+
+````markdown
+- **State:** answered by the customer — [CD#1]
+````
+
+````markdown
+Status: closed 20261104 — question 4, the last held question, answered by [CD#1]
+````
+
+The question set holding question 4, as `commands/brd-interview.md` writes it, the title line read
+by nobody:
+
+````markdown
+# Customer questions: EPIC-008-01
+
+## Round 1, question 4
+
+Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export covers "every invoice", which does not say whether credit notes count. Today the export writes every invoice in a settled batch, credit notes among them. Which invoices should one month's export cover?
+
+- Every invoice issued in the month, credit notes included
+- Every invoice issued in the month, credit notes left out
+- Only the invoices paid in the month
+
+- **Findings:** [CG#4] CONFIRMED
+- **Altitude:** product
+- **Requirement defect:** [DEF#3]
+````
+
+`commands/brd-reconcile.md` then marks the entry answered, appending
+`- **State:** answered by the customer — [CD#1]` beneath its last line, as it does in the record.
+
+**What the readers take from these files, and nothing else is read as a field.**
+
+- **A question's address is its round and its position**, the number its `### <position>. [<tag>] —
+  <rows>` heading opens with, never renumbered. A split question records
+  `- **State:** split — <position>a, <position>b, …`, and each part sits under a heading of its own,
+  `### <position>a. [<tag>] — <rows>`, beneath it. The heading's tag is the one the question was
+  written with; a re-tag is a state, `- **State:** re-tagged — [V], cause [CG#n] NOT-PROVABLE`, or
+  `… cause [CG#n] <verdict>, outcome unprovable`, and every state after it is the re-tagged
+  question's, so the question's tag is the one its last `re-tagged` state names, where it has one —
+  which is how §8 reads *the tag `[C]` in its last recorded state*.
+- **Each state is a line of its own**, `- **State:** <state> — <what it names>`, in the vocabulary of
+  `commands/brd-interview.md`'s *Resolve the round*: a terminal disposition or a holding state. A
+  later write appends a new line beneath the question's last one and never edits one, and **the last
+  is the question's state** — what that command's resume and closure rules read, what
+  `commands/brd-package.md`'s rounds gate reads (its Phase 0 step 7), and the line §8 reads for a
+  `[VD#n]` named *decided*.
+- **`- **Re-puts:**`** stands on every `[V]` and on every question that puts a record again, above
+  the question's first state — save on a `[V]` reached by a re-tag or a rewrite, where the write
+  that records it appends the line, reading `none`, beneath that state, and on a `[V]` a release
+  wrote before the line existed, which `commands/brd-interview.md`'s tie picker gives it later.
+- **`generated against:`** is written once, by the first write, and is what the next round's
+  generation compares the findings with.
+- **The account lines and `Status:` go at the end of each write**: every write of the command
+  appends a `code defects:` line and a `Status:` line — the baseline append aside (§8) — and the
+  record carries the `requirement defects:` account line the command fixes, which round 1's record is
+  read for. `commands/brd-reconcile.md` appends a `Status: closed` line alone, and only where its
+  answers close the round; the last `Status:` line is the round's, outvoted by the questions' own
+  states where the two disagree.
+- **In the question set, the `## Round <N>, question <position>` heading is the entry's boundary**,
+  and its labelled lines — `- **Findings:**`, `- **Altitude:**`, and where they apply
+  `- **Rejected row:**`, `- **Requirement defect:**`, `- **Defect image:**` and `- **Re-puts:**` —
+  are what `commands/brd-package.md` renders and `commands/brd-reconcile.md` copies. **The options
+  the customer is offered are part of the question as it will be put**, a plain list under it on no
+  labelled line, which `commands/brd-reconcile.md` records as the answering `[CD#n]`'s
+  `options_considered` (§1).
+- **The scope paragraph, a question's text and a state's explanation are prose** for whoever reads
+  the record; no command parses them.

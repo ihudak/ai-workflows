@@ -1494,7 +1494,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## product-workflows — BRD route (second pass)
 
-### BRD2-B1 — MINOR — `/brd-interview`'s `[V]` picker is described two contradictory ways, one sentence apart
+### BRD2-B1 — MINOR — `/brd-interview`'s `[V]` picker is described two contradictory ways, one sentence apart — **Fixed in product-workflows 3.58.0 (batch B25)**
 - **Where:** `plugins/product-workflows/commands/brd-interview.md:1490-1492` against `:1495-1500`
 - **What is wrong:** The lead-in to the array says: "The options presented are that question's own `options_considered` …, with one trailing entry for an option the operator supplies themselves and the two standing exits". That describes an "own option" entry plus two exits, Defer and Cancel. The array that follows it, and the two paragraphs under it, say the opposite:
   - "The entries are two options at most, plus the defer entry: three, never four";
@@ -1533,7 +1533,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD2-B5 — MINOR — The will-change picker's `conditional_on: <BRD-KEY>/<decision-id>` collides with the command's own `<BRD-KEY>` placeholder
+### BRD2-B5 — MINOR — The will-change picker's `conditional_on: <BRD-KEY>/<decision-id>` collides with the command's own `<BRD-KEY>` placeholder — **Fixed in product-workflows 3.58.0 (batch B25)**
 - **Where:** `plugins/product-workflows/commands/brd-interview.md:1743`; the intended value is at `:1754`
 - **What is wrong:** Everywhere in this command, `<BRD-KEY>` is the run's own slice key, which the orchestrator substitutes into every array (for example `:2201`, `/product-workflows:brd-package <BRD-KEY>`). In this one option, `"Make it explicitly conditional on the prerequisite — conditional_on: <BRD-KEY>/<decision-id>"`, it must instead be the **prerequisite's** key: "a `conditional_on` naming one specific decision of the prerequisite (`EPIC-008/[VD#3]` …)".
 - **Failure scenario:** A run substitutes its own key the way it does in every other array. The operator is then shown, and the record may then carry, `conditional_on: <this slice>/<id>`: a decision conditional on its own register. `/brd-reconcile`'s propagation sweep, which reaches a held record by that field, would never fire for the real prerequisite.
@@ -1554,7 +1554,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD2-B7 — MINOR — The `/brd-interview` and `/brd-package` docs examples invoke the root key that the docs' own convention names, which both commands refuse
+### BRD2-B7 — MINOR — The `/brd-interview` and `/brd-package` docs examples invoke the root key that the docs' own convention names, which both commands refuse — **Fixed in product-workflows 3.58.0 (batch B25)**
 - **Where:**
   - `plugins/product-workflows/docs/commands/brd-interview.md:518-521` and `:549`;
   - `plugins/product-workflows/docs/commands/brd-package.md:448-451`;
@@ -1589,7 +1589,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD2-B10 — NIT — The `/brd-intake` docs page says `/brd-interview` "gates on" the slice ledger
+### BRD2-B10 — NIT — The `/brd-intake` docs page says `/brd-interview` "gates on" the slice ledger — **Fixed in product-workflows 3.58.0 (batch B25)**
 - **Where:** `plugins/product-workflows/docs/commands/brd-intake.md:17-22`; the command is at `commands/brd-interview.md:213-216`, `:322-326`
 - **What is wrong:** The paragraph contrasts reading from the working tree with gating on "where they have been merged". It then lists "`/brd-interview` on that ledger and those findings". `/brd-interview`'s only `require-on-main` targets `grounding/code-grounding.md`. It reads `coverage-ledger.md` from the worktree, and only for an `unallocated` count (step 8).
 - **Suggested fix:** Change it to "`/brd-interview` on those findings (it reads the ledger from the working tree for its allocation gate)".
@@ -1671,7 +1671,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD3-B8 — MINOR — A finding that keeps its verdict but has an `unprovable` verifier outcome counts as settled in Phase 3 and unsettled in Phase 5
+### BRD3-B8 — MINOR — A finding that keeps its verdict but has an `unprovable` verifier outcome counts as settled in Phase 3 and unsettled in Phase 5 — **Fixed in product-workflows 3.58.0 (batch B25)**
 - **Where:** `plugins/product-workflows/commands/brd-interview.md:851-857` (Phase 3's second source), `:512-514` (Phase 2's no-question test) and `:1905-1908` (the walk record) against `:1401-1402` (Phase 5 outcome 2) and `:96-98` (invariant 4). Also `:2421` (Final report) and `plugins/product-workflows/docs/commands/brd-interview.md:136-137`.
 - **What is wrong:**
   - Phase 3 raises a question for "a `[BR#n]` whose findings are `NOT-PROVABLE` — the repository could not settle it". That tests the **verdict** only.
@@ -1695,7 +1695,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium. The design intent for CONFIRMED plus `unprovable` is not stated anywhere, but the two phases' texts plainly disagree.
 
-### BRD3-B9 — MINOR — Phase 5 can answer a `[G]` from a `SUPERSEDED` finding
+### BRD3-B9 — MINOR — Phase 5 can answer a `[G]` from a `SUPERSEDED` finding — **Fixed in product-workflows 3.58.0 (batch B25)**
 - **Where:** `plugins/product-workflows/commands/brd-interview.md:1393-1400`
 - **What is wrong:**
   - The text reads: "For each `[G]` in the round, search the verified findings for one whose `claim` settles it. Only a finding carrying a verifier `outcome` counts".
@@ -1820,7 +1820,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium.
 
-### BRD3-B21 — NIT — The Final report explains a slice's non-zero `unallocated` term as a row "delegated to a child"
+### BRD3-B21 — NIT — The Final report explains a slice's non-zero `unallocated` term as a row "delegated to a child" — **Fixed in product-workflows 3.58.0 (batch B25)**
 - **Where:** `plugins/product-workflows/commands/brd-interview.md:2466-2467`
 - **What is wrong:**
   - The text reads: "a non-zero `unallocated` term in the line — a row this BRD delegated to a child that has not walked it yet — is that resolution working".
@@ -2480,7 +2480,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `prd-ground-tail-after-phase3-stop`, `prd-ground-instruction-files-as-evidence`, `prd-ground-repo-choice-on-rerun`, `prd-ground-brd-wireframe-not-in-census` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B43 — MINOR — `/brd-interview`: follow-up prompts may be batched, and the round-record and question-set layouts are unspecified
+### FBB-B43 — MINOR — `/brd-interview`: follow-up prompts may be batched, and the round-record and question-set layouts are unspecified — **Fixed in product-workflows 3.58.0 (batch B25)**
 - **Where:** `plugins/product-workflows/commands/brd-interview.md:1485` ("exactly one at a time, never batched" reads as covering only the picker); `references/decision-register-format.md` (no whole-file template for `interview/round-<N>.md` or `customer-questions.md`; `ls references` has no interview-round format).
 - **What is wrong:** A run merged one `[V]`'s argumentation prompt and code-defect offer with the next picker. Each run also improvises state lines that `/brd-package`, `/brd-reconcile` and resume parse.
 - **Suggested fix:** Say that the follow-ups are separate calls. Add a worked round record and a worked `customer-questions.md` entry.

@@ -6,7 +6,7 @@ Reported by the operator after running the BRD route against a real customer eng
 
 Per **S18**, nothing releases while any of these is open.
 
-**Status, 2026-09-22: nothing here is open, and this line is the one to read first.** Every entry below records its own disposition and they are what this paragraph is derived from — `BRD-1` to `BRD-6`, `R-1` to `R-5`, `E-1` to `E-5`, `E-7`, and `G3-1` to `G3-3` all **closed**; `E-6` **retired**; `E-8` is a recorded **question** about the strength of a guarantee and says in its own entry that it is *not an S18 blocker as filed*; `G3-4` and *Recorded, not counted as defects* were never defects. **Re-derive this from the entries rather than trusting the sentence** — it is prose, and no gate in `scripts/` reads this file. The dated paragraphs below are kept as the sequencing records they were, and their tense is historical: each says what was still ahead on the day it was written, not what is ahead now. Where one of them named a gate or a defect as still blocking, this line is what settles it.
+**Status, 2026-09-22: nothing here is open, and this line is the one to read first.** Every entry below records its own disposition and they are what this paragraph is derived from — `BRD-1` to `BRD-6`, `R-1` to `R-5`, `E-1` to `E-5`, `E-7`, and `G3-1` to `G3-3` all **closed**; `E-6` **retired**; `E-8` was a recorded **question** about the strength of a guarantee, *not an S18 blocker as filed*, decided 2026-10-28 with its remainder moved to `docs/superpowers/to-fix.md` D31; `G3-4` and *Recorded, not counted as defects* were never defects. **Re-derive this from the entries rather than trusting the sentence** — it is prose, and no gate in `scripts/` reads this file. The dated paragraphs below are kept as the sequencing records they were, and their tense is historical: each says what was still ahead on the day it was written, not what is ahead now. Where one of them named a gate or a defect as still blocking, this line is what settles it.
 
 **Three design gates, sequenced. All three have shipped** — the plan as written on 2026-09-06, when gate 3 was still ahead:
 
@@ -348,6 +348,8 @@ register created to fix it contained the same unrecorded claim.
 ---
 
 ## E-8 — a `needs-a-human` item has no mechanical carry-forward into the next interview round
+
+**DECIDED 2026-10-28 — the trigger widens (feature-gaps review BRD-G1, batch B25, product-workflows 3.58.0).** `/brd-interview`'s re-disposition trigger now takes an entry the latest reconciliation record of any slice under the parent flags `needs-a-human`, by the `[CDF#n]` `/brd-reconcile`'s record now names for such a hit. What that leaves open, the no-further-round case below first, is `docs/superpowers/to-fix.md` D31.
 
 **Raised 2026-09-08 while measuring E-5, and deliberately not folded into it.**
 

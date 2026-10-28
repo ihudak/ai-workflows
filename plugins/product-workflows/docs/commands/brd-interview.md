@@ -5,7 +5,9 @@ tags every one of them `[G]`, `[V]` or `[C]` **before a single one is asked**, a
 from the grounding findings without asking anybody, puts each `[V]` to the operator one at a time
 with mandatory argumentation, and holds every `[C]` for the customer. It writes `decisions.md`, the
 round's own record, the `[C]` question set, and — where a decision raises a defect in the code or
-re-dispositions one already on file — the code-defect log.
+re-dispositions one already on file — the code-defect log; and, on the operator's confirmation, it
+writes a resolution into the parent BRD's requirement-defect log for an `unsourced` defect a
+verified finding of the slice settles.
 
 ## Who runs it
 
@@ -134,7 +136,8 @@ questions raises no prompt of any kind; the operator queue holds exactly what th
 fixed — including a `[G]` re-tagged to `[V]`, which is re-tested there before it joins — and nothing
 reaches it that has not been through that phase, nor anything at all once the queue opens; and a
 `[G]` can leave the `[G]` set only by re-tagging, which re-enters at the tagging phase and is
-admissible only against a named `NOT-PROVABLE` finding.
+admissible only against a named finding nobody could settle — one reading `NOT-PROVABLE`, or one
+whose verifier outcome is `unprovable`, whatever verdict it keeps.
 
 **The round is scoped to the rows this BRD is answerable for.** Questions are generated over the
 ledger rows reading `covered-here`, `deferred-to`, `rejected` or `superseded-by` — never over a row
@@ -153,6 +156,14 @@ it may not be is the thing asked about.
 until each part carries exactly one, and the `[G]` part is answered first, because its answer
 routinely changes what the business question should ask (§4). A question nobody can tag is
 under-specified and is rewritten — never filed with a guessed tag.
+
+**A requirement whose grounding settled nothing raises a question for a person.** That is a
+finding reading `NOT-PROVABLE` — the repository could not settle it — and equally a finding whose
+verifier outcome is `unprovable`, whatever verdict it keeps other than `SUPERSEDED`: where `/prd-ground`'s verifier
+re-derived the finding twice, blind, and the two disagreed, the finding keeps its verdict beside
+that outcome, and the run reads the outcome as well as the verdict, so a requirement nobody could
+settle is never treated as grounded. The question arrives at tagging carrying that finding, and is
+tagged `[V]` or `[C]`, never `[G]`.
 
 All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 12's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the round's reading, tagging and interactive walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
@@ -177,11 +188,14 @@ flowchart TD
 A run that finds every round closed and nothing a question source would ask since the last one
 opens no new round: it reports that plainly — nothing changed, or each change and why it raised
 nothing — with any requirement defect that belongs to a closed round 1, and the re-open
-that asks it — removes any torn write an interrupted run left and reports each one, and reaches the handoff with nothing
+that asks it, and each code defect a reconciliation flagged, as waiting for a run that works a round
+— removes any torn write an interrupted run left and reports each one, and reaches the handoff with nothing
 to commit where the register is already on file, nothing was torn, no interrupted
-re-disposition of a code defect was completed and none was left uncommitted; otherwise it hands off what it wrote — `decisions.md`
+re-disposition of a code defect was completed, none was left uncommitted and no `unsourced` defect
+was closed; otherwise it hands off what it wrote — `decisions.md`
 as its header line alone where none was on file, any file a torn-write removal or a completed
-re-disposition changed, and a code-defect log an earlier run left changed and uncommitted.
+re-disposition changed, a code-defect log an earlier run left changed and uncommitted, and the
+parent's defect log where Phase 10 wrote a resolution into it.
 `workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK` — and no other
 subagent is dispatched — every finding this command reads was already independently re-derived by
 `/prd-ground`'s own verifier pass.
@@ -314,7 +328,10 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
   otherwise, so a line it leaves naming a holding state no question is in any more is outvoted by
   the dispositions until the next `/brd-interview` write appends one that agrees. This file is what
   makes a round resumable — an interrupted run returns to the first question carrying no terminal
-  disposition rather than restarting the round.
+  disposition rather than restarting the round. Each question sits under a
+  `### <position>. [<tag>] — <rows>` heading, with each state it reaches on a line of its own
+  labelled `- **State:**` beneath it; [`decision-register-format.md`](../../references/decision-register-format.md)
+  §9 shows a whole record, the later writes to it, and the question-set entry it names.
 - `interview/customer-questions.md` — the `[C]` questions held for the customer, each with the
   findings that bear on it, on its own line labelled `- **Findings:**` and reading `none` where none
   does, which [`/brd-package`](brd-package.md) renders into the customer prompt and
@@ -322,7 +339,9 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
   answer that already narrowed it; its altitude — `product`,
   `architecture` or `implementation` — on its own line labelled `- **Altitude:**`, which the
   `[CD#n]` answering it copies; for a rejected row's question, that row, on its own line labelled
-  `- **Rejected row:**`, which is how a later run finds it; and — for a question a requirement
+  `- **Rejected row:**`, which is how a later run finds it; the options the customer is offered,
+  where the question offers any, as a plain list in the question itself, which `/brd-reconcile`
+  records as the answering decision's options; and — for a question a requirement
   defect raised, or a rejected row's question carrying the defect it cites — the `[DEF#n]` it asks
   about, alone on its own line labelled `- **Requirement defect:**`, which `/brd-reconcile` copies
   into the `settles` field of the `[CD#n]` that answers it and every slice reads to know the defect
@@ -348,7 +367,16 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
   bookkeeping. Format:
   [`code-defect-log-format.md`](../../references/code-defect-log-format.md).
 
-**One phase writes all of it, in one order, and the round record goes last.** Phase 9 writes
+**Outside the slice folder, one file, and only a resolution in it**: the parent BRD's
+`brd/brd-defect-log.md`, where Phase 10 writes `resolved-by: <SLICE-KEY>/[CG#n]` for an `unsourced`
+requirement defect a verified finding of this slice settles — only on the operator's confirmation,
+and only where Phase 0 found the log settled. Nothing else in the parent's
+log is written, and the file is handed off with this run's own deliverables; where that handoff
+commits nothing, the run names the log as edited and uncommitted and says how to commit it, since
+each slice's [`/brd-reconcile`](brd-reconcile.md) stops on the log until it is on the default branch.
+
+**One phase writes everything in the slice folder, in one order, and the round record goes last**
+— the parent's defect log apart, whose one write is Phase 10's, after it. Phase 9 writes
 `code-defect-log.md`, then `decisions.md` — the log first, so no decision cites a defect entry that
 is on no file — then `interview/customer-questions.md`, then the round record. A round record
 written before its `code defects:` and `requirement defects:` lines existed first gets a baseline
@@ -445,18 +473,34 @@ option is picked.
   in the *untagged* holding state, with what is wrong with it recorded; it is never asked in that
   state.
 - **Phase 5 — a re-tag needs a cause.** A `[G]` grounding cannot settle is re-tagged only against a
-  named `NOT-PROVABLE` finding or an `unprovable` verifier outcome. A `[G]` no finding bears on at
+  named `NOT-PROVABLE` finding or an `unprovable` verifier outcome. A finding reading `SUPERSEDED`
+  answers no `[G]` and causes no re-tag, though it keeps its claim and its verifier outcome as they
+  stood: its successors are read in its place. A `[G]` no finding bears on at
   all is recorded as *needs grounding* and answered by a `/prd-ground` re-run — it is neither
   re-tagged nor asked, because a re-tag with no finding to name would manufacture the trail from "we
   asked the code" to "we asked a person" instead of recording its absence.
 - **Phase 6 — argumentation is mandatory.** No `[VD#n]` is written without a reason that is not a
   restatement of the decision, not "to be filled in later", and not the name of whoever decided it.
   The test is whether a reader who was not in the room can say what would have to change for the
-  answer to change.
+  answer to change. Each `[V]`'s picker and each prompt that follows its answer — the
+  argumentation prompt, the code-defect offer and the question its *Yes* opens, a re-disposition —
+  is asked on its own, never batched with another into one prompt.
+- **Phase 6 — a code defect a reconciliation flagged is put again.** A later round puts an entry of
+  the code-defect log to the operator where it is still `open`, `conditional` on something the
+  round has settled, or **flagged**: a [`/brd-reconcile`](brd-reconcile.md) run of any slice under
+  the same parent found it stale and sent it to a human, naming its log and its `[CDF#n]` on a
+  `- **Hit:**` line of that slice's latest reconciliation record. The disposition is the operator's
+  to keep or move, and either answer is recorded on the round record's `code defects:` line as
+  `flag answered`, which clears that flag; a later reconciliation's hit on the same entry flags it
+  again. Only a run that works a round can answer one — a run that finds every round closed and
+  nothing to ask names each flagged entry as waiting instead.
 - **Phase 8 — the will-change rule.** A decision whose `evidence` list is *entirely*
   `horizon: will-change` findings may not be closed. Three resolutions are offered and exactly three:
-  re-base it on a `current` finding, make it explicitly `conditional_on` the prerequisite decision, or
-  defer it with the blocking prerequisite named. Deleting the `will-change` finding is not one of
+  re-base it on a `current` finding, make it explicitly `conditional_on` the prerequisite decision —
+  `<PREREQ-KEY>/<decision-id>`, the prerequisite's own key and decision, taken from the
+  `will-change` findings' `prerequisite` field and never this slice's key — or defer it with the
+  blocking prerequisite named. Where those findings name more than one prerequisite decision, or a
+  bare id with no key, the conditional resolution has nothing to write, and choosing it puts the picker again. Deleting the `will-change` finding is not one of
   them, and neither is re-filing the position as an assumption. Whichever is taken, the question is
   *decided* and its round can close — deferring here holds the record, not the question, and is not
   the *deferred* holding state. **A held record's exit is a later round** — and, for one written
@@ -486,6 +530,21 @@ option is picked.
   **Cancel on this picker writes nothing the run decided**: it stops the run before the register phase, so no
   decision this run took is written, and no `[C]` question it held either, and the next run puts the question again — or, for a round
   this run opened, regenerates it and asks only what is still askable.
+- **Phase 10 — an `unsourced` defect a verified finding settles may be closed, on confirmation.**
+  Before the handoff, each `unsourced` requirement defect still `open` in the parent's defect log,
+  raised on a row this slice builds or defers, where every code finding of this slice on that row
+  that is not superseded carries a verdict other than `NOT-PROVABLE`, an outcome other than
+  `unprovable` and a `current` horizon, all of them the same verdict, is listed with those findings,
+  each with its verdict, outcome and horizon. Where any of them fails, the defect is reported
+  instead, with why — a finding a prerequisite decision is about to overturn closes nothing. The
+  operator chooses to write
+  `resolved-by: <SLICE-KEY>/[CG#n]` for every one, for some, or for none, the value then printed to
+  write by hand. Nothing is recommended: whether the finding settles the defect is the operator's to
+  confirm. The parent's log is another BRD's, so Phase 0 runs `require-on-main` on it first —
+  before step 9 reads anything, and only where the log holds an `open` `unsourced` entry on a row this
+  slice builds or defers — and
+  where it is unsettled the run writes nothing there and prints each value instead; that gate never
+  stops the run. A written resolution rides this run's pull request with the rest.
 - **Round closure.** A round closes only when every question in it carries a **terminal**
   disposition. A holding state — *held for the customer*, *deferred*, *needs grounding*, *untagged* — is not one
   and keeps the round open, so a round never closes around a question the run promised to return to:
@@ -516,10 +575,10 @@ option is picked.
 
 ## Example
 
-Work the first round of a synthetic customer BRD, once its split has merged:
+Work the first round of a slice of a synthetic customer BRD, once the slice's own split has merged:
 
 ```
-/product-workflows:brd-interview EPIC-008
+/product-workflows:brd-interview EPIC-008-01
 ```
 
 The run gates on the grounding being merged and verified and the ledger being fully allocated, opens
@@ -547,7 +606,7 @@ A decided slice needs no reconciliation before authoring, so it is also offered 
 Re-opening a closed round later, with its cause recorded:
 
 ```
-/product-workflows:brd-interview EPIC-008 --round 1
+/product-workflows:brd-interview EPIC-008-01 --round 1
 ```
 
 ## See also

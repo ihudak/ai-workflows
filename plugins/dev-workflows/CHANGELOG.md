@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.48.2] — 2026-10-28
+
+Take with `workflows-core` 1.66.0, whose `phase-handoff` §3.7 names the exception `/ready` and these pages now name — batch B25 (FBB-B44).
+
+### Fixed
+- **`/ready` and the *Roles and phases* page no longer say `/brd-reconcile` is the only command beside `/ready` that reads a stopping row without stopping.** `product-workflows` 3.58.0's `/brd-interview` does too, at its Phase 0 step 8a gate on its parent's defect log, where a stop withholds only its offer to close a defect. `/ready`'s own *Key distinction* aside, which listed `/brd-reconcile`'s sites alone, now names that site too, as the gate's own return contract lists it.
+
 ## [4.48.1] — 2026-10-28
 
 Take with `product-workflows` 3.57.0, which retires the detected refinement this release stops describing — batch B24 (PRD-B3).

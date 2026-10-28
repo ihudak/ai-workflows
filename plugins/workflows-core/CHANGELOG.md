@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.66.0] — 2026-10-28
+
+Take with `product-workflows` 3.58.0, whose `/brd-interview` runs the gate this release adds to §3.4 and names in §3.7, and with `dev-workflows` 4.48.2, whose `/ready` and pages name it — batch B25 (FBB-B44).
+
+### Added
+- **`phase-handoff` §3.4 gains a `/brd-interview` row on the parent's `brd/brd-defect-log.md`**, which falls back on `absent`. `/brd-interview`'s Phase 0 step 8a runs `require-on-main` on that log only where it carries an `open` entry of class `unsourced` on a row the slice's ledger records `covered-here` or `deferred-to`, before step 9 reads anything, because the command may now offer to write `resolved-by: <SLICE-KEY>/[CG#n]` there on the operator's confirmation. On `absent`, as on every stopping row, it makes no offer, writes nothing into the log and prints the value to write by hand. §3.4's closing paragraph says `/brd-interview` is among the consumers that stop on `absent` for its `grounding/code-grounding.md` row alone.
+
+### Changed
+- **`phase-handoff` §3.7 names three callers that read a stopping row without stopping**, `/brd-interview`'s step 8a beside `/ready` and `/brd-reconcile`'s three sites. At that gate a stopping row withholds only the offer to close a defect, and row C's *Cancel* is reported as the operator's decline, never as an unsettled log.
+- **§4.0's `brd/brd-defect-log.md` row names both gates on it and both writers of resolutions**, `/brd-reconcile` and `/brd-interview`, and §4.1's spanning-set example names `/brd-interview`'s handoff beside `/brd-reconcile`'s. The `require-on-main` entry file is regenerated.
+
 ## [1.65.1] — 2026-10-28
 
 Take with `product-workflows` 3.57.0, whose `/epics` hands off the files this release classifies, names the next command per Epic as §2.7 now says and hands `doc-fixer` a file path — batch B24 (PRD-B6, FBB-B20, FBA-G2, FBA-G4).
