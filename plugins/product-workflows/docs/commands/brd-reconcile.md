@@ -23,7 +23,7 @@ sweep without freezing, applying or sweeping anything twice — the records the 
 reopened counting as the re-run's own, and any of those writes a freeze cut off part-way did not
 make written by the re-run. It takes the corrections the stopped run disposed without asking again
 where the review was read in schema mode; read in free-text mode, it shows you that run's
-dispositions beside each correction to match. A pass a release before 3.54.0 opened records none of
+dispositions beside each correction to match. A pass a release before 3.55.0 opened records none of
 this, so the re-run asks you to check what its interrupted freeze wrote (a re-run over a *different* review stops with
 `BRD_RECONCILE_INTERRUPTED_PASS` until the unfinished one is finished); to sweep a dependent it could
 only record, once that dependent has its own register on the default branch, against the changed ids

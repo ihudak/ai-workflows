@@ -437,6 +437,8 @@ Use `choices` arrays; 2–4 options, and never author an "Other" option — the 
    resolves and gates no repository and Phase 4 scans none.
    *Set REPOS_PATH* asks for the path in plain text and carries the answer as `$REPOS_PATH` once an
    entry of it is an existing directory.
+
+   **The session file's run environment.** On a resume (step 2), now that this step has resolved `$REPOS_PATH`, or recorded it as `unresolved` on *Proceed without code scan*, and before anything the resumed run writes after Phase 0's preflight, compare the session file's `## Run environment` per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 1 — a session file with none gets it there. On a fresh run or *Start fresh*, whichever step first writes `_session.md` — Phase 3 step 4's feasibility question or Phase 5's first decision — opens it with that section, per §6 *Record*.
    - **Resolve architecture grounding next, then show its line.** Run `resolve-architecture-grounding specify` per `Skill(skill: "workflows-core:reference", args: "architecture-grounding resolve-architecture-grounding")` and show the `architecture grounding:` and `team decisions:` lines from what it returns, verbatim, in the form that reference fixes (off switch: --no-arch). This is the run's one resolution; Phase 4 dispatches `architecture-grounder` on the state it returns without resolving again.
 
 Also display (for user context): `Feature folder: <path>`; resolved `prd_dir`; resolved
@@ -616,7 +618,7 @@ single-Epic and ≥2-Epic-selection cases), the feature folder becomes that Epic
 `specifications/<PRD>-<vslug>/EPIC-<EPIC>-<eslug>/` (Phase 0 step 3's `focus_key`-set case), superseding the
 provisional PRD-level folder Phase 0 resolved — Phase 0 already marks that folder provisional until
 the folder read runs. Re-detect a prior run there (a `_session.md` → a resume is available for that
-Epic). The broad-PRD-spec case — the only other one left — leaves the folder Phase 0 resolved unchanged.
+Epic, compared per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 1 before anything the resumed run writes, as Phase 1 compares one, or opened with its `## Run environment` section where the run writes it fresh). The broad-PRD-spec case — the only other one left — leaves the folder Phase 0 resolved unchanged.
 
 ### Step B — Full Epic-scoped read
 
@@ -929,7 +931,7 @@ Walk the stages in order, authoring `specification.md` live against `${CLAUDE_PL
 
 **Architecture grounding.** Where Phase 4 dispatched `architecture-grounder`, the grill consumes its digest per `workflows-core:architecture-grounding` § Consumption, and the specification records what that section says a specification records: a conflict the grill cannot settle, as an open question naming the governing decision, standard, radar entry or team record, or `radar: <technology> not listed`.
 
-As each decision settles, append it to `_session.md`; capture a genuinely-ambiguous term in `_glossary.md`. Resolve open questions to zero where possible; leave genuinely unresolvable ones as `- [ ]` and keep the header **Open questions** count in sync. A repo gap surfacing here → escalate (describe the missing capability + why) and STOP; the run is resumable from `_session.md` after the user remounts and re-invokes.
+As each decision settles, append it to `_session.md` (which opens with its `## Run environment` section, Phase 1 step 4); capture a genuinely-ambiguous term in `_glossary.md`. Resolve open questions to zero where possible; leave genuinely unresolvable ones as `- [ ]` and keep the header **Open questions** count in sync. A repo gap surfacing here → escalate (describe the missing capability + why) and STOP; the run is resumable from `_session.md` after the user remounts and re-invokes.
 
 ### the BRD route — where the seed lands, and the grill is restricted to gaps
 
@@ -1060,7 +1062,7 @@ Cap: one fix cycle + one re-review maximum. A finding applied at that offer afte
 
 ## Phase 7 — Handoff
 
-Write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2) — into the run's feature folder: the folder Phase 0 resolved (the PRD folder, the slice folder on the BRD route, or the `EPIC-` subfolder an Epic address resolved), unless Step A then re-pointed the run to an Epic, whose `EPIC-` subfolder supersedes it (*Re-pointing the feature folder after the picker*).
+First compare the session file's `## Run environment`, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 2 — loading that part afresh, as §6 says, even where it is in this conversation. On a mismatch, *Stop* writes and hands off nothing below and goes on to Phase 8 under `specs_git: misrooted`, and *Go on pinned* pins every later step to the recorded environment (§6). Then write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2) — into the run's feature folder: the folder Phase 0 resolved (the PRD folder, the slice folder on the BRD route, or the `EPIC-` subfolder an Epic address resolved), unless Step A then re-pointed the run to an Epic, whose `EPIC-` subfolder supersedes it (*Re-pointing the feature folder after the picker*).
 
 **Wherever `prd_dir` holds `grounding/`, on either route, close the consumption loop before
 the offer.** The design's *Consumption tracking* section (§7.3) has every finding and decision record
@@ -1116,7 +1118,7 @@ of what this increment is for.
 ## Phase 8 — Session maintenance & feedback
 
 Terminal phase — runs after Phase 7 and before the Final report is presented;
-NEVER interrupts an earlier phase. `/specify` has no built-in maintenance agent,
+NEVER interrupts an earlier phase. Where this run created or resumed `_session.md`, it opens by comparing the session file's `## Run environment`, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 3 — loading that part afresh, as §6 says — before the tail's first write, unless an earlier comparison this run ended in *Stop*. A *Stop* sets `specs_git: misrooted`, under which this phase's feedback, Phase 9's cost entry and resume pointer are report-only and the terminal `commit-artifacts` skips. `/specify` has no built-in maintenance agent,
 so this phase invokes `impl-maintenance` on the Sonnet detection chain and then
 persists the plugin-facing slice of its report as session feedback.
 
@@ -1202,7 +1204,7 @@ stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
 trailer, and pushes the branch this run's handoff phase created (§4.1) per §4 step 5. It
 NEVER touches a code repo, a docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the
-run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its
+run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice — the flag a §6 comparison this run ended in *Stop* sets (`workflows-core:session-hygiene`), with its `RESUME_ENVIRONMENT_CHANGED:` line as that notice. Hold its
 §6 outcome line for the Final report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git

@@ -1216,7 +1216,7 @@ run superseded or reopened; where the record has moved since, nothing is written
 under *what still needs a human* with the entry. On any adopted pass, every `left` entry, and every
 entry naming more than one cause, is named under *what still needs a human* as *Freeze the customer
 decisions* step 3 names such a record. **A pass reading `freezing` with no `- **Effects:**` line**,
-opened by a release before 3.54.0, cannot say which step-3 writes landed beyond step 1's lines: each
+opened by a release before 3.55.0, cannot say which step-3 writes landed beyond step 1's lines: each
 adopted record from it is named under *what still needs a human* for an operator to check its step-3
 effect in `decisions.md`. **An adopted pass is never edited** — it sits in a dated
 record this run did not write, which nothing here rewrites (*Resolve inputs and gate the sent
@@ -1904,7 +1904,7 @@ the adopted pass's `- **Mode:**` line giving the mode it read the review in: a r
 correction — written by the run that stopped after its edit and before its line — is disposed
 `applied` and reported so, never applied twice. In free-text mode the position rule names no row,
 so every row is put with the adopted pass's lines printed beside it, for the operator to match, as
-for any earlier pass. A pass opened by a release before 3.54.0 carries no
+for any earlier pass. A pass opened by a release before 3.55.0 carries no
 such lines and no `- **Mode:**` line, so every row of it is put again, under the same test.
 
 Any row still undisposed when this phase would end → stop:

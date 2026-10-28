@@ -5,12 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.54.0] — 2026-10-28
+## [3.55.0] — 2026-10-28
 
-Needs nothing newer than `workflows-core` 1.63.0 — to-fix D20.
+Its own changes need nothing newer than `workflows-core` 1.63.0; take 1.64.0, which 3.53.0 needs — to-fix D20.
 
 ### Changed
 - **`/brd-reconcile`'s open pass records its progress, so a re-run over the same review finishes what a stopped run left without asking a human.** The pass opens with a `- **Mode:**` line and an `- **Effects:**` line listing every supersession and reopening the freeze is about to write, with each record's status before the freeze; *Apply the required corrections* appends a `- **Correction <n>:**` line per row, and *The propagation sweep* a `- **Swept:**` line per item, each once its write lands. A re-run adopting a pass interrupted while `freezing` checks each planned effect against `decisions.md` and writes only the missing ones, where it used to send every adopted record to *what still needs a human*; where the review was read in schema mode it takes the corrections a stopped run already disposed rather than putting every row again, and in free-text mode shows that run's dispositions beside each row to match; and it no longer re-asks an `inherited-unchanged` sweep item, which writes nothing. A pass opened by an earlier release is adopted as before.
+
+## [3.53.0] — 2026-10-27
+
+Take with `workflows-core` 1.64.0, whose `session-hygiene` §6 `/specify` now runs — to-fix PR8 (live checks of 2026-10-26).
+
+### Changed
+
+- **`/specify` checks the environment its session file recorded.** `_session.md` opens with a `## Run environment` section, which whichever step first writes the file records, and the run compares it on a resume (Phase 1's or the Epic picker's), before Phase 7's write and handoff, and before Phase 8's first terminal write, asking on a mismatch rather than going on in another repository; *Stop* sets `specs_git: misrooted`, so nothing more is handed off or committed (`workflows-core:session-hygiene` §6).
 
 ## [3.52.0] — 2026-10-27
 

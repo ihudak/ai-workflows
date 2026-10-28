@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.6.0] — 2026-10-27
+
+Take with `workflows-core` 1.65.0, whose `implementation-format` §5 adds the left-behind case this release's change scan names (to-fix C10).
+
+### Changed
+- A change scan's `### Scope` says that the tip conflicts and `origin/<branch>` is gone, so the merge state rests on the commit subject alone, where `unit-branch`'s merged test passed in the subject leg's left-behind case — beside its existing *tip not compared* line for an older git or a comparison that compared nothing.
+
 ## [0.5.0] — 2026-10-27
 
 **Update `workflows-core` to 1.60.0 with this release**: its `security-register-format` §2 states the `reserved_moves` key this release's `register.py plan` prints. Fixes to-fix LC10 (live checks of 2026-10-26), and LC6's instance in this command.

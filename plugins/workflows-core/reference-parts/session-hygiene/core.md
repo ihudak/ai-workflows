@@ -23,6 +23,8 @@ Every rule name in `session-hygiene`, with the part that holds it; `core` comes 
 - `§3` → `guidance`
 - `§4` → `guidance`
 - `§5` → `guidance`
+- `6. Resume environment — the session file records where the run stands, and a resumed run compares it` → `resume-environment`
+- `§6` → `resume-environment`
 
 ---
 
@@ -33,9 +35,11 @@ Cited by the pipeline commands and by `next-phase-offer.md` / `context-managemen
 so the contract lives in ONE place (the same shape as `next-phase-offer` and the
 `emit-block` invariant).
 
-Everything here is **guidance-only** — the plugin NEVER auto-invokes `/compact`,
+Everything in §1–§5 is **guidance-only** — the plugin NEVER auto-invokes `/compact`,
 `/clear`, or `/rename`. The goal is to stop relying on a human to keep asking "prepare
-for a compact/clear": the pipeline does the prep and prompts the choice itself.
+for a compact/clear": the pipeline does the prep and prompts the choice itself. §6 is not a
+suggestion and is outside §5's contract: it is the check a command that keeps a session file runs
+on the environment it recorded there, and it stops the run on a mismatch.
 
 `<KEY>` is the key that named the folder this run resolved — a PRD key on the PA/PE/Dev ladder, the
 root BRD key for `/brd-proposal` — and `<role>` is the just-finished command's lane tag
