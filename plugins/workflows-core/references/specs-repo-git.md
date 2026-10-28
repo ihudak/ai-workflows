@@ -1269,7 +1269,7 @@ replay all the same, save that a register both sides changed refuses it
 
 ## 8. Session-branch mode — a default branch that takes no push
 
-Where the specs repository's default branch takes no direct push — branch protection, a ruleset, a policy or a hook — this reference keeps the run's session files on a per-user **session branch**, and the user lands them through its pull request. Everything above stands; this section says only what changes in the mode. `${CLAUDE_PLUGIN_ROOT}/scripts/session-branch.py` does the git plumbing, every call `--specs "$SPECS_PATH"`, and a change to either is a change to both. Each call prints one JSON object; exit 2 means it could not run, which is reported with the first line of its stderr while the run goes on (§1 rule 5).
+Where the specs repository's default branch takes no direct push — branch protection, a ruleset, a policy or a hook — this reference keeps the run's session files on a per-user **session branch**, and the user lands them through its pull request. Everything above stands; this section says only what changes in the mode. `${CLAUDE_PLUGIN_ROOT}/scripts/session-branch.py` does the git plumbing, every call `--specs "$SPECS_PATH"`, and a change to either is a change to both: the script holds this section's plumbing and §4 step 6's replay, which runs only outside the mode and whose output that step reads. Each call this section makes prints one JSON object; exit 2 means it could not run, which is reported with the first line of its stderr while the run goes on (§1 rule 5).
 
 ### 8.1 When the mode is on
 
