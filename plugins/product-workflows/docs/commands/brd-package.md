@@ -25,6 +25,7 @@ questions it held, are what this command gates on and packages.
   root stops with `BRD_PACKAGE_ROOT_LEVEL`, naming [`/brd-split`](brd-split.md) as the way to carve one, and an idea-route PRD folder — a `PRD-`
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_PACKAGE_NOT_A_SLICE`, naming
   [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on. An `EPIC-` folder stops with `BRD_PACKAGE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one.
+- **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_PACKAGE_TWO_ADDRESSES`.
 - **`--depends-on <BRD-KEY>`** (optional, repeatable) — declares a prerequisite BRD. Persisted
   additively to `brd-link.md`, never replacing what is already there. Any key at any level is
   admissible as the value, so a slice depending on a source-owning BRD and a slice depending on a
@@ -89,7 +90,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 
 ## What it needs
 
-- **`<BRD-KEY>`** — mandatory; absent or malformed stops the run with `BRD_PACKAGE_NEEDS_KEY`.
+- **`<BRD-KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `BRD_PACKAGE_NEEDS_KEY`.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
   folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_PACKAGE_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-package <SLICE-KEY>` on the slice above it where there is one, and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD

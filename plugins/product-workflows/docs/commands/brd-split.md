@@ -42,8 +42,9 @@ already made mandatory for carving a root.
 - **`<BRD-KEY>`** (mandatory) — the BRD to split and allocate. A key naming either level a
   BRD folder can occupy works, and the level decides the run mode (below). Resolved via
   `resolve-address`; format-validated only, never checked against a tracker.
+- **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. Every bare token is then the instruction, save the first bare token, where it is the first and names the same key, which is dropped as the same address typed twice; a key inside the text stays text.
 - **`<instruction>`** (**mandatory on a root that still has a row to place, optional on a slice**) — every token after
-  the key, joined verbatim: a slicing instruction in your own words, such as `cover orders and
+  the key (or every bare token beside an `@<path>` address), joined verbatim: a slicing instruction in your own words, such as `cover orders and
   measurements in the first iteration` or `slice everything this BRD still holds that no child
   covers`. **On a root with a row still `unallocated` it cannot be omitted**: a root is never ground,
   so it carries no findings to cluster candidate slices from, and the instruction is the only
@@ -259,7 +260,7 @@ reads was already independently verified by `/prd-ground`'s own agents.
 
 ## What it needs
 
-- **`<BRD-KEY>`** — mandatory; absent or malformed stops the run with `BRD_SPLIT_NEEDS_KEY`.
+- **`<BRD-KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `BRD_SPLIT_NEEDS_KEY`.
 - **`<instruction>`, on a root that still has a row to place.** A root is never ground, so it has no
   findings to cluster candidate slices from; an absent instruction on a `split_mode: full` run whose
   ledger still holds an `unallocated` row stops with `BRD_SPLIT_NEEDS_INSTRUCTION`, naming the same
