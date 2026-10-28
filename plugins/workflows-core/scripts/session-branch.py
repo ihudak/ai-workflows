@@ -1035,13 +1035,16 @@ def replay_commits(root, onto, commits, register_rebuild):
     onto and c all differ (diff-tree --no-renames of p..onto and p..c); a path onto and c hold alike
     keeps that content. Each is settled by merge_class: "block" (entry_set_merge) and "lines" (git's
     union) by settle(), onto's side first, from the three blobs as stored, refused where either side
-    lacks the file or the rule refuses; "whole" is c's version, a deletion included; "register" is
-    rebuilt; any other class is refused, as is any other path merge-tree reports conflicted. A
-    register is rebuilt wherever both sides changed something under security/<slug>/ that the other
-    side does not hold alike: <register_rebuild>'s rebuild over the merged tree's security/<slug>/,
-    its two files written back through a temporary index; refused where no script was handed over
-    or it fails. A merged tree equal to onto's drops c, its change being there already; otherwise c
-    is committed on onto with its author, author date and message byte for byte (commit_tree), each
+    lacks the file or the rule refuses; "whole" is c's version, a deletion included, refused where
+    onto deleted the file (a modify/delete); "register" is rebuilt; any other class is refused, as is
+    any other path merge-tree reports conflicted. A register is rebuilt wherever both sides changed
+    something under security/<slug>/ that the other side does not hold alike: <register_rebuild>'s
+    rebuild over the merged tree's security/<slug>/, its two files written back through a temporary
+    index; refused where no script was handed over or it fails. A merged tree that changes, against
+    onto, any path c did not change but a rebuilt register's two files is refused: merge-tree follows
+    renames, so a teammate's folder rename would otherwise publish c's content at a path c never
+    wrote. A merged tree equal to onto's drops c, its change being there already; otherwise c is
+    committed on onto with its author, author date and message byte for byte (commit_tree), each
     file in the mode the merged tree gives it, and onto becomes that commit.
     Returns {tip, replayed: the new commits, dropped: the commits already there, numbers:
     {before_remote, before_run, after}, each slug -> the numbers map rebuild printed on the first
@@ -1098,6 +1101,9 @@ def replay_commits(root, onto, commits, register_rebuild):
                 cls = merge_class(x)
                 if b1 == b2 or b0 in (b1, b2) or cls == "register":
                     continue  # one side's change alone, or the same on both: merge-tree's stands; a register is rebuilt
+                if cls == "whole" and b1 is None:
+                    refused.append(x)  # deleted on onto, changed by c: a modify/delete, never restored
+                    continue
                 if cls == "whole" and b2 is None:
                     entries.append("0 %s\t%s" % (ZERO, x))
                 elif cls == "whole":
@@ -1134,6 +1140,13 @@ def replay_commits(root, onto, commits, register_rebuild):
                 rebuilt.add(s)
             if reg_entries:
                 tree = tree_with(root, tree, reg_entries)
+            # merge-tree follows a rename (a teammate's folder rename, and with merge.directoryRenames=true
+            # a file c added there) and no option turns that off: a path the tree changes that c never
+            # changed, save a rebuilt register's two files, is refused rather than published
+            stray = changed(tip, tree) - theirs - {"security/%s/%s" % (s, n) for s in regs
+                                                  for n in ("register.json", "register.md")}
+            if stray:
+                return refusal("conflict", sorted(stray)[0])
             if tree == text(git(root, "rev-parse", tip + "^{tree}")):
                 dropped.append(c)
                 continue
@@ -1408,10 +1421,10 @@ def selftest():
         check(head == IMPL_HEAD.encode() and ents == [(IMPL_1 + "\n").encode(), IMPL_2.encode()],
               "split_entries cuts implementation-format §1's example into its header and two blocks (%r, %r)"
               % (head, ents))
-        for fmt, head, entry in (("feedback", FB_HEAD, FB_1), ("_security.md", SEC_HEAD, SEC_1),
+        for fmt, head, first in (("feedback", FB_HEAD, FB_1), ("_security.md", SEC_HEAD, SEC_1),
                                  ("cost", COST_HEAD, COST)):
-            got = split_entries((head + entry).encode())
-            check(got == (head.encode(), [entry.encode()]), "split_entries finds the %s entry's heading (%r)" % (fmt, got))
+            got = split_entries((head + first).encode())
+            check(got == (head.encode(), [first.encode()]), "split_entries finds the %s entry's heading (%r)" % (fmt, got))
         check(entry_key(b"## x\r\n  a  \r\n\r\n \t\n\n") == b"## x\r\n  a",
               "entry_key drops trailing blank lines and line endings, and nothing before them")
         noted = IMPL_2P + "\n## Notes\nThe billing half waits on the ledger change.\n## 2026-09-03 - retro, not an entry\n"
@@ -3045,6 +3058,49 @@ def selftest():
                           "[replay: resume.md deleted, %s] c's deletion stands over the teammate's change (%r)" % (tag, got))
                 guarded("resume.md deleted, " + tag, resume_deleted)
 
+                # …but an overwritten shape the teammate deleted and c changed is a modify/delete: refused,
+                # never restored over the teammate's removal
+                def resume_removed():
+                    a, (got,) = replay_run("resume.md removed by the teammate, " + tag, where("resume-removed"), attrs,
+                                           lambda r: os.remove(os.path.join(r.path, R_RS)),
+                                           [lambda r: r.write(R_RS, "pos: mine\n")])
+                    check(got.get("refused") == {"reason": "conflict", "path": R_RS},
+                          "[replay: resume.md removed by the teammate, %s] c's change to it refuses (%r)" % (tag, got))
+                guarded("resume.md removed by the teammate, " + tag, resume_removed)
+
+                # a teammate renamed the PRD folder: merge-tree follows the rename and would publish the
+                # run's content at a path the run never wrote -- c's resume.md under both folders, or a
+                # new file the run added directly in the old folder silently moved there
+                # (merge.directoryRenames=true; unset, git reports it conflicted). Refused, whatever
+                # git's own rename settings. (git moves no file that sits in a subfolder the run created.)
+                RENAMED = "specifications/PRD-A-1-renamed"
+                NEW_GAPS = "specifications/PRD-A-1-x/PRD-A-1-implementation-gaps.md"
+
+                def folder_rename(r):
+                    r.git("mv", "specifications/PRD-A-1-x", RENAMED)
+
+                def renamed_resume():
+                    a, (got,) = replay_run("folder renamed, resume.md, " + tag, where("renamed-resume"), attrs,
+                                           folder_rename, [lambda r: r.write(R_RS, "pos: mine\n")])
+                    check(got.get("refused") == {"reason": "conflict", "path": R_RS},
+                          "[replay: folder renamed, resume.md, %s] the run's resume.md under the old folder refuses "
+                          "(%r)" % (tag, got))
+                guarded("folder renamed, resume.md, " + tag, renamed_resume)
+
+                for dir_renames in (None, "true"):
+                    def renamed_new_file(dir_renames=dir_renames):
+                        def mine(r):
+                            if dir_renames:
+                                r.git("config", "merge.directoryRenames", dir_renames)
+                            r.write(NEW_GAPS, "# Implementation gaps — A-1\n\n- none found\n")
+                        label = "folder renamed, a new file, merge.directoryRenames=%s, %s" % (dir_renames or "unset", tag)
+                        a, (got,) = replay_run(label, where("renamed-new-" + (dir_renames or "unset")), attrs,
+                                               folder_rename, [mine])
+                        check(got.get("refused") == {"reason": "conflict", "path": RENAMED + "/PRD-A-1-implementation-gaps.md"},
+                              "[replay: %s] a file the run added under the old folder refuses, never relocated (%r)"
+                              % (label, got))
+                    guarded("folder renamed, a new file, " + tag, renamed_new_file)
+
                 # follow-ups.md appended on both sides: git's union, onto's lines first
                 def follow_ups():
                     a, (got,) = replay_run("follow-ups.md, " + tag, where("follow-ups"), attrs,
@@ -3056,7 +3112,8 @@ def selftest():
 
                 # both sides created the same per-date docs feedback file: one header, both entries
                 def add_add():
-                    TEAM_D, MINE_D = (e.replace("2026-07-09", "2026-10-28") for e in (FB_1, FB_2))
+                    TEAM_D = entry("2026-10-28", "/document", "team docs run")
+                    MINE_D = entry("2026-10-28", "/document", "mine docs run")
                     a, (got,) = replay_run("add/add, " + tag, where("add-add"), attrs,
                                            lambda r: r.write(R_DOCS, DOCS_HEAD + TEAM_D),
                                            [lambda r: r.write(R_DOCS, DOCS_HEAD + MINE_D)])
@@ -3090,6 +3147,14 @@ def selftest():
                     for what, res in (("no rebuild script", none), ("a rebuild that fails", failing)):
                         check(res.get("refused") == {"reason": "register-rebuild", "path": REG},
                               "[replay: register, %s] %s refuses, naming the register (%r)" % (tag, what, res))
+                    # c carried its record alone: the rebuilt files are the only paths c never changed
+                    # that the replay may write
+                    a, (got,) = replay_run("register, c's record alone, " + tag, where("register-record"), attrs, team,
+                                           [lambda r: r.write(RUN2M, run_record(2, "2026-10-28T10:00:00Z", "s2:v3:mm"))])
+                    tip = got.get("tip")
+                    check(got.get("refused") is None and at(a, tip, REG + "register.json") == js
+                          and at(a, tip, REG + "register.md") == md,
+                          "[replay: register, c's record alone, %s] the rebuilt register is written (%r)" % (tag, got))
                 guarded("register, " + tag, register)
 
                 # a modify/delete, and a runs/ add/add of different content: refused, the path named
