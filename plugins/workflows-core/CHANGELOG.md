@@ -15,6 +15,7 @@ Take with `dev-workflows` 4.48.0 and `security-workflows` 0.6.0, whose `/impleme
 - **The timing case is fixed where it can be.** A later run's commit on the same branch, committed before the squash but pushed after it, now reads `after_merge` true, since the earlier run's commit is the squash's head. Where that commit was made after the squash, `--since` excludes `S`, and the leg finds no commit to corroborate, as before.
 - **Remaining misses.** Past twenty commits the leg errs toward open. A teammate's cherry-pick of an earlier same-branch run's commit is the remaining miss toward merged.
 - §5's misses, `after_merge`, step 2's consumer note and the rules summary are rewritten to match.
+- `implementation-format` §4 no longer calls the widened key boundary a change still to make: CORE-G2 was measured and closed as not taken, and the paragraph gives the reasons (no known set to resolve a branch name against, the boundary every reader shares, and a squash normally carrying its keys).
 
 ## [1.62.0] — 2026-10-27
 

@@ -213,9 +213,11 @@ boundary exists to remove. A boundary aware enough to tell the two apart, admitt
 a digit does not follow, would still not reach the merge commit, which the scan does not take
 (`--no-merges`, above). What it would add is a one-parent commit whose message names a branch — on a
 forge that writes the branch into a squash commit (`Merged in <branch> (pull request #N)`), that
-branch's whole landed work. It is not taken here because it changes the one boundary every reader of
-this file shares, which is its own change to make; until then the probe below reports such a commit
-on a repository the scan left at zero matches.
+branch's whole landed work. It is not taken, by decision (2026-10-28, measured first): it would read
+a key out of a branch name, for which no known set exists to resolve it against, it changes the one
+boundary every reader of this file shares, and a squash commit normally carries the pull request's
+title or its commits' messages, keys included, which this scan already matches. The probe below
+reports such a commit on a repository the scan left at zero matches.
 
 **What that costs:** the scan finds no commit of a branch whose own messages name no key: its
 merge commit is not scanned (above), and where the subject the forge wrote for it names the key only
