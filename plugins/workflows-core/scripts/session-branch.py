@@ -12,15 +12,24 @@ Python standard library only.
   session-branch.py --specs <root> commit --branch <b> --default-ref <ref> --message <m> [--include-ahead]
   session-branch.py --specs <root> lift --branch <b>
   session-branch.py --specs <root> put-back --branch <b> --default-ref <ref>
+  session-branch.py --specs <root> replay --branch <b> [--register-rebuild <path>] [--set-upstream]
+                    [--attempts 3] [--fetch-seconds 60] [--push-seconds 60]
   session-branch.py --selftest
 
 <root> is the specs repository's top level. Nothing here switches a branch, moves HEAD,
-pushes, or writes a working-tree path outside specs-repo-git §2.1's session-file shapes.
+pushes, or writes a working-tree path outside specs-repo-git §2.1's session-file shapes,
+save replay (specs-repo-git §4 step 6, outside session-branch mode): it moves the default or
+a plugin branch onto the run's commits replayed onto origin's, in one locked transaction --
+where the checkout stands on that branch, HEAD moves with it, and read-tree -m -u carries the
+checkout's index and files to the new tip, refusing before anything moves where that would
+write over a path the user changed or left untracked -- and only then pushes that tip.
 The session branch moves only by update-ref with its old value, so a concurrent run fails
 instead of overwriting. Output is one JSON object on stdout.
 Exit 0: it ran, whatever it found. Exit 2: it could not run (usage, not a repository's top
 level, an unexpected git failure, any other exception), printing one "session-branch: not run
-(...)" line on stderr; the caller reports it and the run continues.
+(...)" line on stderr; the caller reports it and the run continues. A replay that exits 2
+after it moved a branch first prints its partial result -- moved true -- on stdout, so the
+caller can say what stands.
 """
 
 import argparse
@@ -30,10 +39,12 @@ import json
 import os
 import re
 import shutil
+import signal
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPECS_REPO_GIT = os.path.join(HERE, "..", "references", "specs-repo-git.md")
@@ -79,6 +90,15 @@ ZERO = "0" * 40
 
 class NotRun(Exception):
     """Something this script cannot do here; main() reports it and exits 2."""
+
+
+class Partial(NotRun):
+    """A replay that could not go on after it moved a branch: main() prints <result> -- moved true --
+    on stdout before its one "not run" line, and exits 2, so the caller says what stands."""
+
+    def __init__(self, message, result):
+        NotRun.__init__(self, message)
+        self.result = result
 
 
 def git(root, *args, env=None, data=None, check=True):
@@ -680,15 +700,25 @@ def commit_tree(root, tree, parents, message, env=None):
     return text(git(root, "commit-tree", *sign, tree, *parent_args, "-F", "-", data=data, env=env))
 
 
-def refuse_checked_out(root, branch):
-    """The session branch is never stood on; moving it under a checkout would leave that checkout's
-    index and files behind its HEAD. Refuse while any worktree has it checked out."""
-    where, want = None, "branch refs/heads/" + branch
+def checked_out_at(root, branch):
+    """Every worktree path that holds refs/heads/<branch> checked out, as worktree list --porcelain -z
+    prints it, in its order. The checkout at <root> holds it where the list holds
+    realpath(rev-parse --show-toplevel)."""
+    where, want, out = None, "branch refs/heads/" + branch, []
     for field in nul_list(git(root, "worktree", "list", "--porcelain", "-z")):
         if field.startswith("worktree "):
             where = field[len("worktree "):]
         elif field == want:
-            raise NotRun("%s is checked out at %s; switch that checkout back to the default branch" % (branch, where))
+            out.append(where)
+    return out
+
+
+def refuse_checked_out(root, branch):
+    """The session branch is never stood on; moving it under a checkout would leave that checkout's
+    index and files behind its HEAD. Refuse while any worktree has it checked out."""
+    where = checked_out_at(root, branch)
+    if where:
+        raise NotRun("%s is checked out at %s; switch that checkout back to the default branch" % (branch, where[0]))
 
 
 def is_ancestor(root, a, b):
@@ -764,18 +794,31 @@ def create_at(root, branch, default_ref):
     return start
 
 
-def ahead_paths(root, default_ref):
-    """The files of the commits HEAD holds and <default-ref> lacks, where every one of them is a
-    non-merge commit touching session files only (specs-repo-git §4 step 5's push-scope test)."""
-    commits = text(git(root, "rev-list", "--reverse", "HEAD", "--not", default_ref)).split()
-    paths = set()
+def push_scope(root, head, base, paths=None):
+    """specs-repo-git §4 step 5's push-scope test over the commits <head> holds and <base> lacks
+    (rev-list --reverse <head> --not <base>, oldest first): each must have exactly one parent -- a
+    merge fails, and so does a root commit -- and touch session files only, at least one. Returns
+    that list and the first commit that fails, or None where none does. Where a set <paths> is given,
+    the files of the commits that pass are added to it."""
+    commits = text(git(root, "rev-list", "--reverse", head, "--not", base)).split()
     for c in commits:
         if len(text(git(root, "rev-list", "--parents", "-n", "1", c)).split()) != 2:
-            return [], commits, True
+            return commits, c
         files = nul_list(git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", "--root", "--no-renames", c))
         if not files or not all(classify(f) for f in files):
-            return [], commits, True
-        paths.update(files)
+            return commits, c
+        if paths is not None:
+            paths.update(files)
+    return commits, None
+
+
+def ahead_paths(root, default_ref):
+    """The files of the commits HEAD holds and <default-ref> lacks, where every one of them passes
+    push_scope (specs-repo-git §4 step 5's push-scope test)."""
+    paths = set()
+    commits, failed = push_scope(root, "HEAD", default_ref, paths)
+    if failed:
+        return [], commits, True
     return sorted(paths), commits, False
 
 
@@ -1199,6 +1242,344 @@ def replay_commits(root, onto, commits, register_rebuild):
                 return refusal("register-rebuild", "security/%s/" % s)
             numbers[key][s] = got[0]
     return {"tip": tip, "replayed": replayed, "dropped": dropped, "numbers": numbers, "refused": None}
+
+
+# ---- the move and the push (spec §3.1, §3.4, §3.5): the replay subcommand ------------------------------
+
+# Every refused.reason replay prints: replay_commits' two, then the move's, the conditions' and the
+# fetch's. A closed set: the caller's outcome lines are written against it.
+REFUSALS = ("conflict", "register-rebuild", "would-overwrite", "cannot-replay", "in-progress", "locked",
+            "push-scope", "checked-out", "fetch-failed", "branch-moved")
+
+# The markers of a rebase, merge, cherry-pick or revert in progress (spec §3.1 condition 5), each found
+# where rev-parse --git-path puts it, so a linked worktree's own are the ones read (Review Focus 9).
+IN_PROGRESS = ("rebase-merge", "rebase-apply", "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "sequencer")
+KILL_AFTER = 10  # seconds from git_bounded's SIGTERM to its SIGKILL
+
+
+def git_paths(root, *names):
+    """Each of <names> where rev-parse --git-path puts it for the worktree at <root>, joined to <root>
+    where git prints it relative."""
+    out = text(git(root, "rev-parse", *[x for n in names for x in ("--git-path", n)])).split("\n")
+    return [os.path.join(root, p) for p in out]
+
+
+class _Signalled(Exception):
+    pass
+
+
+def _group_alive(pgid):
+    try:
+        os.killpg(pgid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _end_group(p, signum):
+    """<signum> to <p>'s whole process group, then SIGKILL KILL_AFTER seconds later to whatever of the
+    group is left -- git having exited is not enough, a transport child of its may not have; reaps <p>
+    and returns its output."""
+    try:
+        os.killpg(p.pid, signum)
+    except (ProcessLookupError, PermissionError):
+        pass
+    deadline = time.monotonic() + KILL_AFTER
+    try:
+        out, err = p.communicate(timeout=KILL_AFTER)
+    except subprocess.TimeoutExpired:
+        out = err = None
+    while _group_alive(p.pid) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    if _group_alive(p.pid):
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+    if out is None:
+        out, err = p.communicate()
+    return out or b"", err or b""
+
+
+def git_bounded(root, seconds, *args):
+    """git -C <root> -c core.quotePath=false <args>, capped at <seconds>: the replay's fetch and push
+    (spec §3.1 condition 4, §3.4 step 3), capped as workflows-core:bounded-run caps a call. git runs in
+    a session of its own -- a process group of its own -- with no stdin and its output captured; at
+    the cap the whole group gets SIGTERM, and SIGKILL KILL_AFTER seconds later where any of it is left.
+    Never subprocess.run(timeout=), whose kill reaches git alone and leaves its transport child, and
+    any lock that child holds, behind. A SIGTERM, SIGHUP or SIGINT sent to this script meanwhile is
+    passed on to the group the same way, then raised as NotRun. Returns a CompletedProcess, its
+    returncode 124 where the cap ended git."""
+    cmd = ["git", "-C", root, "-c", "core.quotePath=false", *args]
+
+    def passed_on(signum, _frame):
+        raise _Signalled(signum)
+    held = {}
+    for s in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+        try:
+            held[s] = signal.signal(s, passed_on)
+        except ValueError:  # not the main thread: there is nothing to pass on
+            pass
+    p = None
+    try:
+        p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             start_new_session=True)
+        try:
+            out, err = p.communicate(timeout=seconds)
+            return subprocess.CompletedProcess(cmd, p.returncode, out, err)
+        except subprocess.TimeoutExpired:
+            out, err = _end_group(p, signal.SIGTERM)
+            return subprocess.CompletedProcess(cmd, 124, out, err)
+    except _Signalled as e:
+        for s in held:  # once the group is being ended, a second signal must not interrupt that
+            signal.signal(s, signal.SIG_IGN)
+        if p is not None:
+            _end_group(p, e.args[0])
+        raise NotRun("git %s ended by signal %d" % (args[0], e.args[0]))
+    finally:
+        for s, h in held.items():
+            signal.signal(s, signal.SIG_DFL if h is None else h)
+
+
+def ref_transaction(root, branch):
+    """git update-ref --stdin, one transaction on <branch> whose reflog entry names the replay, which
+    move_branch drives line by line -- start, update, prepare, then commit or abort -- each verb
+    answered "<verb>: ok" on stdout. Its stderr is never read: no reason is taken from git's text.
+    Where the driver goes away while prepared, stdin closes and git aborts, releasing both locks."""
+    return subprocess.Popen(["git", "-C", root, "-c", "core.quotePath=false", "update-ref", "--stdin", "-m",
+                             "session-branch: replayed onto origin/" + branch],
+                            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+
+
+def _tell(txn, lines):
+    """<lines> to the transaction; the one answer they draw, or "" where it has ended."""
+    try:
+        txn.stdin.write(lines.encode("utf-8", "surrogateescape") + b"\n")
+        txn.stdin.flush()
+        return txn.stdout.readline().decode("utf-8", "replace").strip()
+    except OSError:
+        return ""
+
+
+def _would_overwrite(root, old, tip):
+    """The paths of the checkout at <root> that read-tree -m -u <old> <tip> would refuse to write over,
+    found from status --porcelain -z --untracked-files=all --ignored (every modified, staged, untracked
+    and ignored path, a rename's original too) and diff-tree <old> <tip>, never from git's text: each
+    such path the tip changes, each that stands where the tip needs a directory, and each inside a
+    directory where the tip changes a file of that name. Sorted."""
+    changed = set(nul_list(git(root, "diff-tree", "-r", "-z", "--name-only", "--no-renames", old, tip)))
+    recs = nul_list(git(root, "status", "--porcelain", "-z", "--untracked-files=all", "--ignored"))
+    dirty, i = set(), 0
+    while i < len(recs):
+        rec = recs[i]
+        i += 1
+        dirty.add(rec[3:].rstrip("/"))
+        if "R" in rec[:2] or "C" in rec[:2]:  # the original path of a rename or copy rides in the next field
+            if i < len(recs):
+                dirty.add(recs[i].rstrip("/"))
+            i += 1
+
+    def above(path):
+        return {path.rsplit("/", n)[0] for n in range(1, path.count("/") + 1)}
+    needed = set().union(*(above(c) for c in changed))
+    return sorted(d for d in dirty if d in changed or d in needed or above(d) & changed)
+
+
+def move_branch(root, branch, old, tip, here):
+    """Spec §3.4 steps 1 and 2: move refs/heads/<branch> from <old> to <tip>. None where it moved, else
+    the refusal, with nothing moved -- its reason read from exit codes and files, never from git's text
+    (Review Focus 8).
+    <here>, the checkout at <root> standing on the branch: update-index -q --refresh first, so a file
+    rewritten with the same bytes does not fail read-tree as not up to date (a failure: "locked", the
+    index.lock named); then "would-overwrite" where _would_overwrite names any path, before anything
+    moves; then one transaction (ref_transaction): start, update <tip> <old>, prepare -- which takes
+    HEAD's and the branch's locks and fails where the branch is no longer <old>: "branch-moved" --
+    then read-tree -m -u <old> <tip>, the two-tree merge that carries the checkout's index and files to
+    <tip> and keeps the user's staged, unstaged and untracked changes as they are: commit where it
+    succeeded; abort where it failed, "locked" where the index.lock stands, else "would-overwrite" with
+    the paths found again. Where commit fails after read-tree succeeded -- its answer is not "ok" and
+    the branch does not hold <tip> -- read-tree -m -u <tip> <old> puts the index and files back:
+    "branch-moved".
+    Not <here>: refused "checked-out" where a worktree has the branch checked out, naming it; else
+    update-ref <tip> <old> alone, "branch-moved" where it fails."""
+    ref = "refs/heads/" + branch
+    if not here:
+        where = checked_out_at(root, branch)
+        if where:
+            return {"reason": "checked-out", "path": where[0]}
+        r = git(root, "update-ref", "-m", "session-branch: replayed onto origin/" + branch, ref, tip, old, check=False)
+        return None if r.returncode == 0 else {"reason": "branch-moved", "path": None}
+    lock = git_paths(root, "index.lock")[0]
+    if git(root, "update-index", "-q", "--refresh", check=False).returncode != 0:
+        return {"reason": "locked", "path": lock}
+    paths = _would_overwrite(root, old, tip)
+    if paths:
+        return {"reason": "would-overwrite", "path": paths[0], "paths": paths}
+    txn = ref_transaction(root, branch)
+    try:
+        if _tell(txn, "start") != "start: ok" or _tell(txn, "update %s %s %s\nprepare" % (ref, tip, old)) != "prepare: ok":
+            return {"reason": "branch-moved", "path": None}
+        if git(root, "read-tree", "-m", "-u", old, tip, check=False).returncode != 0:
+            _tell(txn, "abort")
+            if os.path.exists(lock):
+                return {"reason": "locked", "path": lock}
+            paths = _would_overwrite(root, old, tip)
+            return {"reason": "would-overwrite", "path": paths[0] if paths else None, "paths": paths}
+        if _tell(txn, "commit") != "commit: ok" and rev(root, ref) != tip:  # the ref decides, not an answer lost
+            if git(root, "read-tree", "-m", "-u", tip, old, check=False).returncode != 0:
+                raise NotRun("%s stays at %s, but the checkout's index and files moved to %s and could not be "
+                             "put back" % (branch, old, tip))
+            return {"reason": "branch-moved", "path": None}
+        return None
+    finally:
+        try:
+            txn.stdin.close()
+        except OSError:
+            pass
+        txn.wait()
+
+
+def _in_progress(root):
+    """Spec §3.1 condition 5 for the worktree at <root>: "in-progress" naming the first marker of a
+    rebase, merge, cherry-pick or revert that stands (IN_PROGRESS), or the first path an unmerged index
+    holds -- a stash pop that stopped on a conflict leaves no marker, and its unmerged index fails the
+    refresh as no lock does; "locked" naming the index.lock where one stands; else None."""
+    *markers, lock = git_paths(root, *IN_PROGRESS, "index.lock")
+    for m in markers:
+        if os.path.lexists(m):
+            return {"reason": "in-progress", "path": m}
+    unmerged = nul_list(git(root, "ls-files", "-u", "-z"))
+    if unmerged:
+        return {"reason": "in-progress", "path": unmerged[0].split("\t", 1)[1]}
+    if os.path.lexists(lock):
+        return {"reason": "locked", "path": lock}
+    return None
+
+
+def _porcelain_line(out, ref):
+    """The status line push --porcelain printed for <ref> -- "<flag>\\t<from>:<to>\\t<summary>" -- or None."""
+    for line in out.decode("utf-8", "surrogateescape").split("\n"):
+        fields = line.split("\t")
+        if len(fields) >= 3 and fields[1].rpartition(":")[2] == ref:
+            return line
+    return None
+
+
+def _moves(recorded):
+    """Spec §3.7's register moves, from the numbers maps of each attempt that moved the branch, oldest
+    first: for each slug those maps rebuilt, each origin whose number on the last of their tips
+    (after) differs from the one it had on origin's branch in the first of them that holds it there
+    (side "remote": a number a teammate already saw) or in the run's own commits in the first of them
+    that rebuilt the slug (side "run": a number this run's report already cites). The run's side is
+    left out where its number is the remote's, which already says so. Ordered by slug, origin and side."""
+    out = []
+    for slug in sorted({s for n in recorded for s in n["after"]}):
+        held = [n for n in recorded if slug in n["after"]]
+        first_run = held[0]["before_run"].get(slug, {})
+        for origin, to in sorted(held[-1]["after"][slug].items()):
+            remote = next((n["before_remote"][slug][origin] for n in held
+                           if origin in n["before_remote"].get(slug, {})), None)
+            for side, number in (("remote", remote), ("run", first_run.get(origin))):
+                if number is not None and number != to and not (side == "run" and number == remote):
+                    out.append({"slug": slug, "origin": origin, "side": side, "from": number, "to": to})
+    return out
+
+
+def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, fetch_seconds=60, push_seconds=60):
+    """Spec §3.1, §3.4 and §3.5: settle a rejected session-file push of <branch>, the default branch or
+    a plugin branch, in session-branch mode off (the caller's conditions 1 and 2). At most <attempts>
+    attempts, each: fetch origin's <branch> into refs/remotes/origin/<branch> (git_bounded,
+    <fetch_seconds>; "fetch-failed"); refuse "cannot-replay" where replay_ok says no, as _in_progress
+    says, "push-scope" naming the first commit push_scope fails among those the branch holds and
+    origin's lacks, and "checked-out" naming another worktree that has the branch checked out. Where
+    origin's holds every commit of the branch, a branch strictly behind is moved onto origin's and
+    nothing is pushed. Otherwise the commits are replayed onto origin's (replay_commits; its refusal
+    stands) and the branch moved onto the tip (move_branch; the checkout with it where it stands on
+    the branch); where every commit was dropped, that tip is origin's and nothing is pushed; else,
+    only then, the tip is pushed (git_bounded, <push_seconds>): pushed where push exits 0; a
+    "[rejected]" status line, origin having moved on meanwhile, starts the next attempt from the moved
+    branch; anything else -- "[remote rejected]" included (Review Focus 7) -- ends the run, its line
+    left for specs-repo-git §4 step 6 to classify. After a push, <set_upstream> sets the upstream a
+    push from a commit id does not set; a failure is reported and changes nothing else.
+    Returns {moved: an attempt moved the branch; pushed; attempts: how many began; replayed, dropped:
+    those of the replay the branch was last moved onto; tip: the commit it was last moved onto, or the
+    one it stood on where origin's already held it, else None; porcelain: the push's status line for
+    the branch, or None; moves (_moves); upstream_error: None or git's first line; refused: None, or
+    {reason (REFUSALS), path} and for would-overwrite paths}. Any exception once the branch moved is
+    raised as Partial carrying that result."""
+    ref, remote = "refs/heads/" + branch, "refs/remotes/origin/" + branch
+    if rev(root, ref) is None:
+        raise NotRun("no such branch: %s" % branch)
+    top = os.path.realpath(text(git(root, "rev-parse", "--show-toplevel")))
+    result = {"moved": False, "pushed": False, "attempts": 0, "replayed": [], "dropped": [], "tip": None,
+              "porcelain": None, "moves": [], "upstream_error": None, "refused": None}
+    recorded = []
+    try:
+        for attempt in range(1, attempts + 1):
+            result["attempts"] = attempt
+            if git_bounded(root, fetch_seconds, "fetch", "origin", "+%s:%s" % (ref, remote)).returncode != 0:
+                result["refused"] = {"reason": "fetch-failed", "path": None}
+                break
+            refused = None if replay_ok(root) else {"reason": "cannot-replay", "path": None}
+            refused = refused or _in_progress(root)
+            old, onto = rev(root, ref), rev(root, remote)
+            if refused is None:
+                commits, failed = push_scope(root, old, onto)
+                if failed:
+                    refused = {"reason": "push-scope", "path": failed}
+            if refused is None:
+                where = checked_out_at(root, branch)
+                here = any(os.path.realpath(w) == top for w in where)
+                others = [w for w in where if os.path.realpath(w) != top]
+                if others:
+                    refused = {"reason": "checked-out", "path": others[0]}
+            if refused:
+                result["refused"] = refused
+                break
+            if commits:
+                got = replay_commits(root, onto, commits, register_rebuild)
+                if got["refused"]:
+                    result["refused"] = got["refused"]
+                    break
+            else:  # origin's holds every commit the branch does
+                got = {"tip": onto, "replayed": [], "dropped": [], "numbers": None}
+            tip = got["tip"]
+            if tip != old:
+                refused = move_branch(root, branch, old, tip, here)
+                if refused:
+                    result["refused"] = refused
+                    break
+                result["moved"] = True
+                if got["numbers"]:
+                    recorded.append(got["numbers"])
+            result.update(tip=tip, replayed=got["replayed"], dropped=got["dropped"])
+            if tip == onto:  # nothing is left that origin's lacks
+                break
+            p = git_bounded(root, push_seconds, "push", "--porcelain", "origin", "%s:%s" % (tip, ref))
+            result["porcelain"] = _porcelain_line(p.stdout, ref)
+            if p.returncode == 0:
+                result["pushed"] = True
+                break
+            fields = (result["porcelain"] or "").split("\t")
+            if len(fields) < 3 or not fields[2].startswith("[rejected]"):
+                break
+        if result["pushed"] and set_upstream:
+            r = git(root, "branch", "--set-upstream-to=origin/" + branch, branch, check=False)
+            if r.returncode != 0:
+                lines = r.stderr.decode("utf-8", "replace").strip().splitlines()
+                result["upstream_error"] = lines[0] if lines else "git branch exited %d" % r.returncode
+        result["moves"] = _moves(recorded)
+    except Exception as e:
+        if not result["moved"]:
+            raise
+        try:
+            result["moves"] = _moves(recorded)
+        except Exception:
+            pass
+        raise Partial(str(e) if isinstance(e, NotRun) else "%s: %s" % (type(e).__name__, e), result) from e
+    return result
 
 
 def selftest():
@@ -3307,6 +3688,521 @@ def selftest():
             for attrs in (None, "* merge=text\n", "* -merge\n", "security/** export-ignore\n"):
                 replay_cases(attrs)
 
+        # ---- the replay subcommand (spec §3.1, §3.4, §3.5, §3.8): fetch, replay, locked move, push ----
+        REAL_GIT = shutil.which("git")
+        TEAM_T, MINE_T = today("team, landed before the run's push"), today("mine, the run's own")
+        RUN_MSG = "A-1 Add dev-workflows session artifacts (implement)"
+        PRD = "specifications/PRD-A-1-x/prd.md"
+        NOTE = "notes/team.md"
+        PLUGIN = "prd/A-1-x"
+        GERMAN = {"LANG": "de_DE.UTF-8", "LC_ALL": "de_DE.UTF-8", "LANGUAGE": "de"}
+
+        def sh_quote(s):
+            return "'" + s.replace("'", "'\\''") + "'"
+
+        def pworld(tmp):
+            """rworld's origin (no hook) and two clones, plus a tracked note of the user's own: (a, b,
+            the stub rebuild script, origin's path)."""
+            a, b, scripts = rworld(tmp, None)
+            b.write(NOTE, "team notes\n")
+            b.commit_all("notes")
+            b.git("push", "-q", "origin", "main")
+            a.git("pull", "-q", "--ff-only")
+            return a, b, scripts["stub"], os.path.join(tmp, "remote.git")
+
+        def diverge(a, b, team=None, mine=None):
+            """b lands <team>'s edit on origin from the branch it stands on; a commits <mine>'s on its
+            own, one session-file commit as a run makes it, and does not fetch."""
+            (team or (lambda r: r.add(FB, TEAM_T)))(b)
+            b.commit_all("team")
+            b.git("push", "-q", "origin", "HEAD")
+            (mine or (lambda r: r.add(FB, MINE_T)))(a)
+            a.git("add", "-A")
+            a.git("commit", "-q", "-m", RUN_MSG)
+
+        def on_origin(remote, ref, path):
+            p = subprocess.run(["git", "--git-dir", remote, "cat-file", "blob", "%s:%s" % (ref, path)],
+                               stdout=subprocess.PIPE, stderr=devnull)
+            return p.stdout.decode("utf-8") if p.returncode == 0 else None
+
+        def origin_rev(remote, ref):
+            return subprocess.run(["git", "--git-dir", remote, "rev-parse", ref], stdout=subprocess.PIPE,
+                                  stderr=devnull).stdout.decode("utf-8").strip()
+
+        def letters(r):
+            """path -> its two status letters, the leading space kept."""
+            recs = raw(r, "status", "--porcelain", "-z", "--untracked-files=all").decode("utf-8").split("\0")
+            return {rec[3:]: rec[:2] for rec in recs if rec}
+
+        def user_state(r, paths):
+            """<paths>' status letters, index entries and bytes."""
+            held = letters(r)
+            return ([held.get(p) for p in paths], r.git("ls-files", "-s", "--", *paths), [r.read(p) for p in paths])
+
+        def replay_cli(r, *args, env=None):
+            got = r.run("replay", *args, env=env)
+            reason = (got.get("refused") or {}).get("reason")
+            check(reason is None or reason in globals().get("REFUSALS", ()),
+                  "[move] refused.reason %r is one of the closed set (%r)" % (reason, got))
+            return got
+
+        def racing(tmp, b, races):
+            """The environment that puts first on PATH a git which, on its n-th push call, first lands
+            races[n-1] -- {path: whole content} -- from <b> on origin with the real git: a teammate
+            pushing while the run pushes."""
+            fake, rdir = os.path.join(tmp, "racing-git"), os.path.join(tmp, "races")
+            os.makedirs(fake)
+            os.makedirs(rdir)
+            for n, files in enumerate(races, 1):
+                for rel, body in files.items():
+                    full = os.path.join(rdir, str(n), rel)
+                    os.makedirs(os.path.dirname(full), exist_ok=True)
+                    with open(full, "w", encoding="utf-8", newline="") as fh:
+                        fh.write(body)
+            q = {"c": sh_quote(os.path.join(rdir, "count")), "d": sh_quote(rdir), "b": sh_quote(b.path),
+                 "g": sh_quote(REAL_GIT)}
+            with open(os.path.join(fake, "git"), "w") as fh:
+                fh.write("#!/bin/sh\n"
+                         "for x in \"$@\"; do\n"
+                         "  if [ \"$x\" = push ]; then\n"
+                         "    n=$(( $(cat %(c)s 2>/dev/null || echo 0) + 1 )); echo $n > %(c)s\n"
+                         "    if [ -d %(d)s/$n ]; then\n"
+                         "      { cp -R %(d)s/$n/. %(b)s/ && %(g)s -C %(b)s add -A && %(g)s -C %(b)s commit -q -m \"race $n\""
+                         " && %(g)s -C %(b)s push -q origin HEAD; } >/dev/null 2>&1\n"
+                         "    fi\n"
+                         "    break\n"
+                         "  fi\n"
+                         "done\n"
+                         "exec %(g)s \"$@\"\n" % q)
+            os.chmod(os.path.join(fake, "git"), 0o755)
+            return {"PATH": fake + os.pathsep + os.environ.get("PATH", "")}
+
+        def cannot_replay():
+            with tempfile.TemporaryDirectory() as tmp:
+                a, b, stub, remote = pworld(tmp)
+                diverge(a, b)
+                old = a.git("rev-parse", "main")
+                fake = os.path.join(tmp, "old-git")
+                os.makedirs(fake)
+                with open(os.path.join(fake, "git"), "w") as fh:
+                    fh.write('#!/bin/sh\nfor x in "$@"; do\n  if [ "$x" = merge-tree ]; then\n    cat <<\'EOF\'\n'
+                             "usage: git merge-tree [--write-tree] [<options>] <branch1> <branch2>\n\n"
+                             "    --write-tree          do a real merge instead of a trivial merge\n"
+                             "    -X, --strategy-option <option=value>\nEOF\n    exit 129\n  fi\ndone\n"
+                             "exec %s \"$@\"\n" % sh_quote(REAL_GIT))
+                os.chmod(os.path.join(fake, "git"), 0o755)
+                runs = [("a git without merge-tree --merge-base", {"PATH": fake + os.pathsep + os.environ.get("PATH", "")})]
+                if not can_replay:
+                    runs.append(("this git, older than 2.40", None))
+                for what, env in runs:
+                    got = replay_cli(a, "--branch", "main", env=env)
+                    check(got.get("refused") == {"reason": "cannot-replay", "path": None} and got.get("moved") is False
+                          and a.git("rev-parse", "main") == old,
+                          "[move] %s refuses cannot-replay, moving nothing (%r)" % (what, got))
+        guarded("cannot-replay", cannot_replay)
+
+        def move_cases():
+            with tempfile.TemporaryDirectory() as tmp:
+                def where(name):
+                    os.makedirs(os.path.join(tmp, name))
+                    return os.path.join(tmp, name)
+
+                # s1's dirty set in the run's clone: replayed, moved, pushed; every user file as it was
+                def dirty_set():
+                    a, b, stub, remote = pworld(where("dirty-set"))
+                    diverge(a, b)
+                    design = "specifications/PRD-A-1-x/design-notes.md"
+                    users = [NOTE, "notes/scratch.txt", PRD, "notes/staged-new.md", design]
+                    a.write(NOTE, "user edit, unstaged\n", append=True)
+                    a.write("notes/scratch.txt", "scratch\n")
+                    a.write(PRD, "user edit, staged\n", append=True)
+                    a.git("add", PRD)
+                    a.write(PRD, "unstaged on top\n", append=True)
+                    a.write("notes/staged-new.md", "new staged\n")
+                    a.git("add", "notes/staged-new.md")
+                    a.write(design, "new staged\n")
+                    a.git("add", design)
+                    a.write(design, "unstaged on top\n", append=True)
+                    before = user_state(a, users)
+                    got = replay_cli(a, "--branch", "main")
+                    tip = got.get("tip")
+                    check(got.get("moved") is True and got.get("pushed") is True and got.get("attempts") == 1
+                          and got.get("refused") is None and len(got.get("replayed", [])) == 1 and got.get("dropped") == []
+                          and got.get("moves") == [] and got.get("upstream_error") is None
+                          and (got.get("porcelain") or "").startswith(" \t%s:refs/heads/main\t" % tip)
+                          and tip == a.git("rev-parse", "main") == origin_rev(remote, "main"),
+                          "[move: dirty set] replayed, moved and pushed in one attempt (%r)" % got)
+                    check(user_state(a, users) == before
+                          and letters(a) == {NOTE: " M", "notes/scratch.txt": "??", PRD: "MM", "notes/staged-new.md": "A ",
+                                             design: "AM"},
+                          "[move: dirty set] every user file keeps its status letters, index entry and bytes (%r)" % letters(a))
+                    both = SEED + "\n" + TEAM_T + "\n" + MINE_T
+                    check(on_origin(remote, "main", FB) == both and a.read(FB) == both,
+                          "[move: dirty set] origin and the checkout hold both sides' entries, once each (%r)"
+                          % on_origin(remote, "main", FB))
+                guarded("dirty set", dirty_set)
+
+                # a dirty file and an untracked one where the tip writes: refused before anything moves,
+                # the paths named from status and diff-tree, never from git's text, whatever the locale
+                def would_overwrite():
+                    a, b, stub, remote = pworld(where("would-overwrite"))
+
+                    def team(r):
+                        r.add(FB, TEAM_T)
+                        r.write(PRD, "# PRD, the teammate's\n")
+                        r.write("notes/new.md", "the teammate's\n")
+                    diverge(a, b, team)
+                    a.write(PRD, "# PRD, mine, unstaged\n")
+                    a.write("notes/new.md", "mine, untracked\n")
+                    before = (a.state(), a.git("rev-parse", "main"), a.read(PRD), a.read("notes/new.md"), a.read(FB))
+                    for label, env in (("C", None), ("de_DE", GERMAN)):
+                        got = replay_cli(a, "--branch", "main", env=env)
+                        after = (a.state(), a.git("rev-parse", "main"), a.read(PRD), a.read("notes/new.md"), a.read(FB))
+                        check(got.get("moved") is False and got.get("pushed") is False and got.get("tip") is None
+                              and got.get("refused") == {"reason": "would-overwrite", "path": "notes/new.md",
+                                                         "paths": ["notes/new.md", PRD]} and after == before,
+                              "[move: would-overwrite, %s] refused naming both paths, HEAD, index and bytes as they were (%r)"
+                              % (label, got))
+                guarded("would-overwrite", would_overwrite)
+
+                # a file rewritten with the same bytes is stat-dirty: the refresh lets read-tree through.
+                # GIT_OPTIONAL_LOCKS=0 (some editors set it) keeps git status from writing a refreshed
+                # index of its own, so the refresh is what is tested
+                def same_bytes():
+                    a, b, stub, remote = pworld(where("same-bytes"))
+
+                    def team(r):
+                        r.add(FB, TEAM_T)
+                        r.write(PRD, "# PRD, the teammate's\n")
+                    diverge(a, b, team)
+                    a.write(PRD, a.read(PRD))
+                    st = os.stat(os.path.join(a.path, PRD))
+                    os.utime(os.path.join(a.path, PRD), (st.st_atime + 100, st.st_mtime + 100))
+                    got = replay_cli(a, "--branch", "main", env={"GIT_OPTIONAL_LOCKS": "0"})
+                    check(got.get("moved") is True and got.get("pushed") is True and a.read(PRD) == "# PRD, the teammate's\n"
+                          and letters(a) == {},
+                          "[move: same bytes] a same-bytes rewrite of a file the tip changes moves after the refresh (%r)" % got)
+                guarded("same bytes", same_bytes)
+
+                # a commit landing between the replay and the move fails prepare: nothing touched
+                def concurrent():
+                    a, b, stub, remote = pworld(where("concurrent"))
+                    diverge(a, b)
+                    a.git("fetch", "-q", "origin")
+                    old, onto = a.git("rev-parse", "main"), a.git("rev-parse", "origin/main")
+                    commits, bad = push_scope(a.path, old, onto)
+                    res = replay_commits(a.path, onto, commits, None)
+                    a.write(R_FU, "- [ ] another session's task\n", append=True)
+                    a.git("commit", "-q", "-m", RUN_MSG + " (another session)", "--", R_FU)
+                    before = frozen(a)
+                    got = move_branch(a.path, "main", old, res.get("tip"), True)
+                    locks = [p for p in ("HEAD.lock", "refs/heads/main.lock", "index.lock")
+                             if os.path.exists(os.path.join(a.path, ".git", p))]
+                    check(bad is None and commits == [old] and res.get("tip") and got == {"reason": "branch-moved", "path": None}
+                          and frozen(a) == before and locks == [],
+                          "[move: concurrent commit] prepare fails, nothing touched, no lock left (%r, %r)" % (got, locks))
+                guarded("concurrent commit", concurrent)
+
+                # a plugin branch the checkout does not stand on, checked out nowhere: update-ref alone; the
+                # upstream a push from a commit id does not set, set after it
+                def plugin_branch():
+                    a, b, stub, remote = pworld(where("plugin-branch"))
+                    b.git("switch", "-q", "-c", PLUGIN)
+                    b.git("push", "-q", "origin", PLUGIN)
+                    a.git("fetch", "-q", "origin")
+                    a.git("branch", "-q", "--no-track", PLUGIN, "origin/" + PLUGIN)
+                    a.git("switch", "-q", PLUGIN)
+                    a.add(FB, MINE_T)
+                    a.git("commit", "-q", "-am", RUN_MSG)
+                    a.git("switch", "-q", "main")
+                    b.add(FB, TEAM_T)
+                    b.commit_all("team")
+                    b.git("push", "-q", "origin", PLUGIN)
+                    before = a.state()
+                    got = replay_cli(a, "--branch", PLUGIN, "--set-upstream")
+                    check(got.get("moved") is True and got.get("pushed") is True and got.get("attempts") == 1
+                          and got.get("tip") == a.git("rev-parse", PLUGIN) == origin_rev(remote, PLUGIN)
+                          and got.get("upstream_error") is None and a.state() == before
+                          and on_origin(remote, PLUGIN, FB) == SEED + "\n" + TEAM_T + "\n" + MINE_T,
+                          "[move: plugin branch] moved by update-ref and pushed, the checkout untouched (%r)" % got)
+                    check(a.git("rev-parse", "--abbrev-ref", PLUGIN + "@{u}", check=False) == "origin/" + PLUGIN,
+                          "[move: plugin branch] --set-upstream sets origin/%s after the push" % PLUGIN)
+                guarded("plugin branch", plugin_branch)
+
+                # condition 7, and Review Focus 9: a branch another worktree holds is refused, naming it;
+                # from that linked worktree, its own in-progress and lock files are the ones that count
+                def linked_worktree():
+                    a, b, stub, remote = pworld(where("worktree"))
+                    b.git("switch", "-q", "-c", PLUGIN)
+                    b.git("push", "-q", "origin", PLUGIN)
+                    a.git("fetch", "-q", "origin")
+                    w = Repo(os.path.join(tmp, "worktree-w"))
+                    a.git("worktree", "add", "-q", "-b", PLUGIN, w.path, "origin/" + PLUGIN)
+                    w.add(FB, MINE_T)
+                    w.git("commit", "-q", "-am", RUN_MSG)
+                    b.add(FB, TEAM_T)
+                    b.commit_all("team")
+                    b.git("push", "-q", "origin", PLUGIN)
+                    old = a.git("rev-parse", PLUGIN)
+                    got = replay_cli(a, "--branch", PLUGIN)
+                    path = (got.get("refused") or {}).get("path") or ""
+                    check(got.get("moved") is False and (got.get("refused") or {}).get("reason") == "checked-out"
+                          and os.path.realpath(path) == os.path.realpath(w.path) and a.git("rev-parse", PLUGIN) == old,
+                          "[move: checked out elsewhere] refused, naming that worktree (%r)" % got)
+
+                    def git_path(r, name):
+                        return os.path.join(r.path, r.git("rev-parse", "--git-path", name))
+                    marker = git_path(w, "MERGE_HEAD")
+                    with open(marker, "w") as fh:
+                        fh.write(old + "\n")
+                    got = replay_cli(w, "--branch", PLUGIN)
+                    os.remove(marker)
+                    check(got.get("refused") == {"reason": "in-progress", "path": marker} and got.get("moved") is False,
+                          "[move: linked worktree] its own MERGE_HEAD refuses in-progress (%r)" % got)
+                    lock = git_path(w, "index.lock")
+                    open(lock, "w").close()
+                    got = replay_cli(w, "--branch", PLUGIN)
+                    os.remove(lock)
+                    check(got.get("refused") == {"reason": "locked", "path": lock} and got.get("moved") is False,
+                          "[move: linked worktree] its own index.lock refuses locked (%r)" % got)
+                    other = git_path(a, "index.lock")  # the main worktree's: not this checkout's index
+                    open(other, "w").close()
+                    got = replay_cli(w, "--branch", PLUGIN)
+                    held = os.path.exists(other)
+                    os.remove(other)
+                    both = SEED + "\n" + TEAM_T + "\n" + MINE_T
+                    check(got.get("moved") is True and got.get("pushed") is True and held
+                          and w.git("rev-parse", "HEAD") == got.get("tip") == origin_rev(remote, PLUGIN)
+                          and w.read(FB) == both and letters(w) == {},
+                          "[move: linked worktree] moved in that worktree and pushed, another worktree's lock aside (%r)" % got)
+                guarded("linked worktree", linked_worktree)
+
+                # an empty list: a branch strictly behind is moved onto origin's, nothing pushed; and a
+                # list whose every commit origin already holds, the same
+                def behind():
+                    a, b, stub, remote = pworld(where("behind"))
+                    b.add(FB, TEAM_T)
+                    b.commit_all("team")
+                    b.git("push", "-q", "origin", "main")
+                    a.write("notes/scratch.txt", "scratch\n")
+                    got = replay_cli(a, "--branch", "main")
+                    check(got.get("moved") is True and got.get("pushed") is False and got.get("replayed") == []
+                          and got.get("dropped") == [] and got.get("refused") is None and got.get("porcelain") is None
+                          and got.get("tip") == a.git("rev-parse", "main") == origin_rev(remote, "main")
+                          and a.read(FB) == SEED + "\n" + TEAM_T and letters(a) == {"notes/scratch.txt": "??"},
+                          "[move: empty list] a branch strictly behind is moved onto origin's, not pushed (%r)" % got)
+                guarded("empty list", behind)
+
+                def all_dropped():
+                    SAME = today("the same entry, appended on both sides")
+                    a, b, stub, remote = pworld(where("all-dropped"))
+                    diverge(a, b, lambda r: r.add(FB, SAME), lambda r: r.add(FB, SAME))
+                    got = replay_cli(a, "--branch", "main")
+                    check(got.get("moved") is True and got.get("pushed") is False and got.get("replayed") == []
+                          and len(got.get("dropped", [])) == 1 and got.get("porcelain") is None
+                          and got.get("tip") == a.git("rev-parse", "main") == origin_rev(remote, "main"),
+                          "[move: every commit dropped] moved onto origin's, not pushed (%r)" % got)
+                guarded("every commit dropped", all_dropped)
+
+                # condition 6: a commit of the user's own among the local ones, or a root commit, refuses
+                # with its sha, before replay_commits (which raises on a root commit) is reached
+                def scope():
+                    a, b, stub, remote = pworld(where("push-scope"))
+                    diverge(a, b)
+                    a.write(PRD, "# PRD, the user's own commit\n")
+                    a.git("commit", "-q", "-am", "the user's own")
+                    own = a.git("rev-parse", "HEAD")
+                    got = replay_cli(a, "--branch", "main")
+                    check(got.get("refused") == {"reason": "push-scope", "path": own} and got.get("moved") is False
+                          and a.git("rev-parse", "main") == own,
+                          "[move: push-scope] a non-session commit refuses with its sha, nothing moved (%r)" % got)
+                    b.git("push", "-q", "origin", "main:refs/heads/prd/orphan")
+                    env = {"GIT_INDEX_FILE": os.path.join(tmp, "orphan-index")}
+                    a.git("read-tree", "--empty", env=env)
+                    a.git("update-index", "--add", "--cacheinfo", "100644,%s,%s" % (a.git("rev-parse", "HEAD:" + FB), FB), env=env)
+                    root = a.git("commit-tree", a.git("write-tree", env=env), "-m", RUN_MSG)
+                    a.git("branch", "prd/orphan", root)
+                    got = replay_cli(a, "--branch", "prd/orphan")
+                    check(got.get("refused") == {"reason": "push-scope", "path": root} and got.get("moved") is False
+                          and a.git("rev-parse", "prd/orphan") == root,
+                          "[move: push-scope] a root commit refuses with its sha (%r)" % got)
+                    # a branch origin does not have: the fetch fails, nothing moves
+                    a.git("branch", "prd/local-only", own)
+                    got = replay_cli(a, "--branch", "prd/local-only")
+                    check(got.get("refused") == {"reason": "fetch-failed", "path": None} and got.get("moved") is False
+                          and got.get("attempts") == 1, "[move: fetch failed] refused, nothing moved (%r)" % got)
+                    # an unmerged index with no marker (a stash pop stopped on a conflict) is in progress
+                    base = a.git("rev-parse", "HEAD:" + NOTE)
+                    subprocess.run(["git", "-C", a.path, "update-index", "--index-info"], check=True,
+                                   input=("0 %s\t%s\n" % (ZERO, NOTE) + "".join("100644 %s %d\t%s\n" % (base, n, NOTE)
+                                                                               for n in (1, 2, 3))).encode())
+                    got = replay_cli(a, "--branch", "main")
+                    a.git("reset", "-q", "--", NOTE)
+                    check(got.get("refused") == {"reason": "in-progress", "path": NOTE} and got.get("moved") is False,
+                          "[move: unmerged index] refused in-progress, naming the path (%r)" % got)
+                guarded("push-scope", scope)
+
+                # the push race (spec §3.4 step 4): a teammate pushing during the run's push
+                def races(label, n):
+                    a, b, stub, remote = pworld(where(label))
+                    diverge(a, b)
+                    fb, trees = SEED + "\n" + TEAM_T, []
+                    for i in range(n):
+                        fb += "\n" + today("race %d, a teammate's push" % (i + 1))
+                        trees.append({FB: fb})
+                    return a, remote, replay_cli(a, "--branch", "main", env=racing(where(label + "-git"), b, trees)), fb
+
+                def race_twice():
+                    a, remote, got, fb = races("race-twice", 2)
+                    check(got.get("attempts") == 3 and got.get("moved") is True and got.get("pushed") is True
+                          and got.get("tip") == a.git("rev-parse", "main") == origin_rev(remote, "main")
+                          and on_origin(remote, "main", FB) == fb + "\n" + MINE_T and a.read(FB) == fb + "\n" + MINE_T,
+                          "[move: two races] settled on the third attempt, each entry once (%r)" % got)
+                guarded("two races", race_twice)
+
+                def race_thrice():
+                    a, remote, got, fb = races("race-thrice", 3)
+                    tip = got.get("tip")
+                    check(got.get("attempts") == 3 and got.get("moved") is True and got.get("pushed") is False
+                          and "\t[rejected]" in (got.get("porcelain") or "") and got.get("refused") is None
+                          and tip == a.git("rev-parse", "main") and on_origin(remote, "main", FB) == fb
+                          and a.read(FB) == at(a, tip, FB),
+                          "[move: three races] the branch stands moved on the last replay, not pushed (%r)" % got)
+                guarded("three races", race_thrice)
+
+                # Review Focus 7: a refusal by origin itself is no race: one attempt, the line returned
+                def remote_rejected():
+                    remote, a, b = world(where("remote-rejected"))
+                    b.add(FB, TEAM_T)
+                    b.commit_all("team")
+                    b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+                    a.add(FB, MINE_T)
+                    a.git("commit", "-q", "-am", RUN_MSG)
+                    got = replay_cli(a, "--branch", "main")
+                    check(got.get("attempts") == 1 and got.get("moved") is True and got.get("pushed") is False
+                          and "\t[remote rejected]" in (got.get("porcelain") or "") and got.get("refused") is None
+                          and got.get("tip") == a.git("rev-parse", "main"),
+                          "[move: remote rejected] one attempt, no loop, the porcelain line returned (%r)" % got)
+                guarded("remote rejected", remote_rejected)
+
+                # a later attempt's replay refused after the first moved: moved, not pushed
+                def later_refused():
+                    a, b, stub, remote = pworld(where("later-refused"))
+                    diverge(a, b)
+                    old = a.git("rev-parse", "main")
+                    edited = SEED.replace("**Friction:** e0 first", "**Friction:** e0 first, edited by hand")
+                    got = replay_cli(a, "--branch", "main",
+                                     env=racing(where("later-refused-git"), b, [{FB: edited + "\n" + TEAM_T}]))
+                    check(got.get("attempts") == 2 and got.get("moved") is True and got.get("pushed") is False
+                          and got.get("refused") == {"reason": "conflict", "path": FB} and len(got.get("replayed", [])) == 1
+                          and got.get("tip") == a.git("rev-parse", "main") != old,
+                          "[move: a later attempt refused] moved on the first, not pushed (%r)" % got)
+                guarded("a later attempt refused", later_refused)
+
+                # exit 2 after a move: the partial result on stdout, then the one "not run" line
+                def partial():
+                    a, b, stub, remote = pworld(where("partial"))
+                    diverge(a, b)
+                    counter, signer = os.path.join(tmp, "signer-count"), os.path.join(tmp, "signer")
+                    with open(signer, "w") as fh:
+                        fh.write("#!/bin/sh\nn=$(( $(cat %(c)s 2>/dev/null || echo 0) + 1 )); echo $n > %(c)s\n"
+                                 "cat >/dev/null\n[ $n -ge 2 ] && exit 1\n"
+                                 "printf '\\n[GNUPG:] SIG_CREATED D 1 8 00 1 X\\n' >&2\n"
+                                 "printf -- '-----BEGIN PGP SIGNATURE-----\\n\\nstub\\n-----END PGP SIGNATURE-----\\n'\n"
+                                 % {"c": sh_quote(counter)})
+                    os.chmod(signer, 0o755)
+                    a.git("config", "commit.gpgSign", "true")
+                    a.git("config", "gpg.program", signer)
+                    race = racing(where("partial-git"), b, [{FB: SEED + "\n" + TEAM_T + "\n" + today("race 1")}])
+                    r = subprocess.run([sys.executable, me, "--specs", a.path, "replay", "--branch", "main"],
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(os.environ, **race))
+                    try:
+                        out = json.loads(r.stdout)
+                    except ValueError:
+                        out = {}
+                    err = r.stderr.decode("utf-8", "replace").splitlines()
+                    check(r.returncode == 2 and out.get("moved") is True and out.get("pushed") is False
+                          and out.get("attempts") == 2 and out.get("tip") == a.git("rev-parse", "main")
+                          and len(err) == 1 and err[0].startswith("session-branch: not run ("),
+                          "[move: exit 2 after a move] stdout carries the partial result, stderr one line (%r, %r, %r)"
+                          % (r.returncode, out, err))
+                guarded("exit 2 after a move", partial)
+
+                # a .git/config the upstream cannot be written to: reported, nothing else changed
+                def readonly_config():
+                    a, b, stub, remote = pworld(where("ro-config"))
+                    diverge(a, b)
+                    a.git("branch", "--unset-upstream", "main")
+                    cfg, ro = os.path.join(a.path, ".git", "config"), os.path.join(a.path, ".git", "ro")
+                    os.makedirs(ro)
+                    os.replace(cfg, os.path.join(ro, "config"))
+                    os.symlink(os.path.join(ro, "config"), cfg)
+                    if os.geteuid() == 0:  # root writes through any mode: a held lock stands in for it
+                        open(os.path.join(ro, "config.lock"), "w").close()
+                    os.chmod(ro, 0o555)
+                    try:
+                        with open(cfg, "rb") as fh:
+                            before = fh.read()
+                        got = replay_cli(a, "--branch", "main", "--set-upstream")
+                        with open(cfg, "rb") as fh:
+                            after = fh.read()
+                        upstream = a.git("rev-parse", "--abbrev-ref", "main@{u}", check=False)
+                    finally:
+                        os.chmod(ro, 0o755)
+                    check(got.get("moved") is True and got.get("pushed") is True and got.get("refused") is None
+                          and isinstance(got.get("upstream_error"), str) and got.get("upstream_error")
+                          and after == before and upstream != "origin/main",
+                          "[move: read-only config] upstream_error set, nothing else changed (%r)" % got)
+                guarded("read-only config", readonly_config)
+
+                # spec §3.7: each finding a rebuild renumbered, from its number before the first attempt
+                # to its number on the last tip, across two attempts
+                def moves():
+                    a, b, stub, remote = pworld(where("moves"))
+                    run2e = REG + "runs/0002-20261028T090000Z-e9e9e9e9.json"  # a race's record, sorting first
+
+                    def team(r):
+                        r.write(RUN2T, run_record(2, "2026-10-28T11:00:00Z", "s2:v3:tt"))
+                        write_register(r, [RUN1, RUN2T])
+
+                    def mine(r):
+                        r.write(RUN2M, run_record(2, "2026-10-28T10:00:00Z", "s2:v3:mm"))
+                        write_register(r, [RUN1, RUN2M])
+                    diverge(a, b, team, mine)
+                    js, md, _ = stub_register([RUN1, run2e, RUN2T])
+                    race = {run2e: run_record(2, "2026-10-28T09:00:00Z", "s2:v3:ee"), REG + "register.json": js,
+                            REG + "register.md": md}
+                    got = replay_cli(a, "--branch", "main", "--register-rebuild", stub,
+                                     env=racing(where("moves-git"), b, [race]))
+
+                    def origin(path):
+                        return "origin-" + os.path.basename(path)[:-5]
+                    want = [{"slug": SLUG, "origin": origin(RUN2M), "side": "run", "from": 2, "to": 3},
+                            {"slug": SLUG, "origin": origin(RUN2T), "side": "remote", "from": 2, "to": 4}]
+                    check(got.get("attempts") == 2 and got.get("pushed") is True and got.get("moves") == want
+                          and on_origin(remote, "main", REG + "register.json") == stub_register([RUN1, run2e, RUN2M, RUN2T])[0],
+                          "[move: moves] each renumbered finding, from its first number to its last (%r)" % got.get("moves"))
+                guarded("moves", moves)
+
+                # the push is bounded: a push origin holds past the cap is ended, and nothing more tried
+                def push_bound():
+                    a, b, stub, remote = pworld(where("push-bound"))
+                    diverge(a, b)
+                    hook = os.path.join(remote, "hooks", "pre-receive")
+                    with open(hook, "w") as fh:
+                        fh.write("#!/bin/sh\nsleep 30\n")
+                    os.chmod(hook, 0o755)
+                    started = time.monotonic()
+                    got = replay_cli(a, "--branch", "main", "--push-seconds", "1")
+                    took = time.monotonic() - started
+                    check(got.get("attempts") == 1 and got.get("moved") is True and got.get("pushed") is False
+                          and got.get("porcelain") is None and took < 15,
+                          "[move: push bound] a push past its cap is ended, no second attempt (%r, %.1f s)" % (got, took))
+                guarded("push bound", push_bound)
+
+        if can_replay:
+            move_cases()
+
         # an unexpected exception is "not run" on one line, exit 2: §6 quotes the first stderr line
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
@@ -3374,6 +4270,13 @@ def main():
             p.add_argument("--include-ahead", action="store_true")
     p = sub.add_parser("lift")
     p.add_argument("--branch", required=True)
+    p = sub.add_parser("replay")
+    p.add_argument("--branch", required=True)
+    p.add_argument("--register-rebuild")
+    p.add_argument("--set-upstream", action="store_true")
+    p.add_argument("--attempts", type=int, default=3)
+    p.add_argument("--fetch-seconds", type=int, default=60)
+    p.add_argument("--push-seconds", type=int, default=60)
     a = ap.parse_args()
     try:
         sys.stdout.reconfigure(errors="backslashreplace")
@@ -3389,6 +4292,11 @@ def main():
         if os.path.realpath(top) != os.path.realpath(a.specs):
             raise NotRun("%s is not its repository's top level (%s)" % (a.specs, top))
         result = dispatch(a)
+    except Partial as e:  # a replay that moved a branch says what stands before it says it stopped
+        print(json.dumps(e.result, indent=2))
+        sys.stdout.flush()
+        print("session-branch: not run (%s)" % " ".join(str(e).split()), file=sys.stderr)
+        return 2
     except (NotRun, OSError) as e:  # git's stderr can span lines; §6 quotes the first one
         print("session-branch: not run (%s)" % " ".join(str(e).split()), file=sys.stderr)
         return 2
@@ -3410,6 +4318,11 @@ def dispatch(a):
         return lift(a.specs, a.branch)
     if a.cmd == "put-back":
         return put_back(a.specs, a.branch, a.default_ref)
+    if a.cmd == "replay":
+        if min(a.attempts, a.fetch_seconds, a.push_seconds) < 1:
+            raise NotRun("--attempts, --fetch-seconds and --push-seconds each take a whole number of at least 1")
+        return replay(a.specs, a.branch, a.register_rebuild, a.set_upstream, a.attempts, a.fetch_seconds,
+                      a.push_seconds)
     raise NotRun("unknown subcommand %s" % a.cmd)
 
 
