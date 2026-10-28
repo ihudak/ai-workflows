@@ -200,17 +200,50 @@ def entry_set_merge(base, ours, theirs):
     out = ours
     if out and not out.endswith(b"\n"):
         out += _line_ending(out, last=True)
-    for e in ents_t:
+    return _append_entries(out, ents_t, have_o)
+
+
+def _append_entries(out, entries, have):
+    """<out>, which ends with a line ending or is empty, followed by each of <entries> whose key
+    <have> lacks, once, in order: after one empty line (none where <out> already ends with a blank
+    line, or is empty), with its trailing blank lines dropped and one line ending, its own lines
+    unchanged. Each line ending added is \\r\\n where the entry's first line ends \\r\\n, else \\n.
+    entry_set_merge's tail, shared with keep_branch_only; <have> gains each key added."""
+    for e in entries:
         k = entry_key(e)
-        if k in have_o:
+        if k in have:
             continue
         end = len(k)
         while e[end:end + 1] in (b" ", b"\t"):  # the last line's own trailing spaces are the entry's
             end += 1
         eol = _line_ending(e)
         out += (eol if out and not _ends_blank(out) else b"") + e[:end] + eol
-        have_o.add(k)
+        have.add(k)
     return out
+
+
+def keep_branch_only(head, given, working):
+    """A block-shaped working copy that commit takes as it is, where the branch still holds the
+    version this worktree was last given (<given>), followed by every entry of <given> that neither
+    <working> nor HEAD's version (<head>, None where HEAD lacks the file) holds, in <given>'s order,
+    as entry_set_merge appends one. An entry HEAD holds that the working copy dropped is a deliberate
+    removal (implementation-format §1's move of a block) and stays removed; an entry only the session
+    branch held, lost by a restore of HEAD's version, is put back. The cost: a hand edit of an entry
+    only the session branch holds keeps its old version beside the edited one -- a visible duplicate,
+    never a lost entry. <working> unchanged where nothing is missing; None (refuse) where the non-empty
+    versions are not all in one line-ending form, as entry_set_merge refuses."""
+    if len({_line_ending_form(x) for x in (head, given, working) if x}) > 1:
+        return None
+    have = {entry_key(e) for e in split_entries(working)[1]}
+    if head is not None:
+        have |= {entry_key(e) for e in split_entries(head)[1]}
+    missing = [e for e in split_entries(given)[1] if entry_key(e) not in have]
+    if not missing:
+        return working
+    out = working
+    if out and not out.endswith(b"\n"):
+        out += _line_ending(out, last=True)
+    return _append_entries(out, missing, have)
 
 
 def rev(root, ref):
@@ -227,12 +260,23 @@ def blob(root, commit, path):
     return text(r) if r.returncode == 0 else None
 
 
-def worktree_blob(root, path):
-    """The blob id git would store for the working copy of <path> (clean filters applied), or None."""
+def worktree_blob(root, path, write=False):
+    """The blob id git would store for the working copy of <path> (clean filters applied), or None;
+    with write, the blob is stored. Where git itself reports the tracked working copy unmodified
+    against the index (diff-files), it is the index's blob: hash-object reads no index, so under
+    core.autocrlf=input it turns a CRLF file's line endings into LF even where the index holds the
+    CRLF blob the clean checkout came from, which then read as a copy of its own. An index entry
+    marked assume-unchanged or skip-worktree, or not at stage 0, is hashed as before."""
     full = os.path.join(root, path)
     if not os.path.isfile(full):
         return None
-    return text(git(root, "hash-object", "--path", path, "--", path))
+    spec = ":(literal)" + path
+    if git(root, "diff-files", "--quiet", "--", spec, check=False).returncode == 0:
+        recs = nul_list(git(root, "ls-files", "-s", "-v", "-z", "--", spec))
+        fields = recs[0].split("\t", 1)[0].split() if len(recs) == 1 else []
+        if len(fields) == 4 and fields[0] == "H" and fields[3] == "0":
+            return fields[2]
+    return text(git(root, "hash-object", *(["-w"] if write else []), "--path", path, "--", path))
 
 
 def dirty_session_paths(root):
@@ -600,7 +644,8 @@ def sync(root, branch, default_ref):
     another clone), into the session branch without a checkout: a fast-forward where the branch holds
     nothing of its own, else merge-tree -X ours with the block-shaped files and follow-ups.md settled
     from their three blobs (settle_merge); then align the overlay. A source that cannot be settled so
-    is not merged at all, and its paths are listed in conflict."""
+    is not merged at all: its paths are listed in conflict, and each with that source -- <default-ref>
+    or origin/<branch>, as given -- in conflicts."""
     refuse_checked_out(root, branch)
     ensure_attributes(root)
     ref = "refs/heads/" + branch
@@ -609,7 +654,7 @@ def sync(root, branch, default_ref):
         raise NotRun("no such ref: %s" % default_ref)
     tip = rev(root, ref)
     result = {"created": False, "merged": False, "fast_forward": False, "tip": tip, "conflict": [],
-              "deferred": [], "aligned": []}
+              "conflicts": [], "deferred": [], "aligned": []}
     if tip is None:
         raise NotRun("no such branch: %s" % branch)
     sources = [(default_ref, base)]
@@ -641,6 +686,7 @@ def sync(root, branch, default_ref):
         tree, refused = settle_merge(root, out[0], tip, c, out[1:] if r.returncode == 1 else [])
         if refused:  # no merge commit for this source; the next run tries again
             result["conflict"] = sorted(set(result["conflict"]) | set(refused))
+            result["conflicts"] += [{"path": p, "source": name} for p in refused]
             continue
         merge = commit_tree(root, tree, [tip, c], "NOISSUE Merge %s into %s" % (name, branch))
         git(root, "update-ref", ref, merge, tip)
@@ -682,9 +728,12 @@ def commit(root, branch, default_ref, message, include_ahead=False):
     <default-ref> in and align the overlay. Never touches the checkout, the index or HEAD.
     A block-shaped working copy, or follow-ups.md, that differs from the tip's version is committed
     as it is where the tip still holds the version this worktree was last given (its record, else
-    HEAD's), so a hand edit goes through; where the tip holds another version, the working copy is
-    first settled with it (settle_copy) and written back, or, where that refuses, left out of the
-    commit and as it is in the working tree, and listed in unsettled."""
+    HEAD's), so a hand edit goes through -- a block-shaped one with every entry of that version that
+    neither it nor HEAD's version holds put back after it (keep_branch_only); where the tip holds
+    another version, the working copy is first settled with it (settle_copy). Either is written back,
+    or, where it refuses, the file is left out of the commit and as it is in the working tree, and
+    listed in unsettled. A file the tip has no version of, any other shape, and a deletion are
+    committed as they are."""
     refuse_checked_out(root, branch)
     ensure_attributes(root)
     ref = "refs/heads/" + branch
@@ -715,13 +764,23 @@ def commit(root, branch, default_ref, message, include_ahead=False):
             if os.path.isfile(full) and not os.path.islink(full):
                 t = blob(root, tip, p)
                 given = placed[p] if p in placed else blob(root, "HEAD", p)
-                if merge_class(p) in SETTLED and t not in (None, given, worktree_blob(root, p)):
-                    settled = settle_copy(root, p, tip)  # the tip holds another version than this worktree's
+                cls = merge_class(p)
+                if cls in SETTLED and t not in (None, worktree_blob(root, p)):
+                    with open(full, "rb") as fh:
+                        working = fh.read()
+                    if t != given:  # the tip holds another version than this worktree was given
+                        settled = settle_copy(root, p, tip)
+                    elif cls == "block":  # as it is, with any entry only the session branch held
+                        head = worktree_form(root, "HEAD", p)
+                        settled = keep_branch_only(head, worktree_form(root, tip, p), working)
+                    else:
+                        settled = working
                     if settled is None:
                         unsettled.append(p)
                         continue
-                    write_bytes(root, p, settled)
-                sha = text(git(root, "hash-object", "-w", "--path", p, "--", p))
+                    if settled != working:
+                        write_bytes(root, p, settled)
+                sha = worktree_blob(root, p, write=True)
                 mode_bits = "100755" if os.stat(full).st_mode & stat.S_IXUSR else "100644"
                 entries.append("%s %s\t%s" % (mode_bits, sha, p))
                 if sha != blob(root, "HEAD", p):  # a stranded file HEAD holds is not the overlay's
@@ -1395,6 +1454,8 @@ def selftest():
             got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
             check(got.get("conflict") == [FB] and a.git("rev-parse", "session/aa") == c,
                   "a modify/delete merge is reported and moves nothing (%r)" % got)
+            check(got.get("conflicts") == [{"path": FB, "source": "origin/main"}],
+                  "…naming the default ref as its source (%r)" % got.get("conflicts"))
 
         # ---- commit ----------------------------------------------------------------------------
         with tempfile.TemporaryDirectory() as tmp:
@@ -2027,6 +2088,24 @@ def selftest():
             got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
             check(got.get("conflict") == [IM] and got.get("merged") is False and a.git("rev-parse", "session/aa") == tip
                   and a.read(IM) == before, "an edited entry on the default side makes no merge commit (%r)" % got)
+            check(got.get("conflicts") == [{"path": IM, "source": "origin/main"}],
+                  "…and names the default ref as the source (%r)" % got.get("conflicts"))
+        # the same identity on two clones: one removed an entry the other's copy still holds and added
+        # to; the merge of origin's copy is refused, and its source is named
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.add(FB, today("a1 from clone a"))
+            a.run("commit", "--branch", "session/aa", *CM)
+            a.git("push", "-q", "-u", "origin", "session/aa")
+            b.git("fetch", "-q", "origin")
+            mine = SEED[:SEED.index("## ")] + today("b1 from clone b")  # e0, an entry main holds, removed by hand
+            b.write(FB, mine)
+            got = b.run("commit", "--branch", "session/aa", *CM)
+            check(got["sync"].get("conflict") == [FB] and got["sync"].get("merged") is False
+                  and got["sync"].get("conflicts") == [{"path": FB, "source": "origin/session/aa"}],
+                  "a refused merge of origin's copy of the session branch names that copy as its source (%r)" % got)
+            check(b.read(FB) == mine and b.git("show", "session/aa:" + FB) == mine.rstrip("\n"),
+                  "…the removal committed as it is and the working copy left as it was (%r)" % b.read(FB))
         # Review Focus 3: implementation-format §1's block move, a removal, is committed as it is where
         # the branch has not moved since this worktree was given its version -- by its record, or after
         # a lift cleared the records -- and left out, in unsettled, where another worktree moved it on
@@ -2114,6 +2193,66 @@ def selftest():
             got = a.run(*PB)
             check(got.get("skipped") == [FB] and got.get("merged") == [] and a.read(FB) == edited,
                   "put-back leaves a foreign copy the entry-set rule refuses as it is, in skipped (%r)" % got)
+        # where the branch has not moved, an entry only the session branch held is never lost: a copy
+        # restored by hand, then appended to, gets it back; a session-only entry edited by hand keeps
+        # its old version beside the edited one, the visible cost of that rule
+        for how in ("restored, then appended to", "a session-only entry edited by hand"):
+            with tempfile.TemporaryDirectory() as tmp:
+                remote, a, b = world(tmp)
+                A1, NEW = today("a1 mine"), today("new after the restore")
+                a.add(FB, A1)
+                a.run("commit", "--branch", "session/aa", *CM)
+                if how.startswith("restored"):
+                    a.git("checkout", "--", FB)
+                    a.add(FB, NEW)
+                    want = SEED + "\n" + NEW + "\n" + A1
+                else:
+                    edited = A1.replace("**Friction:** a1 mine", "**Friction:** a1 mine, corrected")
+                    a.write(FB, SEED + "\n" + edited)
+                    want = SEED + "\n" + edited + "\n" + A1
+                got = a.run("commit", "--branch", "session/aa", *CM)
+                check(got.get("unsettled") == [] and a.git("show", "session/aa:" + FB) == want.rstrip("\n")
+                      and a.read(FB) == want, "[%s] the branch-only entry is put back after the copy (%r, %r)"
+                      % (how, got, a.read(FB)))
+        # keep_branch_only itself: nothing missing leaves the copy's bytes; entries HEAD holds stay
+        # removed; branch-only ones follow in the given version's order, each once; mixed line endings refuse
+        given = IMPL_HEAD + IMPL_1 + "\n" + IMPL_2 + "\n" + IMPL_2P
+        kbo = keep_branch_only
+        check(kbo(b"", given.encode(), given.encode()) == given.encode(),
+              "keep_branch_only leaves a copy that holds every entry as it is")
+        got = kbo((IMPL_HEAD + IMPL_1).encode(), given.encode(), (IMPL_HEAD + "\n").encode())
+        check(got == (IMPL_HEAD + "\n" + IMPL_2 + "\n" + IMPL_2P).encode(),
+              "keep_branch_only keeps HEAD's dropped entry removed and puts back the branch-only ones (%r)" % got)
+        got = kbo(None, (given + "\n" + IMPL_2).encode(), IMPL_HEAD.encode())
+        check(got == (IMPL_HEAD + IMPL_1 + "\n" + IMPL_2 + "\n" + IMPL_2P).encode(),
+              "…with HEAD lacking the file, each entry once (%r)" % got)
+        check(kbo(None, given.encode(), crlf(IMPL_HEAD + IMPL_1).encode()) is None,
+              "keep_branch_only refuses versions in different line-ending forms")
+        # an assume-unchanged entry is hashed, never taken from the index
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.git("update-index", "--assume-unchanged", FB)
+            a.add(FB, today("a1"))
+            check(worktree_blob(a.path, FB) != a.git("rev-parse", "HEAD:" + FB),
+                  "an assume-unchanged working copy that changed is hashed, not read from the index")
+        # a CRLF blob under core.autocrlf=input: a clean checkout is the index's blob, never a foreign copy
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(FB, SEED.replace("\n", "\r\n"))
+            push_main(a, "crlf")  # committed with no autocrlf set: the blob holds CRLF
+            a.git("config", "core.autocrlf", "input")
+            check(worktree_blob(a.path, FB) == a.git("rev-parse", "HEAD:" + FB),
+                  "a clean CRLF checkout under autocrlf=input is the index's blob (%r)" % worktree_blob(a.path, FB))
+            a.add(FB, today("a1"), eol="\r\n")
+            a.run("commit", "--branch", "session/aa", *CM)
+            got = a.run("lift", "--branch", "session/aa")
+            check(got.get("lifted") == [FB] and a.git("status", "--porcelain") == "", "…it lifts (%r)" % got)
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            check(got.get("committed") is None and got.get("unsettled") == [],
+                  "…a commit between the lift and its put-back reads the clean checkout as not in place (%r)" % got)
+            got = a.run(*PB)
+            check(got.get("written") == [FB] and got.get("skipped") == [] and count(a.read(FB).replace("\r\n", "\n"),
+                  today("a1")) == 1, "…and put-back writes the branch's version over it (%r)" % got)
 
         # an unexpected exception is "not run" on one line, exit 2: §6 quotes the first stderr line
         with tempfile.TemporaryDirectory() as tmp:
