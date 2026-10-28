@@ -166,6 +166,13 @@ def _line_ending_form(data):
     return b"\r\n" in data, re.search(rb"(?<!\r)\n", data) is not None
 
 
+def _forms_differ(*versions):
+    """True where the non-empty <versions> (None or empty ones aside) are not all in one line-ending
+    form (_line_ending_form): a line in \\r\\n never matches its copy in \\n, so a merge of them would
+    keep it twice. The refusal entry_set_merge, keep_branch_only and union_lines share."""
+    return len({_line_ending_form(x) for x in versions if x}) > 1
+
+
 def _ends_blank(data):
     """True where the last line of <data>, which ends with a line ending, is empty or whitespace-only."""
     body = data[:-1]
@@ -189,7 +196,7 @@ def entry_set_merge(base, ours, theirs):
     Each line ending added is \\r\\n where the entry's first line ends \\r\\n (for the one added to
     ours, where ours' last line ending is \\r\\n), else \\n. Base decides only the refusal; it need not
     be a prefix of either side. A caller decides a deleted side."""
-    if len({_line_ending_form(x) for x in (base, ours, theirs) if x}) > 1:
+    if _forms_differ(base, ours, theirs):
         return None
     head_o, ents_o = split_entries(ours)
     head_t, ents_t = split_entries(theirs)
@@ -246,7 +253,7 @@ def keep_branch_only(head, given, working):
     missing = [e for e in split_entries(given)[1] if key(e) not in held]
     if not missing:
         return working
-    if len({_line_ending_form(x) for x in (head, given, working) if x}) > 1:
+    if _forms_differ(head, given, working):
         return None
     out = working
     if out and not out.endswith(b"\n"):
@@ -492,7 +499,11 @@ SETTLED = ("block", "lines")  # the classes settle() merges; any other is one si
 
 def union_lines(root, path, base, ours, theirs):
     """git's union of a one-task-per-line file (follow-ups.md) from three versions, ours' lines first.
-    Each line is one whole task, so union cannot fuse two; base None is an empty base."""
+    Each line is one whole task, so union cannot fuse two; base None is an empty base. None (refuse)
+    where the non-empty versions are not all in one line-ending form (_forms_differ): union matches
+    lines byte for byte, so every task in \\r\\n would stand beside its copy in \\n."""
+    if _forms_differ(base, ours, theirs):
+        return None
     with tempfile.TemporaryDirectory() as td:
         names = []
         for name, data in (("ours", ours), ("base", base or b""), ("theirs", theirs)):
@@ -505,11 +516,35 @@ def union_lines(root, path, base, ours, theirs):
         return r.stdout
 
 
+def _task_lines(data):
+    """The lines of <data>, each without its line ending, a \\r before the \\n counted as part of it."""
+    lines = data.split(b"\n") if data else []
+    if lines and not lines[-1]:
+        lines.pop()  # the end of the last line, not a line of its own
+    return [line[:-1] if line.endswith(b"\r") else line for line in lines]
+
+
+def keep_branch_only_lines(root, path, head, given, working):
+    """keep_branch_only for follow-ups.md: a working copy that commit takes as it is, where the branch
+    still holds the version this worktree was last given (<given>), with every line of <given> that
+    neither <working> nor HEAD's version (<head>, None where HEAD lacks the file) holds brought back
+    by git's union of <given> and <working> over <head> (union_lines), so a HEAD line the copy dropped
+    stays dropped. Lines are compared with their line endings taken as \\n, so a copy an editor saved
+    in CRLF over LF blobs (core.autocrlf=input smudges nothing) misses nothing. <working> unchanged
+    where nothing is missing; None (refuse) where something is, and the non-empty versions are not
+    all in one line-ending form, as union_lines refuses."""
+    held = set(_task_lines(working)) | set(_task_lines(head))
+    if all(line in held for line in _task_lines(given)):
+        return working
+    return union_lines(root, path, head, given, working)
+
+
 def settle(root, path, base, ours, theirs):
     """A session file both sides changed, settled from three versions by its class: a block-shaped
-    file as a set of entries (entry_set_merge), follow-ups.md by git's union. None (refuse) where the
-    entry-set rule refuses, where ours or theirs lacks the file, or for any other class. base is None
-    where neither side's history holds it."""
+    file as a set of entries (entry_set_merge), follow-ups.md by git's union (union_lines). None
+    (refuse) where either refuses (the entry-set rule, or versions in two line-ending forms), where
+    ours or theirs lacks the file, or for any other class. base is None where neither side's history
+    holds it."""
     if ours is None or theirs is None:
         return None
     cls = merge_class(path)
@@ -531,10 +566,12 @@ def settle_copy(root, path, tip):
     """The working copy of <path> settled with <tip>'s version (settle(), the tip's side first, its
     entries being the older), so an entry only the branch holds survives a working copy that lacks it
     (a lift nobody put back, another worktree's commit). All three in working-tree form, as the working
-    copy is, so their line endings agree. The base is the version at merge-base HEAD <tip>, not HEAD's:
-    HEAD can hold what the branch never had (a stranded commit), and the tip would then read as
-    deleting it. None where settle() refuses (an entry edited or removed, the headers differing), or
-    where the tip or the working tree lacks the file: the caller leaves the working copy as it is."""
+    copy is, so their line endings agree wherever the checkout gives the file its line endings. The
+    base is the version at merge-base HEAD <tip>, not HEAD's: HEAD can hold what the branch never had
+    (a stranded commit), and the tip would then read as deleting it. None where settle() refuses (an
+    entry edited or removed, the headers differing, or line endings that differ, as a copy saved in
+    CRLF over LF blobs under core.autocrlf=input does), or where the tip or the working tree lacks the
+    file: the caller leaves the working copy as it is."""
     full = os.path.join(root, path)
     if merge_class(path) not in SETTLED or not os.path.isfile(full) or os.path.islink(full):
         return None
@@ -737,13 +774,13 @@ def commit(root, branch, default_ref, message, include_ahead=False):
     A block-shaped working copy, or follow-ups.md, that differs from the tip's version is committed
     as it is where the tip still holds the version this worktree was last given (its record, else
     HEAD's), so a hand edit goes through -- a block-shaped one with every entry of that version that
-    neither it nor HEAD's version holds put back after it (keep_branch_only), follow-ups.md united
-    with that version over HEAD's (union_lines), so a line only the session branch held returns while
-    a HEAD line the copy dropped stays dropped; where the tip holds
-    another version, the working copy is first settled with it (settle_copy). Either is written back,
-    or, where it refuses, the file is left out of the commit and as it is in the working tree, and
-    listed in unsettled. A file the tip has no version of, any other shape, and a deletion are
-    committed as they are."""
+    neither it nor HEAD's version holds put back after it (keep_branch_only), follow-ups.md, where a
+    line of that version is missing from both it and HEAD's, united with that version over HEAD's
+    (keep_branch_only_lines), so a line only the session branch held returns while a HEAD line the
+    copy dropped stays dropped; where the tip holds another version, the working copy is first
+    settled with it (settle_copy). Either is written back, or, where it refuses, the file is left out
+    of the commit and as it is in the working tree, and listed in unsettled. A file the tip has no
+    version of, any other shape, and a deletion are committed as they are."""
     refuse_checked_out(root, branch)
     ensure_attributes(root)
     ref = "refs/heads/" + branch
@@ -784,8 +821,8 @@ def commit(root, branch, default_ref, message, include_ahead=False):
                         head = worktree_form(root, "HEAD", p)
                         settled = keep_branch_only(head, worktree_form(root, tip, p), working)
                     else:  # follow-ups.md: a HEAD line the copy dropped stays dropped, a session-only one returns
-                        settled = union_lines(root, p, worktree_form(root, "HEAD", p), worktree_form(root, tip, p),
-                                              working)
+                        settled = keep_branch_only_lines(root, p, worktree_form(root, "HEAD", p),
+                                                         worktree_form(root, tip, p), working)
                     if settled is None:
                         unsettled.append(p)
                         continue
@@ -2306,12 +2343,15 @@ def selftest():
             check(got.get("unpreserved") == [] and IM in got.get("lifted", []), "…and lift then moves on (%r)" % got)
         # follow-ups.md restored by hand, then edited, where the branch has not moved: a session-only
         # task comes back; a HEAD task the copy dropped stays dropped; a ticked HEAD task next to a
-        # session-only one comes back beside its open copy, as git's union keeps an adjacent pair
+        # session-only one the copy dropped comes back beside its open copy, as git's union keeps an
+        # adjacent pair; where the copy still holds the session-only task, nothing is put back and
+        # the tick is committed as it is
         fu = "specifications/PRD-A-1-x/follow-ups.md"
         for top, edit, want in (
                 ("- [ ] zero\n- [ ] one\n- [ ] mid\n", "- [ ] one\n- [ ] mid\n",
                  "- [ ] one\n- [ ] mid\n- [ ] two (session only)"),
-                ("- [ ] one\n", "- [x] one\n", "- [ ] one\n- [ ] two (session only)\n- [x] one")):
+                ("- [ ] one\n", "- [x] one\n", "- [ ] one\n- [ ] two (session only)\n- [x] one"),
+                ("- [ ] one\n", "- [x] one\n- [ ] two (session only)\n", "- [x] one\n- [ ] two (session only)")):
             with tempfile.TemporaryDirectory() as tmp:
                 remote, a, b = world(tmp)
                 a.write(fu, top)
@@ -2376,6 +2416,58 @@ def selftest():
             got = a.run(*PB)
             check(got.get("written") == [FB] and got.get("skipped") == [] and count(a.read(FB).replace("\r\n", "\n"),
                   today("a1")) == 1, "…and put-back writes the branch's version over it (%r)" % got)
+        # follow-ups.md of LF blobs under core.autocrlf=input, which smudges nothing, its copy saved in
+        # CRLF by an editor: git's union matches lines byte for byte, so each CRLF line would stand
+        # beside its LF copy. Where the branch has not moved and no task is missing, the copy is
+        # committed as it is (stored in LF); where a task must be put back, where the branch moved on,
+        # and in put-back, versions in two line-ending forms refuse, and the copy is left as it is
+        for how in ("appended", "dropped a session-only task", "moved on", "put-back"):
+            with tempfile.TemporaryDirectory() as tmp:
+                remote, a, b = world(tmp)
+                a.git("config", "core.autocrlf", "input")
+                a.write(fu, "- [ ] one\n")
+                push_main(a, "follow-ups")
+                a.write(fu, "- [ ] two\n", append=True)
+                a.run("commit", "--branch", "session/aa", *CM)
+                if how == "moved on":
+                    w2 = Repo(os.path.join(tmp, "w2"))
+                    a.git("worktree", "add", "-q", "-b", "prd/A-1-x", w2.path)
+                    w2.run(*PB)
+                    w2.write(fu, "- [ ] w2\n", append=True)
+                    w2.run("commit", "--branch", "session/aa", *CM)
+                on_before = a.git("show", "session/aa:" + fu)
+                copy = ("- [ ] one\r\n- [ ] three\r\n" if how.startswith("dropped")
+                        else "- [ ] one\r\n- [ ] two\r\n- [ ] three\r\n")
+                a.write(fu, copy)
+                if how == "put-back":
+                    got = a.run(*PB)
+                    check(got.get("skipped") == [fu] and got.get("merged") == [] and a.read(fu) == copy,
+                          "[crlf follow-ups, %s] the copy is left as it is, in skipped (%r, %r)" % (how, got, a.read(fu)))
+                    continue
+                got = a.run("commit", "--branch", "session/aa", *CM)
+                on = a.git("show", "session/aa:" + fu)
+                if how == "appended":
+                    check(got.get("committed") and got.get("unsettled") == [] and a.read(fu) == copy
+                          and on == "- [ ] one\n- [ ] two\n- [ ] three",
+                          "[crlf follow-ups, %s] committed as it is, each task once (%r, %r)" % (how, got, on))
+                    got = a.run("lift", "--branch", "session/aa")
+                    check(got.get("unpreserved") == [] and fu in got.get("lifted", []),
+                          "[crlf follow-ups, %s] …and lift then moves on (%r)" % (how, got))
+                else:
+                    check(got.get("unsettled") == [fu] and a.read(fu) == copy and on == on_before,
+                          "[crlf follow-ups, %s] left out, in unsettled, the copy untouched (%r, %r)" % (how, got, on))
+        # the guard itself: three follow-ups.md versions in two line-ending forms are never united
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(["git", "init", "-q", tmp], check=True)
+            head, given, cr = b"- [ ] one\n", b"- [ ] one\n- [ ] two\n", b"- [ ] one\r\n- [ ] two\r\n- [ ] three\r\n"
+            check(settle(tmp, fu, head, given, cr) is None, "settle() refuses follow-ups.md versions in two forms")
+            got = union_lines(tmp, fu, None, crlf("- [ ] one\n- [ ] two\n").encode(), cr)
+            check(got == cr, "…and unites versions in one form, an absent base aside (%r)" % got)
+            klo = keep_branch_only_lines
+            check(klo(tmp, fu, head, given, cr) == cr,
+                  "keep_branch_only_lines leaves a CRLF copy holding every task of LF versions as it is")
+            check(klo(tmp, fu, head, given, b"- [ ] one\r\n- [ ] three\r\n") is None,
+                  "…and refuses one that must have a task put back")
 
         # an unexpected exception is "not run" on one line, exit 2: §6 quotes the first stderr line
         with tempfile.TemporaryDirectory() as tmp:
