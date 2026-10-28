@@ -22,6 +22,7 @@ Take with `security-workflows` 0.7.0, whose `/scan` hands this release's `specs-
 
 ### Fixed
 - **Every setter of `specs_git: misrooted` is named** (to-fix D27). `specs-repo-git` §3.1 named its notices and `specs-root-check`'s stop, but not `session-hygiene` §6's *Stop*, which sets the flag where a `/design` or `/specify` run finds, at any of §6's three points, its environment no longer the one its session file recorded, or, at the last two, that record unreadable or missing. §3.1, §4 step 1, §7's caller contract, `phase-handoff` §2.1, `cost-emission` §8, `feedback-emission`'s ladder and `session-hygiene` §1 now name it, and §4 step 1 and `phase-handoff` §2.1 re-emit its stop line, `RESUME_ENVIRONMENT_CHANGED:`, where they re-emit the notice that set the flag. §6's *Misrooted* row read `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced`, false after a *Stop* on an `origin`, `$REPOS_PATH` or loader mismatch; it now reads `… SPECS_PATH is misplaced, or the run's environment no longer matches the one it recorded; see the notice below`.
+- **A refused, failed or rejected push is retried by a later run, not always the next** (`specs-repo-git` §4 step 6, §6, §8.4). The *push failed*, *moved, not pushed* and unrecorded *push refused* lines, the session branch's *push rejected* line and the sentences behind them said the next run retries or pushes; a run whose preflight stops at a guard (§3.3) retries only a branch it commits on, and a blocked or misrooted run none, so they now say a later run.
 
 ## [1.66.0] — 2026-10-28
 
