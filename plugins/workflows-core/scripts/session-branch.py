@@ -1456,7 +1456,7 @@ def _undo_partial(root, old, tip):
     holding anything else is left as it is. A write that fails raises NotRun. Only where read-tree
     stopped before it wrote the index: move_branch tells the two apart."""
     paths = nul_list(git(root, "diff-tree", "-r", "-z", "--name-only", "--no-renames", old, tip))
-    back = [p for p in paths if worktree_blob(root, p) == blob(root, tip, p)]  # each path is on one side at least
+    back = [p for p in paths if _link_aware_blob(root, p) == blob(root, tip, p)]  # each path is on one side at least
     modes = {p: mode for p, (mode, _sha) in _tree_entries(root, old, back).items()}
     for p in back:
         try:
@@ -1464,6 +1464,17 @@ def _undo_partial(root, old, tip):
         except OSError as e:
             raise NotRun("read-tree stopped partway from %s to %s, and %s could not be put back (%s)"
                          % (old, tip, p, e.strerror or e))
+
+
+def _link_aware_blob(root, path):
+    """The blob id git would store for the working copy of <path>, or None where nothing stands there:
+    where it is a symbolic link, the hash of the link's own text, as git stores a link -- worktree_blob
+    follows a link (os.path.isfile, hash-object --path), hashing what it points at, or None where that
+    is missing (measured: a link read-tree wrote never matched the tip's blob); else worktree_blob."""
+    full = os.path.join(root, path)
+    if os.path.islink(full):
+        return text(git(root, "hash-object", "--stdin", data=os.fsencode(os.readlink(full))))
+    return worktree_blob(root, path)
 
 
 def _put_back(root, old, path, mode):
@@ -1478,13 +1489,13 @@ def _put_back(root, old, path, mode):
     if mode is None:
         d = os.path.dirname(path)
         while d and blob(root, old, d) is None and os.path.isdir(os.path.join(root, d)) \
-                and not os.listdir(os.path.join(root, d)):
+                and not os.path.islink(os.path.join(root, d)) and not os.listdir(os.path.join(root, d)):
             os.rmdir(os.path.join(root, d))
             d = os.path.dirname(d)
         return
     if mode == "120000":
         os.makedirs(os.path.dirname(full) or root, exist_ok=True)
-        os.symlink(git(root, "cat-file", "blob", "%s:%s" % (old, path)).stdout, full)
+        os.symlink(os.fsdecode(git(root, "cat-file", "blob", "%s:%s" % (old, path)).stdout), full)
         return
     write_from(root, old, path)
     bits = os.stat(full).st_mode
@@ -4432,9 +4443,11 @@ def selftest():
                 def read_only_folder():
                     a, b, stub, remote = pworld(where("read-only-folder"))
                     tool, added = "notes/run.sh", "notes/new-folder/deep/added.md"
+                    old_link, new_link = "notes/old-link", "notes/a-new-link"  # symbolic links, the reviewer's r7
                     b.write(tool, "#!/bin/sh\necho run\n")
                     os.chmod(os.path.join(b.path, tool), 0o755)
-                    b.commit_all("a tool")
+                    os.symlink("team.md", os.path.join(b.path, old_link))
+                    b.commit_all("a tool and a link")
                     b.git("push", "-q", "origin", "main")
                     a.git("pull", "-q", "--ff-only")
 
@@ -4444,6 +4457,9 @@ def selftest():
                         r.write(PRD, "# PRD, the teammate's\n")
                         r.write(added, "the teammate's, in new folders\n")
                         os.remove(os.path.join(r.path, tool))
+                        os.remove(os.path.join(r.path, old_link))
+                        os.symlink("../specifications", os.path.join(r.path, old_link))  # re-pointed
+                        os.symlink("team.md", os.path.join(r.path, new_link))  # added
                     diverge(a, b, team)
                     old, folder = a.git("rev-parse", "main"), os.path.join(a.path, os.path.dirname(PRD))
                     before = (a.state(), [a.read(p) for p in (NOTE, FB, PRD, tool)])
@@ -4461,6 +4477,11 @@ def selftest():
                           and not os.path.exists(os.path.join(a.path, "notes/new-folder")),
                           "[move: read-only folder] the executable comes back executable, the new folders go (%r, %r)"
                           % (letters(a), os.path.exists(os.path.join(a.path, "notes/new-folder"))))
+                    full_old, full_new = os.path.join(a.path, old_link), os.path.join(a.path, new_link)
+                    check(os.path.islink(full_old) and os.readlink(full_old) == "team.md" and not os.path.lexists(full_new),
+                          "[move: read-only folder] a link the tip re-pointed comes back as the link it was, and one it "
+                          "added goes (%r, %r, %r)" % (letters(a), os.path.islink(full_old) and os.readlink(full_old),
+                                                       os.path.lexists(full_new)))
                 if os.geteuid() != 0:  # root writes through any mode
                     guarded("read-only folder", read_only_folder)
 
