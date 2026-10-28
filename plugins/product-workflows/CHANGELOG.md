@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.58.0] — 2026-10-28
+
+Take with `workflows-core` 1.66.0, whose `specs-repo-git` §3.1 now lists `session-hygiene` §6's *Stop* among the setters of `specs_git: misrooted`, as these pages say it does — to-fix D27.
+
+### Fixed
+- **The session-cost, session-feedback and resume pages say what `specs_git: misrooted` means on a `/specify` run.** Each glossed the flag as a `$SPECS_PATH` the run found misplaced; it is also set where a run that resumes from a session file stops because its environment no longer matches the one the file recorded (`session-hygiene` §6), and the cost entry, the feedback entry and the resume pointer are then report-only too.
+
 ## [3.57.0] — 2026-10-28
 
 Take with `workflows-core` 1.65.1, whose `phase-handoff` classifies the `CLAUDE.md` and index page `/epics` now hands off beside its Epics and no longer says its set holds `_coverage.md` alone, whose `doc-fixer` takes its findings as a file path, as `/epics` now passes them; with `dev-workflows` 4.48.1, whose `workflow-states` no longer describes the detected refinement this release retires; and with `prose-style` 0.8.0 or later, whose checker reads the `dialect_files` input `/epics` now passes — batch B24 (FBB-B17, PRD-B3, PRD-B6, PRD-B9, FBB-B20, FBB-B22, FBA-G2, FBA-G3, FBA-G4).

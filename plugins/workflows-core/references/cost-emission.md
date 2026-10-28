@@ -572,7 +572,7 @@ follow-ups already use. Record `prd` always and `epic` when the resolved kind is
 Reuse `feedback-emission.md`'s specs-first ladder, targeting the **`cost/`**
 subdir. Walk top-down; stop at the first tier that applies:
 
-**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or takes it for an artifact that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place. A pending entry written there would never reconcile, and §9 does not run either.
+**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, `addressing.md` §3 `specs-root-check`'s stop, or `session-hygiene.md` §6's *Stop*) → **report-only**, as in tier 4, whatever else would apply. Where `$SPECS_PATH` is set but misplaced, any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or takes it for an artifact that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place; after `session-hygiene.md` §6's *Stop* the run is no longer in the environment it recorded, and writes nothing more. A pending entry written there would never reconcile, and §9 does not run either.
 
 1. `$SPECS_PATH` writable **and** the PRD dir exists (the folder
    the run's own `resolve-address` found for `<KEY>` (`workflows-core:addressing` §3) — or,

@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.49.0] — 2026-10-28
+
+Take with `workflows-core` 1.66.0, whose `specs-repo-git` §3.1 now lists `session-hygiene` §6's *Stop* among the setters of `specs_git: misrooted`, as these pages say it does — to-fix D27.
+
+### Fixed
+- **The session-cost, session-feedback and resume pages say what `specs_git: misrooted` means on a `/design` run.** Each glossed the flag as a `$SPECS_PATH` the run found misplaced; it is also set where a run that resumes from a session file stops because its environment no longer matches the one the file recorded (`session-hygiene` §6), and the cost entry, the feedback entry and the resume pointer are then report-only too.
+
 ## [4.48.1] — 2026-10-28
 
 Take with `product-workflows` 3.57.0, which retires the detected refinement this release stops describing — batch B24 (PRD-B3).
