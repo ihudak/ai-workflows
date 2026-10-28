@@ -668,12 +668,16 @@ def align(root, old_tip, new_tip):
     return done
 
 
-def commit_tree(root, tree, parents, message):
+def commit_tree(root, tree, parents, message, env=None):
     """commit-tree reads no commit.gpgSign, so a user who signs their commits would push unsigned
-    session commits; sign them as git commit would."""
+    session commits; sign them as git commit would. The message (bytes, or str written as UTF-8) is
+    passed byte for byte through -F -, never -m, which completes its last line; a caller that wants
+    a final newline writes it. env carries GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL and GIT_AUTHOR_DATE where
+    the commit keeps another commit's authorship (the replay); the committer is always now."""
     sign = ["-S"] if config(root, "commit.gpgSign", as_bool=True) == "true" else []
     parent_args = [x for p in parents for x in ("-p", p)]
-    return text(git(root, "commit-tree", *sign, tree, *parent_args, "-m", message))
+    data = message if isinstance(message, bytes) else message.encode("utf-8", "surrogateescape")
+    return text(git(root, "commit-tree", *sign, tree, *parent_args, "-F", "-", data=data, env=env))
 
 
 def refuse_checked_out(root, branch):
@@ -740,7 +744,7 @@ def sync(root, branch, default_ref):
             result["conflict"] = sorted(set(result["conflict"]) | set(refused))
             result["conflicts"] += [{"path": p, "source": name} for p in refused]
             continue
-        merge = commit_tree(root, tree, [tip, c], "NOISSUE Merge %s into %s" % (name, branch))
+        merge = commit_tree(root, tree, [tip, c], "NOISSUE Merge %s into %s\n" % (name, branch))
         git(root, "update-ref", ref, merge, tip)
         tip = merge
         result["merged"] = True
@@ -845,7 +849,7 @@ def commit(root, branch, default_ref, message, include_ahead=False):
                 dropped.append(p)
         tree = tree_with(root, tip, entries)
         if tree != text(git(root, "rev-parse", tip + "^{tree}")):
-            committed = commit_tree(root, tree, [tip], message)
+            committed = commit_tree(root, tree, [tip], message if message.endswith("\n") else message + "\n")
             git(root, "update-ref", ref, committed, tip)
             changed = nul_list(git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", tip, committed))
         mark(root, put=added, drop=dropped)
@@ -923,6 +927,227 @@ def put_back(root, branch, default_ref):
         write_from(root, tip, p)
         (removed if want is None else written).append(p)
     return {"written": written, "removed": removed, "merged": merged, "skipped": skipped, "sync": synced}
+
+
+# ---- the replay (spec §3.2, §3.3) ---------------------------------------------------------------------
+
+# The attributes the replay passes to its merge-tree call as -c core.attributesFile=<a temporary file>
+# (spec §3.2 step 1), and never writes into info/attributes outside session-branch mode: §8's block,
+# line for line -- union for follow-ups.md, -merge for the overwritten shapes and the register files,
+# nothing for a block-shaped file. It is the lowest-precedence attribute source, so a repository
+# .gitattributes outranks it: replay_commits settles every path both sides changed from its three
+# blobs itself, whatever git's merge of that path produced.
+REPLAY_BLOCK = "".join(line + "\n" for line in ATTRIBUTES)
+_SLUG_RE = re.compile(r"^security/([^/]+)/")
+
+
+def replay_ok(root):
+    """This git can replay without a checkout (spec §3.1 condition 3): merge-tree takes --write-tree
+    and a merge base the caller names. Its usage prints --merge-base on git 2.40 and --[no-]merge-base
+    from 2.41 on, so "merge-base" alone is looked for."""
+    r = git(root, "merge-tree", "-h", check=False)
+    usage = (r.stdout + r.stderr).decode("utf-8", "replace")
+    return "--write-tree" in usage and "merge-base" in usage
+
+
+def _tree_entries(root, tree, paths):
+    """path -> (mode, object id) for each of <paths> that <tree> holds."""
+    out = {}
+    if paths:
+        for rec in nul_list(git(root, "ls-tree", "-z", tree, "--", *paths)):
+            meta, path = rec.split("\t", 1)
+            mode, _kind, sha = meta.split()
+            out[path] = (mode, sha)
+    return out
+
+
+def _commit_parts(root, c):
+    """<c>'s author as commit-tree's environment takes it, and its message byte for byte, read from
+    the commit object itself, so no log.showSignature, mailmap or re-encoding reaches either."""
+    head, _, message = git(root, "cat-file", "commit", c).stdout.partition(b"\n\n")
+    author = next((line[len(b"author "):] for line in head.split(b"\n") if line.startswith(b"author ")), b"")
+    lt, gt = author.rfind(b" <"), author.rfind(b"> ")
+    if lt < 0 or gt < lt:
+        raise NotRun("%s has no author line commit-tree can take" % c)
+    name, email, date = (x.decode("utf-8", "surrogateescape") for x in (author[:lt], author[lt + 2:gt], author[gt + 2:]))
+    return {"GIT_AUTHOR_NAME": name, "GIT_AUTHOR_EMAIL": email, "GIT_AUTHOR_DATE": date}, message
+
+
+def _fill(root, tree, prefix, dest):
+    """Write each file <tree> holds under <prefix> into <dest> at its own path, read by ls-tree and
+    cat-file -- never git archive, which honours a repository's export-ignore. Returns how many."""
+    blobs = []
+    for rec in nul_list(git(root, "ls-tree", "-r", "-z", tree, "--", prefix)):
+        meta, path = rec.split("\t", 1)
+        _mode, kind, sha = meta.split()
+        if kind != "blob":
+            continue
+        if ".." in path.split("/"):
+            raise NotRun("%s holds a path outside its tree: %s" % (tree, path))
+        blobs.append((path, sha))
+    if not blobs:
+        return 0
+    out = git(root, "cat-file", "--batch", data="".join(sha + "\n" for _, sha in blobs).encode("ascii")).stdout
+    pos = 0
+    for path, sha in blobs:  # each answer: "<id> blob <size>\n<content>\n", in the order asked
+        nl = out.index(b"\n", pos)
+        size = int(out[pos:nl].split()[2])
+        full = os.path.join(dest, path)
+        os.makedirs(os.path.dirname(full), exist_ok=True)
+        with open(full, "wb") as fh:
+            fh.write(out[nl + 1:nl + 1 + size])
+        pos = nl + 1 + size + 1
+    return len(blobs)
+
+
+def _rebuild(root, tree, slug, register_rebuild):
+    """`<register_rebuild> rebuild` over <tree>'s security/<slug>/, copied into a temporary root
+    (spec §3.3): (the numbers map it printed, {"register.json": bytes, "register.md": bytes}); None
+    where it exits non-zero, prints no JSON object, or leaves either file unwritten; ({}, None) where
+    <tree> holds nothing under security/<slug>/, so there is nothing to rebuild."""
+    with tempfile.TemporaryDirectory(prefix="session-branch-rebuild-") as td:
+        if not _fill(root, tree, "security/%s/" % slug, td):
+            return {}, None
+        r = subprocess.run([sys.executable, "-I", register_rebuild, "rebuild", "--specs", td, "--slug", slug],
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            printed = json.loads(r.stdout.decode("utf-8"))
+        except ValueError:
+            printed = None
+        numbers = printed.get("numbers", {}) if isinstance(printed, dict) else None
+        if r.returncode != 0 or not isinstance(numbers, dict):
+            return None
+        files = {}
+        for name in ("register.json", "register.md"):
+            full = os.path.join(td, "security", slug, name)
+            if not os.path.isfile(full):
+                return None
+            with open(full, "rb") as fh:
+                files[name] = fh.read()
+        return numbers, files
+
+
+def replay_commits(root, onto, commits, register_rebuild):
+    """Spec §3.2 and §3.3: <commits> -- a run's own session-file commits, oldest first, one parent
+    each -- replayed onto <onto> with no checkout. Only objects are written: nothing in the checkout,
+    the index or any ref moves. Each commit c, on its parent p, goes through merge-tree --write-tree
+    --merge-base=p onto c with REPLAY_BLOCK, never -X. The paths settled are those whose blobs at p,
+    onto and c all differ (diff-tree --no-renames of p..onto and p..c); a path onto and c hold alike
+    keeps that content. Each is settled by merge_class: "block" (entry_set_merge) and "lines" (git's
+    union) by settle(), onto's side first, from the three blobs as stored, refused where either side
+    lacks the file or the rule refuses; "whole" is c's version, a deletion included; "register" is
+    rebuilt; any other class is refused, as is any other path merge-tree reports conflicted. A
+    register is rebuilt wherever both sides changed something under security/<slug>/ that the other
+    side does not hold alike: <register_rebuild>'s rebuild over the merged tree's security/<slug>/,
+    its two files written back through a temporary index; refused where no script was handed over
+    or it fails. A merged tree equal to onto's drops c, its change being there already; otherwise c
+    is committed on onto with its author, author date and message byte for byte (commit_tree), each
+    file in the mode the merged tree gives it, and onto becomes that commit.
+    Returns {tip, replayed: the new commits, dropped: the commits already there, numbers:
+    {before_remote, before_run, after}, each slug -> the numbers map rebuild printed on the first
+    onto, on the last of <commits> and on the tip, for every register rebuilt, refused: None}. On a
+    refusal, refused is {reason: "conflict" or "register-rebuild", path: the first path refused, or
+    security/<slug>/}, tip is None, so nothing can be moved onto a partial replay, and numbers are
+    empty."""
+    tip = rev(root, onto)
+    if tip is None:
+        raise NotRun("no such commit: %s" % onto)
+    first, replayed, dropped, rebuilt = tip, [], [], set()
+
+    def refusal(reason, path):
+        return {"tip": None, "replayed": replayed, "dropped": dropped,
+                "numbers": {"before_remote": {}, "before_run": {}, "after": {}},
+                "refused": {"reason": reason, "path": path}}
+
+    def read(sha):
+        return None if sha is None else git(root, "cat-file", "blob", sha).stdout
+
+    def changed(a, b):
+        return set(nul_list(git(root, "diff-tree", "-r", "-z", "--no-renames", "--name-only", a, b)))
+
+    with tempfile.TemporaryDirectory(prefix="session-branch-replay-") as td:
+        block = os.path.join(td, "attributes")
+        with open(block, "w", encoding="utf-8") as fh:
+            fh.write(REPLAY_BLOCK)
+        for c in commits:
+            ids = text(git(root, "rev-list", "--parents", "-n", "1", c)).split()
+            if len(ids) != 2:
+                raise NotRun("%s is a root or a merge commit, which the replay never takes" % c)
+            c, p = ids
+            r = git(root, "-c", "core.attributesFile=" + block, "merge-tree", "--write-tree", "-z", "--name-only",
+                    "--no-messages", "--merge-base=" + p, tip, c, check=False)
+            out = nul_list(r)
+            if r.returncode not in (0, 1) or not out:
+                raise NotRun("merge-tree: %s" % r.stderr.decode("utf-8", "replace").strip()[:300])
+            tree, conflicted = out[0], set(out[1:]) if r.returncode == 1 else set()
+            ours, theirs = changed(p, tip), changed(p, c)
+            both = sorted(ours & theirs)
+            at_p, at_o, at_c = (_tree_entries(root, t, sorted(set(both) | {x for x in ours | theirs if _SLUG_RE.match(x)}))
+                                for t in (p, tip, c))
+
+            def sha(held, x):
+                return held[x][1] if x in held else None
+
+            def slugs(side):
+                return {_SLUG_RE.match(x).group(1) for x in side if _SLUG_RE.match(x) and sha(at_o, x) != sha(at_c, x)}
+            regs = sorted(slugs(ours) & slugs(theirs))
+            merged = _tree_entries(root, tree, both)
+            entries, refused, settled = [], [], set()
+            for x in both:
+                b0, b1, b2 = sha(at_p, x), sha(at_o, x), sha(at_c, x)
+                cls = merge_class(x)
+                if b1 == b2 or b0 in (b1, b2) or cls == "register":
+                    continue  # one side's change alone, or the same on both: merge-tree's stands; a register is rebuilt
+                if cls == "whole" and b2 is None:
+                    entries.append("0 %s\t%s" % (ZERO, x))
+                elif cls == "whole":
+                    entries.append("%s %s\t%s" % (merged.get(x, at_c[x])[0], b2, x))
+                elif cls in SETTLED:
+                    data = settle(root, x, read(b0), read(b1), read(b2))
+                    if data is None:
+                        refused.append(x)
+                        continue
+                    new = text(git(root, "hash-object", "-w", "--stdin", data=data))
+                    entries.append("%s %s\t%s" % (merged.get(x, at_c[x])[0], new, x))
+                else:
+                    refused.append(x)
+                    continue
+                settled.add(x)
+            rebuilt_paths = {x for x in conflicted if merge_class(x) == "register" and _SLUG_RE.match(x).group(1) in regs}
+            refused += sorted(conflicted - settled - rebuilt_paths)
+            if refused:
+                return refusal("conflict", sorted(refused)[0])
+            if entries:
+                tree = tree_with(root, tree, entries)
+            if regs and not register_rebuild:
+                return refusal("register-rebuild", "security/%s/" % regs[0])
+            reg_entries = []
+            for s in regs:
+                got = _rebuild(root, tree, s, register_rebuild)
+                if got is None:
+                    return refusal("register-rebuild", "security/%s/" % s)
+                names = ["security/%s/%s" % (s, n) for n in sorted(got[1] or {})]
+                held = _tree_entries(root, tree, names)
+                for path in names:
+                    new = text(git(root, "hash-object", "-w", "--stdin", data=got[1][path.rsplit("/", 1)[1]]))
+                    reg_entries.append("%s %s\t%s" % (held.get(path, ("100644",))[0], new, path))
+                rebuilt.add(s)
+            if reg_entries:
+                tree = tree_with(root, tree, reg_entries)
+            if tree == text(git(root, "rev-parse", tip + "^{tree}")):
+                dropped.append(c)
+                continue
+            env, message = _commit_parts(root, c)
+            tip = commit_tree(root, tree, [tip], message, env=env)
+            replayed.append(tip)
+    numbers = {"before_remote": {}, "before_run": {}, "after": {}}
+    for s in sorted(rebuilt):
+        for key, commit in (("before_remote", first), ("before_run", commits[-1]), ("after", tip)):
+            got = _rebuild(root, commit, s, register_rebuild)
+            if got is None:
+                return refusal("register-rebuild", "security/%s/" % s)
+            numbers[key][s] = got[0]
+    return {"tip": tip, "replayed": replayed, "dropped": dropped, "numbers": numbers, "refused": None}
 
 
 def selftest():
@@ -2536,6 +2761,383 @@ def selftest():
             on = a.git("show", "session/aa:" + fu)
             check(got.get("merged") is True and on == "- [ ] zero\n- [ ] one\n- [ ] team",
                   "a sync keeps a session-side last line with no newline once (%r, %r)" % (got, on))
+
+        # ---- the replay (spec §3.2, §3.3): a run's session-file commits onto a remote that moved on ----
+        def guarded(name, fn):
+            """Run one replay case; a crash fails that case alone, so the rest still run."""
+            try:
+                fn()
+            except Exception as e:
+                check(False, "[replay: %s] crashed: %s: %s" % (name, type(e).__name__, str(e).strip()[:300]))
+
+        R_SECF = "specifications/PRD-A-1-x/EPIC-A-1-1-y/_security.md"
+        R_FU = "specifications/PRD-A-1-x/follow-ups.md"
+        R_RS = "specifications/PRD-A-1-x/dev-workflows/resume.md"
+        R_PEND = "dev-workflows-cost/pending-2026-10-28-abcd1234.md"
+        R_ACC = "specifications/PRD-A-2-café/dev-workflows/A-2-feedback.md"
+        R_DOCS = "documentation/acme-docs/dev-workflows/feedback/2026-10-28.md"
+        DOCS_HEAD = "---\ntype: dev-workflows-feedback\nprd: n/a\nslug: 2026-10-28\n---\n\n"
+        SLUG = "acme-api"
+        REG = "security/%s/" % SLUG
+        RUN1 = REG + "runs/0001-20261016T091200Z-0a0a0a0a.json"
+        RUN2T = REG + "runs/0002-20261028T110000Z-7e7e7e7e.json"  # a teammate's record
+        RUN2M = REG + "runs/0002-20261028T100000Z-3a3a3a3a.json"  # this run's, sorting first
+        SCAN2 = REG + "scans/20261028T100000Z-eb694d0/report.md"
+        AUTHOR = {"GIT_AUTHOR_NAME": "Zoë Writer", "GIT_AUTHOR_EMAIL": "zoe@example.invalid",
+                  "GIT_AUTHOR_DATE": "2026-10-28T09:15:00+05:30"}
+        MSG = b"A-1 Add dev-workflows session artifacts (implement %d)\n\n  kept as typed, its trailing spaces too  \n\n"
+        STUB = (
+            "import json, os, sys\n"
+            "a = sys.argv[1:]\n"
+            "root, slug = a[a.index('--specs') + 1], a[a.index('--slug') + 1]\n"
+            "runs = os.path.join(root, 'security', slug, 'runs')\n"
+            "names = sorted(n for n in os.listdir(runs) if n.endswith('.json')) if os.path.isdir(runs) else []\n"
+            "for n in names:\n"
+            "    with open(os.path.join(runs, n), encoding='utf-8') as fh:\n"
+            "        json.load(fh)  # a record with conflict markers fails, as register.py's replay does\n"
+            "body = {'register.json': json.dumps({'runs': names}, indent=2, sort_keys=True) + '\\n',\n"
+            "        'register.md': '<!-- Generated by the stub. -->\\n\\n# Security register: %s\\n\\n' % slug\n"
+            "        + ''.join('- [SEC#%d] %s\\n' % (i + 1, n) for i, n in enumerate(names))}\n"
+            "for name, text in body.items():\n"
+            "    with open(os.path.join(root, 'security', slug, name), 'w', encoding='utf-8', newline='\\n') as fh:\n"
+            "        fh.write(text)\n"
+            "print(json.dumps({'rebuilt': slug, 'numbers': {'origin-' + n[:-5]: i + 1 for i, n in enumerate(names)}}))\n")
+
+        def stub_register(paths):
+            """What STUB writes and prints for a security/<slug>/ holding these run records."""
+            names = sorted(os.path.basename(p) for p in paths)
+            return (json.dumps({"runs": names}, indent=2, sort_keys=True) + "\n",
+                    "<!-- Generated by the stub. -->\n\n# Security register: %s\n\n" % SLUG
+                    + "".join("- [SEC#%d] %s\n" % (i + 1, n) for i, n in enumerate(names)),
+                    {"origin-" + n[:-5]: i + 1 for i, n in enumerate(names)})
+
+        def run_record(seq, at, origin):
+            return json.dumps({"seq": seq, "at": at, "findings": [{"origin": origin, "status": "open"}]},
+                              indent=2, sort_keys=True) + "\n"
+
+        def write_register(r, runs):
+            js, md, _ = stub_register(runs)
+            r.write(REG + "register.json", js)
+            r.write(REG + "register.md", md)
+
+        def rworld(tmp, attrs):
+            """A bare origin (no hook) and two clones of a seed holding every session-file shape the
+            replay settles, under the repository .gitattributes <attrs>, where one is given."""
+            seed = Repo(os.path.join(tmp, "seed"))
+            subprocess.run(["git", "init", "-q", "-b", "main", seed.path], check=True)
+            seed.configure()
+            if attrs:
+                seed.write(".gitattributes", attrs)
+            seed.write("specifications/PRD-A-1-x/prd.md", "# PRD\n")
+            seed.write(FB, SEED)
+            seed.write(IM, IMPL_HEAD + IMPL_1)
+            seed.write(R_SECF, SEC_HEAD + SEC_1)
+            seed.write(R_FU, "- [ ] one\n")
+            seed.write(R_RS, "pos: base\n")
+            seed.write(R_PEND, COST_HEAD + cost("2026-10-27T08:00:00Z"))
+            seed.write(R_ACC, SEED)
+            seed.write(RUN1, run_record(1, "2026-10-16T09:12:00Z", "s1:v3:aa"))
+            write_register(seed, [RUN1])
+            seed.commit_all("base")
+            remote = os.path.join(tmp, "remote.git")
+            subprocess.run(["git", "clone", "-q", "--bare", seed.path, remote], check=True, stdout=devnull, stderr=devnull)
+            clones = []
+            for name in ("a", "b"):
+                r = Repo(os.path.join(tmp, name))
+                subprocess.run(["git", "clone", "-q", remote, r.path], check=True, stdout=devnull, stderr=devnull)
+                r.configure()
+                clones.append(r)
+            stub, failing = os.path.join(tmp, "stub-register.py"), os.path.join(tmp, "failing-register.py")
+            with open(stub, "w", encoding="utf-8") as fh:
+                fh.write(STUB)
+            with open(failing, "w", encoding="utf-8") as fh:
+                fh.write(STUB + "sys.exit(3)  # it wrote both files and printed its numbers, then failed\n")
+            return clones[0], clones[1], {"stub": stub, "failing": failing, None: None}
+
+        def raw(r, *args):
+            return subprocess.run(["git", "-C", r.path, "-c", "core.quotePath=false", *args], stdout=subprocess.PIPE,
+                                  stderr=devnull).stdout
+
+        def at(r, commit, path):
+            """<path> as <commit> holds it, byte for byte, or None."""
+            p = subprocess.run(["git", "-C", r.path, "cat-file", "blob", "%s:%s" % (commit, path)],
+                               stdout=subprocess.PIPE, stderr=devnull)
+            return p.stdout.decode("utf-8") if p.returncode == 0 else None
+
+        def frozen(r):
+            return r.state() + (r.git("for-each-ref"),)
+
+        def replay_run(label, tmp, attrs, team, mine, rebuilds=("stub",)):
+            """b lands <team>'s edits on origin's main; a commits each of <mine>'s edits, one commit
+            each, as a run commits session files, and fetches. With a staged and further edited file
+            and an untracked one of the user's own in a's checkout, a's commits are replayed onto
+            origin/main once per entry of <rebuilds> (the stub, a failing script, or None). Checks,
+            for every call: nothing in the checkout, the index or any ref moved; each replayed commit
+            keeps its author, author date and message byte for byte on the one before it; and the
+            replay lands no path the run's commits did not carry but the register's two files."""
+            a, b, scripts = rworld(tmp, attrs)
+            team(b)
+            b.commit_all("team")
+            b.git("push", "-q", "origin", "main")
+            for i, edit in enumerate(mine):
+                edit(a)
+                a.git("add", "-A")
+                with open(os.path.join(tmp, "msg"), "wb") as fh:
+                    fh.write(MSG % (i + 1))
+                a.git("commit", "-q", "--cleanup=verbatim", "-F", os.path.join(tmp, "msg"), env=AUTHOR)
+            a.git("fetch", "-q", "origin")
+            a.write("specifications/PRD-A-1-x/prd.md", "# PRD, staged\n")
+            a.git("add", "specifications/PRD-A-1-x/prd.md")
+            a.write("specifications/PRD-A-1-x/prd.md", "# PRD, staged, then edited again\n")
+            a.write("notes.txt", "the user's own, untracked\n")
+            commits = a.git("rev-list", "--reverse", "main", "--not", "origin/main").split()
+            onto = a.git("rev-parse", "origin/main")
+            carried = set()
+            for c in commits:
+                carried |= set(nul_list(subprocess.run(["git", "-C", a.path, "diff-tree", "--no-commit-id", "-r", "-z",
+                                                        "--name-only", c], stdout=subprocess.PIPE)))
+            before = frozen(a)
+            results = []
+            for rb in rebuilds:
+                got = replay_commits(a.path, "refs/remotes/origin/main", commits, scripts[rb])
+                check(frozen(a) == before, "[replay: %s, %s] nothing in the checkout, the index or any ref moved" % (label, rb))
+                if got.get("refused") is None:
+                    kept = [c for c in commits if c not in got.get("dropped", [])]
+                    check(len(kept) == len(got.get("replayed", [])),
+                          "[replay: %s] one new commit per commit not dropped (%r)" % (label, got))
+                    parent = onto
+                    for old, new in zip(kept, got.get("replayed", [])):
+                        show = ("log", "-1", "--date=raw", "--format=%P%x00%an%x00%ae%x00%ad%x00%B")
+                        check(raw(a, *show, new).split(b"\0", 1) == [parent.encode()] + raw(a, *show, old).split(b"\0", 1)[1:],
+                              "[replay: %s] %s is replayed on %s with its author, date and message byte for byte (%r)"
+                              % (label, old[:7], parent[:7], raw(a, *show, new)))
+                        parent = new
+                    check(got.get("tip") == parent, "[replay: %s] the tip is the last commit made, or onto (%r)" % (label, got))
+                    landed = set(nul_list(subprocess.run(["git", "-C", a.path, "diff", "--name-only", "-z", "--no-renames",
+                                                          onto, parent], stdout=subprocess.PIPE)))
+                    check(landed <= carried | {REG + "register.json", REG + "register.md"},
+                          "[replay: %s] it lands only what the run's commits carried (%r)" % (label, landed - carried))
+                results.append(got)
+            return a, results
+
+        git_version = re.search(r"(\d+)\.(\d+)", subprocess.run(["git", "--version"], stdout=subprocess.PIPE)
+                                .stdout.decode("utf-8", "replace"))
+        can_replay = git_version is not None and (int(git_version.group(1)), int(git_version.group(2))) >= (2, 40)
+
+        def replay_ok_cases():
+            with tempfile.TemporaryDirectory() as tmp:
+                subprocess.run(["git", "init", "-q", tmp], check=True)
+                check(replay_ok(tmp) is can_replay,
+                      "replay_ok answers yes exactly where git --version is 2.40 or later (%r, %r)"
+                      % (replay_ok(tmp), git_version.group(0) if git_version else None))
+                # git 2.40 prints --merge-base <commit>; 2.41 and later --[no-]merge-base (Review Focus 6)
+                fake = os.path.join(tmp, "fake")
+                os.makedirs(fake)
+                path = os.environ.get("PATH", "")
+                for line, want in (("    --merge-base <commit>", True), ("    --[no-]merge-base <commit>", True),
+                                   ("    --[no-]messages", False)):
+                    with open(os.path.join(fake, "git"), "w") as fh:
+                        fh.write('#!/bin/sh\nfor x in "$@"; do\n  if [ "$x" = merge-tree ]; then\n    cat <<\'EOF\'\n'
+                                 "usage: git merge-tree [--write-tree] [<options>] <branch1> <branch2>\n\n"
+                                 "    --write-tree          do a real merge instead of a trivial merge\n"
+                                 "%s\nEOF\n    exit 129\n  fi\ndone\nexec \"%s\" \"$@\"\n" % (line, shutil.which("git")))
+                    os.chmod(os.path.join(fake, "git"), 0o755)
+                    os.environ["PATH"] = fake + os.pathsep + path
+                    try:
+                        got = replay_ok(tmp)
+                    finally:
+                        os.environ["PATH"] = path
+                    check(got is want, "replay_ok reads %r as %s (%r)" % (line.strip(), want, got))
+                # the block: union for follow-ups.md, -merge for the overwritten and register shapes,
+                # nothing for a block-shaped file
+                block = os.path.join(tmp, "replay-attributes")
+                with open(block, "w", encoding="utf-8") as fh:
+                    fh.write(REPLAY_BLOCK)
+                for p, want in ((R_FU, "union"), (R_RS, "unset"), ("specifications/PRD-A-1-x/pr-draft.md", "unset"),
+                                ("specifications/PRD-A-1-x/PRD-A-1-implementation-gaps.md", "unset"),
+                                (REG + "register.json", "unset"), (REG + "register.md", "unset"), (IM, "unspecified"),
+                                (FB, "unspecified"), (R_SECF, "unspecified"), (R_PEND, "unspecified"),
+                                (R_DOCS, "unspecified"), (RUN1, "unspecified")):
+                    got = subprocess.run(["git", "-C", tmp, "-c", "core.attributesFile=" + block, "check-attr", "merge",
+                                          "--", p], stdout=subprocess.PIPE).stdout.decode("utf-8").strip().rsplit(": ", 1)[-1]
+                    check(got == want, "REPLAY_BLOCK gives %s merge: %s, not %s" % (p, want, got))
+        guarded("replay_ok and REPLAY_BLOCK", replay_ok_cases)
+
+        def replay_cases(attrs):
+            tag = attrs.strip() if attrs else "no .gitattributes"
+            with tempfile.TemporaryDirectory() as tmp:
+                def where(name):
+                    os.makedirs(os.path.join(tmp, name))
+                    return os.path.join(tmp, name)
+
+                # two same-day entries in each block-shaped format: both kept, the teammate's first
+                def same_day():
+                    TEAM_FB, MINE_FB = today("team, same day"), today("mine, same day")
+
+                    def team(r):
+                        r.add(IM, IMPL_2)
+                        r.add(FB, TEAM_FB)
+                        r.add(R_SECF, SEC_2)
+
+                    def mine(r):
+                        r.add(IM, IMPL_2P)
+                        r.add(FB, MINE_FB)
+                        r.add(R_SECF, SEC_3)
+                    a, (got,) = replay_run("same day, " + tag, where("same-day"), attrs, team, [mine])
+                    tip = got.get("tip")
+                    check(got.get("refused") is None and len(got.get("replayed", [])) == 1 and got.get("dropped") == []
+                          and at(a, tip, IM) == IMPL_HEAD + IMPL_1 + "\n" + IMPL_2 + "\n" + IMPL_2P
+                          and at(a, tip, FB) == SEED + "\n" + TEAM_FB + "\n" + MINE_FB
+                          and at(a, tip, R_SECF) == SEC_HEAD + SEC_1 + "\n" + SEC_2 + "\n" + SEC_3,
+                          "[replay: same day, %s] implementation.md, feedback and _security.md keep both same-day "
+                          "entries, the teammate's first (%r, %r)" % (tag, got, tip and at(a, tip, IM)))
+                guarded("same day, " + tag, same_day)
+
+                # a byte-identical append on both sides: the commit is already there, and dropped
+                def identical():
+                    SAME = today("the same entry, appended on both sides")
+                    a, (got,) = replay_run("identical, " + tag, where("identical"), attrs,
+                                           lambda r: r.add(FB, SAME), [lambda r: r.add(FB, SAME)])
+                    check(got.get("refused") is None and got.get("replayed") == [] and len(got.get("dropped", [])) == 1
+                          and got.get("tip") == a.git("rev-parse", "origin/main"),
+                          "[replay: identical, %s] a commit whose change origin already holds is dropped (%r)" % (tag, got))
+                guarded("identical, " + tag, identical)
+
+                # Review Focus 4: a scan commit whose runs/ and scans/ files (and so its register) origin
+                # already holds byte for byte, plus a new entry: replayed, the shared files untouched, and no
+                # rebuild needed -- none is handed over
+                def shared_scan():
+                    def shared(r):
+                        r.write(RUN2M, run_record(2, "2026-10-28T10:00:00Z", "s2:v3:bb"))
+                        r.write(SCAN2, "# Scan report\n\nOne HIGH finding.\n")
+                        write_register(r, [RUN1, RUN2M])
+
+                    def team(r):
+                        shared(r)
+                        r.add(R_SECF, SEC_2)
+
+                    def mine(r):
+                        shared(r)
+                        r.add(R_SECF, SEC_3)
+                    a, (got,) = replay_run("shared scan, " + tag, where("shared-scan"), attrs, team, [mine], rebuilds=(None,))
+                    tip = got.get("tip")
+                    check(got.get("refused") is None and len(got.get("replayed", [])) == 1
+                          and at(a, tip, R_SECF) == SEC_HEAD + SEC_1 + "\n" + SEC_2 + "\n" + SEC_3
+                          and all(a.git("rev-parse", "%s:%s" % (tip, p)) == a.git("rev-parse", "origin/main:" + p)
+                                  for p in (RUN2M, SCAN2, REG + "register.json", REG + "register.md")),
+                          "[replay: shared scan, %s] files both sides hold alike are kept as they are (%r)" % (tag, got))
+                guarded("shared scan, " + tag, shared_scan)
+
+                # an overwritten shape both sides changed: c's version whole, a deletion included
+                def resume_both():
+                    a, (got,) = replay_run("resume.md, " + tag, where("resume"), attrs,
+                                           lambda r: r.write(R_RS, "pos: team\n"), [lambda r: r.write(R_RS, "pos: mine\n")])
+                    check(got.get("refused") is None and at(a, got.get("tip"), R_RS) == "pos: mine\n",
+                          "[replay: resume.md, %s] both sides changed it: c's version (%r)" % (tag, got))
+                guarded("resume.md, " + tag, resume_both)
+
+                def resume_deleted():
+                    a, (got,) = replay_run("resume.md deleted, " + tag, where("resume-deleted"), attrs,
+                                           lambda r: r.write(R_RS, "pos: team\n"),
+                                           [lambda r: os.remove(os.path.join(r.path, R_RS))])
+                    check(got.get("refused") is None and len(got.get("replayed", [])) == 1
+                          and at(a, got.get("tip"), R_RS) is None,
+                          "[replay: resume.md deleted, %s] c's deletion stands over the teammate's change (%r)" % (tag, got))
+                guarded("resume.md deleted, " + tag, resume_deleted)
+
+                # follow-ups.md appended on both sides: git's union, onto's lines first
+                def follow_ups():
+                    a, (got,) = replay_run("follow-ups.md, " + tag, where("follow-ups"), attrs,
+                                           lambda r: r.write(R_FU, "- [ ] team\n", append=True),
+                                           [lambda r: r.write(R_FU, "- [ ] mine\n", append=True)])
+                    check(got.get("refused") is None and at(a, got.get("tip"), R_FU) == "- [ ] one\n- [ ] team\n- [ ] mine\n",
+                          "[replay: follow-ups.md, %s] both tasks, onto's first (%r)" % (tag, got))
+                guarded("follow-ups.md, " + tag, follow_ups)
+
+                # both sides created the same per-date docs feedback file: one header, both entries
+                def add_add():
+                    TEAM_D, MINE_D = (e.replace("2026-07-09", "2026-10-28") for e in (FB_1, FB_2))
+                    a, (got,) = replay_run("add/add, " + tag, where("add-add"), attrs,
+                                           lambda r: r.write(R_DOCS, DOCS_HEAD + TEAM_D),
+                                           [lambda r: r.write(R_DOCS, DOCS_HEAD + MINE_D)])
+                    check(got.get("refused") is None and at(a, got.get("tip"), R_DOCS) == DOCS_HEAD + TEAM_D + "\n" + MINE_D,
+                          "[replay: add/add, %s] a per-date file both sides created merges under one header (%r, %r)"
+                          % (tag, got, got.get("tip") and at(a, got.get("tip"), R_DOCS)))
+                guarded("add/add, " + tag, add_add)
+
+                # a register both sides changed: rebuilt by the handed-over script over the merged
+                # security/<slug>/; without one, or where it fails, refused
+                def register():
+                    def team(r):
+                        r.write(RUN2T, run_record(2, "2026-10-28T11:00:00Z", "s2:v3:tt"))
+                        write_register(r, [RUN1, RUN2T])
+
+                    def mine(r):
+                        r.write(RUN2M, run_record(2, "2026-10-28T10:00:00Z", "s2:v3:mm"))
+                        write_register(r, [RUN1, RUN2M])
+                    a, (got, none, failing) = replay_run("register, " + tag, where("register"), attrs, team, [mine],
+                                                         rebuilds=("stub", None, "failing"))
+                    tip = got.get("tip")
+                    js, md, after = stub_register([RUN1, RUN2T, RUN2M])
+                    check(got.get("refused") is None and at(a, tip, REG + "register.json") == js
+                          and at(a, tip, REG + "register.md") == md and at(a, tip, RUN2T) and at(a, tip, RUN2M),
+                          "[replay: register, %s] both records kept, the register the rebuild's (%r)" % (tag, got))
+                    want = {"before_remote": {SLUG: stub_register([RUN1, RUN2T])[2]},
+                            "before_run": {SLUG: stub_register([RUN1, RUN2M])[2]}, "after": {SLUG: after}}
+                    check(got.get("numbers") == want and len({json.dumps(m, sort_keys=True) for m in want.values()}) == 3,
+                          "[replay: register, %s] the three numbers maps, from onto, c and the rebuilt tree (%r)"
+                          % (tag, got.get("numbers")))
+                    for what, res in (("no rebuild script", none), ("a rebuild that fails", failing)):
+                        check(res.get("refused") == {"reason": "register-rebuild", "path": REG},
+                              "[replay: register, %s] %s refuses, naming the register (%r)" % (tag, what, res))
+                guarded("register, " + tag, register)
+
+                # a modify/delete, and a runs/ add/add of different content: refused, the path named
+                def modify_delete():
+                    a, (got,) = replay_run("modify/delete, " + tag, where("modify-delete"), attrs,
+                                           lambda r: os.remove(os.path.join(r.path, R_PEND)),
+                                           [lambda r: r.add(R_PEND, cost("2026-10-28T09:00:00Z"))])
+                    check(got.get("refused") == {"reason": "conflict", "path": R_PEND},
+                          "[replay: modify/delete, %s] a pending cost file the teammate relocated refuses (%r)" % (tag, got))
+                guarded("modify/delete, " + tag, modify_delete)
+
+                def runs_add_add():
+                    def side(origin):
+                        def edit(r):
+                            r.write(RUN2M, run_record(2, "2026-10-28T10:00:00Z", origin))
+                            write_register(r, [RUN1, RUN2M])
+                        return edit
+                    a, (got,) = replay_run("runs/ add/add, " + tag, where("runs-add-add"), attrs, side("s2:v3:tt"),
+                                           [side("s2:v3:mm")])
+                    check(got.get("refused") == {"reason": "conflict", "path": RUN2M},
+                          "[replay: runs/ add/add, %s] one record name with two contents refuses (%r)" % (tag, got))
+                guarded("runs/ add/add, " + tag, runs_add_add)
+
+                # two local commits onto a remote that appended to the same file: both replayed, nothing doubled
+                def two_commits():
+                    T, A1, A2 = today("team appended"), today("a1, first local commit"), today("a2, second local commit")
+                    a, (got,) = replay_run("two commits, " + tag, where("two-commits"), attrs, lambda r: r.add(FB, T),
+                                           [lambda r: r.add(FB, A1), lambda r: r.add(FB, A2)])
+                    rep = got.get("replayed", [])
+                    check(got.get("refused") is None and len(rep) == 2
+                          and at(a, rep[0], FB) == SEED + "\n" + T + "\n" + A1
+                          and at(a, rep[1], FB) == SEED + "\n" + T + "\n" + A1 + "\n" + A2,
+                          "[replay: two commits, %s] both replayed, each entry once (%r)" % (tag, got))
+                guarded("two commits, " + tag, two_commits)
+
+                # a session file whose path holds é is settled, not refused
+                def accented():
+                    TEAM_A, MINE_A = today("team, café"), today("mine, café")
+                    a, (got,) = replay_run("é, " + tag, where("accented"), attrs, lambda r: r.add(R_ACC, TEAM_A),
+                                           [lambda r: r.add(R_ACC, MINE_A)])
+                    check(got.get("refused") is None and at(a, got.get("tip"), R_ACC) == SEED + "\n" + TEAM_A + "\n" + MINE_A,
+                          "[replay: é, %s] a path holding é is settled (%r)" % (tag, got))
+                guarded("é, " + tag, accented)
+
+        # Review Focus 5: a repository .gitattributes changes no outcome above
+        if can_replay:
+            for attrs in (None, "* merge=text\n", "* -merge\n", "security/** export-ignore\n"):
+                replay_cases(attrs)
 
         # an unexpected exception is "not run" on one line, exit 2: §6 quotes the first stderr line
         with tempfile.TemporaryDirectory() as tmp:
