@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.70.0] — 2026-10-29
+
+Take with `dev-workflows` 4.53.0, whose `/ready` and `/conformance` hand off the files this release classifies — to-fix D30.
+
+### Changed
+- **`phase-handoff` §4.0's two rows for what a pre-handoff maintenance agent edits name `/ready` and `/conformance` beside `/epics`**: a PRD or Epic folder's `CLAUDE.md`, advisory, and a documentation page directly inside one, unread — what `dev-workflows` 4.53.0's `/ready` (Phase 5 step 2a) and `/conformance` (Phase 5.5) now edit before their handoffs and declare in them. One row of each kind serves all three producers, so each producer's check of its Documentation agent's paths sets the same two rows aside. No array moves: `/ready`'s set stays advisory, `/conformance`'s takes its record's class or its annotated documents', and `/epics`' its `epic.md`'s. §4.3's advisory bullet names `/ready`'s set as one whose other paths take no stronger class.
+
 ## [1.69.1] — 2026-10-29
 
 Take with `dev-workflows` 4.52.0 — to-fix D28.

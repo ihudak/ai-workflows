@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.9.0] — 2026-10-29
+
+Needs nothing newer than `workflows-core` 1.69.0 — to-fix D30.
+
+### Fixed
+- **`/security-workflows:scan`'s Documentation and Instructions agents propose, and write nothing** (D30). Step 7.6's agents, told the project root is `$SPECS_PATH`, edited any internal documentation index in the specs repository that lists security registers or per-repository records, its `CLAUDE.md` and `~/.claude/CLAUDE.md` — none of which the security shape of `specs-repo-git` §2.1 stages, so no run ever committed them, while the step said the terminal `commit-artifacts` did: each edit sat uncommitted, firing §3.3's G1 advisory on every later run, and a `~/.claude/` edit landed unreviewed. The run hands nothing off by pull request, so it now takes the shape `/docs-workflows:document`'s keyed mode takes in its Phase 8.6: each agent returns `{file, anchor, replacement, reason}`, and after the register commit and the follow-ups, before the cost entry, the run refuses a proposal outside its agent's set — for Agent 1, an existing file in `$SPECS_PATH` that is none of the family's artifacts, lies under none of §2.1's shapes (the register's own files among them, which `register.py` alone writes) and is no `CLAUDE.md`; for Agent 3, the specs repository's or the global `CLAUDE.md` — puts the rest to the operator (*Skip — report only*, *Apply all*, *Choose per proposal*), and applies only those accepted, re-dispatching the agent with its own proposal. An applied edit is left uncommitted and named in the step's output with the `git -C "<SPECS_PATH>"` `add` and `commit` commands that commit it; one to `~/.claude/CLAUDE.md` is named as applied outside every repository. The proposals come before the terminal commit, which stages §2.1's shapes alone and so never carries one, keeping `commit-artifacts` the run's last action.
+- **The Knowledge base agent writes only under `~/.claude/memory/`**: the project root's `.claude/memory/` was the specs repository's, where no commit of the run reached it. A project-specific entry is proposed in the step's output instead.
+- Step 7.6's closing line says what the terminal commit carries — the feedback and the follow-ups — and what it does not; the docs page's tail, its phase table and diagram name the proposals step.
+
 ## [0.8.0] — 2026-10-29
 
 Needs nothing newer than `workflows-core` 1.69.0 — to-fix D28.

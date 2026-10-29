@@ -19,7 +19,7 @@ transition, against the rubric in `${CLAUDE_PLUGIN_ROOT}/references/workflow-sta
 `SUPPORTED` / `PARTIAL` / `NOT-SUPPORTED` with a requirement coverage roll-up and named gaps, gated on
 the Opus `readiness-reviewer`.
 
-Key distinction from every other pipeline command: `/ready` **authors nothing** in the PRD/Epic/ARD/spec/design sense — it never writes any of those, and it never writes a status. Its only authored write is an overwritten `_readiness.md` snapshot under `$SPECS_PATH`, and it cuts a deliverable branch only via the handoff's consent choice, at Phase 5 step 3, to hand that snapshot off, creating `ready/<KEY>-<slug>` — `specs-preflight` itself still creates no deliverable branch, switching `$SPECS_PATH` only between branches that already exist and are plugin-created (`workflows-core:specs-repo-git` §2.2); in session-branch mode its flush may create `session/<identity>`, the branch §8 keeps session files on (§8.2), which holds no deliverable. `_readiness.md` is likewise committed only through that same consent choice, never automatically — declining leaves it uncommitted; the terminal `commit-artifacts` step commits ONLY the run's bounded session-artifact paths (`workflows-core:specs-repo-git` §2.1), which `_readiness.md` is not. Where `/design`'s repo gate is a **strict, hard-stop** mount check because it is about to ground code decisions, `/ready`'s repo check is **best-effort presence only** — it never scans code, it only notes whether a needed repo is mounted.
+Key distinction from every other pipeline command: `/ready` **authors nothing** in the PRD/Epic/ARD/spec/design sense — it never writes any of those, and it never writes a status. Its only authored write is an overwritten `_readiness.md` snapshot under `$SPECS_PATH` — beside it, Phase 5 step 2a's maintenance agents may edit an existing documentation page or `CLAUDE.md` in the same folder, edits that ride the same handoff — and it cuts a deliverable branch only via the handoff's consent choice, at Phase 5 step 3, to hand that snapshot off, creating `ready/<KEY>-<slug>` — `specs-preflight` itself still creates no deliverable branch, switching `$SPECS_PATH` only between branches that already exist and are plugin-created (`workflows-core:specs-repo-git` §2.2); in session-branch mode its flush may create `session/<identity>`, the branch §8 keeps session files on (§8.2), which holds no deliverable. `_readiness.md` is likewise committed only through that same consent choice, never automatically — declining leaves it uncommitted, with those edits; the terminal `commit-artifacts` step commits ONLY the run's bounded session-artifact paths (`workflows-core:specs-repo-git` §2.1), which neither `_readiness.md` nor those edits are. Where `/design`'s repo gate is a **strict, hard-stop** mount check because it is about to ground code decisions, `/ready`'s repo check is **best-effort presence only** — it never scans code, it only notes whether a needed repo is mounted.
 
 Key distinction from every other consumer of the handoff gate, `require-on-main`, and of `workflows-core:ard-resolution`: every other caller's own gate stops it when a gated ARD/spec/design resolves off the specs repo's default branch (the gate's own return contract names every other caller that reads a stopping row without stopping — `/product-workflows:brd-reconcile` at three sites, its cross-BRD write guard, a `--sent` run's redundancy check at Phase 0 step 6, which reads the gate inverted, and its ordinary Phase 0 gate on the most recent prompt while the package the review answers is undetermined, which tries each older prompt before it stops; and `/product-workflows:brd-interview` at one, its Phase 0 step 8a gate on its parent's defect log); `/ready` **never** stops. That state becomes a readiness finding — "authored but not handed off" — that caps the eventual verdict at `PARTIAL`; an artifact that is absent outright is recorded as missing in the coverage roll-up, exactly as before this feature. Reporting readiness is `/ready`'s whole function, so a run that stops instead of reporting has failed at the one thing it exists to do.
 
@@ -214,7 +214,7 @@ model_routing:
   current_model: <the model this orchestrator is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   defect_model: <§2.1 Sonnet chain — only under --skip-feedback; under §10, run_flags.enforced_model>
-  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # the folder read (Phase 2) and the Phase 6 maintenance agents; the Phase 3 deterministic skeleton is mechanical and runs orchestrator-inline, not delegated
+  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # the folder read (Phase 2) and the maintenance agents of Phase 5 step 2a and Phase 6; the Phase 3 deterministic skeleton is mechanical and runs orchestrator-inline, not delegated
   review_model:    <§2 Opus chain>     # readiness-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -472,12 +472,53 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    see this run's terminal report for the outcome.
    ```
 
-3. **Hand off** `_readiness.md` (commit-when-asked — never automatic). Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 consent choice verbatim — the **advisory** array, which is the class §4.0 puts `_readiness.md` in: read downstream (`/dev-workflows:implement` Phase 0.5's one-line, never-blocking advisory) and gated by nothing. The **gated** class is wrong outright — §3.4 names no row for `_readiness.md`, so neither of its two arrays applies, and its **stopping** one would promise a downstream stop that cannot happen here — and the unread one would claim nothing reads a file that is read on every keyed `/dev-workflows:implement` run:
+2a. **Pre-handoff maintenance.** The two maintenance agents that edit files in the specs repository — documentation and instructions — run here, before step 3's handoff, so that what they write is handed off with `_readiness.md`; Phase 6 runs the other two, which write nothing a pull request would carry. All four once ran in Phase 6, after the handoff: an edit made then sat uncommitted — on the `ready/` branch the checkout stays on, outside its pull request, or wherever else the checkout stood — and, being none of `workflows-core:specs-repo-git` §2.1's bookkeeping paths, fired §3.3's G1 advisory on every later run of any command until someone committed or removed it.
+
+   `unit_folder` is the folder step 2 wrote `_readiness.md` into — the PRD dir on a PRD-level run, the Epic subdir on an Epic-level one — which step 3 hands off as `feature_folder`. Compose the **change summary block** here, because these agents read it, and Phase 6's read the same block:
+
+   ```
+   Implementation: [one-sentence: readiness check for <PRD> [<EPIC>], verdict SUPPORTED | PARTIAL | NOT-SUPPORTED]
+   Change type: docs
+   Classification: MODERATE
+   Files changed:
+   <absolute path of _readiness.md>
+   Notable additions/removals: _readiness.md (over)written with the Phase 4 verdict
+   Readiness verdict: [SUPPORTED | PARTIAL | NOT-SUPPORTED]
+   ```
+
+   Then spawn Agents 1 and 3 in a **single Agent message**. They are independent and run concurrently. Each edits only an existing file inside `unit_folder`, never creates one, and returns the absolute path of every file it edited. **Check every returned path against the set its agent may edit**: for Agent 1, a documentation page directly inside `unit_folder` that is none of the family's artifacts (the list below) **and** that neither `phase-handoff` §4.0's register of declared artifacts — load the whole reference for it here, `Skill(skill: "workflows-core:reference", args: "phase-handoff")`, the load step 3 makes next, which then has it; its two rows for what a pre-handoff maintenance agent edits aside, which name the very pages this agent may edit — nor `workflows-core:specs-repo-git` §2.1's bounded session-artifact shapes names, so a file the list below misses is still refused when a command of the family writes it; for Agent 3, `<unit_folder>/CLAUDE.md` alone. Record each path in its agent's set as `maintenance_paths`, by its path relative to `$SPECS_PATH`, for step 3's `deliverable_paths`. Any other path is an out-of-scope write, never declared as a deliverable: step 4's report names it by its absolute path, and says that the run left it as the agent wrote it, uncommitted.
+
+   **The family's artifacts** — what Agent 1 never edits, since each has its own producer, format and reviewer — are the list `/product-workflows:epics` Phase 7.4 keeps, given here whole, with `epic.md` added because `unit_folder` may be an Epic's: `prd.md`, `idea.md`, `epic.md`, `_coverage.md`, `ard.md` and every `ard-<area>.md`, `specification.md`, `design.md`, `implementation.md`, `decisions.md`, `brd-link.md`, `coverage-ledger.md`, `slices.md`, `proposal.md`, `proposal-brief.md`, `follow-ups.md`, `release-notes.md`, `pr-draft.md`, `<KEY>-implementation-gaps.md`, `code-defect-log.md`, `prd-seed.md`, `ard-seed.md`, `spec-seed.md`, the BRD route's dated records (`customer-review-prompt-<date>.md`, `customer-review-<date>.md`, `customer-delivery-note-<date>.md`, `self-review-<date>.md`, `reconciliation-<date>.md`, `<BRD-KEY> Customer Review <date>.md`), every file whose name begins with `_` (`_session.md`, `_readiness.md`, `_conformance.md`, `_glossary.md`, `_security.md` among them), `CLAUDE.md`, and — since only a page directly inside `unit_folder` qualifies — anything in a folder under it: an `EPIC-` folder, `dev-workflows/`, `revisions/`, `grounding/`, `brd/`, `interview/`, `design/` or `attachments/` among them.
+
+   **Agent 1 — Documentation** (general-purpose, model: `<detection_model — §2.1 Sonnet chain>`):
+   > "Pre-handoff documentation review. Change summary:
+   > [paste change summary block]
+   >
+   > The project root is the folder this run wrote its readiness snapshot into, [absolute path of unit_folder]; look only for internal documentation files directly inside it that reference its readiness snapshot or the documents beside it (e.g., an index page listing the folder's documents). NEVER edit one of the family's artifacts: [paste the family's artifacts list above] — each has its own producer and reviewer.
+   > Determine if any such file needs updating.
+   > Skip if: no such file exists or readiness runs aren't indexed there.
+   > If an update is warranted: edit that file in place — a minimal edit, inside the project root, to a file that already exists; never create a file and never write outside the project root. This run has not handed its snapshot off yet, so your edit is handed off with it, behind the same consent choice.
+   > Return: the absolute path of each file you edited and the edit you made, OR 'no update required (reason)'."
+
+   **Agent 3 — Instructions** (general-purpose, model: `<detection_model — §2.1 Sonnet chain>`):
+   > "Pre-handoff instructions review. Change summary:
+   > [paste change summary block]
+   >
+   > Check CLAUDE.md in the project root, [absolute path of unit_folder]; CLAUDE.md at the specs repository's top level, [absolute path of $SPECS_PATH]; and ~/.claude/CLAUDE.md (global).
+   > Determine if any readiness-gate rules, guidance, or guardrails are missing because of what this run revealed.
+   > Skip if: the run followed existing conventions with no surprises.
+   > If YES: apply minimal, additive, scoped changes only, and only to the project root's CLAUDE.md, where it already exists — never create one. This run has not handed its snapshot off yet, so your edit is handed off with it, behind the same consent choice. NEVER edit the other two — return the edit each needs, as a proposal, and write nothing: the specs repository's top-level CLAUDE.md governs every project in that repository, and a change to it does not belong in one unit's readiness pull request; ~/.claude/CLAUDE.md lies outside every repository, so no pull request would carry an edit there and nobody would review it.
+   > Return: the absolute path of each file you edited, what was changed and why, and each proposed edit to the specs repository's CLAUDE.md or ~/.claude/CLAUDE.md, naming the file, with its reason, OR 'no update required'."
+
+   Collect both summaries for step 4's report.
+
+3. **Hand off** `_readiness.md` (commit-when-asked — never automatic). Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 consent choice verbatim — the **advisory** array, which is the class §4.0 puts `_readiness.md` in: read downstream (`/dev-workflows:implement` Phase 0.5's one-line, never-blocking advisory) and gated by nothing. It is the whole set's class too, since nothing step 2a's agents edit is stronger — the folder's `CLAUDE.md` advisory and a documentation page in it unread (§4.0). The **gated** class is wrong outright — §3.4 names no row for `_readiness.md`, so neither of its two arrays applies, and its **stopping** one would promise a downstream stop that cannot happen here — and the unread one would claim nothing reads a file that is read on every keyed `/dev-workflows:implement` run. **Print what step 2a's agents edited** just above the array — before the one line §4.3 prints immediately above it (the `specs_git` flag line, or the no-remote line its push-target probe decides), which keeps that place — each path in `maintenance_paths`, relative to `$SPECS_PATH`, with a one-line summary of its edit from the agent's return, or `Maintenance edits: none`, so the operator consents to those edits knowing they ride the same commit:
    `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]`.
+   On the second or third choice, `_readiness.md` and what step 2a's agents edited stay written and uncommitted.
    On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2)
-   with `prefix: ready`; `feature_folder` = the PRD dir or Epic subdir step 2 wrote into;
-   `deliverable_paths` = `_readiness.md`; `title: <PRD|EPIC> Update readiness snapshot`; and `body_facts` =
-   the verdict, the coverage roll-up (N/M, P%), and the derived phase(s). Because `_readiness.md`
+   with `prefix: ready`; `feature_folder` = `unit_folder`, the PRD dir or Epic subdir step 2 wrote into;
+   `deliverable_paths` = `_readiness.md` and every path in step 2a's `maintenance_paths`, each by its path relative to `$SPECS_PATH` (§2.9); `title: <PRD|EPIC> Update readiness snapshot`; and `body_facts` =
+   the verdict, the coverage roll-up (N/M, P%), the derived phase(s), and any documentation or `CLAUDE.md` edit step 2a's agents made. Because `_readiness.md`
    is overwritten every run, §2.2's collision rule fires on most re-runs against an already-merged prior
    branch — expect the `-2`/`-3` substitution, and report it via the §4.1 outcome line as that section
    requires. Emit that line in the terminal report's Phase handoff section (step 4).
@@ -544,6 +585,12 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    as advice." — or the declined/no-remote/gate-failed/nothing-to-commit variant. Never the gated
    clause: nothing runs require-on-main on _readiness.md]
 
+   ### Pre-handoff maintenance (step 2a)
+   - Documentation (Agent 1): [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as step 3's `Phase handoff:` line gives `_readiness.md`'s: committed and pushed with it, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside it (the handoff was declined, or its gate failed)] — _or_ "no update required (reason)"
+   - Instructions (Agent 3): [<unit_folder>/CLAUDE.md, relative to $SPECS_PATH] — [summary of change and why] — [its fate, as above] — _or_ "no update required"
+   - Proposed, not written: [the specs repository's CLAUDE.md | ~/.claude/CLAUDE.md] — [the edit and why] — _one per proposal; omit where none_
+   - Out-of-scope write, not handed off: [absolute path] — _a path step 2a's agents returned outside the set each may edit, left as written and uncommitted; omit where none_
+
    ### Next step
    [Per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked. SUPPORTED → `/dev-workflows:implement <ADDRESS>` — the same single address this run judged (D4), no handoff. PARTIAL / NOT-SUPPORTED → resolve the named gaps above and update
    any status you keep elsewhere to match the artifacts, then re-run `/dev-workflows:ready <ADDRESS>`.]
@@ -562,84 +609,56 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
    The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`, the *Dev — build, verify & deliver* lane.
 
-`/ready` **NEVER** writes outside `$SPECS_PATH`. It commits and hands off
-`_readiness.md` only through step 3's `workflows-core:phase-handoff` §4.3 consent choice — declining leaves it
+`/ready` **NEVER** writes outside `$SPECS_PATH`, save Phase 6's knowledge-base entries under
+`~/.claude/memory/` and the cost checkpoint Phase 8 advances (`workflows-core:cost-emission` §3). It commits and hands off
+`_readiness.md`, with what step 2a's agents edited, only through step 3's `workflows-core:phase-handoff` §4.3 consent choice — declining leaves them
 uncommitted; that handoff is independent of the terminal `commit-artifacts` step, which stages ONLY the
 run's bounded session-artifact paths (`workflows-core:specs-repo-git` §2.1) and
-never `_readiness.md` itself. Phases 6–8 below append their own short trailing notices after this
+never `_readiness.md` or those edits. Phases 6–8 below append their own short trailing notices after this
 report; they do not reopen or restate it.
 
 ---
 
 ## Phase 6 — Post-run maintenance & feedback
 
-Runs the same four maintenance roles `epics.md` runs in its Phases 7.4 and 8 — documentation, knowledge base, instructions and `impl-maintenance` — all four here as one genuinely **terminal** phase, after this run's handoff (unlike `/epics`, which runs the two that edit specs-repository files before its handoff, so their edits ride its pull request, and whose maintenance
-feeds the still-to-come final report — here the readiness report already printed in Phase 5).
+Runs the two maintenance roles that write nothing a pull request would carry — knowledge base and `impl-maintenance` — as one genuinely **terminal** phase, after this run's handoff. The two that edit specs-repository files, documentation and instructions, ran before the handoff, in Phase 5 step 2a, so their edits ride its pull request — the split `/product-workflows:epics` makes between its Phases 7.4 and 8. The readiness report already printed in Phase 5, with step 2a's results in it.
 
 a. `project_root` = `$SPECS_PATH` for this run (where `_readiness.md` was written). Run
-   `git -C "$SPECS_PATH" status --short -- <the _readiness.md path>` if it is a git repo (it should be,
+   `git -C "$SPECS_PATH" status --short -- <the _readiness.md path> <each path in maintenance_paths>` if it is a git repo (it should be,
    per Phase 0 step 3) — just to report what changed. Phase 5 step 3 already ran the only commit
-   `_readiness.md` ever gets, so this prints nothing if the user consented there, and lists the file if
+   `_readiness.md` and step 2a's edits ever get, so this prints nothing if the user consented there, and lists each file if
    they declined — `??` for a first report, which `git diff --stat` would not show at all, ` M` over an
-   earlier one; this phase itself commits nothing beyond the bounded artifact paths the terminal
+   earlier one or an edited page; this phase itself commits nothing beyond the bounded artifact paths the terminal
    `commit-artifacts` step stages (`workflows-core:specs-repo-git` §2.1).
-b. Compose a **change summary block**:
-
-```
-Implementation: [one-sentence: readiness check for <PRD> [<EPIC>], verdict SUPPORTED | PARTIAL | NOT-SUPPORTED]
-Change type: docs
-Classification: MODERATE
-Files changed:
-<absolute path of _readiness.md>
-Notable additions/removals: _readiness.md (over)written with the Phase 4 verdict
-Readiness verdict: [SUPPORTED | PARTIAL | NOT-SUPPORTED]
-```
+b. The change summary block Phase 5 step 2a composed is the one Agents 2 and 4 read.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 (`impl-maintenance`), with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of the persisted-path line in this phase's own output below. Capture-at-block (`emit-block`) is unaffected by the flag.
 
-Then spawn all four maintenance agents in a **single Agent message**. They are independent and run
+Then spawn both maintenance agents in a **single Agent message**. They are independent and run
 concurrently.
-
-**Agent 1 — Documentation** (general-purpose, model: `<detection_model — §2.1 Sonnet chain>`):
-> "Post-run documentation review. Change summary:
-> [paste change summary block]
->
-> The project root is the specs repo (`$SPECS_PATH`). Look only for internal documentation files that
-> reference readiness gates or the `dev-workflows/` per-PRD artifact area (e.g. a
-> `dev-workflows/README.md` index).
-> Determine if any such file needs updating.
-> Skip if: no such file exists or readiness runs aren't indexed centrally.
-> If an update is warranted: apply minimal edits.
-> Return: file updated and what changed, OR 'no update required (reason)'."
 
 **Agent 2 — Knowledge base** (general-purpose, model: `<detection_model — §2.1 Sonnet chain>`):
 > "Post-run knowledge review. Change summary:
 > [paste change summary block]
 >
-> Check ~/.claude/memory/ (global) and .claude/memory/ (project-level) for existing knowledge files.
+> Check ~/.claude/memory/ (global) for existing knowledge files.
 > Determine which new knowledge entries are warranted — one entry per lesson, never two lessons in one
 > entry — look for: recurring readiness-gate gaps for this PRD-family, non-obvious status/artifact
 > mismatches uncovered, repo-availability surprises.
-> For each: append it to the most fitting existing file (never create a new file if an existing one
-> fits), titled by its own lesson, using this format:
+> For each entry that holds beyond this project: append it to the most fitting existing file under
+> ~/.claude/memory/ (never create a new file if an existing one fits), titled by its own lesson, using this format:
 > ### [Short title naming this entry's lesson]
 > - **Context**: what problem/situation triggered this
 > - **Insight**: the learned rule, pattern, or gotcha
 > - **When it applies**: conditions under which this matters
 > - **Date**: YYYY-MM-DD
 > - **Ref**: [first 60 chars of the key + PRD summary]
-> Return: each entry's file updated/created and a summary of the entry, one line per entry, OR 'no update required'."
+> For each entry specific to this project: write nothing — return it, in the same format, as a proposed
+> entry for the project's own memory, naming the file it belongs in. The handoff is behind this run, and
+> a file written into a repository now would sit uncommitted outside its pull request.
+> Return: each entry's file updated/created and a summary of the entry, one line per entry, then each proposed project entry with its file, OR 'no update required'."
 
-**Agent 3 — Instructions** (general-purpose, model: `<detection_model — §2.1 Sonnet chain>`):
-> "Post-run instructions review. Change summary:
-> [paste change summary block]
->
-> Check CLAUDE.md in the project root and ~/.claude/CLAUDE.md (global).
-> Determine if any readiness-gate rules, guidance, or guardrails are missing because of what this run
-> revealed.
-> Skip if: the run followed existing conventions with no surprises.
-> If YES: apply minimal, additive, scoped changes only.
-> Return: what was changed and why, OR 'no update required'."
+**Agent 2 stays after the handoff, and writes only under `~/.claude/memory/`**, as `/product-workflows:epics` confines its own. Its project-level memory was `.claude/memory/` relative to the session's working directory, which `/ready` never fixes (it is cwd-agnostic) — a code repository, the specs repository or anywhere else — so a file it wrote there was never one the handoff could declare. A project-specific entry is proposed in this phase's output instead, for the operator to record where their project keeps its memory, the way step 2a's Agent 3 proposes a global `CLAUDE.md` edit. A global entry needs no pull request: `~/.claude/` is outside every repository.
 
 **Agent 4 — Session maintenance** (workflows-core:impl-maintenance, model: `<detection_model — §2.1 Sonnet chain>`):
 > "Analyse this session and return a Lessons Learned report.
@@ -667,17 +686,19 @@ Emit this phase's own short output:
 
 ```
 ### Post-run maintenance (Phase 6)
-- Documentation (Agent 1): [result]
-- Knowledge base (Agent 2): [result]
-- Instructions (Agent 3): [result]
+- Knowledge base (Agent 2): [one line per entry: file updated/created under ~/.claude/memory/ — summary of that entry] — _or_ "no update required"
+- Proposed for the project's memory, not written: [file] — [the entry, in the format above] — _one per project-specific entry; omit where none_
 - Session learnings (Agent 4): [top suggestions, or "no suggestions — routine session"] — _or, under `--skip-feedback`, omit this line entirely_
 - Feedback persisted: [path, or "no plugin-facing signal — nothing persisted"] — _or, under `--skip-feedback`, `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` / `— no defects` in its place_
 ```
 
-ADDITIVE — this phase NEVER fails the run and NEVER commits its own output (still true — it writes only
-the maintenance/feedback artifacts, which the terminal `commit-artifacts` step in Phase 8 commits, per
-`workflows-core:specs-repo-git` §4; the only commit this run makes before Phase 8 is
-Phase 5 step 3's `_readiness.md` handoff, which is unrelated), and NEVER writes into
+Agents 1 and 3 are reported in the Phase 5 report's `### Pre-handoff maintenance (step 2a)`.
+
+ADDITIVE — this phase NEVER fails the run and NEVER commits its own output (still true — of what it
+writes, the feedback file is what the terminal `commit-artifacts` step in Phase 8 commits, per
+`workflows-core:specs-repo-git` §4, and Agent 2's entries lie under `~/.claude/memory/`, outside every
+repository, where no commit reaches; the only commit this run makes before Phase 8 is
+Phase 5 step 3's handoff of `_readiness.md` and step 2a's edits, which is unrelated), and NEVER writes into
 a code or docs repository, or the current working directory, where it is not the specs repository.
 
 ---
@@ -707,8 +728,8 @@ Emit this phase's own short output:
 ADDITIVE — the follow-ups also remain in the Phase 5 report's Findings/coverage sections. This
 phase NEVER fails the run and NEVER commits its own output (still true — it only writes follow-up
 files, which the terminal `commit-artifacts` step in Phase 8 commits, per
-`workflows-core:specs-repo-git` §4; unrelated to Phase 5 step 3's `_readiness.md`
-handoff, the only commit this run makes before Phase 8), and NEVER writes into
+`workflows-core:specs-repo-git` §4; unrelated to Phase 5 step 3's handoff of `_readiness.md`
+and step 2a's edits, the only commit this run makes before Phase 8), and NEVER writes into
 a code or docs repository, or the current working directory, where it is not the specs repository.
 
 ---
@@ -765,9 +786,10 @@ a code or docs repository, or the current working directory, where it is not the
   `workflows-core:specs-repo-git` §2.2; the one branch it may create is `session/<identity>`, in
   session-branch mode, where its flush commits session files there (§8.2) — a branch that holds no
   deliverable and that the checkout never stands on (§8.1)
-- NEVER auto-commit `_readiness.md` — the commit is offered at that same §4.3 choice, never automatic;
-  declining leaves `_readiness.md` uncommitted (still true — `_readiness.md` is the deliverable, an
-  OTHER path the terminal `commit-artifacts` step never stages, §2.1)
+- NEVER auto-commit `_readiness.md` or what Phase 5 step 2a's agents edited — the commit is offered at that same §4.3 choice, never automatic;
+  declining leaves them uncommitted (still true — `_readiness.md` is the deliverable and those edits ride it, OTHER
+  paths the terminal `commit-artifacts` step never stages, §2.1)
+- ALWAYS check every path Phase 5 step 2a's agents return against the set its agent may edit, declaring only those in the handoff and naming any other in the report as left uncommitted
 - NEVER stop on a `require-on-main` or `workflows-core:ard-resolution` outcome for a gated ARD/spec/design (Phase 1
   step 2, Phase 2.5) — `/ready` is the one caller these gates never stop: an artifact off `<default>`
   becomes a readiness finding ("authored, not handed off") that caps the verdict at `PARTIAL`; an absent
@@ -791,9 +813,9 @@ a code or docs repository, or the current working directory, where it is not the
   `readiness-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + the Phase 3
   deterministic skeleton run on `current_model`
 - ALWAYS invoke `readiness-reviewer` before Phase 5 — no verdict is written or reported without it
-- ALWAYS pass `Change type: docs` in the Phase 6 change summary block
+- ALWAYS pass `Change type: docs` in the change summary block (Phase 5 step 2a)
 - ALWAYS pass `Command run: /ready` in the Phase 6 Agent 4 session handoff
-- ALWAYS spawn Phase 6's four maintenance agents in a single message — never sequentially
+- ALWAYS spawn Phase 5 step 2a's two maintenance agents in one message, and Phase 6's two in another — never sequentially
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0)
 - ARD steps (Phase 2.5, the reviewer's `applicable_ard`, the report's ARD-conformance section) are
   ADDITIVE and guarded on `status: found` or `status: unmerged` — a run with no ARD (`status: none`) is

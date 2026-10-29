@@ -41,7 +41,8 @@ flowchart TD
     p2 --> p3["Phase 3 — Re-check before asking"]
     p3 --> p4["Phase 4 — The walk"]
     p4 --> p5["Phase 5 — Effects and the record"]
-    p5 --> d1{"Hand off the record and notes? (consent choice)"}
+    p5 --> p55["Phase 5.5 — Pre-handoff maintenance"]
+    p55 --> d1{"Hand off the record and notes? (consent choice)"}
     d1 -->|"Branch + commit + push + PR"| p7["Phase 7 — Report"]
     d1 -->|"Write only — no commit"| p7
     p7 --> p89["Phase 8 — Maintenance, feedback, follow-ups / Phase 9 — Session cost and commit"]
@@ -82,7 +83,7 @@ On a PRD run, the Dev's decisions where the implementation won come first, then 
 
 - `_conformance.md` in the checked folder: the ref and commit it checked in each repository — the Epic's branch where an Epic run traced it, and otherwise the default branch — the counts by verdict, the satisfied requirements with their evidence, the unverified ones with what would settle them, a `## Not checkable` list naming each requirement no code could show and why, and one `[DD#n]` entry per discrepancy with its decision and status. A later PRD run traces in full each requirement an Epic's record lists as not checkable. Its ids are permanent, and a re-run asks only about what is new, marking an entry resolved once the code satisfies it.
 - Follow-up tasks for *fix the code*, and `## Engineering review` notes for *amend the document* on a PRD run.
-- A handoff of the record and the notes on a `conformance/` branch, behind the usual consent choice. On a PRD run whose record withdraws follow-ups, the choice first says how many: `/implement` on another clone skips them only once the record is on the default branch, so declining keeps them in your working copy alone.
+- A handoff of the record and the notes on a `conformance/` branch, behind the usual consent choice, with any edit Phase 5.5's maintenance agents made. On a PRD run whose record withdraws follow-ups, the choice first says how many: `/implement` on another clone skips them only once the record is on the default branch, so declining keeps them in your working copy alone.
 
 ## Gates
 
@@ -94,7 +95,7 @@ Each run is charged to phase `conformance`, with the role taken from the folder:
 
 ## Session feedback
 
-The maintenance phase runs as on `/ready`, and its plugin-facing lessons are persisted as feedback. `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows it to bug capture only; see [Session feedback](../reference/session-feedback.md).
+Maintenance runs as on `/ready`, on both sides of the handoff. Before it, in Phase 5.5, a documentation agent may update an existing page directly inside the checked folder — never the record or any other artifact a command of the family writes — and an instructions agent that folder's existing `CLAUDE.md`; each path is checked against what its agent may edit, the edits are printed above the consent choice and ride the same commit, a path outside that set is named in the report as left uncommitted, and an edit the specs repository's top-level `CLAUDE.md` or your `~/.claude/CLAUDE.md` needs is only proposed. After it, in Phase 8, a knowledge-base agent writes only under `~/.claude/memory/`, and `impl-maintenance`'s plugin-facing lessons are persisted as feedback. `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows that feedback to bug capture only; see [Session feedback](../reference/session-feedback.md).
 
 ## Example
 

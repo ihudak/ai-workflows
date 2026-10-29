@@ -90,7 +90,7 @@ Usage: `/conformance <EPIC-KEY | PRD-KEY | @<path>> [--skip-costs] [--skip-feedb
 
 **Rule: Ask, don't guess.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
 
-**Ending early.** Every stop in this command — Phase 0's (`CONFORMANCE_NEEDS_KEY`, `CONFORMANCE_TWO_ADDRESSES`, the `$SPECS_PATH` *Cancel*, step 3's `CONFORMANCE_BRD_NOT_SLICED` and `CONFORMANCE_EPIC_FOLDERS`, step 4's gate, step 5's `CONFORMANCE_RECORD_BEHIND` and `CONFORMANCE_RECORD_UNMERGED`), (b)'s ARD stops (`CONFORMANCE_ARD_NOT_ON_MAIN`, and the gate's own) and its `CONFORMANCE_NO_REQUIREMENTS`, (c)'s `CONFORMANCE_NOT_IMPLEMENTED`, `CONFORMANCE_BRANCH_MISSING` and `CONFORMANCE_NO_CODE` — and every run-ending answer — (c)'s *Stop until the branch is found*, *Stop until it is merged* and both its *Cancel*s, (d)'s probe *Cancel*, Phase 4's walk *Cancel* — takes `workflows-core:specs-repo-git` §4's refusal tail: the cost entry (unless `--skip-costs`) and `commit-artifacts`, with no `resume.md` and no maintenance phase. Phase 0's address stops (steps 1–2) skip only the preflight (§3 there). A run-ending answer writes no record, note or follow-up, and the stop message says what was decided before it. Phase 6's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the record stays written, and the run goes on through Phases 7–9. A *cancel* at Phase 8's follow-up preview drops only the items it names.
+**Ending early.** Every stop in this command — Phase 0's (`CONFORMANCE_NEEDS_KEY`, `CONFORMANCE_TWO_ADDRESSES`, the `$SPECS_PATH` *Cancel*, step 3's `CONFORMANCE_BRD_NOT_SLICED` and `CONFORMANCE_EPIC_FOLDERS`, step 4's gate, step 5's `CONFORMANCE_RECORD_BEHIND` and `CONFORMANCE_RECORD_UNMERGED`), (b)'s ARD stops (`CONFORMANCE_ARD_NOT_ON_MAIN`, and the gate's own) and its `CONFORMANCE_NO_REQUIREMENTS`, (c)'s `CONFORMANCE_NOT_IMPLEMENTED`, `CONFORMANCE_BRANCH_MISSING` and `CONFORMANCE_NO_CODE` — and every run-ending answer — (c)'s *Stop until the branch is found*, *Stop until it is merged* and both its *Cancel*s, (d)'s probe *Cancel*, Phase 4's walk *Cancel* — takes `workflows-core:specs-repo-git` §4's refusal tail: the cost entry (unless `--skip-costs`) and `commit-artifacts`, with no `resume.md` and no maintenance phase. Phase 0's address stops (steps 1–2) skip only the preflight (§3 there). A run-ending answer writes no record, note or follow-up, and the stop message says what was decided before it. Phase 6's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the record and what Phase 5.5's agents edited stay written, and the run goes on through Phases 7–9. A *cancel* at Phase 8's follow-up preview drops only the items it names.
 
 **(a) Clones and freshness.** Do this before any step below reads a ref. The repositories are every one an Epic's `target:` names (`workflows-core:components`: the id up to its `:`) and every one an `implementation.md` in scope names. Resolve each to a clone under `${REPOS_PATH:-/workspace}`, one directory or a colon-separated list, by the `<repo-slug>` rule `workflows-core:components` §1 defines, applied to each top-level directory's `origin` (`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null`); where two clones share a slug, prefer the one whose name ends `-repo`, then `_repo` or `_fast`, then the alphabetically last. A repository with **no clone of** it under `$REPOS_PATH` is named in the report, and its requirements are listed as not traced — never guessed. On a writable clone (`workflows-core:read-only-repos` §1), refresh its remote refs: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C <repo> fetch --quiet origin` — refs only, never a switch, a pull or a working-tree write. A fetch that fails or times out is named in the report, and that clone is read as last fetched. On a read-only mount, fetch nothing, and apply that reference's §5 instead, printing the age of each ref read where it is older than fourteen days. Where `git -C <repo> rev-parse --is-shallow-repository` prints `true`, the report's *Scope* says that the merge state may read as open in that shallow clone (`workflows-core:implementation-format` §5) — a merged Epic read as unmerged, on either run — and the run never deepens it. **Each repository's `<ref>`** is then its default branch as `workflows-core:read-only-repos` §3's chain resolves it — `origin/<default>` — and its commit `git -C <repo> rev-parse <ref>`: what the merged test reads, and what a PRD run traces; an Epic run traces the ref (c) chooses for each repository, `<ref>` or the Epic's branch. A clone whose chain resolves none is named in the report, and its requirements are listed as not traced.
 
@@ -159,7 +159,7 @@ model_routing:
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it
-  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # conformance-tracer, and the Phase 8 maintenance agents
+  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # conformance-tracer, and the maintenance agents of Phases 5.5 and 8
   defect_model: <§2.1 Sonnet chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -395,10 +395,38 @@ line `/dev-workflows:implement` prints, always have an entry to name.
 
 ---
 
+## Phase 5.5 — Pre-handoff maintenance
+
+Runs once Phase 5 has written the record, and before Phase 6. **The two maintenance agents that edit files in the specs repository — documentation and instructions — run here, before the handoff, so that what they write is handed off with the record**; Phase 8 runs the other two, which write nothing a pull request would carry. All four once ran in Phase 8, after the handoff: an edit made then sat uncommitted — on the `conformance/` branch the checkout stays on, outside its pull request, or wherever else the checkout stood — and, being none of `workflows-core:specs-repo-git` §2.1's bookkeeping paths, fired §3.3's G1 advisory on every later run of any command until someone committed or removed it. It is the split `/product-workflows:epics` makes between its Phases 7.4 and 8.
+
+`unit_folder` is the unit's folder — the one Phase 0 step 3 placed and Phase 5 writes `_conformance.md` into: the Epic's on an Epic run, the PRD's on a PRD run — which Phase 6 hands off as `feature_folder`. Compose the **change summary block** here, because these agents read it, and Phase 8's read the same block:
+
+```
+Implementation: [one sentence: conformance check of <KEY> — <Epic run (Dev) | PRD run (PE)>, N discrepancies settled]
+Change type: docs
+Classification: [MODERATE | SIGNIFICANT]
+Files changed:
+<absolute path of each file Phase 5 wrote: the record, any Epic record marked superseded-by, each annotated document>
+Notable additions/removals: _conformance.md written; [N follow-ups queued, N notes, N overrules]
+Conformance verdicts: [the counts by verdict, as Phase 7's `### Verdicts` line gives them]
+```
+
+Then spawn Agents 1 and 3 in a **single Agent message**, each with `model: <detection_model>` and told that the project root is `unit_folder`, by its absolute path. They are independent and run concurrently. Each edits only an existing file inside `unit_folder`, never creates one, and returns the absolute path of every file it edited. **Check every returned path against the set its agent may edit**: for Agent 1, a documentation page directly inside `unit_folder` that is none of the family's artifacts (the list below) **and** that neither `phase-handoff` §4.0's register of declared artifacts — load the whole reference for it here, `Skill(skill: "workflows-core:reference", args: "phase-handoff")`, the load Phase 6 makes next, which then has it; its two rows for what a pre-handoff maintenance agent edits aside, which name the very pages this agent may edit — nor `workflows-core:specs-repo-git` §2.1's bounded session-artifact shapes names, so a file the list below misses is still refused when a command of the family writes it; for Agent 3, `<unit_folder>/CLAUDE.md` alone. Record each path in its agent's set as `maintenance_paths`, by its path relative to `$SPECS_PATH`, for Phase 6's set. Any other path is an out-of-scope write, never declared as a deliverable: the Phase 7 report names it by its absolute path, and says that the run left it as the agent wrote it, uncommitted.
+
+**The family's artifacts** — what Agent 1 never edits, since each has its own producer, format and reviewer — are the list `/product-workflows:epics` Phase 7.4 keeps, given here whole, with `epic.md` added because `unit_folder` may be an Epic's: `prd.md`, `idea.md`, `epic.md`, `_coverage.md`, `ard.md` and every `ard-<area>.md`, `specification.md`, `design.md`, `implementation.md`, `decisions.md`, `brd-link.md`, `coverage-ledger.md`, `slices.md`, `proposal.md`, `proposal-brief.md`, `follow-ups.md`, `release-notes.md`, `pr-draft.md`, `<KEY>-implementation-gaps.md`, `code-defect-log.md`, `prd-seed.md`, `ard-seed.md`, `spec-seed.md`, the BRD route's dated records (`customer-review-prompt-<date>.md`, `customer-review-<date>.md`, `customer-delivery-note-<date>.md`, `self-review-<date>.md`, `reconciliation-<date>.md`, `<BRD-KEY> Customer Review <date>.md`), every file whose name begins with `_` (`_session.md`, `_readiness.md`, `_conformance.md`, `_glossary.md`, `_security.md` among them), `CLAUDE.md`, and — since only a page directly inside `unit_folder` qualifies — anything in a folder under it: an `EPIC-` folder, `dev-workflows/`, `revisions/`, `grounding/`, `brd/`, `interview/`, `design/` or `attachments/` among them.
+
+- **Agent 1 — Documentation** (general-purpose): given the change summary, look only for internal documentation files directly inside `unit_folder` that reference its conformance record or the documents beside it — an index page listing the folder's documents, say — and NEVER edit one of the family's artifacts, [the list above pasted in], each of which has its own producer and reviewer; where an update is warranted, edit that file in place — a minimal edit to a file that already exists, never creating one and never writing outside `unit_folder` — knowing that the run has not handed its record off yet, so the edit is handed off with it, behind the same consent choice; return the absolute path of each file it edited and the edit it made, and otherwise "no update required (reason)".
+- **Agent 3 — Instructions** (general-purpose): given the change summary, check `CLAUDE.md` in `unit_folder`, `CLAUDE.md` at `$SPECS_PATH`'s top level and `~/.claude/CLAUDE.md` for a missing rule this run revealed; where one is warranted, apply a minimal, additive, scoped change to `unit_folder`'s `CLAUDE.md` alone, where it already exists — never creating one — knowing that it is handed off with the record; NEVER edit the other two, and return the edit each needs as a proposal, writing nothing: the top-level `CLAUDE.md` governs every project in the specs repository and does not belong in one unit's conformance pull request, and `~/.claude/CLAUDE.md` lies outside every repository, where no pull request would carry the edit and nobody would review it. Return the absolute path of each file it edited, what changed and why, and each proposal with its file and reason, and otherwise "no update required".
+
+Collect both summaries for the Phase 7 report.
+
+---
+
 ## Phase 6 — Handoff
 
 Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. The set to hand off is the
-record, every Epic `_conformance.md` this run marked `superseded-by`, and every document it annotated.
+record, every Epic `_conformance.md` this run marked `superseded-by`, every document it annotated, and
+every path in Phase 5.5's `maintenance_paths`.
 Its class, per §4.0, is the strongest among its paths, and the array is §4.3's for that class, presented
 verbatim:
 - **A set holding an annotated document** — `specification.md`, `prd.md`, `epic.md` or `ard.md`, each
@@ -406,8 +434,9 @@ verbatim:
   ```
   choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
   ```
-- **The record alone, or with Epic records it marked `superseded-by`,** is **advisory**: later runs of
-  this command read it, and so does `/dev-workflows:implement`'s follow-up read-back, a PRD record's
+- **The record alone, or with Epic records it marked `superseded-by`, Phase 5.5's edits or both** —
+  the unit folder's `CLAUDE.md` is advisory and a documentation page in it unread (§4.0), so neither
+  lifts the class — is **advisory**: later runs of this command read it, and so does `/dev-workflows:implement`'s follow-up read-back, a PRD record's
   `withdraws:` lines, and none runs `require-on-main` on it. A later run stops on it only where it
   sits on a branch unmerged, or where the default branch holds a copy the checkout lacks or predates
   (Phase 0 step 5) — states this array's first option can leave and a decline never does: a declined
@@ -421,11 +450,20 @@ presents, verbatim with the count filled in: `This record withdraws <N> follow-u
 on another clone skips them only once the record is on the default branch; declined, it keeps them in
 this working copy alone.`
 
+**Print what Phase 5.5's agents edited** above whichever array this phase presents — above the
+`withdraws:` line where there is one, and before the one line §4.3 prints immediately above the array
+(the `specs_git` flag line, or the no-remote line its push-target probe decides), which keeps that
+place — each path in `maintenance_paths`, relative to `$SPECS_PATH`, with a one-line summary of its edit
+from the agent's return, or `Maintenance edits: none`, so the operator consents to those edits knowing
+they ride the same commit.
+
 On its first option, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with
-`prefix: conformance`; `feature_folder` = the unit's folder; `deliverable_paths` = the set above, one
-literal path each; `title: <KEY> Settle delivery conformance`; and `body_facts` = the counts by verdict,
-each decision, and on a PRD run the rulings on Dev's entries. Emit its §4.1 outcome line in the report,
-with the `<downstream-clause>` of the class presented.
+`prefix: conformance`; `feature_folder` = `unit_folder`, the unit's folder; `deliverable_paths` = the set above, one
+literal path each, relative to `$SPECS_PATH` (§2.9); `title: <KEY> Settle delivery conformance`; and `body_facts` = the counts by verdict,
+each decision, on a PRD run the rulings on Dev's entries, and any documentation or `CLAUDE.md` edit
+Phase 5.5's agents made. Emit its §4.1 outcome line in the report,
+with the `<downstream-clause>` of the class presented. On its second or third option, the set stays
+written and uncommitted, what Phase 5.5's agents edited included.
 
 ---
 
@@ -476,6 +514,12 @@ Written to: <absolute path>.
 ### Phase handoff
 [the Phase 6 §4.1 outcome line]
 
+### Pre-handoff maintenance (Phase 5.5)
+- Documentation (Agent 1): [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as the Phase 6 `Phase handoff:` line gives the record's: committed and pushed with it, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside it (the handoff was declined, or its gate failed)] — or "no update required (reason)"
+- Instructions (Agent 3): [<unit_folder>/CLAUDE.md, relative to $SPECS_PATH] — [summary of change and why] — [its fate, as above] — or "no update required"
+- Proposed, not written: [the specs repository's CLAUDE.md | ~/.claude/CLAUDE.md] — [the edit and why] — one per proposal; omit where none
+- Out-of-scope write, not handed off: [absolute path] — a path Phase 5.5's agents returned outside the set each may edit, left as written and uncommitted; omit where none
+
 ### Next step
 [Per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked.]
 
@@ -509,7 +553,8 @@ An offer carries `<merge-clause>`, in a span of its own after the command's, res
 offered command gates — one its own `require-on-main` runs on, or the ARD for a command that resolves
 one through `workflows-core:ard-resolution`. An annotated document is
 the only such path: `/product-workflows:update-prd` and the two documentation commands gate none, and
-an Epic run hands off only its record, which no command gates, so its offers carry none.
+an Epic run hands off only its record and Phase 5.5's edits, none of which a command gates, so its
+offers carry none.
 
 Where more routes apply than a prompt can carry, the offer's overflow rule applies.
 
@@ -517,33 +562,22 @@ Where more routes apply than a prompt can carry, the offer's overflow rule appli
 
 ## Phase 8 — Maintenance, feedback, follow-ups
 
-Terminal: runs after the Phase 7 report and NEVER interrupts an earlier phase. Compose a **change
-summary block**:
-
-```
-Implementation: [one sentence: conformance check of <KEY> — <Epic run (Dev) | PRD run (PE)>, N discrepancies settled]
-Change type: docs
-Classification: [MODERATE | SIGNIFICANT]
-Files changed:
-<absolute path of each file Phase 5 wrote: the record, any Epic record marked superseded-by, each annotated document>
-Notable additions/removals: _conformance.md written; [N follow-ups, N notes, N overrules]
-Conformance verdicts: [the Phase 7 counts]
-```
+Terminal: runs after the Phase 7 report and NEVER interrupts an earlier phase. The change summary
+block Phase 5.5 composed is the one Agents 2 and 4 read. The agents here write nothing a pull request
+would carry: Agent 2 writes only outside every repository, and Agent 4 writes nothing.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 below, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing, and surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects`.
 
-Then spawn all four maintenance agents in a **single Agent message**, each with `model: <detection_model>` and told that the project root is `$SPECS_PATH`, as `/dev-workflows:ready` tells its own: that is where this run wrote, while the working directory may be a code checkout, which this command never writes.
+Then spawn both maintenance agents in a **single Agent message**, each with `model: <detection_model>` and told that the project root is `$SPECS_PATH`, as `/dev-workflows:ready` tells its own: that is where this run wrote, while the working directory may be a code checkout, which this command never writes.
 
-- **Agent 1 — Documentation** (general-purpose): given the change summary, check the specs repo's own internal documentation for an index of conformance records or per-PRD artifacts; apply a minimal edit where one is warranted, and otherwise return "no update required (reason)".
-- **Agent 2 — Knowledge base** (general-purpose): given the change summary, check `~/.claude/memory/` and the project root's `.claude/memory/` for fitting files and append one entry per recurring or non-obvious conformance pattern this run surfaced — never two lessons in one entry — each titled by its own lesson and appended to the most fitting file, in the `### [Short title]` / Context / Insight / When it applies / Date / Ref format; otherwise return "no update required".
-- **Agent 3 — Instructions** (general-purpose): given the change summary, check `CLAUDE.md` in the project root and `~/.claude/CLAUDE.md` for a missing rule this run revealed; apply a minimal, additive, scoped change only where one is warranted.
+- **Agent 2 — Knowledge base** (general-purpose): given the change summary, check `~/.claude/memory/` for fitting files and append one entry per recurring or non-obvious conformance pattern this run surfaced that holds beyond this project — never two lessons in one entry — each titled by its own lesson and appended to the most fitting file under `~/.claude/memory/`, in the `### [Short title]` / Context / Insight / When it applies / Date / Ref format; for an entry specific to this project, write nothing and return it, in the same format, as a proposed entry naming the file it belongs in, since the handoff is behind this run and a file written into a repository now would sit uncommitted outside its pull request; otherwise return "no update required". It writes only under `~/.claude/memory/`, as `/product-workflows:epics` confines its own, and this phase's output names each proposed entry, for the operator to record where their project keeps its memory.
 - **Agent 4 — Session maintenance** (`workflows-core:impl-maintenance`): "Analyse this session and return a Lessons Learned report. Session handoff: Command run: /conformance; What was done: [one paragraph]; Key events: [code not found, Epics not shown merged, re-check drops, overrules, or 'none']; Workarounds used: [or 'none']; Review verdict: [the Phase 7 counts]; Test result: N/A (read-only conformance check); Project root: $SPECS_PATH."
 
 **Persist plugin feedback (automatic).** After Agent 4 returns, invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6) with Agent 4's Lessons Learned report, `command: /conformance`, the run's `key` and `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`).
 
 **Then persist the follow-ups** by invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")` and executing its steps inline on every `fix-code` item Phase 5 queued, previewed and confirmed per its §7, each with its own `unit_folder` and `key` (its §8) — the folder and key of the unit its line names, an Epic's or, on a PRD with no Epic folder, the PRD's. **An Epic run emits its `fix-code` items here, at once** — the Dev owns that code; the PE's later ruling withdraws one it overrules. Where the preview cancels an item, the report says so beside its `[DD#n]` — its record's `effect:` reads *proposed*, which stays true (`dev-workflows:conformance-format`).
 
-Emit this phase's short output — each agent's result, the feedback persisted, and `N follow-ups written to <target>` or `none`. This phase NEVER fails the run and NEVER commits its own output: the terminal `commit-artifacts` step in Phase 9 commits it.
+Emit this phase's short output — each agent's result, each entry Agent 2 proposed for the project's memory and did not write, the feedback persisted, and `N follow-ups written to <target>` or `none`; Agents 1 and 3 are reported in the Phase 7 report's `### Pre-handoff maintenance (Phase 5.5)`. This phase NEVER fails the run and NEVER commits its own output: of what it writes, the feedback and the follow-ups are what the terminal `commit-artifacts` step in Phase 9 commits, and Agent 2's entries lie under `~/.claude/memory/`, outside every repository, where no commit reaches.
 
 ---
 
@@ -571,7 +605,8 @@ Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission
 - A `[DD#n]` is permanent: never renumbered or reused (`conformance-format.md` §5)
 - ALWAYS run `specs-preflight`, the document gate and the record check at Phase 0, and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`)
 - An Epic run traces the Epic's branch by `unit-branch`, before or after its merge — and the default branch in three cases: where `unit-branch` finds the work merged (`merged`), where no block names the repository (`none`), and where the Dev answered that a `missing` branch's pull request merged; a PRD run traces merged code, and asks before tracing an Epic not shown merged
-- ALWAYS hand off the record and the notes only through the Phase 6 §4.3 consent choice, on a `conformance/` branch
+- ALWAYS hand off the record, the notes and what Phase 5.5's agents edited only through the Phase 6 §4.3 consent choice, on a `conformance/` branch
+- ALWAYS check every path Phase 5.5's agents return against the set its agent may edit, handing off only those and naming any other in the report as left uncommitted; the Knowledge base agent writes only under `~/.claude/memory/`
 - ALWAYS end the report with a `### Next step` per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option (`workflows-core:escalation-rules` §0)
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a plugin, skill, command or reference gap — never for a discrepancy, a decision, or an environment or user halt
