@@ -82,6 +82,7 @@ standard library only.
 """
 
 import argparse
+import datetime
 import contextlib
 import io
 import json
@@ -1163,6 +1164,84 @@ def manifest_documents(text):
     return names
 
 
+CLAUSE_RE = re.compile(r"(?i:the) `([^`]+)` repository at commit `([0-9a-f]{7,40})`")
+COMMIT_WORD_RE = re.compile(r"(?<![\w/.\-])([0-9a-f]{7,40})(?![\w/\-]|\.\w)")
+
+
+def baseline_pairs(text):
+    """(repo, commit) for each entry of a baselines document, in order, a repeat recorded once."""
+    pairs, repo = [], None
+    for line in text.split("\n"):
+        m = re.match(r"^\s*-\s*repo\s*:\s*(.+?)\s*$", line)
+        if m:
+            repo = m.group(1).strip("`")
+            continue
+        m = re.match(r"^\s*commit\s*:\s*([0-9a-f]{7,40})\s*$", line)
+        if m and repo and (repo, m.group(1)) not in pairs:
+            pairs.append((repo, m.group(1)))
+    return pairs
+
+
+def _is_pin(word, commits):
+    """Section 7.1's commit word: a valid YYYYMMDD date, or a word of hex letters alone, is a pin only
+    where it prefixes a baseline commit -- the note is prose, and both read as hex."""
+    if any(c.startswith(word) for c in commits):
+        return True
+    if word.isalpha():
+        return False
+    if len(word) == 8 and word.isdigit():
+        try:
+            datetime.datetime.strptime(word, "%Y%m%d")
+            return False
+        except ValueError:
+            pass
+    return True
+
+
+def note_pins(out, note_text, pairs, source):
+    """Relation 3: the note's pin clauses and commit words against the baselines' (repo, commit) pairs."""
+    text = " ".join(note_text.split())
+    base = {}
+    for repo, commit in pairs:
+        base.setdefault(repo, []).append(commit)
+    every = [c for _, c in pairs]
+    named, extra, covered, spans = [], [], set(), []
+    for m in CLAUSE_RE.finditer(text):
+        repo, word = m.group(1), m.group(2)
+        spans.append(m.span())
+        named.append("%s at %s" % (repo, word))
+        hits = sorted({c for c in base.get(repo, []) if c.startswith(word)})
+        if hits:
+            covered.add(repo)
+            if len(hits) > 1:
+                out["ambiguous"].append({"relation": 3, "where": "delivery note", "token": word, "commits": hits})
+        else:
+            extra.append("%s at %s" % (repo, word))
+    for m in COMMIT_WORD_RE.finditer(text):
+        word = m.group(1)
+        if any(a <= m.start() < b for a, b in spans) or not _is_pin(word, every):
+            continue
+        named.append(word)
+        hits = sorted({c for c in every if c.startswith(word)})
+        if not hits:
+            extra.append(word)
+        elif len(hits) > 1:
+            out["ambiguous"].append({"relation": 3, "where": "delivery note", "token": word, "commits": hits})
+    entry = {"relation": 3, "where": "delivery note", "source": source,
+             "filter": "repositories and their pinned commits", "named": named,
+             "held": ["%s at %s" % p for p in pairs], "extra": extra,
+             "missing": ["%s at %s" % (repo, cs[-1]) for repo, cs in base.items() if repo not in covered]}
+    if named and not pairs:
+        entry["verdict"] = "unreadable"
+        out["unreadable"].append(entry)
+    elif entry["missing"] or entry["extra"]:
+        entry["verdict"] = "mismatch"
+        out["mismatch"].append(entry)
+    else:
+        entry["verdict"] = "pass"
+    out["relations"].append(entry)
+
+
 def _compare(out, relation, where, source, filter_, named, held, key=_idkey):
     named, held = sorted(set(named), key=key), sorted(set(held), key=key)
     entry = {"relation": relation, "where": where, "source": source, "filter": filter_, "named": named,
@@ -1203,6 +1282,10 @@ def sets(bundle, key, date, manifest, note, unreviewed=()):
     _compare(out, 2, "manifest", "the bundle's listing", "every markdown document but the manifest",
              manifest_documents(_read(os.path.join(bundle, manifest), manifest)), [_stem(n) for n in listing],
              key=str)
+    source = "%s-baselines.md" % key
+    path = os.path.join(bundle, source)
+    pairs = baseline_pairs(_read(path, source)) if os.path.exists(path) else []
+    note_pins(out, _read(note, "the delivery note " + os.path.basename(note)), pairs, source)
     return out
 
 
@@ -1221,6 +1304,17 @@ def _sets_prompt(bodies=None, sep=".", numbers=range(1, 12)):
         "## %d%s Part %d\n\n%s\n" % (n, sep, n, bodies.get(n, "Text.\n")) for n in numbers)
 
 
+SHA_A = "abcdef1234567890abcdef1234567890abcdef12"
+SHA_B = "1234567fedcba0987654321fedcba0987654321f"
+
+
+def _sets_baselines(pairs):
+    return "# Grounding baselines: K-1\n\n" + "".join(
+        "## 2026-10-%02d — %s\n\n- repo: %s\n  commit: %s\n  verification:\n"
+        "    - git -C \"<repo>\" rev-parse HEAD → %s\n  result: clean\n\n" % (i + 1, r, r, c, c)
+        for i, (r, c) in enumerate(pairs))
+
+
 def _sets_manifest(names, extra=""):
     return ("# K-1 — bundle manifest\n\nIntro naming `K-1-gone.md` as context not carried.\n\n## Documents\n\n"
             "| File | What it is | For review? |\n|---|---|---|\n"
@@ -1237,6 +1331,8 @@ def sets_selftest(check):
         with tempfile.TemporaryDirectory() as d:
             b = os.path.join(d, "b")
             os.mkdir(b)
+            if "K-1-baselines.md" not in files:
+                files = dict(files, **{"K-1-baselines.md": _sets_baselines([("app", SHA_A)])})
             if kw["manifest"] not in files:
                 files = dict(files, **{kw["manifest"]: _sets_manifest(
                     [n for n in files if n.endswith(".md")])})
@@ -1329,21 +1425,52 @@ def sets_selftest(check):
         return next(x for x in r["relations"] if x["relation"] == 2)
 
     pr = {"K-1-customer-review-prompt-20261029.md": _sets_prompt()}
-    docs = ["K-1-customer-review-prompt-20261029.md", "K-1-decisions.md", "K-1-a.md"]
-    files = dict(pr, **{"K-1-decisions.md": "# Decision register: K-1\n", "K-1-a.md": "x\n", "K-1-wire.svg": "<svg/>"})
+    docs = ["K-1-customer-review-prompt-20261029.md", "K-1-decisions.md", "K-1-a.md", "K-1-baselines.md"]
+    files = dict(pr, **{"K-1-decisions.md": "# Decision register: K-1\n", "K-1-a.md": "x\n", "K-1-wire.svg": "<svg/>",
+                        "K-1-baselines.md": _sets_baselines([("app", SHA_A)])})
     r = run(dict(files, **{"K-1-manifest.md": _sets_manifest(docs)}))
     check("sets relation 2: the real manifest's shape passes — its own absence, an image line, the map table",
-          r2(r)["verdict"] == "pass" and len(r2(r)["named"]) == 3)
+          r2(r)["verdict"] == "pass" and len(r2(r)["named"]) == 4)
     r = run(dict(files, **{"K-1-manifest.md": _sets_manifest(
-        ["K-1-customer-review-prompt-20261029", "K-1-decisions", "K-1-a.md"], "| `K-1-wire.svg` | i | yes |\n")}))
+        ["K-1-customer-review-prompt-20261029", "K-1-decisions", "K-1-a.md", "K-1-baselines"],
+        "| `K-1-wire.svg` | i | yes |\n")}))
     check("sets relation 2: the extension either way matches, and an image row is out of scope",
           r2(r)["verdict"] == "pass")
     r = run(dict(files, **{"K-1-manifest.md": _sets_manifest(
-        ["K-1-customer-review-prompt-20261029.md", "K-1-a.md", "K-1-ghost.md"])}))
+        ["K-1-customer-review-prompt-20261029.md", "K-1-a.md", "K-1-baselines.md", "K-1-ghost.md"])}))
     check("sets relation 2: a document with no row is missing, a row with no document is extra",
           r2(r)["missing"] == ["K-1-decisions"] and r2(r)["extra"] == ["K-1-ghost"] and r2(r) in r["mismatch"])
     msg = refused(lambda: run(dict(files, **{"K-1-manifest.md": "# K-1 — bundle manifest\n\n- `K-1-a.md`\n"})))
     check("sets relation 2: a manifest with no Documents table is refused", bool(msg) and "Documents" in msg)
+    def r3(r):
+        return next(x for x in r["relations"] if x["relation"] == 3)
+
+    two = {"K-1-baselines.md": _sets_baselines([("app", SHA_A), ("lib", SHA_B), ("app", SHA_A)])}
+    wrapped = ("Pull `bundle-20261012/` today, 20261012, as defaced copies are\nnot ours. The `app` repository at commit\n"
+               "`abcdef1` and the `lib` repository at commit `1234567`.\n")
+    r = run(dict(pr, **two), note=wrapped)
+    check("sets relation 3: a wrapped clause, an abbreviation, a commit recorded twice and an all-digit pin pass; "
+          "a path, a date and a hex-letter word are no pin",
+          r3(r)["verdict"] == "pass" and r["ambiguous"] == [] and len(r3(r)["named"]) == 2)
+    r = run(dict(pr, **two), note="The `app` repository at commit `1234567` and the `lib` repository at commit `abcdef1`.\n")
+    check("sets relation 3: a swapped pair is a mismatch", r3(r)["verdict"] == "mismatch" and len(r3(r)["extra"]) == 2)
+    r = run(dict(pr, **two), note="The `app` repository at commit `abcdef1` and the `web` repository at commit `abcdef1`.\n")
+    check("sets relation 3: a repository the baselines lack is extra, and one the note omits is missing",
+          r3(r)["verdict"] == "mismatch" and [m.split()[0] for m in r3(r)["missing"]] == ["lib"]
+          and [m.split()[0] for m in r3(r)["extra"]] == ["web"])
+    amb = {"K-1-baselines.md": _sets_baselines([("app", SHA_A), ("app", "abcdef1999999999999999999999999999999999")])}
+    r = run(dict(pr, **amb), note="The `app` repository at commit `abcdef1`.\n")
+    check("sets relation 3: an abbreviation prefixing two different commits is ambiguous",
+          [a["token"] for a in r["ambiguous"]] == ["abcdef1"])
+    r = run(dict(pr, **{"K-1-baselines.md": "# Grounding baselines: K-1\n"}),
+            note="The `app` repository at commit `abcdef1`.\n")
+    check("sets relation 3: pins over a baselines file that yields none are unreadable", r3(r)["verdict"] == "unreadable")
+    r = run(dict(pr, **{"K-1-baselines.md": "# Grounding baselines: K-1\n"}), note="No code was read.\n")
+    check("sets relation 3: no pin and no baseline is the ordinary pass", r3(r)["verdict"] == "pass")
+    r = run(dict(pr, **two), note="The `app` repository at commit `abcdef1`, the `lib` repository at commit "
+                                 "`1234567`; also 9999999.\n")
+    check("sets relation 3: a commit word outside a clause that prefixes no baseline is extra",
+          r3(r)["extra"] == ["9999999"])
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "K-1-customer-review-prompt-20261029.md"), "w", encoding="utf-8") as fh:
             fh.write(_sets_prompt())
