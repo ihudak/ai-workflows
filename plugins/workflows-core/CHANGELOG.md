@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.68.0] — 2026-10-29
+
+Take with `product-workflows` 3.60.0 and `dev-workflows` 4.50.0 — to-fix D19.
+
+### Changed
+- **`pre-lint`'s specification checks** count a superseded or withdrawn item for contiguity, check only live criteria for test coverage, and flag a marker in neither of `specification-format`'s two forms.
+- **`next-phase-offer`'s PE lane** gains `/product-workflows:update-spec`, whose next step revises each design it names or refines the Epics; its PM lane's `/update-prd` node offers it for an existing specification.
+- `run-flags` names `/update-spec` among the free-text commands; `phase-handoff` §3.4 gives `/update-spec` its rows — its own base stops, its inputs gated as `/specify`'s; the `docs-grounding` and `architecture-grounding` consumer lists, `cost-emission` §7 and the command-namespace map gain it.
+
 ## [1.67.0] — 2026-10-28
 
 Take with `security-workflows` 0.7.0, whose `/scan` hands this release's `specs-preflight` and `commit-artifacts` the `register_rebuild` input that lets the replay below rebuild a security register both sides changed — to-fix LC11 (live checks of 2026-10-26, run 6); and with `dev-workflows` 4.49.0 and `product-workflows` 3.59.0, whose session-cost and session-feedback pages cite §3.1's list of the setters of `specs_git: misrooted`, which only this release completes, and whose resume pages gloss the flag with `session-hygiene` §6's *Stop* too — to-fix D27.

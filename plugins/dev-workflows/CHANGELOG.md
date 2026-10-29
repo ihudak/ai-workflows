@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.50.0] — 2026-10-29
+
+Take with `product-workflows` 3.60.0, whose `/update-spec` marks a specification item superseded or withdrawn, and `workflows-core` 1.68.0 — to-fix D19.
+
+### Changed
+- **Every reader of specification IDs skips a superseded or withdrawn item** — one whose heading ends ` — Superseded by …` or ` — Withdrawn …`: `/design`'s requirement extraction and `spec_lines`, `design-format`'s coverage rule and `design-reviewer`'s traceability check, `/implement`'s in-scope IDs and `code-review`'s conformance dimension, and `/conformance`'s trace. Such an item keeps its number and its text, and is read as context, never as a requirement.
+- `/conformance`'s *amend the document* note recommends `/product-workflows:update-spec` for a specification, which revises it in place, where it named `/product-workflows:specify`.
+
 ## [4.49.0] — 2026-10-28
 
 Take with `workflows-core` 1.67.0, whose `specs-repo-git` §3.1 now lists `session-hygiene` §6's *Stop* among the setters of `specs_git: misrooted`, as the session-cost and session-feedback pages say it does — to-fix D27.
