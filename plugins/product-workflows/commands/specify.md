@@ -500,6 +500,14 @@ on someone else's file: a broad PRD-level spec's feature folder is the PRD folde
 writes `idea.md` and lands it through its own handoff, and `/create-prd`'s ladder reads it. An
 `idea.md` already in the feature folder is never this command's to touch.
 
+**Record the inputs' commit first.** Before Step A reads anything, capture `inputs_at` =
+`git -C "$SPECS_PATH" rev-parse <default-ref>` (the full SHA; `<default-ref>` as `specs-preflight`
+resolved it), and keep it for Phase 5, which writes it into the specification's frontmatter
+(`${CLAUDE_PLUGIN_ROOT}/references/specification-format.md` § Frontmatter). It names the commit whose
+PRD, ARDs, `epic.md`, grounding and register this run reads: every one of them is gated on the default
+branch before it is read, so the working tree holds what that commit holds. A failed `rev-parse`
+leaves the field out — a null baseline, said in the Final report — and never stops the run.
+
 Phase 2 reads the folder in **two steps, cheap before expensive**. Step A settles *granularity* — the
 input's type and, for a multi-Epic PRD, *which* Epic — with a cheap `prd-plus-epics` read (and, when
 needed, the progress-aware picker), resolving `focus_key`. Only then does Step B spend the full-depth
@@ -900,16 +908,19 @@ and the working tree's, where it differs from that one or `<default-ref>` holds 
 nothing from `_session.md`: archiving is a copy and destroys nothing, so every existing copy is
 archived, a resumed run's own draft included. Where no copy exists, the guard does nothing.
 - **Any copy `Published: yes` → stop**: `SPECIFY_PUBLISHED: <feature-folder>/specification.md is published (Published: yes) — its IDs are contracts /dev-workflows:design and /dev-workflows:implement cite (specification-format.md § Identifier conventions), and /specify does not rewrite a published specification. Change it through the specs repo's change management, or, where a rewrite is intended, set Published: no by hand and re-run '/product-workflows:specify <ADDRESS>'.`
-- **Otherwise** ask once, naming each copy and where it was found: `choices: ["Archive the existing copy and continue (Recommended)", "Cancel"]`. *Archive the existing copy and continue* copies each into `<feature-folder>/revisions/` before this run's first write — `<default-ref>`'s (read with `git -C "$SPECS_PATH" show "<default-ref>:./<feature-folder>/specification.md"`) as `specification_<YYYYMMDD>.md`, the working tree's as `specification_<YYYYMMDD>-worktree.md`, each taking the first free `-2`, `-3`, … form where its name is taken — **unless a file in `revisions/` already holds exactly that content**, byte for byte, which then stands as its archive — and reports each path. Where a copy fails, stop before writing anything with `SPECIFY_ARCHIVE_FAILED: could not archive <feature-folder>/specification.md to <archive path> (<error>). This folder's specification.md was not touched — /specify never overwrites a specification it has not archived. Make revisions/ writable, then re-run '/product-workflows:specify <ADDRESS>'.` *Cancel* ends the run.
-Revising a specification in place — keeping its IDs and `Created`, asking only what changes — is not
-this command's yet; this guard only keeps a write from destroying one.
+- **Otherwise** ask once, naming each copy and where it was found: `choices: ["Archive the existing copy and continue (Recommended)", "Cancel"]`. *Archive the existing copy and continue* archives each copy before this run's first write, by `${CLAUDE_PLUGIN_ROOT}/references/specification-format.md` § Archiving before a rewrite, its stop `SPECIFY_ARCHIVE_FAILED` with `/specify` and `'/product-workflows:specify <ADDRESS>'` in it, and reports each path. *Cancel* ends the run.
+This guard only keeps a write from destroying a specification. Revising a merged one in place —
+keeping its IDs and `Created`, asking only about what changes — is
+`/product-workflows:update-spec <ADDRESS>`'s, and where the existing copy is on `<default-ref>` and
+not published, the question's own text names that command as the way to revise it rather than
+rewrite it.
 
 
 **Interview technique (grilling — embedded; no runtime dependency).** Conduct each stage as a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer where one exists, explore the Phase 4 code scan / PRD content to self-answer (fact-vs-decision), ask from the frontier, and clear the confirmation gate before writing that stage's section.
 
 Walk the stages in order, authoring `specification.md` live against `${CLAUDE_PLUGIN_ROOT}/references/specification-format.md`, applying the no-hard-wrap prose convention in `Skill(skill: "workflows-core:reference", args: "prose-formatting")`:
 
-1. Header + **Problem statement**
+1. Header + **Problem statement** — the frontmatter carrying `inputs_at` as Phase 2 captured it
 2. **Scope** (In/Out)
 3. **User stories** (`[Uxx]`)
 4. **Acceptance criteria** (`[ACxx]`, EARS)
