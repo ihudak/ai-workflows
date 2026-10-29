@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.62.0] — 2026-10-29
+
+Needs nothing newer than `workflows-core` 1.68.0 — to-fix D21, part 2 of 2 (plan `docs/superpowers/plans/2026-10-29-bundle-set-check.md`), which closes it.
+
+### Added
+- **`bundle-scan.py sets`, `/brd-package`'s set-resolution check (Phase 8 rule 9, `bundle-packaging.md` §7)**, so no run writes its own. Relation 1 compares six lists in the prompt — the open assumptions in parts 7 and 9, the conditional positions and conditional code defects in part 8, and the in-scope and out-of-scope code defects in parts 6 and 11 — with the records each one's filter selects by their own fields, a range expanded. Relation 2 compares the manifest's document table with the bundle's markdown files, the extension either way. Relation 3 pairs each repository the delivery note pins with its own baseline commits, an abbreviation as a prefix, a date or a word of hex letters alone no pin unless it prefixes one. On the 2026-10-12 `PRD-BOOK-2-01` bundle, with the five sub-headings its prompt predates added, every relation passes, and a dropped manifest row and a changed pin are both caught.
+- `BRD_PACKAGE_SET_AMBIGUOUS`: a commit the note names that prefixes two different commits its repository's baselines record.
+
+### Changed
+- **Three render forms the check reads, so it never parses prose.** The prompt renders each of those six lists under a fixed `###` sub-heading, each record an item that opens with its id, and whatever follows a list in its part under a sub-heading of its own. The manifest lists its documents in the table under `## Documents`. The delivery note names each repository as ``the `<repo>` repository at commit `<commit>` ``. A prompt built before this release lacks the sub-headings, so the check refuses it rather than passing it.
+- `bundle-packaging.md` §7.1 records the narrowing that a list's members are the ids opening its items — a part may name a withdrawn record on a held question, and, measured, a register's records cite their siblings — and the pairing and hex-letter rules of relation 3; §7.2 adds a repository named outside a pin clause.
+- Part 8 counts a position only while it is live: a superseded or withdrawn record is not among them.
+
 ## [3.61.0] — 2026-10-29
 
 Needs nothing newer than `workflows-core` 1.68.0 — to-fix D21, part 1 of 2 (plan `docs/superpowers/plans/2026-10-29-bundle-citation-check.md`).

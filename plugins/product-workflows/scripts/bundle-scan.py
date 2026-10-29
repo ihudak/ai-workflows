@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bundle-scan.py — /brd-package's plugin-free scan (tokens) and citation-resolution check (citations).
+"""bundle-scan.py — /brd-package's plugin-free scan (tokens), citation check (citations) and set check (sets).
 
   bundle-scan.py tokens <file-or-directory>... [--prereq-key KEY]... [--captured NAME]...
                         [--captured-path PATH]...
@@ -27,6 +27,19 @@ under unknown_key. It reads section 1.1's filenames and section 6.2's fields fro
 it each run, and stops (exit 2) where it cannot. Prints one line of JSON: partitions, the resolved
 and discharged counts, dead, mismatch, ambiguous, unqualified, unknown_key, unreadable, customer
 with its groups, and prerequisite_external.
+
+sets: runs the bundle-packaging reference's section 7 over an assembled bundle and the delivery note.
+Relation 1 reads six lists of the prompt <KEY>-customer-review-prompt-<DATE>.md under the
+sub-headings /brd-package renders (REGIONS), each member an id opening an item, and compares each
+with the records of <KEY>-decisions.md or <KEY>-code-defect-log.md its filter selects by their own
+fields, --unreviewed-prereq naming the prerequisites part 8's filter reads. Relation 2 compares the
+manifest's '## Documents' table with the bundle's markdown files. Relation 3 pairs the note's
+"the `<repo>` repository at commit `<commit>`" clauses, and tests its other commit words, against
+<KEY>-baselines.md. A restatement over a source that yields nothing is unreadable; a commit that
+prefixes two different baseline commits is ambiguous. A prompt missing a part or a sub-heading, or a
+manifest with no Documents table, is refused (exit 2). Prints one line of JSON: relations, each with
+where, source, filter, named, held, missing, extra and verdict, and the mismatch, unreadable and
+ambiguous hits.
 
 tokens: reads every given file, and every .md or .markdown file under every given directory, and
 reports each token of a class the plugin's bundle-packaging reference tabulates in section 1.2 -- a
