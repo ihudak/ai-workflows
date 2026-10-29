@@ -189,14 +189,14 @@ The following menu is a candidate set, not a prompt to emit before filtering. Ap
 
 ```
 An updated PRD can invalidate what was derived from it. Where this run can go next:
-  • Re-run the spec         — /product-workflows:specify <KEY> <merge-clause>    (PE, if one exists)
+  • Revise the spec         — /product-workflows:update-spec <KEY> <merge-clause> (PE, if one exists)
   • Re-run architecture     — /product-workflows:create-ard <KEY> <merge-clause> (PA, if one exists)
   • Re-run epics            — /product-workflows:epics <KEY>                     (PE)
   • Re-draft the release note — /docs-workflows:release-notes <KEY>          (PM)
 ```
 
 ```
-choices: ["Re-run the spec — /product-workflows:specify <KEY> (PE, if one exists) <merge-clause>", "Re-run architecture — /product-workflows:create-ard <KEY> (PA, if one exists) <merge-clause>", "Re-run epics — /product-workflows:epics <KEY> (PE)", "Stop here"]
+choices: ["Revise the spec — /product-workflows:update-spec <KEY> (PE, if one exists) <merge-clause>", "Re-run architecture — /product-workflows:create-ard <KEY> (PA, if one exists) <merge-clause>", "Re-run epics — /product-workflows:epics <KEY> (PE)", "Stop here"]
 ```
 
 **The offer is conditional on Phase 0 step 5a, not flat.** Where step 5a found `release-notes.md`, add `"Re-draft the release note — /docs-workflows:release-notes <KEY> (PM)"` to the candidate options before applying the cap. That command lives in `docs-workflows`, but its artifact is one an update can invalidate just as it can a spec or an ARD.
@@ -221,7 +221,7 @@ false published claim.
 
 **Every surviving route uses the same key.** `<ADDRESS>` is what this run was invoked with; it resolves the `$SPECS_PATH` folder Phase 0 step 3 found, and every offered command resolves that same folder through the same entry point. There is no second identity to keep straight and no import to wait for.
 
-**The spec and architecture routes carry `<merge-clause>` when offered; the Epics and release-note routes do not.** `/product-workflows:create-ard` and `/product-workflows:specify` both gate this run's PRD on the specs repo's default branch, so both stop where the updated PRD reached a branch; where it reached none, `workflows-core:phase-handoff` §3.4's rows for them apply unchanged — `/create-ard` falls back to the resolved folder, reported, and `/specify` skips the grounding confirmation rather than stopping; `/product-workflows:epics` gates `<PRD-dir>/specification.md` and `/docs-workflows:release-notes` gates nothing, so neither waits on anything this run wrote. The placeholder is resolved from this run's own `Phase handoff:` outcome line (§4.1) per `workflows-core:next-phase-offer`'s *resolution table* and is never written as an unconditional "once the pull request above is merged" — a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the surviving options retain their authored wording apart from the prescribed placeholders and recommendation markers, per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
+**The spec and architecture routes carry `<merge-clause>` when offered; the Epics and release-note routes do not.** `/product-workflows:create-ard` and `/product-workflows:update-spec` both gate this run's PRD on the specs repo's default branch, so both stop where the updated PRD reached a branch; where it reached none, `workflows-core:phase-handoff` §3.4's rows for them apply unchanged — `/create-ard` falls back to the resolved folder, reported, and `/update-spec`, which gates the PRD as `/product-workflows:specify` does, skips the grounding confirmation rather than stopping. **The spec route is a revision, not a rewrite**: the specification already exists, so it is `/update-spec`, which keeps the specification's IDs and diffs the PRD from the commit the specification recorded, and never `/specify`, which would rewrite it; `/product-workflows:epics` gates `<PRD-dir>/specification.md` and `/docs-workflows:release-notes` gates nothing, so neither waits on anything this run wrote. The placeholder is resolved from this run's own `Phase handoff:` outcome line (§4.1) per `workflows-core:next-phase-offer`'s *resolution table* and is never written as an unconditional "once the pull request above is merged" — a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the surviving options retain their authored wording apart from the prescribed placeholders and recommendation markers, per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
 
 ### Context hygiene
 

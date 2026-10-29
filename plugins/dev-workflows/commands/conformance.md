@@ -331,7 +331,7 @@ deletes a requirement.
 - **Amend the document — on a PRD run** → add a `- [ ]` note under an `## Engineering review` heading
   (created at the end of the document where it has none) on the document holding the requirement —
   `specification.md`, `prd.md`, `epic.md`, or `ard.md` for an `[AD#n]` Rule — naming the requirement,
-  what shipped and `<KEY>/[DD#n]`, and recommending `/product-workflows:specify`,
+  what shipped and `<KEY>/[DD#n]`, and recommending `/product-workflows:update-spec`,
   `/product-workflows:update-prd`, `/product-workflows:epics` or `/product-workflows:create-ard`.
 - **Amend the document — on an Epic run** → recorded as a proposal only. The documents are the PE's and
   the PM's; the PE's PRD run writes the note when it confirms the proposal.
@@ -497,7 +497,7 @@ The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "nex
   `<slug>`, as its follow-up names it — for a PRD-level
   requirement, the Epic Phase 4 named or chose, or `<PRD-KEY>` where the PRD has no Epics; for
   an `amend-document` decision,
-  `/product-workflows:update-prd <PRD-KEY>`, `/product-workflows:specify <KEY>`,
+  `/product-workflows:update-prd <PRD-KEY>`, `/product-workflows:update-spec <KEY>`,
   `/product-workflows:epics <PRD-KEY>` or `/product-workflows:create-ard <KEY>`, as the note names; once
   settled, `/docs-workflows:document <PRD-KEY>` and `/docs-workflows:release-notes <PRD-KEY>`.
 
