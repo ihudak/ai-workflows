@@ -1,0 +1,13 @@
+# BEGIN workflows-core session-branch: written by session-branch.py, do not edit
+**/dev-workflows/** merge=union
+dev-workflows-feedback/** merge=union
+dev-workflows-cost/** merge=union
+**/implementation.md merge=union
+**/follow-ups.md merge=union
+**/_security.md merge=union
+**/*-implementation-gaps.md merge=union
+**/dev-workflows/resume.md -merge
+**/pr-draft.md -merge
+security/*/register.json -merge
+security/*/register.md -merge
+# END workflows-core session-branch

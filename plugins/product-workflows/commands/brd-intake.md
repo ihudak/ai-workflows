@@ -1285,7 +1285,7 @@ answering a question it does not ask:
 
 ```text
 These questions triage the defects proposed for this document — by brd-reader, and by documentation grounding where it ran. They resolve none of them. Each one asks: is this a real defect in the customer's text?
-- Confirm as written logs it as an open [DEF#n] in brd/brd-defect-log.md. The customer's document is never edited. An open defect is settled later, never here: by the customer's answer, which /product-workflows:brd-interview asks and /product-workflows:brd-reconcile records, or by a grounding finding from /product-workflows:prd-ground, which a person records.
+- Confirm as written logs it as an open [DEF#n] in brd/brd-defect-log.md. The customer's document is never edited. An open defect is settled later, never here: by the customer's answer, which /product-workflows:brd-interview asks and /product-workflows:brd-reconcile records, or by a grounding finding from /product-workflows:prd-ground, which /product-workflows:brd-interview offers to record for an unsourced defect, or a person records by hand.
 - Confirm with an edited reason logs it the same way, with a reason you narrow first. Where /product-workflows:brd-interview later puts the defect to the customer, its question is built from this reason, so keep only what is actually open.
 - Reject — not a defect drops it, with no record that it was raised: the answer where the document already answers it, where it is no defect, or where it restates an entry already on file (an On file line says so). A later re-run of this intake can raise it again.
 - Cancel ends the run here, before any defect is logged.

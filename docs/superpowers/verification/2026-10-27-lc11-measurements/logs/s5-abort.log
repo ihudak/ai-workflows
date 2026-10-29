@@ -1,0 +1,176 @@
+git version 2.43.0
+
+### 5a — clean checkout: stop 1 (register) settled by rebuild, stop 2 (resume.md) aborts
+$ git -C <measure-root>/work/s5a/A rebase origin/main
+Rebasing (1/2)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. eadea6f (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. eadea6f (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+error: could not apply eadea6f... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply eadea6f... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+stop 1 — conflicted: security/acme-api/register.json security/acme-api/register.md
+$ python3 -I <measure-root>/rebuild.py <measure-root>/work/s5a/A acme-api
+{"rebuilt": "acme-api", "runs": 3, "findings": 3}
+[exit 0]
+$ git -C <measure-root>/work/s5a/A add -- security/acme-api/register.json security/acme-api/register.md
+[exit 0]
+$ git -C <measure-root>/work/s5a/A rebase --continue
+[detached HEAD e3a715d] PRD-A-1 Add dev-workflows session artifacts (/a1)
+ 4 files changed, 20 insertions(+), 3 deletions(-)
+ create mode 100644 security/acme-api/runs/0002-20261027T020000Z-a1a1a1a1.json
+Rebasing (2/2)warning: Cannot merge binary files: specifications/PRD-A-1-x/dev-workflows/resume.md (HEAD vs. cdf203a (PRD-A-1 Add dev-workflows session artifacts (/a2)))
+Auto-merging specifications/PRD-A-1-x/dev-workflows/resume.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/resume.md
+error: could not apply cdf203a... PRD-A-1 Add dev-workflows session artifacts (/a2)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply cdf203a... PRD-A-1 Add dev-workflows session artifacts (/a2)
+[exit 1]
+stop 2 — conflicted: specifications/PRD-A-1-x/dev-workflows/resume.md
+=> other conflict (or a stop with no conflicted path): abort
+$ git -C <measure-root>/work/s5a/A rebase --abort
+[exit 0]
+Specs repo: … push REJECTED … run git -C "<measure-root>/work/s5a/A" pull --rebase --autostash origin main, then git -C "<measure-root>/work/s5a/A" push origin main
+SNAPSHOT IDENTICAL
+-- files whose mtime changed (content identical):
+   security/acme-api/register.json 2026-10-27 22:49:17.294650784 +0000
+   security/acme-api/register.md 2026-10-27 22:49:17.294650784 +0000
+   security/acme-api/runs/0002-20261027T020000Z-a1a1a1a1.json 2026-10-27 22:49:17.233653151 +0000
+   specifications/PRD-A-1-x/dev-workflows/feedback.md 2026-10-27 22:49:17.294650784 +0000
+   specifications/PRD-A-1-x/dev-workflows/resume.md 2026-10-27 22:49:17.294650784 +0000
+-- notes/new.md (B's, added during the rebase) present after abort? no
+-- HEAD reflog, new entries:
+cdf203a HEAD@{0}: rebase (abort): returning to refs/heads/main
+e3a715d HEAD@{1}: rebase (continue): PRD-A-1 Add dev-workflows session artifacts (/a1)
+f07f4eb HEAD@{2}: rebase (start): checkout origin/main
+-- branch reflog changed? no
+-- ORIG_HEAD == HEAD? yes
+-- leftovers in .git:
+   none
+$ git -C <measure-root>/work/s5a/A status
+On branch main
+Your branch and 'origin/main' have diverged,
+and have 2 and 1 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+
+nothing to commit, working tree clean
+[exit 0]
+$ git -C <measure-root>/work/s5a/A stash list
+[exit 0]
+
+### 5b — the same with the user's dirty files and --autostash
+$ git -C <measure-root>/work/s5b/A rebase --autostash origin/main
+Created autostash: 6dbbd76
+Rebasing (1/2)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. a17b88a (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. a17b88a (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+error: could not apply a17b88a... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply a17b88a... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+stop 1 — conflicted: security/acme-api/register.json security/acme-api/register.md
+$ python3 -I <measure-root>/rebuild.py <measure-root>/work/s5b/A acme-api
+{"rebuilt": "acme-api", "runs": 3, "findings": 3}
+[exit 0]
+$ git -C <measure-root>/work/s5b/A add -- security/acme-api/register.json security/acme-api/register.md
+[exit 0]
+$ git -C <measure-root>/work/s5b/A rebase --continue
+[detached HEAD ce101a9] PRD-A-1 Add dev-workflows session artifacts (/a1)
+ 4 files changed, 20 insertions(+), 3 deletions(-)
+ create mode 100644 security/acme-api/runs/0002-20261027T020000Z-a1a1a1a1.json
+Rebasing (2/2)warning: Cannot merge binary files: specifications/PRD-A-1-x/dev-workflows/resume.md (HEAD vs. 3b74a84 (PRD-A-1 Add dev-workflows session artifacts (/a2)))
+Auto-merging specifications/PRD-A-1-x/dev-workflows/resume.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/resume.md
+error: could not apply 3b74a84... PRD-A-1 Add dev-workflows session artifacts (/a2)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 3b74a84... PRD-A-1 Add dev-workflows session artifacts (/a2)
+[exit 1]
+stop 2 — conflicted: specifications/PRD-A-1-x/dev-workflows/resume.md
+=> other conflict (or a stop with no conflicted path): abort
+$ git -C <measure-root>/work/s5b/A rebase --abort
+Applied autostash.
+[exit 0]
+Specs repo: … push REJECTED … run git -C "<measure-root>/work/s5b/A" pull --rebase --autostash origin main, then git -C "<measure-root>/work/s5b/A" push origin main
+SNAPSHOT DIFFERS:
+@@ -9,7 +9,7 @@
+ 100644 f9446838f2161b1d90cdcb44def8a3d5b10a767f 0	specifications/PRD-A-1-x/dev-workflows/resume.md
+ 100644 becb3fc9fe007660fed4ffbb4e2e981f7c1b071c 0	specifications/PRD-A-1-x/follow-ups.md
+ 100644 93efa27cef454010a1cea558cdf2897691f6dc4c 0	specifications/PRD-A-1-x/implementation.md
+-100644 1bb921e715a8d78952e70e823ba5a0c4ee212ee1 0	specifications/PRD-A-1-x/prd.md
++100644 31c2fd97a9f9eabbab23d24f12ea420e959b3a88 0	specifications/PRD-A-1-x/prd.md
+ -- worktree
+ 8a8b8bfb0d5a4ee30d6e5087926dc4a8b8909f3a26d39fbd08cde1636fcfab1b  ./notes/team.md
+ ea46748e171abd2dd4dba5b86bb6589334d86bba2df8d50cbb16b36c83b0856a  ./notes/u.txt
+@@ -24,7 +24,7 @@
+ 3fb1bdf63b80b655a9ad9bbf1714aa201204a07c26672eb3d21ead476aa5d086  ./specifications/PRD-A-1-x/prd.md
+ -- status
+  M notes/team.md
+-M  specifications/PRD-A-1-x/prd.md
++ M specifications/PRD-A-1-x/prd.md
+ ?? notes/u.txt
+ -- stash
+ -- rebase dirs
+
+### 5c — rerere.enabled=true (a common user setting): what the stops and the abort leave in rr-cache
+$ git -C <measure-root>/work/s5c/A rebase origin/main
+Rebasing (1/2)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. a17b88a (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. a17b88a (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+error: could not apply a17b88a... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply a17b88a... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+stop 1 — conflicted: security/acme-api/register.json security/acme-api/register.md
+$ python3 -I <measure-root>/rebuild.py <measure-root>/work/s5c/A acme-api
+{"rebuilt": "acme-api", "runs": 3, "findings": 3}
+[exit 0]
+$ git -C <measure-root>/work/s5c/A add -- security/acme-api/register.json security/acme-api/register.md
+[exit 0]
+$ git -C <measure-root>/work/s5c/A rebase --continue
+[detached HEAD ce101a9] PRD-A-1 Add dev-workflows session artifacts (/a1)
+ 4 files changed, 20 insertions(+), 3 deletions(-)
+ create mode 100644 security/acme-api/runs/0002-20261027T020000Z-a1a1a1a1.json
+Rebasing (2/2)warning: Cannot merge binary files: specifications/PRD-A-1-x/dev-workflows/resume.md (HEAD vs. 3b74a84 (PRD-A-1 Add dev-workflows session artifacts (/a2)))
+Auto-merging specifications/PRD-A-1-x/dev-workflows/resume.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/resume.md
+error: could not apply 3b74a84... PRD-A-1 Add dev-workflows session artifacts (/a2)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 3b74a84... PRD-A-1 Add dev-workflows session artifacts (/a2)
+[exit 1]
+stop 2 — conflicted: specifications/PRD-A-1-x/dev-workflows/resume.md
+=> other conflict (or a stop with no conflicted path): abort
+$ git -C <measure-root>/work/s5c/A rebase --abort
+[exit 0]
+Specs repo: … push REJECTED … run git -C "<measure-root>/work/s5c/A" pull --rebase --autostash origin main, then git -C "<measure-root>/work/s5c/A" push origin main
+-- rr-cache entries after abort: 0
+<measure-root>/work/s5c/A/.git/rr-cache:

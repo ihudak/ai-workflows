@@ -1,0 +1,549 @@
+git version 2.43.0
+
+### strategy a
+
+== a / dirty
+{"moved": true, "steps": [{"cmd": "git read-tree -m -u e902649834e8aae3134c33e3772890d957f49e6a 77f7dbb316c10fbf7b21eff56404b4f0df3bfe9a", "exit": 0, "err": ""}, {"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main 77f7dbb316c10fbf7b21eff56404b4f0df3bfe9a e902649834e8aae3134c33e3772890d957f49e6a", "exit": 0, "err": ""}]}
+   HEAD=TIP main=TIP on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+
+== a / collide
+{"moved": false, "steps": [{"cmd": "git read-tree -m -u e902649834e8aae3134c33e3772890d957f49e6a d41fde655e35a9894ffedc8bd5ec4cc841df3fed", "exit": 128, "err": "error: Entry 'specifications/PRD-A-1-x/prd.md' would be overwritten by merge. Cannot merge."}]}
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== a / untracked
+{"moved": false, "steps": [{"cmd": "git read-tree -m -u e902649834e8aae3134c33e3772890d957f49e6a e62ecfea104e6c1f309151576a597308b8d4911d", "exit": 128, "err": "error: Untracked working tree file 'notes/new.md' would be overwritten by merge."}]}
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/new.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== a / concurrent
+{"moved": false, "steps": [{"cmd": "git read-tree -m -u a0fdf6f4036c10267eec01a17f9be4ecc84e4ce7 1898dfaef690fe1bec2a4859953193bb98748360", "exit": 0, "err": ""}, {"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main 1898dfaef690fe1bec2a4859953193bb98748360 a0fdf6f4036c10267eec01a17f9be4ecc84e4ce7", "exit": 128, "err": "fatal: update_ref failed for ref 'refs/heads/main': cannot lock ref 'refs/heads/main': is at aefea581d8cdb8ef8987b9c83f265731ed7b33e2 but expected a0fdf6f4036c10267eec01a17f9be4ecc84e4ce7"}]}
+   HEAD=X main=X on=main
+   status: A  notes/staged-new.md; M notes/team.md;M  security/acme-api/register.json;M  security/acme-api/register.md;A  security/acme-api/runs/0002-20261027T020000Z-b1b1b1b1.json;AM specifications/PRD-A-1-x/design-notes.md;M  specifications/PRD-A-1-x/dev-workflows/feedback.md;M  specifications/PRD-A-1-x/implementation.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md security/acme-api/register.json security/acme-api/register.md security/acme-api/runs/0002-20261027T020000Z-b1b1b1b1.json specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/dev-workflows/feedback.md specifications/PRD-A-1-x/implementation.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   X (the concurrent commit) on a branch: 1
+
+== a / window-pathspec
+{"moved": false, "steps": [{"cmd": "git read-tree -m -u 5d00deb65f938fee0b98319fc7cb3a8cfff8b783 8b01995c143ace018831377dbe4eb6bbcab719c7", "exit": 0, "err": ""}, {"during": "git -C '<scratchpad-path>", "exit": 0, "out": ["committed"]}, {"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main 8b01995c143ace018831377dbe4eb6bbcab719c7 5d00deb65f938fee0b98319fc7cb3a8cfff8b783", "exit": 128, "err": "fatal: update_ref failed for ref 'refs/heads/main': cannot lock ref 'refs/heads/main': is at be122795c01a6dca2f7203b97f1a6256e0002839 but expected 5d00deb65f938fee0b98319fc7cb3a8cfff8b783"}]}
+   HEAD=be12279 main=be12279 on=main
+   status: A  notes/staged-new.md; M notes/team.md;M  security/acme-api/register.json;M  security/acme-api/register.md;A  security/acme-api/runs/0002-20261027T020000Z-b1b1b1b1.json;AM specifications/PRD-A-1-x/design-notes.md;M  specifications/PRD-A-1-x/dev-workflows/feedback.md;M  specifications/PRD-A-1-x/implementation.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md security/acme-api/register.json security/acme-api/register.md security/acme-api/runs/0002-20261027T020000Z-b1b1b1b1.json specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/dev-workflows/feedback.md specifications/PRD-A-1-x/implementation.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   newest commit on main: be12279 PRD-A-1 Add dev-workflows session artifacts (/window) — parent OLD
+
+== a / window-index
+{"moved": false, "steps": [{"cmd": "git read-tree -m -u 5d00deb65f938fee0b98319fc7cb3a8cfff8b783 8b01995c143ace018831377dbe4eb6bbcab719c7", "exit": 0, "err": ""}, {"during": "git -C '<scratchpad-path>", "exit": 0, "out": ["committed"]}, {"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main 8b01995c143ace018831377dbe4eb6bbcab719c7 5d00deb65f938fee0b98319fc7cb3a8cfff8b783", "exit": 128, "err": "fatal: update_ref failed for ref 'refs/heads/main': cannot lock ref 'refs/heads/main': is at df049723fe1dd5ebe052aac86613bbd62593f1d6 but expected 5d00deb65f938fee0b98319fc7cb3a8cfff8b783"}]}
+   HEAD=df04972 main=df04972 on=main
+   status:  M notes/team.md; M specifications/PRD-A-1-x/design-notes.md; M specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: nothing
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   newest commit on main: df04972 a plain index commit by another process — parent OLD
+
+### strategy b
+
+== b / dirty
+{"moved": true, "steps": [{"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main 8b01995c143ace018831377dbe4eb6bbcab719c7 5d00deb65f938fee0b98319fc7cb3a8cfff8b783", "exit": 0, "err": ""}, {"cmd": "git read-tree -m -u 5d00deb65f938fee0b98319fc7cb3a8cfff8b783 8b01995c143ace018831377dbe4eb6bbcab719c7", "exit": 0, "err": ""}]}
+   HEAD=TIP main=TIP on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+
+== b / collide
+{"moved": false, "steps": [{"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main cc39c7d0afbccad10a01b75c1703484ebaffee2f 5d00deb65f938fee0b98319fc7cb3a8cfff8b783", "exit": 0, "err": ""}, {"cmd": "git read-tree -m -u 5d00deb65f938fee0b98319fc7cb3a8cfff8b783 cc39c7d0afbccad10a01b75c1703484ebaffee2f", "exit": 128, "err": "error: Entry 'specifications/PRD-A-1-x/prd.md' would be overwritten by merge. Cannot merge."}, {"cmd": "git update-ref -m settle: put back refs/heads/main 5d00deb65f938fee0b98319fc7cb3a8cfff8b783 cc39c7d0afbccad10a01b75c1703484ebaffee2f", "exit": 0, "err": ""}]}
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== b / untracked
+{"moved": false, "steps": [{"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main f0690c941830cb5ab16795f1ca52fca171907608 a34f4e4ce5e84aed74a28bcc6303186a2bcef9fc", "exit": 0, "err": ""}, {"cmd": "git read-tree -m -u a34f4e4ce5e84aed74a28bcc6303186a2bcef9fc f0690c941830cb5ab16795f1ca52fca171907608", "exit": 128, "err": "error: Untracked working tree file 'notes/new.md' would be overwritten by merge."}, {"cmd": "git update-ref -m settle: put back refs/heads/main a34f4e4ce5e84aed74a28bcc6303186a2bcef9fc f0690c941830cb5ab16795f1ca52fca171907608", "exit": 0, "err": ""}]}
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/new.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== b / concurrent
+{"moved": false, "steps": [{"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main b01ada70d4c7350f0e319390ec4982cf53a65e76 a34f4e4ce5e84aed74a28bcc6303186a2bcef9fc", "exit": 128, "err": "fatal: update_ref failed for ref 'refs/heads/main': cannot lock ref 'refs/heads/main': is at e0f760997a719622c94d4ac08e9f7d68779c15fa but expected a34f4e4ce5e84aed74a28bcc6303186a2bcef9fc"}]}
+   HEAD=X main=X on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+   X (the concurrent commit) on a branch: 1
+
+== b / window-pathspec
+{"moved": true, "steps": [{"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main b01ada70d4c7350f0e319390ec4982cf53a65e76 a34f4e4ce5e84aed74a28bcc6303186a2bcef9fc", "exit": 0, "err": ""}, {"during": "git -C '<scratchpad-path>", "exit": 0, "out": ["committed"]}, {"cmd": "git read-tree -m -u a34f4e4ce5e84aed74a28bcc6303186a2bcef9fc b01ada70d4c7350f0e319390ec4982cf53a65e76", "exit": 0, "err": ""}]}
+   HEAD=2a579f8 main=2a579f8 on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   newest commit on main: 2a579f8 PRD-A-1 Add dev-workflows session artifacts (/window) — parent TIP
+
+== b / window-index
+{"moved": true, "steps": [{"cmd": "git update-ref -m settle: replayed onto origin refs/heads/main b01ada70d4c7350f0e319390ec4982cf53a65e76 a34f4e4ce5e84aed74a28bcc6303186a2bcef9fc", "exit": 0, "err": ""}, {"during": "git -C '<scratchpad-path>", "exit": 0, "out": ["committed"]}, {"cmd": "git read-tree -m -u a34f4e4ce5e84aed74a28bcc6303186a2bcef9fc b01ada70d4c7350f0e319390ec4982cf53a65e76", "exit": 0, "err": ""}]}
+   HEAD=01e9f67 main=01e9f67 on=main
+   status:  M notes/team.md;M  security/acme-api/register.json;M  security/acme-api/register.md;A  security/acme-api/runs/0002-20261027T020000Z-b1b1b1b1.json; M specifications/PRD-A-1-x/design-notes.md;M  specifications/PRD-A-1-x/dev-workflows/feedback.md;M  specifications/PRD-A-1-x/implementation.md; M specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: security/acme-api/register.json security/acme-api/register.md security/acme-api/runs/0002-20261027T020000Z-b1b1b1b1.json specifications/PRD-A-1-x/dev-workflows/feedback.md specifications/PRD-A-1-x/implementation.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   newest commit on main: 01e9f67 a plain index commit by another process — parent TIP
+
+### strategy txn
+
+== txn / dirty
+{"moved": true, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"cmd": "git read-tree -m -u 576d7c5c9e976015cf3e06c6dac319ac49df0a4f 99a8fae5c074c3657f816dfa2d08b7f3ea58ee11", "exit": 0, "err": ""}, {"txn": "commit: ok"}]}
+   HEAD=TIP main=TIP on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+
+== txn / collide
+{"moved": false, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"cmd": "git read-tree -m -u 576d7c5c9e976015cf3e06c6dac319ac49df0a4f 3495a91151e87a4c1344247451d032976e98de23", "exit": 128, "err": "error: Entry 'specifications/PRD-A-1-x/prd.md' would be overwritten by merge. Cannot merge."}, {"txn": "abort: ok"}]}
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== txn / untracked
+{"moved": false, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"cmd": "git read-tree -m -u 576d7c5c9e976015cf3e06c6dac319ac49df0a4f 07d6c7a9e7d3499881f8c1595d9869af12949767", "exit": 128, "err": "error: Untracked working tree file 'notes/new.md' would be overwritten by merge."}, {"txn": "abort: ok"}]}
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/new.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== txn / concurrent
+{"moved": false, "steps": [{"txn": ["start: ok", ""]}, {"txn-stderr": "fatal: prepare: cannot lock ref 'refs/heads/main': is at 65f8b72b18171c85ed0a522f3e280da694786ea4 but expected 576d7c5c9e976015cf3e06c6dac319ac49df0a4f"}]}
+   HEAD=X main=X on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+   X (the concurrent commit) on a branch: 1
+
+== txn / window-pathspec
+{"moved": true, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"during": "git -C '<scratchpad-path>", "exit": 128, "out": ["fatal: cannot lock ref 'HEAD': Unable to create '<measure-root>/work/s91-txn-window-pathspec/A/.git/HEAD.lock': File exists."]}, {"cmd": "git read-tree -m -u 576d7c5c9e976015cf3e06c6dac319ac49df0a4f 28bbdd32050bcb5f457a131585b8587c3a0f8111", "exit": 0, "err": ""}, {"txn": "commit: ok"}]}
+   HEAD=TIP main=TIP on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md; M specifications/PRD-A-1-x/follow-ups.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/follow-ups.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   newest commit on main: 28bbdd3 PRD-A-1 Add dev-workflows session artifacts (/a1) — parent b6d020b
+
+== txn / window-index
+{"moved": true, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"during": "git -C '<scratchpad-path>", "exit": 128, "out": ["fatal: cannot lock ref 'HEAD': Unable to create '<measure-root>/work/s91-txn-window-index/A/.git/HEAD.lock': File exists."]}, {"cmd": "git read-tree -m -u 3d821ba87043514f5c14ac9261c46daa97f2e017 99d280e680f01bdf312fc76303fad6e09827eea4", "exit": 0, "err": ""}, {"txn": "commit: ok"}]}
+   HEAD=TIP main=TIP on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   newest commit on main: 99d280e PRD-A-1 Add dev-workflows session artifacts (/a1) — parent 5681a1a
+
+### strategy switchC
+
+== switchC / dirty
+$ git -C <measure-root>/work/s91-switchC-dirty/A switch -C main 99d280e680f01bdf312fc76303fad6e09827eea4
+Reset branch 'main'
+A	notes/staged-new.md
+M	notes/team.md
+A	specifications/PRD-A-1-x/design-notes.md
+M	specifications/PRD-A-1-x/prd.md
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+[exit 0]
+   HEAD=TIP main=TIP on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+
+== switchC / collide
+$ git -C <measure-root>/work/s91-switchC-collide/A switch -C main 7f39cd12babca37fad0c522e4c19eeebcf5d46a9
+error: Your local changes to the following files would be overwritten by checkout:
+	specifications/PRD-A-1-x/prd.md
+Please commit your changes or stash them before you switch branches.
+Aborting
+[exit 1]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== switchC / untracked
+$ git -C <measure-root>/work/s91-switchC-untracked/A switch -C main fcea147a29c1a9f4ec163cc14c42eaeb28705013
+error: The following untracked working tree files would be overwritten by checkout:
+	notes/new.md
+Please move or remove them before you switch branches.
+Aborting
+[exit 1]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/new.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== switchC / concurrent
+$ git -C <measure-root>/work/s91-switchC-concurrent/A switch -C main 0b309ba93f79a90c307af6e9e2d1806f09ca24eb
+Reset branch 'main'
+A	notes/staged-new.md
+M	notes/team.md
+A	specifications/PRD-A-1-x/design-notes.md
+M	specifications/PRD-A-1-x/prd.md
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+[exit 0]
+   HEAD=TIP main=TIP on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   X (the concurrent commit) on a branch: 0
+
+### strategy checkoutB
+
+== checkoutB / dirty
+$ git -C <measure-root>/work/s91-checkoutB-dirty/A checkout -B main 0b309ba93f79a90c307af6e9e2d1806f09ca24eb
+Reset branch 'main'
+A	notes/staged-new.md
+M	notes/team.md
+A	specifications/PRD-A-1-x/design-notes.md
+M	specifications/PRD-A-1-x/prd.md
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+[exit 0]
+   HEAD=TIP main=TIP on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+
+== checkoutB / collide
+$ git -C <measure-root>/work/s91-checkoutB-collide/A checkout -B main 23302ff2fe091c0c62d91acaf82f4bdf1b3ece99
+error: Your local changes to the following files would be overwritten by checkout:
+	specifications/PRD-A-1-x/prd.md
+Please commit your changes or stash them before you switch branches.
+Aborting
+[exit 1]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== checkoutB / untracked
+$ git -C <measure-root>/work/s91-checkoutB-untracked/A checkout -B main 14fc7c7eb2c7b5515fe258b838e2df8a5e27aca8
+error: The following untracked working tree files would be overwritten by checkout:
+	notes/new.md
+Please move or remove them before you switch branches.
+Aborting
+[exit 1]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/new.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== checkoutB / concurrent
+$ git -C <measure-root>/work/s91-checkoutB-concurrent/A checkout -B main 3d9fa2a1f58ed7b5e62b45f8ea3d1713c4d10edb
+Reset branch 'main'
+A	notes/staged-new.md
+M	notes/team.md
+A	specifications/PRD-A-1-x/design-notes.md
+M	specifications/PRD-A-1-x/prd.md
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+[exit 0]
+   HEAD=TIP main=TIP on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   X (the concurrent commit) on a branch: 0
+
+### strategy resetkeep
+
+== resetkeep / dirty
+$ git -C <measure-root>/work/s91-resetkeep-dirty/A reset --keep 3d9fa2a1f58ed7b5e62b45f8ea3d1713c4d10edb
+[exit 0]
+   HEAD=TIP main=TIP on=main
+   status:  M notes/team.md; M specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;?? notes/staged-new.md;?? specifications/PRD-A-1-x/design-notes.md;
+   index≠HEAD on: nothing
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+
+== resetkeep / collide
+$ git -C <measure-root>/work/s91-resetkeep-collide/A reset --keep eff9206ebab439dd27ed75410e777bad0c4ffc5f
+error: Entry 'specifications/PRD-A-1-x/prd.md' would be overwritten by merge. Cannot merge.
+fatal: Could not reset index file to revision 'eff9206ebab439dd27ed75410e777bad0c4ffc5f'.
+[exit 128]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== resetkeep / untracked
+$ git -C <measure-root>/work/s91-resetkeep-untracked/A reset --keep 8de44041b280480f2a6a6d3adf1bd353cfa522f8
+error: Untracked working tree file 'notes/new.md' would be overwritten by merge.
+fatal: Could not reset index file to revision '8de44041b280480f2a6a6d3adf1bd353cfa522f8'.
+[exit 128]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/new.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== resetkeep / concurrent
+$ git -C <measure-root>/work/s91-resetkeep-concurrent/A reset --keep 7c426135cce474874fcea003d20d590c1e7bebea
+[exit 0]
+   HEAD=TIP main=TIP on=main
+   status:  M notes/team.md; M specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;?? notes/staged-new.md;?? specifications/PRD-A-1-x/design-notes.md;
+   index≠HEAD on: nothing
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: no
+   X (the concurrent commit) on a branch: 0
+
+### strategy mergeff
+
+== mergeff / dirty
+$ git -C <measure-root>/work/s91-mergeff-dirty/A merge --ff-only 9faab8b74432c7528638a80038f8beb6166608a1
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== mergeff / collide
+$ git -C <measure-root>/work/s91-mergeff-collide/A merge --ff-only 643e3ac90ce5e280e5a2e35f5e07a6672f33b7ac
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== mergeff / untracked
+$ git -C <measure-root>/work/s91-mergeff-untracked/A merge --ff-only b11769c5226dad71c07dba853f050afd7308968f
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/new.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== mergeff / concurrent
+$ git -C <measure-root>/work/s91-mergeff-concurrent/A merge --ff-only 9faab8b74432c7528638a80038f8beb6166608a1
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+   HEAD=X main=X on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+   X (the concurrent commit) on a branch: 1
+
+### strategy pullff
+
+== pullff / dirty
+$ git -C <measure-root>/work/s91-pullff-dirty/A fetch -q origin
+[exit 0]
+$ git -C <measure-root>/work/s91-pullff-dirty/A pull --ff-only --no-rebase origin main
+From <measure-root>/work/s91-pullff-dirty/origin
+ * branch            main       -> FETCH_HEAD
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== pullff / collide
+$ git -C <measure-root>/work/s91-pullff-collide/A fetch -q origin
+[exit 0]
+$ git -C <measure-root>/work/s91-pullff-collide/A pull --ff-only --no-rebase origin main
+From <measure-root>/work/s91-pullff-collide/origin
+ * branch            main       -> FETCH_HEAD
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== pullff / untracked
+$ git -C <measure-root>/work/s91-pullff-untracked/A fetch -q origin
+[exit 0]
+$ git -C <measure-root>/work/s91-pullff-untracked/A pull --ff-only --no-rebase origin main
+From <measure-root>/work/s91-pullff-untracked/origin
+ * branch            main       -> FETCH_HEAD
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+   HEAD=OLD main=OLD on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/new.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+
+== pullff / concurrent
+$ git -C <measure-root>/work/s91-pullff-concurrent/A fetch -q origin
+[exit 0]
+$ git -C <measure-root>/work/s91-pullff-concurrent/A pull --ff-only --no-rebase origin main
+From <measure-root>/work/s91-pullff-concurrent/origin
+ * branch            main       -> FETCH_HEAD
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+   HEAD=X main=X on=main
+   status: A  notes/staged-new.md; M notes/team.md;AM specifications/PRD-A-1-x/design-notes.md;MM specifications/PRD-A-1-x/prd.md;?? notes/scratch.txt;
+   index≠HEAD on: notes/staged-new.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   worktree≠index on: notes/team.md specifications/PRD-A-1-x/design-notes.md specifications/PRD-A-1-x/prd.md 
+   user files' bytes unchanged: yes
+   whole snapshot (HEAD, index, every file, stash) unchanged: yes
+   X (the concurrent commit) on a branch: 1
+
+### txn — the driver goes away between prepare and commit (stdin closes): are the locks released, is the ref unchanged?
+   start: ok / prepare: ok
+   while prepared: HEAD.lock True, main.lock True
+   after stdin closed: update-ref exit 0, stderr ''
+   HEAD.lock False, main.lock False
+   main is OLD? yes
+
+### txn — index.lock held by another process when the move runs
+{"moved": false, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"cmd": "git read-tree -m -u 2a3f4428ba12fbe57f2de2dbfc7c9d831e992652 346c8f035eee8bdad059b09f6bbf0123f3797520", "exit": 128, "err": "fatal: Unable to create '$M/work/s91-txn-indexlock/A/.git/index.lock': File exists."}, {"txn": "abort: ok"}]}
+SNAPSHOT IDENTICAL
+   main is OLD? yes; reflog entries for main: 2

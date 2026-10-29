@@ -1,0 +1,376 @@
+git version 2.43.0
+
+### 3a — attributes installed in A; A two append commits, B one; rebase
+$ git -C <measure-root>/work/s3a/A push --porcelain origin main
+error: failed to push some refs to '<measure-root>/work/s3a/origin.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+To <measure-root>/work/s3a/origin.git
+!	refs/heads/main:refs/heads/main	[rejected] (fetch first)
+Done
+[exit 1]
+$ git -C <measure-root>/work/s3a/A fetch -q origin
+[exit 0]
+$ git -C <measure-root>/work/s3a/A log --oneline --graph --all
+* 05924b5 PRD-A-1 Add dev-workflows session artifacts (/a2)
+* 18c2803 PRD-A-1 Add dev-workflows session artifacts (/a1)
+| * a298fcb PRD-A-1 Add dev-workflows session artifacts (/b1)
+|/  
+* 9e471fa NOISSUE base
+[exit 0]
+$ git -C <measure-root>/work/s3a/A check-attr merge -- specifications/PRD-A-1-x/implementation.md specifications/PRD-A-1-x/dev-workflows/feedback.md specifications/PRD-A-1-x/follow-ups.md specifications/PRD-A-1-x/dev-workflows/resume.md security/acme-api/register.json security/acme-api/runs/x.json
+specifications/PRD-A-1-x/implementation.md: merge: union
+specifications/PRD-A-1-x/dev-workflows/feedback.md: merge: union
+specifications/PRD-A-1-x/follow-ups.md: merge: union
+specifications/PRD-A-1-x/dev-workflows/resume.md: merge: unset
+security/acme-api/register.json: merge: unset
+security/acme-api/runs/x.json: merge: unspecified
+[exit 0]
+$ git -C <measure-root>/work/s3a/A rebase origin/main
+Rebasing (1/2)Rebasing (2/2)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s3a/A log --oneline --graph
+* 36b5163 PRD-A-1 Add dev-workflows session artifacts (/a2)
+* d364382 PRD-A-1 Add dev-workflows session artifacts (/a1)
+* a298fcb PRD-A-1 Add dev-workflows session artifacts (/b1)
+* 9e471fa NOISSUE base
+[exit 0]
+---- A:specifications/PRD-A-1-x/implementation.md
+# Implementation record
+
+## 2026-10-01 base run
+- api: abc1234 on feat/a
+
+## 2026-10-27 b1 run
+- api: b1 on feat/b1
+## 2026-10-27 a1 run
+- api: a1 on feat/a1
+
+## 2026-10-27 a2 run
+- api: a2 on feat/a2
+---- A:specifications/PRD-A-1-x/dev-workflows/feedback.md
+# Feedback
+- base entry
+- b1 entry
+- a1 entry
+- a2 entry
+---- A:specifications/PRD-A-1-x/follow-ups.md
+- [ ] base item 1
+- [ ] base item 2
+- [ ] b1 item
+- [ ] a1 item
+- [ ] a2 item
+$ git -C <measure-root>/work/s3a/A push --porcelain origin main
+To <measure-root>/work/s3a/origin.git
+ 	refs/heads/main:refs/heads/main	a298fcb..36b5163
+Done
+[exit 0]
+
+### 3b — the same without the attributes (the rationale's conflict)
+$ git -C <measure-root>/work/s3b/A push --porcelain origin main
+error: failed to push some refs to '<measure-root>/work/s3b/origin.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+To <measure-root>/work/s3b/origin.git
+!	refs/heads/main:refs/heads/main	[rejected] (fetch first)
+Done
+[exit 1]
+$ git -C <measure-root>/work/s3b/A fetch -q origin
+[exit 0]
+$ git -C <measure-root>/work/s3b/A log --oneline --graph --all
+* 05924b5 PRD-A-1 Add dev-workflows session artifacts (/a2)
+* 18c2803 PRD-A-1 Add dev-workflows session artifacts (/a1)
+| * a298fcb PRD-A-1 Add dev-workflows session artifacts (/b1)
+|/  
+* 9e471fa NOISSUE base
+[exit 0]
+$ git -C <measure-root>/work/s3b/A rebase origin/main
+Rebasing (1/2)Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/feedback.md
+Auto-merging specifications/PRD-A-1-x/follow-ups.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/follow-ups.md
+Auto-merging specifications/PRD-A-1-x/implementation.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/implementation.md
+error: could not apply 18c2803... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 18c2803... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+$ git -C <measure-root>/work/s3b/A status --short
+UU specifications/PRD-A-1-x/dev-workflows/feedback.md
+UU specifications/PRD-A-1-x/follow-ups.md
+UU specifications/PRD-A-1-x/implementation.md
+[exit 0]
+---- A:specifications/PRD-A-1-x/implementation.md
+# Implementation record
+
+## 2026-10-01 base run
+- api: abc1234 on feat/a
+
+<<<<<<< HEAD
+## 2026-10-27 b1 run
+- api: b1 on feat/b1
+=======
+## 2026-10-27 a1 run
+- api: a1 on feat/a1
+>>>>>>> 18c2803 (PRD-A-1 Add dev-workflows session artifacts (/a1))
+---- A:specifications/PRD-A-1-x/follow-ups.md
+- [ ] base item 1
+- [ ] base item 2
+<<<<<<< HEAD
+- [ ] b1 item
+=======
+- [ ] a1 item
+>>>>>>> 18c2803 (PRD-A-1 Add dev-workflows session artifacts (/a1))
+$ git -C <measure-root>/work/s3b/A rebase --abort
+[exit 0]
+$ git -C <measure-root>/work/s3b/A status --short
+[exit 0]
+
+### 3c — both appended the identical line (attributes installed)
+$ git -C <measure-root>/work/s3c/A push --porcelain origin main
+error: failed to push some refs to '<measure-root>/work/s3c/origin.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+To <measure-root>/work/s3c/origin.git
+!	refs/heads/main:refs/heads/main	[rejected] (fetch first)
+Done
+[exit 1]
+$ git -C <measure-root>/work/s3c/A fetch -q origin
+[exit 0]
+$ git -C <measure-root>/work/s3c/A log --oneline --graph --all
+* 76eedbf PRD-A-1 Add dev-workflows session artifacts (/same)
+| * 4cc6efe PRD-A-1 Add dev-workflows session artifacts (/same)
+|/  
+* 9e471fa NOISSUE base
+[exit 0]
+$ git -C <measure-root>/work/s3c/A rebase origin/main
+warning: skipped previously applied commit 76eedbf
+hint: use --reapply-cherry-picks to include skipped commits
+hint: Disable this message with "git config advice.skippedCherryPicks false"
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s3c/A log --oneline
+4cc6efe PRD-A-1 Add dev-workflows session artifacts (/same)
+9e471fa NOISSUE base
+[exit 0]
+---- A:specifications/PRD-A-1-x/dev-workflows/feedback.md
+# Feedback
+- base entry
+- same entry
+(and identical line + a distinct line after it on A's side)
+$ git -C <measure-root>/work/s3c2/A rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+---- A:specifications/PRD-A-1-x/dev-workflows/feedback.md
+# Feedback
+- base entry
+- same entry
+- A only
+
+### 3d — B ticks a follow-up line mid-file / at the end; A appends (attributes installed)
+(d1: B ticks line 1 of 2, A appends after line 2 — non-adjacent)
+$ git -C <measure-root>/work/s3d1/A rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+---- A:specifications/PRD-A-1-x/follow-ups.md
+- [x] base item 1
+- [ ] base item 2
+- [ ] a1 item
+(d2: B ticks the LAST line, A appends right after it — adjacent hunks)
+$ git -C <measure-root>/work/s3d2/A rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+---- A:specifications/PRD-A-1-x/follow-ups.md
+- [ ] base item 1
+- [x] base item 2
+- [ ] base item 2
+- [ ] a1 item
+(d2 without attributes, for contrast)
+$ git -C <measure-root>/work/s3d3/A rebase origin/main
+Rebasing (1/1)Auto-merging specifications/PRD-A-1-x/follow-ups.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/follow-ups.md
+error: could not apply 9de0358... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 9de0358... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+$ git -C <measure-root>/work/s3d3/A diff --name-only --diff-filter=U
+specifications/PRD-A-1-x/follow-ups.md
+[exit 0]
+$ git -C <measure-root>/work/s3d3/A rebase --abort
+[exit 0]
+
+### 3e — both sides edited the same mid-file line of implementation.md differently (attributes installed)
+$ git -C <measure-root>/work/s3e/A rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+---- A:specifications/PRD-A-1-x/implementation.md
+# Implementation record
+
+## 2026-10-01 base run
+- api: abc1234 on feat/a (merged by B)
+- api: def5678 on feat/a (A rewrote)
+
+### 3f — add/add: both created the same new implementation.md (attributes installed)
+$ git -C <measure-root>/work/s3f/A rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+---- A:specifications/PRD-A-1-x/EPIC-A-1-1-y/implementation.md
+# Implementation record
+
+## 2026-10-27 B run
+- api: B
+## 2026-10-27 A run
+- api: A
+
+### 3g — modify/delete on a union path (cost-emission §9: a pending cost file relocated and deleted by one side, appended by the other)
+$ git -C <measure-root>/work/s3g/A rebase origin/main
+Rebasing (1/1)CONFLICT (modify/delete): dev-workflows-cost/pending-s1.md deleted in HEAD and modified in 4268ef5 (NOISSUE Add dev-workflows session artifacts (/a)).  Version 4268ef5 (NOISSUE Add dev-workflows session artifacts (/a)) of dev-workflows-cost/pending-s1.md left in tree.
+error: could not apply 4268ef5... NOISSUE Add dev-workflows session artifacts (/a)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 4268ef5... NOISSUE Add dev-workflows session artifacts (/a)
+[exit 1]
+$ git -C <measure-root>/work/s3g/A status --short
+DU dev-workflows-cost/pending-s1.md
+[exit 0]
+$ git -C <measure-root>/work/s3g/A rebase --abort
+[exit 0]
+
+### 3h — the overwritten shape (resume.md, -merge) changed by both: plain rebase vs rebase -X theirs
+$ git -C <measure-root>/work/s3h/A rebase origin/main
+Rebasing (1/1)warning: Cannot merge binary files: specifications/PRD-A-1-x/dev-workflows/resume.md (HEAD vs. 45c1110 (PRD-A-1 Add dev-workflows session artifacts (/a)))
+Auto-merging specifications/PRD-A-1-x/dev-workflows/resume.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/resume.md
+error: could not apply 45c1110... PRD-A-1 Add dev-workflows session artifacts (/a)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 45c1110... PRD-A-1 Add dev-workflows session artifacts (/a)
+[exit 1]
+$ git -C <measure-root>/work/s3h/A status --short
+UU specifications/PRD-A-1-x/dev-workflows/resume.md
+[exit 0]
+---- A:specifications/PRD-A-1-x/dev-workflows/resume.md during the stop
+last: B
+next: /ready B
+$ git -C <measure-root>/work/s3h/A rebase --abort
+[exit 0]
+$ git -C <measure-root>/work/s3h/A rebase -X theirs origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+---- A:specifications/PRD-A-1-x/dev-workflows/resume.md after rebase -X theirs
+last: A
+next: /implement A
+$ git -C <measure-root>/work/s3h/A log --oneline -3
+a02ad51 PRD-A-1 Add dev-workflows session artifacts (/a)
+6c6c93a B
+6922df2 NOISSUE base
+[exit 0]
+(-X theirs on a text conflict outside every attribute — e.g. a same-named runs/ record — silently keeps A's side; see s4)
+
+### 3i — the block passed for this one command only (git -c core.attributesFile=<block>), nothing written to info/attributes
+$ git -C <measure-root>/work/s3i/A check-attr merge -- specifications/PRD-A-1-x/implementation.md
+specifications/PRD-A-1-x/implementation.md: merge: unspecified
+[exit 0]
+$ git -C <measure-root>/work/s3i/A -c core.attributesFile=<measure-root>/work/s3i/block.attributes check-attr merge -- specifications/PRD-A-1-x/implementation.md specifications/PRD-A-1-x/dev-workflows/resume.md security/acme-api/register.json
+specifications/PRD-A-1-x/implementation.md: merge: union
+specifications/PRD-A-1-x/dev-workflows/resume.md: merge: unset
+security/acme-api/register.json: merge: unset
+[exit 0]
+$ git -C <measure-root>/work/s3i/A -c core.attributesFile=<measure-root>/work/s3i/block.attributes rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+---- A:specifications/PRD-A-1-x/dev-workflows/feedback.md
+# Feedback
+- base entry
+- b1 entry
+- a1 entry
+info/attributes in A: 0 non-empty lines
+(and the autostash re-apply under the same -c: a dirty feedback.md over B's append)
+$ git -C <measure-root>/work/s3i2/A -c core.attributesFile=<measure-root>/work/s3i2/block.attributes rebase --autostash origin/main
+Created autostash: 4631f32
+Rebasing (1/1)Applied autostash.
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s3i2/A status --short
+ M specifications/PRD-A-1-x/dev-workflows/feedback.md
+[exit 0]
+
+### 3i3 — the -c must ride on every call: a stop (register), then --continue WITHOUT the -c, with a later pick on a union file
+$ git -C <measure-root>/work/s3i3/A -c core.attributesFile=<measure-root>/work/s3i3/block.attributes rebase origin/main
+Rebasing (1/2)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. fbc4e64 (PRD-A-1 Add dev-workflows session artifacts (/a1: register only)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. fbc4e64 (PRD-A-1 Add dev-workflows session artifacts (/a1: register only)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+error: could not apply fbc4e64... PRD-A-1 Add dev-workflows session artifacts (/a1: register only)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply fbc4e64... PRD-A-1 Add dev-workflows session artifacts (/a1: register only)
+[exit 1]
+(continue without the -c)
+$ git -C <measure-root>/work/s3i3/A rebase --continue
+[detached HEAD b806026] PRD-A-1 Add dev-workflows session artifacts (/a1: register only)
+ 3 files changed, 19 insertions(+), 3 deletions(-)
+ create mode 100644 security/acme-api/runs/0002-20261027T020000Z-a1a1a1a1.json
+Rebasing (2/2)Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/feedback.md
+error: could not apply a2ad5ce... PRD-A-1 Add dev-workflows session artifacts (/a2: feedback only)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply a2ad5ce... PRD-A-1 Add dev-workflows session artifacts (/a2: feedback only)
+[exit 1]
+$ git -C <measure-root>/work/s3i3/A diff --name-only --diff-filter=U
+specifications/PRD-A-1-x/dev-workflows/feedback.md
+[exit 0]
+$ git -C <measure-root>/work/s3i3/A rebase --abort
+[exit 0]
+(the same, continue WITH the -c)
+$ git -C <measure-root>/work/s3i3/A -c core.attributesFile=<measure-root>/work/s3i3/block.attributes rebase origin/main
+Rebasing (1/2)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. fbc4e64 (PRD-A-1 Add dev-workflows session artifacts (/a1: register only)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. fbc4e64 (PRD-A-1 Add dev-workflows session artifacts (/a1: register only)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+error: could not apply fbc4e64... PRD-A-1 Add dev-workflows session artifacts (/a1: register only)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply fbc4e64... PRD-A-1 Add dev-workflows session artifacts (/a1: register only)
+[exit 1]
+$ git -C <measure-root>/work/s3i3/A -c core.attributesFile=<measure-root>/work/s3i3/block.attributes rebase --continue
+[detached HEAD b806026] PRD-A-1 Add dev-workflows session artifacts (/a1: register only)
+ 3 files changed, 19 insertions(+), 3 deletions(-)
+ create mode 100644 security/acme-api/runs/0002-20261027T020000Z-a1a1a1a1.json
+Rebasing (2/2)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+---- A:specifications/PRD-A-1-x/dev-workflows/feedback.md
+# Feedback
+- base entry
+- b1
+- a2

@@ -1544,8 +1544,8 @@ which one is read off the findings rather than asked, because each `will-change`
 names the one prerequisite decision that overturns it (`workflows-core:grounding-format` §5):
 
 - **every `will-change` finding in the list names the same prerequisite decision, each carrying its
-  BRD key** → §6's second resolution: `conditional_on: <BRD-KEY>/<decision-id>`, naming that
-  decision, and `status: decided` — the form `/product-workflows:brd-interview` records that
+  BRD key** → §6's second resolution: `conditional_on: <PREREQ-KEY>/<decision-id>`, naming that
+  decision by the prerequisite's own key, never this slice's, and `status: decided` — the form `/product-workflows:brd-interview` records that
   resolution in. The propagation sweep then reaches the record by its field the day that
   prerequisite's decision moves (§5).
 - **they name more than one** → §6's third resolution: `status: open`. `conditional_on` holds one
@@ -1626,7 +1626,8 @@ Then, in the same phase and from the same confirmed set:
    settled* phase's last step) — and it is why the round stays open from the moment `/brd-interview` holds a `[C]`
    until this command runs: holding a question is not the customer answering it, and the customer
    answering it is not the register recording an answer (`interview-tagging.md` §5, `decision-register-format.md` §1). Mark the same question answered in
-   `interview/customer-questions.md`, naming the `[CD#n]`. **A question an earlier review already
+   `interview/customer-questions.md`, naming the `[CD#n]` — in each file a `- **State:**` line
+   appended beneath the question's last line, the layout `decision-register-format.md` §9 shows. **A question an earlier review already
    answered has no holding state to leave**: where this run's answer to it replaces that record
    (step 3) and is frozen `decided` or held `open` by the will-change rule, a further *answered by
    the customer*, naming the new `[CD#n]`, is appended beneath the one already there, in the round
@@ -2628,7 +2629,11 @@ captured files.
    reached by neither. **The outcome is unchanged and no new one is added**: the row below sends every
    `code-defect-log.md` hit to `needs-a-human`, because every disposition on that log is the operator's
    and `/product-workflows:brd-interview` is its only writer. What travels is the finding, not a
-   correction.
+   correction — to the operator, and, for a hit on the log of a slice under the parent, to that
+   slice's next `/product-workflows:brd-interview` run that works a round, which reads the
+   `- **Hit:**` lines of the latest reconciliation record of every slice under the parent, this
+   one's while it is the latest, and puts the flagged entry's disposition again until a round
+   record of that slice answers the flag (its *Put each `[V]` to the operator*).
 
    **Outside this root the only outcomes available are `still-true` and `needs-a-human`; `updated` is
    not.** This widening is detection, and the write surface does not move with it: correcting a
@@ -2771,7 +2776,27 @@ changed, why, which ids, and what still needs a human:
   and every citing item with its disposition and reason — the `- **Swept:**` lines already under this
   pass are that list, and it is not written again — each id in the qualified prose form the
   propagation sweep fixes, and every dependent recorded-not-written
-  with its state; per stale-reference hit, the file, what was found, and its outcome.
+  with its state; and every stale-reference hit, one line each, in exactly this shape:
+
+  ```
+  - **Hit:** <path> › <entry> — <what was found> — <outcome>
+  ```
+
+  `<path>` is the file's path relative to the parent's folder where it lies under it — a slice's
+  `PRD-<SLICE-KEY>-<slug>/code-defect-log.md`, say — and relative to `$SPECS_PATH/specifications/`
+  where search 1 reached it outside that root; `<entry>` is the `[CDF#n]` of the entry a hit in a
+  `code-defect-log.md` landed in, read off that entry's own `id`, and `none` for a hit in any other
+  file; `<outcome>` is one of the three outcomes above, written as the table writes it and nothing
+  after it, so it is the text after the line's last ` — ` whatever `<what was found>` holds. What an
+  outcome carries goes in `<what was found>`, never after `<outcome>`: a `still-true` hit's reason
+  why the sentence survives, an `updated` hit's `[CD#n]` that changed it, a `needs-a-human` hit's
+  judgement for the person. **The line's
+  slots are read, never its prose**: `/product-workflows:brd-interview` carries a `needs-a-human` hit
+  on a slice's code-defect log into that slice's next round that works one, putting the entry's
+  disposition to the operator again (its *Put each `[V]` to the operator*), and it reads `<path>`
+  against its own log's path, `<entry>` against that log's ids and `<outcome>` against
+  `needs-a-human` — so every hit takes the line, and a hit in a code-defect log never takes
+  `none`.
 - **What still needs a human** — every `[SR#n]` answer carried `unmatched` because the package the
   review answers could not be determined (*Ingest the review*), with the customer's words; every
   record the *Resolve the defects the review settled* phase sent here — one whose `settles` names a

@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.49.0] — 2026-10-28
+
+Take with `workflows-core` 1.67.0, whose `specs-repo-git` §3.1 now lists `session-hygiene` §6's *Stop* among the setters of `specs_git: misrooted`, as the session-cost and session-feedback pages say it does — to-fix D27.
+
+### Fixed
+- **The session-cost, session-feedback and resume pages say what `specs_git: misrooted` means on a `/design` run.** Each glossed the flag as a `$SPECS_PATH` the run found misplaced; it is also set where a run that keeps a session file stops because, at any of `session-hygiene` §6's three points, its environment no longer matches the one the file recorded, or, at the last two, that record is unreadable or missing; the cost entry, the feedback entry and the resume pointer are then report-only too.
+
+## [4.48.2] — 2026-10-28
+
+Take with `workflows-core` 1.66.0, whose `phase-handoff` §3.7 names the exception `/ready` and these pages now name — batch B25 (FBB-B44).
+
+### Fixed
+- **`/ready` and the *Roles and phases* page no longer say `/brd-reconcile` is the only command beside `/ready` that reads a stopping row without stopping.** `product-workflows` 3.58.0's `/brd-interview` does too, at its Phase 0 step 8a gate on its parent's defect log, where a stop withholds only its offer to close a defect. `/ready`'s own *Key distinction* aside, which listed `/brd-reconcile`'s sites alone, now names that site too, as the gate's own return contract lists it.
+
+## [4.48.1] — 2026-10-28
+
+Take with `product-workflows` 3.57.0, which retires the detected refinement this release stops describing — batch B24 (PRD-B3).
+
+### Fixed
+- **`workflow-states`' *Refine* note describes one way in**: addressing the `EPIC-` folder. The detected way — `/epics <PRD>` offering to fill in Epics flagged `refinement_candidate: true` — read a flag no Epic format defines and nothing writes, and `product-workflows` 3.57.0 retires it.
+- **`/ready` Phase 6 no longer says it mirrors `/epics` Phase 8**: it runs the same four maintenance roles, while `/epics` now runs the two that edit specs-repository files before its handoff (product-workflows 3.57.0); `/ready` still runs all four after its own, which to-fix D30 records.
+
 ## [4.48.0] — 2026-10-27
 
 Take with `workflows-core` 1.65.0, whose `implementation-format` §5 merged test this release's pages describe and whose left-behind case its `/implement` and `/conformance` name (to-fix C10).

@@ -1,0 +1,96 @@
+git version 2.43.0
+code repo <measure-root>/work/s4g/code at 9c24e735d2baa47902b964f060c2672fa3fcf112
+{"record": "0001-20261016T080000Z-f63bbc79.json", "ids": {"v3:p0": 1}, "renumbered": []}
+
+### A records scan sA (not pushed); B records scan sB and pushes first
+{"record": "0002-20261016T090000Z-46f7ef62.json", "ids": {"v3:pa": 2}, "renumbered": []}
+{"record": "0002-20261016T090500Z-249e1e99.json", "ids": {"v3:pb": 2}, "renumbered": []}
+$ git -C <measure-root>/work/s4g/A push --porcelain origin main
+error: failed to push some refs to '<measure-root>/work/s4g/origin.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+To <measure-root>/work/s4g/origin.git
+!	refs/heads/main:refs/heads/main	[rejected] (fetch first)
+Done
+[exit 1]
+$ git -C <measure-root>/work/s4g/A fetch -q origin
+[exit 0]
+$ python3 -I <measure-root>/push_scope.py <measure-root>/work/s4g/A main refs/remotes/origin/main
+67d4b63 NOISSUE Add dev-workflows session artifacts (/security-workflows:scan)  session
+push-scope: PASS (every commit is the run's own) -> rebase allowed
+[exit 0]
+
+### rebase; at the stop, the real rebuild
+$ git -C <measure-root>/work/s4g/A rebase origin/main
+Rebasing (1/1)warning: Cannot merge binary files: security/code/register.json (HEAD vs. 67d4b63 (NOISSUE Add dev-workflows session artifacts (/security-workflows:scan)))
+Auto-merging security/code/register.json
+CONFLICT (content): Merge conflict in security/code/register.json
+warning: Cannot merge binary files: security/code/register.md (HEAD vs. 67d4b63 (NOISSUE Add dev-workflows session artifacts (/security-workflows:scan)))
+Auto-merging security/code/register.md
+CONFLICT (content): Merge conflict in security/code/register.md
+error: could not apply 67d4b63... NOISSUE Add dev-workflows session artifacts (/security-workflows:scan)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 67d4b63... NOISSUE Add dev-workflows session artifacts (/security-workflows:scan)
+[exit 1]
+$ git -C <measure-root>/work/s4g/A status --short
+UU security/code/register.json
+UU security/code/register.md
+A  security/code/runs/0002-20261016T090000Z-46f7ef62.json
+A  security/code/scans/sA/CLAUDE-SECURITY-RESULTS.jsonl
+A  security/code/scans/sA/CLAUDE-SECURITY-REVISION-9c24e735d2ba.json
+[exit 0]
+runs/ in the worktree at the stop:
+0001-20261016T080000Z-f63bbc79.json
+0002-20261016T090000Z-46f7ef62.json
+0002-20261016T090500Z-249e1e99.json
+scans/ in the worktree at the stop:
+s0
+sA
+sB
+$ python3 -I /workspace/ai-workflows/plugins/security-workflows/scripts/register.py rebuild --specs <measure-root>/work/s4g/A --slug code
+{
+  "findings": 3,
+  "runs": 3,
+  "renumbered": [
+    {
+      "run": "0002-20261016T090500Z-249e1e99.json",
+      "origin": "sB:v3:pb",
+      "from": 2,
+      "to": 3,
+      "provisional": true
+    }
+  ],
+  "numbers": {
+    "s0:v3:p0": 1,
+    "sA:v3:pa": 2,
+    "sB:v3:pb": 3
+  }
+}
+[exit 0]
+$ git -C <measure-root>/work/s4g/A add -- security/code/register.json security/code/register.md
+[exit 0]
+$ git -C <measure-root>/work/s4g/A rebase --continue
+[detached HEAD fea7e4c] NOISSUE Add dev-workflows session artifacts (/security-workflows:scan)
+ 5 files changed, 142 insertions(+), 5 deletions(-)
+ create mode 100644 security/code/runs/0002-20261016T090000Z-46f7ef62.json
+ create mode 100644 security/code/scans/sA/CLAUDE-SECURITY-RESULTS.jsonl
+ create mode 100644 security/code/scans/sA/CLAUDE-SECURITY-REVISION-9c24e735d2ba.json
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s4g/A push --porcelain origin main
+To <measure-root>/work/s4g/origin.git
+ 	refs/heads/main:refs/heads/main	8962f4a..fea7e4c
+Done
+[exit 0]
+
+### is the pushed register exactly what a rebuild of the pushed records gives?
+YES: register.json and register.md == rebuild(runs/, scans/) at origin/main
+| [SEC#1] | HIGH | CWE-89 | `src/b.py:1` | open |
+| [SEC#2] | HIGH | CWE-89 | `src/a.py:10` | open |
+| [SEC#3] | HIGH | CWE-89 | `src/a.py:30` | open |

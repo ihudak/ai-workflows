@@ -1,0 +1,376 @@
+git version 2.43.0
+
+### 1a — git rebase --autostash origin/main, dirty files none of which the incoming commits touch
+$ git -C <measure-root>/work/s1a/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+AM specifications/PRD-A-1-x/design-notes.md
+MM specifications/PRD-A-1-x/prd.md
+?? drafts/
+?? notes/scratch.txt
+[exit 0]
+$ git -C <measure-root>/work/s1a/A rebase --autostash origin/main
+Created autostash: 62d4017
+Rebasing (1/1)Applied autostash.
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s1a/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+A  specifications/PRD-A-1-x/design-notes.md
+ M specifications/PRD-A-1-x/prd.md
+?? drafts/
+?? notes/scratch.txt
+[exit 0]
+(HEAD moves by design; compare everything but HEAD)
+SNAPSHOT DIFFERS:
+@@ -4,10 +4,10 @@
+ 100644 87f8acaeeedbe0c25f3cbe18d4469cd92da8294f 0	security/acme-api/register.json
+ 100644 952df3f71fcb4f035a0d0db1f8da6fad027eab36 0	security/acme-api/register.md
+ 100644 a218193c0b94346bc6d16f84eb0b76ee4281bd82 0	security/acme-api/runs/0001-20261001T000000Z-aaaaaaaa.json
+-100644 0057358bd5e055d02ca5d4a19abfddf361c3a738 0	specifications/PRD-A-1-x/design-notes.md
++100644 3be364cb7cc5ffe75c2014786a6f33e46b4f7855 0	specifications/PRD-A-1-x/design-notes.md
+ 100644 e19062d315ed4a844dc9ca3109ca9d5c063baa4d 0	specifications/PRD-A-1-x/dev-workflows/resume.md
+ 100644 becb3fc9fe007660fed4ffbb4e2e981f7c1b071c 0	specifications/PRD-A-1-x/follow-ups.md
+-100644 91b5f9880c0a141bf8682cec4824a14e5508f369 0	specifications/PRD-A-1-x/prd.md
++100644 31c2fd97a9f9eabbab23d24f12ea420e959b3a88 0	specifications/PRD-A-1-x/prd.md
+ -- worktree
+ 7eb2ca55b87a4d45d66a63f76db11f9b4aa9106472a62b5865060f9fd8eadaaa  ./drafts/d.md
+ a27110a155b1dd079db5ea8fee149a2b80019f48b359a7852f281a7720fe15a8  ./notes/scratch.txt
+@@ -23,8 +23,8 @@
+ -- status
+ A  notes/staged-new.md
+  M notes/team.md
+-AM specifications/PRD-A-1-x/design-notes.md
+-MM specifications/PRD-A-1-x/prd.md
++A  specifications/PRD-A-1-x/design-notes.md
++ M specifications/PRD-A-1-x/prd.md
+ ?? drafts/d.md
+ ?? notes/scratch.txt
+ -- stash
+
+### 1b — the same through git pull --rebase --autostash origin main
+$ git -C <measure-root>/work/s1b/A pull --rebase --autostash origin main
+From <measure-root>/work/s1b/origin
+ * branch            main       -> FETCH_HEAD
+Created autostash: 62d4017
+Rebasing (1/1)Applied autostash.
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s1b/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+A  specifications/PRD-A-1-x/design-notes.md
+ M specifications/PRD-A-1-x/prd.md
+?? drafts/
+?? notes/scratch.txt
+[exit 0]
+SNAPSHOT DIFFERS:
+@@ -4,10 +4,10 @@
+ 100644 87f8acaeeedbe0c25f3cbe18d4469cd92da8294f 0	security/acme-api/register.json
+ 100644 952df3f71fcb4f035a0d0db1f8da6fad027eab36 0	security/acme-api/register.md
+ 100644 a218193c0b94346bc6d16f84eb0b76ee4281bd82 0	security/acme-api/runs/0001-20261001T000000Z-aaaaaaaa.json
+-100644 0057358bd5e055d02ca5d4a19abfddf361c3a738 0	specifications/PRD-A-1-x/design-notes.md
++100644 3be364cb7cc5ffe75c2014786a6f33e46b4f7855 0	specifications/PRD-A-1-x/design-notes.md
+ 100644 e19062d315ed4a844dc9ca3109ca9d5c063baa4d 0	specifications/PRD-A-1-x/dev-workflows/resume.md
+ 100644 becb3fc9fe007660fed4ffbb4e2e981f7c1b071c 0	specifications/PRD-A-1-x/follow-ups.md
+-100644 91b5f9880c0a141bf8682cec4824a14e5508f369 0	specifications/PRD-A-1-x/prd.md
++100644 31c2fd97a9f9eabbab23d24f12ea420e959b3a88 0	specifications/PRD-A-1-x/prd.md
+ -- worktree
+ 7eb2ca55b87a4d45d66a63f76db11f9b4aa9106472a62b5865060f9fd8eadaaa  ./drafts/d.md
+ a27110a155b1dd079db5ea8fee149a2b80019f48b359a7852f281a7720fe15a8  ./notes/scratch.txt
+@@ -23,8 +23,8 @@
+ -- status
+ A  notes/staged-new.md
+  M notes/team.md
+-AM specifications/PRD-A-1-x/design-notes.md
+-MM specifications/PRD-A-1-x/prd.md
++A  specifications/PRD-A-1-x/design-notes.md
++ M specifications/PRD-A-1-x/prd.md
+ ?? drafts/d.md
+ ?? notes/scratch.txt
+ -- stash
+
+### 1c — rebase.autoStash=true, plain git rebase origin/main
+$ git -C <measure-root>/work/s1c/A rebase origin/main
+Created autostash: 62d4017
+Rebasing (1/1)Applied autostash.
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s1c/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+A  specifications/PRD-A-1-x/design-notes.md
+ M specifications/PRD-A-1-x/prd.md
+?? drafts/
+?? notes/scratch.txt
+[exit 0]
+
+### 1d — a dirty file the incoming commits also change (B edited prd.md; the user has prd.md staged+dirty in A)
+$ git -C <measure-root>/work/s1d/A rebase --autostash origin/main
+Created autostash: 62d4017
+Rebasing (1/1)Applying autostash resulted in conflicts.
+Your changes are safe in the stash.
+You can run "git stash pop" or "git stash drop" at any time.
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s1d/A status --short
+A  notes/staged-new.md
+M  notes/team.md
+A  specifications/PRD-A-1-x/design-notes.md
+UU specifications/PRD-A-1-x/prd.md
+?? drafts/
+?? notes/scratch.txt
+[exit 0]
+$ git -C <measure-root>/work/s1d/A stash list
+stash@{0}: autostash
+[exit 0]
+---- prd.md after the failed re-apply:
+# PRD A-1
+
+<<<<<<< Updated upstream
+Goal: B changed it.
+=======
+Goal: base.
+user edit, staged
+user edit, unstaged on top of the staged one
+>>>>>>> Stashed changes
+$ git -C <measure-root>/work/s1d/A log --oneline -3
+3e689bf PRD-A-1 Add dev-workflows session artifacts (/a1)
+dd2a31a PRD-A-1 B edits the PRD (merged PR)
+af4ffbc PRD-A-1 Add dev-workflows session artifacts (/b1)
+[exit 0]
+$ git -C <measure-root>/work/s1d/A stash show --stat stash@{0}
+ notes/staged-new.md                      | 1 +
+ notes/team.md                            | 1 +
+ specifications/PRD-A-1-x/design-notes.md | 3 +++
+ specifications/PRD-A-1-x/prd.md          | 2 ++
+ 4 files changed, 7 insertions(+)
+[exit 0]
+(is the stash complete? apply it on the original HEAD in a scratch worktree)
+$ git -C <measure-root>/work/s1d/A worktree add -q --detach <measure-root>/work/s1d/wt ORIG_HEAD
+[exit 0]
+$ git -C <measure-root>/work/s1d/wt stash apply --index stash@{0}
+Not currently on any branch.
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   notes/staged-new.md
+	new file:   specifications/PRD-A-1-x/design-notes.md
+	modified:   specifications/PRD-A-1-x/prd.md
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   notes/team.md
+	modified:   specifications/PRD-A-1-x/design-notes.md
+	modified:   specifications/PRD-A-1-x/prd.md
+
+[exit 0]
+$ git -C <measure-root>/work/s1d/wt status --short
+A  notes/staged-new.md
+ M notes/team.md
+AM specifications/PRD-A-1-x/design-notes.md
+MM specifications/PRD-A-1-x/prd.md
+[exit 0]
+$ git -C <measure-root>/work/s1d/A worktree remove --force <measure-root>/work/s1d/wt
+[exit 0]
+
+### 1e — a dirty SESSION file the incoming commits also change (feedback.md: union in A) — re-apply honours the attributes?
+$ git -C <measure-root>/work/s1e/A rebase --autostash origin/main
+Created autostash: e229202
+Rebasing (1/1)Applied autostash.
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s1e/A status --short
+ M specifications/PRD-A-1-x/dev-workflows/feedback.md
+[exit 0]
+# Feedback
+- base entry
+- b1 entry
+- a1 entry
+- concurrent session entry, uncommitted
+(and without the attributes: A's own commit touches follow-ups.md only, B appended feedback.md, the dirty copy of feedback.md conflicts)
+$ git -C <measure-root>/work/s1e2/A rebase --autostash origin/main
+Created autostash: b733e12
+Rebasing (1/1)Applying autostash resulted in conflicts.
+Your changes are safe in the stash.
+You can run "git stash pop" or "git stash drop" at any time.
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s1e2/A status --short
+UU specifications/PRD-A-1-x/dev-workflows/feedback.md
+[exit 0]
+$ git -C <measure-root>/work/s1e2/A stash list
+stash@{0}: autostash
+[exit 0]
+# Feedback
+- base entry
+<<<<<<< Updated upstream
+- b1 entry
+=======
+- concurrent session entry, uncommitted
+>>>>>>> Stashed changes
+
+### 1f — the decided path's abort (resume.md conflict = 'any other conflict') with the user's dirty files autostashed
+$ git -C <measure-root>/work/s1f/A rebase --autostash origin/main
+Created autostash: 74a72e9
+Rebasing (1/1)Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+warning: Cannot merge binary files: specifications/PRD-A-1-x/dev-workflows/resume.md (HEAD vs. c27f9b4 (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging specifications/PRD-A-1-x/dev-workflows/resume.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/resume.md
+Auto-merging specifications/PRD-A-1-x/implementation.md
+error: could not apply c27f9b4... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply c27f9b4... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+-- during the stop:
+$ git -C <measure-root>/work/s1f/A status --short
+M  specifications/PRD-A-1-x/dev-workflows/feedback.md
+UU specifications/PRD-A-1-x/dev-workflows/resume.md
+M  specifications/PRD-A-1-x/implementation.md
+?? drafts/
+?? notes/scratch.txt
+[exit 0]
+$ git -C <measure-root>/work/s1f/A stash list
+[exit 0]
+   (the user's files during the stop:)
+line 3
+Goal: base.
+scratch.txt
+team.md
+$ git -C <measure-root>/work/s1f/A rebase --abort
+Applied autostash.
+[exit 0]
+SNAPSHOT DIFFERS:
+@@ -5,12 +5,12 @@
+ 100644 87f8acaeeedbe0c25f3cbe18d4469cd92da8294f 0	security/acme-api/register.json
+ 100644 952df3f71fcb4f035a0d0db1f8da6fad027eab36 0	security/acme-api/register.md
+ 100644 a218193c0b94346bc6d16f84eb0b76ee4281bd82 0	security/acme-api/runs/0001-20261001T000000Z-aaaaaaaa.json
+-100644 0057358bd5e055d02ca5d4a19abfddf361c3a738 0	specifications/PRD-A-1-x/design-notes.md
++100644 3be364cb7cc5ffe75c2014786a6f33e46b4f7855 0	specifications/PRD-A-1-x/design-notes.md
+ 100644 d8bf42be646b422012a6e27e415f9144673f7bb8 0	specifications/PRD-A-1-x/dev-workflows/feedback.md
+ 100644 f86480ada4d531e2bc08fb8be11a8bc009dce560 0	specifications/PRD-A-1-x/dev-workflows/resume.md
+ 100644 becb3fc9fe007660fed4ffbb4e2e981f7c1b071c 0	specifications/PRD-A-1-x/follow-ups.md
+ 100644 08ce9b7dcc6c904916ee9e1509e66eacd6f9da47 0	specifications/PRD-A-1-x/implementation.md
+-100644 91b5f9880c0a141bf8682cec4824a14e5508f369 0	specifications/PRD-A-1-x/prd.md
++100644 31c2fd97a9f9eabbab23d24f12ea420e959b3a88 0	specifications/PRD-A-1-x/prd.md
+ -- worktree
+ 7eb2ca55b87a4d45d66a63f76db11f9b4aa9106472a62b5865060f9fd8eadaaa  ./drafts/d.md
+ a27110a155b1dd079db5ea8fee149a2b80019f48b359a7852f281a7720fe15a8  ./notes/scratch.txt
+@@ -28,8 +28,8 @@
+ -- status
+ A  notes/staged-new.md
+  M notes/team.md
+-AM specifications/PRD-A-1-x/design-notes.md
+-MM specifications/PRD-A-1-x/prd.md
++A  specifications/PRD-A-1-x/design-notes.md
++ M specifications/PRD-A-1-x/prd.md
+ ?? drafts/d.md
+ ?? notes/scratch.txt
+ -- stash
+-- reflog after abort:
+c27f9b4 HEAD@{0}: rebase (abort): returning to refs/heads/main
+c4ad4b3 HEAD@{1}: rebase (start): checkout origin/main
+c27f9b4 HEAD@{2}: commit: PRD-A-1 Add dev-workflows session artifacts (/a1)
+9e471fa HEAD@{3}: clone: from <measure-root>/work/s1f/origin.git
+-- branch reflog:
+c27f9b4 refs/heads/main@{0}: commit: PRD-A-1 Add dev-workflows session artifacts (/a1)
+9e471fa refs/heads/main@{1}: clone: from <measure-root>/work/s1f/origin.git
+-- stash reflog / refs/stash:
+fatal: ambiguous argument 'refs/stash': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
+no refs/stash
+-- ORIG_HEAD: c27f9b498af3748470ffe1463ffb7419766a0e68  HEAD: c27f9b498af3748470ffe1463ffb7419766a0e68
+
+### 1g — an untracked file at a path the incoming commits add (B added notes/new.md; A has an untracked notes/new.md)
+$ git -C <measure-root>/work/s1g/A rebase --autostash origin/main
+Created autostash: 893a3d7
+error: The following untracked working tree files would be overwritten by checkout:
+	notes/new.md
+Please move or remove them before you switch branches.
+Aborting
+Applied autostash.
+error: could not detach HEAD
+[exit 1]
+$ git -C <measure-root>/work/s1g/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+A  specifications/PRD-A-1-x/design-notes.md
+ M specifications/PRD-A-1-x/prd.md
+?? drafts/
+?? notes/new.md
+?? notes/scratch.txt
+[exit 0]
+$ git -C <measure-root>/work/s1g/A stash list
+[exit 0]
+no rebase in progress
+SNAPSHOT DIFFERS:
+@@ -5,12 +5,12 @@
+ 100644 87f8acaeeedbe0c25f3cbe18d4469cd92da8294f 0	security/acme-api/register.json
+ 100644 952df3f71fcb4f035a0d0db1f8da6fad027eab36 0	security/acme-api/register.md
+ 100644 a218193c0b94346bc6d16f84eb0b76ee4281bd82 0	security/acme-api/runs/0001-20261001T000000Z-aaaaaaaa.json
+-100644 0057358bd5e055d02ca5d4a19abfddf361c3a738 0	specifications/PRD-A-1-x/design-notes.md
++100644 3be364cb7cc5ffe75c2014786a6f33e46b4f7855 0	specifications/PRD-A-1-x/design-notes.md
+ 100644 d8bf42be646b422012a6e27e415f9144673f7bb8 0	specifications/PRD-A-1-x/dev-workflows/feedback.md
+ 100644 e19062d315ed4a844dc9ca3109ca9d5c063baa4d 0	specifications/PRD-A-1-x/dev-workflows/resume.md
+ 100644 becb3fc9fe007660fed4ffbb4e2e981f7c1b071c 0	specifications/PRD-A-1-x/follow-ups.md
+ 100644 08ce9b7dcc6c904916ee9e1509e66eacd6f9da47 0	specifications/PRD-A-1-x/implementation.md
+-100644 91b5f9880c0a141bf8682cec4824a14e5508f369 0	specifications/PRD-A-1-x/prd.md
++100644 31c2fd97a9f9eabbab23d24f12ea420e959b3a88 0	specifications/PRD-A-1-x/prd.md
+ -- worktree
+ 7eb2ca55b87a4d45d66a63f76db11f9b4aa9106472a62b5865060f9fd8eadaaa  ./drafts/d.md
+ 4466b2bf7332cdb989bf9df12b1df61233f743b622f98a203a26bded88385402  ./notes/new.md
+@@ -29,8 +29,8 @@
+ -- status
+ A  notes/staged-new.md
+  M notes/team.md
+-AM specifications/PRD-A-1-x/design-notes.md
+-MM specifications/PRD-A-1-x/prd.md
++A  specifications/PRD-A-1-x/design-notes.md
++ M specifications/PRD-A-1-x/prd.md
+ ?? drafts/d.md
+ ?? notes/new.md
+ ?? notes/scratch.txt
+(and the pull form)
+$ git -C <measure-root>/work/s1g/A pull --rebase --autostash origin main
+From <measure-root>/work/s1g/origin
+ * branch            main       -> FETCH_HEAD
+Created autostash: c6cdf85
+error: The following untracked working tree files would be overwritten by checkout:
+	notes/new.md
+Please move or remove them before you switch branches.
+Aborting
+Applied autostash.
+error: could not detach HEAD
+[exit 1]
+SNAPSHOT DIFFERS:
+@@ -5,12 +5,12 @@
+ 100644 87f8acaeeedbe0c25f3cbe18d4469cd92da8294f 0	security/acme-api/register.json
+ 100644 952df3f71fcb4f035a0d0db1f8da6fad027eab36 0	security/acme-api/register.md
+ 100644 a218193c0b94346bc6d16f84eb0b76ee4281bd82 0	security/acme-api/runs/0001-20261001T000000Z-aaaaaaaa.json
+-100644 0057358bd5e055d02ca5d4a19abfddf361c3a738 0	specifications/PRD-A-1-x/design-notes.md
++100644 3be364cb7cc5ffe75c2014786a6f33e46b4f7855 0	specifications/PRD-A-1-x/design-notes.md
+ 100644 d8bf42be646b422012a6e27e415f9144673f7bb8 0	specifications/PRD-A-1-x/dev-workflows/feedback.md
+ 100644 e19062d315ed4a844dc9ca3109ca9d5c063baa4d 0	specifications/PRD-A-1-x/dev-workflows/resume.md
+ 100644 becb3fc9fe007660fed4ffbb4e2e981f7c1b071c 0	specifications/PRD-A-1-x/follow-ups.md
+ 100644 08ce9b7dcc6c904916ee9e1509e66eacd6f9da47 0	specifications/PRD-A-1-x/implementation.md
+-100644 91b5f9880c0a141bf8682cec4824a14e5508f369 0	specifications/PRD-A-1-x/prd.md
++100644 31c2fd97a9f9eabbab23d24f12ea420e959b3a88 0	specifications/PRD-A-1-x/prd.md
+ -- worktree
+ 7eb2ca55b87a4d45d66a63f76db11f9b4aa9106472a62b5865060f9fd8eadaaa  ./drafts/d.md
+ 4466b2bf7332cdb989bf9df12b1df61233f743b622f98a203a26bded88385402  ./notes/new.md
+@@ -29,8 +29,8 @@
+ -- status
+ A  notes/staged-new.md
+  M notes/team.md
+-AM specifications/PRD-A-1-x/design-notes.md
+-MM specifications/PRD-A-1-x/prd.md
++A  specifications/PRD-A-1-x/design-notes.md
++ M specifications/PRD-A-1-x/prd.md
+ ?? drafts/d.md
+ ?? notes/new.md
+ ?? notes/scratch.txt

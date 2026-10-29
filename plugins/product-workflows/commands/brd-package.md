@@ -753,9 +753,13 @@ enumeration leaves whichever artifact the enumeration missed with no route at al
 `code-defect-log.md`; `/product-workflows:brd-split` for a ledger disposition;
 `/product-workflows:prd-ground` for a finding; `/product-workflows:brd-intake` for
 `brd/brd-inventory.md`, its `accounts:` record included, or `brd/brd-defect-log.md`'s own entries;
-`/product-workflows:brd-reconcile` for a defect resolution a customer's answer settles. **Where the
+`/product-workflows:brd-reconcile` for a defect resolution a customer's answer settles;
+`/product-workflows:brd-interview` again for the `resolved-by: <SLICE-KEY>/[CG#n]` an `unsourced`
+defect takes where a verified finding of the slice building its row settles it (its *Handoff*'s
+first step, which offers that write on the operator's confirmation). **Where the
 named artifact has no command writer at all** — a `brd/brd-defect-log.md` entry a grounding finding
-would settle is the case on the tree (`references/brd-format.md` §4, and
+would settle and that step does not offer, one of any other class or one only a `[DG#n]` settles,
+is the case on the tree (`references/brd-format.md` §4, and
 `/product-workflows:brd-interview`'s *Round 1 is generated from the grounding*) — **the marker is
 still written, and it takes the person or role who must write that artifact by hand as its value**:
 `fixed-by: <person or role>`, with the recorded reason saying in as many words that no command

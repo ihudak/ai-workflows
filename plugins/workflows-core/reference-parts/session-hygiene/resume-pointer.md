@@ -66,7 +66,7 @@ uncommitted, since `commit-artifacts` runs after cost. Prepare-first (§5 rule 2
 the write happens before the run ends, and therefore before the user can act on the
 printed suggestion.
 
-**Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): `$SPECS_PATH` is misplaced, so the pointer would land where the next run, with the variable corrected, never looks.
+**Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): where `$SPECS_PATH` is misplaced, the pointer would land where the next run, with the variable corrected, never looks; where this reference's §6 *Stop* set the flag, the run is no longer in the environment it recorded, and writes nothing more.
 
 **Skipped**: `/idea` (its brief is the anchor, and it is written and handed off in the same run), `/implement`
 **direct** mode, `/document` **doc-edit** mode (Mode B), `/vuln`, `/upgrade`, `/frames`. There the
