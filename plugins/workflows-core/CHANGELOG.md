@@ -12,7 +12,8 @@ Take with `product-workflows` 3.60.0 and `dev-workflows` 4.50.0 — to-fix D19.
 ### Changed
 - **`pre-lint`'s specification checks** count a superseded or withdrawn item for contiguity, check only live criteria for test coverage, and flag a marker in neither of `specification-format`'s two forms.
 - **`next-phase-offer`'s PE lane** gains `/product-workflows:update-spec`, whose next step revises each design it names or refines the Epics; its PM lane's `/update-prd` node offers it for an existing specification.
-- `run-flags` names `/update-spec` among the free-text commands; `phase-handoff` §3.4 gives `/update-spec` its rows — its own base stops, its inputs gated as `/specify`'s; the `docs-grounding` and `architecture-grounding` consumer lists, `cost-emission` §7 and the command-namespace map gain it.
+- **`overlap-reader` takes `/update-spec` as a caller**: a read of the items a revision changed, its `changed` list the change list, with no session file — an absent `session_path` is no `ERROR` for that caller.
+- `ard-resolution` lists `/update-spec` among its consumers. `run-flags` names `/update-spec` among the free-text commands; `phase-handoff` §3.4 gives `/update-spec` its rows — its own base stops, its inputs gated as `/specify`'s; the `docs-grounding` and `architecture-grounding` consumer lists, `cost-emission` §7 and the command-namespace map gain it.
 
 ## [1.67.0] — 2026-10-28
 

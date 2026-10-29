@@ -11,7 +11,7 @@ Take with `product-workflows` 3.60.0, whose `/update-spec` marks a specification
 
 ### Changed
 - **Every reader of specification IDs skips a superseded or withdrawn item** — one whose heading ends ` — Superseded by …` or ` — Withdrawn …`: `/design`'s requirement extraction and `spec_lines`, `design-format`'s coverage rule and `design-reviewer`'s traceability check, `/implement`'s in-scope IDs and `code-review`'s conformance dimension, and `/conformance`'s trace. Such an item keeps its number and its text, and is read as context, never as a requirement.
-- `/conformance`'s *amend the document* note recommends `/product-workflows:update-spec` for a specification, which revises it in place, where it named `/product-workflows:specify`.
+- `/conformance`'s *amend the document* note recommends `/product-workflows:update-spec` for a specification, which revises it in place, where it named `/product-workflows:specify`; so do `/implement`'s note on a post-review departure and `/design`'s re-split remedy for the Epic whose specification still holds the work that moved.
 
 ## [4.49.0] — 2026-10-28
 
