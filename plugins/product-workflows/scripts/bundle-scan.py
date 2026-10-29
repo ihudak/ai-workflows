@@ -3,7 +3,25 @@
 
   bundle-scan.py tokens <file-or-directory>... [--prereq-key KEY]... [--captured NAME]...
                         [--captured-path PATH]...
+  bundle-scan.py citations <bundle-dir> --key KEY [--prereq-key KEY]... [--copied-key KEY]...
+                        [--date YYYYMMDD] [--captured NAME]... [--captured-path PATH]...
+                        [--source-basename NAME]... [--manifest NAME]
   bundle-scan.py --selftest
+
+citations: runs the bundle-packaging reference's section 6 over an assembled bundle. Documents
+partition on the key each bundled name begins with, resolved against --key and --prereq-key, never
+parsed out; an unkeyed document, and a --copied-key no document answers to, are dead. Each
+partition's corpora -- the inventory and the defect log by their tables' id column, the grounding
+files, the decision register and the code-defect log by their records' id keys, padding tolerated --
+give the ids its references resolve against: relation 1 (every [PREFIX#n] resolves in its own
+partition, save another BRD's key before it, a section 6.2 structured field, [SR#n] and a
+placeholder), relation 2 (a class-4 [DG#n] cites a [CG#n] whose claim names the same requirement)
+and relation 3 (a bare <name>.md carrying a key, or matching a section 1.1 working filename, names a
+bundle file). Record-shaped content that parses to no id is unreadable. A hit in the customer's own
+words or naming is reported under customer, for the operator's ruling. It reads section 1.1's
+filenames and section 6.2's fields from the reference beside it each run, and stops (exit 2) where it
+cannot. Prints one line of JSON: partitions, dead, mismatch, ambiguous, unqualified, unreadable,
+customer, prerequisite_external and the discharged count.
 
 tokens: reads every given file, and every .md or .markdown file under every given directory, and
 reports each token of a class the plugin's bundle-packaging reference tabulates in section 1.2 -- a
@@ -332,6 +350,454 @@ def scan(paths, prereq_keys=(), captured=(), captured_paths=(), fam=None):
     return {"files": len(files), "omitted_locator_sections": omitted, "groups": groups}
 
 
+
+# ---------------------------------------------------------------------------------------------------
+# citations: bundle-packaging section 6, run over an assembled bundle
+# ---------------------------------------------------------------------------------------------------
+
+REFERENCE = os.path.join(PLUGIN_ROOT, "references", "bundle-packaging.md")
+ID_RE = re.compile(r"\[(BR|DEF|CG|DG|VD|CDF|CD|AS|SR)#(n|[0-9]+)\]")
+KEY_SHAPE = r"[A-Z][A-Z0-9_]*(?:-[0-9]+)+"
+QUALIFIED_RE = re.compile(r"(?<![\w-])(" + KEY_SHAPE + r")(?: |/)$")
+REQ_RE = re.compile(r"\[(?:BR|US|AC|FR)#[0-9]+\]")
+MD_TOKEN_RE = re.compile(r"(?<![\w/.<>-])([\w][\w.<>-]*\.md)(?![\w/])")
+# Which corpus file each identifier class resolves against (section 6.1's table), by the working
+# basename the file's bundled name carries after its key.
+CORPUS_FILES = {
+    "BR": ("brd-inventory.md",),
+    "DEF": ("brd-defect-log.md",),
+    "CG": ("code-grounding.md", "design-grounding.md"),
+    "DG": ("code-grounding.md", "design-grounding.md"),
+    "VD": ("decisions.md",), "CD": ("decisions.md",), "AS": ("decisions.md",),
+    "CDF": ("code-defect-log.md",),
+}
+TABLE_CORPORA = {"brd-inventory.md", "brd-defect-log.md"}
+RECORD_ID_RE = re.compile(r"^\s*-?\s*id\s*:\s*(\S.*?)\s*$")
+# Section 6.2's structured fields, one entry per row of its table: the marker the row's first cell
+# carries, and how the script reads the field. The selftest holds this set equal to the table's rows,
+# so a field an authority adds stops CI until it is read here.
+STRUCTURED_FIELDS = [
+    ("conditional_on:", "keyed"), ("blocked_on:", "keyed"), ("`prerequisite`", "keyed-or-report"),
+    ("rejected:", "keyed"), ("customer-amended", "no-id"), ("resolved-by:", "keyed-or-report"),
+    ("a defect entry is raised against", "defect-log-rows"), ("superseded-by:", "ledger-rows"),
+    ("*Rows* line", "figures-rows"),
+]
+
+
+def _section(text, start, stop):
+    a = text.find(start)
+    if a < 0:
+        return None
+    b = text.find(stop, a + len(start))
+    return text[a:b if b >= 0 else len(text)]
+
+
+def reference_text():
+    try:
+        with open(REFERENCE, encoding="utf-8") as f:
+            return f.read()
+    except (OSError, UnicodeDecodeError) as e:
+        raise Refused("cannot read the bundle-packaging reference: " + e.__class__.__name__)
+
+
+def working_names(ref, date=None, source_basenames=()):
+    """Section 1.1's working filenames, each as a regex over a bare basename (relation 3, shape 2)."""
+    sec = _section(ref, "### 1.1 ", "### 1.2 ")
+    if sec is None:
+        raise Refused("bundle-packaging.md has no section 1.1 to read the working filenames from")
+    names = set()
+    for tok in re.findall(r"`([^`\s]+\.md)`", sec):
+        if tok.startswith(("references/", "commands/")):
+            continue
+        names.add(tok.rsplit("/", 1)[-1])
+    pats = []
+    for n in sorted(names):
+        if "<file>" in n or "<basename>" in n:
+            for b in source_basenames:
+                stem = b[:-3] if b.endswith(".md") else b
+                pats.append(re.compile(re.escape(n.replace("<file>", stem).replace("<basename>", stem))
+                                       .replace(re.escape(".md.md"), re.escape(".md")) + r"$"))
+            continue
+        rx = re.escape(n)
+        rx = rx.replace(re.escape("<YYYYMMDD>"), re.escape(date) if date else "[0-9]{8}")
+        rx = rx.replace(re.escape("<N>"), "[0-9]+")
+        pats.append(re.compile(rx + "$"))
+    return pats
+
+
+def structured_rows(ref):
+    """The first cells of section 6.2's structured-field table."""
+    sec = _section(ref, "### 6.2 ", "### 6.3 ")
+    if sec is None:
+        raise Refused("bundle-packaging.md has no section 6.2 to read the structured fields from")
+    rows, inside = [], False
+    for line in sec.split("\n"):
+        if line.startswith("| Field | Authority |"):
+            inside = True
+            continue
+        if inside:
+            if not line.startswith("|"):
+                break
+            if SEPARATOR_RE.match(line):
+                continue
+            cells = _cells(line)
+            if cells:
+                rows.append(cells[0][2])
+    return rows
+
+
+def _partition(base, keys):
+    """The key a bundled filename belongs to, resolved against the run's key set, or None."""
+    best = None
+    for k in keys:
+        if base.startswith(k + "-") and (best is None or len(k) > len(best)):
+            best = k
+    return best
+
+
+def _corpus_ids(text, table):
+    """(ids, record_shaped) for one corpus file, parsed by its owner's layout (section 6.1)."""
+    ids, shaped = set(), False
+    lines = text.split("\n")
+    if table:
+        header = False
+        for line in lines:
+            if not line.lstrip().startswith("|"):
+                header = False
+                continue
+            cells = _cells(line)
+            if not cells:
+                continue
+            if cells[0][2].strip() == "id":
+                header = True
+                continue
+            if header and not SEPARATOR_RE.match(line):
+                shaped = True
+                m = re.fullmatch(r"\s*\[([A-Z]+)#([0-9]+)\]\s*", cells[0][2])
+                if m:
+                    ids.add("[%s#%s]" % (m.group(1), m.group(2)))
+    else:
+        for line in lines:
+            m = RECORD_ID_RE.match(line)
+            if m:
+                shaped = True
+                v = re.fullmatch(r"\[([A-Z]+)#([0-9]+)\]", m.group(1))
+                if v:
+                    ids.add("[%s#%s]" % (v.group(1), v.group(2)))
+    return ids, shaped
+
+
+def _blocks(text):
+    """Grounding finding blocks: [{id, class, cites, claim, line}] by their '- id:' openers."""
+    out, cur = [], None
+    for i, line in enumerate(text.split("\n")):
+        m = re.match(r"^\s*-\s*id\s*:\s*(\[[A-Z]+#[0-9]+\])", line)
+        if m:
+            cur = {"id": m.group(1), "line": i + 1}
+            out.append(cur)
+            continue
+        if cur is None:
+            continue
+        f = re.match(r"^\s+(class|cites|claim)\s*:\s*(.*)$", line)
+        if f:
+            cur[f.group(1)] = f.group(2).strip()
+        elif line.startswith("#") or not line.strip():
+            cur = None
+    return out
+
+
+def _quoted_spans(base, lines):
+    """{line index: [(start, end)]} for the customer's words the figures file and the register quote."""
+    spans = {}
+    if base.endswith("brd-figures.md"):
+        section, fence = None, False
+        for i, line in enumerate(lines):
+            if line.startswith("### "):
+                section, fence = line[4:].strip(), False
+                continue
+            if line.startswith("## "):
+                section = None
+                continue
+            if section == "Text":
+                if line.startswith("```"):
+                    fence = not fence
+                    continue
+                if fence:
+                    spans.setdefault(i, []).append((0, len(line)))
+            elif section == "Flow" and line.lstrip().startswith("- "):
+                spans.setdefault(i, []).append((0, len(line)))
+            elif section == "Annotations" and line.lstrip().startswith("|"):
+                cells = _cells(line)
+                if cells and cells[0][2].strip() not in ("Says",) and not SEPARATOR_RE.match(line):
+                    spans.setdefault(i, []).append((cells[0][0], cells[0][1]))
+    if base.endswith("decisions.md"):
+        block = None
+        for i, line in enumerate(lines):
+            m = re.match(r"^(\s*)(argumentation|chosen)\s*:\s*(\|)?(.*)$", line)
+            if m:
+                block = len(m.group(1)) if m.group(3) else None
+                if not m.group(3) and m.group(2) == "chosen" and "outside the options:" in m.group(4):
+                    spans.setdefault(i, []).append((line.index("outside the options:"), len(line)))
+                continue
+            if block is not None:
+                indent = len(line) - len(line.lstrip())
+                if line.strip() and indent <= block:
+                    block = None
+                else:
+                    if not re.match(r"\s*(Reopened|Reverted|Withdrawn|Superseded) [0-9]{8}:", line):
+                        spans.setdefault(i, []).append((0, len(line)))
+    return spans
+
+
+def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(), captured_paths=(),
+              source_basenames=(), manifest=None, ref=None):
+    ref = reference_text() if ref is None else ref
+    names_rx = working_names(ref, date, source_basenames)
+    keys = [key] + [k for k in prereq_keys if k != key]
+    files = _files([bundle])
+    texts = {}
+    for name, full in files:
+        try:
+            with open(full, encoding="utf-8") as f:
+                texts[name] = f.read()
+        except (OSError, UnicodeDecodeError) as e:
+            raise Refused("cannot read " + name + " as UTF-8: " + e.__class__.__name__)
+    try:
+        bundle_names = {os.path.relpath(os.path.join(r, n), bundle) for r, _, ns in os.walk(bundle) for n in ns}
+    except OSError as e:
+        raise Refused("cannot list the bundle: " + e.__class__.__name__)
+    out = {"partitions": {}, "dead": [], "mismatch": [], "ambiguous": [], "unqualified": [],
+           "unreadable": [], "customer": [], "prerequisite_external": [], "discharged": 0}
+    part_of = {}
+    for name in texts:
+        k = _partition(os.path.basename(name), keys)
+        part_of[name] = k
+        if k is None:
+            out["dead"].append({"file": name, "line": 0, "token": name, "reason": "unkeyed bundle document"})
+        else:
+            out["partitions"].setdefault(k, []).append(name)
+    for k in copied_keys:
+        if k not in out["partitions"]:
+            out["dead"].append({"file": None, "line": 0, "token": k,
+                                "reason": "a prerequisite package copied in answers to no partition"})
+    # corpora, per partition
+    corpus = {}
+    for k, names in out["partitions"].items():
+        ids = {}
+        for name in names:
+            base = os.path.basename(name)[len(k) + 1:]
+            for cls, corpora in CORPUS_FILES.items():
+                if base in corpora:
+                    got, shaped = _corpus_ids(texts[name], base in TABLE_CORPORA)
+                    got = {g for g in got if g.startswith("[" + cls + "#")}
+                    ids.setdefault(cls, set()).update(got)
+                    if shaped and not got and not any(
+                            g.startswith(tuple("[" + c + "#" for c in CORPUS_FILES if base in CORPUS_FILES[c]))
+                            for g in _corpus_ids(texts[name], base in TABLE_CORPORA)[0]):
+                        out["unreadable"].append({"file": name, "class": cls})
+        corpus[k] = ids
+    # relations 1 and 3
+    for name, text in texts.items():
+        k = part_of[name]
+        if k is None:
+            continue
+        base = os.path.basename(name)
+        working = base[len(k) + 1:]
+        lines = text.split("\n")
+        rows = _table_kinds(lines)
+        quoted = _quoted_spans(working, lines)
+        whole = base in set(captured)
+        in_prereq = k != key
+        defect_table = working == "brd-defect-log.md"
+        for i, line in enumerate(lines):
+            row = rows.get(i)
+            locs, tails, _ = _locators(line, set(captured), list(captured_paths))
+
+            def placed(a):
+                if whole:
+                    return "captured-file"
+                if any(s <= a < e for s, e in locs):
+                    return "locator"
+                if any(s <= a < e for s, e in tails):
+                    return "locator-tail"
+                if any(s <= a < e for s, e in quoted.get(i, ())):
+                    return "quoted"
+                if row:
+                    kind, cells = row
+                    if len(cells) == (4 if kind == "inventory" else 5) and cells[1][0] <= a < cells[1][1]:
+                        if kind == "ledger" or not _image_anchor(cells[2][2]):
+                            return kind + "-text"
+                return None
+
+            discharged_cells = []
+            if row and row[0] == "ledger" and len(row[1]) == 5:
+                disp = row[1][2][2]
+                if disp.startswith("covered-by"):
+                    discharged_cells.append((row[1][0][0], row[1][0][1]))
+                if disp.startswith("superseded-by"):
+                    discharged_cells.append((row[1][2][0], row[1][2][1]))
+            if defect_table and line.lstrip().startswith("|") and not SEPARATOR_RE.match(line):
+                cells = _cells(line)
+                if len(cells) >= 4:
+                    discharged_cells.extend([(cells[2][0], cells[2][1]), (cells[3][0], cells[3][1])])
+            figures_rows = working == "brd-figures.md" and re.match(r"^\s*- \*\*Rows:\*\*", line)
+            for m in ID_RE.finditer(line):
+                cls, num = m.group(1), m.group(2)
+                if cls == "SR" or num == "n":
+                    continue
+                tok = m.group(0)
+                before = line[:m.start()]
+                q = QUALIFIED_RE.search(before)
+                if figures_rows or any(s <= m.start() < e for s, e in discharged_cells):
+                    out["discharged"] += 1
+                    continue
+                if q and q.group(1) != k:
+                    out["discharged"] += 1
+                    continue
+                field = re.search(r"(prerequisite|resolved-by)\s*:\s*$", before)
+                if field and not q:
+                    out["unqualified"].append({"file": name, "line": i + 1, "token": tok, "field": field.group(1)})
+                    continue
+                if tok in corpus.get(k, {}).get(cls, set()):
+                    continue
+                span = placed(m.start())
+                hit = {"file": name, "line": i + 1, "token": tok,
+                       "reason": "not in %s's %s corpus" % (k, cls)}
+                if span:
+                    hit["span"] = span
+                    out["customer"].append(hit)
+                else:
+                    out["dead"].append(hit)
+            for m in MD_TOKEN_RE.finditer(line):
+                tok = m.group(1)
+                if line[m.end():m.end() + 2].startswith(":") and line[m.end() + 1:m.end() + 2].isdigit():
+                    continue
+                shape1 = _partition(tok, keys) is not None
+                shape2 = any(rx.match(tok) for rx in names_rx)
+                if not (shape1 or shape2):
+                    continue
+                if manifest and base == manifest and not shape1:
+                    continue
+                if any(os.path.basename(b) == tok for b in bundle_names):
+                    continue
+                span = placed(m.start(1))
+                hit = {"file": name, "line": i + 1, "token": tok, "reason": "names no file in the bundle"}
+                if span:
+                    hit["span"] = span
+                    out["customer"].append(hit)
+                elif in_prereq:
+                    out["prerequisite_external"].append(hit)
+                else:
+                    out["dead"].append(hit)
+    # relation 2
+    for k, names in out["partitions"].items():
+        blocks = []
+        for name in names:
+            if os.path.basename(name)[len(k) + 1:] in ("code-grounding.md", "design-grounding.md"):
+                blocks.extend(dict(b, file=name) for b in _blocks(texts[name]))
+        by_id = {b["id"]: b for b in blocks}
+        for b in blocks:
+            if not b["id"].startswith("[DG#") or b.get("class", "").strip() != "4":
+                continue
+            cites = re.search(r"\[CG#[0-9]+\]", b.get("cites", ""))
+            reqs = set(REQ_RE.findall(b.get("claim", "")))
+            if not cites or cites.group(0) not in by_id:
+                out["dead"].append({"file": b["file"], "line": b["line"], "token": b.get("cites", ""),
+                                    "reason": "class-4 cites no [CG#n] in %s" % k})
+                continue
+            if len(reqs) != 1:
+                out["ambiguous"].append({"file": b["file"], "line": b["line"], "token": b["id"],
+                                         "requirements": sorted(reqs)})
+                continue
+            cited = by_id[cites.group(0)]
+            if next(iter(reqs)) not in REQ_RE.findall(cited.get("claim", "")):
+                out["mismatch"].append({"file": b["file"], "line": b["line"], "token": b["id"],
+                                        "cites": cites.group(0), "claim": b.get("claim", ""),
+                                        "cited_claim": cited.get("claim", "")})
+    return out
+
+
+def citations_selftest(check):
+    ref = reference_text()
+    rows = structured_rows(ref)
+    markers = [m for m, _ in STRUCTURED_FIELDS]
+    check("section 6.2's table has one row per structured field the script reads",
+          len(rows) == len(STRUCTURED_FIELDS) and all(sum(m in r for r in rows) == 1 for m in markers))
+    check("section 1.1's working filenames are read from the reference",
+          any(rx.match("decisions.md") for rx in working_names(ref, "20261029"))
+          and any(rx.match("self-review-20261029.md") for rx in working_names(ref, "20261029"))
+          and not any(rx.match("self-review-20261030.md") for rx in working_names(ref, "20261029")))
+
+    def run(files, **kw):
+        kw.setdefault("key", "K-1")
+        with tempfile.TemporaryDirectory() as d:
+            for n, t in files.items():
+                with open(os.path.join(d, n), "w", encoding="utf-8") as f:
+                    f.write(t)
+            return citations(d, ref=ref, **kw)
+
+    inv = "| id | text | source_anchor | defects |\n|---|---|---|---|\n| [BR#1] | a | 2. x | |\n"
+    grd = "- id:       [CG#1]\n  claim: [BR#1] — x\n  verdict: CONFIRMED\n\n- id: [CG#12]\n  claim: [BR#1] — y\n"
+    r = run({"K-1-brd-inventory.md": inv, "K-1-code-grounding.md": grd,
+             "K-1-prompt.md": "See [CG#1], [CG#12], [BR#1], [SR#3] and [BR#n]; [CG#99] is gone.\n"})
+    check("padded and unpadded ids parse; [SR#n] and placeholders are no hit; a missing id is dead",
+          [h["token"] for h in r["dead"]] == ["[CG#99]"])
+    r = run({"K-1-a.md": "x\n", "Z-a.md": "y\n"}, copied_keys=["P-2"], prereq_keys=["P-2", "P-3"])
+    check("an unkeyed document is dead, and so is a copied-in prerequisite with no partition",
+          sorted(h["reason"] for h in r["dead"]) == ["a prerequisite package copied in answers to no partition",
+                                                    "unkeyed bundle document"])
+    r = run({"K-1-code-grounding.md": grd, "P-2-code-grounding.md": "- id: [CG#7]\n  claim: [BR#1] — z\n",
+             "K-1-brd-inventory.md": inv, "P-2-brd-inventory.md": inv,
+             "K-1-prompt.md": "Ours [CG#7] dead; P-2 [CG#7] theirs; K-1 [CG#99] own and dead; Q-5 [CG#1].\n"},
+            prereq_keys=["P-2"], copied_keys=["P-2"])
+    check("a partition resolves its own ids; another BRD's qualified id is discharged; its own is resolved",
+          sorted(h["token"] for h in r["dead"]) == ["[CG#7]", "[CG#99]"] and r["discharged"] == 2)
+    r = run({"K-1-decisions.md": "id: [CD#1]\nconditional_on: P-2/[CD#2]\nprerequisite: [VD#3]\n",
+             "K-1-x.md": "resolved-by: K-1/[CD#9] and resolved-by: [CG#4]\n"})
+    check("structured fields: another key discharged, its own resolved, a bare one reported",
+          [h["token"] for h in r["dead"]] == ["[CD#9]"]
+          and sorted(h["token"] for h in r["unqualified"]) == ["[CG#4]", "[VD#3]"])
+    r = run({"K-1-decisions.md": "header only\n", "K-1-code-grounding.md": "- id: CG-1\n  claim: x\n"})
+    check("a header-only register is empty; a grounding file whose ids are malformed is unreadable",
+          [(h["file"], h["class"]) for h in r["unreadable"]] == [("K-1-code-grounding.md", "CG"),
+                                                                 ("K-1-code-grounding.md", "DG")])
+    r = run({"K-1-brief.md": "Their [BR#4].\n", "K-1-brd-inventory.md": inv}, captured=["K-1-brief.md"])
+    check("a hit in a captured file goes to the operator's ruling",
+          [h["span"] for h in r["customer"]] == ["captured-file"] and r["dead"] == [])
+    dg = ("- id: [CG#1]\n  claim: [BR#1] — x\n\n- id: [CG#2]\n  claim: [BR#2] — y\n\n"
+          "- id: [DG#1]\n  class: 4\n  cites: [CG#1]\n  claim: the export, per [BR#1], runs\n\n"
+          "- id: [DG#2]\n  class: 4\n  cites: [CG#2]\n  claim: [BR#1] — z\n\n"
+          "- id: [DG#3]\n  class: 4\n  cites: [CG#9]\n  claim: [BR#1] — w\n\n"
+          "- id: [DG#4]\n  class: 4\n  cites: [CG#1]\n  claim: [BR#1] and [BR#2]\n")
+    r = run({"K-1-design-grounding.md": dg})
+    check("relation 2: a match passes, a mismatch, a dead cites and a two-requirement claim are reported",
+          [h["token"] for h in r["mismatch"]] == ["[DG#2]"] and [h["token"] for h in r["ambiguous"]] == ["[DG#4]"]
+          and any("class-4" in h["reason"] for h in r["dead"]))
+    r = run({"K-1-decisions.md": "id: [CD#1]\n",
+             "K-1-prompt.md": "Open K-1-decisions.md, not K-1-gone.md; not self-review-20261029.md; "
+                              "evidence docs/api.md:12 and README.md:12; plain notes.md.\n"}, date="20261029")
+    check("relation 3: a present bundled name passes; an absent or excluded one is dead; locators are no hit",
+          sorted(h["token"] for h in r["dead"]) == ["K-1-gone.md", "self-review-20261029.md"])
+    r = run({"K-1-manifest.md": "brd/source/a.md → K-1-a.md — linked as `notes.md`\n", "K-1-a.md": "x\n"},
+            manifest="K-1-manifest.md", source_basenames=["notes.md"])
+    check("a target the manifest quotes as written is no hit", r["dead"] == [])
+    led = ("| id | text | disposition | defects | evidence |\n|---|---|---|---|---|\n"
+           "| [BR#9] | x | covered-by: OTHER-1 | | |\n| [BR#1] | y | superseded-by: [BR#8] | | |\n")
+    r = run({"K-1-coverage-ledger.md": led, "K-1-brd-inventory.md": inv,
+             "K-1-brd-figures.md": "## source/i.png\n\n- **Rows:** yields [BR#14]; illustrates [BR#6]\n",
+             "K-1-brd-defect-log.md": "| id | class | raised on | names | reason | resolution |\n|---|---|---|---|---|---|\n"
+                                      "| [DEF#1] | duplicate | [BR#30] | [BR#31] | r | open |\n"})
+    check("orphan rows, superseded-by, the figures Rows line and the parent defect log's rows are discharged",
+          r["dead"] == [] and r["discharged"] == 6)
+    r = run({"K-1-brd-figures.md": "## source/i.png\n\n### Text\n\n```text\nsee [BR#77]\n```\n",
+             "K-1-decisions.md": "id: [CD#1]\nargumentation: |\n  per [BR#78]\n"})
+    check("an id inside the figures file's Text or a decision's argumentation goes to the ruling",
+          sorted(h["span"] for h in r["customer"]) == ["quoted", "quoted"] and r["dead"] == [])
+    r = run({"P-2-x.md": "see P-2-gone.md\n"}, prereq_keys=["P-2"], copied_keys=["P-2"])
+    check("a copied prerequisite's reference to a file this bundle lacks is named, never a stop",
+          r["dead"] == [] and [h["token"] for h in r["prerequisite_external"]] == ["P-2-gone.md"])
+
+
 def selftest():
     cases, failed = 0, 0
 
@@ -484,6 +950,7 @@ def selftest():
     fam_here = family()
     check("this plugin's family is found", "product-workflows" in fam_here["names"]
           and "brd-package" in fam_here["commands"] and "brd-reader" in fam_here["agents"])
+    citations_selftest(check)
     print("SELFTEST " + ("PASS" if not failed else "FAIL") + " (%d cases, %d failed)" % (cases, failed))
     return 0 if not failed else 1
 
@@ -497,14 +964,28 @@ def main(argv=None):
     t.add_argument("--prereq-key", action="append", default=[])
     t.add_argument("--captured", action="append", default=[])
     t.add_argument("--captured-path", action="append", default=[])
+    c = sub.add_parser("citations")
+    c.add_argument("bundle")
+    c.add_argument("--key", required=True)
+    c.add_argument("--prereq-key", action="append", default=[])
+    c.add_argument("--copied-key", action="append", default=[])
+    c.add_argument("--date")
+    c.add_argument("--captured", action="append", default=[])
+    c.add_argument("--captured-path", action="append", default=[])
+    c.add_argument("--source-basename", action="append", default=[])
+    c.add_argument("--manifest")
     a = ap.parse_args(argv)
     if a.selftest:
         return selftest()
-    if a.cmd != "tokens":
+    if a.cmd not in ("tokens", "citations"):
         ap.print_usage(sys.stderr)
         return 2
     try:
-        result = scan(a.paths, a.prereq_key, a.captured, a.captured_path)
+        if a.cmd == "citations":
+            result = citations(a.bundle, a.key, a.prereq_key, a.copied_key, a.date, a.captured,
+                               a.captured_path, a.source_basename, a.manifest)
+        else:
+            result = scan(a.paths, a.prereq_key, a.captured, a.captured_path)
     except Refused as e:
         print("bundle-scan.py: " + str(e), file=sys.stderr)
         return 2

@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.61.0] — 2026-10-29
+
+Needs nothing newer than `workflows-core` 1.68.0 — to-fix D21, part 1 of 2 (plan `docs/superpowers/plans/2026-10-29-bundle-citation-check.md`).
+
+### Added
+- **`bundle-scan.py citations`, `/brd-package`'s citation-resolution check (Phase 8 rule 8, `bundle-packaging.md` §6)**, so no run writes its own. Documents partition on the key each bundled name begins with, resolved against the run's key set; each partition's identifier files — the inventory, the defect log, the grounding files, the decision register and the code-defect log — are read by their own layouts, padding tolerated, and record-shaped content that yields no id is reported unreadable rather than as an empty corpus. It checks every identifier reference within its partition (another BRD's qualified id, a §6.2 structured field, `[SR#n]` and a placeholder excepted), every class-4 `[DG#n]` against the `[CG#n]` it cites, and every bare filename that claims to be a bundle document. A hit in the customer's own words or naming — a captured file, an inventory or ledger text cell, a locator, the figures file's quoted text, a decision's quoted argument — is reported for the operator's ruling, as the plugin-free scan's are. It reads §1.1's working filenames and §6.2's structured fields from the reference each run, and its selftest fails CI where §6.2's table names a field the script does not read. On the 2026-10-12 `PRD-BOOK-2-01` bundle it reports nothing, and catches a deliberately broken id and filename there.
+
 ## [3.60.0] — 2026-10-29
 
 Take with `workflows-core` 1.68.0 and `dev-workflows` 4.50.0 — to-fix D19 (design `docs/superpowers/specs/2026-10-28-update-spec-design.md`).

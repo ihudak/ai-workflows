@@ -1631,6 +1631,31 @@ or not that line is there.
    hunts tokens a reader **resolves to the wrong thing**, which is the worse failure and needs the
    bundle's own corpus to detect.
 
+   **Run it with the scanner, as rule 7 runs its scan**, never with code of your own:
+   ```
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" citations <the working directory> --key <BRD-KEY> [--prereq-key <KEY>]… [--copied-key <KEY>]… --date <YYYYMMDD> [--captured <bundled name>]… [--captured-path <path relative to brd/>]… [--source-basename <name>]… --manifest <the manifest's bundled name>
+   ```
+   `--prereq-key` for every prerequisite Phase 2 carried and `--copied-key` for each whose package
+   rule 5 copied in — §6.1's vacuity guard reads that second set, and nothing derives either from a
+   filename; `--date` the run's stamp; `--captured` and `--captured-path` as rule 7 passes them;
+   `--source-basename` for each captured markdown file's basename, which relation 3's placeholders
+   resolve against. It reads §6.1's corpora by their owners' layouts, §1.1's working filenames and
+   §6.2's structured fields from `bundle-packaging.md` itself, and prints one line of JSON. Any exit
+   other than 0 stops the run, naming its stderr. Read it by field: every `dead` entry is a
+   `BRD_PACKAGE_DEAD_CITATION` below, an unkeyed document and a copied-in prerequisite answering to no
+   partition among them; every `mismatch` a `BRD_PACKAGE_CITATION_MISMATCH`; every `unreadable` a
+   `BRD_PACKAGE_CORPUS_UNREADABLE`; each `customer` entry a hit inside the customer's own words or
+   naming, put to the operator's ruling as the paragraph below on that says, its `span` saying where
+   (`quoted` is the figures file's *Text*, *Says* or *Flow*, or a `[CD#n]`'s quoted `argumentation`
+   or `chosen`); each `ambiguous` entry a class-4 `[DG#n]` whose claim names more than one
+   requirement, and each `unqualified` entry a bare `prerequisite` or `resolved-by` value — both
+   reported in the Final report and never resolved, as §6.2 says; and each `prerequisite_external`
+   entry a reference inside a copied prerequisite's document to a file this bundle does not carry,
+   named in the manifest and the Final report as the paragraph below on that says. A `dead` entry
+   inside a span of §6.3's that position alone cannot place — a customer-derived locator in prose the
+   scanner did not match, a customer's answer quoted outside the register's fields — is the
+   customer's, not a stop: read each `dead` entry's line before stopping, as rule 7 reads a `none` hit.
+
    A reference that resolves to nothing — an unresolved id or filename (§6.2 relations 1 and 3), a
    bundle document whose filename carries no `<BRD-KEY>` and therefore has no partition at all, or a
    prerequisite key **whose package this run copied in** that no partition in the bundle answers to,

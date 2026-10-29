@@ -213,11 +213,12 @@ jobs:
         run: python3 plugins/product-workflows/scripts/ledger-evidence.py --selftest
 
       - name: Self-test the bundle scanner
-        # /product-workflows:brd-package runs its plugin-free scan with it, over the prompt, the
-        # delivery note and the bundle. Its failure modes are silent: a class it stops matching ships a
-        # plugin-internal token to the customer, and a span it misplaces either stops a correct package
-        # or puts the plugin's own words to the operator as the customer's. Fixtures are built at run
-        # time.
+        # /product-workflows:brd-package runs its plugin-free scan (tokens) and its citation check
+        # (citations) with it. Their failure modes are silent: a class it stops matching ships a
+        # plugin-internal token to the customer, a span it misplaces stops a correct package or puts
+        # the plugin's own words to the operator as the customer's, and a corpus it misparses reports
+        # every reference dead or none. The selftest also holds the script's structured fields equal
+        # to bundle-packaging.md section 6.2's table. Fixtures are built at run time.
         run: python3 plugins/product-workflows/scripts/bundle-scan.py --selftest
 
       - name: Self-test the security register

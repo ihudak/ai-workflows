@@ -172,7 +172,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   clean by `/prd-ground`; the repo→SHA table is read from that run's `baselines.md`, and the three
   pin-verification commands are handed to the customer's reviewer to run rather than re-run here.
 - **`python3`** — for one bundled script, standard library only: `scripts/bundle-scan.py`, which runs
-  the plugin-free scan in Phases 6, 7 and 8. Without it the scan does not run, and the run stops
+  the plugin-free scan in Phases 6, 7 and 8 and the citation-resolution check in Phase 8. Without it the scan does not run, and the run stops
   rather than read no output as a clean scan.
 
 ## What it produces
@@ -389,7 +389,7 @@ attack.
   Once you merge that pull request, [`/brd-reconcile`](brd-reconcile.md) finds the review without a
   path; on the archive route you pass the path of the file that came back. The prompt itself names
   no route, since it is handed on to whoever does the review, so the note is where this is said.
-- **Phase 8 — the citation-resolution check.** Run over every document in the assembled bundle,
+- **Phase 8 — the citation-resolution check**, by `scripts/bundle-scan.py citations`, so every run checks the same way: it reads each package's identifier files by their own layouts and reports every hit by kind, a hit in your customer's own words put to your ruling as the plugin-free scan's are. Run over every document in the assembled bundle,
   after the plugin-free scan, because both of its inputs — the identifier corpus and the set of
   bundle filenames — are facts about the bundle only once it is assembled. Three relations: every
   identifier reference resolves inside its own partition's corpus for its class, unless it carries
