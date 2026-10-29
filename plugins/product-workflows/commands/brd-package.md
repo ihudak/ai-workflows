@@ -596,12 +596,13 @@ returned answer (D14, `decision-register-format.md` §1) — so a `[CD#n]` on fi
 review actually came back *and* was confirmed, which is exactly the question step 2 asks. A
 prerequisite that was packaged and sent, or whose review is sitting unreconciled in somebody's
 inbox, reads *not customer-reviewed* here, correctly: nothing about it is frozen yet, and every
-position resting on it can still move.
+position and assumption resting on it can still move.
 
 Carry, for each prerequisite: its key, whether it resolved, whether its decisions are
-customer-reviewed, whether a package of its own was found, and **every decision in this BRD's
-register carrying `conditional_on: <PREREQ-KEY>/<decision-id>`** (`decision-register-format.md` §5).
-Those are the positions D20 obliges the prompt and the delivery note to name, and they are found
+customer-reviewed, whether a package of its own was found, and **every position reading `open`, `decided` or `reopened` and every open
+assumption in this BRD's register carrying `conditional_on: <PREREQ-KEY>/<decision-id>`**
+(`decision-register-format.md` §5, §7). Those are the records D20 obliges the prompt and the
+delivery note to name, and they are found
 mechanically by the field rather than by reading — which is the whole point of the field existing.
 
 ---
@@ -950,7 +951,7 @@ whose eleven are not there once each and in order.
 | 5 | The single most important claim to verify first | the register, the findings and the held `[C]` entries, by the rule below |
 | 6 | Review scope | `coverage-ledger.md` dispositions, `brd/brd-inventory.md`, and every `in-scope` `[CDF#n]` |
 | 7 | The decisions the customer must make | `interview/customer-questions.md`, every open `[AS#n]`, and every `escalated-to-customer` `[SR#n]` |
-| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position (D20), and every `conditional` `[CDF#n]` |
+| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position and open `conditional_on` assumption (D20), and every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its name, and the inlined schema | the D13 rule, the `Package reviewed` line, and `render-schema` below |
 | 11 | What this session cannot settle | the ledger, the prerequisites, every `out-of-scope` `[CDF#n]`, and the review's own limits |
@@ -977,7 +978,7 @@ sub-heading rather than by reading the part's prose. Each is a `###` heading ins
 |---|---|---|
 | 6 | `Code defects we will repair` | every `in-scope` `[CDF#n]` |
 | 7 | `Open assumptions` | every open `[AS#n]` |
-| 8 | `Positions that could still move` | every live position — `open`, `decided` or `reopened` — carrying `conditional_on` a prerequisite not yet customer-reviewed |
+| 8 | `Positions and assumptions that could still move` | every live position — `open`, `decided` or `reopened` — and every open assumption, carrying `conditional_on` a prerequisite not yet customer-reviewed |
 | 8 | `Code defects whose scope is unsettled` | every `conditional` `[CDF#n]` |
 | 9 | `Open assumptions` | every open `[AS#n]` |
 | 11 | `Code defects we will not repair` | every `out-of-scope` `[CDF#n]` |
@@ -1113,10 +1114,14 @@ account of why no evidence exists, and its `argumentation`.
 customer-reviewed**, named, with what is unsettled about it; and every position in this package
 carrying `conditional_on` one of them, named by its `[VD#n]` and its `statement` — every **live** one,
 reading `open`, `decided` or `reopened`: a record reading `superseded` or `withdrawn` is no longer a
-position this package takes, and is not among them. A package may ship
+position this package takes, and is not among them. **And every open `[AS#n]` carrying
+`conditional_on` one of them**, named by its id and its `statement`: an assumption can rest on a
+prerequisite's decision exactly as a position can (`decision-register-format.md` §7), and parts 7
+and 9, which carry it too, ask the customer to confirm it and to attack it without saying it could
+move. A package may ship
 while a prerequisite is unreviewed — **loudly**, which is what this part is. Say in one line what
-the customer's own review should then do about it: mark the affected approvals in their section 3 as
-contingent, and **not** list the prerequisite in their section 10 as a blocker, because it is not
+the customer's own review should then do about it: mark the affected approvals in their section 3,
+and the affected assumptions they accept in their section 8, as contingent, and **not** list the prerequisite in their section 10 as a blocker, because it is not
 blocking, it is unsettled, and the two get very different treatment on the delivery side. A package
 with no prerequisite at all says so explicitly — a reviewer who was told nothing could move writes
 no contingent rows, and their absence then means what it says.
@@ -1413,7 +1418,7 @@ sent. The *Assemble the bundle* phase does not copy it in, and the manifest does
 
 It states only: which BRD this is; **how the customer gets the bundle**, shaped by the route just settled (`bundle-packaging.md` §4) — on the **repository** route, the repository to pull, the committed `bundle-<YYYYMMDD>/` directory by path, and the instruction to open the prompt file there and paste it; on the **archive** route, what is attached. This is the one document that names a delivery route, and the only one that may: it is written to a customer whose situation the operator knows, where the prompt is handed on to a reader the run cannot see (§5); which repositories, at which commits — one clause per repository, written ``the `<repo>` repository at commit `<commit>` ``, `<repo>` the repository's slug exactly as its baselines entry records it — never a path — and `<commit>` that entry's commit, whole or abbreviated to seven characters or more, which *Assemble the bundle* rule 9 pairs with the bundle's baselines (`bundle-packaging.md` §7.1, relation 3); **which
 file is the prompt** — the one file to paste; **which file comes back** — the one file to send,
-named exactly, and, on the **repository** route, where it goes: committed into the folder that holds `bundle-<YYYYMMDD>/`, under exactly that name, on a branch of the customer's own with a pull request against the default branch, changing nothing else — a correction the customer wants made to the package goes in the review's section 12, never into the bundle — or, where they cannot push, sent back instead (`bundle-packaging.md` §5, *The review comes back the way the bundle went out*); any prerequisite whose decisions are still provisional and that positions resting on
+named exactly, and, on the **repository** route, where it goes: committed into the folder that holds `bundle-<YYYYMMDD>/`, under exactly that name, on a branch of the customer's own with a pull request against the default branch, changing nothing else — a correction the customer wants made to the package goes in the review's section 12, never into the bundle — or, where they cannot push, sent back instead (`bundle-packaging.md` §5, *The review comes back the way the bundle went out*); any prerequisite whose decisions are still provisional and that positions and assumptions resting on
 it could move (D20); and anything else that must not sit buried inside a document. The two bolded
 items are bolded in the rendered note too — the repository route's return instruction is part of that item and is not trimmed either — because the single most common failure of this loop is a
 reviewer who reads the documents, forms a view, and writes it into an email of their own devising —

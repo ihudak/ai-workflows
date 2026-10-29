@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.63.0] — 2026-10-29
+
+Needs nothing newer than `workflows-core` 1.68.0 — to-fix D33.
+
+### Changed
+- **`/brd-package`'s part 8, *What could still move*, lists every open assumption resting on a prerequisite not yet customer-reviewed, beside the positions.** An `[AS#n]` can carry `conditional_on` exactly as a `[VD#n]` can (`decision-register-format.md` §7), and parts 7 and 9 put it to the customer to confirm and to attack without saying it could move — so a confirmation of it read as unconditional. Its list's sub-heading is now *Positions and assumptions that could still move*, Phase 2 carries those assumptions with the positions, and the reviewer is told to mark the affected assumptions they accept, in their review's section 8, as contingent — beside the marking `accepted`, never in its place — as they mark approvals in section 3; the review schema says the same. `bundle-scan.py sets` compares that list's `[VD#n]` and `[AS#n]` both, a position while it is live and an assumption while it is open.
+
 ## [3.62.0] — 2026-10-29
 
 Needs nothing newer than `workflows-core` 1.68.0 — to-fix D21, part 2 of 2 (plan `docs/superpowers/plans/2026-10-29-bundle-set-check.md`), which closes it.

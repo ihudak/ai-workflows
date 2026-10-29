@@ -363,8 +363,8 @@ It states only:
 - **which file is the prompt** — the one file to paste
 - **which file comes back** — the one file to send, named exactly, and, on the repository route,
   where to commit it (§5, *The review comes back the way the bundle went out*)
-- any prerequisite whose decisions are still provisional, and that positions resting on it could
-  move (D20)
+- any prerequisite whose decisions are still provisional, and that positions and assumptions resting
+  on it could move (D20)
 - anything else that must not sit buried inside a document
 
 **It is not a per-file table.** The manifest inside the bundle covers per-file detail, and
@@ -960,7 +960,7 @@ somebody already paid for.
 **Relation 1 — a part that enumerates a set of identified records names exactly that set.** Its scope
 is the prompt parts whose source is a set of records carrying identifiers, which render them as an
 enumeration, **and whose source is itself in the bundle**: the open assumptions, the conditional
-positions and conditional defect entries, the in-scope defect entries the review scope part names by
+positions, assumptions and defect entries, the in-scope defect entries the review scope part names by
 id, and the out-of-scope defect entries. **For each part in that
 scope**, the identifiers it names are exactly those its own stated filter selects from its source
 file, both directions — an identifier in the part and not in the filtered source is an invention, one
@@ -1086,7 +1086,7 @@ it, itemised here because a narrowed rule is a deletion
 (`workflows-core:instruction-file-maintenance`). What §2.1 governs is a resolution over records,
 where an empty side means a read failed. Here one side is a **restatement**, and a part that
 legitimately has nothing says so: both sides empty is the ordinary pass, and reading it as a failure
-would refuse every package with no conditional position or no out-of-scope defect. What stays
+would refuse every package with no conditional position or assumption, or no out-of-scope defect. What stays
 failing is the asymmetric case — a restatement carrying members over a source that yielded none —
 because that is a read failure wearing the shape of a discrepancy.
 
