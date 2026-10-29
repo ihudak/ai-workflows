@@ -1534,7 +1534,7 @@ If the argument starts with `@`, treat it as a path to a markdown file. Resolve 
 
 `/document` (direct mode) is the **one-shot doc-editing** workflow — minor edits, formatting, small updates to existing pages, and single-file additions where the content comes from the user's description alone. It is the right tool when:
 - the change is small and the content is already in the user's head or the file, **not** scattered across PRD sections and the diffs behind them
-- no tests, no branch (still true — the specs-repo preflight creates none, `workflows-core:specs-repo-git` §2.2), no code review, and no commit of the doc edit are warranted
+- no tests, no branch (still true — the specs-repo preflight creates no deliverable branch, `workflows-core:specs-repo-git` §2.2; only, in session-branch mode, its flush and the terminal commit may create `session/<identity>`, §8.2, which holds no deliverable and which the checkout never stands on), no code review, and no commit of the doc edit are warranted
 
 For net-new documentation assembled from a PRD folder plus the diffs its implementation record names, use keyed mode (above). For writing child Epic drafts from a Product Requirements Document, use `/product-workflows:epics`.
 
@@ -1963,7 +1963,7 @@ directory, where it is not the specs repository; no user name is ever written (�
 
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - ALWAYS run Phase 3.5 (style check) after editing — `docs-style-checker` always also runs `prose-style-checker` — complementary beside a repo linter that produced a result, FALLBACK where every detected rung failed, SOLE where the repository configures none (its step 5); never skip style on tool-absence judgement
-- NEVER create a git branch — this mode never branches. `specs-preflight` may switch `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2); it creates none.
+- NEVER create a git branch for the work — this mode never branches its edits. `specs-preflight` may switch `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2); it creates no deliverable branch, and in session-branch mode its flush and the terminal `commit-artifacts` may create `session/<identity>` (`workflows-core:specs-repo-git` §8.2), which holds session files and no deliverable and which the checkout never stands on (§8.1).
 - NEVER run tests (this command has no test phase)
 - NEVER invoke Opus (no planning agent, no review agent — docs edits are always SIMPLE or MODERATE), unless `run_flags.enforced_model` names one (§10)
 - NEVER commit the doc edits, or anything else in a docs/code repo or the current working directory, where it is not the specs repository — the user manages git manually there. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1).

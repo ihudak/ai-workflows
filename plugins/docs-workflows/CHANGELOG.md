@@ -7,11 +7,12 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.29.0] — 2026-10-29
 
-Take with `workflows-core` 1.69.0 — to-fix SEC-G6.
+Take with `workflows-core` 1.69.0 — to-fix SEC-G6 and D25.
 
 ### Fixed
 - **`toolchain-preflight`'s Vale form for a configuration with no `StylesPath` makes its directory in the session's scratchpad**, where the session names one, so `docs-style-checker`, which runs it and reads no `run-flags`, no longer lands it in `/tmp`. `/document` says its temporary files sit there, as `workflows-core` 1.69.0's `run-flags` §7 puts them.
 - **`/docs-serve` keeps its server log in the system's temporary directory, and says why**: the server outlives the session, so its log is no temporary file of the run, and §7's exception is what keeps it out of the session's scratchpad.
+- **`/docs-init`, `/docs-audit`, `/docs-brand`, `/document` and `/release-notes` no longer say the specs-repo preflight, or the command, creates no branch in `$SPECS_PATH`.** In session-branch mode — a specs repository whose default branch takes no push — the preflight's flush and the terminal `commit-artifacts` create `session/<identity>` (`workflows-core:specs-repo-git` §8.2), which holds session files and no deliverable and which the checkout never stands on. Each sentence now says the command creates no *deliverable* branch and names that exception, as `/ready` has since `dev-workflows` 4.43.0; `/docs-init`'s, `/docs-audit`'s and `/docs-brand`'s *"This family creates no branch in `$SPECS_PATH`"*, which `/release-notes`' own `prd/` handoff branch also contradicted, now speaks for the command alone. `/release-notes`' docs page says the same.
 
 ## [1.28.0] — 2026-10-27
 
