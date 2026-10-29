@@ -18,6 +18,7 @@
 | promote the team's decisions to organisation ADRs | [`/promote-decisions`](commands/promote-decisions.md) |
 | break a PRD into Epics | [`/epics`](commands/epics.md) |
 | write a specification | [`/specify`](commands/specify.md) |
+| revise a merged specification, keeping its IDs | [`/update-spec`](commands/update-spec.md) |
 | price a requirement set — work packages, hours by role, a range with its evidence | [`/prd-proposal`](commands/prd-proposal.md) |
 | roll a BRD's priced slices into one programme proposal, with its coverage computed from the ledger | [`/brd-proposal`](commands/brd-proposal.md) |
 | read an effort proposal, or know what one guarantees before sending it | [Effort proposals](reference/proposal-format.md) |
@@ -43,6 +44,7 @@ Four pages orient you before you touch a command: [Getting started](getting-star
 - [`/prd-proposal`](commands/prd-proposal.md) — author an effort proposal for one PRD folder: work packages, hours by package and role, and a range whose width comes from per-package confidence, with every cost driver citing a record on disk.
 - [`/specify`](commands/specify.md) — author an org-standard specification for one item through a relentless grill.
 - [`/update-prd`](commands/update-prd.md) — refresh an existing Product Requirements Document.
+- [`/update-spec`](commands/update-spec.md) — revise a merged specification in place: what moved upstream, what is wrong, and the notes other commands left, its IDs kept.
 
 ## Reference
 

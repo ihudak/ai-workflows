@@ -82,7 +82,8 @@ working tree is at it, in the working tree, since no commit holds what that scan
 ## Cross-cutting checks
 
 - **Traceability (BLOCKER on gap):** every in-scope item and user story (`[Uxx]`) in the specification
-  appears in the design's **Requirements coverage** — addressed or explicitly deferred with a reason.
+  appears in the design's **Requirements coverage** — addressed or explicitly deferred with a reason —
+  live items only — an item whose heading ends ` — Superseded by …` or ` — Withdrawn …`, and every item nested under it, is not a requirement; it keeps its number, and its text is read as context (the specification format's *Live items* rule); a coverage row for one is a `MINOR`, its replacement the item to trace.
   An in-scope requirement with no coverage → `BLOCKER`.
 - **Decision-completeness (BLOCKER):** any unresolved `- [ ]` open question in `design.md`. The design
   is the last gate before code.

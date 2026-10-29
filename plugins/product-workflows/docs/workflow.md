@@ -31,6 +31,7 @@ flowchart TD
     subgraph PE["PE — breakdown & specification"]
         epics["/epics"]:::prod
         specify["/specify"]:::prod
+        updatespec["/update-spec"]:::prod
         conformanceprd["/dev-workflows:conformance — the PRD, every Epic merged"]:::dev
     end
     subgraph EST["PM — effort proposals (optional, gates nothing on the build ladder)"]
@@ -55,7 +56,11 @@ flowchart TD
     epics -->|epic.md| specify
     createvi -->|prd.md| specify
     updatevi -.->|updated prd.md — existing ARD| createard
-    updatevi -.->|updated prd.md — existing specification| specify
+    updatevi -.->|updated prd.md — existing specification| updatespec
+    specify -.->|merged specification.md — revise in place| updatespec
+    updatespec -->|"revised specification.md — IDs kept"| design
+    updatespec -.->|"superseded or withdrawn IDs an Epic covers"| epics
+    design -.->|"Engineering review notes"| updatespec
     updatevi -.->|updated prd.md — existing Epics| epics
     specify -.->|PRD-level specification.md| epics
     specify -->|specification.md| design
@@ -65,7 +70,7 @@ flowchart TD
     implement -->|"each Epic — the Dev"| conformanceepic
     conformanceepic -.->|"fix the code — a follow-up"| implement
     conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd
-    conformanceprd -.->|"amend the document"| specify
+    conformanceprd -.->|"amend the document"| updatespec
     conformanceprd -.->|"amend the document"| epics
     conformanceprd -.->|"amend the PRD"| updatevi
     brdsplitroot -->|"each confirmed slice — claims are its [BR#n] rows"| groundbrd
@@ -114,7 +119,7 @@ Five nodes in the diagram are not this plugin's commands and are drawn for conti
 
 The diagram above shows where each command sits in the pipeline; [Roles and phases](roles-and-phases.md) says what each role is accountable for and what it hands over at each seam.
 
-**None of this plugin's own sixteen commands is known to collide with a Claude Code built-in today**, so every one of them works either way, bare or `product-workflows:`-qualified. Of the cross-plugin commands this diagram draws for continuity, `/docs-workflows:release-notes` collides, and `/dev-workflows:design` does on the accounts Claude Code's own `/design` is switched on for; both are qualified, as is every cross-plugin node, and they ship in the companion `docs-workflows` and `dev-workflows` plugins.
+**None of this plugin's own seventeen commands is known to collide with a Claude Code built-in today**, so every one of them works either way, bare or `product-workflows:`-qualified. Of the cross-plugin commands this diagram draws for continuity, `/docs-workflows:release-notes` collides, and `/dev-workflows:design` does on the accounts Claude Code's own `/design` is switched on for; both are qualified, as is every cross-plugin node, and they ship in the companion `docs-workflows` and `dev-workflows` plugins.
 
 ## Architecture knowledge base
 
@@ -143,6 +148,7 @@ flowchart TD
     org -->|"organisation root"| grounder
     grounder -.->|"references + challenges"| createard
     grounder -.->|"references + challenges"| specify["/specify"]:::prod
+    grounder -.->|"references + challenges — the changed items"| updatespec["/update-spec"]:::prod
     grounder -.->|"references + challenges"| design["/dev-workflows:design"]:::dev
     createard -.->|"Supersedes — applied by the next harvest"| harvest
 

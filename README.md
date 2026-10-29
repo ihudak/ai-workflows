@@ -9,7 +9,7 @@ Ivan Gudak's open-source Claude Code plugin marketplace, **Shipwright**: plugins
 | Plugin | Description |
 |--------|-------------|
 | [dev-workflows](plugins/dev-workflows/) | Six slash commands: design → implementation → `/conformance`, readiness, upgrade and vuln fixing, with Opus-backed review gates. Needs `workflows-core`. [Docs](plugins/dev-workflows/docs/README.md) |
-| [product-workflows](plugins/product-workflows/) | Sixteen slash commands: idea → PRD → ARD → spec, BRD-to-PRD route, effort proposals, decision harvest/promotion. Needs `workflows-core`, `prose-style`. [Docs](plugins/product-workflows/docs/README.md) |
+| [product-workflows](plugins/product-workflows/) | Seventeen commands: idea → PRD → ARD → spec, BRD-to-PRD route, effort proposals, decision harvest/promotion. Needs `workflows-core`, `prose-style`. [Docs](plugins/product-workflows/docs/README.md) |
 | [guideline-reviewers](plugins/guideline-reviewers/) | Two standalone commands: `/api-guideline-reviewer` reviews OpenAPI specs against bundled REST/IAM guidance; `/guideline-reviewer` reviews code/UI against bundled design-system and a11y standards. |
 | [workflows-core](plugins/workflows-core/) | Shared foundation for the workflow plugin family — addressing, git handoff, model routing, emission — plus seven utility commands. [Docs](plugins/workflows-core/docs/README.md) |
 | [docs-workflows](plugins/docs-workflows/) | Seven commands: scaffold, brand and serve a docs portal, audit its coverage, write pages, profile, release notes. Needs `workflows-core`, `prose-style`. [Docs](plugins/docs-workflows/docs/README.md) |

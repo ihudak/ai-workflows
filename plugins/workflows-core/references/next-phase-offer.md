@@ -202,7 +202,7 @@ array carries every option.
 - `/product-workflows:create-prd <ADDRESS>`:
   `/docs-workflows:release-notes <PRD>` (PM — draft the release note; recommended clear next step); hand to PA
   *(optional)* → `/product-workflows:create-ard <PRD>`; or hand to PE → `/product-workflows:epics <PRD>` (or `/product-workflows:specify <PRD>`).
-- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:specify <PRD>` (PE).
+- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:update-spec <PRD>` (PE) — the revision of an existing specification, which `/product-workflows:specify` would rewrite from scratch.
 <!-- /part -->
 
 <!-- part: brd -->
@@ -320,6 +320,11 @@ array carries every option.
   or written and never committed), and with `require-on-main`'s stop naming the branch or pull
   request where a plugin branch carries it.
 - `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
+- `/product-workflows:update-spec <KEY>` (a merged specification revised in place) → for each design it
+  names as citing a superseded or withdrawn ID, Dev → `/dev-workflows:design <ITS-KEY>` to revise it;
+  where it names an Epic's `## Covers` or the PRD's `_coverage.md`, `/product-workflows:epics <PRD>` to
+  refine; where it names nothing, the next step `/product-workflows:specify` gives a specification at
+  the same altitude.
 <!-- /part -->
 
 <!-- part: epics-precondition -->

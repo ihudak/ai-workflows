@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.60.0] — 2026-10-29
+
+Take with `workflows-core` 1.68.0 and `dev-workflows` 4.50.0 — to-fix D19 (design `docs/superpowers/specs/2026-10-28-update-spec-design.md`).
+
+### Added
+- **`/update-spec`, which revises a merged specification in place.** It starts only from the copy on the default branch, stops where a change no merge has carried is pending on it — in the checkout (an interrupted `/specify` draft, a hand edit) or on an unmerged `spec/`, `design/` or `conformance/` branch that changed it since it forked, where `/design`, `/implement` and `/conformance` hand off their notes — and on a `Published: yes` one, resolves the applicable ARD as `/specify` does, and grills only the items of a change list you confirm. The list comes from three places: what moved upstream since the specification's new `inputs_at` baseline (the PRD, the ARDs, `epic.md`, the grounding files and, on the BRD route, `decisions.md`, diffed by git), your correction, and the notes `/design`, `/implement` and `/conformance` left in it. IDs never move: a wording fix keeps its ID, a change of meaning takes a new ID and marks the old one `Superseded by` it, and a removal is marked `Withdrawn` in place. `spec-reviewer` then reviews the whole result against the archived base and the change list, and the run names every design and Epic that cites a superseded or withdrawn ID, offering `/dev-workflows:design` or `/epics` for each. A specification written before this release has a null baseline: its first update cannot tell what moved upstream, says so, and records the baseline for the next one.
+
+### Changed
+- **`specification-format` gains `inputs_at`, the two markers and the live-items rule**: the default-branch commit a writing run read its inputs at; ` — Superseded by [ACnn], <date>` and ` — Withdrawn <date>: <reason>` on an item's heading; and the rule that a superseded or withdrawn item keeps its number and is skipped by every reader that counts, covers or traces requirements. It also takes the archive rule `/specify`'s guard used, now shared with `/update-spec`, and describes the notes other commands write. `/specify` records `inputs_at`, and its guard names `/update-spec` for a revision rather than saying one is not supported.
+- **`spec-reviewer`** checks `inputs_at` and the markers, reads live items only, and, given a base and a change list, flags a change outside the list, a meaning change passed off as a wording fix, and a renumbered ID.
+- `/update-prd`'s next step offers `/update-spec` for an existing specification, where it offered `/specify`, which would rewrite it; `/epics`' parse of a PRD-level specification and the proposal tier's test-case count read live items only.
+
 ## [3.59.0] — 2026-10-28
 
 Take with `workflows-core` 1.67.0, whose `specs-repo-git` §3.1 now lists `session-hygiene` §6's *Stop* among the setters of `specs_git: misrooted`, as the session-cost and session-feedback pages say it does — to-fix D27.

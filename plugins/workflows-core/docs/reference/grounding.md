@@ -6,17 +6,17 @@ The family's authoring commands read more than the folder they were given: the s
 
 | Source | Read by | Turned on by | Off switch |
 |---|---|---|---|
-| [Shipped product docs](#shipped-product-docs) | `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/brd-intake`, `/epics`, `/prd-ground`, `/release-notes` | `$DOCS_PATH` (default `/workspace/docs`) holding markdown; `--docs <path>` for one run | `--no-docs` |
-| [Architecture repository](#architecture-repository) | `/create-ard`, `/specify`, `/dev-workflows:design` | `$ARCHITECTURE_REPO_PATH` naming a valid architecture repository | `--no-arch` |
-| [Team decision records](#team-decision-records) | `/create-ard`, `/specify`, `/dev-workflows:design` | `$SPECS_PATH/architecture/`, built by `/harvest-decisions` | `--no-arch` |
-| [Mounted code](#mounted-code) | `/idea`, `/epics`, `/create-ard`, `/specify`, `/prd-ground`, `/dev-workflows:design`; diffs in `/document`, `/release-notes` | clones under `$REPOS_PATH` (default `/workspace`) | per command — see below |
+| [Shipped product docs](#shipped-product-docs) | `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/brd-intake`, `/epics`, `/prd-ground`, `/release-notes` | `$DOCS_PATH` (default `/workspace/docs`) holding markdown; `--docs <path>` for one run | `--no-docs` |
+| [Architecture repository](#architecture-repository) | `/create-ard`, `/specify`, `/update-spec`, `/dev-workflows:design` | `$ARCHITECTURE_REPO_PATH` naming a valid architecture repository | `--no-arch` |
+| [Team decision records](#team-decision-records) | `/create-ard`, `/specify`, `/update-spec`, `/dev-workflows:design` | `$SPECS_PATH/architecture/`, built by `/harvest-decisions` | `--no-arch` |
+| [Mounted code](#mounted-code) | `/idea`, `/epics`, `/create-ard`, `/specify`, `/update-spec`, `/prd-ground`, `/dev-workflows:design`; diffs in `/document`, `/release-notes` | clones under `$REPOS_PATH` (default `/workspace`) | per command — see below |
 | [Design frames](#design-frames) | `/prd-ground` | a frame set under the folder's `design/`, indexed by `/frames` | `--no-design` |
 
 The status lines are printed in the command's configure or plan step; the off switch is stated beside them. There is no prior-art search in this family: what you hand `/idea` is the only prior art it reads.
 
 ## Shipped product docs
 
-- **Feeds:** what the product already does and how the published docs say it — challenges such as "already documented", a terminology mismatch or a contradiction. The grill ranks them in `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify` and `/brd-intake`; the writer gets them as background in `/epics` and `/release-notes`; `/prd-ground` reads them as the lead's context. Agent: `docs-grounder`.
+- **Feeds:** what the product already does and how the published docs say it — challenges such as "already documented", a terminology mismatch or a contradiction. The grill ranks them in `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec` and `/brd-intake`; the writer gets them as background in `/epics` and `/release-notes`; `/prd-ground` reads them as the lead's context. Agent: `docs-grounder`.
 - **Turned on by:** `$DOCS_PATH`, default `/workspace/docs`, when it is a readable directory with at least one markdown file; `--docs <path>` points a run at another root. Retrieval uses a `qmd` index where one covers the root, else keyword search.
 - **Status line:** `docs grounding: ON <root> (retrieval: …)` or `docs grounding: OFF (<reason>)`.
 - **Off switch:** `--no-docs`.

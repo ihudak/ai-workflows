@@ -319,7 +319,7 @@ Where grounding was OFF, nothing in this section is required.
 ## Traceability & identifiers
 
 - Every in-scope spec item and user story (`[Uxx]`) appears in **Requirements coverage** (addressed or
-  explicitly deferred).
+  explicitly deferred), live items only — an item whose heading ends ` — Superseded by …` or ` — Withdrawn …`, and every item nested under it, is not a requirement; it keeps its number, and its text is read as context (the specification format's *Live items* rule).
 - Reference spec IDs (`[Uxx]` / `[ACxx]` / `[TCxx]`) rather than restating them; a design section that
   duplicates a `specification.md` section **verbatim** should reference it instead (both docs live in
   the same per-Epic folder).

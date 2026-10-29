@@ -2,7 +2,7 @@
 
 `/create-ard` grounds an ARD, `/specify` a specification and `/design` a design in the organisation's architecture repository — its technology radar, standards, principles, patterns and accepted ADRs — in addition to the code. This file governs *whether architecture grounding runs and against what root*, *how its agent is dispatched*, and *how the digest is consumed*. It is **read-only** and **advisory**: no run writes, fetches, pulls or switches the repository, and every miss turns grounding OFF with a reason — never an error, never `emit-block`, never a reviewer finding. It also reads the team's own decisions — the records `/product-workflows:harvest-decisions` keeps under `$SPECS_PATH/architecture/` (`workflows-core:architecture-kb`) — as a second, **team** root, under the same rules.
 
-Consumers: `/product-workflows:create-ard` and `/product-workflows:specify`, on both routes, and `/dev-workflows:design` (grill-rank consumption).
+Consumers: `/product-workflows:create-ard`, `/product-workflows:specify` and `/product-workflows:update-spec`, which grounds only the items it revises, on both routes, and `/dev-workflows:design` (grill-rank consumption).
 
 ## Procedure — `resolve-architecture-grounding <command-name>`
 

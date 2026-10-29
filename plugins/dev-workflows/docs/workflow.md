@@ -6,6 +6,7 @@ This is the `dev-workflows` pipeline top to bottom — every command shown here,
 flowchart TD
     subgraph PMPRD["PM/PA/PE — product-workflows (upstream)"]
         specify["/product-workflows:specify"]:::prod
+        updatespec["/product-workflows:update-spec"]:::prod
         createard["/product-workflows:create-ard"]:::prod
         harvest["/product-workflows:harvest-decisions"]:::prod
     end
@@ -25,7 +26,10 @@ flowchart TD
     ready -.->|_readiness.md — advisory| implement
     implement -->|"Epic: the Dev, before its pull request merges"| conformance
     conformance -.->|"fix the code — a follow-up"| implement
-    conformance -.->|"PRD: the PE, every Epic merged — amend the document"| specify
+    conformance -.->|"PRD: the PE, every Epic merged — amend the document"| updatespec
+    specify -.->|"merged specification.md — revise in place"| updatespec
+    updatespec -->|"revised specification.md — IDs kept"| design
+    design -.->|"Engineering review notes"| updatespec
     conformance -.->|"Epic: then the security scan, in security-workflows"| secplugin["/security-workflows:scan"]:::sec
     secplugin -.->|"fix — a follow-up, on the Epic's branch"| implement
     implement -.->|code + implementation.md, in docs-workflows| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs

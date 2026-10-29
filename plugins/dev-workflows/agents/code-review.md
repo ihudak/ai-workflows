@@ -237,7 +237,9 @@ full review.
    deviations recorded, which is the conservative reading.
 10. **Spec/design conformance** (conditional — only when `applicable_spec` is
     provided; otherwise this dimension does not apply — omit it silently) —
-    classify each `in_scope_ids` requirement against **the code as it stands
+    classify each `in_scope_ids` requirement — live items only, as the caller extracts them; a
+    superseded or withdrawn item in `spec_paths` is context, never a requirement
+    (an item whose heading ends ` — Superseded by …` or ` — Withdrawn …`, the specification format's *Live items* rule) — against **the code as it stands
     after this change**, not against the diff alone: `satisfied` / `missing` /
     `partial` / `contradicts`. Start from the diff; where the diff does not
     deliver a requirement, search the codebase before classifying it — a

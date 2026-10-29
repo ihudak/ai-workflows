@@ -36,7 +36,8 @@
     "idea",
     "promote-decisions",
     "specify",
-    "update-prd"
+    "update-prd",
+    "update-spec"
   ],
   "prose-style": [
     "prose-review-docs",

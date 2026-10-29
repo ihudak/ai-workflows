@@ -201,7 +201,8 @@ class, in its Phase 0, before it classifies, since its class decides whether its
 ## Phase 2 — Read the spec
 
 Read the resolved `specification.md` **fully** (from the specs repo main). Extract the in-scope items,
-user stories (`[Uxx]`), acceptance criteria (`[ACxx]`), and test cases (`[TCxx]`) the design must cover
+user stories (`[Uxx]`), acceptance criteria (`[ACxx]`), and test cases (`[TCxx]`) the design must cover,
+live items only — an item whose heading ends ` — Superseded by …` or ` — Withdrawn …`, and every item nested under it, is not a requirement; it keeps its number, and its text is read as context (the specification format's *Live items* rule)
 — this is the traceability baseline for **Requirements coverage** and the raw material the grill
 challenges. Note the spec's `Published` flag (governs whether Phase 5 may propose ID changes or must
 annotate-only) and any existing `- [ ]` open questions (spec-level; tolerated — the design inherits
@@ -228,7 +229,7 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
    — *Confirm this set* and *Remove repos* each carry a `description` naming every derived candidate, and *Add repos* one naming every other clone the slug→clone map holds, each by slug and in the order shown, so they are named in the dialog whether or not the list was printed (`workflows-core:epic-picker` *The cap*). *Add repos* asks in plain text for the repositories' names, and step 3 resolves each against the map, never by parsing one out of the answer. *Remove repos* asks in plain text for the names to remove, each resolved against the derived candidates its description lists, never parsed out of the answer, and a name matching none of them is asked about again.
    **On an Epic with a target, "Add repos" takes the repositories, then asks**, because a second repository makes the design span two components:
    `choices: ["<Re-split — /product-workflows:epics <EPIC> | Add the component first — /product-workflows:create-ard <PRD>> (Recommended)", "Add anyway (recorded as a Target span)", "Cancel"]`
-   — *Re-split* where every added repository holds a component of the PRD-level ARD's set: stop, telling the user to run `/epics <EPIC>` and, at its plan approval, choose *Revise* and name the work that moves and the component it moves to, which makes that focus run split this Epic (`/epics` Phase 2 and Phase 6), and then `/product-workflows:specify <EPIC>`, whose specification still holds the work that moved; *Add the component first* otherwise — no ARD, or an ARD whose set lacks one — since the PRD now spans a component no set records, and `/create-ard` is where it is recorded and its contract fixed (`workflows-core:components` §3).
+   — *Re-split* where every added repository holds a component of the PRD-level ARD's set: stop, telling the user to run `/epics <EPIC>` and, at its plan approval, choose *Revise* and name the work that moves and the component it moves to, which makes that focus run split this Epic (`/epics` Phase 2 and Phase 6), and then `/product-workflows:update-spec <EPIC>`, whose specification still holds the work that moved and is revised in place; *Add the component first* otherwise — no ARD, or an ARD whose set lacks one — since the PRD now spans a component no set records, and `/create-ard` is where it is recorded and its contract fixed (`workflows-core:components` §3).
    **The first option** stops, naming its command; **Cancel** stops; **Add anyway** takes the added repositories, and Phase 5 records each under `## Risks & mitigations` as `- Target span: <component> — <why>`, which `design-reviewer` flags.
 3. **Resolve each confirmed repo against the map.** One match → use it. Ambiguous or zero matches
    escalate per the `Repo unresolved (zero matches) — /epics` rule in
@@ -374,7 +375,7 @@ take, labelled **A**, **B**, and **C** in that order; those are the labels the F
   > constraint: [A — Minimise the interface | B — Maximise flexibility | C — Optimise for the most common caller]
   > problem_frame: |
   >   purpose: [what the interface is for, and the seam it sits at]
-  >   spec_lines: [each `[Uxx]` / `[ACxx]` / `[TCxx]` line of specification.md the interface serves, quoted literally — a displayed value, a format or a bound exactly as the spec writes it]
+  >   spec_lines: [each live `[Uxx]` / `[ACxx]` / `[TCxx]` line of specification.md the interface serves, quoted literally — a displayed value, a format or a bound exactly as the spec writes it]
   >   surviving_surface: [each existing public operation, type or endpoint at this seam that must survive the change, with its callers as Phase 4's scan found them — or `none`]
   >   settled_values: [each value the grill has settled that the interface depends on — a limit, a default, a name, a format, an error outcome — with the decision it was settled in, from `_design-session.md`, or `none`]
   >   constraints: [any other constraint every proposal must satisfy]
