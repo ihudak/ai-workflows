@@ -256,13 +256,24 @@ not a phase: a question before the first `##` heading needs the step before it, 
 heading. The census `question rules: N command(s) present a choice list, M load the rules first` is
 printed, and `--verbose` lists each asking command's step line and first question line.
 
+THE BRANCH CHECK. `check-branch-check` gates phase-handoff §6's `branch-check`. Every markdown file
+under `commands/` of workflows-core and of every dependent plugin whose text names `resolve-address`
+-- the set CLAUDE.md derives with `grep -l resolve-address plugins/*/commands/*.md` -- requests
+`args: "phase-handoff branch-check"` in a paragraph or list item outside every fenced block. Every one
+of them that presents phase-handoff §4.3's consent choice -- the array quoted, read by its first option,
+or a line naming both `phase-handoff` and `§4.3`, as check-questions reads it -- passes `prefix:` in the
+paragraph of one such request, save the commands EXEMPT_PREFIX names, each with its reason. A file
+naming neither is not read. The census `branch-check: N command(s) resolve a folder, M run
+branch-check, P producer(s) pass a prefix` is printed.
+
 IT FAILS CLOSED. A scan that finds no reference-parts declaration fails check-parts and
 check-citations, and a declared reference no consumer cites fails check-citations: a gate that
 matched nothing proves nothing when it passes. Entry-point files are outside that guard: a tree
 declaring none passes their checks. But a declared entry point that no `##` section of a scanned
 file requests, `args: "<ref> <entry>"`, fails check-citations, as a declared reference no consumer
 cites does: its out-of-file check would judge nothing. A scan that finds no command presenting a
-choice list fails check-questions.
+choice list fails check-questions, and one that finds no command naming `resolve-address` fails
+check-branch-check.
 
 WHAT IT CANNOT SEE: whether a run loads the part when it reaches a citation -- the preamble
 tells it to; the rule-by-rule reading and the live runs check that it does. A name the gate
@@ -298,13 +309,18 @@ question only as a `choices:` line, a line naming `phase-handoff` and `§4.3`, o
 of 2–4 options: a question asked in prose with no array and no option count before the step goes unseen,
 and so does a prompt stated on a line that also names a `choices` array, which it reads as the arrays'
 rule; a line that only mentions `choices:`, or `2–4 options` without that rule's subject, counts as a
-question, erring early.
+question, erring early. check-branch-check cannot see where a command's request stands -- after its
+preflight and its resolution, before anything reads the folder -- nor whether the prefix it passes is
+the one its handoff names, nor whether a command naming `resolve-address` only says it resolves
+nothing; it reads a producer by its consent choice alone, so one that hands off without presenting
+§4.3's choice goes unseen.
 
 Usage:
     python3 scripts/reference-parts.py [--root DIR] generate
     python3 scripts/reference-parts.py [--root DIR] check-parts
     python3 scripts/reference-parts.py [--root DIR] check-citations [--verbose]
     python3 scripts/reference-parts.py [--root DIR] check-questions [--verbose]
+    python3 scripts/reference-parts.py [--root DIR] check-branch-check [--verbose]
     python3 scripts/reference-parts.py --selftest
 
 `--root` defaults to the repository holding this script. Exit 0 on a pass, 1 on any
@@ -387,6 +403,20 @@ QUESTION_ARRAY = "choices:"
 QUESTION_HANDOFF = ("phase-handoff", "§4.3")
 QUESTION_PROMPT = re.compile(r"2[–-]4 options")
 QUESTION_RULE = re.compile(r"`choices` arrays?\b")
+
+# check-branch-check: a command that resolves a folder runs phase-handoff's branch-check on it, and a
+# producer -- one presenting phase-handoff §4.3's consent choice -- passes it the prefix its handoff names.
+BRANCH_RESOLVES = "resolve-address"
+BRANCH_REQUEST = "phase-handoff branch-check"
+BRANCH_PREFIX = "prefix:"
+BRANCH_CONSENT = "Branch + commit + push + open PR to main"   # the first option of every §4.3 array
+# Producers that pass no prefix, by design (phase-handoff §6.2; the run-state checks design, §1.2).
+EXEMPT_PREFIX = {
+    "plugins/dev-workflows/commands/implement.md":
+        "its Phase 4.5 handoff is conditional, and onto a prefix it does not own (spec, design)",
+    "plugins/product-workflows/commands/update-spec.md":
+        "its own Phase 0 already stops on a branch that changed specification.md, the check §6.2 would repeat",
+}
 
 CORE_NAME = os.path.basename(CORE_PLUGIN_REL)
 SCRIPT_REL = "scripts/reference-parts.py"
@@ -1988,6 +2018,57 @@ def cmd_check_questions(root, verbose):
     return 0
 
 
+def cmd_check_branch_check(root, verbose):
+    """Every command naming resolve-address requests `phase-handoff branch-check` outside a fenced block;
+    every one of them presenting phase-handoff §4.3's consent choice -- the array quoted, or a line naming
+    `phase-handoff` and `§4.3` -- passes `prefix:` in the paragraph of one such request, save EXEMPT_PREFIX."""
+    problems, resolving, running, prefixed = [], 0, 0, 0
+    for path in scan_files(root, QUESTION_PLUGIN_RELS, (QUESTION_DIR,)):
+        text = path.read_text(encoding="utf-8")
+        if BRANCH_RESOLVES not in text:
+            continue
+        resolving += 1
+        name = path.relative_to(root).as_posix()
+        fenced, fences = set(), Fences()
+        for n, line in enumerate(text.splitlines(), 1):
+            if fences.step(line):
+                fenced.add(n)
+        requests = [joined for joined, at, _table in blocks_of(text) if at[0][1] not in fenced
+                    and any(" ".join(m.group(1).split()) == BRANCH_REQUEST for m in CALL.finditer(joined))]
+        if not requests:
+            problems.append('%s: names %s but never executes branch-check, `args: "%s"`'
+                            % (name, BRANCH_RESOLVES, BRANCH_REQUEST))
+            continue
+        running += 1
+        producer = BRANCH_CONSENT in text or any(all(w in line for w in QUESTION_HANDOFF) for line in text.splitlines())
+        if not producer or name in EXEMPT_PREFIX:
+            if verbose:
+                print("RUNS %s: %s" % (name, "exempt from the prefix -- " + EXEMPT_PREFIX[name]
+                                       if producer else "no consent choice, no prefix owed"))
+            continue
+        if any(BRANCH_PREFIX in joined for joined in requests):
+            prefixed += 1
+            if verbose:
+                print("RUNS %s: producer, passes a prefix" % name)
+        else:
+            problems.append("%s: presents phase-handoff §4.3's consent choice, but no request of branch-check passes "
+                            "`%s` in its own paragraph -- pass the prefix its handoff names, or add the command to "
+                            "EXEMPT_PREFIX with its reason" % (name, BRANCH_PREFIX))
+    if not resolving:
+        problems.append("no command under %s names %s -- the scan matched nothing, and a gate that matched nothing "
+                        "proves nothing when it passes"
+                        % (either(["%s/%s/" % (r, QUESTION_DIR) for r in QUESTION_PLUGIN_RELS], quote=""), BRANCH_RESOLVES))
+    for p in problems:
+        print("ERROR " + p)
+    print("branch-check: %d command(s) resolve a folder, %d run branch-check, %d producer(s) pass a prefix"
+          % (resolving, running, prefixed))
+    if problems:
+        print("reference-parts check-branch-check: FAIL -- %d problem(s)" % len(problems))
+        return 1
+    print("reference-parts check-branch-check: PASS -- %d command(s) run branch-check" % running)
+    return 0
+
+
 # ---------------------------------------------------------------- selftest
 # One fixture tree per case under scripts/fixtures/reference-parts/<case>/, laid out as the repo
 # is, and run through the CLI with --root. A step asserts the exit code AND what it must print;
@@ -2890,6 +2971,35 @@ CASES = [
                                       'question rules: 0 command(s) present a choice list, 0 load the rules first'],
              errors=1),
     ]),
+    # check-branch-check: every command naming resolve-address requests `phase-handoff branch-check`, and
+    # every one of them presenting phase-handoff §4.3's consent choice -- the array quoted, or a line
+    # naming `phase-handoff` and `§4.3` -- passes `prefix:` in a request's own paragraph, save the exempt
+    # set. The ok tree holds a producer of each form, a consumer, and a command resolving nothing.
+    ('branch_check_ok', 'every resolving command runs branch-check, and each producer passes a prefix', [
+        Step(['check-branch-check'], 0, ['branch-check: 3 command(s) resolve a folder, 3 run branch-check, '
+                                         '2 producer(s) pass a prefix',
+                                         'check-branch-check: PASS -- 3 command(s) run branch-check'], errors=0),
+    ]),
+    ('branch_check_missing', 'a command naming resolve-address that never requests branch-check fails', [
+        Step(['check-branch-check'], 1, ['plugins/dev-workflows/commands/look.md: names resolve-address but never '
+                                         'executes branch-check, `args: "phase-handoff branch-check"`'], errors=1),
+    ]),
+    # A prefix in another paragraph is not the request's; a producer by its §4.3 line counts as one by its array.
+    ('branch_check_no_prefix', 'a producer that passes branch-check no prefix fails, in either consent form', [
+        Step(['check-branch-check'], 1, ['plugins/dev-workflows/commands/make.md: presents phase-handoff §4.3\'s '
+                                         'consent choice, but no request of branch-check passes `prefix:` in its '
+                                         'own paragraph',
+                                         'plugins/workflows-core/commands/index.md: presents phase-handoff §4.3\'s '
+                                         'consent choice'], errors=2),
+    ]),
+    ('branch_check_exempt', 'dev-workflows/implement passes branch-check no prefix, by the exempt set', [
+        Step(['check-branch-check'], 0, ['branch-check: 1 command(s) resolve a folder, 1 run branch-check, '
+                                         '0 producer(s) pass a prefix',
+                                         'check-branch-check: PASS -- 1 command(s) run branch-check'], errors=0),
+    ]),
+    ('branch_check_vacuity', 'vacuity: no command names resolve-address', [
+        Step(['check-branch-check'], 1, ['the scan matched nothing'], errors=1),
+    ]),
 ]
 
 
@@ -2952,8 +3062,9 @@ def _selftest() -> int:
 
 
 COMMANDS = {"generate": cmd_generate, "check-parts": cmd_check_parts, "check-citations": cmd_check_citations,
-            "check-questions": cmd_check_questions}
-USAGE = ("usage: reference-parts.py [--root DIR] generate|check-parts|check-citations|check-questions [--verbose]\n"
+            "check-questions": cmd_check_questions, "check-branch-check": cmd_check_branch_check}
+USAGE = ("usage: reference-parts.py [--root DIR] generate|check-parts|check-citations|check-questions|check-branch-check "
+         "[--verbose]\n"
          "       reference-parts.py --selftest")
 
 
