@@ -1631,6 +1631,52 @@ or not that line is there.
    hunts tokens a reader **resolves to the wrong thing**, which is the worse failure and needs the
    bundle's own corpus to detect.
 
+   **Run it with the scanner, as rule 7 runs its scan**, never with code of your own:
+   ```
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" citations <the working directory> --key <BRD-KEY> [--prereq-key <KEY>]… [--copied-key <KEY>]… [--known-key <KEY>]… --date <YYYYMMDD> [--captured <bundled name>]… [--captured-path <path relative to brd/>]… [--source-basename <name>]… --manifest <the manifest's bundled name> [--prereq-aux <bundled name>]…
+   ```
+   Every argument is something this run already holds, and none is derived from a filename:
+   `--prereq-key` for every prerequisite Phase 2 carried and `--copied-key` for each whose package
+   rule 5 copied in — §6.1's vacuity guard reads that second set; `--known-key` for this slice's
+   `parent:` and each slice the parent's `slices.md` names, and, for each copied prerequisite, its
+   own `parent:`, that parent's `slices.md` slices and its `depends-on:` keys (rule 5 reads its
+   `brd-link.md`) — the other BRDs a qualified reference or a structured field may name; `--date` the run's stamp; `--captured` and
+   `--captured-path` as rule 7 passes them; `--source-basename` for each captured markdown file's
+   basename, which relation 3's placeholders resolve against; `--manifest` the manifest rule 6
+   wrote, whose quotation of a target as written relation 3 stays off; and `--prereq-aux` for each
+   copied prerequisite's rendered prompt and manifest, which rule 5 identified and did not copy. It
+   reads §6.1's corpora by their owners' layouts, and §1.1's working filenames — every backticked
+   working `.md` path that section names, in its table and its prose — and §6.2's structured fields
+   from `bundle-packaging.md` itself, and prints one line of JSON. Any exit other than 0 stops the
+   run, naming its stderr. Read it by field:
+   - `dead` → `BRD_PACKAGE_DEAD_CITATION` below, an unkeyed document and a copied-in prerequisite
+     answering to no partition among them; `mismatch` → `BRD_PACKAGE_CITATION_MISMATCH`;
+     `unreadable` → `BRD_PACKAGE_CORPUS_UNREADABLE`.
+   - `customer` → a hit inside the customer's own words or naming, put to the operator's ruling as
+     the paragraph below on that says, grouped by `groups`; its `span` says where — `captured-file`,
+     `locator`, `locator-tail`, `anchor`, `inventory-text` or `ledger-text` as rule 7 reads them, and
+     `quoted` for the figures file's *Text*, *Says* or *Flow* or a `[CD#n]`'s quoted `argumentation`
+     or `chosen`.
+   - `ambiguous` → a class-4 `[DG#n]` whose claim names no requirement, or more than one;
+     `unqualified` → a `prerequisite` value carrying no known BRD's key, a bare `resolved-by` value,
+     or a slash form outside a structured field; `unknown_key` → a key-shaped word before an id that
+     names no BRD this run knows — a typo for one, or an ordinary word such as `UTF-8` — whose id is
+     then read as unqualified, in this package's own documents, and discharged in a copied
+     prerequisite's, which is never rewritten. `ambiguous` and `unqualified` entries are never
+     resolved by a guess, as §6.2 says, and all three lists are reported in the Final report.
+   - `prerequisite_external` → a reference inside a copied prerequisite's document to a file of a
+     package that prerequisite carried, or to its own prompt or manifest, named in the manifest and the
+     Final report as the paragraph below on that says.
+   - `resolved` and `discharged` → the counts the Final report gives.
+
+   **Read the line before acting, both ways**, as rule 7 reads its spans: a `dead` entry inside a span
+   of §6.3's that position alone cannot place — a customer-derived locator in prose the scanner did
+   not match, a customer's answer quoted outside the register's fields — is the customer's, and goes
+   to the operator's ruling rather than stopping the run; and a `customer` entry whose line shows the
+   package's own words — a `locator-tail` that is this package's sentence running on after a heading
+   path, an `inventory-text` or `ledger-text` hit on an image-drawn row outside the element it quotes
+   (`image_row` `true`, or a ledger row's `null`, read off its inventory row) — is a stop.
+
    A reference that resolves to nothing — an unresolved id or filename (§6.2 relations 1 and 3), a
    bundle document whose filename carries no `<BRD-KEY>` and therefore has no partition at all, or a
    prerequisite key **whose package this run copied in** that no partition in the bundle answers to,
@@ -1956,7 +2002,7 @@ manifest, this bundle does not include, by document (rule 8); every artifact wri
 prompt, the delivery note and the bundle, and `brd-link.md` where this run added a prerequisite to
 it; **the citation check's
 outcome** — how many identifier references resolved, across how many source packages, how many
-named another BRD and were discharged, and every hit inside verbatim customer content or a
+named another BRD and were discharged (the citation scanner's `resolved`, `partitions` and `discharged`), every `ambiguous`, `unqualified` and `unknown_key` entry it reported, by document and line, and every hit inside verbatim customer content or a
 customer-derived locator — this check's and the plugin-free scan's alike, the scan's model ids in the
 customer's naming a grounding block records among them — that the operator was
 asked to rule on, under the *Customer content:* outcome line `bundle-packaging.md` §6.3's *The
