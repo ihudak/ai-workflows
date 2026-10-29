@@ -25,7 +25,8 @@ shape, enforces §6, and — on §4's first cause — reopens a `decided` `[VD#n
 `reopened` again wherever no question putting it is in flight, whichever run reopened it; by `commands/create-prd.md`, which writes an `[AS#n]` — and only an `[AS#n]` —
 for a customer-authority gap that only PRD authoring could surface (§7); by `agents/brd-package-reviewer.md`, which reads them; and by
 `commands/brd-package.md`, which surfaces every open `[AS#n]` in the customer prompt (§7) and finds
-every position resting on a prerequisite by its `conditional_on` field (§5); and by
+every live position and open assumption resting on a prerequisite by its `conditional_on` field
+(§5, §7); and by
 `commands/brd-reconcile.md`, which mints the `[CD#n]` records — the only command that does — and
 enforces §6 on them as it freezes them, supersedes the `[AS#n]` each one settles, reopens what an incoming customer decision overturns under
 §4, re-decides in place a `[CD#n]` whose reopened question the customer has answered, and runs the propagation sweep §5 exists to serve. **It has more readers than those**: the three

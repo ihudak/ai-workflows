@@ -231,8 +231,9 @@ applied by anyone who was not the reviewer.
 ## 6. Where a returned review may still be provisional
 
 A package may ship while a prerequisite it depends on is not yet customer-reviewed, provided the
-prompt says so and names which positions could still move. Where it does, the review's section 3
-states which of its approvals are contingent on that prerequisite, and section 10 does **not** list
+prompt says so and names which positions and assumptions could still move. Where it does, the review's
+section 3 states which of its approvals are contingent on that prerequisite, section 8 which of the
+assumptions it accepts are, and section 10 does **not** list
 the prerequisite as a blocker — it is not blocking, it is unsettled, and the two get very different
 treatment on the delivery side.
 

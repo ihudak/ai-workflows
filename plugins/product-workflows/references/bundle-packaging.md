@@ -960,7 +960,7 @@ somebody already paid for.
 **Relation 1 — a part that enumerates a set of identified records names exactly that set.** Its scope
 is the prompt parts whose source is a set of records carrying identifiers, which render them as an
 enumeration, **and whose source is itself in the bundle**: the open assumptions, the conditional
-positions and conditional defect entries, the in-scope defect entries the review scope part names by
+positions, assumptions and defect entries, the in-scope defect entries the review scope part names by
 id, and the out-of-scope defect entries. **For each part in that
 scope**, the identifiers it names are exactly those its own stated filter selects from its source
 file, both directions — an identifier in the part and not in the filtered source is an invention, one

@@ -244,7 +244,7 @@ Assembled from the package, never hand-written, in a fixed order that is not re-
 | 5 | The single most important claim to verify first | the finding the most decisions rest on, else the most-relied-on open assumption, else the finding the most held `[C]` questions bear on — or a statement that none rests on one |
 | 6 | Review scope | the ledger's dispositions — the rows this slice answers for, each orphan row (a claim the parent withdrew) as another BRD's, `<PARENT-KEY> [BR#n]`, not for review — plus every `in-scope` `[CDF#n]` |
 | 7 | The decisions the customer must make | the `[C]` question set, every open `[AS#n]`, every escalated `[SR#n]` |
-| 8 | What could still move | prerequisites not yet customer-reviewed, every live `conditional_on` position, and every `conditional` `[CDF#n]` |
+| 8 | What could still move | prerequisites not yet customer-reviewed, every live `conditional_on` position and open `conditional_on` assumption, and every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its exact name, and the inlined schema | the one-new-file rule, the `Package reviewed` line section 1 repeats, and the rendered schema |
 | 11 | What this session cannot settle | the ledger, the prerequisites, the review's own limits, and every `out-of-scope` `[CDF#n]` |

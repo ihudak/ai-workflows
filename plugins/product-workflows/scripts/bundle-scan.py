@@ -1040,16 +1040,17 @@ def prompt_parts(lines):
 
 
 LIVE_POSITION = ("open", "decided", "reopened")
-# Relation 1's enumerations: the part, the sub-heading Phase 6 renders it under, the prefix its records
-# carry, the working name of its source, the filter as written, and the filter as the records' own
+# Relation 1's enumerations: the part, the sub-heading Phase 6 renders it under, the prefix or prefixes
+# its records carry, the working name of its source, the filter as written, and the filter as the records' own
 # fields test it (section 7.1, "Resolve the filter against the records' own fields").
 REGIONS = [
     (6, "Code defects we will repair", "CDF", "code-defect-log.md", "disposition: in-scope",
      lambda r, u: r.get("disposition") == "in-scope"),
     (7, "Open assumptions", "AS", "decisions.md", "status: open", lambda r, u: r.get("status") == "open"),
-    (8, "Positions that could still move", "VD", "decisions.md",
-     "conditional_on an unreviewed prerequisite, status open, decided or reopened",
-     lambda r, u: r.get("status") in LIVE_POSITION and r.get("conditional_on", "").split("/", 1)[0].strip() in u),
+    (8, "Positions and assumptions that could still move", ("VD", "AS"), "decisions.md",
+     "conditional_on an unreviewed prerequisite: a position open, decided or reopened, an assumption open",
+     lambda r, u: r.get("status") in (LIVE_POSITION if _idkey(r["id"])[0] == "VD" else ("open",))
+     and r.get("conditional_on", "").split("/", 1)[0].strip() in u),
     (8, "Code defects whose scope is unsettled", "CDF", "code-defect-log.md", "disposition: conditional",
      lambda r, u: r.get("disposition") == "conditional"),
     (9, "Open assumptions", "AS", "decisions.md", "status: open", lambda r, u: r.get("status") == "open"),
@@ -1109,9 +1110,10 @@ def _idkey(rid):
 
 
 def members(lines, prefix):
-    """The ids of prefix that open an item -- a list item, a table row's first cell, a heading --
+    """The ids of prefix (one, or a tuple of them) that open an item -- a list item, a table row's first cell, a heading --
     with a range in that position expanded. An id anywhere else in an item is a mention, not a member
     (section 7.1, "Members open an item")."""
+    prefixes = (prefix,) if isinstance(prefix, str) else tuple(prefix)
     out = set()
     for _, line in _unfenced(lines, 0, len(lines)):
         m = ITEM_RE.match(line)
@@ -1119,13 +1121,13 @@ def members(lines, prefix):
             continue
         rest = line[m.end():]
         o = OPENER_RE.match(rest)
-        if not o or o.group(1) != prefix:
+        if not o or o.group(1) not in prefixes:
             continue
         lo = hi = int(o.group(2))
         tail = RANGE_TAIL_RE.match(rest[o.end():])
-        if tail and tail.group(1) == prefix:
+        if tail and tail.group(1) == o.group(1):
             lo, hi = sorted((lo, int(tail.group(2))))
-        out.update("[%s#%d]" % (prefix, n) for n in range(lo, hi + 1))
+        out.update("[%s#%d]" % (o.group(1), n) for n in range(lo, hi + 1))
     return sorted(out, key=_idkey)
 
 
@@ -1286,7 +1288,8 @@ def sets(bundle, key, date, manifest, note, unreviewed=()):
         source = "%s-%s" % (key, working)
         if source not in sources:
             sources[source] = _records(bundle, source)
-        held = [r["id"] for r in sources[source] if _idkey(r["id"])[0] == prefix and test(r, unreviewed)]
+        prefixes = (prefix,) if isinstance(prefix, str) else prefix
+        held = [r["id"] for r in sources[source] if _idkey(r["id"])[0] in prefixes and test(r, unreviewed)]
         a, b = where[(part, title)]
         _compare(out, 1, "part %d, %s" % (part, title), source, filter_, members(lines[a + 1:b], prefix), held)
     # relation 2: the working directory this run assembled holds no never-sent marker, so a review
@@ -1309,7 +1312,7 @@ def sets(bundle, key, date, manifest, note, unreviewed=()):
 SETS_DEFAULT_BODIES = {
     6: "### 6.1 Code defects we will repair\n\nNone.\n",
     7: "### 7.3 Open assumptions\n\nNone.\n",
-    8: "### 8.1 Positions that could still move\n\nNone.\n\n### 8.2 Code defects whose scope is unsettled\n\nNone.\n",
+    8: "### 8.1 Positions and assumptions that could still move\n\nNone.\n\n### 8.2 Code defects whose scope is unsettled\n\nNone.\n",
     9: "### 9.1 Open assumptions\n\nNone.\n",
     11: "### 11.1 Code defects we will not repair\n\nNone.\n",
 }
@@ -1411,7 +1414,7 @@ def sets_selftest(check):
     good = {6: "### 6.1 Code defects we will repair\n\n- **[CDF#1]** — x\n",
             7: "### 7.1 Questions held for you\n\n- **Re-puts:** [AS#3]\n\n### 7.3 Open assumptions\n\n"
                "- **[AS#1]** — a, unlike [AS#3]\n- **[AS#2]** — b\n",
-            8: "### 8.1 Positions that could still move\n\n| Record | Depends on |\n|---|---|\n"
+            8: "### 8.1 Positions and assumptions that could still move\n\n| Record | Depends on |\n|---|---|\n"
                "| `[VD#7]` — d, as [VD#11] decided | P-2 [CD#3] |\n\n"
                "### 8.2 Code defects whose scope is unsettled\n\n#### [CDF#2]\n\ny\n",
             9: "### 9.1 Open assumptions\n\n- **[AS#1]**–**[AS#2]**: both open\n\n#### [SR#3]\n\nattacks [AS#3]\n",
@@ -1422,7 +1425,24 @@ def sets_selftest(check):
           [x["verdict"] for x in r["relations"] if x["relation"] == 1] == ["pass"] * 6
           and r1(r, 9, "Open assumptions")["named"] == ["[AS#1]", "[AS#2]"])
     check("sets relation 1: a conditional_on a reviewed prerequisite, or a superseded one, is not in part 8's set",
-          r1(r, 8, "Positions that could still move")["held"] == ["[VD#7]"])
+          r1(r, 8, "Positions and assumptions that could still move")["held"] == ["[VD#7]"])
+    creg = "# Decision register: K-1\n\n" + rec("[AS#5]", statement="a", conditional_on="P-2/[CD#3]", status="open") \
+        + rec("[AS#6]", statement="b", conditional_on="P-2/[CD#4]", status="withdrawn") \
+        + rec("[VD#7]", statement="c", conditional_on="P-2/[CD#3]", status="decided") \
+        + rec("[AS#8]", statement="d", conditional_on="P-3/[CD#1]", status="open")
+    cond = {7: "### 7.3 Open assumptions\n\n- [AS#5] — a\n- [AS#8] — d\n",
+            8: "### 8.1 Positions and assumptions that could still move\n\n- [VD#7] — c\n- [AS#5] — a\n\n"
+               "### 8.2 Code defects whose scope is unsettled\n\nNone.\n",
+            9: "### 9.1 Open assumptions\n\n- [AS#5] — a\n- [AS#8] — d\n"}
+    r = run({"K-1-decisions.md": creg, "K-1-customer-review-prompt-20261029.md": _sets_prompt(cond)}, unreviewed=["P-2"])
+    check("sets relation 1: part 8 holds every open assumption resting on an unreviewed prerequisite, beside the positions",
+          r1(r, 8, "Positions and assumptions that could still move")["held"] == ["[AS#5]", "[VD#7]"]
+          and r1(r, 8, "Positions and assumptions that could still move")["verdict"] == "pass")
+    cond[8] = "### 8.1 Positions and assumptions that could still move\n\n- [VD#7] — c\n\n" \
+              "### 8.2 Code defects whose scope is unsettled\n\nNone.\n"
+    r = run({"K-1-decisions.md": creg, "K-1-customer-review-prompt-20261029.md": _sets_prompt(cond)}, unreviewed=["P-2"])
+    check("sets relation 1: a conditional assumption part 8 leaves out is missing",
+          r1(r, 8, "Positions and assumptions that could still move")["missing"] == ["[AS#5]"])
     check("sets relation 1: a status inside an argumentation scalar is not the record's",
           "[AS#4]" not in r1(r, 7, "Open assumptions")["held"])
     r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt()}), unreviewed=["P-2"])
@@ -1525,7 +1545,7 @@ def sets_selftest(check):
     r = run(dict(base, **{"K-1-decisions.md": sc, "K-1-customer-review-prompt-20261029.md": _sets_prompt(good)}),
             unreviewed=["P-2"])
     check("sets relation 1: a field inside an argumentation scalar is not the record's",
-          r1(r, 8, "Positions that could still move")["held"] == ["[VD#7]"])
+          r1(r, 8, "Positions and assumptions that could still move")["held"] == ["[VD#7]"])
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "K-1-customer-review-prompt-20261029.md"), "w", encoding="utf-8") as fh:
             fh.write(_sets_prompt())

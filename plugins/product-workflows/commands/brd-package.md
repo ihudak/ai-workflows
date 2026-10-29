@@ -950,7 +950,7 @@ whose eleven are not there once each and in order.
 | 5 | The single most important claim to verify first | the register, the findings and the held `[C]` entries, by the rule below |
 | 6 | Review scope | `coverage-ledger.md` dispositions, `brd/brd-inventory.md`, and every `in-scope` `[CDF#n]` |
 | 7 | The decisions the customer must make | `interview/customer-questions.md`, every open `[AS#n]`, and every `escalated-to-customer` `[SR#n]` |
-| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position (D20), and every `conditional` `[CDF#n]` |
+| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position and open `conditional_on` assumption (D20), and every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its name, and the inlined schema | the D13 rule, the `Package reviewed` line, and `render-schema` below |
 | 11 | What this session cannot settle | the ledger, the prerequisites, every `out-of-scope` `[CDF#n]`, and the review's own limits |
@@ -977,7 +977,7 @@ sub-heading rather than by reading the part's prose. Each is a `###` heading ins
 |---|---|---|
 | 6 | `Code defects we will repair` | every `in-scope` `[CDF#n]` |
 | 7 | `Open assumptions` | every open `[AS#n]` |
-| 8 | `Positions that could still move` | every live position — `open`, `decided` or `reopened` — carrying `conditional_on` a prerequisite not yet customer-reviewed |
+| 8 | `Positions and assumptions that could still move` | every live position — `open`, `decided` or `reopened` — and every open assumption, carrying `conditional_on` a prerequisite not yet customer-reviewed |
 | 8 | `Code defects whose scope is unsettled` | every `conditional` `[CDF#n]` |
 | 9 | `Open assumptions` | every open `[AS#n]` |
 | 11 | `Code defects we will not repair` | every `out-of-scope` `[CDF#n]` |
@@ -1113,10 +1113,14 @@ account of why no evidence exists, and its `argumentation`.
 customer-reviewed**, named, with what is unsettled about it; and every position in this package
 carrying `conditional_on` one of them, named by its `[VD#n]` and its `statement` — every **live** one,
 reading `open`, `decided` or `reopened`: a record reading `superseded` or `withdrawn` is no longer a
-position this package takes, and is not among them. A package may ship
+position this package takes, and is not among them. **And every open `[AS#n]` carrying
+`conditional_on` one of them**, named by its id and its `statement`: an assumption can rest on a
+prerequisite's decision exactly as a position can (`decision-register-format.md` §7), and parts 7
+and 9, which carry it too, ask the customer to confirm it and to attack it without saying it could
+move. A package may ship
 while a prerequisite is unreviewed — **loudly**, which is what this part is. Say in one line what
-the customer's own review should then do about it: mark the affected approvals in their section 3 as
-contingent, and **not** list the prerequisite in their section 10 as a blocker, because it is not
+the customer's own review should then do about it: mark the affected approvals in their section 3,
+and the affected assumptions they accept in their section 8, as contingent, and **not** list the prerequisite in their section 10 as a blocker, because it is not
 blocking, it is unsettled, and the two get very different treatment on the delivery side. A package
 with no prerequisite at all says so explicitly — a reviewer who was told nothing could move writes
 no contingent rows, and their absence then means what it says.
