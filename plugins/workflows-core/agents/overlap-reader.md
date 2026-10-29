@@ -1,6 +1,6 @@
 ---
 name: overlap-reader
-description: Read-only overlap read for /dev-workflows:design and /product-workflows:specify, before the play-back that precedes their first review. From the draft, the run's decisions, the specification a design implements and the inherited [AD#N] Rules, lists grilling-technique's five kinds of overlap, one entry per member, reads each Rule's quantifiers against every requirement and scope line touching its behaviour, and returns the lists, the counts the play-back needs and each conflict — two outcomes for one situation, or a departure from a Rule. Writes, asks and settles nothing. Uses Claude Opus.
+description: Read-only overlap read for /dev-workflows:design, /product-workflows:specify and /product-workflows:update-spec, before the play-back that precedes their first review. From the draft, the run's decisions, the specification a design implements and the inherited [AD#N] Rules, lists grilling-technique's five kinds of overlap, one entry per member, reads each Rule's quantifiers against every requirement and scope line touching its behaviour, and returns the lists, the counts the play-back needs and each conflict — two outcomes for one situation, or a departure from a Rule. Writes, asks and settles nothing. Uses Claude Opus.
 model: opus
 tools: ["Read", "Glob", "Grep"]
 ---
@@ -9,11 +9,11 @@ Read what a drafted artifact settles against what overlaps it, for the play-back
 
 ## Inputs
 
-- `caller` — the command and the read: `/design`'s whole-design read, before the play-back that closes its grill; `/design`'s read after it writes `design.md` once after its grill, before the whole-artifact gate that plays back what the writing changed or added; or `/specify`'s whole-specification read, before the confirmation gate that precedes its first `spec-reviewer` dispatch.
+- `caller` — the command and the read: `/design`'s whole-design read, before the play-back that closes its grill; `/design`'s read after it writes `design.md` once after its grill, before the whole-artifact gate that plays back what the writing changed or added; `/specify`'s whole-specification read, before the confirmation gate that precedes its first `spec-reviewer` dispatch; or `/update-spec`'s read of the items it revised, before the whole-artifact gate that precedes its first `spec-reviewer` dispatch.
 - `artifact_path` — absolute path of the draft, `design.md` or `specification.md`; `none` where the caller has not written it yet (`/design` writing after its grill), and the session file's decisions, with the specification `spec_path` names, are then what you read in its place.
-- `session_path` — absolute path of the caller's session file, `_design-session.md` or `_session.md`, which records each decision as the grill settled it.
+- `session_path` — absolute path of the caller's session file, `_design-session.md` or `_session.md`, which records each decision as the grill settled it; **absent for `/update-spec`**, which keeps no session file — its `changed` list records each decision instead.
 - `spec_path` — `/design` only: the specification the design implements; its stories, criteria, test cases and scope lines are members too, read as what a decision must keep.
-- `changed` — `/design`'s read after its write only: each change or addition the writing made to what a gate confirmed. Your lists then hold only the entries a change or addition takes part in, each read against every member it overlaps in the draft, the session file and the specification, and every conflict you return involves one.
+- `changed` — `/design`'s read after its write, and every `/update-spec` read: each change or addition the writing made to what a gate confirmed — for `/update-spec`, each item of its confirmed change list with its ID before and after and its kind (`wording`, `meaning`, `withdrawn` or `new`). Your lists then hold only the entries a change or addition takes part in, each read against every member it overlaps in the draft, the session file and the specification, and every conflict you return involves one.
 - `ard_paths` — absolute paths of the applicable ARD files; absent where no ARD applies.
 - `applicable_ard` — the inherited `[AD#N]` Rules as the caller's ARD resolution (`${CLAUDE_PLUGIN_ROOT}/references/ard-resolution.md`) returned them, each with `id`, `binds`, `prevents` and `rule`; absent where no ARD applies.
 - `first` — the kinds your caller reads first, and how it lists them, in its own words.
@@ -76,7 +76,7 @@ unread: [<ARD path>, …]       # [] when every file in ard_paths was read
 error: <one line — ERROR only>
 ```
 
-`ERROR` — the brief names no caller, or the draft (where `artifact_path` is not `none`), the session file or the specification `spec_path` names cannot be read. An ARD file that cannot be read is no `ERROR`: its Rules are read from `applicable_ard` and the file is named in `unread`.
+`ERROR` — the brief names no caller, or the draft (where `artifact_path` is not `none`), the session file (where the brief carries `session_path`) or the specification `spec_path` names cannot be read. An absent `session_path` is no `ERROR` for `/update-spec`, the one caller that keeps none. An ARD file that cannot be read is no `ERROR`: its Rules are read from `applicable_ard` and the file is named in `unread`.
 
 ## Hard rules
 

@@ -1,7 +1,7 @@
 # Session Cost Emission — Shared Reference
 
-Single source of truth for the plugin family's session-cost subsystem. Twenty-eight of
-the thirty commands with an §7 row cite this file from their terminal
+Single source of truth for the plugin family's session-cost subsystem. Twenty-nine of
+the thirty-one commands with an §7 row cite this file from their terminal
 "Session cost" phase and execute its steps inline through the single `emit-cost`
 entry point (§11). The other two — `/prompt-brainstorm` and `/prompt-grill-me` —
 cede the session before such a phase could run, call `emit-cost` never, and
@@ -667,7 +667,7 @@ and acceptable.
 ## 11. Caller contract — `emit-cost`
 
 One entry point, called by the
-twenty-eight commands that measure themselves (§7) and by
+twenty-nine commands that measure themselves (§7) and by
 whichever of them replays a §13 record (never by the two that defer — they call
 nothing). Every caller supplies `command`, `phase`, `role` (or the
 `inferred` marker — `/release-notes`, `/frames`, `/conformance`, `/scan`, the four feedback commands and
@@ -885,7 +885,7 @@ exists to catch.
 
 ### 13.3 The replay
 
-`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-eight
+`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-nine
 commands that measure themselves (§7) never take this path.
 
 Otherwise the run passes one `--claim <command>` per deferred record, oldest

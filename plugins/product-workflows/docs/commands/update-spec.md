@@ -48,13 +48,13 @@ Five subagents can be dispatched, under the same rules as in [`/specify`](specif
 
 ## What it needs
 
-- **`<ADDRESS>`** — mandatory; absent stops the run with `UPDATE_SPEC_NEEDS_KEY`. A folder that does not resolve stops naming [`/specify`](specify.md) as the run that authors a specification.
+- **`<ADDRESS>`** — mandatory; absent stops the run with `UPDATE_SPEC_NEEDS_KEY`, and an address that resolves no folder with `UPDATE_SPEC_NOT_FOUND`.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH` and offers to enter a path or cancel.
 - **A merged, unpublished specification.** The base is the `specification.md` on the specs repo's default branch, never a working-tree copy:
   - not on the default branch → `UPDATE_SPEC_NO_BASE`, naming the merge it waits for or `/specify`;
-  - a checkout copy that differs from the merged one — a `/design` or `/implement` note on an unmerged branch, an interrupted `/specify` draft, a hand edit — → `UPDATE_SPEC_PENDING_CHANGE`: merge or discard that change first, since this run would otherwise overwrite it or build on what no reviewer saw;
+  - a change no merge has carried — in the checkout (an interrupted `/specify` draft, a hand edit) or on an unmerged `spec/`, `design/` or `conformance/` branch, where `/design`, `/implement` and `/conformance` hand off their notes — → `UPDATE_SPEC_PENDING_CHANGE`: merge or discard it first, or delete a branch that was abandoned, since this run would otherwise overwrite it or build on what no reviewer saw;
   - `Published: yes` → `UPDATE_SPEC_PUBLISHED`: its IDs are contracts. To revise it anyway, set `Published: no` and land that edit on the default branch.
-- **Its inputs on the default branch**, gated as [`/specify`](specify.md) gates them — the PRD, on the BRD route the slice's decision register, and the Epic.
+- **Its inputs on the default branch**, gated as [`/specify`](specify.md) gates them — the PRD, on the BRD route the slice's decision register, the Epic, and the applicable ARD, whose `[AD#N]` Rules every revised item keeps or records a deviation from.
 - **Documentation and architecture grounding** (optional) — as in [`/specify`](specify.md), for the items that changed.
 
 ## What it produces
@@ -69,7 +69,7 @@ Five subagents can be dispatched, under the same rules as in [`/specify`](specif
 
 - **Phase 4 — the overlap read**, `workflows-core:overlap-reader` on Opus, over the changed items against what they overlap, then the whole-artifact confirmation gate — as in [`/specify`](specify.md).
 - **Phase 4.5 — Structural pre-lint** (`workflows-core:pre-lint`), advisory — it counts superseded and withdrawn items for contiguity and checks only live ones for coverage.
-- **Phase 5 — `spec-reviewer`**, Opus-pinned, reviewing **the whole** revised specification, with the archived base and the change list in its brief: a change outside the list, a meaning change passed off as a wording fix, or a renumbered ID is a BLOCKER. Its verdict is acted on as [`/specify`](specify.md) acts on it.
+- **Phase 5 — `spec-reviewer`**, Opus-pinned, reviewing **the whole** revised specification, with the archived base and the change list in its brief: a change outside the list that alters a live item's meaning, a meaning change passed off as a wording fix, or a renumbered ID is a BLOCKER; a change outside the list that alters no meaning is a MINOR. Its verdict is acted on as [`/specify`](specify.md) acts on it.
 
 ## Example
 

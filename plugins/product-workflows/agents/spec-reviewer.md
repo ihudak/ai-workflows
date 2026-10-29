@@ -57,7 +57,7 @@ The caller passes:
 - **Identifier integrity:** `[Uxx]` unique+contiguous doc-wide; `[ACxx]` per story; `[TCxx]` per AC,
   superseded and withdrawn items counted; any cross-reference points at an existing ID. A heading
   marker that is neither of `specification-format.md` § Identifier conventions' two forms → `MAJOR`; a
-  `Superseded by` naming an ID that is not in the same scope, or not live → `BLOCKER`.
+  `Superseded by` naming an ID that is not in the same scope → `BLOCKER`; one naming an item since superseded in turn is a chain, and valid.
 - **Live items only:** every traceability, coverage, contradiction and NFR check above reads live
   items alone (`specification-format.md` § Identifier conventions, *Live items*). A superseded or
   withdrawn item is never a finding for lacking a test case or a story, and never the other side of a
@@ -73,7 +73,7 @@ The caller passes:
   read the base and compare. A difference between base and result outside the change list's items →
   `BLOCKER` where it changes a live item's meaning, else `MINOR`; an item the list calls `wording`
   whose meaning changed → `BLOCKER` (a change of meaning takes a new ID and supersedes the old one); an
-  ID renumbered or reused, or a superseded or withdrawn item's text changed → `BLOCKER`; `Version`
+  ID renumbered or reused, or a superseded or withdrawn item's text changed → `BLOCKER` — save its open-question lines, which an update ticks when it adopts or declines them (`specification-format.md` § Notes other commands write); `Version`
   not one above the base's, or `Created`, `Author` or `Published` changed → `MAJOR`.
 
 - **Contract citation (conditional — only when `contracts` is provided; otherwise skip silently):** an acceptance criterion or test case whose behaviour spans two components names, in its own text, the `[AD#N]` interface row it crosses, so `/epics` can split it per side (`/specify` Phase 5) → a crossing criterion naming none → `MAJOR`; one naming an `[AD#N]` that is no row of `contracts` → `MAJOR`.

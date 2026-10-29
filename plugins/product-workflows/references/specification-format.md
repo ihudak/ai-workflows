@@ -19,12 +19,16 @@ inputs_at: <40-hex SHA>      # the default-branch commit the writing run read it
 **`inputs_at` is the commit of the specs repository's default branch that the writing run read its
 inputs at** — the PRD, the ARDs, the Epic's `epic.md`, the grounding files and, on the BRD route, the
 slice's `decisions.md` — written as the full 40-character SHA `git -C "$SPECS_PATH" rev-parse
-<default-ref>` printed once those inputs had passed their `require-on-main` gates. `/specify` writes
+<default-ref>` printed when the run began reading them. The PRD, the ARDs, the Epic and the register
+are gated on the default branch before they are read, so the working tree holds what that commit
+holds; the grounding files are not gated, so a working-tree change to one is read as it stands, and a
+later diff from `inputs_at` sees only what the default branch holds. `/specify` writes
 it on every run that writes this file, and `/product-workflows:update-spec` rewrites it on every run;
 every other writer — `/dev-workflows:design`, `/dev-workflows:implement` and `/dev-workflows:conformance`,
 which add notes (*Notes other commands write*, below) — keeps it unchanged, as every unknown key is
 kept. It records when the inputs were read, never a version of this file, and nothing downstream reads
-it: its one reader is `/update-spec`, which diffs the inputs from it to find what moved upstream.
+it: `/update-spec` diffs the inputs from it to find what moved upstream, and `spec-reviewer` checks
+only its shape.
 **Absent — every specification written before the field existed — it is a null baseline**: what moved
 upstream since cannot be told, and `/update-spec` says so rather than guess a baseline from this file's
 history, which records those other writers' notes as well as its authoring.
@@ -174,7 +178,7 @@ The two markers are appended to the item's heading line — after the title of a
 - ` — Withdrawn <YYYY-MM-DD>: <reason>`.
 
 **Live items.** An item whose heading carries either marker, and every item nested under it, is **not
-live**: it keeps its number and counts for contiguity, its text stays as it was, and every reader
+live**: it keeps its number and counts for contiguity, its text stays as it was — save its `- [ ]` open-question lines, which an update ticks as *Notes other commands write* says — and every reader
 that enumerates, covers, traces or counts a specification's requirements skips it — `spec-reviewer`
 and `workflows-core:pre-lint`'s specification checks; `/dev-workflows:design`'s requirement
 extraction, `interface-designer`'s `spec_lines`, `dev-workflows:design-format`'s coverage table and
@@ -182,7 +186,8 @@ extraction, `interface-designer`'s `spec_lines`, `dev-workflows:design-format`'s
 `applicable_spec`; `/dev-workflows:conformance`'s trace; `/product-workflows:epics`' requirement parse
 into `_coverage.md`; and `product-workflows:proposal-format`'s test-case count. A citation of a
 superseded or withdrawn item still resolves — to the item, and through its marker to what replaced it
-or why it went — so nothing that cites one ever points at nothing.
+or why it went, following the chain where the replacement was itself superseded later — so nothing that
+cites one ever points at nothing.
 
 **Renumbering a large specification.** Where a fix cycle has to renumber a whole story's ACs or TCs —
 a story split, or criteria reordered before the spec is published — rewrite that story as one section,
