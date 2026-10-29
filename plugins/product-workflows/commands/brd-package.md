@@ -596,12 +596,13 @@ returned answer (D14, `decision-register-format.md` §1) — so a `[CD#n]` on fi
 review actually came back *and* was confirmed, which is exactly the question step 2 asks. A
 prerequisite that was packaged and sent, or whose review is sitting unreconciled in somebody's
 inbox, reads *not customer-reviewed* here, correctly: nothing about it is frozen yet, and every
-position resting on it can still move.
+position and assumption resting on it can still move.
 
 Carry, for each prerequisite: its key, whether it resolved, whether its decisions are
-customer-reviewed, whether a package of its own was found, and **every decision in this BRD's
-register carrying `conditional_on: <PREREQ-KEY>/<decision-id>`** (`decision-register-format.md` §5).
-Those are the positions D20 obliges the prompt and the delivery note to name, and they are found
+customer-reviewed, whether a package of its own was found, and **every live position and every open
+assumption in this BRD's register carrying `conditional_on: <PREREQ-KEY>/<decision-id>`**
+(`decision-register-format.md` §5, §7). Those are the records D20 obliges the prompt and the
+delivery note to name, and they are found
 mechanically by the field rather than by reading — which is the whole point of the field existing.
 
 ---
@@ -1417,7 +1418,7 @@ sent. The *Assemble the bundle* phase does not copy it in, and the manifest does
 
 It states only: which BRD this is; **how the customer gets the bundle**, shaped by the route just settled (`bundle-packaging.md` §4) — on the **repository** route, the repository to pull, the committed `bundle-<YYYYMMDD>/` directory by path, and the instruction to open the prompt file there and paste it; on the **archive** route, what is attached. This is the one document that names a delivery route, and the only one that may: it is written to a customer whose situation the operator knows, where the prompt is handed on to a reader the run cannot see (§5); which repositories, at which commits — one clause per repository, written ``the `<repo>` repository at commit `<commit>` ``, `<repo>` the repository's slug exactly as its baselines entry records it — never a path — and `<commit>` that entry's commit, whole or abbreviated to seven characters or more, which *Assemble the bundle* rule 9 pairs with the bundle's baselines (`bundle-packaging.md` §7.1, relation 3); **which
 file is the prompt** — the one file to paste; **which file comes back** — the one file to send,
-named exactly, and, on the **repository** route, where it goes: committed into the folder that holds `bundle-<YYYYMMDD>/`, under exactly that name, on a branch of the customer's own with a pull request against the default branch, changing nothing else — a correction the customer wants made to the package goes in the review's section 12, never into the bundle — or, where they cannot push, sent back instead (`bundle-packaging.md` §5, *The review comes back the way the bundle went out*); any prerequisite whose decisions are still provisional and that positions resting on
+named exactly, and, on the **repository** route, where it goes: committed into the folder that holds `bundle-<YYYYMMDD>/`, under exactly that name, on a branch of the customer's own with a pull request against the default branch, changing nothing else — a correction the customer wants made to the package goes in the review's section 12, never into the bundle — or, where they cannot push, sent back instead (`bundle-packaging.md` §5, *The review comes back the way the bundle went out*); any prerequisite whose decisions are still provisional and that positions and assumptions resting on
 it could move (D20); and anything else that must not sit buried inside a document. The two bolded
 items are bolded in the rendered note too — the repository route's return instruction is part of that item and is not trimmed either — because the single most common failure of this loop is a
 reviewer who reads the documents, forms a view, and writes it into an email of their own devising —

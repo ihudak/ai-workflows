@@ -1426,6 +1426,8 @@ def sets_selftest(check):
           and r1(r, 9, "Open assumptions")["named"] == ["[AS#1]", "[AS#2]"])
     check("sets relation 1: a conditional_on a reviewed prerequisite, or a superseded one, is not in part 8's set",
           r1(r, 8, "Positions and assumptions that could still move")["held"] == ["[VD#7]"])
+    check("sets relation 1: a status inside an argumentation scalar is not the record's",
+          "[AS#4]" not in r1(r, 7, "Open assumptions")["held"])
     creg = "# Decision register: K-1\n\n" + rec("[AS#5]", statement="a", conditional_on="P-2/[CD#3]", status="open") \
         + rec("[AS#6]", statement="b", conditional_on="P-2/[CD#4]", status="withdrawn") \
         + rec("[VD#7]", statement="c", conditional_on="P-2/[CD#3]", status="decided") \
@@ -1443,8 +1445,11 @@ def sets_selftest(check):
     r = run({"K-1-decisions.md": creg, "K-1-customer-review-prompt-20261029.md": _sets_prompt(cond)}, unreviewed=["P-2"])
     check("sets relation 1: a conditional assumption part 8 leaves out is missing",
           r1(r, 8, "Positions and assumptions that could still move")["missing"] == ["[AS#5]"])
-    check("sets relation 1: a status inside an argumentation scalar is not the record's",
-          "[AS#4]" not in r1(r, 7, "Open assumptions")["held"])
+    cond[8] = "### 8.1 Positions and assumptions that could still move\n\n- [AS#5]–[VD#7] — both\n\n" \
+              "### 8.2 Code defects whose scope is unsettled\n\nNone.\n"
+    r = run({"K-1-decisions.md": creg, "K-1-customer-review-prompt-20261029.md": _sets_prompt(cond)}, unreviewed=["P-2"])
+    check("sets relation 1: a range whose ends carry different prefixes names its opener alone",
+          r1(r, 8, "Positions and assumptions that could still move")["named"] == ["[AS#5]"])
     r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt()}), unreviewed=["P-2"])
     check("sets relation 1: sources with members under 'None' bodies are mismatches, by id",
           r1(r, 7, "Open assumptions")["missing"] == ["[AS#1]", "[AS#2]"] and r["mismatch"]

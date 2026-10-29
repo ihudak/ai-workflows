@@ -209,7 +209,9 @@ earlier answer of yours; any other that touches it may still be asked. A require
 alone is passed to the delivery team and drops nothing until they act on it.
 
 **Section 8 — every assumption the package surfaced gets exactly one row**, marked accepted,
-corrected, or cannot-say. Cannot-say is a real answer and is not a failure to respond. An assumption
+corrected, or cannot-say. Cannot-say is a real answer and is not a failure to respond. An accepted
+assumption the prompt names as one that could still move may also say that the acceptance is
+contingent — beside the marking `accepted`, never in its place. An assumption
 the customer corrects is the cheapest correction in the whole loop, and it is only cheap while it is
 still an assumption.
 
@@ -233,9 +235,9 @@ applied by anyone who was not the reviewer.
 A package may ship while a prerequisite it depends on is not yet customer-reviewed, provided the
 prompt says so and names which positions and assumptions could still move. Where it does, the review's
 section 3 states which of its approvals are contingent on that prerequisite, section 8 which of the
-assumptions it accepts are, and section 10 does **not** list
+assumptions it accepts are contingent on it, and section 10 does **not** list
 the prerequisite as a blocker — it is not blocking, it is unsettled, and the two get very different
 treatment on the delivery side.
 
-A reviewer who was told nothing could move writes no such rows, and their absence then means what it
-says.
+A reviewer who was told nothing could move marks nothing contingent, and the absence of such a mark
+then means what it says.
