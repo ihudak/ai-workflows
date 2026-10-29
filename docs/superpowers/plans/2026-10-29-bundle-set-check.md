@@ -22,6 +22,8 @@
 
 ## Decisions the maintainer is asked to make before Task 1
 
+**Taken 2026-10-29: the recommendation on all four.**
+
 1. **How relation 1 finds each enumeration in the rendered prompt.** A whole part is the wrong unit, and that is measured:
    - part 7 legitimately names a withdrawn record on a held `[C]` entry's `Re-puts:` line (Phase 6, *Only a held entry is rendered*);
    - part 9 carries the reviewer's own words, which may cite any id;
