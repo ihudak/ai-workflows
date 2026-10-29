@@ -12,7 +12,7 @@ result is consumed*. It is **read-only**: these commands never write into
 never `emit-block`.
 
 Consumers: `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`,
-`/brd-intake` (grill-rank consumption); `/epics`, `/release-notes`
+`/update-spec`, `/brd-intake` (grill-rank consumption); `/epics`, `/release-notes`
 (writer-attach consumption); `/prd-ground` (lead-only consumption).
 `/document` does **not** consume this file — it only uses `$DOCS_PATH` as a
 write-target discovery hint (see its Phase 0). `/brd-split` deliberately does
@@ -121,7 +121,7 @@ On `status: EMPTY`, proceed the same way; the digest simply adds nothing.
 
 ## Consumption
 
-**`grill-rank`** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/brd-intake`):
+**`grill-rank`** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/brd-intake`):
 Feed `docs_references` to the grill as positive grounding (facts to build on,
 analogous precedents to model after, building-block altitude/permissions).
 **Rank** each `docs_challenges` entry into the command's existing
@@ -129,7 +129,7 @@ Impact × Uncertainty gap list — do **not** append. A docs challenge competes 
 attention and never adds a question — a *question slot* only where the caller's
 grill is capped, which among the grill-rank consumers with a grill is `/idea`
 alone (and there this is what preserves its ≤10-question bound). `/create-prd`,
-`/update-prd`, `/create-ard` and `/specify` grill to convergence, where ranking
+`/update-prd`, `/create-ard`, `/specify` and `/update-spec` grill to convergence, where ranking
 decides what is asked **first**, never how much is asked.
 
 **`/brd-intake` is the one consumer this rule is stated differently for, and it
