@@ -258,7 +258,7 @@ ending the run), `/brd-interview` (Phase 0 step 3), `/brd-package`
 *Address resolution*, on a `<KEY>` address only), `/document` (*Mode detection*, keyed mode on a
 `<KEY>` address only, and for `REPOS_PATH` keyed mode's Phase 1), `/release-notes` (Phase 0
 step 1, on a `<KEY>` address only, and for `REPOS_PATH` Phase 1, with diff grounding on),
-`/conformance` (Phase 0 step 2), `/ready` (Phase 0 step 2), `/create-prd` (Phase 0 step 2b),
+`/conformance` (Phase 0 step 2), `/vuln` (Step 0, on an `@<path>` address only), `/ready` (Phase 0 step 2), `/create-prd` (Phase 0 step 2b),
 `/update-prd` (Phase 0 step 2), and — for `SPECS_PATH` and `REPOS_PATH` both — `/design` (Phase 0
 step 2, and Phase 1 step 4), `/specify` (Phase 0 step 2, and Phase 1 step 4), `/create-ard` (Phase 0
 step 2, and Phase 1 step 3) and `/epics` (Phase 0 step 0a, and Phase 1, with code examination on)

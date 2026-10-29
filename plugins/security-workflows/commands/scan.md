@@ -60,7 +60,8 @@ created or copied files into, is deleted. A folder a record names is never delet
 found in place and copied nothing into stays as it was found (Phase 4 step 2). A stop on a run that scanned, once Phase 3 step 3 has found the report directory
 and before 7.2 has written the run's record, names that `CLAUDE-SECURITY-…` directory — on
 `--verify-fixes`, the copy 7.4 makes of it out of the worktree — and the line that records it without
-scanning again, `/security-workflows:scan <KEY | repo-path> --import <report dir>`. Its address is the
+scanning again, `/security-workflows:scan <KEY | @<path> | repo-path> --import <report dir>`. Its address is the
+`@<path>` as typed where the run was given one — the key may match more than one folder — else the
 run's `<KEY>` where the run's role is `dev`, and its `<repo root>` where the role is `sec`, whatever
 address the run was given: an `--import` with a key is a `dev` run (Phase 0 step 2), so only the path
 keeps a `sec` run's role.
@@ -74,7 +75,7 @@ keeps a `sec` run's role.
    **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
 2. **Arguments.** What step 1 leaves is one positional address and the command's own flags.
-   - **An `@` token whose path — absolute, or relative to the working directory — names an existing directory under `$SPECS_PATH/specifications/` is a unit's folder**, and the run is a key run in every respect: step 4 reads the key its carrier asserts. With `$SPECS_PATH` unset such a token cannot be placed yet: take step 3's stop first, and classify the address again once it is answered. **Any other address that names an existing directory is a repository path**: step 5 takes its repository. **Any other address is a key**, which step 4 reads with `read-key` — an `@` token naming no such folder among them, which `read-key` finds `invalid`.
+   - **An `@` token whose path — absolute, or relative to the working directory — names an existing directory under `$SPECS_PATH/specifications/` is a unit's folder**, and the run is a key run in every respect: step 4 reads the key its carrier asserts. With `$SPECS_PATH` unset, or naming no existing directory, such a token cannot be placed yet: take step 3's stop first, and classify the address again once it is answered. **Any other address that does not begin with `@` and names an existing directory is a repository path**: step 5 takes its repository. **Any other address is a key**, which step 4 reads with `read-key` — an `@` token naming no such folder among them, which `read-key` finds `invalid`.
    - `--import <dir>`, `--triage` and `--verify-fixes` exclude one another, and `--import` takes an existing directory.
    - `--effort` takes `medium` or `high`. This command never asks Claude Security for a `low`-effort scan, which reads the target with one researcher, keeps no coverage account, and so can never close a fix (`workflows-core:security-register-format` §5 rule 2). On `--import` and `--triage`, which scan nothing, `--effort` has no effect, and the run says so.
    - Anything else stops — no address or two, an unknown flag, a flag without its value, two of `--import`, `--triage` and `--verify-fixes`, an `--import` naming no existing directory, or an `--effort` other than `medium` or `high`:

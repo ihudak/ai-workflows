@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.69.1] — 2026-10-29
+
+Take with `dev-workflows` 4.52.0 — to-fix D28.
+
+### Changed
+- `specs-repo-git` §3 and §3.1, and `escalation-rules`' *Required path environment variable unset* citer list, describe `dev-workflows` 4.52.0's `/vuln` on an `@<path>` address: its run key set takes the key the folder's carrier asserts, and it asks for an unset `$SPECS_PATH` before going on, rather than running on as it does on a key or no address.
+
 ## [1.69.0] — 2026-10-29
 
 Take with `dev-workflows` 4.51.0, `docs-workflows` 1.29.0 and `product-workflows` 3.64.0 — to-fix SEC-G6 and D29.
