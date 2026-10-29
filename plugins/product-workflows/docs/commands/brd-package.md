@@ -113,6 +113,15 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   exists and cannot be read stops the run with `BRD_PACKAGE_ROUND_UNREADABLE` instead, since it
   decides nothing. This test runs before the register gate below, so that gate's remedy — commit
   the register — never lands a torn write first.
+- **A specs checkout not behind for the BRD.** After that test and before the register gate, the
+  run checks the branch the specs checkout stands on. Where it is a plugin branch the default
+  branch has moved past under the slice's parent `BRD-` folder — a document there, a sibling
+  slice's included, added, changed or removed since that branch was cut, session files aside — the
+  run stops, naming the paths and what to run: merge the default branch in, where it is this run's
+  own `brd/` branch, or switch to the default branch, where it is another unit's. Where the `brd/`
+  branch this run's handoff would reuse is open and has changed something under that folder, it
+  asks first whether to switch to that branch and continue there, or stop until its pull request is
+  merged or closed.
 - **`/brd-interview`'s register already merged to the specs repo's default branch.**
   `require-on-main` runs against `decisions.md` before any content is read; an unmerged pull
   request stops the run naming the branch/PR state. Where the gate reports the register is on no ref

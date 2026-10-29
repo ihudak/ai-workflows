@@ -16,10 +16,12 @@
 
 **When it has no remote.** A run fetches the specs repository's `session/*` branches to reserve the finding numbers other runs have taken, and fetches nothing where `origin` has no URL or the specs repository is a read-only mount. That fetch never stops the run; one that fails or times out is named in the report's `### Register` section, and the refs are read as last fetched.
 
+**When it changes under a resumed conversation.** The specs-repo preflight first prints one line, `Environment: SPECS_PATH=<real path> (origin <url|none>), REPOS_PATH=<value|unset>`, and the conversation carries it wherever it is resumed. Before each write of the run's tail — its feedback, the follow-ups, the cost entry, the resume pointer — the run compares the environment it now stands in with that line. Where they differ — a conversation resumed in another container, with `claude --resume` or a continuation — it prints `Environment changed: …` once, naming both, and from there records and commits nothing more in the specs repository, without asking: those entries stay in the printed output, and the terminal commit is skipped. The register and the unit note, written in Phase 7 before the tail, are not covered: they land where `$SPECS_PATH` names at that moment, and stay there uncommitted. Re-run in the container the run started in.
+
 **What lives under it.**
 
 - `security/<repo-slug>/` holds one code repository's register: its scans, its run records, the derived `register.json` and `register.md`, and the cost entries of the runs on that repository that had no key. [Security register](security-register.md) describes the layout.
 - `_security.md` in a PRD or Epic folder is the unit note a run addressed by a key appends to.
 - A run addressed by a key files its cost entry under the unit's PRD folder ([Session cost](session-cost.md)).
 
-**What the plugin does not read.** There is no `REPOS_PATH` here. A run addressed by a key scans the code repository this session is open in, `git rev-parse --show-toplevel` from the working directory; a run addressed by a path scans that path's repository; and `--import <dir>` takes the repository holding `<dir>`.
+**What the plugin does not read.** There is no `REPOS_PATH` here: the preflight's `Environment:` line above names its value, as it does wherever the preflight runs, and nothing in a scan uses it. A run addressed by a key scans the code repository this session is open in, `git rev-parse --show-toplevel` from the working directory; a run addressed by a path scans that path's repository; and `--import <dir>` takes the repository holding `<dir>`.

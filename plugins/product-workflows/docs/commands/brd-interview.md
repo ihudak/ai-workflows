@@ -219,6 +219,15 @@ subagent is dispatched — every finding this command reads was already independ
 - **An existing BRD folder.** No folder for `<BRD-KEY>` — searched at every level
   `resolve-address` bounds (three below `specifications/`) — stops the run with `BRD_INTERVIEW_NOT_FOUND`, which names both ways a folder comes
   to exist rather than asserting one.
+- **A specs checkout not behind for the BRD.** Once the slice resolves and the specs-repo preflight
+  has run, the run checks the branch the specs checkout stands on, before the grounding gate below.
+  Where it is a plugin branch the default branch has moved past under the slice's parent `BRD-`
+  folder — a document there, a sibling slice's included, added, changed or removed since that
+  branch was cut, session files aside — the run stops, naming the paths and what to run: merge the
+  default branch in, where it is this run's own `brd/` branch, or switch to the default branch,
+  where it is another unit's. Where the `brd/` branch this run's handoff would reuse is open and
+  has changed something under that folder, it asks first whether to switch to that branch and
+  continue there, or stop until its pull request is merged or closed.
 - **`/prd-ground`'s findings already merged to the specs repo's default branch.** `require-on-main`
   runs against `grounding/code-grounding.md` before anything else is read; an unmerged grounding pull
   request stops the run naming the branch/PR state, and a BRD never grounded at all stops naming the

@@ -168,6 +168,17 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 - **An existing BRD folder.** No folder for `<BRD-KEY>` — searched at every level
   `resolve-address` bounds (three below `specifications/`) — stops with `BRD_RECONCILE_NOT_FOUND`, which names both ways a folder comes to
   exist rather than asserting one.
+- **A specs checkout not behind for the BRD.** Once the slice resolves and the specs-repo preflight
+  has run, the run checks the branch the specs checkout stands on, before the package gate below.
+  Where it is a plugin branch the default branch has moved past under the slice's parent `BRD-`
+  folder — a document there, a sibling slice's included, added, changed or removed since that
+  branch was cut, session files aside — the run stops, naming the paths and what to run: merge the
+  default branch in, where it is this run's own `brd/` branch, or switch to the default branch,
+  where it is another unit's. Where the `brd/` branch the review's handoff would reuse is open and
+  has changed something under that folder, it asks first whether to switch to that branch and
+  continue there, or stop until its pull request is merged or closed. A dependent BRD under another
+  `BRD-` folder is checked too, but only before the run writes into it, and what that check finds
+  never stops the run (*Gates*, below).
 - **A review the reader could read.** Where `customer-review-reader` returns no decisions, no
   required changes and no challenges, the run reads **section 2's verdict** to tell two states
   apart: `approved` beside three empty sets is a customer who approved and asked for nothing, and is
@@ -512,7 +523,9 @@ command removes none of them; the next `/brd-interview` run does.
   into a parent's figures file, defect resolutions into a parent's log, sweep dispositions into a
   dependent's register, and stale-reference corrections into a sibling slice's artifacts are all
   cross-BRD writes, and each runs `require-on-main` against the
-  target first. Any stopping row — including the artifact being on no branch the commands cut — means **record,
+  target first — a write into a dependent BRD, under a `BRD-` folder other than this run's, also
+  checks, once per such folder, that the branch the specs checkout stands on is not one the default
+  branch has moved past there, and a stop of that check is a stopping row too. Any stopping row — including the artifact being on no branch the commands cut — means **record,
   never write**, naming the intended change and the branch/PR state — save the parent's defect log,
   which the run settles before confirming any answer and waits on rather than record (above).
   Recording never stops the run: letting

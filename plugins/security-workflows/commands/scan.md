@@ -44,7 +44,7 @@ step 4 resolved) is written out in the command, and a
 handles a code itself, the run stops there with that message.
 
 **Ending early.** Every stop — each `SECURITY_*` line, the `$SPECS_PATH` *Cancel*, Phase 0 step 4's
-address stops, a switch or a fast-forward git refuses at Phase 1, and a `register.py` exit 2 before
+address stops, a stop `branch-check` makes at Phase 0 step 4, a switch or a fast-forward git refuses at Phase 1, and a `register.py` exit 2 before
 Phase 7.2 has written the run's record — and every
 run-ending answer — Phase 0 step 9's *Cancel*, Phase 1's switch *Cancel*, Phase 3's *Cancel* and
 Phase 4's *Stop to clean the files* — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase
