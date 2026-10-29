@@ -37,7 +37,7 @@ This file never writes into `$SPECS_PATH` or a docs repo, and none of the others
 
 ## 2. `finish-code-branch` — the entry point
 
-Called once per branch the run finished work on, at the point where **every** in-repo write is done — including the caller's post-implementation maintenance agents, which edit `README.md`, `CHANGELOG.md`, `CLAUDE.md`, and in-repo memory files. A call placed before those agents run leaves their edits outside the commit, which is the one ordering mistake this step can make.
+Called once per branch the run finished work on, at the point where **every** in-repo write is done — on `/implement`, including its post-implementation maintenance agents, which edit `README.md`, `CHANGELOG.md`, `CLAUDE.md`, and in-repo memory files; `/vuln` and `/upgrade` run `impl-maintenance` alone, which writes nothing. A call placed before those agents run leaves their edits outside the commit, which is the one ordering mistake this step can make.
 
 ### 2.1 Gate
 

@@ -7,7 +7,7 @@ paths:
 
 # Plugin updates — which plugins to update together (continued)
 
-This file continues `.claude/rules/plugin-updates-coupling.md`, whose `paths:` it shares and whose rules bind it: the older bullets, `workflows-core` 1.39.0 to 1.52.0, moved here to keep that file under 20,000 characters. New bullets go there.
+This file continues `.claude/rules/plugin-updates-coupling.md`, whose `paths:` it shares and whose rules bind it: the older bullets, `workflows-core` 1.39.0 to 1.56.0, moved here to keep that file under 20,000 characters. New bullets go there.
 
 ## Releases to update together
 
@@ -23,3 +23,4 @@ This file continues `.claude/rules/plugin-updates-coupling.md`, whose `paths:` i
 - **Update `workflows-core` 1.48.0 with `product-workflows` 3.38.1**: 1.48.0 describes 3.37.0's lanes and 3.38.0's picker and archives; 3.38.1's label cites 1.48.0's picker rule.
 - **Update `workflows-core` 1.51.0 with `dev-workflows` 4.34.0 and `product-workflows` 3.42.0**: `/design`'s and `/specify`'s new overlap reads before their play-backs, and the inline-fix steps of `/design`, `/specify`, `/create-prd`, `/create-ard`, `/prd-proposal` and `/brd-proposal`, cite `grilling-technique`'s *What a requirement overlaps*, which 1.50.0 lacks — though each new read states its own first kind and runs that part all the same. The reverse leaves two live instructions at odds: 1.51.0 reads every inline edit and every gate against five kinds, where an older fix step of those six commands names a narrower set.
 - **Update `workflows-core` 1.52.0 with `product-workflows` 3.43.0 and `dev-workflows` 4.35.0**: `/epics` makes the offer to apply open findings that only 1.52.0's `escalation-rules` lists it for, and `/specify` and `/implement` restate 1.52.0's `epic-picker` cap, so a mixed install holds two caps that disagree on a PRD of two to four Epics.
+- **Update `workflows-core` 1.56.0 with `docs-workflows` 1.24.0**: `/document` carries its own copy of `source-truth` §7.3's per-discrepancy array, and `/release-notes` presents it, so beside an older `workflows-core` the two commands recommend *Document as actual (code)* and hold the release on *Document as intended (spec)* while the reference they load recommends the intended phrasing and holds nothing — two live instructions that disagree. The reverse is the same disagreement the other way: 1.56.0 tells an older `/document` and `/release-notes` to hold a release they never mention, beside a copy that still recommends the intended phrasing; and an older `/document` asks a `(not verifiable)` row the actual-code choice, which has nothing to write.

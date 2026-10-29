@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.70.0] — 2026-10-29
+
+Take with `dev-workflows` 4.53.0, whose `/ready` and `/conformance` hand off the files this release classifies — to-fix D30.
+
+### Changed
+- **`phase-handoff` §4.0's two rows for what a pre-handoff maintenance agent edits name `/ready` and `/conformance` beside `/epics`**: a PRD or Epic folder's `CLAUDE.md`, and a documentation page directly inside one, both advisory (below) — what `dev-workflows` 4.53.0's `/ready` (Phase 5 step 2a) and `/conformance` (Phase 5.5) now edit before their handoffs and declare in them. One row of each kind serves all three producers, so each producer's check of its Documentation agent's paths sets the same two rows aside. No array moves: `/ready`'s set stays advisory, `/conformance`'s takes its record's class or its annotated documents', and `/epics`' its `epic.md`'s. §4.3's advisory bullet names `/ready`'s set as one whose other paths take no stronger class.
+
+### Fixed
+- **§4.0's documentation-page row is advisory, not unread.** It said no command opens such a page, a search of the producers' own commands: `/product-workflows:brd-reconcile`'s stale cross-reference sweep reads every markdown file under a parent BRD's folder, each slice's folder and the Epic folders inside one among them, and records an outcome for every stale reference it finds there, so on the BRD route the page has a reader, and §4.0's own rule makes it advisory. §4.3's falling-back bullet, for `/epics`' set, and its advisory bullet, for `/ready`'s, now call the page advisory; its unread bullet counts the page among the members the class lost when someone looked, and names `/epics`' `_coverage.md` among the members it keeps, which its list had left out. No array moves, since each producer declares the page beside a deliverable of its own whose class the set takes.
+
 ## [1.69.1] — 2026-10-29
 
 Take with `dev-workflows` 4.52.0 — to-fix D28.
