@@ -11,7 +11,7 @@ Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.
 
 ### Added
 - **`/design`, `/ready` and `/conformance` run `workflows-core:phase-handoff`'s `branch-check` at Phase 0**, after the preflight and the resolution, with their handoff's prefix: a plugin branch behind the default branch under the address's root folder stops the run, naming the paths and what to run (D24), and an open branch the handoff would reuse is asked about before any work (D18). `/ready` runs it after its clean-main test and records a behind branch as a finding capping the verdict at `PARTIAL`.
-- `/implement` (keyed runs) and `/vuln` (once per root folder) run it with no prefix. `/design` on a PRD address that names no Epic passes none at Phase 0 and runs it again with `design` once its Epic picker settles the Epic; `/ready` ends its run where a branch its §6.2 *Switch* moved it to is behind.
+- `/implement` (keyed runs) and `/vuln` (once per root folder) run it with no prefix. `/design` on a PRD address that names no Epic passes `reuse: later` at Phase 0 and runs it again with `design` once step 4 settles the feature folder — the Epic it set, or the PRD folder for a broad design; `/ready` ends its run where a branch its §6.2 *Switch* moved it to is behind.
 
 ### Changed
 - The preflight clause of every command names the `Environment:` line `specs-preflight` now prints.

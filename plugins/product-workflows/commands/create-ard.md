@@ -225,6 +225,7 @@ this stage). Zero external calls.
    address was an **`@<path>`** the stop substitutes that path for the search clause —
    `no folder at <path> (given as a path)` — because "every level addressing.md §3 bounds" would
    describe a search a verbatim path never performs.
+
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: ard`; a stop it makes ends the run here.
 
 4. **Prior ARD.** If the target `ard.md` exists — or, on an Epic-level run, any per-area `ard-<area>.md` (Phase 4's *Per-area split*, an Epic-level split only; `ard-seed.md` is a seed, never an ARD) — Phase 1 offers refine-vs-fresh, and every one of those files is a prior ARD file Phase 1 step 2 copies. The target is in the feature folder step 3 resolved, on every route — a `PRD-` slice folder is that folder on the BRD route, and the test is the same glob in the same place with no route branch.

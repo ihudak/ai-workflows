@@ -290,7 +290,7 @@ nothing.
    `no folder at <path> (given as a path)` — because "every level addressing.md §3 bounds" would
    describe a search a verbatim path never performs.
 
-**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder — on an Epic address with `prefix: spec`; on a PRD address with no `prefix`, since Phase 2 Step A may re-point the feature folder at an Epic, and the branch its handoff names is settled only then, where Step A runs this again with the prefix. A stop it makes ends the run here; it runs before this step looks for a prior run, so a switch it makes is the checkout that step reads.
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder — on an Epic address with `prefix: spec`; on a PRD address with `prefix: spec` and `reuse: later`, since Phase 2 Step A may re-point the feature folder at an Epic, and the branch its handoff names is settled only then, where Step A runs this again with the prefix alone. A stop it makes ends the run here; it runs before this step looks for a prior run, so a switch it makes is the checkout that step reads.
 
 4. **Detect a prior run.** If a `_session.md` exists in the resolved feature folder, record that a
    resume is available — Phase 1 asks the user resume-vs-fresh. If no `_session.md` exists, this is a
