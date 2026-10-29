@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1 — 2026-10-29
+
+### Fixed
+- **`/prose-review-pr` makes Vale's configuration directory in the session's scratchpad**: its `mktemp -d` runs with `TMPDIR` set to the scratchpad directory the session names, where it names one, rather than landing in `/tmp`, which the harness's unset `TMPDIR` sent it to (to-fix SEC-G6).
+
 ## 0.8.0 — 2026-10-26
 
 ### Changed

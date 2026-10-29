@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.69.0] — 2026-10-29
+
+Needs nothing newer of any other plugin — to-fix SEC-G6 and D29.
+
+### Added
+- **`run-flags` §7, *Temporary files*: where the session names a scratchpad directory, every `mktemp` a run executes runs with `TMPDIR` set to it** — in the command's own text and in every reference it loads; templates, the variables carrying each path and their removal are unchanged. `mktemp` honours `TMPDIR`, and the harness leaves it unset, so fifteen commands' temporary files and worktrees — `/security-workflows:scan`'s run directory, `/implement`'s `dw-impl-*` files, `/vuln`'s and `/upgrade`'s, `/epics`' handoff, `/brd-intake`'s figures among them — landed in `/tmp` while the session's own system prompt names a scratchpad for them. Every one of those commands loads `run-flags` at its start. A subagent's session names the same scratchpad, so an agent that creates temporary files applies the rule from its own body.
+
+### Changed
+- **`prd-format` says what `sources` holds on the BRD route.** Its schema commented the field only as propagated from `idea.md`, while `/create-prd` on the BRD route writes one entry of its own naming the customer's document (`provenance: markdown`, `ref:` the slice inventory's `source:`, no `vendored`), or none where the inventory carries no `source:`. The schema's comments and a paragraph beside the BRD-route fields now say so.
+
 ## [1.68.0] — 2026-10-29
 
 Take with `product-workflows` 3.60.0 and `dev-workflows` 4.50.0 — to-fix D19.

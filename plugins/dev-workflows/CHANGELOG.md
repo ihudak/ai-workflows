@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.51.0] — 2026-10-29
+
+Needs nothing newer than `workflows-core` 1.68.0 — to-fix SEC-G6.
+
+### Fixed
+- **`test-baseliner` and `test-writer` put their temporary files in the session's scratchpad.** Each runs its `mktemp` — a long suite's output file, the index copy behind the diff — with `TMPDIR` set to the scratchpad directory its session names, where it names one, as `workflows-core` 1.69.0's `run-flags` §7 has every command do; the harness leaves `TMPDIR` unset, so both landed in `/tmp`.
+
 ## [4.50.0] — 2026-10-29
 
 Take with `product-workflows` 3.60.0, whose `/update-spec` marks a specification item superseded or withdrawn, and `workflows-core` 1.68.0 — to-fix D19.

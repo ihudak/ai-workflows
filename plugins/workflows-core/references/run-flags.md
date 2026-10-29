@@ -126,3 +126,18 @@ Four report lines, each printed only where the step that produces it fires:
 - `Model routing: bypassed — enforced <id> (flag|env)` — wherever a command's final report would otherwise state its model-routing degradation, under `run_flags.enforced_model`. `<id>` is rendered as **what the dispatches were actually passed** (`classification.md` §5's dispatch form), followed — where that differs from `run_flags.requested`, the value as written, or where the harness picks the version — by a parenthesis saying so. Where the parameter accepts ids: `enforced claude-opus-5-5 (flag)` when `claude-opus-5-5` was requested as written, and `enforced claude-opus-5-5 (from opus) (flag)` when the alias `opus` resolved to it; `enforced opus (the harness picks the version) (flag)` for a bare `opus` in a family-only harness; `enforced opus (from opus5.5; the harness picks the version) (env)` for an accepted version-specific form there, naming the value as the user wrote it.
 
 **The final report repeats the `Run flags:` line** whenever §3 printed one during the run, so a reader of the report alone — without having watched the run live — still sees which flags were non-default and why.
+
+## 7. Temporary files
+
+**Where the session names a scratchpad directory, every `mktemp` this run executes runs with
+`TMPDIR` set to it** — `TMPDIR="<scratchpad>" command mktemp -t <template>`, and the same for
+`mktemp -d` — in the command's own text and in every reference it loads, wherever the call stands.
+The template, the variable that carries the path it prints and the removal that ends it are
+unchanged: each removes the path `mktemp` printed, wherever that is. `mktemp` honours `TMPDIR`, and
+the harness leaves it unset, so a call run as written lands in `/tmp` while the session's own
+system prompt names a scratchpad for exactly these files. Where the session names none, `mktemp`
+runs as written.
+
+A subagent's session names the same scratchpad in its own environment, so an agent that creates
+temporary files of its own applies the same rule from its own body; the dispatch carries nothing
+for it.
