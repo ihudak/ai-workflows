@@ -106,11 +106,12 @@ ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-
   preflight has run, before anything is copied. Where it is a plugin branch the default branch has
   moved past under that folder — a document there, a slice's included, added, changed or removed
   since that branch was cut, session files aside — the run stops, naming the paths and what to run:
-  merge the default branch in, where it is this run's own `brd/` branch, or switch to the default
-  branch, where it is another unit's. Where the `brd/` branch this run's handoff would reuse is
-  open and has changed something under that folder, it asks first whether to switch to that branch
-  and continue there, or stop until its pull request is merged or closed. A folder this run creates
-  has nothing to compare.
+  merge the default branch in, where this run builds on that branch — its own `brd/` branch, or an
+  earlier phase's open branch it stacks on — or switch to the default branch, where it does not.
+  Where the `brd/` branch this run's handoff would reuse is open and has changed something under
+  that folder, it asks first whether to switch to that branch and continue there, or stop until its
+  pull request is merged, or closed and the branch deleted. A folder this run creates has nothing
+  to compare.
 - **`$DOCS_PATH`** (optional, default `/workspace/docs`) — documentation grounding, resolved once
   in Phase 1 and consumed with grill-rank ranking over Phase 4's defect walk. Missing, unreadable,
   or carrying no markdown file is a silent, non-blocking skip. Turned off explicitly with

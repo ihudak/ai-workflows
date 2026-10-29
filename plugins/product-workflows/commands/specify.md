@@ -290,6 +290,8 @@ nothing.
    `no folder at <path> (given as a path)` — because "every level addressing.md §3 bounds" would
    describe a search a verbatim path never performs.
 
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder — on an Epic address with `prefix: spec`; on a PRD address with no `prefix`, since Phase 2 Step A may re-point the feature folder at an Epic, and the branch its handoff names is settled only then, where Step A runs this again with the prefix. A stop it makes ends the run here; it runs before this step looks for a prior run, so a switch it makes is the checkout that step reads.
+
 4. **Detect a prior run.** If a `_session.md` exists in the resolved feature folder, record that a
    resume is available — Phase 1 asks the user resume-vs-fresh. If no `_session.md` exists, this is a
    fresh run.
@@ -303,8 +305,6 @@ folder. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git s
 run, retry an artifact commit that failed to push, and settle the branch. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if
 it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
 `commit-artifacts` step skips on it.
-
-**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder — on an Epic address with `prefix: spec`; on a PRD address with no `prefix`, since Phase 2 Step A may re-point the feature folder at an Epic, and the branch its handoff names is settled only then, where Step A runs this again with the prefix. A stop it makes ends the run here.
 
 **Gate the PRD — on every route, with no branch.** The folder gated is **the PRD folder this run resolved**: the resolved folder itself when the address named a `PRD-` folder, its parent when the address named an `EPIC-` folder, and — on the BRD route — the resolved `PRD-` slice folder, which *is* that route's PRD folder (§4.1). One rule, one path expression, no route test. Execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against the PRD file in that folder (written below as `specifications/<PRD>-<vslug>/` for brevity; the folder on disk carries its kind prefix — `PRD-<PRD>-<vslug>/` on a current tree, the unprefixed form only through `workflows-core:addressing` §5's legacy fallback — and it is always the folder Phase 0 resolved, never a path re-derived here) — that file is `prd.md`, a constant. `/create-prd` and `/update-prd` write no other canonical name — the only other PRD file either writes is the dated copy `/update-prd` archives under `revisions/`, which is no PRD this gate could mean — and `workflows-core:addressing` §5 fixes the boundary: the legacy fallback resolves a folder name and nothing inside it, so a pre-rename tree renames its artifacts rather than being resolved for. **A key-globbed filename was gated here once, and is not restored.** The pre-rename `<KEY>_<slug>.md` form matches nothing in a current repo — so the gate returned `absent` for every PRD that was present and the rows D/E stop could never fire — and on the one tree it was written for it also matches the pre-rename ARD `<KEY>_ARD.md`, so it can gate the wrong artifact entirely. Gating the constant is correct on both trees: on a current one it names the file that is there, and on a pre-rename one it reports `absent`, which is what §5 now tells that operator to fix. Map its §3.7 return value by `stopped` first, never by `on_main` alone. Any stopping state → stop per §4.4. Otherwise (`stopped: false`): on `pass`/`pass_amending`, proceed — Phase 2 still reads the resolved folder exactly as it does without this gate; the merged PRD is a grounding confirmation, not a new content source; on `absent`, `/specify`'s existing specs-tree behaviour is unaffected — but report it: *"No authored PRD on `<default>` for `<PRD>` — specifying from the resolved folder at `<path>`. If a PRD exists on a branch, this run would have stopped; it does not, so none does."*; on `unmanaged`, behave exactly as before this feature — reachable here even after step 2's own `$SPECS_PATH` check, since that check only rejects an unset value, never an invalid path or a non-git directory.
 
@@ -629,10 +629,10 @@ is the only command that writes one at all.
 single-Epic and ≥2-Epic-selection cases), the feature folder becomes that Epic's per-Epic subfolder
 `specifications/<PRD>-<vslug>/EPIC-<EPIC>-<eslug>/` (Phase 0 step 3's `focus_key`-set case), superseding the
 provisional PRD-level folder Phase 0 resolved — Phase 0 already marks that folder provisional until
-the folder read runs. Re-detect a prior run there (a `_session.md` → a resume is available for that
+the folder read runs. Then execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on that folder, with `prefix: spec` — a stop it makes ends the run here — and only then re-detect a prior run there (a `_session.md` → a resume is available for that
 Epic, compared per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 1 before anything the resumed run writes, as Phase 1 compares one, or opened with its `## Run environment` section where the run writes it fresh). The broad-PRD-spec case — the only other one left — leaves the folder Phase 0 resolved unchanged.
 
-**Check the branch the run stands on, for the folder Step A settled.** On a PRD address, once Step A has settled the feature folder — an Epic's, or the PRD's own for one broad PRD-level spec — execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: spec`; a stop it makes ends the run here. An Epic address ran it with that prefix in Phase 0.
+**Check the branch the run stands on, for a broad PRD-level spec.** On a PRD address whose Step A left `focus_key` null, for one broad PRD-level spec, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the PRD folder, with `prefix: spec`; a stop it makes ends the run here. An Epic address ran it with that prefix in Phase 0, and a re-pointed folder ran it above.
 
 ### Step B — Full Epic-scoped read
 
@@ -1224,7 +1224,7 @@ stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
 trailer, and pushes the branch this run's handoff phase created (§4.1) per §4 step 5. It
 NEVER touches a code repo, a docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the
-run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice — the flag a §6 comparison this run ended in *Stop* sets (`workflows-core:session-hygiene`), with its `RESUME_ENVIRONMENT_CHANGED:` line as that notice. Hold its
+run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice — the flag a §6 comparison this run ended in *Stop* sets (`workflows-core:session-hygiene`), with its `RESUME_ENVIRONMENT_CHANGED:` line as that notice, or the flag its §7 `env-check` sets, with its `Environment changed:` line. Hold its
 §6 outcome line for the Final report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git

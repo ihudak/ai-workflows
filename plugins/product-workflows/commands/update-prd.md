@@ -38,6 +38,8 @@ Usage: `/update-prd <KEY> [@transcript-or-notes ...] [--no-docs] [--docs <path>]
    UPDATE_PRD_EPIC_FOLDER: <KEY> resolves to an Epic folder at <path>, and an Epic is never the folder a PRD lives in — a PRD lives in a PRD- folder, and this Epic's PRD is the one in the folder above it. <remedy>
    ```
    `<remedy>` names the parent PRD as the likely intended target wherever there is one: where the folder above holds a `prd.md` asserting `kind: prd`, `This is probably the PRD you meant: re-run '/product-workflows:update-prd <PRD-KEY>'; to re-refine this Epic instead, run '/product-workflows:epics <KEY>'.`, `<PRD-KEY>` being that `prd.md`'s own `key` (`workflows-core:addressing` §4), never parsed out of either folder's name — and where this folder holds no `epic.md`, `/product-workflows:epics <KEY>` refuses it (`EPICS_NO_PRD`), so that clause names `'/product-workflows:epics <PRD-KEY>'` instead; where the folder above holds none, this Epic has no PRD above it, the shape `/product-workflows:epics <KEY>` reports as `EPICS_EPIC_NOT_UNDER_PRD` where this folder holds an `epic.md` and as `EPICS_NO_PRD` where it holds none, and the remedy is the one both stops give: where the folder above is a `PRD-` folder, `The PRD folder above it holds no PRD yet: author one there with '/product-workflows:create-prd <PARENT-KEY>'.`, `<PARENT-KEY>` being that folder's own `key`, subject to step 4's table applied to *that* folder where it carries a `brd-link.md`; anywhere else, name no parent and say so. It is a user halt, so `emit-block` does not fire.
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: prd`; a stop it makes ends the run here.
+
 4. **Resolve the base PRD.** It is the `prd.md` in the folder step 3 resolved — the only current copy there is (earlier revisions are archived under `revisions/` and never read as the base), and therefore authoritative without a test.
 
    **Present but unreadable → stop before any write.** A `prd.md` that exists but cannot be read is
@@ -96,8 +98,6 @@ These reads are deliberately **not** gated: `require-on-main` is never executed 
 `/update-prd` is **cwd-agnostic** and needs **no repos mounted** (product-level; no code scan).
 
 **Specs-repo preflight** — run in step 3, once the resolution returns `status: found`, with the run key set step 3 fixes, before step 3a, step 4 or step 5 reads anything. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run, retry an artifact commit that failed to push, and settle the branch. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts` step skips on it.
-
-**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: prd`; a stop it makes ends the run here.
 
 ---
 

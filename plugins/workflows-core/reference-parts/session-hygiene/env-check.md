@@ -62,11 +62,11 @@ printf 'Environment: SPECS_PATH=%s (origin %s), REPOS_PATH=%s\n' \
   "${REPOS_PATH-unset}"
 ```
 
-The conversation carries the line, and the conversation is the one thing a resume takes to another container.
+The conversation carries the line, and the conversation is the one thing a resume takes to another container. **Where the run carries `$SPECS_PATH` from an answer** — the *Set SPECS_PATH* question of `workflows-core:escalation-rules`' *Required path environment variable unset* — rather than from its environment, the call runs with that value exported first, `export SPECS_PATH='<the value>';`, here and at every re-run below, so the line records the path the run writes to.
 
 **`env-check`** — run where its callers say, each time afresh:
 
-1. **Find the last `Environment:` line in the conversation**, which is this run's own wherever its preflight ran. **Where there is none** — a run started before this release, or one whose preflight did not run — pass: there is nothing to compare.
+1. **Find the last `Environment:` line this run printed** — since this command's invocation, never one an earlier run in the same conversation printed. **Where there is none** — a run started before this release, or one whose preflight did not run — pass: there is nothing to compare.
 2. **Where §6 pinned the run** (*Go on pinned to the recorded environment*), pass: §6 compares it at the same points, against the values it pins, and the `REPOS_PATH` it exports is its command's resolved value rather than the variable this line records.
 3. **Run the line's Bash call again, as a new call** — never answer from the conversation — and compare what it prints with that line, whole.
 4. **Equal → pass, silently.** **Different → set `specs_git: misrooted` for the rest of the run** and print, once per run however many times this runs:

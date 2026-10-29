@@ -170,12 +170,13 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   preflight has run, the run checks the branch the specs checkout stands on, before either route's
   gate below. Where it is a plugin branch the default branch has moved past under the address's
   top-level folder in `specifications/` — the `BRD-` folder above a slice, or the PRD folder itself
-  on the idea route — a document there added, changed or removed since that branch was cut,
-  session files aside, the run stops, naming the paths and what to run: merge the default branch
-  in, where it is this run's own branch — `brd/` on the BRD route, `prd/` on the idea route — or
-  switch to the default branch, where it is another unit's. Where the branch this run's handoff
-  would reuse is open and has changed something under that folder, it asks first whether to switch
-  to that branch and continue there, or stop until its pull request is merged or closed.
+  on the idea route — a document there added, changed or removed since that branch was cut, session
+  files aside, the run stops, naming the paths and what to run: merge the default branch in, where
+  this run builds on that branch — its own branch (`brd/` on the BRD route, `prd/` on the idea
+  route), or an earlier phase's open branch it stacks on — or switch to the default branch, where
+  it does not. Where the branch this run's handoff would reuse is open and has changed something
+  under that folder, it asks first whether to switch to that branch and continue there, or stop
+  until its pull request is merged, or closed and the branch deleted.
 - **`$REPOS_PATH`** — required, on either route, unless `--repos-path` names it; resolved as one
   directory or a colon-separated list. No resolvable entry stops the run naming `REPOS_PATH`.
 - **`$DOCS_PATH`** (optional, default `/workspace/docs`) — documentation grounding, resolved once

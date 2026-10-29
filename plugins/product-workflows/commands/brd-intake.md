@@ -159,6 +159,8 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    a pre-prefix repo already holds; this command does not add to them.
 
 
+   **Check the branch the run stands on.** Where the folder was found, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: brd`, before the re-run block below reads it; a stop it makes ends the run here. A folder this run derives has nothing on any branch to compare.
+
    **A re-run over an existing root BRD folder re-reads the source and rewrites the inventory, the ledger and
    the records beside them, and the confirmation for that is taken here — before Phase 2's first
    write.** Where the folder resolved above already holds a `brd/brd-inventory.md` with at least one
@@ -229,8 +231,6 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
 command, it consumes no prior phase's deliverable, so it runs no `require-on-main` gate here. It is
 cwd-agnostic and needs no repos mounted (no `$REPOS_PATH`); grounding against code and design is
 `/prd-ground`'s job, not this one's.
-
-**Check the branch the run stands on.** Where step 7 found the folder, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: brd`; a stop it makes ends the run here. A folder this run derives has nothing on any branch to compare.
 
 ---
 

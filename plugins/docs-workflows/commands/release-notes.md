@@ -177,7 +177,7 @@ in is untouched (§1 rule 1). Prompt-free; it prints its `Environment:` line, an
 if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole
 run — the terminal `commit-artifacts` step skips on it.
 
-**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: prd`; a stop it makes ends the run here.
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the PRD folder this run carries — the resolved folder, or the PRD folder above an Epic address — which its handoff names, with `prefix: prd`; a stop it makes ends the run here.
 
 ---
 

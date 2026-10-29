@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.
 
 ### Added
-- **`/release-notes` and keyed `/document` run `workflows-core:phase-handoff`'s `branch-check`** after the preflight and the resolution: a plugin branch behind the default branch under the address's root folder stops the run (D24); `/release-notes` passes `prefix: prd`, so an open branch its handoff would reuse is asked about before any work (D18).
+- **`/release-notes` and keyed `/document` run `workflows-core:phase-handoff`'s `branch-check`** after the preflight and the resolution: a plugin branch behind the default branch under the address's root folder stops the run (D24); `/release-notes` passes `prefix: prd` on the PRD folder its handoff names, also on an Epic address, so an open branch its handoff would reuse is asked about before any work (D18).
 
 ### Changed
 - The preflight clause of every command names the `Environment:` line `specs-preflight` now prints; `/document` loads `phase-handoff` explicitly where it applies §2.7.1's template rule, and `/release-notes` names the handoff in words where it only explains it.

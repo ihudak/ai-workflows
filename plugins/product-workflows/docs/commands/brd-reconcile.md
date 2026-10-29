@@ -173,12 +173,13 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   Where it is a plugin branch the default branch has moved past under the slice's parent `BRD-`
   folder — a document there, a sibling slice's included, added, changed or removed since that
   branch was cut, session files aside — the run stops, naming the paths and what to run: merge the
-  default branch in, where it is this run's own `brd/` branch, or switch to the default branch,
-  where it is another unit's. Where the `brd/` branch the review's handoff would reuse is open and
-  has changed something under that folder, it asks first whether to switch to that branch and
-  continue there, or stop until its pull request is merged or closed. A dependent BRD under another
-  `BRD-` folder is checked too, but only before the run writes into it, and what that check finds
-  never stops the run (*Gates*, below).
+  default branch in, where this run builds on that branch — its own `brd/` branch, or an earlier
+  phase's open branch it stacks on — or switch to the default branch, where it does not. Where the
+  `brd/` branch the review's handoff would reuse is open and has changed something under that
+  folder, it asks first whether to switch to that branch and continue there, or stop until its pull
+  request is merged, or closed and the branch deleted. A dependent BRD under another `BRD-` folder
+  is checked too, but only before the run writes into it, and what that check finds never stops the
+  run (*Gates*, below).
 - **A review the reader could read.** Where `customer-review-reader` returns no decisions, no
   required changes and no challenges, the run reads **section 2's verdict** to tell two states
   apart: `approved` beside three empty sets is a customer who approved and asked for nothing, and is

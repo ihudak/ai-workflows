@@ -295,11 +295,12 @@ reads was already independently verified by `/prd-ground`'s own agents.
   below. Where it is a plugin branch the default branch has moved past under the root's `BRD-`
   folder — the resolved folder on a root, its parent on a slice — a document there, any slice's
   included, added, changed or removed since that branch was cut, session files aside, the run
-  stops, naming the paths and what to run: merge the default branch in, where it is this run's own
-  `brd/` branch, or switch to the default branch, where it is another unit's. Where the `brd/`
-  branch this run's handoff would reuse is open and has changed something under that folder, it
-  asks first whether to switch to that branch and continue there, or stop until its pull request
-  is merged or closed.
+  stops, naming the paths and what to run: merge the default branch in, where this run builds on
+  that branch — its own `brd/` branch, or an earlier phase's open branch it stacks on — or switch
+  to the default branch, where it does not. Where the `brd/` branch this run's handoff would reuse
+  is open and has changed something under that folder, it asks first whether to switch to that
+  branch and continue there, or stop until its pull request is merged, or closed and the branch
+  deleted.
 - **On a slice: `/prd-ground`'s findings already merged to the specs repo's default branch.**
   `split_mode: allocate-only` only — a root is never ground, so this gate and the next two do not
   run there at all; a root's own inventory-only check is stated separately below. Phase 0 gates

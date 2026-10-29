@@ -224,10 +224,11 @@ subagent is dispatched — every finding this command reads was already independ
   Where it is a plugin branch the default branch has moved past under the slice's parent `BRD-`
   folder — a document there, a sibling slice's included, added, changed or removed since that
   branch was cut, session files aside — the run stops, naming the paths and what to run: merge the
-  default branch in, where it is this run's own `brd/` branch, or switch to the default branch,
-  where it is another unit's. Where the `brd/` branch this run's handoff would reuse is open and
-  has changed something under that folder, it asks first whether to switch to that branch and
-  continue there, or stop until its pull request is merged or closed.
+  default branch in, where this run builds on that branch — its own `brd/` branch, or an earlier
+  phase's open branch it stacks on — or switch to the default branch, where it does not. Where the
+  `brd/` branch this run's handoff would reuse is open and has changed something under that folder,
+  it asks first whether to switch to that branch and continue there, or stop until its pull request
+  is merged, or closed and the branch deleted.
 - **`/prd-ground`'s findings already merged to the specs repo's default branch.** `require-on-main`
   runs against `grounding/code-grounding.md` before anything else is read; an unmerged grounding pull
   request stops the run naming the branch/PR state, and a BRD never grounded at all stops naming the

@@ -116,7 +116,7 @@ record, and the parent's defect log waits (below).** They are:
 | *The propagation sweep* | sweep dispositions into a **dependent BRD's** `decisions.md` |
 | *The stale cross-reference sweep* | `updated` corrections into any artifact under the parent, including a **sibling slice's** |
 
-**The rule, once, for the three that record.** Where that artifact's BRD lies under a root folder other than this run's — a dependent BRD's — first execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on that BRD's folder, once for each such root, with no `prefix`; a stop it makes is a stopping row here (§6.3). Before writing into an artifact that belongs to a BRD other than
+**The rule, once, for the three that record.** Where that artifact's BRD lies under a root folder other than this run's — a dependent BRD's — first execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on that BRD's folder, once for each such root, with no `prefix`; a stop it makes is a stopping row here (§6.3), recorded by its finding. Before writing into an artifact that belongs to a BRD other than
 the one this run was given, execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against that artifact. Any **stopping** row → **record, never write**: the intended change, the
 artifact, and the concrete branch/PR state the gate reported all go into the reconciliation record
 and the final report, and the file is left exactly as it was. Row F (`absent` — the artifact is on no
