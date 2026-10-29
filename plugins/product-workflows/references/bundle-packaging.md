@@ -949,9 +949,8 @@ count test and fail the reader — a substitution, which is worse than a miscoun
 correct. Every relation below compares **membership**.
 
 **Every relation here was measured against assembled bundles before it was written, and each one is
-narrower than the obvious version because the obvious version fired on correct packages.** One
-narrowing added since was reasoned from a measured one rather than measured itself, and says so
-where it stands. That is
+narrower than the obvious version because the obvious version fired on correct packages.** Each
+narrowing added since says where it was reasoned rather than measured. That is
 recorded per relation rather than as a general caution, because the specific narrowings are the
 content: a reader who widens one back is not being bolder, they are reintroducing a false positive
 somebody already paid for.
@@ -1038,9 +1037,9 @@ the bundle. Three qualifications, each of which a real package would otherwise f
   `<name>.md` token only: it is review's. A captured image is a different case — §1.1's map names
   every one the bundle carries — and this relation still does not test it.
 
-**The manifest's lines are the rows of its document table**, the table under its `## Documents`
-heading, whose first cell names each document (`commands/brd-package.md`, *Assemble the bundle*
-rule 6). The manifest's other sections map captured paths to bundled names and name files the
+**Relation 2's manifest lines are the rows of its document table** — every table under its
+`## Documents` heading, whose first cell names each document (`commands/brd-package.md`, *Assemble
+the bundle* rule 6). That one was reasoned from the manifest's other sections rather than measured. The manifest's other sections map captured paths to bundled names and name files the
 bundle does not carry, and a reading of every filename in it reports those as documents missing
 from the bundle. Inside the working directory *Assemble the bundle* builds, nothing is markdown but
 the review documents and the manifest, so there the *review document* test is every markdown file
@@ -1071,7 +1070,8 @@ ground.
 
 **Pair each repository with its own commit.** The note names each as one clause, ``the `<repo>`
 repository at commit `<commit>` `` (`commands/brd-package.md`, *Render the delivery note*), and the
-comparison is per repository: the note's clauses and the baselines name the same repositories, and
+comparison is per repository: the note's clauses and the baselines name the same repositories, by
+the slug each entry records (`workflows-core:grounding-format` §4), and
 each clause's commit prefixes a commit that repository's own entries record. A commit that prefixes
 another repository's pin is a swap, which a membership test over the commits alone reads as
 correct. A commit word outside a clause is still tested against every baseline commit.
@@ -1096,6 +1096,9 @@ because that is a read failure wearing the shape of a discrepancy.
   the closed list §7.1 opens with and does not name it, so a row left off that list, or named there
   that the ledger does not put out of scope, is review's to catch — as is a wrong id there, since
   §6's relation 1 discharges a qualified one rather than resolving it.
+- **A record a list mentions in an item's text rather than opening an item with.** Relation 1 reads
+  members off item openers (§7.1), so a sentence inside an item that presents another record as
+  listed — a withdrawn one among them — is not compared; review reads for it.
 - **A repository the delivery note names outside a pin clause.** Relation 3 reads repositories
   from the clauses alone, so one named in a sentence of its own is review's.
 - **A faithful restatement of a wrong source.** Where the ledger, the register or the findings are

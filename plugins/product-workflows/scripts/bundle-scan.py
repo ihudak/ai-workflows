@@ -1058,7 +1058,8 @@ REGIONS = [
 ]
 SUBHEAD_RE = re.compile(r"^(#{3,6})\s+(?:[0-9]+(?:\.[0-9]+)*\.?\s+)?(.+?)\s*$")
 ANY_HEAD_RE = re.compile(r"^(#{1,6})\s")
-ITEM_RE = re.compile(r"^\s*(?:[-*+]\s|[0-9]+[.)]\s|\||#{1,6}\s)")
+# an item opens at column 0: a nested bullet is part of the record above it, never a record
+ITEM_RE = re.compile(r"^(?:[-*+]\s|[0-9]+[.)]\s|\||#{1,6}\s)")
 OPENER_RE = re.compile(r"^[\s*_`]*\[([A-Z]+)#([0-9]+)\]")
 RANGE_TAIL_RE = re.compile(r"^[\s*_`]*[–-][\s*_`]*\[([A-Z]+)#([0-9]+)\]")
 
@@ -1136,34 +1137,34 @@ def _records(bundle, name):
     return _blocks(_read(path, name))
 
 
-IMAGE_EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
-
-
 def _stem(name):
-    return name[:-3] if name.endswith(".md") else name
+    for ext in DOC_EXT:
+        if name.lower().endswith(ext):
+            return name[:-len(ext)]
+    return name
 
 
 def manifest_documents(text):
-    """The first cells of the table under the manifest's '## Documents' heading (Phase 8 rule 6), each
-    the name inside its backticks, '.md' stripped; an image row is out of scope (section 7.1)."""
+    """The first cells of every table under the manifest's '## Documents' heading (Phase 8 rule 6), up
+    to the next '## ' heading, each the name inside its backticks, its extension stripped; an image row
+    is out of scope (section 7.1)."""
     lines = text.split("\n")
     try:
         a = next(i for i, l in enumerate(lines) if re.match(r"^##\s+Documents\s*$", l))
     except StopIteration:
         raise Refused("the manifest has no '## Documents' heading to read its document list from")
-    names, inside = [], False
+    names, inside, tables = [], False, 0
     for line in lines[a + 1:]:
         if line.startswith("## "):
             break
         if not line.lstrip().startswith("|"):
-            if inside:
-                break
+            inside = False
             continue
         if SEPARATOR_RE.match(line):
-            inside = True
+            inside, tables = True, tables + 1
             continue
         if not inside:
-            continue  # the header row
+            continue  # a table's header row
         cells = _cells(line)
         if not cells:
             continue
@@ -1172,7 +1173,7 @@ def manifest_documents(text):
         name = q.group(1) if q else cell
         if not name.lower().endswith(IMAGE_EXT):
             names.append(_stem(name))
-    if not inside:
+    if not tables:
         raise Refused("the manifest has no table under '## Documents' to read its document list from")
     return names
 
@@ -1182,10 +1183,13 @@ COMMIT_WORD_RE = re.compile(r"(?<![\w/.\-])([0-9a-f]{7,40})(?![\w/\-]|\.\w)")
 
 
 def baseline_pairs(text):
-    """(repo, commit) for each entry of a baselines document, in order, a repeat recorded once."""
+    """(repo, commit) for each entry of a baselines document, in order, a repeat recorded once -- read by
+    the fields of workflows-core grounding-format section 4's layout, and of the one before it."""
     pairs, repo = [], None
     for line in text.split("\n"):
-        m = re.match(r"^\s*-\s*repo\s*:\s*(.+?)\s*$", line)
+        if re.match(r"^-\s", line):
+            repo = None  # a new entry: section 4's opens '- date:', an older one '- repo:'
+        m = re.match(r"^\s*(?:-\s*)?repo\s*:\s*(.+?)\s*$", line)
         if m:
             repo = m.group(1).strip("`")
             continue
@@ -1288,7 +1292,7 @@ def sets(bundle, key, date, manifest, note, unreviewed=()):
     # relation 2: the working directory this run assembled holds no never-sent marker, so a review
     # document is every markdown file but the manifest
     try:
-        listing = [n for n in os.listdir(bundle) if n.endswith(".md") and n != manifest
+        listing = [n for n in os.listdir(bundle) if n.lower().endswith(DOC_EXT) and n != manifest
                    and os.path.isfile(os.path.join(bundle, n))]
     except OSError as e:
         raise Refused("cannot list the bundle: " + e.__class__.__name__)
@@ -1322,6 +1326,14 @@ SHA_B = "1234567fedcba0987654321fedcba0987654321f"
 
 
 def _sets_baselines(pairs):
+    """Baselines in workflows-core grounding-format section 4's entry layout."""
+    return "# Grounding baselines: K-1\n\n" + "".join(
+        "- date: 2026-10-%02d\n  repo: %s\n  commit: %s\n  integrity: clean\n  finding: [CG#%d]\n\n"
+        % (i + 1, r, c, i + 1) for i, (r, c) in enumerate(pairs))
+
+
+def _sets_legacy_baselines(pairs):
+    """Baselines in the layout written before section 4 fixed one, a dated heading over '- repo:'."""
     return "# Grounding baselines: K-1\n\n" + "".join(
         "## 2026-10-%02d — %s\n\n- repo: %s\n  commit: %s\n  verification:\n"
         "    - git -C \"<repo>\" rev-parse HEAD → %s\n  result: clean\n\n" % (i + 1, r, r, c, c)
@@ -1484,6 +1496,32 @@ def sets_selftest(check):
                                  "`1234567`; also 9999999.\n")
     check("sets relation 3: a commit word outside a clause that prefixes no baseline is extra",
           r3(r)["extra"] == ["9999999"])
+    r = run(dict(pr, **{"K-1-baselines.md": _sets_legacy_baselines([("app", SHA_A), ("lib", SHA_B)])}), note=wrapped)
+    check("sets relation 3: baselines written before section 4's layout are read too", r3(r)["verdict"] == "pass")
+    check("sets relation 3: an entry with no repo takes no other entry's",
+          baseline_pairs("- date: 2026-10-01\n  repo: app\n  commit: %s\n\n- date: 2026-10-02\n  commit: %s\n"
+                         % (SHA_A, SHA_B)) == [("app", SHA_A)])
+    check("tokens: a TIFF anchor is still an image row", _image_anchor("source/scan.tiff › Figure 2"))
+    mk = dict(files, **{"K-1-brief.markdown": "x\n"})
+    r = run(dict(mk, **{"K-1-manifest.md": _sets_manifest(docs + ["K-1-brief.markdown"])}))
+    check("sets relation 2: a bundled .markdown document matches its row", r2(r)["verdict"] == "pass")
+    split = _sets_manifest(docs[:2]).replace(
+        "\nImage:", "\nCopied in, not for re-review:\n\n| File | What it is | For review? |\n|---|---|---|\n"
+                    + "".join("| `%s` | d | no |\n" % n for n in docs[2:]) + "\nImage:")
+    r = run(dict(files, **{"K-1-manifest.md": split}))
+    check("sets relation 2: every table under Documents is read, prose between them", r2(r)["verdict"] == "pass")
+    nest = dict(good)
+    nest[7] = ("### 7.1 Questions held for you\n\n- [AS#3] is re-put by round 1, question 2\n\n"
+               "### 7.3 Open assumptions\n\n- **[AS#1]** — a\n  - [AS#3] was its predecessor\n- **[AS#2]** — b\n")
+    r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt(nest)}), unreviewed=["P-2"])
+    check("sets relation 1: an id opening an item outside the sub-heading, or a nested one, is no member",
+          r1(r, 7, "Open assumptions")["verdict"] == "pass")
+    sc = base["K-1-decisions.md"] + ("id: [VD#12]\nstatement: q\nargumentation: |\n  as if\n"
+                                     "  conditional_on: P-2/[CD#3]\nstatus: decided\n\n")
+    r = run(dict(base, **{"K-1-decisions.md": sc, "K-1-customer-review-prompt-20261029.md": _sets_prompt(good)}),
+            unreviewed=["P-2"])
+    check("sets relation 1: a field inside an argumentation scalar is not the record's",
+          r1(r, 8, "Positions that could still move")["held"] == ["[VD#7]"])
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "K-1-customer-review-prompt-20261029.md"), "w", encoding="utf-8") as fh:
             fh.write(_sets_prompt())

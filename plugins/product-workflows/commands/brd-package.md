@@ -937,7 +937,9 @@ that rule: it is an instruction the assembly follows, taken by an operator again
 finding, rather than a part somebody composed freehand. The eleven parts are the design's, and they
 are not re-ordered, merged or renumbered for a package that happens to have little to put in one of
 them — a part with nothing in it says `none` and says why, for the same reason the review's own
-sections do.
+sections do. **Each part opens with a level-2 heading, `## <N>. <title>`**, `<N>` its number in the
+table below: *Assemble the bundle* rule 9 places every list by those headings, and stops on a prompt
+whose eleven are not there once each and in order.
 
 | # | Part | Filled from |
 |---|---|---|
@@ -948,7 +950,7 @@ sections do.
 | 5 | The single most important claim to verify first | the register, the findings and the held `[C]` entries, by the rule below |
 | 6 | Review scope | `coverage-ledger.md` dispositions, `brd/brd-inventory.md`, and every `in-scope` `[CDF#n]` |
 | 7 | The decisions the customer must make | `interview/customer-questions.md`, every open `[AS#n]`, and every `escalated-to-customer` `[SR#n]` |
-| 8 | What could still move | the prerequisites resolved above, every `conditional_on` position (D20), and every `conditional` `[CDF#n]` |
+| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position (D20), and every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its name, and the inlined schema | the D13 rule, the `Package reviewed` line, and `render-schema` below |
 | 11 | What this session cannot settle | the ledger, the prerequisites, every `out-of-scope` `[CDF#n]`, and the review's own limits |
@@ -975,14 +977,15 @@ sub-heading rather than by reading the part's prose. Each is a `###` heading ins
 |---|---|---|
 | 6 | `Code defects we will repair` | every `in-scope` `[CDF#n]` |
 | 7 | `Open assumptions` | every open `[AS#n]` |
-| 8 | `Positions that could still move` | every position carrying `conditional_on` a prerequisite not yet customer-reviewed |
+| 8 | `Positions that could still move` | every live position — `open`, `decided` or `reopened` — carrying `conditional_on` a prerequisite not yet customer-reviewed |
 | 8 | `Code defects whose scope is unsettled` | every `conditional` `[CDF#n]` |
 | 9 | `Open assumptions` | every open `[AS#n]` |
 | 11 | `Code defects we will not repair` | every `out-of-scope` `[CDF#n]` |
 
-Under each, every record is an item that **opens with its own id**: a list item that begins with it,
-a table row whose first cell is it, or a heading that is it. An id anywhere else in an item is a
-mention of another record and is not read as listed, which is why a statement or an argumentation
+Under each, every record is an item that **opens with its own id**: a top-level list item that begins
+with it, a table row whose first cell is it, or a heading that is it. An id anywhere else in an item
+— a nested bullet inside a record's item among them — is a mention of another record and is not
+read as listed, which is why a statement or an argumentation
 may cite a sibling freely. A list with nothing in it keeps its sub-heading and says `None` and why,
 as an empty part does. **Whatever a part carries after one of these lists goes under a `###`
 sub-heading of its own** — part 9's accepted-risk findings among them — because a list runs to the
@@ -1108,8 +1111,9 @@ account of why no evidence exists, and its `argumentation`.
 
 **Part 8 — what could still move (D20).** Every declared prerequisite whose decisions are **not yet
 customer-reviewed**, named, with what is unsettled about it; and every position in this package
-carrying `conditional_on` one of them, named by its `[VD#n]` and its `statement` — a record reading
-`superseded` or `withdrawn` is no longer a position this package takes, and is not among them. A package may ship
+carrying `conditional_on` one of them, named by its `[VD#n]` and its `statement` — every **live** one,
+reading `open`, `decided` or `reopened`: a record reading `superseded` or `withdrawn` is no longer a
+position this package takes, and is not among them. A package may ship
 while a prerequisite is unreviewed — **loudly**, which is what this part is. Say in one line what
 the customer's own review should then do about it: mark the affected approvals in their section 3 as
 contingent, and **not** list the prerequisite in their section 10 as a blocker, because it is not
@@ -1407,7 +1411,7 @@ body. **It is not part of the bundle** (`bundle-packaging.md` §4): it is the em
 document, and a copy of it inside the bundle would be a second, divergent statement of what was
 sent. The *Assemble the bundle* phase does not copy it in, and the manifest does not list it.
 
-It states only: which BRD this is; **how the customer gets the bundle**, shaped by the route just settled (`bundle-packaging.md` §4) — on the **repository** route, the repository to pull, the committed `bundle-<YYYYMMDD>/` directory by path, and the instruction to open the prompt file there and paste it; on the **archive** route, what is attached. This is the one document that names a delivery route, and the only one that may: it is written to a customer whose situation the operator knows, where the prompt is handed on to a reader the run cannot see (§5); which repositories, at which commits — one clause per repository, written ``the `<repo>` repository at commit `<commit>` ``, which *Assemble the bundle* rule 9 pairs with the bundle's baselines (`bundle-packaging.md` §7.1, relation 3); **which
+It states only: which BRD this is; **how the customer gets the bundle**, shaped by the route just settled (`bundle-packaging.md` §4) — on the **repository** route, the repository to pull, the committed `bundle-<YYYYMMDD>/` directory by path, and the instruction to open the prompt file there and paste it; on the **archive** route, what is attached. This is the one document that names a delivery route, and the only one that may: it is written to a customer whose situation the operator knows, where the prompt is handed on to a reader the run cannot see (§5); which repositories, at which commits — one clause per repository, written ``the `<repo>` repository at commit `<commit>` ``, `<repo>` the repository's slug exactly as its baselines entry records it — never a path — and `<commit>` that entry's commit, whole or abbreviated to seven characters or more, which *Assemble the bundle* rule 9 pairs with the bundle's baselines (`bundle-packaging.md` §7.1, relation 3); **which
 file is the prompt** — the one file to paste; **which file comes back** — the one file to send,
 named exactly, and, on the **repository** route, where it goes: committed into the folder that holds `bundle-<YYYYMMDD>/`, under exactly that name, on a branch of the customer's own with a pull request against the default branch, changing nothing else — a correction the customer wants made to the package goes in the review's section 12, never into the bundle — or, where they cannot push, sent back instead (`bundle-packaging.md` §5, *The review comes back the way the bundle went out*); any prerequisite whose decisions are still provisional and that positions resting on
 it could move (D20); and anything else that must not sit buried inside a document. The two bolded
@@ -1757,8 +1761,8 @@ or not that line is there.
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" sets <the working directory> --key <BRD-KEY> --date <YYYYMMDD> --manifest <the manifest's bundled name> --note <BRD-dir>/customer-delivery-note-<YYYYMMDD>.md [--unreviewed-prereq <KEY>]…
    ```
    `--date` is the run's stamp, `--manifest` the manifest rule 6 wrote, `--note` the note *Render the
-   delivery note* wrote, and `--unreviewed-prereq` each prerequisite Phase 2 found **not**
-   customer-reviewed — the set part 8's filter names, taken from Phase 2 and never read off a record.
+   delivery note* wrote, and `--unreviewed-prereq` every prerequisite Phase 2 did **not** find
+   customer-reviewed, one it could not resolve included — the set part 8's filter names, taken from Phase 2 and never read off a record.
    It finds relation 1's lists under the sub-headings *Render the customer prompt* fixes, relation
    2's in the manifest's `## Documents` table, and relation 3's pins in the clause *Render the
    delivery note* fixes, and it carries every narrowing §7.1 records. **That section states them per

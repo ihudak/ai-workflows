@@ -244,7 +244,7 @@ Assembled from the package, never hand-written, in a fixed order that is not re-
 | 5 | The single most important claim to verify first | the finding the most decisions rest on, else the most-relied-on open assumption, else the finding the most held `[C]` questions bear on — or a statement that none rests on one |
 | 6 | Review scope | the ledger's dispositions — the rows this slice answers for, each orphan row (a claim the parent withdrew) as another BRD's, `<PARENT-KEY> [BR#n]`, not for review — plus every `in-scope` `[CDF#n]` |
 | 7 | The decisions the customer must make | the `[C]` question set, every open `[AS#n]`, every escalated `[SR#n]` |
-| 8 | What could still move | prerequisites not yet customer-reviewed, every `conditional_on` position, and every `conditional` `[CDF#n]` |
+| 8 | What could still move | prerequisites not yet customer-reviewed, every live `conditional_on` position, and every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its exact name, and the inlined schema | the one-new-file rule, the `Package reviewed` line section 1 repeats, and the rendered schema |
 | 11 | What this session cannot settle | the ledger, the prerequisites, the review's own limits, and every `out-of-scope` `[CDF#n]` |
@@ -427,8 +427,8 @@ attack.
   two sets of the same size with different members read as correct: a part that enumerates
   identified records names exactly what its filter selects; the manifest and the bundle name the
   same review documents; and the delivery note's repositories and pins are the bundle's baselines'.
-  **Each is narrower than its obvious form, and every narrowing but one was measured against
-  assembled packages** — the review-scope part renders prose rather than identifiers, save its `in-scope`
+  **Each is narrower than its obvious form, and every narrowing was measured against assembled
+  packages or says why it was reasoned instead** — the review-scope part renders prose rather than identifiers, save its `in-scope`
   defect entries, which it names by id and the check tests, and the requirements it names as another
   BRD's, which the check leaves to review; a part writes `[AS#1]`–`[AS#4]` as a
   range rather than naming each; a manifest writes filenames with or without the extension and names
@@ -436,8 +436,8 @@ attack.
   that records one entry per repository *per run* and so may hold the same commit twice; and a commit
   the note names is a run of 7 to 40 hexadecimal characters standing as a word of its own, never a
   date that prefixes no baseline commit or one inside a filename such as `bundle-<date>/`, since a date
-  is hexadecimal too — nor a word of hex letters alone, such as `defaced`, the one narrowing reasoned
-  from the date's case rather than measured. The obvious
+  is hexadecimal too — nor a word of hex letters alone, such as `defaced`, a narrowing reasoned from
+  the date's case rather than measured. The obvious
   form of each relation fires on a correct bundle. The script finds each restatement by a form the
   command renders, never by reading prose: the prompt's six lists under fixed sub-headings, each
   record an item opening with its id, with an id inside an item's text read as a mention rather than
