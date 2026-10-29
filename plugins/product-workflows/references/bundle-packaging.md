@@ -949,7 +949,8 @@ count test and fail the reader — a substitution, which is worse than a miscoun
 correct. Every relation below compares **membership**.
 
 **Every relation here was measured against assembled bundles before it was written, and each one is
-narrower than the obvious version because the obvious version fired on correct packages.** That is
+narrower than the obvious version because the obvious version fired on correct packages.** Each
+narrowing added since says where it was reasoned rather than measured. That is
 recorded per relation rather than as a general caution, because the specific narrowings are the
 content: a reader who widens one back is not being bolder, they are reintroducing a false positive
 somebody already paid for.
@@ -985,6 +986,23 @@ rather than naming each, and on measured packages that was the *only* rendering 
 a comparison over literal tokens sees two ids where the part names four and reports two omissions
 against a correct package. A range between two ids of one prefix denotes every id between them
 inclusive.
+
+**Read a part's list under its sub-heading, and its members off the items that open with an id.**
+`commands/brd-package.md`'s *Render the customer prompt* renders each list this relation compares
+under a sub-heading it fixes, and each record as an item that opens with its id — a top-level list
+item, a table row's first cell, or a heading. The members are those openers, a range in that
+position expanded as above; an id anywhere else in an item — one opening a nested bullet among them
+— is a mention of another record, not a member. That a nested bullet is a mention was reasoned
+rather than measured: a record's item may carry a list of its own, and a reading that took a
+sibling id opening one as listed reports a correct package's record as an invention.
+**A part is the wrong unit**, by what the command renders into it: the decisions part legitimately
+names a withdrawn record on a held question's `Re-puts:` line (*Only a held entry is rendered*), and
+the attack part carries the self-review's own words, which may cite any record. **And every id in a
+list is the wrong reading**, which was measured: in one register, seven of thirteen `[VD#n]` records name a sibling
+`[VD#n]` in their own fields, and a list that renders a record's statement or argumentation carries
+those mentions into the part, where a reading that counted them reports a correct package's records
+as inventions. A sub-heading the prompt lacks is not an empty list: the relation cannot place the
+list at all, and stops rather than passing it.
 
 **The accepted-risk findings are deliberately outside this relation, though the part that surfaces
 them is not.** Their source is the adversarial self-review, which §1.1 excludes from the bundle by
@@ -1022,6 +1040,14 @@ the bundle. Three qualifications, each of which a real package would otherwise f
   `<name>.md` token only: it is review's. A captured image is a different case — §1.1's map names
   every one the bundle carries — and this relation still does not test it.
 
+**Relation 2's manifest lines are the rows of its document table** — every table under its
+`## Documents` heading, whose first cell names each document (`commands/brd-package.md`, *Assemble
+the bundle* rule 6). That one was reasoned from the manifest's other sections rather than measured. The manifest's other sections map captured paths to bundled names and name files the
+bundle does not carry, and a reading of every filename in it reports those as documents missing
+from the bundle. Inside the working directory *Assemble the bundle* builds, nothing is markdown but
+the review documents and the manifest, so there the *review document* test is every markdown file
+but the manifest.
+
 **Relation 3 — the delivery note's repositories and pins are the bundle's own baselines'.** The note
 restates which repositories, at which commits; the bundle's baselines document is where those were
 recorded. Same repositories, and **each commit the note names is a prefix of a baseline commit, with every
@@ -1032,7 +1058,11 @@ does, so an equality test finds nothing and reports every correct note as carryi
 never one that reads as a valid `YYYYMMDD` date and prefixes no baseline commit: a date is all digits,
 and so hexadecimal, and a check that read `20261012` as a pin reported a correct note as naming a
 commit no baseline holds. An all-digit abbreviation that does prefix a baseline is a commit, as about
-one 7-character abbreviation in 27 is.
+one 7-character abbreviation in 27 is. **A word of hexadecimal letters alone is no pin either, unless it
+prefixes a baseline commit** — the note is prose, and `defaced` is seven hexadecimal characters
+standing as a word of its own. That one was reasoned from the date's case rather than measured: no
+measured note carried such a word, and the cost is a letters-only abbreviation that prefixes nothing
+going unreported, about one 7-character abbreviation in a thousand.
 **"Exactly one" is the wrong cardinality and fires on correct content**: a baselines document records
 one entry per repository *per run*, so a package pinned across two dated runs at unmoved commits
 holds the same SHA twice and a prefix legitimately matches both. What makes an abbreviation
@@ -1040,6 +1070,14 @@ ambiguous is matching two *different* commits, which is the case to report. This
 reaches the note, which is deliberately not a bundle document (§4) and which §6 therefore never sees:
 a pin restated wrongly there has the reviewer verify every code claim against a snapshot nobody
 ground.
+
+**Pair each repository with its own commit.** The note names each as one clause, ``the `<repo>`
+repository at commit `<commit>` `` (`commands/brd-package.md`, *Render the delivery note*), and the
+comparison is per repository: the note's clauses and the baselines name the same repositories, by
+the slug each entry records (`workflows-core:grounding-format` §4), and
+each clause's commit prefixes a commit that repository's own entries record. A commit that prefixes
+another repository's pin is a swap, which a membership test over the commits alone reads as
+correct. A commit word outside a clause is still tested against every baseline commit.
 
 **A relation whose source side comes up empty while the restatement is not fails rather than
 passes.** `workflows-core:grounding-format` §2.1 states the general form — a relation fails when
@@ -1061,6 +1099,11 @@ because that is a read failure wearing the shape of a discrepancy.
   the closed list §7.1 opens with and does not name it, so a row left off that list, or named there
   that the ledger does not put out of scope, is review's to catch — as is a wrong id there, since
   §6's relation 1 discharges a qualified one rather than resolving it.
+- **A record a list mentions in an item's text rather than opening an item with.** Relation 1 reads
+  members off item openers (§7.1), so a sentence inside an item that presents another record as
+  listed — a withdrawn one among them — is not compared; review reads for it.
+- **A repository the delivery note names outside a pin clause.** Relation 3 reads repositories
+  from the clauses alone, so one named in a sentence of its own is review's.
 - **A faithful restatement of a wrong source.** Where the ledger, the register or the findings are
   themselves wrong, every relation here goes green. This check is about the copy; the original is
   what verification and the interview settle.

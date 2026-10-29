@@ -519,7 +519,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
     `BRD_PACKAGE_PROMPT_LEAK`, `BRD_PACKAGE_UNDISPOSED`, an aborted disposition walk or an aborted tier
     choice, or a stop of *Assemble the bundle* before its move: `BRD_PACKAGE_DEAD_CITATION`,
     `BRD_PACKAGE_CITATION_MISMATCH`, `BRD_PACKAGE_CORPUS_UNREADABLE`, `BRD_PACKAGE_SET_MISMATCH`,
-    `BRD_PACKAGE_SET_UNREADABLE`, or a hold at the bundle's ruling, each of which removes its working
+    `BRD_PACKAGE_SET_UNREADABLE`, `BRD_PACKAGE_SET_AMBIGUOUS`, or a hold at the bundle's ruling, each of which removes its working
     directory — and nothing of
     it was committed. A bundle built under a declined handoff and then moved out of the folder looks
     the same here and cannot be told apart, which is why the stop's remedy above has the operator
@@ -937,7 +937,9 @@ that rule: it is an instruction the assembly follows, taken by an operator again
 finding, rather than a part somebody composed freehand. The eleven parts are the design's, and they
 are not re-ordered, merged or renumbered for a package that happens to have little to put in one of
 them — a part with nothing in it says `none` and says why, for the same reason the review's own
-sections do.
+sections do. **Each part opens with a level-2 heading, `## <N>. <title>`**, `<N>` its number in the
+table below: *Assemble the bundle* rule 9 places every list by those headings, and stops on a prompt
+whose eleven are not there once each and in order.
 
 | # | Part | Filled from |
 |---|---|---|
@@ -948,7 +950,7 @@ sections do.
 | 5 | The single most important claim to verify first | the register, the findings and the held `[C]` entries, by the rule below |
 | 6 | Review scope | `coverage-ledger.md` dispositions, `brd/brd-inventory.md`, and every `in-scope` `[CDF#n]` |
 | 7 | The decisions the customer must make | `interview/customer-questions.md`, every open `[AS#n]`, and every `escalated-to-customer` `[SR#n]` |
-| 8 | What could still move | the prerequisites resolved above, every `conditional_on` position (D20), and every `conditional` `[CDF#n]` |
+| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position (D20), and every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its name, and the inlined schema | the D13 rule, the `Package reviewed` line, and `render-schema` below |
 | 11 | What this session cannot settle | the ledger, the prerequisites, every `out-of-scope` `[CDF#n]`, and the review's own limits |
@@ -964,6 +966,30 @@ the bundle* rule 8, so a numbered example stops the package where that id is abs
 package's corpus and names an unrelated record where it is present — the rule
 `${CLAUDE_PLUGIN_ROOT}/references/customer-review-schema.md` §1 gives the schema, for the same
 reason. A real record is named only by the id its source artifact carries.
+
+**Six lists render under sub-headings this command fixes, and each record opens an item of its
+own.** *Assemble the bundle* rule 9 compares each with the records it restates
+(`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §7.1, relation 1), and finds it by its
+sub-heading rather than by reading the part's prose. Each is a `###` heading inside its part,
+`### <part>.<n> <title>`, with the title exactly as written here:
+
+| Part | Sub-heading title | Lists |
+|---|---|---|
+| 6 | `Code defects we will repair` | every `in-scope` `[CDF#n]` |
+| 7 | `Open assumptions` | every open `[AS#n]` |
+| 8 | `Positions that could still move` | every live position — `open`, `decided` or `reopened` — carrying `conditional_on` a prerequisite not yet customer-reviewed |
+| 8 | `Code defects whose scope is unsettled` | every `conditional` `[CDF#n]` |
+| 9 | `Open assumptions` | every open `[AS#n]` |
+| 11 | `Code defects we will not repair` | every `out-of-scope` `[CDF#n]` |
+
+Under each, every record is an item that **opens with its own id**: a top-level list item that begins
+with it, a table row whose first cell is it, or a heading that is it. An id anywhere else in an item
+— a nested bullet inside a record's item among them — is a mention of another record and is not
+read as listed, which is why a statement or an argumentation
+may cite a sibling freely. A list with nothing in it keeps its sub-heading and says `None` and why,
+as an empty part does. **Whatever a part carries after one of these lists goes under a `###`
+sub-heading of its own** — part 9's accepted-risk findings among them — because a list runs to the
+next heading of its level or higher, and a record rendered as a `####` heading must not end it.
 
 **Part 1 — Setup.** States, in this order: the one-line capability set the prompt assumes — *this
 prompt assumes an agent that can read files in a folder and search for a file by name; the pin check
@@ -1085,7 +1111,9 @@ account of why no evidence exists, and its `argumentation`.
 
 **Part 8 — what could still move (D20).** Every declared prerequisite whose decisions are **not yet
 customer-reviewed**, named, with what is unsettled about it; and every position in this package
-carrying `conditional_on` one of them, named by its `[VD#n]` and its `statement`. A package may ship
+carrying `conditional_on` one of them, named by its `[VD#n]` and its `statement` — every **live** one,
+reading `open`, `decided` or `reopened`: a record reading `superseded` or `withdrawn` is no longer a
+position this package takes, and is not among them. A package may ship
 while a prerequisite is unreviewed — **loudly**, which is what this part is. Say in one line what
 the customer's own review should then do about it: mark the affected approvals in their section 3 as
 contingent, and **not** list the prerequisite in their section 10 as a blocker, because it is not
@@ -1383,7 +1411,7 @@ body. **It is not part of the bundle** (`bundle-packaging.md` §4): it is the em
 document, and a copy of it inside the bundle would be a second, divergent statement of what was
 sent. The *Assemble the bundle* phase does not copy it in, and the manifest does not list it.
 
-It states only: which BRD this is; **how the customer gets the bundle**, shaped by the route just settled (`bundle-packaging.md` §4) — on the **repository** route, the repository to pull, the committed `bundle-<YYYYMMDD>/` directory by path, and the instruction to open the prompt file there and paste it; on the **archive** route, what is attached. This is the one document that names a delivery route, and the only one that may: it is written to a customer whose situation the operator knows, where the prompt is handed on to a reader the run cannot see (§5); which repositories, at which commits; **which
+It states only: which BRD this is; **how the customer gets the bundle**, shaped by the route just settled (`bundle-packaging.md` §4) — on the **repository** route, the repository to pull, the committed `bundle-<YYYYMMDD>/` directory by path, and the instruction to open the prompt file there and paste it; on the **archive** route, what is attached. This is the one document that names a delivery route, and the only one that may: it is written to a customer whose situation the operator knows, where the prompt is handed on to a reader the run cannot see (§5); which repositories, at which commits — one clause per repository, written ``the `<repo>` repository at commit `<commit>` ``, `<repo>` the repository's slug exactly as its baselines entry records it — never a path — and `<commit>` that entry's commit, whole or abbreviated to seven characters or more, which *Assemble the bundle* rule 9 pairs with the bundle's baselines (`bundle-packaging.md` §7.1, relation 3); **which
 file is the prompt** — the one file to paste; **which file comes back** — the one file to send,
 named exactly, and, on the **repository** route, where it goes: committed into the folder that holds `bundle-<YYYYMMDD>/`, under exactly that name, on a branch of the customer's own with a pull request against the default branch, changing nothing else — a correction the customer wants made to the package goes in the review's section 12, never into the bundle — or, where they cannot push, sent back instead (`bundle-packaging.md` §5, *The review comes back the way the bundle went out*); any prerequisite whose decisions are still provisional and that positions resting on
 it could move (D20); and anything else that must not sit buried inside a document. The two bolded
@@ -1576,8 +1604,12 @@ or not that line is there.
    reviewer who reviews it anyway spends their effort on decisions another review already settled
    or will settle.
 6. **Write the manifest**, listing documents **by filename** — the same reason rule 1 names them
-   that way — with one line each saying what the document is and whether it is for review or *not
-   for re-review*. **Then map every captured file the bundle carries** — each markdown file and each
+   that way — in tables under its `## Documents` heading, one row each, whose first cell is the
+   bundled filename in backticks and whose others say what the document is and whether it is for
+   review or *not for re-review*. **Every table under that heading is a document table**: rule 9
+   compares their first column with the bundle's listing (`bundle-packaging.md` §7.1, relation 2)
+   and reads no other line of the manifest as a document, so the map and the notes this rule goes
+   on to name go under `##` headings of their own, after it. **Then map every captured file the bundle carries** — each markdown file and each
    image from `brd/source/` and `brd/source-external/` — from its path relative to `brd/` to its
    bundled filename, naming beside it any target as written that the link log maps to it
    (`bundle-packaging.md` §1.1, §2.1) — **and map every other image whose bundled name took a folder
@@ -1726,21 +1758,35 @@ or not that line is there.
    runs last because relation 2 needs the assembled bundle's own listing, and it is the only one that
    reaches the delivery note, which is deliberately not a bundle document.
 
-   **Read §7's narrowings before running any relation, and read them all — the section states them
-   per relation and carries no total, deliberately.** Every one was measured against assembled
-   packages, and the obvious form of each fires on a correct bundle: a part writes an id **range**
-   where a literal comparison sees two ids and reports the rest as omissions; a filter resolved from
-   a part's prose rather than from the records' own fields over-selects; a manifest matcher fixed on
-   one filename convention reports every document as missing; a manifest does not list itself and
-   names images only sometimes; and a commit test demanding equality reports every correct delivery
-   note as carrying no pin. **A count here would be a fourth wrong one** — this pointer has carried a
-   wrong total three times, which is why it now cites the section instead of summarising it.
+   **Run it with the scanner, as rules 7 and 8 run theirs**, never with code of your own:
+   ```
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" sets <the working directory> --key <BRD-KEY> --date <YYYYMMDD> --manifest <the manifest's bundled name> --note <BRD-dir>/customer-delivery-note-<YYYYMMDD>.md [--unreviewed-prereq <KEY>]…
+   ```
+   `--date` is the run's stamp, `--manifest` the manifest rule 6 wrote, `--note` the note *Render the
+   delivery note* wrote, and `--unreviewed-prereq` every prerequisite Phase 2 did **not** find
+   customer-reviewed, one it could not resolve included — the set part 8's filter names, taken from Phase 2 and never read off a record.
+   It finds relation 1's lists under the sub-headings *Render the customer prompt* fixes, relation
+   2's in the manifest's `## Documents` tables, and relation 3's pins in the clause *Render the
+   delivery note* fixes, and it carries every narrowing §7.1 records. **That section states them per
+   relation and carries no total, deliberately**, and nothing here summarises them: this pointer has
+   carried a wrong total three times. Any exit other than 0 stops the run, naming its stderr — a
+   prompt whose eleven parts or six sub-headings cannot be found and a manifest with no `## Documents`
+   table among them, each being a form this command renders and the bundle lacks. It prints one line
+   of JSON: every relation it ran under `relations`, each with its `where`, `source`, `filter`,
+   `named`, `held`, `missing`, `extra` and `verdict`; and the hits again by the stop each is:
+   - each `mismatch` entry → `BRD_PACKAGE_SET_MISMATCH` below, its fields filling the message's slots;
+   - each `unreadable` entry → `BRD_PACKAGE_SET_UNREADABLE`;
+   - each `ambiguous` entry → `BRD_PACKAGE_SET_AMBIGUOUS`, a commit the note names that prefixes two
+     different commits its repository's baselines record.
 
    A membership mismatch stops with:
    `BRD_PACKAGE_SET_MISMATCH: <part-or-document> restates <source>'s <filter> as <N> item(s) and the source holds <M> — <missing> are in the source and not here; <extra> are here and not in the source. A restatement is a copy; the sentence that composed it is what has to change, not the list.`
 
    A source side that comes up empty while the restatement is not stops with:
    `BRD_PACKAGE_SET_UNREADABLE: <source> yielded zero records under <filter> while <part-or-document> restates some — that is a read failure, not an empty set, and passing it would certify a restatement against nothing.`
+
+   A commit the note abbreviates too far to name one stops with:
+   `BRD_PACKAGE_SET_AMBIGUOUS: the delivery note's commit <token> prefixes <N> different baseline commits (<commits>) — a reviewer told to check out that pin cannot tell which snapshot was ground. Write enough of the commit to name one.`
 
 **Then move it into place.** Create the target first, with `command mkdir -- "<BRD-dir>/bundle-<YYYYMMDD>"`,
 which fails where the path exists: another run can have written it since Phase 0 step 11 looked, and
@@ -1943,7 +1989,7 @@ a round a standing re-decision names and no record holds
 round record on disk that cannot be read (`BRD_PACKAGE_ROUND_UNREADABLE`), an unsettled or uninterviewed round, nothing to review, a bundle directory
 that already exists, and an unset `$SPECS_PATH` are environment or sequencing halts; the other
 bundle-integrity checks (`BRD_PACKAGE_DEAD_CITATION`, `BRD_PACKAGE_CITATION_MISMATCH`,
-`BRD_PACKAGE_SET_MISMATCH`) report what the assembled bundle and the records it was built from hold;
+`BRD_PACKAGE_SET_MISMATCH`, `BRD_PACKAGE_SET_AMBIGUOUS`) report what the assembled bundle and the records it was built from hold;
 `BRD_PACKAGE_UNDISPOSED` is the gate working; and `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` is the
 operator's own ruling on what the scan reported as the customer's words. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
@@ -2006,7 +2052,7 @@ named another BRD and were discharged (the citation scanner's `resolved`, `parti
 customer-derived locator — this check's and the plugin-free scan's alike, the scan's model ids in the
 customer's naming a grounding block records among them — that the operator was
 asked to rule on, under the *Customer content:* outcome line `bundle-packaging.md` §6.3's *The
-operator's ruling* fixes and grouped as that section fixes, **or `Customer content: none`**; **the
+operator's ruling* fixes and grouped as that section fixes, **or `Customer content: none`**; **the set-resolution check's outcome** — the relations the scanner ran, by their `where`, each having passed; **the
 delivery note and its delivery-route item** — both printed at *Next steps*, before that phase's
 offer, and named here rather than repeated, so the condition the item carries is printed once; the
 feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line); the `Phase handoff:` outcome line

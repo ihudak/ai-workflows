@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bundle-scan.py — /brd-package's plugin-free scan (tokens) and citation-resolution check (citations).
+"""bundle-scan.py — /brd-package's plugin-free scan (tokens), citation check (citations) and set check (sets).
 
   bundle-scan.py tokens <file-or-directory>... [--prereq-key KEY]... [--captured NAME]...
                         [--captured-path PATH]...
@@ -7,6 +7,8 @@
                         [--date YYYYMMDD] [--captured NAME]... [--captured-path PATH]...
                         [--source-basename NAME]... [--manifest NAME] [--known-key KEY]...
                         [--prereq-aux NAME]...
+  bundle-scan.py sets <bundle-dir> --key KEY --date YYYYMMDD --manifest NAME --note PATH
+                        [--unreviewed-prereq KEY]...
   bundle-scan.py --selftest
 
 citations: runs the bundle-packaging reference's section 6 over an assembled bundle. Documents
@@ -25,6 +27,19 @@ under unknown_key. It reads section 1.1's filenames and section 6.2's fields fro
 it each run, and stops (exit 2) where it cannot. Prints one line of JSON: partitions, the resolved
 and discharged counts, dead, mismatch, ambiguous, unqualified, unknown_key, unreadable, customer
 with its groups, and prerequisite_external.
+
+sets: runs the bundle-packaging reference's section 7 over an assembled bundle and the delivery note.
+Relation 1 reads six lists of the prompt <KEY>-customer-review-prompt-<DATE>.md under the
+sub-headings /brd-package renders (REGIONS), each member an id opening an item, and compares each
+with the records of <KEY>-decisions.md or <KEY>-code-defect-log.md its filter selects by their own
+fields, --unreviewed-prereq naming the prerequisites part 8's filter reads. Relation 2 compares the
+manifest's '## Documents' tables with the bundle's markdown files. Relation 3 pairs the note's
+"the `<repo>` repository at commit `<commit>`" clauses, and tests its other commit words, against
+<KEY>-baselines.md. A restatement over a source that yields nothing is unreadable; a commit that
+prefixes two different baseline commits is ambiguous. A prompt missing a part or a sub-heading, or a
+manifest with no Documents table, is refused (exit 2). Prints one line of JSON: relations, each with
+where, source, filter, named, held, missing, extra and verdict, and the mismatch, unreadable and
+ambiguous hits.
 
 tokens: reads every given file, and every .md or .markdown file under every given directory, and
 reports each token of a class the plugin's bundle-packaging reference tabulates in section 1.2 -- a
@@ -80,6 +95,7 @@ standard library only.
 """
 
 import argparse
+import datetime
 import contextlib
 import io
 import json
@@ -981,6 +997,551 @@ def citations_selftest(check):
           and sorted(h["token"] for h in r["prerequisite_external"]) == ["P-2-manifest.md", "Q-9-other.md"])
 
 
+# ---------------------------------------------------------------------------------------------------
+# sets: bundle-packaging section 7, run over an assembled bundle and the delivery note
+# ---------------------------------------------------------------------------------------------------
+
+PART_RE = re.compile(r"^##\s+([0-9]+)\s*[.·:]?\s")
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
+
+
+def _read(path, name):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        raise Refused("no " + name + " to read")
+    except (OSError, UnicodeDecodeError) as e:
+        raise Refused("cannot read " + name + " as UTF-8: " + e.__class__.__name__)
+
+
+def prompt_parts(lines):
+    """{part: (heading line index, end index)} for the prompt's eleven parts, each a '## <N>' heading
+    with '.', '·' or ':' after the number, outside a code fence. Anything but parts 1 to 11, once each
+    and in order, is refused: the relations below cannot be placed in a prompt whose parts are not."""
+    heads, fence = [], None
+    for i, line in enumerate(lines):
+        f = FENCE_RE.match(line)
+        if f:
+            if fence is None:
+                fence = f.group(1)[0]
+            elif f.group(1)[0] == fence:
+                fence = None
+            continue
+        if fence is None:
+            m = PART_RE.match(line)
+            if m:
+                heads.append((int(m.group(1)), i))
+    found = [n for n, _ in heads]
+    if found != list(range(1, 12)):
+        raise Refused("the prompt's part headings are not parts 1 to 11, once each and in order: found %s"
+                      % found)
+    return {n: (i, heads[k + 1][1] if k + 1 < len(heads) else len(lines)) for k, (n, i) in enumerate(heads)}
+
+
+LIVE_POSITION = ("open", "decided", "reopened")
+# Relation 1's enumerations: the part, the sub-heading Phase 6 renders it under, the prefix its records
+# carry, the working name of its source, the filter as written, and the filter as the records' own
+# fields test it (section 7.1, "Resolve the filter against the records' own fields").
+REGIONS = [
+    (6, "Code defects we will repair", "CDF", "code-defect-log.md", "disposition: in-scope",
+     lambda r, u: r.get("disposition") == "in-scope"),
+    (7, "Open assumptions", "AS", "decisions.md", "status: open", lambda r, u: r.get("status") == "open"),
+    (8, "Positions that could still move", "VD", "decisions.md",
+     "conditional_on an unreviewed prerequisite, status open, decided or reopened",
+     lambda r, u: r.get("status") in LIVE_POSITION and r.get("conditional_on", "").split("/", 1)[0].strip() in u),
+    (8, "Code defects whose scope is unsettled", "CDF", "code-defect-log.md", "disposition: conditional",
+     lambda r, u: r.get("disposition") == "conditional"),
+    (9, "Open assumptions", "AS", "decisions.md", "status: open", lambda r, u: r.get("status") == "open"),
+    (11, "Code defects we will not repair", "CDF", "code-defect-log.md", "disposition: out-of-scope",
+     lambda r, u: r.get("disposition") == "out-of-scope"),
+]
+SUBHEAD_RE = re.compile(r"^(#{3,6})\s+(?:[0-9]+(?:\.[0-9]+)*\.?\s+)?(.+?)\s*$")
+ANY_HEAD_RE = re.compile(r"^(#{1,6})\s")
+# an item opens at column 0: a nested bullet is part of the record above it, never a record
+ITEM_RE = re.compile(r"^(?:[-*+]\s|[0-9]+[.)]\s|\||#{1,6}\s)")
+OPENER_RE = re.compile(r"^[\s*_`]*\[([A-Z]+)#([0-9]+)\]")
+RANGE_TAIL_RE = re.compile(r"^[\s*_`]*[–-][\s*_`]*\[([A-Z]+)#([0-9]+)\]")
+
+
+def _unfenced(lines, start, end):
+    """(index, line) for the lines in [start, end) outside a code fence."""
+    fence = None
+    for i in range(start, end):
+        f = FENCE_RE.match(lines[i])
+        if f:
+            if fence is None:
+                fence = f.group(1)[0]
+            elif f.group(1)[0] == fence:
+                fence = None
+            continue
+        if fence is None:
+            yield i, lines[i]
+
+
+def regions(lines, parts):
+    """{(part, title): (start, end)} for each of REGIONS' sub-headings: from the heading to the next
+    heading of its level or higher, or the part's end. A sub-heading Phase 6 renders and the prompt
+    lacks is refused: the enumeration under it cannot be placed."""
+    out = {}
+    for part, title, *_ in REGIONS:
+        a, b = parts[part]
+        found = None
+        for i, line in _unfenced(lines, a + 1, b):
+            m = SUBHEAD_RE.match(line)
+            if found is None:
+                if m and m.group(2) == title:
+                    found = (i, len(m.group(1)))
+                continue
+            h = ANY_HEAD_RE.match(line)
+            if h and len(h.group(1)) <= found[1]:
+                out[(part, title)] = (found[0], i)
+                break
+        if found is None:
+            raise Refused("part %d of the prompt has no '%s' sub-heading" % (part, title))
+        out.setdefault((part, title), (found[0], b))
+    return out
+
+
+def _idkey(rid):
+    m = re.match(r"\[([A-Z]+)#([0-9]+)\]", rid)
+    return (m.group(1), int(m.group(2)))
+
+
+def members(lines, prefix):
+    """The ids of prefix that open an item -- a list item, a table row's first cell, a heading --
+    with a range in that position expanded. An id anywhere else in an item is a mention, not a member
+    (section 7.1, "Members open an item")."""
+    out = set()
+    for _, line in _unfenced(lines, 0, len(lines)):
+        m = ITEM_RE.match(line)
+        if not m or SEPARATOR_RE.match(line):
+            continue
+        rest = line[m.end():]
+        o = OPENER_RE.match(rest)
+        if not o or o.group(1) != prefix:
+            continue
+        lo = hi = int(o.group(2))
+        tail = RANGE_TAIL_RE.match(rest[o.end():])
+        if tail and tail.group(1) == prefix:
+            lo, hi = sorted((lo, int(tail.group(2))))
+        out.update("[%s#%d]" % (prefix, n) for n in range(lo, hi + 1))
+    return sorted(out, key=_idkey)
+
+
+def _records(bundle, name):
+    """The records of a register-shaped source, by part 1's reader; an absent file is an empty corpus."""
+    path = os.path.join(bundle, name)
+    if not os.path.exists(path):
+        return []
+    return _blocks(_read(path, name))
+
+
+def _stem(name):
+    for ext in DOC_EXT:
+        if name.lower().endswith(ext):
+            return name[:-len(ext)]
+    return name
+
+
+def manifest_documents(text):
+    """The first cells of every table under the manifest's '## Documents' heading (Phase 8 rule 6), up
+    to the next '## ' heading, each the name inside its backticks, its extension stripped; an image row
+    is out of scope (section 7.1)."""
+    lines = text.split("\n")
+    try:
+        a = next(i for i, l in enumerate(lines) if re.match(r"^##\s+Documents\s*$", l))
+    except StopIteration:
+        raise Refused("the manifest has no '## Documents' heading to read its document list from")
+    names, inside, tables = [], False, 0
+    for line in lines[a + 1:]:
+        if line.startswith("## "):
+            break
+        if not line.lstrip().startswith("|"):
+            inside = False
+            continue
+        if SEPARATOR_RE.match(line):
+            inside, tables = True, tables + 1
+            continue
+        if not inside:
+            continue  # a table's header row
+        cells = _cells(line)
+        if not cells:
+            continue
+        cell = cells[0][2].strip()
+        q = re.fullmatch(r"`([^`]+)`", cell)
+        name = q.group(1) if q else cell
+        if not name.lower().endswith(IMAGE_EXT):
+            names.append(_stem(name))
+    if not tables:
+        raise Refused("the manifest has no table under '## Documents' to read its document list from")
+    return names
+
+
+CLAUSE_RE = re.compile(r"(?i:the) `([^`]+)` repository at commit `([0-9a-f]{7,40})`")
+COMMIT_WORD_RE = re.compile(r"(?<![\w/.\-])([0-9a-f]{7,40})(?![\w/\-]|\.\w)")
+
+
+def baseline_pairs(text):
+    """(repo, commit) for each entry of a baselines document, in order, a repeat recorded once -- read by
+    the fields of workflows-core grounding-format section 4's layout, and of the one before it."""
+    pairs, repo = [], None
+    for line in text.split("\n"):
+        if re.match(r"^-\s", line):
+            repo = None  # a new entry: section 4's opens '- date:', an older one '- repo:'
+        m = re.match(r"^\s*(?:-\s*)?repo\s*:\s*(.+?)\s*$", line)
+        if m:
+            repo = m.group(1).strip("`")
+            continue
+        m = re.match(r"^\s*commit\s*:\s*([0-9a-f]{7,40})\s*$", line)
+        if m and repo and (repo, m.group(1)) not in pairs:
+            pairs.append((repo, m.group(1)))
+    return pairs
+
+
+def _is_pin(word, commits):
+    """Section 7.1's commit word: a valid YYYYMMDD date, or a word of hex letters alone, is a pin only
+    where it prefixes a baseline commit -- the note is prose, and both read as hex."""
+    if any(c.startswith(word) for c in commits):
+        return True
+    if word.isalpha():
+        return False
+    if len(word) == 8 and word.isdigit():
+        try:
+            datetime.datetime.strptime(word, "%Y%m%d")
+            return False
+        except ValueError:
+            pass
+    return True
+
+
+def note_pins(out, note_text, pairs, source):
+    """Relation 3: the note's pin clauses and commit words against the baselines' (repo, commit) pairs."""
+    text = " ".join(note_text.split())
+    base = {}
+    for repo, commit in pairs:
+        base.setdefault(repo, []).append(commit)
+    every = [c for _, c in pairs]
+    named, extra, covered, spans = [], [], set(), []
+    for m in CLAUSE_RE.finditer(text):
+        repo, word = m.group(1), m.group(2)
+        spans.append(m.span())
+        named.append("%s at %s" % (repo, word))
+        hits = sorted({c for c in base.get(repo, []) if c.startswith(word)})
+        if hits:
+            covered.add(repo)
+            if len(hits) > 1:
+                out["ambiguous"].append({"relation": 3, "where": "delivery note", "token": word, "commits": hits})
+        else:
+            extra.append("%s at %s" % (repo, word))
+    for m in COMMIT_WORD_RE.finditer(text):
+        word = m.group(1)
+        if any(a <= m.start() < b for a, b in spans) or not _is_pin(word, every):
+            continue
+        named.append(word)
+        hits = sorted({c for c in every if c.startswith(word)})
+        if not hits:
+            extra.append(word)
+        elif len(hits) > 1:
+            out["ambiguous"].append({"relation": 3, "where": "delivery note", "token": word, "commits": hits})
+    entry = {"relation": 3, "where": "delivery note", "source": source,
+             "filter": "repositories and their pinned commits", "named": named,
+             "held": ["%s at %s" % p for p in pairs], "extra": extra,
+             "missing": ["%s at %s" % (repo, cs[-1]) for repo, cs in base.items() if repo not in covered]}
+    if named and not pairs:
+        entry["verdict"] = "unreadable"
+        out["unreadable"].append(entry)
+    elif entry["missing"] or entry["extra"]:
+        entry["verdict"] = "mismatch"
+        out["mismatch"].append(entry)
+    else:
+        entry["verdict"] = "pass"
+    out["relations"].append(entry)
+
+
+def _compare(out, relation, where, source, filter_, named, held, key=_idkey):
+    named, held = sorted(set(named), key=key), sorted(set(held), key=key)
+    entry = {"relation": relation, "where": where, "source": source, "filter": filter_, "named": named,
+             "held": held, "missing": [x for x in held if x not in named],
+             "extra": [x for x in named if x not in held]}
+    if named and not held:
+        entry["verdict"] = "unreadable"
+        out["unreadable"].append(entry)
+    elif entry["missing"] or entry["extra"]:
+        entry["verdict"] = "mismatch"
+        out["mismatch"].append(entry)
+    else:
+        entry["verdict"] = "pass"
+    out["relations"].append(entry)
+
+
+def sets(bundle, key, date, manifest, note, unreviewed=()):
+    prompt_name = "%s-customer-review-prompt-%s.md" % (key, date)
+    lines = _read(os.path.join(bundle, prompt_name), prompt_name).split("\n")
+    where = regions(lines, prompt_parts(lines))
+    out = {"relations": [], "mismatch": [], "unreadable": [], "ambiguous": []}
+    unreviewed = set(unreviewed)
+    sources = {}
+    for part, title, prefix, working, filter_, test in REGIONS:
+        source = "%s-%s" % (key, working)
+        if source not in sources:
+            sources[source] = _records(bundle, source)
+        held = [r["id"] for r in sources[source] if _idkey(r["id"])[0] == prefix and test(r, unreviewed)]
+        a, b = where[(part, title)]
+        _compare(out, 1, "part %d, %s" % (part, title), source, filter_, members(lines[a + 1:b], prefix), held)
+    # relation 2: the working directory this run assembled holds no never-sent marker, so a review
+    # document is every markdown file but the manifest
+    try:
+        listing = [n for n in os.listdir(bundle) if n.lower().endswith(DOC_EXT) and n != manifest
+                   and os.path.isfile(os.path.join(bundle, n))]
+    except OSError as e:
+        raise Refused("cannot list the bundle: " + e.__class__.__name__)
+    _compare(out, 2, "manifest", "the bundle's listing", "every markdown document but the manifest",
+             manifest_documents(_read(os.path.join(bundle, manifest), manifest)), [_stem(n) for n in listing],
+             key=str)
+    source = "%s-baselines.md" % key
+    path = os.path.join(bundle, source)
+    pairs = baseline_pairs(_read(path, source)) if os.path.exists(path) else []
+    note_pins(out, _read(note, "the delivery note " + os.path.basename(note)), pairs, source)
+    return out
+
+
+SETS_DEFAULT_BODIES = {
+    6: "### 6.1 Code defects we will repair\n\nNone.\n",
+    7: "### 7.3 Open assumptions\n\nNone.\n",
+    8: "### 8.1 Positions that could still move\n\nNone.\n\n### 8.2 Code defects whose scope is unsettled\n\nNone.\n",
+    9: "### 9.1 Open assumptions\n\nNone.\n",
+    11: "### 11.1 Code defects we will not repair\n\nNone.\n",
+}
+
+
+def _sets_prompt(bodies=None, sep=".", numbers=range(1, 12)):
+    bodies = {**SETS_DEFAULT_BODIES, **(bodies or {})}
+    return "# K-1 — customer review prompt\n\n" + "".join(
+        "## %d%s Part %d\n\n%s\n" % (n, sep, n, bodies.get(n, "Text.\n")) for n in numbers)
+
+
+SHA_A = "abcdef1234567890abcdef1234567890abcdef12"
+SHA_B = "1234567fedcba0987654321fedcba0987654321f"
+
+
+def _sets_baselines(pairs):
+    """Baselines in workflows-core grounding-format section 4's entry layout."""
+    return "# Grounding baselines: K-1\n\n" + "".join(
+        "- date: 2026-10-%02d\n  repo: %s\n  commit: %s\n  integrity: clean\n  finding: [CG#%d]\n\n"
+        % (i + 1, r, c, i + 1) for i, (r, c) in enumerate(pairs))
+
+
+def _sets_legacy_baselines(pairs):
+    """Baselines in the layout written before section 4 fixed one, a dated heading over '- repo:'."""
+    return "# Grounding baselines: K-1\n\n" + "".join(
+        "## 2026-10-%02d — %s\n\n- repo: %s\n  commit: %s\n  verification:\n"
+        "    - git -C \"<repo>\" rev-parse HEAD → %s\n  result: clean\n\n" % (i + 1, r, r, c, c)
+        for i, (r, c) in enumerate(pairs))
+
+
+def _sets_manifest(names, extra=""):
+    return ("# K-1 — bundle manifest\n\nIntro naming `K-1-gone.md` as context not carried.\n\n## Documents\n\n"
+            "| File | What it is | For review? |\n|---|---|---|\n"
+            + "".join("| `%s` | d | yes |\n" % n for n in names) + extra
+            + "\nImage: `K-1-wire.svg`.\n\n## Your files\n\n| Path | In this bundle |\n|---|---|\n"
+              "| `source/a.md` | `K-1-a.md` |\n")
+
+
+def sets_selftest(check):
+    def run(files, note="The `app` repository at commit `abcdef1`.\n", **kw):
+        kw.setdefault("key", "K-1")
+        kw.setdefault("date", "20261029")
+        kw.setdefault("manifest", "K-1-manifest.md")
+        with tempfile.TemporaryDirectory() as d:
+            b = os.path.join(d, "b")
+            os.mkdir(b)
+            if "K-1-baselines.md" not in files:
+                files = dict(files, **{"K-1-baselines.md": _sets_baselines([("app", SHA_A)])})
+            if kw["manifest"] not in files:
+                files = dict(files, **{kw["manifest"]: _sets_manifest(
+                    [n for n in files if n.endswith(".md")])})
+            for n, txt in files.items():
+                with open(os.path.join(b, n), "w", encoding="utf-8") as fh:
+                    fh.write(txt)
+            np_ = os.path.join(d, "note.md")
+            with open(np_, "w", encoding="utf-8") as fh:
+                fh.write(note)
+            return sets(b, note=np_, **kw)
+
+    def refused(fn):
+        try:
+            fn()
+        except Refused as e:
+            return str(e)
+        return None
+
+    lines = _sets_prompt().split("\n")
+    parts = prompt_parts(lines)
+    check("sets: '## N.' headings locate parts 1 to 11", sorted(parts) == list(range(1, 12)))
+    check("sets: '## N ·' headings locate them too",
+          sorted(prompt_parts(_sets_prompt(sep=" ·").split("\n"))) == list(range(1, 12)))
+    check("sets: a prompt missing part 8 is refused",
+          refused(lambda: prompt_parts(_sets_prompt(numbers=[n for n in range(1, 12) if n != 8]).split("\n"))))
+    check("sets: a prompt repeating part 7 is refused",
+          refused(lambda: prompt_parts(_sets_prompt(numbers=[1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10, 11]).split("\n"))))
+    l10 = _sets_prompt({10: "### 10.3 The twelve sections\n\nx\n"}).split("\n")
+    p10 = prompt_parts(l10)
+    at = l10.index("### 10.3 The twelve sections")
+    check("sets: a schema heading stays inside part 10", p10[10][0] < at < p10[10][1])
+    msg = refused(lambda: run({"K-1-manifest.md": "x\n"}))
+    check("sets: an absent prompt is refused, by its name",
+          bool(msg) and "K-1-customer-review-prompt-20261029.md" in msg)
+    def rec(rid, **fields):
+        return "id: %s\n" % rid + "".join("%s: %s\n" % (k, v) for k, v in fields.items()) + "\n"
+
+    def r1(r, part, title):
+        return next(x for x in r["relations"] if x["relation"] == 1 and x["where"] == "part %d, %s" % (part, title))
+
+    reg = "# Decision register: K-1\n\n" + rec("[AS#1]", statement="a", status="open") \
+        + rec("[AS#2]", statement="b", status="open") + rec("[AS#3]", statement="c", status="withdrawn") \
+        + rec("[VD#7]", statement="d", conditional_on="P-2/[CD#3]", status="decided") \
+        + rec("[VD#8]", statement="e", conditional_on="P-3/[CD#1]", status="decided") \
+        + rec("[VD#9]", statement="f", conditional_on="P-2/[CD#4]", status="superseded") \
+        + rec("[VD#11]", statement="g", status="decided") \
+        + "id: [AS#4]\nstatement: h\nargumentation: |\n  quoted\n  status: open\nstatus: withdrawn\n\n"
+    cdl = rec("[CDF#1]", statement="x", disposition="in-scope") + rec("[CDF#2]", statement="y", disposition="conditional",
+                                                                       blocked_on="P-2/[CD#3]") \
+        + rec("[CDF#3]", statement="z", disposition="out-of-scope") + rec("[CDF#4]", statement="w", disposition="withdrawn")
+    good = {6: "### 6.1 Code defects we will repair\n\n- **[CDF#1]** — x\n",
+            7: "### 7.1 Questions held for you\n\n- **Re-puts:** [AS#3]\n\n### 7.3 Open assumptions\n\n"
+               "- **[AS#1]** — a, unlike [AS#3]\n- **[AS#2]** — b\n",
+            8: "### 8.1 Positions that could still move\n\n| Record | Depends on |\n|---|---|\n"
+               "| `[VD#7]` — d, as [VD#11] decided | P-2 [CD#3] |\n\n"
+               "### 8.2 Code defects whose scope is unsettled\n\n#### [CDF#2]\n\ny\n",
+            9: "### 9.1 Open assumptions\n\n- **[AS#1]**–**[AS#2]**: both open\n\n#### [SR#3]\n\nattacks [AS#3]\n",
+            11: "### 11.1 Code defects we will not repair\n\n1. [CDF#3] — z\n"}
+    base = {"K-1-decisions.md": reg, "K-1-code-defect-log.md": cdl}
+    r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt(good)}), unreviewed=["P-2"])
+    check("sets relation 1: six faithful enumerations pass — openers, a range, mentions and Re-puts read right",
+          [x["verdict"] for x in r["relations"] if x["relation"] == 1] == ["pass"] * 6
+          and r1(r, 9, "Open assumptions")["named"] == ["[AS#1]", "[AS#2]"])
+    check("sets relation 1: a conditional_on a reviewed prerequisite, or a superseded one, is not in part 8's set",
+          r1(r, 8, "Positions that could still move")["held"] == ["[VD#7]"])
+    check("sets relation 1: a status inside an argumentation scalar is not the record's",
+          "[AS#4]" not in r1(r, 7, "Open assumptions")["held"])
+    r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt()}), unreviewed=["P-2"])
+    check("sets relation 1: sources with members under 'None' bodies are mismatches, by id",
+          r1(r, 7, "Open assumptions")["missing"] == ["[AS#1]", "[AS#2]"] and r["mismatch"]
+          and r1(r, 11, "Code defects we will not repair")["verdict"] == "mismatch")
+    r = run({"K-1-customer-review-prompt-20261029.md": _sets_prompt()})
+    check("sets relation 1: both sides empty is the ordinary pass",
+          [x["verdict"] for x in r["relations"] if x["relation"] == 1] == ["pass"] * 6)
+    inv = dict(good)
+    inv[7] = "### 7.3 Open assumptions\n\n- [AS#1] — a\n- [AS#2] — b\n- [AS#5] — invented\n"
+    inv[9] = "### 9.1 Open assumptions\n\n- [AS#1]–[AS#4] — four\n"
+    r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt(inv)}), unreviewed=["P-2"])
+    check("sets relation 1: an invention is extra; a range expands to every id it spans",
+          r1(r, 7, "Open assumptions")["extra"] == ["[AS#5]"]
+          and r1(r, 9, "Open assumptions")["extra"] == ["[AS#3]", "[AS#4]"])
+    r = run({"K-1-customer-review-prompt-20261029.md": _sets_prompt(
+        {6: "### 6.1 Code defects we will repair\n\n- [CDF#2] — y\n"})})
+    check("sets relation 1: a restatement over an absent source is unreadable, not a mismatch",
+          r1(r, 6, "Code defects we will repair")["verdict"] == "unreadable" and r["unreadable"])
+    msg = refused(lambda: run({"K-1-customer-review-prompt-20261029.md": _sets_prompt({9: "Nothing.\n"})}))
+    check("sets relation 1: a missing sub-heading is refused, by part and title",
+          bool(msg) and "part 9" in msg and "Open assumptions" in msg)
+    def r2(r):
+        return next(x for x in r["relations"] if x["relation"] == 2)
+
+    pr = {"K-1-customer-review-prompt-20261029.md": _sets_prompt()}
+    docs = ["K-1-customer-review-prompt-20261029.md", "K-1-decisions.md", "K-1-a.md", "K-1-baselines.md"]
+    files = dict(pr, **{"K-1-decisions.md": "# Decision register: K-1\n", "K-1-a.md": "x\n", "K-1-wire.svg": "<svg/>",
+                        "K-1-baselines.md": _sets_baselines([("app", SHA_A)])})
+    r = run(dict(files, **{"K-1-manifest.md": _sets_manifest(docs)}))
+    check("sets relation 2: the real manifest's shape passes — its own absence, an image line, the map table",
+          r2(r)["verdict"] == "pass" and len(r2(r)["named"]) == 4)
+    r = run(dict(files, **{"K-1-manifest.md": _sets_manifest(
+        ["K-1-customer-review-prompt-20261029", "K-1-decisions", "K-1-a.md", "K-1-baselines"],
+        "| `K-1-wire.svg` | i | yes |\n")}))
+    check("sets relation 2: the extension either way matches, and an image row is out of scope",
+          r2(r)["verdict"] == "pass")
+    r = run(dict(files, **{"K-1-manifest.md": _sets_manifest(
+        ["K-1-customer-review-prompt-20261029.md", "K-1-a.md", "K-1-baselines.md", "K-1-ghost.md"])}))
+    check("sets relation 2: a document with no row is missing, a row with no document is extra",
+          r2(r)["missing"] == ["K-1-decisions"] and r2(r)["extra"] == ["K-1-ghost"] and r2(r) in r["mismatch"])
+    msg = refused(lambda: run(dict(files, **{"K-1-manifest.md": "# K-1 — bundle manifest\n\n- `K-1-a.md`\n"})))
+    check("sets relation 2: a manifest with no Documents table is refused", bool(msg) and "Documents" in msg)
+    def r3(r):
+        return next(x for x in r["relations"] if x["relation"] == 3)
+
+    two = {"K-1-baselines.md": _sets_baselines([("app", SHA_A), ("lib", SHA_B), ("app", SHA_A)])}
+    wrapped = ("Pull `bundle-20261012/` today, 20261012, as defaced copies are\nnot ours. The `app` repository at commit\n"
+               "`abcdef1` and the `lib` repository at commit `1234567`.\n")
+    r = run(dict(pr, **two), note=wrapped)
+    check("sets relation 3: a wrapped clause, an abbreviation, a commit recorded twice and an all-digit pin pass; "
+          "a path, a date and a hex-letter word are no pin",
+          r3(r)["verdict"] == "pass" and r["ambiguous"] == [] and len(r3(r)["named"]) == 2)
+    r = run(dict(pr, **two), note="The `app` repository at commit `1234567` and the `lib` repository at commit `abcdef1`.\n")
+    check("sets relation 3: a swapped pair is a mismatch", r3(r)["verdict"] == "mismatch" and len(r3(r)["extra"]) == 2)
+    r = run(dict(pr, **two), note="The `app` repository at commit `abcdef1` and the `web` repository at commit `abcdef1`.\n")
+    check("sets relation 3: a repository the baselines lack is extra, and one the note omits is missing",
+          r3(r)["verdict"] == "mismatch" and [m.split()[0] for m in r3(r)["missing"]] == ["lib"]
+          and [m.split()[0] for m in r3(r)["extra"]] == ["web"])
+    amb = {"K-1-baselines.md": _sets_baselines([("app", SHA_A), ("app", "abcdef1999999999999999999999999999999999")])}
+    r = run(dict(pr, **amb), note="The `app` repository at commit `abcdef1`.\n")
+    check("sets relation 3: an abbreviation prefixing two different commits is ambiguous",
+          [a["token"] for a in r["ambiguous"]] == ["abcdef1"])
+    r = run(dict(pr, **{"K-1-baselines.md": "# Grounding baselines: K-1\n"}),
+            note="The `app` repository at commit `abcdef1`.\n")
+    check("sets relation 3: pins over a baselines file that yields none are unreadable", r3(r)["verdict"] == "unreadable")
+    r = run(dict(pr, **{"K-1-baselines.md": "# Grounding baselines: K-1\n"}), note="No code was read.\n")
+    check("sets relation 3: no pin and no baseline is the ordinary pass", r3(r)["verdict"] == "pass")
+    r = run(dict(pr, **two), note="The `app` repository at commit `abcdef1`, the `lib` repository at commit "
+                                 "`1234567`; also 9999999.\n")
+    check("sets relation 3: a commit word outside a clause that prefixes no baseline is extra",
+          r3(r)["extra"] == ["9999999"])
+    r = run(dict(pr, **{"K-1-baselines.md": _sets_legacy_baselines([("app", SHA_A), ("lib", SHA_B)])}), note=wrapped)
+    check("sets relation 3: baselines written before section 4's layout are read too", r3(r)["verdict"] == "pass")
+    check("sets relation 3: an entry with no repo takes no other entry's",
+          baseline_pairs("- date: 2026-10-01\n  repo: app\n  commit: %s\n\n- date: 2026-10-02\n  commit: %s\n"
+                         % (SHA_A, SHA_B)) == [("app", SHA_A)])
+    check("tokens: a TIFF anchor is still an image row", _image_anchor("source/scan.tiff › Figure 2"))
+    mk = dict(files, **{"K-1-brief.markdown": "x\n"})
+    r = run(dict(mk, **{"K-1-manifest.md": _sets_manifest(docs + ["K-1-brief.markdown"])}))
+    check("sets relation 2: a bundled .markdown document matches its row", r2(r)["verdict"] == "pass")
+    split = _sets_manifest(docs[:2]).replace(
+        "\nImage:", "\nCopied in, not for re-review:\n\n| File | What it is | For review? |\n|---|---|---|\n"
+                    + "".join("| `%s` | d | no |\n" % n for n in docs[2:]) + "\nImage:")
+    r = run(dict(files, **{"K-1-manifest.md": split}))
+    check("sets relation 2: every table under Documents is read, prose between them", r2(r)["verdict"] == "pass")
+    nest = dict(good)
+    nest[7] = ("### 7.1 Questions held for you\n\n- [AS#3] is re-put by round 1, question 2\n\n"
+               "### 7.3 Open assumptions\n\n- **[AS#1]** — a\n  - [AS#3] was its predecessor\n- **[AS#2]** — b\n")
+    nest[9] = ("### 9.1 Open assumptions\n\n- **[AS#1]** — a\n- **[AS#2]** — b\n\n"
+               "### 9.2 Where our own review found us weakest\n\n- [AS#3] is attacked here\n")
+    r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt(nest)}), unreviewed=["P-2"])
+    check("sets relation 1: an id opening an item outside the sub-heading, or a nested one, is no member",
+          r1(r, 7, "Open assumptions")["verdict"] == "pass")
+    check("sets relation 1: a list ends at the next sub-heading of its level",
+          r1(r, 9, "Open assumptions")["verdict"] == "pass")
+    sc = base["K-1-decisions.md"] + ("id: [VD#12]\nstatement: q\nargumentation: |\n  as if\n"
+                                     "  conditional_on: P-2/[CD#3]\nstatus: decided\n\n")
+    r = run(dict(base, **{"K-1-decisions.md": sc, "K-1-customer-review-prompt-20261029.md": _sets_prompt(good)}),
+            unreviewed=["P-2"])
+    check("sets relation 1: a field inside an argumentation scalar is not the record's",
+          r1(r, 8, "Positions that could still move")["held"] == ["[VD#7]"])
+    with tempfile.TemporaryDirectory() as d:
+        with open(os.path.join(d, "K-1-customer-review-prompt-20261029.md"), "w", encoding="utf-8") as fh:
+            fh.write(_sets_prompt())
+        with open(os.path.join(d, "K-1-manifest.md"), "w", encoding="utf-8") as fh:
+            fh.write("## Documents\n\n| File | What | For review? |\n|---|---|---|\n"
+                     "| `K-1-customer-review-prompt-20261029.md` | p | yes |\n")
+        with open(os.path.join(d, "note.md"), "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = main(["sets", d, "--key", "K-1", "--date", "20261029", "--manifest", "K-1-manifest.md",
+                         "--note", os.path.join(d, "note.md")])
+    check("sets: the command line prints one line of JSON and exits 0",
+          code == 0 and buf.getvalue().count("\n") == 1 and "relations" in json.loads(buf.getvalue()))
+
+
 def selftest():
     cases, failed = 0, 0
 
@@ -1134,6 +1695,7 @@ def selftest():
     check("this plugin's family is found", "product-workflows" in fam_here["names"]
           and "brd-package" in fam_here["commands"] and "brd-reader" in fam_here["agents"])
     citations_selftest(check)
+    sets_selftest(check)
     print("SELFTEST " + ("PASS" if not failed else "FAIL") + " (%d cases, %d failed)" % (cases, failed))
     return 0 if not failed else 1
 
@@ -1159,14 +1721,23 @@ def main(argv=None):
     c.add_argument("--manifest")
     c.add_argument("--known-key", action="append", default=[])
     c.add_argument("--prereq-aux", action="append", default=[])
+    s = sub.add_parser("sets")
+    s.add_argument("bundle")
+    s.add_argument("--key", required=True)
+    s.add_argument("--date", required=True)
+    s.add_argument("--manifest", required=True)
+    s.add_argument("--note", required=True)
+    s.add_argument("--unreviewed-prereq", action="append", default=[])
     a = ap.parse_args(argv)
     if a.selftest:
         return selftest()
-    if a.cmd not in ("tokens", "citations"):
+    if a.cmd not in ("tokens", "citations", "sets"):
         ap.print_usage(sys.stderr)
         return 2
     try:
-        if a.cmd == "citations":
+        if a.cmd == "sets":
+            result = sets(a.bundle, a.key, a.date, a.manifest, a.note, a.unreviewed_prereq)
+        elif a.cmd == "citations":
             result = citations(a.bundle, a.key, a.prereq_key, a.copied_key, a.date, a.captured,
                                a.captured_path, a.source_basename, a.manifest, a.known_key, a.prereq_aux)
         else:
