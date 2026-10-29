@@ -11,7 +11,7 @@ Take with `workflows-core` 1.69.0 — to-fix SEC-G6 and D25.
 
 ### Fixed
 - `/epics` says its handoff's temporary files sit in the session's scratchpad where the session names one, as `workflows-core` 1.69.0's `run-flags` §7 puts them, rather than always under the system's temporary directory.
-- **`/epics` no longer says `specs-preflight` creates no branch.** In session-branch mode its flush and the terminal `commit-artifacts` create `session/<identity>` (`workflows-core:specs-repo-git` §8.2), which holds no deliverable and which the checkout never stands on; both sentences — the no-branching-context note and the handoff invariant — now say the `epics/` branch is the one *deliverable* branch the run creates, and `session/<identity>` the one other it may.
+- **`/epics` no longer says `specs-preflight` creates no branch.** In session-branch mode the run's session-file commits — its flush and the terminal `commit-artifacts` among them — create `session/<identity>` (`workflows-core:specs-repo-git` §8.2), which holds no deliverable and which the checkout never stands on; both sentences — the no-branching-context note and the handoff invariant — now say the `epics/` branch is the one *deliverable* branch the run creates, and `session/<identity>` the one other it may.
 
 ## [3.63.0] — 2026-10-29
 
