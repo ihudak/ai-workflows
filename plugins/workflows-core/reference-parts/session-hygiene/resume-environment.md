@@ -25,6 +25,8 @@ Every rule name in `session-hygiene`, with the part that holds it; `core` comes 
 - `§5` → `guidance`
 - `6. Resume environment — the session file records where the run stands, and a resumed run compares it` → `resume-environment`
 - `§6` → `resume-environment`
+- ``7. `env-check` — the environment a run started in, compared before it writes`` → `env-check`
+- `§7` → `env-check`
 
 ---
 
@@ -39,7 +41,9 @@ Everything in §1–§5 is **guidance-only** — the plugin NEVER auto-invokes `
 `/clear`, or `/rename`. The goal is to stop relying on a human to keep asking "prepare
 for a compact/clear": the pipeline does the prep and prompts the choice itself. §6 is not a
 suggestion and is outside §5's contract: it is the check a command that keeps a session file runs
-on the environment it recorded there, and it stops the run on a mismatch.
+on the environment it recorded there, and it stops the run on a mismatch. §7 is not one either: it
+compares every run's environment with the line the run's preflight printed, before the run writes,
+and asks nothing.
 
 `<KEY>` is the key that named the folder this run resolved — a PRD key on the PA/PE/Dev ladder, the
 root BRD key for `/brd-proposal` — and `<role>` is the just-finished command's lane tag
@@ -50,8 +54,9 @@ root BRD key for `/brd-proposal` — and `<role>` is the just-finished command's
 A run can be resumed in an environment other than the one it started in — a later invocation
 resuming its session file, or the conversation itself resumed (`claude --resume`, a continuation)
 in another container — with `$SPECS_PATH` and `$REPOS_PATH` pointing elsewhere and the reference
-loader on another install. Nothing else re-checks what Phase 0 resolved, so a run that goes on
-branches, writes and commits in a repository it never resolved. This section is cited by every
+loader on another install. Unchecked, such a run goes on to branch, write and commit in a
+repository it never resolved. §7 checks every run against the line its preflight printed, asking
+nothing; this section checks a run that keeps a session file against that file, and asks. It is cited by every
 command that keeps a session file it resumes from: `/design` (`_design-session.md`) and `/specify`
 (`_session.md`).
 

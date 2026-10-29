@@ -68,8 +68,9 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    files, not authored content, and each artifact already carries its own
    `author:` field (`feedback-emission.md` §1).
 7. **Prompt-free.** Neither entry point asks the user anything. `specs-preflight`
-   is silent unless it acts, a guard fires, or §3.1 reports a misconfigured
-   `$SPECS_PATH`; `commit-artifacts` emits one outcome line (§6).
+   prints its `Environment:` line (§3) and is otherwise silent unless it acts, a
+   guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`; `commit-artifacts`
+   emits one outcome line (§6).
 8. **State of its own.** The **push-refusal record** of a branch, which §4
    step 6 writes when `origin` refuses a push to that branch and step 5 reads:
    a file whose path, `<record>` below, is
@@ -281,7 +282,8 @@ a run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `abse
 either order, a run that stops before the preflight on a check of its own inputs needing no specs-repo
 state — a run flag, the directory it runs from, a path it reads where it sits rather than as an
 artifact of the specs tree — runs none either. Prompt-free.
-Silent when the repository is already clean and on the default branch, no other plugin branch holds a session-file commit §3.4 tries to push or is one §3.4 finds merged, and §3.1 finds
+**Its first act is a line, printed on every run that reaches it, whatever its gate finds**: the `Environment:` line `workflows-core:session-hygiene` §7 defines, `Skill(skill: "workflows-core:reference", args: "session-hygiene env-check")` — `$SPECS_PATH`'s real path and `origin`, and `$REPOS_PATH` — which that section's `env-check` compares before the run writes, so a conversation resumed in another container writes nothing into the specs repository there. Past that line it is
+silent when the repository is already clean and on the default branch, no other plugin branch holds a session-file commit §3.4 tries to push or is one §3.4 finds merged, and §3.1 finds
 `$SPECS_PATH` well placed; it emits a block only when it acts or when a guard fires, and a
 notice only where §3.1 reports a misconfigured `$SPECS_PATH`. That notice is one line, plus one more
 line naming anything a misrooted run left behind. On a run carrying `specs_git: misrooted`, §3.5 adds
@@ -307,7 +309,7 @@ state in this container setup.
 
 Still **never fatal** (§1): each notice reports and the run continues. **Where the path is a directory and `specs-root-check` finds a signal there, the non-repository notice above sets `specs_git: misrooted` too.**
 
-**`specs_git: misrooted` is the run-wide record that `$SPECS_PATH` is misplaced, or that the run is no longer in the environment it recorded.** It is set by either notice above; by `workflows-core:addressing` §3 `specs-root-check` where it stops the run at resolution; or by `session-hygiene.md` §6's *Stop*, where a run that keeps a session file finds, at any of that section's three points — on a resume, and on every such run before the deliverable write that leads to the handoff and before the tail's first write — its environment no longer the one the file recorded (`$SPECS_PATH`'s real path, its `origin`, `$REPOS_PATH` or the reference loader's install), or, at the last two, that record unreadable or missing; its stop line, `RESUME_ENVIRONMENT_CHANGED:`, is the notice that set the flag. Under it, every emitter of the tail falls to its report-only tier, so the tail writes nothing under a path the run has found wrong, or in an environment it did not record. That covers cost (`cost-emission.md` §8), feedback (`feedback-emission.md` §2), follow-ups (`followup-emission.md` §2) and `resume.md` (`session-hygiene.md` §1). Writing there would only add files §2.1's classifier puts in OTHER, or artifact paths that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place: a pending cost there never reconciles, and G1 fires on every run after the variable is corrected.
+**`specs_git: misrooted` is the run-wide record that `$SPECS_PATH` is misplaced, or that the run is no longer in the environment it recorded.** It is set by either notice above; by `workflows-core:addressing` §3 `specs-root-check` where it stops the run at resolution; by `session-hygiene.md` §7's `env-check`, where a run no longer stands in the environment its preflight's `Environment:` line printed, its `Environment changed:` notice being the one that set the flag; or by `session-hygiene.md` §6's *Stop*, where a run that keeps a session file finds, at any of that section's three points — on a resume, and on every such run before the deliverable write that leads to the handoff and before the tail's first write — its environment no longer the one the file recorded (`$SPECS_PATH`'s real path, its `origin`, `$REPOS_PATH` or the reference loader's install), or, at the last two, that record unreadable or missing; its stop line, `RESUME_ENVIRONMENT_CHANGED:`, is the notice that set the flag. Under it, every emitter of the tail falls to its report-only tier, so the tail writes nothing under a path the run has found wrong, or in an environment it did not record. That covers cost (`cost-emission.md` §8), feedback (`feedback-emission.md` §2), follow-ups (`followup-emission.md` §2) and `resume.md` (`session-hygiene.md` §1). Writing there would only add files §2.1's classifier puts in OTHER, or artifact paths that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place: a pending cost there never reconciles, and G1 fires on every run after the variable is corrected.
 
 **The preflight itself performs no write under the flag**: no leftover flush, no push retry, no branch switch, creation or deletion, no pull, no commit and no push. Where the gate passed, it still reads, because `workflows-core:phase-handoff`'s `require-on-main` runs on what it reads. §3.2 runs in full, its best-effort fetch included, which refreshes the remote-tracking refs every `<default-ref>` test reads and moves no checkout. §3.5 classifies the branch, and a row that would switch stays and reports instead. §3.3's guards and §3.4's flush do not run, and each section says why. §4's `commit-artifacts` skips, as it does on `specs_git: blocked`. `workflows-core:phase-handoff` §2.1's `handoff-to-main` refuses the handoff, its §4.3 says so above the consent array, and its row C offers no repair. **So none of `specs-preflight`, `commit-artifacts`, `handoff-to-main` and `require-on-main` switches a branch or commits under the flag.** That bound is those four entry points', not the run's. A command that changes code still cuts its own branch and commits on it in the code repository it changed (`dev-workflows:code-handoff`), and a documentation command does the same in its docs repository. Where the specs tree sits inside that same repository, that branch moves the specs checkout too, which is one reason that layout is unsupported.
 
@@ -706,7 +708,8 @@ spend before it is the conversation's.
      notice. The repo *is* managed; the plugin is deliberately refusing to
      commit, and the user must know.
    - Carries `specs_git: misrooted` → **not silent**: re-emit the notice
-     that set it — the §3.1 notice, `specs-root-check`'s stop, or
+     that set it — the §3.1 notice, `specs-root-check`'s stop,
+     `session-hygiene` §7's `Environment changed:` notice, or
      `session-hygiene` §6's `RESUME_ENVIRONMENT_CHANGED:` stop line — whether
      or not §3.1's environment conditions hold. Nothing is committed, and the
      tail's emitters wrote nothing under `$SPECS_PATH` (§3.1). What the command
@@ -1215,7 +1218,7 @@ follow the report.
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
 | Commit failed | `Specs repo: NOT COMMITTED — the commit failed (<the first line of git's error or the hook's output>); the artifacts stay staged, and a later run commits them once git accepts the commit (a merge concluded, a hook satisfied)` |
 | Blocked (G0) | `Specs repo: NOT COMMITTED — see the notice below`, followed by the §5 G0 block verbatim |
-| Misrooted (§3.1: a misplaced `$SPECS_PATH`, or `session-hygiene` §6's *Stop*), whether or not the environment conditions hold | `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced, or the run's environment no longer matches the one it recorded; see the notice below`, followed by the notice that set the flag, verbatim: the §3.1 notice, `specs-root-check`'s stop, or `session-hygiene` §6's `RESUME_ENVIRONMENT_CHANGED:` stop line |
+| Misrooted (§3.1: a misplaced `$SPECS_PATH`, `session-hygiene` §7's `env-check`, or its §6's *Stop*), whether or not the environment conditions hold | `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced, or the run's environment no longer matches the one it recorded; see the notice below`, followed by the notice that set the flag, verbatim: the §3.1 notice, `specs-root-check`'s stop, `session-hygiene` §7's `Environment changed:` notice, or its §6's `RESUME_ENVIRONMENT_CHANGED:` stop line |
 | Gate failed on environment, on a run carrying neither flag | *(no line at all — silent no-op)* |
 
 When a guard fired at §3.3 G1 or G2, the outcome line is followed by that
@@ -1265,7 +1268,7 @@ Omitting any one of them is a defect, not a style choice.
    commands. Carry any returned `specs_git: blocked` or `specs_git: misrooted`
    flag for the whole run, and `specs_git: misrooted` from `workflows-core:addressing`
    §3 `specs-root-check` where its stop ended the run before any preflight, and
-   from `workflows-core:session-hygiene` §6's *Stop* for the rest of the run.
+   from `workflows-core:session-hygiene` §7's `env-check` or its §6's *Stop* for the rest of the run.
 2. **Cite and execute `commit-artifacts` (§4)** as the last action of the run,
    after `resume.md` (where one is written) and after the cost phase — or, where
    a later phase cedes control to another skill or to an open-ended interactive
