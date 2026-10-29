@@ -1122,8 +1122,49 @@ def _records(bundle, name):
     return _blocks(_read(path, name))
 
 
-def _compare(out, relation, where, source, filter_, named, held):
-    named, held = sorted(set(named), key=_idkey), sorted(set(held), key=_idkey)
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
+
+
+def _stem(name):
+    return name[:-3] if name.endswith(".md") else name
+
+
+def manifest_documents(text):
+    """The first cells of the table under the manifest's '## Documents' heading (Phase 8 rule 6), each
+    the name inside its backticks, '.md' stripped; an image row is out of scope (section 7.1)."""
+    lines = text.split("\n")
+    try:
+        a = next(i for i, l in enumerate(lines) if re.match(r"^##\s+Documents\s*$", l))
+    except StopIteration:
+        raise Refused("the manifest has no '## Documents' heading to read its document list from")
+    names, inside = [], False
+    for line in lines[a + 1:]:
+        if line.startswith("## "):
+            break
+        if not line.lstrip().startswith("|"):
+            if inside:
+                break
+            continue
+        if SEPARATOR_RE.match(line):
+            inside = True
+            continue
+        if not inside:
+            continue  # the header row
+        cells = _cells(line)
+        if not cells:
+            continue
+        cell = cells[0][2].strip()
+        q = re.fullmatch(r"`([^`]+)`", cell)
+        name = q.group(1) if q else cell
+        if not name.lower().endswith(IMAGE_EXT):
+            names.append(_stem(name))
+    if not inside:
+        raise Refused("the manifest has no table under '## Documents' to read its document list from")
+    return names
+
+
+def _compare(out, relation, where, source, filter_, named, held, key=_idkey):
+    named, held = sorted(set(named), key=key), sorted(set(held), key=key)
     entry = {"relation": relation, "where": where, "source": source, "filter": filter_, "named": named,
              "held": held, "missing": [x for x in held if x not in named],
              "extra": [x for x in named if x not in held]}
@@ -1152,6 +1193,16 @@ def sets(bundle, key, date, manifest, note, unreviewed=()):
         held = [r["id"] for r in sources[source] if _idkey(r["id"])[0] == prefix and test(r, unreviewed)]
         a, b = where[(part, title)]
         _compare(out, 1, "part %d, %s" % (part, title), source, filter_, members(lines[a + 1:b], prefix), held)
+    # relation 2: the working directory this run assembled holds no never-sent marker, so a review
+    # document is every markdown file but the manifest
+    try:
+        listing = [n for n in os.listdir(bundle) if n.endswith(".md") and n != manifest
+                   and os.path.isfile(os.path.join(bundle, n))]
+    except OSError as e:
+        raise Refused("cannot list the bundle: " + e.__class__.__name__)
+    _compare(out, 2, "manifest", "the bundle's listing", "every markdown document but the manifest",
+             manifest_documents(_read(os.path.join(bundle, manifest), manifest)), [_stem(n) for n in listing],
+             key=str)
     return out
 
 
@@ -1170,6 +1221,14 @@ def _sets_prompt(bodies=None, sep=".", numbers=range(1, 12)):
         "## %d%s Part %d\n\n%s\n" % (n, sep, n, bodies.get(n, "Text.\n")) for n in numbers)
 
 
+def _sets_manifest(names, extra=""):
+    return ("# K-1 — bundle manifest\n\nIntro naming `K-1-gone.md` as context not carried.\n\n## Documents\n\n"
+            "| File | What it is | For review? |\n|---|---|---|\n"
+            + "".join("| `%s` | d | yes |\n" % n for n in names) + extra
+            + "\nImage: `K-1-wire.svg`.\n\n## Your files\n\n| Path | In this bundle |\n|---|---|\n"
+              "| `source/a.md` | `K-1-a.md` |\n")
+
+
 def sets_selftest(check):
     def run(files, note="The `app` repository at commit `abcdef1`.\n", **kw):
         kw.setdefault("key", "K-1")
@@ -1178,6 +1237,9 @@ def sets_selftest(check):
         with tempfile.TemporaryDirectory() as d:
             b = os.path.join(d, "b")
             os.mkdir(b)
+            if kw["manifest"] not in files:
+                files = dict(files, **{kw["manifest"]: _sets_manifest(
+                    [n for n in files if n.endswith(".md")])})
             for n, txt in files.items():
                 with open(os.path.join(b, n), "w", encoding="utf-8") as fh:
                     fh.write(txt)
@@ -1263,6 +1325,25 @@ def sets_selftest(check):
     msg = refused(lambda: run({"K-1-customer-review-prompt-20261029.md": _sets_prompt({9: "Nothing.\n"})}))
     check("sets relation 1: a missing sub-heading is refused, by part and title",
           bool(msg) and "part 9" in msg and "Open assumptions" in msg)
+    def r2(r):
+        return next(x for x in r["relations"] if x["relation"] == 2)
+
+    pr = {"K-1-customer-review-prompt-20261029.md": _sets_prompt()}
+    docs = ["K-1-customer-review-prompt-20261029.md", "K-1-decisions.md", "K-1-a.md"]
+    files = dict(pr, **{"K-1-decisions.md": "# Decision register: K-1\n", "K-1-a.md": "x\n", "K-1-wire.svg": "<svg/>"})
+    r = run(dict(files, **{"K-1-manifest.md": _sets_manifest(docs)}))
+    check("sets relation 2: the real manifest's shape passes — its own absence, an image line, the map table",
+          r2(r)["verdict"] == "pass" and len(r2(r)["named"]) == 3)
+    r = run(dict(files, **{"K-1-manifest.md": _sets_manifest(
+        ["K-1-customer-review-prompt-20261029", "K-1-decisions", "K-1-a.md"], "| `K-1-wire.svg` | i | yes |\n")}))
+    check("sets relation 2: the extension either way matches, and an image row is out of scope",
+          r2(r)["verdict"] == "pass")
+    r = run(dict(files, **{"K-1-manifest.md": _sets_manifest(
+        ["K-1-customer-review-prompt-20261029.md", "K-1-a.md", "K-1-ghost.md"])}))
+    check("sets relation 2: a document with no row is missing, a row with no document is extra",
+          r2(r)["missing"] == ["K-1-decisions"] and r2(r)["extra"] == ["K-1-ghost"] and r2(r) in r["mismatch"])
+    msg = refused(lambda: run(dict(files, **{"K-1-manifest.md": "# K-1 — bundle manifest\n\n- `K-1-a.md`\n"})))
+    check("sets relation 2: a manifest with no Documents table is refused", bool(msg) and "Documents" in msg)
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "K-1-customer-review-prompt-20261029.md"), "w", encoding="utf-8") as fh:
             fh.write(_sets_prompt())
