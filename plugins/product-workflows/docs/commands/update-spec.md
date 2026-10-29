@@ -13,7 +13,7 @@ Revises a merged `specification.md` in place — keeping its IDs and its `Create
 ```
 
 - **`<ADDRESS>`** (mandatory) — the Epic or PRD whose specification to revise: a key, or an `@<path>` naming its folder, read as [`/specify`](specify.md) reads one. A PRD address revises the PRD folder's own specification; where it has none and its Epics do, the run stops and names `/update-spec <EPIC-KEY>` for each.
-- **`[<what is wrong>]`** (optional) — every other token that is not a flag: free text saying what to correct. Without it, the run takes what moved upstream and the notes already in the specification, and asks for a correction only where those name nothing.
+- **`[<what is wrong>]`** (optional) — every token from the first one after the address that is neither a flag nor a flag's value: free text saying what to correct, kept as typed. Without it, the run takes what moved upstream and the notes already in the specification, and asks for a correction only where those name nothing.
 - **`[--no-docs]`**, **`[--docs <path>]`**, **`[--no-arch]`** — as [`/specify`](specify.md)'s: documentation and architecture grounding for the items that changed.
 
 All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and persists only defects. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) runs every dispatched step on that model — see [Model routing](../reference/model-routing.md).
