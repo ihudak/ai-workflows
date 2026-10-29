@@ -86,15 +86,19 @@ drafts, which are. Catching it at the source is cheaper than catching it downstr
   nor withdrawn; a `**Withdrawn:**` line carries a reason.
 - **Contracts — only when the frontmatter `components:` has two or more `kind: code` entries** (an entry's `kind` defaults to `code`) (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §5). `## Contracts` is then a required heading (missing → BLOCKER), with `### Schema ownership`, `### Versioning and compatibility` and `### Landing order` under it (a missing one → MAJOR). Every interface-table row's `AD` cell names an `[AD#N]` that has a `### [AD#N]` heading (else BLOCKER); every `Producer` and `Consumers` value is an `id` in `components:` (else MAJOR); every `Status` is `new`, `changed` or `exists` (else MAJOR). With fewer than two code entries `## Contracts` is not required, and its absence is not reported.
 
-## spec — `specification.md` (`/specify`; format `specification-format.md`)
+## spec — `specification.md` (`/specify` and `/update-spec`; format `specification-format.md`)
 
 - Required headings: `## Problem statement`, `## Scope`, `## User stories`; header fields
   `- **Published**:` and `- **Open questions**:`.
 - ID series: `[Uxx]` (in `### [Uxx]:`) contiguous document-wide; `[ACxx]` (in `#### [ACxx]:`)
-  contiguous within each story; `[TCxx]` (in `**[TCxx]:`) contiguous within each AC.
+  contiguous within each story; `[TCxx]` (in `**[TCxx]:`) contiguous within each AC — a superseded or
+  withdrawn item counted, since it keeps its number (`specification-format.md` § Identifier
+  conventions). A heading line ending in ` — Superseded by …` or ` — Withdrawn …` in any other form
+  than that section's two → MAJOR, naming the line.
 - **Open-questions header consistency:** the integer in `- **Open questions**: N` must equal the
   count of `- [ ]` items in the file (`grep -cE '^[[:space:]]*- \[ \]' <file>`). Mismatch → MAJOR.
-- **Per-criterion test coverage:** under each `#### [ACxx]:`, its `**[TCxx]: <title> — <Category>:**`
+- **Per-criterion test coverage:** under each live `#### [ACxx]:` — one whose heading, and whose
+  story's, carries neither marker — its live `**[TCxx]: <title> — <Category>:**`
   lines carry at least one `Happy path` and at least one `Negative / boundary` category
   (`specification-format.md` Stage 5). An `[ACxx]` missing either → MAJOR, naming the story, the
   criterion and the category it lacks. Read the category after the last ` — ` of the line, as the
