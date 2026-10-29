@@ -119,7 +119,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes, cheap — `/implement` still runs its own tests, but the planner should know the patch was never test-run.
 - **Suggested scope:** `register.py commit` reads `scans/<folder>/patches/patches.jsonl` and appends a fixed structured clause (e.g. "— the patch was verified on review only") where the unit's `untested` is true; never text from the file.
 
-### SEC-G6 — The run's scratch directory and worktree ignore the harness scratchpad — **Deferred to `to-fix.md` (batch B17): it needs a home first**
+### SEC-G6 — The run's scratch directory and worktree ignore the harness scratchpad — **Deferred to `to-fix.md` (batch B17): it needs a home first** — **Fixed in `workflows-core` 1.69.0: `run-flags` §7**
 - **Designed in:** user feedback `BOOK-2-01-scan-run-dir-tmp-vs-harness-scratchpad` (`BOOK-2-01-feedback.md`).
 - **Current state:** `scan.md:96` (`mktemp -d -t security-workflows-run.XXXXXX`) and `:233` (`mktemp -d -t security-workflows.<repo-slug>-<commit7>.XXXXXX`) say nothing about `$TMPDIR` or a session scratchpad; both name templates and the removal guards (`*/security-workflows-run.*`, Phase 0 step 7's last-component prefix) would work unchanged under any parent.
 - **Still worth doing?:** low priority — a one-sentence note; the same pattern is family-wide (`dw-impl-*` in `/implement`), so fix it once in a shared place.

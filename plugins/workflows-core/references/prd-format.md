@@ -24,10 +24,10 @@ owning_program: <program>
 tracking_programs: [ ... ]
 priority: <e.g. Major>
 labels: [ ... ]
-sources:                     # PROPAGATED from idea.md's recorded provenance — not the literal idea.md
+sources:                     # PROPAGATED from idea.md's recorded provenance — not the literal idea.md; on the BRD route, one entry /create-prd writes from the slice inventory (below)
   - provenance: prd | community-post | prompt | markdown
-    ref: <as idea.md recorded it; absent on a prompt entry>
-    vendored: <as idea.md recorded it; present only where idea.md's entry carries one and that idea.md is the one in this PRD's folder — the path is relative to it>
+    ref: <as idea.md recorded it; absent on a prompt entry; on the BRD route, the slice inventory's source: value>
+    vendored: <as idea.md recorded it; present only where idea.md's entry carries one and that idea.md is the one in this PRD's folder — the path is relative to it; never on the BRD route>
 derived_from: <path to the idea.md this PRD was built from>
 seeded_from_prd: <PRD key or path when this PRD was seeded from another PRD via `/create-prd --from-prd`; omit otherwise>
 brd_key: <the BRD key this PRD was authored from via `/create-prd` on the BRD route; omit otherwise>
@@ -40,6 +40,12 @@ workitem_key: <optional — your own tracker's identity for this work; the plugi
 ```
 
 **`relevant_for_release_notes` is retired and is not to be reintroduced.** It asked a question with one answer — every PRD is relevant for release notes — so the only value it could carry that changed anything was one nobody should write. `/release-notes` gated on it and `/create-prd` asked to confirm a `no`; neither does now, and a value left in an existing PRD is read by nothing. What replaced it is not another field: whether a note is drafted is the decision of the person running `/release-notes`, taken at that moment, and the PRD says nothing about it.
+
+**On the BRD route `sources` is written, not propagated.** There is no `idea.md` on that route, so
+`/create-prd` writes one entry naming the customer's own document — `provenance: markdown`, `ref:` the
+value of the `source:` header of the slice's `brd/brd-inventory.md` as written there (the parent's
+`brd/source/` document, relative to the parent's folder), and no `vendored` — or no `sources` at all where that inventory carries no `source:`
+(`/product-workflows:create-prd` Phase 3), and `/update-prd` carries it forward unchanged.
 
 `brd_key`, `brd_parent` and `depends_on` are written only by `/create-prd` on the BRD route, from the BRD's
 own `brd-link.md`, and are never asked of the PM. **`brd_parent` is present on every PRD that carries

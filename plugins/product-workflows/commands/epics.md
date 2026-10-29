@@ -347,7 +347,7 @@ Also display (for user context):
 - `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH or named at the plan's approval` (or "Repos: N/A — code scan off")
 - Resolved `prd_dir`, `key` and `focus_key` (or "none — PRD-level")
 
-No branching context is shown here: the one branch this run may create is the `epics/` branch Phase 7.5's handoff cuts behind its consent choice, and `specs-preflight` only switches `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2).
+No branching context is shown here: the one deliverable branch this run may create is the `epics/` branch Phase 7.5's handoff cuts behind its consent choice, and `specs-preflight` only switches `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2); besides the `epics/` branch, the one branch the run may create there is `session/<identity>`, in session-branch mode, where the run's session-file commits go (`workflows-core:specs-repo-git` §8.2) — a branch that holds no deliverable and that the checkout never stands on (§8.1).
 
 ---
 
@@ -874,8 +874,9 @@ Runs once Phase 7 has settled — the review gate passed, or escalated to a deci
 `command rm -f -- "<path>"`: `command` because the Bash tool's shell carries the user's aliases and
 shell functions, and an `rm -i` or `rm -I` of theirs would ask before removing the file, be answered no
 from that shell's empty standard input, and leave it behind; `--` ends `rm`'s options. Nothing else
-removes one — they sit under the system's temporary directory, outside every repository and outside
-the specs tree, where no later phase and no later run looks. A run that stops before this phase removes
+removes one — they sit in the session's scratchpad directory where the session names one
+(`workflows-core:run-flags` §7), else under the system's temporary directory, outside every
+repository and outside the specs tree, where no later phase and no later run looks. A run that stops before this phase removes
 every file `temp_files` holds by then, in the same way.
 
 Then gather the change context:
@@ -1193,7 +1194,7 @@ user name is ever written (§10 privacy).
 - ALWAYS resolve one positional address (Phase 0) — a key or an `@<path>` naming a folder in the specs tree works without it; `/epics` is cwd-agnostic and rejects `mode: direct`
 - ALWAYS gate the resolved folder in Phase 0 step 1b on **`prd.md`'s own `kind: prd`** (and, one level down, `epic.md`'s own `kind: epic`) — NEVER on the folder's asserted `kind:`, which a `PRD-` slice folder sets to `brd`; two shapes are accepted (a PRD folder → draft; an `EPIC-` folder with a PRD above it → re-refine, `focus_key` derived from it) and every other shape is refused
 - NEVER partition a `BRD-` container (step 1a, `EPICS_BRD_NOT_SLICED`, taken on the directory prefix after the specs-repo preflight and before any other read) or an `EPIC-` folder with no PRD above it (`EPICS_EPIC_NOT_UNDER_PRD`) or no `epic.md` in it (`EPICS_NO_PRD`) — Epics come from a PRD only, and `/epics` is the ONLY command that creates an `EPIC-` folder
-- ALWAYS offer Phase 7.5's handoff once Phase 7 has settled and Phase 7.4's agents have returned — the one branch this command creates is the `epics/` branch `handoff-to-main` cuts behind that consent choice (`workflows-core:phase-handoff` §2). `specs-preflight` may switch `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2); it creates none.
+- ALWAYS offer Phase 7.5's handoff once Phase 7 has settled and Phase 7.4's agents have returned — the one deliverable branch this command creates is the `epics/` branch `handoff-to-main` cuts behind that consent choice (`workflows-core:phase-handoff` §2). `specs-preflight` may switch `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2); it creates no deliverable branch, and besides the `epics/` branch the one branch the run may create there is `session/<identity>`, in session-branch mode, where its session-file commits go (§8.2) — a branch that holds no deliverable and that the checkout never stands on (§8.1).
 - NEVER commit the Epic files except through Phase 7.5's `handoff-to-main`, and never anything in the current working directory, where it is not the specs repository. **Say what a declined handoff costs**: an uncommitted `epic.md` in the PRD folder is an `OTHER` path to `workflows-core:specs-repo-git` §2.1, so it fires §3.3's G1 advisory on every later run of any command and keeps the preflight's leftover flush and branch settle skipped until it is committed or removed. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1).
 - ALWAYS run `specs-preflight` at Phase 0 and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - NEVER write inside `_archive/` — read-only by convention

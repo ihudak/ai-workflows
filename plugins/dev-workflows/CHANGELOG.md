@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.51.0] — 2026-10-29
+
+Take with `workflows-core` 1.69.0 — to-fix SEC-G6.
+
+### Fixed
+- **The agents and references that run a `mktemp` of their own put the file in the session's scratchpad**, where the session names one, as `workflows-core` 1.69.0's `run-flags` §7 has every command do: `test-baseliner`'s long-suite output file; `bug-diagnosis`' scratch checkout, which `code-writer` and `risk-planner` make; and `code-handoff` §6.2's revert script, whose index copy `vuln-fixer` and `upgrade-executor` make. No agent reads `run-flags`, and the harness leaves `TMPDIR` unset, so each landed in `/tmp`. `code-handoff`'s commit-message file and `context-management`'s run files are now described where they sit.
+
 ## [4.50.0] — 2026-10-29
 
 Take with `product-workflows` 3.60.0, whose `/update-spec` marks a specification item superseded or withdrawn, and `workflows-core` 1.68.0 — to-fix D19.

@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.2.5] — 2026-10-29
+
+### Fixed
+- **`guideline-reviewer` writes ESLint's JSON report into the session's scratchpad**: its `mktemp` runs with `TMPDIR` set to the scratchpad directory its session names, where it names one, rather than landing in `/tmp`, which the harness's unset `TMPDIR` sent it to (to-fix SEC-G6).
+
 ## [1.2.4] — 2026-10-26
 
 ### Fixed

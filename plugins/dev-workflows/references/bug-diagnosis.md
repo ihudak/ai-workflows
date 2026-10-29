@@ -89,7 +89,8 @@ change — a scan's patch applied included, a probe's tagged line not — dividi
 
 **The scratch checkout** is outside every repository and is removed whatever the run in it exits
 with, a red check's expected failure included. One Bash call makes it, runs in it and removes it, since
-no shell variable survives from one call to the next:
+no shell variable survives from one call to the next — its `mktemp` run with `TMPDIR` set to
+the session's scratchpad directory where the session names one that exists:
 `( d=$(command mktemp -d -t dw-bug-XXXXXX) && trap 'case "$d" in */dw-bug-*) command rm -rf -- "$d" ;; esac' EXIT && command mkdir -- "$d/tree" && GIT_INDEX_FILE="$d/index" git -C "<top level>" -c core.hooksPath=/dev/null --work-tree="$d/tree" checkout HEAD -- . && cd -- "$d/tree/<the directory the run needs>" && <the run> )`.
 The checkout reads `HEAD`'s tree through an index file of its own into `"$d/tree"`, so nothing is
 written into the working tree, its index or its refs; it keeps the `export-ignore` paths a
