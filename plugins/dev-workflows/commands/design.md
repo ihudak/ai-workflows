@@ -201,7 +201,8 @@ class, in its Phase 0, before it classifies, since its class decides whether its
 ## Phase 2 — Read the spec
 
 Read the resolved `specification.md` **fully** (from the specs repo main). Extract the in-scope items,
-user stories (`[Uxx]`), acceptance criteria (`[ACxx]`), and test cases (`[TCxx]`) the design must cover
+user stories (`[Uxx]`), acceptance criteria (`[ACxx]`), and test cases (`[TCxx]`) the design must cover,
+live items only — an item whose heading ends ` — Superseded by …` or ` — Withdrawn …`, and every item nested under it, is not a requirement; it keeps its number, and its text is read as context (the specification format's *Live items* rule)
 — this is the traceability baseline for **Requirements coverage** and the raw material the grill
 challenges. Note the spec's `Published` flag (governs whether Phase 5 may propose ID changes or must
 annotate-only) and any existing `- [ ]` open questions (spec-level; tolerated — the design inherits
@@ -374,7 +375,7 @@ take, labelled **A**, **B**, and **C** in that order; those are the labels the F
   > constraint: [A — Minimise the interface | B — Maximise flexibility | C — Optimise for the most common caller]
   > problem_frame: |
   >   purpose: [what the interface is for, and the seam it sits at]
-  >   spec_lines: [each `[Uxx]` / `[ACxx]` / `[TCxx]` line of specification.md the interface serves, quoted literally — a displayed value, a format or a bound exactly as the spec writes it]
+  >   spec_lines: [each live `[Uxx]` / `[ACxx]` / `[TCxx]` line of specification.md the interface serves, quoted literally — a displayed value, a format or a bound exactly as the spec writes it]
   >   surviving_surface: [each existing public operation, type or endpoint at this seam that must survive the change, with its callers as Phase 4's scan found them — or `none`]
   >   settled_values: [each value the grill has settled that the interface depends on — a limit, a default, a name, a format, an error outcome — with the decision it was settled in, from `_design-session.md`, or `none`]
   >   constraints: [any other constraint every proposal must satisfy]

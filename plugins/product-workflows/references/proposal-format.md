@@ -142,7 +142,7 @@ refusal on readiness is the absence of the caller's own gated input, which that 
 | **1 · Indicative** | `prd.md` | the driver section states outright that the drivers are not known; standing banner in the header |
 | **2 · Grounded** | \+ verified grounding, \+ a settled decision register | drivers carry evidence; **the floor for a document that goes to a customer** |
 | **3 · Architected** | \+ `ard.md` | discovery becomes translation of an existing architecture rather than authoring one |
-| **4 · Specified** | \+ `specification.md` | QA is sized from the authored test-case count; the definition of done is built from the acceptance criteria |
+| **4 · Specified** | \+ `specification.md` | QA is sized from the authored test-case count; the definition of done is built from the acceptance criteria — live items only, a superseded or withdrawn one not counted (`references/specification-format.md` § Identifier conventions) |
 
 **Both tier conditions reuse rules that already exist.** *Verified grounding* means every finding
 carries a verifier outcome — `workflows-core:grounding-format`'s rule that a finding without an
@@ -548,7 +548,7 @@ file one time. **A proposal written before this record existed carries none**, a
 | `prd.md` — never a legacy `<KEY>_<slug>.md`, which `workflows-core:addressing` §5's fallback does not cover and `commands/prd-proposal.md` Phase 0 asks to be renamed | the requirement set the packages cluster |
 | `decisions.md` | tier 2's settled-register half; frozen decisions are driver evidence |
 | `ard.md` | tier 3 |
-| `specification.md` | tier 4; the authored test-case count sizes QA |
+| `specification.md` | tier 4; the authored count of live test cases sizes QA |
 | `code-defect-log.md` | defect source 1 (§7) |
 | every `.md` file under `grounding/` (in any case), recursively, no name beginning with `.` — an editor's backup, an autosave or any other file is not a grounding record | tier 2's verified-grounding half; driver evidence; defect source 2 |
 | every `interview/round-<N>.md`, and `interview/customer-questions.md` | the register's settledness; the open-items sweep's unanswered customer questions (§8) |
