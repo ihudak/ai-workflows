@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.8.0] — 2026-10-29
+
+Needs nothing newer than `workflows-core` 1.69.0 — to-fix D28.
+
+### Added
+- **`/security-workflows:scan` takes an `@<path>` address to a unit's folder**, the way through `resolve-address`'s `ambiguous` stop, which names `@<path>`: a key was read with `read-key`, which reads no path. An `@` token naming an existing folder under `$SPECS_PATH/specifications/` is now a key run in every respect, its key read off the folder's carrier and the token handed to `resolve-address` as typed; it is classified before the rule that an existing directory is a repository path, and with `$SPECS_PATH` unset the run asks for it first. An `@` token is never a repository path. The post-scan `--import` line prints the `@<path>` as typed where the run was given one, since its key may match more than one folder.
+
 ## [0.7.0] — 2026-10-28
 
 **Update `workflows-core` to 1.67.0 with this release**: its `specs-repo-git` reads the `register_rebuild` input this release's scan passes, and replays a rejected push. Fixes to-fix LC11 (live checks of 2026-10-26, run 6).

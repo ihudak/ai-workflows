@@ -25,7 +25,7 @@ closes fixes with `--verify-fixes`, and reviews decisions in `--triage`. **A Dev
 The command reasons about source code: it never runs anything against a deployed system, and never
 writes exploit code.
 
-Usage: `/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+Usage: `/security-workflows:scan <KEY | @<path> | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 **Rule: Ask, don't guess.** Use `choices` arrays: 2–4 options, each array presented verbatim, and
 never an authored "Other" — the harness supplies the free-text escape itself
@@ -60,8 +60,9 @@ created or copied files into, is deleted. A folder a record names is never delet
 found in place and copied nothing into stays as it was found (Phase 4 step 2). A stop on a run that scanned, once Phase 3 step 3 has found the report directory
 and before 7.2 has written the run's record, names that `CLAUDE-SECURITY-…` directory — on
 `--verify-fixes`, the copy 7.4 makes of it out of the worktree — and the line that records it without
-scanning again, `/security-workflows:scan <KEY | repo-path> --import <report dir>`. Its address is the
-run's `<KEY>` where the run's role is `dev`, and its `<repo root>` where the role is `sec`, whatever
+scanning again, `/security-workflows:scan <KEY | @<path> | repo-path> --import <report dir>`. Its address, where the
+run's role is `dev`, is the `@<path>` as typed where the run was given one — the key may match more
+than one folder — else its `<KEY>`; where the role is `sec`, it is the run's `<repo root>`, whatever
 address the run was given: an `--import` with a key is a `dev` run (Phase 0 step 2), so only the path
 keeps a `sec` run's role.
 
@@ -74,12 +75,12 @@ keeps a `sec` run's role.
    **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
 2. **Arguments.** What step 1 leaves is one positional address and the command's own flags.
-   - **An address that names an existing directory is a repository path**: step 5 takes its repository. **Any other address is a key**, which step 4 reads with `read-key`.
+   - **An `@` token whose path — absolute, or relative to the working directory — names an existing directory under `$SPECS_PATH/specifications/` is a unit's folder**, and the run is a key run in every respect: step 4 reads the key its carrier asserts. With `$SPECS_PATH` unset, or naming no existing directory, such a token cannot be placed yet: take step 3's stop first, and classify the address again once it is answered. **Any other address that does not begin with `@` and names an existing directory is a repository path**: step 5 takes its repository. **Any other address is a key**, which step 4 reads with `read-key` — an `@` token naming no such folder among them, which `read-key` finds `invalid`.
    - `--import <dir>`, `--triage` and `--verify-fixes` exclude one another, and `--import` takes an existing directory.
    - `--effort` takes `medium` or `high`. This command never asks Claude Security for a `low`-effort scan, which reads the target with one researcher, keeps no coverage account, and so can never close a fix (`workflows-core:security-register-format` §5 rule 2). On `--import` and `--triage`, which scan nothing, `--effort` has no effect, and the run says so.
    - Anything else stops — no address or two, an unknown flag, a flag without its value, two of `--import`, `--triage` and `--verify-fixes`, an `--import` naming no existing directory, or an `--effort` other than `medium` or `high`:
 
-     `SECURITY_USAGE: /security-workflows:scan needs one address — a key (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7-01) or a repository path — at most one of --import <dir>, --triage and --verify-fixes, and --effort medium or high. Re-run '/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high]' — <what was wrong>.`
+     `SECURITY_USAGE: /security-workflows:scan needs one address — a key (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7-01), an @<path> to its folder, or a repository path — at most one of --import <dir>, --triage and --verify-fixes, and --effort medium or high. Re-run '/security-workflows:scan <KEY | @<path> | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high]' — <what was wrong>.`
 
    **A run that scans** is every run but `--import` and `--triage`: a key with none of `--import`, `--triage` and `--verify-fixes` (a **change scan** of the Epic's branch), a path with none of them (a **codebase scan** of the whole repository), and `--verify-fixes` with either address (a codebase scan scoped to the files of the findings being fixed). The effort defaults to `high` for a change scan — Claude Security's own advice for a feature-sized change — and to `medium` for a whole-repository scan or `--verify-fixes`.
 
@@ -87,7 +88,7 @@ keeps a `sec` run's role.
 
 3. **Require `$SPECS_PATH`.** Take this test before step 4 resolves anything: the register lives under it, on every run. Where it is unset, or names no existing directory, stop naming it: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text, carries it as `$SPECS_PATH` for the run once it names an existing directory, and asks again where it does not (`workflows-core:escalation-rules` *Required path environment variable unset*); *Cancel* ends the run.
 
-4. **Resolve the address.** A path needs no resolution: its run key set is empty, and the run is keyless. A key is read with `read-key` (`workflows-core:addressing` §1) and resolved with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path` (the unit's folder), `kind` and `key`; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `absent` → stop with the `key dir not found` rule of `workflows-core:escalation-rules` — this command creates no folder. A token `read-key` finds `invalid` stops with `SECURITY_USAGE`, its `<what was wrong>` reading `'<token>' is not a key (workflows-core:addressing §1)`.
+4. **Resolve the address.** A repository path needs no resolution: its run key set is empty, and the run is keyless. A unit's folder given as an `@<path>` is never read with `read-key`, which reads no path: read the key its carrier asserts now (`workflows-core:addressing` §4) — the run's key from here on, its run key set's and every stop's — and hand `resolve-address` the token as typed, through its `@<path>` branch (§3 step 1); a folder with no carrier asserts no key, and a key run needs one, so it stops as §3 step 1 says. This is the way through `resolve-address`'s `ambiguous` stop, which names `@<path>`. A key is read with `read-key` (`workflows-core:addressing` §1) and resolved with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path` (the unit's folder), `kind` and `key`; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `absent` → stop with the `key dir not found` rule of `workflows-core:escalation-rules` — this command creates no folder. A token `read-key` finds `invalid` stops with `SECURITY_USAGE`, its `<what was wrong>` reading `'<token>' is not a key (workflows-core:addressing §1)`.
 
    **Specs-repo preflight** — once the run key set is fixed (`workflows-core:specs-repo-git` §3.2: the resolved `key`, and on an Epic folder its parent PRD's key too; empty for a path). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, with `register_rebuild: ${CLAUDE_PLUGIN_ROOT}/scripts/register.py` (its §7), so that a leftover push its §3.4 retries, which `origin` rejects because its branch moved on, can rebuild a register both sides changed. Where it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole run: the register is still written, and `commit-artifacts` leaves it uncommitted and says why. Where it returns `specs_git: misrooted` (§3.1), stop: the register lives under `$SPECS_PATH`, and nothing is written under a misplaced one — no scan folder, run record, unit note or follow-up:
 

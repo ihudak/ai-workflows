@@ -14,10 +14,10 @@ Cost-attribution phase: [conformance](../roles-and-phases.md#conformance).
 ## Synopsis
 
 ```
-/conformance <EPIC-KEY | PRD-KEY> [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
+/conformance <EPIC-KEY | PRD-KEY | @<path>> [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
-Type it as `/dev-workflows:conformance`. It takes one address, resolved against `$SPECS_PATH`: an `EPIC-` folder is an Epic run, a `PRD-` folder (a BRD-route slice included) a PRD run. A `BRD-` container is refused with `CONFORMANCE_BRD_NOT_SLICED`, which names its slices; no address, or one that is not a key, stops with `CONFORMANCE_NEEDS_KEY`.
+Type it as `/dev-workflows:conformance`. It takes one address, resolved against `$SPECS_PATH` — a key, or an `@<path>` naming the folder under `$SPECS_PATH/specifications/`, which takes the key the folder's own document asserts and is the way through a key that matches more than one folder: an `EPIC-` folder is an Epic run, a `PRD-` folder (a BRD-route slice included) a PRD run. A `BRD-` container is refused with `CONFORMANCE_BRD_NOT_SLICED`, which names its slices; no address, or one that is not a key or such a folder, stops with `CONFORMANCE_NEEDS_KEY`, and an `@<path>` beside a second address with `CONFORMANCE_TWO_ADDRESSES`.
 
 ## How it runs
 

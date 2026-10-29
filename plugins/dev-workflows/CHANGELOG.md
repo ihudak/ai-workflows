@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.52.0] — 2026-10-29
+
+Take with `workflows-core` 1.69.1 — to-fix D28.
+
+### Added
+- **`/conformance` and `/vuln` take an `@<path>` address**, the way through `resolve-address`'s `ambiguous` stop, which names `@<path>` and was a dead end for both: each read its address with `read-key`, which reads no path, so an `@` token never reached `resolve-address`'s `@<path>` branch. As `/create-prd` does since `product-workflows` 3.56.0, an `@` token naming an existing folder under `$SPECS_PATH/specifications/` is the address, its key read off the folder's carrier and the token handed to `resolve-address` as typed. `/conformance` stops an `@<path>` beside a second address with `CONFORMANCE_TWO_ADDRESSES`. `/vuln`'s `ADDRESS:CVE-ID` token splits at its last `:`, which no identifier it reads contains, so a `:` inside the path stays in the address; an `@` address naming no folder there stops with `VULN_ADDRESS_NOT_A_FOLDER`, and one whose folder the preflight switched off the checkout stops rather than going on keyless. Each asks for an unset `$SPECS_PATH` before classifying an `@` token.
+
 ## [4.51.0] — 2026-10-29
 
 Take with `workflows-core` 1.69.0 — to-fix SEC-G6.
