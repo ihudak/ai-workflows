@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.71.0] — 2026-10-30
+
+Take with `dev-workflows` 4.54.0, `product-workflows` 3.65.0, `docs-workflows` 1.30.0 and `security-workflows` 0.10.0 — to-fix D18, D24 and D26.
+
+### Added
+- **`phase-handoff` §6 `branch-check`, an entry point with its own generated file** (`reference-parts/phase-handoff/branch-check.md`: §1, §2.2, §6 and §3.3's *Row B′'s remedy*). Every command that resolves a folder runs it once at its start, after its preflight and its resolution. **§6.1 Behind (D24):** on a plugin branch, the paths the default branch changed under the address's root folder since the branch was cut, less the session-file shapes, stop the run, naming up to ten — with row B′'s merge remedy on the run's own branch, its prefix and the resolved folder's own key, and "switch to the default branch and re-run" on another unit's, each with its session-branch, misrooted and read-only forms. **§6.2 Reuse (D18):** a producer passes its handoff's prefix, and where the branch §2.2 rule 3 would reuse is unmerged, not HEAD and changed something under the root, the run asks before any work: switch to it and continue there, or stop. §6.3 names `/dev-workflows:ready` and `/product-workflows:brd-reconcile`'s cross-BRD write guard as the two callers that record a §6.1 stop and go on.
+- **`session-hygiene` §7 `env-check` (D26).** `specs-preflight` prints `Environment: SPECS_PATH=<realpath> (origin <url|none>), REPOS_PATH=<value|unset>` on every run, by the one Bash call §7 defines. `env-check`, prompt-free, re-runs it before `handoff-to-main`'s gate, before each emitter's first write and before `resume.md`, and on a difference sets `specs_git: misrooted` and prints `Environment changed: …` once, so a conversation resumed in another container writes, commits and hands off nothing more there. No line in the conversation, or a run §6 pinned, passes.
+
+### Changed
+- **`handoff-to-main` gains §4.1's *Switch refused* outcome** (§2.2 rule 3): where git refuses the switch onto a reused branch, the run's files stay where they are and git's advice is never followed; §1 rule 4 forbids `switch --discard-changes` and `switch -f`.
+- Row B′'s remedy forms moved, word for word, from its table cell to *Row B′'s remedy*, the paragraph after §3.3's table, so both entry files hold them whole.
+- `specs-repo-git` §1 rule 7 and §3 no longer say the preflight is silent unless it acts; every list of `specs_git: misrooted`'s setters, and every site repeating its notice, names §7; `session-hygiene` §6 no longer says nothing else re-checks the environment; `followup-emission`'s misrooted notice no longer calls every such run's `$SPECS_PATH` misplaced.
+- The `reference` loader's entry list and entry-point rules, and `phase-handoff` §5 rule 4's carve-out, name both entry files.
+- `/frames` runs `branch-check` with `prefix: frames`; the preflight clause of `/frames`, `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me` and `/diagnose-session` names the `Environment:` line.
+- `next-phase-offer`'s merge-clause table gains a *Switch refused* row; the docs reference pages and workflow diagram name `branch-check`, both entry files, `env-check` and the `Environment:` line, and the environment page says what a resumed conversation in another container writes.
+
 ## [1.70.0] — 2026-10-29
 
 Take with `dev-workflows` 4.53.0, whose `/ready` and `/conformance` hand off the files this release classifies — to-fix D30.

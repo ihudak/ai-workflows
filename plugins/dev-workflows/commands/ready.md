@@ -588,7 +588,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    clause: nothing runs require-on-main on _readiness.md]
 
    ### Pre-handoff maintenance (step 2a)
-   - Documentation (Agent 1): [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as step 3's `Phase handoff:` line gives `_readiness.md`'s: committed and pushed with it, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside it (the handoff was declined, or its gate failed)] — _or_ "no update required (reason)"
+   - Documentation (Agent 1): [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as step 3's `Phase handoff:` line gives `_readiness.md`'s: committed and pushed with it, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside it (the handoff was declined, its gate failed, or git refused its switch)] — _or_ "no update required (reason)"
    - Instructions (Agent 3): [<unit_folder>/CLAUDE.md, relative to $SPECS_PATH] — [summary of change and why] — [its fate, as above] — _or_ "no update required"
    - Proposed, not written: [the specs repository's CLAUDE.md | ~/.claude/CLAUDE.md] — [the edit and why] — _one per proposal; omit where none_
    - Out-of-scope write, not handed off: [absolute path] — _a path step 2a's agents returned outside the set each may edit, left as written and uncommitted; omit where none_

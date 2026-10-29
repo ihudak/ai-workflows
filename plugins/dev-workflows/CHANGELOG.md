@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.54.0] — 2026-10-30
+
+Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.
+
+### Added
+- **`/design`, `/ready` and `/conformance` run `workflows-core:phase-handoff`'s `branch-check` at Phase 0**, after the preflight and the resolution, with their handoff's prefix: a plugin branch behind the default branch under the address's root folder stops the run, naming the paths and what to run (D24), and an open branch the handoff would reuse is asked about before any work (D18). `/ready` runs it after its clean-main test and records a behind branch as a finding capping the verdict at `PARTIAL`.
+- `/implement` (keyed runs) and `/vuln` (once per root folder) run it with no prefix.
+
+### Changed
+- The preflight clause of every command names the `Environment:` line `specs-preflight` now prints.
+- `/ready` and `/conformance` name a refused switch among the fates of their maintenance edits; the docs pages say where each command checks its branch, and the environment page what a resumed conversation in another container writes.
+
 ## [4.53.0] — 2026-10-29
 
 Take with `workflows-core` 1.70.0, whose `phase-handoff` §4.0 classifies the `CLAUDE.md` and documentation page `/ready` and `/conformance` now hand off beside their records — to-fix D30.

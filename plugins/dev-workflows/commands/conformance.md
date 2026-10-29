@@ -517,7 +517,7 @@ Written to: <absolute path>.
 [the Phase 6 §4.1 outcome line]
 
 ### Pre-handoff maintenance (Phase 5.5)
-- Documentation (Agent 1): [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as the Phase 6 `Phase handoff:` line gives the record's: committed and pushed with it, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside it (the handoff was declined, or its gate failed)] — or "no update required (reason)"
+- Documentation (Agent 1): [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as the Phase 6 `Phase handoff:` line gives the record's: committed and pushed with it, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside it (the handoff was declined, its gate failed, or git refused its switch)] — or "no update required (reason)"
 - Instructions (Agent 3): [<unit_folder>/CLAUDE.md, relative to $SPECS_PATH] — [summary of change and why] — [its fate, as above] — or "no update required"
 - Proposed, not written: [the specs repository's CLAUDE.md | ~/.claude/CLAUDE.md] — [the edit and why] — one per proposal; omit where none
 - Out-of-scope write, not handed off: [absolute path] — a path Phase 5.5's agents returned outside the set each may edit, left as written and uncommitted; omit where none
