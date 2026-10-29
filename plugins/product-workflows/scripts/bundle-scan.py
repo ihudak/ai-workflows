@@ -7,6 +7,8 @@
                         [--date YYYYMMDD] [--captured NAME]... [--captured-path PATH]...
                         [--source-basename NAME]... [--manifest NAME] [--known-key KEY]...
                         [--prereq-aux NAME]...
+  bundle-scan.py sets <bundle-dir> --key KEY --date YYYYMMDD --manifest NAME --note PATH
+                        [--unreviewed-prereq KEY]...
   bundle-scan.py --selftest
 
 citations: runs the bundle-packaging reference's section 6 over an assembled bundle. Documents
@@ -981,6 +983,125 @@ def citations_selftest(check):
           and sorted(h["token"] for h in r["prerequisite_external"]) == ["P-2-manifest.md", "Q-9-other.md"])
 
 
+# ---------------------------------------------------------------------------------------------------
+# sets: bundle-packaging section 7, run over an assembled bundle and the delivery note
+# ---------------------------------------------------------------------------------------------------
+
+PART_RE = re.compile(r"^##\s+([0-9]+)\s*[.·:]?\s")
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
+
+
+def _read(path, name):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        raise Refused("no " + name + " to read")
+    except (OSError, UnicodeDecodeError) as e:
+        raise Refused("cannot read " + name + " as UTF-8: " + e.__class__.__name__)
+
+
+def prompt_parts(lines):
+    """{part: (heading line index, end index)} for the prompt's eleven parts, each a '## <N>' heading
+    with '.', '·' or ':' after the number, outside a code fence. Anything but parts 1 to 11, once each
+    and in order, is refused: the relations below cannot be placed in a prompt whose parts are not."""
+    heads, fence = [], None
+    for i, line in enumerate(lines):
+        f = FENCE_RE.match(line)
+        if f:
+            if fence is None:
+                fence = f.group(1)[0]
+            elif f.group(1)[0] == fence:
+                fence = None
+            continue
+        if fence is None:
+            m = PART_RE.match(line)
+            if m:
+                heads.append((int(m.group(1)), i))
+    found = [n for n, _ in heads]
+    if found != list(range(1, 12)):
+        raise Refused("the prompt's part headings are not parts 1 to 11, once each and in order: found %s"
+                      % found)
+    return {n: (i, heads[k + 1][1] if k + 1 < len(heads) else len(lines)) for k, (n, i) in enumerate(heads)}
+
+
+def sets(bundle, key, date, manifest, note, unreviewed=()):
+    prompt_name = "%s-customer-review-prompt-%s.md" % (key, date)
+    lines = _read(os.path.join(bundle, prompt_name), prompt_name).split("\n")
+    prompt_parts(lines)
+    return {"relations": [], "mismatch": [], "unreadable": [], "ambiguous": []}
+
+
+SETS_DEFAULT_BODIES = {
+    6: "### 6.1 Code defects we will repair\n\nNone.\n",
+    7: "### 7.3 Open assumptions\n\nNone.\n",
+    8: "### 8.1 Positions that could still move\n\nNone.\n\n### 8.2 Code defects whose scope is unsettled\n\nNone.\n",
+    9: "### 9.1 Open assumptions\n\nNone.\n",
+    11: "### 11.1 Code defects we will not repair\n\nNone.\n",
+}
+
+
+def _sets_prompt(bodies=None, sep=".", numbers=range(1, 12)):
+    bodies = {**SETS_DEFAULT_BODIES, **(bodies or {})}
+    return "# K-1 — customer review prompt\n\n" + "".join(
+        "## %d%s Part %d\n\n%s\n" % (n, sep, n, bodies.get(n, "Text.\n")) for n in numbers)
+
+
+def sets_selftest(check):
+    def run(files, note="The `app` repository at commit `abcdef1`.\n", **kw):
+        kw.setdefault("key", "K-1")
+        kw.setdefault("date", "20261029")
+        kw.setdefault("manifest", "K-1-manifest.md")
+        with tempfile.TemporaryDirectory() as d:
+            b = os.path.join(d, "b")
+            os.mkdir(b)
+            for n, txt in files.items():
+                with open(os.path.join(b, n), "w", encoding="utf-8") as fh:
+                    fh.write(txt)
+            np_ = os.path.join(d, "note.md")
+            with open(np_, "w", encoding="utf-8") as fh:
+                fh.write(note)
+            return sets(b, note=np_, **kw)
+
+    def refused(fn):
+        try:
+            fn()
+        except Refused as e:
+            return str(e)
+        return None
+
+    lines = _sets_prompt().split("\n")
+    parts = prompt_parts(lines)
+    check("sets: '## N.' headings locate parts 1 to 11", sorted(parts) == list(range(1, 12)))
+    check("sets: '## N ·' headings locate them too",
+          sorted(prompt_parts(_sets_prompt(sep=" ·").split("\n"))) == list(range(1, 12)))
+    check("sets: a prompt missing part 8 is refused",
+          refused(lambda: prompt_parts(_sets_prompt(numbers=[n for n in range(1, 12) if n != 8]).split("\n"))))
+    check("sets: a prompt repeating part 7 is refused",
+          refused(lambda: prompt_parts(_sets_prompt(numbers=[1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10, 11]).split("\n"))))
+    l10 = _sets_prompt({10: "### 10.3 The twelve sections\n\nx\n"}).split("\n")
+    p10 = prompt_parts(l10)
+    at = l10.index("### 10.3 The twelve sections")
+    check("sets: a schema heading stays inside part 10", p10[10][0] < at < p10[10][1])
+    msg = refused(lambda: run({"K-1-manifest.md": "x\n"}))
+    check("sets: an absent prompt is refused, by its name",
+          bool(msg) and "K-1-customer-review-prompt-20261029.md" in msg)
+    with tempfile.TemporaryDirectory() as d:
+        with open(os.path.join(d, "K-1-customer-review-prompt-20261029.md"), "w", encoding="utf-8") as fh:
+            fh.write(_sets_prompt())
+        with open(os.path.join(d, "K-1-manifest.md"), "w", encoding="utf-8") as fh:
+            fh.write("## Documents\n\n| File | What | For review? |\n|---|---|---|\n"
+                     "| `K-1-customer-review-prompt-20261029.md` | p | yes |\n")
+        with open(os.path.join(d, "note.md"), "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = main(["sets", d, "--key", "K-1", "--date", "20261029", "--manifest", "K-1-manifest.md",
+                         "--note", os.path.join(d, "note.md")])
+    check("sets: the command line prints one line of JSON and exits 0",
+          code == 0 and buf.getvalue().count("\n") == 1 and "relations" in json.loads(buf.getvalue()))
+
+
 def selftest():
     cases, failed = 0, 0
 
@@ -1134,6 +1255,7 @@ def selftest():
     check("this plugin's family is found", "product-workflows" in fam_here["names"]
           and "brd-package" in fam_here["commands"] and "brd-reader" in fam_here["agents"])
     citations_selftest(check)
+    sets_selftest(check)
     print("SELFTEST " + ("PASS" if not failed else "FAIL") + " (%d cases, %d failed)" % (cases, failed))
     return 0 if not failed else 1
 
@@ -1159,14 +1281,23 @@ def main(argv=None):
     c.add_argument("--manifest")
     c.add_argument("--known-key", action="append", default=[])
     c.add_argument("--prereq-aux", action="append", default=[])
+    s = sub.add_parser("sets")
+    s.add_argument("bundle")
+    s.add_argument("--key", required=True)
+    s.add_argument("--date", required=True)
+    s.add_argument("--manifest", required=True)
+    s.add_argument("--note", required=True)
+    s.add_argument("--unreviewed-prereq", action="append", default=[])
     a = ap.parse_args(argv)
     if a.selftest:
         return selftest()
-    if a.cmd not in ("tokens", "citations"):
+    if a.cmd not in ("tokens", "citations", "sets"):
         ap.print_usage(sys.stderr)
         return 2
     try:
-        if a.cmd == "citations":
+        if a.cmd == "sets":
+            result = sets(a.bundle, a.key, a.date, a.manifest, a.note, a.unreviewed_prereq)
+        elif a.cmd == "citations":
             result = citations(a.bundle, a.key, a.prereq_key, a.copied_key, a.date, a.captured,
                                a.captured_path, a.source_basename, a.manifest, a.known_key, a.prereq_aux)
         else:
