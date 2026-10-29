@@ -989,9 +989,12 @@ inclusive.
 
 **Read a part's list under its sub-heading, and its members off the items that open with an id.**
 `commands/brd-package.md`'s *Render the customer prompt* renders each list this relation compares
-under a sub-heading it fixes, and each record as an item that opens with its id — a list item, a
-table row's first cell, or a heading. The members are those openers, a range in that position
-expanded as above; an id anywhere else in an item is a mention of another record, not a member.
+under a sub-heading it fixes, and each record as an item that opens with its id — a top-level list
+item, a table row's first cell, or a heading. The members are those openers, a range in that
+position expanded as above; an id anywhere else in an item — one opening a nested bullet among them
+— is a mention of another record, not a member. That a nested bullet is a mention was reasoned
+rather than measured: a record's item may carry a list of its own, and a reading that took a
+sibling id opening one as listed reports a correct package's record as an invention.
 **A part is the wrong unit**, by what the command renders into it: the decisions part legitimately
 names a withdrawn record on a held question's `Re-puts:` line (*Only a held entry is rendered*), and
 the attack part carries the self-review's own words, which may cite any record. **And every id in a

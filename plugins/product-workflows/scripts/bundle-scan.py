@@ -1513,9 +1513,13 @@ def sets_selftest(check):
     nest = dict(good)
     nest[7] = ("### 7.1 Questions held for you\n\n- [AS#3] is re-put by round 1, question 2\n\n"
                "### 7.3 Open assumptions\n\n- **[AS#1]** — a\n  - [AS#3] was its predecessor\n- **[AS#2]** — b\n")
+    nest[9] = ("### 9.1 Open assumptions\n\n- **[AS#1]** — a\n- **[AS#2]** — b\n\n"
+               "### 9.2 Where our own review found us weakest\n\n- [AS#3] is attacked here\n")
     r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt(nest)}), unreviewed=["P-2"])
     check("sets relation 1: an id opening an item outside the sub-heading, or a nested one, is no member",
           r1(r, 7, "Open assumptions")["verdict"] == "pass")
+    check("sets relation 1: a list ends at the next sub-heading of its level",
+          r1(r, 9, "Open assumptions")["verdict"] == "pass")
     sc = base["K-1-decisions.md"] + ("id: [VD#12]\nstatement: q\nargumentation: |\n  as if\n"
                                      "  conditional_on: P-2/[CD#3]\nstatus: decided\n\n")
     r = run(dict(base, **{"K-1-decisions.md": sc, "K-1-customer-review-prompt-20261029.md": _sets_prompt(good)}),

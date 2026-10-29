@@ -1604,10 +1604,12 @@ or not that line is there.
    reviewer who reviews it anyway spends their effort on decisions another review already settled
    or will settle.
 6. **Write the manifest**, listing documents **by filename** — the same reason rule 1 names them
-   that way — in a table under its `## Documents` heading, one row each, whose first cell is the
+   that way — in tables under its `## Documents` heading, one row each, whose first cell is the
    bundled filename in backticks and whose others say what the document is and whether it is for
-   review or *not for re-review*. Rule 9 compares that column with the bundle's listing
-   (`bundle-packaging.md` §7.1, relation 2) and reads no other line of the manifest as a document. **Then map every captured file the bundle carries** — each markdown file and each
+   review or *not for re-review*. **Every table under that heading is a document table**: rule 9
+   compares their first column with the bundle's listing (`bundle-packaging.md` §7.1, relation 2)
+   and reads no other line of the manifest as a document, so the map and the notes this rule goes
+   on to name go under `##` headings of their own, after it. **Then map every captured file the bundle carries** — each markdown file and each
    image from `brd/source/` and `brd/source-external/` — from its path relative to `brd/` to its
    bundled filename, naming beside it any target as written that the link log maps to it
    (`bundle-packaging.md` §1.1, §2.1) — **and map every other image whose bundled name took a folder
