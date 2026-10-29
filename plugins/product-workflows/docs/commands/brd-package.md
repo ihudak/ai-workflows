@@ -172,7 +172,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   clean by `/prd-ground`; the repo→SHA table is read from that run's `baselines.md`, and the three
   pin-verification commands are handed to the customer's reviewer to run rather than re-run here.
 - **`python3`** — for one bundled script, standard library only: `scripts/bundle-scan.py`, which runs
-  the plugin-free scan in Phases 6, 7 and 8 and the citation-resolution check in Phase 8. Without it the scan does not run, and the run stops
+  the plugin-free scan in Phases 6, 7 and 8 and the citation-resolution check in Phase 8. Without it neither check runs, and the run stops
   rather than read no output as a clean scan.
 
 ## What it produces

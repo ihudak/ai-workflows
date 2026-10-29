@@ -19,7 +19,7 @@
 ## Decisions the maintainer is asked to make before Task 1
 
 1. **The structured-field discharges (§6.2's table) — where the script gets them.** §6.2 says the fields are "derived from the authorities that own them, never maintained as a list here", yet a script needs to know them. *Recommendation:* the script carries one entry per field, and its selftest **reads §6.2's table and fails where the table names a field the script does not know** — so a field an authority adds stops CI until the script learns it, and never passes silently.
-2. **§1.1's working filenames (relation 3's shape 2) — where the script gets them.** §6.2 says they are "derived from §1.1's own table each time this relation runs, never copied into a second list". *Recommendation:* the script **parses §1.1's table at run time** from `${PLUGIN_ROOT}/references/bundle-packaging.md` — the backticked paths in its first column, placeholders resolved as relation 3 says — and stops (exit 2) where the table cannot be read, rather than falling back to a copy.
+2. **§1.1's working filenames (relation 3's shape 2) — where the script gets them.** §6.2 says they are "derived from §1.1's own table each time this relation runs, never copied into a second list". *Recommendation:* the script **parses §1.1's table at run time** from `${PLUGIN_ROOT}/references/bundle-packaging.md` — every backticked working `.md` path the section names, in its table and its prose (the exclusions sit in its prose), `references/` and `commands/` paths aside, placeholders resolved as relation 3 says — and stops (exit 2) where the table cannot be read, rather than falling back to a copy.
 
 ## Review Focus
 
