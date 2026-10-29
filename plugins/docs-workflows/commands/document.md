@@ -1133,7 +1133,8 @@ handoff file — one path, which a `BLOCKED` return has that phase rewrite in pl
 Phase 7's BLOCK or PASS WITH RECOMMENDATIONS branch wrote one, its `claims_file`. Remove each as `command rm -f -- "<path>"`: `command`
 because the Bash tool's shell carries the user's aliases and shell functions, and an `rm -i` or `rm -I`
 of theirs would ask before removing the file, be answered no from that shell's empty standard input,
-and leave it behind; `--` ends `rm`'s options. Nothing else removes one — they sit under the system's
+and leave it behind; `--` ends `rm`'s options. Nothing else removes one — they sit in the session's scratchpad
+directory where the session names one (`workflows-core:run-flags` §7), else under the system's
 temporary directory, outside every repository, where no later phase and no later run looks. A run that
 stops before this phase removes the files it had made, in the same way.
 

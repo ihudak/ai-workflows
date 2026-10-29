@@ -187,9 +187,10 @@ theirs would otherwise run in its place, and one that prints would put its outpu
 `cd` found on `PATH` — Linux has none, so `command cd` there is a command not found, and macOS has
 `/usr/bin/cd`, which changes only its own child process's directory, so `command cd` there exits 0
 and Vale runs wherever the session stands. For the
-same reason `mktemp`, `vale` and `rm` run as `command <name>`; and where the session names a scratchpad directory, the `mktemp -d` runs with `TMPDIR` set to it, so the directory lands there rather than in `/tmp` — an `rm -i` or `rm -I` alias would
+same reason `mktemp`, `vale` and `rm` run as `command <name>` — an `rm -i` or `rm -I` alias would
 ask before removing the directory, be answered no from an empty standard input, and leave the
-directory behind — and `--` ends `rm`'s options.
+directory behind — and `--` ends `rm`'s options. Where the session names a scratchpad directory, the
+`mktemp -d` runs with `TMPDIR` set to it, so the directory lands there rather than in `/tmp`.
 
 **This is the one definition of the form this plugin runs Vale in** — `/prose-review-docs` step 5
 cites it — **and every part of both forms is load-bearing** (Vale 3.21, measured, and read from

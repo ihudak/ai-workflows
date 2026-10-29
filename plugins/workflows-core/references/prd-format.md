@@ -43,8 +43,8 @@ workitem_key: <optional — your own tracker's identity for this work; the plugi
 
 **On the BRD route `sources` is written, not propagated.** There is no `idea.md` on that route, so
 `/create-prd` writes one entry naming the customer's own document — `provenance: markdown`, `ref:` the
-value of the `source:` header of the slice's `brd/brd-inventory.md` as written there, and no
-`vendored` — or no `sources` at all where that inventory carries no `source:`
+value of the `source:` header of the slice's `brd/brd-inventory.md` as written there — the parent's
+`brd/source/` document, relative to the parent's folder — and no `vendored` — or no `sources` at all where that inventory carries no `source:`
 (`/product-workflows:create-prd` Phase 3), and `/update-prd` carries it forward unchanged.
 
 `brd_key`, `brd_parent` and `depends_on` are written only by `/create-prd` on the BRD route, from the BRD's

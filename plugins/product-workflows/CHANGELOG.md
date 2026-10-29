@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.64.0] — 2026-10-29
+
+Take with `workflows-core` 1.69.0 — to-fix SEC-G6.
+
+### Fixed
+- `/epics` says its handoff's temporary files sit in the session's scratchpad where the session names one, as `workflows-core` 1.69.0's `run-flags` §7 puts them, rather than always under the system's temporary directory.
+
 ## [3.63.0] — 2026-10-29
 
 Needs nothing newer than `workflows-core` 1.68.0 — to-fix D33.

@@ -7,13 +7,14 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.69.0] — 2026-10-29
 
-Needs nothing newer of any other plugin — to-fix SEC-G6 and D29.
+Take with `dev-workflows` 4.51.0, `docs-workflows` 1.29.0 and `product-workflows` 3.64.0 — to-fix SEC-G6 and D29.
 
 ### Added
-- **`run-flags` §7, *Temporary files*: where the session names a scratchpad directory, every `mktemp` a run executes runs with `TMPDIR` set to it** — in the command's own text and in every reference it loads; templates, the variables carrying each path and their removal are unchanged. `mktemp` honours `TMPDIR`, and the harness leaves it unset, so fifteen commands' temporary files and worktrees — `/security-workflows:scan`'s run directory, `/implement`'s `dw-impl-*` files, `/vuln`'s and `/upgrade`'s, `/epics`' handoff, `/brd-intake`'s figures among them — landed in `/tmp` while the session's own system prompt names a scratchpad for them. Every one of those commands loads `run-flags` at its start. A subagent's session names the same scratchpad, so an agent that creates temporary files applies the rule from its own body.
+- **`run-flags` §7, *Temporary files*: where the session names a scratchpad directory that exists, every `mktemp` a run executes runs with `TMPDIR` set to it** — in the command's own text and in every reference it loads, a recipe that shows `mktemp` without the assignment included; templates, the variables carrying each path and their removal are unchanged. `mktemp` honours `TMPDIR`, and the harness leaves it unset, so a run's temporary files and worktrees — `/security-workflows:scan`'s run directory, `/implement`'s `dw-impl-*` files, `/vuln`'s and `/upgrade`'s, `/epics`' handoff, `/brd-intake`'s figures, every handoff's commit-message file among them — landed in `/tmp` while the session's own system prompt names a scratchpad for them. Every command with a `mktemp` of its own loads `run-flags` at its start. A file that a process outliving the session goes on writing — a server's log — keeps the system's temporary directory. No agent reads `run-flags`, so the rule is stated beside each recipe an agent runs, in its body or in the reference that holds it.
+- `phase-handoff` §2.4's commit-message file states the same rule beside its `mktemp`, so it reaches `/harvest-decisions`, which executes `handoff-to-main` and loads no `run-flags`.
 
 ### Changed
-- **`prd-format` says what `sources` holds on the BRD route.** Its schema commented the field only as propagated from `idea.md`, while `/create-prd` on the BRD route writes one entry of its own naming the customer's document (`provenance: markdown`, `ref:` the slice inventory's `source:`, no `vendored`), or none where the inventory carries no `source:`. The schema's comments and a paragraph beside the BRD-route fields now say so.
+- **`prd-format` says what `sources` holds on the BRD route.** Its schema commented the field only as propagated from `idea.md`, while `/create-prd` on the BRD route writes one entry of its own naming the customer's document (`provenance: markdown`, `ref:` the slice inventory's `source:`, resolved against the parent's folder, no `vendored`), or none where the inventory carries no `source:`. The schema's comments and a paragraph beside the BRD-route fields now say so. `prd-reviewer` reads no `sources`, so nothing there needed changing.
 
 ## [1.68.0] — 2026-10-29
 

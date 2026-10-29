@@ -1,6 +1,6 @@
 # Run Flags — Shared Reference
 
-Single source of truth for the three run flags every applicable command accepts, their environment defaults, the model aliases, the `run_flags` record, and the skipped-cost path. Read through the loader; commands execute `strip-run-flags` in Phase 0 and `skip-cost` in their cost phase.
+Single source of truth for the three run flags every applicable command accepts, their environment defaults, the model aliases, the `run_flags` record, the skipped-cost path, and where a run's temporary files go (§7). Read through the loader; commands execute `strip-run-flags` in Phase 0 and `skip-cost` in their cost phase.
 
 ## 1. The flags
 
@@ -129,15 +129,22 @@ Four report lines, each printed only where the step that produces it fires:
 
 ## 7. Temporary files
 
-**Where the session names a scratchpad directory, every `mktemp` this run executes runs with
-`TMPDIR` set to it** — `TMPDIR="<scratchpad>" command mktemp -t <template>`, and the same for
-`mktemp -d` — in the command's own text and in every reference it loads, wherever the call stands.
-The template, the variable that carries the path it prints and the removal that ends it are
-unchanged: each removes the path `mktemp` printed, wherever that is. `mktemp` honours `TMPDIR`, and
-the harness leaves it unset, so a call run as written lands in `/tmp` while the session's own
-system prompt names a scratchpad for exactly these files. Where the session names none, `mktemp`
-runs as written.
+**Where the session names a scratchpad directory that exists, every `mktemp` this run executes runs
+with `TMPDIR` set to it** — `TMPDIR="<scratchpad>" command mktemp -t <template>`, and the same for
+`mktemp -d` — in the command's own text and in every reference it loads, wherever the call stands:
+a recipe that shows `mktemp` without the assignment is run with it all the same. The template, the
+variable that carries the path it prints and the removal that ends it are unchanged: each removes
+the path `mktemp` printed, wherever that is. `mktemp` honours `TMPDIR`, and the harness leaves it
+unset, so a call run as written lands in the system's temporary directory while the session's own
+system prompt names a scratchpad for exactly these files. Where the session names none, or names
+one that does not exist, `mktemp` runs as written.
 
-A subagent's session names the same scratchpad in its own environment, so an agent that creates
-temporary files of its own applies the same rule from its own body; the dispatch carries nothing
-for it.
+**A file that a process outliving the session goes on writing is not this run's temporary file**,
+and keeps the system's temporary directory: the scratchpad is the session's own, and the file must
+still be there for the run that ends that process. A server's log is the case — the call that
+names one says so where it stands.
+
+**An agent's session names the same scratchpad, and an agent applies the same rule** — but no agent
+reads this section, so the rule is stated beside each `mktemp` recipe an agent runs: in the agent's
+own body, or in the reference that holds the recipe, once for every caller. The dispatch carries
+nothing for it.

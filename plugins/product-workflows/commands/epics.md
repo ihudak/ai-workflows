@@ -874,8 +874,9 @@ Runs once Phase 7 has settled — the review gate passed, or escalated to a deci
 `command rm -f -- "<path>"`: `command` because the Bash tool's shell carries the user's aliases and
 shell functions, and an `rm -i` or `rm -I` of theirs would ask before removing the file, be answered no
 from that shell's empty standard input, and leave it behind; `--` ends `rm`'s options. Nothing else
-removes one — they sit under the system's temporary directory, outside every repository and outside
-the specs tree, where no later phase and no later run looks. A run that stops before this phase removes
+removes one — they sit in the session's scratchpad directory where the session names one
+(`workflows-core:run-flags` §7), else under the system's temporary directory, outside every
+repository and outside the specs tree, where no later phase and no later run looks. A run that stops before this phase removes
 every file `temp_files` holds by then, in the same way.
 
 Then gather the change context:

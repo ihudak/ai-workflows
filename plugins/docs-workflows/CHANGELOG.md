@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.29.0] — 2026-10-29
+
+Take with `workflows-core` 1.69.0 — to-fix SEC-G6.
+
+### Fixed
+- **`toolchain-preflight`'s Vale form for a configuration with no `StylesPath` makes its directory in the session's scratchpad**, where the session names one, so `docs-style-checker`, which runs it and reads no `run-flags`, no longer lands it in `/tmp`. `/document` says its temporary files sit there, as `workflows-core` 1.69.0's `run-flags` §7 puts them.
+- **`/docs-serve` keeps its server log in the system's temporary directory, and says why**: the server outlives the session, so its log is no temporary file of the run, and §7's exception is what keeps it out of the session's scratchpad.
+
 ## [1.28.0] — 2026-10-27
 
 Take with `product-workflows` 3.52.0 and `dev-workflows` 4.46.0, which carry the same hook wording; this release relies on neither — to-fix D23.
