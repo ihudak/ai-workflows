@@ -1638,8 +1638,9 @@ or not that line is there.
    Every argument is something this run already holds, and none is derived from a filename:
    `--prereq-key` for every prerequisite Phase 2 carried and `--copied-key` for each whose package
    rule 5 copied in — §6.1's vacuity guard reads that second set; `--known-key` for this slice's
-   `parent:` and for each slice the parent's `slices.md` names, the other BRDs a qualified reference
-   or a structured field in this package may name; `--date` the run's stamp; `--captured` and
+   `parent:` and each slice the parent's `slices.md` names, and, for each copied prerequisite, its
+   own `parent:`, that parent's `slices.md` slices and its `depends-on:` keys (rule 5 reads its
+   `brd-link.md`) — the other BRDs a qualified reference or a structured field may name; `--date` the run's stamp; `--captured` and
    `--captured-path` as rule 7 passes them; `--source-basename` for each captured markdown file's
    basename, which relation 3's placeholders resolve against; `--manifest` the manifest rule 6
    wrote, whose quotation of a target as written relation 3 stays off; and `--prereq-aux` for each
@@ -1659,9 +1660,10 @@ or not that line is there.
    - `ambiguous` → a class-4 `[DG#n]` whose claim names no requirement, or more than one;
      `unqualified` → a `prerequisite` value carrying no known BRD's key, a bare `resolved-by` value,
      or a slash form outside a structured field; `unknown_key` → a key-shaped word before an id that
-     names no BRD this run knows — a typo for one, or an ordinary word such as `UTF-8`, the id resolved
-     as unqualified all the same. All three are reported in the Final report and never resolved by a
-     guess, as §6.2 says.
+     names no BRD this run knows — a typo for one, or an ordinary word such as `UTF-8` — whose id is
+     then read as unqualified, in this package's own documents, and discharged in a copied
+     prerequisite's, which is never rewritten. `ambiguous` and `unqualified` entries are never
+     resolved by a guess, as §6.2 says, and all three lists are reported in the Final report.
    - `prerequisite_external` → a reference inside a copied prerequisite's document to a file of a
      package that prerequisite carried, or to its own prompt or manifest, named in the manifest and the
      Final report as the paragraph below on that says.

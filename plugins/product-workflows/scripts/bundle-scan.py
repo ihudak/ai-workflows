@@ -366,7 +366,6 @@ SLASH_KEY_RE = re.compile(r"(?<![\w/-])(" + KEY_TOKEN + r")/$")
 KEY_ANY_RE = re.compile(r"(?<![\w/-])(" + KEY_TOKEN + r")(?![\w-])")
 REQ_RE = re.compile(r"\[(?:BR|US|AC|FR)#[0-9]+\]")
 MD_TOKEN_RE = re.compile(r"(?<![\w/.<>-])([\w][\w.<>-]*\.md)(?![\w/])")
-FIELD_RE = re.compile(r"(?<![\w-])(conditional_on|blocked_on|rejected|resolved-by|prerequisite|superseded-by)\s*:")
 # Which corpus file each identifier class resolves against (section 6.1's table), by the working
 # basename the file's bundled name carries after its key.
 CORPUS_FILES = {
@@ -382,18 +381,22 @@ GROUNDING = ("code-grounding.md", "design-grounding.md")
 RECORD_ID_RE = re.compile(r"^\s*-?\s*id\s*:\s*(\S.*?)\s*$")
 MARKER_RE = re.compile(r"^\s*(Reopened|Reverted|Withdrawn|Superseded) [0-9]{8}:")
 # Section 6.2's structured fields, one entry per row of its table: the marker the row's first cell
-# carries and the reading the script gives it, one handler per reading. The selftest holds this list
-# equal to the table's rows, every reading to a handler and every entry to a fixture of its own, so
-# a field an authority adds stops CI until it is read here.
+# carries, the reading the script gives it, and, for a field written `<name>: <value>` on a line, its
+# name. FIELD_RE and FIELD_READING are built from this list, so a named field it gains is matched
+# with the reading it names; every reading is one READINGS lists. The selftest holds this list equal
+# to the table's rows and every entry to a fixture of its own, so a field an authority adds stops CI
+# until it is read here and tested.
 STRUCTURED_FIELDS = [
-    ("conditional_on:", "slash"), ("blocked_on:", "slash"), ("`prerequisite`", "keyed-else-report"),
-    ("rejected:", "slash"), ("customer-amended", "no-id"), ("resolved-by:", "slash-else-report"),
-    ("a defect entry is raised against", "defect-log-rows"), ("superseded-by:", "ledger-rows"),
-    ("*Rows* line", "figures-rows"),
+    ("conditional_on:", "slash", "conditional_on"), ("blocked_on:", "slash", "blocked_on"),
+    ("`prerequisite`", "keyed-else-report", "prerequisite"), ("rejected:", "slash", "rejected"),
+    ("customer-amended", "no-id", None), ("resolved-by:", "slash-else-report", "resolved-by"),
+    ("a defect entry is raised against", "defect-log-rows", None),
+    ("superseded-by:", "ledger-rows", "superseded-by"), ("*Rows* line", "figures-rows", None),
 ]
-FIELD_READING = {"conditional_on": "slash", "blocked_on": "slash", "rejected": "slash",
-                 "resolved-by": "slash-else-report", "prerequisite": "keyed-else-report",
-                 "superseded-by": "ledger-rows"}
+READINGS = ("slash", "keyed-else-report", "slash-else-report", "ledger-rows", "defect-log-rows",
+            "figures-rows", "no-id")
+FIELD_READING = {name: reading for _, reading, name in STRUCTURED_FIELDS if name}
+FIELD_RE = re.compile(r"(?<![\w-])(" + "|".join(re.escape(n) for n in FIELD_READING) + r")\s*:")
 
 
 def _section(text, start, stop):
@@ -585,8 +588,11 @@ def _quoted_spans(base, lines):
                 continue
             f = re.match(r"^(\s*)([a-z_]+)\s*:\s*(\|[-+]?)?(.*)$", line)
             if f and (block is None or len(f.group(1)) <= block):
-                block, marker = (len(f.group(1)) if f.group(3) and f.group(2) == "argumentation" else None), False
                 cd = bool(record and record.startswith("[CD#"))
+                # a [CD#n]'s argumentation, and its chosen where a block scalar carries an answer outside
+                # the options (decision-register-format section 1's form for one spanning lines)
+                block = len(f.group(1)) if f.group(3) and f.group(2) in ("argumentation", "chosen") else None
+                marker = False
                 if cd and f.group(2) == "chosen" and "outside the options:" in line:
                     spans.setdefault(i, []).append((line.index("outside the options:"), len(line)))
                 if not cd:
@@ -770,6 +776,11 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                         continue
                     if reading == "unknown":
                         out["unknown_key"].append(dict(hit, key=pk.group(1)))
+                        if in_prereq:
+                            # that package is never rewritten (section 5): an id qualified by a key of
+                            # its own tree is named, never resolved into its partition
+                            out["discharged"] += 1
+                            continue
                 resolve(hit, k, tok, cls, span)
             if whole:
                 continue  # a captured file's own text is outside relation 3 (sections 6.2, 6.3 rule 3)
@@ -783,8 +794,8 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                 shape2 = any(rx.match(tok) for rx in names_rx)
                 if not (shape1 or shape2):
                     continue
-                if manifest and base == manifest and line[m.start() - 1:m.start()] in "`\"'" \
-                        and line[m.end():m.end() + 1] in "`\"'":
+                if manifest and base == manifest and m.start() > 0 and line[m.start() - 1] in "`\"'" \
+                        and m.end() < len(line) and line[m.end()] in "`\"'":
                     continue  # the manifest's quotation of a target as written
                 if tok in bundle_names:
                     continue
@@ -841,12 +852,11 @@ FIELD_FIXTURES = {}  # marker -> the selftest case that exercises it
 def citations_selftest(check):
     ref = reference_text()
     rows = structured_rows(ref)
-    markers = [m for m, _ in STRUCTURED_FIELDS]
+    markers = [m for m, _, _ in STRUCTURED_FIELDS]
     check("section 6.2's table has one row per structured field the script reads",
           len(rows) == len(STRUCTURED_FIELDS) and all(sum(m in r for r in rows) == 1 for m in markers))
-    readings = {"slash", "keyed-else-report", "no-id", "slash-else-report", "defect-log-rows",
-                "ledger-rows", "figures-rows"}
-    check("every structured field's reading has a handler", {r for _, r in STRUCTURED_FIELDS} <= readings)
+    check("every structured field's reading is one citations() branches on",
+          {r for _, r, _ in STRUCTURED_FIELDS} <= set(READINGS))
     wn = working_names(ref, "20261029")
     check("section 1.1's working filenames are read from the reference",
           any(rx.match("decisions.md") for rx in wn) and any(rx.match("self-review-20261029.md") for rx in wn)
@@ -882,7 +892,8 @@ def citations_selftest(check):
     check("own ids resolve; a known BRD's qualified id is discharged; an unknown key-shaped word is reported",
           sorted(h["token"] for h in r["dead"]) == ["[CG#7]", "[CG#98]", "[CG#99]"] and r["discharged"] == 2
           and [h["key"] for h in r["unknown_key"]] == ["UTF-8"] and r["partitions"]["K-10"] == ["K-10-x.md"])
-    reg = ("id: [CD#1]\nconditional_on: P-2/[CD#2]\n\nid: [VD#2]\nargumentation: |\n  per [CG#55]\n\n"
+    reg = ("id: [CD#1]\nconditional_on: P-2/[CD#2]\nchosen: |\n  outside the options: We want \"both\", as [BR#77] says\n\n"
+           "id: [VD#2]\nargumentation: |\n  per [CG#55]\n\n"
            "id: [CD#3]\nargumentation: |\n  their [CG#56] words\n\n  Reopened 20261020: by [CD#1], since the\n"
            "  finding [CG#57] moved\n\n  re-decided, per [CG#58]\n")
     fixture("conditional_on:", "conditional_on: another key's decision is discharged",
@@ -890,7 +901,7 @@ def citations_selftest(check):
     r = run({"K-1-decisions.md": reg})
     check("a [VD#n]'s argumentation and a [CD#n]'s Reopened paragraph are the package's own; a [CD#n]'s quoted words are the customer's",
           sorted(h["token"] for h in r["dead"]) == ["[CG#55]", "[CG#57]"]
-          and sorted(h["token"] for h in r["customer"]) == ["[CG#56]", "[CG#58]"])
+          and sorted(h["token"] for h in r["customer"]) == ["[BR#77]", "[CG#56]", "[CG#58]"])
     cdl = "id: [CDF#1]\nblocked_on: P-2/[VD#4]\n\nid: [CDF#2]\nblocked_on: K-1/[VD#9]\n"
     r = run({"K-1-code-defect-log.md": cdl}, prereq_keys=["P-2"])
     fixture("blocked_on:", "blocked_on: another key discharged, its own key resolved",
@@ -910,8 +921,9 @@ def citations_selftest(check):
             [h["token"] for h in r["dead"]] == ["[CD#9]"])
     fixture("superseded-by:", "superseded-by: its [BR#n] is discharged",
             r["discharged"] == 6)
-    fixture("customer-amended", "customer-amended carries no id and stops nothing",
-            all(h["token"] != "K-1" for h in r["dead"]))
+    fixture("customer-amended", "customer-amended carries no id: its line yields no entry of any kind",
+            not any(h["line"] == 3 and h["file"] == "K-1-brd-defect-log.md"
+                    for lst in ("dead", "unqualified", "unknown_key", "customer") for h in r[lst]))
     fixture("a defect entry is raised against", "the parent defect log's raised-on and names cells are discharged",
             not any(h["token"] in ("[BR#30]", "[BR#31]") for h in r["dead"]))
     r = run({"K-1-x.md": "resolved-by: K-1/[CD#9]\nresolved-by: [CG#4]\nprose P-2/[CD#5]\n"},
@@ -957,6 +969,11 @@ def citations_selftest(check):
              "K-1-a.md": "x\n"}, manifest="K-1-manifest.md", source_basenames=["notes.md"])
     check("only the target the manifest quotes as written is exempt; its own prose is tested",
           [h["token"] for h in r["dead"]] == ["decisions.md"])
+    r = run({"P-2-01-q.md": "the parent's row P-2 [BR#12]\n"}, prereq_keys=["P-2-01"], copied_keys=["P-2-01"])
+    check("in a copied prerequisite, an id its own tree's key qualifies is named and discharged, never resolved",
+          r["dead"] == [] and [h["key"] for h in r["unknown_key"]] == ["P-2"] and r["discharged"] == 1)
+    r = run({"K-1-manifest.md": "decisions.md\n", "K-1-a.md": "x\n"}, manifest="K-1-manifest.md")
+    check("a manifest name at a line's edge, unquoted, is tested", [h["token"] for h in r["dead"]] == ["decisions.md"])
     r = run({"P-2-x.md": "see P-2-gone.md, Q-9-other.md and P-2-manifest.md\n"},
             prereq_keys=["P-2", "Q-9"], copied_keys=["P-2"], prereq_aux=["P-2-manifest.md"])
     check("in a copied prerequisite, a file of a package it carried, or its own manifest, is named, never a stop; its own missing file is dead",
