@@ -38,9 +38,30 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    4's `restore --staged` is not a `reset`: it rewrites only index entries for
    paths the commit just carried, moves no ref and touches no working-tree file.
    §8's merges are of the default branch into the session branch, never the
-   reverse, and move no checkout. §8.3's `lift` is the one discard: it returns
-   to HEAD a session file whose exact content it has just found on the session
-   branch.
+   reverse, and move no checkout. **§4 step 6's replay is the named exception
+   beside them, and it does move the checkout.** Where `origin` rejects a push
+   of the plugin's own session-file commits as non-fast-forward, it takes
+   `origin`'s commits in with no `merge`, `rebase` or `reset`: it writes the
+   plugin's commits again on top of `origin`'s branch with `merge-tree` and
+   `commit-tree`, which move nothing, then moves the branch onto the result
+   by `update-ref` inside one locked transaction, and, where the checkout
+   stands on that branch, carries its index and files along by
+   `read-tree -m -u`. Where the checkout stands is read at the move itself,
+   never trusted from before the replay — a branch the checkout left during
+   the replay moves by `update-ref` alone — and once more under the
+   transaction's lock, so the move refuses, with nothing moved, where
+   another session switches the checkout to or from the branch while it
+   moves. One instant is left: a switch onto the branch between that last
+   look and the ref's write, which no lock this side can take holds off,
+   still moves the branch under that checkout, its HEAD on the new tip and
+   its index and files on the old. It refuses too where it would
+   write over a path the user changed, left untracked or ignores —
+   `session-branch.py`, which runs the replay, tests every such path before
+   anything moves, since `read-tree` alone writes over an ignored file — and
+   the user's staged and unstaged changes keep their status. Only then does
+   it push.
+   §8.3's `lift` is the one discard: it returns to HEAD a session file whose
+   exact content it has just found on the session branch.
 5. **Never fatal.** Every failure is reported and the run continues. The run
    never fails because of a git step here.
 6. **No `Co-Authored-By` trailer.** These are plugin-generated bookkeeping
@@ -68,7 +89,10 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    and the per-worktree record `session-branch.py` keeps of the session files
    §8.3's overlay placed (`git rev-parse --git-path session-branch-placed.json`).
    Nothing else is written here; what git itself writes for the commands this
-   reference runs is unchanged by it — the upstream a `push -u` sets, and the
+   reference runs is unchanged by it — the upstream a `push -u` sets, the same
+   upstream §4 step 6's replay sets with `git branch --set-upstream-to` where
+   step 5's push carried `-u`, since its own push, from a commit id, sets
+   none, and the
    whole `branch.<branch>` section that `branch -d` removes; §3.5's B2 removes
    the record of a branch it deletes — the configuration-key form only where `.git/config` can be
    written, and its report names one it cannot remove. `workflows.sessionBranch` is the user's
@@ -283,11 +307,11 @@ state in this container setup.
 
 Still **never fatal** (§1): each notice reports and the run continues. **Where the path is a directory and `specs-root-check` finds a signal there, the non-repository notice above sets `specs_git: misrooted` too.**
 
-**`specs_git: misrooted` is the run-wide record that `$SPECS_PATH` is misplaced.** It is set by either notice above, or by `workflows-core:addressing` §3 `specs-root-check` where it stops the run at resolution. Under it, every emitter of the tail falls to its report-only tier, so the tail writes nothing under a path the run has found wrong. That covers cost (`cost-emission.md` §8), feedback (`feedback-emission.md` §2), follow-ups (`followup-emission.md` §2) and `resume.md` (`session-hygiene.md` §1). Writing there would only add files §2.1's classifier puts in OTHER, or artifact paths that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place: a pending cost there never reconciles, and G1 fires on every run after the variable is corrected.
+**`specs_git: misrooted` is the run-wide record that `$SPECS_PATH` is misplaced, or that the run is no longer in the environment it recorded.** It is set by either notice above; by `workflows-core:addressing` §3 `specs-root-check` where it stops the run at resolution; or by `session-hygiene.md` §6's *Stop*, where a run that keeps a session file finds, at any of that section's three points — on a resume, and on every such run before the deliverable write that leads to the handoff and before the tail's first write — its environment no longer the one the file recorded (`$SPECS_PATH`'s real path, its `origin`, `$REPOS_PATH` or the reference loader's install), or, at the last two, that record unreadable or missing; its stop line, `RESUME_ENVIRONMENT_CHANGED:`, is the notice that set the flag. Under it, every emitter of the tail falls to its report-only tier, so the tail writes nothing under a path the run has found wrong, or in an environment it did not record. That covers cost (`cost-emission.md` §8), feedback (`feedback-emission.md` §2), follow-ups (`followup-emission.md` §2) and `resume.md` (`session-hygiene.md` §1). Writing there would only add files §2.1's classifier puts in OTHER, or artifact paths that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place: a pending cost there never reconciles, and G1 fires on every run after the variable is corrected.
 
 **The preflight itself performs no write under the flag**: no leftover flush, no push retry, no branch switch, creation or deletion, no pull, no commit and no push. Where the gate passed, it still reads, because `workflows-core:phase-handoff`'s `require-on-main` runs on what it reads. §3.2 runs in full, its best-effort fetch included, which refreshes the remote-tracking refs every `<default-ref>` test reads and moves no checkout. §3.5 classifies the branch, and a row that would switch stays and reports instead. §3.3's guards and §3.4's flush do not run, and each section says why. §4's `commit-artifacts` skips, as it does on `specs_git: blocked`. `workflows-core:phase-handoff` §2.1's `handoff-to-main` refuses the handoff, its §4.3 says so above the consent array, and its row C offers no repair. **So none of `specs-preflight`, `commit-artifacts`, `handoff-to-main` and `require-on-main` switches a branch or commits under the flag.** That bound is those four entry points', not the run's. A command that changes code still cuts its own branch and commits on it in the code repository it changed (`dev-workflows:code-handoff`), and a documentation command does the same in its docs repository. Where the specs tree sits inside that same repository, that branch moves the specs checkout too, which is one reason that layout is unsupported.
 
-**What the flag leaves alone is what the command itself writes.** A run a notice let continue still writes its deliverable where the command puts it, and any of §2.1's single files it writes beside it: `implementation.md`, `pr-draft.md` or the implementation-gaps draft. They stay there, written and uncommitted, for the operator to move or commit once `$SPECS_PATH` is right. A run stopped at resolution writes nothing under the path at all. What changes is that the condition is now *said*.
+**What the flag leaves alone is what the command itself writes.** A run a notice let continue still writes its deliverable where the command puts it, and any of §2.1's single files it writes beside it: `implementation.md`, `pr-draft.md` or the implementation-gaps draft. They stay there, written and uncommitted, for the operator to move or commit once `$SPECS_PATH` is right — or, after `session-hygiene` §6's *Stop*, once the recorded environment is restored and the run re-run, as its stop line says. A run stopped at resolution writes nothing under the path at all. What changes is that the condition is now *said*.
 
 ### 3.2 Resolution inputs
 
@@ -376,17 +400,20 @@ notice, never a quiet line.
 
 Always runs when stage 1 matched nothing **and the run does not carry `specs_git: misrooted`** (§3.1). Under that flag it does not run at all, so there is no flush and no push retry, and the preflight goes on to §3.5, which switches nothing under the flag. A flush there would `git add` paths that porcelain prints relative to the repository's top level and that do not exist from `$SPECS_PATH`, which fails with exit 128 on every run. Where `$SPECS_PATH` is a correct root holding a stray folder, it would commit and push while the notice says the run wrote nothing.
 
-**On the default branch, catch up first.** Where HEAD is on the default branch (§3.2), `<default-ref>` is `origin/<default>`, and HEAD is strictly behind it — `git -C "$SPECS_PATH" merge-base --is-ancestor HEAD <default-ref>` succeeds and `git -C "$SPECS_PATH" rev-parse HEAD` differs from `git -C "$SPECS_PATH" rev-parse <default-ref>` — run `git -C "$SPECS_PATH" pull --ff-only --no-rebase origin <default>` before either case below. In session-branch mode (§8) the catch-up is wrapped in `lift` and `put-back` (§8.3). `--no-rebase` is required: a `pull.rebase` setting would otherwise make the pull a rebase, which §1 rule 4 forbids and which refuses to run beside a modified artifact. The catch-up is silent where it succeeds; where it fails, report git's first error line and continue on the branch as it stands. §4 step 2 runs it again before staging, for a run whose preflight ended at a guard or never ran. Nothing else here brings the default branch up to date while a run stands on it — §3.5's B1 does nothing, and only B2 and B4, which switch to it, pull — so without it a run's commit would land on a stale base, and its push and every later retry would be rejected as non-fast-forward. A default branch holding commits the remote lacks is ahead or diverged, never behind, and no fast-forward applies to it; a diverged one is §4 step 6's case.
+**On the default branch, catch up first.** Where HEAD is on the default branch (§3.2), `<default-ref>` is `origin/<default>`, and HEAD is strictly behind it — `git -C "$SPECS_PATH" merge-base --is-ancestor HEAD <default-ref>` succeeds and `git -C "$SPECS_PATH" rev-parse HEAD` differs from `git -C "$SPECS_PATH" rev-parse <default-ref>` — run `git -C "$SPECS_PATH" pull --ff-only --no-rebase origin <default>` before either case below. In session-branch mode (§8) the catch-up is wrapped in `lift` and `put-back` (§8.3). `--no-rebase` is required: a `pull.rebase` setting would otherwise make the pull a rebase, which §1 rule 4 forbids and which refuses to run beside a modified artifact. The catch-up is silent where it succeeds; where it fails, report git's first error line and continue on the branch as it stands. §4 step 2 runs it again before staging, for a run whose preflight ended at a guard or never ran. Before a push, nothing else here brings the default branch up to date while a run stands on it — §3.5's B1 does nothing, and only B2 and B4, which switch to it, pull — so without it a run's commit would land on a stale base, and its push would be rejected as non-fast-forward, left to §4 step 6's replay, which moves the checkout and settles the push only where every condition it tests holds. A default branch holding commits the remote lacks is ahead or diverged, never behind, and no fast-forward applies to it; a diverged one is §4 step 6's case: where its push is rejected, step 6 replays the run's session-file commits onto the remote's branch, or names what to run where it cannot, save where another session switched the checkout during the move.
 
 **On a merged plugin branch, leave it before the flush.** Outside session-branch mode (§8), where HEAD is a plugin branch (§2.2) and dirty ARTIFACT paths exist, ask `branch-merged HEAD` (§3.5) before the first case below. Where it answers merged, run B2's action (§3.5) now, with its reports — switch to the default branch, `pull --ff-only --no-rebase`, `branch -d` — and the first case below then commits on the default branch, which §3.5 classifies as B1. The switch carries the dirty session files across: one a run wrote new is untracked, and git carries a modified one wherever the default branch holds the same version of it as HEAD. Where git refuses the switch — a session file the two branches hold differently, `resume.md` the likeliest — report git's first error line, flush on the branch as below, and, where the flush commits, print `Specs preflight: <branch> is merged, and this flush committed <sha7> on it, which no run pushes; to land it, standing on <default>, run git -C "<SPECS_PATH>" cherry-pick <sha7>`. Without this, the flush commits on the merged branch first, and that commit makes every `branch-merged` test read unmerged (§3.5), so B2 never fires, and the commit stays on a branch whose remote the merge deleted, which §4 step 5 never pushes. In session-branch mode the flush commits nothing on HEAD (§8.2), so there is nothing to leave first.
 
 - **Dirty ARTIFACT paths exist** → commit them **onto the current branch** (they
   belong to the run that wrote them) and push where §4 step 5 allows it, per §4
   steps 2–6, which print no §6 line here: where step 4 finds nothing to commit,
-  or step 5 pushes nothing, the flush ends silently.
+  or step 5 pushes nothing, the flush ends silently. A push `origin` rejects
+  as non-fast-forward goes to step 6's replay, which prints its line here in
+  `Specs preflight:` form whatever it did, a push included (step 6).
 - **No dirty ARTIFACT path** → where the current branch holds commits a push
   would publish and all three of §4 step 5's conditions hold, **retry the
-  push**; where one fails, nothing is retried and nothing is printed. Stage 1
+  push**, a non-fast-forward rejection going to step 6's replay as above;
+  where one fails, nothing is retried and nothing is printed. Stage 1
   has already ended the preflight on every branch step 5's first condition
   refuses (§3.3 G2), so the other two decide here, and a specs repository with
   nowhere to push never retries.
@@ -447,7 +474,11 @@ does — a push names its branch, so it needs no switch — and print
 `Specs preflight: pushed <N> session-file commit(s) left on <branch>`. Where a
 test fails, nothing is pushed and nothing is printed. A push step 6 reports as
 failed prints step 6's line for it, which names the switch to `<branch>` its
-remedy needs, since the run is standing on another branch. Without this, a
+remedy needs, since the run is standing on another branch. A push `origin`
+rejects as non-fast-forward goes to step 6's replay, which moves `<branch>`
+by `update-ref` alone, since no checkout here stands on it, refuses where
+another worktree has it checked out, and prints its line either way; the
+retry then goes on to the next branch. Without this, a
 commit stranded on a branch the run is not standing on is never retried: B4
 below switches away from a plugin branch keyed to no key of the run right after
 the flush above committed on it, so a flush whose push failed leaves its commit
@@ -563,7 +594,7 @@ B3 keeps the working tree containing the artifact the run is about to read or am
 
 G0 is the one guard that refuses to commit, and it is a data-loss guard
 rather than a courtesy. (`specs_git: misrooted`, §3.1, also stops `commit-artifacts`
-and `phase-handoff`'s deliverable commit, but it is set by the gate's notices, not by a guard.)
+and `phase-handoff`'s deliverable commit, but no guard sets it: §3.1 names its setters.)
 
 A commit made on a detached HEAD is reachable from no ref. Nothing points at it,
 `git branch` will not list it, and it is eligible for garbage collection. If
@@ -650,7 +681,8 @@ to state. **One stop is no run at all, and takes no tail**: `/product-workflows:
 spend before it is the conversation's.
 
 1. **Gate.** All of §3.1's environment conditions, **plus** the run must not
-   carry `specs_git: blocked` from §3.3 G0 or `specs_git: misrooted` from §3.1.
+   carry `specs_git: blocked` from §3.3 G0 or `specs_git: misrooted`, whichever
+   of §3.1's setters set it.
    **Test the two flags first, and a flag's outcome below takes precedence
    over an environment failure**, so each state has one outcome.
    `specs_git: misrooted` is often set where an environment condition fails
@@ -673,13 +705,14 @@ spend before it is the conversation's.
    - Carries `specs_git: blocked` → **not silent**: re-emit the §5 blocking
      notice. The repo *is* managed; the plugin is deliberately refusing to
      commit, and the user must know.
-   - Carries `specs_git: misrooted` → **not silent**: re-emit the §3.1 notice,
-     or `specs-root-check`'s stop, that set it, whether or not §3.1's
-     environment conditions hold. Nothing is committed, and the tail's
-     emitters wrote nothing under `$SPECS_PATH` (§3.1). What the command
+   - Carries `specs_git: misrooted` → **not silent**: re-emit the notice
+     that set it — the §3.1 notice, `specs-root-check`'s stop, or
+     `session-hygiene` §6's `RESUME_ENVIRONMENT_CHANGED:` stop line — whether
+     or not §3.1's environment conditions hold. Nothing is committed, and the
+     tail's emitters wrote nothing under `$SPECS_PATH` (§3.1). What the command
      itself wrote there — a noticed run's deliverable, or one of §2.1's single
      files such as `implementation.md` — stays written and uncommitted, and
-     what was already there sits where this run found it wrong.
+     what was already there sits where this run found it.
    - Carries neither, and fails on path / repo / permission grounds →
      **silent no-op**, matching the emission ladders' silent-skip discipline.
      Nothing committed, nothing reported, run unaffected.
@@ -688,7 +721,10 @@ spend before it is the conversation's.
    guard (§3.3) or never ran has not had it; where the preflight already caught
    up, it finds nothing to do. Its test reads the ref last fetched, so a merge
    that lands on the remote during the run goes unseen; that run's push is
-   rejected, and step 6 says what to run. In session-branch mode (§8), §8.2's
+   rejected as non-fast-forward, and step 6 replays the run's session-file
+   commits onto the remote's branch, or names what to run where it cannot,
+   save where another session switched the checkout during the move.
+   In session-branch mode (§8), §8.2's
    `commit` enumerates instead, and the catch-up is wrapped as §8.3 says.
 3. **Nothing staged** (the gate passed but no artifact path is dirty) → no
    commit; emit the §6 `nothing to commit` outcome line. This is distinct from
@@ -890,27 +926,113 @@ spend before it is the conversation's.
      `git -C "$SPECS_PATH" config branch.<branch>.workflowsPushRefused "$(date +%Y-%m-%d)"`;
      and report. The commit stays local, and step 5 pushes this branch no more
      until the record is removed. Where neither can be written, the refusal is
-     unrecorded: §6's row says so, and the next run pushes the branch again. Retrying would be refused the same way on
+     unrecorded: §6's row says so, and a later run pushes the branch again. Retrying would be refused the same way on
      every run while the commits pile up on the local branch. Name what to do
      wherever this step runs: at the end of a run, §6's *push refused* line;
      inside §3.4's flush or retry, which print no §6 line, as
-     `Specs preflight: <branch> not pushed — origin refused it (<the reason in parentheses>), and this is recorded so no later run pushes it; <the remedy §6's push-refused line gives>` — or, where step 6 could record it neither way, `…, and this could not be recorded (<error>), so the next run pushes it again`.
+     `Specs preflight: <branch> not pushed — origin refused it (<the reason in parentheses>), and this is recorded so no later run pushes it; <the remedy §6's push-refused line gives>` — or, where step 6 could record it neither way, `…, and this could not be recorded (<error>), so a later run pushes it again`.
      A rule that refuses what a commit carries, rather than the branch it goes
      to, refuses the branch that remedy names too; removing the record is then
      how the user lets a later run try again.
    - An auth failure, a remote that cannot be reached, a transient refusal
-     above, or any other failure → report; the commit stays local. §3.4 retries the push on the next run.
-   - **Non-fast-forward rejection** (`[rejected]`) → report; **never force-push**, never
-     auto-rebase mid-run. The commit stays local, and no later run's retry
-     succeeds until the user takes in the remote's commits: the branch has
-     diverged, a fast-forward cannot reach it, and this reference never
-     rebases. Name the commands that do it wherever this step runs: at the
-     end of a run, in §6's *push rejected* line; inside §3.4's flush or retry,
-     which print no §6 line, as
-     `Specs preflight: <branch> not pushed — origin's <branch> has commits it lacks; run git -C "<SPECS_PATH>" switch <branch>, git -C "<SPECS_PATH>" pull --rebase --autostash origin <branch> and git -C "<SPECS_PATH>" push origin <branch>, then switch back to <the branch the run stands on>`.
+     above, or any other failure → report; the commit stays local. §3.4 retries the push on the next run whose preflight gets past its guards (§3.3).
+   - **Non-fast-forward rejection** (`[rejected]`): `origin`'s branch has
+     commits this one lacks, and a fast-forward cannot reach it. **Never
+     force-push.** Where session-branch mode is not on — §8.1's `mode`
+     printed `off` or `unsupported`, so the branch is the default branch or
+     a plugin branch, never the session branch — the run takes those commits
+     in itself, by a **replay** that leaves the checkout alone until one
+     locked move (§1 rule 4). Run, in a Bash call of its own with a timeout
+     of 420000 ms,
+     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/session-branch.py" --specs "$SPECS_PATH" replay --branch <branch> [--register-rebuild <path>] [--set-upstream]`
+     — `--set-upstream` exactly where step 5's push carried `-u`, and
+     `--register-rebuild` with the path the caller passed as
+     `register_rebuild` (§7), where it passed one. The script fetches
+     `origin`'s `<branch>`; refuses where that fetch fails, where this git
+     cannot replay without a checkout (its `merge-tree` lacks `--write-tree`
+     or `--merge-base`), where a rebase, merge, cherry-pick or revert is in
+     progress or a lock stands, where a commit the push would publish is not
+     a session-file commit (step 5's `push-scope`, measured again against
+     the fetched ref), and where another worktree has `<branch>` checked
+     out; replays each commit the push would publish onto `origin`'s with
+     `merge-tree` and `commit-tree` — an appended file both sides changed
+     settled as §8.2 step 3 settles a block-shaped file or `follow-ups.md`,
+     `origin`'s version first and the commit's entries after it, an
+     overwritten one taken in the commit's version whole, refused where
+     `origin` deleted it, a security
+     register both sides changed rebuilt from the merged records with
+     `register_rebuild`'s script, and any other path both sides changed
+     refused — dropping a commit whose change `origin` already holds; moves
+     `<branch>` onto the result as §1 rule 4 says, refusing where the
+     checkout switches to or from `<branch>` while it moves; and only then pushes it,
+     at most three attempts in all, a second or third only where that push
+     is rejected as non-fast-forward again. The 420 s are the script's
+     bounded fetches and pushes — three attempts of a fetch and a push, each
+     capped at 60 s and killed 2 s after that, as `workflows-core:bounded-run`
+     caps a call: 372 s — plus room for the replays and register rebuilds,
+     which nothing bounds, under the Bash tool's 600 s ceiling. A branch is
+     not left half-moved because of that margin, though: the script holds
+     SIGTERM, SIGHUP and SIGINT while it moves a branch, and acts on one only
+     once the branch and the checkout agree.
+
+     It prints one JSON object — `moved`, `pushed`, `attempts`, `replayed`
+     and `dropped` (commit ids), `tip`, `porcelain` (the `--porcelain`
+     status line for `<branch>` that the last attempt's push printed, or
+     `null` where that attempt made no push or its push printed none),
+     `moves`,
+     `upstream_error` and `refused` (`null`, or `{reason, path}`, with
+     `paths` too on `would-overwrite`) — and the first of these that holds
+     names the §6 row:
+     1. `pushed` is true → *replayed and pushed*.
+     2. `moved` is false and `refused` is set → nothing moved: *push
+        rejected*, its reason clause naming `refused` (§6).
+     3. `replayed` is empty → `origin`'s `<branch>` already held every
+        change this branch carries, and nothing was left to push: *already
+        there*.
+     4. Otherwise `moved` is true and the push did not land: *moved, not
+        pushed*, naming why by the first of these that holds — `refused`
+        is set: a later attempt refused, its reason clause naming it;
+        `porcelain` holds `[rejected]`: `origin` moved on again during each
+        of the `attempts` attempts; `porcelain` holds a refusal as the first
+        bullet above reads one: write the push-refusal record as that
+        bullet does, and take the row's refused form; any other `porcelain`,
+        or none: the push failed, as the second bullet reads it.
+
+     Where the script exits 2 with nothing on stdout, nothing moved: *push
+     rejected*, its reason clause `session-branch.py could not run (<the
+     first line of its stderr>)`. Where it exits 2 having printed its JSON
+     first, it stopped after it moved the branch (`moved` is true there):
+     read that JSON by the same four cases, so a `pushed` that is true still
+     gives *replayed and pushed*; where case 4 applies, its why is
+     `session-branch.py stopped (<the first line of its stderr>)`, ahead of
+     every other. Where the Bash call ends with no exit status of its own —
+     the harness ended it at its 420 s timeout — nothing the script printed
+     says what moved: *push rejected*, its reason clause
+     `session-branch.py did not finish within 420 s, so <branch> may already stand on the replay (git -C "<SPECS_PATH>" log -1 <branch> shows it); the next run whose preflight gets past its guards retries the push where it stands on <branch> or <branch> is a plugin branch`
+     — §3.4, which a preflight reaches only past §3.3's guards, retries the
+     branch a run stands on and every other local plugin branch, never a
+     default branch the run is not standing on.
+
+     **In session-branch mode** nothing is replayed: a rejection of the
+     session branch is §8.4's, and one of a plugin branch §3.4 retries takes
+     *push rejected* naming that branch, its reason clause
+     `session-branch mode is on, which replays nothing`, and its remedy
+     wrapped in the session branch's `lift` and `put-back` as §6 gives it.
+     Wherever the replay does not push, the commits stay on local `<branch>`.
+
+     Report wherever this step runs: at the end of a run, the §6 row;
+     inside §3.4's flush or retry, which print no §6 line, that row in its
+     `Specs preflight:` form (§6), whatever the replay did, a push
+     included. On a branch the run is not standing on, the *push rejected*
+     remedy names the switch first, and the switch back after it:
+     `run git -C "<SPECS_PATH>" switch <branch>, git -C "<SPECS_PATH>" pull --rebase --no-autostash origin <branch> and git -C "<SPECS_PATH>" push origin <branch>, then switch back to <the branch the run stands on>`.
      The switch is not optional: §3.4's retry pushes branches the run is not
      standing on, and a `pull` run from another branch merges `<branch>`'s
-     remote commits into that one instead.
+     remote commits into that one instead. The exceptions are the
+     `checked-out` reason, whose remedy §6 gives: it runs in the worktree
+     that has `<branch>` checked out, and names no switch, which git refuses
+     for a branch another worktree has checked out; and `checkout-moved`,
+     whose row names no remedy at all (§6).
    - **`index.lock` present** (a concurrent session holds the repo) → report and
      skip; **never delete a lock file**. The artifacts stay in the working tree
      and the next run's preflight flushes them.
@@ -1084,13 +1206,16 @@ follow the report.
 | Committed, not pushed — origin refused the branch before (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: origin refused pushes to <branch> on <date> (<record>), and every commit since stays on local <branch>; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, rm "<record>"` |
 | Committed, push refused by origin (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REFUSED by origin (<the reason in parentheses>): a rule there takes no push of <branch>, so this is recorded and no later run pushes it; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, rm "<record>"` |
 | Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish commits that are not this plugin's session-file commits, the oldest <sha7> <subject>, which carries <path>; push <branch> once they are ready to go, and the artifacts go with them` — or, where that oldest commit is this run's own, `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: a pre-commit hook added <path>[, and <M-1> more] to this commit, so it carries more than this plugin's session files; check what the hook added before you push <branch>` |
-| Committed, push rejected as non-fast-forward (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REJECTED: origin's <branch> has commits this one lacks, and no run takes them in for you; run git -C "<SPECS_PATH>" pull --rebase --autostash origin <branch>, then git -C "<SPECS_PATH>" push origin <branch>` |
-| Committed, push failed for any other reason | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
+| Committed, origin's branch had moved on — replayed and pushed (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — pushed after a replay: origin's <branch> had moved on, so the run replayed its <K> commit(s) onto it[, <D> of them already there and dropped][; <the register clause>]` |
+| Committed, origin's branch had moved on — already there (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed, and nothing is left to push: origin's <branch> had moved on and already holds every change <branch> carries, so <branch> now stands on it[; <the register clause>]` |
+| Committed, origin's branch had moved on — moved, not pushed (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — origin's <branch> had moved on, so the run replayed its <K> commit(s) onto it[, <D> of them already there and dropped][; <the register clause>] and moved <branch> there, but <why>; the commits are on local <branch>, and a later run retries the push` — or, in its refused form, from `but` on: `but push REFUSED by origin (<the reason in parentheses>): ` followed by the *push refused by origin* row from `a rule there` on, as that row reads in this run, its variants below included — the one where step 6 could record the refusal neither way, and, on the default branch, the remedy that says the mode turns on |
+| Committed, push rejected as non-fast-forward, nothing moved (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REJECTED: origin's <branch> has commits this one lacks, and the run could not take them in: <reason clause>; run git -C "<SPECS_PATH>" pull --rebase --no-autostash origin <branch>, then git -C "<SPECS_PATH>" push origin <branch>` |
+| Committed, push failed for any other reason | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and a later run retries it` |
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
 | Commit failed | `Specs repo: NOT COMMITTED — the commit failed (<the first line of git's error or the hook's output>); the artifacts stay staged, and a later run commits them once git accepts the commit (a merge concluded, a hook satisfied)` |
 | Blocked (G0) | `Specs repo: NOT COMMITTED — see the notice below`, followed by the §5 G0 block verbatim |
-| Misrooted (§3.1), whether or not the environment conditions hold | `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced; see the notice below`, followed by the §3.1 notice, or `specs-root-check`'s stop, verbatim |
+| Misrooted (§3.1: a misplaced `$SPECS_PATH`, or `session-hygiene` §6's *Stop*), whether or not the environment conditions hold | `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced, or the run's environment no longer matches the one it recorded; see the notice below`, followed by the notice that set the flag, verbatim: the §3.1 notice, `specs-root-check`'s stop, or `session-hygiene` §6's `RESUME_ENVIRONMENT_CHANGED:` stop line |
 | Gate failed on environment, on a run carrying neither flag | *(no line at all — silent no-op)* |
 
 When a guard fired at §3.3 G1 or G2, the outcome line is followed by that
@@ -1099,9 +1224,30 @@ fired, a path it names may be one that block, or the append below, calls
 uncommitted, since the hook swept it into this run's commit: follow them with
 `Specs repo: <path>[, …] is now committed in <sha7>, put there by a pre-commit hook, and not pushed`.
 
-**`<record>` in the refused rows is the push-refusal record's path** (§1 rule 8). Where the record is the older configuration key instead — found there, or written there because the file could not be — the row names `branch.<branch>.workflowsPushRefused` in its place and clears it with `git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused`, which needs a writable `.git/config`. **Where step 6 could write neither**, the *push refused* row says so in place of `so this is recorded and no later run pushes it`: `but this could not be recorded (<error>, the configuration write's), so the next run pushes <branch> again`; it names no `rm` or `config --unset`, and on the default branch no session-branch switch, since nothing turns the mode on.
+**`<record>` in the refused rows is the push-refusal record's path** (§1 rule 8). Where the record is the older configuration key instead — found there, or written there because the file could not be — the row names `branch.<branch>.workflowsPushRefused` in its place and clears it with `git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused`, which needs a writable `.git/config`. **Where step 6 could write neither**, the *push refused* row says so in place of `so this is recorded and no later run pushes it`: `but this could not be recorded (<error>, the configuration write's), so a later run pushes <branch> again`; it names no `rm` or `config --unset`, and on the default branch no session-branch switch, since nothing turns the mode on.
 
-**In session-branch mode** (§8) the not-pushed rows name the session branch as `<branch>`, and the *push refused* and *refused before* rows, when they name it, read from `to land the commits` on instead `once origin takes pushes to session/<identity>, rm "<record>"`, `<record>` being `session/<identity>`'s — the session branch is never stood on, so no `reset` is named for it. Where `sync.conflict` is not empty, append `; merging <default> into session/<identity> left <path>[, …] unsettled — settle them in its pull request`, and where `sync.error` is set, `; the merge of <default> into session/<identity> could not run (<sync.error>), and the next run tries again`. Where §8.2 printed `stranded` above 0, append `; your local <default> still holds <K> commit(s) origin refused, whose files are on session/<identity> now — to drop them, standing on <default>, run python3 "<the script's path>" --specs "<SPECS_PATH>" lift --branch session/<identity> && git -C "<SPECS_PATH>" reset --keep origin/<default> && python3 "<the script's path>" --specs "<SPECS_PATH>" put-back --branch session/<identity> --default-ref origin/<default>`, `<K>` being `stranded`. The *push rejected* row reads `Specs repo: committed <sha7> (<N> files) on session/<identity> — push REJECTED: origin's session/<identity> has commits this clone lacks, pushed from another clone under the same identity; the next run takes them in and pushes`. Where `mode` printed `unsupported`, the run's line, whichever it is, appends `; session-branch mode is on for this clone, but this git's merge-tree cannot merge without a checkout (it needs --write-tree and -X), so these files stay on <branch> until git is upgraded`. And where a *push refused* line names the default branch and step 6 recorded it, the run is the one that turns the mode on, so its remedy, from `to land the commits` on, reads instead `from the next run on, session files go to session/<identity>, a branch of your own whose pull request lands them (session-branch mode), and these commits' files go there too` — with `a session branch of your own, once GIT_USER_INITIALS names it` in place of `session/<identity>` where §8.1 resolves no identity.
+**The rows of a non-fast-forward rejection** (§4 step 6). In the three rows a replay gives where it moved the branch or found nothing left to push — *replayed and pushed*, *already there* and *moved, not pushed* — `<sha7>` is the first seven characters of the replay's `tip`, the commit `<branch>` now stands on: this run's own commit as replayed, or, where that was dropped, the commit `origin`'s branch already held. `<K>` counts the commits in `replayed` and `dropped` together, and the `<D>` clause, the commits in `dropped`, is there only where that is not 0. **The register clause** is there once for each `security/<slug>/` that `moves` names: `the rebuild of security/<slug>/ renumbered <move>[, <move>…], and the next run that records in that register lists the lines that cite an old number`, each `<move>` reading `[SEC#<from>] → [SEC#<to>] (<origin>, <whose number>)` — `the local number` on a move whose `side` is `run`, the number the replayed commits gave it, which the report and follow-up lines of the run that made them cite, and `origin's number` on one whose `side` is `remote`, the number a teammate already saw. No record holds such a move, so the next run that records anything in that register reports it again, with the lines to correct (`security-register-format.md` §2). Where `upstream_error` is set, the *replayed and pushed* row adds `; its upstream could not be set (<upstream_error>)`. `<why>`, in *moved, not pushed*, is the reason step 6 names: `a later attempt could not take origin's newer commits in: <reason clause>` (where the reason is `checkout-moved`, its clause there reads `… so <branch> was not moved again; …`, since an earlier attempt moved it), `origin's <branch> moved on again during each of its <attempts> attempts`, `the push FAILED (<the status line's bracketed summary and its reason, or no status line>)`, or `session-branch.py stopped (<the first line of its stderr>)`.
+
+**The reason clause** says why the replay refused, by `refused.reason`, `<path>` being `refused.path`:
+
+- `conflict` → `both sides changed <path>, or the folder holding it, and the run cannot settle it`
+- `register-rebuild` → `both sides changed the security register <path>, which only a rebuild settles, and this command hands the run no register.py to rebuild it` where the call carried no `--register-rebuild`, else `…, which only a rebuild settles, and that rebuild failed`
+- `would-overwrite` → `moving the checkout would write over <path>[ and <M> more], which you changed, left untracked or ignore — once that is clear, the next run that commits session files on <branch> settles the push itself`, `<M>` being the paths in `refused.paths` less that one
+- `cannot-replay` → `this git cannot replay without a checkout (its merge-tree needs --write-tree and --merge-base, git 2.40 or later)`
+- `in-progress` → `a rebase, merge, cherry-pick or revert, or an unresolved conflict, is in progress in the checkout (<path>)`
+- `locked` → `<path> is held by another git process, or was left by one that died, and this plugin never deletes a lock`
+- `push-scope` → `the push would now also publish <path's first seven characters>, which is not one of this plugin's session-file commits`
+- `checked-out` → `another worktree, <path>, has <branch> checked out`
+- `fetch-failed` → `fetching origin's <branch> failed`
+- `branch-moved` → `<branch> moved while the run was replaying it`
+- `cannot-move` → `git could not move the checkout onto the replay (a folder it cannot write, say), and nothing moved`
+- `checkout-moved` → `the checkout switched to or from <branch> while the run was moving it — another session's preflight or handoff, say — so <branch> was not moved; the next run that commits session files on <branch> settles the push itself`
+
+Step 6 adds three of its own: `session-branch.py could not run (<the first line of its stderr>)`, `session-branch.py did not finish within 420 s, …` (step 6 gives it whole), and `session-branch mode is on, which replays nothing`. **Where the reason is `checked-out`, the remedy runs in that worktree**, in the row and in its `Specs preflight:` form alike, and names no switch, which git refuses for a branch another worktree has checked out: from `; run git` on, the line reads `; run git -C "<path>" pull --rebase --no-autostash origin <branch>, then git -C "<path>" push origin <branch>`. **Where the reason is `checkout-moved`, the line ends at its reason clause**, in the row and in its `Specs preflight:` form alike, and names no remedy: another session put the checkout where it now stands, and a `pull` run there could merge `<branch>`'s remote commits into another branch. **Where the reason is `session-branch mode is on, which replays nothing`, the remedy is wrapped in the session branch's `lift` and `put-back`**, since the overlay keeps session files modified in the checkout, which the switch and the pull both refuse: from `; run` on, the line reads `; run python3 "<the script's path>" --specs "<SPECS_PATH>" lift --branch session/<identity>, then <the remedy as it reads without this wrapping, from its first git on>, then python3 "<the script's path>" --specs "<SPECS_PATH>" put-back --branch session/<identity> --default-ref origin/<default>`. **The remedy never stashes.** `--no-autostash` is spelled out because a `rebase.autoStash` setting turns a bare `--rebase` into an autostash, which, where putting the user's changes back conflicts, leaves conflict markers in the user's own file and a stash behind, and still exits 0; without it the pull refuses up front while anything in the checkout is uncommitted, and changes nothing.
+
+**Inside §3.4's flush and retry**, which print no §6 line, each of these four rows prints in its `Specs preflight:` form: `Specs preflight: <branch>` in place of `Specs repo: committed <sha7> (<N> files) on <branch>`, and, on a branch the run is not standing on, the *push rejected* remedy §4 step 6 gives there, which switches first, save for `checked-out`, whose remedy runs in the worktree that has `<branch>` checked out, and `checkout-moved`, which names none (above).
+
+**In session-branch mode** (§8) the not-pushed rows name the session branch as `<branch>`, and the *push refused* and *refused before* rows, when they name it, read from `to land the commits` on instead `once origin takes pushes to session/<identity>, rm "<record>"`, `<record>` being `session/<identity>`'s — the session branch is never stood on, so no `reset` is named for it. Where `sync.conflict` is not empty, append, for the paths `sync.conflicts` gives the source `<default-ref>`, `; merging <default> into session/<identity> left <path>[, …] unsettled — settle them in its pull request`, and for those it gives the source `origin/session/<identity>`, `; origin's copy of session/<identity>, pushed from another clone, was not merged in: on <path>[, …] one clone changed what the other clone's copy still holds unchanged (an entry edited or removed, the header edited, the file deleted) — make the two copies agree, by making the same change on the clone that still holds it (standing on <default> there; a pending cost file the other relocated is relocated there too, never deleted by hand) or by undoing it on the other; the next run on the clone you changed commits it, and once that is pushed, a later run here merges and pushes`; and where `sync.error` is set, `; the merge of <default> into session/<identity> could not run (<sync.error>), and the next run tries again`. Where §8.2's `unsettled` is not empty, the line, whichever it is, appends `; <path>[, …] and session/<identity>'s version of it each hold a change the other lacks, so it was left out of this commit and is as it was in your working tree — git -C "<SPECS_PATH>" show session/<identity>:<path> shows the branch's version; once your copy is that version with your own entries added after it, in the line endings your checkout gives the file, the next run commits it, and an edit or removal of an entry the branch your specs checkout stands on holds can then be made again; until then lift will not discard it, so each move of the specs checkout is skipped`. Where §8.2 printed `stranded` above 0, append `; your local <default> still holds <K> commit(s) origin refused, whose files are on session/<identity> now — to drop them, standing on <default>, run python3 "<the script's path>" --specs "<SPECS_PATH>" lift --branch session/<identity> && git -C "<SPECS_PATH>" reset --keep origin/<default> && python3 "<the script's path>" --specs "<SPECS_PATH>" put-back --branch session/<identity> --default-ref origin/<default>`, `<K>` being `stranded`. The *push rejected* row, for a push of the session branch, reads `Specs repo: committed <sha7> (<N> files) on session/<identity> — push REJECTED: origin's session/<identity> has commits this clone lacks, pushed from another clone under the same identity; a later run takes them in and pushes` — ending instead `…under the same identity, which a later run takes in only once the two clones' copies agree, as this line says` where `sync.conflicts` gives the source `origin/session/<identity>`. Where `mode` printed `unsupported`, the run's line, whichever it is, appends `; session-branch mode is on for this clone, but this git's merge-tree cannot merge without a checkout (it needs --write-tree and -X), so these files stay on <branch> until git is upgraded`. And where a *push refused* line names the default branch and step 6 recorded it, the run is the one that turns the mode on, so its remedy, from `to land the commits` on, reads instead `from the next run on, session files go to session/<identity>, a branch of your own whose pull request lands them (session-branch mode), and these commits' files go there too` — with `a session branch of your own, once GIT_USER_INITIALS names it` in place of `session/<identity>` where §8.1 resolves no identity.
 
 When the deliverable is still uncommitted because the user declined git at
 handoff (§4.1), append to the line:
@@ -1118,7 +1264,8 @@ Omitting any one of them is a defect, not a style choice.
    before the preflight on a check of its own inputs needing no specs-repo state (§3). Phase 0 in most
    commands. Carry any returned `specs_git: blocked` or `specs_git: misrooted`
    flag for the whole run, and `specs_git: misrooted` from `workflows-core:addressing`
-   §3 `specs-root-check` where its stop ended the run before any preflight.
+   §3 `specs-root-check` where its stop ended the run before any preflight, and
+   from `workflows-core:session-hygiene` §6's *Stop* for the rest of the run.
 2. **Cite and execute `commit-artifacts` (§4)** as the last action of the run,
    after `resume.md` (where one is written) and after the cost phase — or, where
    a later phase cedes control to another skill or to an open-ended interactive
@@ -1129,9 +1276,23 @@ Omitting any one of them is a defect, not a style choice.
 4. **Never restate this reference's rules** — cite the section number. A rule
    copied into a command is a rule that goes stale.
 
+**One optional input, `register_rebuild: <absolute path>`**, to `specs-preflight`
+and to `commit-artifacts` alike: the script that rebuilds a security register
+(`security-register-format.md` §1), which is `security-workflows`' own
+`register.py` — a `workflows-core` reference cannot name another plugin's
+root, so the caller hands the path over. Either entry point passes it to
+§4 step 6's replay, wherever it reaches one (§3.4's flush and retry, or the
+terminal push), as `--register-rebuild <path>`, and the replay runs it only
+to rebuild a register both sides changed, as
+`python3 -I <path> rebuild --specs <a temporary root> --slug <slug>`.
+`/security-workflows:scan` passes `${CLAUDE_PLUGIN_ROOT}/scripts/register.py`
+at both calls. A caller that passes nothing — every other command — gets the
+replay all the same, save that a register both sides changed refuses it
+(§6's `register-rebuild` reason clause).
+
 ## 8. Session-branch mode — a default branch that takes no push
 
-Where the specs repository's default branch takes no direct push — branch protection, a ruleset, a policy or a hook — this reference keeps the run's session files on a per-user **session branch**, and the user lands them through its pull request. Everything above stands; this section says only what changes in the mode. `${CLAUDE_PLUGIN_ROOT}/scripts/session-branch.py` does the git plumbing, every call `--specs "$SPECS_PATH"`, and a change to either is a change to both. Each call prints one JSON object; exit 2 means it could not run, which is reported with the first line of its stderr while the run goes on (§1 rule 5).
+Where the specs repository's default branch takes no direct push — branch protection, a ruleset, a policy or a hook — this reference keeps the run's session files on a per-user **session branch**, and the user lands them through its pull request. Everything above stands; this section says only what changes in the mode. `${CLAUDE_PLUGIN_ROOT}/scripts/session-branch.py` does the git plumbing, every call `--specs "$SPECS_PATH"`, and a change to either is a change to both: the script holds this section's plumbing and §4 step 6's replay, which runs only outside the mode and whose output that step reads. Each call this section makes prints one JSON object; exit 2 means it could not run, which is reported with the first line of its stderr while the run goes on (§1 rule 5).
 
 ### 8.1 When the mode is on
 
@@ -1148,18 +1309,18 @@ Where the mode is on, carry `session_branch: <branch>` for the whole run, and fo
 In the mode nothing in this reference commits a session file on the checked-out branch. Where §3.4's flush or §4 step 4 would commit, run `… commit --branch <session branch> --default-ref <default-ref> --message "<that step's message>"`, adding `--include-ahead` where HEAD is the default branch. It:
 
 1. creates the session branch where it does not exist, at the commit the checkout's files come from (`git merge-base HEAD <default-ref>`);
-2. commits every session file the overlay holds (§8.3) — each path `git status` reports dirty and each where the branch differs from HEAD, by §2.1's classifier, a deleted one as a deletion — onto it through a temporary index. A working copy that is HEAD's version, or the version this worktree was last given, is not committed — save the files `--include-ahead` carries, which HEAD holds: the overlay is simply not in place there (a `lift` not yet put back, a second worktree, a switch back from the session branch, a file removed by hand), or another worktree moved the branch on, and the branch keeps its own. An absent session file is a deletion only under `dev-workflows-cost/` — `cost-emission.md` §9 relocates a pending cost file and deletes it, the one session file a run deletes — and only where HEAD holds it or this worktree held it, which the script records per worktree (path and version, in `session-branch-placed.json` under the git directory); any other absent session file is put back; a working copy of an appended shape (the `union` ones of step 3) that differs from the branch's version is first merged with it, `git merge-file --union` from the version at `git merge-base HEAD <session branch>`, and written back, so an entry only the branch holds survives a hand edit or a lift nobody put back; and with `--include-ahead` also the files of the commits on the local default branch that `<default-ref>` lacks, where every one of them is a session-file commit (the ones a refused push left there); it moves neither the checkout, the index nor HEAD;
-3. then merges in `<default-ref>`, and `origin`'s copy of the session branch where one exists (another clone pushed it under the same identity), each where the branch lacks it, as `NOISSUE Merge <ref> into <session branch>` — a fast-forward where the branch holds nothing of its own, else `git merge-tree --write-tree -X ours` with git's `union` driver for the appended shapes, kept as one marked block in the repository's own `info/attributes`, which no commit carries — so a teammate's entries and this run's both survive, and an overwritten file (`resume.md`, `pr-draft.md`, and a security register's `register.json` and `register.md`, unset there) keeps this run's version whole;
+2. commits every session file the overlay holds (§8.3) — each path `git status` reports dirty and each where the branch differs from HEAD, by §2.1's classifier, a deleted one as a deletion — onto it through a temporary index. A working copy that is HEAD's version, or the version this worktree was last given, is not committed — save the files `--include-ahead` carries, which HEAD holds: the overlay is simply not in place there (a `lift` not yet put back, a second worktree, a switch back from the session branch, a file removed by hand), or another worktree moved the branch on, and the branch keeps its own. An absent session file is a deletion only under `dev-workflows-cost/` — `cost-emission.md` §9 relocates a pending cost file and deletes it, the one session file a run deletes — and only where HEAD holds it or this worktree held it, which the script records per worktree (path and version, in `session-branch-placed.json` under the git directory); any other absent session file is put back. A working copy the session branch has no version of, a working copy of an overwritten file or of a security register (step 3), and a deletion are committed as they are, with nothing settled. A working copy of a block-shaped file or `follow-ups.md` (step 3) that differs from the branch's version is committed as it is where the branch still holds the version this worktree was last given, by its record or, where it has none (a `lift` clears them), HEAD's: only the working copy changed, so a hand edit goes through. A block-shaped one is committed followed by every entry of the version this worktree was given that neither it nor HEAD's version holds, in the given version's order, entries compared with their line endings taken as `\n`; `follow-ups.md`, where a line of the given version is missing from both it and HEAD's version, lines compared the same way, is united with the given version over HEAD's by `git merge-file --union`. An entry or task line HEAD holds that the working copy dropped is a deliberate removal and stays removed, `implementation-format.md` §1's move of a block among them — save that, where a task only the session branch holds is put back, a task ticked next to it comes back beside its open copy, as git's union keeps such a pair. An entry or task only the session branch holds is put back whatever dropped it — a restore of HEAD's version, a removal by hand, or an edit, whose old version then stays beside the edited one — so no working copy can remove or replace one until the session pull request has merged: a visible duplicate rather than a lost entry. Where the branch holds another version (another worktree's commit or a merge moved it on, or a lift was never put back), the working copy is settled with the branch's version as step 3 settles a file, from the version at `git merge-base HEAD <session branch>`. Every version is read as a checkout writes it, so that their line endings agree, and the result is written back, so an entry only the branch holds survives. Where that cannot be done — for a block-shaped file, an entry of the merge base's version that one of the two versions edited or removed while the other still holds it, the branch's version included (a teammate's removal merged in, say, that the copy still holds), or headers that differ; for either shape, versions whose line endings differ, the one case `follow-ups.md` is refused in (`git merge-file --union` matches lines byte for byte, so it would keep each task in CRLF beside its copy in LF), which, where the branch holds the given version, refuses only where something must be put back — the file is left out of the commit and as it is in the working tree, and listed in `unsettled` (§6), since committing it as it is would drop the branch's entries or bring back one it removed. With `--include-ahead` it also commits the files of the commits on the local default branch that `<default-ref>` lacks, where every one of them is a session-file commit (the ones a refused push left there). It moves neither the checkout, the index nor HEAD;
+3. then merges in `<default-ref>`, and `origin`'s copy of the session branch where one exists (another clone pushed it under the same identity), each where the branch lacks it, as `NOISSUE Merge <ref> into <session branch>` — a fast-forward where the branch holds nothing of its own, else `git merge-tree --write-tree -X ours`, after which each block-shaped file and `follow-ups.md` that the merge base (`git merge-base <session branch> <ref>`), the branch and `<ref>` each hold differently is settled from those three versions, whatever `merge-tree` wrote for it, and written into the merge through a temporary index. A **block-shaped** file — `implementation.md`, `_security.md`, and the feedback and cost files, pending ones included, under `dev-workflows/`, `dev-workflows-feedback/` and `dev-workflows-cost/` — is a header followed by entries, each running from its format's dated `## ` heading to the next: it settles as the branch's version followed by each entry of `<ref>`'s that the branch's lacks, in `<ref>`'s order, one empty line before each, and is refused where the two headers differ or an entry of the merge base's version is missing from one side while the other still holds it, an edit or a removal made on one side alone; an entry both sides removed stays removed, one both edited alike is kept once, and one they edited differently stays in both edited versions, a visible duplicate rather than a lost edit. Two cases follow from that: an entry one side removed and the other edited keeps the edit, the removal lost without a word; and a last entry both sides extended, with no heading of their own, stays twice, once with each side's tail. `follow-ups.md`, one task per line, settles by `git merge-file --union`, the branch's lines first. So a teammate's entries and this run's are each kept once and whole — never by git's `union` driver for a block-shaped file, which matches lines, not entries, and fuses two entries that share lines into one. Either shape is also refused where the three versions are not all in one line-ending form, since a line in CRLF never matches its copy in LF. Where a file is refused, or `merge-tree` reports any other path conflicted, that `<ref>` is not merged at all, no merge commit, and the paths are listed in `sync.conflict`; the next run tries again. An overwritten file (`resume.md`, `pr-draft.md`, `*-implementation-gaps.md`, and a security register's `register.json` and `register.md`) keeps this run's version whole, being unset (`-merge`) in one marked block in the repository's own `info/attributes`, which no commit carries; the block gives `follow-ups.md` git's `union` driver and names no block-shaped file, so a merge of one the user makes stops on a conflict rather than fusing two entries;
 4. and brings each working copy that still matches the branch's previous version up to the merged one.
 
-It prints `{committed, files, paths, created, stranded, ahead_not_session, sync}`. `committed: null` is §4 step 3's *nothing to commit*. A non-empty `sync.conflict` names files the merge could not settle, and `sync.error` says the merge could not run at all: either way the commit stands, its push goes ahead, and §6's line says so. The commit is built with `git commit-tree`, signed where `commit.gpgSign` is set, and runs no `pre-commit` or `commit-msg` hook: those judge a change staged in a checkout, and this one is neither; a rule on `origin` still judges its push.
+It prints `{committed, files, paths, created, stranded, ahead_not_session, unsettled, sync}`. `committed: null` is §4 step 3's *nothing to commit*. A non-empty `unsettled` names the working copies step 2 left out of the commit, which §6's line names. A non-empty `sync.conflict` names files a merge of step 3 could not settle — `sync.conflicts` names each with that merge's source, `<default-ref>` or `origin/<session branch>` — and `sync.error` says the merge could not run at all: either way the commit stands, its push goes ahead, and §6's line says so. The commit is built with `git commit-tree`, signed where `commit.gpgSign` is set, and runs no `pre-commit` or `commit-msg` hook: those judge a change staged in a checkout, and this one is neither; a rule on `origin` still judges its push.
 
 ### 8.3 The overlay, around every move of the checkout
 
 In the mode the working tree's session files hold the session branch's version wherever it differs from HEAD, so every command keeps reading and appending them where it always has. Git refuses to fast-forward or switch over such a working copy, even a byte-identical one, so every move of the specs checkout is wrapped:
 
 - **Before it, `… lift --branch <session branch>`.** Where a session file is not yet on the session branch it prints `unpreserved: [...]` and changes nothing: run §8.2's `commit`, with §4 step 4's message, then `lift` again. A second `unpreserved` skips the move, which the step that wanted it reports as it would a refused switch or pull; nothing is discarded. Otherwise it returns each dirty session file to HEAD — the one discard this reference makes (§1 rule 4), and only of content it has just found on the session branch.
-- **After it, `… put-back --branch <session branch> --default-ref <default-ref>`.** It merges as §8.2 step 3 does, then writes each session file where the branch differs from the new HEAD, or removes it where the branch lacks it. A path whose working copy is neither HEAD's nor the branch's is merged with the branch's version as §8.2 step 2 merges it where its shape is appended, and listed in `merged`; any other is left as it is and listed in `skipped`, as is a pending cost file this worktree held and a run deleted, whose deletion §8.2 commits. A copy that is still the version this worktree was last given, where another worktree has since moved the branch on, is brought up to date like HEAD's. Where its merge cannot run, it puts the branch back as it stands and says so in `sync.error`. It runs whether or not the move succeeded, so the overlay returns over the checkout as it stands.
+- **After it, `… put-back --branch <session branch> --default-ref <default-ref>`.** It merges as §8.2 step 3 does, then writes each session file where the branch differs from the new HEAD, or removes it where the branch lacks it. A path whose working copy is neither HEAD's nor the branch's is, where it is a block-shaped file or `follow-ups.md`, settled with the branch's version as §8.2 step 2 settles one the branch holds another version of, written back and listed in `merged`; where that settlement is refused, and for any other shape, the copy is left as it is and listed in `skipped`, as is a pending cost file this worktree held and a run deleted, whose deletion §8.2 commits. A copy that is still the version this worktree was last given, where another worktree has since moved the branch on, is brought up to date like HEAD's. Where its merge cannot run, it puts the branch back as it stands and says so in `sync.error`. It runs whether or not the move succeeded, so the overlay returns over the checkout as it stands.
 
 The moves: §3.4's catch-up and §4 step 2's repeat of it; §3.5's B2 (switch, pull, `branch -d`), B4 (switch, pull) and the re-run's switch back; `phase-handoff.md` §2.2's switch onto a new or reused deliverable branch, and its §3.3 row C repair; and a direct `/dev-workflows:implement` run from inside the specs repository, around its own branch and commit (its Phase 1.4, where its clean-tree check lifts and a fresh start switches, its Pre-Phase 3 and its Phase 4.6). **The preflight ends with `put-back` in the mode** whether or not it moved the checkout, and where a guard (§3.3) ended it, never under `specs_git: misrooted`, so a run interrupted between a `lift` and its `put-back` finds its overlay restored. Neither call prints anything where it succeeds, `skipped` included; an exit 2 is reported as this section's opening says.
 
@@ -1171,4 +1332,4 @@ The moves: §3.4's catch-up and §4 step 2's repeat of it; §3.5's B2 (switch, p
 - **A remote that deleted it does not stop the push.** A session pull request merged with *delete branch on merge* deletes it, and every later run's files would otherwise stay local for good; the push recreates it, and its next pull request shows only what has not landed.
 - **`push-scope` counts the default branch as published.** The commits the push would publish are `git -C "$SPECS_PATH" rev-list --reverse refs/heads/<session branch> --not <base> <default-ref>`, or, with no base, step 5's `--not --remotes=origin` form, since the merges of §8.2 step 3 bring the default branch's own commits onto this branch and `origin` holds those already. Each must be a session-file commit as step 5 tests it, or a merge with exactly two parents (`rev-list --parents -n 1` prints three shas). Then the branch's whole change, `git -C "$SPECS_PATH" diff --name-only -z --no-renames <default-ref>...refs/heads/<session branch>` — what its pull request shows — must list ARTIFACT paths (§2.1) only; where it lists another, §6's *push-scope* line names the branch's newest merge commit and that path.
 
-Step 6 reads the outcome as for any branch, and records a refusal of the session branch on it. A non-fast-forward rejection there means another clone pushed under the same identity first: the next run fetches that copy (§8.1), merges it in and pushes, which §6 says in place of naming a pull. The outcome line is §6's *session branch* row.
+Step 6 reads the outcome as for any branch, and records a refusal of the session branch on it. A non-fast-forward rejection there means another clone pushed under the same identity first: a later run fetches that copy (§8.1), merges it in as §8.2 step 3 does and pushes, which §6 says in place of naming a pull — unless that merge is refused, where one clone changed what the other clone's copy still holds unchanged (an entry edited or removed, the header edited, the file deleted); §6's line then names the path, and the merge goes through once both copies agree on it (§8.2 step 3). The outcome line is §6's *session branch* row.

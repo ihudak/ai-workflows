@@ -1,0 +1,58 @@
+git version 2.43.0
+
+### 2a — untracked files only (none at a path the rebase writes)
+$ git -C <measure-root>/work/s2a/A rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s2a/A status --short
+?? drafts/
+?? notes/scratch.txt
+[exit 0]
+
+### 2b — a tracked file modified (unstaged), which the rebase does not touch
+$ git -C <measure-root>/work/s2b/A rebase origin/main
+error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
+[exit 1]
+SNAPSHOT IDENTICAL
+$ git -C <measure-root>/work/s2b/A pull --rebase origin main
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+[exit 128]
+SNAPSHOT IDENTICAL
+
+### 2c — a staged change only, which the rebase does not touch
+$ git -C <measure-root>/work/s2c/A rebase origin/main
+error: cannot rebase: Your index contains uncommitted changes.
+error: Please commit or stash them.
+[exit 1]
+SNAPSHOT IDENTICAL
+$ git -C <measure-root>/work/s2c/A pull --rebase origin main
+error: cannot pull with rebase: Your index contains uncommitted changes.
+error: Please commit or stash them.
+[exit 128]
+SNAPSHOT IDENTICAL
+
+### 2d — staged + unstaged + untracked together
+$ git -C <measure-root>/work/s2d/A rebase origin/main
+error: cannot rebase: You have unstaged changes.
+error: additionally, your index contains uncommitted changes.
+error: Please commit or stash them.
+[exit 1]
+SNAPSHOT IDENTICAL
+
+### 2e — an untracked file where the incoming commits add one (no autostash): fails at checkout
+$ git -C <measure-root>/work/s2e/A rebase origin/main
+error: The following untracked working tree files would be overwritten by checkout:
+	notes/new.md
+Please move or remove them before you switch branches.
+Aborting
+error: could not detach HEAD
+[exit 1]
+SNAPSHOT IDENTICAL
+
+### 2f — the pre-check a refuse-when-dirty rule would run before rebasing (porcelain, tracked only), on 2a/2b/2c/2d's trees
+s2a: ''  diff-index: clean
+s2b: ' M notes/team.md '  diff-index: dirty
+s2c: 'M  specifications/PRD-A-1-x/prd.md '  diff-index: dirty
+s2d: ' M notes/team.md M  specifications/PRD-A-1-x/prd.md '  diff-index: dirty

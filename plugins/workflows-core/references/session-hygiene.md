@@ -51,7 +51,7 @@ uncommitted, since `commit-artifacts` runs after cost. Prepare-first (§5 rule 2
 the write happens before the run ends, and therefore before the user can act on the
 printed suggestion.
 
-**Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): `$SPECS_PATH` is misplaced, so the pointer would land where the next run, with the variable corrected, never looks.
+**Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): where `$SPECS_PATH` is misplaced, the pointer would land where the next run, with the variable corrected, never looks; where this reference's §6 *Stop* set the flag, the run is no longer in the environment it recorded, and writes nothing more.
 
 **Skipped**: `/idea` (its brief is the anchor, and it is written and handed off in the same run), `/implement`
 **direct** mode, `/document` **doc-edit** mode (Mode B), `/vuln`, `/upgrade`, `/frames`. There the
@@ -440,12 +440,12 @@ options or the question is asked again; a typed cancel is *Stop*.
 
 **_Stop_ sets `specs_git: misrooted` for the rest of the run**, with its stop line, `RESUME_ENVIRONMENT_CHANGED:`,
 as the notice that set it — reusing that flag's handling, `workflows-core:specs-repo-git` §3.1, rather
-than adding a flag, because the case is the one it records: the run's specs root is not the one
+than adding a flag, because the case is one it records: the run is no longer in the environment
 it recorded. So the run writes and hands off nothing more — `handoff-to-main` refuses on the flag
 — and goes on to its terminal phases, where every emitter of the tail falls to report-only, no
-`resume.md` is written, and `commit-artifacts` skips, re-emitting the stop line. Wherever a reader of the flag says to repeat
-the §3.1 notice or `specs-root-check`'s stop that set it — `specs-repo-git` §4 step 1,
-`workflows-core:phase-handoff` §2.1 — the stop line is that notice. What the run already wrote
+`resume.md` is written, and `commit-artifacts` skips, re-emitting the stop line. `specs-repo-git` §4 step 1 and
+`workflows-core:phase-handoff` §2.1, which repeat the notice that set the flag, name this stop line
+as that notice. What the run already wrote
 stays where it is. The stop line is:
 
 `RESUME_ENVIRONMENT_CHANGED: <each field that differs, recorded and now> — nothing more was written. Restore the recorded environment and re-run '<command> <address>', which resumes from <session file path>.`

@@ -1,0 +1,58 @@
+git version 2.43.0
+
+### 8a — the user's dirty files (MM, AM, staged new, unstaged, untracked), none touched by B; register conflict settled off-checkout
+$ git -C <measure-root>/work/s8a/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+AM specifications/PRD-A-1-x/design-notes.md
+MM specifications/PRD-A-1-x/prd.md
+?? notes/scratch.txt
+[exit 0]
+replay.py: {"tip": "31299b7da6be260d2a7b338e2d91551d78ea2a5c", "replayed": 1, "dropped": []}  (49 ms; checkout untouched so far)
+$ git -C <measure-root>/work/s8a/A read-tree -m -u HEAD 31299b7da6be260d2a7b338e2d91551d78ea2a5c
+[exit 0]
+$ git -C <measure-root>/work/s8a/A update-ref -m settle: replayed onto origin/main refs/heads/main 31299b7da6be260d2a7b338e2d91551d78ea2a5c 93fc12e50f125b5cef9159d84c1fea0c19cb44d8
+[exit 0]
+(move by readtree: 2 ms)
+$ git -C <measure-root>/work/s8a/A push --porcelain origin main
+To <measure-root>/work/s8a/origin.git
+ 	refs/heads/main:refs/heads/main	8739052..31299b7
+Done
+[exit 0]
+$ git -C <measure-root>/work/s8a/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+AM specifications/PRD-A-1-x/design-notes.md
+MM specifications/PRD-A-1-x/prd.md
+?? notes/scratch.txt
+[exit 0]
+SNAPSHOT IDENTICAL
+-- origin/main now: 31299b7 PRD-A-1 Add dev-workflows session artifacts (/a1)|8739052 PRD-A-1 Add dev-workflows session artifacts (/b1)|ed34813 NOISSUE base|
+-- register at origin == rebuild? yes
+# Feedback
+- base entry
+- b1 entry
+- a1 entry
+
+### 8b — a dirty file B also changed (prd.md): the move refuses, nothing changes
+replay.py: {"tip": "7a2e10f28f346b5fc456d86f7d3edb01211aa65a", "replayed": 1, "dropped": []}  (48 ms; checkout untouched so far)
+$ git -C <measure-root>/work/s8b/A read-tree -m -u HEAD 7a2e10f28f346b5fc456d86f7d3edb01211aa65a
+error: Entry 'specifications/PRD-A-1-x/prd.md' would be overwritten by merge. Cannot merge.
+[exit 128]
+(move by readtree: 1 ms)
+=> the checkout refused the move; nothing changed; print today's lines
+SNAPSHOT IDENTICAL
+
+### 8c — an untracked file where B adds one
+replay.py: {"tip": "b1a97c5f13e032feb9f5fc841b10c3b6d4d6e2d3", "replayed": 1, "dropped": []}  (48 ms; checkout untouched so far)
+$ git -C <measure-root>/work/s8c/A read-tree -m -u HEAD b1a97c5f13e032feb9f5fc841b10c3b6d4d6e2d3
+error: Untracked working tree file 'notes/new.md' would be overwritten by merge.
+[exit 128]
+(move by readtree: 1 ms)
+=> the checkout refused the move; nothing changed; print today's lines
+SNAPSHOT IDENTICAL
+
+### 8d — another conflict (resume.md): refused before the checkout is touched
+replay.py: {"refused": "conflict in specifications/PRD-A-1-x/dev-workflows/resume.md replaying d4118c6"}  (49 ms; checkout untouched so far)
+=> refused before touching anything; print today's lines
+SNAPSHOT IDENTICAL

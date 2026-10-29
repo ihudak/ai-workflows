@@ -1,0 +1,62 @@
+git version 2.43.0
+
+### mode
+$ python3 -I /workspace/ai-workflows/plugins/workflows-core/scripts/session-branch.py --specs <measure-root>/work/s95/A mode --default main
+{
+  "mode": "on",
+  "source": "config",
+  "identity": "ab",
+  "identity_rung": "env",
+  "branch": "session/ab"
+}
+[exit 0]
+
+### a run's session files, committed in the mode (commit-artifacts' §8.2 call); B pushes main meanwhile
+$ git -C <measure-root>/work/s95/A fetch -q origin
+[exit 0]
+$ python3 -I /workspace/ai-workflows/plugins/workflows-core/scripts/session-branch.py --specs <measure-root>/work/s95/A commit --branch session/ab --default-ref origin/main --message PRD-A-1 Add dev-workflows session artifacts (/a1) --include-ahead
+{
+  "committed": "8c42ff66eeffddb7eb8ee657248614af603c20eb",
+  "files": 2,
+  "paths": [
+    "specifications/PRD-A-1-x/dev-workflows/feedback.md",
+    "specifications/PRD-A-1-x/implementation.md"
+  ],
+  "created": true,
+  "stranded": 0,
+  "ahead_not_session": false,
+  "sync": {
+    "created": false,
+    "merged": true,
+    "fast_forward": false,
+    "tip": "6711b326609f33f8d57b5851a8d9aac749aead66",
+    "conflict": [],
+    "deferred": [],
+    "aligned": [
+      "specifications/PRD-A-1-x/dev-workflows/feedback.md"
+    ]
+  }
+}
+[exit 0]
+-- local main: 5d3da73; commits on main that origin/main lacks: 0
+$ git -C <measure-root>/work/s95/A log --oneline --graph session/ab
+*   6711b32 NOISSUE Merge origin/main into session/ab
+|\  
+| * 12cbb73 b1
+* | 8c42ff6 PRD-A-1 Add dev-workflows session artifacts (/a1)
+|/  
+* 5d3da73 NOISSUE base
+[exit 0]
+-- §8.4: the push names the session branch, never main:
+$ git -C <measure-root>/work/s95/A push --porcelain -u origin session/ab
+To <measure-root>/work/s95/origin.git
+*	refs/heads/session/ab:refs/heads/session/ab	[new branch]
+branch 'session/ab' set up to track 'origin/session/ab'.
+Done
+[exit 0]
+-- main is behind origin/main only (a fast-forward for §3.4's catch-up, never a rejection):
+$ git -C <measure-root>/work/s95/A status -sb
+## main...origin/main [behind 1]
+ M specifications/PRD-A-1-x/dev-workflows/feedback.md
+ M specifications/PRD-A-1-x/implementation.md
+[exit 0]

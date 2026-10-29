@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.59.0] — 2026-10-28
+
+Take with `workflows-core` 1.67.0, whose `specs-repo-git` §3.1 now lists `session-hygiene` §6's *Stop* among the setters of `specs_git: misrooted`, as the session-cost and session-feedback pages say it does — to-fix D27.
+
+### Fixed
+- **The session-cost, session-feedback and resume pages say what `specs_git: misrooted` means on a `/specify` run.** Each glossed the flag as a `$SPECS_PATH` the run found misplaced; it is also set where a run that keeps a session file stops because, at any of `session-hygiene` §6's three points, its environment no longer matches the one the file recorded, or, at the last two, that record is unreadable or missing; the cost entry, the feedback entry and the resume pointer are then report-only too.
+
 ## [3.58.0] — 2026-10-28
 
 Take with `workflows-core` 1.66.0, whose `phase-handoff` §3.4 and §3.7 name the gate `/brd-interview`'s new Phase 0 step 8a runs and let it read a stopping row without stopping, and with `dev-workflows` 4.48.2, whose `/ready` and pages name that exception — batch B25 (BRD2-B1, BRD2-B5, BRD3-B8, BRD3-B9, BRD3-B21, FBB-B43, FBB-B44, BRD2-B7, BRD2-B10, BRD-G1).

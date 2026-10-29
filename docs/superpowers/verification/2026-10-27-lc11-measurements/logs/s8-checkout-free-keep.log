@@ -1,0 +1,85 @@
+git version 2.43.0
+
+### 8a — the user's dirty files (MM, AM, staged new, unstaged, untracked), none touched by B; register conflict settled off-checkout
+$ git -C <measure-root>/work/s8a/A status --short
+A  notes/staged-new.md
+ M notes/team.md
+AM specifications/PRD-A-1-x/design-notes.md
+MM specifications/PRD-A-1-x/prd.md
+?? notes/scratch.txt
+[exit 0]
+replay.py: {"tip": "65ecb366c150c0eac4dfde6b28dec714831126e4", "replayed": 1, "dropped": []}  (50 ms; checkout untouched so far)
+$ git -C <measure-root>/work/s8a/A reset --keep 65ecb366c150c0eac4dfde6b28dec714831126e4
+[exit 0]
+(move by keep: 1 ms)
+$ git -C <measure-root>/work/s8a/A push --porcelain origin main
+To <measure-root>/work/s8a/origin.git
+ 	refs/heads/main:refs/heads/main	77b6434..65ecb36
+Done
+[exit 0]
+$ git -C <measure-root>/work/s8a/A status --short
+ M notes/team.md
+ M specifications/PRD-A-1-x/prd.md
+?? notes/scratch.txt
+?? notes/staged-new.md
+?? specifications/PRD-A-1-x/design-notes.md
+[exit 0]
+SNAPSHOT DIFFERS:
+@@ -1,10 +1,8 @@
+ -- index
+-100644 2ce75e2a24f7d6841a504cf3616ef5a59edb3a2d 0	notes/staged-new.md
+ 100644 89e7f9d046af4bac14d5be303187335a273779d4 0	notes/team.md
+-100644 2ce75e2a24f7d6841a504cf3616ef5a59edb3a2d 0	specifications/PRD-A-1-x/design-notes.md
+ 100644 e19062d315ed4a844dc9ca3109ca9d5c063baa4d 0	specifications/PRD-A-1-x/dev-workflows/resume.md
+ 100644 becb3fc9fe007660fed4ffbb4e2e981f7c1b071c 0	specifications/PRD-A-1-x/follow-ups.md
+-100644 91b5f9880c0a141bf8682cec4824a14e5508f369 0	specifications/PRD-A-1-x/prd.md
++100644 31c2fd97a9f9eabbab23d24f12ea420e959b3a88 0	specifications/PRD-A-1-x/prd.md
+ -- worktree
+ a27110a155b1dd079db5ea8fee149a2b80019f48b359a7852f281a7720fe15a8  ./notes/scratch.txt
+ f7a8d619b88acb448b0296754c7de9bde8f5e74156113c0444f9ea1026078cff  ./notes/staged-new.md
+@@ -14,11 +12,11 @@
+ 323180409790fa4d7ab3c3315eda4ce6143c4983f04064a35a16c38c089e6f6d  ./specifications/PRD-A-1-x/follow-ups.md
+ 041600b7703e70d87452a039df7594fbbf7e867315e80a753a14707eb685cb9b  ./specifications/PRD-A-1-x/prd.md
+ -- status
+-A  notes/staged-new.md
+  M notes/team.md
+-AM specifications/PRD-A-1-x/design-notes.md
+-MM specifications/PRD-A-1-x/prd.md
++ M specifications/PRD-A-1-x/prd.md
+ ?? notes/scratch.txt
++?? notes/staged-new.md
++?? specifications/PRD-A-1-x/design-notes.md
+ -- stash
+ -- rebase dirs
+ none
+-- origin/main now: 65ecb36 PRD-A-1 Add dev-workflows session artifacts (/a1)|77b6434 PRD-A-1 Add dev-workflows session artifacts (/b1)|4f1cd5e NOISSUE base|
+-- register at origin == rebuild? yes
+# Feedback
+- base entry
+- b1 entry
+- a1 entry
+
+### 8b — a dirty file B also changed (prd.md): the move refuses, nothing changes
+replay.py: {"tip": "59c7c1290a54cc431f4d2b6068c837dac39de052", "replayed": 1, "dropped": []}  (47 ms; checkout untouched so far)
+$ git -C <measure-root>/work/s8b/A reset --keep 59c7c1290a54cc431f4d2b6068c837dac39de052
+error: Entry 'specifications/PRD-A-1-x/prd.md' would be overwritten by merge. Cannot merge.
+fatal: Could not reset index file to revision '59c7c1290a54cc431f4d2b6068c837dac39de052'.
+[exit 128]
+(move by keep: 1 ms)
+=> the checkout refused the move; nothing changed; print today's lines
+SNAPSHOT IDENTICAL
+
+### 8c — an untracked file where B adds one
+replay.py: {"tip": "310586f10337ab6d33fcdf2a56112ecf5f00f142", "replayed": 1, "dropped": []}  (47 ms; checkout untouched so far)
+$ git -C <measure-root>/work/s8c/A reset --keep 310586f10337ab6d33fcdf2a56112ecf5f00f142
+error: Untracked working tree file 'notes/new.md' would be overwritten by merge.
+fatal: Could not reset index file to revision '310586f10337ab6d33fcdf2a56112ecf5f00f142'.
+[exit 128]
+(move by keep: 1 ms)
+=> the checkout refused the move; nothing changed; print today's lines
+SNAPSHOT IDENTICAL
+
+### 8d — another conflict (resume.md): refused before the checkout is touched
+replay.py: {"refused": "conflict in specifications/PRD-A-1-x/dev-workflows/resume.md replaying 0b6ecc5"}  (49 ms; checkout untouched so far)
+=> refused before touching anything; print today's lines
+SNAPSHOT IDENTICAL

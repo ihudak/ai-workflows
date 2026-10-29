@@ -1,0 +1,168 @@
+git version 2.43.0
+
+### P1 — push BEFORE move; the move is refused; origin does not move again before the next run
+$ git -C <measure-root>/work/s92-p1/A push --porcelain origin 4adffe303992941d1787e504e2e9f28e881a78d5:refs/heads/main
+To <measure-root>/work/s92-p1/origin.git
+ 	4adffe303992941d1787e504e2e9f28e881a78d5:refs/heads/main	fccf5f2..4adffe3
+Done
+[exit 0]
+{"moved": false, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"cmd": "git read-tree -m -u 681b1152889f1c6af930658b3f1b21db7cc9f0b1 4adffe303992941d1787e504e2e9f28e881a78d5", "exit": 128, "err": "error: Entry 'specifications/PRD-A-1-x/prd.md' not uptodate. Cannot merge."}, {"txn": "abort: ok"}]}
+
+-- the next run's view:
+$ git -C <measure-root>/work/s92-p1/A fetch -q origin
+[exit 0]
+$ git -C <measure-root>/work/s92-p1/A status -sb
+## main...origin/main [ahead 1, behind 3]
+ M specifications/PRD-A-1-x/prd.md
+[exit 0]
+   §3.4 catch-up test (merge-base --is-ancestor HEAD origin/main): not behind -> no catch-up
+$ git -C <measure-root>/work/s92-p1/A pull --ff-only --no-rebase origin main
+From <measure-root>/work/s92-p1/origin
+ * branch            main       -> FETCH_HEAD
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+$ python3 -I <measure-root>/push_scope.py <measure-root>/work/s92-p1/A main refs/remotes/origin/main
+681b115 PRD-A-1 Add dev-workflows session artifacts (/a1)  session
+push-scope: PASS (every commit is the run's own) -> rebase allowed
+[exit 0]
+$ git -C <measure-root>/work/s92-p1/A cherry -v origin/main main
++ 681b1152889f1c6af930658b3f1b21db7cc9f0b1 PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 0]
+-- the next run commits its own session files (a2) on local main, its push is rejected, it replays:
+$ git -C <measure-root>/work/s92-p1/A push --porcelain origin main
+error: failed to push some refs to '<measure-root>/work/s92-p1/origin.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+To <measure-root>/work/s92-p1/origin.git
+!	refs/heads/main:refs/heads/main	[rejected] (non-fast-forward)
+Done
+[exit 1]
+$ python3 -I <measure-root>/replay.py <measure-root>/work/s92-p1/A main origin/main python3 -I <measure-root>/rebuild.py
+{"tip": "279c5338f5c19fa31f5e556d8adbe0c4ff35e125", "replayed": 2, "dropped": ["681b115"]}
+[exit 0]
+$ git -C <measure-root>/work/s92-p1/A push --porcelain origin 279c5338f5c19fa31f5e556d8adbe0c4ff35e125:refs/heads/main
+To <measure-root>/work/s92-p1/origin.git
+ 	279c5338f5c19fa31f5e556d8adbe0c4ff35e125:refs/heads/main	4adffe3..279c533
+Done
+[exit 0]
+{"moved": false, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"cmd": "git read-tree -m -u 45c07554b137bc144b5d3b49d53dd65ad724e44a 279c5338f5c19fa31f5e556d8adbe0c4ff35e125", "exit": 128, "err": "error: Entry 'specifications/PRD-A-1-x/prd.md' not uptodate. Cannot merge."}, {"txn": "abort: ok"}]}
+
+-- origin/main content:
+   feedback.md: 1 × 'a1 entry'
+   feedback.md: 1 × 'b1 entry'
+   feedback.md: 1 × 'a2 entry'
+   feedback.md: 0 × 'b2 entry'
+   implementation.md: 1 × '## a1 run'
+   implementation.md: 1 × '## a2 run'
+   resume.md: last: base next: /design PRD-A-1 
+   register.json == rebuild(runs): yes  runs: 4
+-- the user discards the colliding edit; the run after that replays again:
+$ python3 -I <measure-root>/replay.py <measure-root>/work/s92-p1/A main origin/main python3 -I <measure-root>/rebuild.py
+{"tip": "c11b137b25073c307f9919c3a113fc8a4366bedb", "replayed": 2, "dropped": []}
+[exit 0]
+   replay tip == origin/main? no
+{"moved": true, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"cmd": "git read-tree -m -u 45c07554b137bc144b5d3b49d53dd65ad724e44a c11b137b25073c307f9919c3a113fc8a4366bedb", "exit": 0, "err": ""}, {"txn": "commit: ok"}]}
+
+$ git -C <measure-root>/work/s92-p1/A status -sb
+## main...origin/main [ahead 2]
+[exit 0]
+-- what local main now holds, and would push next:
+   feedback.md: 2 × 'a1 entry'
+   feedback.md: 2 × 'a2 entry'
+   feedback.md: 1 × 'b1 entry'
+$ git -C <measure-root>/work/s92-p1/A diff --stat origin/main main
+ specifications/PRD-A-1-x/dev-workflows/feedback.md | 2 ++
+ specifications/PRD-A-1-x/implementation.md         | 3 +++
+ 2 files changed, 5 insertions(+)
+[exit 0]
+-- origin/main content:
+   feedback.md: 1 × 'a1 entry'
+   feedback.md: 1 × 'b1 entry'
+   feedback.md: 1 × 'a2 entry'
+   feedback.md: 0 × 'b2 entry'
+   implementation.md: 1 × '## a1 run'
+   implementation.md: 1 × '## a2 run'
+   resume.md: last: base next: /design PRD-A-1 
+   register.json == rebuild(runs): yes  runs: 4
+
+### P2 — push BEFORE move; move refused; B pushes again before the next run (origin moved past the replays)
+-- the next run re-replays local main (its pre-replay a1) onto origin (b1, a1', b2):
+$ python3 -I <measure-root>/replay.py <measure-root>/work/s92-p2/A main origin/main python3 -I <measure-root>/rebuild.py
+{"tip": "00df25d833d267f172fc112b309773491852d4de", "replayed": 1, "dropped": []}
+[exit 0]
+-- what that replay would publish:
+   feedback.md: 2 × 'a1 entry'
+   feedback.md: 1 × 'b1 entry'
+   feedback.md: 1 × 'b2 entry'
+   implementation.md: 1 × '## a1 run'
+   git diff origin/main <replay tip> --stat:
+ specifications/PRD-A-1-x/dev-workflows/feedback.md | 1 +
+ 1 file changed, 1 insertion(+)
+
+### P2x — the same, with resume.md overwritten by a1 and later by b2, replayed with -X theirs
+   origin's resume.md: last: b2
+   re-replay (-X theirs) of the already-published a1 -> resume.md: last: a1
+
+### M — move BEFORE push: the move is refused, so nothing is pushed
+{"moved": false, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"cmd": "git read-tree -m -u 6e4d68ea10a7caacf0f342af9b20364ce275d349 1ac30d566186830b691d767cd11eef0a7ab26497", "exit": 128, "err": "error: Entry 'specifications/PRD-A-1-x/prd.md' not uptodate. Cannot merge."}, {"txn": "abort: ok"}]}
+=> move refused: no push; everything as it was
+-- the next run's view:
+$ git -C <measure-root>/work/s92-m/A fetch -q origin
+[exit 0]
+$ git -C <measure-root>/work/s92-m/A status -sb
+## main...origin/main [ahead 1, behind 2]
+ M specifications/PRD-A-1-x/prd.md
+[exit 0]
+   §3.4 catch-up test (merge-base --is-ancestor HEAD origin/main): not behind -> no catch-up
+$ git -C <measure-root>/work/s92-m/A pull --ff-only --no-rebase origin main
+From <measure-root>/work/s92-m/origin
+ * branch            main       -> FETCH_HEAD
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint: 
+hint: 	git merge --no-ff
+hint: 
+hint: or:
+hint: 
+hint: 	git rebase
+hint: 
+hint: Disable this message with "git config advice.diverging false"
+fatal: Not possible to fast-forward, aborting.
+[exit 128]
+$ python3 -I <measure-root>/push_scope.py <measure-root>/work/s92-m/A main refs/remotes/origin/main
+6e4d68e PRD-A-1 Add dev-workflows session artifacts (/a1)  session
+push-scope: PASS (every commit is the run's own) -> rebase allowed
+[exit 0]
+$ git -C <measure-root>/work/s92-m/A cherry -v origin/main main
++ 6e4d68ea10a7caacf0f342af9b20364ce275d349 PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 0]
+-- B pushed again; the user then discards the colliding edit; the next run (a2 too) replays, moves, pushes:
+$ python3 -I <measure-root>/replay.py <measure-root>/work/s92-m/A main origin/main python3 -I <measure-root>/rebuild.py
+{"tip": "1b626ea290258f7d4b3a4e75808de76322971a89", "replayed": 2, "dropped": []}
+[exit 0]
+{"moved": true, "steps": [{"txn": ["start: ok", "prepare: ok"]}, {"cmd": "git read-tree -m -u bb6fd3ce732e548603c4f7785a070876922a7cdd 1b626ea290258f7d4b3a4e75808de76322971a89", "exit": 0, "err": ""}, {"txn": "commit: ok"}]}
+
+$ git -C <measure-root>/work/s92-m/A push --porcelain origin main
+To <measure-root>/work/s92-m/origin.git
+ 	refs/heads/main:refs/heads/main	ee9bda7..1b626ea
+Done
+[exit 0]
+-- origin/main content:
+   feedback.md: 1 × 'a1 entry'
+   feedback.md: 1 × 'b1 entry'
+   feedback.md: 1 × 'a2 entry'
+   feedback.md: 1 × 'b2 entry'
+   implementation.md: 1 × '## a1 run'
+   implementation.md: 1 × '## a2 run'
+   resume.md: last: base next: /design PRD-A-1 
+   register.json == rebuild(runs): yes  runs: 5

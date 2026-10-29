@@ -1,0 +1,102 @@
+git version 2.43.0
+parent P=4185de0  onto (B's side, merge-tree's branch1 = ours) 5ec37d8  replayed commit (A's, branch2 = theirs) 3d32320
+
+### no -X, block passed: which paths conflict
+
+$ git -c core.attributesFile=<measure-root>/block.attributes merge-tree --write-tree --name-only --merge-base=4185de0eb69abb09072ecd6958be0463445ce313 5ec37d83fbe1e98e84ddde0fed546853fb7b3820 3d3232060d424a6c8bb31787628e080b5ebb9fea 
+[exit 1]
+   05539406894be3a368ad9ba3961c0ec317a8329f
+   security/acme-api/register.json
+   security/acme-api/register.md
+   security/acme-api/runs/0009-20261027T090000Z-samename.json
+   specifications/PRD-A-1-x/dev-workflows/resume.md
+   specifications/PRD-A-1-x/pr-draft.md
+   
+   warning: Cannot merge binary files: security/acme-api/register.json (5ec37d83fbe1e98e84ddde0fed546853fb7b3820 vs. 3d3232060d424a6c8bb31787628e080b5ebb9fea)
+   Auto-merging security/acme-api/register.json
+   CONFLICT (content): Merge conflict in security/acme-api/register.json
+   warning: Cannot merge binary files: security/acme-api/register.md (5ec37d83fbe1e98e84ddde0fed546853fb7b3820 vs. 3d3232060d424a6c8bb31787628e080b5ebb9fea)
+   Auto-merging security/acme-api/register.md
+   CONFLICT (content): Merge conflict in security/acme-api/register.md
+   Auto-merging security/acme-api/runs/0009-20261027T090000Z-samename.json
+   CONFLICT (add/add): Merge conflict in security/acme-api/runs/0009-20261027T090000Z-samename.json
+   Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+   warning: Cannot merge binary files: specifications/PRD-A-1-x/dev-workflows/resume.md (5ec37d83fbe1e98e84ddde0fed546853fb7b3820 vs. 3d3232060d424a6c8bb31787628e080b5ebb9fea)
+   Auto-merging specifications/PRD-A-1-x/dev-workflows/resume.md
+   CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/resume.md
+   warning: Cannot merge binary files: specifications/PRD-A-1-x/pr-draft.md (5ec37d83fbe1e98e84ddde0fed546853fb7b3820 vs. 3d3232060d424a6c8bb31787628e080b5ebb9fea)
+   Auto-merging specifications/PRD-A-1-x/pr-draft.md
+   CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/pr-draft.md
+
+### -X theirs, block passed
+
+$ git -c core.attributesFile=<measure-root>/block.attributes merge-tree --write-tree --name-only -X theirs --merge-base=4185de0eb69abb09072ecd6958be0463445ce313 5ec37d83fbe1e98e84ddde0fed546853fb7b3820 3d3232060d424a6c8bb31787628e080b5ebb9fea 
+[exit 0]
+   18d3bc2a326727081bf514a84b98129cf372a23d
+   specifications/PRD-A-1-x/dev-workflows/resume.md: last: a|
+   specifications/PRD-A-1-x/pr-draft.md: draft: a|
+   security/acme-api/register.json: runs ['aaaaaaaa', 'a1a1a1a1', 'samename']
+   security/acme-api/register.md: 3 finding rows
+   specifications/PRD-A-1-x/dev-workflows/feedback.md: # Feedback|- base entry|- b entry|- a entry|
+   security/acme-api/runs/0009-20261027T090000Z-samename.json: "x:a" 
+
+### -X ours, block passed (orientation check)
+
+$ git -c core.attributesFile=<measure-root>/block.attributes merge-tree --write-tree --name-only -X ours --merge-base=4185de0eb69abb09072ecd6958be0463445ce313 5ec37d83fbe1e98e84ddde0fed546853fb7b3820 3d3232060d424a6c8bb31787628e080b5ebb9fea 
+[exit 0]
+   633983187bb84c6691dda6c5de53b9fe51414732
+   specifications/PRD-A-1-x/dev-workflows/resume.md: last: b|
+   specifications/PRD-A-1-x/pr-draft.md: draft: b|
+   security/acme-api/register.json: runs ['aaaaaaaa', 'b1b1b1b1', 'samename']
+   security/acme-api/register.md: 3 finding rows
+   specifications/PRD-A-1-x/dev-workflows/feedback.md: # Feedback|- base entry|- b entry|- a entry|
+   security/acme-api/runs/0009-20261027T090000Z-samename.json: "x:b" 
+
+### -X theirs WITHOUT the block
+
+$ git merge-tree --write-tree --name-only -X theirs --merge-base=4185de0eb69abb09072ecd6958be0463445ce313 5ec37d83fbe1e98e84ddde0fed546853fb7b3820 3d3232060d424a6c8bb31787628e080b5ebb9fea 
+[exit 0]
+   809b4c02b18e8976d6143150d3963ed688c19587
+   specifications/PRD-A-1-x/dev-workflows/resume.md: last: a|
+   specifications/PRD-A-1-x/pr-draft.md: draft: a|
+   security/acme-api/register.json: runs ['aaaaaaaa', 'a1a1a1a1', 'samename']
+   security/acme-api/register.md: 3 finding rows
+   specifications/PRD-A-1-x/dev-workflows/feedback.md: # Feedback|- base entry|- a entry|
+   security/acme-api/runs/0009-20261027T090000Z-samename.json: "x:a" 
+
+### modify/delete under -X theirs (B deleted a pending cost file A appended to)
+
+$ git -c core.attributesFile=<measure-root>/block.attributes merge-tree --write-tree --name-only -X theirs --merge-base=dbfa50c7ed201532ab6af497e0ed2bbad3873b74 8a7b67c3f261c68cf70175fa8c5f97f635eb3031 ccea35886565106e1182812edb3f10c98074d79e 
+[exit 1]
+   7f086b656207ed6a42754e0e7f0689d9ebf616f7
+   dev-workflows-cost/pending-s1.md
+   
+   CONFLICT (modify/delete): dev-workflows-cost/pending-s1.md deleted in 8a7b67c3f261c68cf70175fa8c5f97f635eb3031 and modified in ccea35886565106e1182812edb3f10c98074d79e.  Version ccea35886565106e1182812edb3f10c98074d79e of dev-workflows-cost/pending-s1.md left in tree.
+
+### replay.py with REPLAY_X=theirs (no same-named record this time): overwritten shapes kept whole, registers rebuilt
+$ python3 -I <measure-root>/replay.py <measure-root>/work/s94/seed replayed3 origin/main python3 -I <measure-root>/rebuild.py
+{"tip": "61b7ac46ef10eb58961185964b7462f117a852f1", "replayed": 1, "dropped": []}
+[exit 0]
+   specifications/PRD-A-1-x/dev-workflows/resume.md: last: a|
+   specifications/PRD-A-1-x/pr-draft.md: draft: a|
+   security/acme-api/register.json: runs ['aaaaaaaa', 'a1a1a1a1', 'b1b1b1b1']
+   security/acme-api/register.md: 3 finding rows
+   specifications/PRD-A-1-x/dev-workflows/feedback.md: # Feedback|- base entry|- b entry|- a entry|
+   register.json == rebuild(runs) at the replayed tip: yes
+(REPLAY_X=scoped: take the replayed version of resume.md / pr-draft.md only; everything else as without -X)
+$ python3 -I <measure-root>/replay.py <measure-root>/work/s94/seed replayed3 origin/main python3 -I <measure-root>/rebuild.py
+{"tip": "61b7ac46ef10eb58961185964b7462f117a852f1", "replayed": 1, "dropped": []}
+[exit 0]
+   specifications/PRD-A-1-x/dev-workflows/resume.md: last: a|
+   specifications/PRD-A-1-x/pr-draft.md: draft: a|
+   security/acme-api/register.json: runs ['aaaaaaaa', 'a1a1a1a1', 'b1b1b1b1']
+   security/acme-api/register.md: 3 finding rows
+   specifications/PRD-A-1-x/dev-workflows/feedback.md: # Feedback|- base entry|- b entry|- a entry|
+(REPLAY_X=scoped on the first pair, which also holds the same-named runs/ record: still refused)
+$ python3 -I <measure-root>/replay.py <measure-root>/work/s94/seed replayed1 origin/main python3 -I <measure-root>/rebuild.py
+{"refused": "conflict in security/acme-api/runs/0009-20261027T090000Z-samename.json replaying 3d32320"}
+[exit 1]
+(and without REPLAY_X: the overwritten shapes refuse the replay)
+$ python3 -I <measure-root>/replay.py <measure-root>/work/s94/seed replayed3 origin/main python3 -I <measure-root>/rebuild.py
+{"refused": "conflict in specifications/PRD-A-1-x/dev-workflows/resume.md replaying 99254b5"}
+[exit 1]

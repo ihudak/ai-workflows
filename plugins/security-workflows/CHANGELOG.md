@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.7.0] — 2026-10-28
+
+**Update `workflows-core` to 1.67.0 with this release**: its `specs-repo-git` reads the `register_rebuild` input this release's scan passes, and replays a rejected push. Fixes to-fix LC11 (live checks of 2026-10-26, run 6).
+
+### Changed
+- **A scan whose closing push is rejected because another clone pushed first settles it itself**, outside session-branch mode. Phase 0's `specs-preflight` and 7.6's `commit-artifacts` — and the one *Ending early* runs — pass `register_rebuild: ${CLAUDE_PLUGIN_ROOT}/scripts/register.py`, so `workflows-core:specs-repo-git` §4 step 6's replay takes `origin`'s commits in, rebuilds `register.json` and `register.md` from both sides' run records where both sides changed the register, keeps both sides' blocks in a unit's `_security.md` and both sides' lines in its `follow-ups.md`, and pushes, with nothing for you to run. In run 6 the run printed `pull --rebase`, the push and the `register.py rebuild` lines instead, and the only conflicts were the two register files.
+- **The renumbering a replay's rebuild makes is reported in the `Specs repo:` line**, each move `[SEC#<from>] → [SEC#<to>]` with its origin and whose number it was, and nothing more is printed for it: no record holds such a move, so the next run that records in the register reports it again, with the follow-up lines that cite the old number. The check under each move in the report's `### Register` also runs after each replay that brings `origin`'s records in, not only after each pull.
+- **The settle line follows only the *push rejected* row that advises `git pull --rebase --no-autostash`** — printed where the replay refused or could not run, so nothing moved — where the commit holds a file of the register, as before. The row no longer advises `--autostash`.
+- The command page and the security register page describe the replay, its report of the moves, and the settle line's narrower place.
+
 ## [0.6.0] — 2026-10-27
 
 Take with `workflows-core` 1.65.0, whose `implementation-format` §5 adds the left-behind case this release's change scan names (to-fix C10).

@@ -1,0 +1,322 @@
+git version 2.43.0
+
+### 4a — A: two session commits with register runs; B: one, pushed first; attributes installed; settle
+$ git -C <measure-root>/work/s4a/A push --porcelain origin main
+error: failed to push some refs to '<measure-root>/work/s4a/origin.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+To <measure-root>/work/s4a/origin.git
+!	refs/heads/main:refs/heads/main	[rejected] (fetch first)
+Done
+[exit 1]
+$ git -C <measure-root>/work/s4a/A fetch -q origin
+[exit 0]
+$ python3 -I <measure-root>/push_scope.py <measure-root>/work/s4a/A main refs/remotes/origin/main
+7f26919 PRD-A-1 Add dev-workflows session artifacts (/a1)  session
+6c73a1c PRD-A-1 Add dev-workflows session artifacts (/a2)  session
+push-scope: PASS (every commit is the run's own) -> rebase allowed
+[exit 0]
+$ git -C <measure-root>/work/s4a/A rebase origin/main
+Rebasing (1/2)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. 7f26919 (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. 7f26919 (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+Auto-merging specifications/PRD-A-1-x/implementation.md
+error: could not apply 7f26919... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 7f26919... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+STOP at 1/2 (PRD-A-1 Add dev-workflows session artifacts (/a1)) — conflicted: security/acme-api/register.json security/acme-api/register.md
+  runs/ in the worktree at the stop: 0001-20261001T000000Z-aaaaaaaa.json 0002-20261027T020000Z-a1a1a1a1.json 0002-20261027T020000Z-b1b1b1b1.json 
+  register.json at the stop holds runs: ['0001-20261001T000000Z-aaaaaaaa.json', '0002-20261027T020000Z-b1b1b1b1.json']
+$ python3 -I <measure-root>/rebuild.py <measure-root>/work/s4a/A acme-api
+{"rebuilt": "acme-api", "runs": 3, "findings": 3}
+[exit 0]
+$ git -C <measure-root>/work/s4a/A add -- security/acme-api/register.json security/acme-api/register.md
+[exit 0]
+  rebuild+add took 24 ms
+$ git -C <measure-root>/work/s4a/A rebase --continue
+[detached HEAD 39ca2d5] PRD-A-1 Add dev-workflows session artifacts (/a1)
+ 5 files changed, 22 insertions(+), 3 deletions(-)
+ create mode 100644 security/acme-api/runs/0002-20261027T020000Z-a1a1a1a1.json
+Rebasing (2/2)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. 6c73a1c (PRD-A-1 Add dev-workflows session artifacts (/a2)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. 6c73a1c (PRD-A-1 Add dev-workflows session artifacts (/a2)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+Auto-merging specifications/PRD-A-1-x/implementation.md
+error: could not apply 6c73a1c... PRD-A-1 Add dev-workflows session artifacts (/a2)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 6c73a1c... PRD-A-1 Add dev-workflows session artifacts (/a2)
+[exit 1]
+STOP at 2/2 (PRD-A-1 Add dev-workflows session artifacts (/a2)) — conflicted: security/acme-api/register.json security/acme-api/register.md
+  runs/ in the worktree at the stop: 0001-20261001T000000Z-aaaaaaaa.json 0002-20261027T020000Z-a1a1a1a1.json 0002-20261027T020000Z-b1b1b1b1.json 0003-20261027T030000Z-a2a2a2a2.json 
+  register.json at the stop holds runs: ['0001-20261001T000000Z-aaaaaaaa.json', '0002-20261027T020000Z-a1a1a1a1.json', '0002-20261027T020000Z-b1b1b1b1.json']
+$ python3 -I <measure-root>/rebuild.py <measure-root>/work/s4a/A acme-api
+{"rebuilt": "acme-api", "runs": 4, "findings": 4}
+[exit 0]
+$ git -C <measure-root>/work/s4a/A add -- security/acme-api/register.json security/acme-api/register.md
+[exit 0]
+  rebuild+add took 24 ms
+$ git -C <measure-root>/work/s4a/A rebase --continue
+[detached HEAD 956fb1d] PRD-A-1 Add dev-workflows session artifacts (/a2)
+ 5 files changed, 23 insertions(+), 3 deletions(-)
+ create mode 100644 security/acme-api/runs/0003-20261027T030000Z-a2a2a2a2.json
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+whole settle: 118 ms
+$ git -C <measure-root>/work/s4a/A log --oneline --graph
+* 956fb1d PRD-A-1 Add dev-workflows session artifacts (/a2)
+* 39ca2d5 PRD-A-1 Add dev-workflows session artifacts (/a1)
+* 7a3f78a PRD-A-1 Add dev-workflows session artifacts (/b1)
+* 6922df2 NOISSUE base
+[exit 0]
+register at HEAD == rebuild(runs at HEAD): YES
+runs at HEAD: 0001-20261001T000000Z-aaaaaaaa.json 0002-20261027T020000Z-a1a1a1a1.json 0002-20261027T020000Z-b1b1b1b1.json 0003-20261027T030000Z-a2a2a2a2.json 
+<!-- Generated by rebuild.py from runs/. Never edit it by hand. -->
+
+# Security register: acme-api
+
+Runs: 4, last at 2026-10-27T03:00:00Z
+
+| ID | Origin | Status | Title |
+|---|---|---|---|
+| [SEC#1] | scan0:p1 | open | base finding |
+| [SEC#2] | scan-a1:p1 | open | a1 finding |
+| [SEC#3] | scan-b1:p1 | open | b1 finding |
+| [SEC#4] | scan-a2:p1 | open | a2 finding |
+$ git -C <measure-root>/work/s4a/A push --porcelain origin main
+To <measure-root>/work/s4a/origin.git
+ 	refs/heads/main:refs/heads/main	7a3f78a..956fb1d
+Done
+[exit 0]
+$ git -C <measure-root>/work/s4a/A status --short
+[exit 0]
+
+### 4b — the same, but both sides also overwrote resume.md (same PRD): the decided rule aborts
+$ git -C <measure-root>/work/s4b/A rebase origin/main
+Rebasing (1/1)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. 21eb0e3 (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. 21eb0e3 (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+warning: Cannot merge binary files: specifications/PRD-A-1-x/dev-workflows/resume.md (HEAD vs. 21eb0e3 (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging specifications/PRD-A-1-x/dev-workflows/resume.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/resume.md
+Auto-merging specifications/PRD-A-1-x/implementation.md
+error: could not apply 21eb0e3... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 21eb0e3... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+STOP at 1/1 (PRD-A-1 Add dev-workflows session artifacts (/a1)) — conflicted: security/acme-api/register.json security/acme-api/register.md specifications/PRD-A-1-x/dev-workflows/resume.md
+  runs/ in the worktree at the stop: 0001-20261001T000000Z-aaaaaaaa.json 0002-20261027T020000Z-a1a1a1a1.json 0002-20261027T020000Z-b1b1b1b1.json 
+  register.json at the stop holds runs: ['0001-20261001T000000Z-aaaaaaaa.json', '0002-20261027T020000Z-b1b1b1b1.json']
+  => other conflict: abort
+$ git -C <measure-root>/work/s4b/A rebase --abort
+[exit 0]
+$ git -C <measure-root>/work/s4b/A log --oneline -3
+21eb0e3 PRD-A-1 Add dev-workflows session artifacts (/a1)
+6bbae66 NOISSUE base
+[exit 0]
+(variant: at a stop, take the run's own version of an overwritten shape — in a rebase that is --theirs)
+$ git -C <measure-root>/work/s4b/A rebase origin/main
+Rebasing (1/1)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. 21eb0e3 (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. 21eb0e3 (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+warning: Cannot merge binary files: specifications/PRD-A-1-x/dev-workflows/resume.md (HEAD vs. 21eb0e3 (PRD-A-1 Add dev-workflows session artifacts (/a1)))
+Auto-merging specifications/PRD-A-1-x/dev-workflows/resume.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/resume.md
+Auto-merging specifications/PRD-A-1-x/implementation.md
+error: could not apply 21eb0e3... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 21eb0e3... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+$ git -C <measure-root>/work/s4b/A checkout --theirs -- specifications/PRD-A-1-x/dev-workflows/resume.md
+[exit 0]
+$ git -C <measure-root>/work/s4b/A add -- specifications/PRD-A-1-x/dev-workflows/resume.md
+[exit 0]
+$ python3 -I <measure-root>/rebuild.py <measure-root>/work/s4b/A acme-api
+{"rebuilt": "acme-api", "runs": 3, "findings": 3}
+[exit 0]
+$ git -C <measure-root>/work/s4b/A add -- security/acme-api/register.json security/acme-api/register.md
+[exit 0]
+$ git -C <measure-root>/work/s4b/A rebase --continue
+[detached HEAD e0fcd65] PRD-A-1 Add dev-workflows session artifacts (/a1)
+ 6 files changed, 23 insertions(+), 4 deletions(-)
+ create mode 100644 security/acme-api/runs/0002-20261027T020000Z-a1a1a1a1.json
+[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+---- resume.md
+last: a1
+register at HEAD == rebuild(runs at HEAD): YES
+runs at HEAD: 0001-20261001T000000Z-aaaaaaaa.json 0002-20261027T020000Z-a1a1a1a1.json 0002-20261027T020000Z-b1b1b1b1.json 
+
+### 4c — runs/ itself conflicts: the same record file name with different content on both sides
+$ git -C <measure-root>/work/s4c/A rebase origin/main
+Rebasing (1/1)warning: Cannot merge binary files: security/acme-api/register.json (HEAD vs. 9088638 (NOISSUE Add dev-workflows session artifacts (/scan a)))
+Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+warning: Cannot merge binary files: security/acme-api/register.md (HEAD vs. 9088638 (NOISSUE Add dev-workflows session artifacts (/scan a)))
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+Auto-merging security/acme-api/runs/0002-20261027T020000Z-deadbeef.json
+CONFLICT (add/add): Merge conflict in security/acme-api/runs/0002-20261027T020000Z-deadbeef.json
+error: could not apply 9088638... NOISSUE Add dev-workflows session artifacts (/scan a)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 9088638... NOISSUE Add dev-workflows session artifacts (/scan a)
+[exit 1]
+$ git -C <measure-root>/work/s4c/A status --short
+UU security/acme-api/register.json
+UU security/acme-api/register.md
+AA security/acme-api/runs/0002-20261027T020000Z-deadbeef.json
+[exit 0]
+---- the conflicted record:
+{
+  "seq": 2,
+  "at": "2026-10-27T02:00:00Z",
+  "findings": [
+<<<<<<< HEAD
+    {"origin": "scan-b:p1", "title": "B finding", "status": "fixed"}
+=======
+    {"origin": "scan-a:p1", "title": "A finding", "status": "open"}
+>>>>>>> 9088638 (NOISSUE Add dev-workflows session artifacts (/scan a))
+  ]
+}
+---- what a rebuild does on it:
+json.decoder.JSONDecodeError: Expecting value: line 5 column 1 (char 62)
+[exit 1]
+$ git -C <measure-root>/work/s4c/A rebase --abort
+[exit 0]
+(same name, identical content on both sides — the realistic case, since <hash8> is the record's own sha256)
+$ git -C <measure-root>/work/s4c2/A rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+$ git -C <measure-root>/work/s4c2/A status --short
+[exit 0]
+
+### 4d — no attributes in A: register.json / register.md merge as text
+$ git -C <measure-root>/work/s4d/A rebase origin/main
+Rebasing (1/1)Auto-merging security/acme-api/register.json
+CONFLICT (content): Merge conflict in security/acme-api/register.json
+Auto-merging security/acme-api/register.md
+CONFLICT (content): Merge conflict in security/acme-api/register.md
+Auto-merging specifications/PRD-A-1-x/dev-workflows/feedback.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/dev-workflows/feedback.md
+Auto-merging specifications/PRD-A-1-x/implementation.md
+CONFLICT (content): Merge conflict in specifications/PRD-A-1-x/implementation.md
+error: could not apply 772c3a7... PRD-A-1 Add dev-workflows session artifacts (/a1)
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 772c3a7... PRD-A-1 Add dev-workflows session artifacts (/a1)
+[exit 1]
+$ git -C <measure-root>/work/s4d/A diff --name-only --diff-filter=U
+security/acme-api/register.json
+security/acme-api/register.md
+specifications/PRD-A-1-x/dev-workflows/feedback.md
+specifications/PRD-A-1-x/implementation.md
+[exit 0]
+---- register.json with markers:
+{
+  "findings": [
+    {
+      "by": "0001-20261001T000000Z-aaaaaaaa.json",
+      "id": "SEC#1",
+      "origin": "scan0:p1",
+      "status": "open",
+      "title": "base finding"
+    },
+    {
+<<<<<<< HEAD
+      "by": "0002-20261027T020000Z-b1b1b1b1.json",
+      "id": "SEC#2",
+      "origin": "scan-b1:p1",
+      "status": "open",
+      "title": "b1 finding"
+=======
+      "by": "0002-20261027T020000Z-a1a1a1a1.json",
+      "id": "SEC#2",
+      "origin": "scan-a1:p1",
+      "status": "open",
+      "title": "a1 finding"
+>>>>>>> 772c3a7 (PRD-A-1 Add dev-workflows session artifacts (/a1))
+    }
+  ],
+  "last_at": "2026-10-27T02:00:00Z",
+  "runs": [
+    "0001-20261001T000000Z-aaaaaaaa.json",
+<<<<<<< HEAD
+    "0002-20261027T020000Z-b1b1b1b1.json"
+$ git -C <measure-root>/work/s4d/A rebase --abort
+[exit 0]
+(a register change on one side far from the other's: B triages the base finding only — a decision record —, A adds a run)
+$ git -C <measure-root>/work/s4d2/A rebase origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+register at HEAD == rebuild(runs at HEAD): YES
+runs at HEAD: 0001-20261001T000000Z-aaaaaaaa.json 0002-20261002T000000Z-00000002.json 0003-20261003T000000Z-00000003.json 0004-20261004T000000Z-00000004.json 0005-20261005T000000Z-00000005.json 0006-20261006T000000Z-00000006.json 0007-20261007T000000Z-00000007.json 0008-20261008T000000Z-00000008.json 0009-20261009T000000Z-00000009.json 0010-202610010T000000Z-00000010.json 0011-202610011T000000Z-00000011.json 0012-202610012T000000Z-00000012.json 0013-20261027T130000Z-a13a13a1.json 
+
+### 4e — rebase -X theirs (keeps an overwritten shape whole with no stop): the registers too
+$ git -C <measure-root>/work/s4e/A rebase -X theirs origin/main
+Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/main.
+[exit 0]
+register at HEAD == rebuild(runs at HEAD): NO
+15a16,22
+>     },
+>     {
+>       "by": "0002-20261027T020000Z-b1b1b1b1.json",
+>       "id": "SEC#3",
+>       "origin": "scan-b1:p1",
+>       "status": "open",
+>       "title": "b1 finding"
+21c28,29
+<     "0002-20261027T020000Z-a1a1a1a1.json"
+---
+>     "0002-20261027T020000Z-a1a1a1a1.json",
+>     "0002-20261027T020000Z-b1b1b1b1.json"
+runs at HEAD: 0001-20261001T000000Z-aaaaaaaa.json 0002-20261027T020000Z-a1a1a1a1.json 0002-20261027T020000Z-b1b1b1b1.json 
+---- implementation.md (union still applies under -X theirs?)
+# Implementation record
+
+## 2026-10-01 base run
+- api: abc1234 on feat/a
+
+## 2026-10-27 b1 run
+- api: b1b1b1b1
+## 2026-10-27 a1 run
+- api: a1a1a1a1
+
+### 4f — timing: A five session commits, B one; settle (attributes installed)
+settle of 5 commits, 5 stops, 5 rebuilds: 286 ms
+register at HEAD == rebuild(runs at HEAD): YES
+runs at HEAD: 0001-20261001T000000Z-aaaaaaaa.json 0002-20261027T020000Z-a1a1a1a1.json 0002-20261027T020000Z-b1b1b1b1.json 0003-20261027T030000Z-a2a2a2a2.json 0004-20261027T040000Z-a3a3a3a3.json 0005-20261027T050000Z-a4a4a4a4.json 0006-20261027T060000Z-a5a5a5a5.json 
