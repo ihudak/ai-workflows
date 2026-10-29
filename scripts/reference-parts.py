@@ -86,8 +86,10 @@ that is neither numbered under it nor an unnumbered one deeper than its own. `pa
 text. A section held whole is declared once, its subsections with it: no other § of its entry,
 held whole or in part, is it or lies under it, and no § held in part has it under it; one § held
 in part under another is allowed. Regions never nest and never close inside a fenced block, and
-the markers take the `part` regions' exact form with `entry` for `part`. A line outside every
-region belongs to no entry file: unlike a split reference, a line needs no region. A region line
+the markers take the `part` regions' exact form with `entry` for `part`, save that an entry region
+may name several entries, space-separated, each once -- `<!-- entry: check-it make-it -->` -- and its
+lines are then in each one's file: two entry points that need one section share its region. A line
+outside every region belongs to no entry file: unlike a split reference, a line needs no region. A region line
 inside a numbered section lies inside one its entry holds whole or in part, so the line under
 the file's title names every section the file holds text of; a line before the first numbered
 heading is in no section and free. `generate` writes
@@ -112,7 +114,8 @@ FLAG line and does not fail either, since an entry-point file too holds only som
 reference's text. On an entry-point declaration it fails on a block out of place, unclosed or
 carried twice, a malformed line or marker, an entry declared twice, a partial line naming an
 undeclared entry, a section held whole declared beside one it is, lies under or has under it, a
-nested region, one closed inside a fenced block or one naming no declared entry; on an entry
+nested region, one closed inside a fenced block, one naming no declared entry or one naming an entry
+twice; on an entry
 that is no entry point of its reference; on a § no heading opens with; on a non-blank line of a
 section held whole that lies in no region of its entry; on a region line inside a numbered
 section its entry neither holds whole nor holds in part; on a phrase of a section held in part
@@ -393,9 +396,11 @@ ROOT_SENTENCE = "`${CLAUDE_PLUGIN_ROOT}` in this file is `%s`'s root, whichever 
 PART_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 DECL_OPEN = re.compile(r"^\s*<!--\s*reference-parts\b")
 ENTRY_DECL_OPEN = re.compile(r"^\s*<!--\s*reference-entry-files\b")
-# Per region word: the opening marker, the closing marker, and anything that looks like either.
-MARKERS = {w: (re.compile(r"^<!-- %s: (\S+) -->$" % w), re.compile(r"^<!-- /%s -->$" % w),
-               re.compile(r"<!--\s*/?\s*%s\b" % w)) for w in ("part", "entry")}
+# Per region word: the opening marker, the closing marker, and anything that looks like either. A part
+# region names one part; an entry region names one entry or more, space-separated.
+MARKERS = {w: (re.compile(r"^<!-- %s: (%s) -->$" % (w, names)), re.compile(r"^<!-- /%s -->$" % w),
+               re.compile(r"<!--\s*/?\s*%s\b" % w))
+           for w, names in (("part", r"\S+"), ("entry", r"\S+(?: \S+)*"))}
 SECTION = re.compile(r"^\d+(?:\.\d+)*$")
 HOLDS = re.compile(r"^holds=(\d+(?:\.\d+)*(?:,\d+(?:\.\d+)*)*)$")
 HEADING_NUMBER = re.compile(r"^(\d+(?:\.\d+)*)\.?(?=\s|$)")
@@ -560,29 +565,34 @@ def more(numbers):
 
 
 def walk_regions(src, lines, start, word, names):
-    """The body from line index `start`, as events: ("open", n, name) where `<!-- <word>: <name> -->`
-    opens a region; ("close", name, first, last) where `<!-- /<word> -->` closes it, first and last
-    being its content line numbers; ("line", n, line, the open region's name or None, whether the line
+    """The body from line index `start`, as events: ("open", n, names) where `<!-- <word>: <name> -->`
+    opens a region; ("close", names, first, last) where `<!-- /<word> -->` closes it, first and last
+    being its content line numbers; ("line", n, line, the open region's names or None, whether the line
     is fenced) for every other line; and ("halt",) after a marker error, reported on `src`, which ends
-    the walk. A region names one of `names`, never nests, and never closes inside a fenced block."""
+    the walk. `names` is a tuple: one name for a part region, one or more for an entry region. A region
+    names only members of `names`, each once, never nests, and never closes inside a fenced block."""
     opener, closer, anything = MARKERS[word]
-    fences, current = Fences(), None   # (name, the line number of its opening marker)
+    fences, current = Fences(), None   # (names, the line number of its opening marker)
     for i in range(start, len(lines)):
         n, line, s = i + 1, lines[i], lines[i].strip()
         mo, mc = opener.match(s), closer.match(s)
+        opened = tuple(mo.group(1).split(" ")) if mo else ()
         if mo and current is not None:
             src.err(n, "region '%s' opens inside region '%s' (opened at line %d) -- regions never nest"
-                    % (mo.group(1), current[0], current[1]))
-        elif mo and mo.group(1) not in names:
-            src.err(n, "region '%s' names no declared %s" % (mo.group(1), word))
+                    % (mo.group(1), " ".join(current[0]), current[1]))
+        elif mo and any(o not in names for o in opened):
+            src.err(n, "region '%s' names no declared %s" % (next(o for o in opened if o not in names), word))
+        elif mo and len(set(opened)) < len(opened):
+            src.err(n, "region names '%s' twice -- an %s region names each %s once"
+                    % (next(o for o in opened if opened.count(o) > 1), word, word))
         elif mo:
-            current = (mo.group(1), n)
+            current = (opened, n)
             yield ("open", n, current[0])
             continue
         elif mc and current is None:
             src.err(n, "<!-- /%s --> closes no open region" % word)
         elif mc and fences.open is not None:
-            src.err(n, "region '%s' closes inside a fenced block" % current[0])
+            src.err(n, "region '%s' closes inside a fenced block" % " ".join(current[0]))
         elif mc:
             yield ("close", current[0], current[1] + 1, n - 1)
             current = None
@@ -596,7 +606,7 @@ def walk_regions(src, lines, start, word, names):
         yield ("halt",)
         return
     if current is not None:
-        src.err(current[1], "region '%s' is never closed" % current[0])
+        src.err(current[1], "region '%s' is never closed" % " ".join(current[0]))
         yield ("halt",)
 
 
@@ -668,15 +678,15 @@ def parse_source(root: Path, path: Path):
             report_gap()
             continue
         if event[0] == "close":
-            _, pname, first, last = event
+            _, (pname,), first, last = event
             ref.parts[pname].regions.append((first, lines[first - 1:last]))
             continue
-        _, n, line, pname, fenced = event
-        if pname is None:
+        _, n, line, pnames, fenced = event
+        if pnames is None:
             if line.strip():
                 gap.append(n)
             continue
-        part = ref.parts[pname]
+        part = ref.parts[pnames[0]]
         if not fenced:
             h = HEADING.match(line)
             if h and h.group(2):
@@ -814,19 +824,21 @@ def parse_entry_source(root: Path, path: Path):
         return ref
 
     # The body: regions, and the numbered headings that bound each section. `body` maps the number of
-    # every line that is no marker to its text, and `owner` each region line's to its entry.
+    # every line that is no marker to its text, and `owner` each region line's to the entries its region
+    # names.
     body, owner, heads = {}, {}, []
     for event in walk_regions(ref, lines, end + 1, "entry", ref.entries):
         if event[0] == "halt":
             return ref
         if event[0] == "close":
-            _, entry, first, last = event
-            ref.entries[entry].regions.append((first, last))
-            owner.update((k, entry) for k in range(first, last + 1))
+            _, names, first, last = event
+            for entry in names:
+                ref.entries[entry].regions.append((first, last))
+            owner.update((k, names) for k in range(first, last + 1))
         elif event[0] == "line":
-            _, n, line, entry, fenced = event
+            _, n, line, names, fenced = event
             body[n] = line
-            if entry is not None:
+            if names is not None:
                 ref.flags += ["FLAG %s:%d: %s" % (rel, n, m.group(0)) for m in POSITIONAL.finditer(line)]
             h = None if fenced else HEADING.match(line)
             if h and h.group(2):
@@ -852,7 +864,7 @@ def parse_entry_source(root: Path, path: Path):
         # A section held whole: every non-blank line of it, its heading included, lies in this entry's regions.
         for sec in (s for s in decl.holds if s in extent):
             first, last = extent[sec]
-            gap = [k for k in range(first, last + 1) if body.get(k, "").strip() and owner.get(k) != entry]
+            gap = [k for k in range(first, last + 1) if body.get(k, "").strip() and entry not in owner.get(k, ())]
             if gap:
                 ref.err(gap[0], "§%s is held whole by entry '%s', but this line of it lies in no `%s` region%s"
                         % (sec, entry, entry, more(gap)))
@@ -874,7 +886,7 @@ def parse_entry_source(root: Path, path: Path):
         # while the rule itself lies outside every region.
         for sec, phrases in ((s, p) for s, p in decl.partial.items() if s in extent):
             first, last = extent[sec]
-            mine = [body[k] for k in range(first, last + 1) if owner.get(k) == entry]
+            mine = [body[k] for k in range(first, last + 1) if entry in owner.get(k, ())]
             held = norm(" ".join(mine))
             for phrase in phrases:
                 rule = RULE_PHRASE.match(norm(phrase))
@@ -1689,7 +1701,10 @@ def cmd_check_citations(root, verbose):
             here_sec = section_of.get(here)
             for r in sorted(asked):
                 inside = asked[r].get(here_sec)
-                early = [] if inside else sorted(e for e, first in first_asked[r].items() if here < first)
+                # Early only before the file's first request of any entry point of r: once one file is
+                # read, a citation is judged against the files already requested, whatever comes later.
+                early = [] if inside or any(first < here for first in first_asked[r].values()) else \
+                    sorted(first_asked[r])
                 late = [] if inside or early else sorted(e for e, first in first_asked[r].items() if first < here)
                 if not inside and not early and not late:
                     continue
@@ -2542,6 +2557,40 @@ CASES = [
         Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 1 citation(s) checked',
                                       'check-citations: PASS'], errors=0),
         Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
+    ]),
+    # entry_minimal's tree with a second entry point, make-it, holding §1 and §2: §1 lies in one region
+    # naming both entries, so each file holds it. The consumer requests check-it in Phase 0 and make-it
+    # in Phase 2, and between them cites §1, which check-it's file holds: a run has read that file by
+    # then, so the sentence is judged against it, and make-it's later request does not make it early.
+    ('entry_shared_region', 'a region naming two entries puts its lines in both files; a citation after the first '
+                            'request is judged against the files already requested', [
+        Step(['check-parts'], 0, ['FLAG plugins/workflows-core/references/gamma.md:25: below',
+                                  'FLAG plugins/workflows-core/references/gamma.md:33: above',
+                                  'check-parts: PASS -- 1 split reference(s), 2 entry file(s), 5 generated file(s) fresh'],
+             errors=0, flags=2, post=[
+            _order(G + '/gamma/make-it.md',
+                   ['# Gamma steps — entry point make-it',
+                    'This file holds entry point `make-it` of `gamma`: §1 and §2. Any other section is in the whole '
+                    'reference: `Skill(skill: "workflows-core:reference", args: "gamma")`. This file is 16 lines long.',
+                    '## 1. Hard rules', '2. `check-it` is fatal by design.', '## 2. `make-it` — the producer'],
+                   absent=['Scope: the steps', '## 3. `check-it`', '<!-- entry', '<!-- /entry']),
+            _entry_files({'gamma': {'check-it': (['1', '3'], {'4.0': ['never infer']},
+                                                 [(10, 12), (16, 19), (29, 43), (49, 51)]),
+                                    'make-it': (['1', '2'], {}, [(16, 19), (23, 25)])}})]),
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked',
+                                      'entry-point file gamma make-it: 1 request section(s), 1 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
+        Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
+    ]),
+    # entry_shared_region's tree, make-it's region naming an entry no line declares beside it.
+    ('entry_region_list_undeclared', 'a region naming several entries names only declared ones', [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:22: region 'nope' names no declared "
+                                  "entry"], errors=1),
+    ]),
+    # entry_shared_region's tree, its shared region naming make-it twice.
+    ('entry_region_names_twice', 'a region names each entry once', [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:15: region names 'make-it' twice -- "
+                                  "an entry region names each entry once"], errors=1),
     ]),
     # entry_minimal's tree, its consumer requesting nothing: no scanned file requests check-it, so the
     # out-of-file check judges nothing -- which fails, closed, as a split reference no consumer cites does.
