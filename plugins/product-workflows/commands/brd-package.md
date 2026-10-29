@@ -1766,7 +1766,7 @@ or not that line is there.
    delivery note* wrote, and `--unreviewed-prereq` every prerequisite Phase 2 did **not** find
    customer-reviewed, one it could not resolve included — the set part 8's filter names, taken from Phase 2 and never read off a record.
    It finds relation 1's lists under the sub-headings *Render the customer prompt* fixes, relation
-   2's in the manifest's `## Documents` table, and relation 3's pins in the clause *Render the
+   2's in the manifest's `## Documents` tables, and relation 3's pins in the clause *Render the
    delivery note* fixes, and it carries every narrowing §7.1 records. **That section states them per
    relation and carries no total, deliberately**, and nothing here summarises them: this pointer has
    carried a wrong total three times. Any exit other than 0 stops the run, naming its stderr — a

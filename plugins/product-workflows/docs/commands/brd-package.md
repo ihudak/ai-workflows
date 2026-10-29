@@ -441,7 +441,7 @@ attack.
   form of each relation fires on a correct bundle. The script finds each restatement by a form the
   command renders, never by reading prose: the prompt's six lists under fixed sub-headings, each
   record an item opening with its id, with an id inside an item's text read as a mention rather than
-  a member; the manifest's `## Documents` table; and one clause per repository in the note, which
+  a member; the manifest's `## Documents` tables; and one clause per repository in the note, which
   lets it pair each repository with its own commit and so catch a swapped pair. A prompt or manifest
   missing one of those forms stops the run. A mismatch stops with `BRD_PACKAGE_SET_MISMATCH`; an
   empty source side with `BRD_PACKAGE_SET_UNREADABLE`; and a note's commit abbreviated so far that

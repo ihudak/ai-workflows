@@ -33,7 +33,7 @@ Relation 1 reads six lists of the prompt <KEY>-customer-review-prompt-<DATE>.md 
 sub-headings /brd-package renders (REGIONS), each member an id opening an item, and compares each
 with the records of <KEY>-decisions.md or <KEY>-code-defect-log.md its filter selects by their own
 fields, --unreviewed-prereq naming the prerequisites part 8's filter reads. Relation 2 compares the
-manifest's '## Documents' table with the bundle's markdown files. Relation 3 pairs the note's
+manifest's '## Documents' tables with the bundle's markdown files. Relation 3 pairs the note's
 "the `<repo>` repository at commit `<commit>`" clauses, and tests its other commit words, against
 <KEY>-baselines.md. A restatement over a source that yields nothing is unreadable; a commit that
 prefixes two different baseline commits is ambiguous. A prompt missing a part or a sub-heading, or a
