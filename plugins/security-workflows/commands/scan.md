@@ -60,9 +60,9 @@ created or copied files into, is deleted. A folder a record names is never delet
 found in place and copied nothing into stays as it was found (Phase 4 step 2). A stop on a run that scanned, once Phase 3 step 3 has found the report directory
 and before 7.2 has written the run's record, names that `CLAUDE-SECURITY-…` directory — on
 `--verify-fixes`, the copy 7.4 makes of it out of the worktree — and the line that records it without
-scanning again, `/security-workflows:scan <KEY | @<path> | repo-path> --import <report dir>`. Its address is the
-`@<path>` as typed where the run was given one — the key may match more than one folder — else the
-run's `<KEY>` where the run's role is `dev`, and its `<repo root>` where the role is `sec`, whatever
+scanning again, `/security-workflows:scan <KEY | @<path> | repo-path> --import <report dir>`. Its address, where the
+run's role is `dev`, is the `@<path>` as typed where the run was given one — the key may match more
+than one folder — else its `<KEY>`; where the role is `sec`, it is the run's `<repo root>`, whatever
 address the run was given: an `--import` with a key is a `dev` run (Phase 0 step 2), so only the path
 keeps a `sec` run's role.
 
