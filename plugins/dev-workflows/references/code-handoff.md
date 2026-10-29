@@ -387,7 +387,7 @@ It prints one tree id. Record it as `pre_edit_tree` and pass the same value on e
 
 ### 6.2 The revert — the agent's
 
-Wherever the agent's own text says to revert, run this script once, with `bash`, after replacing its two values: `<repo>` with the request's `repo:`, the repository's top level, and `<pre_edit_tree>` with its `pre_edit_tree:`. Where your session names a scratchpad directory, also put `TMPDIR='<that directory>'` before the script's one `mktemp`, so its index copy lands there.
+Wherever the agent's own text says to revert, run this script once, with `bash`, after replacing its two values: `<repo>` with the request's `repo:`, the repository's top level, and `<pre_edit_tree>` with its `pre_edit_tree:`. Where your session names a scratchpad directory that exists, also write the script's `i=$(command mktemp -t dw-index-XXXXXX)` as `i=$(TMPDIR='<that directory>' command mktemp -t dw-index-XXXXXX)`, so its index copy lands there — the assignment goes before `command`, never between `command` and `mktemp`, where the shell reads it as a program name and the revert fails.
 
     repo='<repo>' pre='<pre_edit_tree>'
     fail() { printf 'REVERT-FAILED: %s\n' "$*"; }

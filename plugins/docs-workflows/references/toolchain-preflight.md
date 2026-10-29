@@ -87,7 +87,7 @@ de-duplicate by binary name.
    - **It sets one:** `(builtin cd "<that directory>" >/dev/null && unset VALE_CONFIG_PATH && command vale --no-global <arguments>)`.
    - **It sets none:** `(builtin cd "<that directory>" >/dev/null && unset VALE_CONFIG_PATH && h=$(command mktemp -d) && { XDG_CONFIG_HOME="$h" command vale <arguments>; s=$?; command rm -r -- "$h"; exit $s; })`,
      which removes the directory it made and exits with Vale's own status; its `mktemp -d` runs with
-     `TMPDIR` set to the session's scratchpad directory where the session names one.
+     `TMPDIR` set to the session's scratchpad directory where the session names one that exists.
 
    Every part is there for a reason (Vale 3.21, measured, and read from its source). Vale merges
    the user's global configuration file — `~/.config/vale/.vale.ini` on Linux, wherever
