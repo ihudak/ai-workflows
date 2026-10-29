@@ -635,7 +635,7 @@ Asked here, the operator either continues the open work on its own branch, which
 
 **Stop**: `Branch check: stopped — <branch> holds open work under <root>, which this run's handoff would switch onto: merge its pull request, or close it and delete <branch> from this clone and from origin, then re-run.`
 
-### 6.3 What it returns, and the caller that reads a stop without stopping
+### 6.3 What it returns, and the callers that read a stop without stopping
 
     stopped: true | false
     finding: <the stop's text, or null>
@@ -643,5 +643,5 @@ Asked here, the operator either continues the open work on its own branch, which
 
 **A stop ends the run before its work**, as a refusal: nothing of the run's own is written, and its emitter tail runs as `specs-repo-git.md` §4's *A run that refuses before it has written anything* settles it.
 
-**`/dev-workflows:ready` is the one caller that reads a stop of §6.1 without stopping.** It is a read-only verifier whose function is to report, so it records the stop's finding in its report, capping its verdict as it does on a stopping row of `require-on-main`, and goes on reading the checkout it stands on, which its Phase 0 lets the operator proceed on. §6.2's question, and a stop §6.2 makes, end or switch its run as they do any producer's. No other caller reads a stop without stopping, and a caller that would adds itself here first.
+**Two callers read a stop of §6.1 without stopping.** `/dev-workflows:ready` is a read-only verifier whose function is to report, so it records the stop's finding in its report, capping its verdict as it does on a stopping row of `require-on-main`, and goes on reading the checkout it stands on, which its Phase 0 lets the operator proceed on; §6.2's question, and a stop §6.2 makes, end or switch its run as they do any producer's. `/product-workflows:brd-reconcile`'s cross-BRD write guard runs this on a dependent BRD's folder, under a root other than the run's, before writing into it, and treats a stop as it treats a stopping row of `require-on-main` there: it records the write it meant to make, leaves the file as it was, and goes on, since a dependent's state must not stall the reconciliation its own positions rest on. No other caller reads a stop without stopping, and a caller that would adds itself here first.
 <!-- /entry -->

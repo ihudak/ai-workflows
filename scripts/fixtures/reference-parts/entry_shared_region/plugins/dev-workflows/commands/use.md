@@ -29,3 +29,5 @@ pickers*.
 
 Hand the deliverable off: execute `make-it` with
 `Skill(skill: "workflows-core:reference", args: "gamma make-it")`.
+
+It gates nothing here, which `workflows-core:gamma` §3 leaves to Phase 0.

@@ -51,6 +51,8 @@ Usage: `/conformance <EPIC-KEY | PRD-KEY | @<path>> [--skip-costs] [--skip-feedb
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, once the run key set is fixed (`workflows-core:specs-repo-git` §3.2: the resolved `key`, and on an Epic-level folder its parent PRD's key too), before step 3 places the folder. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. If it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: conformance`; a stop it makes ends the run here.
+
 3. **Place the folder — by its prefix, never by the kind it asserts** (`workflows-core:addressing` §4.1), container test first:
    - **A BRD container** — a `BRD-` folder, or one with no prefix holding `coverage-ledger.md` or `brd/brd-inventory.md` and no `brd-link.md` naming a `parent:` — is checked through its slices. Stop before reading anything else:
      `CONFORMANCE_BRD_NOT_SLICED: <KEY> is a BRD container, and conformance is checked on a PRD- slice or an Epic — run '/dev-workflows:conformance <SLICE-KEY>' for each slice: <slice keys>.`

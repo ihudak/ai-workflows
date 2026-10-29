@@ -218,6 +218,8 @@ and nothing downstream can tell the difference afterwards.
 
     Stop:
     `BRD_INTERVIEW_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Interviewing settles a BRD slice's requirements into a decision register the customer reviews, and this folder has no coverage ledger, no requirement inventory and no customer BRD to decide against. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>', its handoff merged, where the folder holds no prd.md yet — each gates prd.md with require-on-main); each reads this folder's grounding/ findings wherever /product-workflows:prd-ground wrote them, and marks the ones it drew on. Re-running this command on this folder stops here again, whatever grounding it holds.`
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
+
 6. **Gate the grounding deliverable on main.** This command **consumes** a `$SPECS_PATH` deliverable
    it did not write, so per `workflows-core:phase-handoff` §5 rule 2 it executes
    `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before anything else reads a file. Execute it against the resolved

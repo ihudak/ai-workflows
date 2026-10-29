@@ -252,6 +252,8 @@ behaviour, not the behaviour.
       clause: that command accepts the folder (its Phase 0 steps 5a and 5b refuse only a container and
       an Epic folder) and writes the `prd.md` whose `kind: prd` sets `route: idea` here on the re-run,
       which is what `PRD_GROUND_NEEDS_PRD` names for a `PRD-` folder in the same state.
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd` on `route: brd` and `prefix: prd` on the idea route, the prefix its handoff names; a stop it makes ends the run here.
+
 6. **On `route: brd`, gate this BRD's own inventory and ledger on main.** (The idea route's own
    gate is step 6i, immediately below — this whole step is the `route: brd` branch, unchanged.)
    **The two gates below resolve in a fixed order: the ledger's first, the inventory's second.**

@@ -94,6 +94,8 @@ name the same way (into run-state `specs_merged_branch` at Phase 1.4): Phase 7's
 reads it there, since a pointer item waiting on that branch's merge is settled by it, and B2 may
 have deleted the only ref that showed it.
 
+**Check the branch the run stands on.** On a keyed run, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with no `prefix`: this command's own handoff is conditional, and onto prefixes it does not own. A stop it makes ends the run here. A direct run resolves no folder, and skips this.
+
 **Epic-unit resolution (keyed runs).** `/implement` implements one Epic at a time. When
 `mode: keyed`, place the resolved folder as `workflows-core:addressing` §4.1 does — by its prefix,
 never by the kind it asserts, which on a BRD-route slice is `brd` — taking its container test first.

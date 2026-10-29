@@ -230,6 +230,8 @@ command, it consumes no prior phase's deliverable, so it runs no `require-on-mai
 cwd-agnostic and needs no repos mounted (no `$REPOS_PATH`); grounding against code and design is
 `/prd-ground`'s job, not this one's.
 
+**Check the branch the run stands on.** Where step 7 found the folder, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: brd`; a stop it makes ends the run here. A folder this run derives has nothing on any branch to compare.
+
 ---
 
 ## Phase 1 — Confirm
@@ -489,8 +491,8 @@ is what every later mention of *Phase 2's capture order* means.
   command says a file was copied: the link log below, every later phase that says
   "Phase 2 copied", and Phase 7's `deliverable_paths`, which must declare it. An earlier intake
   that stopped before its handoff, or declined it, left that file uncommitted, and nothing else in
-  this plugin ever stages it; a declared file already committed unchanged costs nothing
-  (`workflows-core:phase-handoff` §2.3 step 4).
+  this plugin ever stages it; a declared file already committed unchanged costs nothing, since the
+  handoff accounts for such a file as already on its branch.
 
 Copy each file **byte-for-byte, whatever its type** — an image, a PDF, a spreadsheet — never opened
 as text, never re-encoded, never resized. Phase 0 step 3's markdown-only rule is about the *document*

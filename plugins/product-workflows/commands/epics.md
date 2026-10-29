@@ -166,6 +166,8 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
      must be re-taken, and a `rejected` row must be re-cited against its `[DEF#n]`. Name those
      decisions — saying only that the dispositions are replaced is not the disclosure.
 
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: epics`; a stop it makes ends the run here.
+
 1b. **`/epics` accepts exactly two shapes, and the gate is the artifact's own `kind:`.** A `PRD-`
    folder holding its `prd.md` is partitioned into Epics; an `EPIC-` folder **that holds its `epic.md`
    and has a PRD above it** is re-refined. Everything else is refused — among it an `EPIC-` folder

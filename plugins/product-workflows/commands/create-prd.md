@@ -106,6 +106,8 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
     guard in both `commit-artifacts` and `handoff-to-main` was inert here and a detached-HEAD specs
     repo would take this command's commits to an unreachable place and report success.
 
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: prd`; a stop it makes ends the run here.
+
 3. **Resolve `idea.md` (ladder — stop at first hit). Skipped entirely on the BRD route**, where
    the register (`decisions.md`) is the seed and there is no `idea.md` to find: rung 1 would return `absent` on a
    BRD folder that never held one, and rung 3 would then offer an idea from some other

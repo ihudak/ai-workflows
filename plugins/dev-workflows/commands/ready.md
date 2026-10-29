@@ -145,6 +145,8 @@ step skips on it.
      included, so a checkout whose only changes are those paths passes it.
    - Clean `main`/`master` → proceed silently.
 
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the folder step 1 resolved, with `prefix: ready`. **A stop of its §6.1 does not end this run** (§6.3): record its finding in the report as a readiness finding, capping the verdict at `PARTIAL` as a stopping row of Phase 1's gate does, and go on reading the checkout step 3 settled. A stop of its §6.2 ends the run here, as it ends any producer's.
+
 4. **Map onto the specs repo (PRD dir + optional Epic subdir).** Resolve the PRD dir with
    `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level §3 bounds and carries §5's legacy fallback; `status: absent` means none exists, and

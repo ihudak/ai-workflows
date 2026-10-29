@@ -176,6 +176,8 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    `key`, subject to step 5's `<remedy>` table applied to *that* folder; anywhere else, name no
    parent and say so. It is a user halt, so `emit-block` does not fire.
 
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: prd`; a stop it makes ends the run here.
+
 5. **Gate `prd.md` on main.** Execute `require-on-main`
    (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against the
    PRD file in the resolved folder, `prd.md`. **There is no filename fallback**: `workflows-core:addressing`

@@ -159,6 +159,8 @@ four-resolution one.
    walk itself needs — the defect log a `rejected: [DEF#n]` cites — resolves in the parent's log in
    `allocate-only` mode, and that lookup is exactly one hop because the cap makes a slice's parent
    always the source-owning root (`brd-format.md` §4). Phase 4 states it where it is used.
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
+
 6. **Gate the grounding deliverable on main.** **This step and step 7 run in `split_mode: allocate-only` only.** A root BRD is never ground — grounding happens at a `PRD-` folder (on this route a slice), and the customer interview at the slice and nowhere else — so on a `full` run there is no grounding to gate and both steps are skipped entirely. There is no `coverage-ledger.md` gate to keep: step 8 reads that ledger in both modes with a plain worktree read, never a `require-on-main` gate, which is why the handoff contract classes it — and `brd/brd-inventory.md` beside it — **advisory** at a root. `/brd-split` **consumes** a `$SPECS_PATH`
    deliverable it did not write (`/prd-ground`'s findings, and — transitively — `/brd-intake`'s
    ledger), so per `workflows-core:phase-handoff` §5 rule 2 it executes `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here in Phase 0,

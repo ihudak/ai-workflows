@@ -205,7 +205,9 @@ the file, before the request or after it, and reads the whole reference for any 
 sentence of that section citing <ref> -- a `workflows-core:<ref>` token, a loader call or a path -- or
 carrying a § reference that belongs to a citation of <ref>, by the rule above, is judged by its own
 numbered § references of <ref>. Each passes where it lies under a § the entry holds whole, or is a §
-held in part and the sentence holds one of that section's phrases, each normalised as a rule name is;
+held in part and the sentence holds one of that section's phrases, each normalised as a rule name is --
+the entry being the section's own, or one the file requested in an earlier section, whose file is in
+the conversation by then;
 any other fails, `ERROR <file>:<line>: cites workflows-core:<ref> §<n>, which the <entry> file does not
 hold, in a section that reads only that file -- ...`. A sentence citing <ref> by no § reference of it,
 with no request of the entry point among its calls, cites no section and fails the same way, `with no
@@ -1767,7 +1769,10 @@ def cmd_check_citations(root, verbose):
                             numbers.append((offset, num.group(1)))
                     if not ours and not numbers:
                         continue
-                    holders = inside or late
+                    # Inside a requesting section the files of entry points requested in an earlier
+                    # section are in the conversation too, and serve a citation of what they hold.
+                    holders = sorted(set(inside) | {e for e, first in first_asked[r].items()
+                                                    if here_sec is not None and first < here_sec}) if inside else late
                     for e in holders:
                         entry_census[(r, e)][1] += 1
                     if whole and inside:
@@ -2643,6 +2648,8 @@ CASES = [
     # naming both entries, so each file holds it. The consumer requests check-it in Phase 0 and make-it
     # in Phase 2, and between them cites §1, which check-it's file holds: a run has read that file by
     # then, so the sentence is judged against it, and make-it's later request does not make it early.
+    # Phase 2 also cites §3, which only check-it's file holds: read in Phase 0, it serves the citation
+    # inside a section requesting make-it too.
     ('entry_shared_region', 'a region naming two entries puts its lines in both files; a citation after the first '
                             'request is judged against the files already requested', [
         Step(['check-parts'], 0, ['FLAG plugins/workflows-core/references/gamma.md:25: below',
@@ -2658,8 +2665,8 @@ CASES = [
             _entry_files({'gamma': {'check-it': (['1', '3'], {'4.0': ['never infer']},
                                                  [(10, 12), (16, 19), (29, 43), (49, 51)]),
                                     'make-it': (['1', '2'], {}, [(16, 19), (23, 25)])}})]),
-        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked',
-                                      'entry-point file gamma make-it: 1 request section(s), 1 citation(s) checked',
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 4 citation(s) checked',
+                                      'entry-point file gamma make-it: 1 request section(s), 2 citation(s) checked',
                                       'check-citations: PASS'], errors=0),
         Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
     ]),

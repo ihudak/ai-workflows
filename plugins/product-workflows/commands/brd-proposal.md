@@ -159,6 +159,8 @@ not work: a flag is a token, so `--redo` would arrive as the address.
    Where both lines are absent, say so rather than inventing a key. It is a user halt, so
    `emit-block` does not fire.
 
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
+
 5. **Note whether this run is a revision**, last: whether `proposal.md` already exists in the
    resolved folder. Where it does, Phase 6 treats it as the anchor (§8) unless `--redo` was given,
    Phase 8 archives it (§2), and §4's section 23 renders (§12). **A `proposal-brief.md` standing

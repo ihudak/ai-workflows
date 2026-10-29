@@ -141,6 +141,8 @@ retry an artifact commit that failed to push, and settle the branch. Prompt-free
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
+**Check the branch the run stands on.** Where step 1 found the folder, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: idea`; a stop it makes ends the run here. A folder this run is about to create has nothing on any branch to compare.
+
 ---
 
 ## Phase 1 — Classify the source
@@ -609,18 +611,18 @@ a hub note leaves dozens of dirty OTHER paths. Four routes reach that state, and
 is a decline: Phase 5's `status: refined` branch offers the handoff and the operator may decline it;
 its `status: draft` branch **never offers one at all** — so a draft run leaves the whole set
 dirty by construction rather than by a choice; a `status: refined` run whose handoff was
-**taken** and whose `workflows-core:phase-handoff` §2.1 gate then refused it committed nothing
-either, which is the *Gate failed* line §4.1 emits and which Phase 5 already names beside a decline;
-and one whose handoff was **taken** and whose §2.4 commit git then refused — a hook's rejection, a
-signature it cannot make — committed nothing too, and leaves the set staged on the branch §2.2 cut,
-which is the *Commit failed* line §4.1 emits and which Phase 5 names beside the other two. The third one is reachable rather than theoretical:
-§2.1 fails on path, repo or permission grounds
+**taken** and whose handoff gate then refused it committed nothing
+either, which is the handoff's *Gate failed* outcome line and which Phase 5 already names beside a decline;
+and one whose handoff was **taken** and whose handoff commit git then refused — a hook's rejection, a
+signature it cannot make — committed nothing too, and leaves the set staged on the branch the handoff cut,
+which is the handoff's *Commit failed* outcome line and which Phase 5 names beside the other two. The third one is reachable rather than theoretical:
+the handoff gate fails on path, repo or permission grounds
 **or** on either run-wide flag it names — `specs_git: blocked`, which Phase 0 carries for the whole
 run whenever its own preflight returns `workflows-core:specs-repo-git` §3.3's G0, and
 `specs_git: misrooted`, which it carries whenever that preflight's §3.1 notice set it. The fourth
-needs only a specs repository whose `pre-commit` hook refuses the commit, a markdown linter for one. The other non-landing §4.1 rows are not
-further routes — *No remote*, *Push failed* and *Push refused for access* all committed on a branch first (§2.4 runs before
-§2.5), and *Nothing to commit* changed nothing.
+needs only a specs repository whose `pre-commit` hook refuses the commit, a markdown linter for one. The handoff's other non-landing outcome lines are not
+further routes — *No remote*, *Push failed* and *Push refused for access* all committed on a branch first (the handoff commits
+before it pushes), and *Nothing to commit* changed nothing.
 
 On the next run of any command sharing that repo, §3.3's **G1** matches. Its consequences are three, not
 one: the preflight **ends** there, at advisory severity, listing the paths — no commit, no branch switch,
