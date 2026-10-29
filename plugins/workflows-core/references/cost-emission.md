@@ -387,6 +387,7 @@ Fixed per-command labels, with nine inferred exceptions:
 | Command | phase | role |
 |---------|-------|------|
 | `/specify` | specification | pe |
+| `/update-spec` | specification | pe |
 | `/epics` | epic-refinement | pe |
 | `/design` | planning | dev |
 | `/implement` | implementation | dev |

@@ -1,10 +1,10 @@
 # Session cost
 
-Cost attribution is one of the subsystems the companion `workflows-core` plugin holds: its `cost-emission` reference and the price table beside it are what every plugin in the family reads, and its `session-cost.py` script does the arithmetic. This page documents the subsystem from the side that invokes it — what a command here declares, and what each of the fourteen cost-emitting commands *in this plugin* charges to.
+Cost attribution is one of the subsystems the companion `workflows-core` plugin holds: its `cost-emission` reference and the price table beside it are what every plugin in the family reads, and its `session-cost.py` script does the arithmetic. This page documents the subsystem from the side that invokes it — what a command here declares, and what each of the fifteen cost-emitting commands *in this plugin* charges to.
 
 ## What a command declares
 
-Every cost-emitting command passes a `phase` and a `role` label at the point it calls the shared entry point, and `workflows-core:cost-emission` §7 carries one attribution row per command. Fourteen commands emit a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)) — every command in this plugin but `/harvest-decisions` and `/promote-decisions`, which work on the team architecture knowledge base rather than advance a PRD- or BRD-scoped artifact (`workflows-core:cost-emission` §7) — and all with a fixed pair rather than an inferred one:
+Every cost-emitting command passes a `phase` and a `role` label at the point it calls the shared entry point, and `workflows-core:cost-emission` §7 carries one attribution row per command. Fifteen commands emit a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)) — every command in this plugin but `/harvest-decisions` and `/promote-decisions`, which work on the team architecture knowledge base rather than advance a PRD- or BRD-scoped artifact (`workflows-core:cost-emission` §7) — and all with a fixed pair rather than an inferred one:
 
 | Command(s) | Phase | Role |
 |---|---|---|
@@ -14,7 +14,7 @@ Every cost-emitting command passes a `phase` and a `role` label at the point it 
 | `/prd-ground` | `brd-to-prd` | `pm` |
 | `/create-ard` | `architecture` | `pa` |
 | `/epics` | `epic-refinement` | `pe` |
-| `/specify` | `specification` | `pe` |
+| `/specify`, `/update-spec` | `specification` | `pe` |
 | `/prd-proposal`, `/brd-proposal` | `proposal` | `pm` |
 
 `brd-to-prd` is one role's phase: every command of the BRD-to-PRD route runs as PM, `/prd-ground` included — whoever runs it, a PA or PE among them where the PM cannot clone the code. An entry written before product-workflows 3.31.0 reads `pa` and stays as recorded. [Roles and phases](../roles-and-phases.md) defines what each phase means and what a run in it is accountable for; this page states only what each command passes.

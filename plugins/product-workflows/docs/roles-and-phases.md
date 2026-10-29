@@ -35,11 +35,11 @@ The companion `dev-workflows` plugin's `/dev-workflows:ready` is the one caller 
 ## PE — product engineering
 
 - **Owns:** breaking a PRD into Epics, and writing an org-standard specification for one item — an Epic, or, for a small PRD, the whole PRD.
-- **Runs:** `/epics`, `/specify`, and, once every Epic has merged, `/dev-workflows:conformance <PRD-KEY>`, which closes the implementation phase those two opened — a `dev-workflows` command, so a PE installs that plugin too; and `/prd-ground`, a PM command, where the PM cannot clone the code repositories — the PE has them cloned, and with fewer PAs than PEs on most teams, a PE is often the one at hand (see PM above).
+- **Runs:** `/epics`, `/specify`, `/update-spec` — which revises a merged specification in place, keeping its IDs — and, once every Epic has merged, `/dev-workflows:conformance <PRD-KEY>`, which closes the implementation phase those two opened — a `dev-workflows` command, so a PE installs that plugin too; and `/prd-ground`, a PM command, where the PM cannot clone the code repositories — the PE has them cloned, and with fewer PAs than PEs on most teams, a PE is often the one at hand (see PM above).
 - **Consumes:** the PRD, plus the ARD when one exists and any Epics already drafted.
 - **Produces:** one `EPIC-<PRD-KEY>-NN-<eslug>/epic.md` per Epic under the PRD folder, plus a PRD-holistic `_coverage.md` beside `prd.md`, landed on the specs repo's default branch; `specification.md`, landed the same way; and, from `/dev-workflows:conformance` on the PRD, `_conformance.md` with the PE's final decision on every discrepancy, the Dev's proposals included.
 - **Hands over at the seam:** `/specify` gates on the PRD the same way `/create-ard` does — an absent PRD falls back to the resolved folder, and is reported rather than silent, and the hard stop is an unmerged PRD, never a missing one. `/epics` has no PRD gate at all, but it does gate two other inputs: an optional PRD-level `specification.md`, whose absence is a silent skip (`vi_spec_present: false`) — save on a multi-component PRD, where `/epics` asks for it — and the applicable ARD, where `status: unmerged` stops the run. `/epics` lands its Epic drafts on an `epics/` branch with a pull request, and `/specify` — like `/create-ard` at Epic altitude — stops while an Epic it reads sits there unmerged; an Epic on no branch is read from the folder as it stands, and reported. `/specify` lands `specification.md` onto the specs repo's default branch, and the companion plugin's `/dev-workflows:design` refuses to start until it finds that specification there.
-- **Cost phase(s):** `epic-refinement` (`/epics`), `specification` (`/specify`) and `conformance` (`/dev-workflows:conformance` on a PRD) — all role `pe`.
+- **Cost phase(s):** `epic-refinement` (`/epics`), `specification` (`/specify`, `/update-spec`) and `conformance` (`/dev-workflows:conformance` on a PRD) — all role `pe`.
 
 ## Where Dev picks up
 
@@ -47,7 +47,7 @@ This plugin's spine ends at `specification.md`, landed on the specs repo's defau
 
 ## Cost-attribution phases
 
-Every cost-emitting command tags its cost line with a `phase` and a `role`. Seven phases are reached by this plugin's fourteen cost-emitting commands; each entry below names the command that emits it and what being in that phase means. Eight more lifecycle phases exist for the companion `dev-workflows`, `docs-workflows` and `security-workflows` plugins' own commands — four, three and one respectively — and are documented on those plugins' own pages, not restated here; `workflows-core:cost-emission` §7 is the table that fixes every command's pair. Each of the seven below can also be reached **by inheritance**: the companion `workflows-core` plugin's `/workflows-core:prompt`, `/workflows-core:feedback`, `/workflows-core:prompt-brainstorm` and `/workflows-core:prompt-grill-me` adopt the phase and role of whatever they are correcting, so a correction to a `/specify` output is a second entry in `specification`.
+Every cost-emitting command tags its cost line with a `phase` and a `role`. Seven phases are reached by this plugin's fifteen cost-emitting commands; each entry below names the command that emits it and what being in that phase means. Eight more lifecycle phases exist for the companion `dev-workflows`, `docs-workflows` and `security-workflows` plugins' own commands — four, three and one respectively — and are documented on those plugins' own pages, not restated here; `workflows-core:cost-emission` §7 is the table that fixes every command's pair. Each of the seven below can also be reached **by inheritance**: the companion `workflows-core` plugin's `/workflows-core:prompt`, `/workflows-core:feedback`, `/workflows-core:prompt-brainstorm` and `/workflows-core:prompt-grill-me` adopt the phase and role of whatever they are correcting, so a correction to a `/specify` output is a second entry in `specification`.
 
 ### prd-creation
 
@@ -67,7 +67,7 @@ Emitted by `/create-ard`, role `pa`. Being in this phase means architecture deci
 
 ### specification
 
-Emitted by `/specify`, role `pe`. Being in this phase means an org-standard `specification.md` is being authored for one item, lightly grounded in code.
+Emitted by `/specify` and `/update-spec`, role `pe`. Being in this phase means an org-standard `specification.md` is being authored for one item, lightly grounded in code, or a merged one revised in place.
 
 ### proposal
 

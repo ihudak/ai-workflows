@@ -14,7 +14,7 @@ Opus-gated quality gates, plus the verifier that re-derives evidence rather than
 | `grounding-verifier` | opus | Read, Glob, Grep, Bash, Skill | Re-derives `[CG#n]`/`[DG#n]` findings in batches, first blind (`mode: derive`, never handed the answer), then against the original (`mode: compare`); agree / extend / contradict / unprovable. | `/prd-ground` |
 | `prd-reviewer` | opus | Read, Glob, Grep, Skill | Reviews a Product Requirements Document for goal crispness, testable stories/criteria, internal consistency, measurable metrics, and product-level purity (no implementation detail). | `/create-prd`, `/update-prd` |
 | `proposal-reviewer` | opus | Read, Glob, Grep, Skill | Attacks an effort proposal before a customer sees it — re-adds the hours, resolves driver citations, checks the tier and brief against the evidence; returns PASS / PASS WITH RECOMMENDATIONS / BLOCK. | `/prd-proposal`, `/brd-proposal` |
-| `spec-reviewer` | opus | Read, Glob, Grep | Reviews a specification for per-stage quality, cross-stage consistency, coverage, and identifier integrity. | `/specify` |
+| `spec-reviewer` | opus | Read, Glob, Grep | Reviews a specification for per-stage quality, cross-stage consistency, coverage, and identifier integrity — and, for a revision, the change against its base. | `/specify`, `/update-spec` |
 
 ## Readers and scanners
 
@@ -37,7 +37,7 @@ Produce artifact content from a structured handoff. Does not run git.
 |---|---|---|---|---|
 | `epic-writer` | per routing | Read, Glob, Grep, Write, Edit, Skill | Writes one file per child Epic from a structured handoff, traceable to the PRD it partitions and `code-scanner` evidence; write-only, never commits. | `/epics` |
 
-Every one of the 14 agents above is dispatched by at least one command. There is no maintenance section here: `workflows-core:impl-maintenance`, dispatched by 15 of the 16 commands (every one but `/harvest-decisions`), ships in `workflows-core`. `workflows-core:docs-grounder`, `workflows-core:architecture-grounder`, `workflows-core:promotion-scout` and `workflows-core:adr-drafter` are the agents no command here dispatches by writing a `subagent_type:` inline — their callers invoke a named procedure defined in each one's governing reference file instead.
+Every one of the 14 agents above is dispatched by at least one command. There is no maintenance section here: `workflows-core:impl-maintenance`, dispatched by 16 of the 17 commands (every one but `/harvest-decisions`), ships in `workflows-core`. `workflows-core:docs-grounder`, `workflows-core:architecture-grounder`, `workflows-core:promotion-scout` and `workflows-core:adr-drafter` are the agents no command here dispatches by writing a `subagent_type:` inline — their callers invoke a named procedure defined in each one's governing reference file instead.
 
 ## What every agent does with what it reads
 

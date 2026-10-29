@@ -52,6 +52,7 @@ flowchart TD
     subgraph PE["PE — breakdown and specification"]
         epics["/epics"]:::prod
         specify["/specify"]:::prod
+        updatespec["/update-spec"]:::prod
         conformanceprd["/dev-workflows:conformance (PRD)"]:::dev
     end
     subgraph DEV["Dev — build and verify"]
@@ -107,7 +108,9 @@ flowchart TD
     groundprd -.->|"findings"| specify
     createprd -.->|"existing prd.md — revise"| updateprd
     updateprd -.->|"updated prd.md — existing ARD"| createard
-    updateprd -.->|"updated prd.md — existing specification"| specify
+    updateprd -.->|"updated prd.md — existing specification"| updatespec
+    specify -.->|"merged specification.md — revise in place"| updatespec
+    updatespec -->|"revised specification.md — IDs kept"| design
     updateprd -.->|"updated prd.md — existing Epics"| epics
     updateprd -.->|"updated prd.md — existing release note"| rnearly
     createprd -->|"prd.md"| createard
@@ -135,7 +138,7 @@ flowchart TD
     implement -->|"Epic: the Dev, before its pull request merges"| conformanceepic
     conformanceepic -.->|"fix the code — a follow-up"| implement
     conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd
-    conformanceprd -.->|"PRD: the PE, every Epic merged — amend the document"| specify
+    conformanceprd -.->|"PRD: the PE, every Epic merged — amend the document"| updatespec
     conformanceprd -.->|"amend the PRD"| updateprd
     implement -.->|"implementation.md — diff grounding on"| rnfinal
     conformanceepic -.->|"action: then the security scan, still before the merge"| secscan
@@ -176,7 +179,7 @@ flowchart TD
 - **Solid arrows carry the main inputs**, to commands or to manual work. **Dashed arrows** carry optional inputs, conditional reruns, advice (`/ready`'s verdict), or explicit `action:` / `call:` labels. An artifact edge is not an automatic invocation. Whether a command also waits for its input to be merged is a per-command gate, described on its own page.
 - **`/prd-ground` is one command drawn separately for each route**, not a missing `/brd-ground`. A root BRD is split first, then each slice is grounded before its allocation walk and interview. An idea-route PRD may be grounded but never enters `/brd-split`. BRD authoring also reads the slice's findings after the decision handoff; those extra input edges are omitted here.
 - **The BRD route joins the PRD ladder at the slice folder**, not at an `idea.md`. The three authoring commands are alternatives, not a sequence, and each gates the slice's `decisions.md`. `/brd-reconcile` offers them once the customer's answers are frozen. `/brd-interview` offers them directly when every question was settled from the findings, so the slice needs no customer review — `/create-prd` there, as after a reconciliation, only where a row the slice claims is `covered-here`.
-- **`/update-prd` offers reruns for existing downstream artifacts** — architecture, specification, Epics and release notes — and recommends a rerun when the update invalidates one. These edges do not require creating artifacts that do not yet exist. The specification-to-Epics edge is optional enrichment from a PRD-level `specification.md`, not a requirement to specify before splitting.
+- **`/update-prd` offers reruns for existing downstream artifacts** — architecture, specification, Epics and release notes — and recommends a rerun when the update invalidates one; for an existing specification the rerun is `/update-spec`, which revises it in place and keeps its IDs. These edges do not require creating artifacts that do not yet exist. The specification-to-Epics edge is optional enrichment from a PRD-level `specification.md`, not a requirement to specify before splitting.
 - **`/docs-workflows:release-notes` is drawn twice** to show PRD-driven drafts or refreshes and the post-implementation note. The final run reads nothing `/document` writes, so the two documentation commands are independent. This command, `/dev-workflows:upgrade`, `/workflows-core:statusline` and `/workflows-core:feedback` use qualified names because their bare names collide with built-ins, and `/dev-workflows:design` because its bare name does on the accounts Claude Code's own `/design` is switched on for.
 - **The audit backlog has a manual implementation stage.** Select an actionable unit, write its page, maintain its `unit:` metadata and backlog `page_path` / `status`, verify its claims, and publish it. `/document` direct mode can help with a described prose edit, but it never reads the backlog or manages unit status; keyed mode remains the feature-documentation route. `/docs-write` is planned, not shipped. The `docs-workflows` documentation route page describes the manual procedure; `--refresh` re-audits coverage and does not replace verification.
 - **The PA lane keeps its own decisions.** `/harvest-decisions` turns the decisions of merged ARDs into team records that `/create-ard`, `/specify` and `/dev-workflows:design` ground on; `/promote-decisions`, run in the architecture repository, proposes organisation ADRs from them, and once one is accepted grounding cites the ADR instead of the record. The product-workflows Workflow overview page draws the whole loop.
