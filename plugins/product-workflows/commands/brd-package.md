@@ -599,7 +599,7 @@ inbox, reads *not customer-reviewed* here, correctly: nothing about it is frozen
 position and assumption resting on it can still move.
 
 Carry, for each prerequisite: its key, whether it resolved, whether its decisions are
-customer-reviewed, whether a package of its own was found, and **every live position and every open
+customer-reviewed, whether a package of its own was found, and **every position reading `open`, `decided` or `reopened` and every open
 assumption in this BRD's register carrying `conditional_on: <PREREQ-KEY>/<decision-id>`**
 (`decision-register-format.md` §5, §7). Those are the records D20 obliges the prompt and the
 delivery note to name, and they are found
