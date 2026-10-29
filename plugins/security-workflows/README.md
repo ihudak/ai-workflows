@@ -1,6 +1,6 @@
 # security-workflows
 
-One slash command for the security audit of the workflow plugin family: `/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high]` runs Anthropic's Claude Security plugin on the branch a PRD or Epic was implemented on, before it merges, or across a whole repository, and records what it finds in the specs repository as a findings register per code repository. The shared foundation it draws on — the addressing grammar, the git entry points, escalation and triage — ships in the companion `workflows-core` plugin; Claude Security is installed with it.
+One slash command for the security audit of the workflow plugin family: `/security-workflows:scan <KEY | @<path> | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high]` runs Anthropic's Claude Security plugin on the branch a PRD or Epic was implemented on, before it merges, or across a whole repository, and records what it finds in the specs repository as a findings register per code repository. The shared foundation it draws on — the addressing grammar, the git entry points, escalation and triage — ships in the companion `workflows-core` plugin; Claude Security is installed with it.
 
 > Part of the `shipwright` marketplace — see the [repo-root setup guide](../../README.md) for marketplace install + prerequisites.
 

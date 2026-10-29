@@ -30,7 +30,7 @@ gone on since (`after_merge`), when it traces the branch's tip, the merged work 
 once every Epic is done and merged, its decisions are `final`, and it rules on every decision a Dev
 recorded — none is carried silently.
 
-Usage: `/conformance <EPIC-KEY | PRD-KEY> [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+Usage: `/conformance <EPIC-KEY | PRD-KEY | @<path>> [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 ---
 
@@ -40,8 +40,11 @@ Usage: `/conformance <EPIC-KEY | PRD-KEY> [--skip-costs] [--skip-feedback] [--en
 
    **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
-   Read the **single positional address** with `read-key` (`workflows-core:addressing` §1) and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key`; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `absent` → stop with the `key dir not found` rule of `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` — this command creates no folder. With no address, or one `read-key` finds `invalid`, stop:
-   `CONFORMANCE_NEEDS_KEY: /conformance needs an Epic or PRD address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7 or ACME-7-01) — re-run '/dev-workflows:conformance <ADDRESS>'.`
+   **An `@<path>` address — taken before the key.** An `@` token whose path — absolute, or relative to the working directory — names an existing directory under `$SPECS_PATH/specifications/` is the address. It is never read with `read-key`, which reads no path: read the key its carrier asserts now, as `workflows-core:addressing` §4 reads one — that key is the run's from here on, the preflight's run key set and every stop included — and hand `resolve-address` the token as typed, through its `@<path>` branch (§3 step 1), never the key. A folder with no carrier asserts no key, and this run needs one, so it stops as §3 step 1 says. This is the way through `resolve-address`'s `ambiguous` stop, which names `@<path>`. Any other `@` token is no address, and stops as `CONFORMANCE_NEEDS_KEY` does on `invalid`. A second address token beside it — another `@` token, or a bare token that is not the key its carrier asserts — stops; a bare token that is that key is the same address typed twice, and is dropped:
+   `CONFORMANCE_TWO_ADDRESSES: <first> and <second> each name a unit, and one run traces one — re-run with one of them.`
+
+   Otherwise, read the **single positional address** with `read-key` (`workflows-core:addressing` §1) and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key`; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `absent` → stop with the `key dir not found` rule of `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` — this command creates no folder. With no address, or one `read-key` finds `invalid`, stop:
+   `CONFORMANCE_NEEDS_KEY: /conformance needs an Epic or PRD address — a key (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7 or ACME-7-01) or an @<path> to its folder — re-run '/dev-workflows:conformance <ADDRESS>'.`
    On `invalid` the message goes on, naming the token: ` — '<token>' is not a key (workflows-core:addressing §1).`
 
 2. **Require `$SPECS_PATH`.** Take this test before step 1 resolves anything. If it is unset, stop naming it: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` once it names an existing directory, asking again where it does not, per the *Required path environment variable unset* rule in `workflows-core:escalation-rules`; *Cancel* ends the run.

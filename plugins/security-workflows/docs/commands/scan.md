@@ -16,12 +16,12 @@ Every run is charged to the `security-audit` cost phase, with that role ([Sessio
 ## Synopsis
 
 ```
-/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
+/security-workflows:scan <KEY | @<path> | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 Phase 0 step 2 reads what the run flags leave as one positional address and the command's own flags:
 
-- **An address that names an existing directory is a repository path**; any other address is a key, which must match the family's key grammar, `^[A-Z][A-Z0-9_]*(-\d+)+$`.
+- **An `@<path>` naming a folder under `$SPECS_PATH/specifications/` is that unit's address**, taking the key its own document asserts — a key run, and the way through a key that matches more than one folder. **Any other address that names an existing directory is a repository path**; any other address is a key, which must match the family's key grammar, `^[A-Z][A-Z0-9_]*(-\d+)+$`.
 - **`--import <dir>`, `--triage` and `--verify-fixes` exclude one another**, and `--import` takes an existing directory.
 - **`--effort` takes `medium` or `high`.** It defaults to `high` for a change scan, Claude Security's own advice for a feature-sized change, and to `medium` for a whole-repository scan and for `--verify-fixes`. The command never asks Claude Security for a `low`-effort scan, which reads the target with one researcher, keeps no coverage account, and so could never close a fix. On `--import` and `--triage`, which scan nothing, `--effort` has no effect, and the run says so.
 - **Anything else stops with `SECURITY_USAGE`**: no address or two, an unknown flag, a flag without its value, two of `--import`, `--triage` and `--verify-fixes`, an `--import` naming no existing directory, or an `--effort` other than `medium` or `high`.
