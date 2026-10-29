@@ -1025,11 +1025,134 @@ def prompt_parts(lines):
     return {n: (i, heads[k + 1][1] if k + 1 < len(heads) else len(lines)) for k, (n, i) in enumerate(heads)}
 
 
+LIVE_POSITION = ("open", "decided", "reopened")
+# Relation 1's enumerations: the part, the sub-heading Phase 6 renders it under, the prefix its records
+# carry, the working name of its source, the filter as written, and the filter as the records' own
+# fields test it (section 7.1, "Resolve the filter against the records' own fields").
+REGIONS = [
+    (6, "Code defects we will repair", "CDF", "code-defect-log.md", "disposition: in-scope",
+     lambda r, u: r.get("disposition") == "in-scope"),
+    (7, "Open assumptions", "AS", "decisions.md", "status: open", lambda r, u: r.get("status") == "open"),
+    (8, "Positions that could still move", "VD", "decisions.md",
+     "conditional_on an unreviewed prerequisite, status open, decided or reopened",
+     lambda r, u: r.get("status") in LIVE_POSITION and r.get("conditional_on", "").split("/", 1)[0].strip() in u),
+    (8, "Code defects whose scope is unsettled", "CDF", "code-defect-log.md", "disposition: conditional",
+     lambda r, u: r.get("disposition") == "conditional"),
+    (9, "Open assumptions", "AS", "decisions.md", "status: open", lambda r, u: r.get("status") == "open"),
+    (11, "Code defects we will not repair", "CDF", "code-defect-log.md", "disposition: out-of-scope",
+     lambda r, u: r.get("disposition") == "out-of-scope"),
+]
+SUBHEAD_RE = re.compile(r"^(#{3,6})\s+(?:[0-9]+(?:\.[0-9]+)*\.?\s+)?(.+?)\s*$")
+ANY_HEAD_RE = re.compile(r"^(#{1,6})\s")
+ITEM_RE = re.compile(r"^\s*(?:[-*+]\s|[0-9]+[.)]\s|\||#{1,6}\s)")
+OPENER_RE = re.compile(r"^[\s*_`]*\[([A-Z]+)#([0-9]+)\]")
+RANGE_TAIL_RE = re.compile(r"^[\s*_`]*[–-][\s*_`]*\[([A-Z]+)#([0-9]+)\]")
+
+
+def _unfenced(lines, start, end):
+    """(index, line) for the lines in [start, end) outside a code fence."""
+    fence = None
+    for i in range(start, end):
+        f = FENCE_RE.match(lines[i])
+        if f:
+            if fence is None:
+                fence = f.group(1)[0]
+            elif f.group(1)[0] == fence:
+                fence = None
+            continue
+        if fence is None:
+            yield i, lines[i]
+
+
+def regions(lines, parts):
+    """{(part, title): (start, end)} for each of REGIONS' sub-headings: from the heading to the next
+    heading of its level or higher, or the part's end. A sub-heading Phase 6 renders and the prompt
+    lacks is refused: the enumeration under it cannot be placed."""
+    out = {}
+    for part, title, *_ in REGIONS:
+        a, b = parts[part]
+        found = None
+        for i, line in _unfenced(lines, a + 1, b):
+            m = SUBHEAD_RE.match(line)
+            if found is None:
+                if m and m.group(2) == title:
+                    found = (i, len(m.group(1)))
+                continue
+            h = ANY_HEAD_RE.match(line)
+            if h and len(h.group(1)) <= found[1]:
+                out[(part, title)] = (found[0], i)
+                break
+        if found is None:
+            raise Refused("part %d of the prompt has no '%s' sub-heading" % (part, title))
+        out.setdefault((part, title), (found[0], b))
+    return out
+
+
+def _idkey(rid):
+    m = re.match(r"\[([A-Z]+)#([0-9]+)\]", rid)
+    return (m.group(1), int(m.group(2)))
+
+
+def members(lines, prefix):
+    """The ids of prefix that open an item -- a list item, a table row's first cell, a heading --
+    with a range in that position expanded. An id anywhere else in an item is a mention, not a member
+    (section 7.1, "Members open an item")."""
+    out = set()
+    for _, line in _unfenced(lines, 0, len(lines)):
+        m = ITEM_RE.match(line)
+        if not m or SEPARATOR_RE.match(line):
+            continue
+        rest = line[m.end():]
+        o = OPENER_RE.match(rest)
+        if not o or o.group(1) != prefix:
+            continue
+        lo = hi = int(o.group(2))
+        tail = RANGE_TAIL_RE.match(rest[o.end():])
+        if tail and tail.group(1) == prefix:
+            lo, hi = sorted((lo, int(tail.group(2))))
+        out.update("[%s#%d]" % (prefix, n) for n in range(lo, hi + 1))
+    return sorted(out, key=_idkey)
+
+
+def _records(bundle, name):
+    """The records of a register-shaped source, by part 1's reader; an absent file is an empty corpus."""
+    path = os.path.join(bundle, name)
+    if not os.path.exists(path):
+        return []
+    return _blocks(_read(path, name))
+
+
+def _compare(out, relation, where, source, filter_, named, held):
+    named, held = sorted(set(named), key=_idkey), sorted(set(held), key=_idkey)
+    entry = {"relation": relation, "where": where, "source": source, "filter": filter_, "named": named,
+             "held": held, "missing": [x for x in held if x not in named],
+             "extra": [x for x in named if x not in held]}
+    if named and not held:
+        entry["verdict"] = "unreadable"
+        out["unreadable"].append(entry)
+    elif entry["missing"] or entry["extra"]:
+        entry["verdict"] = "mismatch"
+        out["mismatch"].append(entry)
+    else:
+        entry["verdict"] = "pass"
+    out["relations"].append(entry)
+
+
 def sets(bundle, key, date, manifest, note, unreviewed=()):
     prompt_name = "%s-customer-review-prompt-%s.md" % (key, date)
     lines = _read(os.path.join(bundle, prompt_name), prompt_name).split("\n")
-    prompt_parts(lines)
-    return {"relations": [], "mismatch": [], "unreadable": [], "ambiguous": []}
+    where = regions(lines, prompt_parts(lines))
+    out = {"relations": [], "mismatch": [], "unreadable": [], "ambiguous": []}
+    unreviewed = set(unreviewed)
+    sources = {}
+    for part, title, prefix, working, filter_, test in REGIONS:
+        source = "%s-%s" % (key, working)
+        if source not in sources:
+            sources[source] = _records(bundle, source)
+        held = [r["id"] for r in sources[source] if _idkey(r["id"])[0] == prefix and test(r, unreviewed)]
+        a, b = where[(part, title)]
+        _compare(out, 1, "part %d, %s" % (part, title), source, filter_, members(lines[a + 1:b], prefix), held)
+    return out
 
 
 SETS_DEFAULT_BODIES = {
@@ -1086,6 +1209,60 @@ def sets_selftest(check):
     msg = refused(lambda: run({"K-1-manifest.md": "x\n"}))
     check("sets: an absent prompt is refused, by its name",
           bool(msg) and "K-1-customer-review-prompt-20261029.md" in msg)
+    def rec(rid, **fields):
+        return "id: %s\n" % rid + "".join("%s: %s\n" % (k, v) for k, v in fields.items()) + "\n"
+
+    def r1(r, part, title):
+        return next(x for x in r["relations"] if x["relation"] == 1 and x["where"] == "part %d, %s" % (part, title))
+
+    reg = "# Decision register: K-1\n\n" + rec("[AS#1]", statement="a", status="open") \
+        + rec("[AS#2]", statement="b", status="open") + rec("[AS#3]", statement="c", status="withdrawn") \
+        + rec("[VD#7]", statement="d", conditional_on="P-2/[CD#3]", status="decided") \
+        + rec("[VD#8]", statement="e", conditional_on="P-3/[CD#1]", status="decided") \
+        + rec("[VD#9]", statement="f", conditional_on="P-2/[CD#4]", status="superseded") \
+        + rec("[VD#11]", statement="g", status="decided") \
+        + "id: [AS#4]\nstatement: h\nargumentation: |\n  quoted\n  status: open\nstatus: withdrawn\n\n"
+    cdl = rec("[CDF#1]", statement="x", disposition="in-scope") + rec("[CDF#2]", statement="y", disposition="conditional",
+                                                                       blocked_on="P-2/[CD#3]") \
+        + rec("[CDF#3]", statement="z", disposition="out-of-scope") + rec("[CDF#4]", statement="w", disposition="withdrawn")
+    good = {6: "### 6.1 Code defects we will repair\n\n- **[CDF#1]** — x\n",
+            7: "### 7.1 Questions held for you\n\n- **Re-puts:** [AS#3]\n\n### 7.3 Open assumptions\n\n"
+               "- **[AS#1]** — a, unlike [AS#3]\n- **[AS#2]** — b\n",
+            8: "### 8.1 Positions that could still move\n\n| Record | Depends on |\n|---|---|\n"
+               "| `[VD#7]` — d, as [VD#11] decided | P-2 [CD#3] |\n\n"
+               "### 8.2 Code defects whose scope is unsettled\n\n#### [CDF#2]\n\ny\n",
+            9: "### 9.1 Open assumptions\n\n- **[AS#1]**–**[AS#2]**: both open\n\n#### [SR#3]\n\nattacks [AS#3]\n",
+            11: "### 11.1 Code defects we will not repair\n\n1. [CDF#3] — z\n"}
+    base = {"K-1-decisions.md": reg, "K-1-code-defect-log.md": cdl}
+    r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt(good)}), unreviewed=["P-2"])
+    check("sets relation 1: six faithful enumerations pass — openers, a range, mentions and Re-puts read right",
+          [x["verdict"] for x in r["relations"] if x["relation"] == 1] == ["pass"] * 6
+          and r1(r, 9, "Open assumptions")["named"] == ["[AS#1]", "[AS#2]"])
+    check("sets relation 1: a conditional_on a reviewed prerequisite, or a superseded one, is not in part 8's set",
+          r1(r, 8, "Positions that could still move")["held"] == ["[VD#7]"])
+    check("sets relation 1: a status inside an argumentation scalar is not the record's",
+          "[AS#4]" not in r1(r, 7, "Open assumptions")["held"])
+    r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt()}), unreviewed=["P-2"])
+    check("sets relation 1: sources with members under 'None' bodies are mismatches, by id",
+          r1(r, 7, "Open assumptions")["missing"] == ["[AS#1]", "[AS#2]"] and r["mismatch"]
+          and r1(r, 11, "Code defects we will not repair")["verdict"] == "mismatch")
+    r = run({"K-1-customer-review-prompt-20261029.md": _sets_prompt()})
+    check("sets relation 1: both sides empty is the ordinary pass",
+          [x["verdict"] for x in r["relations"] if x["relation"] == 1] == ["pass"] * 6)
+    inv = dict(good)
+    inv[7] = "### 7.3 Open assumptions\n\n- [AS#1] — a\n- [AS#2] — b\n- [AS#5] — invented\n"
+    inv[9] = "### 9.1 Open assumptions\n\n- [AS#1]–[AS#4] — four\n"
+    r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt(inv)}), unreviewed=["P-2"])
+    check("sets relation 1: an invention is extra; a range expands to every id it spans",
+          r1(r, 7, "Open assumptions")["extra"] == ["[AS#5]"]
+          and r1(r, 9, "Open assumptions")["extra"] == ["[AS#3]", "[AS#4]"])
+    r = run({"K-1-customer-review-prompt-20261029.md": _sets_prompt(
+        {6: "### 6.1 Code defects we will repair\n\n- [CDF#2] — y\n"})})
+    check("sets relation 1: a restatement over an absent source is unreadable, not a mismatch",
+          r1(r, 6, "Code defects we will repair")["verdict"] == "unreadable" and r["unreadable"])
+    msg = refused(lambda: run({"K-1-customer-review-prompt-20261029.md": _sets_prompt({9: "Nothing.\n"})}))
+    check("sets relation 1: a missing sub-heading is refused, by part and title",
+          bool(msg) and "part 9" in msg and "Open assumptions" in msg)
     with tempfile.TemporaryDirectory() as d:
         with open(os.path.join(d, "K-1-customer-review-prompt-20261029.md"), "w", encoding="utf-8") as fh:
             fh.write(_sets_prompt())
