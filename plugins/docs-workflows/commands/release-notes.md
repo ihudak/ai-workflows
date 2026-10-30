@@ -574,9 +574,9 @@ Outside that one case there is no question to ask and no option that replaces th
    prints a directory and the folder's `realpath` is neither that directory's `realpath` nor beneath
    it; where that command fails there is no work tree to be outside of, and the offer goes ahead for
    `handoff-to-main`'s gate to refuse. On every other run, invoke
-   `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 consent
+   `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 consent
    choice verbatim — the **advisory** array, `release-notes.md` being read by a later run of this
-   command and by others and gated by none (§4.0) — `/docs-workflows:docs-audit` excepted, which reads
+   command and by others and gated by none, as the handoff's register of classes records — `/docs-workflows:docs-audit` excepted, which reads
    the drafts at the specs repository's `HEAD` and so misses one left uncommitted. **Say what a
    declined handoff costs, before the choice**, since neither the array nor §4.1's *Declined by the
    user* line says it: print this one line above the array — immediately above it, or above §4.3's

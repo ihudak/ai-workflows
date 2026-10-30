@@ -144,7 +144,7 @@ Report each document with the IDs it cites that changed, and the kind of each. P
 
 ## Phase 7 — Handoff
 
-**Offer** (commit-when-asked — never automatic), presenting `Skill(skill: "workflows-core:reference", args: "phase-handoff")`'s §4.3 choice array verbatim:
+**Offer** (commit-when-asked — never automatic), presenting `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`'s §4.3 choice array verbatim:
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
 ```

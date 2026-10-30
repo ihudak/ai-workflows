@@ -6,7 +6,7 @@
 flowchart TD
     subgraph CORPUS["What every sibling plugin reads"]
         refs["references/ — addressing, git + phase handoff, escalation, triage, emission"]:::core
-        parts["reference-parts/ — the generated parts of the references that load by part, and the files require-on-main and branch-check read"]:::core
+        parts["reference-parts/ — the generated parts of the references that load by part, and the files require-on-main, branch-check and handoff-to-main read"]:::core
         loader["skills/reference — the loader a sibling reads the corpus through"]:::core
         skill["skills/model-routing"]:::core
         agents["agents/ — adr-drafter · architecture-grounder · code-scanner · defect-reporter · doc-fixer · docs-grounder · frame-describer · impl-maintenance · overlap-reader · promotion-scout · session-analyst"]:::core

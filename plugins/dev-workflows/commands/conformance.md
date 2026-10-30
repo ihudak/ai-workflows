@@ -426,10 +426,10 @@ Collect both summaries for the Phase 7 report.
 
 ## Phase 6 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. The set to hand off is the
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`. The set to hand off is the
 record, every Epic `_conformance.md` this run marked `superseded-by`, every document it annotated, and
 every path in Phase 5.5's `maintenance_paths`.
-Its class, per §4.0, is the strongest among its paths, and the array is §4.3's for that class, presented
+Its class is the strongest among its paths, since a set spanning classes takes the strongest class (§4.0), and the array is §4.3's for that class, presented
 verbatim:
 - **A set holding an annotated document** — `specification.md`, `prd.md`, `epic.md` or `ard.md`, each
   gated onto the default branch by the commands that read it next — is **gated — stopping**:

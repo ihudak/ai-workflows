@@ -1377,7 +1377,7 @@ push-target probe finds an `origin` remote to push to; and the operator consents
 Take all three here, step 1 loading the handoff contract that states them:
 
 1. **Take the handoff's consent now.** Invoke
-   `Skill(skill: "workflows-core:reference", args: "phase-handoff")`, test §2.1's gate conditions —
+   `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, test §2.1's gate conditions —
    each is a read — and run its push-target probe, printing the one line §4.3 puts above the array
    where one applies: its flag line on a run carrying either flag, otherwise its no-remote line where
    the probe set `remote: none`. Then present its §4.3 choice array verbatim:

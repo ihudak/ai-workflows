@@ -2297,7 +2297,7 @@ hand. A resolution written stands: no run of this command writes over one, any m
 parent's log is another BRD's file, which is why the write waits on that step-8a gate and is handed
 off below with this run's own deliverables.
 
-Then invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and **execute §4.3 in
+Then invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and **execute §4.3 in
 full rather than its array alone**: run §2.1's push-target probe first, and print the one line
 §4.3 puts immediately above the array where one applies, unreworded — its flag line on a run
 carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the

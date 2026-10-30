@@ -1452,10 +1452,9 @@ grounding has actually run. When `--sort-existing` was not given, this phase is 
 
 ## Phase 7 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 choice array verbatim — the **gated — stopping** array: every slice's
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim — the **gated — stopping** array: every slice's
 `/product-workflows:brd-reconcile` executes `require-on-main` on this BRD's `brd/brd-defect-log.md`
-before it confirms any answer, and stops while the log is on no ref (`workflows-core:phase-handoff`
-§3.4), since it writes its defect resolutions into that file. Every other artifact of this handoff
+before it confirms any answer, and stops while the log is on no ref (its own gate on main), since it writes its defect resolutions into that file. Every other artifact of this handoff
 is read from the worktree — `/product-workflows:brd-split` on a root reads them with a plain worktree
 read at its own step 8, never a `require-on-main` gate (steps 6 and 7 run only in
 `split_mode: allocate-only`) — but one stopping consumer decides the array:

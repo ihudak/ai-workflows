@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.72.0] — 2026-10-30
+
+Take with `dev-workflows` 4.55.0, `product-workflows` 3.66.0 and `docs-workflows` 1.31.0 for the saving — to-fix PR9. Neither side needs the other: a request of `phase-handoff handoff-to-main` beside an older `workflows-core` names an entry point with no file of its own, which reads the whole reference as before.
+
+### Added
+- **`phase-handoff`'s `handoff-to-main` reads a file of its own** (`reference-parts/phase-handoff/handoff-to-main.md`, about 76 KB against the reference's 178 KB, which no single read holds): §1, §2, §4.1, §4.2 and §4.3, and of §4.0 its class table, its strongest-class rule and its *Classify by naming the reader* rule, not its register of artifacts. A producer requests it at its consent step and presents §4.3's choice from that file, and §2 runs only on the choice's first option — the loader's entry-point rules say so, and §2 opens with it.
+
+### Changed
+- §4.3's measured paragraph names the request that loads it now; §5 rule 4's carve-out, the loader's entry list and its entry-point rules name all three entry files.
+- `/frames` presents its consent choice from the `handoff-to-main` file, and names in words the gate rows it only explains; the docs reference page and the workflow diagram describe the three entry files.
+
 ## [1.71.0] — 2026-10-30
 
 Take with `dev-workflows` 4.54.0, `product-workflows` 3.65.0, `docs-workflows` 1.30.0 and `security-workflows` 0.10.0 — to-fix D18, D24 and D26.

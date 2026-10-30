@@ -745,7 +745,7 @@ path nobody else can reproduce; the copy is the record.
    the plugin has no record to check against and inventing one would be the failure this whole
    admission exists to avoid.
 
-5. **Hand it off.** Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 choice array verbatim — the **advisory** array, which is the class §4.0 puts the returned review in: read (by this run's own reader dispatch, and by a later run's step-2 overwrite refusal) and gated by nothing, since §3.4's row for this command targets the *sent prompt* rather than the returned review. That is the same fact the *Declining does not stop the ingest* paragraph below states, and the **gated — stopping** array contradicted it in the operator's own prompt.
+5. **Hand it off.** Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim — the **advisory** array, which is the class the handoff's register of classes puts the returned review in: read (by this run's own reader dispatch, and by a later run's step-2 overwrite refusal) and gated by nothing, since the gate's row for this command targets the *sent prompt* rather than the returned review. That is the same fact the *Declining does not stop the ingest* paragraph below states, and the **gated — stopping** array contradicted it in the operator's own prompt.
    ```
    choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
    ```
@@ -2878,7 +2878,7 @@ second review with no way to process it until tomorrow.
 
 ## Phase 13 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 choice array verbatim:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]

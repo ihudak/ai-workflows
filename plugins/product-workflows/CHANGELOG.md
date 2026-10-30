@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.66.0] — 2026-10-30
+
+Take with `workflows-core` 1.72.0 for the saving — to-fix PR9.
+
+### Changed
+- Every producer — `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/epics`, `/harvest-decisions`, `/prd-proposal`, `/brd-proposal`, `/brd-intake`, `/prd-ground`, `/brd-split`, `/brd-interview`, `/brd-package` and `/brd-reconcile` — requests `phase-handoff handoff-to-main` at its consent step instead of loading the whole reference, so a handoff reads one file; `/epics`' pre-handoff maintenance step still loads the whole reference for §4.0's register, and `/harvest-decisions` its Phase 0's `owner-repo` derivation. Explanatory pointers into sections that file does not hold are named in words; `/brd-split` cites §1 rule 4 by its section.
+
 ## [3.65.0] — 2026-10-30
 
 Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.
