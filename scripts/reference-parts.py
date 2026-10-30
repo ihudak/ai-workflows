@@ -86,8 +86,10 @@ that is neither numbered under it nor an unnumbered one deeper than its own. `pa
 text. A section held whole is declared once, its subsections with it: no other § of its entry,
 held whole or in part, is it or lies under it, and no § held in part has it under it; one § held
 in part under another is allowed. Regions never nest and never close inside a fenced block, and
-the markers take the `part` regions' exact form with `entry` for `part`. A line outside every
-region belongs to no entry file: unlike a split reference, a line needs no region. A region line
+the markers take the `part` regions' exact form with `entry` for `part`, save that an entry region
+may name several entries, space-separated, each once -- `<!-- entry: check-it make-it -->` -- and its
+lines are then in each one's file: two entry points that need one section share its region. A line
+outside every region belongs to no entry file: unlike a split reference, a line needs no region. A region line
 inside a numbered section lies inside one its entry holds whole or in part, so the line under
 the file's title names every section the file holds text of; a line before the first numbered
 heading is in no section and free. `generate` writes
@@ -112,7 +114,8 @@ FLAG line and does not fail either, since an entry-point file too holds only som
 reference's text. On an entry-point declaration it fails on a block out of place, unclosed or
 carried twice, a malformed line or marker, an entry declared twice, a partial line naming an
 undeclared entry, a section held whole declared beside one it is, lies under or has under it, a
-nested region, one closed inside a fenced block or one naming no declared entry; on an entry
+nested region, one closed inside a fenced block, one naming no declared entry or one naming an entry
+twice; on an entry
 that is no entry point of its reference; on a § no heading opens with; on a non-blank line of a
 section held whole that lies in no region of its entry; on a region line inside a numbered
 section its entry neither holds whole nor holds in part; on a phrase of a section held in part
@@ -202,7 +205,9 @@ the file, before the request or after it, and reads the whole reference for any 
 sentence of that section citing <ref> -- a `workflows-core:<ref>` token, a loader call or a path -- or
 carrying a § reference that belongs to a citation of <ref>, by the rule above, is judged by its own
 numbered § references of <ref>. Each passes where it lies under a § the entry holds whole, or is a §
-held in part and the sentence holds one of that section's phrases, each normalised as a rule name is;
+held in part and the sentence holds one of that section's phrases, each normalised as a rule name is --
+the entry being the section's own, or one the file requested in an earlier section, whose file is in
+the conversation by then;
 any other fails, `ERROR <file>:<line>: cites workflows-core:<ref> §<n>, which the <entry> file does not
 hold, in a section that reads only that file -- ...`. A sentence citing <ref> by no § reference of it,
 with no request of the entry point among its calls, cites no section and fails the same way, `with no
@@ -253,13 +258,24 @@ not a phase: a question before the first `##` heading needs the step before it, 
 heading. The census `question rules: N command(s) present a choice list, M load the rules first` is
 printed, and `--verbose` lists each asking command's step line and first question line.
 
+THE BRANCH CHECK. `check-branch-check` gates phase-handoff §6's `branch-check`. Every markdown file
+under `commands/` of workflows-core and of every dependent plugin whose text names `resolve-address`
+-- the set CLAUDE.md derives with `grep -l resolve-address plugins/*/commands/*.md` -- requests
+`args: "phase-handoff branch-check"` in a paragraph or list item outside every fenced block. Every one
+of them that presents phase-handoff §4.3's consent choice -- the array quoted, read by its first option,
+or a line naming both `phase-handoff` and `§4.3`, as check-questions reads it -- passes `prefix:` in the
+paragraph of one such request, save the commands EXEMPT_PREFIX names, each with its reason. A file
+naming neither is not read. The census `branch-check: N command(s) resolve a folder, M run
+branch-check, P producer(s) pass a prefix` is printed.
+
 IT FAILS CLOSED. A scan that finds no reference-parts declaration fails check-parts and
 check-citations, and a declared reference no consumer cites fails check-citations: a gate that
 matched nothing proves nothing when it passes. Entry-point files are outside that guard: a tree
 declaring none passes their checks. But a declared entry point that no `##` section of a scanned
 file requests, `args: "<ref> <entry>"`, fails check-citations, as a declared reference no consumer
 cites does: its out-of-file check would judge nothing. A scan that finds no command presenting a
-choice list fails check-questions.
+choice list fails check-questions, and one that finds no command naming `resolve-address` fails
+check-branch-check.
 
 WHAT IT CANNOT SEE: whether a run loads the part when it reaches a citation -- the preamble
 tells it to; the rule-by-rule reading and the live runs check that it does. A name the gate
@@ -295,13 +311,18 @@ question only as a `choices:` line, a line naming `phase-handoff` and `§4.3`, o
 of 2–4 options: a question asked in prose with no array and no option count before the step goes unseen,
 and so does a prompt stated on a line that also names a `choices` array, which it reads as the arrays'
 rule; a line that only mentions `choices:`, or `2–4 options` without that rule's subject, counts as a
-question, erring early.
+question, erring early. check-branch-check cannot see where a command's request stands -- after its
+preflight and its resolution, before anything reads the folder -- nor whether the prefix it passes is
+the one its handoff names, nor whether a command naming `resolve-address` only says it resolves
+nothing; it reads a producer by its consent choice alone, so one that hands off without presenting
+§4.3's choice goes unseen.
 
 Usage:
     python3 scripts/reference-parts.py [--root DIR] generate
     python3 scripts/reference-parts.py [--root DIR] check-parts
     python3 scripts/reference-parts.py [--root DIR] check-citations [--verbose]
     python3 scripts/reference-parts.py [--root DIR] check-questions [--verbose]
+    python3 scripts/reference-parts.py [--root DIR] check-branch-check [--verbose]
     python3 scripts/reference-parts.py --selftest
 
 `--root` defaults to the repository holding this script. Exit 0 on a pass, 1 on any
@@ -385,6 +406,20 @@ QUESTION_HANDOFF = ("phase-handoff", "§4.3")
 QUESTION_PROMPT = re.compile(r"2[–-]4 options")
 QUESTION_RULE = re.compile(r"`choices` arrays?\b")
 
+# check-branch-check: a command that resolves a folder runs phase-handoff's branch-check on it, and a
+# producer -- one presenting phase-handoff §4.3's consent choice -- passes it the prefix its handoff names.
+BRANCH_RESOLVES = "resolve-address"
+BRANCH_REQUEST = "phase-handoff branch-check"
+BRANCH_PREFIX = "prefix:"
+BRANCH_CONSENT = "Branch + commit + push + open PR to main"   # the first option of every §4.3 array
+# Producers that pass no prefix, by design (phase-handoff §6.2; the run-state checks design, §1.2).
+EXEMPT_PREFIX = {
+    "plugins/dev-workflows/commands/implement.md":
+        "its Phase 4.5 handoff is conditional, and onto a prefix it does not own (spec, design)",
+    "plugins/product-workflows/commands/update-spec.md":
+        "its own Phase 0 already stops on a branch that changed specification.md, the check §6.2 would repeat",
+}
+
 CORE_NAME = os.path.basename(CORE_PLUGIN_REL)
 SCRIPT_REL = "scripts/reference-parts.py"
 ROOT_SENTENCE = "`${CLAUDE_PLUGIN_ROOT}` in this file is `%s`'s root, whichever plugin's run reads it." % CORE_NAME
@@ -393,9 +428,11 @@ ROOT_SENTENCE = "`${CLAUDE_PLUGIN_ROOT}` in this file is `%s`'s root, whichever 
 PART_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 DECL_OPEN = re.compile(r"^\s*<!--\s*reference-parts\b")
 ENTRY_DECL_OPEN = re.compile(r"^\s*<!--\s*reference-entry-files\b")
-# Per region word: the opening marker, the closing marker, and anything that looks like either.
-MARKERS = {w: (re.compile(r"^<!-- %s: (\S+) -->$" % w), re.compile(r"^<!-- /%s -->$" % w),
-               re.compile(r"<!--\s*/?\s*%s\b" % w)) for w in ("part", "entry")}
+# Per region word: the opening marker, the closing marker, and anything that looks like either. A part
+# region names one part; an entry region names one entry or more, space-separated.
+MARKERS = {w: (re.compile(r"^<!-- %s: (%s) -->$" % (w, names)), re.compile(r"^<!-- /%s -->$" % w),
+               re.compile(r"<!--\s*/?\s*%s\b" % w))
+           for w, names in (("part", r"\S+"), ("entry", r"\S+(?: \S+)*"))}
 SECTION = re.compile(r"^\d+(?:\.\d+)*$")
 HOLDS = re.compile(r"^holds=(\d+(?:\.\d+)*(?:,\d+(?:\.\d+)*)*)$")
 HEADING_NUMBER = re.compile(r"^(\d+(?:\.\d+)*)\.?(?=\s|$)")
@@ -560,29 +597,34 @@ def more(numbers):
 
 
 def walk_regions(src, lines, start, word, names):
-    """The body from line index `start`, as events: ("open", n, name) where `<!-- <word>: <name> -->`
-    opens a region; ("close", name, first, last) where `<!-- /<word> -->` closes it, first and last
-    being its content line numbers; ("line", n, line, the open region's name or None, whether the line
+    """The body from line index `start`, as events: ("open", n, names) where `<!-- <word>: <name> -->`
+    opens a region; ("close", names, first, last) where `<!-- /<word> -->` closes it, first and last
+    being its content line numbers; ("line", n, line, the open region's names or None, whether the line
     is fenced) for every other line; and ("halt",) after a marker error, reported on `src`, which ends
-    the walk. A region names one of `names`, never nests, and never closes inside a fenced block."""
+    the walk. `names` is a tuple: one name for a part region, one or more for an entry region. A region
+    names only members of `names`, each once, never nests, and never closes inside a fenced block."""
     opener, closer, anything = MARKERS[word]
-    fences, current = Fences(), None   # (name, the line number of its opening marker)
+    fences, current = Fences(), None   # (names, the line number of its opening marker)
     for i in range(start, len(lines)):
         n, line, s = i + 1, lines[i], lines[i].strip()
         mo, mc = opener.match(s), closer.match(s)
+        opened = tuple(mo.group(1).split(" ")) if mo else ()
         if mo and current is not None:
             src.err(n, "region '%s' opens inside region '%s' (opened at line %d) -- regions never nest"
-                    % (mo.group(1), current[0], current[1]))
-        elif mo and mo.group(1) not in names:
-            src.err(n, "region '%s' names no declared %s" % (mo.group(1), word))
+                    % (mo.group(1), " ".join(current[0]), current[1]))
+        elif mo and any(o not in names for o in opened):
+            src.err(n, "region '%s' names no declared %s" % (next(o for o in opened if o not in names), word))
+        elif mo and len(set(opened)) < len(opened):
+            src.err(n, "region names '%s' twice -- an %s region names each %s once"
+                    % (next(o for o in opened if opened.count(o) > 1), word, word))
         elif mo:
-            current = (mo.group(1), n)
+            current = (opened, n)
             yield ("open", n, current[0])
             continue
         elif mc and current is None:
             src.err(n, "<!-- /%s --> closes no open region" % word)
         elif mc and fences.open is not None:
-            src.err(n, "region '%s' closes inside a fenced block" % current[0])
+            src.err(n, "region '%s' closes inside a fenced block" % " ".join(current[0]))
         elif mc:
             yield ("close", current[0], current[1] + 1, n - 1)
             current = None
@@ -596,7 +638,7 @@ def walk_regions(src, lines, start, word, names):
         yield ("halt",)
         return
     if current is not None:
-        src.err(current[1], "region '%s' is never closed" % current[0])
+        src.err(current[1], "region '%s' is never closed" % " ".join(current[0]))
         yield ("halt",)
 
 
@@ -668,15 +710,15 @@ def parse_source(root: Path, path: Path):
             report_gap()
             continue
         if event[0] == "close":
-            _, pname, first, last = event
+            _, (pname,), first, last = event
             ref.parts[pname].regions.append((first, lines[first - 1:last]))
             continue
-        _, n, line, pname, fenced = event
-        if pname is None:
+        _, n, line, pnames, fenced = event
+        if pnames is None:
             if line.strip():
                 gap.append(n)
             continue
-        part = ref.parts[pname]
+        part = ref.parts[pnames[0]]
         if not fenced:
             h = HEADING.match(line)
             if h and h.group(2):
@@ -814,19 +856,21 @@ def parse_entry_source(root: Path, path: Path):
         return ref
 
     # The body: regions, and the numbered headings that bound each section. `body` maps the number of
-    # every line that is no marker to its text, and `owner` each region line's to its entry.
+    # every line that is no marker to its text, and `owner` each region line's to the entries its region
+    # names.
     body, owner, heads = {}, {}, []
     for event in walk_regions(ref, lines, end + 1, "entry", ref.entries):
         if event[0] == "halt":
             return ref
         if event[0] == "close":
-            _, entry, first, last = event
-            ref.entries[entry].regions.append((first, last))
-            owner.update((k, entry) for k in range(first, last + 1))
+            _, names, first, last = event
+            for entry in names:
+                ref.entries[entry].regions.append((first, last))
+            owner.update((k, names) for k in range(first, last + 1))
         elif event[0] == "line":
-            _, n, line, entry, fenced = event
+            _, n, line, names, fenced = event
             body[n] = line
-            if entry is not None:
+            if names is not None:
                 ref.flags += ["FLAG %s:%d: %s" % (rel, n, m.group(0)) for m in POSITIONAL.finditer(line)]
             h = None if fenced else HEADING.match(line)
             if h and h.group(2):
@@ -852,7 +896,7 @@ def parse_entry_source(root: Path, path: Path):
         # A section held whole: every non-blank line of it, its heading included, lies in this entry's regions.
         for sec in (s for s in decl.holds if s in extent):
             first, last = extent[sec]
-            gap = [k for k in range(first, last + 1) if body.get(k, "").strip() and owner.get(k) != entry]
+            gap = [k for k in range(first, last + 1) if body.get(k, "").strip() and entry not in owner.get(k, ())]
             if gap:
                 ref.err(gap[0], "§%s is held whole by entry '%s', but this line of it lies in no `%s` region%s"
                         % (sec, entry, entry, more(gap)))
@@ -874,7 +918,7 @@ def parse_entry_source(root: Path, path: Path):
         # while the rule itself lies outside every region.
         for sec, phrases in ((s, p) for s, p in decl.partial.items() if s in extent):
             first, last = extent[sec]
-            mine = [body[k] for k in range(first, last + 1) if owner.get(k) == entry]
+            mine = [body[k] for k in range(first, last + 1) if entry in owner.get(k, ())]
             held = norm(" ".join(mine))
             for phrase in phrases:
                 rule = RULE_PHRASE.match(norm(phrase))
@@ -1689,7 +1733,10 @@ def cmd_check_citations(root, verbose):
             here_sec = section_of.get(here)
             for r in sorted(asked):
                 inside = asked[r].get(here_sec)
-                early = [] if inside else sorted(e for e, first in first_asked[r].items() if here < first)
+                # Early only before the file's first request of any entry point of r: once one file is
+                # read, a citation is judged against the files already requested, whatever comes later.
+                early = [] if inside or any(first < here for first in first_asked[r].values()) else \
+                    sorted(first_asked[r])
                 late = [] if inside or early else sorted(e for e, first in first_asked[r].items() if first < here)
                 if not inside and not early and not late:
                     continue
@@ -1722,7 +1769,10 @@ def cmd_check_citations(root, verbose):
                             numbers.append((offset, num.group(1)))
                     if not ours and not numbers:
                         continue
-                    holders = inside or late
+                    # Inside a requesting section the files of entry points requested in an earlier
+                    # section are in the conversation too, and serve a citation of what they hold.
+                    holders = sorted(set(inside) | {e for e, first in first_asked[r].items()
+                                                    if here_sec is not None and first < here_sec}) if inside else late
                     for e in holders:
                         entry_census[(r, e)][1] += 1
                     if whole and inside:
@@ -1970,6 +2020,57 @@ def cmd_check_questions(root, verbose):
         return 1
     print("reference-parts check-questions: PASS -- %d command(s) load the question rules before their first question"
           % loading)
+    return 0
+
+
+def cmd_check_branch_check(root, verbose):
+    """Every command naming resolve-address requests `phase-handoff branch-check` outside a fenced block;
+    every one of them presenting phase-handoff §4.3's consent choice -- the array quoted, or a line naming
+    `phase-handoff` and `§4.3` -- passes `prefix:` in the paragraph of one such request, save EXEMPT_PREFIX."""
+    problems, resolving, running, prefixed = [], 0, 0, 0
+    for path in scan_files(root, QUESTION_PLUGIN_RELS, (QUESTION_DIR,)):
+        text = path.read_text(encoding="utf-8")
+        if BRANCH_RESOLVES not in text:
+            continue
+        resolving += 1
+        name = path.relative_to(root).as_posix()
+        fenced, fences = set(), Fences()
+        for n, line in enumerate(text.splitlines(), 1):
+            if fences.step(line):
+                fenced.add(n)
+        requests = [joined for joined, at, _table in blocks_of(text) if at[0][1] not in fenced
+                    and any(" ".join(m.group(1).split()) == BRANCH_REQUEST for m in CALL.finditer(joined))]
+        if not requests:
+            problems.append('%s: names %s but never executes branch-check, `args: "%s"`'
+                            % (name, BRANCH_RESOLVES, BRANCH_REQUEST))
+            continue
+        running += 1
+        producer = BRANCH_CONSENT in text or any(all(w in line for w in QUESTION_HANDOFF) for line in text.splitlines())
+        if not producer or name in EXEMPT_PREFIX:
+            if verbose:
+                print("RUNS %s: %s" % (name, "exempt from the prefix -- " + EXEMPT_PREFIX[name]
+                                       if producer else "no consent choice, no prefix owed"))
+            continue
+        if any(BRANCH_PREFIX in joined for joined in requests):
+            prefixed += 1
+            if verbose:
+                print("RUNS %s: producer, passes a prefix" % name)
+        else:
+            problems.append("%s: presents phase-handoff §4.3's consent choice, but no request of branch-check passes "
+                            "`%s` in its own paragraph -- pass the prefix its handoff names, or add the command to "
+                            "EXEMPT_PREFIX with its reason" % (name, BRANCH_PREFIX))
+    if not resolving:
+        problems.append("no command under %s names %s -- the scan matched nothing, and a gate that matched nothing "
+                        "proves nothing when it passes"
+                        % (either(["%s/%s/" % (r, QUESTION_DIR) for r in QUESTION_PLUGIN_RELS], quote=""), BRANCH_RESOLVES))
+    for p in problems:
+        print("ERROR " + p)
+    print("branch-check: %d command(s) resolve a folder, %d run branch-check, %d producer(s) pass a prefix"
+          % (resolving, running, prefixed))
+    if problems:
+        print("reference-parts check-branch-check: FAIL -- %d problem(s)" % len(problems))
+        return 1
+    print("reference-parts check-branch-check: PASS -- %d command(s) run branch-check" % running)
     return 0
 
 
@@ -2543,6 +2644,42 @@ CASES = [
                                       'check-citations: PASS'], errors=0),
         Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
     ]),
+    # entry_minimal's tree with a second entry point, make-it, holding §1 and §2: §1 lies in one region
+    # naming both entries, so each file holds it. The consumer requests check-it in Phase 0 and make-it
+    # in Phase 2, and between them cites §1, which check-it's file holds: a run has read that file by
+    # then, so the sentence is judged against it, and make-it's later request does not make it early.
+    # Phase 2 also cites §3, which only check-it's file holds: read in Phase 0, it serves the citation
+    # inside a section requesting make-it too.
+    ('entry_shared_region', 'a region naming two entries puts its lines in both files; a citation after the first '
+                            'request is judged against the files already requested', [
+        Step(['check-parts'], 0, ['FLAG plugins/workflows-core/references/gamma.md:25: below',
+                                  'FLAG plugins/workflows-core/references/gamma.md:33: above',
+                                  'check-parts: PASS -- 1 split reference(s), 2 entry file(s), 5 generated file(s) fresh'],
+             errors=0, flags=2, post=[
+            _order(G + '/gamma/make-it.md',
+                   ['# Gamma steps — entry point make-it',
+                    'This file holds entry point `make-it` of `gamma`: §1 and §2. Any other section is in the whole '
+                    'reference: `Skill(skill: "workflows-core:reference", args: "gamma")`. This file is 16 lines long.',
+                    '## 1. Hard rules', '2. `check-it` is fatal by design.', '## 2. `make-it` — the producer'],
+                   absent=['Scope: the steps', '## 3. `check-it`', '<!-- entry', '<!-- /entry']),
+            _entry_files({'gamma': {'check-it': (['1', '3'], {'4.0': ['never infer']},
+                                                 [(10, 12), (16, 19), (29, 43), (49, 51)]),
+                                    'make-it': (['1', '2'], {}, [(16, 19), (23, 25)])}})]),
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 4 citation(s) checked',
+                                      'entry-point file gamma make-it: 1 request section(s), 2 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
+        Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
+    ]),
+    # entry_shared_region's tree, make-it's region naming an entry no line declares beside it.
+    ('entry_region_list_undeclared', 'a region naming several entries names only declared ones', [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:22: region 'nope' names no declared "
+                                  "entry"], errors=1),
+    ]),
+    # entry_shared_region's tree, its shared region naming make-it twice.
+    ('entry_region_names_twice', 'a region names each entry once', [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:15: region names 'make-it' twice -- "
+                                  "an entry region names each entry once"], errors=1),
+    ]),
     # entry_minimal's tree, its consumer requesting nothing: no scanned file requests check-it, so the
     # out-of-file check judges nothing -- which fails, closed, as a split reference no consumer cites does.
     ('entry_unrequested', 'a declared entry point that no scanned file requests fails', [
@@ -2841,6 +2978,35 @@ CASES = [
                                       'question rules: 0 command(s) present a choice list, 0 load the rules first'],
              errors=1),
     ]),
+    # check-branch-check: every command naming resolve-address requests `phase-handoff branch-check`, and
+    # every one of them presenting phase-handoff §4.3's consent choice -- the array quoted, or a line
+    # naming `phase-handoff` and `§4.3` -- passes `prefix:` in a request's own paragraph, save the exempt
+    # set. The ok tree holds a producer of each form, a consumer, and a command resolving nothing.
+    ('branch_check_ok', 'every resolving command runs branch-check, and each producer passes a prefix', [
+        Step(['check-branch-check'], 0, ['branch-check: 3 command(s) resolve a folder, 3 run branch-check, '
+                                         '2 producer(s) pass a prefix',
+                                         'check-branch-check: PASS -- 3 command(s) run branch-check'], errors=0),
+    ]),
+    ('branch_check_missing', 'a command naming resolve-address that never requests branch-check fails', [
+        Step(['check-branch-check'], 1, ['plugins/dev-workflows/commands/look.md: names resolve-address but never '
+                                         'executes branch-check, `args: "phase-handoff branch-check"`'], errors=1),
+    ]),
+    # A prefix in another paragraph is not the request's; a producer by its §4.3 line counts as one by its array.
+    ('branch_check_no_prefix', 'a producer that passes branch-check no prefix fails, in either consent form', [
+        Step(['check-branch-check'], 1, ['plugins/dev-workflows/commands/make.md: presents phase-handoff §4.3\'s '
+                                         'consent choice, but no request of branch-check passes `prefix:` in its '
+                                         'own paragraph',
+                                         'plugins/workflows-core/commands/index.md: presents phase-handoff §4.3\'s '
+                                         'consent choice'], errors=2),
+    ]),
+    ('branch_check_exempt', 'dev-workflows/implement passes branch-check no prefix, by the exempt set', [
+        Step(['check-branch-check'], 0, ['branch-check: 1 command(s) resolve a folder, 1 run branch-check, '
+                                         '0 producer(s) pass a prefix',
+                                         'check-branch-check: PASS -- 1 command(s) run branch-check'], errors=0),
+    ]),
+    ('branch_check_vacuity', 'vacuity: no command names resolve-address', [
+        Step(['check-branch-check'], 1, ['the scan matched nothing'], errors=1),
+    ]),
 ]
 
 
@@ -2903,8 +3069,9 @@ def _selftest() -> int:
 
 
 COMMANDS = {"generate": cmd_generate, "check-parts": cmd_check_parts, "check-citations": cmd_check_citations,
-            "check-questions": cmd_check_questions}
-USAGE = ("usage: reference-parts.py [--root DIR] generate|check-parts|check-citations|check-questions [--verbose]\n"
+            "check-questions": cmd_check_questions, "check-branch-check": cmd_check_branch_check}
+USAGE = ("usage: reference-parts.py [--root DIR] generate|check-parts|check-citations|check-questions|check-branch-check "
+         "[--verbose]\n"
          "       reference-parts.py --selftest")
 
 

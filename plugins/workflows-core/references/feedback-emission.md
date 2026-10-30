@@ -112,7 +112,9 @@ Apply the rows in this order. A value one row has replaced is not matched again 
 **deterministic** (no interactive path prompt, consistent with silent
 capture, §5). Walk the ladder top-down and stop at the first tier that applies:
 
-**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, `addressing.md` §3 `specs-root-check`'s stop, or `session-hygiene.md` §6's *Stop*) → **report-only**, as in tier 4, whatever else would apply. Where `$SPECS_PATH` is set but misplaced, any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or takes it for an artifact that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place; after `session-hygiene.md` §6's *Stop* the run is no longer in the environment it recorded, and writes nothing more. Every entry point below resolves its target here, so this covers them all.
+**Run `env-check` first** (`Skill(skill: "workflows-core:reference", args: "session-hygiene env-check")`, `session-hygiene.md` §7), before tier 1: it sets `specs_git: misrooted` where the run no longer stands in the environment its preflight printed.
+
+**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, `addressing.md` §3 `specs-root-check`'s stop, `session-hygiene.md` §7's `env-check`, or its §6's *Stop*) → **report-only**, as in tier 4, whatever else would apply. Where `$SPECS_PATH` is set but misplaced, any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or takes it for an artifact that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place; after `session-hygiene.md` §6's *Stop* the run is no longer in the environment it recorded, and writes nothing more. Every entry point below resolves its target here, so this covers them all.
 
 1. **`$SPECS_PATH` resolvable + writable + the PRD dir exists** — the folder
    the run's own `resolve-address` found for `<KEY>` (`workflows-core:addressing` §3) — or,

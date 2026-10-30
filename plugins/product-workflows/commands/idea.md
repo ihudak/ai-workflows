@@ -137,9 +137,11 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    `detection_model`.
 
 **Specs-repo preflight** — run in step 1, as soon as `$SPECS_PATH` is known and before the folder is resolved. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
-retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+retry an artifact commit that failed to push, and settle the branch. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
+
+**Check the branch the run stands on.** Where step 1 found the folder, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: idea`; a stop it makes ends the run here. A folder this run is about to create has nothing on any branch to compare.
 
 ---
 
@@ -605,22 +607,22 @@ they are deliverables, and they reach the default branch only through Phase 5's 
 `idea.md` **and every path this phase wrote** — one copy in `attachments/` for the source and for
 every markdown file Phase 1.5 took, one in `design/idea-sources/` for every image `figure-reader`
 read, and that set's `index.md` — a number Phase 1.5 fixes and no cap bounds, so a source that links
-a hub note leaves dozens of dirty OTHER paths. Four routes reach that state, and only one of them
+a hub note leaves dozens of dirty OTHER paths. Five routes reach that state, and only one of them
 is a decline: Phase 5's `status: refined` branch offers the handoff and the operator may decline it;
 its `status: draft` branch **never offers one at all** — so a draft run leaves the whole set
 dirty by construction rather than by a choice; a `status: refined` run whose handoff was
-**taken** and whose `workflows-core:phase-handoff` §2.1 gate then refused it committed nothing
-either, which is the *Gate failed* line §4.1 emits and which Phase 5 already names beside a decline;
-and one whose handoff was **taken** and whose §2.4 commit git then refused — a hook's rejection, a
-signature it cannot make — committed nothing too, and leaves the set staged on the branch §2.2 cut,
-which is the *Commit failed* line §4.1 emits and which Phase 5 names beside the other two. The third one is reachable rather than theoretical:
-§2.1 fails on path, repo or permission grounds
+**taken** and whose handoff gate then refused it committed nothing
+either, which is the handoff's *Gate failed* outcome line and which Phase 5 already names beside a decline;
+and one whose handoff was **taken** and whose handoff commit git then refused — a hook's rejection, a
+signature it cannot make — committed nothing too, and leaves the set staged on the branch the handoff cut,
+which is the handoff's *Commit failed* outcome line and which Phase 5 names beside the other two; and one whose handoff was **taken** and whose switch onto its own open `idea/` branch git refused, a path this run changed being one that branch changed too, which committed nothing and moved nothing — the handoff's *Switch refused* outcome line. The third one is reachable rather than theoretical:
+the handoff gate fails on path, repo or permission grounds
 **or** on either run-wide flag it names — `specs_git: blocked`, which Phase 0 carries for the whole
 run whenever its own preflight returns `workflows-core:specs-repo-git` §3.3's G0, and
-`specs_git: misrooted`, which it carries whenever that preflight's §3.1 notice set it. The fourth
-needs only a specs repository whose `pre-commit` hook refuses the commit, a markdown linter for one. The other non-landing §4.1 rows are not
-further routes — *No remote*, *Push failed* and *Push refused for access* all committed on a branch first (§2.4 runs before
-§2.5), and *Nothing to commit* changed nothing.
+`specs_git: misrooted`, which it carries whenever that preflight's §3.1 notice set it, or `workflows-core:session-hygiene` §7's `env-check` set it at the handoff's gate. The fourth
+needs only a specs repository whose `pre-commit` hook refuses the commit, a markdown linter for one. The handoff's other non-landing outcome lines are not
+further routes — *No remote*, *Push failed* and *Push refused for access* all committed on a branch first (the handoff commits
+before it pushes), and *Nothing to commit* changed nothing.
 
 On the next run of any command sharing that repo, §3.3's **G1** matches. Its consequences are three, not
 one: the preflight **ends** there, at advisory severity, listing the paths — no commit, no branch switch,
@@ -691,9 +693,9 @@ the next phase — **adapted to status**:
   opened is still open that command stops on rows D/E — an unqualified recommendation sends the
   operator into a stop this run itself caused.
 
-  **On a decline, or where §4.1's *Gate failed* or *Commit failed* line was emitted, offer the
+  **On a decline, or where §4.1's *Gate failed*, *Commit failed* or *Switch refused* line was emitted, offer the
   `@<path>` route beside it** — the one the draft branch below names for the same on-disk state:
-  `/product-workflows:create-prd <KEY> @<the absolute path of this idea.md>`. None of the three
+  `/product-workflows:create-prd <KEY> @<the absolute path of this idea.md>`. None of the four
   outcomes committed anything. Where this run wrote a new brief, `idea.md` is written and on no ref, exactly as
   a draft is, and `/create-prd <KEY>` with no path then finds it on no ref (row F), names it without
   reading it, and goes on down its idea ladder — which comes back to this brief only through its

@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.30.0] — 2026-10-30
+
+Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.
+
+### Added
+- **`/release-notes` and keyed `/document` run `workflows-core:phase-handoff`'s `branch-check`** after the preflight and the resolution: a plugin branch behind the default branch under the address's root folder stops the run (D24); `/release-notes` passes `prefix: prd` on the PRD folder its handoff names, also on an Epic address, so an open branch its handoff would reuse is asked about before any work (D18).
+
+### Changed
+- The preflight clause of every command names the `Environment:` line `specs-preflight` now prints; `/document` loads `phase-handoff` explicitly where it applies §2.7.1's template rule, and `/release-notes` names the handoff in words where it only explains it.
+- The docs pages say where `/release-notes` and keyed `/document` check their branch, and the environment page what a resumed conversation in another container writes.
+
 ## [1.29.0] — 2026-10-29
 
 Take with `workflows-core` 1.69.0 — to-fix SEC-G6 and D25.

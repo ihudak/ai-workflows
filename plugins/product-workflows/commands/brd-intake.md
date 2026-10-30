@@ -63,7 +63,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
    *Set SPECS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
-6. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+6. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
    `commit-artifacts` step skips on it.
 7. **Resolve or derive the BRD folder** via `resolve-address <BRD-KEY>` — or `resolve-address @<path>`, as typed, where step 1 found an `@<path>` address — (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Found → an existing folder, and where it is a
@@ -158,6 +158,8 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    `workflows-core:addressing` §5 keeps resolving the folders
    a pre-prefix repo already holds; this command does not add to them.
 
+
+   **Check the branch the run stands on.** Where the folder was found, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: brd`, before the re-run block below reads it; a stop it makes ends the run here. A folder this run derives has nothing on any branch to compare.
 
    **A re-run over an existing root BRD folder re-reads the source and rewrites the inventory, the ledger and
    the records beside them, and the confirmation for that is taken here — before Phase 2's first
@@ -489,8 +491,8 @@ is what every later mention of *Phase 2's capture order* means.
   command says a file was copied: the link log below, every later phase that says
   "Phase 2 copied", and Phase 7's `deliverable_paths`, which must declare it. An earlier intake
   that stopped before its handoff, or declined it, left that file uncommitted, and nothing else in
-  this plugin ever stages it; a declared file already committed unchanged costs nothing
-  (`workflows-core:phase-handoff` §2.3 step 4).
+  this plugin ever stages it; a declared file already committed unchanged costs nothing, since the
+  handoff accounts for such a file as already on its branch.
 
 Copy each file **byte-for-byte, whatever its type** — an image, a PDF, a spreadsheet — never opened
 as text, never re-encoded, never resized. Phase 0 step 3's markdown-only rule is about the *document*

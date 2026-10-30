@@ -21,6 +21,8 @@ Every rule name in `session-hygiene`, with the part that holds it; `core` comes 
 - `§5` → `guidance`
 - `6. Resume environment — the session file records where the run stands, and a resumed run compares it` → `resume-environment`
 - `§6` → `resume-environment`
+- ``7. `env-check` — the environment a run started in, compared before it writes`` → `env-check`
+- `§7` → `env-check`
 
 ## Parts of `session-hygiene`
 
@@ -28,3 +30,4 @@ Every rule name in `session-hygiene`, with the part that holds it; `core` comes 
 - `resume-pointer`
 - `guidance`
 - `resume-environment`
+- `env-check`

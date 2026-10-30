@@ -95,7 +95,7 @@ four-resolution one.
    choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
    *Set SPECS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
-3. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+3. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
    `commit-artifacts` step skips on it.
 4. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` — or `resolve-address @<path>`, as typed, where step 1 found an `@<path>` address — (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
@@ -159,6 +159,8 @@ four-resolution one.
    walk itself needs — the defect log a `rejected: [DEF#n]` cites — resolves in the parent's log in
    `allocate-only` mode, and that lookup is exactly one hop because the cap makes a slice's parent
    always the source-owning root (`brd-format.md` §4). Phase 4 states it where it is used.
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
+
 6. **Gate the grounding deliverable on main.** **This step and step 7 run in `split_mode: allocate-only` only.** A root BRD is never ground — grounding happens at a `PRD-` folder (on this route a slice), and the customer interview at the slice and nowhere else — so on a `full` run there is no grounding to gate and both steps are skipped entirely. There is no `coverage-ledger.md` gate to keep: step 8 reads that ledger in both modes with a plain worktree read, never a `require-on-main` gate, which is why the handoff contract classes it — and `brd/brd-inventory.md` beside it — **advisory** at a root. `/brd-split` **consumes** a `$SPECS_PATH`
    deliverable it did not write (`/prd-ground`'s findings, and — transitively — `/brd-intake`'s
    ledger), so per `workflows-core:phase-handoff` §5 rule 2 it executes `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here in Phase 0,

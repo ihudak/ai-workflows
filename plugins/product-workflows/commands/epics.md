@@ -166,6 +166,8 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
      must be re-taken, and a `rejected` row must be re-cited against its `[DEF#n]`. Name those
      decisions — saying only that the dispositions are replaced is not the disclosure.
 
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the PRD folder — the resolved folder, or its parent on an Epic address, which its handoff names as `prd_dir`, with `prefix: epics`; a stop it makes ends the run here.
+
 1b. **`/epics` accepts exactly two shapes, and the gate is the artifact's own `kind:`.** A `PRD-`
    folder holding its `prd.md` is partitioned into Epics; an `EPIC-` folder **that holds its `epic.md`
    and has a PRD above it** is re-refined. Everything else is refused — among it an `EPIC-` folder
@@ -265,7 +267,7 @@ directory (resolved in Phase 1), so it does **not** require cwd to be anywhere i
 **Specs-repo preflight** — run at the end of step 1, with the run key set step 1 fixes, before step
 1a or 1b reads anything. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session
 artifacts from an earlier run, retry an artifact commit that failed to push,
-and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+and settle the branch. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the
 terminal `commit-artifacts` step skips on it.
 
@@ -1079,14 +1081,14 @@ MODERATE — Epic drafting for a single PRD
 [OK | VIOLATIONS_FOUND (N fixed, M remaining[, K declined — format headings][, U declined by you — each named, on your Phase 6.1 answers]) | ERROR (reason)] — [1-line summary] — rules: [the checker's `rules_source`] — [where `rules_source` is `baseline` and a remaining finding is on a house term: record it in `$SPECS_PATH/.prose-style/rules/`]
 
 ### Documentation (Agent 1)
-- [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as Phase 7.5's `Phase handoff:` line gives the drafts': committed and pushed with them, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside them (the handoff was declined, or its gate failed)] OR "no update required (reason)"
+- [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as Phase 7.5's `Phase handoff:` line gives the drafts': committed and pushed with them, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside them (the handoff was declined, its gate failed, or git refused its switch)] OR "no update required (reason)"
 
 ### Knowledge base (Agent 2)
 - [one line per entry: file updated/created under ~/.claude/memory/] — [summary of that entry] OR "no update required"
 - Proposed for the project's memory, not written: [file] — [the entry, in the format above] — _one per project-specific entry; omit where none_
 
 ### Instructions (Agent 3)
-- [<prd_dir>/CLAUDE.md, relative to $SPECS_PATH] — [summary of change and why] — [its fate, as Phase 7.5's `Phase handoff:` line gives the drafts': committed and pushed with them, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside them (the handoff was declined, or its gate failed)] OR "no update required"
+- [<prd_dir>/CLAUDE.md, relative to $SPECS_PATH] — [summary of change and why] — [its fate, as Phase 7.5's `Phase handoff:` line gives the drafts': committed and pushed with them, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside them (the handoff was declined, its gate failed, or git refused its switch)] OR "no update required"
 - Proposed, not written: [the specs repository's CLAUDE.md | ~/.claude/CLAUDE.md] — [the edit and why] — _one per proposal; omit where none_
 - Out-of-scope write, not handed off: [absolute path] — _a path Phase 7.4's agents returned outside the set each may edit, left as written and uncommitted; omit where none_
 

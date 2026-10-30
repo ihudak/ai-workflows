@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.0] — 2026-10-30
+
+Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.
+
+### Added
+- **`/security-workflows:scan` runs `workflows-core:phase-handoff`'s `branch-check`** on a unit's folder, after the preflight and the resolution, with no prefix: a plugin branch behind the default branch under the folder's root stops the run before it records anything (D24). A repository path resolves no folder and skips it.
+
+### Changed
+- `/security-workflows:scan`'s *Ending early* names the stop `branch-check` makes; the docs pages say where it checks its branch, and the environment page what a resumed conversation in another container writes.
+
 ## [0.9.0] — 2026-10-29
 
 Needs nothing newer than `workflows-core` 1.69.0 — to-fix D30.

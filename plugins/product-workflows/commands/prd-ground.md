@@ -138,7 +138,7 @@ behaviour, not the behaviour.
    *Set SPECS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort
-   one, the same ordering `/design` Phase 0 uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
+   one, the same ordering `/design` Phase 0 uses and for the same reason. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` — or `resolve-address @<path>`, as typed, where step 1 found an `@<path>` address — (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns.
    Absent → stop, without asserting which command would create it: no folder exists, so no
@@ -252,6 +252,8 @@ behaviour, not the behaviour.
       clause: that command accepts the folder (its Phase 0 steps 5a and 5b refuse only a container and
       an Epic folder) and writes the `prd.md` whose `kind: prd` sets `route: idea` here on the re-run,
       which is what `PRD_GROUND_NEEDS_PRD` names for a `PRD-` folder in the same state.
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd` on `route: brd` and `prefix: prd` on the idea route, the prefix its handoff names; a stop it makes ends the run here.
+
 6. **On `route: brd`, gate this BRD's own inventory and ledger on main.** (The idea route's own
    gate is step 6i, immediately below — this whole step is the `route: brd` branch, unchanged.)
    **The two gates below resolve in a fixed order: the ledger's first, the inventory's second.**

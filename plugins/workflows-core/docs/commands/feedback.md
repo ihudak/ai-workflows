@@ -24,7 +24,7 @@ Write the flag before or after the note, never inside it: a leading run of flag 
 
 - **The note itself** — friction plus a suggested improvement. The command lightly tidies wording but never invents content you didn't say.
 - **Confirmed metadata**, resolved in one grouped prompt: `command` (inferred from recent context, or `n/a`), `category` (a controlled, reuse-first vocabulary), and `impact` (`blocker | friction | polish`).
-- **`$SPECS_PATH`** — the specs-preflight step at Phase 0 settles the branch before anything is written; it is silent when the repo is already clean and on its default branch, no other plugin branch holds a session-file commit it tries to push, and `$SPECS_PATH` names the root of a dedicated specs repository.
+- **`$SPECS_PATH`** — the specs-preflight step at Phase 0 settles the branch before anything is written; it prints one `Environment:` line naming `$SPECS_PATH`, its `origin` and `$REPOS_PATH`, and is otherwise silent when the repo is already clean and on its default branch, no other plugin branch holds a session-file commit it tries to push, and `$SPECS_PATH` names the root of a dedicated specs repository.
 
 ## What it produces
 
@@ -34,7 +34,7 @@ An `origin: manual` entry appended to the plugin's per-PRD feedback file — see
 A **session-cost entry** too, since this command now reports its own spend: `phase`/`role` inherited from the target command — save a `/security-workflows:scan` target, whose phase is inherited and whose role is recorded as `n/a` — or [`plugin-feedback`](../roles-and-phases.md#plugin-feedback)/`n/a` when there is nothing to inherit. It lands beside the feedback entry under `$SPECS_PATH`, or in the keyless pending file — see [Session cost](../reference/session-cost.md).
 ## Gates
 
-No reviewer and no branch of its own. The only two checkpoints are the specs-repo git guards — `specs-preflight` at the start, `commit-artifacts` at the end (`../../references/specs-repo-git.md`) — and a manual entry is never silently skipped: an `id` collision appends with a numeric suffix and a warning rather than dropping the note.
+No reviewer and no branch of its own. The only checkpoints are the specs-repo git guards — `specs-preflight` at the start, `commit-artifacts` at the end (`../../references/specs-repo-git.md`) — and, before the entry is written, the environment check (`../../references/session-hygiene.md` §7), which, where the environment no longer matches the `Environment:` line the preflight printed — a conversation resumed in another container — says so and leaves the entry in the printed output rather than writing it; and a manual entry is never silently skipped: an `id` collision appends with a numeric suffix and a warning rather than dropping the note.
 
 ## Example
 

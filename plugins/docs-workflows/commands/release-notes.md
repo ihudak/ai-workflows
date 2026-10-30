@@ -28,7 +28,7 @@ Usage: `/release-notes <ADDRESS> [--version <v>] [--no-docs] [--docs <path>] [--
 
 For full feature documentation use `/document`; for Epic drafting use `/epics`.
 
-This command makes **no external API calls but two**: key discovery's optional, read-only `gh search prs` and `gh pr view` — with diff grounding on, where a scanned clone is on GitHub and `gh` is installed and logged in — and, on the operator's consent, the draft's handoff, whose `gh` calls (its authentication check, its open-pull-request probe and `gh pr create`) are `workflows-core:phase-handoff` §2.6–§2.7's. It **never writes into the docs repo**.
+This command makes **no external API calls but two**: key discovery's optional, read-only `gh search prs` and `gh pr view` — with diff grounding on, where a scanned clone is on GitHub and `gh` is installed and logged in — and, on the operator's consent, the draft's handoff, whose `gh` calls (its authentication check, its open-pull-request probe and `gh pr create`) are the handoff's own. It **never writes into the docs repo**.
 
 ---
 
@@ -173,9 +173,11 @@ fixes, before step 1 places the folder or takes any stop its placement leads to 
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so the code/docs repo this run is working
-in is untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice;
+in is untouched (§1 rule 1). Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice;
 if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole
 run — the terminal `commit-artifacts` step skips on it.
+
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the PRD folder this run carries — the resolved folder, or the PRD folder above an Epic address — which its handoff names, with `prefix: prd`; a stop it makes ends the run here.
 
 ---
 
@@ -571,7 +573,7 @@ Outside that one case there is no question to ask and no option that replaces th
    (`workflows-core:addressing` §3). Outside means `git -C "$SPECS_PATH" rev-parse --show-toplevel`
    prints a directory and the folder's `realpath` is neither that directory's `realpath` nor beneath
    it; where that command fails there is no work tree to be outside of, and the offer goes ahead for
-   `handoff-to-main`'s gate to refuse (`workflows-core:phase-handoff` §2.1). On every other run, invoke
+   `handoff-to-main`'s gate to refuse. On every other run, invoke
    `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 consent
    choice verbatim — the **advisory** array, `release-notes.md` being read by a later run of this
    command and by others and gated by none (§4.0) — `/docs-workflows:docs-audit` excepted, which reads

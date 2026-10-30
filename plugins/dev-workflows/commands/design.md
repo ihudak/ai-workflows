@@ -87,11 +87,13 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
 fixes, before step 1 places the folder or takes any stop its placement leads to. A run that stops on its address — none given, `invalid`, `ambiguous`, `misrooted` or `absent` — stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier
-run, retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if
+run, retry an artifact commit that failed to push, and settle the branch. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if
 it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
 `commit-artifacts` step skips on it.
 
 *(The preflight runs before the gate below — at the end of step 1, earlier still — because `require-on-main` performs **no** `fetch` of its own — §3.2 — and relies on this step's best-effort one. Gating first would test never-fetched refs: a just-merged artifact would be missed on `origin/<default>` while the stale remote-tracking ref for its deleted branch still carries it, producing a false row D/E stop. `specs-preflight` self-gates on `$SPECS_PATH`, so it is safe this early.)*
+
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder with `prefix: design` — and, where `<EPIC>` is null, `reuse: later` as well, since step 4 settles the feature folder, and so the branch the handoff names, only then, where this runs again with the prefix alone. A stop it makes ends the run here.
 
 3. **Map onto the specs repo + require the spec on main.** Derive provisional kebab-case slugs from the relevant title(s): `<vslug>` for `<PRD>`, and `<eslug>` for `<EPIC>` when `<EPIC>` is set.
    - **Resolve the PRD dir:** call `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3) and use its `path`; on `ambiguous`, stop naming every match and `@<path>` as the way through; on `misrooted`, stop with §3's `SPECS_PATH_INSIDE_TREE` message. No matching rule is written here — §5 owns it, and it carries the legacy fallback. Use a freshly derived `PRD-<PRD>-<vslug>` only on `status: absent`. Every later `specifications/<PRD>-<vslug>/` in this command — the Epic-enumeration ref test included — names the dir resolved here.
@@ -119,6 +121,8 @@ it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), ca
          - **● done** — a `design.md` exists there → shown greyed, **not** default-selectable; selecting offers *revise*.
          Default cursor = the first actionable row (in-progress before not-started), and that row carries `(Recommended)`; where every spec'd Epic is ●, no row carries it, and the question's own text says so (`workflows-core:epic-picker` *The cap*). On selecting an Epic → set `<EPIC>` to that Epic's key and re-point the feature folder to its per-Epic subfolder; step 3's gate re-applies against that Epic's `specification.md`.
      - neither a flat `specification.md` nor any spec'd Epic subfolder exists at all → the equivalent of step 3's `absent` outcome; stop with its wording, unchanged.
+
+   **Check the branch the run stands on, for the folder step 4 settled.** Where `<EPIC>` was null, once step 4 has settled the feature folder — the Epic it set, by the picker or by auto-selecting the one spec'd Epic, or the PRD folder itself for a broad design, a flat `specification.md` or *Design across components anyway* — execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: design`; a stop it makes ends the run here.
 
 5. **Detect a prior `/design` run.** If a `_design-session.md` exists in the resolved feature folder,
    record that a resume is available — Phase 1 asks resume-vs-fresh. (Distinct from `/specify`'s
@@ -600,7 +604,7 @@ stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
 trailer, and pushes the branch this run's handoff phase created (§4.1) per §4 step 5. It
 NEVER touches a code repo, a docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the
-run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice — the flag a §6 comparison this run ended in *Stop* sets (`workflows-core:session-hygiene`), with its `RESUME_ENVIRONMENT_CHANGED:` line as that notice. Hold its
+run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice — the flag a §6 comparison this run ended in *Stop* sets (`workflows-core:session-hygiene`), with its `RESUME_ENVIRONMENT_CHANGED:` line as that notice, or the flag its §7 `env-check` sets, with its `Environment changed:` line. Hold its
 §6 outcome line for the Final report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git

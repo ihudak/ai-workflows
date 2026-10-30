@@ -143,6 +143,11 @@ jobs:
         # question. A citation inside a rule statement is no step: a run reads it as a source note. A
         # scan that finds no asking command fails.
         run: python3 scripts/reference-parts.py check-questions
+      - name: Check every resolving command runs branch-check
+        # A command naming resolve-address requests phase-handoff's branch-check; one presenting §4.3's
+        # consent choice passes it a prefix in that request's paragraph, save the exempt set the script
+        # declares with a reason each. A scan that finds no resolving command fails.
+        run: python3 scripts/reference-parts.py check-branch-check
 
       - name: Install the mermaid gate's pinned parser
         run: npm ci --prefix scripts/mermaid --ignore-scripts --no-audit --no-fund

@@ -25,6 +25,8 @@ Every rule name in `session-hygiene`, with the part that holds it; `core` comes 
 - `§5` → `guidance`
 - `6. Resume environment — the session file records where the run stands, and a resumed run compares it` → `resume-environment`
 - `§6` → `resume-environment`
+- ``7. `env-check` — the environment a run started in, compared before it writes`` → `env-check`
+- `§7` → `env-check`
 
 ---
 
@@ -39,7 +41,9 @@ Everything in §1–§5 is **guidance-only** — the plugin NEVER auto-invokes `
 `/clear`, or `/rename`. The goal is to stop relying on a human to keep asking "prepare
 for a compact/clear": the pipeline does the prep and prompts the choice itself. §6 is not a
 suggestion and is outside §5's contract: it is the check a command that keeps a session file runs
-on the environment it recorded there, and it stops the run on a mismatch.
+on the environment it recorded there, and it stops the run on a mismatch. §7 is not one either: it
+compares every run's environment with the line the run's preflight printed, before the run writes,
+and asks nothing.
 
 ## 1. Prepare-checkpoint (runs FIRST — unconditional for PRD-scoped runs, save one carrying `specs_git: misrooted`)
 
@@ -66,7 +70,9 @@ uncommitted, since `commit-artifacts` runs after cost. Prepare-first (§5 rule 2
 the write happens before the run ends, and therefore before the user can act on the
 printed suggestion.
 
-**Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): where `$SPECS_PATH` is misplaced, the pointer would land where the next run, with the variable corrected, never looks; where this reference's §6 *Stop* set the flag, the run is no longer in the environment it recorded, and writes nothing more.
+**Run `env-check` first** (§7, `Skill(skill: "workflows-core:reference", args: "session-hygiene env-check")`), before anything of the pointer is written: it sets `specs_git: misrooted` where the run no longer stands in the environment its preflight printed.
+
+**Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): where `$SPECS_PATH` is misplaced, the pointer would land where the next run, with the variable corrected, never looks; where this reference's §6 *Stop* or §7's `env-check` set the flag, the run is no longer in the environment it recorded or started in, and writes nothing more.
 
 **Skipped**: `/idea` (its brief is the anchor, and it is written and handed off in the same run), `/implement`
 **direct** mode, `/document` **doc-edit** mode (Mode B), `/vuln`, `/upgrade`, `/frames`. There the

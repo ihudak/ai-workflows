@@ -39,9 +39,11 @@ so every run of one unit writes into one file however the unit was addressed; an
 item, so each lands in the file of the unit its line asks a run of. One file per PRD or Epic folder,
 alongside the artifacts the follow-ups are about.
 
-**No folder resolved, or the run carries `specs_git: misrooted` (`specs-repo-git.md` §3.1) → report-only.** The follow-ups stay in the Final Report and the phase emits a
+**Run `env-check` first** (`Skill(skill: "workflows-core:reference", args: "session-hygiene env-check")`, `session-hygiene.md` §7), before this section's first rung: it sets `specs_git: misrooted` where the run no longer stands in the environment its preflight printed.
+
+**No folder resolved, or the run carries `specs_git: misrooted` (`specs-repo-git.md` §3.1, which names every setter) → report-only.** The follow-ups stay in the Final Report and the phase emits a
 one-line notice naming its reason: `⚠ No resolved folder — N follow-up(s) kept in this report only.`, or,
-under the flag, whether or not a folder resolved, `⚠ SPECS_PATH is misplaced (specs_git: misrooted) — N follow-up(s) kept in this report only.` **NEVER write into
+under the flag, whether or not a folder resolved, `⚠ SPECS_PATH is misplaced, or the run's environment changed (specs_git: misrooted) — N follow-up(s) kept in this report only.` **NEVER write into
 the current working directory**, which may be a code repository.
 
 **That is the whole ladder now, and it used to have four rungs.** The vault was the primary target,

@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.65.0] — 2026-10-30
+
+Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.
+
+### Added
+- **Every command that resolves a folder runs `workflows-core:phase-handoff`'s `branch-check`** after its preflight, its resolution and its level refusals, before the first step that reads or gates the folder's documents — `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/prd-proposal`, `/brd-intake`, `/brd-proposal`, `/prd-ground`, `/brd-split`, `/brd-interview`, `/brd-package` and `/brd-reconcile` with their handoff's prefix, `/update-spec` with none: a plugin branch behind the default branch under the address's root folder stops the run (D24), and an open branch the handoff would reuse is asked about before any work (D18). `/idea` and `/brd-intake` run it on a folder they found; `/specify` passes `reuse: later` at Phase 0 on a PRD address and runs it again with `spec` once Phase 2 Step A settles the feature folder, before it re-detects a prior run there; `/epics` checks the PRD folder its handoff names, also on an Epic address; `/brd-reconcile`'s cross-BRD write guard runs it on a dependent BRD's folder and records a stop rather than stopping.
+
+### Changed
+- The preflight clause of every command names the `Environment:` line `specs-preflight` now prints; `/idea`, `/brd-intake` and `/update-prd` name the handoff's rules in words where they only explain them.
+- `/epics` and `/idea` name a refused switch among the handoff outcomes that leave their files uncommitted, and `/idea` offers its `@<path>` route on it; the docs pages say where each command checks its branch, and the environment page what a resumed conversation in another container writes.
+
 ## [3.64.0] — 2026-10-29
 
 Take with `workflows-core` 1.69.0 — to-fix SEC-G6 and D25.

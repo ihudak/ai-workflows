@@ -116,7 +116,7 @@ record, and the parent's defect log waits (below).** They are:
 | *The propagation sweep* | sweep dispositions into a **dependent BRD's** `decisions.md` |
 | *The stale cross-reference sweep* | `updated` corrections into any artifact under the parent, including a **sibling slice's** |
 
-**The rule, once, for the three that record.** Before writing into an artifact that belongs to a BRD other than
+**The rule, once, for the three that record.** Where that artifact's BRD lies under a root folder other than this run's — a dependent BRD's — first execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on that BRD's folder, once for each such root, with no `prefix`; a stop it makes is a stopping row here (§6.3), recorded by its finding. Before writing into an artifact that belongs to a BRD other than
 the one this run was given, execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against that artifact. Any **stopping** row → **record, never write**: the intended change, the
 artifact, and the concrete branch/PR state the gate reported all go into the reconciliation record
 and the final report, and the file is left exactly as it was. Row F (`absent` — the artifact is on no
@@ -219,7 +219,7 @@ write would re-ask a question already answered.
    *Set SPECS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
-   the same ordering `/brd-package` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+   the same ordering `/brd-package` uses and for the same reason. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` — or `resolve-address @<path>`, as typed, where step 1 found an `@<path>` address — (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns. Absent
@@ -283,6 +283,8 @@ write would re-ask a question already answered.
 
     Stop:
     `BRD_RECONCILE_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Reconciling applies a customer's returned review of a BRD slice's package, and this folder was never packaged by this route and holds no coverage ledger and no requirement inventory for a correction to land in; --sent does not change that. Check the key names the slice whose package the customer answered. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>' where the folder holds no prd.md yet). Where it holds a prd.md, run '/product-workflows:update-prd <KEY>' to revise that PRD from what the review says. Re-running this command on this folder stops here again.`
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`, the prefix of its first handoff; a stop it makes ends the run here. A dependent BRD under another root folder is checked by the cross-BRD write guard, before anything is written into it.
+
 6. **Gate the sent package on main — unless `--sent` supplied one.**
 
    **What this gate is actually for, and why `--sent` can satisfy it.** The *Why the gate is the

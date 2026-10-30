@@ -86,13 +86,15 @@ from `IMPLEMENT_BRD_NOT_SLICED`'s listing, or an Epic folder, `specification.md`
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so the code/docs repo this run is working
-in is untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice;
+in is untouched (§1 rule 1). Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice;
 if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole
 run (into run-state `specs_git` at Phase 1.4, read from there after it) — the terminal `commit-artifacts` step skips on it.
 Where its §3.5 B2 found the plugin branch the checkout stood on merged and left it, carry that branch's
 name the same way (into run-state `specs_merged_branch` at Phase 1.4): Phase 7's resume-pointer write
 reads it there, since a pointer item waiting on that branch's merge is settled by it, and B2 may
 have deleted the only ref that showed it.
+
+**Check the branch the run stands on.** On a keyed run, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with no `prefix`: this command's own handoff is conditional, and onto prefixes it does not own. A stop it makes ends the run here. A direct run resolves no folder, and skips this.
 
 **Epic-unit resolution (keyed runs).** `/implement` implements one Epic at a time. When
 `mode: keyed`, place the resolved folder as `workflows-core:addressing` §4.1 does — by its prefix,

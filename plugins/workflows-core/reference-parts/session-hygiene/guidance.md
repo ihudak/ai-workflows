@@ -25,6 +25,8 @@ Every rule name in `session-hygiene`, with the part that holds it; `core` comes 
 - `§5` → `guidance`
 - `6. Resume environment — the session file records where the run stands, and a resumed run compares it` → `resume-environment`
 - `§6` → `resume-environment`
+- ``7. `env-check` — the environment a run started in, compared before it writes`` → `env-check`
+- `§7` → `env-check`
 
 ---
 
@@ -39,7 +41,9 @@ Everything in §1–§5 is **guidance-only** — the plugin NEVER auto-invokes `
 `/clear`, or `/rename`. The goal is to stop relying on a human to keep asking "prepare
 for a compact/clear": the pipeline does the prep and prompts the choice itself. §6 is not a
 suggestion and is outside §5's contract: it is the check a command that keeps a session file runs
-on the environment it recorded there, and it stops the run on a mismatch.
+on the environment it recorded there, and it stops the run on a mismatch. §7 is not one either: it
+compares every run's environment with the line the run's preflight printed, before the run writes,
+and asks nothing.
 
 ## 2. The suggestion — role-aware (reads next-phase-offer's role labels)
 

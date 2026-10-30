@@ -44,7 +44,7 @@ step 4 resolved) is written out in the command, and a
 handles a code itself, the run stops there with that message.
 
 **Ending early.** Every stop — each `SECURITY_*` line, the `$SPECS_PATH` *Cancel*, Phase 0 step 4's
-address stops, a switch or a fast-forward git refuses at Phase 1, and a `register.py` exit 2 before
+address stops, a stop `branch-check` makes at Phase 0 step 4, a switch or a fast-forward git refuses at Phase 1, and a `register.py` exit 2 before
 Phase 7.2 has written the run's record — and every
 run-ending answer — Phase 0 step 9's *Cancel*, Phase 1's switch *Cancel*, Phase 3's *Cancel* and
 Phase 4's *Stop to clean the files* — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase
@@ -95,6 +95,8 @@ keeps a `sec` run's role.
    `SECURITY_SPECS_MISROOTED: $SPECS_PATH is misplaced — the notice above says how, and names the value to set where it can tell. The register can be read there but not written, so this run would record nothing; point SPECS_PATH at the root of a dedicated specs repository, then re-run '/security-workflows:scan <the arguments as given>'.`
 
    Then make the run's scratch directory, outside every repository: `run_dir=$(mktemp -d -t security-workflows-run.XXXXXX)`, carrying the path it prints as `run_dir`. Its files — the reservations, the plan, the decisions — are the run's own and are never committed. It is removed on every path from here on: immediately before the terminal `commit-artifacts` (Phase 7.6), and in *Ending early*'s tail.
+
+   **Check the branch the run stands on.** Where step 4 resolved a unit's folder — a key, or an `@<path>` to one — execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with no `prefix`: this command hands nothing off in the specs repository. A stop it makes ends the run here. A repository path resolves no folder, and skips this.
 
 5. **The repository** (spec D5). Each run reads one code repository, `<repo root>`:
    - **A key run without `--import`** — a change scan (a key with none of `--import`, `--triage` and `--verify-fixes`), or `--triage` or `--verify-fixes` with a key — takes the repository this session is open in: `git rev-parse --show-toplevel` from the working directory. It is the one repository Claude Security's change job scans, and, for `--triage` and `--verify-fixes`, the repository whose register the key narrows. Where that fails, stop with `SECURITY_USAGE`, its `<what was wrong>` saying that this session is open in no git repository.

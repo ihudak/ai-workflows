@@ -5,7 +5,9 @@ part core always
 part resume-pointer
 part guidance
 part resume-environment
+part env-check
 alias resume-environment "§6"
+alias env-check "§7"
 alias resume-pointer "§1" "Location" "Skipped"
 alias guidance "§2" "§3" "§4" "§5"
 -->
@@ -22,7 +24,9 @@ Everything in §1–§5 is **guidance-only** — the plugin NEVER auto-invokes `
 `/clear`, or `/rename`. The goal is to stop relying on a human to keep asking "prepare
 for a compact/clear": the pipeline does the prep and prompts the choice itself. §6 is not a
 suggestion and is outside §5's contract: it is the check a command that keeps a session file runs
-on the environment it recorded there, and it stops the run on a mismatch.
+on the environment it recorded there, and it stops the run on a mismatch. §7 is not one either: it
+compares every run's environment with the line the run's preflight printed, before the run writes,
+and asks nothing.
 <!-- /part -->
 
 <!-- part: resume-pointer -->
@@ -51,7 +55,9 @@ uncommitted, since `commit-artifacts` runs after cost. Prepare-first (§5 rule 2
 the write happens before the run ends, and therefore before the user can act on the
 printed suggestion.
 
-**Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): where `$SPECS_PATH` is misplaced, the pointer would land where the next run, with the variable corrected, never looks; where this reference's §6 *Stop* set the flag, the run is no longer in the environment it recorded, and writes nothing more.
+**Run `env-check` first** (§7, `Skill(skill: "workflows-core:reference", args: "session-hygiene env-check")`), before anything of the pointer is written: it sets `specs_git: misrooted` where the run no longer stands in the environment its preflight printed.
+
+**Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): where `$SPECS_PATH` is misplaced, the pointer would land where the next run, with the variable corrected, never looks; where this reference's §6 *Stop* or §7's `env-check` set the flag, the run is no longer in the environment it recorded or started in, and writes nothing more.
 
 **Skipped**: `/idea` (its brief is the anchor, and it is written and handed off in the same run), `/implement`
 **direct** mode, `/document` **doc-edit** mode (Mode B), `/vuln`, `/upgrade`, `/frames`. There the
@@ -365,8 +371,9 @@ this reference. `/vuln` + `/upgrade` place the `/compact` line near their
 A run can be resumed in an environment other than the one it started in — a later invocation
 resuming its session file, or the conversation itself resumed (`claude --resume`, a continuation)
 in another container — with `$SPECS_PATH` and `$REPOS_PATH` pointing elsewhere and the reference
-loader on another install. Nothing else re-checks what Phase 0 resolved, so a run that goes on
-branches, writes and commits in a repository it never resolved. This section is cited by every
+loader on another install. Unchecked, such a run goes on to branch, write and commit in a
+repository it never resolved. §7 checks every run against the line its preflight printed, asking
+nothing; this section checks a run that keeps a session file against that file, and asks. It is cited by every
 command that keeps a session file it resumes from: `/design` (`_design-session.md`) and `/specify`
 (`_session.md`).
 
@@ -449,4 +456,34 @@ as that notice. What the run already wrote
 stays where it is. The stop line is:
 
 `RESUME_ENVIRONMENT_CHANGED: <each field that differs, recorded and now> — nothing more was written. Restore the recorded environment and re-run '<command> <address>', which resumes from <session file path>.`
+<!-- /part -->
+
+<!-- part: env-check -->
+## 7. `env-check` — the environment a run started in, compared before it writes
+
+A conversation resumed in another container — `claude --resume`, a continuation — goes on against whatever `$SPECS_PATH` and `$REPOS_PATH` name there, and only the two commands §6 serves keep a record to compare it with. So every run prints its environment once, at its start, and `env-check` compares the environment it stands in with that line before the run writes into the specs repository. Prompt-free, as `workflows-core:specs-repo-git`'s two entry points are (its §1 rule 7): a question at the first write would come after the work, and the operator re-runs where the run started instead.
+
+**The line.** `specs-preflight` (`workflows-core:specs-repo-git` §3) prints, on every run and before its first act, what this one Bash call prints:
+
+```bash
+printf 'Environment: SPECS_PATH=%s (origin %s), REPOS_PATH=%s\n' \
+  "$(if [ -n "${SPECS_PATH-}" ]; then realpath -- "$SPECS_PATH" 2>/dev/null || printf '%s' "$SPECS_PATH"; else printf unset; fi)" \
+  "$(if [ -n "${SPECS_PATH-}" ]; then git -C "$SPECS_PATH" remote get-url origin 2>/dev/null || printf none; else printf none; fi)" \
+  "${REPOS_PATH-unset}"
+```
+
+The conversation carries the line, and the conversation is the one thing a resume takes to another container. **Where the run carries `$SPECS_PATH` from an answer** — the *Set SPECS_PATH* question of `workflows-core:escalation-rules`' *Required path environment variable unset* — rather than from its environment, the call runs with that value exported first, `export SPECS_PATH='<the value>';`, here and at every re-run below, so the line records the path the run writes to.
+
+**`env-check`** — run where its callers say, each time afresh:
+
+1. **Find the last `Environment:` line this run printed** — since this command's invocation, never one an earlier run in the same conversation printed. **Where there is none** — a run started before this release, or one whose preflight did not run — pass: there is nothing to compare.
+2. **Where §6 pinned the run** (*Go on pinned to the recorded environment*), pass: §6 compares it at the same points, against the values it pins, and the `REPOS_PATH` it exports is its command's resolved value rather than the variable this line records.
+3. **Run the line's Bash call again, as a new call** — never answer from the conversation — and compare what it prints with that line, whole.
+4. **Equal → pass, silently.** **Different → set `specs_git: misrooted` for the rest of the run** and print, once per run however many times this runs:
+
+   `Environment changed: started in <the values the line recorded>, now <the values printed now> — nothing more is committed, handed off or recorded here, and what this run already wrote stays where it is. Re-run in the container the run started in.`
+
+**The flag does the rest, everywhere it is read** — `workflows-core:specs-repo-git` §3.1 records this as one of its setters: `handoff-to-main` refuses (`workflows-core:phase-handoff` §2.1, which repeats this notice), every emitter of the tail falls to its report-only tier, no `resume.md` is written, and `commit-artifacts` skips, repeating the notice. A new flag would need every one of those consumers taught it; this one is already honoured by all of them, and the case is one it records: the run is no longer in the environment it started in.
+
+**Callers.** `handoff-to-main`, first in its §2.1 gate, and the first step of every write of the tail: `workflows-core:feedback-emission` §2, `workflows-core:followup-emission` §2, `workflows-core:cost-emission` §8, and this reference's §1 before it writes `resume.md`. So a command that never hands off — `/dev-workflows:vuln`, `/docs-workflows:document`, `/security-workflows:scan` — is still checked before its first write of the tail. A deliverable a command writes before its handoff is not covered: it lands where `$SPECS_PATH` names at that moment, and §6 alone checks before that write, for the two commands it serves.
 <!-- /part -->

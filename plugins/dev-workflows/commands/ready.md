@@ -108,7 +108,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
 fixes, before step 1 places the folder or takes any stop its placement leads to. A run that stops on its address — none given, `invalid`, `ambiguous`, `misrooted` or `absent` — stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
-retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+retry an artifact commit that failed to push, and settle the branch. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
@@ -144,6 +144,8 @@ step skips on it.
      *I've switched to a clean main — re-check* takes this whole test again, the two exceptions
      included, so a checkout whose only changes are those paths passes it.
    - Clean `main`/`master` → proceed silently.
+
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the folder step 1 resolved, with `prefix: ready`. **A stop of its §6.1 does not end this run** (§6.3): record its finding in the report as a readiness finding, capping the verdict at `PARTIAL` as a stopping row of Phase 1's gate does, and go on reading the checkout step 3 settled — save after its §6.2 *Switch*, which takes the run off that checkout, where a stop of §6.1 ends the run as it ends any producer's. A stop of its §6.2 ends the run here, as it ends any producer's.
 
 4. **Map onto the specs repo (PRD dir + optional Epic subdir).** Resolve the PRD dir with
    `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
@@ -586,7 +588,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    clause: nothing runs require-on-main on _readiness.md]
 
    ### Pre-handoff maintenance (step 2a)
-   - Documentation (Agent 1): [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as step 3's `Phase handoff:` line gives `_readiness.md`'s: committed and pushed with it, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside it (the handoff was declined, or its gate failed)] — _or_ "no update required (reason)"
+   - Documentation (Agent 1): [file edited, relative to $SPECS_PATH] — [the edit made] — [its fate, as step 3's `Phase handoff:` line gives `_readiness.md`'s: committed and pushed with it, committed but not pushed (the push failed, or there is no remote), staged but not committed (*Commit failed*), already on the branch unchanged (*Nothing to commit*), or uncommitted beside it (the handoff was declined, its gate failed, or git refused its switch)] — _or_ "no update required (reason)"
    - Instructions (Agent 3): [<unit_folder>/CLAUDE.md, relative to $SPECS_PATH] — [summary of change and why] — [its fate, as above] — _or_ "no update required"
    - Proposed, not written: [the specs repository's CLAUDE.md | ~/.claude/CLAUDE.md] — [the edit and why] — _one per proposal; omit where none_
    - Out-of-scope write, not handed off: [absolute path] — _a path step 2a's agents returned outside the set each may edit, left as written and uncommitted; omit where none_

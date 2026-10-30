@@ -102,8 +102,7 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
 3. **Specs-repo preflight — once step 2's resolution returns `status: found`.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")`
    and execute its `specs-preflight` entry point (§3) inline, before step 4's container refusal, step 4a's Epic refusal and step 5's gate — `require-on-main` performs no fetch of its own
-   (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one. Prompt-free, and
-   silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5
+   (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5
    notice; if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the
    terminal `commit-artifacts` step skips on it.
    Its run key set (`workflows-core:specs-repo-git` §3.2) is fixed from what step 2 returned and
@@ -175,6 +174,8 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    there with '/product-workflows:create-prd <PARENT-KEY>'.`, `<PARENT-KEY>` being that folder's own
    `key`, subject to step 5's `<remedy>` table applied to *that* folder; anywhere else, name no
    parent and say so. It is a user halt, so `emit-block` does not fire.
+
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: prd`; a stop it makes ends the run here.
 
 5. **Gate `prd.md` on main.** Execute `require-on-main`
    (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against the

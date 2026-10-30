@@ -93,8 +93,7 @@ not work: a flag is a token, so `--redo` would arrive as the address.
 
 3. **Specs-repo preflight — once step 2's resolution returns `status: found`.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")`
    and execute its `specs-preflight` entry point (§3) inline, before step 4's slice refusal and every later read, Phase 4's gate among them — `require-on-main` performs no fetch of its own
-   and relies on this step's best-effort one. Prompt-free, and
-   silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5
+   and relies on this step's best-effort one. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5
    notice; if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the
    terminal `commit-artifacts` step skips on it.
    Its run key set (`workflows-core:specs-repo-git` §3.2) is fixed from what step 2 returned and
@@ -158,6 +157,8 @@ not work: a flag is a token, so `--redo` would arrive as the address.
 
    Where both lines are absent, say so rather than inventing a key. It is a user halt, so
    `emit-block` does not fire.
+
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
 
 5. **Note whether this run is a revision**, last: whether `proposal.md` already exists in the
    resolved folder. Where it does, Phase 6 treats it as the anchor (§8) unless `--redo` was given,

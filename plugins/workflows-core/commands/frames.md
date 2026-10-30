@@ -134,9 +134,11 @@ Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=
 **Specs-repo preflight** — run at the end of step 1's resolution, on `status: found`, with the run key
 set step 1 fixes, before step 1's carrier and kind tests read the folder. Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
-retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+retry an artifact commit that failed to push, and settle the branch. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
+
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: frames`; a stop it makes ends the run here.
 
 ---
 
@@ -334,7 +336,7 @@ set empty — has no deliverable, offers no handoff, and says so; offering one w
 request for nothing.
 
 Report what each set now holds, then present
-`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.3's consent choice verbatim — the **advisory** variant (§4.0), whose second option says no command stops on this and that what reads it reads your working copy. **Nothing gates a frame-set index, but something reads one**: `product-workflows:design-grounder` refuses to run on a frame set holding no index at all, and `product-workflows:grounding-verifier` returns `NO_INDEX`/`STALE_INDEX` on one — both from the working tree, neither off a ref. The **gated** class is wrong outright — §3.4 names no row for a frame-set index, so neither of its two arrays applies, and its **stopping** one would promise a refusal no consumer makes — and the **unread** variant — which this phase presented until §4.0's register was verified against the tree — told the operator to ignore a file `/prd-ground` refuses a frame set without, three lines above a paragraph of this same phase saying the set stays `NO_INDEX` for everybody else. That contradiction is the reason §4.3 asks a producer to name its reader rather than infer the class from the absence of a §3.4 row. On the first
+`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.3's consent choice verbatim (`Skill(skill: "workflows-core:reference", args: "phase-handoff")` loads it whole) — the **advisory** variant (§4.0), whose second option says no command stops on this and that what reads it reads your working copy. **Nothing gates a frame-set index, but something reads one**: `product-workflows:design-grounder` refuses to run on a frame set holding no index at all, and `product-workflows:grounding-verifier` returns `NO_INDEX`/`STALE_INDEX` on one — both from the working tree, neither off a ref. The **gated** class is wrong outright — §3.4 names no row for a frame-set index, so neither of its two arrays applies, and its **stopping** one would promise a refusal no consumer makes — and the **unread** variant — which this phase presented until §4.0's register was verified against the tree — told the operator to ignore a file `/prd-ground` refuses a frame set without, three lines above a paragraph of this same phase saying the set stays `NO_INDEX` for everybody else. That contradiction is the reason §4.3 asks a producer to name its reader rather than infer the class from the absence of a §3.4 row. On the first
 option, execute `handoff-to-main` (§2) with all five of its §2.9 inputs: `prefix: frames`;
 `feature_folder` = the folder Phase 0 resolved; `deliverable_paths` = **every `index.md` this run
 wrote, one literal path each, repo-relative as Phase 2 held them**; `title: <KEY> Index design frame sets`; and
