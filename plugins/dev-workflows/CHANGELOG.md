@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.55.0] — 2026-10-30
+
+Take with `workflows-core` 1.72.0 for the saving — to-fix PR9.
+
+### Changed
+- `/design`, `/ready`, `/conformance` and `/implement` request `phase-handoff handoff-to-main` at their consent step instead of loading the whole reference, so a handoff reads one file; `/ready`'s and `/conformance`'s pre-handoff maintenance step still loads the whole reference for §4.0's register. Explanatory pointers into sections that file does not hold are named in words.
+
 ## [4.54.0] — 2026-10-30
 
 Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.

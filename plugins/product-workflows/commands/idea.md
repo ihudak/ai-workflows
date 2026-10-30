@@ -644,10 +644,10 @@ this run emits.
 Report where `idea.md` was written and its `status`, and what Phase 4.5 vendored beside it, then offer
 the next phase — **adapted to status**:
 
-- **`status: refined`** — offer the handoff. Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")`
+- **`status: refined`** — offer the handoff. Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`
   and present its §4.3 consent choice verbatim — the **gated — falling back** variant (§4.1
   bullet 2), because `/product-workflows:create-prd <KEY>` runs `require-on-main` on this `idea.md`
-  (§3.4's first row), which settles the class as **gated**, and that row is the *only* one naming
+  (the gate's first row-F row), which settles the class as **gated**, and that row is the *only* one naming
   this file: it preserves the Phase 0 idea ladder instead of stopping, so §4.1's quantifier takes
   the falling-back half. The **gated — stopping** array would promise a refusal `/create-prd` does
   not make: on `absent` it names the file without reading it and goes on down its idea ladder,
@@ -701,7 +701,7 @@ the next phase — **adapted to status**:
   reading it, and goes on down its idea ladder — which comes back to this brief only through its
   same-session rung or a path the operator types, and otherwise grills the PRD from scratch. Where it
   refined a brief the default branch already carries, the working copy differs from the merged one,
-  and `/create-prd <KEY>` stops on that at `workflows-core:phase-handoff` §3.3's C rows until it is
+  and `/create-prd <KEY>` stops on that at its gate's C rows until it is
   committed (§4.1, the stopping array this run presented). Named as a path, the file is read where
   it sits on rung 2's terms: never relocated, never gated, reported once as out-of-contract. The
   merge-clause route is for an operator who will land the files first; the `@<path>` route is the

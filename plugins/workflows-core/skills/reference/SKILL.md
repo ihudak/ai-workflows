@@ -54,7 +54,7 @@ On any other reference, a second argument names an entry point; where it
 names none of that reference's entry points, the request fails: report the
 argument that named nothing, and stop as your command, or your agent, stops.
 
-These entry points read their own file: `phase-handoff branch-check` and `phase-handoff require-on-main`.
+These entry points read their own file: `phase-handoff branch-check`, `phase-handoff handoff-to-main` and `phase-handoff require-on-main`.
 Each one's file is
 `${CLAUDE_PLUGIN_ROOT}/reference-parts/<the reference>/<the entry point>.md`.
 A request on one of their references, with or without a second argument,

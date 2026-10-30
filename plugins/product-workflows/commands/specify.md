@@ -1104,7 +1104,7 @@ inventing one would mint a format this command alone understood. Its consumption
 that *is* stamped, and only because it lives inside `code-grounding.md`: a matrix row is not a finding
 record either, so it too is reported at file granularity rather than given a `consumed_by` of its own.
 
-Then **offer** (commit-when-asked — never automatic), invoking `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and presenting its §4.3 choice array verbatim:
+Then **offer** (commit-when-asked — never automatic), invoking `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and presenting its §4.3 choice array verbatim:
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
 ```

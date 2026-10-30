@@ -1352,7 +1352,7 @@ that path this phase rewrites only what the removal and the reconcile changed �
 
 ## Phase 6 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 choice array verbatim — **two arrays, selected by the `deliverable_paths` set below, per §4.0's strongest-class rule.** Where that set holds any **slice-level** `coverage-ledger.md` or `brd/brd-inventory.md` — every path but the ones named next — present §4.3's **gated — stopping** array (§4.1 bullet 1), because `/prd-ground` stops on both (`workflows-core:phase-handoff` §3.4):
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim — **two arrays, selected by the `deliverable_paths` set below, per §4.0's rule that a set spanning classes takes the strongest class.** Where that set holds any **slice-level** `coverage-ledger.md` or `brd/brd-inventory.md` — every path but the ones named next — present §4.3's **gated — stopping** array (§4.1 bullet 1), because `/prd-ground` stops on both, by its own gate rows:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
@@ -1723,7 +1723,7 @@ run's window then opens where the one before it closed (`workflows-core:cost-emi
 this run spends after its own cost entry — its resume pointer, its commit, its report and the wait
 on the merge below — rolls into the first grounding run's bucket, as spend between two commands
 always does there. **Nothing here merges, rebases or resets**: the plugin
-never merges (`workflows-core:specs-repo-git` §1 rule 4, `workflows-core:phase-handoff` rule 4) —
+never merges (`workflows-core:specs-repo-git` §1 rule 4, `workflows-core:phase-handoff` §1 rule 4) —
 this section waits for the operator's merge and checks it.
 
 1. **The merge gate**, read off Phase 6's §4.1 outcome:

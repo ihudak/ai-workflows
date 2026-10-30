@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.31.0] — 2026-10-30
+
+Take with `workflows-core` 1.72.0 for the saving — to-fix PR9.
+
+### Changed
+- `/release-notes` requests `phase-handoff handoff-to-main` at its consent step instead of loading the whole reference; its pointer to the handoff's register of classes is named in words.
+
 ## [1.30.0] — 2026-10-30
 
 Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.
