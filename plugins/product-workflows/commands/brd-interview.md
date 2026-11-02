@@ -653,7 +653,12 @@ the round record*), and where the two disagree the dispositions win.
   supersession happened**: a record whose findings a re-grounding superseded while an earlier round
   was still open was not put again by that round, and its supersession predating the last closure
   must not strand it — or a record *A decision reopened elsewhere* puts again: a `[VD#n]` or
-  `[CD#n]` reading `reopened` that no question in flight puts, whichever run reopened it. **A change
+  `[CD#n]` reading `reopened` that no question in flight puts, whichever run reopened it — or, where
+  this BRD holds a `code-defect-log.md`, an entry of it a reconciliation flagged and no round record
+  has answered (`${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §7, from the records
+  *Resolve inputs and gate the grounded BRD*, step 9, read), **whenever that reconciliation ran**: the
+  *Put each `[V]` to the operator* phase puts its disposition again, and a round is the only place a
+  re-disposition is written (`decision-register-format.md` §8). **A change
   raises a question only where a source puts one**, and many do not: a `--rebaseline` pass
   supersedes every finding it re-grounds, shipped or not, so a pass whose successors confirm every
   plain record they bear on, and leave every held record waiting on its prerequisite, changes the
@@ -663,7 +668,13 @@ the round record*), and where the two disagree the dispositions win.
   command writes — `withdrawn`, or a re-decision, completion or reversion written in place — raises
   nothing of itself either, since `reopened` is the one status a source here reads as a question.
   - **At least one question** → open round `<highest + 1>`, naming in its record exactly what
-    changed and made it askable, and work it.
+    changed and made it askable, and work it. A flagged entry counts here as a question does. **Where
+    flagged entries alone made the round askable, it holds no question**: it is opened to put them,
+    its record names each as what made it askable, and its write — the `code defects:` line carrying
+    each `flag answered`, and a `Status: closed` line, since no question in it is left without a
+    terminal disposition — closes it in the same run, as round 1's *No question at all* branch closes
+    its record. A run that stops before that write leaves the flags unanswered, and the next run opens
+    the round again.
   - **No question at all** → **open no round** and write no round record: a round with nothing in it
     holds nothing for anyone to answer, and a record of one would read as a round nobody finished
     (*An empty in-scope set is a finished state*, in *Generate the round's question set*, refuses the
@@ -680,10 +691,6 @@ the round record*), and where the two disagree the dispositions win.
     the round record* would (`decision-register-format.md` §8) — this path is a completed run that
     skips that phase, and a torn write left here would sit on file with nothing to remove it — and
     **report each one removed**, by id or heading with the round it claimed, in the final report.
-    **Report, too, every `code-defect-log.md` entry a reconciliation record flagged** (*Put each
-    `[V]` to the operator*'s re-disposition trigger), with the record and the hit, as waiting for
-    the next run of this command that works a round: this path works none, and a re-disposition is
-    written only once a round record names it (`decision-register-format.md` §8).
     Then skip to the handoff phase — with nothing to commit where the register was already on file,
     nothing was torn, no re-disposition was completed, no earlier run left `code-defect-log.md`
     changed and *Handoff*'s first step wrote no defect resolution, and otherwise with the files this
@@ -1335,8 +1342,9 @@ saying so later requires the round number to still mean what it says (§5).
 
 **A later round is generated from what changed after the last round was generated, by the same
 sources, and before it is opened.** *Resolve the round*'s *Every round is closed* branch runs the scoping
-above and this generation for round `<highest + 1>` to learn whether that round would hold anything,
-and opens it only where it would — so, as for round 1, this phase then works that set and generates
+above and this generation for round `<highest + 1>` to learn whether that round would hold anything, and opens it only where it would, or where an
+unanswered code-defect flag (`${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §7) makes
+it askable without a question — so, as for round 1, this phase then works that set and generates
 nothing again. The generation takes: the *Round 1 is generated from the grounding* bullets, applied
 to each finding added, or whose verdict or verifier outcome changed, since the last round was
 generated, whenever the change happened — the last round's `generated against:` line is the
@@ -1636,37 +1644,20 @@ disposition it carries — put its disposition to the operator once, against the
 `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §4 fixes for a first raise.
 
 **An entry is flagged where a reconciliation's stale cross-reference sweep sent it to a human and
-no round record has answered that flag.** That sweep reaches this log from any slice under the
-parent and sends every hit in a `code-defect-log.md` to `needs-a-human`, since no field of an entry
-is its to write (`commands/brd-reconcile.md`, *The stale cross-reference sweep*, its
-`code-defect-log.md` row), and its reconciliation record writes every hit as one line,
-`- **Hit:** <path> › <entry> — <what was found> — <outcome>`, beneath the heading of the pass that
-found it (*Write the reconciliation record*, its *The sweeps* item). **Read the slots, never the
-prose**: an entry is flagged by a hit line in the latest reconciliation record of a slice under the
-parent, this one included (*Resolve inputs and gate the grounded BRD*, step 9), whose `<path>` is
-this BRD's own log as that record writes it — `<this slice's folder name>/code-defect-log.md`,
-relative to the parent's folder — whose `<outcome>`, the text after the line's last ` — `, reads
-`needs-a-human`, and whose `<entry>` is one of the ids this log holds, **resolved against that known
-set** and never parsed into an id the log does not hold. A hit on this log whose `<entry>` names none
-of them resolves to no entry: report it with its record, and put nothing on it. A record written
-before `/brd-reconcile` wrote hit lines holds none, so nothing in it flags an entry: its hits reach
-the operator through that run's report alone.
-
-**A flag is answered once a counted round record of this BRD names it**: a `code defects:` line
-carrying `flag answered [CDF#n] <record> › <review file>` (*Write the register and the round
-record*), where `<record>` is the flagging record's path relative to the parent's folder and
-`<review file>` the canonical review file its pass heading names — a known set read off the round
-records step 9 already reads, so no date is compared and no prose is read. The answer is written
-whatever the operator chose: a move, which the same line records as `re-dispositioned` too, or the
-disposition kept. An answered flag puts nothing again; a hit a later pass or a later record writes
-on the same entry is a flag of its own, put once more.
+no round record has answered that flag**, as `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md`
+§7 states — the one statement of both, which `/product-workflows:brd-package`'s flag gate reads
+too. The records it reads are the ones *Resolve inputs and gate the grounded BRD*, step 9, read:
+the latest reconciliation record of every slice under the parent, this one included, and this
+BRD's counted round records. A hit on this log whose `<entry>` names no id the log holds is
+reported with its record, and nothing is put on it (§7).
 
 **This is the carry-forward that keeps such a hit from living only in a report**: the case it exists for
 is a `conditional` entry whose `blocked_on` another BRD's reconciliation settled, which neither
 test before it sees. It carries the finding, never a correction: the operator answers with a
-disposition, the current one among the five, so keeping it is an answer like any other. A
-flagged entry reaches the operator only on a run that works a round — the no-new-round path in
-*Resolve the round* reports it instead, and its flag stays unanswered until a round record names it.
+disposition, the current one among the five, so keeping it is an answer like any other. An
+unanswered flag is itself a change that makes a round askable (*Resolve the round*, the *Every round
+is closed* branch), so a run that finds every round closed opens one for it rather than reporting it
+as waiting; its flag stays unanswered until a round record names it.
 
 Two things bound a re-disposition, and neither is a matter of taste. **What may move is `disposition`, and `blocked_on` with
 it** — added when the new disposition is `conditional`, dropped when it is not (§2). **What may not
@@ -2036,8 +2027,7 @@ short — and `argumentation` saying **why the package proceeds on the assumptio
 to establish it**. A bare sentence with no account of its own groundlessness is a claim, not an
 assumption record.
 
-**`<BRD-dir>/interview/round-<N>.md`** — the round's own record, append-only. **A round that raised
-no question at all records the walk instead of the questions**: each of the seven sources *Round 1
+**`<BRD-dir>/interview/round-<N>.md`** — the round's own record, append-only. **A round 1 that raised no question at all records the walk instead of the questions**: each of the seven sources *Round 1
 is generated from the grounding* names, and what this BRD held under each — **written from what the
 walk found, never from a rule over verdicts**: no finding whose verdict or verifier outcome left
 its premise open (the first two sources: a premise that moved, and one the repository could not
@@ -2049,7 +2039,11 @@ reopened elsewhere* found no record to put again. Naming the verdicts instead wo
 any corpus holding a `SUPERSEDED` finding, which raises no question and is not `CONFIRMED` either,
 or a `CONFIRMED` finding whose outcome is `unprovable`, which raises one.
 That is a complete record of a completed walk, which is exactly what the all-delegated stop's
-prohibition on an *empty* record is protecting against. Otherwise: every question in the order it
+prohibition on an *empty* record is protecting against. **A later round that unanswered
+code-defect flags alone made askable** (*Resolve the round*, the *Every round is closed* branch)
+raises no question either, and records no walk: it records what made it askable — each flagged
+`[CDF#n]`, with the reconciliation record and the hit that flagged it — and its `code defects:`
+line's `flag answered` parts record the answers. Otherwise: every question in the order it
 was written, its tag, **on every question that puts an existing record again, that record on a
 line of its own labelled exactly `- **Re-puts:** [VD#n]` or `- **Re-puts:** [CD#n]`**, whatever the
 question's tag, **and on every other `[V]` the same line reading `- **Re-puts:** none`**, written
@@ -2435,7 +2429,7 @@ may not be consumed downstream while it reads `reopened` (`decision-register-for
 **`package_offerable: yes`:**
 
 ```
-choices: ["Stop here — this round's decisions are recorded", "Package this BRD for customer review — /product-workflows:brd-package <BRD-KEY> <merge-clause>", "Work another round now — /product-workflows:brd-interview <BRD-KEY> (only if findings have changed, a requirement defect became this BRD's to ask, a re-grounding moved a decision's evidence, or another run reopened a decision — that last once every round is closed)", "Interview another BRD or slice"]
+choices: ["Stop here — this round's decisions are recorded", "Package this BRD for customer review — /product-workflows:brd-package <BRD-KEY> <merge-clause>", "Work another round now — /product-workflows:brd-interview <BRD-KEY> (only if findings have changed, a requirement defect became this BRD's to ask, a re-grounding moved a decision's evidence, a reconciliation flagged a code defect, or another run reopened a decision — those last two once every round is closed)", "Interview another BRD or slice"]
 ```
 
 **`package_offerable: rounds-unsettled` — `/brd-package` is left out rather than offered and
@@ -2463,7 +2457,8 @@ choices: ["Re-open round 1 to ask the requirement defects — /product-workflows
 either the packaging step or another round of this command.** Both would stop or report a no-op: the
 packaging step on its step-8 gate, and this command because it opens a new round only where a
 question source puts a question on what changed after the last round was generated — the findings,
-a requirement defect becoming this BRD's to ask, or a decision reopened; a record moved to
+a requirement defect becoming this BRD's to ask, a code defect a reconciliation flagged, or a
+decision reopened; a record moved to
 `reopened` raises its question through *A decision reopened elsewhere*, and one moved to
 `superseded` raises nothing (*Resolve the round*) — and nothing here has changed. **The one
 exception is a reopened record named waiting beside the list (above)**, and it takes its own list
@@ -2668,8 +2663,7 @@ appended to its rejected row's held question, naming that question, and every on
 question of its own because the held entry could not be chosen, naming the candidates;
 the `[VD#n]` decided this run and any deferred; the `[AS#n]` recorded; the `[CDF#n]` raised this
 round and the `[CDF#n]` re-dispositioned, each with its old and new disposition, when any; every
-`code-defect-log.md` entry a reconciliation record flagged, with that record, and whether it was put
-to the operator or waits for the next run that works a round, and every hit on this log that named
+`code-defect-log.md` entry a reconciliation record flagged, with that record, and that it was put to the operator, and every hit on this log that named
 none of its entries; every `unsourced` defect *Handoff*'s first step found to be a candidate, with its
 finding, and whether its resolution was written or left open — each left open with the value to
 write by hand, and with what the parent log's gate reported, or that the operator declined at the
