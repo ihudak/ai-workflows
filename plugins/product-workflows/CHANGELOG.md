@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.67.1] — 2026-11-02
+
+### Fixed
+- `/brd-package` step 7a's stop for a flag-answering round record on no ref carries its own literal `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN` message rather than step 7's, whose wording names register rounds; the docs page names that gate.
+
 ## [3.67.0] — 2026-11-02
 
 To-fix D31, part (1). No `workflows-core` change.
