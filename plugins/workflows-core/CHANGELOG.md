@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.72.1] — 2026-11-02
+
+Take with `product-workflows` 3.67.0 — batch B26 (BRD3-B20).
+
+### Fixed
+- `grounding-format` §2's `prerequisite` row says the grounding run's horizon pass writes it, where it said both grounder agents emit it: from `product-workflows` 3.67.0 they return every finding `current`, with none.
+
 ## [1.72.0] — 2026-10-30
 
 Take with `dev-workflows` 4.55.0, `product-workflows` 3.66.0 and `docs-workflows` 1.31.0 for the saving — to-fix PR9. Neither side needs the other: a request of `phase-handoff handoff-to-main` beside an older `workflows-core` names an entry point with no file of its own, which reads the whole reference as before.

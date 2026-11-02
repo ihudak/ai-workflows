@@ -818,7 +818,7 @@ Entries:
 
 **to-fix.md items:** D7, D9, D10.
 
-Done ahead of the batch on branch `fix/to-fix-product`: D7, D9 and D10 in product-workflows 3.52.0, D9's `grounding-format` §4 change and D7's `escalation-rules` `--repos-path` qualifier in workflows-core 1.63.0, and D9's upgrade note in the 3.52.0 changelog. The batch's review entries are still to do.
+Done ahead of the batch on branch `fix/to-fix-product`: D7, D9 and D10 in product-workflows 3.52.0, D9's `grounding-format` §4 change and D7's `escalation-rules` `--repos-path` qualifier in workflows-core 1.63.0, and D9's upgrade note in the 3.52.0 changelog. The batch's review entries: done in product-workflows 3.67.0, with `grounding-format` §2's `prerequisite` row (BRD3-B20) in workflows-core 1.72.1.
 
 **Confirm first:** BRD-B2 (medium); BRD-B3 (medium); BRD3-B20 (medium); FBA-B6 (medium); FBB-B41 (medium).
 

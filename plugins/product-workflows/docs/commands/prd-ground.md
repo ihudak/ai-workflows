@@ -78,7 +78,9 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   comma-separated token — a slug, or an absolute path to a clone — so the run asks nothing about
   them; without it the run lists the clones under `$REPOS_PATH` as candidates and asks — all but
   the specs repository and the documentation root, which are no code, though either may still be
-  named.
+  named. It asks on every run not given this flag, a re-run included; where the folder's
+  `grounding/baselines.md` records some of the clones listed, but not all, it offers those first, as
+  recommended, and you still confirm.
 - **`--repos-path <dir>[:<dir>…]`** (optional) — the `$REPOS_PATH` this run uses in place of the
   environment's. [`/brd-split`](brd-split.md)'s *Ground now* passes it where you answered its
   `REPOS_PATH` question, so a child run does not ask again.
@@ -98,7 +100,9 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   on-file finding — is never rewritten in place: the finding is superseded and a successor with the
   same verdict and the new horizon is appended and verified — or, for a design finding no frame
   set places, it is superseded with none — so a decision taken on the old horizon
-  is put again by [`/brd-interview`](brd-interview.md). **Refused outright on the idea route** —
+  is put again by [`/brd-interview`](brd-interview.md). Where a declared prerequisite slice has no
+  frozen decision yet, the next-step offer can print `/brd-interview <PREREQ-KEY>` for it — the step
+  that freezes decisions — with the re-run of this one that follows it, running neither. **Refused outright on the idea route** —
   `PRD_GROUND_NO_PREREQUISITES` — because a `will-change` horizon needs a decision register to
   freeze a prerequisite's decision in, and the idea route has none anywhere: every finding there is
   `current`, whatever this flag names, so accepting it and doing nothing would leave a documented
@@ -362,7 +366,7 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
   prose entry per page that contradicts a verified `[CG#n]`, naming that finding by id.
 - `grounding/design-grounding.md` — every `[DG#n]` finding, or a note explaining why design
   grounding did not run, **plus a `## Frame sets covered` section listing every subdirectory of the
-  folder's design/ with its disposition** — `ground`, `skipped: --no-design`, or `skipped: no index`.
+  folder's design/ with its disposition** — `ground`, `skipped: --no-design`, `skipped: no index` or `skipped: stale index`.
   That census is written on every run, including one that ground no designs at all, and it is what
   `/brd-split`'s design gate reads on the BRD route. On this route the frame sets it names are the
   idea's own source images, vendored under `design/idea-sources/` by `/idea` Phase 4.5. **Under
@@ -389,7 +393,7 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
   column would be empty on every ledger for ever, and since the ledger and both grounding files all
   ship in the customer bundle, the package would hand the customer the one document listing every
   requirement and unable to tell a checked one from an unchecked one.
-- `brd-link.md` — **BRD route only.** The `depends-on:` list, merged additively across runs. Never
+- `brd-link.md` — **BRD route only.** The `depends-on:` list, merged additively across runs; written only by a run whose `--depends-on` adds a prerequisite, and handed off by any run that finds it changed from the last commit — so a change a stopped run left behind goes out with the re-run. Never
   written on the idea route, since `--depends-on` is refused there before Phase 4 could persist one.
 
 **A finding that names another names it by the id the file carries, bracketed — `[CG#4]`.** Each
@@ -479,7 +483,16 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   check existed: that pass retires every finding at the pin, whichever repository ground it, and
   a class-4 `[DG#n]` citing one of them is superseded through the cascade, with its note.
 - **Phase 4.5 — documentation is a lead and a divergence, never evidence.** No `[CG#n]` or
-  `[DG#n]` may cite a documentation page in its `evidence`, under any verdict, in any phase.
+  `[DG#n]` may cite a documentation page in its `evidence`, under any verdict, in any phase — and
+  a repository's own prose is documentation too. Which files those are is a closed list read off
+  the path: `CLAUDE.md` and `AGENTS.md`, `.github/copilot-instructions.md` and the files under
+  `.github/instructions/`, `.claude/rules/` and `.cursor/rules/`, any `README*`, any `.md`, `.mdx`,
+  `.rst` or `.adoc` file, and a `.txt` file under the top-level `docs/` — a code or configuration
+  file under `docs/` is not one. `code-grounder` and `grounding-verifier` never give one as an
+  evidence path, as at most a lead to the code that is evidence (a search that found nothing is
+  stated in words, so naming a README searched is not citing it), and the orchestrator rejects a
+  finding that does: a grounder's is re-dispatched once into the same finding id, then stops the run
+  with `PRD_GROUND_DOC_EVIDENCE`.
   Grounding answers whether a claim is true of a *specific commit*
   (`workflows-core:grounding-format` §1), and a document is a claim
   *about* behaviour rather than the behaviour: citing one would let a confident, stale page satisfy
@@ -587,7 +600,10 @@ recorded fate, but no child is created, because nesting is capped at one level. 
 slice holding a design frame set the run could not reconcile, which `/brd-split` refuses: there the
 offer recommends `/workflows-core:frames` — which ships in the companion plugin — to write the
 missing index, and a `--no-code` re-run here to ground the set, before `/brd-split` can be taken at
-all.
+all; where the set's index is intact and its frames are gone, it recommends restoring them and the
+`--no-code` re-run instead, since `/frames` writes nothing over an empty set. Above the offer, the run
+names every image in the parent's captured source that a row of this slice cites and no frame set
+holds, with the route that grounds it — a report only.
 `/brd-split` is not where the route ends: it hands on to
 [`/brd-interview`](brd-interview.md).
 
