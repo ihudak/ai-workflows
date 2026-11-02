@@ -148,7 +148,7 @@ findings:                    # one entry per finding in the batch, on status: OK
     status:       OK | INPUT_MISSING
     own_verdict:  CONFIRMED | AMENDED | REWRITTEN | FALSE-FRIEND | NOT-PROVABLE | SUPERSEDED   # status: OK only (own_evidence and own_control likewise)
     own_evidence:
-      - path:  <relative to repo_path, or the frame path for a DG#n>
+      - path:  <relative to repo_path, or the frame path for a DG#n>   # omit only on an entry stating a search that found nothing, its note saying what was searched and where
         lines: [<1-based line numbers>]   # omit only when the evidence is a whole-file read
         note:  <what this line or frame actually shows, and how it bears on the claim>
     own_control:  <required wherever own_verdict OWES a control by §2.2's closed-set rule, in §2.2's
@@ -249,6 +249,16 @@ Every status other than `OK` and `INCOMPLETE` is a *refusal*, not a verdict (an 
 - NEVER read a missing `control` as a defect before deciding whether the finding owed one. Owed-ness comes from `workflows-core:grounding-format` §2.2's closed-set rule, and a baseline finding and three of the four `[DG#n]` classes owe none — a check that skipped that question would contradict every one of them.
 - NEVER return `contradict` on the ground that a `NOT-PROVABLE` finding's recorded control failed and fails again for you (step 5a). It said exactly what §2.2 tells a writer to say, and your re-run reproduced its result. Overturning it on that ground would punish the one finding on the page that told the truth about its own search. Its outcome is the one step 6 reaches from your blind verdict, so a `contradict` there means the blind verdict differs, never that the control failed.
 - NEVER leave `own_evidence` blank in derive mode, on a finding you re-derived, including for a `NOT-PROVABLE` verdict. State what was searched and why it fell short, per `workflows-core:grounding-format` §2.
+- NEVER give a prose file of a repository as an `own_evidence` entry's `path` — at any depth, a file named `CLAUDE.md` or
+  `AGENTS.md`, `.github/copilot-instructions.md` or a file under `.github/instructions/`,
+  `.claude/rules/` or `.cursor/rules/`, a file whose name begins `README`, a file ending `.md`,
+  `.mdx`, `.rst` or `.adoc`, and a `.txt` file under the top-level `docs/` directory — a closed list,
+  read off the path, never off the contents; a code or configuration file under `docs/` is not one. Each is a claim *about* behaviour,
+  not the behaviour, and is at most a lead to the code that is evidence — read that code and cite
+  it. Where it seems to settle a claim the code does not, your verdict comes from the code alone —
+  `NOT-PROVABLE` where the code settles nothing. A search that found nothing is recorded as an
+  entry with no `path`, its `note` stating what was searched and where, so naming a prose file there as a place looked is not citing it.
+  Your caller reads an `own_evidence` giving one as a `path` as blank and re-derives the finding.
 - NEVER let a confident original write-up substitute for your own search. Fluency is not evidence — and in derive mode there is no write-up to read.
 
 <!-- untrusted-content:begin -->

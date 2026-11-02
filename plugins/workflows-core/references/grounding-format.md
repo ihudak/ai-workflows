@@ -53,7 +53,7 @@ Every finding — `[CG#n]` from `code-grounder`, `[DG#n]` from `design-grounder`
 | `horizon` | one of `current \| will-change` (§5), naming the prerequisite decision when `will-change` |
 | `class` | *(design-grounding only)* one of the four `[DG#n]` reconciliation classes defined in §6; absent on a `[CG#n]` |
 | `cites` | *(design-grounding only)* a `[CG#n]` id; required when `class` is the fourth (§6), **omitted** on a `[DG#n]` of class 1, 2 or 3 (§2.1 — never written empty), absent on a `[CG#n]` |
-| `prerequisite` | the prerequisite decision this finding's horizon turns on; **required when `horizon` is `will-change`, omitted otherwise** (§5). Both grounder agents emit it, so it is a field of the record rather than a phrase inside `horizon`'s |
+| `prerequisite` | the prerequisite decision this finding's horizon turns on; **required when `horizon` is `will-change`, omitted otherwise** (§5). The grounding run's horizon pass writes it — both grounder agents return every finding `current`, with none, since neither is handed a prerequisite's decisions — and it is a field of the record rather than a phrase inside `horizon`'s |
 | `consumed_by` | `none`, or the list of the downstream artifacts that have actually drawn on this finding — any of `PRD`, `ARD`, `specification`, each at most once; `none` until something has |
 
 `class` and `cites` apply only to `[DG#n]` findings — a `[CG#n]` finding carries neither. See §6 for

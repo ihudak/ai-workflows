@@ -5,10 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.67.1] — 2026-11-02
+## [3.68.1] — 2026-11-02
 
 ### Fixed
-- `/brd-package` step 7a's stop for a flag-answering round record on no ref carries its own literal `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN` message rather than step 7's, whose wording names register rounds; the docs page names that gate.
+- `/brd-package` step 7a's (3.67.0) stop for a flag-answering round record on no ref carries its own literal `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN` message rather than step 7's, whose wording names register rounds; the docs page names that gate.
+
+## [3.68.0] — 2026-11-02
+
+Take with `workflows-core` 1.72.2 — batch B26: BRD-B2, BRD-B3, BRD3-B6, BRD3-B20, FBA-B6, FBA-B7, FBB-B41.
+
+### Changed
+- **`/prd-ground` Phase 10 offers *Decide a prerequisite first* in place of *Ground another declared prerequisite first* (BRD-B2)**: chosen, it prints `/product-workflows:brd-interview <PREREQ-KEY>` for each declared prerequisite slice whose decisions are not frozen, and is offered only where one exists — grounding a prerequisite froze nothing, so it could not move this slice's horizons. It prints the re-run of `/prd-ground` that follows them too, and runs neither; its label names the command in words, since it carries no `<merge-clause>` — another slice's gate is not fed by this run's pull request. Phase 4's example `prerequisites:` block names slice keys, where it named `EPIC-` keys the command refuses.
+- **`code-grounder` and `design-grounder` return every finding `horizon: current`, with no `prerequisite` (BRD3-B20)**: neither is handed a prerequisite's decisions, and `design-grounder`'s `cg_findings` carries no horizon. `/prd-ground` Phase 6 sets every horizon, and a class-4 `[DG#n]` takes the horizon and prerequisite Phase 6 settles for the `[CG#n]` it cites, so the two cannot diverge — save where Phase 6 supersedes the cited on-file `[CG#n]`, which leaves the class-4 finding to Phase 8's cascade rather than appending a successor that cites a superseded finding.
+- **A repository's own prose is documentation (FBA-B7, FBB-B41)**: `/prd-ground`'s evidence ban names a closed list of prose files, read off the path — `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, files under `.github/instructions/`, `.claude/rules/` and `.cursor/rules/`, `README*`, any `.md`/`.mdx`/`.rst`/`.adoc` file, and a `.txt` file under the top-level `docs/`; a code file under `docs/` is not one. `code-grounder` and `grounding-verifier` never give one as an evidence `path` — at most a lead to the code that is evidence; a search that found nothing is an entry with no `path` — and the orchestrator rejects a finding that does: a grounder's is re-dispatched once into the same `[CG#n]` id, before the design pass, then stops the run with `PRD_GROUND_DOC_EVIDENCE`; a verifier's `own_evidence` giving one is read as blank and retried.
+- **`/prd-ground` Phase 1 asks for the repositories on every run not given `--repos`, a re-run included (FBB-B41)**, and where `grounding/baselines.md` records some of the clones listed, but not all, offers those first as recommended.
+- **`/prd-ground` Phase 8 names every customer image a slice's row cites that no frame set holds (FBB-B41)** — an image anchor into the parent's captured source with no byte-identical file under `design/` — with the route that grounds it, in Phase 10 and the Final report; a report only.
+
+### Fixed
+- **`/prd-ground` Phase 5 handles `design-grounder`'s `STALE_INDEX` (BRD3-B6)**: it skips the set and names restoring the frames as the repair, not `/frames`, which writes nothing over a set whose frames are gone. The census records it `skipped: stale index`, Phase 10 offers that repair, and `/brd-split`'s design gate stops on it as it does on `skipped: no index`.
+- **`/prd-ground` Phase 9 names `brd-link.md` only where it differs from `HEAD` (BRD-B3)**, on a full run as on a `--no-code` one — a `git status` test of the file, so a change a stopped run left uncommitted is handed off by the re-run.
+- **`/prd-ground` Phase 0 step 4 names its run key set (FBA-B6)**: the key step 1 read, never a `--depends-on` or `--from-split` key, so `specs-repo-git` §3's preflight-first order applies.
+- **`/prd-ground` Phase 11 states the tail after a stop in Phase 3, 5 or 7 (FBB-B41)**: no handoff and no next-step offer; maintenance, feedback, the cost entry and `commit-artifacts` run; no resume pointer is written; a `brd-link.md` Phase 4 wrote stays uncommitted, and the re-run's Phase 9 hands it off.
 
 ## [3.67.0] — 2026-11-02
 
