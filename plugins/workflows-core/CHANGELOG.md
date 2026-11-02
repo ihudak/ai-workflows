@@ -7,10 +7,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.72.2] — 2026-11-02
 
-Take with `product-workflows` 3.67.0 — batch B26 (BRD3-B20).
+Take with `product-workflows` 3.68.0 — batch B26 (BRD3-B20).
 
 ### Fixed
-- `grounding-format` §2's `prerequisite` row says the grounding run's horizon pass writes it, where it said both grounder agents emit it: from `product-workflows` 3.67.0 they return every finding `current`, with none.
+- `grounding-format` §2's `prerequisite` row says the grounding run's horizon pass writes it, where it said both grounder agents emit it: from `product-workflows` 3.68.0 they return every finding `current`, with none.
 
 ## [1.72.1] — 2026-11-02
 

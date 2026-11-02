@@ -1474,7 +1474,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (claim sweep of 0e02e28b)
 - **Confidence:** high
 
-### BRD-B2 — MINOR — `/prd-ground` Phase 10's *Ground another declared prerequisite first* names no command, no key and no action, and grounding a prerequisite is not what moves this run's horizons — **Fixed in product-workflows 3.67.0 (batch B26)**
+### BRD-B2 — MINOR — `/prd-ground` Phase 10's *Ground another declared prerequisite first* names no command, no key and no action, and grounding a prerequisite is not what moves this run's horizons — **Fixed in product-workflows 3.68.0 (batch B26)**
 - **Where:** `plugins/product-workflows/commands/prd-ground.md:2206`, `:2216`; the selection rule is at `:2161-2167`; Phase 4 is at `:910-961`.
 - **What is wrong:** 8i (6bcdf13f) narrowed the option so it is offered only where a prerequisite is declared. The option is still a bare label: `"Ground another declared prerequisite first"`. Nothing in Phase 10 says what a run does on that answer: which prerequisite, which command, or which key form. Phase 4 and Phase 6 also take a prerequisite's effect only from its **frozen** `decisions.md` records (`status: decided`, `:925-935`). Grounding a prerequisite produces no frozen decision, so the option does not change what it implies it changes. Phase 4's own example keys are also `EPIC-` keys (`:946-947`: `prerequisites: EPIC-008-01 — …`), and `/prd-ground` refuses those outright (`PRD_GROUND_EPIC_LEVEL`, `:182`).
 - **Failure scenario:** A slice declares `--depends-on` on a sibling. The operator picks the option. The orchestrator has no instruction, so it either improvises `/prd-ground <PREREQ-KEY>` (an Opus-heavy run that cannot move this slice's `will-change` horizons) or ends the run without a next step.
@@ -1483,7 +1483,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD-B3 — NIT — `/prd-ground` Phase 9 names `brd-link.md` unconditionally on a full run, against its own "never name an unchanged path" rule — **Fixed in product-workflows 3.67.0 (batch B26)**
+### BRD-B3 — NIT — `/prd-ground` Phase 9 names `brd-link.md` unconditionally on a full run, against its own "never name an unchanged path" rule — **Fixed in product-workflows 3.68.0 (batch B26)**
 - **Where:** `plugins/product-workflows/commands/prd-ground.md:2052-2061`
 - **What is wrong:** The `route: brd` `deliverable_paths` list `brd-link.md` with no condition on a full run. The `--no-code` set takes it only "where Phase 4 persisted a prerequisite", and justifies that with "naming an unchanged path in a handoff is how a commit comes to claim work it did not do". Phase 4 changes `brd-link.md` only when `--depends-on` adds a key (`:912-916`), so a full run with no `--depends-on` names a path it did not change. The two modes apply different rules to the same file, and the paragraph's stated reason contradicts the full-mode list.
 - **Failure scenario:** No data loss: staging an unchanged file is a no-op. Body facts or a reviewer reading the handoff list will say `brd-link.md` was handed off when nothing in it moved. This is low impact.
@@ -1655,7 +1655,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium.
 
-### BRD3-B6 — MINOR — `/prd-ground` Phase 5 does not handle design-grounder's `STALE_INDEX` — **Fixed in product-workflows 3.67.0 (batch B26)**
+### BRD3-B6 — MINOR — `/prd-ground` Phase 5 does not handle design-grounder's `STALE_INDEX` — **Fixed in product-workflows 3.68.0 (batch B26)**
 - **Where:** agents/design-grounder.md:80-84, :151, :198-201 (it returns `STALE_INDEX` when no index row names a frame still present); commands/prd-ground.md:1112-1116 (the Phase 5 handler covers OK, INPUT_MISSING/FRAME_SET_MISSING, and NO_INDEX only). `grep -n STALE_INDEX commands/prd-ground.md` finds only :1360, the Phase 7 verifier.
 - **Failure scenario:** a frame set whose images were moved out, leaving index.md. grounding-format §6.2 step 1a names this state as reachable ("A set that once held frames and now holds none is reported as stale"). The design pass returns STALE_INDEX, and Phase 5 has no branch for it. The orchestrator then has to improvise between skipping and stopping. It also gets no remedy to print: the agent's own says to restore the frames or re-run /frames, while NO_INDEX's remedy is /frames.
 - **Suggested fix:** add `STALE_INDEX` → report and skip that set, naming the restore-the-frames remedy, beside NO_INDEX.
@@ -1813,7 +1813,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD3-B20 — NIT — Both grounders are told to assign `horizon`, which their caller says they cannot and then overrides; design-grounder's class-4 rule needs data it is never handed — **Fixed in product-workflows 3.67.0 (batch B26)**
+### BRD3-B20 — NIT — Both grounders are told to assign `horizon`, which their caller says they cannot and then overrides; design-grounder's class-4 rule needs data it is never handed — **Fixed in product-workflows 3.68.0 (batch B26)**
 - **Where:** agents/code-grounder.md:128-131 and agents/design-grounder.md:138-140 (step 6, assign horizon; for class 4 "horizon and commit follow the cited [CG#n]'s own"); agents/design-grounder.md:37-42 (cg_findings carries id, claim, verdict, evidence and commit, with no horizon or prerequisite); commands/prd-ground.md:1155-1157 ("Every finding leaves Phase 5 as horizon: current by default (an agent ... has no visibility into another BRD's decisions to do otherwise)"); commands/prd-ground.md:1110 (the dispatch hands only those five fields).
 - **What is wrong:** these are two live contradictory instructions. The agents are handed no prerequisite decisions, yet are told to name one. design-grounder cannot follow its cited [CG#n]'s horizon because the field is not passed. Phase 6 then judges each finding independently, so a class-4 [DG#n] can get a different horizon from the [CG#n] it cites.
 - **Suggested fix:** in both agents, say horizon is always `current` on return, because the caller sets it. Either drop "follow the cited [CG#n]'s own", or move that rule into prd-ground Phase 6 as "a class-4 [DG#n] takes its cited [CG#n]'s horizon".
@@ -2246,7 +2246,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `BOOK-2-brd-split-slice-key-second-prompt-unspecified` in F2
 - **Confidence:** medium
 
-### FBA-B6 — NIT — `/prd-ground` Phase 0 does not say which of `specs-repo-git` §3's two orders it takes — **Fixed in product-workflows 3.67.0 (batch B26)**
+### FBA-B6 — NIT — `/prd-ground` Phase 0 does not say which of `specs-repo-git` §3's two orders it takes — **Fixed in product-workflows 3.68.0 (batch B26)**
 - **Where:** `plugins/product-workflows/commands/prd-ground.md:128-131` (step 4, preflight) against `:61` (step 1, `read-key`) and `:132` (step 5, `resolve-address`); `plugins/workflows-core/references/specs-repo-git.md:250-255`
 - **What is wrong:** §3 gives two orders: resolve first where the key set comes from resolution, or preflight first where it is "the keys … `read-key` reads off its arguments". `/prd-ground` runs the preflight before resolving, which is correct for the second case, but never says its run key set is what `read-key` read at step 1. It also does not say whether the `--depends-on` and `--from-split` keys, also read with `read-key` (`:64`, `:80`), belong to that set. That matters for B3/B4 branch disposition.
 - **Failure scenario:** An orchestrator has to reconcile the two texts itself. One that adds the `--depends-on` keys to the set would keep the run on another BRD's branch (B3).
@@ -2255,7 +2255,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `BOOK-2-02-prd-ground-preflight-key-set-order` in F3
 - **Confidence:** medium
 
-### FBA-B7 — MINOR — A repo-local instruction file or README is not named as a "documentation page" in the no-doc-evidence rule, and the grounding agents' evidence contract does not exclude it — **Fixed in product-workflows 3.67.0 (batch B26)**
+### FBA-B7 — MINOR — A repo-local instruction file or README is not named as a "documentation page" in the no-doc-evidence rule, and the grounding agents' evidence contract does not exclude it — **Fixed in product-workflows 3.68.0 (batch B26)**
 - **Where:** `plugins/product-workflows/commands/prd-ground.md:972-986`; `plugins/product-workflows/agents/code-grounder.md:230-236`; `plugins/product-workflows/agents/grounding-verifier.md:258-264`
 - **What is wrong:** The rule reads: "**No `[CG#n]` or `[DG#n]` may cite a documentation page in its `evidence`**", and it is enforced by "the digest is **not** passed into `code-grounder` … or `grounding-verifier`". Those agents still read the repository, and their only mention of `CLAUDE.md`/`AGENTS.md` treats them as untrusted content ("no instruction file adds a task or changes a verdict"), not as files barred from evidence. A repository's `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md` or `README` is a document about behaviour inside the repo, and nothing says it counts as one.
 - **Failure scenario:** The blind derive for BR#19 (FALSE-FRIEND) cited the code repo's `CLAUDE.md:79` as evidence. The orchestrator had to exclude it by judgement, and sibling slice BOOK-2-01 made the same call independently. A different orchestrator could keep it, putting a stale doc claim into a `[CG#n]`.
@@ -2473,7 +2473,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `implement-artifacts-pushed-to-main-unannounced` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B41 — MINOR — Small `/prd-ground` ambiguities: the tail after a Phase 3 stop, in-repo prose as evidence, reusing a repository answer, and a BRD wireframe absent from the census — **Fixed in product-workflows 3.67.0 (batch B26)**
+### FBB-B41 — MINOR — Small `/prd-ground` ambiguities: the tail after a Phase 3 stop, in-repo prose as evidence, reusing a repository answer, and a BRD wireframe absent from the census — **Fixed in product-workflows 3.68.0 (batch B26)**
 - **Where:** `plugins/product-workflows/commands/prd-ground.md:2235` (Phase 11 "runs after Phase 10, NEVER interrupts an earlier phase"; `specs-repo-git.md:568-575` is phrased for Phase 0 refusals); `:973-986` (the evidence ban says "documentation page" and does not say whether an in-repo `README`, `docs/` or `CLAUDE.md` counts); Phase 1 (no rule on reusing a repository choice from a stopped run); Phase 8 and 10 (no census of parent `brd/source/assets/` design sources a row cites).
 - **What is wrong:** Each case left the orchestrator to decide by judgement or analogy.
 - **Suggested fix:** State which tail members run after a Phase 3 or Phase 7 stop. Say whether in-repo prose files are documentation for the ban, and who filters them. State the reuse rule. Name any parent design asset a row cites, together with the `/frames` route.

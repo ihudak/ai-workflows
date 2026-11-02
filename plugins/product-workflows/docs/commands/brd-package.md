@@ -159,6 +159,15 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   set is derived from those two sources rather than from the **interview/** listing, which is what
   makes a partial merge visible — enumerating the directory finds the rounds that landed and never
   learns a third was owed.
+- **No code-defect flag shipped unasked.** Where the folder holds **code-defect-log.md**, the
+  latest [`/brd-reconcile`](brd-reconcile.md) record of every slice under the parent — read as it
+  is in the folder, not gated on the default branch — may flag one of its entries for a human: the
+  reconciliation moved a decision the entry rests on and may not rewrite it. Each flag no interview
+  round has answered is listed, and you are asked once: stop with `BRD_PACKAGE_FLAGGED_DEFECTS` and
+  run [`/brd-interview`](brd-interview.md), which opens a round for the flags, or ship anyway, with
+  the flags named in the final report and nowhere the customer sees. The answer is not remembered;
+  the next run asks again while a flag stays unanswered. A record that cannot be read stops with
+  `BRD_PACKAGE_RECONCILIATION_UNREADABLE`.
 - **An interview that happened at all.** A BRD whose **interview/** holds no round record stops
   with `BRD_PACKAGE_NOT_INTERVIEWED`, naming `/brd-interview`, whatever its register holds — an open
   `[AS#n]` that [`/create-prd`](create-prd.md) wrote included — rather than being reported as a

@@ -412,6 +412,53 @@ cannot review, and they will not tell you that — they will review it anyway, b
    names work that is still ours, and packaging around one asks the customer to approve a position
    the delivery team has not finished taking.
 
+7a. **Ask before shipping a code-defect log a reconciliation flagged.** Only where the folder holds
+   `code-defect-log.md`. A reconciliation of any slice under the parent can find one of this log's
+   entries stale and send it to a human — it may write no field of an entry — and that flag reaches
+   the operator only through `/product-workflows:brd-interview`, which puts it in a round. A package
+   built over an unanswered one ships the customer a disposition another slice's decision has moved.
+   Read the flags as `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §7 states them —
+   the one statement of what flags an entry and what answers it, which `/brd-interview` reads too —
+   from the latest reconciliation record of every slice under the parent, this one included, and
+   from this slice's round records. **A round record that answers a flag and is not in step 7's set
+   is gated as step 7 gates that set** — a round that only answered flags names no register record
+   and no `[C]` entry, so step 7 never reaches it — with the same `require-on-main` mapped the same way before its answer counts — any stopping row
+   stops, naming that round, and one on no ref stops with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN`, its
+   message naming the round as one that answered a code-defect flag rather than one the register or
+   the held questions name: an answer whose record never merged leaves the default branch
+   showing the flag unanswered, and another clone's `/brd-interview` would open that round again.
+   **Read those reconciliation records as they are in the
+   folders, and run no `require-on-main` on them**, as `/brd-interview` reads them: in the flow the
+   route runs, each was merged before this command runs and the two reads agree, and where they do
+   not — a `/brd-reconcile` handoff declined — the record in the folder is the one that carries the
+   flag.
+   - **A record that exists and cannot be read** → stop, since the flags it would carry are
+     undecidable:
+     `BRD_PACKAGE_RECONCILIATION_UNREADABLE: <BRD-KEY>'s code-defect flags cannot be decided — <path> exists and cannot be read. Repair or restore it, then re-run.`
+   - **A hit on this log whose `<entry>` names no id the log holds** flags nothing (§7): print it as
+     `hit names no entry of this log: <record> › <the hit's line>` and go on.
+   - **No unanswered flag** → print nothing for this step, and go on.
+   - **Otherwise** print each unanswered flag, one line each,
+     `[CDF#n] — <record> › <what was found>`, the record's path relative to the parent's folder and
+     the hit's `<what was found>` slot, and then ask, once for the whole set:
+
+     ```
+     choices: ["Stop — re-disposition them first with /product-workflows:brd-interview <BRD-KEY> (Recommended)", "Ship anyway — name them in the Final report"]
+     ```
+
+     **Stop** → stop; nothing has been written, so there is nothing to hand off:
+     `BRD_PACKAGE_FLAGGED_DEFECTS: <BRD-KEY>'s code-defect log holds <n> flag(s) a reconciliation raised that no interview round has answered — run '/product-workflows:brd-interview <BRD-KEY>', which opens a round for them where every round is closed, merge its handoff, then re-run this command.`
+     **Ship anyway** → carry the flags to the Final report's *Flagged code defects shipped* line and
+     go on. The answer is not recorded anywhere: the next run of this command reads the records
+     again and asks again while a flag stays unanswered, since this command writes neither the log
+     nor a round record. **Nothing about a flag reaches the customer** — not the prompt, the delivery
+     note or the bundle (*How nothing plugin-internal reaches the customer*); the log ships as it
+     stands.
+
+   **Unlike step 6, this step sends the operator to `/brd-interview`**, and its reason does not
+   apply here: an unanswered flag is itself what makes that command's *Resolve the round* phase open
+   a round, so the run it names puts the flag rather than taking the no-new-round path.
+
 8. **Gate on there being something to review — and report it as a finished state, not a missing
    step.** A package with **no** `[C]` question, **no** open `[AS#n]`, and **no** `[VD#n]` in the
    register has nothing for a customer to confirm, correct or attack. Stop rather than sending it:
@@ -2044,7 +2091,9 @@ disposition, with the `accepted-risk` ones listed in
 full because those are the ones the customer will read; whether a second reviewer pass ran after a
 `fixed` correction and what it added; the counts the prompt carries — `[C]` questions, open
 `[AS#n]`, `escalated-to-customer` findings, and the `[CDF#n]` counts parts 6, 8 and 11 each carry,
-`in-scope`, `conditional` and `out-of-scope` respectively; **every prerequisite named under *what
+`in-scope`, `conditional` and `out-of-scope` respectively; where Phase 0 step 7a's *Ship anyway*
+was taken, `Flagged code defects shipped: [CDF#n] (<record> › <what was found>), …`, naming every
+flag it shipped — plugin-internal, and in no customer artifact; **every prerequisite named under *what
 could still move***, with whether it resolved, whether its decisions are customer-reviewed, and whether a
 package of its own was copied in — and every model id *Assemble the bundle* rule 7 left standing in
 a copied-in package, by bundled filename and line, as *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`,

@@ -349,6 +349,8 @@ register created to fix it contained the same unrecorded claim.
 
 ## E-8 — a `needs-a-human` item has no mechanical carry-forward into the next interview round
 
+**2026-11-02 — its no-further-round case is closed (to-fix D31 (1), product-workflows 3.67.0).** An unanswered flag now opens a `/brd-interview` round when every round is closed, and `/brd-package` asks before shipping a log that holds one.
+
 **DECIDED 2026-10-28 — the trigger widens (feature-gaps review BRD-G1, batch B25, product-workflows 3.58.0).** `/brd-interview`'s re-disposition trigger now takes an entry the latest reconciliation record of any slice under the parent flags `needs-a-human`, by the `[CDF#n]` `/brd-reconcile`'s record now names for such a hit. What that leaves open, the no-further-round case below first, is `docs/superpowers/to-fix.md` D31.
 
 **Raised 2026-09-08 while measuring E-5, and deliberately not folded into it.**
