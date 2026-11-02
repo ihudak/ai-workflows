@@ -5,9 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.72.1] — 2026-11-02
+
+Review of 1.72.0 (to-fix PR9). Take with `dev-workflows` 4.55.1.
+
+### Fixed
+- **A request of `phase-handoff handoff-to-main` made after the consent choice was answered no longer reads as asking it again.** The loader's entry-point rules and §2's opening say a request made after this run presented §4.3's choice runs §2 on the answer carried — the *On the first choice, execute `handoff-to-main`* steps and `/brd-package`'s Phase 9, which said it does not ask again.
+- **§4.0's register paragraphs name the register.** *What this table is* and *Classify by naming the reader* said "this table" and "the table above", which in `handoff-to-main`'s file landed on the class table, a table that lists no path; they name §4.0's register of artifacts, which that file does not hold.
+- §2.2 cites `<default-ref>` to `specs-repo-git.md` §3.2, which defines it, rather than to this reference's §3.2, which `handoff-to-main`'s file does not hold.
+- 1.72.0's note said the release needed no partner; it does — `.claude/rules/plugin-updates-coupling.md` now carries the bullet.
+
 ## [1.72.0] — 2026-10-30
 
-Take with `dev-workflows` 4.55.0, `product-workflows` 3.66.0 and `docs-workflows` 1.31.0 for the saving — to-fix PR9. Neither side needs the other: a request of `phase-handoff handoff-to-main` beside an older `workflows-core` names an entry point with no file of its own, which reads the whole reference as before.
+Take with `dev-workflows` 4.55.0, `product-workflows` 3.66.0 and `docs-workflows` 1.31.0, and never let those three run beside an older `workflows-core`: their consent steps request `phase-handoff handoff-to-main`, which an older loader executes inline — §2's branch, commit, push and pull request before §4.3's choice is shown (corrected in 1.72.1; this line first said neither side needed the other) — to-fix PR9.
 
 ### Added
 - **`phase-handoff`'s `handoff-to-main` reads a file of its own** (`reference-parts/phase-handoff/handoff-to-main.md`, about 76 KB against the reference's 178 KB, which no single read holds): §1, §2, §4.1, §4.2 and §4.3, and of §4.0 its class table, its strongest-class rule and its *Classify by naming the reader* rule, not its register of artifacts. A producer requests it at its consent step and presents §4.3's choice from that file, and §2 runs only on the choice's first option — the loader's entry-point rules say so, and §2 opens with it.

@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.31.0] — 2026-10-30
 
-Take with `workflows-core` 1.72.0 for the saving — to-fix PR9.
+Take with `workflows-core` 1.72.0 or later, never an older one: an older `workflows-core` executes `phase-handoff handoff-to-main` inline at the consent step, which is §2's branch, commit, push and pull request before §4.3's choice is shown (corrected in `workflows-core` 1.72.1) — to-fix PR9.
 
 ### Changed
 - `/release-notes` requests `phase-handoff handoff-to-main` at its consent step instead of loading the whole reference; its pointer to the handoff's register of classes is named in words.
