@@ -7,10 +7,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.66.0] — 2026-10-30
 
-Take with `workflows-core` 1.72.0 for the saving — to-fix PR9.
+Take with `workflows-core` 1.72.0 or later, never an older one: an older `workflows-core` executes `phase-handoff handoff-to-main` inline at the consent step, which is §2's branch, commit, push and pull request before §4.3's choice is shown (corrected in `workflows-core` 1.72.1) — to-fix PR9.
 
 ### Changed
-- Every producer — `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/epics`, `/harvest-decisions`, `/prd-proposal`, `/brd-proposal`, `/brd-intake`, `/prd-ground`, `/brd-split`, `/brd-interview`, `/brd-package` and `/brd-reconcile` — requests `phase-handoff handoff-to-main` at its consent step instead of loading the whole reference, so a handoff reads one file; `/epics`' pre-handoff maintenance step still loads the whole reference for §4.0's register, and `/harvest-decisions` its Phase 0's `owner-repo` derivation. Explanatory pointers into sections that file does not hold are named in words; `/brd-split` cites §1 rule 4 by its section.
+- Every producer but `/promote-decisions` — whose `architecture-promotion` §11.1 cites §2.6.1's `owner-repo` before the handoff and so reads the whole reference — `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/epics`, `/harvest-decisions`, `/prd-proposal`, `/brd-proposal`, `/brd-intake`, `/prd-ground`, `/brd-split`, `/brd-interview`, `/brd-package` and `/brd-reconcile` — requests `phase-handoff handoff-to-main` at its consent step instead of loading the whole reference, so a handoff reads one file; `/epics`' pre-handoff maintenance step still loads the whole reference for §4.0's register, and `/harvest-decisions` its Phase 0's `owner-repo` derivation. Explanatory pointers into sections that file does not hold are named in words; `/brd-split` cites §1 rule 4 by its section.
 
 ## [3.65.0] — 2026-10-30
 

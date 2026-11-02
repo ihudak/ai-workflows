@@ -5,9 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.55.1] — 2026-11-02
+
+Take with `workflows-core` 1.72.1.
+
+### Fixed
+- `/conformance` Phase 6 says the unit folder's `CLAUDE.md` and a documentation page in it are advisory "as the handoff's register of artifacts records", rather than citing §4.0, whose register the handoff's own file does not hold.
+
 ## [4.55.0] — 2026-10-30
 
-Take with `workflows-core` 1.72.0 for the saving — to-fix PR9.
+Take with `workflows-core` 1.72.0 or later, never an older one: an older `workflows-core` executes `phase-handoff handoff-to-main` inline at the consent step, which is §2's branch, commit, push and pull request before §4.3's choice is shown (corrected in `workflows-core` 1.72.1) — to-fix PR9.
 
 ### Changed
 - `/design`, `/ready`, `/conformance` and `/implement` request `phase-handoff handoff-to-main` at their consent step instead of loading the whole reference, so a handoff reads one file; `/ready`'s and `/conformance`'s pre-handoff maintenance step still loads the whole reference for §4.0's register. Explanatory pointers into sections that file does not hold are named in words.
