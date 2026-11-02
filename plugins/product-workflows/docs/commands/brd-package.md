@@ -166,8 +166,11 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   round has answered is listed, and you are asked once: stop with `BRD_PACKAGE_FLAGGED_DEFECTS` and
   run [`/brd-interview`](brd-interview.md), which opens a round for the flags, or ship anyway, with
   the flags named in the final report and nowhere the customer sees. The answer is not remembered;
-  the next run asks again while a flag stays unanswered. A record that cannot be read stops with
-  `BRD_PACKAGE_RECONCILIATION_UNREADABLE`.
+  the next run asks again while a flag stays unanswered. A reconciliation record that cannot be read
+  stops with `BRD_PACKAGE_RECONCILIATION_UNREADABLE`. The round record whose answer clears a flag,
+  unlike the reconciliation records, is gated on the default branch: a round that only answered flags
+  is named by no register record and no held question, so this gate checks it itself, and one on no
+  ref stops with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN`.
 - **An interview that happened at all.** A BRD whose **interview/** holds no round record stops
   with `BRD_PACKAGE_NOT_INTERVIEWED`, naming `/brd-interview`, whatever its register holds — an open
   `[AS#n]` that [`/create-prd`](create-prd.md) wrote included — rather than being reported as a

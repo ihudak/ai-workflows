@@ -423,9 +423,11 @@ cannot review, and they will not tell you that — they will review it anyway, b
    from this slice's round records. **A round record that answers a flag and is not in step 7's set
    is gated as step 7 gates that set** — a round that only answered flags names no register record
    and no `[C]` entry, so step 7 never reaches it — with the same `require-on-main` mapped the same way before its answer counts — any stopping row
-   stops, naming that round, and one on no ref stops with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN`, its
-   message naming the round as one that answered a code-defect flag rather than one the register or
-   the held questions name: an answer whose record never merged leaves the default branch
+   stops, naming that round, and every one on no ref is collected and stops once, with this message —
+   the record is in the folder, since step 7a read the answer there:
+   `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s round(s) <list> answered code-defect flags, but their interview/round-<N>.md is on no ref — the records never merged. Land them on the specs repo's default branch and re-run.`
+   Step 7 stops before this step reaches its own, so an operator missing rounds of both kinds
+   learns of these on the next run. An answer whose record never merged leaves the default branch
    showing the flag unanswered, and another clone's `/brd-interview` would open that round again.
    **Read those reconciliation records as they are in the
    folders, and run no `require-on-main` on them**, as `/brd-interview` reads them: in the flow the
