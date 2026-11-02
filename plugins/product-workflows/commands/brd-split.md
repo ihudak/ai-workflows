@@ -248,9 +248,9 @@ four-resolution one.
       - **The section is present and records no set, while `design/` holds one** → stop with the same
         message, naming the parse. An empty relation fails rather than passes
         (`workflows-core:grounding-format` §2.1) — a read that learned nothing is not a clean tree.
-      - **A subdirectory is absent from the recorded set, or recorded `skipped: no index`** → stop,
-        naming each such set. The second is a set `/prd-ground` could not reconcile, which is
-        unreconciled by a different route to the same place.
+      - **A subdirectory is absent from the recorded set, or recorded `skipped: no index` or
+        `skipped: stale index`** → stop, naming each such set. The second and third are sets
+        `/prd-ground` could not reconcile, which are unreconciled by a different route to the same place.
       - **Recorded `ground`, or `skipped: --no-design`** → passes. The second is an operator decision
         taken per run, not an inability, so it is honoured — but it is carried into the final report
         and into `slices.md` as a recorded limit on what this split was able to check, because it is
@@ -258,7 +258,7 @@ four-resolution one.
         the pre-section pass above can let one through too, but unknown, which is why that pass is
         recorded as unchecked rather than as a limit.
 
-      `BRD_SPLIT_DESIGN_NOT_GROUND: <BRD-KEY> has frame sets on disk that no design grounding on main covers (<names>) — re-run '/product-workflows:prd-ground <BRD-KEY> --no-code' to ground them without re-deriving the code findings already on file, and accept its handoff. Where a set is listed as having no index, run '/workflows-core:frames <BRD-KEY>' first, which writes the index that lets the set be reconciled at all.`
+      `BRD_SPLIT_DESIGN_NOT_GROUND: <BRD-KEY> has frame sets on disk that no design grounding on main covers (<names>) — re-run '/product-workflows:prd-ground <BRD-KEY> --no-code' to ground them without re-deriving the code findings already on file, and accept its handoff. Where a set is listed as having no index, run '/workflows-core:frames <BRD-KEY>' first, which writes the index that lets the set be reconciled at all. Where a set is listed as having a stale index, restore its missing frames first — /workflows-core:frames writes nothing over a set whose frames are gone.`
 
    c. **Every finding carries a verifier outcome.** Every `[CG#n]`/`[DG#n]` finding carries one (of
    the four in `workflows-core:grounding-format` §8 — `agree`, `extend`,

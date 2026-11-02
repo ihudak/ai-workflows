@@ -135,9 +135,12 @@ guess, not a citation.
    `[DG#n]`, which the verifier's fail-closed row selection turns into a refusal and the caller into
    a halted run.
 
-6. **Assign `altitude` and `horizon`** per `workflows-core:grounding-format` §2 and §5. A class-4 finding's
-   `horizon` and `commit` follow the cited `[CG#n]`'s own — this agent does not re-derive a horizon
-   or pin a commit of its own for a claim it did not settle.
+6. **Assign `altitude`** per `workflows-core:grounding-format` §2, **and return every finding
+   `horizon: current`, with no `prerequisite`** — class 4 included. You are handed no prerequisite's
+   decisions, and `cg_findings` carries no horizon: your caller sets every finding's horizon itself,
+   a class-4 finding's from the `[CG#n]` it cites (`workflows-core:grounding-format` §5). A class-4
+   finding's `commit` is the cited `[CG#n]`'s own — this agent pins no commit of its own for a claim
+   it did not settle.
 
 7. **Emit exactly one finding per divergence**, numbered contiguously as `[DG#n]` starting from
    `DG#1` in the order the reconciliation surfaced them. Ids are assigned once, and you never
@@ -161,10 +164,9 @@ findings:
     control: <class 2 only, and required there — a field of the same kind as the one said to be missing, found in THESE frames by the same reading, with the frame path it was read from; where the control did NOT fire, the same field records the method and the case with `— no match`. OMIT entirely on class 1, 3 and 4, which owe none: 1 and 3 resolve against the `inventory` the caller handed in, which is a lookup rather than a search, and 4's code half belongs to the cited [CG#n]. `workflows-core:grounding-format` §2.2>
     commit: <class 4 only, and it is the cited [CG#n]'s own. OMIT the field entirely on a class-1/2/3 finding: it is settled from the frame set and the requirement text, is pinned to no commit, and a commit supplied here sends it down the verifier's code row>
     altitude: product | architecture | implementation
-    horizon: current | will-change
+    horizon: current   # always current on return — your caller sets will-change, and the prerequisite it turns on (step 6)
     class: 1 | 2 | 3 | 4
     cites: <CG#n — class 4 only; OMIT entirely on class 1, 2 or 3, never write it empty>
-    prerequisite: <the prerequisite decision the horizon turns on — omit entirely when horizon is current>
     consumed_by: none
 notes: |
   <class-4 gaps deferred for lack of a settling [CG#n]; ambiguous index entries; anything else
@@ -181,12 +183,12 @@ which put every `[DG#n]` on disk in a different key order from every `[CG#n]` be
 
 **A reference to a finding names one of this return's own `[DG#n]`, by the id this return gives
 it, or a `[CG#n]` of `cg_findings`, by the id given there, and nothing else**, written bracketed —
-in a `note`, `control`, `prerequisite` or `notes`, and `cites` names a `cg_findings` id the same
+in a `note`, `control` or `notes`, and `cites` names a `cg_findings` id the same
 way. Your caller renumbers your findings into one sequence for the whole requirement set and
 rewrites every `DG#n` you wrote as a reference to your own; a `CG#n` it leaves naming the finding
 you named.
 
-**Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
+**Write each evidence `note` and `control` for a reader with no plugin**
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `design-grounding.md`, which
 on the BRD route goes to the customer as written. Name no command, agent or skill, no section or
 rule number of a reference, no phase or step, no decision-row id, no reference file's name or path, and no model a run, a pass or a tool of the operator's ran on, by its id or its family's name — yours among them — say what a rule requires rather than where it is
@@ -222,7 +224,7 @@ written. A model id or a model family's name that the customer's own requirement
   never assert the code limitation on this agent's own authority, and never borrow a `[CG#n]` that
   does not actually settle the specific capture in question.
 - NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id,
-  a reference file's name, the model a run, a pass or a tool of the operator's ran on, by its id or its family's name — a model the customer's own requirement, code, configuration or documents name is not one — or a directory of this machine by its value — `frame_set_dir`'s among them; a path a frame, the inventory or a cited finding names is not one — into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
+  a reference file's name, the model a run, a pass or a tool of the operator's ran on, by its id or its family's name — a model the customer's own requirement, code, configuration or documents name is not one — or a directory of this machine by its value — `frame_set_dir`'s among them; a path a frame, the inventory or a cited finding names is not one — into an evidence `note` or `control`. Those fields go to the customer as written
   (`workflows-core:grounding-format` §2.3).
 - NEVER cite a frame without having read what it actually shows. A filename or index caption that
   merely sounds like it matches the requirement is a lead, not evidence.

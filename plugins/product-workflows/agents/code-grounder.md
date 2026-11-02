@@ -125,10 +125,11 @@ of theirs would otherwise run in its place and could print into what you read; g
    folded into the claim's `evidence` alongside the real evidence that actually settles the claim
    — but never silently.
 
-6. **Assign `altitude` and `horizon`** per `workflows-core:grounding-format` §2 and §5. `horizon: will-change`
-   names the specific prerequisite decision that overturns the finding, not merely the prerequisite
-   BRD; if no prerequisite's decisions are frozen yet — frozen being `status: decided` and nothing
-   else, per that section — the finding stays `current`.
+6. **Assign `altitude`** per `workflows-core:grounding-format` §2, **and return every finding
+   `horizon: current`, with no `prerequisite`.** You are handed no prerequisite's decisions, so you
+   have nothing to set `will-change` from: your caller applies the declared prerequisites' frozen
+   decisions across the whole finding set and sets the horizon itself (`workflows-core:grounding-format`
+   §5).
 
 7. **Emit exactly one finding per claim**, numbered contiguously as `[CG#n]` starting from `CG#1`
    in the order `claims` was given. Ids are assigned once, and you never renumber one: your caller
@@ -146,7 +147,7 @@ findings:
     claim: <the requirement id as given — BR#n, AC#n, FR#n, or US#n> — <the claim text as given>
     verdict: CONFIRMED | AMENDED | REWRITTEN | FALSE-FRIEND | NOT-PROVABLE   # never SUPERSEDED — never emitted by a grounder; only a re-grounding run marks a finding SUPERSEDED, writing its prior_verdict (workflows-core:grounding-format §2)
     evidence:
-      - path: <relative to repo_path>
+      - path: <relative to repo_path>   # omit only on an entry stating a search that found nothing, its note saying what was searched and where
         lines: [<1-based line numbers>]   # omit only when the evidence is a whole-file read
         note: <what this line actually shows, and how it bears on the claim>
     control: <required wherever this finding asserts an absence — in its verdict or in the correction it
@@ -156,8 +157,7 @@ findings:
               entirely on a finding that asserts no absence. `workflows-core:grounding-format` §2.2>
     commit: <same resolved commit as above — every finding is pinned individually>
     altitude: product | architecture | implementation
-    horizon: current | will-change
-    prerequisite: <the prerequisite decision the horizon turns on — omit entirely when horizon is current>
+    horizon: current   # always current on return — your caller sets will-change, and the prerequisite it turns on (step 6)
     consumed_by: none
 ```
 
@@ -168,12 +168,12 @@ agent's: a run that aligned one batch's keys and not the next produced a `code-g
 scan reported 140 findings missing that were on the page.
 
 **A reference to a finding names one of this return's own, by the id this return gives it, written
-`[CG#n]`** — in a `note`, `control`, `prerequisite` or `notes` (*the search named in [CG#5]*).
+`[CG#n]`** — in a `note`, `control` or `notes` (*the search named in [CG#5]*).
 You are handed no other finding, so never name one. Your caller renumbers your findings into one
 sequence for the whole requirement set and rewrites every `CG#n` you wrote as a reference to your
 own, so a number you meant as another finding's would be rewritten to name the wrong one.
 
-**Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
+**Write each evidence `note` and `control` for a reader with no plugin**
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `grounding/code-grounding.md`,
 which on the BRD route goes to the customer as written. Name no command, agent or skill, no section
 or rule number of a reference, no phase or step, no decision-row id, no reference file's name or path, and no model a run, a pass or a tool of the operator's ran on, by its id or its family's name — yours among them — say what a rule requires rather than where it
@@ -203,6 +203,18 @@ notes: |
   pinned commit.
 - NEVER cite a line without having read what it actually does. A token match is a lead, not
   evidence; evidence is a line re-read and confirmed to bear on the specific claim under test.
+- NEVER give a prose file as an evidence entry's `path` — at any depth, a file named `CLAUDE.md` or
+  `AGENTS.md`, `.github/copilot-instructions.md` or a file under `.github/instructions/`,
+  `.claude/rules/` or `.cursor/rules/`, a file whose name begins `README`, a file ending `.md`,
+  `.mdx`, `.rst` or `.adoc`, and a `.txt` file under the top-level `docs/` directory — a closed list,
+  read off the path, never off the contents; a code or configuration file under `docs/` is not one. Each is a claim *about* behaviour,
+  written by a person at a date, and nothing keeps it in step with the code. At most it is a lead to
+  the code that is evidence — read the code it points at and cite that. Where it seems to settle a
+  claim the code you searched does not, the verdict comes from the code alone — `NOT-PROVABLE` where
+  the code settles nothing. A search that found nothing is recorded as an evidence entry with no
+  `path`, its `note` stating what was searched and where, so naming a prose file there as a place
+  looked is not citing it.
+  Your caller rejects a finding whose evidence gives one as a `path`.
 - NEVER leave `evidence` blank, including for `NOT-PROVABLE` findings or findings that assert an
   absence. State what was searched and why it fell short, per `workflows-core:grounding-format` §2.
 - NEVER assert an absence without a `control` that fired — in a verdict or in a correction, and
@@ -213,7 +225,7 @@ notes: |
   `NOT-PROVABLE` and the failed control is recorded — never a `REWRITTEN` or an `AMENDED` resting
   on a search that was never shown to work.
 - NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id,
-  a reference file's name, the model a run, a pass or a tool of the operator's ran on, by its id or its family's name — a model the customer's own requirement, code, configuration or documents name is not one — or a directory of this machine by its value — `repo_path`'s among them; a path the repository's own code names is not one — into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
+  a reference file's name, the model a run, a pass or a tool of the operator's ran on, by its id or its family's name — a model the customer's own requirement, code, configuration or documents name is not one — or a directory of this machine by its value — `repo_path`'s among them; a path the repository's own code names is not one — into an evidence `note` or `control`. Those fields go to the customer as written
   (`workflows-core:grounding-format` §2.3).
 - NEVER report a `FALSE-FRIEND` as though it were the claim's real support. When a plausibly-named
   decoy is the only thing found, the verdict names it as a decoy, not as confirmation.

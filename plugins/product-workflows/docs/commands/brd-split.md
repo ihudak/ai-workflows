@@ -327,7 +327,7 @@ reads was already independently verified by `/prd-ground`'s own agents.
   executes `require-on-main` against it rather than trusting the code gate's single-commit
   implication, which `/prd-ground --no-code` breaks by design. A **design/** subdirectory that no
   entry in `design-grounding.md`'s frame-set list covers — absent from it, or listed as having no
-  index — stops with `BRD_SPLIT_DESIGN_NOT_GROUND`, which names `/prd-ground <KEY> --no-code` as
+  index or a stale one (an index whose frames are all gone) — stops with `BRD_SPLIT_DESIGN_NOT_GROUND`, which names `/prd-ground <KEY> --no-code` as
   the repair so the missing design pass can be added without re-deriving verified code findings. A
   set the operator explicitly skipped with `--no-design` passes, and is recorded in `slices.md` as
   a limit on what the split could check.
