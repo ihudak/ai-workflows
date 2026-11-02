@@ -1636,30 +1636,12 @@ disposition it carries — put its disposition to the operator once, against the
 `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §4 fixes for a first raise.
 
 **An entry is flagged where a reconciliation's stale cross-reference sweep sent it to a human and
-no round record has answered that flag.** That sweep reaches this log from any slice under the
-parent and sends every hit in a `code-defect-log.md` to `needs-a-human`, since no field of an entry
-is its to write (`commands/brd-reconcile.md`, *The stale cross-reference sweep*, its
-`code-defect-log.md` row), and its reconciliation record writes every hit as one line,
-`- **Hit:** <path> › <entry> — <what was found> — <outcome>`, beneath the heading of the pass that
-found it (*Write the reconciliation record*, its *The sweeps* item). **Read the slots, never the
-prose**: an entry is flagged by a hit line in the latest reconciliation record of a slice under the
-parent, this one included (*Resolve inputs and gate the grounded BRD*, step 9), whose `<path>` is
-this BRD's own log as that record writes it — `<this slice's folder name>/code-defect-log.md`,
-relative to the parent's folder — whose `<outcome>`, the text after the line's last ` — `, reads
-`needs-a-human`, and whose `<entry>` is one of the ids this log holds, **resolved against that known
-set** and never parsed into an id the log does not hold. A hit on this log whose `<entry>` names none
-of them resolves to no entry: report it with its record, and put nothing on it. A record written
-before `/brd-reconcile` wrote hit lines holds none, so nothing in it flags an entry: its hits reach
-the operator through that run's report alone.
-
-**A flag is answered once a counted round record of this BRD names it**: a `code defects:` line
-carrying `flag answered [CDF#n] <record> › <review file>` (*Write the register and the round
-record*), where `<record>` is the flagging record's path relative to the parent's folder and
-`<review file>` the canonical review file its pass heading names — a known set read off the round
-records step 9 already reads, so no date is compared and no prose is read. The answer is written
-whatever the operator chose: a move, which the same line records as `re-dispositioned` too, or the
-disposition kept. An answered flag puts nothing again; a hit a later pass or a later record writes
-on the same entry is a flag of its own, put once more.
+no round record has answered that flag**, as `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md`
+§7 states — the one statement of both, which `/product-workflows:brd-package`'s flag gate reads
+too. The records it reads are the ones *Resolve inputs and gate the grounded BRD*, step 9, read:
+the latest reconciliation record of every slice under the parent, this one included, and this
+BRD's counted round records. A hit on this log whose `<entry>` names no id the log holds is
+reported with its record, and nothing is put on it (§7).
 
 **This is the carry-forward that keeps such a hit from living only in a report**: the case it exists for
 is a `conditional` entry whose `blocked_on` another BRD's reconciliation settled, which neither

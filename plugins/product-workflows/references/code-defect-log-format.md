@@ -137,3 +137,39 @@ real record of the wrong package and the check goes green.
   by the BRD that owns the source document and reached one hop up from a slice
   (`references/brd-format.md` §4). This log is **slice-owned** and there is no hop: a code defect
   belongs to the slice's own grounding, and grounding is slice-only.
+
+## 7. Flags a reconciliation raises
+
+`commands/brd-interview.md` puts a flagged entry to the operator, and `commands/brd-package.md`'s
+flag gate asks before shipping a log that holds one; both read the flag and its answer as this
+section states, and neither restates it.
+
+**An entry is flagged where a reconciliation's stale cross-reference sweep sent it to a human and
+no round record has answered that flag.** That sweep reaches a slice's log from any slice under the
+parent and sends every hit in a `code-defect-log.md` to `needs-a-human`, since no field of an entry
+is its to write (`commands/brd-reconcile.md`, *The stale cross-reference sweep*, its
+`code-defect-log.md` row), and its reconciliation record writes every hit as one line,
+`- **Hit:** <path> › <entry> — <what was found> — <outcome>`, beneath the heading of the pass that
+found it (*Write the reconciliation record*, its *The sweeps* item). **Read the slots, never the
+prose**: an entry is flagged by a hit line in the latest reconciliation record of a slice under the
+parent, the slice's own included — in each folder the `reconciliation-<YYYYMMDD>.md` of greatest
+date, every pass in it, none where the folder holds none, read through
+`references/decision-register-format.md` §8 — whose `<path>` is the slice's own log as that record
+writes it — `<the slice's folder name>/code-defect-log.md`, relative to the parent's folder — whose
+`<outcome>`, the text after the line's last ` — `, reads `needs-a-human`, and whose `<entry>` is one
+of the ids the log holds, **resolved against that known set** and never parsed into an id the log
+does not hold. A hit on the log whose `<entry>` names none of them resolves to no entry: it is
+reported with its record, and it flags nothing. A record that exists and cannot be read leaves the
+flags it would carry undecidable, and each reader says what it does then. A record written before
+`/brd-reconcile` wrote hit lines holds none, so nothing in it flags an entry: its hits reach the
+operator through that run's report alone.
+
+**A flag is answered once a counted round record of the slice names it**: a `code defects:` line
+carrying `flag answered [CDF#n] <record> › <review file>` (`commands/brd-interview.md`, *Write the
+register and the round record*), where `<record>` is the flagging record's path relative to the
+parent's folder and `<review file>` the canonical review file its pass heading names — a known set
+read off the slice's counted round records (`references/decision-register-format.md` §8), so no date
+is compared and no prose is read. The answer is written whatever the operator chose: a move, which
+the same line records as `re-dispositioned` too, or the disposition kept. An answered flag puts
+nothing again; a hit a later pass or a later record writes on the same entry is a flag of its own,
+unanswered until a round record names it.
