@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.67.0] — 2026-11-02
+
+To-fix D31, part (1). No `workflows-core` change.
+
+### Added
+- **`/brd-package` asks before shipping a code-defect log a reconciliation flagged** (Phase 0 step 7a). Where the slice holds `code-defect-log.md` and the latest reconciliation record of any slice under the parent flags one of its `[CDF#n]` `needs-a-human` with no round record answering it, the run lists each flag and asks once: stop with `BRD_PACKAGE_FLAGGED_DEFECTS` and re-disposition them through `/brd-interview`, or ship anyway with the flags named in the Final report and nowhere the customer sees. The records are read as they are in the folders, not gated on the default branch; one that exists and cannot be read stops with `BRD_PACKAGE_RECONCILIATION_UNREADABLE`. The answer is not recorded, so the next run asks again.
+- **`code-defect-log-format.md` §7** states what flags an entry and what answers a flag — moved from `/brd-interview`, which cites it with `/brd-package`.
+
+### Changed
+- **`/brd-interview` opens a round for an unanswered flag.** In *Resolve the round*, a flagged entry no round record has answered is a change that makes the next round askable, so a run that finds every round closed opens round `<highest + 1>` and puts it, rather than taking the no-new-round path and reporting it as waiting. Where flags alone made the round askable, it holds no question and closes in the same run once their `flag answered` parts are written. `--round <highest + 1>` follows, as it mirrors the bare run.
+
 ## [3.66.0] — 2026-10-30
 
 Take with `workflows-core` 1.72.0 or later, never an older one: an older `workflows-core` executes `phase-handoff handoff-to-main` inline at the consent step, which is §2's branch, commit, push and pull request before §4.3's choice is shown (corrected in `workflows-core` 1.72.1) — to-fix PR9.
