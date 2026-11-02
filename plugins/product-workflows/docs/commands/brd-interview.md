@@ -185,11 +185,10 @@ flowchart TD
     p11 --> p12["Phase 12 — Session maintenance, feedback & cost"]
 ```
 
-A run that finds every round closed and nothing a question source would ask since the last one
-opens no new round: it reports that plainly — nothing changed, or each change and why it raised
+A run that finds every round closed and nothing a question source would ask since the last one —
+an unanswered code-defect flag counts as something to ask, below — opens no new round: it reports that plainly — nothing changed, or each change and why it raised
 nothing — with any requirement defect that belongs to a closed round 1, and the re-open
-that asks it, and each code defect a reconciliation flagged, as waiting for a run that works a round
-— removes any torn write an interrupted run left and reports each one, and reaches the handoff with nothing
+that asks it — removes any torn write an interrupted run left and reports each one, and reaches the handoff with nothing
 to commit where the register is already on file, nothing was torn, no interrupted
 re-disposition of a code defect was completed, none was left uncommitted and no `unsourced` defect
 was closed; otherwise it hands off what it wrote — `decisions.md`
@@ -502,8 +501,11 @@ option is picked.
   `- **Hit:**` line of that slice's latest reconciliation record. The disposition is the operator's
   to keep or move, and either answer is recorded on the round record's `code defects:` line as
   `flag answered`, which clears that flag; a later reconciliation's hit on the same entry flags it
-  again. Only a run that works a round can answer one — a run that finds every round closed and
-  nothing to ask names each flagged entry as waiting instead.
+  again. Only a round can answer one, so an unanswered flag opens one: a run that finds every round closed
+  opens the next round for it, and where the flags alone made it askable that round holds no question
+  and closes once their answers are written. This is what [`/brd-package`](brd-package.md)'s flag gate
+  sends you back here for. The rule for what flags an entry and what answers it is
+  `code-defect-log-format.md` §7.
 - **Phase 8 — the will-change rule.** A decision whose `evidence` list is *entirely*
   `horizon: will-change` findings may not be closed. Three resolutions are offered and exactly three:
   re-base it on a `current` finding, make it explicitly `conditional_on` the prerequisite decision —

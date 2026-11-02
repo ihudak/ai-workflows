@@ -653,7 +653,12 @@ the round record*), and where the two disagree the dispositions win.
   supersession happened**: a record whose findings a re-grounding superseded while an earlier round
   was still open was not put again by that round, and its supersession predating the last closure
   must not strand it — or a record *A decision reopened elsewhere* puts again: a `[VD#n]` or
-  `[CD#n]` reading `reopened` that no question in flight puts, whichever run reopened it. **A change
+  `[CD#n]` reading `reopened` that no question in flight puts, whichever run reopened it — or, where
+  this BRD holds a `code-defect-log.md`, an entry of it a reconciliation flagged and no round record
+  has answered (`${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §7, from the records
+  *Resolve inputs and gate the grounded BRD*, step 9, read), **whenever that reconciliation ran**: the
+  *Put each `[V]` to the operator* phase puts its disposition again, and a round is the only place a
+  re-disposition is written (`decision-register-format.md` §8). **A change
   raises a question only where a source puts one**, and many do not: a `--rebaseline` pass
   supersedes every finding it re-grounds, shipped or not, so a pass whose successors confirm every
   plain record they bear on, and leave every held record waiting on its prerequisite, changes the
@@ -663,7 +668,13 @@ the round record*), and where the two disagree the dispositions win.
   command writes — `withdrawn`, or a re-decision, completion or reversion written in place — raises
   nothing of itself either, since `reopened` is the one status a source here reads as a question.
   - **At least one question** → open round `<highest + 1>`, naming in its record exactly what
-    changed and made it askable, and work it.
+    changed and made it askable, and work it. A flagged entry counts here as a question does. **Where
+    flagged entries alone made the round askable, it holds no question**: it is opened to put them,
+    its record names each as what made it askable, and its write — the `code defects:` line carrying
+    each `flag answered`, and a `Status: closed` line, since no question in it is left without a
+    terminal disposition — closes it in the same run, as round 1's *No question at all* branch closes
+    its record. A run that stops before that write leaves the flags unanswered, and the next run opens
+    the round again.
   - **No question at all** → **open no round** and write no round record: a round with nothing in it
     holds nothing for anyone to answer, and a record of one would read as a round nobody finished
     (*An empty in-scope set is a finished state*, in *Generate the round's question set*, refuses the
@@ -680,10 +691,6 @@ the round record*), and where the two disagree the dispositions win.
     the round record* would (`decision-register-format.md` §8) — this path is a completed run that
     skips that phase, and a torn write left here would sit on file with nothing to remove it — and
     **report each one removed**, by id or heading with the round it claimed, in the final report.
-    **Report, too, every `code-defect-log.md` entry a reconciliation record flagged** (*Put each
-    `[V]` to the operator*'s re-disposition trigger), with the record and the hit, as waiting for
-    the next run of this command that works a round: this path works none, and a re-disposition is
-    written only once a round record names it (`decision-register-format.md` §8).
     Then skip to the handoff phase — with nothing to commit where the register was already on file,
     nothing was torn, no re-disposition was completed, no earlier run left `code-defect-log.md`
     changed and *Handoff*'s first step wrote no defect resolution, and otherwise with the files this
@@ -1646,9 +1653,10 @@ reported with its record, and nothing is put on it (§7).
 **This is the carry-forward that keeps such a hit from living only in a report**: the case it exists for
 is a `conditional` entry whose `blocked_on` another BRD's reconciliation settled, which neither
 test before it sees. It carries the finding, never a correction: the operator answers with a
-disposition, the current one among the five, so keeping it is an answer like any other. A
-flagged entry reaches the operator only on a run that works a round — the no-new-round path in
-*Resolve the round* reports it instead, and its flag stays unanswered until a round record names it.
+disposition, the current one among the five, so keeping it is an answer like any other. An
+unanswered flag is itself a change that makes a round askable (*Resolve the round*, the *Every round
+is closed* branch), so a run that finds every round closed opens one for it rather than reporting it
+as waiting; its flag stays unanswered until a round record names it.
 
 Two things bound a re-disposition, and neither is a matter of taste. **What may move is `disposition`, and `blocked_on` with
 it** — added when the new disposition is `conditional`, dropped when it is not (§2). **What may not
