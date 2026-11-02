@@ -437,7 +437,7 @@ verbatim:
   choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
   ```
 - **The record alone, or with Epic records it marked `superseded-by`, Phase 5.5's edits or both** —
-  the unit folder's `CLAUDE.md` and a documentation page in it are both advisory (§4.0), so neither
+  the unit folder's `CLAUDE.md` and a documentation page in it are both advisory, as the handoff's register of artifacts records, so neither
   lifts the class — is **advisory**: later runs of this command read it, and so does `/dev-workflows:implement`'s follow-up read-back, a PRD record's
   `withdraws:` lines, and none runs `require-on-main` on it. A later run stops on it only where it
   sits on a branch unmerged, or where the default branch holds a copy the checkout lacks or predates
