@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Review of 1.72.0 (to-fix PR9). Take with `dev-workflows` 4.55.1.
 
 ### Fixed
-- **A request of `phase-handoff handoff-to-main` made after the consent choice was answered no longer reads as asking it again.** The loader's entry-point rules and §2's opening say a request made after this run presented §4.3's choice runs §2 on the answer carried — the *On the first choice, execute `handoff-to-main`* steps and `/brd-package`'s Phase 9, which said it does not ask again.
+- **A request of `phase-handoff handoff-to-main` made after the consent choice was answered no longer reads as asking it again.** The loader's entry-point rules and §2's opening say a request made after this run presented §4.3's choice runs §2 on the answer carried — the *On the first choice, execute `handoff-to-main`* steps and `/brd-package`'s Phase 9, which said it does not ask again. The rule is scoped to the handoff whose choice was presented: `/brd-reconcile`'s second handoff still presents its own.
 - **§4.0's register paragraphs name the register.** *What this table is* and *Classify by naming the reader* said "this table" and "the table above", which in `handoff-to-main`'s file landed on the class table, a table that lists no path; they name §4.0's register of artifacts, which that file does not hold.
 - §2.2 cites `<default-ref>` to `specs-repo-git.md` §3.2, which defines it, rather than to this reference's §3.2, which `handoff-to-main`'s file does not hold.
 - 1.72.0's note said the release needed no partner; it does — `.claude/rules/plugin-updates-coupling.md` now carries the bullet.
