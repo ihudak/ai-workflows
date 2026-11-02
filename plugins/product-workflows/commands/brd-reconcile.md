@@ -2632,7 +2632,8 @@ captured files.
    `code-defect-log.md` hit to `needs-a-human`, because every disposition on that log is the operator's
    and `/product-workflows:brd-interview` is its only writer. What travels is the finding, not a
    correction — to the operator, and, for a hit on the log of a slice under the parent, to that
-   slice's next `/product-workflows:brd-interview` run that works a round, which reads the
+   slice's next `/product-workflows:brd-interview` run, which opens a round for it where every round is
+   closed and reads the
    `- **Hit:**` lines of the latest reconciliation record of every slice under the parent, this
    one's while it is the latest, and puts the flagged entry's disposition again until a round
    record of that slice answers the flag (its *Put each `[V]` to the operator*).

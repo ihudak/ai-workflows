@@ -420,7 +420,14 @@ cannot review, and they will not tell you that — they will review it anyway, b
    Read the flags as `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §7 states them —
    the one statement of what flags an entry and what answers it, which `/brd-interview` reads too —
    from the latest reconciliation record of every slice under the parent, this one included, and
-   from the round records step 7 read. **Read those reconciliation records as they are in the
+   from this slice's round records. **A round record that answers a flag and is not in step 7's set
+   is gated as step 7 gates that set** — a round that only answered flags names no register record
+   and no `[C]` entry, so step 7 never reaches it — with the same `require-on-main` mapped the same way before its answer counts — any stopping row
+   stops, naming that round, and one on no ref stops with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN`, its
+   message naming the round as one that answered a code-defect flag rather than one the register or
+   the held questions name: an answer whose record never merged leaves the default branch
+   showing the flag unanswered, and another clone's `/brd-interview` would open that round again.
+   **Read those reconciliation records as they are in the
    folders, and run no `require-on-main` on them**, as `/brd-interview` reads them: in the flow the
    route runs, each was merged before this command runs and the two reads agree, and where they do
    not — a `/brd-reconcile` handoff declined — the record in the folder is the one that carries the

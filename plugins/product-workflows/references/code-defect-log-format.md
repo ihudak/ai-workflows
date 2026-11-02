@@ -150,9 +150,11 @@ parent and sends every hit in a `code-defect-log.md` to `needs-a-human`, since n
 is its to write (`commands/brd-reconcile.md`, *The stale cross-reference sweep*, its
 `code-defect-log.md` row), and its reconciliation record writes every hit as one line,
 `- **Hit:** <path> › <entry> — <what was found> — <outcome>`, beneath the heading of the pass that
-found it (*Write the reconciliation record*, its *The sweeps* item). **Read the slots, never the
+found it (`commands/brd-reconcile.md`, *Write the reconciliation record*, its *The sweeps* item). **Read the slots, never the
 prose**: an entry is flagged by a hit line in the latest reconciliation record of a slice under the
-parent, the slice's own included — in each folder the `reconciliation-<YYYYMMDD>.md` of greatest
+parent, the slice's own included — the slices the positive `brd-link.md` parent test finds
+(`commands/brd-split.md` Phase 0) against the `parent:` the slice's own `brd-link.md` names, never
+a directory listing — in each folder the `reconciliation-<YYYYMMDD>.md` of greatest
 date, every pass in it, none where the folder holds none, read through
 `references/decision-register-format.md` §8 — whose `<path>` is the slice's own log as that record
 writes it — `<the slice's folder name>/code-defect-log.md`, relative to the parent's folder — whose

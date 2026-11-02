@@ -1342,8 +1342,9 @@ saying so later requires the round number to still mean what it says (§5).
 
 **A later round is generated from what changed after the last round was generated, by the same
 sources, and before it is opened.** *Resolve the round*'s *Every round is closed* branch runs the scoping
-above and this generation for round `<highest + 1>` to learn whether that round would hold anything,
-and opens it only where it would — so, as for round 1, this phase then works that set and generates
+above and this generation for round `<highest + 1>` to learn whether that round would hold anything, and opens it only where it would, or where an
+unanswered code-defect flag (`${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §7) makes
+it askable without a question — so, as for round 1, this phase then works that set and generates
 nothing again. The generation takes: the *Round 1 is generated from the grounding* bullets, applied
 to each finding added, or whose verdict or verifier outcome changed, since the last round was
 generated, whenever the change happened — the last round's `generated against:` line is the
@@ -2026,8 +2027,7 @@ short — and `argumentation` saying **why the package proceeds on the assumptio
 to establish it**. A bare sentence with no account of its own groundlessness is a claim, not an
 assumption record.
 
-**`<BRD-dir>/interview/round-<N>.md`** — the round's own record, append-only. **A round that raised
-no question at all records the walk instead of the questions**: each of the seven sources *Round 1
+**`<BRD-dir>/interview/round-<N>.md`** — the round's own record, append-only. **A round 1 that raised no question at all records the walk instead of the questions**: each of the seven sources *Round 1
 is generated from the grounding* names, and what this BRD held under each — **written from what the
 walk found, never from a rule over verdicts**: no finding whose verdict or verifier outcome left
 its premise open (the first two sources: a premise that moved, and one the repository could not
@@ -2039,7 +2039,11 @@ reopened elsewhere* found no record to put again. Naming the verdicts instead wo
 any corpus holding a `SUPERSEDED` finding, which raises no question and is not `CONFIRMED` either,
 or a `CONFIRMED` finding whose outcome is `unprovable`, which raises one.
 That is a complete record of a completed walk, which is exactly what the all-delegated stop's
-prohibition on an *empty* record is protecting against. Otherwise: every question in the order it
+prohibition on an *empty* record is protecting against. **A later round that unanswered
+code-defect flags alone made askable** (*Resolve the round*, the *Every round is closed* branch)
+raises no question either, and records no walk: it records what made it askable — each flagged
+`[CDF#n]`, with the reconciliation record and the hit that flagged it — and its `code defects:`
+line's `flag answered` parts record the answers. Otherwise: every question in the order it
 was written, its tag, **on every question that puts an existing record again, that record on a
 line of its own labelled exactly `- **Re-puts:** [VD#n]` or `- **Re-puts:** [CD#n]`**, whatever the
 question's tag, **and on every other `[V]` the same line reading `- **Re-puts:** none`**, written
@@ -2425,7 +2429,7 @@ may not be consumed downstream while it reads `reopened` (`decision-register-for
 **`package_offerable: yes`:**
 
 ```
-choices: ["Stop here — this round's decisions are recorded", "Package this BRD for customer review — /product-workflows:brd-package <BRD-KEY> <merge-clause>", "Work another round now — /product-workflows:brd-interview <BRD-KEY> (only if findings have changed, a requirement defect became this BRD's to ask, a re-grounding moved a decision's evidence, or another run reopened a decision — that last once every round is closed)", "Interview another BRD or slice"]
+choices: ["Stop here — this round's decisions are recorded", "Package this BRD for customer review — /product-workflows:brd-package <BRD-KEY> <merge-clause>", "Work another round now — /product-workflows:brd-interview <BRD-KEY> (only if findings have changed, a requirement defect became this BRD's to ask, a re-grounding moved a decision's evidence, a reconciliation flagged a code defect, or another run reopened a decision — those last two once every round is closed)", "Interview another BRD or slice"]
 ```
 
 **`package_offerable: rounds-unsettled` — `/brd-package` is left out rather than offered and
@@ -2453,7 +2457,8 @@ choices: ["Re-open round 1 to ask the requirement defects — /product-workflows
 either the packaging step or another round of this command.** Both would stop or report a no-op: the
 packaging step on its step-8 gate, and this command because it opens a new round only where a
 question source puts a question on what changed after the last round was generated — the findings,
-a requirement defect becoming this BRD's to ask, or a decision reopened; a record moved to
+a requirement defect becoming this BRD's to ask, a code defect a reconciliation flagged, or a
+decision reopened; a record moved to
 `reopened` raises its question through *A decision reopened elsewhere*, and one moved to
 `superseded` raises nothing (*Resolve the round*) — and nothing here has changed. **The one
 exception is a reopened record named waiting beside the list (above)**, and it takes its own list
@@ -2658,8 +2663,7 @@ appended to its rejected row's held question, naming that question, and every on
 question of its own because the held entry could not be chosen, naming the candidates;
 the `[VD#n]` decided this run and any deferred; the `[AS#n]` recorded; the `[CDF#n]` raised this
 round and the `[CDF#n]` re-dispositioned, each with its old and new disposition, when any; every
-`code-defect-log.md` entry a reconciliation record flagged, with that record, and whether it was put
-to the operator or waits for the next run that works a round, and every hit on this log that named
+`code-defect-log.md` entry a reconciliation record flagged, with that record, and that it was put to the operator, and every hit on this log that named
 none of its entries; every `unsourced` defect *Handoff*'s first step found to be a candidate, with its
 finding, and whether its resolution was written or left open — each left open with the value to
 write by hand, and with what the parent log's gate reported, or that the operator declined at the
