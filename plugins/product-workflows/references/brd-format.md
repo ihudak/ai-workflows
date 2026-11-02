@@ -18,7 +18,8 @@ as written. It is not authored by the delivery team and it is not a PRD.
 
 Once intaken, the source is **immutable** (D11): nothing under `brd/source/` is ever edited,
 reworded, or reformatted, no matter how badly worded a requirement inside it is. **It is written by
-`/brd-intake` Phase 2 alone, and only ever as a byte-for-byte copy of the customer's file.** A
+`/brd-intake` Phase 2 alone, and only ever as a byte-for-byte copy of the customer's file** — of its
+content, never its mode bits, every copy written at mode `0644` (`commands/brd-intake.md` Phase 2). A
 re-run over a **revised** source is the one time a copy is written again: each file at a path
 already on file whose bytes changed — the document itself, or a file beside it — has its copy
 replaced whole, git keeping the earlier one, and a document the customer revised under a new

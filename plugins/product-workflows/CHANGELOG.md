@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.69.0] — 2026-11-02
+
+Batch B27: BRD2-B2, BRD2-B3, BRD2-B4, BRD2-B9, BRD3-B22, BRD3-B23, FBA-B4, FBA-B5, FBA-G8, FBA-G9.
+
+### Added
+- **`coverage-ledger-format` §7 fixes the `slices.md` layout (FBA-G9)**: frontmatter `kind: slices` and `key:`, then one `##` heading per block type in Phase 5's order. It is structural only: no script parses the file, and `/brd-package` reads the slice keys under `## Slices` (Phase 8 rule 8 now names those headings, and on a legacy file the keys its slice blocks name). `/brd-split` Phase 5 writes `slices.md` in it; `/brd-reconcile` keeps it when it corrects the file in place. A `slices.md` without that frontmatter is a legacy file: in-place edits never convert it, and only a full `/brd-split` write does.
+- **`/brd-split` Phase 4 Step 1, renamed the settled-answer offer, fires with two or more slices standing (FBA-G8)**, only where every offerable row is in a group Phase 2 confirmed and Phase 3 keyed into a child: one confirmation listing each row with its own `covered-by: <SLICE-KEY>`, refusable per row, its walk option keeping each row's `<recommended>`.
+
+### Changed
+- **`/brd-split`'s *Assign to a named slice* asks the key as a picker of its own (FBA-B5)**, after the row's picker and never in the same call: the run's eligible slice keys, the child the row's confirmed group was keyed into first — marked recommended where the instruction placed the row there — three plus *Another slice* past four; a typed key is resolved against the run's slice keys and re-prompted as before. Where one child is eligible it is taken without asking, the notice naming it, and naming the placed child where that one was barred; the option's label now says the key is asked only where more than one slice can take it.
+- **`/brd-intake` Phase 2 copies content, not mode bits (FBA-B4)**: every copy under `brd/source/` and `brd/source-external/` is written with `install -m 0644`, and a re-run resets to `0644` any file already there at another mode, handing the mode change off with the run's other paths.
+
+### Fixed
+- **`coverage-ledger-format` §6.5's worked example is a legal root (BRD3-B22)**: its four `covered-here` rows are `deferred-to: <this BRD>`, the arithmetic adjusted; §3's orphan-table `covered-here` row and §6.1's parent case name `covered-here` as reachable only on a ledger written before a BRD became a container.
+- **§6.2 says `/brd-split` gates code grounding only on a slice, in `allocate-only` mode (BRD3-B23).**
+- **The `/brd-split` docs page (BRD2-B2, BRD2-B3, BRD2-B4, BRD2-B9)**: the `allocate-only` bulk offer's condition counts offerable rows; the no-op names its third exception, a child out of step; a slice block's rationale is what in the instruction placed it; the ledger list includes `covered-here`, and `allocate-only` writes "the two files above".
+
 ## [3.68.1] — 2026-11-02
 
 ### Fixed

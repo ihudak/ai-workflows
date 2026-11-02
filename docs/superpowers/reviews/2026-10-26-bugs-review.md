@@ -1506,7 +1506,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD2-B2 — MINOR — The `/brd-split` docs table gives the `allocate-only` bulk offer the firing condition the command calls a defect
+### BRD2-B2 — MINOR — The `/brd-split` docs table gives the `allocate-only` bulk offer the firing condition the command calls a defect — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Where:** `plugins/product-workflows/docs/commands/brd-split.md:174`; the command is at `plugins/product-workflows/commands/brd-split.md:743`
 - **What is wrong:** The docs table says that on `allocate-only`, Step 1 "fires whenever ≥2 rows are unallocated". The command's condition is "two or more rows are in the set this step would actually offer — every row still `unallocated`, *minus* any row Phase 1.5's reading already placed on a different disposition". It then names the raw-count reading as the shipped defect: "Counting the raw `unallocated` set instead fires the offer on a set of one or zero … the degenerate prompt the rule below says is skipped".
 - **Failure scenario:** On a slice with five unallocated rows and the instruction "defer everything except the login flow", an operator reading the page expects a bulk `covered-here` offer. The command correctly skips it, because only one row is offerable. The page describes the defect that was fixed, so the operator meets a different behaviour from the one documented. The page's own intro (`:10`, "and offerable") already has it right; the table contradicts the intro.
@@ -1515,7 +1515,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD2-B3 — MINOR — The `/brd-split` docs page's "No-op … with two exceptions" drops the third exception, a child out of step
+### BRD2-B3 — MINOR — The `/brd-split` docs page's "No-op … with two exceptions" drops the third exception, a child out of step — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Where:** `plugins/product-workflows/docs/commands/brd-split.md:544-548`; the command is at `commands/brd-split.md:395-412`
 - **What is wrong:** The page says: "Re-running `/brd-split` once every row already has a disposition changes nothing **unless** a child is standing empty … **or** the run was given an instruction that found a re-cuttable row … A **bare** re-run … with no child standing empty … reports the ledger line and stops." The command's step 10 has three parts. It is a no-op only with "no standing empty child **and** no child out of step", and otherwise it takes the reconcile path, where Step 3 rewrites the child's `claims:`, inventory and ledger. The same page states this correctly at `:226-238`.
 - **Failure scenario:** `/prd-ground` stops with `PRD_GROUND_SLICE_UNRECONCILED` and names a bare `/brd-split <PARENT-KEY>` as the fix. An operator reading the Gates section is told that run changes nothing and stops, so they doubt the remedy or skip it. The run in fact writes the child's files and opens a pull request.
@@ -1524,7 +1524,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (claim-sweep refinement 8: the docs copy is the one acted on)
 - **Confidence:** high
 
-### BRD2-B4 — MINOR — The `/brd-split` docs page says a slice block's rationale is "the buildable / blocked / depends-on reading", a grounded-root concept the command retired
+### BRD2-B4 — MINOR — The `/brd-split` docs page says a slice block's rationale is "the buildable / blocked / depends-on reading", a grounded-root concept the command retired — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Where:** `plugins/product-workflows/docs/commands/brd-split.md:362-364`; the command is at `commands/brd-split.md:1289-1291`
 - **What is wrong:** The docs say `slices.md` gives "one block per confirmed slice (its key, its folder, and the rationale that grouped its rows: the buildable / blocked / depends-on reading, or, for a group a slicing instruction placed, what in the instruction placed it)". The command's Phase 5 has one rationale only: "what in the instruction placed it". A root is never ground and carries no findings (command Phase 2, `:539`; docs `:84-88`: "In `full` mode the instruction is the whole picture"), so there is no buildable/blocked/depends-on reading to record.
 - **Failure scenario:** A reader of `slices.md`, or an agent writing it from the docs, looks for or invents a grounding-based rationale on a root that has no findings.
@@ -1580,7 +1580,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD2-B9 — NIT — The `/brd-split` docs "What it produces" omits `covered-here` and says "the first two of the following" about a list that sits above
+### BRD2-B9 — NIT — The `/brd-split` docs "What it produces" omits `covered-here` and says "the first two of the following" about a list that sits above — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Where:** `plugins/product-workflows/docs/commands/brd-split.md:354-356`, `:385`
 - **What is wrong:**
   - Line 354: "`coverage-ledger.md` — updated so no row remains `unallocated`: each row now reads `covered-by: <SLICE-KEY>`, `deferred-to: <this BRD>`, `rejected: [DEF#n]`, or `superseded-by: [BR#n]`". On an `allocate-only` run, the ordinary landing is `covered-here`, which is missing from the list.
@@ -1835,7 +1835,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD3-B22 — NIT — `coverage-ledger-format` §6 still models a root ledger holding `covered-here` rows, a state §5 calls illegal
+### BRD3-B22 — NIT — `coverage-ledger-format` §6 still models a root ledger holding `covered-here` rows, a state §5 calls illegal — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Where:** `plugins/product-workflows/references/coverage-ledger-format.md:773-783` (§6.5's worked example: root `EPIC-008` with "`covered-here` | 4" and "`unallocated` | 1"), `:657-658` (§6.1: "The parent case lands on a row the parent resolved `covered-here` or `deferred-to`"), and §3's orphan table row at `:173` ("`covered-here` — the parent builds it").
 - **What is wrong:**
   - §5's table (`:386`) says: "Every row of a root's ledger ends `covered-by`, `deferred-to`, `rejected` or `superseded-by`; `covered-here` is not among them, and a root row carrying one is a ledger written before a BRD became a container, or edited by hand".
@@ -1847,7 +1847,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium. This is misleading text in an authority, not a runtime failure.
 
-### BRD3-B23 — NIT — §6.2 says `/brd-split` gates `grounding/code-grounding.md`, which it does only in `allocate-only` mode
+### BRD3-B23 — NIT — §6.2 says `/brd-split` gates `grounding/code-grounding.md`, which it does only in `allocate-only` mode — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Where:** `plugins/product-workflows/references/coverage-ledger-format.md:718-720`
 - **What is wrong:**
   - The text reads: "only `/prd-ground` gates **this file**, in its Phase 0 step 6. `/brd-split` and `/brd-interview` each gate `grounding/code-grounding.md` there and then read the ledger from the working tree".
@@ -2228,7 +2228,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `BOOK-1-create-ard-optionality-advisory-small-undefined` in F1
 - **Confidence:** high
 
-### FBA-B4 — NIT — `/brd-intake`'s "byte-for-byte" copy does not exclude the source's mode bits
+### FBA-B4 — NIT — `/brd-intake`'s "byte-for-byte" copy does not exclude the source's mode bits — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Where:** `plugins/product-workflows/commands/brd-intake.md:386-391` (Phase 2)
 - **What is wrong:** The step says: "copy `@<brd-file>` **verbatim, byte-for-byte** into `<BRD-dir>/brd/source/<basename>`". It says nothing about permissions, and nowhere under `plugins/product-workflows/` normalises them (`grep -rn "chmod\|0644\|file mode"` finds only scripts).
 - **Failure scenario:** The source comes from a mount whose files are mode 777, and a mode-preserving copy commits `brd/source/*.md` and `*.svg` as 100755. That is noise in the specs history, though not data loss.
@@ -2237,7 +2237,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `BOOK-2-brd-intake-copy-carries-source-file-mode` in F2
 - **Confidence:** high
 
-### FBA-B5 — NIT — `/brd-split`'s *Assign to a named slice* key prompt: no rule for asking it in the same call, and no pre-fill from the Phase 1.5 placement
+### FBA-B5 — NIT — `/brd-split`'s *Assign to a named slice* key prompt: no rule for asking it in the same call, and no pre-fill from the Phase 1.5 placement — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Where:** `plugins/product-workflows/commands/brd-split.md:893` (picker), `:1015-1017` (the key prompt)
 - **What is wrong:** The text says: "**Assign to a named slice** … → prompt for the slice's key: any created in Phase 3 this run, or any found already nested … Reject a key that resolves to neither and re-prompt". `<recommended>` already marks `covered-by` where Phase 1.5 placed the row (`:946-948`), but the key prompt that follows does not offer that placement's key as its default. The command also does not say whether the key may be asked in the same `AskUserQuestion` call as the disposition, or how the re-prompt validation applies when it is.
 - **Failure scenario:** A 19-row walk takes 38 prompts even though every row's target is already fixed by the instruction. An orchestrator that folds the two questions into one call is improvising validation.

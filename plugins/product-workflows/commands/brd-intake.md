@@ -398,7 +398,13 @@ the one they were read from. An inventory holding no row, or one already carryin
 left as it stands here.
 
 Then copy `@<brd-file>` **verbatim, byte-for-byte** into `<BRD-dir>/brd/source/<basename>` (creating
-`brd/source/` inside the folder) — on a re-run, only as the copy rule below allows. Per
+`brd/source/` inside the folder) — on a re-run, only as the copy rule below allows. **Byte-for-byte
+covers the content only, never the source's mode bits**, here and at every copy this phase makes
+under `brd/source/` and `brd/source-external/`, the linked files included: write each copy at mode
+`0644` with `install -m 0644 <source> <copy>`, which also resets a copy an earlier run left at another
+mode when it replaces it — never with `cp -p` or `cp -a`, and never with a plain `cp` either, which
+gives a new file the source's own mode less the umask, so a file a mount marks `0777` would be
+committed executable. Per
 `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1, nothing under
 `brd/source/` is ever edited, reworded, or reformatted, no matter how badly worded a requirement
 inside it is — defects found in it are logged beside it (Phase 4), never corrected in it — and this
@@ -436,6 +442,14 @@ say where one is so for want of a record rather than because its bytes changed �
 although the copy at its destination already has its bytes, because an earlier run copied it and
 reconciled no row against it (it stopped before Phase 3, or its read found no requirement), so the
 operator is not left wondering why a file this run wrote nothing to is called replaced.
+
+**On a re-run, reset the mode of every file already standing there, before copying anything.** List
+every file under `<BRD-dir>/brd/source/` and `<BRD-dir>/brd/source-external/`, over whichever of the
+two exists, whose mode is not `0644` — `find <dir> -type f ! -perm 0644` — and reset each with
+`chmod 0644 <path>`, whether or not this run takes it. An earlier intake that copied with a plain
+`cp` can have left a copy executable, and the rule below writes nothing over an unchanged file, so
+nothing else would ever normalise it. Each file reset counts as written by this run: name it in the
+final report, and Phase 7's `deliverable_paths` declares it, so the mode change is committed.
 
 **Then copy, writing only what differs from the copy at the destination.** Where a copy with
 identical bytes already stands there, write nothing: the file counts as copied wherever this command
@@ -495,7 +509,8 @@ is what every later mention of *Phase 2's capture order* means.
   handoff accounts for such a file as already on its branch.
 
 Copy each file **byte-for-byte, whatever its type** — an image, a PDF, a spreadsheet — never opened
-as text, never re-encoded, never resized. Phase 0 step 3's markdown-only rule is about the *document*
+as text, never re-encoded, never resized, and at mode `0644`, as the document itself is copied: its
+content, never its mode bits. Phase 0 step 3's markdown-only rule is about the *document*
 the inventory anchors into; a file it links is captured as it stands. **What is read, and by whom, is
 Phase 2.5's and Phase 3's** — this phase copies and reads nothing.
 
@@ -1468,7 +1483,8 @@ On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:re
 bytes or found an identical copy already standing, which covers both collision rule 1's re-use and a
 re-run that left an unchanged copy untouched (Phase 2), neither of which this run *wrote* — **enumerated, one literal repo-relative path each: never a glob and never a directory**, because §2.3 stages neither, so a declaration that looks complete ships nothing — §2.3 step 4 names each in §4.1's *declaration unaccounted for* clause, so the failure is reported rather than silent, but nothing it names lands. That is the customer's document and every file Phase 2 captured into `brd/source/` or `brd/source-external/`, whether or not this run wrote any of them — named individually (the copy step knows them; neither `brd/source/**` nor `brd/source-external/**` is a path), plus `brd/brd-inventory.md`, `brd/brd-defect-log.md`, `brd/brd-link-log.md`, `brd/brd-figures.md` wherever it exists after Phase 2.5,
 `coverage-ledger.md`, and — only when Phase 6 ran — `prd-seed.md`, `ard-seed.md`, `spec-seed.md`.
-**Declare, too, every untracked file already under `brd/source/` or `brd/source-external/` that this
+**Declare, too, every file Phase 2's mode reset changed**, whether or not this run took it, so its
+mode change is committed. **Declare, too, every untracked file already under `brd/source/` or `brd/source-external/` that this
 run did not take** — one an earlier intake copied and never handed off, or copied before it was
 interrupted — found by `git -C "$SPECS_PATH" status --porcelain -z --untracked-files=all` over those
 two directories and named one literal path each: nothing else in the plugin ever stages it, so
@@ -1639,7 +1655,8 @@ directory and into `brd/source-external/` — and, per `brd/brd-link-log.md`, ev
 not capture with its reason (Phase 2), with Phase 1's answers and any *other* file the operator
 accounted for; on a re-run, every file Phase 2 recorded **replaced**, saying where one is so for
 want of a `captured:` record, and where one is so although its copy already stood
-with those bytes, because an earlier run copied it and reconciled no row against it — and each slice
+with those bytes, because an earlier run copied it and reconciled no row against it; every file
+Phase 2's mode reset changed to `0644`, named as **reset**, never as replaced; and each slice
 whose `source:` names a document other than the one this run copied (Phase 2); how many images were
 transcribed, re-used and not read, with each reason; **how many of the images this run captured hold
 no transcription at all — every one it dispatched that came back `read: false`, and every section it
