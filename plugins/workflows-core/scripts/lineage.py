@@ -307,14 +307,13 @@ def check(specs, ref, docs, output=None):
         with open(output, encoding="utf-8") as fh:
             accepted = read_record(fh.read())[0]["accepted"]
     acc = {(a["path"], a["blob"]) for a in accepted}
-    res = {"stale": [], "missing": [], "absent": [], "accepted": [], "highest": None}
-    best = None  # (depth, downstream)
+    res = {"stale": [], "missing": [], "absent": [], "accepted": [], "highest": None, "top_missing": None}
+    best = {"stale": None, "missing": None}  # each (depth, document)
     seen = set()
 
-    def note_highest(depth, downstream):
-        nonlocal best
-        if best is None or depth > best[0]:
-            best = (depth, downstream)
+    def note_highest(depth, downstream, which="stale"):
+        if best[which] is None or depth > best[which][0]:
+            best[which] = (depth, downstream)
 
     def walk(doc, depth):
         if doc in seen:
@@ -333,7 +332,7 @@ def check(specs, ref, docs, output=None):
                 res["accepted"].append({"missing": doc, "blob": blob})
             else:
                 res["missing"].append({"doc": doc, "blob": blob})
-                note_highest(depth, doc)
+                note_highest(depth, doc, "missing")
             return
         for e in found["upstreams"]:
             up = e["path"]
@@ -353,8 +352,12 @@ def check(specs, ref, docs, output=None):
 
     for d in docs:
         walk(d, 0)
-    if best is not None:
-        res["highest"] = {"downstream": best[1], "reviser": kinds()[kind_of(best[1])]["reviser"]}
+    if best["stale"] is not None:
+        d = best["stale"][1]
+        res["highest"] = {"downstream": d, "reviser": kinds()[kind_of(d)]["reviser"]}
+    if best["missing"] is not None:
+        d = best["missing"][1]
+        res["top_missing"] = {"doc": d, "reviser": kinds()[kind_of(d)]["reviser"]}
     return res
 
 
@@ -381,14 +384,16 @@ def _compare_plain(old, new):
 
 
 def accept(doc, checked):
-    """Append accepted entries for each stale link (its upstream at its current blob) and each
-    missing record (that document at its blob), de-duplicated."""
+    """Append accepted entries for each stale link (its upstream at its current blob), each missing
+    record (that document at its blob) and each link the check found already accepted, de-duplicated."""
     with open(doc, encoding="utf-8") as fh:
         found, _ = read_record(fh.read())
     entries = list(found["accepted"])
     keys = {(e["path"], e["blob"]) for e in entries}
     new = [(s["upstream"], s["current"]["blob"]) for s in checked.get("stale", [])]
     new += [(m["doc"], m["blob"]) for m in checked.get("missing", [])]
+    # links an earlier run accepted, which the check suppressed: kept across a rewrite of the document
+    new += [(a.get("upstream") or a.get("missing"), a["blob"]) for a in checked.get("accepted", [])]
     added = []
     for path, blob in new:
         if (path, blob) not in keys:
@@ -637,9 +642,9 @@ def test_missing_record():
         r.commit()
         res = check(r.root, "main", [r.spec])
         _check("missing listed", [m["doc"] for m in res["missing"]] == [r.spec], json.dumps(res))
-        _check("missing highest", res["highest"]["downstream"] == r.spec, json.dumps(res))
+        _check("missing top", res["top_missing"]["doc"] == r.spec and res["highest"] is None, json.dumps(res))
         res2 = check(r.root, "main", [r.prd])
-        _check("prd never missing", res2["missing"] == [] and res2["highest"] is None, json.dumps(res2))
+        _check("prd never missing", res2["missing"] == [] and res2["top_missing"] is None, json.dumps(res2))
     _with_repo(body)
 
 
@@ -714,6 +719,51 @@ def test_stamp_carry_forward():
 def _load_json(path):
     with open(path, encoding="utf-8") as fh:
         return json.load(fh)
+
+
+def test_consumed_by_not_moved():
+    old = "- id: [CG#1]\n  claim: x\n  verdict: CONFIRMED\n  consumed_by: none\n"
+    new = old.replace("consumed_by: none", "consumed_by: [specification]")
+    r = compare("grounding", old, new)
+    _check("test_consumed_by_not_moved", r == {"added": [], "changed": [], "withdrawn": []}, str(r))
+    r2 = compare("decisions", old.replace("CG#1", "VD#1"), new.replace("CG#1", "VD#1"))
+    _check("test_consumed_by_not_moved decisions", r2 == {"added": [], "changed": [], "withdrawn": []}, str(r2))
+
+
+def test_engineering_review_notes_all_kinds():
+    for kind in ("epic", "prd", "ard", "design"):
+        old = "---\nkind: x\n---\n# T\n\n## Goal\n\nShip it.\n"
+        new = old + "\n## Engineering review\n\n- [ ] A conformance gap.\n"
+        r = compare(kind, old, new)
+        _check(f"test_engineering_review_notes_all_kinds {kind}", r == {"added": [], "changed": [], "withdrawn": []}, str(r))
+
+
+def test_missing_only_has_no_stale_highest():
+    def body(r):
+        r.write(r.prd, PRD)
+        r.write(r.spec, SPEC)
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        _check("missing-only highest", res["highest"] is None, json.dumps(res))
+        _check("missing-only top_missing", res["top_missing"] == {"doc": r.spec, "reviser": "/product-workflows:update-spec <KEY>"}, json.dumps(res))
+    _with_repo(body)
+
+
+def test_accepted_survive_rewrite():
+    def body(r):
+        r.chain()
+        r.write(r.prd, PRD.replace("within one minute", "within two minutes"))
+        r.commit()
+        out = os.path.join(r.root, r.design)
+        accept(out, check(r.root, "main", [r.design]))
+        first = check(r.root, "main", [r.design], output=out)
+        # the consumer rewrites its output from scratch, losing the accepted: block, then stamps and accepts
+        r.write(r.design, "---\nkind: design\nkey: PRD-1\n---\n# Design\n\n- **Version**: 2\n\n## Approach\n\nCards.\n")
+        stamp(r.root, "main", out, capture(r.root, "main", [r.spec], []))
+        accept(out, first)
+        again = check(r.root, "main", [r.design], output=out)
+        _check("accepted survive rewrite", again["stale"] == [] and len(again["accepted"]) == 1, json.dumps(again))
+    _with_repo(body)
 
 
 def main(argv):

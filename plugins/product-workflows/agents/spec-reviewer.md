@@ -29,7 +29,7 @@ The caller passes:
 1. Read the specification end-to-end before judging.
 2. Verify header fields populated; `Published` is `yes`/`no`; the `Open questions` count equals the
    actual `- [ ]` count; the frontmatter's `upstreams:`, where present, gives each entry a `path`, a `blob` of 40 lowercase
-   hexadecimal characters and a `version` (`workflows-core:document-lineage` §1; absent is valid, since
+   hexadecimal characters and a `version` (the lineage record; absent is valid, since
    `/specify` stamps the record after this review); a legacy `inputs_at`, where present, is 40 lowercase
    hexadecimal characters.
 3. For each stage present, apply every validation rule for that stage from

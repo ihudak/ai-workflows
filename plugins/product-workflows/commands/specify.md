@@ -1075,7 +1075,7 @@ Cap: one fix cycle + one re-review maximum. A finding applied at that offer afte
 
 First compare the session file's `## Run environment`, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 2 — loading that part afresh, as §6 says, even where it is in this conversation. On a mismatch, *Stop* writes and hands off nothing below and goes on to Phase 8 under `specs_git: misrooted`, and *Go on pinned* pins every later step to the recorded environment (§6). Then write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2) — into the run's feature folder: the folder Phase 0 resolved (the PRD folder, the slice folder on the BRD route, or the `EPIC-` subfolder an Epic address resolved), unless Step A then re-pointed the run to an Epic, whose `EPIC-` subfolder supersedes it (*Re-pointing the feature folder after the picker*).
 
-**Stamp the specification** as soon as it is written, before anything stages it: execute `document-lineage` `record` §5 step 2 against it with Phase 2.5's capture, and, where that phase's `upstream-check` was answered *Proceed*, accept into it as the same step says.
+**Stamp the specification** as soon as it is written, before anything stages it: execute `document-lineage` `record` §5 step 2 against it with Phase 2.5's capture, and, where that phase ran `upstream-check`, accept into it with that check's file as the same step says.
 
 **Wherever `prd_dir` holds `grounding/`, on either route, close the consumption loop before
 the offer.** The design's *Consumption tracking* section (§7.3) has every finding and decision record

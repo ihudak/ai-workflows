@@ -32,7 +32,7 @@ The current copy of an upstream is read from the default branch (`<default-ref>`
 1. **Same blob as recorded** → not moved.
 2. **A different blob** → the script reads the recorded copy by its blob id (`git cat-file -p`) and compares **live items** by key, per the upstream's row in the kind table (§4). No live item added, changed or withdrawn → **not moved**: a note another command wrote (`/dev-workflows:design`'s `## Engineering review`, an open question ticked, an `Engineering proposal (/design):` answer), a header count or whitespace never asks. Otherwise it moved, and the keys that changed are what the operator sees.
 3. **Item keys** are an item's full ID path where its IDs restart under a parent — a specification's `[U02]/[AC01]/[TC03]`, since AC and TC numbers restart per story and per criterion (`product-workflows:specification-format`) — and its own ID where they do not (`[US#2]`, `[AD#3]`). Text outside every item is compared per `## ` section, keyed `§<heading>`; a kind with no item IDs is compared that way alone.
-4. **A superseded or withdrawn item** (its heading carries ` — Superseded by` or ` — Withdrawn`) is reported once, as withdrawn, and the items nested under it are not reported again.
+4. **A superseded or withdrawn item whose marker sits on its own heading** — a specification's (` — Superseded by`, ` — Withdrawn`) — is reported once, as withdrawn, and the items nested under it are not reported again. A kind that marks it on a line of its own under the heading — a PRD's or an ARD's `**Superseded by:**` — has that item reported as changed.
 5. **The recorded blob is not in the clone** — a shallow clone, rewritten history, or working-tree bytes that were never committed → reported as moved, with *recorded copy unavailable — cannot list items*.
 6. **The upstream is absent from `<default-ref>`** → reported as absent, never as moved: the gate that reads that upstream owns that state.
 
@@ -48,12 +48,12 @@ The current copy of an upstream is read from the default branch (`<default-ref>`
 | Kind | Files | Items | Excluded | Reviser | Covered |
 |---|---|---|---|---|---|
 | specification | `specification.md` | `[Uxx]` › `[ACxx]` › `[TCxx]` | `## Engineering review`, every `Open questions` heading's section, `- [ ]`/`- [x]` lines, `Engineering proposal (/design):` lines, the `Version` and `Open questions` header lines | `/product-workflows:update-spec` | yes |
-| epic | `epic.md` | none — per section | — | `/product-workflows:epics` | yes |
-| design | `design.md` | none — per section | the `Version` and `Open questions` header lines | `/dev-workflows:design` | yes |
-| prd | `prd.md` | `[US#n]`, `[AC#n]`, `[SM#n]`, `[SMC#n]`, `[UC#n]`, `[FR#n]` | — | `/product-workflows:update-prd` | no |
-| ard | `ard.md`, `ard-<area>.md` | `[AD#n]` | — | `/product-workflows:create-ard` | no |
-| grounding | `code-grounding.md`, `design-grounding.md` | `[CG#n]`, `[DG#n]` | — | — | no |
-| decisions | `decisions.md` | `[VD#n]`, `[CD#n]`, `[AS#n]` | — | `/product-workflows:brd-interview` | no |
+| epic | `epic.md` | none — per section | `## Engineering review`, `- [ ]`/`- [x]` lines | `/product-workflows:epics` | yes |
+| design | `design.md` | none — per section | `## Engineering review`, `- [ ]`/`- [x]` lines, the `Version` and `Open questions` header lines | `/dev-workflows:design` | yes |
+| prd | `prd.md` | `[US#n]`, `[AC#n]`, `[SM#n]`, `[SMC#n]`, `[UC#n]`, `[FR#n]` | `## Engineering review`, `- [ ]`/`- [x]` lines | `/product-workflows:update-prd` | no |
+| ard | `ard.md`, `ard-<area>.md` | `[AD#n]` | `## Engineering review`, `- [ ]`/`- [x]` lines | `/product-workflows:create-ard` | no |
+| grounding | `code-grounding.md`, `design-grounding.md` | `[CG#n]`, `[DG#n]` | `consumed_by:` lines | — | no |
+| decisions | `decisions.md` | `[VD#n]`, `[CD#n]`, `[AS#n]` | `consumed_by:` lines | `/product-workflows:brd-interview` | no |
 | idea | `idea.md` | none — per section | — | — | no |
 
 A file matching no row is compared as plain text, whitespace collapsed. Only `specification.md` and `design.md` carry a `Version`; every other kind is shown by its short blob id (§6).
@@ -67,8 +67,9 @@ Executed by a command that writes a document of a covered kind, in two steps.
    — every path relative to `$SPECS_PATH`; `--from-disk` for each input the run reads from the working tree, which is how the family's commands read their inputs, and `--from-ref` only for one it reads from `<default-ref>` itself (`git show <default-ref>:<path>`). Either way the blob is that of the bytes read (§1): a working-tree copy equal to the default branch's has the default branch's blob. `<capture-file>` is a file the run creates where `workflows-core:run-flags` puts its temporary files.
 2. **After the run writes each document**, and before its handoff stages it, stamp it:
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lineage.py" stamp --specs "$SPECS_PATH" --ref <default-ref> --doc <the document's absolute path> --capture <capture-file>`
-   — then, where the run's `upstream-check` (§6) was answered *Proceed*, accept into it:
+   — then, wherever the run executed `upstream-check` (§6) and went on past it, accept into it:
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lineage.py" accept --doc <the document's absolute path> --check <check-file>`
+   — which writes each link the operator accepted this run and each one an earlier run had accepted (the check JSON's `accepted`), so a document its command rewrote from scratch keeps them.
 
 **Any non-zero exit stops the run** with `<COMMAND>_LINEAGE_FAILED: <the first line of the script's stderr>`, `<COMMAND>` being the calling command's error prefix, before it writes anything further: a document stamped wrongly or not at all would hide a stale chain from every later run.
 
@@ -77,14 +78,13 @@ Executed by a command that writes a document of a covered kind, in two steps.
 Executed by a command after its own gates have passed the documents it reads (`workflows-core:phase-handoff` `require-on-main`, §3), before its first agent dispatch or other expensive work. The caller supplies `docs` — the documents of a covered kind it is about to build on, relative to `$SPECS_PATH` — and `output`, its own existing output document where one is on disk (the one a re-run rewrites), else none.
 
 1. **Check:** `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lineage.py" check --specs "$SPECS_PATH" --ref <default-ref> [--output <output's absolute path>] --out <check-file> <docs…>`. A non-zero exit stops the run with `<COMMAND>_LINEAGE_FAILED`, as in §5. The check walks from each document up its recorded `upstreams:` and on through every covered upstream's own record, to the top of the covered chain (§3), and reports every stale link it meets — not only the documents' direct ones.
-2. **Nothing stale and nothing missing** — the JSON's `stale` and `missing` are both empty → say nothing more; the Final report carries `Lineage: current` (§7). An `accepted` entry is a link `output` already accepted, and is not asked again.
+2. **Nothing stale and nothing missing** — the JSON's `stale` and `missing` are both empty → say nothing more; the Final report carries `Lineage: current` (§7). An `accepted` entry is a link `output` already accepted: it is not asked again, and `record` step 2 writes it into the new output.
 3. **Otherwise show one block**, then ask. One line per stale link: `<downstream> ← <upstream> <recorded> → <current>: changed <keys>; new <keys>; withdrawn <keys>` — `<recorded>` and `<current>` being the `Version` where the upstream's kind carries one, else the first seven characters of each blob, and an empty kind of change left out; *recorded copy unavailable — cannot list items* in place of the keys where the JSON's `unavailable` is true. One line per missing record: `<doc>: no lineage record — cannot tell whether its upstreams moved`. One line per absent upstream is not shown here: its gate owns it. Then ask, with `escalation-rules` loaded as the caller's **Load the question rules.** step loaded them:
 
-   `choices: ["Stop — revise <highest> first with <reviser> (Recommended)", "Proceed — record that I accepted these upstreams"]`
-
-   — `<highest>` and `<reviser>` from the JSON's `highest`: the stale downstream nearest the top of the chain, and the command that revises it, its `<KEY>` filled with that document's folder key. Fixing the top link first is the only order that settles the chain, since revising a lower document against a stale higher one leaves it stale.
-4. ***Stop*** → the run stops with `<COMMAND>_UPSTREAM_STALE: <highest> is behind its upstreams — revise it first with <reviser>`, writing nothing further, its Final report naming each stale link.
-5. ***Proceed*** → keep `<check-file>`; after the run writes each document whose walk passed through an accepted link, `record` step 2 accepts into it (§5). A run that stops before writing records nothing, and the next run asks again: nothing was built on the acceptance. The Final report names each accepted link.
+   - **Where `stale` is not empty:** `choices: ["Stop — revise <highest> first with <reviser> (Recommended)", "Proceed — record that I accepted these upstreams"]` — `<highest>` and `<reviser>` from the JSON's `highest`: the stale downstream nearest the top of the chain, and the command that revises it, its `<KEY>` filled with that document's folder key. Fixing the top link first is the only order that settles the chain, since revising a lower document against a stale higher one leaves it stale.
+   - **Where only `missing` is:** nothing is known to have moved — the documents only predate the record — so proceeding is recommended: `choices: ["Proceed — record that I accepted these unrecorded documents (Recommended)", "Stop — revise <top_missing> first with <reviser>"]`, `<top_missing>` and `<reviser>` from the JSON's `top_missing`, filled as above.
+4. ***Stop*** → the run stops, writing nothing further, its Final report naming each stale link and missing record: with `<COMMAND>_UPSTREAM_STALE: <highest> is behind its upstreams — revise it first with <reviser>`, or, where only `missing` was, `<COMMAND>_UPSTREAM_STALE: <top_missing> carries no lineage record — revise it first with <reviser>, or re-run and proceed`.
+5. ***Proceed*** → keep `<check-file>`; after the run writes each document, `record` step 2 accepts into it (§5). A run that stops before writing records nothing, and the next run asks again: nothing was built on the acceptance. The Final report names each accepted link.
 
 ## 7. Report line
 

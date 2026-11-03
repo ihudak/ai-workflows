@@ -220,8 +220,8 @@ the spec is the requirements source of truth.
 
 Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:reference", args: "ard-resolution")` and running its resolution with `<PRD>`, `<EPIC>`, and `$SPECS_PATH`. On `status: none`, **skip the rest of this phase and proceed exactly as before** (no ARD in play). On `status: unmerged`, **stop**, naming the returned `branch` and any `pr`. On `status: found`, carry the returned `invariants` (PRD-level inherited + Epic-level `AD#N`), `guidance_summary` and `contracts` into Phase 5, and `components` into Phase 3 — the design is authored **within** them, and a necessary deviation is recorded in a `## ARD deviations` section of `design.md` + as a `- [ ]` open question (never edit the ARD). The `invariants` list is passed to `design-reviewer` in Phase 6 as `applicable_ard`.
 
-
 **Record and check lineage.** With the design's inputs known, execute `Skill(skill: "workflows-core:reference", args: "document-lineage record")` §5 step 1, capturing `--from-disk` the `specification.md` Phase 2 read, each ARD path `ard-resolution` returned, and, where `<EPIC>` is set and its folder holds one, the Epic's `epic.md`, whose `target:` Phase 3 reads. Then execute `Skill(skill: "workflows-core:reference", args: "document-lineage upstream-check")` §6 with `docs` = that `specification.md` and `output` = the feature folder's `design.md` where one is on disk. Its error tokens are `DESIGN_LINEAGE_FAILED` and `DESIGN_UPSTREAM_STALE`.
+
 ---
 
 ## Phase 3 — Derive repos + STRICT gate
@@ -511,7 +511,7 @@ Cap: one fix cycle + one re-review maximum. Phase 7 will not hand off a `design.
 
 First compare the session file's `## Run environment`, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 2 — loading that part afresh, as §6 says, even where it is in this conversation. On a mismatch, *Stop* writes and hands off nothing below and goes on to Phase 8 under `specs_git: misrooted`, and *Go on pinned* pins every later step to the recorded environment (§6). Then write the feature folder: `design.md` (flat, alongside `specification.md`), the updated `specification.md` (its `## Engineering review` + open-question edits), `_design-session.md`, and `_design-glossary.md`. **Refuse to proceed if `design.md` has any unresolved `- [ ]`** (the decision-completeness gate).
 
-**Then stamp `design.md`**, before anything stages it: execute `document-lineage` `record` §5 step 2 against it with Phase 2.5's capture, accepting into it where that phase's `upstream-check` was answered *Proceed*. The record names `specification.md` as Phase 2 read it, before this phase's `## Engineering review` and open-question edits; those are notes, which the lineage check never reads as a move (`workflows-core:document-lineage` §2).
+**Then stamp `design.md`**, before anything stages it: execute `document-lineage` `record` §5 step 2 against it with Phase 2.5's capture, accepting into it with that check's file as the same step says. The record names `specification.md` as Phase 2 read it, before this phase's `## Engineering review` and open-question edits; those are notes, which the lineage check never reads as a move (`workflows-core:document-lineage` §2).
 
 Then **offer** (commit-when-asked — never automatic), invoking `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and presenting its §4.3 choice array verbatim:
 `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]`

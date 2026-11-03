@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Take with `product-workflows` 3.70.0 and `dev-workflows` 4.56.0 — D32 part 1, document lineage.
 
 ### Added
-- `document-lineage`, a shared reference: every specification, Epic and design records in its frontmatter (`upstreams:`) the git blob id of each upstream document its run read, and a consumer's `upstream-check` walks that record up the chain before it builds. A move that touched only notes, ticks or whitespace is not a move; a real one shows the item IDs added, changed or withdrawn and asks *revise first* or *proceed*, recording a proceed in the consumer's output (`accepted:`). A document with no record asks once. It never stops a run on its own account.
+- `document-lineage`, a shared reference: every specification, Epic and design records in its frontmatter (`upstreams:`) the git blob id of each upstream document its run read, and a consumer's `upstream-check` walks that record up the chain before it builds. A move that touched only notes, ticks or whitespace is not a move; a real one shows the item IDs added, changed or withdrawn and asks *revise first* or *proceed*, recording a proceed in the consumer's output (`accepted:`). A note another command writes — an `## Engineering review` item, an open question ticked, a `consumed_by:` stamp — is never a move. A document with no record asks once, recommending *proceed*. It never stops a run on its own account.
 - `scripts/lineage.py` (`capture`, `stamp`, `check`, `accept`, `--selftest`, run in CI) and its kind table, `scripts/lineage-kinds.json`.
 
 ## [1.72.2] — 2026-11-02

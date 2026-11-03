@@ -147,7 +147,7 @@ Report each document with the IDs it cites that changed, and the kind of each, a
 
 ## Phase 7 — Handoff
 
-**Stamp the revision first**: execute `document-lineage` `record` §5 step 2 against the revised `specification.md` with Phase 0 step 7's capture, accepting into it where step 7a's `upstream-check` was answered *Proceed*, before the offer below stages anything.
+**Stamp the revision first**: execute `document-lineage` `record` §5 step 2 against the revised `specification.md` with Phase 0 step 7's capture, accepting into it with that check's file where step 7a ran `upstream-check`, before the offer below stages anything.
 
 **Offer** (commit-when-asked — never automatic), presenting `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`'s §4.3 choice array verbatim:
 ```
