@@ -45,7 +45,7 @@ names, is never counted.
 ## 1. Record shape
 
 **The file opens with one line, `# Decision register: <BRD-KEY>`** — the key of the BRD whose folder
-it sits in — and holds its records after that line, one block per record. **Every command that
+it sits in, under the file's lineage frontmatter where it carries one (below) — and holds its records after that line, one block per record. **Every command that
 creates the file writes that line first**: `commands/brd-interview.md` on the first register it
 creates, whether or not the round recorded anything; `commands/create-prd.md` where it creates the
 register for a roundless `[AS#n]` (§7); and `commands/brd-reconcile.md` where a `--sent` run finds
@@ -55,6 +55,8 @@ phase). **A register holding no record is that line alone**, and it is an ordina
 `/brd-reconcile` where the register it creates takes no `[CD#n]` — which every reader treats as a
 register with nothing in it, never as a missing one. A register written before 3.7.0 may lack the
 line, and no reader keys on it: records are found by their own ids.
+
+**The lineage frontmatter.** `commands/brd-interview.md` stamps the register with `workflows-core:document-lineage` §1's record after its run's last write to it, on a run that generated a round's questions against the grounding it read — never on one that only resumed or re-opened a round: an `upstreams:` block naming what the run read the register's decisions against — the slice's `grounding/code-grounding.md`, `grounding/design-grounding.md` and `brd/brd-inventory.md` — and an `accepted:` block where an operator went on past a moved one, in a `---` frontmatter above the header line, written by that reference's script alone. Every other write into the register — `commands/create-prd.md`'s roundless `[AS#n]`, the `consumed_by` stamps, `commands/brd-reconcile.md`'s `[CD#n]` and its sweeps, which never re-read a decision against the grounding — leaves it as it stands. It is not a record: records are found by their own ids, and a register holding its header line alone under one still holds none. A register written before product-workflows 3.72.0 carries none, and a consumer's lineage check asks about it once (`workflows-core:document-lineage` §3).
 
 Each `[VD#n]` and `[CD#n]` carries:
 
@@ -127,7 +129,8 @@ reads downstream as a decision nobody took.
 
 - **One record per block, unfenced**, in the field order the §1 table gives, every key of a block
   at the same indentation, and **no blank line between one key of a block and the next**. The
-  `# Decision register: <BRD-KEY>` header line stands alone at the top.
+  `# Decision register: <BRD-KEY>` header line stands alone at the top, under the lineage frontmatter
+  where the file carries one (above).
 - **A blank line inside a block scalar's content is part of the value, not a boundary**, and §4
   requires one: a cause is appended to `argumentation` as a **closing paragraph** beneath what the
   field already holds, and on a `[CD#n]` beneath the customer's quotation — two paragraphs in one

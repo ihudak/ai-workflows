@@ -281,12 +281,13 @@ cannot review, and they will not tell you that — they will review it anyway, b
      operator back to `/brd-interview`**: whether it opens a new round is
      its *Resolve the round* phase's own test of what changed after the last round was generated — that
      phase's to state, and cited, never restated here — and where the test finds nothing it takes
-     the no-new-round path, reaches its handoff phase with nothing staged, reports `nothing to
-     commit` and opens no pull request — save where the handoff re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch, and a re-publish pushes only commits already made, never the files on disk — while where it finds something the round it opens is handed
+     the no-new-round path, which never stages a round record already on disk — where nothing
+     changed and its lineage re-stamp of the register changes no byte, it reaches its handoff phase
+     with nothing staged, reports `nothing to commit` and opens no pull request — save where the handoff re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch, and a re-publish pushes only commits already made, never the files on disk — while where it finds something the round it opens is handed
      off with its own record and not the earlier ones. Either way `handoff-to-main` stages only the
      paths *that* run declared, and the round records already
      on disk are not among them. What is needed is the register already written, landed:
-     `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register is written at <path> but is on no branch — its handoff was declined. Commit and merge decisions.md and the interview/ round records to the specs repo's default branch, then re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path stages nothing on an unchanged BRD.`
+     `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register is written at <path> but is on no branch — its handoff was declined. Commit and merge decisions.md and the interview/ round records to the specs repo's default branch, then re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk.`
 6b. **Gate the question set and the code-defect log on main, each where it is in the folder.**
     Both ship in the bundle whole (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1),
     and neither is implied by step 6's gate. For each of `interview/customer-questions.md` and
@@ -337,7 +338,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    whether `interview/round-<N>.md` exists in the folder at all.
    - **Present in the worktree, on no ref** — the record was written and its handoff declined, or
      the run stopped after writing it; landing it is the fix:
-     `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s decisions.md and held [C] questions name rounds <list>, but <these> have no interview/round-<N>.md on any ref — the records those decisions and questions came from never merged. Land them on the specs repo's default branch and re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path stages nothing on an unchanged BRD.`
+     `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s decisions.md and held [C] questions name rounds <list>, but <these> have no interview/round-<N>.md on any ref — the records those decisions and questions came from never merged. Land them on the specs repo's default branch and re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk.`
    - **Absent from the worktree too** — after step 5c, the one state that reaches here is a
      re-decision a `/brd-interview` run left standing at a round whose record it never wrote: a
      record carrying a `Reopened` paragraph, which

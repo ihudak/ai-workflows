@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.57.2] — 2026-11-03
+
+Take with `workflows-core` 1.75.0, whose lineage walk this documents.
+
+### Fixed
+- The `/ready` and `/implement` pages name the decision register, the grounding and the slice inventory among what the lineage check walks up to on the BRD route.
+
 ## [4.57.1] — 2026-11-03
 
 Independent of the other plugins' releases.

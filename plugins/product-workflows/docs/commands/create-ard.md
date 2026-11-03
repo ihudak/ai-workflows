@@ -82,7 +82,7 @@ A decision that replaces a team record from another PRD carries `**Supersedes:**
 
 **`[AD#N]` decisions bind seven downstream commands** once the ARD is merged, each resolving it via `workflows-core:ard-resolution`: `/create-ard` itself (an Epic-level run inheriting its PRD-level ARD), `/dev-workflows:design`, `/dev-workflows:implement`, [`/specify`](specify.md), [`/epics`](epics.md), `/dev-workflows:ready`, and `/dev-workflows:conformance`, which traces each Rule against the merged code. An `[AD#N]` `Rule` violated downstream without a recorded "ARD deviation" is a reviewer BLOCKER in whichever of those commands hit it.
 
-**Each ARD records its lineage**: the exact version (git blob id) of the PRD and, on an Epic, the `epic.md` and the inherited ARD it was built from, plus the register, seed and grounding files it read — never the Epic's specification or design, which are built on the ARD. Before its grounding, the run checks the PRD and the Epic up the chain: where one was built from a document that has since changed, or carries no lineage record yet, it shows what moved and asks whether to revise the highest stale document first or proceed, recording your answer in the ARD.
+**Each ARD records its lineage**: the exact version (git blob id) of the PRD and, on an Epic, the `epic.md` and the inherited ARD it was built from, plus the register, seed and grounding files it read — never the Epic's specification or design, which are built on the ARD. Before its grounding, the run checks the PRD, the Epic, the decision register and the grounding files up the chain: where one was built from a document that has since changed, or carries no lineage record yet, it shows what moved and asks whether to revise the highest stale document first or proceed, recording your answer in the ARD.
 
 ## Gates
 
@@ -110,7 +110,7 @@ The run resolves `ACME-001-01`'s folder two levels under `specifications/`, insi
 
 ## See also
 
-- `workflows-core:document-lineage` — the lineage record each ARD carries, and the upstream check run on the PRD and the Epic.
+- `workflows-core:document-lineage` — the lineage record each ARD carries, and the upstream check run on the PRD, the Epic, the decision register and the grounding files; a register or grounding change counts only where an architecture-level record moved.
 - [Roles and phases](../roles-and-phases.md) — what the `pa` role owns, an optional phase in the pipeline.
 - [`/create-prd`](create-prd.md) — the upstream command that authors the PRD `/create-ard` reads.
 - [`/harvest-decisions`](harvest-decisions.md) — keeps every merged ARD's decisions in the team knowledge base this command grounds on.

@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.75.0] — 2026-11-03
+
+Take with `product-workflows` 3.72.0 — D32 part 3, document lineage on the BRD route.
+
+### Added
+- `document-lineage`: the decision register and the grounding files are covered kinds, revised by `/product-workflows:brd-interview` and `/product-workflows:prd-ground`; the slice inventory is a kind of its own, compared by its `[BR#n]` rows, and stays a top of the walk.
+- `document-lineage` §2: the altitude filter — a link into a PRD, an ARD or a specification compares only the register's and the grounding's records at that document's altitude (product, architecture, implementation), applied per link and never along the walk; a record carrying no altitude always counts.
+- `document-lineage` §4: the chain's order on each route — the grounding above the register on the BRD route, below `prd.md` on the idea route — and the rule that a producer records only its own folder's documents; §5: a run that writes into one of its own inputs takes its capture after that write.
+- `grounding-format` §2.4: the lineage frontmatter `/prd-ground` stamps on each grounding file.
+- `lineage.py`: `compare` takes the downstream's altitude, and the kind table gains its `altitude` and `item_altitude` fields.
+
+### Changed
+- `prd-format`: a BRD-route `prd.md` carries the lineage record too, naming the slice's decision register.
+- `phase-handoff` §3.4: `/brd-package`'s register row, and the BRD-route register row, give as the reason `/brd-interview` is no remedy for an unlanded register that its no-new-round path never stages the round records on disk — it may now stage the register's lineage re-stamp.
+
 ## [1.74.1] — 2026-11-03
 
 The lineage record's deferred minors, from D32 parts 1 and 2. Independent of the other plugins' releases.

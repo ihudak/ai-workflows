@@ -165,6 +165,8 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
 `code-grounder` instance has returned — its fourth reconciliation class cites a `[CG#n]` — frontmatter-pinned to Opus, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), and
 `grounding-verifier` (Phase 7, two dispatches per batch of up to 25 findings — a blind `mode: derive`, then `mode: compare` — frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one) — plus `workflows-core:impl-maintenance` (Phase 11, session lessons-learned, also read-only: it reads the session handoff and suggests, writing nothing — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
 
+**Each grounding file records its lineage**: the exact version (git blob id) of what it was built from — the slice's `brd/brd-inventory.md` on the BRD route, `prd.md` on the idea route — and, for `design-grounding.md`, each frame-set index it read; never a prerequisite BRD's register, the parent's files or this slice's own decision register, which is built on the grounding. On the idea route the run first checks `prd.md` up its chain: where the PRD was built from an idea that has since changed, or carries no lineage record yet, it shows what moved and asks whether to revise the PRD first or proceed, recording your answer in the grounding files. On the BRD route it checks nothing — the inventory is the top of the chain.
+
 ## What it needs
 
 - **`<KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `PRD_GROUND_NEEDS_KEY`.
@@ -639,6 +641,8 @@ baseline finding the run writes per repository is `CONFIRMED` too, and is not on
   command of the BRD-to-PRD route ends its final report with, this one included on the BRD route.
 - `workflows-core:prd-format` — the `[AC#n]`/`[FR#n]`/`[US#n]` grammar this
   command reads its claim list from, on the idea route.
+- `workflows-core:document-lineage` — the lineage record each grounding file carries, and the
+  upstream check run on `prd.md` on the idea route.
 - `workflows-core:docs-grounding` — the `$DOCS_PATH` resolution gate,
   the `docs grounding:` line this command shows verbatim, and the lead-only consumption mode this
   command's Phase 4.5 applies.

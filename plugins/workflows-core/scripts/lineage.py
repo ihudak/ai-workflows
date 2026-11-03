@@ -53,7 +53,21 @@ def items(kind, text):
     """Item key -> normalised live content. A not-live item maps to WITHDRAWN and its nested items
     are omitted. Text outside every item is keyed per '## ' section as '§<heading>' ('§header'
     before the first)."""
+    return _items(kind, text)[0]
+
+
+def _key_col(line):
+    return len(line) - len(line.lstrip(" -"))
+
+
+def _items(kind, text):
+    """items() and, for a kind whose row carries item_altitude, item key -> its altitude ('' for a
+    live item carrying none). The field is read only at the column of the item's own id key, so a
+    block-scalar line inside another field is never taken for it."""
     row = kinds()[kind]
+    alt_rx = re.compile(row["item_altitude"]) if row.get("item_altitude") else None
+    alts = {}
+    key_col = None
     starts = [(it["level"], re.compile(it["start"])) for it in row["items"]]
     notes = [re.compile(p) for p in row["notes"]]
     ignore = [re.compile(p) for p in row["ignore_lines"]]
@@ -102,6 +116,9 @@ def items(kind, text):
                 dead_level = level
                 continue
             put(current, line)
+            if alt_rx is not None:
+                alts[current] = ""
+                key_col = _key_col(line)
             continue
         if depth is not None and depth <= 2:
             stack = []
@@ -112,6 +129,10 @@ def items(kind, text):
             continue
         if dead_level is not None:
             continue
+        if current in alts and _key_col(line) == key_col:
+            m = alt_rx.search(line)
+            if m:
+                alts[current] = m.group(1)
         if any(i.search(line) for i in ignore):
             continue
         put(current, line)
@@ -119,12 +140,20 @@ def items(kind, text):
     for key in order:
         val = buckets[key]
         out[key] = val if val == WITHDRAWN else _norm(val)
-    return {k: v for k, v in out.items() if v != ""}
+    return {k: v for k, v in out.items() if v != ""}, alts
 
 
-def compare(kind, old_text, new_text):
-    """Which live items were added, changed or withdrawn between two copies of a document."""
-    old, new = items(kind, old_text), items(kind, new_text)
+def compare(kind, old_text, new_text, altitude=None):
+    """Which live items were added, changed or withdrawn between two copies of a document. With an
+    altitude (the downstream's), an item whose every live copy carries another altitude is left
+    out; an item carrying none, and text outside every item, always count."""
+    (old, old_alt), (new, new_alt) = _items(kind, old_text), _items(kind, new_text)
+    if altitude is not None:
+        def other(key):
+            seen = {a[key] for a in (old_alt, new_alt) if key in a}
+            return bool(seen) and "" not in seen and altitude not in seen
+        old = {k: v for k, v in old.items() if not other(k)}
+        new = {k: v for k, v in new.items() if not other(k)}
     added, changed, withdrawn = [], [], []
     for key, val in new.items():
         if key not in old:
@@ -385,7 +414,7 @@ def check(specs, ref, docs, output=None, accepted_from=()):
                 res["absent"].append({"downstream": doc, "upstream": up})
                 continue
             if cur != e["blob"]:
-                link = _link(specs, doc, e, up, cur)
+                link = _link(specs, doc, e, up, cur, kinds()[kind].get("altitude"))
                 if link is not None:
                     if (up, cur) in acc:
                         res["accepted"].append({"downstream": doc, "upstream": up, "blob": cur})
@@ -405,7 +434,7 @@ def check(specs, ref, docs, output=None, accepted_from=()):
     return res
 
 
-def _link(specs, doc, entry, up, cur):
+def _link(specs, doc, entry, up, cur, altitude=None):
     kind = kind_of(up)
     cur_text = _cat_blob(specs, cur) or ""
     old_text = _cat_blob(specs, entry["blob"])
@@ -415,7 +444,7 @@ def _link(specs, doc, entry, up, cur):
             "added": [], "changed": [], "withdrawn": [], "unavailable": old_text is None}
     if old_text is None:
         return link
-    diff = compare(kind, old_text, cur_text) if kind else _compare_plain(old_text, cur_text)
+    diff = compare(kind, old_text, cur_text, altitude) if kind else _compare_plain(old_text, cur_text)
     if not any(diff.values()):
         return None
     link.update(diff)
@@ -1064,6 +1093,159 @@ def test_accept_impl_crlf():
             text = fh.read()
         _check("CRLF kept in the appended field", text.startswith(crlf) and "\n" not in text.replace("\r\n", ""), repr(text[-160:]))
         _check("CRLF field read back", _accepted_of(doc) == [{"path": r.prd, "blob": "c" * 40}], str(_accepted_of(doc)))
+    _with_repo(body)
+
+
+REGISTER = """# Decision register: PRD-1
+
+id: [VD#1]
+statement: Buyers pay by card.
+options_considered: [card, invoice]
+chosen: card
+argumentation: |
+  The BRD asks for card payment.
+evidence: [[CG#1]]
+altitude: product
+status: decided
+consumed_by: none
+round: 1
+
+id: [VD#2]
+statement: Cards go through the gateway.
+options_considered: [gateway, direct]
+chosen: gateway
+argumentation: |
+  altitude: product would be wrong here; this is the ARD's.
+evidence: []
+altitude: architecture
+status: decided
+consumed_by: none
+round: 1
+
+id: [VD#3]
+statement: Receipts are emailed.
+options_considered: ["yes", "no"]
+chosen: "yes"
+argumentation: |
+  Written before altitude existed.
+evidence: []
+status: decided
+consumed_by: none
+round: 1
+"""
+
+GROUNDING = """# Code grounding: PRD-1
+
+- id: [CG#1]
+  claim: [BR#1] — the gateway accepts cards
+  verdict: CONFIRMED
+  evidence:
+    - pay/gateway.py:10
+  commit: 4f1c9ab0d2e7c35a91b8f6e04c2d7a5b9e13f860
+  altitude: implementation
+  horizon: current
+  consumed_by: none
+  outcome: agree
+"""
+
+INVENTORY = """---
+kind: brd
+key: PRD-2
+quoted:
+  - "[BR#1]"
+---
+
+# Inventory: PRD-2
+
+| id | text | source_anchor | defects |
+|---|---|---|---|
+| [BR#1] | The monthly report lists every invoice. | 2. Monthly report | [DEF#1] |
+| [BR#2] | Every monthly report must include the invoice number. | 2. Monthly report | |
+"""
+
+
+def test_altitude_filter_per_downstream():
+    vd1 = REGISTER.replace("Buyers pay by card.", "Buyers pay by card or wallet.")
+    vd2 = REGISTER.replace("Cards go through the gateway.", "Cards go direct.")
+    vd3 = REGISTER.replace("Receipts are emailed.", "Receipts are printed.")
+    _check("product ignores architecture", compare("decisions", REGISTER, vd2, "product")["changed"] == [], str(compare("decisions", REGISTER, vd2, "product")))
+    _check("architecture sees architecture", compare("decisions", REGISTER, vd2, "architecture")["changed"] == ["[VD#2]"])
+    _check("architecture ignores product", compare("decisions", REGISTER, vd1, "architecture")["changed"] == [])
+    _check("no altitude counts", compare("decisions", REGISTER, vd3, "product")["changed"] == ["[VD#3]"])
+    _check("unfiltered sees all", compare("decisions", REGISTER, vd2)["changed"] == ["[VD#2]"])
+    moved = REGISTER.replace("altitude: architecture", "altitude: product")
+    _check("moved into product counts", compare("decisions", REGISTER, moved, "product")["changed"] == ["[VD#2]"])
+    _check("moved out of architecture counts", compare("decisions", REGISTER, moved, "architecture")["changed"] == ["[VD#2]"])
+
+    def body(r):
+        reg = f"{r.dir}/decisions.md"
+        r.write(reg, REGISTER)
+        stamp(r.root, "main", os.path.join(r.root, reg), [])
+        r.commit()
+        r.write(r.prd, PRD)
+        stamp(r.root, "main", os.path.join(r.root, r.prd), capture(r.root, "main", [reg], []))
+        r.commit()
+        r.write(reg, r.read(reg).replace("Cards go through the gateway.", "Cards go direct."))
+        r.commit()
+        res = check(r.root, "main", [r.prd])
+        _check("prd not stale on architecture", res["stale"] == [] and res["missing"] == [], json.dumps(res))
+        r.write(reg, r.read(reg).replace("Buyers pay by card.", "Buyers pay by card or wallet."))
+        r.commit()
+        res = check(r.root, "main", [r.prd])
+        _check("prd stale on product", [(s["downstream"], s["changed"]) for s in res["stale"]] == [(r.prd, ["[VD#1]"])], json.dumps(res))
+        _check("prd reviser", res["highest"]["reviser"].startswith("/product-workflows:update-prd"), json.dumps(res))
+    _with_repo(body)
+
+
+def test_register_link_unfiltered():
+    def body(r):
+        gr = f"{r.dir}/grounding/code-grounding.md"
+        reg = f"{r.dir}/decisions.md"
+        os.makedirs(os.path.join(r.root, r.dir, "grounding"))
+        r.write(gr, GROUNDING)
+        stamp(r.root, "main", os.path.join(r.root, gr), [])
+        r.commit()
+        r.write(reg, REGISTER)
+        stamp(r.root, "main", os.path.join(r.root, reg), capture(r.root, "main", [gr], []))
+        r.commit()
+        r.write(r.prd, PRD)
+        stamp(r.root, "main", os.path.join(r.root, r.prd), capture(r.root, "main", [reg], []))
+        r.commit()
+        r.write(gr, r.read(gr).replace("the gateway accepts cards", "the gateway accepts cards and wallets"))
+        r.commit()
+        res = check(r.root, "main", [r.prd])
+        _check("register stale on an implementation finding",
+               [(s["downstream"], s["upstream"], s["changed"]) for s in res["stale"]] == [(reg, gr, ["[CG#1]"])], json.dumps(res))
+        _check("register reviser", res["highest"] == {"downstream": reg, "reviser": "/product-workflows:brd-interview <KEY>"}, json.dumps(res))
+    _with_repo(body)
+
+
+def test_inventory_rows():
+    _check("inventory kind", kind_of("specifications/PRD-2-x/brd/brd-inventory.md") == "inventory")
+    _check("inventory uncovered", kinds()["inventory"]["covered"] is False)
+    new = INVENTORY.replace("must include the invoice number.", "must include the invoice number and date.")
+    r = compare("inventory", INVENTORY, new)
+    _check("inventory row changed", r == {"added": [], "changed": ["[BR#2]"], "withdrawn": []}, str(r))
+    fm = INVENTORY.replace('  - "[BR#1]"\n', '  - "[BR#1]"\n  - "[BR#2]"\n')
+    _check("inventory frontmatter not a move", compare("inventory", INVENTORY, fm) == {"added": [], "changed": [], "withdrawn": []})
+
+
+def test_stamp_register_without_frontmatter():
+    def body(r):
+        gr = f"{r.dir}/code-grounding.md"
+        reg = f"{r.dir}/decisions.md"
+        r.write(gr, GROUNDING)
+        r.commit()
+        r.write(reg, REGISTER)
+        stamp(r.root, "main", os.path.join(r.root, reg), capture(r.root, "main", [gr], []))
+        text = r.read(reg)
+        _check("register frontmatter created", text.startswith("---\nupstreams:\n"), text[:80])
+        fm, body_text, _eol = _split_frontmatter(text)
+        _check("register body byte-identical", body_text == REGISTER, repr(body_text[:80]))
+        _check("register record read", read_record(text)[1] is True and read_record(text)[0]["upstreams"][0]["path"] == gr)
+        _check("register items unchanged", items("decisions", text) == items("decisions", REGISTER))
+        _check("grounding kind covered", kinds()["grounding"]["covered"] is True and kinds()["decisions"]["covered"] is True)
+        _check("grounding reviser", kinds()["grounding"]["reviser"] == "/product-workflows:prd-ground <KEY>")
     _with_repo(body)
 
 
