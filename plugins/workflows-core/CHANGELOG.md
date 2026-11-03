@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.74.1] — 2026-11-03
+
+The lineage record's deferred minors, from D32 parts 1 and 2. Independent of the other plugins' releases.
+
+### Fixed
+- `lineage.py` reads a CRLF document's frontmatter: before, `check` reported every document checked in with Windows line endings as having no lineage record, and `stamp` rewrote its frontmatter in LF.
+- `stamp` and `accept` keep the frontmatter's own line ending, write the two blocks where the first of them stood rather than at the end, and recognise a closing `---` with nothing after it instead of prepending a second frontmatter.
+- `upstreams: [ ]` and an empty list with a trailing comment are read as the empty record; a comment line inside a block, or after a value, no longer stops the run.
+- `accept` on a CRLF `implementation.md` appends in CRLF.
+
 ## [1.74.0] — 2026-11-03
 
 Take with `workflows-core` 1.74.0, `product-workflows` 3.71.0 and `dev-workflows` 4.57.0 — D32 part 2, document lineage for PRDs and ARDs.

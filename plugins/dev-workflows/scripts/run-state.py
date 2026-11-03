@@ -522,6 +522,9 @@ def cmd_remove(f, args, out):
         for p in d.get("patches") or []:
             if isinstance(p, dict) and p.get("temp") is True and isinstance(p.get("path"), str):
                 paths.append(p["path"])
+        lineage = d.get("lineage")
+        if isinstance(lineage, dict) and isinstance(lineage.get("check_file"), str):
+            paths.append(lineage["check_file"])
         for p in paths:
             a = os.path.abspath(p)
             if a in keep:
@@ -907,6 +910,8 @@ def selftest():
             return p
         plan, summ, kept = mk("dw-impl-plan-1"), mk("dw-impl-summary-1"), mk("dw-impl-diff-1")
         report, patch, user = mk("dw-impl-step-1"), mk("dw-impl-patch-1"), mk("notes.md")
+        lineage_check = mk("dw-impl-lineage-1")
+        call(["set", "lineage", json.dumps({"check_file": lineage_check, "line": "Lineage: current"})], repo=repo)
         files = {m: None for m in dict(KEYS)["files"]}
         files.update({"plan_file": plan, "summary_file": summ, "test_diff_file": kept, "review_file": user})
         call(["set", "files", json.dumps(files),
@@ -916,6 +921,7 @@ def selftest():
         code, out = call(["remove", "--keep", kept], repo=repo)
         check("remove succeeds", code == 0 and not os.path.exists(f))
         check("remove takes the temp files", not any(os.path.exists(p) for p in (plan, summ, report, patch)))
+        check("remove takes lineage.check_file", not os.path.exists(lineage_check))
         check("remove keeps a --keep path", os.path.exists(kept))
         check("remove leaves a non-temp path", os.path.exists(user) and "left: %s" % user in out)
         check("stale file survives remove", len([n for n in os.listdir(here) if STALE_RE.match(n)]) == 1)
