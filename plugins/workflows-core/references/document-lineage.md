@@ -64,7 +64,7 @@ Executed by a command that writes a document of a covered kind, in two steps.
 
 1. **When the run reads its inputs**, capture them, before reading any of them:
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lineage.py" capture --specs "$SPECS_PATH" --ref <default-ref> --from-ref <path>… --from-disk <path>… --out <capture-file>`
-   — every path relative to `$SPECS_PATH`; `--from-ref` for each input gated on the default branch and read as it holds it, `--from-disk` for each read from the working tree (§1). `<capture-file>` is a file the run creates where `workflows-core:run-flags` puts its temporary files. The caller names which inputs go where; this reference names only the rule.
+   — every path relative to `$SPECS_PATH`; `--from-disk` for each input the run reads from the working tree, which is how the family's commands read their inputs, and `--from-ref` only for one it reads from `<default-ref>` itself (`git show <default-ref>:<path>`). Either way the blob is that of the bytes read (§1): a working-tree copy equal to the default branch's has the default branch's blob. `<capture-file>` is a file the run creates where `workflows-core:run-flags` puts its temporary files.
 2. **After the run writes each document**, and before its handoff stages it, stamp it:
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lineage.py" stamp --specs "$SPECS_PATH" --ref <default-ref> --doc <the document's absolute path> --capture <capture-file>`
    — then, where the run's `upstream-check` (§6) was answered *Proceed*, accept into it:
