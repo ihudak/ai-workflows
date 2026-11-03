@@ -360,14 +360,14 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Suggested scope:** Add an advisory MAJOR in the design block for `kubectl (rollout restart|delete|scale)` carrying only `-n`, `--namespace` or `--all`, with no resource name and no `-l`.
 - **Source:** feedback `BOOK-1-design-prelint-unscoped-kubectl` in F1
 
-### FBA-G8 — `/brd-split`'s uniform-answer offer never fires with two or more slices, even where the instruction placed every row
+### FBA-G8 — `/brd-split`'s uniform-answer offer never fires with two or more slices, even where the instruction placed every row — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Designed in:** feedback `BOOK-2-brd-split-bulk-offer-skips-instruction-placed-multi-slice` in F2
 - **Current state:** `brd-split.md:741` (the `full` row) requires "**exactly one** slice". `:748-750` says: "**With two or more slices standing it does not fire at all**, and that is not a limitation for a later edit to generalise away". So 19 rows that Phase 1.5 placed and Phase 2 confirmed still cost 19 prompts whose answers are already determined.
 - **Still worth doing?:** yes, but it is a design decision. The current text refuses it deliberately, and the re-cut row (`:742`, `:758`) shows the "confirmed targets" reasoning the feedback asks for already exists on another path.
 - **Suggested scope:** Add a `full`-mode row for two or more slices that fires only where every offered row was placed by Phase 1.5 on a child Phase 2 keyed. Make it one confirmation that lists each row with its own target. Rewrite `:748-750` rather than append to it.
 - **Source:** feedback `BOOK-2-brd-split-bulk-offer-skips-instruction-placed-multi-slice` in F2
 
-### FBA-G9 — `slices.md` has no defined layout
+### FBA-G9 — `slices.md` has no defined layout — **Fixed in product-workflows 3.69.0 (batch B27)**
 - **Designed in:** feedback `BOOK-2-brd-split-slices-md-format-undefined` in F2
 - **Current state:** `brd-split.md:1285-1330` lists the blocks the file must carry but sets no frontmatter, headings or order. No reference defines it (`grep -l slices.md` in `references/` finds only passing mentions in `coverage-ledger-format.md:18` and `bundle-packaging.md:164`). `/brd-reconcile` corrects it in place (`brd-reconcile.md:1727`).
 - **Still worth doing?:** yes, small. Readers treat it as prose today, so the risk is drift between runs, not a parse failure.

@@ -16,7 +16,8 @@ restated; key grammar and folder resolution are defined once in `workflows-core:
 The coverage ledger is **the only authoritative record of a requirement's fate.** Every other BRD
 artifact — the inventory, the defect log, the grounding findings, the decisions — describes what a
 requirement says or what is known about it; `/brd-split`'s `slices.md` does write down the fates its
-run assigned, with a rationale for each, but as a narrative of that run that nothing gates on. Only
+run assigned, with a rationale for each, but as a narrative of that run that nothing gates on (its
+layout, §7, is structural only). Only
 the ledger is read for what happened to it: built here, owned by another named BRD, deferred,
 rejected, or superseded.
 
@@ -170,7 +171,7 @@ writes could name one.
 | The parent's walk settled the withdrawn row | The withdrawn slice's orphan row reads |
 |---|---|
 | `covered-by: <SIBLING-KEY>` — another child builds it | `covered-by: <SIBLING-KEY>` |
-| `covered-here` — the parent builds it | `covered-by: <PARENT-KEY>` |
+| `covered-here` — reachable only on a parent ledger written before a BRD became a container, or edited by hand (§5); a parent's walk no longer offers it | `covered-by: <PARENT-KEY>` |
 | `deferred-to: <the parent>` — a live obligation of the parent | `covered-by: <PARENT-KEY>` |
 | `rejected: [DEF#n]` | `rejected: [DEF#n]` |
 | `superseded-by: [BR#n]` | `superseded-by: [BR#n]` |
@@ -274,8 +275,9 @@ the ledger's job is to record a requirement's fate, not to force every requireme
 
 `/brd-split` cannot complete while any row in this BRD's ledger is `unallocated`.
 It opens the gate by giving every remaining `unallocated` row a terminal disposition.
-**The walk is one row at a time, and that is its default**; where one answer is uniform by
-construction, the command may instead offer a single confirmation that settles a set of rows — an
+**The walk is one row at a time, and that is its default**; where every answer is settled by
+construction — one answer uniform across the set, or each row's slice already fixed by a placement
+the operator confirmed — the command may instead offer a single confirmation that settles a set of rows — an
 offer it states in full and the operator may refuse row by row. **The paths available are
 not the same set at both levels**, and the difference is no longer a disposition §3 withholds from
 a slice: §3 makes `covered-by` legal at both. It is a difference of **writer and of row**. The slice form of
@@ -655,7 +657,8 @@ row that does:
   orphan rows, withdrawn claims (§2) — so no parent's hop ever lands on one.
 - **A slice's hop lands on a sibling that claims the row, or on the parent.** The sibling case is
   the first bullet one level across. The parent case lands on a row the parent resolved
-  `covered-here` or `deferred-to` (§3's orphan table), never on another `covered-by`: a parent row
+  `deferred-to` (§3's orphan table) — or `covered-here`, reachable only on a ledger written before a
+  BRD became a container (§5) — never on another `covered-by`: a parent row
   reading `covered-by: <SIBLING-KEY>` is what produces the sibling form instead of the parent one.
 
 Nesting is capped at one level throughout (`workflows-core:addressing` §6), so there is no third
@@ -716,7 +719,7 @@ written `unresolved`, it is never offered by any picker, and it never blocks §4
 
 **The line mixes two provenances, and a reader should know which term came from where.** The ledger
 being reported on is gated wherever a gate exists — but only `/prd-ground` gates **this file**, in
-its Phase 0 step 6. `/brd-split` and `/brd-interview` each gate `grounding/code-grounding.md` there
+its Phase 0 step 6. `/brd-split` (on a slice, in `allocate-only` mode — a root is never ground, so a `full` run gates nothing there) and `/brd-interview` each gate `grounding/code-grounding.md` there
 and then read the ledger from the working tree, `/brd-interview` stopping on it twice
 (`BRD_INTERVIEW_UNALLOCATED`, `BRD_INTERVIEW_ALL_DELEGATED`). That is sanctioned — a command may
 read the worktree and refuse what it finds; what it may not do is *claim* the file is merged because
@@ -771,13 +774,14 @@ resolved one hop through the sibling or parent the mapping names.
 ### 6.5 Worked example
 
 A synthetic BRD `EPIC-008` holds seventeen ledger rows, seven of them delegated to its one child
-`EPIC-008-01`:
+`EPIC-008-01`. It is a root, so none of its own rows reads `covered-here` (§5): a row it does not
+delegate is deferred, rejected, superseded, or, where a re-intake added a row since the split, still
+`unallocated`:
 
 | This BRD's disposition | Rows |
 |---|---|
-| `covered-here` | 4 |
 | `covered-by: EPIC-008-01` | 7 |
-| `deferred-to: <this BRD>` | 2 |
+| `deferred-to: <this BRD>` | 6 |
 | `rejected: [DEF#n]` | 1 |
 | `superseded-by: [BR#n]` | 2 |
 | `unallocated` | 1 |
@@ -798,20 +802,20 @@ the one delegated row the child superseded. 17 − 3 = 14 requirements. Six dele
 that exclusion; of those, the child covers 2, is not building 3 (1 deferred + 1 rejected +
 1 `unallocated`), and 1 could not be resolved.
 
-- covered = 4 `covered-here` + 2 delegated-and-covered = 6
-- deferred = 2 here + 1 delegated = 3
+- covered = 0 `covered-here` + 2 delegated-and-covered = 2
+- deferred = 6 here + 1 delegated = 7
 - rejected = 1 here + 1 delegated = 2
 - unallocated = 1 here + 1 delegated = 2
 - unresolved = 1
 
-6 + 3 + 2 + 2 + 1 = 14, and 6 delegated = 2 covered + 3 not built + 1 unresolved:
+2 + 7 + 2 + 2 + 1 = 14, and 6 delegated = 2 covered + 3 not built + 1 unresolved:
 
 ```
-ledger: 14 requirements — 6 covered, 3 deferred, 2 rejected, 2 unallocated, 1 unresolved (6 delegated, 3 not built)
+ledger: 14 requirements — 2 covered, 7 deferred, 2 rejected, 2 unallocated, 1 unresolved (6 delegated, 3 not built)
 ```
 
 **What the unconditional rule reported instead.** Counting every `covered-by` row as covered on its
-own word, the same ledger read `15 requirements — 11 covered, 2 deferred, 1 rejected, 1 unallocated`:
+own word, the same ledger read `15 requirements — 7 covered, 6 deferred, 1 rejected, 1 unallocated`:
 three requirements nobody is building were reported as covered, one delegated requirement nobody
 could account for was reported as covered, and a row the child had already superseded was still
 counted as a live requirement. That line is what §1 says the ledger exists to prevent.
@@ -857,3 +861,42 @@ instead, the orphan row would read `rejected: [DEF#4]` — the disposition carri
 `4 requirements — 2 covered, 1 deferred, 1 rejected, 0 unallocated, 0 unresolved (0 delegated, 0 not built)`.
 That is exactly what this file said before the orphan row was kept, except that the row is now
 there to be counted at all.
+
+## 7. The `slices.md` layout
+
+`/brd-split` Phase 5 writes `<BRD-dir>/slices.md` in this layout, and `/brd-reconcile` corrects it in place without changing it. **The layout is structural only.** It fixes where each block goes, so two runs write the same file the same way; it is not a schema. Nothing gates on this file and no script parses it. One command reads values out of it: `/brd-package` reads the slice keys under `## Slices` to build its known-key set (`commands/brd-package.md` Phase 8, rule 8). Every other reader reads its content as prose — the narrative of a run that §1 describes.
+
+````markdown
+---
+kind: slices
+key: <the key of the BRD whose folder holds this file>
+---
+
+# Slices: <that key>
+
+## Slices
+## Deferrals
+## Bulk resolution
+## Re-cut
+## Removed children
+## Reconciled children
+## Instruction
+## Frame sets skipped
+````
+
+`kind: slices` names this document, not the folder. It is a kind outside `brd`, `prd` and `epic`, so `workflows-core:addressing` §4 passes over it, as it passes over `kind: coverage-ledger` (§2). `key:` is the key of the BRD the run stood on — the root's on a `full` run, the slice's own on an `allocate-only` one — and the title names the same key.
+
+The eight `##` headings are Phase 5's eight block types, in Phase 5's order, and each block goes under its own heading and no other:
+
+| Heading | What goes under it (`commands/brd-split.md` Phase 5) |
+|---|---|
+| `## Slices` | one `### <SLICE-KEY>` per slice confirmed and keyed, with its folder and rationale. **Always present**: where no slice was keyed, it carries the note saying why — no slice proposed, or, on a slice, Phase 0 step 5's notice that no child may be created below it |
+| `## Deferrals` | one `### [BR#n]` per row resolved `deferred-to: <this BRD>`, with its rationale |
+| `## Bulk resolution` | the Step 1 offer: what it wrote and on which rows, the rows held back and why, or the one line saying it fired and was declined |
+| `## Re-cut` | one `### [BR#n]` per row in the re-cut candidate set |
+| `## Removed children` | one `### <CHILD-KEY>` per child Phase 4.5 removed |
+| `## Reconciled children` | one `### <CHILD-KEY>` per child Step 3 reconciled although no walk of the run touched it |
+| `## Instruction` | the instruction verbatim and how it was read |
+| `## Frame sets skipped` | one line per frame set let through as `skipped: --no-design` |
+
+Every heading but `## Slices` is written only where its block applies, so an absent heading means the run had nothing to record there; an edit that adds a block under a heading the file does not yet carry inserts that heading at its place in this order. **A `slices.md` without `kind: slices` frontmatter is a legacy file**, written before this layout was fixed, with no frontmatter and no headings. It is read as it stands, a slice key wherever its slice blocks name one. A writer never converts it: an edit in place — `/brd-split`'s reconcile-path rewrite, `/brd-reconcile`'s correction — leaves its layout as it is, deletes a removed slice's block wherever that block stands, and appends each new block as prose at the end of the file, as before this layout existed. Only a fresh full write — a `/brd-split` run that writes the whole file, not the reconcile path's edit — writes this layout, and from then on the file is no longer legacy.

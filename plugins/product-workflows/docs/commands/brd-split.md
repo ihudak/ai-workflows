@@ -6,10 +6,11 @@ nests a `PRD-` folder per confirmed slice with its own `brd-link.md`, an invento
 inherits, and an unallocated coverage ledger of its own. On a **slice** it instead gates on every
 grounding finding carrying a verifier verdict. Both runs then walk every unallocated coverage-ledger
 row one at a time through four resolutions until none remain `unallocated`, and write `slices.md`
-with the rationale for each slice and each deferral. Where one answer is uniform by construction
+with the rationale for each slice and each deferral. Where every answer is settled by construction
 **and two or more rows are still `unallocated` and offerable** — exactly one slice standing on a
-parent, or any run on a slice — the walk first offers to write that single disposition across every remaining row
-in one confirmation, stating each row it would write and letting any of them be held back to the
+parent; two or more standing where every offerable row is in a confirmed group the run keyed into a
+slice; or any run on a slice — the walk first offers to write those dispositions across every remaining row
+in one confirmation, stating each row it would write, and where it would write it, and letting any of them be held back to the
 one-at-a-time walk. Run on a **slice** it allocates but does not slice: the proposal and
 child-creation phases are skipped and the walk offers its own four resolutions — the same count as
 `full` mode, a different set. Run again on a **fully allocated root with an instruction**, and
@@ -172,7 +173,7 @@ declaration.
 | Phase 2 — propose slices | runs | skipped |
 | Phase 3 — key and nest children | runs | skipped — this is the child creation the one-level cap forbids |
 | Phase 4 — walk the ledger | runs, **four** resolutions — no `covered-here` | runs, **four** — this walk offers no `covered-by` |
-| Phase 4 Step 1 — the bulk offer | on an ordinary run, fires only when **exactly one** slice stands and ≥2 unallocated rows may be offered to it; writes `covered-by: <that slice>` | fires whenever ≥2 rows are unallocated; writes `covered-here`, and carries the marker the per-row picker already carries |
+| Phase 4 Step 1 — the bulk offer | on an ordinary run, fires on ≥2 offerable rows where **one** slice stands, or where **several** do and every offered row is in a confirmed group this run keyed (below) | fires where ≥2 rows are still `unallocated` and not placed on another disposition by the instruction; writes `covered-here`, and carries the marker the per-row picker already carries |
 | Phase 4 Step 2R — the re-cut walk | runs **in place of** the walk above on a fully allocated ledger an instruction found a re-cuttable row on | never — the candidate set is built in `full` mode only |
 | Phase 4.5 — resolve standing empty children | runs | skipped — a slice has no children |
 | `rejected: [DEF#n]` resolves in | this BRD's own defect log | the **parent's** log, one hop ([`brd-format.md`](../../references/brd-format.md) §4) |
@@ -207,7 +208,7 @@ flowchart TD
     p1 --> p15["Phase 1.5 — Read the slicing instruction (only when one was given; both modes)"]
     p15 --> p2["Phase 2 — Propose slices"]
     p2 --> p3["Phase 3 — Key and nest each confirmed slice"]
-    p3 --> p4["Phase 4 — Walk the ledger (Step 1 bulk offer where one answer is uniform by construction, then the one-at-a-time walk — Step 2, or Step 2R on the re-cut path — then Step 3 reconciles every standing child)"]
+    p3 --> p4["Phase 4 — Walk the ledger (Step 1 bulk offer where every answer is settled by construction, then the one-at-a-time walk — Step 2, or Step 2R on the re-cut path — then Step 3 reconciles every standing child)"]
     p4 --> p45["Phase 4.5 — Resolve standing empty children"]
     p45 --> p5["Phase 5 — Write slices.md"]
     p5 --> p6["Phase 6 — Handoff"]
@@ -366,15 +367,20 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
 
 - `coverage-ledger.md` — updated so no row remains `unallocated`: each row now reads
   `covered-by: <SLICE-KEY>`, `deferred-to: <this BRD>`, `rejected: [DEF#n]`, or
-  `superseded-by: [BR#n]`. **On a re-cut run this file is written where no row was `unallocated` to
+  `superseded-by: [BR#n]` — or, on a slice, `covered-here`. **On a re-cut run this file is written where no row was `unallocated` to
   begin with**: each re-pointed row takes `covered-by: <B-KEY>` for the receiving sibling, and the
   **donor's** own `coverage-ledger.md` takes the same value on its row for that `[BR#n]` — the
   parent's row written first, so a run interrupted between the two leaves the parent pointing one hop
   at the receiver rather than a second hop through the donor. No row returns to `unallocated` on
   either ledger, and no ledger row is ever deleted.
-- `slices.md` — one block per confirmed slice (its key, its folder, and the rationale that grouped
-  its rows: the buildable / blocked / depends-on reading, or, for a group a slicing instruction
-  placed, what in the instruction placed it); one block per row deferred this run; one block for the
+- `slices.md` — written in the layout
+  [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §7 fixes: frontmatter
+  `kind: slices` and `key:`, then one heading per block type in a fixed order — structural only:
+  no script parses it, [`/brd-package`](brd-package.md) reads the slice keys under `## Slices`, and
+  every other reader reads the blocks as prose. A file written before this layout existed, with no such
+  frontmatter, is left in its own layout by every in-place edit and only rewritten in this layout by
+  a full run. One block per confirmed slice (its key, its folder,
+  and the rationale that grouped its rows: what in the instruction placed it); one block per row deferred this run; one block for the
   Phase 4 Step 1 bulk offer where it fired, naming what it wrote and what was held back; and, when the run
   was given an instruction, one block for the instruction itself — **verbatim**, with how it was
   read: which rows Phase 1.5's Step A placed directly, which the Step B grill settled and by what
@@ -395,8 +401,8 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
   a child**, one block for it: its key, that it was removed for claiming nothing, and every row the
   removal re-pointed onto this BRD by `[BR#n]` and by the ledger it sits on — this BRD's own
   included — or that it re-pointed none.
-In `allocate-only` mode the run writes exactly the first two of the following; Phase 3 never runs,
-so no child folder is created.
+In `allocate-only` mode the run writes exactly the two files above, `coverage-ledger.md` and
+`slices.md`; Phase 3 never runs, so no child folder is created.
 
 - One nested folder per confirmed slice still claiming at least one row after the walk
   (`split_mode: full` only),
@@ -456,7 +462,12 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   `unallocated`. Every remaining row is presented one at a time via `AskUserQuestion`, through
   exactly four resolutions in `split_mode: full` — assign to a named
   slice (`covered-by`), defer to this BRD (`deferred-to`), reject citing a `[DEF#n]`, or mark
-  superseded by another `[BR#n]`. A child whose own ledger holds an **orphan row** for that `[BR#n]`
+  superseded by another `[BR#n]`. *Assign to a named slice* then asks for the slice's key as a
+  question of its own, never folded into the row's picker: a picker of the children this run keyed
+  or found nested, less any barred for the row, with the child the row's confirmed group was keyed into
+  first, marked recommended where the instruction placed the row there; where more than four are eligible it shows three and names the rest
+  in its last option, a typed key reaches any of them and is checked against them, and where only one
+  is eligible it is taken without asking. A child whose own ledger holds an **orphan row** for that `[BR#n]`
   — a row for a requirement it no longer claims, recording a claim a walk withdrew from it — is never
   offered that row, and the walk says why; a child that still claims it is offered it whatever its
   own row reads, save `covered-by` — a re-cut withdrawal left unfinished, which the next run's
@@ -473,7 +484,11 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   `covered-by: <the one slice>`, and every row on that slice then takes `covered-here`. Where that
   answer is fixed by construction — **exactly one** slice standing on a parent, any run on a slice —
   and two or more rows are still `unallocated` and offerable to it, the walk asks **once** instead of
-  once per row. A
+  once per row. With **two or more** slices standing it fires only where every offerable row's slice
+  is already fixed — each row in a group Phase 2 confirmed and this run keyed, whether the instruction
+  placed it there or you moved it there — and then it is one confirmation listing each row with its
+  own `covered-by: <SLICE-KEY>`; one offerable row in no such group, and it does not fire, since that
+  row has no slice to list. A
   forty-row BRD resolved to a single slice costs 40 + 40 = **80** prompts without it and **2** with
   it, across the same two runs and the same two pull requests. **On a re-cut run it fires on a third
   condition, over a different uniformity**: two or more placed candidates carrying **one** confirmed
@@ -483,14 +498,15 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   opposite of the ordinary case.
 
   Three things keep it an offer rather than a mode. It **states what it will write** before you
-  answer — the disposition spelled out, the count, every `[BR#n]` with the first line of its text,
-  and, on an ordinary run, the `brd-link.md` `claims:` entries it adds alongside. On the re-cut path
+  answer — the disposition spelled out, the count, every `[BR#n]` with the first line of its text
+  (and, with several slices standing, the slice each goes to), and, on an ordinary run, the `brd-link.md` `claims:` entries it adds alongside. On the re-cut path
   it states a different second write and touches no `claims:` list at all: the donor's ledger row,
   taking `covered-by: <B-KEY>` after the parent's — the `claims:` entries are the reconcile's there,
   withdrawn from the donor and added to the receiver a step later. It is **refusable per row**: the second
   option takes a list of `[BR#n]` ids to hold back and walks exactly those one at a time, so three
   exceptions out of forty cost one offer, one naming prompt and three row prompts — **5**, not 40.
-  And the **third option is the ordinary walk**, which is where *every* answer the run cannot use
+  And the **third option is the ordinary walk** — with several slices standing, each row's picker
+  still recommending the slice the instruction placed it on, where it did — which is where *every* answer the run cannot use
   falls through to — at the offer itself and at the hold-back prompt, an empty answer included — so
   nothing is ever written in bulk that you were not shown and did not confirm.
 
@@ -499,15 +515,16 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   the three would either skip a prompt that carries content or copy one row's reason onto rows that do
   not share it. The re-point needs none of those — the donor came from the candidate set and the
   receiver from Phase 2's confirmation, and neither is a sentence you have to type.
-  It does not fire where two or more slices stand — which slice owns a row is the per-row judgement
-  the walk exists to take — nor where the placed candidates carry two or more distinct receivers,
+  It does not fire where two or more slices stand and an offerable row is in no confirmed group
+  keyed into a slice — which slice owns that row is the per-row judgement the walk exists to take, and nobody has
+  made it yet — nor where the placed candidates carry two or more distinct receivers,
   where one `<B-KEY>` in the list would stand for two destinations and the rows going to each would be
   invisible in it; nor on a single remaining row, where it would spend a prompt to save
   one. A row the run's `<instruction>` placed on a different disposition is excluded from the set
   and named in the offer, never absorbed by it; on a re-cut run the exclusion is instead every
-  candidate the placement left unplaced, named with the donor it stays with. Neither the `full` offer nor the re-cut one
-  recommends an option, and for the same reason each time: the run knows which slice a delegated row
-  would go to, not whether this row is one to delegate — and which sibling a re-pointed row would go
+  candidate the placement left unplaced, named with the donor it stays with. Neither `full` offer, nor
+  the re-cut one, recommends an option, and for the same reason each time: the run knows which
+  slice a delegated row would go to, not whether this row is one to delegate — and which sibling a re-pointed row would go
   to, not whether this row is one to move. `slices.md` records that the offer fired, what it
   wrote, and what was held back, because the ledger rows read identically either way.
 - **Phase 4 Step 2R — the re-cut walk, and it is a per-row offer.** It runs **in place of** the
@@ -554,11 +571,12 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   naming a folder that is gone. This repair became reachable with the re-cut, which is what made a
   child that a ledger still names able to end a run claiming nothing; where the read finds no such
   row nothing extra is written, which is every removal on a tree no re-cut has touched.
-- **No-op on a fully-allocated ledger, with two exceptions.** Re-running `/brd-split` once every row
+- **No-op on a fully-allocated ledger, with three exceptions.** Re-running `/brd-split` once every row
   already has a disposition changes nothing **unless** a child is standing empty, in which case
-  Phase 4.5 still runs, **or** the run was given an instruction that found a re-cuttable row, in
-  which case it is the sibling re-cut. A **bare** re-run builds no candidate set at all,
-  so with no child standing empty it reports the ledger line and stops.
+  Phase 4.5 still runs, **or** a child is out of step with this ledger, in which case Step 3
+  reconciles it (the reconcile path), **or** the run was given an instruction that found a re-cuttable
+  row, in which case it is the sibling re-cut. A **bare** re-run builds no candidate set at all,
+  so with no child standing empty or out of step it reports the ledger line and stops.
 
 ## Example
 

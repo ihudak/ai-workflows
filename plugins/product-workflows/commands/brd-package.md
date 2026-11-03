@@ -1726,8 +1726,10 @@ or not that line is there.
    Every argument is something this run already holds, and none is derived from a filename:
    `--prereq-key` for every prerequisite Phase 2 carried and `--copied-key` for each whose package
    rule 5 copied in — §6.1's vacuity guard reads that second set; `--known-key` for this slice's
-   `parent:` and each slice the parent's `slices.md` names, and, for each copied prerequisite, its
-   own `parent:`, that parent's `slices.md` slices and its `depends-on:` keys (rule 5 reads its
+   `parent:` and each slice the parent's `slices.md` names — the `### <SLICE-KEY>` headings under its
+   `## Slices`, or, in a legacy file without `kind: slices` frontmatter, each slice key its slice
+   blocks name (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §7) — and, for each copied prerequisite, its
+   own `parent:`, that parent's `slices.md` slices, read the same way, and its `depends-on:` keys (rule 5 reads its
    `brd-link.md`) — the other BRDs a qualified reference or a structured field may name; `--date` the run's stamp; `--captured` and
    `--captured-path` as rule 7 passes them; `--source-basename` for each captured markdown file's
    basename, which relation 3's placeholders resolve against; `--manifest` the manifest rule 6

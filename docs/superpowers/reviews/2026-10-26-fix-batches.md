@@ -849,9 +849,11 @@ Entries:
 
 **to-fix.md items:** none.
 
+Done in product-workflows 3.69.0: the nine entries, with FBA-G8 accepted narrowly and landed here.
+
 **Confirm first:** FBA-B5 (medium); BRD3-B22 (medium).
 
-**Notes:** FBA-G8 (the uniform-answer offer) is in the decisions list; if it is accepted, it lands here.
+**Notes:** FBA-G8 (Step 1's bulk offer, now named the settled-answer offer) was accepted narrowly and landed in product-workflows 3.69.0.
 
 **Version bumps:** product-workflows minor.
 

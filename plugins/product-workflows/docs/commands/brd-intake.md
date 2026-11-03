@@ -129,7 +129,11 @@ ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-
 Under `$SPECS_PATH/specifications/BRD-<BRD-KEY>-<slug>/` — the `BRD-` kind prefix is part of the
 name the run creates ([addressing](../reference/references.md) §2):
 
-- `brd/source/<basename>` — the customer's source, copied byte-for-byte and never edited. A re-run
+- `brd/source/<basename>` — the customer's source, copied byte-for-byte and never edited. Byte-for-byte
+  is its content, not its file mode: every copy under `brd/source/` and `brd/source-external/` is
+  written at mode `0644`, so a source on a mount that marks its files executable is not committed
+  executable, and a re-run resets to `0644` any file already there at another mode — taken this run
+  or not — and hands the mode change off with the rest. A re-run
   over a revised source replaces the copy of each file whose bytes changed, git keeping the earlier
   one, and leaves an unchanged file untouched; a document revised under a new filename is copied at
   that name beside the earlier copy, which stays, and is read as a revision of it rather than as a
