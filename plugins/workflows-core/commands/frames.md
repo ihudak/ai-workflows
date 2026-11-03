@@ -333,9 +333,12 @@ only through Phase 3's handoff.
 
 **Only where at least one index this run wrote is absent from `<default-ref>` or differs from it
 there.** `<default-ref>` is the ref `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §3.2 names.
-Test each index Phase 2 wrote, by its repo-relative path: it is **absent** where
-`git -C "$SPECS_PATH" cat-file -e "<default-ref>:<path>"` fails, and otherwise **differs** where
-`git -C "$SPECS_PATH" diff --quiet <default-ref> -- <path>` exits 1 (the test
+Test each index Phase 2 wrote, by its path relative to `$SPECS_PATH`, written with the leading `./`
+that `phase-handoff`'s *Every `<ref>:` object name below is written `<ref>:./<path>`* rule requires
+(without it a specs tree inside a larger repository reads every index as absent, and the handoff
+would fire on an unchanged re-run): it is **absent** where
+`git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<path>"` fails, and otherwise **differs** where
+`git -C "$SPECS_PATH" diff --quiet <default-ref> -- "./<path>"` exits 1 (the test
 `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §2.3 uses for *already on `<default>`*). Both are
 asked because `diff --quiet` alone cannot see an index that is new and untracked: it exits 0 for a
 path in neither the ref nor the index, which would read as already on the default branch. An index

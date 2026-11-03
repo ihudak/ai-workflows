@@ -580,7 +580,7 @@ is the only command that writes one at all.
   `Skill(skill: "workflows-core:reference", args: "epic-picker")`: every Epic listed as prose above the prompt, and
   the array carrying the explicit **"Author one broad PRD-level spec instead"** choice beside the Epics —
   every Epic row (marker + key + title) where three or fewer stand, and otherwise **at most two** Epic
-  rows and *"Another Epic (you'll be prompted for its key)"*, whose `description` names every Epic the
+  rows and *"Another Epic (you'll be prompted for its key)"*, the array's last option, after the broad-spec choice, whose `description` names every Epic the
   array leaves out — marker, key and title each, in the picker's order — so a left-out Epic is named
   in the dialog whether or not the prose list was printed; a typed key is resolved against the keys
   the array and that description listed. That file's *The cap* section states the marker, the description and the typed-key rules, and is why the Epic rows are the ones that give way: the

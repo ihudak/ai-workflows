@@ -127,7 +127,7 @@ folder and what it carries — and, where it holds an `idea.md` and no `prd.md`,
     `/dev-workflows:design` designs as one unit and then offers to this command by the PRD's key.
     Auto-selecting the Epic there would never offer that slice, so ask, the Epic's row carrying its
     marker by the done-predicate in the next bullet:
-    `choices: ["<marker> <EPIC-KEY> <title>", "Implement one broad PRD-level slice instead"]`
+    `choices: ["<marker> <key> <title>", "Implement one broad PRD-level slice instead"]`
     The first sets `focus_key` to that Epic; the second leaves it null (specs resolve PRD-level). No
     `(Recommended)` marker: a flat specification beside an Epic means two units were specified, and
     which one this run implements is the operator's to say — the silent choice is the one this
@@ -141,7 +141,7 @@ folder and what it carries — and, where it holds an `idea.md` and no `prd.md`,
     gate below does not catch that, an absent in-scope spec being `absent` rather than a stop. So:
     every Epic listed as prose, and, where the flat `specification.md` stands, the array carrying that
     broad-slice choice beside every Epic row where three or fewer stand, and otherwise **at most two**
-    Epic rows and *"Another Epic (you'll be prompted for its key)"*; where it does
+    Epic rows and *"Another Epic (you'll be prompted for its key)"*, which comes last, after the broad-slice choice; where it does
     not, the choice is omitted and the freed row goes back to the Epics — every Epic row where four or
     fewer stand, and otherwise **at most three** plus that same remainder option, which is *The cap*'s
     own shape for a picker appending nothing of its own. Either way the remainder option's
