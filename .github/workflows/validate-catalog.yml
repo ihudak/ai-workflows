@@ -18,6 +18,8 @@ name: Validate plugin catalog
 # form, never the dash form that Jira auto-links to an unrelated ticket on paste.
 # It is here rather than in a hook because a gate whose enforcement lives only in
 # someone's memory is how the description-length rule regressed three times.
+# Its --baseline step holds the spec/design numbered-ID census (the [U01]/[Uxx]-style IDs,
+# deliberately outside that grammar) to scripts/spec-id-baseline.txt.
 #
 # It also runs scripts/check-docs.sh, which guards each plugin named in its
 # PLUGIN_RELS list -- read the list from that script's own definition rather
@@ -87,6 +89,11 @@ jobs:
 
       - name: Check requirement-ID grammar
         run: ./scripts/check-id-grammar.sh --root .
+
+      - name: Check the spec-ID census against its baseline
+        # Runs scripts/spec-id-baseline.txt's own Verify recipe and fails on any difference. The
+        # census was a tripwire nothing tripped: its header records drifts found weeks late, by hand.
+        run: ./scripts/check-id-grammar.sh --baseline
 
       - name: Self-test the docs gate
         run: ./scripts/check-docs.sh --selftest

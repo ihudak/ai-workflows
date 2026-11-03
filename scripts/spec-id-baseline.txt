@@ -15,7 +15,9 @@
 # claimed as the reason to include it: the three editions keep different
 # changelogs, so counting them made the numbers diverge. With CHANGELOG.md
 # excluded all three editions produce this file's numbers exactly, so drift in
-# one edition is now visible as a difference from the other two.
+# one edition is now visible as a difference from the other two. That holds only
+# for text all three carry: a change one edition has not taken yet moves the other's
+# counts alone, so compare an edition's file with this one only after a port.
 #
 # 2026-08-22 (2.57.0): regenerated at -1 for each of [Uxx], [ACxx], [TCxx]. The
 # docs restructure retired the old README's converge-check sentence, and the single
@@ -55,6 +57,19 @@
 # and at the regenerating commit's parent differ in commands/conformance.md alone,
 # by exactly those three placeholders, and no other placeholder or concrete ID moved.
 #
+# 2026-11-03 (batch B29): regenerated at +1 [AC01], +2 [AC02], +2 [AC04], +12 [ACxx], +1 [TC03],
+# +12 [TCxx], +1 [U01], +1 [U02] and +9 [Uxx] -- the drift since 093776a8 (2026-10-16), found
+# when batch B29 put this file's Verify recipe into CI, where nothing had run it. Every delta is
+# an added use in new text; no ID left the tree. Traced per file, merge by merge on main's first
+# parent: f4a93513 (B16) escalation-rules.md and its two generated parts, review.md and
+# version-line.md, one [Uxx]/[ACxx]/[TCxx] each; c577ce77 (B18) pre-lint.md +2 [ACxx] +1 [TCxx];
+# fa8b820b (B05) interface-designer.md one of each placeholder and design.md +1 [ACxx] +2 [TCxx]
+# +1 [Uxx]; 949a7d26 design-reviewer.md and design-format.md +1 [ACxx] +1 [TCxx] each; 50160ba4
+# (/update-spec) update-spec.md +1 [Uxx], specification-format.md +2 of each placeholder, and
+# its docs page's worked example, 2 [AC02], 2 [AC04] and 1 [U01]; 1e73eab6 (D32)
+# document-lineage.md, one of each placeholder and the example [U02]/[AC01]/[TC03].
+# implement.md moved +1 and back (dc42e634, b44101b3). No other placeholder or concrete ID moved.
+#
 # Regenerate, preserving this header:
 #   ( grep '^#' scripts/spec-id-baseline.txt; \
 #     grep -rhoE '\[U0[0-9]+\]|\[AC0[0-9]+\]|\[TC0[0-9]+\]|\[Uxx\]|\[ACxx\]|\[TCxx\]' \
@@ -62,16 +77,20 @@
 #   ) > scripts/spec-id-baseline.new \
 #   && mv scripts/spec-id-baseline.new scripts/spec-id-baseline.txt
 #
-# Verify (must print nothing):
+# Verify (must print nothing) -- `./scripts/check-id-grammar.sh --baseline` runs this recipe on
+# every push, in .github/workflows/validate-catalog.yml, and fails on any difference:
 #   grep -rhoE '\[U0[0-9]+\]|\[AC0[0-9]+\]|\[TC0[0-9]+\]|\[Uxx\]|\[ACxx\]|\[TCxx\]' \
 #     --include='*.md' --exclude='CHANGELOG.md' plugins/ CLAUDE.md .claude/rules/ docs/maintainers/ 2>/dev/null | sort | uniq -c \
 #   | diff <(grep -v '^#' scripts/spec-id-baseline.txt) -
-      4 [AC01]
+      5 [AC01]
+      2 [AC02]
       2 [AC03]
-     24 [ACxx]
+      2 [AC04]
+     36 [ACxx]
       2 [TC01]
+      1 [TC03]
       1 [TC07]
-     19 [TCxx]
-      5 [U01]
-      2 [U02]
-     28 [Uxx]
+     31 [TCxx]
+      6 [U01]
+      3 [U02]
+     37 [Uxx]
