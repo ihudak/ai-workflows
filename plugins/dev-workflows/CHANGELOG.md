@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.57.1] — 2026-11-03
+
+Independent of the other plugins' releases.
+
+### Fixed
+- `/ready`: a lineage check that fails to run caps the verdict at `PARTIAL`, as a stale link does.
+- `/implement`: the lineage check file is a `dw-impl-` temp file the end-of-run removal deletes (`run-state.py remove` takes `lineage.check_file`), and a *Stop* at the check deletes it too.
+
 ## [4.57.0] — 2026-11-03
 
 Take with `workflows-core` 1.74.0, `product-workflows` 3.71.0 and `dev-workflows` 4.57.0 — D32 part 2, document lineage for PRDs and ARDs.

@@ -37,6 +37,7 @@ def kind_of(path, text=None):
 
 
 def _strip_frontmatter(text):
+    text = text.replace("\r\n", "\n")
     if text.startswith("---\n"):
         end = text.find("\n---\n", 4)
         if end != -1:
@@ -181,31 +182,54 @@ def _hash_bytes(specs, data):
 # --------------------------------------------------------------------------- the record
 
 _ENTRY = re.compile(r"^\s*(?:-\s+)?(path|blob|version):\s*(.*?)\s*$")
+_TOP = re.compile(r"^(upstreams|accepted):\s*(\[\s*\])?\s*(?:#.*)?$")
+_COMMENT = re.compile(r"\s+#.*$")
+
+
+def _eol_of(text):
+    """The line ending the text's first line ends with: CRLF where it does, else LF."""
+    i = text.find("\n")
+    return "\r\n" if i > 0 and text[i - 1] == "\r" else "\n"
 
 
 def _split_frontmatter(text):
-    """(frontmatter lines or None, body). Frontmatter lines exclude the two '---' fences."""
-    if text.startswith("---\n"):
-        end = text.find("\n---\n", 3)
+    """(frontmatter lines or None, body, eol). The lines exclude the two '---' fences and carry no
+    line ending; eol is the one the opening fence ends with, and the body is kept byte for byte. A
+    closing fence with nothing after it -- not even a line ending -- still closes the frontmatter."""
+    eol = _eol_of(text)
+    if text.startswith("---" + eol):
+        start = 3 + len(eol)
+        end = text.find(eol + "---" + eol, start - len(eol))
         if end != -1:
-            return text[4:end].split("\n"), text[end + 5:]
-    return None, text
+            return text[start:end].split(eol) if end >= start else [], text[end + 2 * len(eol) + 3:], eol
+        if text.endswith(eol + "---") and len(text) >= start + 3:
+            end = len(text) - 3 - len(eol)
+            return text[start:end].split(eol) if end >= start else [], "", eol
+    return None, text, eol
 
 
 def _blocks(fm):
-    """{'upstreams': [...], 'accepted': [...]} parsed from frontmatter lines, the other lines, and the
-    set of the two keys present — an empty flow list (`upstreams: []`) is a key present with no entries."""
+    """{'upstreams': [...], 'accepted': [...]} parsed from frontmatter lines, the other lines, the set
+    of the two keys present -- an empty flow list (`upstreams: []`, `[ ]`, with or without a trailing
+    comment) is a key present with no entries -- and the index in the other lines where the first of
+    them stood. A comment line inside a block, and a trailing comment on a value, are skipped: the
+    script writes these blocks, and the next write drops them."""
     found = {"upstreams": [], "accepted": []}
     other = []
     seen = set()
+    at = None
     current = None
     for line in fm:
-        top = re.match(r"^(upstreams|accepted):\s*(\[\])?\s*$", line)
+        top = _TOP.match(line)
         if top:
             seen.add(top.group(1))
+            if at is None:
+                at = len(other)
             current = None if top.group(2) else top.group(1)
             continue
         if current and (line.startswith(" ") or line.startswith("-")) and line.strip():
+            if line.strip().startswith("#"):
+                continue
             m = _ENTRY.match(line)
             if not m:
                 raise LineageError(f"unreadable {current} line: {line!r}")
@@ -214,20 +238,22 @@ def _blocks(fm):
             if not found[current]:
                 raise LineageError(f"{current} entry without '-': {line!r}")
             val = m.group(2)
+            if not val.startswith('"'):
+                val = _COMMENT.sub("", val)
             if m.group(1) == "version":
                 val = None if val in ("null", "~", "") else json.loads(val) if val.startswith('"') else val
             found[current][-1][m.group(1)] = val
             continue
         current = None
         other.append(line)
-    return found, other, seen
+    return found, other, seen, at
 
 
 def read_record(text):
-    fm, _ = _split_frontmatter(text)
+    fm, _, _ = _split_frontmatter(text)
     if fm is None:
         return {"upstreams": [], "accepted": []}, False
-    found, _, seen = _blocks(fm)
+    found, _, seen, _ = _blocks(fm)
     return found, "upstreams" in seen
 
 
@@ -245,23 +271,36 @@ def _render(name, entries, with_version, keep_empty=False):
     return out
 
 
+def _read(doc):
+    with open(doc, encoding="utf-8", newline="") as fh:
+        return fh.read()
+
+
+def _write(doc, text):
+    with open(doc, "w", encoding="utf-8", newline="") as fh:
+        fh.write(text)
+
+
 def _write_record(doc, upstreams=None, accepted=None):
-    """Rewrite only the upstreams:/accepted: blocks of doc's frontmatter; None keeps a block as is."""
-    with open(doc, encoding="utf-8") as fh:
-        text = fh.read()
-    fm, body = _split_frontmatter(text)
+    """Rewrite only the upstreams:/accepted: blocks of doc's frontmatter, where the first of them
+    stood (at its end where neither did), in the frontmatter's own line ending; every other line and
+    the body are kept byte for byte. None keeps a block as is."""
+    text = _read(doc)
+    fm, body, eol = _split_frontmatter(text)
     if fm is None:
         fm, body = [], text
-    found, other, seen = _blocks(fm)
+    found, other, seen, at = _blocks(fm)
     ups = found["upstreams"] if upstreams is None else upstreams
     acc = found["accepted"] if accepted is None else accepted
     # an upstreams: key is a record, even an empty one: written where given or already present
     keep_ups = upstreams is not None or "upstreams" in seen
-    while other and other[-1] == "":
-        other.pop()
-    lines = other + _render("upstreams", ups, True, keep_ups) + _render("accepted", acc, False)
-    with open(doc, "w", encoding="utf-8") as fh:
-        fh.write("---\n" + "\n".join(lines) + "\n---\n" + body)
+    block = _render("upstreams", ups, True, keep_ups) + _render("accepted", acc, False)
+    if at is None:
+        while other and other[-1] == "":
+            other.pop()
+        at = len(other)
+    lines = other[:at] + block + other[at:]
+    _write(doc, "---" + eol + eol.join(lines) + eol + "---" + eol + body)
 
 
 # --------------------------------------------------------------------------- subcommands
@@ -295,8 +334,7 @@ def _version_any(path, text):
 
 def stamp(specs, ref, doc, captured):
     """Write upstreams: from a capture; carry forward each accepted entry still current at ref."""
-    with open(doc, encoding="utf-8") as fh:
-        found, _ = read_record(fh.read())
+    found, _ = read_record(_read(doc))
     carried, dropped = [], []
     for e in found["accepted"]:
         (carried if _blob_at(specs, ref, e["path"]) == e["blob"] else dropped).append(e)
@@ -400,7 +438,7 @@ def _impl_accepted(text):
     """Every accepted entry recorded inside implementation.md's blocks: an entry's `accepted:` field
     and the `- path:` / `blob:` lines indented under it."""
     out, indent = [], None
-    for line in text.split("\n"):
+    for line in text.splitlines():
         m = re.match(r"^(\s+)accepted:\s*$", line)
         if m:
             indent = len(m.group(1))
@@ -423,8 +461,7 @@ def _impl_accepted(text):
 
 def _accepted_of(path):
     """The accepted entries a document records: its frontmatter's, or implementation.md's blocks'."""
-    with open(path, encoding="utf-8") as fh:
-        text = fh.read()
+    text = _read(path)
     return _impl_accepted(text) if _is_impl(path) else read_record(text)[0]["accepted"]
 
 
@@ -432,8 +469,7 @@ def _accept_into_block(doc, checked):
     """implementation.md: the run's own block -- the last one, written just before -- gains an
     `accepted:` field listing each stale link and missing record this run went on past. Links an
     earlier run accepted stay in that run's block, which check reads too."""
-    with open(doc, encoding="utf-8") as fh:
-        text = fh.read()
+    text = _read(doc)
     if not _IMPL_BLOCK.search(text):
         raise LineageError(f"{doc} holds no /implement block to record the acceptance in")
     new = [(s["upstream"], s["current"]["blob"]) for s in checked.get("stale", [])]
@@ -445,9 +481,9 @@ def _accept_into_block(doc, checked):
             added.append({"path": path, "blob": blob})
     if added:
         lines = ["  accepted:"] + [l for a in added for l in (f"    - path: {a['path']}", f"      blob: {a['blob']}")]
-        text = text.rstrip("\n") + "\n" + "\n".join(lines) + "\n"
-        with open(doc, "w", encoding="utf-8") as fh:
-            fh.write(text)
+        i = text.rstrip("\r\n").rfind("\n")  # the line ending of the file's last line decides
+        eol = "\r\n" if i > 0 and text[i - 1] == "\r" else "\n"
+        _write(doc, text.rstrip("\r\n") + eol + eol.join(lines) + eol)
     return {"accepted": doc, "added": added}
 
 
@@ -457,8 +493,7 @@ def accept(doc, checked):
     implementation.md records them in its last block instead (_accept_into_block)."""
     if _is_impl(doc):
         return _accept_into_block(doc, checked)
-    with open(doc, encoding="utf-8") as fh:
-        found, _ = read_record(fh.read())
+    found, _ = read_record(_read(doc))
     entries = list(found["accepted"])
     keys = {(e["path"], e["blob"]) for e in entries}
     new = [(s["upstream"], s["current"]["blob"]) for s in checked.get("stale", [])]
@@ -954,6 +989,81 @@ def test_accepted_from_union():
         _check("accepted via union", res["stale"] == [] and len(res["accepted"]) == 1, json.dumps(res))
         res2 = check(r.root, "main", [r.spec], accepted_from=[other])
         _check("other doc does not accept", len(res2["stale"]) == 1, json.dumps(res2))
+    _with_repo(body)
+
+
+def test_flow_empty_spaced_and_commented():
+    for form in ("upstreams: [ ]", "upstreams: []  # no idea in the specs repository"):
+        _check(f"empty form read: {form}", read_record(f"---\nkind: prd\n{form}\n---\n# P\n")[1] is True)
+    def body(r):
+        r.write(r.prd, "---\nkind: prd\nupstreams: [ ]\nkey: PRD-1\n---\n# P\n")
+        stamp(r.root, "main", os.path.join(r.root, r.prd), [])
+        text = r.read(r.prd)
+        _check("spaced empty list replaced once", text.count("upstreams:") == 1, text)
+    _with_repo(body)
+
+
+def test_comment_inside_block_tolerated():
+    blob = "a" * 40
+    text = (f"---\nkind: specification\nupstreams:\n  # read by /specify\n  - path: p/prd.md\n"
+            f"    blob: {blob}  # the PRD\n    version: null\n---\n# S\n")
+    found, has = read_record(text)
+    _check("comment skipped", has and found["upstreams"] == [{"path": "p/prd.md", "blob": blob, "version": None}], str(found))
+
+
+def test_closing_fence_without_newline():
+    def body(r):
+        r.write(r.prd, PRD)
+        r.commit()
+        r.write(r.spec, "---\nkind: specification\nkey: PRD-1\n---")
+        stamp(r.root, "main", os.path.join(r.root, r.spec), capture(r.root, "main", [r.prd], []))
+        text = r.read(r.spec)
+        _check("one frontmatter", text.count("kind: specification") == 1 and text.count("---") == 2, text)
+    _with_repo(body)
+
+
+def test_blocks_keep_position():
+    def body(r):
+        r.write(r.prd, PRD)
+        r.commit()
+        r.write(r.spec, "---\nkind: specification\nupstreams: []\nkey: PRD-1\n---\n# S\n")
+        stamp(r.root, "main", os.path.join(r.root, r.spec), capture(r.root, "main", [r.prd], []))
+        text = r.read(r.spec)
+        _check("upstreams stays before key", text.index("upstreams:") < text.index("key: PRD-1"), text)
+    _with_repo(body)
+
+
+def test_crlf_record_read_and_kept():
+    def body(r):
+        r.write(r.prd, PRD)
+        r.commit()
+        crlf = SPEC.replace("\n", "\r\n")
+        with open(os.path.join(r.root, r.spec), "w", encoding="utf-8", newline="") as fh:
+            fh.write(crlf)
+        doc = os.path.join(r.root, r.spec)
+        stamp(r.root, "main", doc, capture(r.root, "main", [r.prd], []))
+        with open(doc, encoding="utf-8", newline="") as fh:
+            text = fh.read()
+        _check("no bare LF written", "\n" not in text.replace("\r\n", ""), repr(text[:200]))
+        _check("body bytes kept", text.endswith(crlf.split("\r\n---\r\n", 1)[1]), repr(text[-200:]))
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        _check("CRLF record is a record", res["missing"] == [] and res["stale"] == [], json.dumps(res))
+    _with_repo(body)
+
+
+def test_accept_impl_crlf():
+    def body(r):
+        rel = f"{r.dir}/implementation.md"
+        crlf = IMPL.replace("\n", "\r\n")
+        with open(os.path.join(r.root, rel), "w", encoding="utf-8", newline="") as fh:
+            fh.write(crlf)
+        doc = os.path.join(r.root, rel)
+        accept(doc, {"stale": [{"upstream": r.prd, "current": {"blob": "c" * 40}}], "missing": []})
+        with open(doc, encoding="utf-8", newline="") as fh:
+            text = fh.read()
+        _check("CRLF kept in the appended field", text.startswith(crlf) and "\n" not in text.replace("\r\n", ""), repr(text[-160:]))
+        _check("CRLF field read back", _accepted_of(doc) == [{"path": r.prd, "blob": "c" * 40}], str(_accepted_of(doc)))
     _with_repo(body)
 
 

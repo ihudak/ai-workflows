@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.71.1] — 2026-11-03
+
+Independent of the other plugins' releases.
+
+### Fixed
+- `/update-prd` on a PRD whose lineage record is empty now records the folder's `idea.md` where one has been added since, and reads it whole.
+
 ## [3.71.0] — 2026-11-03
 
 Take with `workflows-core` 1.74.0, `product-workflows` 3.71.0 and `dev-workflows` 4.57.0 — D32 part 2, document lineage for PRDs and ARDs.
