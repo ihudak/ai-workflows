@@ -118,7 +118,7 @@ KEYS = [
     ("routing", {"block": None, "history": []}), ("class", None), ("coding_model", None),
     ("branch_answer", {"answer": None, "moves": [], "lines": []}), ("branch", None),
     ("stash_ref", None), ("pre_existing_dirty", None), ("session_branch_lift", False),
-    ("test_decision", None), ("clean_finish", True),
+    ("session_branch_created", None), ("test_decision", None), ("clean_finish", True),
     ("files", {"task_description_file": None, "plan_file": None, "pending_plan_file": None,
                "summary_file": None, "baseline_file": None, "test_diff_file": None,
                "test_report_file": None, "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
@@ -735,6 +735,17 @@ def selftest():
         check("set refuses an unknown key, changing nothing", code == 3
               and json.load(open(f, encoding="utf-8"))["class"] == "HIGH-RISK")
         check("set refuses an unknown member", call(["set", "files.plan", '"x"'], repo=repo)[0] == 3)
+
+        # session_branch_created: null until a session-branch commit this run makes prints
+        # created: true, then the <base short sha> specs-repo-git §8.2 says to carry, read for §6's line
+        d = json.load(open(f, encoding="utf-8"))
+        check("session_branch_created defaults to null", "session_branch_created" in d
+              and d["session_branch_created"] is None)
+        code, _ = call(["set", "session_branch_created", '"abc1234"'], repo=repo)
+        rcode, out = call(["read", "session_branch_created"], repo=repo)
+        check("session_branch_created is set and read back", code == 0 and rcode == 0
+              and json.loads(out) == "abc1234"
+              and json.load(open(f, encoding="utf-8"))["session_branch_created"] == "abc1234")
 
         # append: onto a list, onto null, into a list entry; an unknown key refused
         code, _ = call(["append", "deferred", '"one"', "deferred", '"two"'], repo=repo)

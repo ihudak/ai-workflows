@@ -259,7 +259,7 @@ Never fatal (§1 rule 4). Every failure is reported, and no report may imply a s
 |---|---|
 | `repo` | absolute path of the code repository's top level — where the caller holds a path inside it, `git -C <path> rev-parse --show-toplevel` of that path: §2.2's porcelain paths are relative to the top level, and `git add` run from a subdirectory reads them against the wrong root |
 | `branch` | the branch the caller created or adopted — §2.1 check 4 verifies HEAD is actually on it |
-| `pre_existing_dirty` | porcelain paths dirty before the run's first edit, each with its §2.2 fingerprint, or `null` |
+| `pre_existing_dirty` | porcelain paths dirty before the run's first edit, each with its §2.2 fingerprint, or `null`; on `/implement`, also each path a test run touched that the user left out of the commit, whose entry carries `"reason": "written by a test run"`, which §3.1's line names it by (`/implement` Pre-Phase 3.5) |
 | `stash_ref` | the stash the caller pushed at branch time, or `null` |
 | `key` | the key of the unit the run implements (`workflows-core:implementation-format` §3) — the resolved folder's (`workflows-core:addressing` §4), save where `/implement` chose an Epic under a PRD address and passes that Epic's — or `null` |
 | `workitem_key` | the `workitem_key:` field in the frontmatter of the `epic.md` or `prd.md` that unit's folder holds at its top level, whichever it holds — tested by the file, never by the kind the folder asserts — or `null` where it holds neither or the field is absent; never `key`, and never read off the log |
@@ -316,8 +316,9 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | Gate failed | `Code repo: NOT committed — <reason>. Your changes are still in the working tree.` |
 | Skipped under `--no-commit` | `Code repo: not committed — --no-commit. Your changes are in the working tree on <branch>.` |
 | A unit commit rejected (§2.12) | append `; <unit> NOT committed — rejected by <who> (<reason>); its changes are <where>.` |
-| Pre-existing dirty paths skipped | append `; <n> pre-existing dirty path(s) were left uncommitted.` |
-| Pre-existing dirty paths committed (§2.2) | append `; <n> path(s) dirty before this run whose content changed during it were committed whole, their earlier changes included, each with the other half of its rename where it has one (<path>, …).` |
+| Pre-existing dirty paths skipped | append `; <n> pre-existing dirty path(s) were left uncommitted.`, `<n>` counting no path whose entry carries a `reason` |
+| Paths a test run wrote skipped | append `; <n> path(s) written by a test run were left uncommitted, at your answer (<path>, …).` — each path left out of the commit whose `pre_existing_dirty` entry carries `"reason": "written by a test run"` |
+| Pre-existing dirty paths committed (§2.2) | append `; <n> path(s) dirty before this run whose content changed during it were committed whole, their earlier changes included, each with the other half of its rename where it has one (<path>, …).`, a path whose entry carries a `reason` written `<path> (<reason>)` |
 | A staged deletion kept (§2.2) | append `; <path>, … changed during this run but stay uncommitted, since committing them would undo a deletion you had staged.` |
 | A stash is outstanding | append `; a stash from this run's branch step is still on the stack (<stash_ref>).` |
 | Possible secrets committed (§2.2) | append `; <n> possible secret(s) the scan flagged were committed as not secret, at your request (<unit>, …).` |
