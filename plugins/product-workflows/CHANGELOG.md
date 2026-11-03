@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.72.0] — 2026-11-03
+
+Take with `workflows-core` 1.75.0 — D32 part 3, document lineage on the BRD route.
+
+### Added
+- `/prd-ground` records what each grounding file is built from — the slice inventory on the BRD route, `prd.md` on the idea route, and the frame-set indexes for `design-grounding.md` — and on the idea route checks `prd.md` before grounding it.
+- `/brd-interview` and `/brd-reconcile` record what the decision register is taken against — the slice's grounding files and inventory — and check the grounding before deciding anything. A `/brd-interview` run that finds no question re-stamps the register and offers the handoff, so a register re-checked after a `--rebaseline` stops reading as stale.
+- `/create-prd` on the BRD route checks the register and records it in `prd.md`, captured after any `[AS#n]` the run writes into it.
+- `decision-register-format` §1: the register's lineage frontmatter.
+
+### Changed
+- `/update-prd` records a BRD-route PRD's lineage too: the slice's register, of which it diffs the product decisions only. It no longer records a grounding file on either route — on the idea route the grounding is built from the PRD, so a record each way would never settle.
+- `/create-ard`, `/specify` and `/update-spec` check the register and the grounding files up their chain; `/update-spec`'s upstream diff of the two carries implementation records only.
+
 ## [3.71.1] — 2026-11-03
 
 Independent of the other plugins' releases.

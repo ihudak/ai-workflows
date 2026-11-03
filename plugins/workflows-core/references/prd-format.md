@@ -60,9 +60,10 @@ can no longer author. An absent `brd_parent` beside a present `brd_key` is there
 not a legitimate omission, and `product-workflows:prd-reviewer` raises it. **`/update-prd` preserves all three and authors
 none of them** — on a PRD that carries them it copies each through the refresh unchanged, and on a
 PRD that does not it writes none — so the *written only by* rule above still reads exactly as it
-says: carrying an existing value forward mints no new one, and `/update-prd` reads nothing of a BRD
-tree it could mint one from — its Phase 0 opens a slice's `brd-link.md` and ledger only to word a
-stop's remedy, never as a source for any of the three. They record, on the PRD itself, the BRD identity and the prerequisites the
+says: carrying an existing value forward mints no new one, and `/update-prd` mints none from what
+it reads of a BRD tree — its Phase 0 opens a slice's `brd-link.md` and ledger only to word a
+stop's remedy, and its Phase 2 reads the slice's decision register for product decisions alone,
+never as a source for any of the three. They record, on the PRD itself, the BRD identity and the prerequisites the
 customer committed to — and **no command of the build ladder consumes them** — which is a claim about
 *behaviour*, not about every read. Neither `/epics` nor `/ready` reads any of the three, and no command from
 `/create-ard` to `/implement` branches on them. Two reads sit outside that claim. `brd_key` and `brd_parent`
