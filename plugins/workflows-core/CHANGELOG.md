@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.74.0] — 2026-11-03
+
+Take with `workflows-core` 1.74.0, `product-workflows` 3.71.0 and `dev-workflows` 4.57.0 — D32 part 2, document lineage for PRDs and ARDs.
+
+### Added
+- `document-lineage`: `prd.md` and the ARD files are covered kinds — their producers record and every consumer walks through them to the idea. The chain's order is stated once (§4), with the rule that a producer never records a document below its own output.
+- `document-lineage` §6 step 6: the never-ask form `/dev-workflows:ready` uses — one check per unit, acceptances read from that unit's own documents (`lineage.py check --accepted-from`), every finding reported and nothing accepted.
+- `implementation-format` §1: an entry's `accepted:` field, where `/dev-workflows:implement` records a lineage link it went on past — in the run's own block, never a frontmatter, since `specs-repo-git` settles the file as a set of blocks.
+- `prd-format`: the `upstreams:` lineage record in a PRD's frontmatter.
+
+### Changed
+- `lineage.py`: an empty capture stamps `upstreams: []`, a record with nothing above it rather than a missing one, and the reader takes that flow-form empty list without duplicating the key; `accept` on an `implementation.md` writes into its last block, and `check` reads every block's acceptances.
+
 ## [1.73.0] — 2026-11-03
 
 Take with `product-workflows` 3.70.0 and `dev-workflows` 4.56.0 — D32 part 1, document lineage.

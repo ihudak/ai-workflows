@@ -38,6 +38,22 @@ One `## <YYYY-MM-DD> — /implement` block per run that committed (below), with 
 replacing one. This is the shape `grounding/baselines.md` already uses, one layer up. The one hand
 edit this file names is the operator's move below.
 
+**An entry may carry `accepted:`** — the lineage links the run went on past when `workflows-core:document-lineage` §6 asked, each an upstream's path and the blob accepted, indented under the field:
+
+```markdown
+## 2026-11-03 — /implement
+- repo:    orders-service
+  branch:  feat/ACME-77-01-order-intake
+  base:    main
+  commit:  c41d9e0
+  pushed:  true
+  accepted:
+    - path: specifications/PRD-ACME-77-checkout/prd.md
+      blob: 9f2c1e7a4b0d8c3f6e5a1b2c3d4e5f6a7b8c9d0e
+```
+
+Only `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lineage.py" accept` writes it, into the block the same run has just appended — part of writing that block, not an edit of a written one — and only `document-lineage`'s check reads it, from every block, so an acceptance an earlier run recorded stays honoured where it sits. It lives in the block, never in a frontmatter: `workflows-core:specs-repo-git` settles this file as a set of blocks and refuses a header the two sides changed differently. No other reader of this file takes the field.
+
 **A record is present only where it holds a block.** Every reader that tests whether a folder has a
 record — `/implement`'s ● marker (`references/epic-picker.md`), `/ready`'s artifact inventory, and
 any other — tests whether its `implementation.md` holds at least one `## <YYYY-MM-DD> — /implement`
