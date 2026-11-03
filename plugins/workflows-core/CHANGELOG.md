@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.76.0] — 2026-11-03
+
+Take with `docs-workflows` 1.32.0 — D32 part 4, `/document` and `/release-notes` report the lineage.
+
+### Changed
+- `document-lineage` §6 step 6: `/docs-workflows:document` (keyed mode) and `/docs-workflows:release-notes` join `/dev-workflows:ready` as callers that never ask, each checking the units it describes — the focus Epic, or the PRD folder and each Epic under it — and `prd.md` alone where nothing under the PRD is specified yet.
+- `document-lineage` §6 step 6 and §7: a caller with no `require-on-main` gate shows each document the check found missing from the default branch, and each its checkout has changed from the default branch's copy, as a note, and its report never says `current` while one is listed — `Lineage: not checked — <doc…> not on <default-ref>` where every document it checked was, `Lineage: not checked — no specs repository` where it had none to read; §2 case 6 and §6's opening say so where they name the gate that owns an absent document.
+
 ## [1.75.0] — 2026-11-03
 
 Take with `product-workflows` 3.72.0 — D32 part 3, document lineage on the BRD route.
