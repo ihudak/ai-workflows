@@ -35,6 +35,11 @@ components:                  # PRD level only — the components this PRD touche
     paths: [<path>, ...]     # optional; default the id's own path, or the whole repository for a bare slug
 inherits: <path to the PRD folder's ard.md | null — on a BRD-route slice's own ARD, the parent BRD folder's ard.md; an Epic's ARD under a slice inherits the slice's ard.md>
 derived_from: <path to the PRD file, canonical prd.md — or, in a BRD folder that holds no PRD, that folder's ard-seed.md>
+upstreams:                   # the lineage record — written only by lineage.py (workflows-core:document-lineage §1): each input /create-ard read, by path and blob; never the Epic's specification.md or design.md
+  - path: <relative to $SPECS_PATH>
+    blob: <its git blob id>
+    version: null
+accepted:                    # where /create-ard's upstream-check was answered Proceed (document-lineage §6); written only by lineage.py
 ---
 ```
 
