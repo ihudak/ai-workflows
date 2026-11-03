@@ -149,6 +149,256 @@ def version_of(kind, text):
     return m.group(1) if m else None
 
 
+# --------------------------------------------------------------------------- git
+
+class LineageError(Exception):
+    pass
+
+
+def _git(specs, *args, data=None):
+    import subprocess
+    r = subprocess.run(["git", "-C", specs, *args], input=data, capture_output=True)
+    return r.returncode, r.stdout
+
+
+def _blob_at(specs, ref, path):
+    rc, out = _git(specs, "rev-parse", "--verify", "-q", f"{ref}:{path}")
+    return out.decode().strip() if rc == 0 else None
+
+
+def _cat_blob(specs, blob):
+    rc, out = _git(specs, "cat-file", "-p", blob)
+    return out.decode("utf-8", "replace") if rc == 0 else None
+
+
+def _hash_bytes(specs, data):
+    rc, out = _git(specs, "hash-object", "--stdin", data=data)
+    if rc != 0:
+        raise LineageError("git hash-object failed")
+    return out.decode().strip()
+
+
+# --------------------------------------------------------------------------- the record
+
+_ENTRY = re.compile(r"^\s*(?:-\s+)?(path|blob|version):\s*(.*?)\s*$")
+
+
+def _split_frontmatter(text):
+    """(frontmatter lines or None, body). Frontmatter lines exclude the two '---' fences."""
+    if text.startswith("---\n"):
+        end = text.find("\n---\n", 3)
+        if end != -1:
+            return text[4:end].split("\n"), text[end + 5:]
+    return None, text
+
+
+def _blocks(fm):
+    """{'upstreams': [...], 'accepted': [...]} parsed from frontmatter lines, plus the other lines."""
+    found = {"upstreams": [], "accepted": []}
+    other = []
+    current = None
+    for line in fm:
+        top = re.match(r"^(upstreams|accepted):\s*$", line)
+        if top:
+            current = top.group(1)
+            continue
+        if current and (line.startswith(" ") or line.startswith("-")) and line.strip():
+            m = _ENTRY.match(line)
+            if not m:
+                raise LineageError(f"unreadable {current} line: {line!r}")
+            if line.lstrip().startswith("-"):
+                found[current].append({})
+            if not found[current]:
+                raise LineageError(f"{current} entry without '-': {line!r}")
+            val = m.group(2)
+            if m.group(1) == "version":
+                val = None if val in ("null", "~", "") else json.loads(val) if val.startswith('"') else val
+            found[current][-1][m.group(1)] = val
+            continue
+        current = None
+        other.append(line)
+    return found, other
+
+
+def read_record(text):
+    fm, _ = _split_frontmatter(text)
+    if fm is None:
+        return {"upstreams": [], "accepted": []}, False
+    found, other = _blocks(fm)
+    has = any(re.match(r"^upstreams:\s*$", l) for l in fm)
+    return found, has
+
+
+def _render(name, entries, with_version):
+    if not entries:
+        return []
+    out = [f"{name}:"]
+    for e in entries:
+        out.append(f"  - path: {e['path']}")
+        out.append(f"    blob: {e['blob']}")
+        if with_version:
+            v = e.get("version")
+            out.append(f"    version: {json.dumps(v) if v is not None else 'null'}")
+    return out
+
+
+def _write_record(doc, upstreams=None, accepted=None):
+    """Rewrite only the upstreams:/accepted: blocks of doc's frontmatter; None keeps a block as is."""
+    with open(doc, encoding="utf-8") as fh:
+        text = fh.read()
+    fm, body = _split_frontmatter(text)
+    if fm is None:
+        fm, body = [], text
+    found, other = _blocks(fm)
+    ups = found["upstreams"] if upstreams is None else upstreams
+    acc = found["accepted"] if accepted is None else accepted
+    while other and other[-1] == "":
+        other.pop()
+    lines = other + _render("upstreams", ups, True) + _render("accepted", acc, False)
+    with open(doc, "w", encoding="utf-8") as fh:
+        fh.write("---\n" + "\n".join(lines) + "\n---\n" + body)
+
+
+# --------------------------------------------------------------------------- subcommands
+
+def capture(specs, ref, from_ref, from_disk):
+    """Each input's path, blob id of the bytes read, and Version: from_ref read at ref, from_disk as
+    the working tree holds it."""
+    out = []
+    for path in from_ref:
+        blob = _blob_at(specs, ref, path)
+        if blob is None:
+            raise LineageError(f"{path} is not on {ref}")
+        text = _cat_blob(specs, blob) or ""
+        out.append({"path": path, "blob": blob, "version": _version_any(path, text)})
+    for path in from_disk:
+        full = os.path.join(specs, path)
+        try:
+            with open(full, "rb") as fh:
+                data = fh.read()
+        except OSError as exc:
+            raise LineageError(f"cannot read {path}: {exc}")
+        out.append({"path": path, "blob": _hash_bytes(specs, data),
+                    "version": _version_any(path, data.decode("utf-8", "replace"))})
+    return out
+
+
+def _version_any(path, text):
+    kind = kind_of(path)
+    return version_of(kind, text) if kind else None
+
+
+def stamp(specs, ref, doc, captured):
+    """Write upstreams: from a capture; carry forward each accepted entry still current at ref."""
+    with open(doc, encoding="utf-8") as fh:
+        found, _ = read_record(fh.read())
+    carried, dropped = [], []
+    for e in found["accepted"]:
+        (carried if _blob_at(specs, ref, e["path"]) == e["blob"] else dropped).append(e)
+    _write_record(doc, upstreams=[{"path": c["path"], "blob": c["blob"], "version": c.get("version")} for c in captured],
+                  accepted=carried)
+    return {"stamped": doc, "carried": carried, "dropped": dropped}
+
+
+def check(specs, ref, docs, output=None):
+    """Walk from docs (paths relative to specs) up recorded upstreams through covered kinds."""
+    accepted = []
+    if output and os.path.exists(output):
+        with open(output, encoding="utf-8") as fh:
+            accepted = read_record(fh.read())[0]["accepted"]
+    acc = {(a["path"], a["blob"]) for a in accepted}
+    res = {"stale": [], "missing": [], "absent": [], "accepted": [], "highest": None}
+    best = None  # (depth, downstream)
+    seen = set()
+
+    def note_highest(depth, downstream):
+        nonlocal best
+        if best is None or depth > best[0]:
+            best = (depth, downstream)
+
+    def walk(doc, depth):
+        if doc in seen:
+            return
+        seen.add(doc)
+        kind = kind_of(doc)
+        if kind is None or not kinds()[kind]["covered"]:
+            return
+        blob = _blob_at(specs, ref, doc)
+        if blob is None:
+            res["absent"].append({"downstream": None, "upstream": doc})
+            return
+        found, has = read_record(_cat_blob(specs, blob) or "")
+        if not has:
+            if (doc, blob) in acc:
+                res["accepted"].append({"missing": doc, "blob": blob})
+            else:
+                res["missing"].append({"doc": doc, "blob": blob})
+                note_highest(depth, doc)
+            return
+        for e in found["upstreams"]:
+            up = e["path"]
+            cur = _blob_at(specs, ref, up)
+            if cur is None:
+                res["absent"].append({"downstream": doc, "upstream": up})
+                continue
+            if cur != e["blob"]:
+                link = _link(specs, doc, e, up, cur)
+                if link is not None:
+                    if (up, cur) in acc:
+                        res["accepted"].append({"downstream": doc, "upstream": up, "blob": cur})
+                    else:
+                        res["stale"].append(link)
+                        note_highest(depth, doc)
+            walk(up, depth + 1)
+
+    for d in docs:
+        walk(d, 0)
+    if best is not None:
+        res["highest"] = {"downstream": best[1], "reviser": kinds()[kind_of(best[1])]["reviser"]}
+    return res
+
+
+def _link(specs, doc, entry, up, cur):
+    kind = kind_of(up)
+    cur_text = _cat_blob(specs, cur) or ""
+    old_text = _cat_blob(specs, entry["blob"])
+    link = {"downstream": doc, "upstream": up,
+            "recorded": {"blob": entry["blob"], "version": entry.get("version")},
+            "current": {"blob": cur, "version": _version_any(up, cur_text)},
+            "added": [], "changed": [], "withdrawn": [], "unavailable": old_text is None}
+    if old_text is None:
+        return link
+    diff = compare(kind, old_text, cur_text) if kind else _compare_plain(old_text, cur_text)
+    if not any(diff.values()):
+        return None
+    link.update(diff)
+    return link
+
+
+def _compare_plain(old, new):
+    same = " ".join(_strip_frontmatter(old).split()) == " ".join(_strip_frontmatter(new).split())
+    return {"added": [], "changed": [] if same else ["§file"], "withdrawn": []}
+
+
+def accept(doc, checked):
+    """Append accepted entries for each stale link (its upstream at its current blob) and each
+    missing record (that document at its blob), de-duplicated."""
+    with open(doc, encoding="utf-8") as fh:
+        found, _ = read_record(fh.read())
+    entries = list(found["accepted"])
+    keys = {(e["path"], e["blob"]) for e in entries}
+    new = [(s["upstream"], s["current"]["blob"]) for s in checked.get("stale", [])]
+    new += [(m["doc"], m["blob"]) for m in checked.get("missing", [])]
+    added = []
+    for path, blob in new:
+        if (path, blob) not in keys:
+            keys.add((path, blob))
+            entries.append({"path": path, "blob": blob})
+            added.append({"path": path, "blob": blob})
+    _write_record(doc, accepted=entries)
+    return {"accepted": doc, "added": added}
+
+
 # --------------------------------------------------------------------------- selftest
 
 SPEC = """---
@@ -292,11 +542,226 @@ def test_kind_of():
     _check("kind unknown", kind_of("specifications/PRD-1-x/notes.md") is None)
 
 
+class _Repo:
+    """A throwaway specs repository: a PRD folder with prd.md, specification.md and design.md."""
+
+    def __init__(self, tmp):
+        import subprocess
+        self.root = tmp
+        self.sp = subprocess
+        self.run("init", "-q", "-b", "main")
+        self.run("config", "user.email", "t@example.invalid")
+        self.run("config", "user.name", "t")
+        self.dir = "specifications/PRD-1-checkout"
+        os.makedirs(os.path.join(tmp, self.dir))
+        self.prd = f"{self.dir}/prd.md"
+        self.spec = f"{self.dir}/specification.md"
+        self.design = f"{self.dir}/design.md"
+
+    def run(self, *args):
+        r = self.sp.run(["git", "-C", self.root, *args], capture_output=True, text=True)
+        if r.returncode != 0:
+            raise AssertionError(f"git {args} failed: {r.stderr}")
+        return r.stdout.strip()
+
+    def write(self, rel, text):
+        with open(os.path.join(self.root, rel), "w", encoding="utf-8") as fh:
+            fh.write(text)
+
+    def read(self, rel):
+        with open(os.path.join(self.root, rel), encoding="utf-8") as fh:
+            return fh.read()
+
+    def commit(self, msg="c"):
+        self.run("add", "-A")
+        self.run("commit", "-q", "-m", msg)
+
+    def chain(self):
+        """prd -> spec -> design, each downstream stamped against its upstream at main."""
+        self.write(self.prd, PRD)
+        self.commit()
+        self.write(self.spec, SPEC)
+        stamp(self.root, "main", os.path.join(self.root, self.spec), capture(self.root, "main", [self.prd], []))
+        self.commit()
+        self.write(self.design, "---\nkind: design\nkey: PRD-1\n---\n# Design\n\n- **Version**: 1\n\n## Approach\n\nCards via the gateway.\n")
+        stamp(self.root, "main", os.path.join(self.root, self.design), capture(self.root, "main", [self.spec], []))
+        self.commit()
+
+
+def _with_repo(fn):
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        fn(_Repo(tmp))
+
+
+def test_capture_ref_and_disk():
+    def body(r):
+        r.write(r.prd, PRD)
+        r.commit()
+        r.write(f"{r.dir}/code-grounding.md", "- id: [CG#1]\n  claim: x\n")
+        got = capture(r.root, "main", [r.prd], [f"{r.dir}/code-grounding.md"])
+        _check("capture ref blob", got[0]["blob"] == r.run("rev-parse", f"main:{r.prd}"), str(got))
+        disk = r.run("hash-object", os.path.join(r.root, r.dir, "code-grounding.md"))
+        _check("capture disk blob", got[1]["blob"] == disk, str(got))
+        _check("capture version", got[0]["version"] is None)
+    _with_repo(body)
+
+
+def test_walk_full_chain():
+    def body(r):
+        r.chain()
+        r.write(r.prd, PRD.replace("within one minute", "within two minutes"))
+        r.commit()
+        res = check(r.root, "main", [r.design])
+        _check("walk stale count", len(res["stale"]) == 1, json.dumps(res))
+        link = res["stale"][0]
+        _check("walk link", link["downstream"] == r.spec and link["upstream"] == r.prd and link["changed"] == ["[AC#4]"], json.dumps(link))
+        _check("walk highest", res["highest"] == {"downstream": r.spec, "reviser": "/product-workflows:update-spec <KEY>"}, json.dumps(res["highest"]))
+    _with_repo(body)
+
+
+def test_notes_commit_not_stale():
+    def body(r):
+        r.chain()
+        r.write(r.spec, r.read(r.spec) + "\n## Engineering review\n\n- A tax rule is needed.\n")
+        r.commit()
+        res = check(r.root, "main", [r.design])
+        _check("notes not stale", res["stale"] == [] and res["missing"] == [], json.dumps(res))
+    _with_repo(body)
+
+
+def test_missing_record():
+    def body(r):
+        r.write(r.prd, PRD)
+        r.write(r.spec, SPEC)
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        _check("missing listed", [m["doc"] for m in res["missing"]] == [r.spec], json.dumps(res))
+        _check("missing highest", res["highest"]["downstream"] == r.spec, json.dumps(res))
+        res2 = check(r.root, "main", [r.prd])
+        _check("prd never missing", res2["missing"] == [] and res2["highest"] is None, json.dumps(res2))
+    _with_repo(body)
+
+
+def test_accept_suppresses_then_reasks():
+    def body(r):
+        r.chain()
+        r.write(r.prd, PRD.replace("within one minute", "within two minutes"))
+        r.commit()
+        out = os.path.join(r.root, r.design)
+        accept(out, check(r.root, "main", [r.design]))
+        res = check(r.root, "main", [r.design], output=out)
+        _check("accepted suppressed", res["stale"] == [] and len(res["accepted"]) == 1, json.dumps(res))
+        r.write(r.prd, PRD.replace("within one minute", "within three minutes"))
+        r.commit()
+        res = check(r.root, "main", [r.design], output=out)
+        _check("moved again asks", len(res["stale"]) == 1, json.dumps(res))
+    _with_repo(body)
+
+
+def test_blob_unavailable():
+    def body(r):
+        r.chain()
+        text = r.read(r.spec)
+        bogus = "0123456789abcdef0123456789abcdef01234567"
+        r.write(r.spec, re.sub(r"blob: [0-9a-f]{40}", f"blob: {bogus}", text))
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        _check("unavailable", len(res["stale"]) == 1 and res["stale"][0]["unavailable"] is True, json.dumps(res))
+    _with_repo(body)
+
+
+def test_stamp_preserves_unknown_keys():
+    def body(r):
+        r.write(r.prd, PRD)
+        r.commit()
+        original = "---\nkind: specification\nkey: PRD-1\nteam_field: keep me  # exactly\n---\n" + SPEC.split("---\n", 2)[2]
+        r.write(r.spec, original)
+        doc = os.path.join(r.root, r.spec)
+        stamp(r.root, "main", doc, capture(r.root, "main", [r.prd], []))
+        after = r.read(r.spec)
+        _check("unknown key kept", "team_field: keep me  # exactly\n" in after)
+        _check("body kept", after.split("\n---\n", 1)[1] == original.split("\n---\n", 1)[1])
+        accept(doc, {"stale": [], "missing": [{"doc": r.prd, "blob": "a" * 40}]})
+        stamp(r.root, "main", doc, capture(r.root, "main", [r.prd], []))
+        again = r.read(r.spec)
+        _check("restamp idempotent on other bytes", again.count("upstreams:") == 1 and "team_field: keep me  # exactly\n" in again, again)
+    _with_repo(body)
+
+
+def test_upstream_absent():
+    def body(r):
+        r.chain()
+        r.run("rm", "-q", r.prd)
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        _check("absent not stale", res["stale"] == [] and res["absent"] == [{"downstream": r.spec, "upstream": r.prd}], json.dumps(res))
+    _with_repo(body)
+
+
+def test_stamp_carry_forward():
+    def body(r):
+        r.chain()
+        doc = os.path.join(r.root, r.spec)
+        cur = r.run("rev-parse", f"main:{r.prd}")
+        accept(doc, {"stale": [{"upstream": r.prd, "current": {"blob": cur}}], "missing": [{"doc": r.design, "blob": "b" * 40}]})
+        res = stamp(r.root, "main", doc, capture(r.root, "main", [r.prd], []))
+        _check("carried", res["carried"] == [{"path": r.prd, "blob": cur}], json.dumps(res))
+        _check("dropped", res["dropped"] == [{"path": r.design, "blob": "b" * 40}], json.dumps(res))
+    _with_repo(body)
+
+
+def _load_json(path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
 def main(argv):
+    import argparse
     if argv[1:2] == ["--selftest"]:
         return selftest()
-    print("usage: lineage.py --selftest | <subcommand> ...", file=sys.stderr)
-    return 2
+    p = argparse.ArgumentParser(prog="lineage.py", description=__doc__.splitlines()[0])
+    sub = p.add_subparsers(dest="cmd", required=True)
+    c = sub.add_parser("capture")
+    c.add_argument("--specs", required=True)
+    c.add_argument("--ref", required=True)
+    c.add_argument("--from-ref", action="append", default=[])
+    c.add_argument("--from-disk", action="append", default=[])
+    c.add_argument("--out", required=True)
+    s = sub.add_parser("stamp")
+    s.add_argument("--specs", required=True)
+    s.add_argument("--ref", required=True)
+    s.add_argument("--doc", required=True)
+    s.add_argument("--capture", required=True)
+    k = sub.add_parser("check")
+    k.add_argument("--specs", required=True)
+    k.add_argument("--ref", required=True)
+    k.add_argument("--output")
+    k.add_argument("--out")
+    k.add_argument("docs", nargs="+")
+    a = sub.add_parser("accept")
+    a.add_argument("--doc", required=True)
+    a.add_argument("--check", required=True)
+    args = p.parse_args(argv[1:])
+    try:
+        if args.cmd == "capture":
+            result = capture(args.specs, args.ref, args.from_ref, args.from_disk)
+            with open(args.out, "w", encoding="utf-8") as fh:
+                json.dump(result, fh, indent=2)
+        elif args.cmd == "stamp":
+            result = stamp(args.specs, args.ref, args.doc, _load_json(args.capture))
+        elif args.cmd == "check":
+            result = check(args.specs, args.ref, args.docs, output=args.output)
+            if args.out:
+                with open(args.out, "w", encoding="utf-8") as fh:
+                    json.dump(result, fh, indent=2)
+        else:
+            result = accept(args.doc, _load_json(args.check))
+    except (LineageError, OSError, ValueError, KeyError) as exc:
+        print(f"lineage.py {args.cmd}: {exc}", file=sys.stderr)
+        return 1
+    print(json.dumps(result, indent=2))
+    return 0
 
 
 if __name__ == "__main__":
