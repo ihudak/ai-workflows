@@ -85,10 +85,10 @@ Ahead of the review, Phase 5.5 runs a structural pre-lint against the drafted `d
 Design a per-Epic implementation for an Epic whose specification is already merged:
 
 ```
-/dev-workflows:design EPIC-98760
+/dev-workflows:design ACME-77-01
 ```
 
-The run resolves `EPIC-98760` as the focus Epic within PRD `PRODUCT-1234`, gates its `specification.md` on the specs repo's main branch, resolves any ARD, derives and confirms the implementation repos, hard-stops if any is unmounted, scans the confirmed set, then grills you through challenging the spec and designing the implementation — offering the three-take interface fan-out if a seam turns out contested. Once `design-reviewer` passes, it offers to branch, commit, push, and open a pull request; once that pull request is merged, `/dev-workflows:implement EPIC-98760` can start.
+The run resolves `ACME-77-01` as the focus Epic within PRD `ACME-77`, gates its `specification.md` on the specs repo's main branch, resolves any ARD, derives and confirms the implementation repos, hard-stops if any is unmounted, scans the confirmed set, then grills you through challenging the spec and designing the implementation — offering the three-take interface fan-out if a seam turns out contested. Once `design-reviewer` passes, it offers to branch, commit, push, and open a pull request; once that pull request is merged, `/dev-workflows:implement ACME-77-01` can start.
 
 ## See also
 

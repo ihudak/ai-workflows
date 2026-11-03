@@ -718,7 +718,7 @@ Reconcile the review that came back for a synthetic customer BRD's slice, from w
 attachment was saved:
 
 ```
-/product-workflows:brd-reconcile EPIC-008-01 "@~/Downloads/EPIC-008-01 Customer Review 20260422.md"
+/product-workflows:brd-reconcile ACME-001-01 "@~/Downloads/ACME-001-01 Customer Review 20260422.md"
 ```
 
 The `@<review-file>` token is **quoted**, because the command parses its arguments positionally and
@@ -727,7 +727,7 @@ a returned review routinely arrives under a name with spaces in it — the same 
 send back. Unquoted, `Customer`, `Review` and `20260422.md` are three further positional tokens and
 the path the run resolves is not the file the customer sent.
 
-The date in the name is the reviewer's own — `EPIC-008-01` was **packaged** on 15 April and the
+The date in the name is the reviewer's own — `ACME-001-01` was **packaged** on 15 April and the
 review came back finished on the 22nd — which is what makes the filename rung usable here. Had the
 reviewer returned the file still carrying the packaging date, the run would have rejected that rung
 and asked.
@@ -737,10 +737,10 @@ hand-authored package takes `--sent` instead — copies the file to `customer-re
 offers to commit it, dispatches `customer-review-reader`, surfaces every schema anomaly before
 anything is confirmed, walks each candidate against its verbatim quotation, freezes the confirmed
 answers as `[CD#n]` and closes their `[C]` questions, applies the review's required changes, banners
-the dated prompt and self-review the answers overturned, writes `customer-amended EPIC-008-01 20260422`
-and `withdrawn` rows to the defect log, moves the ledger rows the decisions settled, sweeps `EPIC-014`
+the dated prompt and self-review the answers overturned, writes `customer-amended ACME-001-01 20260422`
+and `withdrawn` rows to the defect log, moves the ledger rows the decisions settled, sweeps `ACME-001-02`
 and every other dependent starting with its `conditional_on` positions, sweeps every artifact under
-`EPIC-008` — this slice's parent — for the changed ids and for prose still asserting the old
+`ACME-001` — this slice's parent — for the changed ids and for prose still asserting the old
 position, and writes `reconciliation-<date>.md`.
 
 Phase 14 then hands the route over. Nothing this run left behind reopened a decision, held a `[C]`
@@ -749,9 +749,9 @@ for the customer, left a finding to re-derive, or left a dependent only recorded
 `covered-here`, so all three exits are offered off the same key:
 
 ```
-/product-workflows:create-prd EPIC-008-01
-/product-workflows:create-ard EPIC-008-01
-/product-workflows:specify EPIC-008-01
+/product-workflows:create-prd ACME-001-01
+/product-workflows:create-ard ACME-001-01
+/product-workflows:specify ACME-001-01
 ```
 
 Had this ledger left a row `unallocated`, or left none `covered-here`, the first line would be

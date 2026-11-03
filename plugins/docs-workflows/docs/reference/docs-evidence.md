@@ -31,7 +31,7 @@ A page records its sources in its frontmatter. There are three kinds:
 evidence:
   - { kind: code, repo: example-webapp, path: src/routes/orders/new.tsx, ref: <sha> }
   - { kind: walkthrough, id: W-001 }
-  - { kind: artifact, path: specifications/PRD-EXAMPLE-1-orders/release-notes.md, ref: <commit> }
+  - { kind: artifact, path: specifications/PRD-ACME-77-orders/release-notes.md, ref: <commit> }
 ```
 
 **`artifact` is for a claim whose source is a document rather than code or a screen** — a release-notes draft, an ARD, a design doc. It is its own kind because prose changes by being re-worded, not by being re-implemented, and that is a different thing to watch for.

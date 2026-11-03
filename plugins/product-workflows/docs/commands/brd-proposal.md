@@ -96,7 +96,7 @@ Every figure in both artifacts is **hours of human delivery time**. Neither carr
 Price a programme whose slices have each been through grounding, an interview round and their own proposal:
 
 ```
-/product-workflows:brd-proposal PRODUCT-1234
+/product-workflows:brd-proposal ACME-001
 ```
 
 The run refuses nothing (the address resolves to a `BRD-` folder), enumerates the four slices carrying a `brd-link.md` that names this BRD, and walks them: three hold a `proposal.md` whose `priced-against` record still matches every input it priced, and the fourth holds none while grading tier 2 — so the walk's computed recommendation for that one is **stop and price it**, printed beside a two-option array that leaves the decision yours. You exclude it. The run gates the three included proposals on the default branch, shows the profile back, builds one row per included slice, adds its own work packages for programme management and one acceptance campaign, flags one verified finding two slices both priced against and asks you whether that is one piece of work or two, computes peak concurrency from the schedule rather than adding the slices' FTE figures, and grades the umbrella at the minimum of the three tiers while printing the mix. Coverage comes out of the root ledger with the excluded slice's requirements enumerated by identifier. Then the pre-lint, `proposal-reviewer`, triage, and the handoff offer.
@@ -104,7 +104,7 @@ The run refuses nothing (the address resolves to a `BRD-` folder), enumerates th
 Re-run it after the excluded slice has been priced:
 
 ```
-/product-workflows:brd-proposal PRODUCT-1234
+/product-workflows:brd-proposal ACME-001
 ```
 
 Same run, now including four slices. The prior umbrella is archived under `revisions/`, and the changelog names the cause of every figure that moved — including the ones that moved only because a slice joined the roll-up.

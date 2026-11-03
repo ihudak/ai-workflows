@@ -107,10 +107,10 @@ On every reviewed run with a specification in scope, save a companion run, the r
 Implement one Epic from a multi-Epic PRD whose specification and design are already merged:
 
 ```
-/dev-workflows:implement EPIC-98760
+/dev-workflows:implement ACME-77-01
 ```
 
-The run resolves `EPIC-98760` as the focus Epic, gates its in-scope `specification.md`/`design.md` on the specs repo's main branch, classifies the task (`SIGNIFICANT` by the multi-source floor, its resolved specs folder being a folder input), delegates planning to `risk-planner`, creates a feature branch, captures the test baseline, has `code-writer` code the plan one step group at a time — on the session's model where that is Opus or Fable, else on the first available model of the Opus fallback chain — writes tests, runs the Opus code review and triage, verifies against the baseline, and closes with the four Phase 4 maintenance agents and the Final Report, whose next step comes before the Epic's pull request merges: `/dev-workflows:conformance EPIC-98760`, then `/security-workflows:scan EPIC-98760`, from the repository it branched, the PRD's remaining Epics after them. Once every Epic has merged, the PE's `/dev-workflows:conformance` on the PRD comes next, and `/docs-workflows:document` after it.
+The run resolves `ACME-77-01` as the focus Epic, gates its in-scope `specification.md`/`design.md` on the specs repo's main branch, classifies the task (`SIGNIFICANT` by the multi-source floor, its resolved specs folder being a folder input), delegates planning to `risk-planner`, creates a feature branch, captures the test baseline, has `code-writer` code the plan one step group at a time — on the session's model where that is Opus or Fable, else on the first available model of the Opus fallback chain — writes tests, runs the Opus code review and triage, verifies against the baseline, and closes with the four Phase 4 maintenance agents and the Final Report, whose next step comes before the Epic's pull request merges: `/dev-workflows:conformance ACME-77-01`, then `/security-workflows:scan ACME-77-01`, from the repository it branched, the PRD's remaining Epics after them. Once every Epic has merged, the PE's `/dev-workflows:conformance` on the PRD comes next, and `/docs-workflows:document` after it.
 
 ## See also
 

@@ -94,19 +94,19 @@ The plugin runs commands a repository declares, with your permissions: its test 
 `/design` is where this plugin's spine picks up, once the companion `product-workflows` plugin's `/product-workflows:specify` has landed a `specification.md` on the specs repo's default branch. It takes the same address that named the specification.
 
 ```
-/dev-workflows:design EPIC-98760
+/dev-workflows:design ACME-77-01
 ```
 
-**Type the command.** Every command in this plugin is typed-only (`disable-model-invocation: true`): it stays out of the list of skills the model picks from, which keeps that list inside Claude Code's budget, so asking in prose — "design EPIC-98760" — does not start it.
+**Type the command.** Every command in this plugin is typed-only (`disable-model-invocation: true`): it stays out of the list of skills the model picks from, which keeps that list inside Claude Code's budget, so asking in prose — "design ACME-77-01" — does not start it.
 
 Claude Code ships a `/design` of its own, which makes a Design artifact and is switched on for some accounts only; where it is on, the bare form can reach it instead of this plugin's, so the qualified `/dev-workflows:design` is the form that always works.
 
-`EPIC-98760` resolves the Epic within its PRD, the same key `/product-workflows:specify` used to land `specification.md`. Nothing looks it up beyond the specs tree, and no tracker is read.
+`ACME-77-01` resolves the Epic within its PRD, the same key `/product-workflows:specify` used to land `specification.md`. An Epic's key is its PRD's key plus `-NN` — `ACME-77-01` is the first Epic `/product-workflows:epics` cut from PRD `ACME-77`, in the folder `EPIC-ACME-77-01-<slug>/` — and the `EPIC-` prefix is optional when you type it: `EPIC-ACME-77-01` reads as the same key. Nothing looks it up beyond the specs tree, and no tracker is read.
 
 Here is what to expect:
 
 1. **A gate.** `/design` refuses to start if `specification.md` is not found on the specs repo's default branch — this plugin's one hard exception to the "absent input falls back" rule (the companion `product-workflows` commands whose gated input was never optional stop too, as `workflows-core:phase-handoff` §3.4 lists).
 2. **Grounding and a grill.** It resolves any applicable ARD, derives and confirms the implementation repos under `$REPOS_PATH`, hard-stops if none is mounted, scans the confirmed set, then grills you through challenging the spec and designing the implementation.
-3. **A written design.** It writes `design.md` into the same specs feature folder, then offers to commit, push, and open a pull request against the specs repo's default branch. Once that lands, `/implement EPIC-98760` picks up the design and starts the code change.
+3. **A written design.** It writes `design.md` into the same specs feature folder, then offers to commit, push, and open a pull request against the specs repo's default branch. Once that lands, `/implement ACME-77-01` picks up the design and starts the code change.
 
 From here, [Workflow overview](workflow.md) shows where every other command sits relative to `/design`, and [Roles and phases](roles-and-phases.md) says what happens at each handoff along the way — including where `product-workflows`'s own PRD → architecture → Epic breakdown → specification ladder hands off into this one.

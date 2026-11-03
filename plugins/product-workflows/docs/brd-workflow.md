@@ -297,9 +297,10 @@ consumption modes this route uses.
 
 `<BRD-KEY>` follows the same shape everywhere in this route: `^[A-Z][A-Z0-9_]*(-\d+)+$`, checked
 for shape only and never against a tracker — a BRD is a markdown file under `$SPECS_PATH`, not a
-tracker ticket. **That shape is two segments or three**: a BRD owning its source document is keyed
-`EPIC-008` and a slice of it `EPIC-008-01`, and the grammar prefers neither — a key's segment count
-is a naming convention, never a depth declaration. Every command after `/brd-intake` resolves a key
+tracker ticket. **That shape is one or more numeric segments; the grammar fixes no depth**: a BRD
+owning its source document is keyed `ACME-001` and a slice of it `ACME-001-01` here, and the
+grammar prefers neither — a key's segment count is a naming convention, never a depth
+declaration. Every command after `/brd-intake` resolves a key
 through `resolve-address`, which searches three levels below `specifications/` — a BRD folder
 directly under it, the `PRD-` folder of a slice inside that, and an `EPIC-` folder below either kind of
 PRD folder — because a root has to resolve before it can be refused by name.

@@ -203,10 +203,10 @@ The two Security Engineer offers name their register because a key run's resume 
 The Dev's scan, from the code repository the Epic was implemented in, once its `/dev-workflows:conformance` decided no fix:
 
 ```
-/security-workflows:scan ACME-7-01
+/security-workflows:scan ACME-77-01
 ```
 
-The run finds the Epic's branch checked out, scans its changes over its base at `high` after one confirmation, records the report, and shows two findings: a HIGH it suggests fixing and a LOW it suggests deciding later. The Dev marks the LOW a false positive, naming the template line that escapes the value. Claude Security writes a patch for the HIGH; the run records it `fixing` and the false positive awaiting security review, appends the Epic's `_security.md`, and, after its report, writes the follow-up the preview showed. Next: `/dev-workflows:implement ACME-7-01`, which continues on the Epic's branch, so the fix joins the open pull request.
+The run finds the Epic's branch checked out, scans its changes over its base at `high` after one confirmation, records the report, and shows two findings: a HIGH it suggests fixing and a LOW it suggests deciding later. The Dev marks the LOW a false positive, naming the template line that escapes the value. Claude Security writes a patch for the HIGH; the run records it `fixing` and the false positive awaiting security review, appends the Epic's `_security.md`, and, after its report, writes the follow-up the preview showed. Next: `/dev-workflows:implement ACME-77-01`, which continues on the Epic's branch, so the fix joins the open pull request.
 
 The Security Engineer's two runs, after the fix has merged:
 

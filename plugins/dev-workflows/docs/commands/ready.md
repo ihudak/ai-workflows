@@ -75,10 +75,10 @@ Because `/ready` authors nothing, there is no fixer to dispatch and no `BLOCK`/r
 Check whether an Epic is really ready to move into `Refined`:
 
 ```
-/dev-workflows:ready EPIC-98760
+/dev-workflows:ready ACME-77-01
 ```
 
-The run resolves `EPIC-98760` with `resolve-address`; its folder's `EPIC-` prefix is what sets the altitude and the Epic ladder, so no second key is passed and none is accepted. It reads that Epic and the parent PRD's artifacts from the resolved tree, resolves any applicable ARD, locates the Epic's `specification.md`/`design.md` and checks each against the specs repo's default branch (never stopping on what it finds), builds the coverage map and status-expectation checklist, and dispatches `readiness-reviewer`. It prints the verdict with its coverage roll-up and Findings, writes `_readiness.md` into the Epic subdir, and offers to commit and hand it off — declining leaves the snapshot written but uncommitted.
+The run resolves `ACME-77-01` with `resolve-address`; its folder's `EPIC-` prefix is what sets the altitude and the Epic ladder, so no second key is passed and none is accepted. It reads that Epic and the parent PRD's artifacts from the resolved tree, resolves any applicable ARD, locates the Epic's `specification.md`/`design.md` and checks each against the specs repo's default branch (never stopping on what it finds), builds the coverage map and status-expectation checklist, and dispatches `readiness-reviewer`. It prints the verdict with its coverage roll-up and Findings, writes `_readiness.md` into the Epic subdir, and offers to commit and hand it off — declining leaves the snapshot written but uncommitted.
 
 ## See also
 

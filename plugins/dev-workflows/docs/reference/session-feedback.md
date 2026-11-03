@@ -46,7 +46,7 @@ One file per PRD, `<KEY>-feedback.md`, opening with frontmatter written once on 
 ```yaml
 ---
 type: dev-workflows-feedback
-prd: PRODUCT-1234
+prd: ACME-77
 slug: env-ag-update-window
 ---
 ```
@@ -57,7 +57,7 @@ Each logged entry is a dated heading, a fenced YAML block, and prose — appende
 ## 2026-07-09 — /design — missing-capability
 
 ```yaml
-id: PRODUCT-1234-design-scope-boundary
+id: ACME-77-design-scope-boundary
 date: 2026-07-09
 command: /design              # controlled: exact command name, or n/a
 plugin_version: 2.9.0

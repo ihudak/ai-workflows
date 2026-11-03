@@ -126,7 +126,11 @@ case "$cmd" in
         emit_dir_listing_if_small
         # /implement <address> is keyed — it resolves its own argument via
         # resolve-address; also preload specs context here.
-        if [[ "$cmd" == "implement" && "$prompt" =~ ^/(dev-workflows:)?implement[[:space:]]+[A-Z][A-Z0-9]+-[0-9]+ ]]; then
+        # A hook cannot load a reference, so this test is a deliberately loose
+        # "looks like an address": a superset of workflows-core:addressing §1's
+        # key grammar (A-1, ACME_X-90, ACME-1-2-3) that also takes a typed folder
+        # name (PRD-ACME-77-slug). The command itself validates the address.
+        if [[ "$cmd" == "implement" && "$prompt" =~ ^/(dev-workflows:)?implement[[:space:]]+[A-Z][A-Z0-9_-]*-[0-9] ]]; then
             emit_specs_context
         fi
         ;;

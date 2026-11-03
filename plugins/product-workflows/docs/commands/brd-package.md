@@ -497,7 +497,7 @@ attack.
 Package a slice of a synthetic customer BRD once its interview round has settled, declaring one prerequisite:
 
 ```
-/product-workflows:brd-package EPIC-008-01 --depends-on EPIC-014
+/product-workflows:brd-package ACME-001-02 --depends-on ACME-001-01
 ```
 
 The run gates on `decisions.md` being merged and on every question carrying a terminal disposition or

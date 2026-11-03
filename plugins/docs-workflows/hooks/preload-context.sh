@@ -5,7 +5,7 @@
 # QUALIFIED form only — see the note above the regexes for why. It routes
 # them:
 #   • /document                         → specs context iff the argument is an
-#                                         address (e.g. /document PRODUCT-1234);
+#                                         address (e.g. /document ACME-77);
 #                                         free-text / @file → silent (direct-edit
 #                                         mode owns its own git hygiene and never
 #                                         invokes Opus)
@@ -94,7 +94,11 @@ case "$cmd" in
     document)
         # Mode-aware: an address argument → specs context; free-text / @file → silent
         # (direct-edit mode owns its own git hygiene and never invokes Opus).
-        if [[ "$prompt" =~ ^/(docs-workflows:)?document[[:space:]]+[A-Z][A-Z0-9]+-[0-9]+ ]]; then
+        # A hook cannot load a reference, so this test is a deliberately loose
+        # "looks like an address": a superset of workflows-core:addressing §1's
+        # key grammar (A-1, ACME_X-90, ACME-1-2-3) that also takes a typed folder
+        # name (PRD-ACME-77-slug). The command itself validates the address.
+        if [[ "$prompt" =~ ^/(docs-workflows:)?document[[:space:]]+[A-Z][A-Z0-9_-]*-[0-9] ]]; then
             emit_specs_context
         fi
         ;;
