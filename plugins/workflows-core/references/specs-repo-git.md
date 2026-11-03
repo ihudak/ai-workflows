@@ -1201,6 +1201,10 @@ the report is the run's last output, or as its own terminal block where the
 report was composed earlier, which holds nothing but what §4 step 7 lets
 follow the report.
 
+**A file count is singular at one.** In every row below that gives a file count, and in the
+`Specs preflight:` and session-branch forms printed after the table, where `<N>` is 1 the line reads
+`(1 file)`, never `(1 files)`.
+
 | Case | Line |
 |---|---|
 | Committed and pushed, on a plugin branch | `Specs repo: committed <sha7> (<N> files) on <branch> — pushed` |

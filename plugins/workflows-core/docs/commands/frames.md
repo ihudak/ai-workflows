@@ -30,7 +30,7 @@ All three run flags apply to this command ([`environment.md`](../reference/envir
 flowchart TD
     p0["Phase 0 — Resolve the address (kind-gated) + model routing"] --> p1["Phase 1 — Enumerate the frame sets"]
     p1 --> p2["Phase 2 — Reconcile, describe (frame-describer), write each index"]
-    p2 --> p3["Phase 3 — Handoff (only where an index was written)"]
+    p2 --> p3["Phase 3 — Handoff (only where an index is not on the default branch as written)"]
     p3 --> p4["Phase 4 — Session maintenance, feedback & cost"]
 ```
 
@@ -49,7 +49,7 @@ One `index.md` per frame set, in the format [`grounding-format.md`](../../refere
 
 Descriptions come from the `frame-describer` agent, which looks at the frames and returns one plain-language description each — an agent whose whole tool list is `Read`, `Glob`, `Grep`, so it cannot write the index it describes into. The command hands the frames to it rather than opening them itself, so every description in an index is one that something which actually saw the frame produced, and "transcribed, never inferred" is a rule about copying rather than a hope about restraint.
 
-The indexes are deliverables, so they reach the default branch through the [phase handoff](../../references/phase-handoff.md) — each named as one literal path, behind the phase handoff's consent choice — the **advisory** variant, whose second option says no command stops on these and that what reads them reads your working copy. No gate consumes a frame-set index, but the design-grounding pass does read one, and refuses to reconcile a frame set that has none. Declining therefore leaves them written and on no ref, and that is an unshared repair rather than a blocked one: your own grounding runs read the frame set from the working tree and see the index, and nobody else's do.
+The indexes are deliverables, so they reach the default branch through the [phase handoff](../../references/phase-handoff.md) — each named as one literal path, behind the phase handoff's consent choice — the **advisory** variant, whose second option says no command stops on these and that what reads them reads your working copy. No gate consumes a frame-set index, but the design-grounding pass does read one, and refuses to reconcile a frame set that has none. The handoff is offered only where at least one index the run wrote is absent from the default branch or differs from it there: a re-run over an unchanged frame set from the default branch rebuilds each index byte for byte, has nothing to commit, and instead prints `Phase handoff: not offered — every index this run wrote is already on <default> as written.` An index committed on a plugin branch that was never pushed is absent from the default branch, so it still gets the offer. Declining therefore leaves them written and on no ref, and that is an unshared repair rather than a blocked one: your own grounding runs read the frame set from the working tree and see the index, and nobody else's do.
 
 ## The cap
 

@@ -642,8 +642,8 @@ step 7.5 in `/implement`, whose tests still run on either answer:
 
 `choices: ["Re-review the edited <artifact> once (Recommended)", "Go on without it — the report says the verdict predates the edits"]`
 
-`<artifact>` names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
-`proposal.md`, the Epic drafts, the pages written, the code change. The offer is made where all
+`<artifact>` is a bare noun phrase, with no leading article, that names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
+`proposal.md`, Epic drafts, pages, code change. The offer is made where all
 three hold: the verdict was not `BLOCK`, or was settled as not `BLOCK` at a triage settle prompt's
 **Proceed**, as *Findings a review leaves open — the offer to apply them* counts such a verdict; the
 run has not re-reviewed this artifact; and an edit answering the verdict's findings followed it. An
@@ -776,7 +776,7 @@ one is an edit after the verdict, which the final report names under `A recorded
 version it was taken against`; it answers no finding, so it makes no re-review offer.
 
 Used by `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec` (which records as `/specify` does) and `/epics`. `/design` is not among them: its
-own open questions must be resolved before its gate passes, so a finding it leaves open stays in its final report and its pull request. It asks first, though, as one of the asking set, so the decisions that reach its report and pull request are only those the other five of that set write into their artifact: one the user chose to leave open, a deferred `BLOCKER`'s, or one no question was put for: one still open when a re-review returned `BLOCK`, or, where a command triages, one its triage marked unverified.
+own open questions must be resolved before its gate passes, so a finding it leaves open stays in its final report and its pull request. It asks first, though, as one of the asking set, so the only decisions that reach its report and pull request are those the other five of that set write into their artifact. Those are a decision the user chose to leave open, a deferred `BLOCKER`'s decision, and a decision no question was put for. No question is put for a finding still open when a re-review returned `BLOCK`, nor, where a command triages, for a finding its triage marked unverified.
 
 ## A BLOCK review's other findings — folded into its fix cycle
 

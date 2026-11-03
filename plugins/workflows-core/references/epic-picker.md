@@ -71,6 +71,10 @@ option's description, below, which the dialog shows whatever else the run prints
 and the option the command adds, if any, fit in four, the array carries them all**, and the prose
 list is still printed. **Otherwise the cap applies**: the array carries **at most three Epic rows plus
 one remainder option**, fewer Epic rows where the command adds its own option (below). **The
+remainder option is always the array's last option, after any option the command adds**, so the
+operator who finds no row for the Epic they want looks in the same place in every picker. **A row's
+label shows the Epic's bare `key`**, as *The picker* reads it from the frontmatter, never the
+folder's `EPIC-` prefix, and the prose list shows the same. **The
 remainder option is labelled `Another Epic (you'll be prompted for its key)`, and its `description`
 names every Epic the array leaves out** — marker, key and title each, in the picker's order, after
 `Not shown as an option:` — because `AskUserQuestion` renders each option's description under its
@@ -78,20 +82,21 @@ label, so an Epic the array leaves out reaches the user even where the prose lis
 printed. Five Epics, with no option added:
 
     Epics under PRD-ACME-77 orders:
-      ◐ EPIC-ACME-77-02  order intake       (in progress)
-      ○ EPIC-ACME-77-03  billing hand-off
-      ○ EPIC-ACME-77-05  refund path
-      ○ EPIC-ACME-77-04  tax rules
-      ● EPIC-ACME-77-01  catalogue sync     (done — selecting it does what the command's ● rule says)
+      ◐ ACME-77-02  order intake       (in progress)
+      ○ ACME-77-03  billing hand-off
+      ○ ACME-77-05  refund path
+      ○ ACME-77-04  tax rules
+      ● ACME-77-01  catalogue sync     (done — selecting it does what the command's ● rule says)
 
-    choices: ["◐ EPIC-ACME-77-02 order intake (Recommended)", "○ EPIC-ACME-77-03 billing hand-off", "○ EPIC-ACME-77-05 refund path", "Another Epic (you'll be prompted for its key)"]
-    description of the last option: "Not shown as an option: ○ EPIC-ACME-77-04 tax rules; ● EPIC-ACME-77-01 catalogue sync (done)"
+    choices: ["◐ ACME-77-02 order intake (Recommended)", "○ ACME-77-03 billing hand-off", "○ ACME-77-05 refund path", "Another Epic (you'll be prompted for its key)"]
+    description of the last option: "Not shown as an option: ○ ACME-77-04 tax rules; ● ACME-77-01 catalogue sync (done)"
 
 Choosing the last option asks for the key in plain text, and a key typed straight into the
 harness's free-text option is taken as given (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`
-§0, *A selection carries no text*); either way the run resolves the typed key **against the keys the
-picker listed** — the array's rows and the remainder option's description — never by parsing one
-out of the answer (`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §1).
+§0, *A selection carries no text*); either way the run first reads the typed token with `read-key`
+(`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §1), so that `EPIC-ACME-77-04` and `ACME-77-04`
+both yield the key `ACME-77-04`, and then resolves that key **against the keys the picker listed** —
+the array's rows and the remainder option's description — never by parsing one out of the answer.
 
 **The description rule binds every picker built from a listing, not only this one** — every member
 of the second set above. No option of such a picker points at "the list above" or leans on a set

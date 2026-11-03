@@ -2481,12 +2481,23 @@ def selftest():
                   "commits ahead that are not all session-file commits are left alone (%r)" % got)
         # a commit with nothing to commit still creates an absent branch, at merge-base HEAD <default-ref>,
         # and says so in created: specs-repo-git §3.4's and §6's lines report it, naming that commit
+        # from a checkout whose HEAD is behind origin/main, so the base (merge-base HEAD origin/main, the commit
+        # the caller reports as <base short sha>) is not origin/main's tip; the branch's final position is not
+        # asserted, since sync fast-forwards it to origin/main, and its creation is read off the reflog instead
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
+            b.add(FB, today("team moved main on"))
+            b.commit_all("team")
+            b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+            a.git("fetch", "-q", "origin")
+            behind = a.git("rev-parse", "HEAD")
+            check(behind != a.git("rev-parse", "origin/main") and a.git("merge-base", "HEAD", "origin/main") == behind,
+                  "(setup) HEAD is behind origin/main, so the base is not origin/main's tip")
             got = a.run("commit", "--branch", "session/zz", "--default-ref", "origin/main", "--message", "A-1 Add session")
-            check(got.get("created") is True and got.get("committed") is None
-                  and a.git("rev-parse", "session/zz") == a.git("merge-base", "HEAD", "origin/main"),
-                  "a no-op commit creates the absent branch at the base and reports it (%r)" % got)
+            made = a.git("reflog", "show", "--format=%H", "session/zz").split("\n")[-1]
+            check(got.get("created") is True and got.get("committed") is None and made == behind,
+                  "a no-op commit creates the absent branch at the base, not at origin/main, and reports it (%r, created at %s)"
+                  % (got, made))
             got = a.run("commit", "--branch", "session/zz", "--default-ref", "origin/main", "--message", "A-1 Add session")
             check(got.get("created") is False and got.get("committed") is None,
                   "…and a later no-op commit reports no creation (%r)" % got)
