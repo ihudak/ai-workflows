@@ -199,6 +199,8 @@ parent's defect log where Phase 10 wrote a resolution into it.
 subagent is dispatched — every finding this command reads was already independently re-derived by
 `/prd-ground`'s own verifier pass.
 
+**The register records its lineage**: the exact version (git blob id) of the slice's two grounding files and its `brd/brd-inventory.md` the run read, never another BRD's files or this run's own interview records. Before anything is decided, the run checks the grounding up its chain: where a grounding file was built from an inventory that has since changed, or carries no lineage record yet, it shows what moved and asks whether to re-ground first or proceed, recording your answer in the register. **A run that finds no question still re-stamps the register** and offers the handoff where that changed it: after a `--rebaseline` whose new findings raise nothing, that is what tells every later command the register was checked against the grounding as it now stands.
+
 ## What it needs
 
 - **`<BRD-KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `BRD_INTERVIEW_NEEDS_KEY`. A
@@ -628,6 +630,8 @@ Re-opening a closed round later, with its cause recorded:
 - [`interview-tagging.md`](../../references/interview-tagging.md) — the authority for the three tags,
   who may answer each, re-tagging and its recorded cause, the split that fixes an untaggable
   question, and how a round opens and closes.
+- `workflows-core:document-lineage` — the lineage record the register carries, and the upstream
+  check run on the grounding files.
 - [`decision-register-format.md`](../../references/decision-register-format.md) — the `[VD#n]` /
   `[CD#n]` / `[AS#n]` record, the five statuses, the mandatory `argumentation`, `conditional_on`, and
   the will-change rule this command enforces.

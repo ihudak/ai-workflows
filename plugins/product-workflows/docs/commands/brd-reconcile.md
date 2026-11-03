@@ -143,6 +143,8 @@ flowchart TD
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the
 terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. No other subagent is dispatched.
 
+**The register records its lineage**: the run re-stamps this slice's `decisions.md` with the exact version (git blob id) of the slice's grounding files and `brd/brd-inventory.md` it read, after its last write to the register — never a dependent BRD's register the propagation sweep wrote, which keeps its own record. Before it reads the review, the run checks the grounding up its chain, as `/brd-interview` does, and asks where it moved.
+
 ## What it needs
 
 - **`<BRD-KEY>`, and a review** — a key absent — with no `@<path>` address naming the folder — or malformed stops with `BRD_RECONCILE_NEEDS_KEY`; an
@@ -769,6 +771,8 @@ dependent BRD is named beside the list with `/brd-interview` on that dependent's
 - [`customer-review-schema.md`](../../references/customer-review-schema.md) — the twelve sections the
   returned review carries, and the one-new-file rule that makes section 12 the only channel for a
   change to a package document.
+- `workflows-core:document-lineage` — the lineage record the register carries, and the upstream
+  check run on the grounding files.
 - [`decision-register-format.md`](../../references/decision-register-format.md) — the `[CD#n]` record,
   the mandatory `argumentation`, the two causes that may reopen a decision, `conditional_on`, and the
   will-change rule the freeze applies to a `[CD#n]`.
