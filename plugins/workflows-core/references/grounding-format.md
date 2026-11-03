@@ -408,6 +408,10 @@ reader acts on — no id, verdict, file or line an evidence entry names, control
 it without dispatching anything again. A finding already on file is not rewritten by a later run; a
 hand edit to its free text is sanctioned (§2.1) and touches none of those fields either.
 
+### 2.4 The lineage frontmatter
+
+`code-grounding.md` and `design-grounding.md` each carry a lineage record (`workflows-core:document-lineage` §1): an `upstreams:` block naming what the run that last wrote the file grounded — on the BRD route the slice's `brd/brd-inventory.md` and each frame-set index (§6.2) it read, on the idea route the folder's `prd.md` — and an `accepted:` block where an operator went on past a moved one. `/product-workflows:prd-ground` stamps it after its last write to the file, in a `---` frontmatter above the file's first line, with `document-lineage`'s script; nothing else writes it, and a consuming command's `consumed_by` write leaves it as it stands. It is not a finding: readers find findings by their `id:` field (§2.1), and a frontmatter holds none. A file written before product-workflows 3.72.0 carries none, and a consumer's lineage check asks about it once (`document-lineage` §3).
+
 
 ## 3. Verdicts
 
