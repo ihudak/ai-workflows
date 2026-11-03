@@ -7,6 +7,7 @@ is lineage-kinds.json beside it. Standard library only.
 
 import json
 import os
+import posixpath
 import re
 import sys
 
@@ -52,7 +53,7 @@ def _norm(lines):
 def items(kind, text):
     """Item key -> normalised live content. A not-live item maps to WITHDRAWN and its nested items
     are omitted. Text outside every item is keyed per '## ' section as '§<heading>' ('§header'
-    before the first)."""
+    before the first), save a section the kind row drops; an ignored field's lines are left out."""
     return _items(kind, text)[0]
 
 
@@ -69,6 +70,11 @@ def _items(kind, text):
     alts = {}
     key_col = None
     starts = [(it["level"], re.compile(it["start"])) for it in row["items"]]
+    sec_alt = row.get("section_altitude") or {}
+    drop = set(row.get("drop_sections") or [])
+    fields = row.get("ignore_fields") or []
+    field_rx = re.compile(r"^\s*(?:-\s+)?(?:%s):" % "|".join(map(re.escape, fields))) if fields else None
+    skipping = False  # inside an ignored field: its continuation lines run past the key column
     notes = [re.compile(p) for p in row["notes"]]
     ignore = [re.compile(p) for p in row["ignore_lines"]]
     buckets = {}
@@ -80,6 +86,8 @@ def _items(kind, text):
     notes_level = None  # inside a notes section opened by a heading of this depth
 
     def put(key, line):
+        if key is None:  # a dropped section's own text
+            return
         if key not in buckets:
             buckets[key] = []
             order.append(key)
@@ -116,20 +124,33 @@ def _items(kind, text):
                 dead_level = level
                 continue
             put(current, line)
+            key_col = _key_col(line)
+            skipping = False
             if alt_rx is not None:
                 alts[current] = ""
-                key_col = _key_col(line)
             continue
         if depth is not None and depth <= 2:
             stack = []
             dead_level = None
-            section = "§" + line[depth:].strip()
+            skipping = False
+            name = line[depth:].strip()
+            section = None if name in drop else "§" + name
             current = section
             put(current, None)
+            if section is not None and name in sec_alt:
+                alts[section] = sec_alt[name]
             continue
         if dead_level is not None:
             continue
-        if current in alts and _key_col(line) == key_col:
+        in_item = current is not None and current.startswith("[")
+        if skipping:
+            if not line.strip() or _key_col(line) > key_col:
+                continue
+            skipping = False
+        if in_item and field_rx is not None and _key_col(line) == key_col and field_rx.search(line):
+            skipping = True
+            continue
+        if in_item and current in alts and _key_col(line) == key_col:
             m = alt_rx.search(line)
             if m:
                 alts[current] = m.group(1)
@@ -143,11 +164,15 @@ def _items(kind, text):
     return {k: v for k, v in out.items() if v != ""}, alts
 
 
-def compare(kind, old_text, new_text, altitude=None):
+def compare(kind, old_text, new_text, altitude=None, skip=frozenset()):
     """Which live items were added, changed or withdrawn between two copies of a document. With an
-    altitude (the downstream's), an item whose every live copy carries another altitude is left
-    out; an item carrying none, and text outside every item, always count."""
+    altitude (the downstream's), an item — or a section the kind row gives an altitude — whose
+    every live copy carries another altitude is left out; an item carrying none, and text outside
+    every item in a section with none, always count. An item whose key is in skip is left out."""
     (old, old_alt), (new, new_alt) = _items(kind, old_text), _items(kind, new_text)
+    if skip:
+        old = {k: v for k, v in old.items() if k.split("/")[0] not in skip}
+        new = {k: v for k, v in new.items() if k.split("/")[0] not in skip}
     if altitude is not None:
         def other(key):
             seen = {a[key] for a in (old_alt, new_alt) if key in a}
@@ -414,7 +439,7 @@ def check(specs, ref, docs, output=None, accepted_from=()):
                 res["absent"].append({"downstream": doc, "upstream": up})
                 continue
             if cur != e["blob"]:
-                link = _link(specs, doc, e, up, cur, kinds()[kind].get("altitude"))
+                link = _link(specs, doc, e, up, cur, kinds()[kind].get("altitude"), _skip_set(specs, ref, up))
                 if link is not None:
                     if (up, cur) in acc:
                         res["accepted"].append({"downstream": doc, "upstream": up, "blob": cur})
@@ -434,7 +459,21 @@ def check(specs, ref, docs, output=None, accepted_from=()):
     return res
 
 
-def _link(specs, doc, entry, up, cur, altitude=None):
+def _skip_set(specs, ref, up):
+    """The item keys an upstream's kind row names in a file beside it (`skip_items_in`) — the
+    grounding's baseline findings, by id in grounding/baselines.md — read at ref. A file missing or
+    unreadable names none, and a line naming no id adds nothing."""
+    kind = kind_of(up)
+    spec = kinds()[kind].get("skip_items_in") if kind else None
+    if not spec:
+        return frozenset()
+    blob = _blob_at(specs, ref, posixpath.join(posixpath.dirname(up), spec["file"]))
+    text = (_cat_blob(specs, blob) or "") if blob else ""
+    rx = re.compile(r"^\s*(?:-\s+)?%s:\s*\[([A-Z]+#\d+)\]" % re.escape(spec["field"]), re.M)
+    return frozenset(f"[{m}]" for m in rx.findall(text))
+
+
+def _link(specs, doc, entry, up, cur, altitude=None, skip=frozenset()):
     kind = kind_of(up)
     cur_text = _cat_blob(specs, cur) or ""
     old_text = _cat_blob(specs, entry["blob"])
@@ -444,7 +483,7 @@ def _link(specs, doc, entry, up, cur, altitude=None):
             "added": [], "changed": [], "withdrawn": [], "unavailable": old_text is None}
     if old_text is None:
         return link
-    diff = compare(kind, old_text, cur_text, altitude) if kind else _compare_plain(old_text, cur_text)
+    diff = compare(kind, old_text, cur_text, altitude, skip) if kind else _compare_plain(old_text, cur_text)
     if not any(diff.values()):
         return None
     link.update(diff)
@@ -1246,6 +1285,135 @@ def test_stamp_register_without_frontmatter():
         _check("register items unchanged", items("decisions", text) == items("decisions", REGISTER))
         _check("grounding kind covered", kinds()["grounding"]["covered"] is True and kinds()["decisions"]["covered"] is True)
         _check("grounding reviser", kinds()["grounding"]["reviser"] == "/product-workflows:prd-ground <KEY>")
+    _with_repo(body)
+
+
+SHA = "4f1c9ab0d2e7c35a91b8f6e04c2d7a5b9e13f860"
+
+
+def _finding(n, claim, altitude="implementation", verdict="CONFIRMED", extra=""):
+    return (f"- id: [CG#{n}]\n  claim: {claim}\n  verdict: {verdict}\n  evidence:\n    - pay/gateway.py:10\n"
+            f"  commit: {SHA}\n  altitude: {altitude}\n  horizon: current\n  consumed_by: none\n{extra}  outcome: agree\n")
+
+
+PIN = "baseline integrity: shop-api is pinned at a verified, unmodified commit"
+RUN1 = ("# Code grounding: PRD-1\n\n" + _finding(1, PIN) + "\n" + _finding(2, "[BR#1] — the gateway accepts cards")
+        + "\n## Derivation matrix\n\n| element | class | source |\n|---|---|---|\n| invoice number | EXISTS | invoices.number |\n"
+        + "\n## Documentation divergences\n\n- docs/pay.md says cards only; [CG#2] shows wallets too.\n")
+
+
+def _rerun(text=RUN1):
+    """What a second /prd-ground run with nothing changed leaves: the old pin SUPERSEDED with its
+    note, the claim finding's outcome re-written, a fresh pin appended after the divergences section,
+    a second divergences section appended, the matrix replaced in place with the same rows."""
+    t = text.replace("verdict: CONFIRMED\n  evidence:\n    - pay/gateway.py:10\n  commit: " + SHA + "\n  altitude: implementation\n  horizon: current\n  consumed_by: none\n  outcome: agree\n\n- id: [CG#2]",
+                     "verdict: SUPERSEDED\n  prior_verdict: CONFIRMED\n  evidence:\n    - pay/gateway.py:10\n  commit: " + SHA + "\n  altitude: implementation\n  horizon: current\n  consumed_by: none\n  outcome: agree\n  notes: superseded by [CG#3]\n\n- id: [CG#2]", 1)
+    t = t.replace("[BR#1] — the gateway accepts cards\n  verdict: CONFIRMED\n  evidence:\n    - pay/gateway.py:10\n  commit: " + SHA + "\n  altitude: implementation\n  horizon: current\n  consumed_by: none\n  outcome: agree",
+                  "[BR#1] — the gateway accepts cards\n  verdict: CONFIRMED\n  evidence:\n    - pay/gateway.py:10\n  commit: " + SHA + "\n  altitude: implementation\n  horizon: current\n  consumed_by: none\n  outcome: extend")
+    assert t != text
+    return t + "\n" + _finding(3, PIN) + "\n## Documentation divergences\n\n- docs/pay.md says cards only; [CG#2] shows wallets too.\n"
+
+
+PINS = frozenset({"[CG#1]", "[CG#3]"})
+
+
+def _empty(d):
+    return not any(d.values())
+
+
+def test_realistic_rerun_layout():
+    re2 = _rerun()
+    for alt in ("implementation", "architecture", None):
+        _check(f"rerun not moved at {alt}", _empty(compare("grounding", RUN1, re2, alt, PINS)), str(compare("grounding", RUN1, re2, alt, PINS)))
+    _check("rerun moved without the pin set", compare("grounding", RUN1, re2) == {"added": ["[CG#3]"], "changed": ["[CG#1]"], "withdrawn": []},
+           str(compare("grounding", RUN1, re2)))
+
+
+def test_claim_change_beside_rerun_reported():
+    re2 = _rerun().replace("the gateway accepts cards", "the gateway accepts cards and wallets")
+    _check("claim change reported", compare("grounding", RUN1, re2, "implementation", PINS) == {"added": [], "changed": ["[CG#2]"], "withdrawn": []},
+           str(compare("grounding", RUN1, re2, "implementation", PINS)))
+
+
+def test_derivation_matrix_altitude():
+    m = RUN1.replace("| invoice number | EXISTS | invoices.number |", "| invoice number | DERIVED | invoices.id |")
+    _check("matrix at implementation", compare("grounding", RUN1, m, "implementation")["changed"] == ["§Derivation matrix"], str(compare("grounding", RUN1, m, "implementation")))
+    _check("matrix unfiltered", compare("grounding", RUN1, m)["changed"] == ["§Derivation matrix"])
+    _check("matrix not architecture", _empty(compare("grounding", RUN1, m, "architecture")))
+
+
+def test_dropped_sections_not_moved():
+    d = RUN1.replace("[CG#2] shows wallets too.", "[CG#2] shows wallets and vouchers.") + "\n## Frame sets covered\n\n- design/checkout — covered\n"
+    _check("dropped sections not moved", _empty(compare("grounding", RUN1, d)), str(compare("grounding", RUN1, d)))
+
+
+def test_finding_after_dropped_section_counts():
+    a = RUN1 + "\n" + _finding(4, "[BR#2] — refunds go back to the card")
+    _check("finding after dropped section", compare("grounding", RUN1, a) == {"added": ["[CG#4]"], "changed": [], "withdrawn": []}, str(compare("grounding", RUN1, a)))
+
+
+def test_multiline_notes_ignored():
+    base = RUN1.replace("  consumed_by: none\n  outcome: agree\n\n## Derivation", "  consumed_by: none\n  notes: |\n    claim: looks like a key\n    second line\n  outcome: agree\n\n## Derivation")
+    n2 = base.replace("    claim: looks like a key\n    second line\n", "    claim: another key\n    third line\n    - a list item\n")
+    _check("multi-line notes ignored", _empty(compare("grounding", base, n2)), str(compare("grounding", base, n2)))
+    o2 = base.replace("  notes: |\n    claim: looks like a key\n    second line\n  outcome: agree\n\n## Derivation", "  notes: |\n    claim: looks like a key\n    second line\n  outcome: agree\n  horizon: will-change\n\n## Derivation")
+    _check("a key after notes is read", compare("grounding", base, o2)["changed"] == ["[CG#2]"], str(compare("grounding", base, o2)))
+
+
+def test_date_heading_not_moved():
+    _check("empty date heading", _empty(compare("grounding", RUN1, RUN1 + "\n## 2026-11-04\n")))
+
+
+def test_legacy_matrix_moves_once():
+    legacy = RUN1.replace("\n## Derivation matrix\n\n", "\n").replace("\n## Documentation divergences\n\n- docs/pay.md says cards only; [CG#2] shows wallets too.\n", "")
+    now = legacy.replace("\n| element | class | source |", "\n## Derivation matrix\n\n| element | class | source |")
+    _check("legacy matrix moves once", compare("grounding", legacy, now, "implementation") == {"added": ["§Derivation matrix"], "changed": ["[CG#2]"], "withdrawn": []},
+           str(compare("grounding", legacy, now, "implementation")))
+    _check("then settles", _empty(compare("grounding", now, now + "\n", "implementation")))
+    _check("legacy matrix not architecture", _empty(compare("grounding", legacy, now, "architecture")), str(compare("grounding", legacy, now, "architecture")))
+
+
+def test_baseline_set_is_the_record():
+    c = RUN1.replace("the gateway accepts cards", "the gateway accepts wallets")
+    _check("a listed id is skipped", _empty(compare("grounding", RUN1, c, None, frozenset({"[CG#2]"}))))
+
+
+def _grounded_repo(r, baselines):
+    gdir = f"{r.dir}/grounding"
+    os.makedirs(os.path.join(r.root, gdir))
+    gr, reg = f"{gdir}/code-grounding.md", f"{r.dir}/decisions.md"
+    r.write(gr, RUN1)
+    stamp(r.root, "main", os.path.join(r.root, gr), [])
+    if baselines:
+        r.write(f"{gdir}/baselines.md", f"- date: 2026-11-01\n  repo: shop-api\n  commit: {SHA}\n  integrity: clean\n  finding: [CG#1]\n")
+    r.commit()
+    r.write(reg, REGISTER)
+    stamp(r.root, "main", os.path.join(r.root, reg), capture(r.root, "main", [gr], []))
+    r.write(r.spec, SPEC)
+    stamp(r.root, "main", os.path.join(r.root, r.spec), capture(r.root, "main", [gr], []))
+    r.commit()
+    r.write(gr, _rerun(r.read(gr)))
+    if baselines:
+        r.write(f"{gdir}/baselines.md", r.read(f"{gdir}/baselines.md") + f"- date: 2026-11-02\n  repo: shop-api\n  commit: {SHA}\n  integrity: clean\n  finding: [CG#3]\n")
+    r.commit()
+    return gr, reg
+
+
+def test_unchanged_rerun_not_moved():
+    def body(r):
+        gr, reg = _grounded_repo(r, baselines=True)
+        res = check(r.root, "main", [r.spec, reg])
+        _check("rerun: nothing stale", res["stale"] == [], json.dumps(res))
+    _with_repo(body)
+
+
+def test_baselines_absent_counts():
+    def body(r):
+        gr, reg = _grounded_repo(r, baselines=False)
+        res = check(r.root, "main", [r.spec, reg])
+        _check("no baselines.md: today's behaviour",
+               sorted((s["downstream"], tuple(s["added"]), tuple(s["changed"])) for s in res["stale"])
+               == sorted([(r.spec, ("[CG#3]",), ("[CG#1]",)), (reg, ("[CG#3]",), ("[CG#1]",))]), json.dumps(res))
     _with_repo(body)
 
 
