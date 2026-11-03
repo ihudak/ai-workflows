@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.77.0] — 2026-11-03
+
+Take with `product-workflows` 3.72.1, `docs-workflows` 1.32.1 and `dev-workflows` 4.57.3 — D32 part 5, the altitude filter's reach; D32 closes.
+
+### Changed
+- `lineage.py`, `document-lineage` §2 and §4: **a grounding re-run is not a move.** The comparison leaves out every baseline finding `grounding/baselines.md` names by its `finding:` id (read at the default branch; missing or unreadable, it names none), a finding's `outcome` and `notes` with their continuation lines, and the text of `## Documentation divergences` and `## Frame sets covered` — a finding written inside one of those still counts. `## Derivation matrix` counts at implementation altitude: a specification and the decision register see a change in it, an ARD does not. The kind table gains `ignore_fields`, `section_altitude`, `drop_sections` and `skip_items_in`.
+- A grounding file whose derivation matrix an earlier `/prd-ground` appended under no heading reads as changed once — the finding the rows followed, and the new `## Derivation matrix` section — the first time `/prd-ground` 3.72.1 writes the section; after that an unchanged re-run settles.
+- `grounding-format` §4.1 and §7: the lineage check leaves baseline findings out; the matrix sits under one `## Derivation matrix` heading that each run writing one replaces.
+
+### Fixed
+- `lineage.py check` reads an `--output` or `--accepted-from` document at the ref where it is not on disk, and refuses a ref that does not resolve instead of reporting every document absent from it.
+- `document-lineage` §6 step 6 and §7: a caller that never asks words each stale link as step 3 does — new and withdrawn keys included — lists and counts each (downstream, upstream) pair once across its units, and reports a script failure as `Lineage: not checked — lineage.py failed: <first stderr line>`; the sentence that said "those two" names `/document` and `/release-notes`.
+
 ## [1.76.0] — 2026-11-03
 
 Take with `docs-workflows` 1.32.0 — D32 part 4, `/document` and `/release-notes` report the lineage.
