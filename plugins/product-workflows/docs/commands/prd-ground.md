@@ -587,7 +587,7 @@ On the BRD route, ground a slice once its parent's `/brd-split` has carved it an
 has merged:
 
 ```
-/product-workflows:prd-ground EPIC-008-01
+/product-workflows:prd-ground ACME-001-01
 ```
 
 The run resolves the slice, gates its inventory and ledger on main, resolves the repositories in
@@ -610,7 +610,7 @@ holds, with the route that grounds it — a report only.
 On the idea route, ground a PRD once [`/create-prd`](create-prd.md)'s handoff has merged:
 
 ```
-/product-workflows:prd-ground PRD-2201
+/product-workflows:prd-ground ACME-77
 ```
 
 The run detects the idea route from the absence of `brd-link.md`, gates `prd.md` on main instead of

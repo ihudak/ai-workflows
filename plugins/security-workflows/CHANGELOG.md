@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.1] — 2026-11-03
+
+Batch B28: DQP-B8.
+
+### Fixed
+- **Example keys**: the getting-started and `/security-workflows:scan` pages use `ACME-77-01`, the family's example Epic key (the first Epic of PRD `ACME-77`), in place of `ACME-7-01`.
+
 ## [0.10.0] — 2026-10-30
 
 Take with `workflows-core` 1.71.0 — to-fix D18, D24 and D26.

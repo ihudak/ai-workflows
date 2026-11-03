@@ -584,7 +584,7 @@ Split a synthetic customer BRD once its intake pull request has merged, naming t
 instruction a root cannot omit:
 
 ```
-/product-workflows:brd-split EPIC-008 cover orders and measurements in the first iteration
+/product-workflows:brd-split ACME-001 cover orders and measurements in the first iteration
 ```
 
 A root is never ground, so the instruction is the only grouping signal there is; with rows still to
@@ -595,18 +595,18 @@ questions, and only where one answer moves several rows — *the BRD writes "for
 and for a compliance artifact; which is meant in these six?* Phase 2 then proposes
 `orders-and-measurements` as a slice. Phase 4 walks each row with
 `(Recommended — your instruction grouped this as an order)` on `covered-by`. A second run,
-`/product-workflows:brd-split EPIC-008 slice everything no child covers`, resolves entirely in Step A and
+`/product-workflows:brd-split ACME-001 slice everything no child covers`, resolves entirely in Step A and
 asks nothing.
 
-Later, `EPIC-008-01` is ground, its own `allocate-only` walk records `deferred-to: EPIC-008-01`
+Later, `ACME-001-01` is ground, its own `allocate-only` walk records `deferred-to: ACME-001-01`
 against the measurement rows, and a third run on the **parent** —
-`/product-workflows:brd-split EPIC-008 peel the measurement rows off the first slice` — is the sibling
-re-cut. `EPIC-008`'s ledger has no `unallocated` row, so the instruction is read over the re-cut
-candidate set instead: the measurement rows, which read `covered-by: EPIC-008-01` here and
-`deferred-to: EPIC-008-01` there. Phase 2 proposes a `measurements` slice as their receiver, naming
-`EPIC-008-01` as each row's donor; Step 2R offers each move one row at a time, showing what
-`EPIC-008-01` decided about the row before you answer. Each accepted row takes `covered-by` for the
-new slice on **both** ledgers, `EPIC-008-01` gives up the claim and the copied inventory row, and the
+`/product-workflows:brd-split ACME-001 peel the measurement rows off the first slice` — is the sibling
+re-cut. `ACME-001`'s ledger has no `unallocated` row, so the instruction is read over the re-cut
+candidate set instead: the measurement rows, which read `covered-by: ACME-001-01` here and
+`deferred-to: ACME-001-01` there. Phase 2 proposes a `measurements` slice as their receiver, naming
+`ACME-001-01` as each row's donor; Step 2R offers each move one row at a time, showing what
+`ACME-001-01` decided about the row before you answer. Each accepted row takes `covered-by` for the
+new slice on **both** ledgers, `ACME-001-01` gives up the claim and the copied inventory row, and the
 new slice re-enters at `/prd-ground` with a row nobody has yet ground for it. Had every child able to
 take those rows already been interviewed, the run would still not stop — Phase 3 can always key a new
 slice — and declining every proposal is an answer, after which each row simply stays where it was.

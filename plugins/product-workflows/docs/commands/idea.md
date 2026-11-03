@@ -163,7 +163,7 @@ that was read, `design/idea-sources/<name>` for each image that was transcribed,
 Refine an inline prompt, grounding it against the mounted frontend repo:
 
 ```
-/product-workflows:idea PRODUCT-1234 "Add a dark-mode toggle to the settings page" --ground-code frontend
+/product-workflows:idea ACME-77 "Add a dark-mode toggle to the settings page" --ground-code frontend
 ```
 
 The run validates the key, classifies the argument as a prompt, ingests it via `idea-reader`, grounds it against the documentation when `$DOCS_PATH` resolves, grills it, and writes `idea.md` into the folder the key names — creating that folder with this first write where none exists yet. The key is not optional — without it the run stops before Phase 1.
@@ -171,7 +171,7 @@ The run validates the key, classifies the argument as a prompt, ingests it via `
 Refine a note that links a mockup and a couple of related pages:
 
 ```
-/product-workflows:idea PRODUCT-1234 @notes/dark-mode.md
+/product-workflows:idea ACME-77 @notes/dark-mode.md
 ```
 
 Here the run walks every link that note makes, has each linked image transcribed, and hands the grill both the prose and what the frames show — asking first if the walk reaches further than two levels of pages, twelve pages or six images.

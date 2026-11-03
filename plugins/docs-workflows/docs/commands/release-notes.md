@@ -82,7 +82,7 @@ One invocation, two runs — the command is the same either time, and only the i
 **The PM's early run**, with the PRD opened and nothing specified or designed yet:
 
 ```
-/docs-workflows:release-notes PRODUCT-1234
+/docs-workflows:release-notes ACME-77
 ```
 
 The run asks about diff grounding (default: PRD content only) and the release version, classifies as `MODERATE`, reads the PRD, resolves `$DOCS_PATH` grounding if configured, and finds neither `specification.md` nor `design.md` under the PRD's specs dir — so it infers `run_phase: pm` and renders the draft via `release-notes-writer` with no documentation redirect link, because the feature isn't built and there is no page to point at yet. It then runs the optional style gate and writes the persistent draft with a reminder to publish it.
@@ -90,7 +90,7 @@ The run asks about diff grounding (default: PRD content only) and the release ve
 **The dev's later re-run**, once a specification or design is on record:
 
 ```
-/docs-workflows:release-notes PRODUCT-1234
+/docs-workflows:release-notes ACME-77
 ```
 
 Byte for byte the same command, and every step above happens the same way. The single difference is what the specs dir now contains: `run_phase` infers as `dev`, so the draft may carry a documentation redirect short link. Same destination, same classification, same style gate, same publish reminder.

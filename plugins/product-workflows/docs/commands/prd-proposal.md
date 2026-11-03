@@ -88,15 +88,15 @@ Every figure in both artifacts is **hours of human delivery time**. Neither carr
 Price a reconciled BRD slice that has been through grounding and an interview round:
 
 ```
-/product-workflows:prd-proposal PRODUCT-1234-01
+/product-workflows:prd-proposal ACME-001-01
 ```
 
-The run gates `prd.md` on the default branch, shows the proposal profile back for confirmation, grades the folder — verified grounding plus a settled register, no `ard.md` yet, so **tier 2 · Grounded**, ceiling **Medium** — clusters the requirements into work packages by delivery seam with a discovery package first and a test/UAT/release package last, sweeps three sources for unrepaired code defects and asks you to confirm the two that are not already adjudicated, computes and prints the naive baseline, then writes one `[ED#n]` row per cost driver that resolves to a verified finding, a frozen decision or a confirmed defect — dropping any candidate that cites none of the three, and naming it in the report. It grades each package's confidence, applies the default band for that grade, records a reason for any deviation, and renders the hours grid with its expected, low and high totals. Then the pre-lint, `proposal-reviewer`, triage, and the handoff offer. Its next-step array offers `/product-workflows:create-ard PRODUCT-1234-01` among its options — after stopping here and rolling the slice into the programme umbrella — because at tier 2 that is the run that actually moves the grade.
+The run gates `prd.md` on the default branch, shows the proposal profile back for confirmation, grades the folder — verified grounding plus a settled register, no `ard.md` yet, so **tier 2 · Grounded**, ceiling **Medium** — clusters the requirements into work packages by delivery seam with a discovery package first and a test/UAT/release package last, sweeps three sources for unrepaired code defects and asks you to confirm the two that are not already adjudicated, computes and prints the naive baseline, then writes one `[ED#n]` row per cost driver that resolves to a verified finding, a frozen decision or a confirmed defect — dropping any candidate that cites none of the three, and naming it in the report. It grades each package's confidence, applies the default band for that grade, records a reason for any deviation, and renders the hours grid with its expected, low and high totals. Then the pre-lint, `proposal-reviewer`, triage, and the handoff offer. Its next-step array offers `/product-workflows:create-ard ACME-001-01` among its options — after stopping here and rolling the slice into the programme umbrella — because at tier 2 that is the run that actually moves the grade.
 
 Price an idea-route PRD with nothing but a PRD in the folder:
 
 ```
-/product-workflows:prd-proposal PRODUCT-1234 --no-brief
+/product-workflows:prd-proposal ACME-77 --no-brief
 ```
 
 Same run, graded **tier 1 · Indicative**, ceiling **Low**. Every package is graded Low and carries a declared re-estimate gate; the document carries one document-level gate whose trigger is grounding the folder, and its cost-driver section states outright that the drivers are not known. No brief is written — not because of the flag, but because the brief does not render below tier 2 at all, and the report says so.

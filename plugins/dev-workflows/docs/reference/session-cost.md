@@ -65,19 +65,19 @@ The dollar figure attached to a phase depends on which price table priced it —
 
 ## Reading a cost file
 
-Here is one persisted entry, copied verbatim from the shared reference this page is derived from:
+Here is one persisted entry, in the shape the shared reference this page is derived from shows; the keys are these docs' example keys, not the reference's:
 
 ````markdown
 ## 2026-07-09T14:22:33Z — /implement — implementation
 
 ```yaml
-id: PRODUCT-1234-98760-implement-2026-07-09T14:22:33Z   # timestamp => unique
+id: ACME-77-01-implement-2026-07-09T14:22:33Z   # timestamp => unique
 date: 2026-07-09T14:22:33Z
 command: /implement
 phase: implementation
 role: dev
-prd: PRODUCT-1234
-epic: EPIC-98760            # present only when an Epic key is in scope
+prd: ACME-77
+epic: ACME-77-01            # present only when an Epic key is in scope
 plugin_version: 2.10.0
 duration_s: 1284
 cost_computed_usd: 3.4821

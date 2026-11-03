@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.31.1] — 2026-11-03
+
+Batch B28: SCR-B3, DQP-B8.
+
+### Fixed
+- **The preload hook gives every keyed `/document` its specs context (SCR-B3)**: its key test was narrower than `workflows-core:addressing` §1's grammar and missed `/document A-1`, `/document ACME_X-90` and a typed folder name. It is now the loose test `[A-Z][A-Z0-9_-]*-[0-9]` after the command, a superset of the grammar, and still silent on free text, so direct mode stays quiet; `docs/reference/hooks.md` states the test.
+- **Example keys (DQP-B8)**: the `/document` and `/release-notes` pages and the hooks page use `ACME-77`, the family's example PRD key, in place of `PRODUCT-1234`, and the docs-evidence page's artifact path names `PRD-ACME-77-orders/` in place of `PRD-EXAMPLE-1-orders/`.
+
 ## [1.31.0] — 2026-10-30
 
 Take with `workflows-core` 1.72.0 or later, never an older one: an older `workflows-core` executes `phase-handoff handoff-to-main` inline at the consent step, which is §2's branch, commit, push and pull request before §4.3's choice is shown (corrected in `workflows-core` 1.72.1) — to-fix PR9.

@@ -73,7 +73,7 @@ Phase 6 offers re-runs only for downstream artifacts that already exist, recomme
 Refresh a PRD with new call notes, after the specs draft has already been reviewed once:
 
 ```
-/product-workflows:update-prd PRODUCT-1234 @call-notes.md
+/product-workflows:update-prd ACME-77 @call-notes.md
 ```
 
 The run resolves the feature folder, reads its `prd.md` as the base, grills the changes against it, and rewrites the canonical file while archiving the prior revision. **Requirement ids never move**: a requirement whose meaning changes gets a new id and the old one is marked `Superseded by` it, a dropped one is marked `Withdrawn` in place, and none is renumbered, reused or deleted, so every Epic, coverage row and grounding finding citing an id still points at the same requirement. `prd-reviewer` checks the update against the archived base.

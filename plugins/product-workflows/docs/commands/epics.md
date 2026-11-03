@@ -90,7 +90,7 @@ Ahead of the review, Phase 6.2 runs `prose-style-checker` unconditionally as a *
 Split a PRD with two existing Epics not yet covering all its scope:
 
 ```
-/product-workflows:epics PRODUCT-1234
+/product-workflows:epics ACME-77
 ```
 
 The run resolves the PRD, derives where the Epics land rather than asking (an `EPIC-` folder per Epic under the PRD folder, `_coverage.md` beside `prd.md`), and asks whether to scan code — default on, with the repos auto-derived from the sibling and parent Epics' `implementation.md` records, or listed by you in plain text right after that question; on a PRD with no such record and no ARD, a picker of repositories instead, the one the session runs in recommended — resolves any PRD-level ARD and specification, reads the PRD folder at `prd-plus-epics` depth, scans the confirmed repos in batches of up to 4, delegates the drafting to `epic-writer`, runs the Prose style check and structural pre-lint, then `epic-reviewer`. On a passing verdict it offers the handoff — taken, the Epics and `_coverage.md` go up on an `epics/` branch with a pull request — then reports the Epics written and `_coverage.md`'s gap list, and recommends `/product-workflows:specify <EPIC>` per drafted Epic as the next step, once that pull request is merged — one address, the Epic's own. Publishing the Epics to a tracker, where a team keeps them there, remains a manual step.

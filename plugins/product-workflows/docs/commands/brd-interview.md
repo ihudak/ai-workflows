@@ -590,7 +590,7 @@ option is picked.
 Work the first round of a slice of a synthetic customer BRD, once the slice's own split has merged:
 
 ```
-/product-workflows:brd-interview EPIC-008-01
+/product-workflows:brd-interview ACME-001-01
 ```
 
 The run gates on the grounding being merged and verified and the ledger being fully allocated, opens
@@ -618,7 +618,7 @@ A decided slice needs no reconciliation before authoring, so it is also offered 
 Re-opening a closed round later, with its cause recorded:
 
 ```
-/product-workflows:brd-interview EPIC-008-01 --round 1
+/product-workflows:brd-interview ACME-001-01 --round 1
 ```
 
 ## See also

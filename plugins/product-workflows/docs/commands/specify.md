@@ -12,7 +12,7 @@ Reads the resolved Epic or PRD folder, lightly grounds in code, and authors an o
 /specify <ADDRESS> [--no-docs] [--docs <path>] [--no-arch] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
-**The BRD route** — where the resolved folder is a `PRD-` folder carrying a `brd-link.md`, or an `EPIC-` folder inside one, the run authors the specification for a decided BRD slice. It is detected, not declared: there is no flag. A `BRD-` container is refused (`SPECIFY_BRD_NOT_SLICED`). The address is then the slice's key (or an Epic's inside it), validated against `^[A-Z][A-Z0-9_]*(-\d+)+$` for shape only (so a three-segment slice key such as `EPIC-008-01` is as valid as `EPIC-008`) and resolved through `resolve-address`, which searches every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus its legacy fallback — so an `@<path>` is only for a folder outside the normal layout. It takes **one address**, like every other route: a second positional token stops the run (`SPECIFY_ONE_ADDRESS`), because a key encodes its own ancestry and no command takes a chain (D4). The pickers, Epic counts and folder read described below run on this route too — a slice is a PRD folder, and [`/epics`](epics.md) can mint Epics inside it — and the route adds to them rather than replacing them: it also reads the slice's `spec-seed.md`, `decisions.md` and `brd-link.md`.
+**The BRD route** — where the resolved folder is a `PRD-` folder carrying a `brd-link.md`, or an `EPIC-` folder inside one, the run authors the specification for a decided BRD slice. It is detected, not declared: there is no flag. A `BRD-` container is refused (`SPECIFY_BRD_NOT_SLICED`). The address is then the slice's key (or an Epic's inside it), validated against `^[A-Z][A-Z0-9_]*(-\d+)+$` for shape only (so a slice key such as `ACME-001-01` is as valid as its parent BRD's `ACME-001` — the grammar fixes no depth) and resolved through `resolve-address`, which searches every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus its legacy fallback — so an `@<path>` is only for a folder outside the normal layout. It takes **one address**, like every other route: a second positional token stops the run (`SPECIFY_ONE_ADDRESS`), because a key encodes its own ancestry and no command takes a chain (D4). The pickers, Epic counts and folder read described below run on this route too — a slice is a PRD folder, and [`/epics`](epics.md) can mint Epics inside it — and the route adds to them rather than replacing them: it also reads the slice's `spec-seed.md`, `decisions.md` and `brd-link.md`.
 
 The folder's prefix sets the altitude — an `EPIC-` folder specifies that Epic, a `PRD-` folder the PRD — never the kind it asserts; a legacy folder with no prefix is placed by what it holds — a carrier asserting `kind: epic` as an Epic folder, one asserting `kind: prd` or a `brd-link.md` naming a `parent:` as a PRD folder.
 
@@ -109,7 +109,7 @@ Ahead of the review, Phase 5.5 runs a structural pre-lint (`workflows-core:pre-l
 Author a specification for a single Epic already selected:
 
 ```
-/product-workflows:specify EPIC-98761
+/product-workflows:specify ACME-77-01
 ```
 
 The run resolves the PRD and the named focus Epic (skipping the picker, since it was given explicitly), reads the full Epic subtree, resolves any applicable ARD, derives and lightly scans mounted repos, grills you relentlessly through Problem statement → Scope → User stories → Acceptance criteria → Test cases, runs the structural pre-lint, then `spec-reviewer`. On a passing verdict it offers to branch, commit, push, and open a pull request; if this Epic came from a multi-Epic PRD's picker, it then offers to loop straight into the next sibling Epic.
@@ -117,10 +117,10 @@ The run resolves the PRD and the named focus Epic (skipping the picker, since it
 Author the specification for a decided BRD slice instead:
 
 ```
-/product-workflows:specify EPIC-008-01
+/product-workflows:specify ACME-001-01
 ```
 
-The run resolves `EPIC-008-01`'s folder two levels under `specifications/`, inside its parent BRD's, reads `spec-seed.md`, the register, the verified findings and any derivation matrix, resolves the ARD under the parent's key with this slice as the Epic, scans the repositories `grounding/baselines.md` pinned, and grills **only the gaps** — every `[VD#n]` and `[CD#n]` the register holds as decided is an input the interview never reopens, because the customer signed it. A `NEW-CAPTURE` matrix row is work this spec must deliver and lands in `## Scope` and an EARS acceptance criterion, not in a footnote.
+The run resolves `ACME-001-01`'s folder two levels under `specifications/`, inside its parent BRD's, reads `spec-seed.md`, the register, the verified findings and any derivation matrix, resolves the ARD under the parent's key with this slice as the Epic, scans the repositories `grounding/baselines.md` pinned, and grills **only the gaps** — every `[VD#n]` and `[CD#n]` the register holds as decided is an input the interview never reopens, because the customer signed it. A `NEW-CAPTURE` matrix row is work this spec must deliver and lands in `## Scope` and an EARS acceptance criterion, not in a footnote.
 
 ## See also
 

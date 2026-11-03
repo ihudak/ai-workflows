@@ -881,6 +881,8 @@ Entries:
 
 **Version bumps:** dev-workflows patch, docs-workflows patch, product-workflows patch.
 
+Done in dev-workflows 4.56.1, docs-workflows 1.31.1, product-workflows 3.70.1 and security-workflows 0.10.1: both preload hooks take a loose superset of the key grammar, `check-docs.sh` check 24 runs them on keyed and free-text prompts, and every plugin's docs use one example key family (idea route `ACME-77`/`ACME-77-01`, BRD route `ACME-001`/`ACME-001-01`/`ACME-001-02`); the shared references' samples are D40.
+
 ### B29 — Gates, instruction tiers and the tracking records
 
 **Tier:** MINOR, repository (no plugin). **Entries:** 4, 0 MAJOR.

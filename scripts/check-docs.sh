@@ -6,15 +6,16 @@
 # in the two restructures this one follows (a sibling plugin repo,
 # ai-containers#78).
 #
-# TWENTY-THREE checks, numbered 1-23 in the order their functions appear below. The number is
+# TWENTY-FOUR checks, numbered 1-24 in the order their functions appear below. The number is
 # written here and nowhere else in this file, and nothing gates it -- re-derive it with
 # `grep -oE '\bfail [0-9]+ ' "$0" | awk '{print $2}' | sort -un` -- the numbers a fail() call
 # can actually report -- rather than trusting this sentence, and update it in the commit that
-# adds a check. Counting the banner comments instead gives 22: checks 1 and 2 share one. Every
-# edition carries all twenty-three: a check an edition has no use for is switched off by its
+# adds a check. Counting the banner comments instead gives 23: checks 1 and 2 share one. Every
+# edition carries all twenty-four: a check an edition has no use for is switched off by its
 # config block (checks 13, 16 and 19 in the internal editions, check 22 here and in the Copilot
-# edition, check 23 in any edition whose escalation rules name no path-unset rule), never cut
-# from the body.
+# edition, check 23 in any edition whose escalation rules name no path-unset rule, check 24 in
+# any edition that ships no hook preloading context for a keyed command), never cut from the
+# body.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -189,6 +190,15 @@ VENDORED_COPIES=""                   # internal Claude edition: the two scripts 
 PATH_UNSET_RULE="Required path environment variable unset"
                                      # internal editions: the same name where their
                                      # escalation rules carry it, else ""
+
+# Check 24: space-separated `<hook>:<command>` pairs, the hook repo-relative and the command as
+# typed (`/implement`), naming each hook that preloads specs context for a keyed command, and
+# the line that context opens with. Each hook is run on keyed prompts and must print the line,
+# and on a free-text prompt and must not. An absent hook is skipped; empty switches it off.
+KEYED_HOOKS="plugins/dev-workflows/hooks/preload-context.sh:/implement plugins/docs-workflows/hooks/preload-context.sh:/document"
+                                     # internal editions: their own keyed preload hooks;
+                                     # copilot: "" where it ships none
+KEYED_HOOK_MARKER="=== Auto-injected project context (specs workflow) ==="
 
 FAILURES=0
 
@@ -2685,6 +2695,43 @@ check_path_rule_cited() {
   [ "$seen" -gt 0 ] || fail 23 "no command under $PLUGIN_RELS offers to set a path variable -- this check would examine nothing"
 }
 
+# ------------------------------------------------------------------ check 24
+# A keyed preload hook takes every address the key grammar takes. A hook cannot load the shared
+# reference that defines the grammar (`^[A-Z][A-Z0-9_]*(-\d+)+$`, no depth fixed), so it carries
+# a test of its own, and a copy narrower than the grammar -- two leading characters required, no
+# `_` -- left `/implement A-1`, `/implement ACME_X-90` and a typed folder name without the context
+# `/implement ACME-90` got. Behavioural, not a regex compare: each KEYED_HOOKS hook is RUN on its
+# command followed by each keyed token below, on a JSON payload as Claude Code sends it, and must
+# print KEYED_HOOK_MARKER; on a free-text argument it must not, since `/document`'s direct mode
+# takes free text and gets no specs context. A hook's own test may be looser than the grammar
+# (the command validates the address); it may never be narrower. An absent hook is skipped and
+# says so; the hooks read the prompt with python3, so without it the check does not run.
+KEYED_HOOK_TOKENS="A-1 ACME_X-90 ACME-1-2-3 PRD-ACME-77-checkout EPIC-ACME-77-01-alerts"
+KEYED_HOOK_FREE="fix the typo in the intro"
+check_keyed_hooks() {
+  local root="$1" pair hook cmd tok out
+  [ -n "$KEYED_HOOKS" ] \
+    || { note "check 24 not applicable: this edition names no keyed preload hook (KEYED_HOOKS is empty)"; return 0; }
+  [ "$HAVE_PY" = 1 ] || { note "check 24 not run: python3 not found, and the hooks read the prompt with it"; return 0; }
+  for pair in $KEYED_HOOKS; do
+    case "$pair" in
+      ?*:/?*) ;;
+      *) fail 24 "KEYED_HOOKS entry '$pair' is not a <hook>:<command> pair"; continue ;;
+    esac
+    hook="${pair%%:*}"; cmd="${pair#*:}"
+    [ -f "$root/$hook" ] || { note "check 24: $hook absent, skipped"; continue; }
+    for tok in $KEYED_HOOK_TOKENS; do
+      out=$(cd "$root" && printf '{"prompt": "%s %s"}' "$cmd" "$tok" | env -u SPECS_PATH bash "$root/$hook" 2>/dev/null)
+      grep -qF -- "$KEYED_HOOK_MARKER" <<<"$out" \
+        || fail 24 "$hook injects no specs context for '$cmd $tok', a valid address -- its key test is narrower than the key grammar; widen it (a superset is fine, the command validates the address)"
+    done
+    out=$(cd "$root" && printf '{"prompt": "%s %s"}' "$cmd" "$KEYED_HOOK_FREE" | env -u SPECS_PATH bash "$root/$hook" 2>/dev/null)
+    grep -qF -- "$KEYED_HOOK_MARKER" <<<"$out" \
+      && fail 24 "$hook injects specs context for the free-text prompt '$cmd $KEYED_HOOK_FREE' -- its key test must still reject free text"
+  done
+  return 0
+}
+
 # ------------------------------------------------------------------ selftest
 # One passing fixture tree; each check gets a mutation of a fresh copy. Asserting
 # the exit code alone would let a mutation that trips a DIFFERENT check register
@@ -4174,11 +4221,33 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_pass_saying "an empty PATH_UNSET_RULE says check 23 does not apply" "PATH_UNSET_RULE=" \
     "check 23 not applicable" "grep -v 'SPECS_PATH' $c23 > c.tmp; mv c.tmp $c23"
 
+  # Check 24 -- a keyed preload hook takes every address. The fixture's KEYED_HOOKS names one
+  # hook whose key test is a superset of the grammar, so the unmutated pass proves every keyed
+  # token reaches it and the free-text prompt does not; each case rewrites that test, or points
+  # the list elsewhere. The sed scripts are expanded inside the case's subshell.
+  local h24="${KEYED_HOOKS%%:*}"
+  local narrow24='s/\[A-Z\]\[A-Z0-9_-\]\*-\[0-9\]/[A-Z][A-Z0-9]+-[0-9]+/'
+  local loose24='s/\[A-Z\]\[A-Z0-9_-\]\*-\[0-9\]/[^[:space:]-]/'
+  if [ -n "$h24" ] && [ -f "$fixture/$h24" ]; then
+    expect_fail_msg "a keyed hook narrower than the key grammar is rejected" 24 "'${KEYED_HOOKS#*:} A-1'" \
+      'sed -i.bak "$narrow24" "$h24"; rm -f "$h24.bak"'
+    expect_fail_msg "a keyed hook that takes free text is rejected" 24 "free-text prompt" \
+      'sed -i.bak "$loose24" "$h24"; rm -f "$h24.bak"'
+    expect_fail_env "a malformed KEYED_HOOKS entry is rejected" 24 'KEYED_HOOKS="no-command-here"' "true" \
+      "is not a <hook>:<command> pair"
+    expect_pass_saying "an absent keyed hook is skipped and says so" \
+      'KEYED_HOOKS="plugins/no-such/hooks/preload.sh:/fixture-keyed"' "absent, skipped" "true"
+    expect_pass_saying "an empty KEYED_HOOKS says check 24 does not apply" "KEYED_HOOKS=" \
+      "check 24 not applicable" 'sed -i.bak "$narrow24" "$h24"; rm -f "$h24.bak"'
+  else
+    printf 'skip  the keyed-hook cases (the fixture ships no hook its KEYED_HOOKS names)\n'
+  fi
+
   # Every config name is set by the config block, and none is taken from the environment: the
   # block above `FAILURES=0` is sourced with each name exported as a sentinel, and no name may
   # come out holding it (or unset, which aborts under set -u). This reads THIS edition's own
   # block, so each edition's selftest proves its own. ASSERT_PUBLISHED is not config.
-  local cfg_names="PLUGIN_RELS CMD_DIR CMD_SUFFIX CMD_EXCLUDE REF_DIR REF_FLAT_EXTRA DOC_CMD_DIR CMD_FORM CLI CLI_VERBS CLI_REQUIRED HAS_COST HAS_CHOICE_CAP HAS_AUTO_OTHER CHANGELOG_GLOB NS_MAP_REL COST_PLUGIN_RELS HANDOFF_PLUGIN_RELS GUARD_PLUGIN_RELS ITC_PLUGIN_REL CORE_PLUGIN_REL LOADER_SKILL RUNTIME_VARS RUNTIME_VARS_FROZEN EDITION_FORBIDDEN_B64 VENDOR_NEUTRAL CHECK11_FAMILY CHECK11_PROSE CHECK11_OFFER_SCOPE INSTRUCTION_TIERS VENDORED_COPIES PATH_UNSET_RULE" leaked
+  local cfg_names="PLUGIN_RELS CMD_DIR CMD_SUFFIX CMD_EXCLUDE REF_DIR REF_FLAT_EXTRA DOC_CMD_DIR CMD_FORM CLI CLI_VERBS CLI_REQUIRED HAS_COST HAS_CHOICE_CAP HAS_AUTO_OTHER CHANGELOG_GLOB NS_MAP_REL COST_PLUGIN_RELS HANDOFF_PLUGIN_RELS GUARD_PLUGIN_RELS ITC_PLUGIN_REL CORE_PLUGIN_REL LOADER_SKILL RUNTIME_VARS RUNTIME_VARS_FROZEN EDITION_FORBIDDEN_B64 VENDOR_NEUTRAL CHECK11_FAMILY CHECK11_PROSE CHECK11_OFFER_SCOPE INSTRUCTION_TIERS VENDORED_COPIES PATH_UNSET_RULE KEYED_HOOKS KEYED_HOOK_MARKER" leaked
   leaked=$(env $(for n in $cfg_names; do printf '%s=env-sentinel ' "$n"; done) bash -c '
     eval "$(sed -n "1,/^FAILURES=0\$/p" "$1")"
     for n in $2; do [ "${!n}" = env-sentinel ] && printf "%s " "$n"; done; true' _ "$0" "$cfg_names" 2>&1)
@@ -4274,6 +4343,10 @@ check_vendored_copies     "$ROOT"
 # Check 23 sits outside the loop for check 17's reason: its vacuity guard is a claim about every
 # command under PLUGIN_RELS at once.
 check_path_rule_cited     "$ROOT"
+
+# Check 24 sits outside the loop: its population is the hooks KEYED_HOOKS names, which need not
+# follow PLUGIN_RELS.
+check_keyed_hooks         "$ROOT"
 
 if [ "$FAILURES" -gt 0 ]; then
   echo "FAIL: $FAILURES problem(s) under $PLUGIN_RELS" >&2

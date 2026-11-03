@@ -101,7 +101,7 @@ Maintenance runs as on `/ready`, on both sides of the handoff. Before it, in Pha
 
 ## Example
 
-`/implement BOOK-1-02` opens its pull request, and the Dev runs `/conformance BOOK-1-02`, which traces the Epic's branch. The spec says a restock notice fires within one minute; the branch schedules it every five. The Dev chooses *Fix the code*: `[DD#1]` is recorded as proposed, and the follow-up is read back by the next `/implement BOOK-1-02`, which continues on the Epic's branch, so the fix joins the open pull request; a re-run then marks `[DD#1]` resolved, and the pull request goes to review. Once every Epic of `BOOK-1` has merged, the PE runs `/conformance BOOK-1`: overrules one Dev decision, marks a stale one resolved, and settles a PRD-level gap by amending the PRD.
+`/implement ACME-77-01` opens its pull request, and the Dev runs `/conformance ACME-77-01`, which traces the Epic's branch. The spec says a restock notice fires within one minute; the branch schedules it every five. The Dev chooses *Fix the code*: `[DD#1]` is recorded as proposed, and the follow-up is read back by the next `/implement ACME-77-01`, which continues on the Epic's branch, so the fix joins the open pull request; a re-run then marks `[DD#1]` resolved, and the pull request goes to review. Once every Epic of `ACME-77` has merged, the PE runs `/conformance ACME-77`: overrules one Dev decision, marks a stale one resolved, and settles a PRD-level gap by amending the PRD.
 
 ## See also
 

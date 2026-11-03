@@ -3,5 +3,6 @@
 | Hook | Trigger |
 |---|---|
 | `notify-fixture` | Stop |
+| `preload-fixture` | UserPromptSubmit |
 
-The fixture ships 1 hooks.
+The fixture ships 2 hooks.

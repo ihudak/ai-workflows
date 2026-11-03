@@ -77,10 +77,10 @@ Five subagents can be dispatched, under the same rules as in [`/specify`](specif
 The PRD was updated after the Epic's specification merged:
 
 ```
-/product-workflows:update-spec EPIC-0042
+/product-workflows:update-spec ACME-77-01
 ```
 
-The run diffs the PRD from the version the specification's lineage record names to now, proposes the two acceptance criteria the changed requirement touches, and asks you to confirm the list. One criterion's meaning changed, so it becomes `[AC04]` and `[AC02]` is marked `Superseded by [AC04]`; the other only needed clearer wording and keeps its ID. After the review, the run names the Epic's `design.md`, which cites `[U01]/[AC02]`, and offers `/dev-workflows:design EPIC-0042` to revise it.
+The run diffs the PRD from the version the specification's lineage record names to now, proposes the two acceptance criteria the changed requirement touches, and asks you to confirm the list. One criterion's meaning changed, so it becomes `[AC04]` and `[AC02]` is marked `Superseded by [AC04]`; the other only needed clearer wording and keeps its ID. After the review, the run names the Epic's `design.md`, which cites `[U01]/[AC02]`, and offers `/dev-workflows:design ACME-77-01` to revise it.
 
 ## See also
 

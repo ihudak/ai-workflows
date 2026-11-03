@@ -100,7 +100,7 @@ Keyed mode also runs a Phase 5.8 **discrepancy analysis** whenever the PRD narra
 Document a shipped PRD once every Epic under it is implemented (keyed mode):
 
 ```
-/docs-workflows:document PRODUCT-1234
+/docs-workflows:document ACME-77
 ```
 
 The run resolves the docs repo and profile, asks for output path / refresh policy / screenshot intent, classifies (typically `SIGNIFICANT`), reads the PRD folder, resolves the repos the implementation record names, determines the applicable space(s), summarises the diffs in parallel, locates write targets, reviews images, plans the documentation, resolves any PRD/spec/code discrepancy, writes the pages via `doc-writer`, runs the style check and render verification, gates on `doc-reviewer`, and closes with the four maintenance agents plus the Final Report — recommending `/docs-workflows:release-notes <PRD>` next, once every Epic is documented.
