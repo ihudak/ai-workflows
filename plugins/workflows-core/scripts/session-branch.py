@@ -2479,6 +2479,17 @@ def selftest():
                         "--include-ahead")
             check(got.get("stranded") == 0 and got.get("ahead_not_session") is True,
                   "commits ahead that are not all session-file commits are left alone (%r)" % got)
+        # a commit with nothing to commit still creates an absent branch, at merge-base HEAD <default-ref>,
+        # and says so in created: specs-repo-git §3.4's and §6's lines report it, naming that commit
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            got = a.run("commit", "--branch", "session/zz", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            check(got.get("created") is True and got.get("committed") is None
+                  and a.git("rev-parse", "session/zz") == a.git("merge-base", "HEAD", "origin/main"),
+                  "a no-op commit creates the absent branch at the base and reports it (%r)" % got)
+            got = a.run("commit", "--branch", "session/zz", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            check(got.get("created") is False and got.get("committed") is None,
+                  "…and a later no-op commit reports no creation (%r)" % got)
 
         # ---- lift and put-back -----------------------------------------------------------------
         with tempfile.TemporaryDirectory() as tmp:

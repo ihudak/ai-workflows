@@ -24,7 +24,7 @@ Write the flag before or after the note, never inside it: a leading run of flag 
 
 - **The note itself** — friction plus a suggested improvement. The command lightly tidies wording but never invents content you didn't say.
 - **Confirmed metadata**, resolved in one grouped prompt: `command` (inferred from recent context, or `n/a`), `category` (a controlled, reuse-first vocabulary), and `impact` (`blocker | friction | polish`).
-- **`$SPECS_PATH`** — the specs-preflight step at Phase 0 settles the branch before anything is written; it prints one `Environment:` line naming `$SPECS_PATH`, its `origin` and `$REPOS_PATH`, and is otherwise silent when the repo is already clean and on its default branch, no other plugin branch holds a session-file commit it tries to push, and `$SPECS_PATH` names the root of a dedicated specs repository.
+- **`$SPECS_PATH`** — the specs-preflight step at Phase 0 settles the branch before anything is written; it prints one `Environment:` line naming `$SPECS_PATH`, its `origin` and `$REPOS_PATH`, and is otherwise silent when the repo is already clean and on its default branch, no other plugin branch holds a session-file commit it tries to push, `$SPECS_PATH` names the root of a dedicated specs repository, and, in session-branch mode, your clone already has its `session/<identity>` branch, whose creation the preflight reports.
 
 ## What it produces
 
