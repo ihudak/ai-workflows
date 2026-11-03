@@ -29,12 +29,14 @@ directory — so every path it names is relative to that top level.
 Stage the run's uncommitted docs-repo edits first — Phase 8 Agent 1 (doc index /
 cross-links) may have edited without committing — and only those: under the
 Phase 6.2 *Proceed anyway* answer the tree also holds somebody else's changes,
-which stay out of the squash.
+which stay out of the squash, and so does every path of Agent 1's that `/document`
+Phase 8 reported rather than staged — one that held somebody else's uncommitted changes
+before Agent 1 ran, or one outside the docs repository.
 Then squash:
 - squash base = `profile_commit` (C0) when recorded — keeps the profile-config
   commit as a distinct first commit; otherwise
   `git -C <docs_repo_path> merge-base <base_branch> HEAD`.
-- mechanics: `git -C <docs_repo_path> add -- <each path under docs_repo_path the run wrote or edited>`
+- mechanics: `git -C <docs_repo_path> add -- <each path under docs_repo_path the run wrote or edited, save one Phase 8 reported rather than staged>`
   → `git -C <docs_repo_path> reset --soft <squash-base>`
   → one `git -C <docs_repo_path> commit -F <msg-path> -- ':(literal)<path>' …` **by pathspec**,
   over the paths the squashed commits carry, `git -C <docs_repo_path> diff --name-only -z --no-renames <squash-base> HEAD`

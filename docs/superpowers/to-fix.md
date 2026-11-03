@@ -147,9 +147,6 @@ Found by the live runs that verified dev-workflows 4.32.0 (`docs/superpowers/ver
 
 Found by the second round of live checks on the e2e copies, 2026-10-29 to 2026-11-03 (`docs/superpowers/verification/2026-10-29-live-checks.md`, which names each run and session, and the plugin versions where the notes kept them). Line numbers are at `533037e0`.
 
-- **LC12 — `/security-workflows:scan --triage` showed a false positive's evidence line only in a command's output, again.** Run S1 (session `16fdd4a7`) marked `[SEC#1]` a false positive citing `this.ratings = data;`; the line appeared in a `git show` output and in the run's thinking, and in neither the reply's text nor the next question's own. This is the second live miss of the same sentence, after run 6 of 2026-10-26. The rule is one clause in the middle of `commands/scan.md:329`, a paragraph about how the evidence is checked. **Proposed fix:** make showing the line a step of its own after the check, and put the quoted line and the finding's `file:line` in the text of the question that follows, or, where no question follows, in the reply's text. Also seen: the check S1 printed under its move said "after each pull" and dropped "or each replay that brings `origin`'s records in", which both step 7.1's instruction (`scan.md:381`) and the report template (`scan.md:490`) carry.
-- **LC21 — two report headings carry a stray "keyed".** `product-workflows/commands/epics.md:1016` reads "## keyed Epic Drafting Report" (seen in A3b), and `docs-workflows/commands/document.md:1309` "## keyed Documentation Report". Both are left over from the sweep that took a tracker's name out of those headings; fixing both bumps two plugins.
-
 ## From the 2026-10-26 feature-gaps review — any machine
 
 Decisions on gaps `docs/superpowers/reviews/2026-10-26-feature-gaps-review.md` found, from the decisions list at the end of `docs/superpowers/reviews/2026-10-26-fix-batches.md`, recorded by batch B29.
