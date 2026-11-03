@@ -179,8 +179,8 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
    every unit is, one check takes the PRD folder's `prd.md` as both. **Print what it finds now**, and
    carry it to the Readiness table's `Lineage` row and to the Phase 9 report's `### Lineage`: each
    stale link `⚠ stale lineage: <downstream> ← <upstream> <recorded> → <current>: <changed keys>; revise <highest> with <reviser>`,
-   worded as §6 step 3 words it, a link accepted in its own unit marked so, each missing record and
-   each `absent` entry a note line as §6 step 6 words it, and a non-zero exit of the script a ⚠ line
+   worded as §6 step 3 words it, a link accepted in its own unit marked so, each missing record,
+   each `absent` entry and each document this checkout changed from `<default-ref>` a note line as §6 step 6 words it, and a non-zero exit of the script a ⚠ line
    naming its first stderr line — after which the run goes on. A stale link is the cause of what Phase
    5.8 may later find claim by claim — a requirement the PRD gained after its specification or design
    was written is one more requirement the code may not have — so it is reported beside those
@@ -318,7 +318,7 @@ Before clarification, show a readiness table summarizing what Phase 0 resolved:
 | Profile | `profile_source`: `<in-repo \| built-in \| generated>` |
 | Toolchain | `<all required tools present>` OR `<N missing: vale, pnpm — user chose to continue>`; writing into `<docs_repo_path>`[ (cwd is `<cwd>`)] |
 | Specs | `<specs_dir>` or `none` |
-| Lineage | `current`, or the step 1 lineage lines — `<n> stale, <m> unrecorded, <k> not on <default-ref>`, each listed — or `not checked — <reason>` |
+| Lineage | `current`, or the step 1 lineage lines — `<n> stale, <m> unrecorded, <k> not on <default-ref>, <j> changed on this checkout`, each listed — or `not checked — <reason>` |
 | Code repos | resolved later in Phase 4 (slug→clone match under `$REPOS_PATH`) |
 
 All discovery defaults to `/workspace` (`${REPOS_PATH:-/workspace}`); on a host, or when a path is missing, the command asks rather than guessing.
@@ -1361,7 +1361,7 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 - ...
 
 ### Lineage
-[The `Lineage:` line (`workflows-core:document-lineage` §7) for Phase 0 step 1's check, then each stale link ⚠ with its remedy, each link accepted in its unit marked so, each missing record and each document not on `<default-ref>` as a note — or nothing more where it reads `current`.]
+[The `Lineage:` line (`workflows-core:document-lineage` §7) for Phase 0 step 1's check, then each stale link ⚠ with its remedy, each link accepted in its unit marked so, each missing record, each document not on `<default-ref>` and each this checkout changed from it as a note — or nothing more where it reads `current`.]
 
 ### Branch-name probe
 [Phase 3's *Report the scan's own reach* step, one line per repository the whole-key commit scan left at zero matches — the only repositories it runs on. Omit the section entirely when it fired nowhere.]

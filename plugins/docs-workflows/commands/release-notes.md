@@ -189,8 +189,8 @@ PRD folder — a listing of the working tree and of `<default-ref>` together, th
 note drafted at the PM stage, before anything is specified — one check takes the PRD folder's
 `prd.md` as both. **Print what it finds before Phase 1 asks anything**, so its diff-grounding question
 is answered knowing it: each stale link `⚠ stale lineage: <downstream> ← <upstream> <recorded> → <current>: <changed keys>; revise <highest> with <reviser>`,
-worded as §6 step 3 words it, a link accepted in its own unit marked so, each missing record and each
-`absent` entry a note line as §6 step 6 words it, and a non-zero exit of the script a ⚠ line naming
+worded as §6 step 3 words it, a link accepted in its own unit marked so, each missing record, each
+`absent` entry and each document this checkout changed from `<default-ref>` a note line as §6 step 6 words it, and a non-zero exit of the script a ⚠ line naming
 its first stderr line — after which the run goes on. A stale link means the PRD may carry a
 requirement added after its specification or design was written, which the code may not have: with
 diff grounding on, a claim drawn from it meets the code in Phase 6's discrepancy table like any other
@@ -643,7 +643,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Deprecation: <EOL <date> (end-of-support <date | —>) | none>
    - Implementation gaps: <<path> — per gap its number, claim and decision; for `document-as-spec`: hold the release and the publication of this note until it is fixed; for `skip-and-report`: omitted from the note, raise the defect; for `document-as-code`: documented as shipped, correct the PRD | none>
    - Diff grounding: <on (repos: …) | off>
-   - Lineage: <the `Lineage:` line (`workflows-core:document-lineage` §7) for Phase 0's check, then each stale link ⚠ with its remedy, each link accepted in its unit marked so, each missing record and each document not on `<default-ref>` as a note>
+   - Lineage: <the `Lineage:` line (`workflows-core:document-lineage` §7) for Phase 0's check, then each stale link ⚠ with its remedy, each link accepted in its unit marked so, each missing record, each document not on `<default-ref>` and each this checkout changed from it as a note>
    - Blocks used: <each block by its record and heading date | none>; dropped by §4's date fallback: <each block by its record and heading date, and each commit the date rule dropped by its own date, by SHA, date and subject — a commit dropped with a block recording it is accounted for by that block's listing | none> — on a run with diff grounding on
    - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — usually a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again
    - Branch-name probe: <per repository the whole-key scan left at zero matches: each commit it matched, by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | fired on <repo>, matched nothing | on <repo>, probe failed — <its `probe_error`> | not fired — the scan matched in every repository | not run — no clone resolved> — on a run with diff grounding on; nothing listed here was read
