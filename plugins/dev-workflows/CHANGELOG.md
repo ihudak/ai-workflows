@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.57.0] — 2026-11-03
+
+Take with `workflows-core` 1.74.0, `product-workflows` 3.71.0 and `dev-workflows` 4.57.0 — D32 part 2, document lineage for PRDs and ARDs.
+
+### Added
+- `/implement` (keyed runs) checks the lineage of the in-scope specification and design before any planning or write, and asks; a *Proceed* is recorded in the block it writes to the unit's `implementation.md`. New run-state key `lineage`.
+- `/conformance` checks the lineage of the documents it traces (Phase 0 step 6) and asks; a *Proceed* is recorded in the unit's `_conformance.md`.
+- `/ready` reports the lineage of each unit's specification and design without asking: a stale link is a ⚠ finding that caps the verdict at `PARTIAL`, a missing record a note.
+
+### Changed
+- `/design` checks the ARDs it reads as well as the specification.
+
 ## [4.56.1] — 2026-11-03
 
 Batch B28: SCR-B3 (IMP-B5, DEV-B6 merged), DQD-B1 (DQC-B1 merged), DQP-B8.

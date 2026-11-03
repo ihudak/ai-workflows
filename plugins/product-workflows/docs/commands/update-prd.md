@@ -62,6 +62,8 @@ Phase 6 offers re-runs only for downstream artifacts that already exist, recomme
 
 **Where `grounding/code-grounding.md` and/or `grounding/design-grounding.md` were discovered, Phase 5 closes the consumption loop**: it adds `PRD` to the `consumed_by` of each `[CG#n]`/`[DG#n]` finding this update actually drew on — never a finding read for context and unused, and never one with no verifier outcome — and stages both grounding files alongside the canonical PRD and its archived snapshot, since an uncommitted consumption record is one no later run can read. **This is the first time `PRD` is written onto a grounding finding record** — [`/create-ard`](create-ard.md) and [`/specify`](specify.md) already write `ARD` and `specification` at their own altitudes, and [`/create-prd`](create-prd.md) already writes `PRD`, but only onto a `decisions.md` decision record on the BRD route, never inside a grounding file, since it reads no `grounding/` file on either route.
 
+**The run reads what moved upstream.** Where the PRD records its lineage, the run diffs the idea from the version recorded to now and puts what changed in front of the grill; a PRD written before lineage existed reads the folder's `idea.md` whole instead. The refreshed `prd.md` is stamped with the version of each input this run read, which is what tells later commands the PRD is current again. A BRD-route PRD records no lineage yet.
+
 ## Gates
 
 - **Phase 3.5 — Prose style check**, mirroring [`/create-prd`](create-prd.md) exactly: `prose-style:prose-style-checker` (unconditional — `prose-style` is a declared dependency of `product-workflows`) applies MAJOR fixes inline and re-runs once, never to a section heading the format requires; a non-gating quality pass.
@@ -80,6 +82,7 @@ The run resolves the feature folder, reads its `prd.md` as the base, grills the 
 
 ## See also
 
+- `workflows-core:document-lineage` — the lineage record this command diffs from and re-stamps.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off at the `prd-update` seam.
 - [`/create-prd`](create-prd.md) — the greenfield sibling that authors a PRD from scratch. `/create-prd` stops and names this command when it finds a PRD already authored; going the other way, a resolved folder holding no `prd.md` stops this run with `UPDATE_PRD_NO_PRD`, and that stop names `/create-prd` only where that command can itself run — it refuses three BRD-route shapes, not one (and an Epic folder, which this run has already refused), so on a BRD-route slice the stop resolves to [`/brd-split`](brd-split.md) against the slice or its parent, or to no command at all, where a data refusal would fire or the slice's coverage ledger is missing or unreadable.
 - [`/create-ard`](create-ard.md), [`/update-spec`](update-spec.md), [`/epics`](epics.md), and the companion plugin's `/docs-workflows:release-notes` — the role re-runs `/update-prd`'s Phase 6 offers when an ARD, spec, or release note already exists; an existing specification is revised in place by `/update-spec`, never rewritten by [`/specify`](specify.md).

@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.71.0] — 2026-11-03
+
+Take with `workflows-core` 1.74.0, `product-workflows` 3.71.0 and `dev-workflows` 4.57.0 — D32 part 2, document lineage for PRDs and ARDs.
+
+### Added
+- `/create-prd` (idea route) and `/update-prd` record the PRD's lineage: the `idea.md` it was built from, or an empty record where no idea sits in the specs repository. A BRD-route PRD records nothing yet.
+- `/update-prd` diffs each upstream its base records from the recorded version and ranks the change into the grill; a PRD written before its record existed reads the folder's `idea.md` whole and records it.
+- `/create-ard` records each ARD's lineage — the PRD, and on an Epic the Epic and the inherited ARD, plus the register, seed and grounding it read — and checks the PRD and Epic up the chain before its grounding.
+- `ard-format`: the `upstreams:` and `accepted:` blocks.
+
+### Changed
+- `/specify` checks the PRD and the ARDs as well as the Epic; `/epics` checks the PRD on every run; `/update-spec` checks the PRD and the ARDs above every base, not only an Epic's.
+
 ## [3.70.1] — 2026-11-03
 
 Batch B28: DQP-B8, DQP-B9.
