@@ -4,6 +4,20 @@
 # the tree 2026-09-23 -- `git show 62e791e8:<that path>` retrieves it.
 set -uo pipefail
 
+# --baseline [<root>] holds the spec/design numbered-ID census to scripts/spec-id-baseline.txt.
+# Those IDs sit deliberately outside the [PREFIX#N] grammar this gate enforces, and the baseline
+# is their tripwire: a change in a count means text using them moved, or a global replace
+# reached their namespace. The file's own "Verify" recipe was run by nothing, so two drifts were
+# found weeks late by hand; this mode runs that recipe -- the pattern and scan roots below must
+# stay the ones its header's Regenerate and Verify recipes name; the mode fails where those
+# recipes do not, and on any difference in the counts. A recipe is matched by its own context,
+# `grep -rhoE '<pattern>'` and `--exclude='CHANGELOG.md' <roots>`, never by the bare string, which
+# the header's prose also carries; each must appear twice, once per recipe. `sort` runs in the C
+# locale and both sides are compared as `<count> <id>`, so neither the order nor `uniq -c`'s count
+# width (GNU and BSD pad it differently) can depend on the machine.
+SPEC_ID_PATTERN='\[U0[0-9]+\]|\[AC0[0-9]+\]|\[TC0[0-9]+\]|\[Uxx\]|\[ACxx\]|\[TCxx\]'
+SPEC_ID_ROOTS='plugins/ CLAUDE.md .claude/rules/ docs/maintainers/'
+
 # --selftest runs the gate against its own fixtures and asserts, per fixture, the
 # exit code AND every form the gate must have named. Without it the fixtures are
 # decorative: CI only ever ran `--root .`, so nothing proved the gate could still
@@ -20,10 +34,11 @@ set -uo pipefail
 if [ "${1:-}" = "--selftest" ]; then
   here=$(cd "$(dirname "$0")" && pwd)
   rc=0
+  mode=--root # the mode each expect runs the gate in; the --baseline cases below switch it
   expect() { # <description> <expected-exit> <root> [<form-that-must-be-reported>...]
     local desc="$1" want="$2" root="$3"; shift 3
     local out got form missing=""
-    out=$("$0" --root "$root" 2>&1); got=$?
+    out=$("$0" "$mode" "$root" 2>&1); got=$?
     for form in "$@"; do
       grep -qF -- "$form" <<<"$out" || missing="$missing $form"
     done
@@ -76,12 +91,89 @@ if [ "${1:-}" = "--selftest" ]; then
     > "$wtroot/green-nm/scripts/mermaid/node_modules/pkg/README.md"
   printf '# compliant\n\n[AC#1] and [SM#1]\n' > "$wtroot/green-nm/kept.md"
   expect "the mermaid gate's installed packages are not walked" 0 "$wtroot/green-nm"
+  # --baseline: the green tree's census equals its baseline only if every scan root is read
+  # (plugins/, CLAUDE.md, .claude/rules/, docs/maintainers/) and nothing else is -- a CHANGELOG.md,
+  # a non-markdown file and docs/superpowers/ each carry IDs that would move a count. Its counts
+  # are padded unlike `uniq -c`'s, which must not matter. The red tree adds one ID and drops
+  # another file's, and must name both drifted lines. A header with one recipe naming another
+  # pattern fails, however the counts compare, and so does one whose prose names the roots while
+  # one recipe names others: prose is never counted as a recipe.
+  mode=--baseline
+  b="$wtroot/base-green"
+  mkdir -p "$b/scripts" "$b/plugins/p" "$b/.claude/rules" "$b/docs/maintainers" "$b/docs/superpowers"
+  recipe() { # <pattern> <roots>: one recipe's two header lines, as the real header writes them
+    printf "#   grep -rhoE '%s' \\\n#     --include='*.md' --exclude='CHANGELOG.md' %s 2>/dev/null\n" "$1" "$2"
+  }
+  hdr=$(recipe "$SPEC_ID_PATTERN" "$SPEC_ID_ROOTS"; recipe "$SPEC_ID_PATTERN" "$SPEC_ID_ROOTS")
+  printf '%s\n2 [AC01]\n  1 [ACxx]\n   2 [Uxx]\n' "$hdr" > "$b/scripts/spec-id-baseline.txt"
+  printf '# a rule\n\n[ACxx]\n' > "$b/.claude/rules/r.md"
+  printf '# a plugin page\n\n[AC01] and [Uxx]\n' > "$b/plugins/p/a.md"
+  printf '# root\n\n[AC01]\n' > "$b/CLAUDE.md"
+  printf '# rationale\n\n[Uxx]\n' > "$b/docs/maintainers/rationale.md"
+  printf '# history\n\n[U01] [U01]\n' > "$b/plugins/p/CHANGELOG.md"
+  printf '[TC01]\n' > "$b/plugins/p/notes.txt"
+  printf '# a record\n\n[TC01]\n' > "$b/docs/superpowers/record.md"
+  cp -R "$b" "$wtroot/base-red"
+  printf '# new\n\n[U01]\n' > "$wtroot/base-red/plugins/p/b.md"
+  rm "$wtroot/base-red/CLAUDE.md"
+  mkdir -p "$wtroot/base-empty/scripts"
+  printf '%s\n' "$hdr" > "$wtroot/base-empty/scripts/spec-id-baseline.txt"
+  cp -R "$b" "$wtroot/base-recipe"
+  { recipe '\[U0[0-9]+\]|\[Uxx\]' "$SPEC_ID_ROOTS"; recipe "$SPEC_ID_PATTERN" "$SPEC_ID_ROOTS"
+    grep -v '^#' "$b/scripts/spec-id-baseline.txt"; } > "$wtroot/base-recipe/scripts/spec-id-baseline.txt"
+  cp -R "$b" "$wtroot/base-prose"
+  { printf '# Scan root: %s   (all commands below are run from the repository root)\n' "$SPEC_ID_ROOTS"
+    recipe "$SPEC_ID_PATTERN" "$SPEC_ID_ROOTS"; recipe "$SPEC_ID_PATTERN" 'plugins/ CLAUDE.md docs/maintainers/'
+    grep -v '^#' "$b/scripts/spec-id-baseline.txt"; } > "$wtroot/base-prose/scripts/spec-id-baseline.txt"
+  expect "the census equals its baseline"            0 "$b"
+  expect "a census that drifted from its baseline fails" 1 "$wtroot/base-red" "[U01]" "[AC01]"
+  expect "a baseline with no census line fails"      1 "$wtroot/base-empty" "no census line"
+  expect "a missing baseline is an error"            2 "$wtroot/green"
+  expect "a header naming another pattern fails"     1 "$wtroot/base-recipe" "no longer name"
+  expect "prose naming the roots is no recipe"       1 "$wtroot/base-prose" "no longer name"
+  mode=--root
   if [ "$rc" -eq 0 ]; then
     echo "SELFTEST PASS"
   else
     echo "SELFTEST FAIL"
   fi
   exit "$rc"
+fi
+
+if [ "${1:-}" = "--baseline" ]; then
+  broot="${2:-.}"
+  bfile="$broot/scripts/spec-id-baseline.txt"
+  if [ ! -r "$bfile" ]; then
+    echo "ERROR: '$bfile' does not exist or is not readable" >&2
+    exit 2
+  fi
+  # The recipes in the header and the copy above must agree, or the two drift apart unseen.
+  for needle in "grep -rhoE '$SPEC_ID_PATTERN'" "--exclude='CHANGELOG.md' $SPEC_ID_ROOTS"; do
+    if [ "$(grep '^#' "$bfile" | grep -cF -- "$needle")" -lt 2 ]; then
+      echo "FAIL: $bfile's Regenerate and Verify recipes no longer name this mode's $needle --"
+      echo "      change scripts/check-id-grammar.sh's SPEC_ID_PATTERN or SPEC_ID_ROOTS with them"
+      exit 1
+    fi
+  done
+  want=$(grep -v '^#' "$bfile" | awk '{print $1, $2}' || true)
+  if [ -z "$want" ]; then
+    echo "FAIL: $bfile holds no census line -- a census of nothing trips on nothing"
+    exit 1
+  fi
+  # shellcheck disable=SC2086 # SPEC_ID_ROOTS is a word list on purpose
+  got=$( cd "$broot" && grep -rhoE "$SPEC_ID_PATTERN" --include='*.md' --exclude='CHANGELOG.md' \
+           $SPEC_ID_ROOTS 2>/dev/null | LC_ALL=C sort | uniq -c | awk '{print $1, $2}' )
+  if delta=$(diff <(printf '%s\n' "$want") <(printf '%s\n' "$got")); then
+    echo "PASS: the spec-ID census under $broot equals scripts/spec-id-baseline.txt"
+    exit 0
+  fi
+  echo "FAIL: the spec-ID census drifted from scripts/spec-id-baseline.txt (< baseline, > tree):"
+  printf '%s\n' "$delta"
+  echo
+  echo "Find which files moved each count before touching the baseline. A global replace that"
+  echo "reached these IDs is the defect this catches; a new or removed use of one is regenerated"
+  echo "with the file's Regenerate recipe and a dated header paragraph naming each delta's source."
+  exit 1
 fi
 
 ROOT="."

@@ -84,3 +84,5 @@ Noted by the re-review and deferred with the rest, in `docs/superpowers/to-fix.m
 ## Open items after both fix waves
 
 All of them — the edition ports (E1, E2), every deferred finding (C1–C8, D1–D16, D14's decision included) and the one accepted residual (which of the customer's sentences a *Correct it* takes as the reason, recorded since product-workflows 3.34.5 rather than tested) — are in `docs/superpowers/to-fix.md`.
+
+**Since then (2026-11-03, batch B29):** the C items no longer stand in `docs/superpowers/to-fix.md`. C1 and C3–C8 were fixed, C6 as moot, in the `/conformance` rework — `12f2408b` deleted C3–C8 and restated C1 against the merged test's new home, `implementation-format` §5, and `4069aa29` deleted C1 — merged to `main` by `c3cd9d3e`. C2, and C9, which `b0272794` added after this record was written, were fixed in workflows-core 1.53.0 (batch B03: `af81dac8`, merged by `9495ec0d`). Of D1–D16, D15 alone is still listed there; E1 and E2 and the accepted residual are too.

@@ -372,12 +372,12 @@ Seventeen review passes, each on one slice, read the slice end to end at `0e02e2
 
 ### Stale text in to-fix.md itself
 
-- **The *Design-level* intro (`docs/superpowers/to-fix.md:96`) says "Of those items only C2, in the section above, is still open."** C9, added by `b0272794` after that sentence was written, is also open in that section. The same paragraph still speaks of re-reviewing once the `/conformance` rework "reaches [main] with the `iv-gu/security-workflows-scan` merge". That merge landed as `c3cd9d3e`, so the condition has already happened and the re-review it defers is owed now.
-- **D16's quotation (`to-fix.md:115`) no longer matches the tree.** It quotes "…run on this slice from <branch> stops here the same way". The text at `create-prd.md:365`, `create-ard.md:296` and `specify.md:342` now reads "…run on this slice stops here the same way". The `:361`/`:292`/`:338` line numbers are at `25a3373c`, which the item says.
-- **E4's source range stops at `56a3c842`.** It does not list the three later commits on main: `01e80e9c` (to-fix itself), `b4ab29c7` (product-workflows 3.36.1; it rewords `/brd-package`, `bundle-packaging`, `/create-prd`, its docs page and `decision-register-format` §7 about what the customer sees) and `0e02e28b` (`/brd-package`). All three are the list itself or BRD-route customer wording, so most likely "not ported". But `b4ab29c7` also edits `/create-prd` and `decision-register-format`, which the editions do carry. Classify that edit explicitly rather than leaving it out by range.
-- **The *Coverage* line (`to-fix.md:9`) says "as of 2026-10-15"** and lists the 2026-10-24 additions as "E4, L2 and the last two *Accepted* entries". That is accurate after `b4ab29c7` removed L1.
+- **The *Design-level* intro (`docs/superpowers/to-fix.md:96`) says "Of those items only C2, in the section above, is still open."** C9, added by `b0272794` after that sentence was written, is also open in that section. The same paragraph still speaks of re-reviewing once the `/conformance` rework "reaches [main] with the `iv-gu/security-workflows-scan` merge". That merge landed as `c3cd9d3e`, so the condition has already happened and the re-review it defers is owed now. — **Fixed in batch B29 (repository)**
+- **D16's quotation (`to-fix.md:115`) no longer matches the tree.** It quotes "…run on this slice from <branch> stops here the same way". The text at `create-prd.md:365`, `create-ard.md:296` and `specify.md:342` now reads "…run on this slice stops here the same way". The `:361`/`:292`/`:338` line numbers are at `25a3373c`, which the item says. — **Fixed in batch B07: D16 was deleted from to-fix.md**
+- **E4's source range stops at `56a3c842`.** It does not list the three later commits on main: `01e80e9c` (to-fix itself), `b4ab29c7` (product-workflows 3.36.1; it rewords `/brd-package`, `bundle-packaging`, `/create-prd`, its docs page and `decision-register-format` §7 about what the customer sees) and `0e02e28b` (`/brd-package`). All three are the list itself or BRD-route customer wording, so most likely "not ported". But `b4ab29c7` also edits `/create-prd` and `decision-register-format`, which the editions do carry. Classify that edit explicitly rather than leaving it out by range. — **Fixed in batch B29 (repository)**
+- **The *Coverage* line (`to-fix.md:9`) says "as of 2026-10-15"** and lists the 2026-10-24 additions as "E4, L2 and the last two *Accepted* entries". That is accurate after `b4ab29c7` removed L1. — **Fixed in batch B29 (repository)**
 - E1's census quote ("500 of this tree's 643") still matches `scripts/check-docs.sh:1843`.
-- **The review record `docs/superpowers/reviews/2026-10-15-review-of-five-merges.md`** still says C1–C8 are tracked in to-fix.md; they were fixed and removed (TRK-B1 below).
+- **The review record `docs/superpowers/reviews/2026-10-15-review-of-five-merges.md`** still says C1–C8 are tracked in to-fix.md; they were fixed and removed (TRK-B1 below). — **Fixed in batch B29 (repository)**
 
 ### The other older records
 
@@ -655,7 +655,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high on the payload key (seen in transcripts). Medium that no Claude Code version sends `output`.
 
-### SCR-B2 — MINOR — CLAUDE.md says check 13 enforces vendor neutrality for every text file under `plugins/`; it scans only `PLUGIN_RELS`, and two catalog plugins name trackers unmarked
+### SCR-B2 — MINOR — CLAUDE.md says check 13 enforces vendor neutrality for every text file under `plugins/`; it scans only `PLUGIN_RELS`, and two catalog plugins name trackers unmarked — **Fixed in batch B29 (repository)**
 - **Where:** `CLAUDE.md:131` ("no text file under `plugins/` … names a tracker unless … carries `<!-- vendor-token-ok … -->`; … check 13 enforces it"), against `scripts/check-docs.sh:52` (`PLUGIN_RELS` lacks `acli`, `prose-style` and `obsidian-llm-wiki`) and `.claude/rules/gates.md:81`/`:83` (scope: "every text file under any plugin in `PLUGIN_RELS`"; "the scope stops at the plugin and the repo-root instruction tiers")
 - **What is wrong:** Two live statements of the same rule disagree, and CLAUDE.md's is false of the tree. `plugins/acli` has 120 unmarked lines naming the tracker, and `plugins/obsidian-llm-wiki` has 18 (e.g. `commands/wiki-task.md:3`, `skills/_shared/task-rules.md:103`). Check 13 passes because it never reads them.
 - **Failure scenario:** An agent editing `acli` or `obsidian-llm-wiki` reads CLAUDE.md, takes the hard constraint as binding, and either "fixes" a plugin whose subject is a tracker CLI or treats a green check 13 as proof the rule holds there.
@@ -674,7 +674,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (the line predates the window, 2026-09-06; the hooks were edited in the window)
 - **Confidence:** high
 
-### SCR-B4 — MINOR — the spec-ID census "tripwire" is run by no gate, and its own header records two drifts that went unnoticed
+### SCR-B4 — MINOR — the spec-ID census "tripwire" is run by no gate, and its own header records two drifts that went unnoticed — **Fixed in batch B29 (repository)**
 - **Where:** `scripts/spec-id-baseline.txt:1-77`; `.claude/rules/gates-id-grammar.md:15` ("`scripts/spec-id-baseline.txt` is its census tripwire"); `.github/workflows/validate-catalog.yml` (no step reads it)
 - **What is wrong:** A tripwire only works if something trips it. The verify recipe is in the file's comment and nothing runs it. The header itself records the consequence: the drift of 2026-08-30 and 2026-09-22 was found only on 2026-09-23, and fe8ce332 (2026-10-13) "named the ids … without regenerating this file", found later by hand.
 - **Failure scenario:** A global replace reaches the `[U01]`/`[AC01]`/`[TC01]` namespace and CI stays green.
@@ -2496,7 +2496,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## older review records
 
-### TRK-B1 — NIT — The 2026-10-15 review record says C1–C8 are still tracked in to-fix.md, but they were fixed and removed
+### TRK-B1 — NIT — The 2026-10-15 review record says C1–C8 are still tracked in to-fix.md, but they were fixed and removed — **Fixed in batch B29 (repository)**
 - **Where:** `docs/superpowers/reviews/2026-10-15-review-of-five-merges.md:64` (*Deferred*: "C1–C7 … is tracked, in full … in `docs/superpowers/to-fix.md`"), `:82` (C8 "recorded there too"), `:84-86` (*Open items after both fix waves*: "every deferred finding (C1–C8 …) … are in `docs/superpowers/to-fix.md`")
 - **What is wrong:** The record says every C finding "is tracked, in full … in `docs/superpowers/to-fix.md`". C1 and C3–C8 were deleted from to-fix.md as fixed or moot in `12f2408b` and `4069aa29`. to-fix.md now holds C2, plus C9, which this record never mentions.
 - **Failure scenario:** A reader, or an agent sweeping open items, follows the record's pointer and either looks for C1 and C3–C8 in to-fix.md and finds nothing, or treats them as open.
@@ -2505,7 +2505,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback in `docs/superpowers/reviews/2026-10-15-review-of-five-merges.md`
 - **Confidence:** high
 
-### TRK-B2 — MINOR — An edition-port obligation from the 2026-08-22 docs restructure has no entry in to-fix.md
+### TRK-B2 — MINOR — An edition-port obligation from the 2026-08-22 docs restructure has no entry in to-fix.md — **Fixed in batch B29 (repository)**
 - **Where:** `docs/superpowers/verification/2026-08-22-docs-restructure-open-items.md` § *Carried forward, outside this branch*; `docs/superpowers/to-fix.md:9`, `:11-82`
 - **What is wrong:** The record says both editions "still carry the five-role vocabulary and the retired `QA` label" and that the port "is its own change". to-fix.md calls itself "the one list of known, unfixed issues … and of the work it owes the editions", yet its E1–E4 do not include this port. Line 9 admits `verification/` records "have not been swept".
 - **Failure scenario:** Someone porting to an edition reads to-fix.md, which says to read it "before starting work on any edition", and never learns of the role-collapse port. The edition keeps `team`/`QA` roles while the cost-emission §7 and next-phase-offer text it ports from this repo use four roles.

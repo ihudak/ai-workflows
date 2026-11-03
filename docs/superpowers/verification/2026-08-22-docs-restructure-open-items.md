@@ -53,6 +53,8 @@ Carriers changed: `references/cost-emission.md` §7, `references/workflow-states
 
 The role collapse touches files that are `cp`-ported to the internal edition and hand-adapted for `ihudak-copilot-plugins`. Both editions still carry the five-role vocabulary and the retired `QA` label wherever their own copies of these references live. The port is its own change — see the cross-repo porting notes before starting it.
 
+**Tracked since 2026-11-03 as E5 in `docs/superpowers/to-fix.md`** (batch B29), which is where this port's status is kept.
+
 ---
 
 ## F. Gate findings — all fourteen built, none deferred

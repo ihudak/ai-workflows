@@ -158,7 +158,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 - **Decision (2026-10-28):** not taken; §4's boundary stays as it is. Measured in the C10 work (workflows-core 1.65.0): the readers are `key-discovery.py` (for `/document` and `/release-notes`), `diff-summarizer` and `docs-grounder` (each its own copy, with merges), and `unit-branch`'s subject leg (bracketed `[<key>]`, unaffected). A repository where the key never matches whole is already covered by §4's probe, which reports it; the residue is a repository where the key matched at least once and some work landed only by a one-parent squash whose title and body both lack the key, while its branch name carries it. Widening would read a key out of a branch name, against *Resolve an identifier against a known set*: no set of code-repo branch names exists, and the specs folder keys reach only two of the four readers; `diff-summarizer` and `docs-grounder` would also take merge commits such as `Merge branch 'main' into feat/<KEY>-x` as that key's work. A squash normally carries the PR title or its commit messages, keys included, which the existing `%B` scan already matches. Reopen on a measured instance.
 
-### SCR-G2 — `untrusted-content` split, deferred "for later" by part 1, never taken up
+### SCR-G2 — `untrusted-content` split, deferred "for later" by part 1, never taken up — **Recorded in to-fix.md (batch B29): dropped (Accepted)**
 - **Designed in:** `docs/superpowers/specs/2026-10-20-lean-context-loader-design.md:46` ("`untrusted-content` (9.5k, 28 command loads, about 4k saved each): check 20 pins it as one file; left for later").
 - **Current state:** `plugins/workflows-core/references/untrusted-content.md` is still one 9,589-byte file. No later spec, ruling or changelog picks it up or drops it.
 - **Still worth doing?:** marginal. D measured that splitting has not clearly paid, and check 20 pins the block byte for byte, so a split also needs a check-20 change. Record it as dropped or keep it in to-fix.md, so it does not stay an open "later".
@@ -179,7 +179,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes, as part of IMP-G1's A/B rather than separately.
 - **Suggested scope:** measure the current `/implement` on the route-3 copy once, record it against the bar, and either accept the higher cost explicitly (a ruling) or fold the target into IMP-G1.
 
-### IMP-G3 — Sub-project F part 2, Fable escalation, deferred and never picked up
+### IMP-G3 — Sub-project F part 2, Fable escalation, deferred and never picked up — **Recorded in to-fix.md (batch B29): deferred**
 - **Designed in:** `specs/2026-10-17-implement-coding-subagents-design.md` § Non-goals: "**No Fable escalation (part 2 of F).** Deferred. No run so far has shown Opus falling short…"; header: "Part 2, Fable escalation, is deferred".
 - **Current state:** absent; only the "never below the session" clause (a Fable session codes on Fable, `classification.md` §4) ships. No later spec revisits it.
 - **Still worth doing?:** no for now — the deferral's own ground (no measured Opus shortfall) still holds; keep it listed as deferred.
@@ -191,7 +191,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** marginal — it guards the text, not the run, and the run-time failure is addressed by Phase 0's session-model gate. Cheap if added.
 - **Suggested scope:** a check that each `→ Agent (subagent_type: "dev-workflows:code-writer"…` and `"dev-workflows:review-fixer"` line carries `model:`.
 
-### IMP-G5 — Resuming a crashed run from the run-state file (explicitly a possible later feature)
+### IMP-G5 — Resuming a crashed run from the run-state file (explicitly a possible later feature) — **Recorded in to-fix.md (batch B29): deferred**
 - **Designed in:** `specs/2026-10-17-implement-coding-subagents-design.md` § Non-goals: "**No resuming of a crashed or abandoned run** from the run-state file … Using it to resume is a possible later feature, and is out of scope."
 - **Current state:** not built: `init` moves any leftover file aside unread (`implement.md:311`).
 - **Still worth doing?:** low — listed so the deferral is visible; IMP-G1 may change the state model anyway.
@@ -301,7 +301,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes. These are the family's most prose-heavy commands (`/docs-audit`: thirteen phases, three agents, a schema with edge rules), and B1 is the kind of defect a single end-to-end run of the route would surface.
 - **Suggested scope:** one bookstore-demo pass through `docs-workflow.md` steps 1–4 and 7: `/docs-init`, `/docs-serve`, `/docs-audit`, a hand-written unit, then `/docs-audit --refresh`. Record what fails.
 
-### DOC-D-G5 — `/release-notes` drops the PRD's starting-state fact, and no record tracks it
+### DOC-D-G5 — `/release-notes` drops the PRD's starting-state fact, and no record tracks it — **Recorded in to-fix.md (batch B29): open**
 - **Also found as:** FBB-B8 (merged here)
 - **Designed in:** none. It was observed in `docs/superpowers/verification/2026-10-20-lean-context-loader.md:91` ("only its run noticed that all three notes drop the PRD's starting-state fact … the gap is not part 1's") and in the ledger, `2026-10-20-lean-context-loader-ledger.md:357` ("All three miss the PRD's starting-state fact; only B (1.14.3) noticed and filed it").
 - **Current state:** the finding was attributed away from part 1 and never filed. It is not in `docs/superpowers/to-fix.md`, and nothing in `release-note-types.md` or `release-notes-writer` was changed for it. The note quality has regressed since docs-workflows 1.14.3 on a known input (demo `BOOK-2-01`).
