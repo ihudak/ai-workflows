@@ -72,7 +72,7 @@
       "match": [
         "^prd\\.md$"
       ],
-      "covered": false,
+      "covered": true,
       "reviser": "/product-workflows:update-prd <KEY>",
       "version": null,
       "items": [
@@ -98,7 +98,7 @@
         "^ard\\.md$",
         "^ard-[A-Za-z0-9._-]+\\.md$"
       ],
-      "covered": false,
+      "covered": true,
       "reviser": "/product-workflows:create-ard <KEY>",
       "version": null,
       "items": [

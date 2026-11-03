@@ -193,14 +193,17 @@ def _split_frontmatter(text):
 
 
 def _blocks(fm):
-    """{'upstreams': [...], 'accepted': [...]} parsed from frontmatter lines, plus the other lines."""
+    """{'upstreams': [...], 'accepted': [...]} parsed from frontmatter lines, the other lines, and the
+    set of the two keys present — an empty flow list (`upstreams: []`) is a key present with no entries."""
     found = {"upstreams": [], "accepted": []}
     other = []
+    seen = set()
     current = None
     for line in fm:
-        top = re.match(r"^(upstreams|accepted):\s*$", line)
+        top = re.match(r"^(upstreams|accepted):\s*(\[\])?\s*$", line)
         if top:
-            current = top.group(1)
+            seen.add(top.group(1))
+            current = None if top.group(2) else top.group(1)
             continue
         if current and (line.startswith(" ") or line.startswith("-")) and line.strip():
             m = _ENTRY.match(line)
@@ -217,21 +220,21 @@ def _blocks(fm):
             continue
         current = None
         other.append(line)
-    return found, other
+    return found, other, seen
 
 
 def read_record(text):
     fm, _ = _split_frontmatter(text)
     if fm is None:
         return {"upstreams": [], "accepted": []}, False
-    found, other = _blocks(fm)
-    has = any(re.match(r"^upstreams:\s*$", l) for l in fm)
-    return found, has
+    found, _, seen = _blocks(fm)
+    return found, "upstreams" in seen
 
 
-def _render(name, entries, with_version):
+def _render(name, entries, with_version, keep_empty=False):
+    """The block's lines; an empty list renders `name: []` where keep_empty, else nothing."""
     if not entries:
-        return []
+        return [f"{name}: []"] if keep_empty else []
     out = [f"{name}:"]
     for e in entries:
         out.append(f"  - path: {e['path']}")
@@ -249,12 +252,14 @@ def _write_record(doc, upstreams=None, accepted=None):
     fm, body = _split_frontmatter(text)
     if fm is None:
         fm, body = [], text
-    found, other = _blocks(fm)
+    found, other, seen = _blocks(fm)
     ups = found["upstreams"] if upstreams is None else upstreams
     acc = found["accepted"] if accepted is None else accepted
+    # an upstreams: key is a record, even an empty one: written where given or already present
+    keep_ups = upstreams is not None or "upstreams" in seen
     while other and other[-1] == "":
         other.pop()
-    lines = other + _render("upstreams", ups, True) + _render("accepted", acc, False)
+    lines = other + _render("upstreams", ups, True, keep_ups) + _render("accepted", acc, False)
     with open(doc, "w", encoding="utf-8") as fh:
         fh.write("---\n" + "\n".join(lines) + "\n---\n" + body)
 
@@ -300,12 +305,14 @@ def stamp(specs, ref, doc, captured):
     return {"stamped": doc, "carried": carried, "dropped": dropped}
 
 
-def check(specs, ref, docs, output=None):
-    """Walk from docs (paths relative to specs) up recorded upstreams through covered kinds."""
+def check(specs, ref, docs, output=None, accepted_from=()):
+    """Walk from docs (paths relative to specs) up recorded upstreams through covered kinds. A link
+    counts as accepted where output, or any document in accepted_from, records it accepted."""
     accepted = []
-    if output and os.path.exists(output):
-        with open(output, encoding="utf-8") as fh:
-            accepted = read_record(fh.read())[0]["accepted"]
+    for src in ([output] if output else []) + list(accepted_from):
+        if os.path.exists(src):
+            with open(src, encoding="utf-8") as fh:
+                accepted += read_record(fh.read())[0]["accepted"]
     acc = {(a["path"], a["blob"]) for a in accepted}
     res = {"stale": [], "missing": [], "absent": [], "accepted": [], "highest": None, "top_missing": None}
     best = {"stale": None, "missing": None}  # each (depth, document)
@@ -451,6 +458,7 @@ When the buyer chooses invoice, the system shall issue an invoice.
 PRD = """---
 kind: prd
 key: PRD-1
+upstreams: []
 ---
 # PRD
 
@@ -582,7 +590,8 @@ class _Repo:
         self.run("commit", "-q", "-m", msg)
 
     def chain(self):
-        """prd -> spec -> design, each downstream stamped against its upstream at main."""
+        """prd -> spec -> design, each downstream stamped against its upstream at main; the PRD
+        carries an empty record (no idea under the specs repository), as PRD does."""
         self.write(self.prd, PRD)
         self.commit()
         self.write(self.spec, SPEC)
@@ -643,8 +652,10 @@ def test_missing_record():
         res = check(r.root, "main", [r.spec])
         _check("missing listed", [m["doc"] for m in res["missing"]] == [r.spec], json.dumps(res))
         _check("missing top", res["top_missing"]["doc"] == r.spec and res["highest"] is None, json.dumps(res))
-        res2 = check(r.root, "main", [r.prd])
-        _check("prd never missing", res2["missing"] == [] and res2["top_missing"] is None, json.dumps(res2))
+        r.write(f"{r.dir}/idea.md", "# Idea\n\n## Problem\n\nCarts.\n")
+        r.commit()
+        res2 = check(r.root, "main", [f"{r.dir}/idea.md"])
+        _check("uncovered top never missing", res2["missing"] == [] and res2["top_missing"] is None, json.dumps(res2))
     _with_repo(body)
 
 
@@ -766,6 +777,90 @@ def test_accepted_survive_rewrite():
     _with_repo(body)
 
 
+
+
+def test_empty_capture_writes_empty_list():
+    def body(r):
+        r.write(r.spec, SPEC)
+        doc = os.path.join(r.root, r.spec)
+        stamp(r.root, "main", doc, [])
+        text = r.read(r.spec)
+        _check("empty list written", "\nupstreams: []\n" in text, text)
+        _check("empty list is a record", read_record(text)[1] is True)
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        _check("empty record not missing", res["missing"] == [] and res["stale"] == [], json.dumps(res))
+    _with_repo(body)
+
+
+def test_flow_empty_list_replaced():
+    def body(r):
+        r.write(r.prd, PRD)
+        r.commit()
+        r.write(r.spec, "---\nkind: specification\nupstreams: []\nkey: PRD-1\n---\n# S\n")
+        doc = os.path.join(r.root, r.spec)
+        stamp(r.root, "main", doc, capture(r.root, "main", [r.prd], []))
+        text = r.read(r.spec)
+        _check("one upstreams key", text.count("upstreams:") == 1 and f"path: {r.prd}" in text, text)
+        _check("other keys kept", "kind: specification\n" in text and "key: PRD-1\n" in text, text)
+    _with_repo(body)
+
+
+def test_accept_creates_frontmatter():
+    def body(r):
+        rel = f"{r.dir}/implementation.md"
+        original = "# Implementation — X\n\n## 2026-01-01 — /implement\n- repo:    orders\n"
+        r.write(rel, original)
+        doc = os.path.join(r.root, rel)
+        accept(doc, {"stale": [{"upstream": r.prd, "current": {"blob": "c" * 40}}], "missing": []})
+        text = r.read(rel)
+        _check("frontmatter created", text.startswith("---\naccepted:\n"), text)
+        _check("body unchanged", text.split("\n---\n", 1)[1] == original, text)
+        _check("no upstreams invented", "upstreams" not in text, text)
+    _with_repo(body)
+
+
+def test_accept_adds_no_upstreams_key():
+    def body(r):
+        rel = f"{r.dir}/_conformance.md"
+        r.write(rel, "---\nkind: conformance-record\nkey: PRD-1\n---\n# C\n")
+        doc = os.path.join(r.root, rel)
+        accept(doc, {"stale": [{"upstream": r.prd, "current": {"blob": "c" * 40}}], "missing": []})
+        text = r.read(rel)
+        _check("keys kept", "kind: conformance-record\nkey: PRD-1\n" in text, text)
+        _check("no upstreams key", "upstreams" not in text, text)
+    _with_repo(body)
+
+
+def test_prd_covered_missing():
+    def body(r):
+        r.write(r.prd, "# PRD\n\n## User Stories\n\n### [US#1]: Pay\n\nAs a buyer, I pay.\n")
+        r.commit()
+        r.write(r.spec, SPEC)
+        stamp(r.root, "main", os.path.join(r.root, r.spec), capture(r.root, "main", [r.prd], []))
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        _check("prd missing", [m["doc"] for m in res["missing"]] == [r.prd], json.dumps(res))
+        _check("prd reviser", res["top_missing"]["reviser"].startswith("/product-workflows:update-prd"), json.dumps(res))
+    _with_repo(body)
+
+
+def test_accepted_from_union():
+    def body(r):
+        r.chain()
+        r.write(r.prd, PRD.replace("within one minute", "within two minutes"))
+        r.commit()
+        design = os.path.join(r.root, r.design)
+        accept(design, check(r.root, "main", [r.design]))
+        other = os.path.join(r.root, r.dir, "other.md")
+        r.write(f"{r.dir}/other.md", "---\nkind: design\n---\n# O\n")
+        res = check(r.root, "main", [r.spec], accepted_from=[design])
+        _check("accepted via union", res["stale"] == [] and len(res["accepted"]) == 1, json.dumps(res))
+        res2 = check(r.root, "main", [r.spec], accepted_from=[other])
+        _check("other doc does not accept", len(res2["stale"]) == 1, json.dumps(res2))
+    _with_repo(body)
+
+
 def main(argv):
     import argparse
     if argv[1:2] == ["--selftest"]:
@@ -787,6 +882,7 @@ def main(argv):
     k.add_argument("--specs", required=True)
     k.add_argument("--ref", required=True)
     k.add_argument("--output")
+    k.add_argument("--accepted-from", action="append", default=[])
     k.add_argument("--out")
     k.add_argument("docs", nargs="+")
     a = sub.add_parser("accept")
@@ -801,7 +897,8 @@ def main(argv):
         elif args.cmd == "stamp":
             result = stamp(args.specs, args.ref, args.doc, _load_json(args.capture))
         elif args.cmd == "check":
-            result = check(args.specs, args.ref, args.docs, output=args.output)
+            result = check(args.specs, args.ref, args.docs, output=args.output,
+                           accepted_from=args.accepted_from)
             if args.out:
                 with open(args.out, "w", encoding="utf-8") as fh:
                     json.dump(result, fh, indent=2)
