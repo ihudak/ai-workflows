@@ -110,7 +110,7 @@ The run resolves `ACME-001-01`'s folder two levels under `specifications/`, insi
 
 ## See also
 
-- `workflows-core:document-lineage` — the lineage record each ARD carries, and the upstream check run on the PRD and the Epic.
+- `workflows-core:document-lineage` — the lineage record each ARD carries, and the upstream check run on the PRD, the Epic, the decision register and the grounding files; a register or grounding change counts only where an architecture-level record moved.
 - [Roles and phases](../roles-and-phases.md) — what the `pa` role owns, an optional phase in the pipeline.
 - [`/create-prd`](create-prd.md) — the upstream command that authors the PRD `/create-ard` reads.
 - [`/harvest-decisions`](harvest-decisions.md) — keeps every merged ARD's decisions in the team knowledge base this command grounds on.

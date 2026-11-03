@@ -91,4 +91,4 @@ The run diffs the PRD from the version the specification's lineage record names 
 - [Roles and phases](../roles-and-phases.md) — what the `pe` role owns.
 - [Model routing](../reference/model-routing.md), [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md) and [Resume and checkpoints](../reference/resume-and-checkpoints.md).
 - `product-workflows:specification-format` — the lineage record and the legacy `inputs_at` field, the superseded and withdrawn markers, the live-items rule and the archive rule.
-- `workflows-core:document-lineage` — the lineage record this command diffs from and re-stamps, and the upstream check it runs above the base — on the PRD, the ARDs and, for an Epic-level specification, the Epic.
+- `workflows-core:document-lineage` — the lineage record this command diffs from and re-stamps, and the upstream check it runs above the base — on the PRD, the ARDs, the decision register and the grounding files and, for an Epic-level specification, the Epic. Of the register and the grounding, only implementation-level records count.
