@@ -399,11 +399,20 @@ def stamp(specs, ref, doc, captured):
 
 def check(specs, ref, docs, output=None, accepted_from=()):
     """Walk from docs (paths relative to specs) up recorded upstreams through covered kinds. A link
-    counts as accepted where output, or any document in accepted_from, records it accepted."""
+    counts as accepted where output, or any document in accepted_from, records it accepted — read
+    from disk, or at ref where it is not on disk. A ref that does not resolve is an error."""
+    if _git(specs, "rev-parse", "--verify", "-q", f"{ref}^{{commit}}")[0] != 0:
+        raise LineageError(f"no {ref} in {specs} to read the documents at")
     accepted = []
     for src in ([output] if output else []) + list(accepted_from):
         if os.path.exists(src):
             accepted += _accepted_of(src)
+            continue
+        rel = os.path.relpath(src, specs).replace(os.sep, "/")
+        blob = None if rel.startswith("../") else _blob_at(specs, ref, rel)
+        text = _cat_blob(specs, blob) if blob else None
+        if text is not None:
+            accepted += _accepted_of_text(rel, text)
     acc = {(a["path"], a["blob"]) for a in accepted}
     res = {"stale": [], "missing": [], "absent": [], "accepted": [], "highest": None, "top_missing": None}
     best = {"stale": None, "missing": None}  # each (depth, document)
@@ -529,7 +538,10 @@ def _impl_accepted(text):
 
 def _accepted_of(path):
     """The accepted entries a document records: its frontmatter's, or implementation.md's blocks'."""
-    text = _read(path)
+    return _accepted_of_text(path, _read(path))
+
+
+def _accepted_of_text(path, text):
     return _impl_accepted(text) if _is_impl(path) else read_record(text)[0]["accepted"]
 
 
@@ -1414,6 +1426,38 @@ def test_baselines_absent_counts():
         _check("no baselines.md: today's behaviour",
                sorted((s["downstream"], tuple(s["added"]), tuple(s["changed"])) for s in res["stale"])
                == sorted([(r.spec, ("[CG#3]",), ("[CG#1]",)), (reg, ("[CG#3]",), ("[CG#1]",))]), json.dumps(res))
+    _with_repo(body)
+
+
+def test_accepted_from_ref_only():
+    def body(r):
+        r.chain()
+        r.write(r.prd, PRD.replace("within one minute", "within two minutes"))
+        r.commit()
+        design = os.path.join(r.root, r.design)
+        accept(design, check(r.root, "main", [r.design]))
+        r.commit()
+        os.remove(design)
+        res = check(r.root, "main", [r.spec], accepted_from=[design])
+        _check("acceptance read at the ref", res["stale"] == [] and len(res["accepted"]) == 1, json.dumps(res))
+    _with_repo(body)
+
+
+def test_unresolvable_ref_fails():
+    import contextlib
+    import io
+
+    def body(r):
+        r.chain()
+        try:
+            check(r.root, "nope", [r.spec])
+            _check("unresolvable ref raises", False)
+        except LineageError as exc:
+            _check("names the ref", "nope" in str(exc), str(exc))
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main(["lineage.py", "check", "--specs", r.root, "--ref", "nope", "--out", os.path.join(r.root, "c.json"), r.spec])
+        _check("main exits non-zero", rc not in (0, None) and "nope" in err.getvalue(), f"{rc} {err.getvalue()}")
     _with_repo(body)
 
 
