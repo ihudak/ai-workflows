@@ -15,6 +15,8 @@ key: <the folder's key>
 ---
 ```
 
+Where `/dev-workflows:conformance`'s lineage check was answered *Proceed*, an `accepted:` block follows `key:` — written only by `workflows-core:document-lineage`'s script, never an `upstreams:` block, since the record is not built from those documents but checks code against them.
+
 `conformance-record` is not a folder kind, so `workflows-core:addressing` §4 never reads this file as the folder's carrier. The record is a phase deliverable: it lands on the specs repository's default branch through `workflows-core:phase-handoff` `handoff-to-main`, on a `conformance/` branch, behind the run's consent choice. Until that branch merges, a later run finds the record there and acts on it before it reads a requirement (`/dev-workflows:conformance` Phase 0 step 5).
 
 ## 2. The header

@@ -71,6 +71,8 @@ Each requirement is traced where its code can live: an Epic's in its target repo
 
 Before tracing, every run prints how many requirements it will trace across how many repositories. Each repository's tracer writes its verdicts to a file the run reads, and on a large run takes its requirements from a file too; every verdict cites the exact line, or a tight range of the lines it relied on, never an approximate one, which is what lets the re-check, the drift check and the grouping above read it.
 
+**A current chain under the documents, or your say-so.** Before it reads a requirement, the run checks the lineage of each document it traces up the chain. Where one was built from a document that has since changed, or carries no lineage record yet, it shows what moved and asks whether to revise the highest stale document first or proceed; *proceed* is recorded in `_conformance.md`, so the next run does not ask again about the same version.
+
 ## The walk
 
 Every discrepancy the re-check confirms is put to you, with no answer recommended — which one is right is the question itself. Questions come up to four at a time, as one prompt, and you give your reason in the answer's notes or as text beside your choice; the run asks for a reason separately only where you accept a difference as shipped, or on a PRD run overrule a Dev's decision, and gave none. Discrepancies whose evidence shares one location — the same line of the same file at the same commit, or overlapping ranges of lines in one file — one cause restated in several requirements — are grouped and asked once, naming that location; a discrepancy joins one group at most, and a group is never a chain of overlaps that share no location: one answer decides them all, and a *fix the code* for the group queues one follow-up rather than one per requirement. You can split a group to decide each of its requirements on its own; either way the record keeps one entry per requirement, each naming the shared cause. A discrepancy with a Dev's decision on it is always asked on its own. The three answers:
@@ -107,5 +109,6 @@ Maintenance runs as on `/ready`, on both sides of the handoff. Before it, in Pha
 
 - [`/implement`](implement.md) — offers this command as its next step after an Epic, to run before its pull request merges, on the Epic's branch.
 - [`/ready`](ready.md) — the readiness gate before implementation; this command is the check after it.
+- `workflows-core:document-lineage` — the upstream check run on the documents traced, and where a *proceed* is recorded.
 - [Follow-up tasks](../reference/follow-ups.md) — where *fix the code* follow-ups land, and how a withdrawn one is marked.
 - [Roles and phases](../roles-and-phases.md) — the Dev's Epic run and the PE's PRD run.

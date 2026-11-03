@@ -86,6 +86,9 @@ Usage: `/conformance <EPIC-KEY | PRD-KEY | @<path>> [--skip-costs] [--skip-feedb
       `CONFORMANCE_RECORD_UNMERGED: <KEY>'s _conformance.md on <branch>, another run's branch, is not shown merged — merge its pull request, or, where its pull request has merged already or was closed without merging, delete the branch, on the remote ('git -C "$SPECS_PATH" push origin --delete <branch>') and locally ('git -C "$SPECS_PATH" branch -D <branch>'), each where it exists; then re-run '/dev-workflows:conformance <KEY>'.`
    5. **Read the records** the checkout holds, where steps 3–4 let the run go on: the unit's — its decided entries, which Phase 4 carries forward rather than asks again (`conformance-format.md` §5); its `## Satisfied`, `## Unverified` and `## Not checkable` lists; and the commit each repository was traced at — and, on a PRD run, each Epic's, which Phase 1 (d) reads. Where the checkout holds no record of the unit's own, the unit has no record, and every discrepancy this run finds is new.
 
+
+6. **Check the chain under the documents read.** Once step 5 has let the run go on, execute `Skill(skill: "workflows-core:reference", args: "document-lineage upstream-check")` §6 with `docs` = each document step 4 gated whose return was `pass` or `pass_amending`, and `output` = the unit's own `_conformance.md`, in the folder step 3 placed, where one is on disk. It runs after step 5 so that a run stopping there has still asked nothing but what step 5 names, and before Phase 1 reads a requirement or scans a clone, so a *Stop* costs nothing: a requirement traced against a document that is behind its own upstreams is one the code can satisfy while the product has moved on. On *Proceed*, keep the check file; Phase 5 accepts into the record it writes. Its error tokens are `CONFORMANCE_LINEAGE_FAILED` and `CONFORMANCE_UPSTREAM_STALE`.
+
 ---
 
 ## Phase 1 — Inventory
@@ -395,6 +398,8 @@ listed, with its flag, each as an entry of its own (`conformance-format.md` §3)
 naming it in `lists:` rather than `ruling:` — so a `withdraws:`, and the `Withdrawn by <PRD-KEY>/[DD#n]`
 line `/dev-workflows:implement` prints, always have an entry to name.
 
+**Then accept into it** where Phase 0 step 6 kept a check file: `workflows-core:document-lineage` `record` §5 step 2's `accept`, alone — the record carries no `upstreams:` — against the unit's `_conformance.md` once it is written, with that file; it re-adds the links an earlier run accepted too, since the record is rewritten whole. Never into an Epic's `_conformance.md` this run marks `superseded-by`, where it changes no other field. A non-zero exit stops the run with `CONFORMANCE_LINEAGE_FAILED`, as §5 says.
+
 ---
 
 ## Phase 5.5 — Pre-handoff maintenance
@@ -491,6 +496,7 @@ Emit the terminal report:
 - Code checked: [<repo> at <the ref traced> @ <commit>, one per repository — the ref Phase 1 (c) traced: its default branch, or on an Epic run the Epic's branch; where `after_merge` was true, that the Epic's pull request has merged and the branch has gone on since, so the trace covers the merged work and what followed it; each repository traced at its default branch on the Dev's word that its pull request merged, and, where its clone was read as last fetched, its `<ref>` as read as last fetched, with its newest commit's age; each clone whose fetch in (a) failed or timed out, with git's error or the timeout, read as last fetched; each where (c)'s branch fetch failed or timed out, and each stale tracking ref (c) removed; each where `unit-branch`, or the PRD run's merged test, could not compare the tip; each shallow clone (a) found, where the merge state may read as open; any ref older than fourteen days on a read-only mount, with its age]
 - Traced where not shown merged: [PRD run only — each Epic traced under (c)'s *Trace anyway*, its requirements marked as traced where its merge was not shown; omit otherwise]
 - Conformance branches: [the `conformance/` fetch's failure, where Phase 0 step 5 could not fetch — the record check read those branches as last fetched; omit otherwise]
+- Lineage: [the `Lineage:` line (`workflows-core:document-lineage` §7), naming each accepted link]
 - Not traced: [each document not read, each repository with no clone or no default branch, and its requirements — on an Epic run, its branch as not traced; on a PRD run each Epic that gave no requirement of its own — or "none"]
 
 ### Verdicts
