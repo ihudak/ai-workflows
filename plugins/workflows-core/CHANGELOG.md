@@ -18,6 +18,7 @@ Take with `product-workflows` 3.72.0 — D32 part 3, document lineage on the BRD
 
 ### Changed
 - `prd-format`: a BRD-route `prd.md` carries the lineage record too, naming the slice's decision register.
+- `phase-handoff` §3.4: `/brd-package`'s register row, and the BRD-route register row, give as the reason `/brd-interview` is no remedy for an unlanded register that its no-new-round path never stages the round records on disk — it may now stage the register's lineage re-stamp.
 
 ## [1.74.1] — 2026-11-03
 

@@ -841,7 +841,7 @@ Cap: one fix cycle + one re-review. **A verdict that is not `BLOCK` spends neith
 Write the feature folder: `prd.md` — where this is the run's first write to it, which it is not
 when Phase 3 already wrote the draft, the pre-write archive (Phase 3) runs first. The in-contract `idea.md` is already there, committed by `/idea`; an out-of-contract idea stays where it is.
 
-**Stamp `prd.md`** once it is written, before anything stages it — on the idea route now, on the BRD route after the consumption loop below: execute `document-lineage` `record` §5 step 2 against it with Phase 2's capture. On the idea route this command runs no `upstream-check`, so it accepts nothing into it.
+**Stamp `prd.md`** once it is written, before anything stages it — on the idea route now, with Phase 2's capture; on the BRD route after the consumption loop below, with the capture taken there: execute `document-lineage` `record` §5 step 2 against it. On the idea route this command runs no `upstream-check`, so it accepts nothing into it.
 
 **On the BRD route, also close the consumption loop before the offer.** The design's *Consumption
 tracking* section (§7.3) has every finding and decision record a `consumed_by`, so that "nothing was
@@ -855,7 +855,7 @@ record rather than editing one, which is why the write guarantee above is stated
 records; both are staged in Phase 5's handoff. Everything at product altitude still
 `none` afterwards goes in the final report by id, per §7.3.
 
-**Then, on the BRD route, record and stamp.** With this run's last write into `decisions.md` behind it — the `consumed_by` stamps above and any `[AS#n]` Phase 3 or Phase 4 wrote — execute `Skill(skill: "workflows-core:reference", args: "document-lineage record")` §5 step 1, capturing `--from-disk` the slice's `decisions.md` where it is on disk and the `prd-seed.md` Phase 2 read where it read the slice's own — never the parent's, which is BRD-wide context (`workflows-core:document-lineage` §4) — then stamp `prd.md` with that capture as the paragraph above says, and, where Phase 2 ran `upstream-check` and the run went on past it, accept into it with that check's file (§5 step 2). A run that read neither captures nothing and stamps the empty record.
+**Then, on the BRD route, record and stamp.** With this run's last write into `decisions.md` behind it — the `consumed_by` stamps above and any `[AS#n]` Phase 3 or Phase 4 wrote — execute `Skill(skill: "workflows-core:reference", args: "document-lineage record")` §5 step 1, capturing `--from-disk` the slice's `decisions.md` where it is on disk and the `prd-seed.md` Phase 2 read, from whichever folder it was found in (`workflows-core:document-lineage` §4) — then stamp `prd.md` with that capture as the paragraph above says, and, where Phase 2 ran `upstream-check` and the run went on past it, accept into it with that check's file (§5 step 2). A run that read neither captures nothing and stamps the empty record.
 
 **`prd-seed.md` is reported, not stamped, and the difference is a fact about the authorities rather
 than an inconsistency.** `consumed_by` is a field of a *record*: it is defined on a decision by

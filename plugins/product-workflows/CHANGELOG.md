@@ -11,7 +11,7 @@ Take with `workflows-core` 1.75.0 — D32 part 3, document lineage on the BRD ro
 
 ### Added
 - `/prd-ground` records what each grounding file is built from — the slice inventory on the BRD route, `prd.md` on the idea route, and the frame-set indexes for `design-grounding.md` — and on the idea route checks `prd.md` before grounding it.
-- `/brd-interview` and `/brd-reconcile` record what the decision register is taken against — the slice's grounding files and inventory — and check the grounding before deciding anything. A `/brd-interview` run that finds no question re-stamps the register and offers the handoff, so a register re-checked after a `--rebaseline` stops reading as stale.
+- `/brd-interview` records what the decision register is taken against — the slice's grounding files and inventory — on a run that generates a round's questions, and checks the grounding before deciding anything. A run that finds no question re-stamps the register and offers the handoff, so a register re-checked after a `--rebaseline` stops reading as stale; one that only resumes an open round keeps the record as it stands. `/brd-reconcile` checks the grounding too and keeps the register's record, since it never re-reads a decision against the grounding.
 - `/create-prd` on the BRD route checks the register and records it in `prd.md`, captured after any `[AS#n]` the run writes into it.
 - `decision-register-format` §1: the register's lineage frontmatter.
 

@@ -143,7 +143,7 @@ flowchart TD
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the
 terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. No other subagent is dispatched.
 
-**The register records its lineage**: the run re-stamps this slice's `decisions.md` with the exact version (git blob id) of the slice's grounding files and `brd/brd-inventory.md` it read, after its last write to the register — never a dependent BRD's register the propagation sweep wrote, which keeps its own record. Before it reads the review, the run checks the grounding up its chain, as `/brd-interview` does, and asks where it moved.
+**The register keeps its lineage record**: the run never re-stamps `decisions.md`. It freezes the customer's answers and never re-reads a decision against the grounding, so the record `/brd-interview` wrote — naming the grounding those decisions were taken against — stands, and a register this run creates stays unrecorded until `/brd-interview` stamps it. Before the customer-review reader runs, the run checks the grounding up its chain, as `/brd-interview` does, and asks where it moved, recording your answer in the register.
 
 ## What it needs
 

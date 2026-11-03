@@ -137,7 +137,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   had its handoff declined (`BRD_PACKAGE_REGISTER_NOT_HANDED_OFF`, land the files that are already
   on disk). The second must
   **not** send the operator back to `/brd-interview`: a bare re-run of that command hands off only
-  the files it writes itself — nothing at all where it finds nothing new to ask, and where it opens a
+  the files it writes itself — at most the register, re-stamped with its lineage, where it finds nothing new to ask, and where it opens a
   new round, that round's record and not the earlier ones already on disk.
 - **The question set and the code-defect log on the default branch too, each where it is in the
   folder.** The bundle ships both whole, and the register being merged says nothing about either: a
