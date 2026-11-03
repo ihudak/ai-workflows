@@ -71,7 +71,7 @@ def _items(kind, text):
     key_col = None
     starts = [(it["level"], re.compile(it["start"])) for it in row["items"]]
     sec_alt = row.get("section_altitude") or {}
-    drop = set(row.get("drop_sections") or [])
+    drop = [re.compile(p) for p in row.get("drop_sections") or []]
     fields = row.get("ignore_fields") or []
     field_rx = re.compile(r"^\s*(?:-\s+)?(?:%s):" % "|".join(map(re.escape, fields))) if fields else None
     skipping = False  # inside an ignored field: its continuation lines run past the key column
@@ -134,7 +134,7 @@ def _items(kind, text):
             dead_level = None
             skipping = False
             name = line[depth:].strip()
-            section = None if name in drop else "§" + name
+            section = None if any(d.search(name) for d in drop) else "§" + name
             current = section
             put(current, None)
             if section is not None and name in sec_alt:
@@ -1459,6 +1459,16 @@ def test_unresolvable_ref_fails():
             rc = main(["lineage.py", "check", "--specs", r.root, "--ref", "nope", "--out", os.path.join(r.root, "c.json"), r.spec])
         _check("main exits non-zero", rc not in (0, None) and "nope" in err.getvalue(), f"{rc} {err.getvalue()}")
     _with_repo(body)
+
+
+def test_run_section_not_moved():
+    dg = "# Design grounding: PRD-1\n\n## 2026-10-12 — grounding run\n\nDesign grounding skipped: no `design/` folder.\n"
+    re2 = dg + "\n## 2026-11-04 — grounding run\n\nDesign grounding skipped: no `design/` folder in this slice.\n"
+    for alt in ("implementation", "architecture", None):
+        _check(f"run section not moved at {alt}", _empty(compare("grounding", dg, re2, alt)), str(compare("grounding", dg, re2, alt)))
+    f1 = dg + "\n- id: [DG#1]\n  claim: [BR#1] — the checkout frame shows a total\n  verdict: CONFIRMED\n  altitude: implementation\n"
+    f2 = f1.replace("shows a total", "shows a total and a tax line")
+    _check("finding in a run section counts", compare("grounding", f1, f2)["changed"] == ["[DG#1]"], str(compare("grounding", f1, f2)))
 
 
 def main(argv):

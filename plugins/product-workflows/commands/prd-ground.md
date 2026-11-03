@@ -2141,10 +2141,16 @@ language about reports, dashboards, exports, extracts, or stored/displayed data 
 otherwise. When on, write one implementation-altitude row per data element the claim list asks to
 display or store into `<BRD-dir>/grounding/code-grounding.md`, classed per `workflows-core:grounding-format` §7
 (`EXISTS | DERIVED | NEW-CAPTURE | NEW-CONFIG | PARTNER | DEFERRED | DEPENDENCY`), under one
-`## Derivation matrix` heading — **replacing any section of that name already in the file, never
-appending a second one**, as `## Frame sets covered` is replaced. Every run reads its whole claim list
-(Phase 0 step 8), so it derives every row again; a second section would leave `/specify` reading two
-matrices with no rule for which, and a re-run that derived the same rows would read as a change to
+`## Derivation matrix` heading — **one section, kept where it stands, never a second one appended**.
+The section is its heading, its lead-in and its table, and nothing else: a `- id:` block after the
+table is a finding wherever it sits — this phase writes the run's findings before this step, and they
+can land there — and is never part of the section. Every run reads its whole claim list (Phase 0 step
+8), so it derives every row again, and then **reconciles the section on file row by row** rather than
+rewriting it: a row whose cells all match the row derived for its element is left byte for byte as it
+stands, and so is the lead-in; a row that differs is rewritten in place, a row for a new element is
+added at the end of the table, and a row for an element the run no longer derives is removed. Where no
+section is on file, write it at the end of the file. A second section would leave `/specify` reading two
+matrices with no rule for which, and a section reworded with nothing changed would read as a change to
 every specification built on this file (`workflows-core:document-lineage` §2). A run with the matrix
 off leaves a section already on file as it stands. It is written there rather than as a new file,
 since it is not in this command's produced-artifact set on its own.

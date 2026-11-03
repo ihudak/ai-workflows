@@ -994,7 +994,7 @@ reconciles it against the requirement inventory it was handed — a BRD's `[BR#n
 
 ## 7. The derivation matrix
 
-Optional (`--derivation-matrix`); one row per data element the BRD asks to display or store, under one `## Derivation matrix` heading in `code-grounding.md` that each run writing a matrix **replaces**, never appending a second — `workflows-core:document-lineage` §2 reads that section at implementation altitude, and a re-run that derives the same rows changes nothing. This
+Optional (`--derivation-matrix`); one row per data element the BRD asks to display or store, under one `## Derivation matrix` heading in `code-grounding.md` — its heading, lead-in and table, never a `- id:` block after the table, which is a finding — that each run writing a matrix **reconciles row by row**, never appending a second: a row the run derives again unchanged is left byte for byte, so a re-run that derives the same rows changes nothing, and `workflows-core:document-lineage` §2 reads the section at implementation altitude. This
 is what converts a vague reporting or data requirement into a build list — naming, for each
 element, the physical source it would actually come from. Always **implementation-altitude**: even
 a BRD requirement written at product altitude decomposes here into implementation facts about where
