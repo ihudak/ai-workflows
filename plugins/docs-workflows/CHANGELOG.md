@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.32.0] — 2026-11-03
+
+Take with `workflows-core` 1.76.0 — D32 part 4, document lineage.
+
+### Added
+- **`/document` (keyed mode) and `/release-notes` report the lineage above the work they describe.** In Phase 0, before any agent is dispatched, each checks every unit's specification and design up the chain — the focus Epic alone on an Epic address, the PRD folder and each Epic under it otherwise, and `prd.md` alone where nothing is specified yet — and reports each stale link with the document to revise and the command that revises it: a PRD revised after its specification or design is one more cause of a requirement the code may not have, reported beside the discrepancies each already reports. Neither asks, stops or records lineage. `/release-notes` shows the lines before it asks about diff grounding, and its plan says when claims drawn from the PRD go unchecked against the code; `/document` shows them in its readiness table, and both carry a `Lineage:` line in the final report.
+
 ## [1.31.1] — 2026-11-03
 
 Batch B28: SCR-B3, DQP-B8.
