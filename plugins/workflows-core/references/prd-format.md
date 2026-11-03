@@ -35,6 +35,10 @@ brd_parent: <that slice's parent BRD key, from its brd-link.md; always present o
 depends_on: [ ... ]           # prerequisite BRD keys, from that brd-link.md's depends-on; omit when empty or outside the BRD route
 revision_of: <path to the archived prior PRD snapshot; written by `/update-prd` on refresh; omit otherwise>
 built_from_date: <YYYY-MM-DD of the resolved folder the `/update-prd` refresh was built from; omit otherwise>
+upstreams:                    # the lineage record — written only by `lineage.py` (workflows-core:document-lineage §1), by /create-prd and /update-prd on the idea route; `upstreams: []` where no idea sits in the specs repository; absent on the BRD route
+  - path: <the idea.md read, relative to $SPECS_PATH>
+    blob: <its git blob id>
+    version: null
 workitem_key: <optional — your own tracker's identity for this work; the plugin never writes this field>
 ---
 ```
