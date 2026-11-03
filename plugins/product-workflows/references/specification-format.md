@@ -12,26 +12,15 @@ it. This is an embedded snapshot — see Provenance.
 ---
 kind: specification          # what this document is
 key: <KEY>                   # this folder's key — must match the folder name
-inputs_at: <40-hex SHA>      # the default-branch commit the writing run read its inputs at
+upstreams:                   # the lineage record — written by workflows-core's lineage.py only
+  - path: <input path, relative to $SPECS_PATH>
+    blob: <40-hex blob id of the bytes the writing run read>
+    version: null
 ---
 ```
 
-**`inputs_at` is the commit of the specs repository's default branch that the writing run read its
-inputs at** — the PRD, the ARDs, the Epic's `epic.md`, the grounding files and, on the BRD route, the
-slice's `decisions.md` — written as the full 40-character SHA `git -C "$SPECS_PATH" rev-parse
-<default-ref>` printed when the run began reading them. The PRD, the ARDs, the Epic and the register
-are gated on the default branch before they are read, so the working tree holds what that commit
-holds; the grounding files are not gated, so a working-tree change to one is read as it stands, and a
-later diff from `inputs_at` sees only what the default branch holds. `/specify` writes
-it on every run that writes this file, and `/product-workflows:update-spec` rewrites it on every run;
-every other writer — `/dev-workflows:design`, `/dev-workflows:implement` and `/dev-workflows:conformance`,
-which add notes (*Notes other commands write*, below) — keeps it unchanged, as every unknown key is
-kept. It records when the inputs were read, never a version of this file, and nothing downstream reads
-it: `/update-spec` diffs the inputs from it to find what moved upstream, and `spec-reviewer` checks
-only its shape.
-**Absent — every specification written before the field existed — it is a null baseline**: what moved
-upstream since cannot be told, and `/update-spec` says so rather than guess a baseline from this file's
-history, which records those other writers' notes as well as its authoring.
+**`upstreams:` is the lineage record** (`workflows-core:document-lineage` §1): one entry per input the writing run read — the PRD, the ARDs, the Epic's `epic.md`, the grounding files and, on the BRD route, the slice's `decisions.md` — with the git blob id of the bytes it read and the input's `Version` where its kind carries one. An optional `accepted:` block beside it records what an operator accepted when an input had moved (§6 there). `/specify` stamps both on every run that writes this file and `/product-workflows:update-spec` on every run; every other writer — `/dev-workflows:design`, `/dev-workflows:implement` and `/dev-workflows:conformance`, which add notes (*Notes other commands write*, below) — keeps them unchanged, as every unknown key is kept. `/update-spec` diffs each input from its recorded blob to find what moved upstream, and every consumer's `upstream-check` reads it.
+**`inputs_at` is the legacy form** — the default-branch commit an earlier run read its inputs at, a 40-character SHA. Nothing writes it any more; `/update-spec` reads it, on a specification with no `upstreams:`, as the baseline for its upstream diff, and a revision it writes carries `upstreams:` instead. **Absent both — every specification written before either existed — it is a null baseline**: what moved upstream since cannot be told, and `/update-spec` says so rather than guess a baseline from this file's history, which records those other writers' notes as well as its authoring.
 
 **Unknown frontmatter keys are preserved.** Every command that rewrites this file keeps fields it does not recognise, in place and unmodified — the same rule `workflows-core:prd-format` states for a PRD, and for the same reason: a user's own field must survive a run that did not author it. `workitem_key` is the documented example, and it is reserved rather than special-cased.
 

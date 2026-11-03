@@ -248,6 +248,12 @@ jobs:
         # processes and signals, about fifteen seconds.
         run: python3 plugins/workflows-core/scripts/bounded.py --selftest
 
+      - name: Self-test the document lineage script
+        # Every lineage record is written and every upstream check is decided by it. Its failure modes
+        # are silent: a note read as a move asks about nothing, and a move read as a note lets a
+        # consumer build on a stale upstream. Fixtures are throwaway git repositories built at run time.
+        run: python3 plugins/workflows-core/scripts/lineage.py --selftest
+
       - name: Every plugin's bounded run is the same script
         # A command, agent or reference calls ${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py -- the copy in
         # the calling file's own plugin. A plugin with a call site must ship one, or every capped

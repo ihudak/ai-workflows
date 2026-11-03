@@ -38,7 +38,7 @@ flowchart TD
 
 **The change list comes from three places, and you confirm it before anything is asked about content:**
 
-- **Upstream** — what changed in the specification's inputs since it was written: the PRD, the ARDs, the Epic's `epic.md`, the grounding files and, on the BRD route, the slice's `decisions.md`, diffed from the commit the specification's `inputs_at` field records. Each change is mapped to the stories, criteria and test cases it bears on. A specification written before `inputs_at` existed has a **null baseline**: the run says it cannot tell what moved upstream, takes the other two sources, and the revision it writes records `inputs_at`, so the next one can.
+- **Upstream** — what changed in the specification's inputs since it was written: the PRD, the ARDs, the Epic's `epic.md`, the grounding files and, on the BRD route, the slice's `decisions.md`, each diffed from the exact version the specification's **lineage record** names (`workflows-core:document-lineage`), or, on a specification written before that record existed, from the commit its older `inputs_at` field names. Each change is mapped to the stories, criteria and test cases it bears on. A specification carrying neither has a **null baseline**: the run says it cannot tell what moved upstream, takes the other two sources, and the revision it writes records its lineage, so the next one can. On an Epic-level specification the run also checks the Epic's own lineage, and asks before going on where the Epic is behind its PRD.
 - **Your correction** — the `<what is wrong>` text, resolved against the specification's own IDs and headings.
 - **Notes other commands left** — open items under `## Engineering review` and the `Engineering proposal (/design): …` answers [`/dev-workflows:design`](../../../dev-workflows/docs/commands/design.md) writes, and the notes `/implement` and `/conformance` add.
 
@@ -60,10 +60,10 @@ Five subagents can be dispatched, under the same rules as in [`/specify`](specif
 
 ## What it produces
 
-- The revised **`specification.md`**, in place: `Version` one higher, `Created`, `Author` and `Published` unchanged, `Open questions` recounted, and `inputs_at` set to the default-branch commit this run read its inputs at. Adopted notes are ticked `adopted in Version <N>`, declined ones ticked with the reason.
+- The revised **`specification.md`**, in place: `Version` one higher, `Created`, `Author` and `Published` unchanged, `Open questions` recounted, and its lineage record re-stamped with the exact version of every input this run read (a legacy `inputs_at` is dropped). Adopted notes are ticked `adopted in Version <N>`, declined ones ticked with the reason.
 - An **archive of the base** under `revisions/specification_<YYYYMMDD>.md`, taken before the first write — a failed copy stops the run with `UPDATE_SPEC_ARCHIVE_FAILED` before anything is written.
 - The same `consumed_by: specification` stamps [`/specify`](specify.md) writes, on the grounding findings and decision records this run newly drew on. No design, Epic, `_coverage.md`, PRD or ARD is ever written.
-- **A downstream report**: every document that cites an ID this run superseded or withdrew — for an Epic-level specification, the Epic's `design.md`; for a PRD-level one, the PRD folder's own `design.md` where one exists, each Epic's `## Covers` and `_coverage.md` — with the IDs each cites.
+- **A downstream report**: every document that cites an ID this run superseded or withdrew — for an Epic-level specification, the Epic's `design.md`; for a PRD-level one, the PRD folder's own `design.md` where one exists, each Epic's `## Covers` and `_coverage.md` — with the IDs each cites; and every `design.md` or `epic.md` whose lineage record names this specification, as built on the version this run replaces.
 - Behind Phase 7's consent choice, the files are committed, pushed, and a pull request opened against the specs repo's default branch on a `spec/` branch.
 
 ## Gates
@@ -80,7 +80,7 @@ The PRD was updated after the Epic's specification merged:
 /product-workflows:update-spec ACME-77-01
 ```
 
-The run diffs the PRD from the specification's `inputs_at` to now, proposes the two acceptance criteria the changed requirement touches, and asks you to confirm the list. One criterion's meaning changed, so it becomes `[AC04]` and `[AC02]` is marked `Superseded by [AC04]`; the other only needed clearer wording and keeps its ID. After the review, the run names the Epic's `design.md`, which cites `[U01]/[AC02]`, and offers `/dev-workflows:design ACME-77-01` to revise it.
+The run diffs the PRD from the version the specification's lineage record names to now, proposes the two acceptance criteria the changed requirement touches, and asks you to confirm the list. One criterion's meaning changed, so it becomes `[AC04]` and `[AC02]` is marked `Superseded by [AC04]`; the other only needed clearer wording and keeps its ID. After the review, the run names the Epic's `design.md`, which cites `[U01]/[AC02]`, and offers `/dev-workflows:design ACME-77-01` to revise it.
 
 ## See also
 
@@ -90,4 +90,5 @@ The run diffs the PRD from the specification's `inputs_at` to now, proposes the 
 - [`/epics`](epics.md) — refines the Epics whose `## Covers` this run named.
 - [Roles and phases](../roles-and-phases.md) — what the `pe` role owns.
 - [Model routing](../reference/model-routing.md), [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md) and [Resume and checkpoints](../reference/resume-and-checkpoints.md).
-- `product-workflows:specification-format` — the `inputs_at` field, the superseded and withdrawn markers, the live-items rule and the archive rule.
+- `product-workflows:specification-format` — the lineage record and the legacy `inputs_at` field, the superseded and withdrawn markers, the live-items rule and the archive rule.
+- `workflows-core:document-lineage` — the lineage record this command diffs from and re-stamps, and the upstream check it runs on an Epic.

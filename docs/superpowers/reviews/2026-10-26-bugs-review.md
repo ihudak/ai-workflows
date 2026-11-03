@@ -664,7 +664,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### SCR-B3 — MINOR — the `/implement` and `/document` preload hooks restate the key grammar, narrower than `addressing` §1, so some keyed runs get no specs context — **Fixed in dev-workflows 4.55.2 and docs-workflows 1.31.1 (batch B28)**
+### SCR-B3 — MINOR — the `/implement` and `/document` preload hooks restate the key grammar, narrower than `addressing` §1, so some keyed runs get no specs context — **Fixed in dev-workflows 4.56.1 and docs-workflows 1.31.1 (batch B28)**
 - **Also found as:** IMP-B5, DEV-B6 (merged here)
 - **Where:** `plugins/dev-workflows/hooks/preload-context.sh:129` and `plugins/docs-workflows/hooks/preload-context.sh:97` (`[A-Z][A-Z0-9]+-[0-9]+`), against `plugins/workflows-core/references/addressing.md:21` (`^[A-Z][A-Z0-9_]*(-\d+)+$`)
 - **What is wrong:** The hook's copy needs at least two prefix characters, rejects `_`, and cannot see a whole folder name, which `read-key` accepts (`addressing` §1 reading 2). `addressing` §1 itself names a local restatement of the grammar as the defect family.
@@ -2772,7 +2772,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## documentation quality — dev-workflows and security-workflows
 
-### DQD-B1 — MINOR — The first-run example key `EPIC-98760` is not a key shape any Epic gets, so a new user copying it learns the wrong form — **Fixed in dev-workflows 4.55.2 (batch B28)**
+### DQD-B1 — MINOR — The first-run example key `EPIC-98760` is not a key shape any Epic gets, so a new user copying it learns the wrong form — **Fixed in dev-workflows 4.56.1 (batch B28)**
 - **Also found as:** DQC-B1 (merged here)
 - **Where:** `plugins/dev-workflows/docs/getting-started.md:97`, `:100`, `:104`, `:110`; `plugins/dev-workflows/docs/commands/design.md:85`, `:88`; `plugins/dev-workflows/docs/commands/implement.md:105`, `:108`; `plugins/dev-workflows/docs/commands/ready.md:75`, `:78`; `plugins/dev-workflows/docs/reference/session-cost.md:80`
 - **What is wrong:** Getting started says "`/dev-workflows:design EPIC-98760`" and "`EPIC-98760` resolves the Epic within its PRD, the same key `/product-workflows:specify` used to land `specification.md`". The design page says "The run resolves `EPIC-98760` as the focus Epic within PRD `PRODUCT-1234`". But `/epics` mints every Epic key as the PRD key plus a two-digit segment, in a folder `EPIC-<PRD-KEY>-NN-<eslug>/` (`plugins/product-workflows/docs/commands/epics.md:69`; this plugin's own layout block at `plugins/dev-workflows/docs/reference/environment.md:76` shows `EPIC-<KEY>-NN-<eslug>/`). An Epic of PRD `PRODUCT-1234` is `PRODUCT-1234-01`. Under `workflows-core:addressing` §1 `read-key`, `EPIC-98760` is the whole key `EPIC-98760`, because `98760` alone is not a valid key. It is not "`EPIC-` plus key `98760`", which is how the example reads. The other pages in the same plugin use the minted shape: `BOOK-1-02` (`conformance.md:99`) and `ACME-77-01` (`commit-convention.md:6`). The security getting-started uses `ACME-7-01`.
@@ -2949,7 +2949,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B8 — MINOR — The docs teach example keys that carry a folder-kind token, and use a different key on every BRD-route page — **Fixed in product-workflows 3.69.1, dev-workflows 4.55.2, docs-workflows 1.31.1 and security-workflows 0.10.1 (batch B28)**
+### DQP-B8 — MINOR — The docs teach example keys that carry a folder-kind token, and use a different key on every BRD-route page — **Fixed in product-workflows 3.70.1, dev-workflows 4.56.1, docs-workflows 1.31.1 and security-workflows 0.10.1 (batch B28)**
 - **Where:** `brd-workflow.md:300-301` (*"a BRD owning its source document is keyed `EPIC-008` and a slice of it `EPIC-008-01`"*); `commands/prd-ground.md:575` (`/product-workflows:prd-ground PRD-2201` on the idea route); `commands/specify.md:109` (`/product-workflows:specify EPIC-98761` for *"a single Epic"*); BRD pages: `brd-intake.md` `ACME-001`, `brd-split.md`/`brd-interview.md`/`brd-package.md` `EPIC-008`, `brd-reconcile.md` `EPIC-008-01`, `brd-proposal.md` `PRODUCT-1234`
 - **What is wrong:** A folder is `<KIND>-<KEY>-<slug>` with kind `BRD`/`PRD`/`EPIC` (`getting-started.md:40`). Examples whose *key* is `EPIC-008` or `PRD-2201` give folders named `BRD-EPIC-008-…`, `PRD-EPIC-008-01-…` and `PRD-PRD-2201-…`. They lead a reader to think the key carries the folder kind. Here `EPIC-008-01` is a BRD *slice* and `EPIC-98761` a focus Epic, while a real Epic's key is `<PRD-KEY>-NN` (`roles-and-phases.md:40`). Addressing has to special-case keys that begin with a kind token (`.claude/rules/brd-route.md`, the prefix rule). Across the BRD route the key also changes on every page, so a reader cannot follow one BRD from intake to reconciliation.
 - **Failure scenario:** A PM keys their first BRD `BRD-12` or their first Epic `EPIC-5`, copying the pages. They get doubled-prefix folders and keys that are hard to tell apart from folder names.
@@ -2958,7 +2958,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (the keys are valid by grammar, but the confusion is the defect)
 
-### DQP-B9 — NIT — "Two segments or three" contradicts the key grammar, which fixes no depth — **Fixed in product-workflows 3.69.1 (batch B28)**
+### DQP-B9 — NIT — "Two segments or three" contradicts the key grammar, which fixes no depth — **Fixed in product-workflows 3.70.1 (batch B28)**
 - **Where:** `workflow.md:168` (*"`<SLICE-KEY>` is `^[A-Z][A-Z0-9_]*(-\d+)+$` — **two segments or three**"*); `brd-workflow.md:300` (*"**That shape is two segments or three**"*)
 - **What is wrong:** `CLAUDE.md` and `commands/create-prd.md` docs page `:15` say the grammar *"fixes no depth"*. `ACME-1-2-3` is valid. The same `brd-workflow.md` paragraph then says *"a key's segment count is a naming convention, never a depth declaration"*, which contradicts its own bold sentence.
 - **Suggested fix:** Replace with "one or more numeric segments; the grammar fixes no depth".

@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.55.2] — 2026-11-03
+## [4.56.1] — 2026-11-03
 
 Batch B28: SCR-B3 (IMP-B5, DEV-B6 merged), DQD-B1 (DQC-B1 merged), DQP-B8.
 
@@ -13,6 +13,13 @@ Batch B28: SCR-B3 (IMP-B5, DEV-B6 merged), DQD-B1 (DQC-B1 merged), DQP-B8.
 - **The preload hook gives every keyed `/implement` its specs context (SCR-B3)**: its key test was narrower than `workflows-core:addressing` §1's grammar and missed `/implement A-1`, `/implement ACME_X-90` and a typed folder name (`/implement PRD-ACME-90-slug`). It is now a deliberately loose "looks like an address" test, `[A-Z][A-Z0-9_-]*-[0-9]` after the command, a superset of the grammar — the command validates the address itself — and still silent on free text; `docs/reference/hooks.md` states the test.
 - **The docs' example Epic key is one `/epics` mints (DQD-B1)**: `EPIC-98760` becomes `ACME-77-01`, the first Epic of PRD `ACME-77`, on the getting-started, `/design`, `/implement` and `/ready` pages and in the session-cost and session-feedback samples. Getting started now says an Epic's key is its PRD's key plus `-NN`, and that the `EPIC-` prefix is optional when typing it. The session-cost page no longer calls its sample a verbatim copy of `workflows-core:cost-emission`'s, whose example keys still differ.
 - **One example key family (DQP-B8)**: the `/conformance` page uses PRD `ACME-77` and Epic `ACME-77-01` in place of `BOOK-1` and `BOOK-1-02`, and the `/vuln` page `ACME-77-01:CVE-…` in place of `PROJ-2423:CVE-…`.
+
+## [4.56.0] — 2026-11-03
+
+Take with `workflows-core` 1.73.0 — D32 part 1, document lineage.
+
+### Added
+- `/design` stamps the lineage record (`workflows-core:document-lineage`) on `design.md` — the specification, ARDs and `epic.md` it was built from — and runs `upstream-check` on the specification before its code scan; its own `## Engineering review` notes never read as a move. `design-format.md` says a rewrite keeps every frontmatter key it does not author.
 
 ## [4.55.1] — 2026-11-02
 

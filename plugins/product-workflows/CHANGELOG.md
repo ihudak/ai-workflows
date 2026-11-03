@@ -5,13 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.69.1] — 2026-11-03
+## [3.70.1] — 2026-11-03
 
 Batch B28: DQP-B8, DQP-B9.
 
 ### Fixed
 - **One example key family across the docs (DQP-B8)**: the idea route uses PRD `ACME-77` and its Epic `ACME-77-01`; every BRD-route page and both workflow pages use BRD `ACME-001` and its slices `ACME-001-01` and `ACME-001-02`, so one BRD can be followed from intake to reconciliation. `PRODUCT-1234`, `EPIC-008`, `EPIC-008-01`, `EPIC-014`, `EPIC-98761`, `PRD-2201` and `EPIC-0042` — keys carrying a folder-kind token, or a different key per page — are gone. The `/brd-package` example now packages `ACME-001-02` declaring `--depends-on ACME-001-01`, so `/brd-reconcile`'s sweep of `ACME-001-02` as a dependent of `ACME-001-01` agrees with it.
 - **The key grammar fixes no depth (DQP-B9)**: `workflow.md` and `brd-workflow.md` said a key is "two segments or three"; both now say one or more numeric segments, the grammar fixing no depth, and `/specify`'s page no longer calls a slice key "three-segment".
+
+## [3.70.0] — 2026-11-03
+
+Take with `workflows-core` 1.73.0 — D32 part 1, document lineage.
+
+### Added
+- `/specify`, `/epics` and `/update-spec` stamp the lineage record (`workflows-core:document-lineage`) on every `specification.md` and `epic.md` they write, and run its `upstream-check` before their scans: `/specify` on the Epics it reads, `/epics` on the PRD-level specification, `/update-spec` on an Epic-level specification's Epic.
+- `/update-spec` Phase 6 also names every `design.md` and `epic.md` whose lineage record names the specification it revised.
+
+### Changed
+- `/update-spec` diffs each input from the blob its lineage record names; a specification with none falls back to its legacy `inputs_at`, then to a null baseline.
+- `/specify` and `/update-spec` no longer write `inputs_at`; `specification-format.md` § Frontmatter documents `upstreams:` and keeps `inputs_at` as the legacy field `/update-spec` reads, and `spec-reviewer` checks the record's shape.
+- `epic-writer` keeps every frontmatter key it did not write, the lineage blocks among them, on a refine.
 
 ## [3.69.0] — 2026-11-02
 

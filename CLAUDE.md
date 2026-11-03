@@ -107,6 +107,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |
 | `plugin-updates-coupling.md` | `*/.claude-plugin/plugin.json`, `*/CHANGELOG.md`; `.claude-plugin/marketplace.json` (repo root) | which plugins to update together, one bullet per release pair |
 | `plugin-updates-coupling-history.md` | as `plugin-updates-coupling.md` | its older bullets, up to `workflows-core` 1.58.0 |
+| `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.60.0 |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
@@ -163,6 +164,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`
 - `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, `branch-check`, the branch-prefix authority, the handoff consent choice → `workflows-core-git.md`
+- `workflows-core:document-lineage` — the lineage record, the moved rule, the kind table, `record` and `upstream-check` → `workflows-core.md`
 - `workflows-core:read-only-repos` — read-only mount detection, write-free ref reading, the `prep` output contract → `workflows-core-read-only.md`
 - `workflows-core:docs-grounding` — `$DOCS_PATH` grounding: the resolution gate, `resolve-docs-grounding`, grill-rank / writer-attach → `docs-grounding.md`
 - `dev-workflows:bug-diagnosis` — repro first, ranked hypotheses, tagged instrumentation, a regression test at a seam → `dev-workflows.md`
