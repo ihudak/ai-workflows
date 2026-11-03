@@ -311,8 +311,7 @@ def check(specs, ref, docs, output=None, accepted_from=()):
     accepted = []
     for src in ([output] if output else []) + list(accepted_from):
         if os.path.exists(src):
-            with open(src, encoding="utf-8") as fh:
-                accepted += read_record(fh.read())[0]["accepted"]
+            accepted += _accepted_of(src)
     acc = {(a["path"], a["blob"]) for a in accepted}
     res = {"stale": [], "missing": [], "absent": [], "accepted": [], "highest": None, "top_missing": None}
     best = {"stale": None, "missing": None}  # each (depth, document)
@@ -390,9 +389,74 @@ def _compare_plain(old, new):
     return {"added": [], "changed": [] if same else ["§file"], "withdrawn": []}
 
 
+_IMPL_BLOCK = re.compile(r"^## \d{4}-\d{2}-\d{2} \u2014 /implement\b", re.M)
+
+
+def _is_impl(path):
+    return os.path.basename(path) == "implementation.md"
+
+
+def _impl_accepted(text):
+    """Every accepted entry recorded inside implementation.md's blocks: an entry's `accepted:` field
+    and the `- path:` / `blob:` lines indented under it."""
+    out, indent = [], None
+    for line in text.split("\n"):
+        m = re.match(r"^(\s+)accepted:\s*$", line)
+        if m:
+            indent = len(m.group(1))
+            continue
+        if indent is None:
+            continue
+        if not line.strip() or len(line) - len(line.lstrip(" ")) <= indent:
+            indent = None
+            continue
+        e = _ENTRY.match(line)
+        if not e or e.group(1) == "version":
+            raise LineageError(f"unreadable accepted line: {line!r}")
+        if line.lstrip().startswith("-"):
+            out.append({})
+        if not out:
+            raise LineageError(f"accepted entry without '-': {line!r}")
+        out[-1][e.group(1)] = e.group(2)
+    return out
+
+
+def _accepted_of(path):
+    """The accepted entries a document records: its frontmatter's, or implementation.md's blocks'."""
+    with open(path, encoding="utf-8") as fh:
+        text = fh.read()
+    return _impl_accepted(text) if _is_impl(path) else read_record(text)[0]["accepted"]
+
+
+def _accept_into_block(doc, checked):
+    """implementation.md: the run's own block -- the last one, written just before -- gains an
+    `accepted:` field listing each stale link and missing record this run went on past. Links an
+    earlier run accepted stay in that run's block, which check reads too."""
+    with open(doc, encoding="utf-8") as fh:
+        text = fh.read()
+    if not _IMPL_BLOCK.search(text):
+        raise LineageError(f"{doc} holds no /implement block to record the acceptance in")
+    new = [(s["upstream"], s["current"]["blob"]) for s in checked.get("stale", [])]
+    new += [(m["doc"], m["blob"]) for m in checked.get("missing", [])]
+    added, seen = [], set()
+    for path, blob in new:
+        if (path, blob) not in seen:
+            seen.add((path, blob))
+            added.append({"path": path, "blob": blob})
+    if added:
+        lines = ["  accepted:"] + [l for a in added for l in (f"    - path: {a['path']}", f"      blob: {a['blob']}")]
+        text = text.rstrip("\n") + "\n" + "\n".join(lines) + "\n"
+        with open(doc, "w", encoding="utf-8") as fh:
+            fh.write(text)
+    return {"accepted": doc, "added": added}
+
+
 def accept(doc, checked):
     """Append accepted entries for each stale link (its upstream at its current blob), each missing
-    record (that document at its blob) and each link the check found already accepted, de-duplicated."""
+    record (that document at its blob) and each link the check found already accepted, de-duplicated.
+    implementation.md records them in its last block instead (_accept_into_block)."""
+    if _is_impl(doc):
+        return _accept_into_block(doc, checked)
     with open(doc, encoding="utf-8") as fh:
         found, _ = read_record(fh.read())
     entries = list(found["accepted"])
@@ -806,17 +870,49 @@ def test_flow_empty_list_replaced():
     _with_repo(body)
 
 
-def test_accept_creates_frontmatter():
+IMPL = ("# Implementation — PRD-1 checkout\n\n## 2026-01-01 — /implement\n- repo:    orders\n"
+        "  commit:  a3f91c2\n  pushed:  true\n\n## 2026-01-02 — /implement\n- repo:    billing\n"
+        "  commit:  7be0d41\n  pushed:  false            # local only\n")
+
+
+def test_accept_into_implementation_block():
     def body(r):
         rel = f"{r.dir}/implementation.md"
-        original = "# Implementation — X\n\n## 2026-01-01 — /implement\n- repo:    orders\n"
-        r.write(rel, original)
+        r.write(rel, IMPL)
         doc = os.path.join(r.root, rel)
-        accept(doc, {"stale": [{"upstream": r.prd, "current": {"blob": "c" * 40}}], "missing": []})
+        accept(doc, {"stale": [{"upstream": r.prd, "current": {"blob": "c" * 40}}], "missing": [],
+                     "accepted": [{"upstream": r.spec, "blob": "d" * 40}]})
         text = r.read(rel)
-        _check("frontmatter created", text.startswith("---\naccepted:\n"), text)
-        _check("body unchanged", text.split("\n---\n", 1)[1] == original, text)
-        _check("no upstreams invented", "upstreams" not in text, text)
+        _check("no frontmatter", not text.startswith("---"), text)
+        _check("earlier blocks unchanged", text.startswith(IMPL), text)
+        _check("last block gains accepted", text[len(IMPL):] == f"  accepted:\n    - path: {r.prd}\n      blob: {'c' * 40}\n", text)
+    _with_repo(body)
+
+
+def test_implementation_acceptances_read():
+    def body(r):
+        r.chain()
+        r.write(r.prd, PRD.replace("within one minute", "within two minutes"))
+        r.commit()
+        rel = f"{r.dir}/implementation.md"
+        r.write(rel, IMPL)
+        doc = os.path.join(r.root, rel)
+        accept(doc, check(r.root, "main", [r.design]))
+        r.write(rel, r.read(rel) + "\n## 2026-01-03 — /implement\n- repo:    orders\n  commit:  1111111\n  pushed:  true\n")
+        res = check(r.root, "main", [r.design], output=doc)
+        _check("block acceptance honoured", res["stale"] == [] and len(res["accepted"]) == 1, json.dumps(res))
+    _with_repo(body)
+
+
+def test_accept_implementation_without_block_fails():
+    def body(r):
+        rel = f"{r.dir}/implementation.md"
+        r.write(rel, "# Implementation — PRD-1 checkout\n")
+        try:
+            accept(os.path.join(r.root, rel), {"stale": [{"upstream": r.prd, "current": {"blob": "c" * 40}}]})
+        except LineageError:
+            return
+        raise AssertionError("accept into an implementation.md with no block must fail")
     _with_repo(body)
 
 
