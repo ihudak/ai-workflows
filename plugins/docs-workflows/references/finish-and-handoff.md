@@ -27,16 +27,21 @@ directory — so every path it names is relative to that top level.
 ## 2. Squash (always)
 
 Stage the run's uncommitted docs-repo edits first — Phase 8 Agent 1 (doc index /
-cross-links) may have edited without committing — and only those: under the
-Phase 6.2 *Proceed anyway* answer the tree also holds somebody else's changes,
-which stay out of the squash, and so does every path of Agent 1's that `/document`
-Phase 8 reported rather than staged — one that held somebody else's uncommitted changes
-before Agent 1 ran, or one outside the docs repository.
+cross-links) may have edited without committing — and only those. Under the
+Phase 6.2 *Proceed anyway* answer the tree also holds somebody else's changes:
+those in a file neither `doc-writer` nor `doc-fixer` wrote or edited stay out of
+the squash, and so does every path of Agent 1's that `/document` Phase 8 reported
+rather than staged — one that held such changes before Agent 1 ran, or one outside
+the docs repository; a page `doc-writer` or `doc-fixer` wrote or edited carries
+those changes whole, as that answer's own option says (*pre-existing changes will
+appear in the diff*). Such a page that changed while Phase 8's agents ran, with no
+agent returning it, goes in as it now reads, that change included: the commit below
+takes each path it names from the working tree.
 Then squash:
 - squash base = `profile_commit` (C0) when recorded — keeps the profile-config
   commit as a distinct first commit; otherwise
   `git -C <docs_repo_path> merge-base <base_branch> HEAD`.
-- mechanics: `git -C <docs_repo_path> add -- <each path under docs_repo_path the run wrote or edited, save one Phase 8 reported rather than staged>`
+- mechanics: `git -C <docs_repo_path> add -- <each path under docs_repo_path the run wrote or edited, save a path of Agent 1's that Phase 8 reported rather than staged>`
   → `git -C <docs_repo_path> reset --soft <squash-base>`
   → one `git -C <docs_repo_path> commit -F <msg-path> -- ':(literal)<path>' …` **by pathspec**,
   over the paths the squashed commits carry, `git -C <docs_repo_path> diff --name-only -z --no-renames <squash-base> HEAD`
