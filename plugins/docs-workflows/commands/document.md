@@ -178,8 +178,9 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
    working tree or on `<default-ref>`, with no `--output`; a unit holding neither is skipped, and where
    every unit is, one check takes the PRD folder's `prd.md` as both. **Print what it finds now**, and
    carry it to the Readiness table's `Lineage` row and to the Phase 9 report's `### Lineage`: each
-   stale link `⚠ stale lineage: <downstream> ← <upstream> <recorded> → <current>: <changed keys>; revise <highest> with <reviser>`,
-   worded as §6 step 3 words it, a link accepted in its own unit marked so, each missing record,
+   stale link `⚠ stale lineage: <downstream> ← <upstream> <recorded> → <current>: changed <keys>; new <keys>; withdrawn <keys>; revise <highest> with <reviser>`,
+   worded as §6 step 3 words it — each (downstream, upstream) pair once across the units, as §6 step 6
+   lists them — a link accepted in its own unit marked so, each missing record,
    each `absent` entry and each document this checkout changed from `<default-ref>` a note line as §6 step 6 words it, and a non-zero exit of the script a ⚠ line
    naming its first stderr line — after which the run goes on. A stale link is the cause of what Phase
    5.8 may later find claim by claim — a requirement the PRD gained after its specification or design
