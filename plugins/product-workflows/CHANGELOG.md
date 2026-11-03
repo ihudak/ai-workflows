@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.70.0] — 2026-11-03
+
+Take with `workflows-core` 1.73.0 — D32 part 1, document lineage.
+
+### Added
+- `/specify`, `/epics` and `/update-spec` stamp the lineage record (`workflows-core:document-lineage`) on every `specification.md` and `epic.md` they write, and run its `upstream-check` before their scans: `/specify` on the Epics it reads, `/epics` on the PRD-level specification, `/update-spec` on an Epic-level specification's Epic.
+- `/update-spec` Phase 6 also names every `design.md` and `epic.md` whose lineage record names the specification it revised.
+
+### Changed
+- `/update-spec` diffs each input from the blob its lineage record names; a specification with none falls back to its legacy `inputs_at`, then to a null baseline.
+- `/specify` and `/update-spec` no longer write `inputs_at`; `specification-format.md` § Frontmatter documents `upstreams:` and keeps `inputs_at` as the legacy field `/update-spec` reads, and `spec-reviewer` checks the record's shape.
+- `epic-writer` keeps every frontmatter key it did not write, the lineage blocks among them, on a refine.
+
 ## [3.69.0] — 2026-11-02
 
 Batch B27: BRD2-B2, BRD2-B3, BRD2-B4, BRD2-B9, BRD3-B22, BRD3-B23, FBA-B4, FBA-B5, FBA-G8, FBA-G9.

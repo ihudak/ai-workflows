@@ -1,0 +1,170 @@
+{
+  "_doc": "The kind table of workflows-core:document-lineage. One row per document kind. match: basename regexes. covered: true where producers record upstreams and the walk reads this kind's own record. reviser: the command that revises this kind when it is the stale downstream. version: 'header' where the kind's header carries '- **Version**: N', else null. items: start-line regexes, one capture group = the item id, with a nesting level (ids that restart under a parent are keyed by their full path). notes: heading regexes opening a section excluded from comparison until the next heading of the same or a higher level. ignore_lines: line regexes excluded from comparison. Text outside every item is compared per '## ' section. _source: where each row was measured.",
+  "kinds": {
+    "specification": {
+      "match": [
+        "^specification\\.md$"
+      ],
+      "covered": true,
+      "reviser": "/product-workflows:update-spec <KEY>",
+      "version": "header",
+      "items": [
+        {
+          "level": 1,
+          "start": "^###\\s+\\[(U\\d+)\\]"
+        },
+        {
+          "level": 2,
+          "start": "^####\\s+\\[(AC\\d+)\\]"
+        },
+        {
+          "level": 3,
+          "start": "^\\*\\*\\[(TC\\d+)\\]"
+        }
+      ],
+      "notes": [
+        "^##\\s+Engineering review\\b",
+        "^#{2,6}\\s+Open questions\\b"
+      ],
+      "ignore_lines": [
+        "^\\s*[-*]\\s+\\[[ xX]\\]",
+        "Engineering proposal \\(/design\\):",
+        "^- \\*\\*Open questions\\*\\*:",
+        "^- \\*\\*Version\\*\\*:"
+      ],
+      "_source": "product-workflows/references/specification-format.md: Stage 3 (### [U01]), Stage 4 (#### [AC01], restarts per story), Stage 5 (**[TC01]:, restarts per AC), Live items, Notes other commands write, Header"
+    },
+    "epic": {
+      "match": [
+        "^epic\\.md$"
+      ],
+      "covered": true,
+      "reviser": "/product-workflows:epics <KEY>",
+      "version": null,
+      "items": [],
+      "notes": [
+        "^##\\s+Engineering review\\b"
+      ],
+      "ignore_lines": [
+        "^\\s*[-*]\\s+\\[[ xX]\\]"
+      ],
+      "_source": "product-workflows/agents/epic-writer.md: the epic.md template under Write mechanics carries no item ids of its own; notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
+    },
+    "design": {
+      "match": [
+        "^design\\.md$"
+      ],
+      "covered": true,
+      "reviser": "/dev-workflows:design <KEY>",
+      "version": "header",
+      "items": [],
+      "notes": [
+        "^##\\s+Engineering review\\b"
+      ],
+      "ignore_lines": [
+        "^\\s*[-*]\\s+\\[[ xX]\\]",
+        "^- \\*\\*Version\\*\\*:",
+        "^- \\*\\*Open questions\\*\\*:"
+      ],
+      "_source": "dev-workflows/references/design-format.md: Header (Version), Traceability & identifiers (cites spec ids, defines none); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
+    },
+    "prd": {
+      "match": [
+        "^prd\\.md$"
+      ],
+      "covered": false,
+      "reviser": "/product-workflows:update-prd <KEY>",
+      "version": null,
+      "items": [
+        {
+          "level": 1,
+          "start": "^#{2,4}\\s+\\[((?:US|UC|FR|SM|SMC|AC)#\\d+)\\]"
+        },
+        {
+          "level": 1,
+          "start": "^\\s*[-*]\\s+\\[((?:US|UC|FR|SM|SMC|AC)#\\d+)\\]"
+        }
+      ],
+      "notes": [
+        "^##\\s+Engineering review\\b"
+      ],
+      "ignore_lines": [
+        "^\\s*[-*]\\s+\\[[ xX]\\]"
+      ],
+      "_source": "workflows-core/references/prd-format.md:144-147,153,162,181 (### [US#N]: headings; [AC#N] bullets under a label line; ids global, never renumbered); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
+    },
+    "ard": {
+      "match": [
+        "^ard\\.md$",
+        "^ard-[A-Za-z0-9._-]+\\.md$"
+      ],
+      "covered": false,
+      "reviser": "/product-workflows:create-ard <KEY>",
+      "version": null,
+      "items": [
+        {
+          "level": 1,
+          "start": "^###\\s+\\[(AD#\\d+)\\]"
+        }
+      ],
+      "notes": [
+        "^##\\s+Engineering review\\b"
+      ],
+      "ignore_lines": [
+        "^\\s*[-*]\\s+\\[[ xX]\\]"
+      ],
+      "_source": "product-workflows/references/ard-format.md:15 (ard-<area>.md), :63 (### [AD#N]:); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
+    },
+    "grounding": {
+      "match": [
+        "^code-grounding\\.md$",
+        "^design-grounding\\.md$"
+      ],
+      "covered": false,
+      "reviser": null,
+      "version": null,
+      "items": [
+        {
+          "level": 1,
+          "start": "^\\s*(?:-\\s+)?id:\\s*\\[((?:CG|DG)#\\d+)\\]"
+        }
+      ],
+      "notes": [],
+      "ignore_lines": [
+        "^\\s*(?:-\\s+)?consumed_by:"
+      ],
+      "_source": "workflows-core/references/grounding-format.md:41-45,105 (- id: [CG#1]); consumed_by is written by each consuming command (grounding-format §2), never a move"
+    },
+    "decisions": {
+      "match": [
+        "^decisions\\.md$"
+      ],
+      "covered": false,
+      "reviser": "/product-workflows:brd-interview <KEY>",
+      "version": null,
+      "items": [
+        {
+          "level": 1,
+          "start": "^\\s*(?:-\\s+)?id:\\s*\\[((?:VD|CD|AS)#\\d+)\\]"
+        }
+      ],
+      "notes": [],
+      "ignore_lines": [
+        "^\\s*(?:-\\s+)?consumed_by:"
+      ],
+      "_source": "product-workflows/references/decision-register-format.md:22,59-62,80 (id: [VD#7]); consumed_by is written by each consuming command (grounding-format §2), never a move"
+    },
+    "idea": {
+      "match": [
+        "^idea\\.md$"
+      ],
+      "covered": false,
+      "reviser": null,
+      "version": null,
+      "items": [],
+      "notes": [],
+      "ignore_lines": [],
+      "_source": "product-workflows/references/idea-format.md (no item ids)"
+    }
+  }
+}

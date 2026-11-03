@@ -47,6 +47,8 @@ BRD-route slice, `idea.md` or `prd.md` in an idea-route PRD folder, `epic.md` in
 and passes over `kind: design`, so the carrier is never this file. The filename is `design.md` and
 carries no key: the folder supplies identity, the filename supplies kind.
 
+**The lineage record.** `/design` adds `upstreams:` — and, where an operator accepted a moved input, `accepted:` — to this frontmatter after writing the file (`workflows-core:document-lineage` §1): the exact version of the `specification.md`, the ARDs and the `epic.md` the design was built from. **A rewrite keeps every frontmatter key it does not author** — those two blocks, which `/design` re-stamps itself, and any key of the user's own — in place and unchanged.
+
 ## Header
 
 ```

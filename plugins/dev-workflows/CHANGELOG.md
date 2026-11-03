@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.56.0] — 2026-11-03
+
+Take with `workflows-core` 1.73.0 — D32 part 1, document lineage.
+
+### Added
+- `/design` stamps the lineage record (`workflows-core:document-lineage`) on `design.md` — the specification, ARDs and `epic.md` it was built from — and runs `upstream-check` on the specification before its code scan; its own `## Engineering review` notes never read as a move. `design-format.md` says a rewrite keeps every frontmatter key it does not author.
+
 ## [4.55.1] — 2026-11-02
 
 Take with `workflows-core` 1.72.1.
