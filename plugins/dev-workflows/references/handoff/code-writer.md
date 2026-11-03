@@ -67,7 +67,7 @@ scratch_checkout: HEAD     # HEAD | none. HEAD on task_shape: bug work: every ru
 pre_existing_dirty: [src/notes.txt]
                            # inline. The paths /implement keeps out of the run's commit (its
                            # pre_existing_dirty): those dirty before the run's first edit, the user's
-                           # own uncommitted work, and each a test run wrote that the user left out.
+                           # own uncommitted work, and each a check run changed that the user left out.
                            # none where it recorded none. Where it names any, a formatter that cannot be limited to
                            # its paths is not run: that step is left to the caller, or, on mode: fix,
                            # that failure goes under ### Not fixed; and a repro that does not go red in
