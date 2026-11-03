@@ -317,7 +317,7 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | Skipped under `--no-commit` | `Code repo: not committed — --no-commit. Your changes are in the working tree on <branch>.` |
 | A unit commit rejected (§2.12) | append `; <unit> NOT committed — rejected by <who> (<reason>); its changes are <where>.` |
 | Pre-existing dirty paths skipped | append `; <n> pre-existing dirty path(s) were left uncommitted.`, `<n>` counting no path whose entry carries a `reason` |
-| Paths a check run changed skipped | append `; <n> path(s) a check run changed were left uncommitted at your answer, with whatever else they held (<path>, …).` — each path left out of the commit whose `pre_existing_dirty` entry carries `"reason": "changed by a check run"` |
+| Paths a check run changed skipped | append `; <n> path(s) a check run changed were left uncommitted, with whatever else they held (<path>, …).` — each path left out of the commit whose `pre_existing_dirty` entry carries `"reason": "changed by a check run"` |
 | Pre-existing dirty paths committed (§2.2) | append `; <n> path(s) dirty before this run whose content changed during it were committed whole, their earlier changes included, each with the other half of its rename where it has one (<path>, …).`, a path whose entry carries a `reason` written `<path> (<reason>)` |
 | A staged deletion kept (§2.2) | append `; <path>, … changed during this run but stay uncommitted, since committing them would undo a deletion you had staged.` |
 | A stash is outstanding | append `; a stash from this run's branch step is still on the stack (<stash_ref>).` |
