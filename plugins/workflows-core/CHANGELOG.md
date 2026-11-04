@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.1] — 2026-11-04
+
+Take with `dev-workflows` 4.58.1 — D40.
+
+### Fixed
+- `cost-emission` §6 and §13.1 and `feedback-emission` §1: the sample entries use the example keys `ACME-77` and `ACME-77-01`, an Epic's key being its PRD's key plus `-NN`, where §6's showed an `epic: EPIC-98760` no run writes and an `id` built from it; `session-branch.py`'s selftest samples follow (D40).
+
 ## [1.78.0] — 2026-11-04
 
 Take with `product-workflows` 3.73.0 and `dev-workflows` 4.58.0 — the fixes from the live checks of 2026-10-29 (to-fix LC12–LC28, D39; `docs/superpowers/verification/2026-10-29-live-checks.md`).
