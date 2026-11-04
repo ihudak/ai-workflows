@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.3] — 2026-11-04
+
+### Fixed
+- **`require-on-main` row B′ now sees an untracked copy at a gated path that an ignore rule hides** (`phase-handoff` §3.3, D15). Its test for an untracked copy ran `git ls-files --others --exclude-standard`, which lists no ignored file, so a copy the operator wrote there under a `.gitignore` or `info/exclude` rule read as the branch never having changed the path, and the stop's message said so. The test now runs without `--exclude-standard`; at one path the flag only ever hid ignored files. The second finding's remedy now says to commit such a copy with `git add -f` first, since the merge it names overwrites an ignored file without a word, where it refuses to merge over any other uncommitted copy. No run is known to reach it: neither specs repository measured has an ignore rule that matches an artifact path.
+
 ## [1.78.2] — 2026-11-04
 
 Wording only, released with `docs-workflows` 1.34.0.
