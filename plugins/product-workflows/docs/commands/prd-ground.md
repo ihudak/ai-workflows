@@ -365,7 +365,7 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
   verified, appended in Phase 8 with the findings it pins, never earlier. `--rebaseline` appends rather than overwrites.
 - `grounding/code-grounding.md` — every `[CG#n]` finding, plus the optional derivation matrix (one `## Derivation matrix` section, which each run that writes one reconciles row by row, leaving a row it derives again unchanged exactly as it stands) and,
   when documentation grounding ran, a `## Documentation divergences` section: one identifier-free
-  prose entry per page that contradicts a verified `[CG#n]`, naming that finding by id.
+  prose entry per page that contradicts a verified `[CG#n]`, naming that finding by id. There is one such section, opening with the date of the run that wrote it: each run with documentation grounding on replaces it whole, and a run with it off leaves it as it stands.
 - `grounding/design-grounding.md` — every `[DG#n]` finding, or a note explaining why design
   grounding did not run, **plus a `## Frame sets covered` section listing every subdirectory of the
   folder's design/ with its disposition** — `ground`, `skipped: --no-design`, `skipped: no index` or `skipped: stale index`.
