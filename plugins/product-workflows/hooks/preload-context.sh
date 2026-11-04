@@ -57,9 +57,9 @@ fi
 cmd="${BASH_REMATCH[2]}"
 
 # Skip the leading flags, then require an argument, so a bare `/epics` or
-# `/epics --help` doesn't inject noise on every misfire. A command strips its
-# run flags wherever they stand (workflows-core:run-flags §3), and its own
-# flags may come first too, so the argument is the first token after the
+# `/epics --help` doesn't inject noise on every misfire. A command strips a run
+# flag that stands before its argument (workflows-core:run-flags §3), and its
+# own flags may come first too, so the argument is the first token after the
 # leading run of tokens opening with `-`. A bare `--enforce-model` takes the
 # token after it as its value (the pair form, run-flags §1), so that token is
 # skipped with it. A command's own flag that takes a separate value

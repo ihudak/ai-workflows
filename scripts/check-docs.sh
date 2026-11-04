@@ -2706,15 +2706,16 @@ check_path_rule_cited() {
 # takes free text and gets no specs context. A hook's own test may be looser than the grammar
 # (the command validates the address); it may never be narrower. An absent hook is skipped and
 # says so; the hooks read the prompt with python3, so without it the check does not run.
-# A run flag may stand before the address: a command strips run flags wherever they stand
-# (`workflows-core:run-flags` §3), and a hook that tested only the first token met the flag there
-# and injected nothing at all -- D41 found every preload hook doing so. So each prompt is also run
-# with each lead below in front of its argument: a run flag in its one-token form, and in its
-# two-token pair form, whose second token is the flag's value and never the address.
+# A run flag may stand before the address: a command strips a run flag that stands before its
+# argument (`workflows-core:run-flags` §3), and a hook that tested only the first token met the
+# flag there and injected nothing at all -- D41 found every preload hook doing so. So each prompt
+# is also run with each lead below in front of its argument: a run flag in its one-token form, and
+# in its two-token pair form, whose second token is the flag's value and never the address. A
+# token that already fails with no lead is not reported again behind one: its fix is the key test.
 KEYED_HOOK_TOKENS="A-1 ACME_X-90 ACME-1-2-3 PRD-ACME-77-checkout EPIC-ACME-77-01-alerts"
 KEYED_HOOK_FREE="fix the typo in the intro"
 check_keyed_hooks() {
-  local root="$1" pair hook cmd tok out lead
+  local root="$1" pair hook cmd tok out lead missed
   local leads=("" "--skip-costs " "--enforce-model opus ")
   [ -n "$KEYED_HOOKS" ] \
     || { note "check 24 not applicable: this edition names no keyed preload hook (KEYED_HOOKS is empty)"; return 0; }
@@ -2726,14 +2727,17 @@ check_keyed_hooks() {
     esac
     hook="${pair%%:*}"; cmd="${pair#*:}"
     [ -f "$root/$hook" ] || { note "check 24: $hook absent, skipped"; continue; }
+    missed=" "
     for lead in "${leads[@]}"; do
       for tok in $KEYED_HOOK_TOKENS; do
         out=$(cd "$root" && printf '{"prompt": "%s %s%s"}' "$cmd" "$lead" "$tok" | env -u SPECS_PATH bash "$root/$hook" 2>/dev/null)
         grep -qF -- "$KEYED_HOOK_MARKER" <<<"$out" && continue
         if [ -z "$lead" ]; then
+          missed="$missed$tok "
           fail 24 "$hook injects no specs context for '$cmd $tok', a valid address -- its key test is narrower than the key grammar; widen it (a superset is fine, the command validates the address)"
         else
-          fail 24 "$hook injects no specs context for '$cmd $lead$tok', a valid address behind a run flag -- the command strips run flags wherever they stand, so skip the leading flags before the key test, a bare --enforce-model together with the token after it"
+          case "$missed" in *" $tok "*) continue ;; esac
+          fail 24 "$hook injects no specs context for '$cmd $lead$tok', a valid address behind a run flag -- the command strips a run flag standing before its argument, so skip the leading flags before the key test, a bare --enforce-model together with the token after it"
         fi
       done
       out=$(cd "$root" && printf '{"prompt": "%s %s%s"}' "$cmd" "$lead" "$KEYED_HOOK_FREE" | env -u SPECS_PATH bash "$root/$hook" 2>/dev/null)

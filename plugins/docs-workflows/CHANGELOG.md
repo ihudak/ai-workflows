@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 D41. Needs nothing from the other plugins' releases.
 
 ### Fixed
-- `preload-context` skips the leading flags before it looks for an argument — every token opening with `-`, and a bare `--enforce-model` together with the token after it, its value in the two-word form — since the command strips its run flags wherever they stand, so `/document --skip-costs ACME-77` gets its specs context and `/docs-workflows:release-notes --skip-costs ACME-77` its context, where a flag first left them with none (D41).
+- `preload-context` skips the leading flags before it looks for an argument — every token opening with `-`, and a bare `--enforce-model` together with the token after it, its value in the two-word form — since the command strips a run flag that stands before its argument, so `/document --skip-costs ACME-77` gets its specs context and `/docs-workflows:release-notes --skip-costs ACME-77` its context, where a flag first left them with none (D41).
 
 ## [1.33.0] — 2026-11-04
 
