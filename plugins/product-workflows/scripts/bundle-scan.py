@@ -20,13 +20,16 @@ give the ids its references resolve against: relation 1 (every [PREFIX#n] resolv
 partition, save another BRD's key before it, a section 6.2 structured field, [SR#n] and a
 placeholder), relation 2 (a class-4 [DG#n] cites a [CG#n] whose claim names the same requirement)
 and relation 3 (a bare <name>.md carrying a key, or matching a section 1.1 working filename, names a
-bundle file). Record-shaped content that parses to no id is unreadable. A hit in the customer's own
+bundle file; a <name>.md:<line> locator only where the name carries a key, an unkeyed one naming a
+repository file). A dead reference inside a document of a copied prerequisite's partition, which is
+never rewritten, is reported under prerequisite_dead rather than dead. Record-shaped content that
+parses to no id is unreadable. A hit in the customer's own
 words or naming is reported under customer, for the operator's ruling. A key-shaped word before an id
 counts as a BRD's key only where it is --key, a --prereq-key or a --known-key; any other is reported
 under unknown_key. It reads section 1.1's filenames and section 6.2's fields from the reference beside
 it each run, and stops (exit 2) where it cannot. Prints one line of JSON: partitions, the resolved
 and discharged counts, dead, mismatch, ambiguous, unqualified, unknown_key, unreadable, customer
-with its groups, and prerequisite_external.
+with its groups, prerequisite_external and prerequisite_dead.
 
 sets: runs the bundle-packaging reference's section 7 over an assembled bundle and the delivery note.
 Relation 1 reads six lists of the prompt <KEY>-customer-review-prompt-<DATE>.md under the
@@ -653,7 +656,7 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
         raise Refused("cannot list the bundle: " + e.__class__.__name__)
     out = {"partitions": {}, "resolved": 0, "discharged": 0, "dead": [], "mismatch": [], "ambiguous": [],
            "unqualified": [], "unknown_key": [], "unreadable": [], "customer": [], "groups": [],
-           "prerequisite_external": []}
+           "prerequisite_external": [], "prerequisite_dead": []}
     part_of = {}
     for name in texts:
         k = _partition(os.path.basename(name), keys)
@@ -689,6 +692,8 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
         if span:
             hit["span"] = span
             out["customer"].append(hit)
+        elif k != key:
+            out["prerequisite_dead"].append(hit)  # a copied prerequisite is never rewritten (section 5)
         else:
             out["dead"].append(hit)
 
@@ -804,8 +809,9 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                 tok = m.group(1)
                 if i in evidence:
                     continue
-                if line[m.end():m.end() + 1] == ":" and line[m.end() + 1:m.end() + 2].isdigit():
-                    continue  # a <file>:<line> locator names a repository file
+                if line[m.end():m.end() + 1] == ":" and line[m.end() + 1:m.end() + 2].isdigit() \
+                        and _partition(tok, keys) is None:
+                    continue  # an unkeyed <file>:<line> locator names a repository file
                 shape1 = _partition(tok, keys) is not None
                 shape2 = any(rx.match(tok) for rx in names_rx)
                 if not (shape1 or shape2):
@@ -823,6 +829,8 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                 elif in_prereq and (tok in prereq_aux or _partition(tok, keys) not in (k, None)):
                     # a file of a package that prerequisite carried, or its own prompt or manifest
                     out["prerequisite_external"].append(hit)
+                elif in_prereq:
+                    out["prerequisite_dead"].append(hit)  # never rewritten (section 5)
                 else:
                     out["dead"].append(hit)
     for k, names in out["partitions"].items():
@@ -837,8 +845,9 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
             cites = re.search(r"\[CG#[0-9]+\]", b.get("cites", ""))
             reqs = set(REQ_RE.findall(b.get("claim", "")))
             if not cites or cites.group(0) not in by_id:
-                out["dead"].append({"file": b["file"], "line": b["line"], "token": b.get("cites", ""),
-                                    "reason": "class-4 cites no [CG#n] in %s" % k})
+                out["dead" if k == key else "prerequisite_dead"].append(
+                    {"file": b["file"], "line": b["line"], "token": b.get("cites", ""),
+                     "reason": "class-4 cites no [CG#n] in %s" % k})
                 continue
             if len(reqs) != 1:
                 out["ambiguous"].append({"file": b["file"], "line": b["line"], "token": b["id"],
@@ -992,9 +1001,22 @@ def citations_selftest(check):
     check("a manifest name at a line's edge, unquoted, is tested", [h["token"] for h in r["dead"]] == ["decisions.md"])
     r = run({"P-2-x.md": "see P-2-gone.md, Q-9-other.md and P-2-manifest.md\n"},
             prereq_keys=["P-2", "Q-9"], copied_keys=["P-2"], prereq_aux=["P-2-manifest.md"])
-    check("in a copied prerequisite, a file of a package it carried, or its own manifest, is named, never a stop; its own missing file is dead",
-          [h["token"] for h in r["dead"]] == ["P-2-gone.md"]
+    check("in a copied prerequisite, a file of a package it carried, or its own manifest, is named, never a stop; "
+          "its own missing file is left as packaged",
+          r["dead"] == [] and [h["token"] for h in r["prerequisite_dead"]] == ["P-2-gone.md"]
           and sorted(h["token"] for h in r["prerequisite_external"]) == ["P-2-manifest.md", "Q-9-other.md"])
+    r = run({"P-2-code-grounding.md": "- id: [CG#7]\n  claim: [BR#1] — z\n",
+             "P-2-design-grounding.md": "- id: [DG#1]\n  class: 4\n  cites: [CG#42]\n  claim: [BR#1] — y\n",
+             "P-2-brd-inventory.md": inv, "P-2-q.md": "per [CG#7] and [CG#99]\n", "K-1-x.md": "ours [CG#5]\n"},
+            prereq_keys=["P-2"], copied_keys=["P-2"])
+    check("a dead id or class-4 cites inside a copied prerequisite is left as packaged; this package's own is dead",
+          [h["token"] for h in r["dead"]] == ["[CG#5]"]
+          and {h["token"] for h in r["prerequisite_dead"]} == {"[CG#42]", "[CG#99]"}
+          and any("class-4" in h["reason"] for h in r["prerequisite_dead"]))
+    r = run({"K-1-prompt.md": "see K-1-gone.md:12, K-1-x.md:3 and README.md:12\n", "K-1-x.md": "x\n"},
+            source_basenames=["README.md"])
+    check("a key-prefixed <name>.md:<line> is a bundle filename and is tested; an unprefixed one is a repository locator",
+          [h["token"] for h in r["dead"]] == ["K-1-gone.md"])
 
 
 # ---------------------------------------------------------------------------------------------------
