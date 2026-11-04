@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.58.2] — 2026-11-04
+
+Docs only, released with `docs-workflows` 1.34.0.
+
+### Changed
+- `conformance-format.md` §6 names `/docs-workflows:release-notes` among the record's readers: it reads the record from another plugin and cannot load the reference, so a change to the fields it reads is a change to that command too. `/conformance`'s docs page says what a release note does with each decision (D42).
+
 ## [4.58.1] — 2026-11-04
 
 Take with `workflows-core` 1.78.1 — D40 and D41.

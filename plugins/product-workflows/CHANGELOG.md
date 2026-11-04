@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.74.0] — 2026-11-04
+
+D43. Needs nothing from the other plugins' releases.
+
+### Changed
+- `/prd-ground` writes one `## Documentation divergences` section into `code-grounding.md`, replacing any already in the file — the first rewritten in place, every other removed — where it appended a new one on every run with documentation grounding on, so a re-run left several lists, the older ones describing pages that may since have changed and naming findings a later run may have superseded. The section opens with the date of the run that wrote it, and a run with documentation grounding off leaves it as it stands (D43).
+
 ## [3.73.1] — 2026-11-04
 
 D41. Needs nothing from the other plugins' releases.
