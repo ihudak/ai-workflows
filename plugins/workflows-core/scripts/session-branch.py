@@ -1989,11 +1989,11 @@ def selftest():
         # The same day's run recorded again, differing in one line: git's union fuses these two.
         IMPL_2P = IMPL_2.replace("  pushed:  false            # local only — resolvable on this machine\n",
                                  "  pushed:  true\n")
-        FB_HEAD = "---\ntype: dev-workflows-feedback\nprd: PRODUCT-1234\nslug: env-ag-update-window\n---\n\n"
+        FB_HEAD = "---\ntype: dev-workflows-feedback\nprd: ACME-77\nslug: env-ag-update-window\n---\n\n"
         FB_1 = ("## 2026-07-09 — /document — missing-capability\n"
                 "\n"
                 "```yaml\n"
-                "id: PRODUCT-1234-document-cloud-self-hosted-split\n"
+                "id: ACME-77-document-cloud-self-hosted-split\n"
                 "date: 2026-07-09\n"
                 "command: /document           # controlled: exact command name, or n/a\n"
                 "plugin_version: 2.9.0\n"
@@ -2026,17 +2026,17 @@ def selftest():
                  .replace("kind:     scan,", "kind:     verify,").replace("1 HIGH · 1 MEDIUM", "0 HIGH · 1 MEDIUM")
                  .replace("raised:   [SEC#1], [SEC#2]", "raised:   none").replace("closed:   none", "closed:   [SEC#1]"))
         SEC_3 = SEC_2.replace("1c0ffee", "d15ea5e").replace("20261016T143000Z", "20261016T170500Z")
-        COST_HEAD = "---\ntype: dev-workflows-cost\nprd: PRODUCT-1234\nsession: 5e55a0d1\n---\n\n"
+        COST_HEAD = "---\ntype: dev-workflows-cost\nprd: ACME-77\nsession: 5e55a0d1\n---\n\n"
         COST = ("## 2026-07-09T14:22:33Z — /implement — implementation\n"
                 "\n"
                 "```yaml\n"
-                "id: PRODUCT-1234-98760-implement-2026-07-09T14:22:33Z   # timestamp => unique\n"
+                "id: ACME-77-01-implement-2026-07-09T14:22:33Z   # timestamp => unique\n"
                 "date: 2026-07-09T14:22:33Z\n"
                 "command: /implement\n"
                 "phase: implementation\n"
                 "role: dev\n"
-                "prd: PRODUCT-1234\n"
-                "epic: EPIC-98760            # present only when an Epic key is in scope\n"
+                "prd: ACME-77\n"
+                "epic: ACME-77-01            # present only when an Epic key is in scope\n"
                 "plugin_version: 2.10.0\n"
                 "duration_s: 1284\n"
                 "cost_computed_usd: 3.4821\n"

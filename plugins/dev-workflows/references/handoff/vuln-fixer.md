@@ -13,7 +13,7 @@ first and treat its content as that section.
 ```markdown
 ## Vuln Fix Request
 repo: /absolute/path/to/repo
-branch: fix/PROJ-2423-CVE-2023-46604   # REQUIRED on phase: full. The orchestrator resolves it
+branch: fix/ACME-77-CVE-2023-46604   # REQUIRED on phase: full. The orchestrator resolves it
                                     # (/vuln Step 1 step 5, per its "Git Workflow → Branch naming");
                                     # vuln-fixer creates exactly this branch and never derives one,
                                     # because /vuln Step 3.9 pushes the same value. Absent => BLOCKED.
@@ -71,7 +71,7 @@ model_routing:                     # optional; set by orchestrator for SIGNIFICA
 ## Research Report (single CVE)
 ### CVE-2023-46604
 status: READY
-address: PROJ-2423
+address: ACME-77
 description: "Apache ActiveMQ RCE via ClassInfo deserialization"
 library: activemq-broker
 ecosystem: Maven
@@ -101,7 +101,7 @@ files:
 ```markdown
 ## Vuln Fix Result: CVE-2023-46604
 status: SUCCESS         # SUCCESS | BUILD_FAILED | TEST_REGRESSION | TEST_REGRESSION_KEPT | TESTS_NOT_RUN | REVERTED | SKIPPED_BY_USER | AWAITING_REVIEW | BLOCKED
-branch: fix/PROJ-2423-CVE-2023-46604
+branch: fix/ACME-77-CVE-2023-46604
                         # no `pr_url` and no commit sha: this agent creates the branch and stops.
                         # The commit, the push, and the pull request are the orchestrator's, in
                         # /vuln Step 3.9 (references/code-handoff.md §2), and it records them
@@ -206,7 +206,7 @@ step 2 created it before the fix was applied):
 ```markdown
 ## Vuln Fix Result: CVE-2023-46604
 status: AWAITING_REVIEW
-branch: fix/PROJ-2423-CVE-2023-46604
+branch: fix/ACME-77-CVE-2023-46604
 build: OK
 files_changed:                # full list — needed by the orchestrator's Opus review
   - pom.xml
@@ -223,7 +223,7 @@ Use this exact shape:
 ```markdown
 ## Vuln Fix Result: CVE-2023-46604
 status: TEST_REGRESSION
-branch: fix/PROJ-2423-CVE-2023-46604
+branch: fix/ACME-77-CVE-2023-46604
 tests_before: 47
 tests_after: 45
 regressions: 2
