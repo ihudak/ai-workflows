@@ -651,7 +651,7 @@ inbox, reads *not customer-reviewed* here, correctly: nothing about it is frozen
 position and assumption resting on it can still move.
 
 Carry, for each prerequisite: its key, whether it resolved, whether its decisions are
-customer-reviewed, whether a package of its own was found, and **every position reading `open`, `decided` or `reopened` and every open
+customer-reviewed, whether a package of its own was found, and **every position — a `[VD#n]` or a `[CD#n]` — reading `open`, `decided` or `reopened` and every open
 assumption in this BRD's register carrying `conditional_on: <PREREQ-KEY>/<decision-id>`**
 (`decision-register-format.md` §5, §7). Those are the records D20 obliges the prompt and the
 delivery note to name, and they are found
@@ -1003,7 +1003,7 @@ whose eleven are not there once each and in order.
 | 5 | The single most important claim to verify first | the register, the findings and the held `[C]` entries, by the rule below |
 | 6 | Review scope | `coverage-ledger.md` dispositions, `brd/brd-inventory.md`, and every `in-scope` `[CDF#n]` |
 | 7 | The decisions the customer must make | `interview/customer-questions.md`, every open `[AS#n]`, and every `escalated-to-customer` `[SR#n]` |
-| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position and open `conditional_on` assumption (D20), and every `conditional` `[CDF#n]` |
+| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position, a `[VD#n]` or a `[CD#n]`, and open `conditional_on` assumption (D20), and every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its name, and the inlined schema | the D13 rule, the `Package reviewed` line, and `render-schema` below |
 | 11 | What this session cannot settle | the ledger, the prerequisites, every `out-of-scope` `[CDF#n]`, and the review's own limits |
@@ -1030,7 +1030,7 @@ sub-heading rather than by reading the part's prose. Each is a `###` heading ins
 |---|---|---|
 | 6 | `Code defects we will repair` | every `in-scope` `[CDF#n]` |
 | 7 | `Open assumptions` | every open `[AS#n]` |
-| 8 | `Positions and assumptions that could still move` | every live position — `open`, `decided` or `reopened` — and every open assumption, carrying `conditional_on` a prerequisite not yet customer-reviewed |
+| 8 | `Positions and assumptions that could still move` | every live position, a `[VD#n]` or a `[CD#n]` — `open`, `decided` or `reopened` — and every open assumption, carrying `conditional_on` a prerequisite not yet customer-reviewed |
 | 8 | `Code defects whose scope is unsettled` | every `conditional` `[CDF#n]` |
 | 9 | `Open assumptions` | every open `[AS#n]` |
 | 11 | `Code defects we will not repair` | every `out-of-scope` `[CDF#n]` |
@@ -1164,9 +1164,14 @@ account of why no evidence exists, and its `argumentation`.
 
 **Part 8 — what could still move (D20).** Every declared prerequisite whose decisions are **not yet
 customer-reviewed**, named, with what is unsettled about it; and every position in this package
-carrying `conditional_on` one of them, named by its `[VD#n]` and its `statement` — every **live** one,
+carrying `conditional_on` one of them, named by its id — a `[VD#n]` of the delivery team's or a
+`[CD#n]` of the customer's own — and its `statement` — every **live** one,
 reading `open`, `decided` or `reopened`: a record reading `superseded` or `withdrawn` is no longer a
-position this package takes, and is not among them. **And every open `[AS#n]` carrying
+position this package takes, and is not among them. **A `[CD#n]` is listed exactly as a `[VD#n]`
+is**: a customer's decision can rest on a prerequisite's as one of ours can —
+`/product-workflows:brd-reconcile` copies an accepted assumption's `conditional_on` onto the
+`[CD#n]` confirming it, and its will-change rule writes one — and it is named so the customer knows
+it could move; it asks their review for no mark. **And every open `[AS#n]` carrying
 `conditional_on` one of them**, named by its id and its `statement`: an assumption can rest on a
 prerequisite's decision exactly as a position can (`decision-register-format.md` §7), and parts 7
 and 9, which carry it too, ask the customer to confirm it and to attack it without saying it could

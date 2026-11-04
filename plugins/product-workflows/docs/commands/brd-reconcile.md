@@ -268,7 +268,11 @@ findings were written somewhere the run could not read them. It copies its `alti
 from what it answers — the held question's own
 `- **Altitude:**` line, an assumption's field, or, for an escalated self-review finding, the altitude
 of the record or question it targets — and where there is nothing to copy the run decides it by the
-downstream artifact the answer must reach, and says so in the reconciliation record. An answer
+downstream artifact the answer must reach, and says so in the reconciliation record. A `[CD#n]`
+confirming an assumption that carries `conditional_on` copies that too, so the propagation sweep
+reaches the live decision when the prerequisite's decision moves; one contradicting such an
+assumption decides its own dependency, and where it does not carry the assumption's, the
+reconciliation record names that value beside it. An answer
 outside the options the question put is frozen as the customer gave it: `chosen` carries it after
 the register's one fixed marker, and `options_considered` stays as it was put — `["as assumed", "not
 as assumed"]` for an assumption, which puts no options. **An answer matching no question the package

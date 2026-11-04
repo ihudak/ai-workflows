@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.76.0] — 2026-11-04
+
+D37. Needs nothing from the other plugins' releases.
+
+### Changed
+- **A `[CD#n]` that confirms an assumption carries the assumption's `conditional_on`.** `/brd-reconcile` copied `defects` and `altitude` from an `[AS#n]` the customer accepted, but left `conditional_on` to judgement, so a confirmed conditional assumption could become an unconditional decision. The propagation sweep then reached only the superseded `[AS#n]`, which is terminal, and never the live `[CD#n]` that replaced it. The field is now copied, never judged, wherever the answer is `as assumed` and the assumption carries one (`decision-register-format.md` §7). An answer contradicting the assumption still decides its own dependency. For every `[CD#n]` answering such an assumption, the reconciliation record says whether the value was copied and whether the review's section 8 marked the acceptance contingent, and names the assumption's value where the `[CD#n]` does not carry it. A `[CD#n]` frozen by an earlier release is not rewritten.
+- **`/brd-package`'s part 8 lists every live `[CD#n]` resting on a prerequisite not yet customer-reviewed**, beside the `[VD#n]` positions and open assumptions. It asks the customer's review for no mark: the decision is their own, named so they know it could move (`customer-review-schema.md` §6). `bundle-scan.py sets` relation 1 reads `[CD#n]` in part 8's set, with two new selftest cases.
+
 ## [3.75.1] — 2026-11-04
 
 Wording only, released with `workflows-core` 1.78.3.
