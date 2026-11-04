@@ -7,14 +7,21 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.58.0] — 2026-11-04
 
-Take with `workflows-core` 1.76.0 — the fixes from the live checks of 2026-10-29 (to-fix LC12–LC28, D39).
+Take with `workflows-core` 1.78.0 — the fixes from the live checks of 2026-10-29 (to-fix LC12–LC28, D39).
 
 ### Changed
 - `/design` asks each decision a review leaves open, one question per finding, the reviewer's options and `Leave it open` last; *Leave it open* leaves it in the final report and the pull request, as before (LC17).
 - `/design`'s deploy-surface scan names every image the release builds, publishes or retags and every workload that pulls one; *Release verification* plays each back at `file:line` and its rollout question names each workload a moved tag reaches (LC15).
 - `/implement` reads the working tree before and after every check — the test-baseliner capture and each verify, lint and build, a bisect, the bug-work repro and its re-run — and asks once per check about each path it created or changed: a created file is left out of the commit by default, deleted or committed at the operator's word; a file that existed is kept or left out, with no recommendation, the question saying what each choice does to this run's own edits. A path a check reverted or deleted is reported (LC16).
-- `/implement`'s run state holds `session_branch_created`, so its `Specs repo:` line reports a session branch the run created (with `workflows-core` 1.76.0's LC28).
+- `/implement`'s run state holds `session_branch_created`, so its `Specs repo:` line reports a session branch the run created (with `workflows-core` 1.78.0's LC28).
 - `/ready` Phase 5 and `/conformance` Phase 5.5: the maintenance agents' briefs name the unit folder, not "the project root"; the run reads it and the session's repository before and after them, hands off only an edit to a file that stood committed and clean, and reports every other (LC14, D39).
+
+## [4.57.3] — 2026-11-03
+
+Take with `workflows-core` 1.77.0 — D32 part 5.
+
+### Fixed
+- `/ready`'s stale-lineage finding names the changed, new and withdrawn keys, and lists each (downstream, upstream) pair once across its units.
 
 ## [4.57.2] — 2026-11-03
 

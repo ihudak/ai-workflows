@@ -27,6 +27,7 @@ The ledger itself, otherwise unchanged, is in `2026-11-04-live-checks-r2-fixes-l
 | 9 | docs-workflows takes a minor bump, 1.32.0, not the plan's 1.31.2. | Task 6 changed `/document`'s behaviour (the read before and after its maintenance agents, Phase 8.5's staging), not only a heading. | None. |
 | 10 | Two narrow fix passes ran after the final review's one fix wave, each re-reviewed. | The user's rule is that every known defect is fixed before push. The skill allows one wave. | Two short dispatches. |
 | 11 | The controller trimmed `.claude/rules/dev-workflows.md`'s bug-diagnosis line (20,136 → 19,998 characters) after the residual pass pushed it past the 20,000-character warning, with its "from the first edit" anchor made explicit. | A gate warning this batch caused; the compaction changes no meaning. | A controller edit that no subagent reviewed; the gate chain checked it. |
+| 12 | On merging `main` after PRs #147 and #148 (D32 parts 4 and 5), which had taken `workflows-core` 1.76.0 and 1.77.0 and `docs-workflows` 1.32.0 and 1.32.1, this batch's releases were renumbered `workflows-core` 1.78.0 and `docs-workflows` 1.33.0. `product-workflows` 3.73.0, `dev-workflows` 4.58.0 and `security-workflows` 0.10.2 stand. The ledger keeps the numbers it was written with. | Two releases cannot share a number. | None. |
 
 ## Extensions of the user's rulings
 

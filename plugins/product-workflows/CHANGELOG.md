@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.73.0] — 2026-11-04
 
-Take with `workflows-core` 1.76.0 — the fixes from the live checks of 2026-10-29 (to-fix LC12–LC28, D39).
+Take with `workflows-core` 1.78.0 — the fixes from the live checks of 2026-10-29 (to-fix LC12–LC28, D39).
 
 ### Changed
 - `/specify`, `/update-spec`, `/create-prd`, `/update-prd` and `/create-ard` ask each decision a review leaves open, one question per finding, the reviewer's options and `Leave it open` last, as `workflows-core:escalation-rules` now says (LC17). `/specify` and `/update-spec` no longer write such a finding as an open question without asking; *Leave it open* records it as before. **`/create-prd`, `/update-prd` and `/create-ard` already asked, as the grill asks; they gain the one-question shape — the reviewer's options, then the explicit *Leave it open*, and a free-text answer that settles nothing asked once more — the questions asked whatever the offer's answer and where no finding whose fix is only an edit is open, and the unspent re-review offered after the questions** — say if you would rather they had not.
@@ -15,6 +15,14 @@ Take with `workflows-core` 1.76.0 — the fixes from the live checks of 2026-10-
 - `/specify`'s next step offers `/dev-workflows:design <PRD>` on a multi-component PRD with an Epic's specification on the default branch without a merge wait, since that run designs the Epic, and says the Epic's specification predates this PRD-level one (LC23).
 - `/epics`: the plan-approval question carries the whole plan (LC18); with the session's repository on a feature branch, the recommended refresh reads its default branch's tip by ref and leaves the checkout where it stands (LC19), and a failed fetch is named in the report; the report heading and its *Clarifications* line say what they count (LC21, LC27).
 - `/epics` Phase 7.4: the maintenance agents' briefs name the PRD folder, not "the project root", and say the session's directory may be a code repository; the run reads the PRD folder and the session's repository before and after them, hands off only an edit to a file that stood committed and clean, and reports every other — an operator's own uncommitted change, a file an agent created, an edit outside the folder, a change no agent returned (LC14, D39).
+
+## [3.72.1] — 2026-11-03
+
+Take with `workflows-core` 1.77.0 — D32 part 5.
+
+### Changed
+- `/prd-ground` keeps the derivation matrix as one `## Derivation matrix` section of `code-grounding.md` — its heading, lead-in and table, never a finding written after the table — reconciled row by row rather than appended again: a row the run derives again unchanged is left byte for byte, so a re-run that derives the same rows changes nothing a specification is checked against.
+- `/update-spec`'s upstream diff leaves a grounding re-run's baseline findings, a finding's `outcome`- or `notes`-only change, and the divergences, frame-set and dated run sections out of its change list, matching the lineage check.
 
 ## [3.72.0] — 2026-11-03
 

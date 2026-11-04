@@ -17,7 +17,7 @@ Loaded when `/release-notes`' command file or docs page is read, `release-notes-
 ## Workflow map
 
 ```
-/release-notes       → read the resolved PRD folder → [diff-summarizer×N (parallel, optional)] → [docs-grounder] → [release-notes-writer: resolve destination + shape per destination + source the **Category:** label + detect deprecation + resolve a breaking note's later effective release] → [prose-style-checker → prose-fixer (optional), on a scratch copy, the checker handed the specs repository as the repo whose house-style rules apply] → append the draft to the PRD folder's release-notes.md, under its version and Change Type section, never rewriting an earlier section (destination-shaped Summary; yours to paste wherever release notes are published) → [handoff-to-main: the draft, `prd/` prefix] → impl-maintenance → commit-artifacts
+/release-notes       → [document-lineage upstream-check per unit, Phase 0, shown before the diff-grounding question — reported, never asks or records] → read the resolved PRD folder → [diff-summarizer×N (parallel, optional)] → [docs-grounder] → [release-notes-writer: resolve destination + shape per destination + source the **Category:** label + detect deprecation + resolve a breaking note's later effective release] → [prose-style-checker → prose-fixer (optional), on a scratch copy, the checker handed the specs repository as the repo whose house-style rules apply] → append the draft to the PRD folder's release-notes.md, under its version and Change Type section, never rewriting an earlier section (destination-shaped Summary; yours to paste wherever release notes are published) → [handoff-to-main: the draft, `prd/` prefix] → impl-maintenance → commit-artifacts
 ```
 
 ## Invariants

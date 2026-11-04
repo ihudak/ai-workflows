@@ -167,6 +167,29 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
      `DOCUMENT_NO_PRD: <focus_key> resolves to an Epic folder at <path> with no PRD folder above it. Move the Epic folder into its PRD folder (git mv) and re-run.`
      — `<path>` here being the Epic folder's own.
 
+   **Check the lineage under each unit — report it, never ask.** Once the folder is placed and none
+   of the stops above has ended the run, execute `Skill(skill: "workflows-core:reference", args: "document-lineage upstream-check")`
+   §6 by its step 6 — the caller that never asks, with no gate — here, before step 2: step 4(c)'s
+   inline profiling can dispatch agents, and this check comes before any dispatch. The units are this
+   run's scope (Phase 3): the focus Epic alone where `focus_key` is set; otherwise each `EPIC-` folder
+   directly under the PRD folder — a listing of the working tree and of `<default-ref>` together, the
+   default branch as `specs-preflight` resolved it — and the PRD folder itself. Each unit's `docs`, and
+   each of its `--accepted-from`, are its `specification.md` and `design.md` where present, in the
+   working tree or on `<default-ref>`, with no `--output`; a unit holding neither is skipped, and where
+   every unit is, one check takes the PRD folder's `prd.md` as both. **Print what it finds now**, and
+   carry it to the Readiness table's `Lineage` row and to the Phase 9 report's `### Lineage`: each
+   stale link `⚠ stale lineage: <downstream> ← <upstream> <recorded> → <current>: changed <keys>; new <keys>; withdrawn <keys>; revise <highest> with <reviser>`,
+   worded as §6 step 3 words it — each (downstream, upstream) pair once across the units, as §6 step 6
+   lists them — a link accepted in its own unit marked so, each missing record,
+   each `absent` entry and each document this checkout changed from `<default-ref>` a note line as §6 step 6 words it, and a non-zero exit of the script a ⚠ line
+   naming its first stderr line — after which the run goes on. A stale link is the cause of what Phase
+   5.8 may later find claim by claim — a requirement the PRD gained after its specification or design
+   was written is one more requirement the code may not have — so it is reported beside those
+   discrepancies and is never a reason to stop: nothing is asked, accepted or written, and this command
+   records no lineage of its own. Where there is no specs repository to read — an `@<path>` run with
+   `$SPECS_PATH` unset, or a folder outside its work tree — run nothing, and carry
+   `Lineage: not checked — no specs repository`.
+
 2. **Resolve the docs repo (cwd-preferred).** This command writes feature documentation into a product docs repository; running it outside such a repository is almost always a mistake. The **docs signals** checked throughout this step are:
    - `package.json` with any script matching `*:start`, `*:build`, `*:lint`, `docs:*`, or
    - any of `.docstack/`, `mkdocs.yml`, `docusaurus.config.js`, `antora.yml`, a Vale configuration file under any of the five names Vale reads (`.vale`, `_vale`, `vale.ini`, `.vale.ini`, `_vale.ini` — `toolchain-preflight.md` §2 source 2), `DOCUMENTATION-GUIDELINES.md`, or
@@ -296,6 +319,7 @@ Before clarification, show a readiness table summarizing what Phase 0 resolved:
 | Profile | `profile_source`: `<in-repo \| built-in \| generated>` |
 | Toolchain | `<all required tools present>` OR `<N missing: vale, pnpm — user chose to continue>`; writing into `<docs_repo_path>`[ (cwd is `<cwd>`)] |
 | Specs | `<specs_dir>` or `none` |
+| Lineage | `current`, or the step 1 lineage lines — `<n> stale, <m> unrecorded, <k> not on <default-ref>, <j> changed on this checkout`, each listed — or `not checked — <reason>` |
 | Code repos | resolved later in Phase 4 (slug→clone match under `$REPOS_PATH`) |
 
 All discovery defaults to `/workspace` (`${REPOS_PATH:-/workspace}`); on a host, or when a path is missing, the command asks rather than guessing.
@@ -1345,6 +1369,9 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 - <repo> — <ref> — unresolved: [reason from `unresolved_prs`]
 - ...
 
+### Lineage
+[The `Lineage:` line (`workflows-core:document-lineage` §7) for Phase 0 step 1's check, then each stale link ⚠ with its remedy, each link accepted in its unit marked so, each missing record, each document not on `<default-ref>` and each this checkout changed from it as a note — or nothing more where it reads `current`.]
+
 ### Branch-name probe
 [Phase 3's *Report the scan's own reach* step, one line per repository the whole-key commit scan left at zero matches — the only repositories it runs on. Omit the section entirely when it fired nowhere.]
 - <repo> — [each commit by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | matched nothing | probe failed — <its `probe_error`>]
@@ -1516,6 +1543,7 @@ name is ever written (§10 privacy).
 
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation, and Mode A Phase 0 step 1's named stops on a folder that resolved — `DOCUMENT_BRD_NOT_SLICED`, `DOCUMENT_FOLDER_NOT_PLACED`, `DOCUMENT_PRD_NO_KEY` and `DOCUMENT_NO_PRD`, each reporting the operator's own tree). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - ALWAYS run Phase 0 docs-repo detection; if 0 signals, require user confirmation before proceeding
+- NEVER ask, stop or write on a lineage outcome (Phase 0 step 1) — a stale link is reported beside Phase 5.8's discrepancies, a script failure is a ⚠ line, and this command records no lineage anywhere
 - NEVER call a forge's REST API directly over HTTPS, on any host. A keyed run has no forge URL to resolve in the first place: it passes `refs[]` only (Phase 4 step 6), and `diff-summarizer` takes a `refs` element's diff with pure local `git`. The forge commands this command names are key discovery's optional, read-only `gh search prs` and `gh pr view` (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md`) and the `gh pr create` Phase 8.5 offers the **user** for the run's own pull request, and `gh` wraps the API rather than calling it directly
 - NEVER write inside `_archive/` — that path is read-only by convention
 - NEVER write product documentation outside the resolved `docs_repo_path` (Phase 0). Outside the docs repository and its remote the run writes these and nothing else: the resolved PRD folder's two drafts, the `<KEY>-implementation-gaps.md` bug-report draft and `pr-draft.md`; a new image placed in the resolved PRD folder's `Doc screenshots/` (Phase 5.6), never its `attachments/`; screenshots staged under `<screenshot_staging_dir>`, and, for each one staged under `$SPECS_PATH`, one line in that repository's local exclude file (Phase 6.3); its session bookkeeping under `$SPECS_PATH`, with the commits, pushes and branch moves `specs-preflight` and `commit-artifacts` make there (`workflows-core:specs-repo-git`), and the session-cost checkpoint Phase 11 advances under `~/.claude/dev-workflows/cost-state/` (`workflows-core:cost-emission` §3); its temporary files, each made by `mktemp` — Phase 6.3's handoff file and Phase 7's claims file, removed at the top of Phase 8, and Phase 6.5's smoke logs, each removed as `render-verification.md` §2 step 5 removes one, save a log that step keeps because it could not show its server stopped, which the record naming it leaves in place; the refresh Phase 1 chose for the resolved code clones, in their own git state (Phase 5's `diff-summarizer`, its Refresh step); whatever the tools it invokes write of their own accord — the repository's own linter, build and server commands, which Phases 6.4 and 6.5 run, above all; and, only behind Phase 8.6's own consent, each accepted Agent 2 or Agent 3 proposal, written to the file that proposal names — which may lie outside every repository, `~/.claude/CLAUDE.md` or `~/.claude/memory/` among them.
