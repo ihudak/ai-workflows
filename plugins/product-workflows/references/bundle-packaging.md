@@ -735,16 +735,38 @@ would otherwise refuse.** A `<file>:<line>` locator in a grounding finding's `ev
 repository file, never a bundle document, so the relation stays off it — and shape 2's
 captured-markdown row in particular reaches only references outside grounding evidence: a customer
 who happened to capture a `README.md` of their own would otherwise turn a correct `README.md:12`
-into a dead citation. The manifest's quotation of a target as written (§1.1, §2.1) is a map entry
-rather than a reference: it sits beside the bundled filename it maps to and quotes the customer's
+into a dead citation. **Outside `evidence` a locator is told by its name**: a `<name>.md:<line>`
+whose name carries no key prefix is read as a repository locator — a grounding file's note quoting
+`CLAUDE.md:79` — and stays outside the relation, a §1.1 working filename with a line number,
+`decisions.md:12`, included, since a repository can carry a file of that name too; one whose name
+carries a key (shape 1) is a bundle filename, a key before the name being how this package names its own documents, and is
+tested like any other; the line number does not excuse it. The manifest's quotation of a target as written (§1.1, §2.1) is a map entry rather than a
+reference: it sits beside the bundled filename it maps to and quotes the customer's
 own link, so the target `notes.md` of a `[[notes.md]]` link, quoted there, is already resolved by
 that line, and testing it would make that package unbuildable with nothing the operator could
 change. The third, for that same reason, is a captured file's own link to another captured file —
-§6.3's to state, with the rest of the customer-derived locators.
+§6.3's to state, with the rest of the customer-derived locators. **Beyond those three, the manifest's
+`## Not included` section is outside the relation**, which no scoping to what this package wrote
+reaches, the manifest being its own: it names, in backticks, a file a copied prerequisite's
+document cites and this bundle does not carry (`commands/brd-package.md`'s *Assemble the bundle*
+rule 8), so every name in it records an absence by design, and testing them would fail it by
+construction.
 
 Relations 1 and 3 fail the same way — a reference that resolves to nothing — and stop the run with
 `BRD_PACKAGE_DEAD_CITATION`, naming the id or filename, the document it sits in, and the corpus or
-bundle it failed to resolve against; the remedy is to fix or qualify the reference. Relation 2 fails
+bundle it failed to resolve against; the remedy is to fix or qualify the reference. **A reference
+that resolves to nothing inside a document copied in from a prerequisite's package is no stop** — an
+id, a class-4 `cites`, or a filename of that prerequisite's own — for the reason §1.2 gives for a
+model id there: that package is never rewritten (§5), so the reference reaches the customer as written
+whether or not it already has, and the only repair would falsify a delivered document. It is the
+source package's own only where the copy is whole, so the scanner first holds the copy against the
+bundle it came from (`--prereq-source`): a file of that prerequisite's there, save its prompt and
+manifest, missing from the copy or differing from it is a copy defect, and dead. The scanner reports
+the rest under `prerequisite_dead`, and `commands/brd-package.md`'s *Assemble the bundle* rule 8
+names each in the run's Final report as left as packaged, never putting it to the operator's ruling —
+save one inside the customer's own words or naming, a span §6.3 places, which goes to that ruling
+like any other customer hit, as §1.2's classes other than a model id do in a copied document.
+A package built before this check existed is the likeliest place to meet one. Relation 2 fails
 differently — the reference resolves, to a finding about a different requirement — and stops with
 `BRD_PACKAGE_CITATION_MISMATCH`, naming both `claim`s; the remedy is to re-derive the finding, and
 the reference itself may be untouched. The two stay separate codes because the two remedies repair
