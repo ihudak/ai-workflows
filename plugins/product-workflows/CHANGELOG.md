@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.75.0] — 2026-11-04
+
+D34, D35 and D36. Needs nothing from the other plugins' releases.
+
+### Changed
+- `/brd-package` no longer stops on a reference that resolves to nothing inside a document copied in from a prerequisite's package — an id that prerequisite's corpus lacks, a class-4 `cites` naming no `[CG#n]` there, or a filename of its own the bundle does not hold. That package is never rewritten, so the stop had no repair short of falsifying a delivered document; the Final report names each as left as packaged, as it already did for a model id there. `bundle-scan.py citations` reports them under `prerequisite_dead` (D34).
+- `/brd-package` writes the note naming a copied prerequisite's references to files this bundle does not carry under a `## Not included` heading of its own after `## Documents`, never as a document-table row the set-resolution check would read as a missing document, and then runs the plugin-free scan over the manifest and the citation check over the bundle again, since the note is written after both first read the manifest (D35).
+- `bundle-scan.py citations` tests a `<name>.md:<line>` token outside grounding evidence where its name carries a key: it is a bundle filename, and `K-1-gone.md:12` passed unchecked before. One with no key, a repository locator such as a grounding note's `CLAUDE.md:79`, keeps the skip. Measured before the change over 119 bundle files across two projects: six such tokens outside evidence, every one a keyless repository locator (D36).
+
 ## [3.74.0] — 2026-11-04
 
 D43. Needs nothing from the other plugins' releases.
