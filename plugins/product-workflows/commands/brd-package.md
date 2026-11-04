@@ -1722,7 +1722,7 @@ or not that line is there.
 
    **Run it with the scanner, as rule 7 runs its scan**, never with code of your own:
    ```
-   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" citations <the working directory> --key <BRD-KEY> [--prereq-key <KEY>]… [--copied-key <KEY>]… [--known-key <KEY>]… --date <YYYYMMDD> [--captured <bundled name>]… [--captured-path <path relative to brd/>]… [--source-basename <name>]… --manifest <the manifest's bundled name> [--prereq-aux <bundled name>]…
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" citations <the working directory> --key <BRD-KEY> [--prereq-key <KEY>]… [--copied-key <KEY>]… [--known-key <KEY>]… --date <YYYYMMDD> [--captured <bundled name>]… [--captured-path <path relative to brd/>]… [--source-basename <name>]… --manifest <the manifest's bundled name> [--prereq-aux <bundled name>]… [--prereq-source <KEY>=<its bundle-YYYYMMDD/>]…
    ```
    Every argument is something this run already holds, and none is derived from a filename:
    `--prereq-key` for every prerequisite Phase 2 carried and `--copied-key` for each whose package
@@ -1734,8 +1734,12 @@ or not that line is there.
    `brd-link.md`) — the other BRDs a qualified reference or a structured field may name; `--date` the run's stamp; `--captured` and
    `--captured-path` as rule 7 passes them; `--source-basename` for each captured markdown file's
    basename, which relation 3's placeholders resolve against; `--manifest` the manifest rule 6
-   wrote, whose quotation of a target as written relation 3 stays off; and `--prereq-aux` for each
-   copied prerequisite's rendered prompt and manifest, which rule 5 identified and did not copy. It
+   wrote, whose quotation of a target as written relation 3 stays off; `--prereq-aux` for each
+   copied prerequisite's rendered prompt and manifest, which rule 5 identified and did not copy;
+   and `--prereq-source` for each copied prerequisite, naming the `bundle-<YYYYMMDD>/` rule 5 copied
+   it from (Phase 2 step 3), so the scanner holds the copy whole first — every file of that
+   prerequisite's there, save its prompt and manifest, present in the bundle byte for byte, one
+   missing or changed being `dead`: a copy defect, which copying again repairs. It
    reads §6.1's corpora by their owners' layouts, and §1.1's working filenames — every backticked
    working `.md` path that section names, in its table and its prose — and §6.2's structured fields
    from `bundle-packaging.md` itself, and prints one line of JSON. Any exit other than 0 stops the
@@ -1775,8 +1779,13 @@ or not that line is there.
    outside a document rule 5 copied in, a
    bundle document whose filename carries no `<BRD-KEY>` and therefore has no partition at all, or a
    prerequisite key **whose package this run copied in** that no partition in the bundle answers to,
-   which is what a collapsed set of filenames looks like from the key set (§6.1) — stops with:
+   which is what a collapsed set of filenames looks like from the key set (§6.1), or a file of a
+   copied prerequisite's that its source bundle holds and the copy lacks or holds otherwise — stops with:
    `BRD_PACKAGE_DEAD_CITATION: <id-or-filename> in <bundle document> resolves to nothing — <what it was resolved against>. A reference the reviewer cannot follow is not fixed by deleting it: some sentence in the package assumed that id or that file, and the sentence is what has to change. Where it is a [BR#n] this slice does not claim, cited bare in a question, a held entry or a register record written before 3.7.0 — which let a question cite a delegated row as context with no qualifier — qualify it by hand as <PARENT-KEY> [BR#n], <PARENT-KEY> being this slice's parent:, and change nothing else in that sentence.`
+
+   Where the entry is a copy defect — its reason says a file of a copied prerequisite's is missing
+   from the copy or differs from its source — no sentence is at fault, and the message says so in
+   place of its last two sentences: re-run, and rule 5 copies that prerequisite's files again.
 
    **A reference inside a document rule 5 copied in, naming a file or a record of a package that
    prerequisite itself carried and this bundle does not, or that prerequisite's own rendered prompt
@@ -1797,11 +1806,15 @@ or not that line is there.
    prerequisite's own the bundle does not hold (the scanner's `prerequisite_dead`) — is no stop
    either, for the reason a model id there is none (rule 7): that package is never rewritten
    (`bundle-packaging.md` §5), so the reference reaches the customer as written whether or not it
-   already has, and no repair short of falsifying a delivered document exists. Name each in the
+   already has, and no repair short of falsifying a delivered document exists. The copy was held
+   whole against its source first (`--prereq-source`, above), so such a reference is the source
+   package's own and not a copying slip. Name each in the
    Final report — the bundled filename, line and token, *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`,
    which is never rewritten — left as packaged* — and package on; it is never put to the operator's
-   ruling, since no answer could change it. A package built before this check existed is the likeliest
-   place to meet one.
+   ruling, since no answer could change it. One inside the customer's own words or naming, a span
+   §6.3 places, is a `customer` entry instead and goes to that ruling like any other, as rule 7's
+   classes other than a model id do in a copied document. A package built before this check existed
+   is the likeliest place to meet one.
 
    **A prerequisite Phase 2 carried with no package to copy in is not a hit**, and the discriminator
    is Phase 2's own carry — *whether a package of its own was found*. Its *BRD not found* and *no

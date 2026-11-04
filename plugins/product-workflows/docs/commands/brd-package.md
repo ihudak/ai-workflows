@@ -424,8 +424,9 @@ attack.
   filename of a document the allow-list admits or excludes by name. That scoping is the relation:
   unscoped, it would refuse a bundle over a correct `docs/api.md:12` sitting in a grounding
   finding's `evidence` list. It never tests a repository locator in that list, nor, outside it, a
-  `<name>.md:<line>` whose name carries no key — a grounding note's `CLAUDE.md:79` — while one whose
-  name carries a key is a bundle filename and is tested like any other; nor the manifest's
+  `<name>.md:<line>` whose name carries no key — a grounding note's `CLAUDE.md:79`, or a working
+  filename with a line number — while one whose name carries a key is a bundle filename and is
+  tested like any other; nor the manifest's
   quotation of a customer's target as written, which sits beside the bundled filename it maps to,
   nor a captured file's own link to another captured file. Its exemptions are `bundle-packaging.md`
   §6.3's: `[SR#n]` is exempt entirely, because the self-review file it would resolve against is
@@ -435,12 +436,7 @@ attack.
   answer or a reason the register quotes — is reported and put to the operator rather than stopping
   the run by itself, for the same reason the plugin-free scan treats it that way, and only the
   operator's *hold* stops it. A reference that resolves to nothing stops with
-  `BRD_PACKAGE_DEAD_CITATION` — save one inside a document copied in from a prerequisite's package,
-  which is never rewritten and so reaches your customer as written either way: the final report
-  names it as left as packaged, and the run goes on. A copied document that names a file of a
-  package this bundle does not carry, or that prerequisite's own prompt or manifest, is named in the
-  manifest under a `## Not included` heading of its own; the manifest has then changed after the
-  plugin-free scan and this check read it, so both run again over it. A requirement this slice does not claim, cited bare in a question, a
+  `BRD_PACKAGE_DEAD_CITATION`. A requirement this slice does not claim, cited bare in a question, a
   held entry or a register record written before 3.7.0, is such a reference — the package carries
   this slice's inventory alone, and 3.7.0 is the release from which the interview, the PRD's
   assumptions, the reconciliation and this command's prompt write such a row `<PARENT-KEY> [BR#n]` —
@@ -448,7 +444,15 @@ attack.
   the key, and change nothing else in the sentence. One that resolves to the wrong requirement stops
   with `BRD_PACKAGE_CITATION_MISMATCH`; a corpus file holding record-shaped content that yields no
   ids stops with `BRD_PACKAGE_CORPUS_UNREADABLE` — a corpus holding no record-shaped content at all
-  is legitimately empty and passes.
+  is legitimately empty and passes. A reference that resolves to nothing inside a document copied
+  in from a prerequisite's package is the exception: that package is never rewritten and so reaches
+  your customer as written either way, so the final report names it as left as packaged and the run
+  goes on — once the check has held the copy whole against the bundle it came from, a file there
+  missing from the copy or changed stopping the run as a copy defect, which re-running repairs — and
+  one inside your customer's own words goes to your ruling like any other. A copied document that
+  names a file of a package this bundle does not carry, or that prerequisite's own prompt or
+  manifest, is named in the manifest under a `## Not included` heading of its own; the manifest has
+  then changed after the plugin-free scan and this check read it, so both run again over it.
 - **Phase 8 — the set-resolution check**, by `scripts/bundle-scan.py sets`, so every run checks the same way. Run last, and the three passes hunt different failures: a
   token the reviewer cannot resolve or, a model id, has no use for, a token they resolve to the wrong thing, and a **set restated
   wrongly** — every identifier resolving, every filename real, and the set they compose not being

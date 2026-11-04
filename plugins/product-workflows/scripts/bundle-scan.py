@@ -4,6 +4,7 @@
   bundle-scan.py tokens <file-or-directory>... [--prereq-key KEY]... [--captured NAME]...
                         [--captured-path PATH]...
   bundle-scan.py citations <bundle-dir> --key KEY [--prereq-key KEY]... [--copied-key KEY]...
+                        [--prereq-source KEY=DIR]...
                         [--date YYYYMMDD] [--captured NAME]... [--captured-path PATH]...
                         [--source-basename NAME]... [--manifest NAME] [--known-key KEY]...
                         [--prereq-aux NAME]...
@@ -21,8 +22,11 @@ partition, save another BRD's key before it, a section 6.2 structured field, [SR
 placeholder), relation 2 (a class-4 [DG#n] cites a [CG#n] whose claim names the same requirement)
 and relation 3 (a bare <name>.md carrying a key, or matching a section 1.1 working filename, names a
 bundle file; a <name>.md:<line> locator only where the name carries a key, an unkeyed one naming a
-repository file). A dead reference inside a document of a copied prerequisite's partition, which is
-never rewritten, is reported under prerequisite_dead rather than dead. Record-shaped content that
+repository file). A dead reference inside a document of a --copied-key prerequisite's partition,
+which is never rewritten, is reported under prerequisite_dead rather than dead; with --prereq-source
+KEY=DIR, every file of KEY's in that source bundle, save a --prereq-aux one, must be in the bundle
+byte for byte first, a file missing or changed being dead, so what prerequisite_dead names is the
+source's own. Record-shaped content that
 parses to no id is unreadable. A hit in the customer's own
 words or naming is reported under customer, for the operator's ruling. A key-shaped word before an id
 counts as a BRD's key only where it is --key, a --prereq-key or a --known-key; any other is reported
@@ -636,7 +640,7 @@ def _key_reading(k, own, known):
 
 
 def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(), captured_paths=(),
-              source_basenames=(), manifest=None, known_keys=(), prereq_aux=(), ref=None):
+              source_basenames=(), manifest=None, known_keys=(), prereq_aux=(), ref=None, prereq_sources=()):
     ref = reference_text() if ref is None else ref
     names_rx = working_names(ref, date, source_basenames)
     keys = [key] + [k for k in prereq_keys if k != key]
@@ -669,6 +673,34 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
         if k not in out["partitions"]:
             out["dead"].append({"file": None, "line": 0, "token": k,
                                 "reason": "a prerequisite package copied in answers to no partition"})
+    copied = set(copied_keys)
+    here = {}
+    for root, _, ns in os.walk(bundle):
+        for n in ns:
+            here.setdefault(n, os.path.join(root, n))
+    part_keys = keys + [k for k in known_keys if k not in keys]
+    for pk, src in prereq_sources:
+        # the copy is held whole first, so a reference prerequisite_dead names is its source's own
+        if not os.path.isdir(src):
+            out["dead"].append({"file": None, "line": 0, "token": src,
+                                "reason": "%s's source bundle cannot be read" % pk})
+            continue
+        for root, _, ns in sorted(os.walk(src)):
+            for n in sorted(ns):
+                if n in prereq_aux or _partition(n, part_keys) != pk:
+                    continue
+                if n not in here:
+                    out["dead"].append({"file": None, "line": 0, "token": n,
+                                        "reason": "in %s's source bundle and missing from the copy" % pk})
+                    continue
+                try:
+                    with open(os.path.join(root, n), "rb") as a, open(here[n], "rb") as b:
+                        same = a.read() == b.read()
+                except OSError as e:
+                    raise Refused("cannot read " + n + ": " + e.__class__.__name__)
+                if not same:
+                    out["dead"].append({"file": None, "line": 0, "token": n,
+                                        "reason": "differs from its copy source in %s's bundle" % pk})
     corpus = {}
     for k, names in out["partitions"].items():
         ids = {}
@@ -692,7 +724,7 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
         if span:
             hit["span"] = span
             out["customer"].append(hit)
-        elif k != key:
+        elif k in copied:
             out["prerequisite_dead"].append(hit)  # a copied prerequisite is never rewritten (section 5)
         else:
             out["dead"].append(hit)
@@ -829,7 +861,7 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                 elif in_prereq and (tok in prereq_aux or _partition(tok, keys) not in (k, None)):
                     # a file of a package that prerequisite carried, or its own prompt or manifest
                     out["prerequisite_external"].append(hit)
-                elif in_prereq:
+                elif k in copied:
                     out["prerequisite_dead"].append(hit)  # never rewritten (section 5)
                 else:
                     out["dead"].append(hit)
@@ -844,11 +876,13 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                 continue
             cites = re.search(r"\[CG#[0-9]+\]", b.get("cites", ""))
             reqs = set(REQ_RE.findall(b.get("claim", "")))
-            if not cites or cites.group(0) not in by_id:
-                out["dead" if k == key else "prerequisite_dead"].append(
+            if not cites:
+                out["prerequisite_dead" if k in copied else "dead"].append(
                     {"file": b["file"], "line": b["line"], "token": b.get("cites", ""),
                      "reason": "class-4 cites no [CG#n] in %s" % k})
                 continue
+            if cites.group(0) not in by_id:
+                continue  # relation 1 has reported that id already, on the cites line
             if len(reqs) != 1:
                 out["ambiguous"].append({"file": b["file"], "line": b["line"], "token": b["id"],
                                          "requirements": sorted(reqs),
@@ -977,11 +1011,14 @@ def citations_selftest(check):
           "- id: [DG#2]\n  class: 4\n  cites: [CG#2]\n  claim: [BR#1] — z\n\n"
           "- id: [DG#3]\n  class: 4\n  cites: [CG#9]\n  claim: [BR#1] — w\n\n"
           "- id: [DG#4]\n  class: 4\n  cites: [CG#1]\n  claim: [BR#1] and [BR#2]\n\n"
-          "id: [DG#5]\nclass: 4\ncites: [CG#2]\nclaim: |\n  multi-line, about [BR#1]\n")
+          "id: [DG#5]\nclass: 4\ncites: [CG#2]\nclaim: |\n  multi-line, about [BR#1]\n\n"
+          "- id: [DG#6]\n  class: 4\n  cites: none\n  claim: [BR#1] — v\n")
     r = run({"K-1-design-grounding.md": dg, "K-1-brd-inventory.md": inv + "| [BR#2] | b | 2. y | |\n"})
     check("relation 2: matches pass; mismatches — a dashless block and a block-scalar claim among them — are reported",
           sorted(h["token"] for h in r["mismatch"]) == ["[DG#2]", "[DG#5]"]
-          and [h["token"] for h in r["ambiguous"]] == ["[DG#4]"] and any("class-4" in h["reason"] for h in r["dead"]))
+          and [h["token"] for h in r["ambiguous"]] == ["[DG#4]"]
+          and [h["token"] for h in r["dead"]].count("[CG#9]") == 1
+          and [h["token"] for h in r["dead"] if "class-4" in h["reason"]] == ["none"])
     r = run({"K-1-decisions.md": "id: [CD#1]\n",
              "K-1-prompt.md": "Open K-1-decisions.md, not K-1-gone.md; not self-review-20261029.md; "
                               "evidence README.md:12; plain notes.md.\n",
@@ -1006,13 +1043,30 @@ def citations_selftest(check):
           r["dead"] == [] and [h["token"] for h in r["prerequisite_dead"]] == ["P-2-gone.md"]
           and sorted(h["token"] for h in r["prerequisite_external"]) == ["P-2-manifest.md", "Q-9-other.md"])
     r = run({"P-2-code-grounding.md": "- id: [CG#7]\n  claim: [BR#1] — z\n",
-             "P-2-design-grounding.md": "- id: [DG#1]\n  class: 4\n  cites: [CG#42]\n  claim: [BR#1] — y\n",
+             "P-2-design-grounding.md": "- id: [DG#1]\n  class: 4\n  cites: [CG#42]\n  claim: [BR#1] — y\n\n"
+                                        "- id: [DG#2]\n  class: 4\n  cites: none\n  claim: [BR#1] — w\n",
              "P-2-brd-inventory.md": inv, "P-2-q.md": "per [CG#7] and [CG#99]\n", "K-1-x.md": "ours [CG#5]\n"},
             prereq_keys=["P-2"], copied_keys=["P-2"])
     check("a dead id or class-4 cites inside a copied prerequisite is left as packaged; this package's own is dead",
           [h["token"] for h in r["dead"]] == ["[CG#5]"]
-          and {h["token"] for h in r["prerequisite_dead"]} == {"[CG#42]", "[CG#99]"}
-          and any("class-4" in h["reason"] for h in r["prerequisite_dead"]))
+          and sorted(h["token"] for h in r["prerequisite_dead"]) == ["[CG#42]", "[CG#99]", "none"]
+          and [h["token"] for h in r["prerequisite_dead"] if "class-4" in h["reason"]] == ["none"])
+    r = run({"P-2-q.md": "per [CG#9]\n"}, prereq_keys=["P-2"])
+    check("a prerequisite's document the run was not told it copied keeps its dead reference a stop",
+          [h["token"] for h in r["dead"]] == ["[CG#9]"] and r["prerequisite_dead"] == [])
+    with tempfile.TemporaryDirectory() as src:
+        for n, t in {"P-2-decisions.md": "id: [VD#3]\n", "P-2-q.md": "per [VD#3] and [VD#9]\n",
+                     "P-2-prompt.md": "Package reviewed: x\n", "Q-9-z.md": "z\n"}.items():
+            with open(os.path.join(src, n), "w", encoding="utf-8") as f:
+                f.write(t)
+        kw = dict(prereq_keys=["P-2"], copied_keys=["P-2"], prereq_aux=["P-2-prompt.md"],
+                  prereq_sources=[("P-2", src)])
+        r = run({"P-2-q.md": "per [VD#3]\n"}, **kw)
+        check("a copied prerequisite's file its source bundle holds and the copy lacks, or holds otherwise, is dead",
+              sorted(h["token"] for h in r["dead"]) == ["P-2-decisions.md", "P-2-q.md"])
+        r = run({"P-2-q.md": "per [VD#3] and [VD#9]\n", "P-2-decisions.md": "id: [VD#3]\n"}, **kw)
+        check("a whole copy leaves only its source's own dead references as packaged",
+              r["dead"] == [] and [h["token"] for h in r["prerequisite_dead"]] == ["[VD#9]"])
     r = run({"K-1-prompt.md": "see K-1-gone.md:12, K-1-x.md:3 and README.md:12\n", "K-1-x.md": "x\n"},
             source_basenames=["README.md"])
     check("a key-prefixed <name>.md:<line> is a bundle filename and is tested; an unprefixed one is a repository locator",
@@ -1768,6 +1822,7 @@ def main(argv=None):
     c.add_argument("--manifest")
     c.add_argument("--known-key", action="append", default=[])
     c.add_argument("--prereq-aux", action="append", default=[])
+    c.add_argument("--prereq-source", action="append", default=[])
     s = sub.add_parser("sets")
     s.add_argument("bundle")
     s.add_argument("--key", required=True)
@@ -1785,8 +1840,15 @@ def main(argv=None):
         if a.cmd == "sets":
             result = sets(a.bundle, a.key, a.date, a.manifest, a.note, a.unreviewed_prereq)
         elif a.cmd == "citations":
+            sources = []
+            for v in a.prereq_source:
+                k, sep, d = v.partition("=")
+                if not sep or not k or not d:
+                    raise Refused("--prereq-source takes KEY=DIR, not " + v)
+                sources.append((k, d))
             result = citations(a.bundle, a.key, a.prereq_key, a.copied_key, a.date, a.captured,
-                               a.captured_path, a.source_basename, a.manifest, a.known_key, a.prereq_aux)
+                               a.captured_path, a.source_basename, a.manifest, a.known_key, a.prereq_aux,
+                               prereq_sources=sources)
         else:
             result = scan(a.paths, a.prereq_key, a.captured, a.captured_path)
     except Refused as e:
