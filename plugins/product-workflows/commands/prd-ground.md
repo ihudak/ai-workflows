@@ -2123,8 +2123,8 @@ recorded here, and a relation with nothing on one side fails rather than passing
 what would make that gate report a clean tree it never read.
 
 **Documentation divergences (only when Phase 4.5 ran).** Append a `## Documentation divergences`
-section to `<BRD-dir>/grounding/code-grounding.md` — appended there, like the derivation matrix
-below, because it is not a produced artifact in its own right. One prose entry per divergence, each
+section to `<BRD-dir>/grounding/code-grounding.md` — written into that file, as the derivation matrix
+below is, because it is not a produced artifact in its own right. One prose entry per divergence, each
 carrying: the documentation page (path relative to the resolved `docs_root`), what it states, and
 the **`[CG#n]` whose verified evidence it diverges from**, quoted by id. **No entry gets an
 identifier of its own, and no entry may exist without naming a verified `[CG#n]`** (Phase 4.5) —
@@ -2138,10 +2138,22 @@ row's `evidence` column ever names a page.
 `--no-derivation-matrix` wins outright; otherwise default it **on** when the claim list reads
 as reporting- or data-centric (a judgment call this command makes from the claim text — recurring
 language about reports, dashboards, exports, extracts, or stored/displayed data fields) and **off**
-otherwise. When on, append one implementation-altitude row per data element the claim list asks to
-display or store to `<BRD-dir>/grounding/code-grounding.md`, classed per `workflows-core:grounding-format` §7
-(`EXISTS | DERIVED | NEW-CAPTURE | NEW-CONFIG | PARTNER | DEFERRED | DEPENDENCY`) — appended there
-rather than as a new file, since it is not in this command's produced-artifact set on its own.
+otherwise. When on, write one implementation-altitude row per data element the claim list asks to
+display or store into `<BRD-dir>/grounding/code-grounding.md`, classed per `workflows-core:grounding-format` §7
+(`EXISTS | DERIVED | NEW-CAPTURE | NEW-CONFIG | PARTNER | DEFERRED | DEPENDENCY`), under one
+`## Derivation matrix` heading — **one section, kept where it stands, never a second one appended**.
+The section is its heading, its lead-in and its table, and nothing else: a `- id:` block after the
+table is a finding wherever it sits — this phase writes the run's findings before this step, and they
+can land there — and is never part of the section. Every run reads its whole claim list (Phase 0 step
+8), so it derives every row again, and then **reconciles the section on file row by row** rather than
+rewriting it: a row whose cells all match the row derived for its element is left byte for byte as it
+stands, and so is the lead-in; a row that differs is rewritten in place, a row for a new element is
+added at the end of the table, and a row for an element the run no longer derives is removed. Where no
+section is on file, write it at the end of the file. A second section would leave `/specify` reading two
+matrices with no rule for which, and a section reworded with nothing changed would read as a change to
+every specification built on this file (`workflows-core:document-lineage` §2). A run with the matrix
+off leaves a section already on file as it stands. It is written there rather than as a new file,
+since it is not in this command's produced-artifact set on its own.
 
 **Write the coverage ledger's `evidence` column — `route: brd` only, and in every mode.** This is
 the last write of this phase, taken once the two grounding files hold everything this run is going

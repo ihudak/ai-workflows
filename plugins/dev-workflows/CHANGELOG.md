@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.57.3] — 2026-11-03
+
+Take with `workflows-core` 1.77.0 — D32 part 5.
+
+### Fixed
+- `/ready`'s stale-lineage finding names the changed, new and withdrawn keys, and lists each (downstream, upstream) pair once across its units.
+
 ## [4.57.2] — 2026-11-03
 
 Take with `workflows-core` 1.75.0, whose lineage walk this documents.

@@ -188,8 +188,9 @@ PRD folder — a listing of the working tree and of `<default-ref>` together, th
 `<default-ref>`, with no `--output`; a unit holding neither is skipped, and where every unit is — a
 note drafted at the PM stage, before anything is specified — one check takes the PRD folder's
 `prd.md` as both. **Print what it finds before Phase 1 asks anything**, so its diff-grounding question
-is answered knowing it: each stale link `⚠ stale lineage: <downstream> ← <upstream> <recorded> → <current>: <changed keys>; revise <highest> with <reviser>`,
-worded as §6 step 3 words it, a link accepted in its own unit marked so, each missing record, each
+is answered knowing it: each stale link `⚠ stale lineage: <downstream> ← <upstream> <recorded> → <current>: changed <keys>; new <keys>; withdrawn <keys>; revise <highest> with <reviser>`,
+worded as §6 step 3 words it — each (downstream, upstream) pair once across the units, as §6 step 6
+lists them — a link accepted in its own unit marked so, each missing record, each
 `absent` entry and each document this checkout changed from `<default-ref>` a note line as §6 step 6 words it, and a non-zero exit of the script a ⚠ line naming
 its first stderr line — after which the run goes on. A stale link means the PRD may carry a
 requirement added after its specification or design was written, which the code may not have: with

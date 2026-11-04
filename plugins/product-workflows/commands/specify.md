@@ -743,8 +743,8 @@ Where `prd_dir` carries `grounding/code-grounding.md` and/or `grounding/design-g
 — the idea-route PRD folder as readily as the BRD-route slice, since `/product-workflows:prd-ground`
 now writes both from either — read the `[CG#n]` and `[DG#n]` finding records, per
 `workflows-core:grounding-format` §2, **and, in the first of the two, any derivation matrix it
-carries.** The matrix is not a file of its own: `/product-workflows:prd-ground` appends its rows to
-`grounding/code-grounding.md` (that command's Phase 8), classed per `workflows-core:grounding-format`
+carries.** The matrix is not a file of its own: `/product-workflows:prd-ground` keeps its rows in one
+`## Derivation matrix` section of `grounding/code-grounding.md` (that command's Phase 8), classed per `workflows-core:grounding-format`
 §7 (`EXISTS | DERIVED | NEW-CAPTURE | NEW-CONFIG | PARTNER | DEFERRED | DEPENDENCY`) on either route —
 it is implementation-altitude by construction, which is why this command is the one that reads it, and
 an absent matrix is ordinary, since `/product-workflows:prd-ground` runs it only on a reporting- or

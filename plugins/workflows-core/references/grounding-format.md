@@ -648,6 +648,8 @@ and §8 define. An earlier entry that records no id, or an id no block carries, 
 and the run reports it rather than searching the file for a block that looks like a baseline.
 Nothing re-verifies a block retired this way; the run that retires it verifies its successor.
 
+**A downstream's lineage check leaves baseline findings out** (`workflows-core:document-lineage` §2): it names them by the `finding:` ids `baselines.md` records, never by their `claim`, so a re-run that only re-pins a repository is no move for the decision register or any specification.
+
 ## 5. Horizon
 
 Every finding carries one of two horizons:
@@ -992,7 +994,7 @@ reconciles it against the requirement inventory it was handed — a BRD's `[BR#n
 
 ## 7. The derivation matrix
 
-Optional (`--derivation-matrix`); one row per data element the BRD asks to display or store. This
+Optional (`--derivation-matrix`); one row per data element the BRD asks to display or store, under one `## Derivation matrix` heading in `code-grounding.md` — its heading, lead-in and table, never a `- id:` block after the table, which is a finding — that each run writing a matrix **reconciles row by row**, never appending a second: a row the run derives again unchanged is left byte for byte, so a re-run that derives the same rows changes nothing, and `workflows-core:document-lineage` §2 reads the section at implementation altitude. This
 is what converts a vague reporting or data requirement into a build list — naming, for each
 element, the physical source it would actually come from. Always **implementation-altitude**: even
 a BRD requirement written at product altitude decomposes here into implementation facts about where

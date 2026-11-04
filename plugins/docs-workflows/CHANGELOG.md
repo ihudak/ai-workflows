@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.32.1] — 2026-11-03
+
+Take with `workflows-core` 1.77.0 — D32 part 5.
+
+### Fixed
+- `/document` and `/release-notes` word each stale lineage link with its changed, new and withdrawn keys — a requirement the PRD gained is named, where the old template left it out — and list each (downstream, upstream) pair once across the units they check.
+
 ## [1.32.0] — 2026-11-03
 
 Take with `workflows-core` 1.76.0 — D32 part 4, document lineage.

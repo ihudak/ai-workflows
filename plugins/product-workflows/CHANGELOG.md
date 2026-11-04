@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.72.1] — 2026-11-03
+
+Take with `workflows-core` 1.77.0 — D32 part 5.
+
+### Changed
+- `/prd-ground` keeps the derivation matrix as one `## Derivation matrix` section of `code-grounding.md` — its heading, lead-in and table, never a finding written after the table — reconciled row by row rather than appended again: a row the run derives again unchanged is left byte for byte, so a re-run that derives the same rows changes nothing a specification is checked against.
+- `/update-spec`'s upstream diff leaves a grounding re-run's baseline findings, a finding's `outcome`- or `notes`-only change, and the divergences, frame-set and dated run sections out of its change list, matching the lineage check.
+
 ## [3.72.0] — 2026-11-03
 
 Take with `workflows-core` 1.75.0 — D32 part 3, document lineage on the BRD route.
