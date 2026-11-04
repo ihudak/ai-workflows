@@ -109,9 +109,12 @@ def run(argv):
     pause = 0.001
     while True:
         if _received:
+            # The command's own status, as GNU timeout reports it: 128 + N where the signal ended it,
+            # its exit code where it caught the signal and exited.
             _ignore_signals()
             _end_group(proc, _received[0])
-            return 128 + _received[0]
+            code = proc.returncode
+            return 128 - code if code < 0 else code
         code = proc.poll()
         if code is not None:
             return 128 - code if code < 0 else code
@@ -299,6 +302,17 @@ def selftest():
             pid = _pid(pidfile + "3")
             check("a SIGTERM landing while the wait lock is held still ends the run, and the command",
                   rc == 128 + signal.SIGTERM and pid is not None and _gone(pid), (rc, pid))
+        proc = subprocess.Popen([sys.executable, os.path.abspath(__file__), "30", "sh", "-c",
+                                 "trap 'exit 5' TERM; echo $$ > '%s'; while :; do sleep 0.1; done" % (pidfile + "4")],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        pid = _pid(pidfile + "4", wait=True)
+        proc.send_signal(signal.SIGTERM)
+        try:
+            rc = proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill(); rc = None
+        check("a command that catches a passed-on signal and exits reports its own exit code, as GNU timeout does",
+              rc == 5 and pid is not None and _gone(pid), (rc, pid))
         script = os.path.join(tmp, "not-executable")
         with open(script, "w") as fh:
             fh.write("#!/bin/sh\nexit 0\n")

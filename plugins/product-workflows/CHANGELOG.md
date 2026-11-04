@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.76.2] — 2026-11-04
+
+Released with `workflows-core` 1.78.5.
+
+### Fixed
+- **`scripts/bounded.py` reports a command's own exit code after a signal passed on to it**, as GNU timeout does: a command that catches the SIGTERM, SIGHUP or SIGINT `bounded.py` passes on and exits by itself now returns its own code, where `bounded.py` used to return 128 + N whatever the command did. A command the signal ends still returns 128 + N. A new selftest case traps the signal and exits 5. The same fix as `workflows-core` 1.78.5's copy, which every plugin ships byte for byte.
+- `/create-prd`, `/create-ard` and `/specify`'s row-B′ stop on a decision register names the new case of an uncommitted copy identical to `<default>`'s, and its remedy of removing that copy, as `phase-handoff` §3.3's message now does (`workflows-core` 1.78.5).
+
 ## [3.76.1] — 2026-11-04
 
 Needs nothing from the other plugins' releases.
