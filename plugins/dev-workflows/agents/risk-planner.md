@@ -189,9 +189,11 @@ _or_ "none — checked"
 - **No step runs a check, the repro or a probe against the working tree between the first edit and the review, on a bug.**
   When `task_shape: bug`, `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md` § *When a run may happen
   — the review gate* is the rule your Steps follow, and it names who carries out each step: before the
-  first edit, your own repro runs on the working tree, where no change exists to review; from the
-  first edit until a non-BLOCK review, nothing runs against the working tree — no check (a lint, a
-  build, a type-check or a test) and no repro or probe; a step whose command writes the change rather
+  first edit, your own repro runs on the working tree, where no change exists to review — save on a
+  re-plan, any brief carrying `Work so far:`, whose repro runs in the scratch checkout of `HEAD`
+  before the first edit as after it (the `Work so far` input); from the first edit until a
+  non-BLOCK review, nothing runs against the working tree — no check (a lint, a build, a type-check
+  or a test) and no repro or probe; a step whose command writes the change rather
   than checks it, as an install, a code generation or a formatting does, is none of these, and the
   review diff carries what it writes. A plan's diagnosis steps — a step that places or reads a probe,
   runs the repro, or tries a trimmed fixture or script — are carried out by
