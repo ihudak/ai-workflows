@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.4] — 2026-11-04
+
+Needs nothing from the other plugins' releases.
+
+### Fixed
+- **`bounded.py` can no longer hang when a signal reaches it.** Its SIGTERM, SIGHUP and SIGINT handler raised an exception, and Python delivers that exception wherever the main thread happens to be. Inside `subprocess`'s wait it could leave the wait lock held, and the final `wait()` then blocked forever: the command's group was ended, but `bounded.py` never exited. One CI run of the selftest hit it. The handler now only records the signal, and the run loop polls the command, ends its group and exits 128 + N. A signal that arrives while the command is starting is now passed on once it has started; before, the command was left running. A new selftest case delivers SIGTERM at the moment the wait lock is taken: the old script hangs on it, and the new one exits 143. The `bounded-run` reference says a signal arriving at start-up is passed on too. `session-branch.py` raises from its handlers the same way and is tracked separately.
+
 ## [1.78.3] — 2026-11-04
 
 Released with `product-workflows` 3.75.1.

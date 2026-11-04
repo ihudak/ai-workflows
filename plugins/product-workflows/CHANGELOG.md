@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.76.1] — 2026-11-04
+
+Needs nothing from the other plugins' releases.
+
+### Fixed
+- **`scripts/bounded.py` can no longer hang when a signal reaches it**: the same fix as `workflows-core` 1.78.4's copy, which every plugin ships byte for byte. Its signal handler raised an exception, which could leave `subprocess`'s wait lock held and the final wait blocked for good. It now records the signal and the run loop acts on it, and a signal that arrives while the command is starting is passed on once it has started.
+
 ## [3.76.0] — 2026-11-04
 
 D37. Needs nothing from the other plugins' releases.
