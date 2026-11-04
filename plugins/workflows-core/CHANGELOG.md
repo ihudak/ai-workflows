@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Wording only, released with `docs-workflows` 1.34.0.
 
 ### Changed
-- `addressing.md` §7's table cites `/release-notes`' `run_phase` step where it now stands, in Phase 0, and the grounding reference page says the command recommends diff grounding once a specification or design exists (D42).
+- `addressing.md` §7's table cites `/release-notes`' `run_phase` step where it now stands, in Phase 0, and the grounding reference page says the command recommends diff grounding once a specification or design exists (D42). `lineage.py`'s re-run fixture says the second divergences section it keeps is an older `/prd-ground`'s layout (D43).
 
 ## [1.78.1] — 2026-11-04
 

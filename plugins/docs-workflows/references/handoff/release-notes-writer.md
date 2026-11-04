@@ -60,7 +60,7 @@ release_notes_block:
 
 conformance_applied:   # one per conformance input entry; omitted when no conformance input was given
   - entry:  <KEY>/[DD#n]
-    action: <left out | worded as shipped | not claimed>   # per release-note-types.md §8
+    action: <left out | left out — the entries disagree | worded as shipped | not claimed>   # per release-note-types.md §8
 
 gaps:
   - field:              <feature_title | prose | change_type | deprecation_eol | effective_version>

@@ -347,6 +347,15 @@ make from the requirement it names (`requirement`, `requirement_text`), then:
   disagree by decision, and either check would pull the claim back to the wording that was decided
   against.
 - **Where leaving out every `fix-code` claim leaves nothing the change ships to describe**, raise a
-  `field: prose` gap (`recommended_action: "ask user"`) rather than writing a note about nothing.
+  `field: prose` gap (`recommended_action: "ask user"`) rather than writing a note about nothing. It
+  is the one question the entries lead to, and the command checks the wording it gets against the
+  claims left out.
+- **Two open entries on one claim** — a PRD-level entry on `prd.md` and an Epic's on its
+  specification, say — are settled by status and then by caution. A `final` decision beats a
+  `proposed` one. Between two of the same status, `fix-code` beats either other decision and the claim
+  is left out, since one of them says the code does not do it yet; between an `amend-document` and an
+  `accept`, the claim states what both `shipped` sentences say where they agree, and is left out where
+  they do not — returned as `left out — the entries disagree`, since the note never takes one
+  record's account of the code over another's.
 - **An entry whose `status` is `proposed`** is a Dev's decision no PRD run has ruled on yet. It is
   applied like a `final` one, and the command's report says it was a proposal.

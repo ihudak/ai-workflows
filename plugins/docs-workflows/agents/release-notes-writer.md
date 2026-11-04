@@ -80,7 +80,8 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
    **When `conformance` is present, apply each entry per §8 before building the body.** A `fix-code`
    entry's claim is left out; an `amend-document` or `accept` entry's claim states what its `shipped`
    says, restated as customer-facing prose; an entry the draft makes no claim from changes nothing.
-   Record each in `conformance_applied` as `left out`, `worded as shipped` or `not claimed`. The
+   Two entries on one claim are settled as §8 says. Record each entry in `conformance_applied` as
+   `left out`, `left out — the entries disagree`, `worded as shipped` or `not claimed`. The
    decision on each entry is a person's and is never re-opened, and you never re-check a requirement
    against the code yourself to second-guess it.
 
