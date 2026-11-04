@@ -771,7 +771,7 @@ The eleven rows:
 | `/design` | *Map onto the specs repo + require the spec on main*, Phase 0 — Resolve input | the merged spec it takes over |
 | `/ready` | *Map onto the specs repo (PRD dir + optional Epic subdir)*, Phase 0 — Resolve input | every artifact it judges |
 | `/idea` | *Resolve the address*, Phase 0 step 1 | the folder `idea.md` is written into on the first write |
-| `/release-notes` | *Resolve `run_phase`*, Phase 6 — Render the draft | the `run_phase` signal |
+| `/release-notes` | *`run_phase`*, under *Resolve the run's stage*, Phase 0 — Load | the `run_phase` signal |
 | `/document` | *Resolve the address*, Phase 0 step 1 | the `specs` files it grounds documentation in |
 | `/frames` | *The address (mandatory)*, Phase 0 step 1 | the folder whose `design/*/` frame sets it indexes |
 

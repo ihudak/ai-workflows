@@ -20,6 +20,14 @@ model_routing:
   opus_available: true | false
   gate_tests_on_review: false
 docs_grounding:      <optional docs-grounder digest (docs_references + docs_challenges); omit when docs grounding was OFF/EMPTY>
+conformance:         <optional array of the open /dev-workflows:conformance entries in the run's scope, as the command's Phase 3 carries them; omit when it found none — release-note-types.md §8>
+  - entry:            <KEY>/[DD#n]
+    requirement:      <the entry's heading: the requirement's id, or its quoted text>
+    requirement_text: <the requirement's text, read from the document its document: names>
+    verdict:          <partial | missing | contradicts>
+    shipped:          <the record's one sentence on what the code does>
+    decision:         <fix-code | amend-document | accept>
+    status:           <final | proposed>
 ```
 
 Refuse to run without `folder_read`. Emit exactly one Summary per run.
@@ -49,6 +57,10 @@ release_notes_block:
     then <prose> — with the category label omitted entirely when category_label is null. For the
     fixes destination: <prose> alone. NEVER a "Change type:" line, a "Release-notes category:" line,
     or a "--- Summary ---" divider.>
+
+conformance_applied:   # one per conformance input entry; omitted when no conformance input was given
+  - entry:  <KEY>/[DD#n]
+    action: <left out | worded as shipped | not claimed>   # per release-note-types.md §8
 
 gaps:
   - field:              <feature_title | prose | change_type | deprecation_eol | effective_version>

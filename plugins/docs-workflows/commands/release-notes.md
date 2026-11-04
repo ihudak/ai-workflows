@@ -179,6 +179,38 @@ run — the terminal `commit-artifacts` step skips on it.
 
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the PRD folder this run carries — the resolved folder, or the PRD folder above an Epic address — which its handoff names, with `prefix: prd`; a stop it makes ends the run here.
 
+**Resolve the run's stage, and find the conformance records — before Phase 1 asks anything.** Both bear on how Phase 1 asks about diff grounding.
+
+- **`run_phase`.** `/release-notes` runs at two points in a PRD's life, and Phase 1's diff-grounding
+  question and the `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §4 documentation-link rule
+  both depend on which. Reuse the existing signal from `workflows-core:cost-emission` §7 — resolve the
+  PRD's specs dir by calling `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), then glob it for `specification.md` and `design.md`. A `misrooted` status stops the run with §3's `SPECS_PATH_INSIDE_TREE` message and is never read as *neither present*, though step 1's resolution, which runs the same check on either address form, has already stopped any run it would reach. That entry point searches every level §3 bounds and carries §5's legacy fallback; `workflows-core:addressing` §7 records why this command is one of its adopters.
+  A flat glob alone would also be **narrower than the signal this step says it reuses**: cost-emission
+  §7 defers to the specs-dir matching `workflows-core:feedback-emission` and
+  `workflows-core:followup-emission` perform, whose pattern already spans both levels.
+
+  - **neither present** → `run_phase: pm`. The feature is not built and its documentation does not
+    exist yet, so the note carries no documentation link and the command never asks for one.
+  - **either present** → `run_phase: dev`. The author may supply a redirect short link that will later
+    point at the page `/document` publishes.
+  - **`$SPECS_PATH` unset or the dir missing** → `run_phase: pm` (the safe default — it only suppresses
+    a link, never fabricates one).
+
+  This is the same inference `emit-cost` already applies in Phase 11; do not add a question for it.
+  Phase 6 hands this value to the writer and never resolves it again.
+- **The conformance records.** `/dev-workflows:conformance` writes `_conformance.md` into the folder
+  it checked — an Epic folder, or a PRD folder — recording, per requirement, whether the code it
+  traced satisfies it, and what a person decided where it does not. List the records in this run's
+  scope, in the working tree, as Phase 3 reads everything else: where `focus_key` is set, the focus
+  Epic folder's and the PRD folder's (Phase 3 says which of the PRD folder's entries a focus run
+  takes); otherwise the PRD folder's and each `EPIC-` folder's directly under it. A missing record is
+  the absence of one, never a prerequisite, and a folder without one is not reported. Read each
+  record's header — its `Run:` line (an Epic or a PRD run, the role, the date) and its `Code
+  checked:` line, one repository, ref and commit per line — and print one line per record before
+  Phase 1 asks anything: `Conformance: <the folder's key> checked <date> (<Epic | PRD> run) — <repo> @ <commit>, …`,
+  or `Conformance: no record in scope` where there is none. A record that cannot be read is a ⚠
+  line naming it and the read error, and the run goes on as if it were absent.
+
 **Check the lineage above the note — report it, never ask.** Then execute `Skill(skill: "workflows-core:reference", args: "document-lineage upstream-check")`
 §6 by its step 6 — the caller that never asks, with no gate — over this run's scope, which is Phase
 3's: the focus Epic alone where `focus_key` is set; otherwise each `EPIC-` folder directly under the
@@ -195,7 +227,9 @@ lists them — a link accepted in its own unit marked so, each missing record, e
 its first stderr line — after which the run goes on. A stale link means the PRD may carry a
 requirement added after its specification or design was written, which the code may not have: with
 diff grounding on, a claim drawn from it meets the code in Phase 6's discrepancy table like any other
-requirement the code lacks; with it off, nothing checks it, and Phase 2's plan says so. It is reported,
+requirement the code lacks; with it off, the only check against the code is a PRD run's conformance record, which
+traces the PRD's own requirements, and only one written after the requirement was added — Phase 2's
+plan says how the claims are checked. It is reported,
 never a reason to stop: nothing is asked, accepted or written, and this command records no lineage of
 its own. Where there is no specs repository to read — an `@<path>` run with `$SPECS_PATH` unset, or one
 leading outside its work tree — run nothing, and carry `Lineage: not checked — no specs repository`.
@@ -206,10 +240,21 @@ leading outside its work tree — run nothing, and carry `Lineage: not checked �
 
 **Rule: Ask, don't guess.** Group questions; use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
 
-- **Diff grounding** (default OFF — the PRD is usually enough for release notes):
+- **Diff grounding** — asked with the array for the run's stage, `run_phase` from Phase 0. **At the
+  PM stage** (`run_phase: pm`) nothing is built yet, so the PRD is the note's whole source and is
+  recommended:
   ```
   choices: ["PRD content only (Recommended)", "Also ground in the recorded refs' diffs", "Cancel"]
   ```
+  **At the dev stage** (`run_phase: dev`) a specification or design exists, so code may have shipped
+  that differs from the PRD — a requirement left unbuilt, or one added to the PRD after the work was
+  planned — and only the diffs check a claim against it, so they are recommended:
+  ```
+  choices: ["Also ground in the recorded refs' diffs (Recommended)", "PRD content only", "Cancel"]
+  ```
+  The stage picks the array, and each is presented as written. A conformance record Phase 0 found
+  does not change the array: it checked the requirements against the code at the commits it names,
+  which can predate what this note covers, while the diffs read the commits this note covers.
   If the user also grounds in diffs, additionally resolve `$REPOS_PATH` as the next bullet says.
 
 - **Repos search base (`$REPOS_PATH`)** (only if diff grounding is ON) — **resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (one directory or a colon-separated list) and record it as `$REPOS_PATH`. **Only where no entry is an existing directory**, ask, naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules` — with this command's own way on without code beside it, and no option marked, since whether the code is reachable is the operator's to know:
@@ -279,7 +324,7 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 
 ## Phase 2 — Plan + approval
 
-1. **Plan.** Before presenting the plan, run `resolve-docs-grounding release-notes` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — this is the run's only consent-bearing step (an index build or a capped refresh), so it must resolve here, before Phase 3's folder read and Phase 4/5's diff resolution do any of the run's real work. Present: resolved `key`, destination, the version this draft will be filed under (or `# Unreleased`), diff-grounding on/off (+ `$REPOS_PATH` and repos to scan when on), style-check choice, and the `docs grounding:` line that `resolve-docs-grounding` returned, verbatim — including its `retrieval:` value and any index-build, staleness, or shadowing clause (off switch: --no-docs) — and, where Phase 0's lineage check found a stale link and diff grounding is off, the line `Lineage: <n> stale link(s) above this note, and diff grounding is off — claims drawn from the PRD are not checked against the code`. Ask:
+1. **Plan.** Before presenting the plan, run `resolve-docs-grounding release-notes` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — this is the run's only consent-bearing step (an index build or a capped refresh), so it must resolve here, before Phase 3's folder read and Phase 4/5's diff resolution do any of the run's real work. Present: resolved `key`, destination, the version this draft will be filed under (or `# Unreleased`), diff-grounding on/off (+ `$REPOS_PATH` and repos to scan when on), style-check choice, and the `docs grounding:` line that `resolve-docs-grounding` returned, verbatim — including its `retrieval:` value and any index-build, staleness, or shadowing clause (off switch: --no-docs) — and the `Conformance:` lines Phase 0 printed, and, where diff grounding is off and `run_phase` is `dev` or Phase 0's lineage check found a stale link, the line `Code check: diff grounding is off — <claims drawn from the PRD are checked against the code only through the conformance record(s) above, as of their dates | no claim drawn from the PRD is checked against the code><; <n> stale lineage link(s) above this note>`, its first alternative where Phase 0 found a record and its second where it found none. Ask:
    ```
    choices: ["Approve & continue (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]
    ```
@@ -292,6 +337,31 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 ## Phase 3 — Read the PRD folder
 
 **Read the PRD folder directly** (Phase 0 step 1) — its `prd.md` for the product content, its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement), and, where `focus_key` is set, the Epic folder the address named and what it holds; that alone when diff grounding is OFF. When ON, read the `implementation.md` records too, which is where the refs the diff grounding needs are recorded (`workflows-core:implementation-format` §1) — `/dev-workflows:implement` writes one into the folder of the unit it implemented, an Epic's or the PRD's (that §1, which also says whose a block an earlier run left in the PRD folder is), so read the focus Epic's own where `focus_key` is set, and otherwise the PRD folder's and every `EPIC-` folder's under it, wherever one stands.
+
+**Read the conformance records Phase 0 found — with diff grounding on or off.** A record is a check
+of the code against the requirements that `/dev-workflows:conformance` already made, with what a
+person decided wherever the two disagree, so a claim it settled is settled for this note too. Its
+format is `dev-workflows:conformance-format`'s, a reference of another plugin that this command
+cannot load, so what it reads is stated here, and that reference's §6 names this command among its
+readers. Every `### [DD#n]` heading is an entry, wherever it sits in the file; the heading names the
+requirement — its id, or its quoted text where it has none — and the entry's fields are
+`document:`, `verdict:`, `shipped:`, `decision:` with its `status:`, and, where present, `flags:`,
+`ruling:`, `lists:` and `superseded-by:`. Nothing here is asked, and no record is written.
+
+1. **One entry speaks for a requirement.** Where the PRD folder's record holds an entry whose
+   `ruling:` or `lists:` names an Epic entry, `<EPIC-KEY>/[DD#k]`, that entry stands for the Epic
+   entry, which is not read on its own: a PRD run's `final` decision wins over an Epic run's
+   `proposed` one. On a run with `focus_key` set, the PRD folder's record contributes only its entries
+   that so name an entry of the focus Epic; the rest of it is about other work.
+2. **Only open entries count.** Drop an entry whose `status:` is `resolved`; whose `flags:` name
+   `fixed` or `stale`, the code now satisfying the requirement; whose `flags:` name
+   `requirement withdrawn` or `orphaned`, the requirement being gone; or that carries
+   `superseded-by:`. Every other entry is open.
+3. **Carry each open entry** to Phase 6 as the writer's `conformance` input:
+   `{entry: <KEY>/[DD#n], requirement: <its heading>, requirement_text: <that requirement's text, read from the document and folder its document: names>, verdict, shipped, decision, status}`.
+   The writer applies `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §8 to them. Count, per
+   record, the requirements under `## Unverified` and `## Not checkable`: no entry carries them, and
+   the report names them as requirements the record did not settle.
 
 **Resolve the diff sources — two of them, merged.** **Only when diff grounding is ON** (Phase 1): it is opt-in and advisory here, so a run that declined it skips this step entirely and grounds its prose in the PRD alone. When it is on, invoke `Skill(skill: "workflows-core:reference", args: "implementation-format")` and follow its §4. **Both steps below run inside a clone, so build the slug→clone map here, once** — the map Phase 4 resolves against, by the recipe stated there: for each top-level directory under each entry of `$REPOS_PATH`, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), any trailing `/` and then a trailing `.git` stripped, the URL's last path segment — what follows its last `/` or `:` — taken as that clone's slug. Step 2's `git log` runs in the clone, and so does the `git rev-parse` that resolves a block's abbreviated `commit:` to the full SHA a read-set comparison takes (`${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1). Phase 4 resolves each in-scope slug against this same map rather than rebuilding it, and is where the operator settles a slug it matches to no clone; until then such a slug is scanned in no repository and compared in none, and nothing under it has been read:
 
@@ -429,22 +499,8 @@ Diff grounding is opt-in and advisory here: a repo the user skips degrades the g
 
 ## Phase 6 — Render the draft
 
-**Resolve `run_phase`.** `/release-notes` runs at two points in a PRD's life, and the
-`release-note-types.md` §4 documentation-link rule depends on which. Reuse the existing signal from
-`workflows-core:cost-emission` §7 — resolve the PRD's specs dir
-by calling `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), then glob it for `specification.md` and `design.md`. A `misrooted` status stops the run with §3's `SPECS_PATH_INSIDE_TREE` message and is never read as *neither present*, though Phase 0's resolution, which runs the same check on either address form, has already stopped any run it would reach. That entry point searches every level §3 bounds and carries §5's legacy fallback; `workflows-core:addressing` §7 records why this command is one of its adopters.
-A flat glob alone would also be **narrower than the signal this step says it reuses**: cost-emission
-§7 defers to the specs-dir matching `workflows-core:feedback-emission` and
-`workflows-core:followup-emission` perform, whose pattern already spans both levels.
-
-- **neither present** → `run_phase: pm`. The feature is not built and its documentation does not
-  exist yet, so the note carries no documentation link and the command never asks for one.
-- **either present** → `run_phase: dev`. The author may supply a redirect short link that will later
-  point at the page `/document` publishes.
-- **`$SPECS_PATH` unset or the dir missing** → `run_phase: pm` (the safe default — it only suppresses
-  a link, never fabricates one).
-
-This is the same inference `emit-cost` already applies in Phase 11; do not add a question for it.
+**`run_phase` is Phase 0's.** It was resolved before Phase 1, whose diff-grounding array it picks;
+hand it on as it stands and never resolve it again.
 
 → Agent (subagent_type: "docs-workflows:release-notes-writer", model: `<detection_model — §9.2 delegated writer / §2.1 Sonnet chain; this run is MODERATE (Phase 1.5); under §10, run_flags.enforced_model>`):
   > "Render the release-notes draft for this brief:
@@ -455,7 +511,8 @@ This is the same inference `emit-cost` already applies in Phase 11; do not add a
   > change_type:            [from Phase 3, else null]
   > release_notes_category: [from Phase 3, else null]
   > filed_version:       [the release Phase 3 resolved for `release_versions` — the one this draft is filed under — or null where it files under `# Unreleased`]
-  > run_phase:           [pm | dev — resolved immediately above, in this phase]
+  > run_phase:           [pm | dev — resolved in Phase 0]
+  > conformance:         [the open conformance entries Phase 3 carried, or omit where it carried none]
   > model_routing:       [the block from Phase 1.5]
   > code_repos:          [the Phase-4 resolved {slug, path} map when diff grounding is on; omit otherwise]"
 
@@ -544,6 +601,14 @@ On the first choice, correct the claim to match the cited criterion. On the seco
 
 Pass `code_repos` (the Phase-4 resolved map) to the writer when diff-grounding is on.
 
+**What the writer did with each conformance entry** comes back as `conformance_applied` — the claim
+left out, worded as shipped, or not claimed at all (`${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §8) — and Phase 8 reports it.
+A claim an entry settled carries no `acceptance-criteria` or `source-truth` gap, so neither handler
+above asks about it: the decision on file is a person's answer to the same question, and asking it
+again would pull the claim back to the wording that was decided against. A re-dispatch after a
+Change Type switch passes the same `conformance` input, and its `conformance_applied` replaces the
+first.
+
 ---
 
 ## Phase 7 — Style gate (optional)
@@ -613,8 +678,9 @@ Outside that one case there is no question to ask and no option that replaces th
    `prefix: prd`; `feature_folder` the resolved PRD folder; `deliverable_paths` = `release-notes.md`
    in it, its one literal path; `title: <KEY> Release-notes draft <version | Unreleased>`, `<KEY>`
    being `focus_key` where it is set and the PRD's key where it is null; and `body_facts` = the
-   version and Change Type section the draft was filed under, its shape, and whether it superseded
-   an earlier `# Unreleased` note, and, where Phase 6 recorded any `document-as-spec` gap, a first
+   version and Change Type section the draft was filed under, its shape, whether it superseded
+   an earlier `# Unreleased` note, and each claim it left out for a fix still pending, by its
+   conformance entry `<KEY>/[DD#n]`, and, where Phase 6 recorded any `document-as-spec` gap, a first
    line `⚠ Hold the release and the publication of this note until <KEY>-implementation-gaps.md
    gaps <n>, … are fixed — the note describes behaviour the code does not have yet.` **Options 2 and 3 decline the handoff and nothing else**: the draft
    stays appended in the PRD folder, uncommitted, and the terminal `commit-artifacts` step never
@@ -643,7 +709,8 @@ Outside that one case there is no question to ask and no option that replaces th
    - Action plan: <from the PRD | supplied by you | TODO marker left in the draft | — (not a breaking note)>
    - Deprecation: <EOL <date> (end-of-support <date | —>) | none>
    - Implementation gaps: <<path> — per gap its number, claim and decision; for `document-as-spec`: hold the release and the publication of this note until it is fixed; for `skip-and-report`: omitted from the note, raise the defect; for `document-as-code`: documented as shipped, correct the PRD | none>
-   - Diff grounding: <on (repos: …) | off>
+   - Diff grounding: <on (repos: …) | off><; the plan's `Code check:` line, where Phase 2 showed one>
+   - Conformance: <per record Phase 0 found: <the folder's key> checked <date> (<Epic | PRD> run) — <repo> @ <commit>, …; then each open entry by `<KEY>/[DD#n]` and what the draft did with it — left out, the fix still pending (re-run /dev-workflows:conformance once it lands, then this command) | worded as shipped (<amend-document | accept>) | not claimed — with `(a Dev's proposal, not yet ruled on)` where its `status:` was `proposed`; then <n> unverified and <m> not-checkable requirements the record did not settle | no record in scope>
    - Lineage: <the `Lineage:` line (`workflows-core:document-lineage` §7) for Phase 0's check, then each stale link ⚠ with its remedy, each link accepted in its unit marked so, each missing record, each document not on `<default-ref>` and each this checkout changed from it as a note>
    - Blocks used: <each block by its record and heading date | none>; dropped by §4's date fallback: <each block by its record and heading date, and each commit the date rule dropped by its own date, by SHA, date and subject — a commit dropped with a block recording it is accounted for by that block's listing | none> — on a run with diff grounding on
    - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — usually a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again
@@ -792,6 +859,7 @@ current working directory, where it is not the specs repository; no user name is
 - No external API call but two — key discovery's optional, read-only `gh search prs` and `gh pr view`, where a scanned clone is on GitHub and `gh` is installed and logged in (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md`), and Phase 8's handoff, on the operator's consent, whose `gh` calls — its authentication check, its open-pull-request probe and `gh pr create` — are `workflows-core:phase-handoff` §2.6–§2.7's; `gh` wraps the API. This run has no forge URL to resolve: Phase 3 builds `refs[]` from `implementation.md` and the commit scan, which a merged pull request's landed commits join, and `diff-summarizer` takes a ref's diff with pure local `git`.
 - Every read of the specs tree is read-only.
 - NEVER ask, stop or write on a lineage outcome (Phase 0) — a stale link is a reported line, shown before the diff-grounding question; a script failure is a ⚠ line; this command records no lineage anywhere, on `release-notes.md` or in a note
+- NEVER ask, stop or write on a conformance record (Phase 0, Phase 3) — it is read and never written; its open entries go to the writer with the decision a person already recorded on each, which the draft follows and no question re-opens (`${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §8); a record that is missing is the absence of one, never a prerequisite.
 - The draft contains NO identifiers, NO PR links, and NO `{{#internal-note}}` block. The scope comment Phase 8 writes above it names a key and the commits the run read, and is not part of the draft (`${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1).
 - The draft is EXACTLY one Summary, shaped by its destination per `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1/§3 — a plain **Category:** label + `### title` + prose for `breaking-changes` / `feature-updates`, or one or two bare past-tense sentences, opening with a past-tense verb, for `fixes`. It carries NO `Change type:` line and NO `Release-notes category:` line, and its **prose** names a release version only where the heading cannot say it — the version is the `#` heading the draft is filed under (Phase 1, `release-note-types.md` §1), which is the only thing that says which release a section belongs to now that the three destinations are three sections of one file. A breaking note that takes effect in a later release names that release, from the source or the user and never invented, or a far-off deprecation's end-of-life date (`release-note-types.md` §6), and every breaking note carries its remediation under a literal `**Action plan:**` label (§4). When the change deprecates something the Summary carries a deprecation note (end-of-life date required, end-of-support optional). A Change Type switch at the Phase 6 prompt re-dispatches the writer.
 - The category label IS the PRD's `release_notes_category`, used verbatim; when the PRD carries none the line is OMITTED. Change Type is sourced `change_type` → infer, and is confirmed with the user ONLY when it was inferred with low confidence — by shape and destination, never by enum label. Neither field is ever asked for by enum label.

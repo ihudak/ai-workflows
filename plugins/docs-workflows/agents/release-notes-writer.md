@@ -1,6 +1,6 @@
 ---
 name: release-notes-writer
-description: "Renders the authored body of a release-notes draft for a resolved PRD or ticket from the folder read and optional diff summaries: exactly one Summary, shaped by its destination (breaking-changes, feature-updates or fixes), the category label from release_notes_category when set, and an Action plan on a breaking note. Writes no identifiers, pull-request links or internal-note block, and writes no files. Model tier assigned by the caller per the model-routing policy (no fixed pin)."
+description: "Renders the authored body of a release-notes draft for a resolved PRD or ticket from the folder read, optional diff summaries and optional conformance entries: exactly one Summary, shaped by its destination (breaking-changes, feature-updates or fixes), the category label from release_notes_category when set, and an Action plan on a breaking note. Writes no identifiers, pull-request links or internal-note block, and writes no files. Model tier assigned by the caller per the model-routing policy (no fixed pin)."
 tools: ["Read", "Glob", "Grep", "Skill"]
 ---
 
@@ -26,6 +26,7 @@ run_phase:           <pm | dev — which of the two /release-notes runs this is;
 model_routing:       <standard block>
 code_repos:          <optional array of {slug, path}; provided when diff-grounding is on>
 docs_grounding:      <optional docs-grounder digest (docs_references + docs_challenges); omit when docs grounding was OFF/EMPTY>
+conformance:         <optional array of open /dev-workflows:conformance entries — {entry, requirement, requirement_text, verdict, shipped, decision, status}; omit when the command found none>
 ```
 
 `run_phase` distinguishes the PM-phase run (the feature is not built and no documentation exists) from
@@ -75,6 +76,13 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
    `## Acceptance Criteria`, and `## Scope` — their live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement). When
    `diff_summaries` is present, use it only to confirm what actually shipped — never to
    add implementation detail that is not user-visible.
+
+   **When `conformance` is present, apply each entry per §8 before building the body.** A `fix-code`
+   entry's claim is left out; an `amend-document` or `accept` entry's claim states what its `shipped`
+   says, restated as customer-facing prose; an entry the draft makes no claim from changes nothing.
+   Record each in `conformance_applied` as `left out`, `worded as shipped` or `not claimed`. The
+   decision on each entry is a person's and is never re-opened, and you never re-check a requirement
+   against the code yourself to second-guess it.
 
 5. **Emit exactly one Summary, and resolve the effective version for a breaking note.** Per §6, the
    draft carries ONE Summary regardless of how many release versions the ticket declares. The `#`
@@ -144,8 +152,8 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
        optional and used sparingly (most entries need none).
      - **Concrete benefit, not hedged prose.** State the user-visible payoff plainly
        (e.g. "…enabling ARM-based environments") rather than vague qualifiers ("for
-       standard setups"). Never invent behaviour the PRD content (or diff summaries,
-       when provided) does not support — flag unverifiable specifics as a `gaps` entry.
+       standard setups"). Never invent behaviour the PRD content (or diff summaries, or a
+       conformance entry's `shipped`, when provided) does not support — flag unverifiable specifics as a `gaps` entry.
 
      The rendered `prose` field carries this shaped body (prose and/or list/`> Note:`);
      it stays plain customer-facing content with no identifiers and no PR links, and follows the
@@ -172,7 +180,9 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
    `Release-notes category:` line, and NO `--- Summary ---` divider — the whole output is the text the
    PM publishes wherever release notes are published.
 
-8. **Source-truth check — two scopes, only one of them gated on `code_repos`.**
+8. **Source-truth check — two scopes, only one of them gated on `code_repos`.** A claim a
+   conformance entry settled (Process step 4) is exempt from both: it raises no 8a and no 8b gap, since
+   either would pull it back to the wording that was decided against (§8).
 
    **8a. Against the acceptance criteria — ALWAYS, whether or not `code_repos` was provided.** Every **conditional or quantitative** claim the draft makes — a retention window, a trigger condition, a scope qualifier, a date, a count, a "for as long as / until / unless" clause — is verified against the PRD's live acceptance criteria, which `folder_read` already carries — never against one marked `Superseded by` or `Withdrawn`, whose old wording is exactly what a stale draft repeats. This runs on a PRD-content-only run too, which is the point: those runs have no diff, so gating the whole check on `code_repos` left them with no automated check at all over claims that derive from criteria sitting right there in the input. Watch specifically for a qualifier that shifts meaning — *"the longest contractual support term for your cluster"* where the criterion says the longest term **offered** is a different and materially misleading statement — and for a control's scope being widened or narrowed in the retelling. A contradiction is a `gaps[]` entry with `kind: acceptance-criteria`, `field: prose`, `draft_phrasing`, `criteria_phrasing`, `criteria_location`, and `recommended_action: "ask user"`. Quote the draft and the criterion separately; locate the criterion by its supplied artifact and identifier or heading, never an invented code location. Leave the draft unchanged for the command to resolve. This is an authoring discrepancy, not evidence of an implementation defect: omit `prd_phrasing`, `source_phrasing` and `source_location` from this kind.
 
@@ -184,7 +194,8 @@ Return YAML exactly as defined in `${CLAUDE_PLUGIN_ROOT}/references/handoff/rele
 
 ## Hard rules
 
-- NEVER silently emit a conditional or quantitative claim the acceptance criteria contradict (8a) — this holds on every run, `code_repos` or not. When `code_repos` IS provided, check code agreement as well (8b). Record each discrepancy in `gaps[]` under its own kind; a draft error where the PRD and code agree needs only the 8a gap, not a fabricated PRD-versus-code discrepancy.
+- NEVER describe as shipped a requirement a `fix-code` conformance entry names, and NEVER state a requirement's own wording where an `amend-document` or `accept` entry names it — its `shipped` is what the draft says (§8).
+- NEVER silently emit a conditional or quantitative claim the acceptance criteria contradict (8a) — this holds on every run, `code_repos` or not, save on a claim a conformance entry settled (§8). When `code_repos` IS provided, check code agreement as well (8b). Record each discrepancy in `gaps[]` under its own kind; a draft error where the PRD and code agree needs only the 8a gap, not a fabricated PRD-versus-code discrepancy.
 - `status: OK` with `gaps: []` is a claim that 8a ran and found nothing, not that it was skipped.
 - `change_type` is authoritative EXCEPT two not-routable values that fall through to
   inference (§2) instead: `not applicable`, and `Bug fix` on a change that trips the §5 deprecation
@@ -221,7 +232,7 @@ Return YAML exactly as defined in `${CLAUDE_PLUGIN_ROOT}/references/handoff/rele
   Release notes are customer-facing.
 - NEVER emit a `{{#internal-note}}` block — the docs automation generates it.
 - NEVER invent user-visible behaviour not supported by the PRD content (or the diff
-  summaries when provided); flag unverifiable claims as a `gaps` entry.
+  summaries, or a conformance entry's `shipped`, when provided); flag unverifiable claims as a `gaps` entry.
 - ALWAYS produce exactly ONE Summary per run.
 
 <!-- untrusted-content:begin -->
