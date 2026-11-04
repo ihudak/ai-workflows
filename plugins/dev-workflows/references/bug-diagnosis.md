@@ -48,10 +48,11 @@ as one (its Phase 3B step 8). **One rule places every run below**, `/implement`'
 change — a scan's patch applied included, a probe's tagged line not — dividing it:
 
 - **Before the first edit**, where no change exists yet to review, the repro runs on the working
-  tree: `risk-planner`'s step 1 repro and its minimisation by its arguments and input. A plan's
-  diagnosis steps do not: `code-writer` carries them out in the scratch checkout of `HEAD` (below)
-  on every dispatch, its first included, so a probe step 3 places is placed and read there too, and
-  the cleanup gate strips any tagged line that reached the working tree all the same.
+  tree: `risk-planner`'s step 1 repro, on any dispatch but a re-plan's, and its minimisation by its
+  arguments and input. A plan's diagnosis steps do not: `code-writer` carries them out in the
+  scratch checkout of `HEAD` (below) on every dispatch, its first included, so a probe step 3
+  places is placed and read there too, and the cleanup gate strips any tagged line that reached the
+  working tree all the same.
 - **From the first edit until a non-BLOCK review, nothing runs against the working tree**, which
   holds the change: no check — a lint, a build, a type-check or a test — and no repro or probe. A
   command that writes the change rather than checks it, as an install, a code generation or a
@@ -59,8 +60,8 @@ change — a scan's patch applied included, a probe's tagged line not — dividi
   carries it. A probe or the repro runs only in the scratch checkout of `HEAD` (below), the tree
   before the change. That takes a probe placed once the edits have begun and every run of the repro
   a plan step makes, which `code-writer` carries out there; and step 1's repro **on a re-plan**
-  whose working tree already holds edits (`/implement` Phase 3A step 5's, or a `blocked` return's
-  Revise at its Phase 3A step 1), which `risk-planner` runs there. Neither runs a test the run
+  (`/implement` Phase 3A step 5's, or a `blocked` return's Revise at its Phase 3A step 1), which
+  `risk-planner` runs there before the first edit as after it. Neither runs a test the run
   created or changed, in that checkout or any other: it is unreviewed change. `risk-planner`'s
   re-plan runs the original repro, and names each such test it left unrun. So a plan carries no step
   that runs a check, the repro or a probe against the working tree between the first edit and the
