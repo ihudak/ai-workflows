@@ -331,9 +331,26 @@ only through Phase 3's handoff.
 
 ## Phase 3 — Handoff
 
-**Only where at least one index was written.** A run that wrote none — no `design/`, no set, every
-set empty — has no deliverable, offers no handoff, and says so; offering one would name a pull
-request for nothing.
+**Only where at least one index this run wrote is absent from `<default-ref>` or differs from it
+there.** `<default-ref>` is the ref `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §3.2 names.
+Test each index Phase 2 wrote, by its path relative to `$SPECS_PATH`, written with the leading `./`
+that `phase-handoff`'s *Every `<ref>:` object name below is written `<ref>:./<path>`* rule requires
+(without it a specs tree inside a larger repository reads every index as absent, and the handoff
+would fire on an unchanged re-run): it is **absent** where
+`git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<path>"` fails, and otherwise **differs** where
+`git -C "$SPECS_PATH" diff --quiet <default-ref> -- "./<path>"` exits 1 (the test
+`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §2.3 uses for *already on `<default>`*). Both are
+asked because `diff --quiet` alone cannot see an index that is new and untracked: it exits 0 for a
+path in neither the ref nor the index, which would read as already on the default branch. An index
+committed on a plugin branch that was never pushed is absent from `<default-ref>`, so it still fires.
+
+A run that wrote no index at all — no `design/`, no set, every set empty — has no deliverable, offers
+no handoff, and says so; offering one would name a pull request for nothing. **A run whose every
+index matches `<default-ref>`** — a re-run over an unchanged frame set from the default branch
+rebuilds each index byte for byte — has nothing to commit, so every answer the choice offers would
+end the same way; it offers no handoff and prints
+`Phase handoff: not offered — every index this run wrote is already on <default> as written.`
+with `<default>` the default branch's name, then goes on to Phase 4.
 
 Report what each set now holds, then present
 `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.3's consent choice verbatim (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` loads the file holding it) — the **advisory** variant, as the handoff's register of classes records, whose second option says no command stops on this and that what reads it reads your working copy. **Nothing gates a frame-set index, but something reads one**: `product-workflows:design-grounder` refuses to run on a frame set holding no index at all, and `product-workflows:grounding-verifier` returns `NO_INDEX`/`STALE_INDEX` on one — both from the working tree, neither off a ref. The **gated** class is wrong outright — the gate's row table names no row for a frame-set index, so neither of its two arrays applies, and its **stopping** one would promise a refusal no consumer makes — and the **unread** variant — which this phase presented until the handoff's register of classes was verified against the tree — told the operator to ignore a file `/prd-ground` refuses a frame set without, three lines above a paragraph of this same phase saying the set stays `NO_INDEX` for everybody else. That contradiction is the reason §4.3 asks a producer to name its reader rather than infer the class from the absence of a gate row. On the first
@@ -477,8 +494,10 @@ and the `Phase handoff:` outcome line for whichever of the two outcomes Phase 3'
 `handoff-to-main`'s own line on the first option, and §4.1's *Declined by the user* line on either
 other, that one already saying the deliverable is written and not on the default branch
 (`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.1, exactly one line per handoff
-offered; §4.3 has the producer emit it on either declining option). **A run that wrote no index prints
-neither**: Phase 3 offers no handoff there, so nothing was declined and §4.1 has no row for it.
+offered; §4.3 has the producer emit it on either declining option). **A run whose Phase 3 offered no
+handoff prints neither** — one that wrote no index, and one whose every index was already on
+`<default>` as written, which prints Phase 3's own `Phase handoff: not offered` line in their place:
+nothing was declined there, and §4.1 has no row for it.
 
 **Say what this run did not do.** It reconciled no frame against any requirement, produced no
 `[DG#n]`, and dispatched no `design-grounder` — the indexes make these sets *readable*, which is a

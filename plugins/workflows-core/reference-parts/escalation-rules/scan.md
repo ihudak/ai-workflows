@@ -35,6 +35,7 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Branch prefix undetected` → `branch-prefix`
 - `A recorded verdict names the version it was taken against` → `version-line`
 - `Findings a review leaves open — the offer to apply them` → `review`
+- `A decision a finding needs — one question per finding` → `review`
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`
@@ -336,7 +337,7 @@ inline. A new citer that reproduces a list inline states which one it uses.
 
 `choices: ["Scan released code at `<ref>` (Recommended — cites shipped behavior)", "Cancel — refresh on the host (`git -C <path> fetch`) or re-mount read-write, then re-run"]`
 
-Used when `code-scanner` or `diff-summarizer` returns `prep.read_only: true` **and** either `prep.ref_committed_at` is more than 14 days old or `prep.head_divergence.ahead > 0`, per `${CLAUDE_PLUGIN_ROOT}/references/read-only-repos.md` §5. Present per affected repo. Neither agent accepts a scan-target parameter — a user who genuinely needs the unmerged working tree says so through the harness's free-text option (§0), because scanning an unmerged tree is what caused this feature's original defect: released behavior cited from unreleased code.
+Used when `code-scanner` or `diff-summarizer` returns `prep.read_only: true` **and** either `prep.ref_committed_at` is more than 14 days old or `prep.head_divergence.ahead > 0`, per `${CLAUDE_PLUGIN_ROOT}/references/read-only-repos.md` §5. Present per affected repo. Neither agent accepts a parameter that points a read-only mount's scan at its working tree or at a branch — `code-scanner`'s `refresh.read_default_by_ref` reads only the default ref, and changes nothing on a read-only mount — so a user who genuinely needs the unmerged working tree says so through the harness's free-text option (§0), because scanning an unmerged tree is what caused this feature's original defect: released behavior cited from unreleased code.
 
 A read-only mount is not a failure and does not use the `Refresh blocked` list: the scan proceeds at `prep.scanned_ref`. This prompt exists only because the container cannot fetch, so refreshing the clone is an action only the user can take on the host.
 

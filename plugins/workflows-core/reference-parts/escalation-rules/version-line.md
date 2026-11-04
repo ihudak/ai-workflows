@@ -35,6 +35,7 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Branch prefix undetected` → `branch-prefix`
 - `A recorded verdict names the version it was taken against` → `version-line`
 - `Findings a review leaves open — the offer to apply them` → `review`
+- `A decision a finding needs — one question per finding` → `review`
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`
@@ -182,7 +183,7 @@ record was reached against a version of the artifact that is no longer the one o
 says so. A reader meets a `PASS` beside a file the `PASS` never saw.
 
 **Every command that records a review verdict states what that verdict was taken against**, and where
-**any** edit followed it — a `MAJOR` fix applied inline, an escalation's manual fix notes, a deferred
+**any** edit followed it — a `MAJOR` fix applied inline, a decision the user settled at a finding's question, an escalation's manual fix notes, a deferred
 finding written into the artifact, a style pass, a resumed verify step — the final report says so
 plainly and names the edits. One line: *"`<verdict>` was reached before <the edits>, which followed
 it; the current text has not been reviewed."*

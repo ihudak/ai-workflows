@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.0] — 2026-11-04
+
+Take with `product-workflows` 3.73.0 and `dev-workflows` 4.58.0 — the fixes from the live checks of 2026-10-29 (to-fix LC12–LC28, D39; `docs/superpowers/verification/2026-10-29-live-checks.md`).
+
+### Changed
+- `escalation-rules`: the commands that settle a review's decisions as they apply them are now `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec` and `/design` (LC17). Each puts every decision-needing finding a review leaves open — after a verdict that is not `BLOCK`, and on a `BLOCK`'s *Fold* — to the user, one question per finding: the reviewer's options (at most three, the recommended one marked) and `Leave it open` last. Where only decision findings are left, no offer is made and the questions alone are asked; otherwise they are asked whatever the offer's answer; a free-text answer that settles nothing is asked once more, then taken as *Leave it open*; a finding a command's triage marked unverified is never asked; the unspent re-review offer follows the questions. **`/create-prd`, `/update-prd` and `/create-ard` already asked, as the grill asks; they gain the one-question shape — the reviewer's options, then the explicit *Leave it open*, and a free-text answer that settles nothing asked once more — the questions asked whatever the offer's answer and where only decision findings are left, and the unspent re-review offered after the questions** — say if you would rather they had not.
+- `code-scanner`: `refresh.read_default_by_ref: true` reads the default branch's tip by ref on a writable clone — one capped fetch, `remote set-head --auto`, `read-only-repos` §3's chain, then §2–§4's write-free reads for every step that reads files — leaving the checkout where it stands (LC19). A failed fetch reads the stale ref and says so in `refresh_note`. `read-only-repos`, the format file and `bounded-run` follow.
+- `overlap-reader`: `scope: rules`, `draft_path` and a Stage 4 `caller` — a Rule-only read of a draft not yet on disk, for `/specify` Stage 4 (LC25). Its description is under 600 characters again.
+- `epic-picker`: the remainder option is always the array's last, after any option the command adds; rows show the bare key, a typed prefixed key is read through `read-key` (LC13).
+- `escalation-rules`: the unspent re-review option's `<artifact>` is a bare noun phrase, so the label no longer reads "the edited the Epic drafts" (LC20).
+- `/workflows-core:frames` Phase 3 offers its handoff only where a written index is absent on the default branch or differs from it there; otherwise it prints `Phase handoff: not offered — every index this run wrote is already on <default> as written.` (LC22).
+- `specs-repo-git`: a session branch's creation is reported — the `Specs preflight:` line where the preflight's flush created it, the `Specs repo:` line otherwise (`session_branch_created`) (LC28); a `Specs repo:` count of one reads `(1 file)` (LC26).
+
+### Fixed
+- `lineage.py capture` takes several paths after one `--from-ref` or `--from-disk`, as `document-lineage` §5 writes the call, and either flag may be repeated (LC24).
+
 ## [1.77.0] — 2026-11-03
 
 Take with `product-workflows` 3.72.1, `docs-workflows` 1.32.1 and `dev-workflows` 4.57.3 — D32 part 5, the altitude filter's reach; D32 closes.

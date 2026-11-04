@@ -65,9 +65,10 @@ scratch_checkout: HEAD     # HEAD | none. HEAD on task_shape: bug work: every ru
                            # has none, in its Phase 3.5 (Steps, below).
                            # none on any other work: it runs none of them.
 pre_existing_dirty: [src/notes.txt]
-                           # inline. The paths /implement recorded as dirty before the run's first edit
-                           # (its pre_existing_dirty): the user's own uncommitted work. none where it
-                           # recorded none. Where it names any, a formatter that cannot be limited to
+                           # inline. The paths /implement keeps out of the run's commit (its
+                           # pre_existing_dirty): those dirty before the run's first edit, the user's
+                           # own uncommitted work, and each a check run changed that the user left out.
+                           # none where it recorded none. Where it names any, a formatter that cannot be limited to
                            # its paths is not run: that step is left to the caller, or, on mode: fix,
                            # that failure goes under ### Not fixed; and a repro that does not go red in
                            # the scratch checkout says, in its ### Blocked, that the checkout lacks them.
@@ -171,7 +172,7 @@ Paths: `<path>`, `<path>`
 <!-- or, on bug work, for a repro a step names that does not go red in the scratch checkout of HEAD:
      Repro not red: step <n> — `<the command>` in `<the directory it ran in>` — <its redacted output>
      — rate <the reproduction rate the plan records, or none recorded> — <the runs made> runs
-     and, where pre_existing_dirty names any path: the scratch checkout lacks the user's uncommitted
+     and, where pre_existing_dirty names any path: the scratch checkout lacks the uncommitted
      files at <those paths>, which the working tree holds -->
 <!-- or, for an evidence input that could not be read: Unreadable: <field> at <path> -->
 ```

@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.33.0] — 2026-11-04
+
+The fixes from the live checks of 2026-10-29 that reach `/document` (to-fix LC21, and LC14's class). They need nothing from the other plugins' releases; take it with `workflows-core` 1.77.0 or later, the release 1.32.1 shipped with.
+
+### Changed
+- `/document`'s pre-handoff maintenance agents, in both modes, are briefed on the folder they may edit — the docs repository, or the target — rather than "the project root", and told the session's working directory may be a code repository; the run reads the session's repository before and after them and reports any change there as an edit outside the docs (LC14's class: a live `/epics` agent edited a code repository's `CLAUDE.md`).
+- Phase 8.5 stages only what this run wrote: an Agent 1 edit to a page that held uncommitted changes before and is none of the pages `doc-writer` or `doc-fixer` wrote or edited, or to one outside the docs repository, is reported and left uncommitted; a page `doc-writer` or `doc-fixer` wrote or edited that changed while the agents ran, with no agent returning it, is committed as it then reads, and the report says so. Under *Proceed anyway*, a page `doc-writer` or `doc-fixer` wrote or edited over the operator's changes is committed whole, as that option says.
+
+### Fixed
+- The report heading reads `## Documentation Report` (LC21).
+
 ## [1.32.1] — 2026-11-03
 
 Take with `workflows-core` 1.77.0 — D32 part 5.

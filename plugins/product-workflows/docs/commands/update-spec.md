@@ -70,7 +70,7 @@ Five subagents can be dispatched, under the same rules as in [`/specify`](specif
 
 - **Phase 4 — the overlap read**, `workflows-core:overlap-reader` on Opus, over the changed items against what they overlap, then the whole-artifact confirmation gate — as in [`/specify`](specify.md).
 - **Phase 4.5 — Structural pre-lint** (`workflows-core:pre-lint`), advisory — it counts superseded and withdrawn items for contiguity and checks only live ones for coverage.
-- **Phase 5 — `spec-reviewer`**, Opus-pinned, reviewing **the whole** revised specification, with the archived base and the change list in its brief: a change outside the list that alters a live item's meaning, a meaning change passed off as a wording fix, or a renumbered ID is a BLOCKER; a change outside the list that alters no meaning is a MINOR. Its verdict is acted on as [`/specify`](specify.md) acts on it.
+- **Phase 5 — `spec-reviewer`**, Opus-pinned, reviewing **the whole** revised specification, with the archived base and the change list in its brief: a change outside the list that alters a live item's meaning, a meaning change passed off as a wording fix, or a renumbered ID is a BLOCKER; a change outside the list that alters no meaning is a MINOR. Its verdict is acted on as [`/specify`](specify.md) acts on it — findings whose fix is only an edit offered to apply, and each finding that needs a product decision put to you as a question of its own, with the reviewer's options and *Leave it open*; one you leave open is written into the specification as a `- [ ]` open question, and every edit made after the first review, a settled decision's among them, joins the change list before any re-review.
 
 ## Example
 

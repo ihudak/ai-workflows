@@ -73,7 +73,7 @@ The `workflows-core` command's line of the family workflow map, the logging comm
                       └── session-analyst (workflows-core)      (used by /diagnose-session)
                       └── docs-grounder (workflows-core)        (used by /idea, /create-prd, /update-prd, /create-ard, /specify, /update-spec, /epics, /release-notes, /brd-intake, /prd-ground)
                       └── architecture-grounder (workflows-core) (used by /create-ard, /specify, /update-spec, /design)
-                      └── overlap-reader (workflows-core)       (used by /design, /specify, /update-spec — the whole-artifact overlap read before the play-back that precedes the first review)
+                      └── overlap-reader (workflows-core)       (used by /design, /specify, /update-spec — the whole-artifact overlap read before the play-back that precedes the first review; and /specify's Stage 4 Rule read, scope: rules, before that stage's gate)
                       └── promotion-scout, adr-drafter (workflows-core) (used by /promote-decisions)
                       └── impl-maintenance (workflows-core)     (used by 29 of the 38 commands — `grep -l 'workflows-core:impl-maintenance' plugins/*/commands/*.md | wc -l` against `find plugins/dev-workflows/commands plugins/product-workflows/commands plugins/docs-workflows/commands plugins/workflows-core/commands plugins/security-workflows/commands -maxdepth 1 -name '*.md' | wc -l` — all but /docs-profile, /docs-serve, /harvest-decisions, /statusline, /feedback, /prompt, /prompt-brainstorm, /prompt-grill-me and /diagnose-session — replaced by defect-reporter under --skip-feedback)
                       └── defect-reporter (workflows-core)      (used under --skip-feedback by the same commands as impl-maintenance)

@@ -35,6 +35,7 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Branch prefix undetected` → `branch-prefix`
 - `A recorded verdict names the version it was taken against` → `version-line`
 - `Findings a review leaves open — the offer to apply them` → `review`
+- `A decision a finding needs — one question per finding` → `review`
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`

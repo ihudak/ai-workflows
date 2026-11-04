@@ -800,6 +800,25 @@ def test_capture_ref_and_disk():
     _with_repo(body)
 
 
+def test_capture_several_paths_per_flag():
+    """document-lineage §5 step 1's form: several paths after one flag, and either flag repeated."""
+    import subprocess
+
+    def body(r):
+        for name in ("a.md", "b.md", "c.md", "d.md"):
+            r.write(name, f"# {name}\n")
+        r.commit()
+        out = os.path.join(r.root, "capture.json")
+        p = subprocess.run([sys.executable, os.path.abspath(__file__), "capture", "--specs", r.root, "--ref", "main",
+                            "--from-disk", "a.md", "b.md", "--from-disk", "c.md", "--from-ref", "d.md",
+                            "--out", out], capture_output=True, text=True)
+        _check("capture several paths exit", p.returncode == 0, p.stderr.strip())
+        with open(out, encoding="utf-8") as fh:
+            paths = sorted(e["path"] for e in json.load(fh))
+        _check("capture several paths recorded once each", paths == ["a.md", "b.md", "c.md", "d.md"], str(paths))
+    _with_repo(body)
+
+
 def test_walk_full_chain():
     def body(r):
         r.chain()
@@ -1480,8 +1499,8 @@ def main(argv):
     c = sub.add_parser("capture")
     c.add_argument("--specs", required=True)
     c.add_argument("--ref", required=True)
-    c.add_argument("--from-ref", action="append", default=[])
-    c.add_argument("--from-disk", action="append", default=[])
+    c.add_argument("--from-ref", action="extend", nargs="+", default=[])
+    c.add_argument("--from-disk", action="extend", nargs="+", default=[])
     c.add_argument("--out", required=True)
     s = sub.add_parser("stamp")
     s.add_argument("--specs", required=True)

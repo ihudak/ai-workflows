@@ -35,6 +35,7 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Branch prefix undetected` → `branch-prefix`
 - `A recorded verdict names the version it was taken against` → `version-line`
 - `Findings a review leaves open — the offer to apply them` → `review`
+- `A decision a finding needs — one question per finding` → `review`
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`
@@ -182,7 +183,7 @@ record was reached against a version of the artifact that is no longer the one o
 says so. A reader meets a `PASS` beside a file the `PASS` never saw.
 
 **Every command that records a review verdict states what that verdict was taken against**, and where
-**any** edit followed it — a `MAJOR` fix applied inline, an escalation's manual fix notes, a deferred
+**any** edit followed it — a `MAJOR` fix applied inline, a decision the user settled at a finding's question, an escalation's manual fix notes, a deferred
 finding written into the artifact, a style pass, a resumed verify step — the final report says so
 plainly and names the edits. One line: *"`<verdict>` was reached before <the edits>, which followed
 it; the current text has not been reviewed."*
@@ -229,7 +230,7 @@ The user merged, and the fix took a second pull request.
 **So, after each review the gate takes whose verdict is not `BLOCK` — the first review or the
 re-review, or, where the command triages, one the run goes on from as from such a verdict at a
 triage settle prompt's **Proceed** (`workflows-core:finding-triage` § When triage empties the
-survivor set, § On re-review) — and before whatever follows it, where it leaves open at least one finding whose fix is only an edit, offer once to apply them:**
+survivor set, § On re-review) — and before whatever follows it, where it leaves open at least one finding whose fix is only an edit, or, in a command of the asking set below, at least one whose fix needs a decision the run does not have, act on them once. Where at least one finding whose fix is only an edit is open, offer once to apply those:**
 
 `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`
 
@@ -239,35 +240,89 @@ printed elsewhere ("listed above"): text a run prints before a question can stay
 and two live offers made after a re-review asked about findings no text had shown, one of them as
 "listed above". **Left open** means not applied, not overridden and not dismissed; where the
 command triages, a finding its triage marked unverified is never applied (`workflows-core:finding-triage` § The step), here as anywhere; and the re-review's offer carries every finding of the first
-review still open beside its own. A finding whose fix needs a decision the run does not have is no
-edit: a command that settles such decisions as it applies (`/create-prd`, `/update-prd`,
-`/create-ard`) puts it to the user one question at a time, as the grill asks, and every other records it where *A finding left open that needs a decision is recorded in the artifact* (below) names the command, and otherwise lists it in the final report and the pull request. A free-text
+review still open beside its own, save one whose decision the user left open at its question, which is not put to them again. A free-text
 answer naming some of the findings applies those.
 
 - **Taken**, each edit is the orchestrator's own, read against what it overlaps (*An inline fix is
   read against what it overlaps*, below) before anything follows — save in `/implement`, whose
   orchestrator edits no source: there the edits are `review-fixer`'s, after the first review in that
   review's one fixer pass and after the re-review in one pass more (its Phase 3B step 7). After the
-  first review the unspent re-review offer (next section) follows; after the re-review no review
+  first review the unspent re-review offer (*Edits after a verdict that is not BLOCK — the unspent
+  re-review*, below) follows, after the asking set's decision questions (next paragraph) too, so a
+  re-review taken there covers the decisions settled at them as well; after the re-review no review
   follows, and the version line above names these edits.
-- **Declined**, the findings stay open, listed in the final report and the pull request (above).
+- **Declined**, the findings stay open, listed in the final report and the pull request, as the
+  option says.
 
-**It is not a fix cycle and raises no cap**: it dispatches no review — `/implement`'s `review-fixer`
-pass after the re-review is no second fix cycle, since no review follows it — and what the cap
-allows after it is exactly what it allowed before. Used by the commands that fix inline —
-`/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and
-`/brd-proposal` — by `/epics`, whose orchestrator applies the offer's edits itself after its first
+**A finding whose fix needs a decision the run does not have is no edit, and the offer does not apply
+it.** The **asking set** — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`
+and `/design`, each a grill that settles decisions of this kind with the user — puts each such finding to the user
+in a question of its own, as *A decision a finding needs — one question per finding* (below) says:
+after the offer is answered, whatever the answer, *Go on without applying them* included, since each
+question carries its own *Leave it open*; and where no finding whose fix is only an edit is open, no
+offer is made and those questions alone are asked. In the asking set the offer's own text says that
+each such decision follows as a question of its own. Every other command records such a finding where
+*A finding left open that needs a decision is recorded in the artifact* (below) names the command, and
+otherwise lists it in the final report and the pull request.
+
+**It is not a fix cycle and raises no cap**, and neither are the asking set's decision questions:
+neither dispatches a review — `/implement`'s `review-fixer` pass after the re-review is no second fix
+cycle, since no review follows it — and what the cap allows after either is exactly what it allowed
+before. Used by the commands that fix inline —
+`/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec` (which acts on its verdict as
+`/specify` does), `/design`, `/prd-proposal` and `/brd-proposal` — by `/epics`, whose orchestrator applies the offer's edits itself after its first
 review and its one re-review, since `doc-fixer`, which takes its `MAJOR` findings whose fix is only
 an edit, takes no `NIT` —
 and by `/implement`, through `review-fixer`, after its first review and its one
 re-review, never after its review of the Phase 3.5 delta, whose edits would follow its tests.
+
+### A decision a finding needs — one question per finding
+
+**A finding whose fix needs a decision is the grill's to settle while the person is there, not the
+final report's.** Three live `/specify` runs each wrote two or three product decisions a review raised
+as open questions after the last review, without asking — one specification ended with four, three
+of which the person could have answered on the spot — and `/design`, which writes no open question,
+could only list its own in the final report.
+
+**So a command of the asking set puts each finding whose fix needs a decision the run does not have
+— where the command triages, a survivor of its triage — to the user, one question per finding:**
+
+`choices: ["<option 1><recommended>", "<option 2><recommended>", "<option 3><recommended>", "Leave it open"]`
+
+- **The question's own text names the finding** — its severity, where it is, and the decision it
+  needs — and never points at text printed before it, for the reason the offer above gives.
+- **The options are the reviewer's** for that decision; where the reviewer gives none, the run drafts
+  the answers as its grill would. One to three are carried, so the array holds two to four options
+  (§0); where there are more than three, the array carries the three likeliest, the question's own
+  text lists them all, and a free-text answer may name one the array does not carry.
+- **`<recommended>` resolves per showing**, as *The `(Recommended)` marker is unconditional* lets a
+  placeholder resolve: to `(Recommended — <why>)` on the option the reviewer or the run recommends,
+  and to the empty string on every other. Where neither recommends one, every placeholder resolves
+  to the empty string and the question's own text says that no option is recommended.
+- **The last option is always *Leave it open*.**
+
+A finding the command's triage marked unverified is never asked: it stays open, recorded where *A
+finding left open that needs a decision is recorded in the artifact* names the command and otherwise
+listed in the final report and the pull request, as any finding left open is.
+
+An option, or a free-text answer that settles the decision, is applied as an edit, read against what
+it overlaps (*An inline fix is read against what it overlaps*). A free-text answer that settles
+nothing is asked once more, and a second that settles nothing is taken as *Leave it open*. In a
+`BLOCK`'s fix cycle, which *A BLOCK review's other findings — folded into its fix cycle* says when it
+reaches, that cycle's re-review covers it; after a verdict that is not `BLOCK`, it is an edit
+answering the verdict's findings, and the unspent re-review offer, made after these questions where
+the cap still holds one, covers it where it is taken; after the last review the version line names
+it among the edits the verdict predates. **Leave it open** leaves the finding open, recorded as *A
+finding left open that needs a decision is recorded in the artifact* says for the command —
+`/specify` and `/update-spec` as a `- [ ]` open question; `/design`, which keeps no open question,
+lists it in the final report and the pull request — and the run does not put it to the user again.
 
 ## Edits after a verdict that is not BLOCK — the unspent re-review
 
 **A verdict that is not `BLOCK` spends neither half of the cap**, nor does a `BLOCK` the first triage
 settle prompt's **Proceed** settles as not `BLOCK` before any fixer ran, so the no-fixed-point argument
 above reaches neither. A run that edits the reviewed artifact in answer to such a verdict's
-findings — a first review's findings the user chose to apply at the offer above, or the fixer pass a command dispatches over them — still holds the cap's one re-review, and handing off without offering it ships edited text
+findings — a first review's findings the user chose to apply at the offer above, a decision one of them needed that the user settled at its question, or the fixer pass a command dispatches over them — still holds the cap's one re-review, and handing off without offering it ships edited text
 unreviewed for no reason the cap gives.
 
 A live `/create-prd` run is the case: `PASS WITH RECOMMENDATIONS` with four `MAJOR` findings, two of
@@ -280,8 +335,8 @@ step 7.5 in `/implement`, whose tests still run on either answer:
 
 `choices: ["Re-review the edited <artifact> once (Recommended)", "Go on without it — the report says the verdict predates the edits"]`
 
-`<artifact>` names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
-`proposal.md`, the Epic drafts, the pages written, the code change. The offer is made where all
+`<artifact>` is a bare noun phrase, with no leading article, that names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
+`proposal.md`, Epic drafts, pages, code change. The offer is made where all
 three hold: the verdict was not `BLOCK`, or was settled as not `BLOCK` at a triage settle prompt's
 **Proceed**, as *Findings a review leaves open — the offer to apply them* counts such a verdict; the
 run has not re-reviewed this artifact; and an edit answering the verdict's findings followed it. An
@@ -295,7 +350,7 @@ and makes no offer.
   one after its fix cycle — its own `Review verdict BLOCK (unresolved after one fix cycle)` rule
   below, or `/implement`'s stayed-blocked stop; any other verdict, or **Proceed** at a settle prompt,
   goes on to the step that follows the review gate, as after the command's own re-review, and none
-  starts a fix cycle: a command that fixes inline, or `/implement`, puts its findings to the offer above, whose edits no review follows, and every other reports them. The version line then names the re-review's verdict, and
+  starts a fix cycle: a command that fixes inline, or `/implement`, puts its findings to the offer above — and a command of the asking set each decision one needs to its own question — whose edits no review follows, and every other reports them. The version line then names the re-review's verdict, and
   an edit after it falls back to the reporting rule above, the cap now spent.
 - **Declined**, the run goes on exactly as before, and the version line says the verdict predates
   the edits.
@@ -304,8 +359,8 @@ and makes no offer.
 and nothing here offers another; a `BLOCK` the first settle prompt's **Proceed** settled before any
 fixer ran spent neither half, and is offered the re-review as above. **Which commands it reaches is a behavioural test, as above: a command whose cap
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
-edit the reviewed artifact on the way.** The seven commands that fix inline edit it through the offer
-above; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
+edit the reviewed artifact on the way.** The eight commands that fix inline edit it through the offer
+above, and the six of the asking set through their decision questions too; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
 finding's rewording in itself, under any verdict, where the user takes it for text they chose, and splits, at its last count, an Epic an *Epic size* finding named —
 and `/implement` `review-fixer`, over the findings and over those the user applies at the offer above. The open questions `A finding left open that needs a decision is
 recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
@@ -325,8 +380,9 @@ had already spent a re-review the same way, on an unsearched *only* (that comman
 **So every inline edit that answers a review finding is read against everything that overlaps it, in
 the artifact and among the `[AD#N]` Rules it inherits, and an operational step against what it acts
 on, before the step that follows it** — a `BLOCK`'s fix cycle before its re-review, a finding the
-user chose to apply at the offer above before the re-review offer or the handoff, and an
-escalation's manual fix notes before the handoff, which no review follows at all:
+user chose to apply at the offer above, or a decision they settled at its question, before the
+re-review offer or the handoff, and an escalation's manual fix notes before the handoff, which no
+review follows at all:
 
 - each requirement the edit adds or changes — a criterion, a test case, a scope line, a story, a
   decision's Rule, a cost line — is read against everything that overlaps it, in its own section and
@@ -352,7 +408,7 @@ the cap. It costs one read of what the edit touched and what overlaps it, agains
 on a defect the fix wrote.
 
 Used by the commands that fix inline — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`,
-`/design`, `/prd-proposal` and `/brd-proposal` — at their own fix steps, and by `/epics` at the
+`/update-spec`, `/design`, `/prd-proposal` and `/brd-proposal` — at their own fix steps, and by `/epics` at the
 edits it makes on the offer to apply what a review leaves open.
 
 ## A finding left open that needs a decision is recorded in the artifact
@@ -390,13 +446,17 @@ the artifact's own format keeps its open questions:
 
 **The question names the requirement it puts in doubt, where it puts one in doubt**, so the next
 run knows which requirement to revisit when it settles the question. **And it is written after the last
-review the run takes** — once the offers to apply findings and the unspent re-review offer are
-settled and any re-review they led to has returned, immediately before the handoff — so no review of this run is spent on the question
-itself.
+review the run takes** — once the offers to apply findings, the asking set's decision questions and
+the unspent re-review offer are settled and any re-review they led to has returned, immediately
+before the handoff — so no review of this run is spent on the question itself.
 
 It reaches findings of any severity the run leaves open — a `MAJOR`, `MINOR` or `NIT` it did not
 apply, a `BLOCKER` deferred at the escalation — and no others: one the user overrode is settled, and
-one whose fix is only an edit asks nobody anything. A `BLOCKER` that `/specify`'s or `/epics`'
+one whose fix is only an edit asks nobody anything. **A command of the asking set puts each such
+decision to the user first** (*A decision a finding needs — one question per finding*), so what it
+records is a decision the user chose to leave open at its question, a deferred `BLOCKER`'s, and one
+no question was put for — a finding still open when a re-review returned `BLOCK`, or, where the
+command triages, one its triage marked unverified. A `BLOCKER` that `/specify`'s, `/update-spec`'s or `/epics`'
 "Defer" writes into `## Refinement notes` is still written as an open question where its fix needs a
 decision: the note records the deferral, as a plain bullet that counts as no question, and the open
 question records the decision. A specification's open
@@ -408,8 +468,8 @@ Epic puts it through its clarification gate, where one left unresolved is an
 one is an edit after the verdict, which the final report names under `A recorded verdict names the
 version it was taken against`; it answers no finding, so it makes no re-review offer.
 
-Used by `/create-prd`, `/update-prd`, `/create-ard`, `/specify` and `/epics`. `/design` is not among them: its
-own open questions must be resolved before its gate passes, so a finding it leaves open stays in its final report and its pull request.
+Used by `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec` (which records as `/specify` does) and `/epics`. `/design` is not among them: its
+own open questions must be resolved before its gate passes, so a finding it leaves open stays in its final report and its pull request. It asks first, though, as one of the asking set, so the only decisions that reach its report and pull request are those the other five of that set write into their artifact. Those are a decision the user chose to leave open, a deferred `BLOCKER`'s decision, and a decision no question was put for. No question is put for a finding still open when a re-review returned `BLOCK`, nor, where a command triages, for a finding its triage marked unverified.
 
 ## A BLOCK review's other findings — folded into its fix cycle
 
@@ -419,11 +479,11 @@ question, in a wording of its own, when a first review returned `BLOCK` with `MA
 `NIT` findings beside its BLOCKERs, and each recommended folding them in.
 
 **So, where a command that fixes inline — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`,
-`/design`, `/prd-proposal` and `/brd-proposal` — has a review return `BLOCK` and go to its fix cycle,
+`/update-spec`, `/design`, `/prd-proposal` and `/brd-proposal` — has a review return `BLOCK` and go to its fix cycle,
 ask once, before the fix cycle starts, where that `BLOCK` review also leaves open at least one
-`MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit, or, in `/create-prd`, `/update-prd` and
-`/create-ard`, which settle decisions as they apply, at least one whose fix needs a decision the run
-does not have:**
+`MAJOR`, `MINOR` or `NIT` finding whose fix is only an edit, or, in a command of the asking set
+(*Findings a review leaves open — the offer to apply them*), at least one whose fix needs a decision
+the run does not have:**
 
 `choices: ["Fold them into this fix cycle (Recommended)", "Fix the BLOCKERs only — the rest wait for the re-review"]`
 
@@ -433,21 +493,28 @@ marked unverified never counts, and is never listed or folded in.
 The question's own text lists the findings as *Findings a review leaves open — the offer to apply
 them* says its own question does: one line per finding, with its severity, where it is and what the
 edit would change. A finding whose fix needs a decision the run does not have is listed too, marked
-as needing one, with the decision it needs in place of the edit.
+as needing one, with the decision it needs in place of the edit; in the asking set, the text says
+that each such decision is put as a question of its own in this fix cycle on *Fold*, and otherwise
+waits for the re-review.
 
 - **Fold them into this fix cycle** — each finding whose fix is only an edit is applied in the same
   fix cycle as the BLOCKER fixes, read against what it overlaps (*An inline fix is read against what
-  it overlaps*), so the one re-review covers it. A finding whose fix needs a decision is no edit:
-  `/create-prd`, `/update-prd` and `/create-ard` put each to the user one question at a time in this
-  fix cycle, as the grill asks, and apply the answer with the fixes; every other command leaves it
-  open, as *Findings a review leaves open — the offer to apply them* says of such a finding.
+  it overlaps*), so the one re-review covers it. A finding whose fix needs a decision is no edit: a
+  command of the asking set puts each to the user in this fix cycle, one question per finding, as
+  *A decision a finding needs — one question per finding* says, and applies each answer with the
+  fixes, so the one re-review covers it too; every other command — `/prd-proposal` and
+  `/brd-proposal` — leaves it open, as *Findings a review leaves open — the offer to apply them* says
+  of such a finding.
 - **Fix the BLOCKERs only** — the findings stay open and wait for the re-review: its offer carries
   them where it makes one, as *Findings a review leaves open — the offer to apply them* says of every
-  finding of the first review still open. A finding that needs a decision makes no offer on its own;
-  it is recorded where *A finding left open that needs a decision is recorded in the artifact* names
-  the command, and otherwise listed in the final report and the pull request. A re-review that
-  returns `BLOCK`, or stays blocked where the command triages,
-  makes no offer, so the findings stay in the final report and the pull request.
+  finding of the first review still open, and in the asking set that rule puts each finding that
+  needs a decision to its own question after the re-review, whether or not an offer is made.
+  Elsewhere, a finding that needs a decision makes no offer on its own; it is recorded where *A
+  finding left open that needs a decision is recorded in the artifact* names the command, and
+  otherwise listed in the final report and the pull request. A re-review that returns `BLOCK`, or
+  stays blocked where the command triages, makes no offer and puts no decision question, so the
+  findings stay in the final report and the pull request, and one that needs a decision is also
+  recorded where that rule names the command.
 
 A free-text answer naming some of the findings folds those in, and leaves the rest open.
 
@@ -463,8 +530,8 @@ in `/document`.
 
 `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
-Used by the commands that fix their own reviewer's findings inline, with no delegated writer — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` — when the one re-review returns `BLOCK`, whether it followed a `BLOCK`'s fix cycle or was the unspent re-review offered after a verdict that was not (*Edits after a verdict that is not BLOCK — the unspent re-review*); for `/prd-proposal` and `/brd-proposal`, which triage their re-review, when the review stayed blocked (`workflows-core:finding-triage` § On re-review). The other five do not triage their re-review, so their re-review's `BLOCK` verdict itself is what takes this rule.
-Escalate per unresolved BLOCKER individually. "Manual fix notes" → get the BLOCKER's notes as *Manual fix notes — the run drafts them* says, then apply them inline in one bounded pass, with no further re-review, reading them first per `An inline fix is read against what it overlaps`. "Defer" → record the finding as deferred in the run's final report; `/specify` also appends it to a `## Refinement notes` section of `specification.md`, as one plain `- ` bullet per finding. Never a `- [ ]` item there: `pre-lint` counts every `- [ ]` in the file against the header's `Open questions` count, while `specification-format.md` counts only those under its Open questions sub-headings, so a checkbox in the notes would put the two at odds. "Override" → ask for the user's rationale in plain text and record the finding, with it, in the run's final report. "Cancel" aborts the run.
+Used by the commands that fix their own reviewer's findings inline, with no delegated writer — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/design`, `/prd-proposal` and `/brd-proposal` — when the one re-review returns `BLOCK`, whether it followed a `BLOCK`'s fix cycle or was the unspent re-review offered after a verdict that was not (*Edits after a verdict that is not BLOCK — the unspent re-review*); for `/prd-proposal` and `/brd-proposal`, which triage their re-review, when the review stayed blocked (`workflows-core:finding-triage` § On re-review). The other six do not triage their re-review, so their re-review's `BLOCK` verdict itself is what takes this rule.
+Escalate per unresolved BLOCKER individually. "Manual fix notes" → get the BLOCKER's notes as *Manual fix notes — the run drafts them* says, then apply them inline in one bounded pass, with no further re-review, reading them first per `An inline fix is read against what it overlaps`. "Defer" → record the finding as deferred in the run's final report; `/specify`, and `/update-spec`, which acts as it does, also append it to a `## Refinement notes` section of `specification.md`, as one plain `- ` bullet per finding. Never a `- [ ]` item there: `pre-lint` counts every `- [ ]` in the file against the header's `Open questions` count, while `specification-format.md` counts only those under its Open questions sub-headings, so a checkbox in the notes would put the two at odds. "Override" → ask for the user's rationale in plain text and record the finding, with it, in the run's final report. "Cancel" aborts the run.
 
 ### Manual fix notes — the run drafts them
 
