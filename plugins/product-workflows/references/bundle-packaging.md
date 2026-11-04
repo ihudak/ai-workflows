@@ -735,8 +735,14 @@ would otherwise refuse.** A `<file>:<line>` locator in a grounding finding's `ev
 repository file, never a bundle document, so the relation stays off it — and shape 2's
 captured-markdown row in particular reaches only references outside grounding evidence: a customer
 who happened to capture a `README.md` of their own would otherwise turn a correct `README.md:12`
-into a dead citation. The manifest's quotation of a target as written (§1.1, §2.1) is a map entry
-rather than a reference: it sits beside the bundled filename it maps to and quotes the customer's
+into a dead citation. **Outside `evidence` a locator is told by its name**: a `<name>.md:<line>`
+whose name carries no key prefix names a repository file — a grounding file's note quoting
+`CLAUDE.md:79` — and stays outside the relation, while one whose name carries a key (shape 1) is a
+bundle filename, a key before the name being how this package names its own documents, and is
+tested like any other; the line number does not excuse it. The manifest's quotation of a target as written (§1.1, §2.1) — and its `## Not included`
+section's naming, in backticks, of a file a copied prerequisite's document cites and this bundle does
+not carry (`commands/brd-package.md`'s *Assemble the bundle* rule 8), which records an absence by
+design — is a map entry rather than a reference: it sits beside the bundled filename it maps to and quotes the customer's
 own link, so the target `notes.md` of a `[[notes.md]]` link, quoted there, is already resolved by
 that line, and testing it would make that package unbuildable with nothing the operator could
 change. The third, for that same reason, is a captured file's own link to another captured file —
@@ -744,7 +750,14 @@ change. The third, for that same reason, is a captured file's own link to anothe
 
 Relations 1 and 3 fail the same way — a reference that resolves to nothing — and stop the run with
 `BRD_PACKAGE_DEAD_CITATION`, naming the id or filename, the document it sits in, and the corpus or
-bundle it failed to resolve against; the remedy is to fix or qualify the reference. Relation 2 fails
+bundle it failed to resolve against; the remedy is to fix or qualify the reference. **A reference
+that resolves to nothing inside a document copied in from a prerequisite's package is no stop** — an
+id, a class-4 `cites`, or a filename of that prerequisite's own — for the reason §1.2 gives for a
+model id there: that package is never rewritten (§5), so the reference reaches the customer as written
+whether or not it already has, and the only repair would falsify a delivered document. The scanner
+reports it under `prerequisite_dead`, and `commands/brd-package.md`'s *Assemble the bundle* rule 8
+names each in the run's Final report as left as packaged, never putting it to the operator's ruling.
+A package built before this check existed is the likeliest place to meet one. Relation 2 fails
 differently — the reference resolves, to a finding about a different requirement — and stops with
 `BRD_PACKAGE_CITATION_MISMATCH`, naming both `claim`s; the remedy is to re-derive the finding, and
 the reference itself may be untouched. The two stay separate codes because the two remedies repair

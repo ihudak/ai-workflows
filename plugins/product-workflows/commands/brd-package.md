@@ -1665,8 +1665,8 @@ or not that line is there.
    bundled filename in backticks and whose others say what the document is and whether it is for
    review or *not for re-review*. **Every table under that heading is a document table**: rule 9
    compares their first column with the bundle's listing (`bundle-packaging.md` §7.1, relation 2)
-   and reads no other line of the manifest as a document, so the map and the notes this rule goes
-   on to name go under `##` headings of their own, after it. **Then map every captured file the bundle carries** — each markdown file and each
+   and reads no other line of the manifest as a document, so the map, the notes this rule goes
+   on to name and rule 8's `## Not included` section go under `##` headings of their own, after it. **Then map every captured file the bundle carries** — each markdown file and each
    image from `brd/source/` and `brd/source-external/` — from its path relative to `brd/` to its
    bundled filename, naming beside it any target as written that the link log maps to it
    (`bundle-packaging.md` §1.1, §2.1) — **and map every other image whose bundled name took a folder
@@ -1758,6 +1758,9 @@ or not that line is there.
    - `prerequisite_external` → a reference inside a copied prerequisite's document to a file of a
      package that prerequisite carried, or to its own prompt or manifest, named in the manifest and the
      Final report as the paragraph below on that says.
+   - `prerequisite_dead` → a reference inside a copied prerequisite's document that resolves to
+     nothing — an id, a class-4 `cites` or a filename of that prerequisite's own — which is no stop:
+     named in the Final report as left as packaged, as the paragraph below on that says.
    - `resolved` and `discharged` → the counts the Final report gives.
 
    **Read the line before acting, both ways**, as rule 7 reads its spans: a `dead` entry inside a span
@@ -1768,7 +1771,8 @@ or not that line is there.
    path, an `inventory-text` or `ledger-text` hit on an image-drawn row outside the element it quotes
    (`image_row` `true`, or a ledger row's `null`, read off its inventory row) — is a stop.
 
-   A reference that resolves to nothing — an unresolved id or filename (§6.2 relations 1 and 3), a
+   A reference that resolves to nothing — an unresolved id or filename (§6.2 relations 1 and 3)
+   outside a document rule 5 copied in, a
    bundle document whose filename carries no `<BRD-KEY>` and therefore has no partition at all, or a
    prerequisite key **whose package this run copied in** that no partition in the bundle answers to,
    which is what a collapsed set of filenames looks like from the key set (§6.1) — stops with:
@@ -1777,8 +1781,27 @@ or not that line is there.
    **A reference inside a document rule 5 copied in, naming a file or a record of a package that
    prerequisite itself carried and this bundle does not, or that prerequisite's own rendered prompt
    or manifest, which rule 5 does not copy**, is no stop: the copy is never rewritten,
-   and no sentence of this package composed it. Name each in the manifest beside that document, as
-   pointing at a package, or at that prerequisite's prompt or manifest, not included, and in the Final report, and package on.
+   and no sentence of this package composed it. Name each in the manifest, under a `## Not included`
+   heading of its own after `## Documents` (rule 6) — one bullet per copied document, its bundled
+   filename and each file it names in backticks, as pointing at a package, or at that prerequisite's
+   prompt or manifest, not included — never as a row of a document table, which rule 9 would read as
+   a document the bundle lacks; and in the Final report. **The manifest has then changed after rules 7
+   and 8 read it, so run both again**: rule 7's scan over the manifest, and this rule's check over
+   the bundle, each acted on as on its first run. A second check that reports the same
+   `prerequisite_external` entries and nothing new packages on; a hit the note itself carries stops
+   or goes to the operator's ruling as any other would. Where there is nothing to name, the manifest
+   is unchanged and neither runs again.
+
+   **A reference inside a document rule 5 copied in that resolves to nothing** — an id its
+   prerequisite's own corpus lacks, a class-4 `cites` naming no `[CG#n]` there, or a filename of that
+   prerequisite's own the bundle does not hold (the scanner's `prerequisite_dead`) — is no stop
+   either, for the reason a model id there is none (rule 7): that package is never rewritten
+   (`bundle-packaging.md` §5), so the reference reaches the customer as written whether or not it
+   already has, and no repair short of falsifying a delivered document exists. Name each in the
+   Final report — the bundled filename, line and token, *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`,
+   which is never rewritten — left as packaged* — and package on; it is never put to the operator's
+   ruling, since no answer could change it. A package built before this check existed is the likeliest
+   place to meet one.
 
    **A prerequisite Phase 2 carried with no package to copy in is not a hit**, and the discriminator
    is Phase 2's own carry — *whether a package of its own was found*. Its *BRD not found* and *no
@@ -2105,7 +2128,9 @@ a copied-in package, by bundled filename and line, as *in `<PREREQ-KEY>`'s `bund
 which is never rewritten — left as packaged*; every file in a copied-in prerequisite's bundle whose
 name begins with no key of that prerequisite's `depends-on:`, as unresolved, by bundled filename (rule 5);
 every reference inside a copied-in document to a package, or to that prerequisite's prompt or
-manifest, this bundle does not include, by document (rule 8); every artifact written, by path — the self-review, the customer
+manifest, this bundle does not include, by document (rule 8), and every reference there that
+resolves to nothing, by bundled filename, line and token, as *in `<PREREQ-KEY>`'s
+`bundle-<YYYYMMDD>/`, which is never rewritten — left as packaged* (rule 8); every artifact written, by path — the self-review, the customer
 prompt, the delivery note and the bundle, and `brd-link.md` where this run added a prerequisite to
 it; **the citation check's
 outcome** — how many identifier references resolved, across how many source packages, how many
