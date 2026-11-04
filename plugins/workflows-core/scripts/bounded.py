@@ -10,14 +10,14 @@ The command inherits stdin, stdout and stderr and runs in a session of its own -
 its own, with no controlling terminal. The cap ends that group whole: SIGTERM, then SIGKILL two
 seconds later for whatever of it is left, so nothing the command started outlives the cap. A SIGTERM,
 SIGHUP or SIGINT sent to this script is passed on to the group the same way, as GNU timeout passes
-it on. A command that exits by itself before the cap leaves what it started in the background
-running, as under GNU timeout.
+it on, one that arrives while the command is starting included. A command that exits by itself
+before the cap leaves what it started in the background running, as under GNU timeout.
 
 Exit codes, as GNU timeout reports them:
   124        the cap ended the command
   126        the command could not be run (not executable)
   127        the command was not found
-  128 + N    signal N ended the command
+  128 + N    signal N ended the command, or reached this script before the command started
   2          usage: <seconds> is not a whole number of at least 1, or no command was given
   otherwise  the command's own exit code
 
@@ -29,22 +29,22 @@ import subprocess
 import sys
 import tempfile
 import time
+import traceback
 
 TIMED_OUT = 124
 GRACE = 2.0
-
-
-class _Signalled(Exception):
-    def __init__(self, signum):
-        Exception.__init__(self, signum)
-        self.signum = signum
-
+POLL = 0.05  # the longest sleep between two looks at the command; the first is 1 ms, then doubled
 
 _FORWARDED = (signal.SIGTERM, signal.SIGHUP, signal.SIGINT)
+_received = []
 
 
-def _raise(signum, _frame):
-    raise _Signalled(signum)
+def _record(signum, _frame):
+    """Note the first signal and return. The handler never raises: an exception raised from it lands
+    wherever the main thread happens to be, and inside subprocess's wait it left the wait lock held, so
+    the final wait blocked for good. The run loop reads the note instead."""
+    if not _received:
+        _received.append(signum)
 
 
 def _ignore_signals():
@@ -92,28 +92,35 @@ def run(argv):
     seconds, cmd = int(argv[0]), argv[1:]
     # A signal sent to this script is passed on to the command's group, as GNU timeout does: the
     # command runs in a session of its own, so a signal to the caller's group no longer reaches it.
+    # One that arrives while the command is starting is passed on once it has started.
     for signum in _FORWARDED:
-        signal.signal(signum, _raise)
-    proc = None
+        signal.signal(signum, _record)
+    if _received:
+        return 128 + _received[0]
     try:
         proc = subprocess.Popen(cmd, start_new_session=True)
-        code = proc.wait(timeout=seconds)
     except FileNotFoundError:
         sys.stderr.write("bounded.py: %s: command not found\n" % cmd[0])
         return 127
     except OSError as e:
         sys.stderr.write("bounded.py: %s: %s\n" % (cmd[0], e.strerror or e))
         return 126
-    except subprocess.TimeoutExpired:
-        _ignore_signals()
-        _end_group(proc)
-        return TIMED_OUT
-    except _Signalled as s:
-        _ignore_signals()
-        if proc is not None:
-            _end_group(proc, s.signum)
-        return 128 + s.signum
-    return 128 - code if code < 0 else code
+    deadline = time.monotonic() + seconds
+    pause = 0.001
+    while True:
+        if _received:
+            _ignore_signals()
+            _end_group(proc, _received[0])
+            return 128 + _received[0]
+        code = proc.poll()
+        if code is not None:
+            return 128 - code if code < 0 else code
+        if time.monotonic() >= deadline:
+            _ignore_signals()
+            _end_group(proc)
+            return TIMED_OUT
+        time.sleep(pause)
+        pause = min(pause * 2, POLL)
 
 
 # --- self-test -------------------------------------------------------------------------------
@@ -163,6 +170,83 @@ def _gone(pid, within=5.0):
     return not _alive(pid)
 
 
+NOT_FIRED = 97
+
+
+def _signal_inside_wait_lock(pidfile):
+    """Run run() in a forked child whose command's wait lock sends the child SIGTERM the instant it is
+    taken -- the timing a CI run hit on Python 3.11, where an exception raised from the signal handler
+    left that lock held and the final wait blocked for good. The child's exit code, None where it hung
+    and was killed, or "skipped" where this Python's Popen keeps no wait lock to stand in for, or never
+    takes it while the command runs. The command writes its pid to <pidfile>."""
+    probe = subprocess.Popen(["true"])
+    probe.wait()
+    if not hasattr(probe, "_waitpid_lock"):
+        return "skipped"
+    pid = os.fork()
+    if pid == 0:
+        code = 99
+        try:
+            real = subprocess.Popen
+            fired = []
+
+            class Lock:
+                def __init__(self, inner):
+                    self.inner, self.fired = inner, False
+
+                def acquire(self, blocking=True, timeout=-1):
+                    got = self.inner.acquire(blocking, timeout)
+                    # Only while run() still handles the signal: once it ignores them, at the cap or
+                    # after a signal, there is no handler left to raise from.
+                    if got and not self.fired and signal.getsignal(signal.SIGTERM) not in (signal.SIG_IGN,
+                                                                                           signal.SIG_DFL):
+                        self.fired = True
+                        fired.append(True)
+                        os.kill(os.getpid(), signal.SIGTERM)
+                    return got
+
+                def release(self):
+                    self.inner.release()
+
+                def __enter__(self):
+                    self.acquire()
+                    return self
+
+                def __exit__(self, *exc):
+                    self.release()
+
+            class Popen(real):
+                def __init__(self, *args, **kwargs):
+                    real.__init__(self, *args, **kwargs)
+                    _pid(pidfile, wait=True)  # the command's pid is on file before the signal comes
+                    self._waitpid_lock = Lock(self._waitpid_lock)
+
+            subprocess.Popen = Popen
+            code = run(["3", "sh", "-c", "echo $$ > '%s'; exec sleep 30" % pidfile])
+            if not fired:
+                code = NOT_FIRED
+        except BaseException:
+            traceback.print_exc()
+        finally:
+            os._exit(code & 0xFF)
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        done, status = os.waitpid(pid, os.WNOHANG)
+        if done:
+            code = os.waitstatus_to_exitcode(status)
+            return "skipped" if code == NOT_FIRED else code
+        time.sleep(0.1)
+    os.kill(pid, signal.SIGKILL)
+    os.waitpid(pid, 0)
+    command = _pid(pidfile)
+    if command is not None:
+        try:
+            os.killpg(command, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+    return None
+
+
 def selftest():
     failures, cases = [], 0
 
@@ -207,6 +291,14 @@ def selftest():
         except subprocess.TimeoutExpired:
             proc.kill(); rc = None
         check("a SIGTERM to bounded.py ends the command too", rc == 128 + signal.SIGTERM and pid is not None and _gone(pid), (rc, pid))
+        rc = _signal_inside_wait_lock(pidfile + "3")
+        if rc == "skipped":
+            print("NOTE a signal inside the wait lock: skipped, this Python's Popen takes no wait lock while"
+                  " the command runs")
+        else:
+            pid = _pid(pidfile + "3")
+            check("a SIGTERM landing while the wait lock is held still ends the run, and the command",
+                  rc == 128 + signal.SIGTERM and pid is not None and _gone(pid), (rc, pid))
         script = os.path.join(tmp, "not-executable")
         with open(script, "w") as fh:
             fh.write("#!/bin/sh\nexit 0\n")
