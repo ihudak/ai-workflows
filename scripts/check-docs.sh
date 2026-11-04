@@ -2706,10 +2706,17 @@ check_path_rule_cited() {
 # takes free text and gets no specs context. A hook's own test may be looser than the grammar
 # (the command validates the address); it may never be narrower. An absent hook is skipped and
 # says so; the hooks read the prompt with python3, so without it the check does not run.
+# A run flag may stand before the address: a command strips a run flag that stands before its
+# argument (`workflows-core:run-flags` §3), and a hook that tested only the first token met the
+# flag there and injected nothing at all -- D41 found every preload hook doing so. So each prompt
+# is also run with each lead below in front of its argument: a run flag in its one-token form, and
+# in its two-token pair form, whose second token is the flag's value and never the address. A
+# token that already fails with no lead is not reported again behind one: its fix is the key test.
 KEYED_HOOK_TOKENS="A-1 ACME_X-90 ACME-1-2-3 PRD-ACME-77-checkout EPIC-ACME-77-01-alerts"
 KEYED_HOOK_FREE="fix the typo in the intro"
 check_keyed_hooks() {
-  local root="$1" pair hook cmd tok out
+  local root="$1" pair hook cmd tok out lead missed
+  local leads=("" "--skip-costs " "--enforce-model opus ")
   [ -n "$KEYED_HOOKS" ] \
     || { note "check 24 not applicable: this edition names no keyed preload hook (KEYED_HOOKS is empty)"; return 0; }
   [ "$HAVE_PY" = 1 ] || { note "check 24 not run: python3 not found, and the hooks read the prompt with it"; return 0; }
@@ -2720,14 +2727,23 @@ check_keyed_hooks() {
     esac
     hook="${pair%%:*}"; cmd="${pair#*:}"
     [ -f "$root/$hook" ] || { note "check 24: $hook absent, skipped"; continue; }
-    for tok in $KEYED_HOOK_TOKENS; do
-      out=$(cd "$root" && printf '{"prompt": "%s %s"}' "$cmd" "$tok" | env -u SPECS_PATH bash "$root/$hook" 2>/dev/null)
+    missed=" "
+    for lead in "${leads[@]}"; do
+      for tok in $KEYED_HOOK_TOKENS; do
+        out=$(cd "$root" && printf '{"prompt": "%s %s%s"}' "$cmd" "$lead" "$tok" | env -u SPECS_PATH bash "$root/$hook" 2>/dev/null)
+        grep -qF -- "$KEYED_HOOK_MARKER" <<<"$out" && continue
+        if [ -z "$lead" ]; then
+          missed="$missed$tok "
+          fail 24 "$hook injects no specs context for '$cmd $tok', a valid address -- its key test is narrower than the key grammar; widen it (a superset is fine, the command validates the address)"
+        else
+          case "$missed" in *" $tok "*) continue ;; esac
+          fail 24 "$hook injects no specs context for '$cmd $lead$tok', a valid address behind a run flag -- the command strips a run flag standing before its argument, so skip the leading flags before the key test, a bare --enforce-model together with the token after it"
+        fi
+      done
+      out=$(cd "$root" && printf '{"prompt": "%s %s%s"}' "$cmd" "$lead" "$KEYED_HOOK_FREE" | env -u SPECS_PATH bash "$root/$hook" 2>/dev/null)
       grep -qF -- "$KEYED_HOOK_MARKER" <<<"$out" \
-        || fail 24 "$hook injects no specs context for '$cmd $tok', a valid address -- its key test is narrower than the key grammar; widen it (a superset is fine, the command validates the address)"
+        && fail 24 "$hook injects specs context for the free-text prompt '$cmd $lead$KEYED_HOOK_FREE' -- its key test must still reject free text"
     done
-    out=$(cd "$root" && printf '{"prompt": "%s %s"}' "$cmd" "$KEYED_HOOK_FREE" | env -u SPECS_PATH bash "$root/$hook" 2>/dev/null)
-    grep -qF -- "$KEYED_HOOK_MARKER" <<<"$out" \
-      && fail 24 "$hook injects specs context for the free-text prompt '$cmd $KEYED_HOOK_FREE' -- its key test must still reject free text"
   done
   return 0
 }
@@ -4222,15 +4238,24 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "check 23 not applicable" "grep -v 'SPECS_PATH' $c23 > c.tmp; mv c.tmp $c23"
 
   # Check 24 -- a keyed preload hook takes every address. The fixture's KEYED_HOOKS names one
-  # hook whose key test is a superset of the grammar, so the unmutated pass proves every keyed
-  # token reaches it and the free-text prompt does not; each case rewrites that test, or points
-  # the list elsewhere. The sed scripts are expanded inside the case's subshell.
+  # hook whose key test is a superset of the grammar, and which skips leading flags first, so
+  # the unmutated pass proves every keyed token reaches it, behind each lead too, and the
+  # free-text prompt does not; each case rewrites that test or the skip, or points the list
+  # elsewhere. The sed scripts are expanded inside the case's subshell.
   local h24="${KEYED_HOOKS%%:*}"
   local narrow24='s/\[A-Z\]\[A-Z0-9_-\]\*-\[0-9\]/[A-Z][A-Z0-9]+-[0-9]+/'
   local loose24='s/\[A-Z\]\[A-Z0-9_-\]\*-\[0-9\]/[^[:space:]-]/'
+  local noskip24='s/^while :; do/while false; do/'
+  local nopair24='s/--enforce-model\[/--no-such-flag[/'
   if [ -n "$h24" ] && [ -f "$fixture/$h24" ]; then
     expect_fail_msg "a keyed hook narrower than the key grammar is rejected" 24 "'${KEYED_HOOKS#*:} A-1'" \
       'sed -i.bak "$narrow24" "$h24"; rm -f "$h24.bak"'
+    expect_fail_msg "a keyed hook that reads a leading run flag as its argument is rejected" 24 \
+      "'${KEYED_HOOKS#*:} --skip-costs A-1', a valid address behind a run flag" \
+      'sed -i.bak "$noskip24" "$h24"; rm -f "$h24.bak"'
+    expect_fail_msg "a keyed hook that reads --enforce-model's value as its argument is rejected" 24 \
+      "'${KEYED_HOOKS#*:} --enforce-model opus A-1'" \
+      'sed -i.bak "$nopair24" "$h24"; rm -f "$h24.bak"'
     expect_fail_msg "a keyed hook that takes free text is rejected" 24 "free-text prompt" \
       'sed -i.bak "$loose24" "$h24"; rm -f "$h24.bak"'
     expect_fail_env "a malformed KEYED_HOOKS entry is rejected" 24 'KEYED_HOOKS="no-command-here"' "true" \

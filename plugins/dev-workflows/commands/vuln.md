@@ -17,7 +17,7 @@ These shared references load by part — `escalation-rules`, `finding-triage`, `
 
 **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
-Each remaining argument token is either `ADDRESS:CVE-ID` (e.g. `PROJ-2423:CVE-2023-46604`) or a bare `CVE-ID` (e.g. `CVE-2023-46604`); `ADDRESS` is a key or an `@<path>` to the unit's folder under `$SPECS_PATH/specifications/`, and a token splits at its **last** `:` — no identifier this command reads contains one — so a `:` inside the path stays in the address; `--allow-install-scripts <name>[,<name>…]` is an option, not a token ("Install scripts" below). Parse and filter each token, research all CVEs first, then fix them one at a time.
+Each remaining argument token is either `ADDRESS:CVE-ID` (e.g. `ACME-77-01:CVE-2023-46604`) or a bare `CVE-ID` (e.g. `CVE-2023-46604`); `ADDRESS` is a key or an `@<path>` to the unit's folder under `$SPECS_PATH/specifications/`, and a token splits at its **last** `:` — no identifier this command reads contains one — so a `:` inside the path stays in the address; `--allow-install-scripts <name>[,<name>…]` is an option, not a token ("Install scripts" below). Parse and filter each token, research all CVEs first, then fix them one at a time.
 
 ---
 

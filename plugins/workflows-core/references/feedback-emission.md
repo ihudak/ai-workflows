@@ -37,7 +37,7 @@ File-level frontmatter, written once on creation:
 ```yaml
 ---
 type: dev-workflows-feedback
-prd: PRODUCT-1234
+prd: ACME-77
 slug: env-ag-update-window
 ---
 ```
@@ -51,7 +51,7 @@ Each entry is appended as a dated H2 header + a fenced YAML block + prose:
 ## 2026-07-09 — /document — missing-capability
 
 ```yaml
-id: PRODUCT-1234-document-cloud-self-hosted-split
+id: ACME-77-document-cloud-self-hosted-split
 date: 2026-07-09
 command: /document           # controlled: exact command name, or n/a
 plugin_version: 2.9.0

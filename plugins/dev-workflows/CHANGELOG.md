@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.58.1] — 2026-11-04
+
+Take with `workflows-core` 1.78.1 — D40 and D41.
+
+### Fixed
+- `preload-context` skips the leading flags before it looks for an argument — every token opening with `-`, and a bare `--enforce-model` together with the token after it, its value in the two-word form — since the command strips a run flag that stands before its argument, so `/implement --skip-costs ACME-77-01`, `/implement --no-commit ACME-77-01` and `/vuln --skip-feedback CVE-2023-46604` get the context they get with the flag after, where a flag first left them with none (D41).
+- `/vuln`'s `ADDRESS:CVE-ID` example and the `vuln-research` and `vuln-fixer` handoff samples use the example key `ACME-77-01`, as its docs page does, and the session-cost page's sample is the reference's own, its note that the keys differ gone (D40).
+
 ## [4.58.0] — 2026-11-04
 
 Take with `workflows-core` 1.78.0 — the fixes from the live checks of 2026-10-29 (to-fix LC12–LC28, D39).

@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.33.1] — 2026-11-04
+
+D41. Needs nothing from the other plugins' releases.
+
+### Fixed
+- `preload-context` skips the leading flags before it looks for an argument — every token opening with `-`, and a bare `--enforce-model` together with the token after it, its value in the two-word form — since the command strips a run flag that stands before its argument, so `/document --skip-costs ACME-77` gets its specs context and `/docs-workflows:release-notes --skip-costs ACME-77` its context, where a flag first left them with none (D41).
+
 ## [1.33.0] — 2026-11-04
 
 The fixes from the live checks of 2026-10-29 that reach `/document` (to-fix LC21, and LC14's class). They need nothing from the other plugins' releases; take it with `workflows-core` 1.77.0 or later, the release 1.32.1 shipped with.

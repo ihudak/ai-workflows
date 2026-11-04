@@ -9,7 +9,7 @@
 repo: /absolute/path/to/repo
 cves:
   - id: CVE-2023-46604
-    address: PROJ-2423     # optional folder key; omit when the token carried none
+    address: ACME-77-01     # optional folder key; omit when the token carried none
   - id: CVE-2024-12345    # bare CVE, no address
 ecosystem_hint: java      # optional; helps when auto-detection is ambiguous
 dependency_tree_files:    # optional; on every dispatch after a NEEDS_TREE, for those CVEs: each ecosystem's
@@ -30,7 +30,7 @@ model_routing:            # optional; if present, echo back in output.
 
 ### CVE-2023-46604
 status: READY             # READY | NEEDS_TREE | NOT_IN_REPO | LOOKUP_FAILED | SKIP_NON_CVE
-address: PROJ-2423
+address: ACME-77-01
 description: "Apache ActiveMQ RCE via ClassInfo deserialization"
 library: activemq-broker
 ecosystem: Maven

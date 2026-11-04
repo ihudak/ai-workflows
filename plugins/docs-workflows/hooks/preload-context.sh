@@ -47,25 +47,45 @@ except Exception:
     print('')
 " 2>/dev/null) || true
 
-# Require at least one non-whitespace, non-flag argument so bare `/document` or
-# `/release-notes --help` doesn't inject noise on every misfire. The optional
-# first capture group holds this plugin's own namespace prefix when the
-# caller used the qualified form; the second holds the command token (e.g.
-# "document", "release-notes").
+# Match the command token. The optional first capture group holds this
+# plugin's own namespace prefix when the caller used the qualified form; the
+# second holds the command token (e.g. "document", "release-notes").
 # `release-notes` is matched in the QUALIFIED form only, and that is not an
 # oversight. Claude Code ships its own built-in /release-notes, and the built-in
 # wins: a bare `/release-notes` never reaches this plugin, so preloading for it
 # would inject specs context into a run that is not ours. `/document` has no
 # built-in of the same name, so both forms reach us and both are matched. Group 2
 # holds the command token in either branch -- keep that true if you edit these.
-if [[ "$prompt" =~ ^/(docs-workflows:)?(document)[[:space:]]+[^[:space:]-] ]]; then
+if [[ "$prompt" =~ ^/(docs-workflows:)?(document)([[:space:]]+|$) ]]; then
     :
-elif [[ "$prompt" =~ ^/(docs-workflows:)(release-notes)[[:space:]]+[^[:space:]-] ]]; then
+elif [[ "$prompt" =~ ^/(docs-workflows:)(release-notes)([[:space:]]+|$) ]]; then
     :
 else
     exit 0
 fi
 cmd="${BASH_REMATCH[2]}"
+
+# Skip the leading flags, then require an argument, so a bare `/document` or
+# `/release-notes --help` doesn't inject noise on every misfire. A command
+# strips a run flag that stands before its argument (workflows-core:run-flags
+# §3), and its own flags may come first too, so the argument is the first
+# token after the leading run of tokens opening with `-`. A bare `--enforce-model` takes
+# the token after it as its value (the pair form, run-flags §1), so that token
+# is skipped with it. A command's own flag that takes a separate value
+# (`/release-notes --version <v>`) leaves its value as the argument, which is
+# still an argument; a flag of that kind on `/document`, whose address test
+# below reads `args`, would need the pair treatment too.
+# The same block stands in dev-workflows' and product-workflows' hooks.
+args="${prompt:${#BASH_REMATCH[0]}}"
+while :; do
+    args="${args#"${args%%[![:space:]]*}"}"
+    if [[ "$args" =~ ^--enforce-model[[:space:]]+[^[:space:]]+ || "$args" =~ ^-[^[:space:]]* ]]; then
+        args="${args:${#BASH_REMATCH[0]}}"
+    else
+        break
+    fi
+done
+[[ -n "$args" ]] || exit 0
 
 # --- helpers -------------------------------------------------------------
 emit_git_branch_if_repo() {
@@ -98,7 +118,7 @@ case "$cmd" in
         # "looks like an address": a superset of workflows-core:addressing §1's
         # key grammar (A-1, ACME_X-90, ACME-1-2-3) that also takes a typed folder
         # name (PRD-ACME-77-slug). The command itself validates the address.
-        if [[ "$prompt" =~ ^/(docs-workflows:)?document[[:space:]]+[A-Z][A-Z0-9_-]*-[0-9] ]]; then
+        if [[ "$args" =~ ^[A-Z][A-Z0-9_-]*-[0-9] ]]; then
             emit_specs_context
         fi
         ;;

@@ -293,7 +293,7 @@ File-level frontmatter (written once on creation):
 ```yaml
 ---
 type: dev-workflows-cost
-prd: PRODUCT-1234
+prd: ACME-77
 session: <sid8>
 ---
 ```
@@ -306,13 +306,13 @@ one session are two lines):
 ## 2026-07-09T14:22:33Z — /implement — implementation
 
 ```yaml
-id: PRODUCT-1234-98760-implement-2026-07-09T14:22:33Z   # timestamp => unique
+id: ACME-77-01-implement-2026-07-09T14:22:33Z   # timestamp => unique
 date: 2026-07-09T14:22:33Z
 command: /implement
 phase: implementation
 role: dev
-prd: PRODUCT-1234
-epic: EPIC-98760            # present only when an Epic key is in scope
+prd: ACME-77
+epic: ACME-77-01            # present only when an Epic key is in scope
 plugin_version: 2.10.0
 duration_s: 1284
 cost_computed_usd: 3.4821
@@ -818,7 +818,7 @@ because the earlier run is over.
 [
   {"command": "/prompt-grill-me", "plugin": "workflows-core",
    "phase": "inferred", "role": "inferred",
-   "target_command": "/document", "key": "PRODUCT-1234", "epic": null,
+   "target_command": "/document", "key": "ACME-77", "epic": null,
    "source": "specs", "plugin_version": "1.0.0",
    "ceded_at": "2026-09-01T10:04:00Z", "skip": false}
 ]

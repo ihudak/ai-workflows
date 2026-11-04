@@ -48,14 +48,34 @@ except Exception:
     print('')
 " 2>/dev/null) || true
 
-# Require at least one non-whitespace, non-flag argument so bare `/epics` or
-# `/epics --help` doesn't inject noise on every misfire. The optional first
-# capture group holds this plugin's own namespace prefix when the caller used
-# the qualified form; the second holds the command token ("epics").
-if [[ ! "$prompt" =~ ^/(product-workflows:)?(epics)[[:space:]]+[^[:space:]-] ]]; then
+# Match the command token. The optional first capture group holds this
+# plugin's own namespace prefix when the caller used the qualified form; the
+# second holds the command token ("epics").
+if [[ ! "$prompt" =~ ^/(product-workflows:)?(epics)([[:space:]]+|$) ]]; then
     exit 0
 fi
 cmd="${BASH_REMATCH[2]}"
+
+# Skip the leading flags, then require an argument, so a bare `/epics` or
+# `/epics --help` doesn't inject noise on every misfire. A command strips a run
+# flag that stands before its argument (workflows-core:run-flags §3), and its
+# own flags may come first too, so the argument is the first token after the
+# leading run of tokens opening with `-`. A bare `--enforce-model` takes the
+# token after it as its value (the pair form, run-flags §1), so that token is
+# skipped with it. A command's own flag that takes a separate value
+# (`/epics --docs <path>`) leaves its value as the argument, which is still an
+# argument.
+# The same block stands in dev-workflows' and docs-workflows' hooks.
+args="${prompt:${#BASH_REMATCH[0]}}"
+while :; do
+    args="${args#"${args%%[![:space:]]*}"}"
+    if [[ "$args" =~ ^--enforce-model[[:space:]]+[^[:space:]]+ || "$args" =~ ^-[^[:space:]]* ]]; then
+        args="${args:${#BASH_REMATCH[0]}}"
+    else
+        break
+    fi
+done
+[[ -n "$args" ]] || exit 0
 
 # --- helpers -------------------------------------------------------------
 emit_git_branch_if_repo() {
