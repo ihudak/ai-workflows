@@ -551,7 +551,7 @@ top-level Epic with no PRD above it, which used to have a branch of its own here
 the case itself (Phase 0 step 3): `/product-workflows:epics` writes every `EPIC-` folder under a PRD folder, and
 is the only command that writes one at all.
 
-- **PRD with exactly 1 Epic, on a multi-component PRD with no PRD-level `specification.md`** (`multi-component-test`, `Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) → no auto-selection: that spec is what `/epics` splits and what `/implement` asks for, so ask `choices: ["Author one broad PRD-level spec now (Recommended)", "Specify <EPIC-KEY> <title>"]` — the first leaves `focus_key` null and proceeds to Step B; the second takes the bullet below.
+- **PRD with exactly 1 Epic, on a multi-component PRD with no PRD-level `specification.md`** (`multi-component-test`, `Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) → no auto-selection: that spec is what `/epics` splits and what `/implement` asks for, so ask `choices: ["Author one broad PRD-level spec now (Recommended)", "Specify <key> <title>"]`, `<key>` and `<title>` being the Epic's bare `key` and its title as `workflows-core:epic-picker` reads them, never the folder's `EPIC-` prefix — the first leaves `focus_key` null and proceeds to Step B; the second takes the bullet below.
 - **PRD with exactly 1 Epic** → no picker; auto-select it. Set `focus_key` = that Epic and emit a
   one-line notice (e.g. `Single child Epic <EPIC> '<title>' — authoring its spec.`). Re-point the
   feature folder to that Epic's per-Epic subfolder (see *Re-pointing* below). Proceed to Step B.
@@ -580,7 +580,8 @@ is the only command that writes one at all.
   `Skill(skill: "workflows-core:reference", args: "epic-picker")`: every Epic listed as prose above the prompt, and
   the array carrying the explicit **"Author one broad PRD-level spec instead"** choice beside the Epics —
   every Epic row (marker + key + title) where three or fewer stand, and otherwise **at most two** Epic
-  rows and *"Another Epic (you'll be prompted for its key)"*, the array's last option, after the broad-spec choice, whose `description` names every Epic the
+  rows, then the broad-spec choice, then, as the array's last option,
+  *"Another Epic (you'll be prompted for its key)"*. That remainder option's `description` names every Epic the
   array leaves out — marker, key and title each, in the picker's order — so a left-out Epic is named
   in the dialog whether or not the prose list was printed; a typed key is resolved against the keys
   the array and that description listed. That file's *The cap* section states the marker, the description and the typed-key rules, and is why the Epic rows are the ones that give way: the
