@@ -508,7 +508,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    eventually disagree. Where the ledger is read at all, the **dispositions in the file** are read
    and never the ledger line, for the reason that section gives.
 10. **Read the inputs the rest of the run works from**, all from the gated folder:
-    `decisions.md` (every `[VD#n]` and `[AS#n]` with its `status`, `evidence`, `argumentation`,
+    `decisions.md` (every `[VD#n]`, `[CD#n]` and `[AS#n]` with its `status`, `evidence`, `argumentation`,
     `conditional_on`, `altitude` and `round` **where it carries one**); every verified
     `[CG#n]`/`[DG#n]` with its `verdict`, `evidence`, `control` where it carries one, `horizon` and
     verifier `outcome`; `grounding/baselines.md`; `brd/brd-inventory.md`'s
@@ -1171,7 +1171,7 @@ position this package takes, and is not among them. **A `[CD#n]` is listed exact
 is**: a customer's decision can rest on a prerequisite's as one of ours can —
 `/product-workflows:brd-reconcile` copies an accepted assumption's `conditional_on` onto the
 `[CD#n]` confirming it, and its will-change rule writes one — and it is named so the customer knows
-it could move; it asks their review for no mark. **And every open `[AS#n]` carrying
+it could move, asking their review for no mark (the one-line instruction below says so). **And every open `[AS#n]` carrying
 `conditional_on` one of them**, named by its id and its `statement`: an assumption can rest on a
 prerequisite's decision exactly as a position can (`decision-register-format.md` §7), and parts 7
 and 9, which carry it too, ask the customer to confirm it and to attack it without saying it could
@@ -1179,7 +1179,9 @@ move. A package may ship
 while a prerequisite is unreviewed — **loudly**, which is what this part is. Say in one line what
 the customer's own review should then do about it: mark the affected approvals in their section 3,
 and the affected assumptions they accept in their section 8, as contingent, and **not** list the prerequisite in their section 10 as a blocker, because it is not
-blocking, it is unsettled, and the two get very different treatment on the delivery side. A package
+blocking, it is unsettled, and the two get very different treatment on the delivery side; and,
+where a `[CD#n]` is listed, that a decision of their own listed here needs no row and no mark —
+it is named so they know it could move, and re-answering it would be a row nothing reconciles. A package
 with no prerequisite at all says so explicitly — a reviewer who was told nothing could move writes
 no contingent rows, and their absence then means what it says.
 

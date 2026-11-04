@@ -237,9 +237,9 @@ prompt says so and names which positions and assumptions could still move. Where
 section 3 states which of its approvals are contingent on that prerequisite, section 8 which of the
 assumptions it accepts are contingent on it, and section 10 does **not** list
 the prerequisite as a blocker — it is not blocking, it is unsettled, and the two get very different
-treatment on the delivery side. A decision of the customer's own the prompt names there, a `[CD#n]`,
-takes no mark: it is named so the reviewer knows it could move, and a contingent mark qualifies an
-approval or an acceptance this review gives.
+treatment on the delivery side. A decision of the customer's own the prompt names among what could still
+move, a `[CD#n]`, takes no row and no mark: it is named so the reviewer knows it could move, and a
+contingent mark qualifies an approval or an acceptance this review gives.
 
 A reviewer who was told nothing could move marks nothing contingent, and the absence of such a mark
 then means what it says.
