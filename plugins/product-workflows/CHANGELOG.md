@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.75.1] — 2026-11-04
+
+Wording only, released with `workflows-core` 1.78.3.
+
+### Changed
+- `/create-prd`, `/create-ard` and `/specify`'s row-B′ stop on a decision register says to add an uncommitted copy an ignore rule hides with `git add -f` before the merge, as `phase-handoff` §3.3's message now does (D15). A copy committed some other way, `git add .` or `git commit -a`, skips an ignored file without a word, and the merge then overwrites it.
+
 ## [3.75.0] — 2026-11-04
 
 D34, D35 and D36. Needs nothing from the other plugins' releases.
