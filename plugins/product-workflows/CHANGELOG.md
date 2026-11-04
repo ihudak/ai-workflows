@@ -10,8 +10,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Released with `workflows-core` 1.78.5.
 
 ### Fixed
-- **`scripts/bounded.py` reports a command's own exit code after a signal passed on to it**, as GNU timeout does: a command that catches the SIGTERM, SIGHUP or SIGINT `bounded.py` passes on and exits by itself now returns its own code, where `bounded.py` used to return 128 + N whatever the command did. A command the signal ends still returns 128 + N. A new selftest case traps the signal and exits 5. The same fix as `workflows-core` 1.78.5's copy, which every plugin ships byte for byte.
-- `/create-prd`, `/create-ard` and `/specify`'s row-B′ stop on a decision register names the new case of an uncommitted copy identical to `<default>`'s, and its remedy of removing that copy, as `phase-handoff` §3.3's message now does (`workflows-core` 1.78.5).
+- **`scripts/bounded.py` reports a command's own exit code after a signal passed on to it**, as GNU timeout does: a command that catches the SIGTERM, SIGHUP or SIGINT `bounded.py` passes on and exits by itself now returns its own code, where `bounded.py` used to return 128 + N whatever the command did. A command the signal ends still returns 128 + N, and one that ignores it, which `bounded.py` kills two seconds later, now returns 137 (128 + 9), as under GNU `timeout -k`, where it too used to return 128 + N. A new selftest case traps the signal and exits 5. The same fix as `workflows-core` 1.78.5's copy, which every plugin ships byte for byte.
+- `/create-prd`, `/create-ard` and `/specify`'s row-B′ stop on a decision register names the new case of an uncommitted copy identical to `<default>`'s, and its remedy of removing that copy, as `phase-handoff` §3.3's message now does (`workflows-core` 1.78.5), and the stop's reason is true for it: the run would rest on a register the branch's own history does not carry. `/epics` and `/brd-reconcile`'s descriptions of the row name the case too.
 
 ## [3.76.1] — 2026-11-04
 

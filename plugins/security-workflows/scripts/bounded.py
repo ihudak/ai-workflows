@@ -110,7 +110,8 @@ def run(argv):
     while True:
         if _received:
             # The command's own status, as GNU timeout reports it: 128 + N where the signal ended it,
-            # its exit code where it caught the signal and exited.
+            # its exit code where it caught the signal and exited, and 137 (128 + 9) where it ignored
+            # the signal and the SIGKILL GRACE seconds later ended it, as under timeout -k.
             _ignore_signals()
             _end_group(proc, _received[0])
             code = proc.returncode
