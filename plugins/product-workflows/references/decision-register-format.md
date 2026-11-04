@@ -374,6 +374,9 @@ the decision a sweep cannot reach.
 It follows that `conditional_on` is written by whoever takes the decision, at the moment they take
 it, and not reconstructed later. The person who knows the position rests on a prerequisite is the
 person taking it; a sweep cannot infer the dependency from a `statement` that never mentions it.
+**A customer confirming an assumption is the one case where it is copied rather than written**: the
+assumption's author wrote it when recording the assumption, and the `[CD#n]` that confirms it carries
+it on (§7), since a confirmation does not take the position off the prerequisite it rests on.
 
 ## 6. The will-change rule (D19)
 
@@ -546,7 +549,12 @@ round contribute nothing to it — which is correct, because they came from no r
 An `[AS#n]` that the customer confirms does not silently become a fact: their confirmation is a
 customer decision, entering the register as a `[CD#n]` under §1's confirmation rule (D14), with the
 assumption recorded as `superseded` by it — its closing `Superseded <YYYYMMDD>: by [CD#m]` paragraph
-naming that decision (§4). An `[AS#n]` the customer contradicts is `superseded` the
+naming that decision (§4). **The `[CD#n]` carries the assumption's `conditional_on`**, copied
+where it has one onto a `[CD#n]` whose `chosen` is `as assumed` — a contingent acceptance among
+them (`commands/brd-reconcile.md`, the frozen record's field table and *Confirm every candidate*): the confirmation
+settles that the customer holds the assumption, not that it stopped resting on the prerequisite's
+decision, and a superseded record is terminal, so a dependency left on it alone would be one §5's
+sweep reaches on a record it can no longer move. An `[AS#n]` the customer contradicts is `superseded` the
 same way, by the decision that contradicts it, and everything that was built on it is reopened under
 §4 — the incoming customer decision is precisely one of the two causes that rule admits.
 

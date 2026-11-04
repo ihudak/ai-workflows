@@ -1123,9 +1123,10 @@ REGIONS = [
     (6, "Code defects we will repair", "CDF", "code-defect-log.md", "disposition: in-scope",
      lambda r, u: r.get("disposition") == "in-scope"),
     (7, "Open assumptions", "AS", "decisions.md", "status: open", lambda r, u: r.get("status") == "open"),
-    (8, "Positions and assumptions that could still move", ("VD", "AS"), "decisions.md",
-     "conditional_on an unreviewed prerequisite: a position open, decided or reopened, an assumption open",
-     lambda r, u: r.get("status") in (LIVE_POSITION if _idkey(r["id"])[0] == "VD" else ("open",))
+    (8, "Positions and assumptions that could still move", ("VD", "CD", "AS"), "decisions.md",
+     "conditional_on an unreviewed prerequisite: a position, [VD#n] or [CD#n], open, decided or reopened, "
+     "an assumption open",
+     lambda r, u: r.get("status") in (LIVE_POSITION if _idkey(r["id"])[0] in ("VD", "CD") else ("open",))
      and r.get("conditional_on", "").split("/", 1)[0].strip() in u),
     (8, "Code defects whose scope is unsettled", "CDF", "code-defect-log.md", "disposition: conditional",
      lambda r, u: r.get("disposition") == "conditional"),
@@ -1526,6 +1527,24 @@ def sets_selftest(check):
     r = run({"K-1-decisions.md": creg, "K-1-customer-review-prompt-20261029.md": _sets_prompt(cond)}, unreviewed=["P-2"])
     check("sets relation 1: a range whose ends carry different prefixes names its opener alone",
           r1(r, 8, "Positions and assumptions that could still move")["named"] == ["[AS#5]"])
+    dreg = "# Decision register: K-1\n\n" + rec("[CD#2]", statement="e", conditional_on="P-2/[VD#3]", status="decided") \
+        + rec("[CD#4]", statement="f", conditional_on="P-2/[VD#3]", status="superseded") \
+        + rec("[CD#5]", statement="g", conditional_on="P-3/[VD#1]", status="open") \
+        + rec("[CD#6]", statement="h", conditional_on="P-2/[VD#4]", status="reopened") \
+        + rec("[VD#7]", statement="c", conditional_on="P-2/[VD#3]", status="decided") \
+        + rec("[CD#8]", statement="i", conditional_on="P-2/[VD#4]", status="open")
+    dcond = {8: "### 8.1 Positions and assumptions that could still move\n\n- [CD#2] — e\n- [CD#6] — h\n- [VD#7] — c\n"
+                "- [CD#8] — i\n\n"
+                "### 8.2 Code defects whose scope is unsettled\n\nNone.\n"}
+    r = run({"K-1-decisions.md": dreg, "K-1-customer-review-prompt-20261029.md": _sets_prompt(dcond)}, unreviewed=["P-2"])
+    check("sets relation 1: part 8 holds every live customer decision resting on an unreviewed prerequisite, an open one included",
+          r1(r, 8, "Positions and assumptions that could still move")["held"] == ["[CD#2]", "[CD#6]", "[CD#8]", "[VD#7]"]
+          and r1(r, 8, "Positions and assumptions that could still move")["verdict"] == "pass")
+    dcond[8] = "### 8.1 Positions and assumptions that could still move\n\n- [VD#7] — c\n\n" \
+               "### 8.2 Code defects whose scope is unsettled\n\nNone.\n"
+    r = run({"K-1-decisions.md": dreg, "K-1-customer-review-prompt-20261029.md": _sets_prompt(dcond)}, unreviewed=["P-2"])
+    check("sets relation 1: a conditional customer decision part 8 leaves out is missing",
+          r1(r, 8, "Positions and assumptions that could still move")["missing"] == ["[CD#2]", "[CD#6]", "[CD#8]"])
     r = run(dict(base, **{"K-1-customer-review-prompt-20261029.md": _sets_prompt()}), unreviewed=["P-2"])
     check("sets relation 1: sources with members under 'None' bodies are mismatches, by id",
           r1(r, 7, "Open assumptions")["missing"] == ["[AS#1]", "[AS#2]"] and r["mismatch"]

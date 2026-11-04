@@ -274,7 +274,9 @@ Assembled from the package, never hand-written, in a fixed order that is not re-
 **Parts 8 and 9 are the two that are easy to lose and expensive to omit.** A package that names its
 own weak points gets a review worth having; one that does not gets a rubber stamp. And a customer
 being asked to accept positions and assumptions built on a prerequisite nobody has reviewed yet is
-entitled to know which those are, by identifier.
+entitled to know which those are, by identifier. Part 8's positions include the customer's own live
+decisions (`[CD#n]`) that rest on such a prerequisite: they are listed beside the delivery team's
+`[VD#n]` so the customer knows they could move, and the review is asked for no row or mark on them.
 
 **Every open `[AS#n]` appears in both part 7 and part 9, deliberately.** Part 7 asks the customer to
 decide it — an assumption corrected while it is still an assumption is the cheapest correction in the

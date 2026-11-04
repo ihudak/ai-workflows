@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.76.0] — 2026-11-04
+
+D37. Needs nothing from the other plugins' releases.
+
+### Changed
+- **A `[CD#n]` that confirms an assumption carries the assumption's `conditional_on`.** `/brd-reconcile` copied `defects` and `altitude` from an `[AS#n]` the customer accepted, but left `conditional_on` to judgement, so a confirmed conditional assumption could become an unconditional decision. The propagation sweep then reached only the superseded `[AS#n]`, which is terminal, and never the live `[CD#n]` that replaced it. The field is now copied, never judged, wherever `chosen` is `as assumed`: from the assumption, from the live record an assumption an earlier review settled resolves to, or, on a later re-decision the customer answers the same way, from the record itself (`decision-register-format.md` §5, §7). A section-8 row marked `accepted` maps to `as assumed` with or without a contingent mark beside it. An answer contradicting the assumption, or one outside the options, still decides its own dependency. The reconciliation record names each copied value and its source, with whether the acceptance was marked contingent, and names the value beside any `[CD#n]` that answers such an assumption, or re-decides such a record, without copying it. A `[CD#n]` frozen by an earlier release is not rewritten.
+- **`/brd-package`'s part 8 lists every live `[CD#n]` resting on a prerequisite not yet customer-reviewed**, beside the `[VD#n]` positions and open assumptions. It asks the customer's review for no mark: the decision is their own, named so they know it could move (`customer-review-schema.md` §6). `bundle-scan.py sets` relation 1 reads `[CD#n]` in part 8's set, with two new selftest cases.
+
 ## [3.75.1] — 2026-11-04
 
 Wording only, released with `workflows-core` 1.78.3.
