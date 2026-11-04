@@ -46,25 +46,45 @@ except Exception:
     print('')
 " 2>/dev/null) || true
 
-# Require at least one non-whitespace, non-flag argument so bare `/implement`
-# or `/implement --help` doesn't inject noise on every misfire. The optional
-# first capture group holds this plugin's own namespace prefix when the
-# caller used the qualified form; the second holds the command token (e.g.
-# "implement", "upgrade") — see spec §3 "Hook scope" for the normative regex.
+# Match the command token. The optional first capture group holds this
+# plugin's own namespace prefix when the caller used the qualified form; the
+# second holds the command token (e.g. "implement", "upgrade").
 # `upgrade` is matched in the QUALIFIED form only, and that is not an oversight.
 # Claude Code ships its own built-in /upgrade, and the built-in wins: a bare
 # `/upgrade` never reaches this plugin, so preloading for it would inject a repo
 # scan into a run that is not ours. `/implement` and `/vuln` have no built-in of
 # the same name, so both forms reach us and both are matched. Group 2 holds the
 # command token in either branch -- keep that true if you edit these.
-if [[ "$prompt" =~ ^/(dev-workflows:)?(implement|vuln)[[:space:]]+[^[:space:]-] ]]; then
+if [[ "$prompt" =~ ^/(dev-workflows:)?(implement|vuln)([[:space:]]+|$) ]]; then
     :
-elif [[ "$prompt" =~ ^/(dev-workflows:)(upgrade)[[:space:]]+[^[:space:]-] ]]; then
+elif [[ "$prompt" =~ ^/(dev-workflows:)(upgrade)([[:space:]]+|$) ]]; then
     :
 else
     exit 0
 fi
 cmd="${BASH_REMATCH[2]}"
+
+# Skip the leading flags, then require an argument, so a bare `/implement` or
+# `/implement --help` doesn't inject noise on every misfire. A command strips
+# its run flags wherever they stand (workflows-core:run-flags §3), and its own
+# flags may come first too, so the argument is the first token after the
+# leading run of tokens opening with `-`. A bare `--enforce-model` takes the
+# token after it as its value (the pair form, run-flags §1), so that token is
+# skipped with it. A command's own flag that takes a separate value
+# (`/vuln --allow-install-scripts <names>`) leaves its value as the argument,
+# which is still an argument; a flag of that kind on `/implement`, whose
+# address test below reads `args`, would need the pair treatment too.
+# The same block stands in docs-workflows' and product-workflows' hooks.
+args="${prompt:${#BASH_REMATCH[0]}}"
+while :; do
+    args="${args#"${args%%[![:space:]]*}"}"
+    if [[ "$args" =~ ^--enforce-model[[:space:]]+[^[:space:]]+ || "$args" =~ ^-[^[:space:]]* ]]; then
+        args="${args:${#BASH_REMATCH[0]}}"
+    else
+        break
+    fi
+done
+[[ -n "$args" ]] || exit 0
 
 # --- helpers -------------------------------------------------------------
 emit_model_routing() {
@@ -130,7 +150,7 @@ case "$cmd" in
         # "looks like an address": a superset of workflows-core:addressing §1's
         # key grammar (A-1, ACME_X-90, ACME-1-2-3) that also takes a typed folder
         # name (PRD-ACME-77-slug). The command itself validates the address.
-        if [[ "$cmd" == "implement" && "$prompt" =~ ^/(dev-workflows:)?implement[[:space:]]+[A-Z][A-Z0-9_-]*-[0-9] ]]; then
+        if [[ "$cmd" == "implement" && "$args" =~ ^[A-Z][A-Z0-9_-]*-[0-9] ]]; then
             emit_specs_context
         fi
         ;;
