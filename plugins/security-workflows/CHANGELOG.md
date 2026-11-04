@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.2] — 2026-11-04
+
+The fix from the live checks of 2026-10-29 that reaches `/scan` (to-fix LC12). Independent of the other plugins' releases.
+
+### Fixed
+- `/scan --triage`: a false positive's evidence line is shown in a step of its own — the quoted line and the finding's `file:line` in the next question's text, or in the reply where no question follows — never only in a command's output; two live runs had shown it nowhere else. The move check is printed verbatim, its "or each replay that brings `origin`'s records in" kept.
+
 ## [0.10.1] — 2026-11-03
 
 Batch B28: DQP-B8.

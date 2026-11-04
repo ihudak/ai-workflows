@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.73.0] — 2026-11-04
+
+Take with `workflows-core` 1.76.0 — the fixes from the live checks of 2026-10-29 (to-fix LC12–LC28, D39).
+
+### Changed
+- `/specify`, `/update-spec`, `/create-prd`, `/update-prd` and `/create-ard` ask each decision a review leaves open, one question per finding, the reviewer's options and `Leave it open` last, as `workflows-core:escalation-rules` now says (LC17). `/specify` no longer writes such a finding as an open question without asking; *Leave it open* records it as before. **`/create-prd`, `/update-prd` and `/create-ard` already asked; they gain the explicit *Leave it open*** — say if you would rather they had not.
+- `/specify` Stage 4 reads the confirmed inferences against the inherited `[AD#N]` Rules with `overlap-reader`'s Rule-only read before its gate, and offers each departure only as an ARD deviation (LC25) — the inline read had called departures kept in three runs out of three.
+- `/specify`'s next step offers `/dev-workflows:design <PRD>` on a multi-component PRD with an Epic's specification on the default branch without a merge wait, since that run designs the Epic, and says the Epic's specification predates this PRD-level one (LC23).
+- `/epics`: the plan-approval question carries the whole plan (LC18); with the session's repository on a feature branch, the recommended refresh reads its default branch's tip by ref and leaves the checkout where it stands (LC19), and a failed fetch is named in the report; the report heading and its *Clarifications* line say what they count (LC21, LC27).
+- `/epics` Phase 7.4: the maintenance agents' briefs name the PRD folder, not "the project root", and say the session's directory may be a code repository; the run reads the PRD folder and the session's repository before and after them, hands off only an edit to a file that stood committed and clean, and reports every other — an operator's own uncommitted change, a file an agent created, an edit outside the folder, a change no agent returned (LC14, D39).
+
 ## [3.72.0] — 2026-11-03
 
 Take with `workflows-core` 1.75.0 — D32 part 3, document lineage on the BRD route.
