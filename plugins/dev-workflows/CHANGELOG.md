@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.58.3] — 2026-11-04
+
+D44. Docs only; needs nothing from the other plugins' releases.
+
+### Fixed
+- The session-feedback page's sample entry is the one `workflows-core:feedback-emission` shows, a `/document` entry, byte for byte. It showed a `/design` entry about screenshots without alt text and an "image phase" collecting URLs, neither of which `/design` has (D44).
+
 ## [4.58.2] — 2026-11-04
 
 Docs only, released with `docs-workflows` 1.34.0.

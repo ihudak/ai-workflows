@@ -54,24 +54,24 @@ slug: env-ag-update-window
 Each logged entry is a dated heading, a fenced YAML block, and prose — appended chronologically, never modified or deleted once written:
 
 ````markdown
-## 2026-07-09 — /design — missing-capability
+## 2026-07-09 — /document — missing-capability
 
 ```yaml
-id: ACME-77-design-scope-boundary
+id: ACME-77-document-cloud-self-hosted-split
 date: 2026-07-09
-command: /design              # controlled: exact command name, or n/a
+command: /document           # controlled: exact command name, or n/a
 plugin_version: 2.9.0
 origin: auto                 # auto | manual | prompt
-author: you@example.com
+author: jane.doe@example.com
 category: missing-capability # controlled, extensible, reuse-first
 impact: friction             # blocker | friction | polish
 ```
 
-**Friction:** Three screenshots landed without alt text and the page got pushed
-back in review; the image phase collects URLs but never prompts for a description.
+**Friction:** One page covered both Cloud and Self-hosted; the Cloud half got pushed
+back in review because the two products differ here.
 
-**Suggested improvement:** Have the image phase ask for alt text per image at
-collection time, so the gap is caught before the page is written.
+**Suggested improvement:** Add an optional `cloud|self-hosted` parameter to
+`/document` so the run scopes to one product.
 ````
 
 `category` is a controlled but extensible vocabulary — reuse an existing value when it fits rather than minting a near-duplicate, so signals cluster instead of fragmenting: `missing-capability`, `wrong-output`, `ambiguous-prompt`, `missing-reference-doc`, `model-routing`, `manual-workaround`, `false-positive`, `docs-ux`, `environment-defect`, `unfollowed-rule`, `other`. `impact` is `blocker`, `friction`, or `polish`. `author` comes from `git config user.email` in the specs repo, best-effort, `unknown` if it can't be resolved — the git commit author is the second, authoritative identity layer once the entry is actually committed and pushed. An `origin: prompt` entry carries two additional prose blocks after Friction and Suggested improvement: **User prompt** (your corrective request, verbatim save the redactions [above](#what-is-redacted)) and **Resolution** (what the AI actually did in response).
