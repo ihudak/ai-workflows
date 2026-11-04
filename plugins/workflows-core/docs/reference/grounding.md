@@ -47,7 +47,7 @@ The status lines are printed in the command's configure or plan step; the off sw
   - `/prd-ground` — always, unless `--no-code` reuses the verified code grounding already on file.
   - `/dev-workflows:design` — every implementation repository the design spans must be mounted.
   - `/document` (keyed mode) — the repositories the implementation record and the commit scan name, always.
-  - `/release-notes` — only when you turn diff grounding on in Phase 1 (default off).
+  - `/release-notes` — only when you turn diff grounding on in Phase 1, which it recommends once a specification or design exists and not before.
 - **Status line:** none of its own — the run shows the repository set it resolved or proposes.
 - **Off switch:** omit `--ground-code` (`/idea`), answer no at the code question (`/epics`), leave diff grounding off (`/release-notes`). The other commands have none: a repository can only be descoped, and the run records what it could not ground. `/prd-ground --no-code` is a run mode that adds design grounding over code grounding already on file, not a way to skip code. Reference: [Environment](environment.md#repos_path).
 

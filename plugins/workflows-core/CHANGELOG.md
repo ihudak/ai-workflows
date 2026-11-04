@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.2] — 2026-11-04
+
+Wording only, released with `docs-workflows` 1.34.0.
+
+### Changed
+- `addressing.md` §7's table cites `/release-notes`' `run_phase` step where it now stands, in Phase 0, and the grounding reference page says the command recommends diff grounding once a specification or design exists (D42). `lineage.py`'s re-run fixture says the second divergences section it keeps is an older `/prd-ground`'s layout (D43).
+
 ## [1.78.1] — 2026-11-04
 
 Take with `dev-workflows` 4.58.1 — D40.

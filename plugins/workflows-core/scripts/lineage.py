@@ -1334,9 +1334,11 @@ RUN1 = ("# Code grounding: PRD-1\n\n" + _finding(1, PIN) + "\n" + _finding(2, "[
 
 
 def _rerun(text=RUN1):
-    """What a second /prd-ground run with nothing changed leaves: the old pin SUPERSEDED with its
+    """What a second /prd-ground run with nothing changed left before product-workflows 3.74.0: the old pin SUPERSEDED with its
     note, the claim finding's outcome re-written, a fresh pin appended after the divergences section,
-    a second divergences section appended, the matrix replaced in place with the same rows."""
+    a second divergences section appended, the matrix replaced in place with the same rows. A run
+    since then replaces the divergences section rather than appending another, but a file an older
+    run wrote can still hold two, which is the layout this fixture keeps."""
     t = text.replace("verdict: CONFIRMED\n  evidence:\n    - pay/gateway.py:10\n  commit: " + SHA + "\n  altitude: implementation\n  horizon: current\n  consumed_by: none\n  outcome: agree\n\n- id: [CG#2]",
                      "verdict: SUPERSEDED\n  prior_verdict: CONFIRMED\n  evidence:\n    - pay/gateway.py:10\n  commit: " + SHA + "\n  altitude: implementation\n  horizon: current\n  consumed_by: none\n  outcome: agree\n  notes: superseded by [CG#3]\n\n- id: [CG#2]", 1)
     t = t.replace("[BR#1] — the gateway accepts cards\n  verdict: CONFIRMED\n  evidence:\n    - pay/gateway.py:10\n  commit: " + SHA + "\n  altitude: implementation\n  horizon: current\n  consumed_by: none\n  outcome: agree",

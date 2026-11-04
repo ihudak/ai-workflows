@@ -689,7 +689,7 @@ the manual path:
    **verbatim**, including any index-build, staleness, or shadowing clause it carries (off switch:
    --no-docs), alongside the repo prompt below. **Under `--no-code` this command overrides the
    returned value to `OFF`** and surfaces that, rather than the procedure's own line: a divergence has
-   nowhere to be written, because Phase 8 appends the `## Documentation divergences` section into
+   nowhere to be written, because Phase 8 writes the `## Documentation divergences` section into
    `grounding/code-grounding.md` and this mode holds that file read-only. Say it as an override —
    `docs grounding: OFF (--no-code: divergences are written into code-grounding.md, which this run
    does not write)` — and not as something `resolve-docs-grounding` decided. That procedure's
@@ -2122,16 +2122,26 @@ recorded here, and a relation with nothing on one side fails rather than passing
 (`workflows-core:grounding-format` §2.1's reading rule). Omitting a set because it was skipped is
 what would make that gate report a clean tree it never read.
 
-**Documentation divergences (only when Phase 4.5 ran).** Append a `## Documentation divergences`
-section to `<BRD-dir>/grounding/code-grounding.md` — written into that file, as the derivation matrix
-below is, because it is not a produced artifact in its own right. One prose entry per divergence, each
+**Documentation divergences (only when Phase 4.5 ran).** Write a `## Documentation divergences`
+section into `<BRD-dir>/grounding/code-grounding.md` — written into that file, as the derivation matrix
+below is, because it is not a produced artifact in its own right — **replacing any section of that
+name already in the file, never appending a second one.** It is this run's comparison of the
+documentation with the findings, not a log: an older list describes pages that may since have
+changed and names `[CG#n]` a later run may have superseded, and a reader meeting two has no rule for
+which is current. Where the file holds one or more such sections — a file written before this rule
+can hold several — the first is rewritten in place and every other is removed; where it holds none,
+the section is appended at the end of the file. A section runs from its heading to the next `##`
+heading or the first `- id:` line, whichever comes first: a finding block after it is a finding
+wherever it sits, never part of the section, and is left as it stands. The section's first line
+names the date of the run that wrote it — `Documentation compared with the findings on <YYYY-MM-DD>.`
+— so one a later run with documentation grounding off leaves standing says how old it is. One prose entry per divergence, each
 carrying: the documentation page (path relative to the resolved `docs_root`), what it states, and
 the **`[CG#n]` whose verified evidence it diverges from**, quoted by id. **No entry gets an
 identifier of its own, and no entry may exist without naming a verified `[CG#n]`** (Phase 4.5) —
 so a divergence is always the code contradicting a page, established by a finding, never a page
 asserting anything about the code. A run with docs grounding ON that found no divergence writes the
 section with an explicit "none found" line rather than omitting it; a run with it OFF writes no
-section at all. Nothing in this section is ever copied into a finding's `evidence`, and no ledger
+section, and leaves one already in the file as it stands. Nothing in this section is ever copied into a finding's `evidence`, and no ledger
 row's `evidence` column ever names a page.
 
 **Derivation matrix.** Resolve whether it runs: an explicit `--derivation-matrix` /

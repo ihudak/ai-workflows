@@ -4,9 +4,9 @@
 
 Consulted by `release-notes-writer` to decide **where a release note lands and what shape it must
 take**. This file is the single authority for the section map, the per-section draft shape,
-the per-section prose rules, the deprecation-note rule, the effective-version rule (§6), and Change
-Type sourcing. The `/release-notes` command cites this file for its own invariants (§1/§3 for the
-draft shape, §4 for the documentation-link rule, §6 for the effective version) but never re-derives
+the per-section prose rules, the deprecation-note rule, the effective-version rule (§6), Change
+Type sourcing, and what a conformance entry does to the draft (§8). The `/release-notes` command cites this file for its own invariants (§1/§3 for the
+draft shape, §4 for the documentation-link rule, §6 for the effective version, §8 for the conformance entries) but never re-derives
 the writer's decision; the agent applies it and returns a proposed destination plus any gaps.
 
 The Change Type is a **field on the PRD, inferred where the PRD does not carry a routable one, and confirmed where that inference is uncertain** (§7). It is never written into the draft
@@ -322,3 +322,40 @@ should carry one gets it from `release_notes_category` added to the PRD.
 **Both used to be dropdowns set outside the plugin and returned by an import**, which is why the
 Change Type ladder's first rung was authoritative and its second was a fallback. Nothing returns them now,
 so the PRD is the only place either can be authored (see `workflows-core:prd-format`).
+
+## 8. A conformance entry
+
+`/release-notes` hands the writer each **open** entry of the `/dev-workflows:conformance` records in
+its scope as `conformance` — a requirement the code it traced does not satisfy as written, with the
+decision a person recorded on it (the command's Phase 3 says which entries are open). The record
+already checked the code against the requirement and someone decided what the difference means, so
+the draft follows that decision and never re-opens it. For each entry, find the claim the draft would
+make from the requirement it names (`requirement`, `requirement_text`), then:
+
+| `decision` | What it says about the code | What the draft does |
+|---|---|---|
+| `fix-code` | It does not do what the requirement says, and a fix is queued | Leaves the claim out: the note says only what ships. A `partial` verdict is left out whole, since the decision is that the code is to change |
+| `amend-document` | What it does is right, and the document is to change | States what `shipped` says, never the requirement's wording |
+| `accept` | It differs from the requirement, and that was accepted | States what `shipped` says, never the requirement's wording |
+
+- **An entry the draft makes no claim from changes nothing** — an architecture rule, a contract
+  between components, a requirement no customer sees. It is returned as `not claimed`.
+- **`shipped` is the record's own sentence about the code**, written for engineers: restate it under
+  the destination's prose rules (§4) and the general rules (§6) — no internal component names, no
+  identifiers — and never copy it in.
+- **A claim an entry settled takes no acceptance-criteria or code gap.** The requirement and the code
+  disagree by decision, and either check would pull the claim back to the wording that was decided
+  against.
+- **Where leaving out every `fix-code` claim leaves nothing the change ships to describe**, raise a
+  `field: prose` gap (`recommended_action: "ask user"`) rather than writing a note about nothing. It
+  is the one question the entries lead to, and the command checks the wording it gets against the
+  claims left out.
+- **Two open entries on one claim** — a PRD-level entry on `prd.md` and an Epic's on its
+  specification, say — are settled by status and then by caution. A `final` decision beats a
+  `proposed` one. Between two of the same status, `fix-code` beats either other decision and the claim
+  is left out, since one of them says the code does not do it yet; between an `amend-document` and an
+  `accept`, the claim states what both `shipped` sentences say where they agree, and is left out where
+  they do not — returned as `left out — the entries disagree`, since the note never takes one
+  record's account of the code over another's.
+- **An entry whose `status` is `proposed`** is a Dev's decision no PRD run has ruled on yet. It is
+  applied like a `final` one, and the command's report says it was a proposal.
