@@ -47,6 +47,13 @@ Install all five together. The defects are in `docs/superpowers/verification/202
 - **LC27 — `/epics`' *Clarifications* line says what it counts** (A3b). Expect it labelled as Phase 6.1's, and, where the review left markers, a pointer to `### Deferred items`.
 - **LC28 — a session branch's creation is reported** (S6, S7). Setup: session-branch mode on the specs copy with no `session/<identity>` yet, any command that writes into it. Expect the `Specs preflight:` line, or the `Specs repo:` line where a later step created it, to say the branch was created and at which commit.
 
+## D31 parts 2 and 3 — `product-workflows` 3.77.0
+
+Install it alone; it needs nothing from the other plugins' releases. Neither BOOK-2 slice on the e2e specs copy has a code-defect log, so both items ride with the next live run of the BRD route that raises one.
+
+- **D31-2 — a flag raised under another parent reaches the dependent slice.** Setup: slice Y under one parent, whose `brd-link.md` names slice X, under another parent, in `depends-on:`, and whose `code-defect-log.md` holds a `[CDF#n]` `conditional` with `blocked_on: <X>/<a [CD#n] of X>`; then `/product-workflows:brd-reconcile <X>` on a review that supersedes that `[CD#n]`. Expect X's record to carry a `- **Hit:**` line naming Y's log by its path relative to `$SPECS_PATH/specifications/`; `/product-workflows:brd-package <Y>` to list the flag at Phase 0 step 7a, with the record's path spelled the same way; and `/product-workflows:brd-interview <Y>`, with every round closed, to open a round for it and write `flag answered [CDF#n] <that record path> › <review file>`, after which step 7a no longer lists it.
+- **D31-3 — a flag in an older record stays until answered.** Setup: D31-2's, stopped before the interview, then a second `/product-workflows:brd-reconcile <X>` on a review that changes nothing Y's log names. Expect the second record to carry no hit on Y's log, and step 7a and `/brd-interview <Y>` still to put the first record's flag.
+
 ## Live checks kept in `to-fix.md`
 
 These stay in `docs/superpowers/to-fix.md`, which holds their detail; they are named here so a test session sees every live check in one place.

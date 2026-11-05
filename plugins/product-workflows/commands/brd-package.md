@@ -414,14 +414,18 @@ cannot review, and they will not tell you that — they will review it anyway, b
    the delivery team has not finished taking.
 
 7a. **Ask before shipping a code-defect log a reconciliation flagged.** Only where the folder holds
-   `code-defect-log.md`. A reconciliation of any slice under the parent can find one of this log's
+   `code-defect-log.md`. A reconciliation of any slice under the parent, or of a slice under another
+   parent that this slice's `depends-on:` names, can find one of this log's
    entries stale and send it to a human — it may write no field of an entry — and that flag reaches
    the operator only through `/product-workflows:brd-interview`, which puts it in a round. A package
    built over an unanswered one ships the customer a disposition another slice's decision has moved.
    Read the flags as `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §7 states them —
    the one statement of what flags an entry and what answers it, which `/brd-interview` reads too —
-   from the latest reconciliation record of every slice under the parent, this one included, and
-   from this slice's round records. **A round record that answers a flag and is not in step 7's set
+   from every reconciliation record of every source slice §7 names — every slice under the parent,
+   this one included, and the folder each key of this slice's `depends-on:` resolves to, as its
+   `brd-link.md` carries them now: this run's `--depends-on` keys are merged only in the *Resolve
+   prerequisites and their packages* phase, and no reconciliation reached this log through a
+   dependency not yet declared — and from this slice's round records. **A round record that answers a flag and is not in step 7's set
    is gated as step 7 gates that set** — a round that only answered flags names no register record
    and no `[C]` entry, so step 7 never reaches it — with the same `require-on-main` mapped the same way before its answer counts — any stopping row
    stops, naming that round, and every one on no ref is collected and stops once, with this message —
@@ -438,11 +442,15 @@ cannot review, and they will not tell you that — they will review it anyway, b
    - **A record that exists and cannot be read** → stop, since the flags it would carry are
      undecidable:
      `BRD_PACKAGE_RECONCILIATION_UNREADABLE: <BRD-KEY>'s code-defect flags cannot be decided — <path> exists and cannot be read. Repair or restore it, then re-run.`
+   - **A `depends-on:` key that resolves to no folder** adds no record (§7): print it as
+     `depends-on key resolves to no folder: <KEY>` and go on — the *Resolve prerequisites and their
+     packages* phase records it as not found too.
    - **A hit on this log whose `<entry>` names no id the log holds** flags nothing (§7): print it as
      `hit names no entry of this log: <record> › <the hit's line>` and go on.
    - **No unanswered flag** → print nothing for this step, and go on.
    - **Otherwise** print each unanswered flag, one line each,
-     `[CDF#n] — <record> › <what was found>`, the record's path relative to the parent's folder and
+     `[CDF#n] — <record> › <what was found>`, the record's path as §7 spells it — relative to the
+     parent's folder, or to `$SPECS_PATH/specifications/` for a record under another parent — and
      the hit's `<what was found>` slot, and then ask, once for the whole set:
 
      ```

@@ -499,8 +499,10 @@ option is picked.
 - **Phase 6 — a code defect a reconciliation flagged is put again.** A later round puts an entry of
   the code-defect log to the operator where it is still `open`, `conditional` on something the
   round has settled, or **flagged**: a [`/brd-reconcile`](brd-reconcile.md) run of any slice under
-  the same parent found it stale and sent it to a human, naming its log and its `[CDF#n]` on a
-  `- **Hit:**` line of that slice's latest reconciliation record. The disposition is the operator's
+  the same parent, or of a slice under another parent that this slice's `depends-on:` names, found
+  it stale and sent it to a human, naming its log and its `[CDF#n]` on a `- **Hit:**` line of that
+  slice's reconciliation record — any of its records, not only the newest, since a later
+  reconciliation looks for what its own review changed and does not repeat an earlier hit. The disposition is the operator's
   to keep or move, and either answer is recorded on the round record's `code defects:` line as
   `flag answered`, which clears that flag; a later reconciliation's hit on the same entry flags it
   again. Only a round can answer one, so an unanswered flag opens one: a run that finds every round closed

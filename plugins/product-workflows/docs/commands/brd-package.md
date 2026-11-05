@@ -159,8 +159,9 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   set is derived from those two sources rather than from the **interview/** listing, which is what
   makes a partial merge visible — enumerating the directory finds the rounds that landed and never
   learns a third was owed.
-- **No code-defect flag shipped unasked.** Where the folder holds **code-defect-log.md**, the
-  latest [`/brd-reconcile`](brd-reconcile.md) record of every slice under the parent — read as it
+- **No code-defect flag shipped unasked.** Where the folder holds **code-defect-log.md**, any
+  [`/brd-reconcile`](brd-reconcile.md) record, of any date, of a slice under the parent or of a
+  slice under another parent that this slice's `depends-on:` names — read as it
   is in the folder, not gated on the default branch — may flag one of its entries for a human: the
   reconciliation moved a decision the entry rests on and may not rewrite it. Each flag no interview
   round has answered is listed, and you are asked once: stop with `BRD_PACKAGE_FLAGGED_DEFECTS` and

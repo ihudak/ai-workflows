@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.77.0] — 2026-11-05
+
+D31 parts 2–4. Needs nothing from the other plugins' releases.
+
+### Changed
+- **A code-defect flag raised by a prerequisite under another parent now reaches the slice it flags.** `/brd-reconcile`'s stale cross-reference sweep follows a declared dependency out of the parent and can send an entry of a dependent slice's `code-defect-log.md` to a human, but `/brd-interview` and `/brd-package`'s flag gate read only the records of slices under the dependent's own parent, so that flag reached the operator through the reconciliation's report alone. Both now also read the records of every slice the dependent's `brd-link.md` names in `depends-on:`, which is the only way that sweep leaves the parent: a slice's `covered-by` never does. A record outside the parent is named by its path relative to `$SPECS_PATH/specifications/`, in the gate's list and in a round record's `flag answered`, as the hit line already spells it (`code-defect-log-format.md` §7). A `depends-on:` key that resolves to no folder is reported and adds nothing.
+- **Every reconciliation record is read for flags, not only each slice's newest.** A later reconciliation looks for what its own review changed, so its silence on an earlier hit says nothing about that hit, and a flag no round had answered disappeared once a newer record stood beside it. The answer line already names the record that raised the flag, so nothing in the round record changes.
+
+A flag in a record written before 3.58.0, which writes no hit line, still reaches the operator only through that run's report; that is recorded as accepted, since those records are a closed set and reading their prose for flags would break the rule that the hit line's slots are read, never its prose.
+
 ## [3.76.2] — 2026-11-04
 
 Released with `workflows-core` 1.78.5.

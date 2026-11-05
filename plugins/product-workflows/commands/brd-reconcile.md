@@ -2652,12 +2652,14 @@ captured files.
    reached by neither. **The outcome is unchanged and no new one is added**: the row below sends every
    `code-defect-log.md` hit to `needs-a-human`, because every disposition on that log is the operator's
    and `/product-workflows:brd-interview` is its only writer. What travels is the finding, not a
-   correction — to the operator, and, for a hit on the log of a slice under the parent, to that
-   slice's next `/product-workflows:brd-interview` run, which opens a round for it where every round is
-   closed and reads the
-   `- **Hit:**` lines of the latest reconciliation record of every slice under the parent, this
-   one's while it is the latest, and puts the flagged entry's disposition again until a round
-   record of that slice answers the flag (its *Put each `[V]` to the operator*).
+   correction — to the operator, and, for a hit on the log of a slice under the parent or of a
+   declared dependent under another parent, to that slice's next
+   `/product-workflows:brd-interview` run, which opens a round for it where every round is closed
+   and reads the `- **Hit:**` lines of every reconciliation record of every slice under its own
+   parent and of every slice its `depends-on:` names, this one's among them whatever records follow
+   it, and puts the flagged entry's disposition again until a round record of that slice answers the
+   flag (its *Put each `[V]` to the operator*; `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md`
+   §7).
 
    **Outside this root the only outcomes available are `still-true` and `needs-a-human`; `updated` is
    not.** This widening is detection, and the write surface does not move with it: correcting a
