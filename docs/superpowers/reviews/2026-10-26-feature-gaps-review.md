@@ -259,7 +259,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## product-workflows — BRD route
 
-### BRD-G1 — `/brd-interview` has no carry-forward for a `needs-a-human` item that `/brd-reconcile`'s sweep raises (follow-up E-8, still open, not in to-fix.md) — **Fixed in product-workflows 3.58.0 (batch B25)** — **its remainder recorded as D31 in `docs/superpowers/to-fix.md`**
+### BRD-G1 — `/brd-interview` has no carry-forward for a `needs-a-human` item that `/brd-reconcile`'s sweep raises (follow-up E-8, still open, not in to-fix.md) — **Fixed in product-workflows 3.58.0 (batch B25)** — **its remainder recorded as D31 in `docs/superpowers/to-fix.md`**, closed in product-workflows 3.77.0 (2026-11-05), its part (4) accepted in to-fix.md *Accepted*
 - **Designed in:** `docs/superpowers/brd-route-follow-ups.md` § E-8: "`/brd-interview` does not read the reconciliation record … So the operator carries it between runs by reading a report … Whether a report line is a strong enough guarantee that a `conditional` `[CDF#n]` is re-settled before packaging — or whether the trigger should widen to include an entry the last reconciliation flagged."
 - **Current state:** Still undecided and unimplemented. `/brd-interview` reads no `reconciliation-<date>.md`: `grep -n "reconciliation-" plugins/product-workflows/commands/brd-interview.md` returns nothing. Its only "what still needs a human" uses are its own (`brd-interview.md:1620`, `:1884`). to-fix.md's coverage line says `brd-route-follow-ups.md` was never swept, and E-8 is not listed there.
 - **Still worth doing?:** Yes, at least as a recorded decision. The entry names the risky case: no interview round is planned before packaging, and an item carried only in a report is lost.

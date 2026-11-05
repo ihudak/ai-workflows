@@ -584,7 +584,8 @@ is left unwritten, and its row, naming both records, is in this run's reconcilia
 
 **Stale cross-references.** Rooted at the **parent's** folder, so a sibling slice is reached. Two
 searches: the changed ids, matched whitespace-tolerantly because an identifier is routinely broken
-across a line wrap; and prose asserting a now-superseded position with no id in it at all. The second
+across a line wrap — this one also run over the dependents the propagation sweep found outside the
+parent, slices whose `depends-on:` names this one, where it only reads and never corrects; and prose asserting a now-superseded position with no id in it at all. The second
 cannot be reduced to a pattern, and it is the one that matters — **updating a register while a value
 document still states the old position is the characteristic failure of this step**, and the
 contradiction is invisible from the register, which is the only place anybody looks.

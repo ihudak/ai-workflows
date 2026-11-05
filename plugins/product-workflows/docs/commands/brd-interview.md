@@ -502,7 +502,7 @@ option is picked.
   the same parent, or of a slice under another parent that this slice's `depends-on:` names, found
   it stale and sent it to a human, naming its log and its `[CDF#n]` on a `- **Hit:**` line of that
   slice's reconciliation record — any of its records, not only the newest, since a later
-  reconciliation looks for what its own review changed and does not repeat an earlier hit. The disposition is the operator's
+  reconciliation looks for what its own review changed and need not repeat an earlier hit. The disposition is the operator's
   to keep or move, and either answer is recorded on the round record's `code defects:` line as
   `flag answered`, which clears that flag; a later reconciliation's hit on the same entry flags it
   again. Only a round can answer one, so an unanswered flag opens one: a run that finds every round closed

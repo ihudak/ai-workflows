@@ -374,7 +374,7 @@ and nothing downstream can tell the difference afterwards.
     this folder's `grounding/code-grounding.md`, and its `grounding/design-grounding.md` and
     `brd/brd-inventory.md`, each where it is on disk. **Only this folder's own files**: never the parent's
     defect log, inventory or ledger, a sibling's ledger, question set or reconciliation record, or a
-    prerequisite's register, which step 9 reads as context (`workflows-core:document-lineage` §4);
+    prerequisite's register or reconciliation record, which step 9 reads as context (`workflows-core:document-lineage` §4);
     nor `decisions.md`, `interview/` or `code-defect-log.md`, which this run writes. Then execute
     `Skill(skill: "workflows-core:reference", args: "document-lineage upstream-check")` §6 with
     `docs` = `grounding/code-grounding.md` where step 6 returned `pass` or `pass_amending`, and
@@ -406,18 +406,22 @@ and nothing downstream can tell the difference afterwards.
    it**, since an entry no round record names is a torn write and asks nothing. **And, where this
    BRD holds a `code-defect-log.md`, every reconciliation record of every source slice**
    (`${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §7) — every slice under the parent,
-   this one included, by the same parent test, and the folder each key of this BRD's `depends-on:`
-   resolves to — in each folder every `reconciliation-<YYYYMMDD>.md`, whatever its date, every pass
+   this one included, by the same parent test, and the slice each key of this BRD's `depends-on:`
+   resolves to, where it resolves to one — in each folder every `reconciliation-<YYYYMMDD>.md`, whatever its date, every pass
    in each, none where the folder holds none — because a reconciliation's stale cross-reference
    sweep reaches this log from any slice under the parent, and from a slice under another parent
    this BRD declares it depends on, and records what it found in that slice's record, not in this
    one's (`commands/brd-reconcile.md`, *The stale cross-reference sweep* and *Write the
    reconciliation record*): it is how the *Put each `[V]` to the operator* phase learns which entries
-   a sweep flagged `needs-a-human`. A `depends-on:` key that resolves to no folder is reported now,
-   by key, as adding no record. A record that exists and cannot be read is reported now, by path, and
-   the flags it would carry are undecidable. **Every read above is
-   through `decision-register-format.md` §8: no torn write counts**, in this BRD's folder or a
-   sibling's, and a round record that exists and cannot be read leaves the items it would name
+   a sweep flagged `needs-a-human`. A `depends-on:` key that resolves `absent` or `invalid` is
+   reported now, by key, as adding no record; one that resolves `ambiguous` stops the run with
+   `resolve-address`'s own stop, naming every match (§7). A record that exists and cannot be read is
+   reported now, by path, and the flags it would carry are undecidable. Wherever this run names one
+   of these records — a report line, the round record, the final report — it names it as §7 spells
+   one: by its path relative to the parent's folder where it lies under this BRD's parent, and
+   relative to `$SPECS_PATH/specifications/` where it lies under another. **Every read above is
+   through `decision-register-format.md` §8: no torn write counts**, in this BRD's folder, a
+   sibling's or a `depends-on:` slice's, and a round record that exists and cannot be read leaves the items it would name
    undecidable, as an unreadable question set does (*Round 1 is generated from the grounding*).
    **Report each torn write in this BRD's folder now**, before anything is written — each record by
    id, each `[CDF#n]` by id, each entry by its heading and each defect line by its `[DEF#n]` and
@@ -1673,7 +1677,8 @@ no round record has answered that flag**, as `${CLAUDE_PLUGIN_ROOT}/references/c
 §7 states — the one statement of both, which `/product-workflows:brd-package`'s flag gate reads
 too. The records it reads are the ones *Resolve inputs and gate the grounded BRD*, step 9, read:
 every reconciliation record of every source slice — every slice under the parent, this one
-included, and each slice this BRD's `depends-on:` names — and this BRD's counted round records. A hit on this log whose `<entry>` names no id the log holds is
+included, and each slice a key of this BRD's `depends-on:` resolves to — and this BRD's counted round
+records, each record named as step 9 says. A hit on this log whose `<entry>` names no id the log holds is
 reported with its record, and nothing is put on it (§7).
 
 **This is the carry-forward that keeps such a hit from living only in a report**: the case it exists for

@@ -2391,8 +2391,9 @@ satisfied, with a dropped class left unsearched.
    this run's `<BRD-KEY>`. Only a slice declares it — `/product-workflows:prd-ground` and
    `/product-workflows:brd-package` merge `depends-on:` into a slice's `brd-link.md`, as this
    command's *Apply the required corrections* phase does for a row asking to add one, and all three
-   refuse a root — but the key it names may sit at any level (D17), so a slice depending on a
-   source-owning BRD and a slice depending on a sibling are both found by the same scan, which still
+   refuse a root — but the key it names may sit at any level (D17). Only a slice is reconciled, so
+   the scan, matching this run's slice key, finds a dependent naming this slice, a sibling or a slice
+   under another parent alike, and no run matches a `depends-on:` naming a source-owning BRD. It still
    searches the three levels below `specifications/` that `workflows-core:addressing` §3 bounds —
    the same bound `resolve-address` uses and for the same reason (`workflows-core:addressing` §3,
    §6) — because a hand-edited or pre-D5 root `brd-link.md` may carry one. This is the reverse of
