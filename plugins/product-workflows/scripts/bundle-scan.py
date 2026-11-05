@@ -27,13 +27,18 @@ which is never rewritten, is reported under prerequisite_dead rather than dead; 
 KEY=DIR, every file of KEY's in that source bundle, save a --prereq-aux one, must be in the bundle
 byte for byte first, a file missing or changed being dead, so what prerequisite_dead names is the
 source's own. Record-shaped content that
-parses to no id is unreadable. A hit in the customer's own
+parses to no id is unreadable. In that prerequisite's partition, for the same reason, a relation-2
+hit is reported under prerequisite_mismatch rather than mismatch, and an unreadable corpus file under
+prerequisite_unreadable rather than unreadable, a reference there to a class that file feeds, which
+no readable file of the partition holds, being counted unchecked rather than reported dead. A hit in
+the customer's own
 words or naming is reported under customer, for the operator's ruling. A key-shaped word before an id
 counts as a BRD's key only where it is --key, a --prereq-key or a --known-key; any other is reported
 under unknown_key. It reads section 1.1's filenames and section 6.2's fields from the reference beside
-it each run, and stops (exit 2) where it cannot. Prints one line of JSON: partitions, the resolved
-and discharged counts, dead, mismatch, ambiguous, unqualified, unknown_key, unreadable, customer
-with its groups, prerequisite_external and prerequisite_dead.
+it each run, and stops (exit 2) where it cannot. Prints one line of JSON: partitions, the resolved,
+discharged and unchecked counts, dead, mismatch, ambiguous, unqualified, unknown_key, unreadable,
+customer with its groups, prerequisite_external, prerequisite_dead, prerequisite_mismatch and
+prerequisite_unreadable.
 
 sets: runs the bundle-packaging reference's section 7 over an assembled bundle and the delivery note.
 Relation 1 reads six lists of the prompt <KEY>-customer-review-prompt-<DATE>.md under the
@@ -660,7 +665,8 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
         raise Refused("cannot list the bundle: " + e.__class__.__name__)
     out = {"partitions": {}, "resolved": 0, "discharged": 0, "dead": [], "mismatch": [], "ambiguous": [],
            "unqualified": [], "unknown_key": [], "unreadable": [], "customer": [], "groups": [],
-           "prerequisite_external": [], "prerequisite_dead": []}
+           "prerequisite_external": [], "prerequisite_dead": [], "prerequisite_mismatch": [],
+           "prerequisite_unreadable": [], "unchecked": 0}
     part_of = {}
     for name in texts:
         k = _partition(os.path.basename(name), keys)
@@ -701,7 +707,7 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                 if not same:
                     out["dead"].append({"file": None, "line": 0, "token": n,
                                         "reason": "differs from its copy source in %s's bundle" % pk})
-    corpus = {}
+    corpus, unchecked = {}, {}
     for k, names in out["partitions"].items():
         ids = {}
         for name in names:
@@ -713,12 +719,20 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
             for cls in classes:
                 ids.setdefault(cls, set()).update(g for g in got if g.startswith("[" + cls + "#"))
             if shaped and not got:
-                out["unreadable"].append({"file": name, "classes": classes})
+                if k in copied:
+                    # never rewritten (section 5): named once, and its classes' references there unchecked
+                    out["prerequisite_unreadable"].append({"file": name, "classes": classes})
+                    unchecked.setdefault(k, set()).update(classes)
+                else:
+                    out["unreadable"].append({"file": name, "classes": classes})
         corpus[k] = ids
 
     def resolve(hit, k, tok, cls, span):
         if tok in corpus.get(k, {}).get(cls, set()):
             out["resolved"] += 1
+            return
+        if cls in unchecked.get(k, ()):
+            out["unchecked"] += 1  # a corpus that could not be read says nothing of whether the id exists
             return
         hit["reason"] = "not in %s's %s corpus" % (k, cls)
         if span:
@@ -891,7 +905,7 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                 continue
             cited = by_id[cites.group(0)]
             if next(iter(reqs)) not in REQ_RE.findall(cited.get("claim", "")):
-                out["mismatch"].append({"file": b["file"], "line": b["line"], "token": b["id"],
+                out["prerequisite_mismatch" if k in copied else "mismatch"].append({"file": b["file"], "line": b["line"], "token": b["id"],
                                         "cites": cites.group(0), "claim": b.get("claim", ""),
                                         "cited_claim": cited.get("claim", "")})
     index = {}
@@ -1067,6 +1081,28 @@ def citations_selftest(check):
         r = run({"P-2-q.md": "per [VD#3] and [VD#9]\n", "P-2-decisions.md": "id: [VD#3]\n"}, **kw)
         check("a whole copy leaves only its source's own dead references as packaged",
               r["dead"] == [] and [h["token"] for h in r["prerequisite_dead"]] == ["[VD#9]"])
+    two = "- id: [CG#1]\n  claim: [BR#1] — x\n\n- id: [CG#2]\n  claim: [BR#2] — y\n"
+    off = "- id: [DG#1]\n  class: 4\n  cites: [CG#2]\n  claim: [BR#1] — z\n"
+    r = run({"P-2-code-grounding.md": two, "P-2-design-grounding.md": off,
+             "K-1-code-grounding.md": two, "K-1-design-grounding.md": off},
+            prereq_keys=["P-2"], copied_keys=["P-2"])
+    check("relation 2: a mismatch inside a copied prerequisite is left as packaged; this package's own is a mismatch",
+          [h["file"] for h in r["mismatch"]] == ["K-1-design-grounding.md"]
+          and [h["file"] for h in r.get("prerequisite_mismatch", [])] == ["P-2-design-grounding.md"])
+    r = run({"P-2-code-grounding.md": "- id: CG-1\n  claim: x\n",
+             "P-2-design-grounding.md": "- id: [DG#1]\n  class: 1\n  claim: y\n",
+             "P-2-decisions.md": "id: [VD#1]\n", "P-2-q.md": "per [CG#1], [DG#1] and [DG#7]; [VD#4]\n",
+             "K-1-code-grounding.md": "- id: CG-1\n  claim: x\n", "K-1-x.md": "ours [CG#1]\n"},
+            prereq_keys=["P-2"], copied_keys=["P-2"])
+    check("an unreadable corpus inside a copied prerequisite is named once and left as packaged, every reference there "
+          "to a class it feeds unchecked, unless a readable file holds it; this package's own is unreadable",
+          [h["file"] for h in r["unreadable"]] == ["K-1-code-grounding.md"]
+          and [h["file"] for h in r.get("prerequisite_unreadable", [])] == ["P-2-code-grounding.md"]
+          and r.get("unchecked") == 2 and [h["token"] for h in r["prerequisite_dead"]] == ["[VD#4]"]
+          and [h["token"] for h in r["dead"]] == ["[CG#1]"])
+    r = run({"K-1-x.md": "x\n"})
+    check("the two left-as-packaged lists and the unchecked count are present when empty",
+          r.get("prerequisite_mismatch") == [] and r.get("prerequisite_unreadable") == [] and r.get("unchecked") == 0)
     r = run({"K-1-prompt.md": "see K-1-gone.md:12, K-1-x.md:3 and README.md:12\n", "K-1-x.md": "x\n"},
             source_basenames=["README.md"])
     check("a key-prefixed <name>.md:<line> is a bundle filename and is tested; an unprefixed one is a repository locator",

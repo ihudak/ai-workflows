@@ -1783,7 +1783,15 @@ or not that line is there.
    - `prerequisite_dead` → a reference inside a copied prerequisite's document that resolves to
      nothing — an id, a class-4 `cites` or a filename of that prerequisite's own — which is no stop:
      named in the Final report as left as packaged, as the paragraph below on that says.
-   - `resolved` and `discharged` → the counts the Final report gives.
+   - `prerequisite_mismatch` → a class-4 `[DG#n]` inside a copied prerequisite's document whose
+     `cites` resolves to a finding about a different requirement, and `prerequisite_unreadable` → a
+     corpus file of that prerequisite's holding record-shaped content that parses to no id: neither
+     is a stop, each named in the Final report as left as packaged, as the paragraph below on them
+     says.
+   - `resolved`, `discharged` and `unchecked` → the counts the Final report gives, `unchecked`
+     counting the references inside a copied prerequisite's documents to a class a
+     `prerequisite_unreadable` file feeds that no readable file of that partition holds — neither
+     resolved nor dead, since an unread corpus says nothing of whether the id is there.
 
    **Read the line before acting, both ways**, as rule 7 reads its spans: a `dead` entry inside a span
    of §6.3's that position alone cannot place — a customer-derived locator in prose the scanner did
@@ -1834,6 +1842,21 @@ or not that line is there.
    classes other than a model id do in a copied document. A package built before this check existed
    is the likeliest place to meet one.
 
+   **A class-4 `[DG#n]` inside a document rule 5 copied in whose `cites` resolves to a finding about
+   a different requirement (the scanner's `prerequisite_mismatch`), and a corpus file of that
+   prerequisite's holding record-shaped content that parses to no id (its
+   `prerequisite_unreadable`), are no stop either**, for the same reason: the one's remedy, re-deriving
+   the finding, and the other's, repairing the file, would each rewrite a delivered document
+   (`bundle-packaging.md` §6.1, §6.2). The copy was held whole first, so either is the source
+   package's own. Name each in the Final report — a mismatch by bundled filename and line, with its
+   `[DG#n]`, the `[CG#n]` it cites and each claim's requirement; an unreadable file by bundled filename
+   and the classes it feeds, the references it left unchecked counted in the citation check's
+   outcome below — as *in
+   `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`, which is never rewritten — left as packaged*, and package
+   on; neither is put to the operator's ruling, since no answer could change it. A package built
+   before 3.61.0, whose citation check the run made by hand, or before 3.1.0, when none ran, is the
+   likeliest place to meet one.
+
    **A prerequisite Phase 2 carried with no package to copy in is not a hit**, and the discriminator
    is Phase 2's own carry — *whether a package of its own was found*. Its *BRD not found* and *no
    package on file; nothing to copy in* branches both leave a key that correctly answers to no
@@ -1842,12 +1865,12 @@ or not that line is there.
    relation 1 discharges a structured field another authority formats as a qualified cross-package
    reference, exactly because no partition could ever hold it.
 
-   A class-4 `[DG#n]` whose `cites` resolves but names a different requirement than the citing
-   finding's own claim (§6.2 relation 2) stops with:
+   A class-4 `[DG#n]` outside a document rule 5 copied in whose `cites` resolves but names a
+   different requirement than the citing finding's own claim (§6.2 relation 2) stops with:
    `BRD_PACKAGE_CITATION_MISMATCH: <DG-id> is class 4 and cites <CG-id>, whose claim names <requirement-a> where the citing finding's claim names <requirement-b> — the citation resolves, to a finding about a different requirement, which is the one failure a reviewer cannot detect by following it.`
 
-   A corpus file holding record-shaped content that parses to zero ids of its class (§6.1) stops
-   with the message below — and **only** such a file. One holding no record-shaped content at all is
+   A corpus file outside a copied prerequisite's partition holding record-shaped content that parses
+   to zero ids of its class (§6.1) stops with the message below — and **only** such a file. One holding no record-shaped content at all is
    a legitimately empty corpus and passes: that is the ordinary state of a `design-grounding.md`
    written as a short note because design grounding was skipped, of a requirement defect log whose
    walk confirmed nothing, and of a `decisions.md` holding only its header line, as `/brd-interview`
@@ -2160,12 +2183,15 @@ which is never rewritten — left as packaged*; every file in a copied-in prereq
 name begins with no key of that prerequisite's `depends-on:`, as unresolved, by bundled filename (rule 5);
 every reference inside a copied-in document to a package, or to that prerequisite's prompt or
 manifest, this bundle does not include, by document (rule 8), and every reference there that
-resolves to nothing, by bundled filename, line and token, as *in `<PREREQ-KEY>`'s
-`bundle-<YYYYMMDD>/`, which is never rewritten — left as packaged* (rule 8); every artifact written, by path — the self-review, the customer
+resolves to nothing, by bundled filename, line and token, every class-4 `[DG#n]` there citing a
+finding about a different requirement, by bundled filename, line, both ids and each claim's
+requirement, and every corpus file there that could not be parsed, by bundled filename and classes,
+each as *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`, which is never rewritten — left as
+packaged* (rule 8); every artifact written, by path — the self-review, the customer
 prompt, the delivery note and the bundle, and `brd-link.md` where this run added a prerequisite to
 it; **the citation check's
 outcome** — how many identifier references resolved, across how many source packages, how many
-named another BRD and were discharged (the citation scanner's `resolved`, `partitions` and `discharged`), every `ambiguous`, `unqualified` and `unknown_key` entry it reported, by document and line, and every hit inside verbatim customer content or a
+named another BRD and were discharged, and how many inside a copied prerequisite went unchecked against a corpus that could not be parsed (the citation scanner's `resolved`, `partitions`, `discharged` and `unchecked`), every `ambiguous`, `unqualified` and `unknown_key` entry it reported, by document and line, and every hit inside verbatim customer content or a
 customer-derived locator — this check's and the plugin-free scan's alike, the scan's model ids in the
 customer's naming a grounding block records among them — that the operator was
 asked to rule on, under the *Customer content:* outcome line `bundle-packaging.md` §6.3's *The

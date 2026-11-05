@@ -473,7 +473,11 @@ prose rather than a link, to a document §1.1 excludes by rule or has already re
 in. Three stops carry it: `BRD_PACKAGE_DEAD_CITATION` for a reference that resolves to nothing
 (§6.1's unkeyed-document case, §6.2's relations 1 and 3), `BRD_PACKAGE_CITATION_MISMATCH` for
 one that resolves to the wrong requirement (§6.2's relation 2), and
-`BRD_PACKAGE_CORPUS_UNREADABLE` for a corpus that cannot be parsed (§6.1). A fourth,
+`BRD_PACKAGE_CORPUS_UNREADABLE` for a corpus that cannot be parsed (§6.1). None of the three stops
+on what a prerequisite's package copied into the bundle holds of its own — a reference there that
+resolves to nothing or to the wrong requirement, or a corpus of its that cannot be parsed — since
+that package is never rewritten (§5) and every repair would falsify a delivered document: §6.1 and
+§6.2 say what the run names instead, and a copy that is not whole still stops. A fourth,
 `BRD_PACKAGE_CUSTOMER_CONTENT_HELD`, is no failure of the check: it is the operator holding the
 package over a hit in the customer's own words, on the question §6.3 fixes. Design authority:
 `docs/superpowers/specs/2026-09-08-bundle-citation-resolution-design.md` §3–§7 (removed from the tree 2026-09-23; `git show 62e791e8:docs/superpowers/specs/2026-09-08-bundle-citation-resolution-design.md` retrieves it).
@@ -573,7 +577,14 @@ file holding **record-shaped content** — at least one block the format would r
 an `id:`-bearing block in a grounding file, an entry or row in an inventory or defect log, a record
 in `decisions.md` — and yielding zero ids of its class stops the run with
 `BRD_PACKAGE_CORPUS_UNREADABLE`, naming the file and the partition, because a scan that cannot read
-a block has learned nothing about whether the ids it names exist. A corpus file holding **no**
+a block has learned nothing about whether the ids it names exist. **In the partition of a
+prerequisite's package copied in, the same file is named, never stopped on**: that package is never
+rewritten (§5), so the repair the stop asks for would falsify a delivered document. The scanner
+reports it under `prerequisite_unreadable`, `commands/brd-package.md`'s *Assemble the bundle* rule 8
+names it in the run's Final report as left as packaged, never putting it to the operator's ruling,
+and a reference in that package's documents to a class the file feeds, which no readable file of
+the partition holds, is counted `unchecked` rather than dead — for the reason the stop exists: an
+unread corpus says nothing of whether the id is there. A corpus file holding **no**
 record-shaped content is an **empty corpus**: a real and ordinary state, and it passes.
 `commands/prd-ground.md`'s *Write findings* phase writes `grounding/design-grounding.md` as every
 `[DG#n]` **or a short note when design grounding was skipped and why**, a defect walk that confirmed
@@ -589,15 +600,17 @@ an entry or re-dispositioned one already on file, so a package whose decisions t
 defect ships no log at all — and §1.1's row for it is conditional for that reason. An absent corpus
 file is not a corpus holding record-shaped content that parsed to zero, so it never reaches
 `BRD_PACKAGE_CORPUS_UNREADABLE`; a `defects` field naming a `[CDF#n]` with no log in the bundle
-fails relation 1 as an ordinary dead citation, which is the correct outcome and needs no stop of
-its own.
+fails relation 1 as an ordinary dead citation — named as left as packaged inside a copied
+prerequisite's document, as §6.2 says of any reference there that resolves to nothing — which is
+the correct outcome and needs no stop of its own.
 
 **The distinction is drawn on record-shaped content because of what the failure actually is.** What
 `workflows-core:grounding-format` §2.1 warns about is a **reader** that cannot see records that are
 there — the padded-colon scan, blind to blocks on the page — so record-shaped content is the
 evidence that there was something to see. Where there is none, the zero and the file agree and
 nothing has gone wrong. A reference *into* an empty corpus then fails relation 1 as an ordinary dead
-citation, which is the correct outcome and needs no stop of its own.
+citation — left as packaged inside a copied prerequisite's document (§6.2) — which is the correct
+outcome and needs no stop of its own.
 
 **The partition depends on rule 1 holding.** The boundary is the `<BRD-KEY>` in each document's
 filename, so it survives flattening, renaming and re-archiving — but a bundle document that reached
@@ -770,7 +783,10 @@ A package built before this check existed is the likeliest place to meet one. Re
 differently — the reference resolves, to a finding about a different requirement — and stops with
 `BRD_PACKAGE_CITATION_MISMATCH`, naming both `claim`s; the remedy is to re-derive the finding, and
 the reference itself may be untouched. The two stay separate codes because the two remedies repair
-different things.
+different things. **A mismatch inside a document copied in from a prerequisite's package is no stop
+either**, for the reason a reference there that resolves to nothing is none: re-deriving the finding
+would rewrite a delivered document. The scanner reports it under `prerequisite_mismatch`, and rule 8
+names it in the run's Final report as left as packaged, never putting it to the operator's ruling.
 
 ### 6.3 Exemptions
 
@@ -938,7 +954,9 @@ Stated because a green check here is otherwise read as a clean bundle:
   see, the *report every reference in the bundle as dead* outcome `BRD_PACKAGE_CORPUS_UNREADABLE`
   was written to prevent. It is acceptable rather than merely tolerated: the run still stops,
   because every reference into that corpus then fails relation 1 as an ordinary dead citation, so
-  nothing ships wrong. What is lost is the diagnosis — the operator is pointed at the references
+  nothing ships wrong — save in a copied prerequisite's partition, where each such reference is
+  named in the Final report as left as packaged (§6.2), so the operator still sees every one. What
+  is lost is the diagnosis — the operator is pointed at the references
   rather than at the corpus. A test tighter than the parse it adjudicates would be undecidable by an
   agent whose parser has just failed, which is why the looser one is the right trade and this limit
   is stated rather than closed.
@@ -948,7 +966,7 @@ Stated because a green check here is otherwise read as a clean bundle:
   that is there and holds record-shaped content (§6.1), so asserting it about a file that is not in
   the bundle would tell the operator something false about their own tree. An absent corpus is an
   empty one for every purpose §6 has, and a reference into it fails relation 1 as an ordinary dead
-  citation.
+  citation, left as packaged inside a copied prerequisite's document (§6.2).
 - **The delivery note.** Its whole job is to name a bundle file exactly — *which file is the prompt*
   and *which file comes back* (§4) — and it is deliberately **not** a bundle document (§4, §1.1), so
   the check, which runs over every document in the finished bundle, never sees it. A wrong filename

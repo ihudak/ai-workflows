@@ -131,8 +131,6 @@ The first items here were found by the 2026-10-15 review or its re-review (line 
 
   Nothing has been seen to hit it. It is not a copy of the `bounded.py` fix: the replay holds signals around its lock-taking steps and turns a signal into a partial result once a branch has moved, so the design question is where a recorded signal is acted on. Holding every subprocess call, so that a signal is raised only between calls, is one answer. Needs a workflows-core bump.
 
-- **D45 — `/brd-package` still stops on a citation mismatch, or an unreadable corpus, inside a copied prerequisite's package, which no one can repair.** Found while fixing D34 (2026-11-04). D34 made a reference that resolves to nothing inside a document copied in from a prerequisite's package a Final-report line rather than a stop, since that package is never rewritten (`bundle-packaging.md` §5); a class-4 `[DG#n]` there whose `cites` resolves to a finding about a different requirement (§6.2 relation 2) still stops with `BRD_PACKAGE_CITATION_MISMATCH`, whose remedy — re-derive the finding — cannot reach a delivered package either. So does a copied prerequisite's corpus file that holds record-shaped content and parses to no id (`BRD_PACKAGE_CORPUS_UNREADABLE`; `bundle-scan.py citations` builds every partition's corpus alike), most likely in a package of an older format. Decide whether relation 2 and the corpus check gain the same counterpart — `prerequisite_mismatch` and a copied partition's unreadable corpus, named as left as packaged — now that D34's copy check (`--prereq-source`) proves the copy whole first.
-
 ## From lean context D — any machine
 
 Found while D was built and run (`docs/superpowers/verification/2026-10-22-lean-context-handoff-part.md` §7).

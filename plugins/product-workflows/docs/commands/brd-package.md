@@ -447,12 +447,15 @@ attack.
   the key, and change nothing else in the sentence. One that resolves to the wrong requirement stops
   with `BRD_PACKAGE_CITATION_MISMATCH`; a corpus file holding record-shaped content that yields no
   ids stops with `BRD_PACKAGE_CORPUS_UNREADABLE` — a corpus holding no record-shaped content at all
-  is legitimately empty and passes. A reference that resolves to nothing inside a document copied
-  in from a prerequisite's package is the exception: that package is never rewritten and so reaches
-  your customer as written either way, so the final report names it as left as packaged and the run
-  goes on — once the check has held the copy whole against the bundle it came from, a file there
+  is legitimately empty and passes. Inside a document copied in from a prerequisite's package, a
+  reference that resolves to nothing or to the wrong requirement, and a corpus file of that
+  package's holding record-shaped content that yields no ids, are the exception: that package is never rewritten and so reaches
+  your customer as written either way, so the final report names each as left as packaged and the
+  run goes on, a reference there into a corpus that could not be read counted as unchecked rather
+  than dead — once the check has held the copy whole against the bundle it came from, a file there
   missing from the copy or changed stopping the run as a copy defect, which re-running repairs — and
-  one inside your customer's own words goes to your ruling like any other. A copied document that
+  a reference there that resolves to nothing inside your customer's own words goes to your ruling
+  like any other. A copied document that
   names a file of a package this bundle does not carry, or that prerequisite's own prompt or
   manifest, is named in the manifest under a `## Not included` heading of its own; the manifest has
   then changed after the plugin-free scan and this check read it, so both run again over it.

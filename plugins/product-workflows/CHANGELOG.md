@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.0] — 2026-11-05
+
+D45. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **`/brd-package` no longer stops on a citation mismatch, or an unreadable corpus, inside a prerequisite's package it copied in.** 3.75.0 made a reference there that resolves to nothing a Final-report line rather than a stop, since that package is never rewritten, but a class-4 `[DG#n]` there whose `cites` resolves to a finding about a different requirement still stopped with `BRD_PACKAGE_CITATION_MISMATCH`, and a corpus file of that prerequisite's holding record-shaped content that parses to no id still stopped with `BRD_PACKAGE_CORPUS_UNREADABLE`. Neither remedy, re-deriving the finding or repairing the file, can reach a delivered package, so a run meeting either had no way through short of falsifying that package or dropping the dependency. `bundle-scan.py citations` now reports the first under `prerequisite_mismatch` and the second under `prerequisite_unreadable`, and the Final report names each as left as packaged, never putting either to the operator's ruling. A reference in that prerequisite's documents to a class the unreadable file feeds, which no readable file of its partition holds, is counted in a new `unchecked` count rather than reported dead, since an unread corpus says nothing of whether the id is there. Both stops still apply to this package's own documents and corpora, and the copy is still held whole against its source first. **Population: none measured** — the one package of the current format on the maintainer's machine passes today's scanner with neither hit; one built before 3.61.0, whose citation check the run made by hand, or before 3.1.0, when none ran, is where either can be met (`bundle-packaging.md` §6.1, §6.2).
+- `bundle-packaging.md` §6.1 and §6.4 said a reference into an empty, absent or uniformly malformed corpus "fails relation 1 as an ordinary dead citation" and that "the run still stops"; since 3.75.0 one inside a copied prerequisite's document is named as left as packaged instead, and both now say so.
+
 ## [3.77.0] — 2026-11-05
 
 D31 parts 2–4. Needs nothing from the other plugins' releases.
