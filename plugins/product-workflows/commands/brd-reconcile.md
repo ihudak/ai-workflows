@@ -503,7 +503,7 @@ write would re-ask a question already answered.
    branch was cut, whatever that branch holds of it (row B′, whose message names the merge
    of `<default>` into the branch, save where no merge can run). Say what the gate reported — the files, branch or
    pull request it named, or the repository state — say that this run writes its defect resolutions
-   into that file and waits rather than write over an edit, into a copy that lacks what has merged on `<default>` since, or leave them unwritten, and say that
+   into that file and waits rather than write over an edit, into a copy that lacks what has merged on `<default>` since, onto a branch that carries none of `<default>`'s commits of the log, or leave them unwritten, and say that
    this plugin never commits, merges or discards anything for it. Then ask:
    ```
    choices: ["I've settled it — check again", "Cancel — re-run once the log is settled"]

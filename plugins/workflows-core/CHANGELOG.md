@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.5] — 2026-11-04
+
+Released with `dev-workflows` 4.58.5 and `product-workflows` 3.76.2.
+
+### Fixed
+- **`scripts/bounded.py` reports a command's own exit code after a signal passed on to it**, as GNU timeout does: a command that catches the SIGTERM, SIGHUP or SIGINT `bounded.py` passes on and exits by itself now returns its own code, where `bounded.py` used to return 128 + N whatever the command did. A command the signal ends still returns 128 + N, and one that ignores it, which `bounded.py` kills two seconds later, now returns 137 (128 + 9), as under GNU `timeout -k`, where it too used to return 128 + N. A new selftest case traps the signal and exits 5. The `bounded-run` reference counts 23 selftest cases.
+- **`require-on-main` row B′ no longer says an untracked copy identical to the default branch's lacks what that branch changed** (`phase-handoff` §3.3). Such a copy took the finding `<branch> changed it too, so its copy lacks what <default> changed`, which was false. It now takes a finding of its own, where the branch has changed nothing else of the path since the fork and `git hash-object` of the copy, as git would store it, equals the default branch's blob: the copy holds nothing the default branch lacks, and it is removed before the merge where no ignore rule hides it, since git will not merge over an untracked copy. An ignored identical copy is overwritten by the merge harmlessly. The row's three findings now read as an ordered cascade, its §3.6 read list names `rev-parse` and `hash-object`, and `ard-resolution` names the case among the copies B′ stops on.
+
 ## [1.78.4] — 2026-11-04
 
 Needs nothing from the other plugins' releases.
