@@ -584,7 +584,8 @@ is left unwritten, and its row, naming both records, is in this run's reconcilia
 
 **Stale cross-references.** Rooted at the **parent's** folder, so a sibling slice is reached. Two
 searches: the changed ids, matched whitespace-tolerantly because an identifier is routinely broken
-across a line wrap; and prose asserting a now-superseded position with no id in it at all. The second
+across a line wrap — this one also run over the dependents the propagation sweep found outside the
+parent, slices whose `depends-on:` names this one, where it only reads and never corrects; and prose asserting a now-superseded position with no id in it at all. The second
 cannot be reduced to a pattern, and it is the one that matters — **updating a register while a value
 document still states the old position is the characteristic failure of this step**, and the
 contradiction is invisible from the register, which is the only place anybody looks.
@@ -607,10 +608,11 @@ record names — and the customer's document and every file captured with it are
 The scope is every markdown file under the parent, which is exactly why the carve-out has to be
 written down. The record writes every hit as one line,
 `- **Hit:** <path> › <entry> — <what was found> — <outcome>`, the entry being the `[CDF#n]` a hit in
-a code-defect log landed in and `none` elsewhere; so, while this run's record is the latest in its
-folder, the next [`/brd-interview`](brd-interview.md) run on the slice owning that
-log puts the entry's disposition to the operator again until a round record answers the flag, and
-the hit does not live only in a report.
+a code-defect log landed in and `none` elsewhere; so the next [`/brd-interview`](brd-interview.md)
+run on the slice owning that log — a slice under the parent, or one under another parent that
+names this slice in its `depends-on:` — puts the entry's disposition to the operator again until a
+round record answers the flag, whatever reconciliations follow this one, and the hit does not live
+only in a report.
 
 ## What it does not do
 

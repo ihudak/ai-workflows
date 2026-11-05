@@ -2391,8 +2391,9 @@ satisfied, with a dropped class left unsearched.
    this run's `<BRD-KEY>`. Only a slice declares it — `/product-workflows:prd-ground` and
    `/product-workflows:brd-package` merge `depends-on:` into a slice's `brd-link.md`, as this
    command's *Apply the required corrections* phase does for a row asking to add one, and all three
-   refuse a root — but the key it names may sit at any level (D17), so a slice depending on a
-   source-owning BRD and a slice depending on a sibling are both found by the same scan, which still
+   refuse a root — but the key it names may sit at any level (D17). Only a slice is reconciled, so
+   the scan, matching this run's slice key, finds a dependent naming this slice, a sibling or a slice
+   under another parent alike, and no run matches a `depends-on:` naming a source-owning BRD. It still
    searches the three levels below `specifications/` that `workflows-core:addressing` §3 bounds —
    the same bound `resolve-address` uses and for the same reason (`workflows-core:addressing` §3,
    §6) — because a hand-edited or pre-D5 root `brd-link.md` may carry one. This is the reverse of
@@ -2652,12 +2653,14 @@ captured files.
    reached by neither. **The outcome is unchanged and no new one is added**: the row below sends every
    `code-defect-log.md` hit to `needs-a-human`, because every disposition on that log is the operator's
    and `/product-workflows:brd-interview` is its only writer. What travels is the finding, not a
-   correction — to the operator, and, for a hit on the log of a slice under the parent, to that
-   slice's next `/product-workflows:brd-interview` run, which opens a round for it where every round is
-   closed and reads the
-   `- **Hit:**` lines of the latest reconciliation record of every slice under the parent, this
-   one's while it is the latest, and puts the flagged entry's disposition again until a round
-   record of that slice answers the flag (its *Put each `[V]` to the operator*).
+   correction — to the operator, and, for a hit on the log of a slice under the parent or of a
+   declared dependent under another parent, to that slice's next
+   `/product-workflows:brd-interview` run, which opens a round for it where every round is closed
+   and reads the `- **Hit:**` lines of every reconciliation record of every slice under its own
+   parent and of every slice its `depends-on:` names, this one's among them whatever records follow
+   it, and puts the flagged entry's disposition again until a round record of that slice answers the
+   flag (its *Put each `[V]` to the operator*; `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md`
+   §7).
 
    **Outside this root the only outcomes available are `still-true` and `needs-a-human`; `updated` is
    not.** This widening is detection, and the write surface does not move with it: correcting a

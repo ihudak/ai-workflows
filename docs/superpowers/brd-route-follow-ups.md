@@ -6,7 +6,7 @@ Reported by the operator after running the BRD route against a real customer eng
 
 Per **S18**, nothing releases while any of these is open.
 
-**Status, 2026-09-22: nothing here is open, and this line is the one to read first.** Every entry below records its own disposition and they are what this paragraph is derived from — `BRD-1` to `BRD-6`, `R-1` to `R-5`, `E-1` to `E-5`, `E-7`, and `G3-1` to `G3-3` all **closed**; `E-6` **retired**; `E-8` was a recorded **question** about the strength of a guarantee, *not an S18 blocker as filed*, decided 2026-10-28 with its remainder moved to `docs/superpowers/to-fix.md` D31; `G3-4` and *Recorded, not counted as defects* were never defects. **Re-derive this from the entries rather than trusting the sentence** — it is prose, and no gate in `scripts/` reads this file. The dated paragraphs below are kept as the sequencing records they were, and their tense is historical: each says what was still ahead on the day it was written, not what is ahead now. Where one of them named a gate or a defect as still blocking, this line is what settles it.
+**Status, 2026-09-22: nothing here is open, and this line is the one to read first.** Every entry below records its own disposition and they are what this paragraph is derived from — `BRD-1` to `BRD-6`, `R-1` to `R-5`, `E-1` to `E-5`, `E-7`, and `G3-1` to `G3-3` all **closed**; `E-6` **retired**; `E-8` was a recorded **question** about the strength of a guarantee, *not an S18 blocker as filed*, decided 2026-10-28 with its remainder moved to `docs/superpowers/to-fix.md` D31, which closed on 2026-11-05 (product-workflows 3.77.0, its part (4) accepted there); `G3-4` and *Recorded, not counted as defects* were never defects. **Re-derive this from the entries rather than trusting the sentence** — it is prose, and no gate in `scripts/` reads this file. The dated paragraphs below are kept as the sequencing records they were, and their tense is historical: each says what was still ahead on the day it was written, not what is ahead now. Where one of them named a gate or a defect as still blocking, this line is what settles it.
 
 **Three design gates, sequenced. All three have shipped** — the plan as written on 2026-09-06, when gate 3 was still ahead:
 
@@ -348,6 +348,8 @@ register created to fix it contained the same unrecorded claim.
 ---
 
 ## E-8 — a `needs-a-human` item has no mechanical carry-forward into the next interview round
+
+**2026-11-05 — the rest is closed (to-fix D31 (2)–(4), product-workflows 3.77.0).** A slice's flag readers now take every reconciliation record, not only the newest, of every slice under its parent and of every slice its `brd-link.md` `depends-on:` names, so a flag raised by a prerequisite under another parent — this entry's E-5 case — reaches its interview and its package gate. Part (4), records older than 3.58.0, which write no hit line, is accepted in to-fix.md.
 
 **2026-11-02 — its no-further-round case is closed (to-fix D31 (1), product-workflows 3.67.0).** An unanswered flag now opens a `/brd-interview` round when every round is closed, and `/brd-package` asks before shipping a log that holds one.
 
