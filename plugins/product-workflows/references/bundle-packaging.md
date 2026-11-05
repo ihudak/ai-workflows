@@ -577,14 +577,14 @@ file holding **record-shaped content** — at least one block the format would r
 an `id:`-bearing block in a grounding file, an entry or row in an inventory or defect log, a record
 in `decisions.md` — and yielding zero ids of its class stops the run with
 `BRD_PACKAGE_CORPUS_UNREADABLE`, naming the file and the partition, because a scan that cannot read
-a block has learned nothing about whether the ids it names exist. **In the partition of a
-prerequisite's package copied in, the same file is named, never stopped on**: that package is never
-rewritten (§5), so the repair the stop asks for would falsify a delivered document. The scanner
-reports it under `prerequisite_unreadable`, `commands/brd-package.md`'s *Assemble the bundle* rule 8
-names it in the run's Final report as left as packaged, never putting it to the operator's ruling,
-and a reference in that package's documents to a class the file feeds, which no readable file of
-the partition holds, is counted `unchecked` rather than dead — for the reason the stop exists: an
-unread corpus says nothing of whether the id is there. A corpus file holding **no**
+a block has learned nothing about whether the ids it names exist. For that same reason a
+reference to a class the file feeds, whose id no readable file of the partition holds, is counted
+`unchecked`, never dead, so the stop is the run's one diagnosis rather than a dead citation for each
+reference into the file. **In the partition of a prerequisite's package copied in, the file is
+named, never stopped on**: that package is never rewritten (§5), so the repair the stop asks for
+would falsify a delivered document. The scanner reports it under `prerequisite_unreadable`, and
+`commands/brd-package.md`'s *Assemble the bundle* rule 8 names it in the run's Final report as left
+as packaged, never putting it to the operator's ruling. A corpus file holding **no**
 record-shaped content is an **empty corpus**: a real and ordinary state, and it passes.
 `commands/prd-ground.md`'s *Write findings* phase writes `grounding/design-grounding.md` as every
 `[DG#n]` **or a short note when design grounding was skipped and why**, a defect walk that confirmed

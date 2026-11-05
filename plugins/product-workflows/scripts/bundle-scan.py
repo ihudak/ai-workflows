@@ -26,12 +26,13 @@ repository file). A dead reference inside a document of a --copied-key prerequis
 which is never rewritten, is reported under prerequisite_dead rather than dead; with --prereq-source
 KEY=DIR, every file of KEY's in that source bundle, save a --prereq-aux one, must be in the bundle
 byte for byte first, a file missing or changed being dead, so what prerequisite_dead names is the
-source's own. Record-shaped content that
-parses to no id is unreadable. In that prerequisite's partition, for the same reason, a relation-2
-hit is reported under prerequisite_mismatch rather than mismatch, and an unreadable corpus file under
-prerequisite_unreadable rather than unreadable, a reference there to a class that file feeds, which
-no readable file of the partition holds, being counted unchecked rather than reported dead. A hit in
-the customer's own
+source's own. A corpus file whose
+record-shaped content parses to no id is unreadable, and a reference to a class it feeds whose id no
+readable file of its partition holds is counted unchecked rather than reported dead. In a
+--copied-key prerequisite's partition, which is never rewritten, a relation-2 mismatch is reported
+under prerequisite_mismatch rather than mismatch, an unreadable corpus file under
+prerequisite_unreadable rather than unreadable, and a prerequisite_dead entry inside such a file is
+marked unparsed, since no span could be placed in it. A hit in the customer's own
 words or naming is reported under customer, for the operator's ruling. A key-shaped word before an id
 counts as a BRD's key only where it is --key, a --prereq-key or a --known-key; any other is reported
 under unknown_key. It reads section 1.1's filenames and section 6.2's fields from the reference beside
@@ -707,7 +708,7 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                 if not same:
                     out["dead"].append({"file": None, "line": 0, "token": n,
                                         "reason": "differs from its copy source in %s's bundle" % pk})
-    corpus, unchecked = {}, {}
+    corpus, unchecked, unparsed = {}, {}, set()
     for k, names in out["partitions"].items():
         ids = {}
         for name in names:
@@ -719,12 +720,12 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
             for cls in classes:
                 ids.setdefault(cls, set()).update(g for g in got if g.startswith("[" + cls + "#"))
             if shaped and not got:
-                if k in copied:
-                    # never rewritten (section 5): named once, and its classes' references there unchecked
-                    out["prerequisite_unreadable"].append({"file": name, "classes": classes})
-                    unchecked.setdefault(k, set()).update(classes)
-                else:
-                    out["unreadable"].append({"file": name, "classes": classes})
+                # named once, a copied prerequisite's left as packaged since it is never rewritten
+                # (section 5); a reference to a class it feeds is then unchecked, never dead
+                out["prerequisite_unreadable" if k in copied else "unreadable"].append(
+                    {"file": name, "classes": classes})
+                unchecked.setdefault(k, set()).update(classes)
+                unparsed.add(name)
         corpus[k] = ids
 
     def resolve(hit, k, tok, cls, span):
@@ -782,7 +783,7 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
             discharged_cells = []
             if row and row[0] == "ledger" and len(row[1]) == 5:
                 idcell = row[1][0]
-                if idcell[2].strip() not in inventory:
+                if idcell[2].strip() not in inventory and "BR" not in unchecked.get(k, ()):
                     discharged_cells.append((idcell[0], idcell[1]))  # an orphan row's own id
             if defect_table and line.lstrip().startswith("|") and not SEPARATOR_RE.match(line):
                 cells = _cells(line)
@@ -896,7 +897,7 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                      "reason": "class-4 cites no [CG#n] in %s" % k})
                 continue
             if cites.group(0) not in by_id:
-                continue  # relation 1 has reported that id already, on the cites line
+                continue  # relation 1 has reported that id already, on the cites line, or counted it unchecked
             if len(reqs) != 1:
                 out["ambiguous"].append({"file": b["file"], "line": b["line"], "token": b["id"],
                                          "requirements": sorted(reqs),
@@ -908,6 +909,9 @@ def citations(bundle, key, prereq_keys=(), copied_keys=(), date=None, captured=(
                 out["prerequisite_mismatch" if k in copied else "mismatch"].append({"file": b["file"], "line": b["line"], "token": b["id"],
                                         "cites": cites.group(0), "claim": b.get("claim", ""),
                                         "cited_claim": cited.get("claim", "")})
+    for h in out["prerequisite_dead"]:
+        if h["file"] in unparsed:
+            h["unparsed"] = True  # its file's records did not parse, so no span of section 6.3 was placed
     index = {}
     for h in out["customer"]:
         g = (h["file"], h["token"], h.get("span"))
@@ -1094,12 +1098,22 @@ def citations_selftest(check):
              "P-2-decisions.md": "id: [VD#1]\n", "P-2-q.md": "per [CG#1], [DG#1] and [DG#7]; [VD#4]\n",
              "K-1-code-grounding.md": "- id: CG-1\n  claim: x\n", "K-1-x.md": "ours [CG#1]\n"},
             prereq_keys=["P-2"], copied_keys=["P-2"])
-    check("an unreadable corpus inside a copied prerequisite is named once and left as packaged, every reference there "
-          "to a class it feeds unchecked, unless a readable file holds it; this package's own is unreadable",
+    check("an unreadable corpus is named once — inside a copied prerequisite left as packaged, in this package a stop — "
+          "and a reference to a class it feeds whose id no readable file of the partition holds is unchecked, never dead",
           [h["file"] for h in r["unreadable"]] == ["K-1-code-grounding.md"]
           and [h["file"] for h in r.get("prerequisite_unreadable", [])] == ["P-2-code-grounding.md"]
-          and r.get("unchecked") == 2 and [h["token"] for h in r["prerequisite_dead"]] == ["[VD#4]"]
-          and [h["token"] for h in r["dead"]] == ["[CG#1]"])
+          and r.get("unchecked") == 3 and [h["token"] for h in r["prerequisite_dead"]] == ["[VD#4]"]
+          and r["dead"] == [])
+    led = "| id | text | disposition | defects | evidence |\n|---|---|---|---|---|\n| [BR#1] | a | covered-here | | |\n"
+    r = run({"P-2-brd-inventory.md": "| id | text | source_anchor | defects |\n|---|---|---|---|\n| BR-1 | a | 2. x | |\n",
+             "P-2-coverage-ledger.md": led}, prereq_keys=["P-2"], copied_keys=["P-2"])
+    check("a ledger row's id over an unreadable inventory is unchecked, never an orphan row's discharged id",
+          r["discharged"] == 0 and r.get("unchecked") == 1 and r["prerequisite_dead"] == [])
+    r = run({"P-2-decisions.md": "id: CD-2\nargumentation: |\n  the customer's [BR#9]\n", "P-2-brd-inventory.md": inv,
+             "P-2-q.md": "see [BR#8]\n"}, prereq_keys=["P-2"], copied_keys=["P-2"])
+    check("a dead reference inside a copied corpus file whose records do not parse is marked unparsed; one elsewhere is not",
+          sorted((h["token"], h.get("unparsed", False)) for h in r["prerequisite_dead"])
+          == [("[BR#8]", False), ("[BR#9]", True)])
     r = run({"K-1-x.md": "x\n"})
     check("the two left-as-packaged lists and the unchecked count are present when empty",
           r.get("prerequisite_mismatch") == [] and r.get("prerequisite_unreadable") == [] and r.get("unchecked") == 0)
