@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.6] — 2026-11-06
+
+D46. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **`scripts/session-branch.py`'s replay can no longer hang when a signal reaches it.** Its SIGTERM, SIGHUP and SIGINT handlers raised an exception, and Python delivers that exception wherever the main thread happens to be. Inside `subprocess`'s wait it could leave the wait lock held, and the next wait on that process then blocked forever, as `bounded.py`'s did before 1.78.4. On Python 3.11 to 3.14 one signal during the fetch or push was enough, since their timed wait has that window there. During any other call it took a second signal while the first one's cleanup ran. Nothing has been seen to hit it. The handlers now only record the signal, and the replay acts on it between calls. A running fetch or push is still ended at once, its whole process group sent the signal: the replay looks for a signal after 1 ms and doubles its wait up to 50 ms. Any other call, a local git or a register rebuild, now runs to its end, where it used to be killed, and the replay stops once it returns. A move of the branch and the upstream's configuration write are still held until they are done. Where a signal stops the replay, its exit code, `not run` line and partial result are as before. One that comes as the fetch or push exits by itself, before the replay looks again, no longer throws that call's result away: a push that landed is reported as pushed, and the replay acts on the signal once its next call returns, or not at all where none follows. One that comes once the replay's last call has returned now changes nothing, and the replay exits 0 with its result, where it used to exit 2 with the same result: everything that result reports has happened. A signal that arrives while the fetch or push is starting is now passed on once git has started; before, git was left running in its own process group. `specs-repo-git` §4 step 6 now says how the replay acts on a signal outside a move.
+- **The selftest covers it.** Five cases fail against the old script on Python 3.14:
+  - a signal the instant the wait lock is taken, as git exits, which hangs the old script; on 3.15, whose wait never takes that lock while git runs, the case says it was skipped;
+  - a signal while git starts, which left git running;
+  - a signal as git exits by itself, which threw its result away;
+  - a signal during a local git call, and one during a register rebuild (the one changed case), where the old script killed the call.
+
+  Three more pin what the old script already did: a signal during the push ends its hook's process group at once, one during the cap's group end still ends the call by the signal, and one recorded just before a move is acted on before the move starts.
+
 ## [1.78.5] — 2026-11-04
 
 Released with `dev-workflows` 4.58.5 and `product-workflows` 3.76.2.
