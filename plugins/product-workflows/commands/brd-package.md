@@ -1410,8 +1410,10 @@ image does not, or a quotation saying something the customer did not — and eve
 stays a hard stop exactly as above, save one. **These two sets, with the model-id span beside them,
 are the plugin-free scan's only exemptions bar that one, and each covers a class of content rather
 than one file** — the citation-resolution check (Phase 8 rule 8, `bundle-packaging.md` §6) carries
-the same two over the same spans, a model id being nothing it tests, and one of a different shape for
-`[SR#n]` (§6.3) — and they exist because the
+the same two over the same spans, a model id being nothing it tests, one of a different shape for
+`[SR#n]` (§6.3), and, for the reason this scan exempts a model id below, none of its stops on what a
+prerequisite's package copied in holds of its own, which it names instead (*Assemble the bundle*
+rule 8) — and they exist because the
 alternatives are a deadlock or a falsified record. **The exemption beyond these is a model id inside a
 prerequisite's package copied in** (*Assemble the bundle* rule 7): that package is never rewritten
 (`bundle-packaging.md` §5), so its text reaches the customer as written whether or not it already
@@ -1730,7 +1732,8 @@ or not that line is there.
    copied document as easily as through a rendered part, and together with rule 8's
    citation-resolution check, this pair is the last point at which anything is still ours.
 8. **Run the citation-resolution check over every document in the finished bundle**, per
-   `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6, and stop on any hit. It runs here and
+   `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6, and stop on any hit, save those this
+   rule puts to the operator's ruling or names as left as packaged below. It runs here and
    nowhere earlier because both of its inputs — the identifier corpus and the set of bundle
    filenames — are facts about the *assembled* bundle; the rendered prompt is covered because the
    prompt is itself a bundle document. It is a second pass rather than a widening of rule 7's scan:
@@ -1783,12 +1786,23 @@ or not that line is there.
    - `prerequisite_dead` → a reference inside a copied prerequisite's document that resolves to
      nothing — an id, a class-4 `cites` or a filename of that prerequisite's own — which is no stop:
      named in the Final report as left as packaged, as the paragraph below on that says.
-   - `resolved` and `discharged` → the counts the Final report gives.
+   - `prerequisite_mismatch` → a class-4 `[DG#n]` inside a copied prerequisite's document whose
+     `cites` resolves to a finding about a different requirement, and `prerequisite_unreadable` → a
+     corpus file of that prerequisite's holding record-shaped content that parses to no id: neither
+     is a stop, each named in the Final report as left as packaged, as the paragraph below on them
+     says.
+   - `resolved`, `discharged` and `unchecked` → the counts the Final report gives, `unchecked`
+     counting each reference to a class an `unreadable` or `prerequisite_unreadable` file feeds
+     whose id no readable file of its partition holds — neither resolved nor dead, since an unread
+     corpus says nothing of whether the id is there, so this package's own such file stops the run
+     on `BRD_PACKAGE_CORPUS_UNREADABLE` alone, never on a dead citation for each reference into it.
 
    **Read the line before acting, both ways**, as rule 7 reads its spans: a `dead` entry inside a span
    of §6.3's that position alone cannot place — a customer-derived locator in prose the scanner did
    not match, a customer's answer quoted outside the register's fields — is the customer's, and goes
-   to the operator's ruling rather than stopping the run; and a `customer` entry whose line shows the
+   to the operator's ruling rather than stopping the run, as does a `prerequisite_dead` entry there
+   rather than being named as left as packaged — read the line of every one the scanner marks
+   `unparsed`, whose file's records did not parse, so it placed no span there; and a `customer` entry whose line shows the
    package's own words — a `locator-tail` that is this package's sentence running on after a heading
    path, an `inventory-text` or `ledger-text` hit on an image-drawn row outside the element it quotes
    (`image_row` `true`, or a ledger row's `null`, read off its inventory row) — is a stop.
@@ -1834,6 +1848,21 @@ or not that line is there.
    classes other than a model id do in a copied document. A package built before this check existed
    is the likeliest place to meet one.
 
+   **A class-4 `[DG#n]` inside a document rule 5 copied in whose `cites` resolves to a finding about
+   a different requirement (the scanner's `prerequisite_mismatch`), and a corpus file of that
+   prerequisite's holding record-shaped content that parses to no id (its
+   `prerequisite_unreadable`), are no stop either**, for the same reason: the one's remedy, re-deriving
+   the finding, and the other's, repairing the file, would each rewrite a delivered document
+   (`bundle-packaging.md` §6.1, §6.2). The copy was held whole first, so either is the source
+   package's own. Name each in the Final report — a mismatch by bundled filename and line, with its
+   `[DG#n]`, the `[CG#n]` it cites and each claim's requirement; an unreadable file by bundled filename
+   and the classes it feeds, the references it left unchecked counted in the citation check's
+   outcome below — as *in
+   `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`, which is never rewritten — left as packaged*, and package
+   on; neither is put to the operator's ruling, since no answer could change it. A package built
+   before 3.61.0, whose citation check the run made by hand, or before 3.1.0, when none ran, is the
+   likeliest place to meet one.
+
    **A prerequisite Phase 2 carried with no package to copy in is not a hit**, and the discriminator
    is Phase 2's own carry — *whether a package of its own was found*. Its *BRD not found* and *no
    package on file; nothing to copy in* branches both leave a key that correctly answers to no
@@ -1842,12 +1871,12 @@ or not that line is there.
    relation 1 discharges a structured field another authority formats as a qualified cross-package
    reference, exactly because no partition could ever hold it.
 
-   A class-4 `[DG#n]` whose `cites` resolves but names a different requirement than the citing
-   finding's own claim (§6.2 relation 2) stops with:
+   A class-4 `[DG#n]` outside a document rule 5 copied in whose `cites` resolves but names a
+   different requirement than the citing finding's own claim (§6.2 relation 2) stops with:
    `BRD_PACKAGE_CITATION_MISMATCH: <DG-id> is class 4 and cites <CG-id>, whose claim names <requirement-a> where the citing finding's claim names <requirement-b> — the citation resolves, to a finding about a different requirement, which is the one failure a reviewer cannot detect by following it.`
 
-   A corpus file holding record-shaped content that parses to zero ids of its class (§6.1) stops
-   with the message below — and **only** such a file. One holding no record-shaped content at all is
+   A corpus file outside a copied prerequisite's partition holding record-shaped content that parses
+   to zero ids of its class (§6.1) stops with the message below — and **only** such a file. One holding no record-shaped content at all is
    a legitimately empty corpus and passes: that is the ordinary state of a `design-grounding.md`
    written as a short note because design grounding was skipped, of a requirement defect log whose
    walk confirmed nothing, and of a `decisions.md` holding only its header line, as `/brd-interview`
@@ -2085,7 +2114,10 @@ reference-integrity gaps — a rendered authority whose boundary moved, a render
 an example identifier with a number in it, and a package artifact carrying a citation, or a model
 id, that should never have been written into it; `BRD_PACKAGE_CORPUS_UNREADABLE` and `BRD_PACKAGE_SET_UNREADABLE`
 are record-integrity gaps — each is, by its own text, this command's parse or read of the plugin's
-own records failing on content that is there, which no sentence in the package can fix; and
+own records failing on content that is there, which no sentence in the package can fix (a copied
+prerequisite's corpus that cannot be parsed is the same failure, but rule 8 names it and halts
+nothing, so `emit-block` never fires for it: step 1 passes it to `impl-maintenance` as a key event
+instead, since the parser, and not the source package, may be what failed); and
 `BRD_PACKAGE_REVIEW_UNACCOUNTED` and `BRD_PACKAGE_REVIEWER_CONTRACT` are agent-contract gaps — a
 dispatch this command owns whose agent broke its return contract twice, and one this command built
 without a field the agent requires — the rule `/product-workflows:brd-reconcile` applies to its own
@@ -2112,7 +2144,8 @@ operator's own ruling on what the scan reported as the customer's words. The one
    `<detection_model>`) with a compact handoff: command `/brd-package`; what was produced (the
    self-review, the prompt, the delivery note, the bundle); key events (the tier assigned and why,
    the `[SR#n]` dispositions, a re-dispatch after a `fixed` correction, a prompt-leak stop, a
-   prerequisite with no package on file — or "none"); workarounds; test result N/A; project root =
+   prerequisite with no package on file, each `prerequisite_unreadable` file rule 8 named, by bundled
+   filename and classes — or "none"); workarounds; test result N/A; project root =
    the BRD folder.
 2. **Persist plugin feedback (automatic).** Invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6)
    with the Lessons Learned report, `command: /brd-package`, the run's `key` (the `<BRD-KEY>`),
@@ -2160,12 +2193,15 @@ which is never rewritten — left as packaged*; every file in a copied-in prereq
 name begins with no key of that prerequisite's `depends-on:`, as unresolved, by bundled filename (rule 5);
 every reference inside a copied-in document to a package, or to that prerequisite's prompt or
 manifest, this bundle does not include, by document (rule 8), and every reference there that
-resolves to nothing, by bundled filename, line and token, as *in `<PREREQ-KEY>`'s
-`bundle-<YYYYMMDD>/`, which is never rewritten — left as packaged* (rule 8); every artifact written, by path — the self-review, the customer
+resolves to nothing, by bundled filename, line and token, every class-4 `[DG#n]` there citing a
+finding about a different requirement, by bundled filename, line, both ids and each claim's
+requirement, and every corpus file of a copied-in prerequisite's that could not be parsed, by
+bundled filename and classes, each as *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`, which is never rewritten — left as
+packaged* (rule 8); every artifact written, by path — the self-review, the customer
 prompt, the delivery note and the bundle, and `brd-link.md` where this run added a prerequisite to
 it; **the citation check's
 outcome** — how many identifier references resolved, across how many source packages, how many
-named another BRD and were discharged (the citation scanner's `resolved`, `partitions` and `discharged`), every `ambiguous`, `unqualified` and `unknown_key` entry it reported, by document and line, and every hit inside verbatim customer content or a
+named another BRD and were discharged, and how many inside a copied prerequisite went unchecked against a corpus that could not be parsed (the citation scanner's `resolved`, `partitions`, `discharged` and `unchecked`), every `ambiguous`, `unqualified` and `unknown_key` entry it reported, by document and line, and every hit inside verbatim customer content or a
 customer-derived locator — this check's and the plugin-free scan's alike, the scan's model ids in the
 customer's naming a grounding block records among them — that the operator was
 asked to rule on, under the *Customer content:* outcome line `bundle-packaging.md` §6.3's *The

@@ -431,8 +431,8 @@ attack.
   filename with a line number — while one whose name carries a key is a bundle filename and is
   tested like any other; nor the manifest's
   quotation of a customer's target as written, which sits beside the bundled filename it maps to,
-  nor a captured file's own link to another captured file. Its exemptions are `bundle-packaging.md`
-  §6.3's: `[SR#n]` is exempt entirely, because the self-review file it would resolve against is
+  nor a captured file's own link to another captured file. Besides a prerequisite's copied package,
+  below, its exemptions are `bundle-packaging.md` §6.3's: `[SR#n]` is exempt entirely, because the self-review file it would resolve against is
   excluded from the bundle by rule and the prompt carries its content filtered;
   and a hit inside the customer's own verbatim content or a locator naming their files and headings
   — a `[BR#n]` or a filename visible in their screenshot among them, or one they wrote into an
@@ -446,13 +446,16 @@ attack.
   so where the stop names one, qualify that id by hand in that form, with this slice's `parent:` as
   the key, and change nothing else in the sentence. One that resolves to the wrong requirement stops
   with `BRD_PACKAGE_CITATION_MISMATCH`; a corpus file holding record-shaped content that yields no
-  ids stops with `BRD_PACKAGE_CORPUS_UNREADABLE` — a corpus holding no record-shaped content at all
-  is legitimately empty and passes. A reference that resolves to nothing inside a document copied
-  in from a prerequisite's package is the exception: that package is never rewritten and so reaches
-  your customer as written either way, so the final report names it as left as packaged and the run
-  goes on — once the check has held the copy whole against the bundle it came from, a file there
-  missing from the copy or changed stopping the run as a copy defect, which re-running repairs — and
-  one inside your customer's own words goes to your ruling like any other. A copied document that
+  ids stops with `BRD_PACKAGE_CORPUS_UNREADABLE` alone, each reference into it counted as unchecked
+  rather than dead — a corpus holding no record-shaped content at all is legitimately empty and
+  passes. A prerequisite's package copied in is the exception, once the check has held the copy
+  whole against the bundle it came from, a file there missing from the copy or changed stopping the
+  run as a copy defect, which re-running repairs: that package is never rewritten and so reaches
+  your customer as written either way, so a reference inside one of its documents that resolves to
+  nothing or to the wrong requirement, and a corpus file of its holding record-shaped content that
+  yields no ids, are each named in the final report as left as packaged, and the run goes on. A
+  reference there that resolves to nothing inside your customer's own words goes to your ruling like
+  any other. A copied document that
   names a file of a package this bundle does not carry, or that prerequisite's own prompt or
   manifest, is named in the manifest under a `## Not included` heading of its own; the manifest has
   then changed after the plugin-free scan and this check read it, so both run again over it.
