@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.7] — 2026-11-06
+
+The re-review of 1.72.1 (to-fix PR9), whose fix was pushed after that release merged and never reached `main` until now. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **`/brd-reconcile`'s second handoff still asks its own consent question.** `phase-handoff` §2's opening and the loader's entry-point rules said a request of `handoff-to-main` made after "this run has already presented that choice" does not ask again. `/brd-reconcile` offers two handoffs, so read literally that let its second handoff, of its reconciliation record, skip its question and run on the answer given for the first, the customer's review, which contradicted the command's own *Handoff* phase. The rule now covers only the handoff whose choice was answered: the step that follows that choice, or a later phase carrying its answer, as `/brd-package`'s Phase 9 does. A second handoff in one run presents its own choice at its own consent step, and the first handoff's answer never stands for it. "Answered" rather than "presented", so a choice that got no answer is asked; one the user reopens after answering — an interruption, then the question put again — is asked again, as §4.1's *A consent choice asked again* says, and both sites now say so.
+- §2's opening states its §2.7.1 exception right after the *only* it is an exception to, rather than after the rule that a later request does not ask again, where it read as an exception to that.
+
 ## [1.78.6] — 2026-11-06
 
 D46. Needs nothing from the other plugins' releases.
