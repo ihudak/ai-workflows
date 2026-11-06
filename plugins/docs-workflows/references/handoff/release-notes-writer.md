@@ -48,10 +48,10 @@ release_notes_block:
     allows it — a breaking note that takes effect in a later release opens with that release. For the
     titled destinations: a first paragraph of about two sentences, or a short intro sentence + a
     bulleted list when the feature enumerates discrete options, a state the release starts from
-    adding its sentence to the first paragraph or after the list where §6 calls for one; a breaking
-    note's remediation opens with "**Action plan:**". For the fixes destination: one self-contained
-    past-tense sentence, two at most, opening with a past-tense verb, a state the release starts from
-    going inside the resolution. See release-note-types.md §3 (shape), §4 (prose rules) and
+    adding its sentence to the first paragraph, or a paragraph of its own straight after the list,
+    where §6 calls for one; a breaking note's remediation opens with "**Action plan:**". For the fixes
+    destination: one self-contained past-tense sentence, two at most, opening with a past-tense verb,
+    a state the release starts from worked into the resolution within those two. See release-note-types.md §3 (shape), §4 (prose rules) and
     §6 (general rules).>
   combined_rendered: |
     <the exact text the PM publishes wherever release notes are published. For a titled destination:

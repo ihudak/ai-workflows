@@ -290,16 +290,21 @@ does not already state.
 - Translate the technical change into customer-value language (product and UI terms).
 - Assert only what the source supports; preserve the facts the source supports.
 - **A state the release starts from goes in where a reader sees it on day one.** Where the PRD's
-  live text (never a requirement marked `Superseded by` or `Withdrawn`) states, as already done,
-  something outside the release's own work that sets what a reader sees when the release ships —
-  for example data removed, reset, migrated or imported beforehand — the note says so in one plain
-  sentence that names what the reader sees and gives the action as its reason. In a titled note it
-  is a present-tense sentence of the first paragraph, or follows the list where the note takes §4's
-  intro-sentence-and-list shape: "The store starts with no ratings: every rating given before this
-  release was removed." In a `## Fixes` entry it is part of the resolution, in the past tense and
-  within the entry's two sentences (§4 *Fixes*). A starting state the PRD gives only as an
-  assumption, a plan or a step still to be done never goes in, since the note would assert what the
-  source does not support, and neither does one no reader sees.
+  live text — its `summary:` or any section of its body, never a requirement marked `Superseded by`
+  or `Withdrawn` — states, as already done, something outside the release's own work that sets what
+  a reader sees when the release ships, for example data removed, reset, migrated or imported
+  beforehand, the note says so in one plain sentence that names what the reader sees and gives the
+  action as its reason. Whether it is stated as done is a matter of how the PRD words it, not of
+  the section it sits in: an item marked settled or done under `## Assumptions & open questions`
+  counts. In a titled note it is a present-tense sentence of the first paragraph: "The store starts
+  with no ratings: every rating given before this release was removed." Where the note takes §4's
+  intro-sentence-and-list shape, it is a paragraph of its own straight after the list, before any
+  second paragraph and any deprecation note, and it is not §4's second paragraph, which keeps its
+  one job. In a `## Fixes` entry it is worked into the resolution, in the past tense, the entry
+  reworded where it must be to stay within its two sentences (§4 *Fixes*). One a
+  `/dev-workflows:conformance` entry names stays as §8 settles it. A starting state the PRD gives
+  only as an assumption, a plan or a step still to be done never goes in, since the note would assert
+  what the source does not support, and neither does one no reader sees.
 - These rules complement, and do not duplicate, the prose-style checks run in the command's
   style-gate phase.
 
