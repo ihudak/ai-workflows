@@ -983,7 +983,9 @@ spend before it is the conversation's.
      which nothing bounds, under the Bash tool's 600 s ceiling. A branch is
      not left half-moved because of that margin, though: the script holds
      SIGTERM, SIGHUP and SIGINT while it moves a branch, and acts on one only
-     once the branch and the checkout agree.
+     once the branch and the checkout agree. Anywhere else it ends a running
+     fetch or push at once, passing the signal to git's whole process group,
+     and lets any other call run to its end before it stops.
 
      It prints one JSON object — `moved`, `pushed`, `attempts`, `replayed`
      and `dropped` (commit ids), `tip`, `porcelain` (the `--porcelain`

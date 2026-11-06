@@ -125,12 +125,6 @@ The first items here were found by the 2026-10-15 review or its re-review (line 
 
   Nothing in the family writes an ignore rule. On 2026-11-04 neither specs repository on the maintainer's machine had one that matched an artifact path, global excludes included, so no run is known to reach this. Fix only with a measured case.
 
-- **D46 — `session-branch.py` can hang on a signal the way `bounded.py` did.** Found while fixing `bounded.py` (workflows-core 1.78.4, 2026-11-04). That script's handler raised, and an exception landing inside `subprocess`'s wait while its wait lock was held left the lock held, so the final `wait()` blocked forever. One CI run hit it (run 41879535888), and `bounded.py`'s selftest now reproduces it on demand. `session-branch.py` raises from its handlers too:
-  - `git_bounded`'s `passed_on` raises during `communicate()`, whose timed wait has the window, and `_end_group`'s timed `communicate()` then times out and its untimed one blocks — one signal is enough;
-  - the replay-wide `_on_signal` raises anywhere outside `_signals_held`, but an untimed `subprocess.run` waits inside `with self._waitpid_lock:`, which Python 3.10 and later enter with no interrupt check (bpo-29988), so one signal releases the lock; the window is reached only through `run()`'s cleanup, `kill()` then `poll()`, so a hang there needs a second signal during the first one's cleanup.
-
-  Nothing has been seen to hit it. It is not a copy of the `bounded.py` fix: the replay holds signals around its lock-taking steps and turns a signal into a partial result once a branch has moved, so the design question is where a recorded signal is acted on. Holding every subprocess call, so that a signal is raised only between calls, is one answer. Needs a workflows-core bump.
-
 ## From lean context D — any machine
 
 Found while D was built and run (`docs/superpowers/verification/2026-10-22-lean-context-handoff-part.md` §7).
