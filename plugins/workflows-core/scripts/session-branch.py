@@ -1367,10 +1367,12 @@ def git_bounded(root, seconds, *args):
     Never subprocess.run(timeout=), whose kill reaches git alone and leaves its transport child, and
     any lock that child holds, behind. A SIGTERM, SIGHUP or SIGINT sent to this script meanwhile is
     recorded (_on_signal), never raised inside the wait: the loop looks for it between waits of 1 ms,
-    doubled up to POLL, passes it on to the group the same way, and raises NotRun. One sent while git
-    starts is passed on once it has started, one recorded before git starts raises NotRun with git never
-    started, and one that comes as git exits raises NotRun once it has. Returns a CompletedProcess, its
-    returncode 124 where the cap ended git."""
+    doubled up to POLL, passes it on to the group the same way, and raises NotRun -- at the cap too,
+    where it comes while the group is being ended. One sent while git starts is passed on once it has
+    started, and one recorded before git starts raises NotRun with git never started. One that comes as
+    git exits by itself, before the loop looks again, is left recorded and git's own result returned:
+    the call has run to its end, and a push that landed is never reported as not pushed. Returns a
+    CompletedProcess, its returncode 124 where the cap ended git."""
     cmd = ["git", "-C", root, "-c", "core.quotePath=false", *args]
     mine = {}
     for s in _SIGNALS:
@@ -1402,12 +1404,13 @@ def git_bounded(root, seconds, *args):
             except subprocess.TimeoutExpired:
                 if time.monotonic() >= deadline:
                     out, err = _end_group(p, signal.SIGTERM)
+                    signum = recorded()
+                    if signum:  # one that came while the group was being ended: the call ends by it
+                        raise NotRun(ended(signum))
                     return subprocess.CompletedProcess(cmd, 124, out, err)
                 pause = min(pause * 2, POLL)
                 continue
-            signum = recorded()
-            if signum:
-                raise NotRun(ended(signum))
+            # git exited by itself: one recorded meanwhile stays recorded for the replay's next check
             return subprocess.CompletedProcess(cmd, p.returncode, out, err)
     finally:
         for s, h in mine.items():
@@ -1729,9 +1732,9 @@ def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, 
     -- the number this run's report already cites; to is its number on the tip the branch stands on.
     SIGTERM, SIGHUP and SIGINT are recorded for the whole call (_on_signal) and acted on between calls:
     the fetch or push running is ended at once (git_bounded), any other call runs to its end first, and
-    a move or the upstream's configuration write is held until it is done (_signals_held). Any exception
-    once the branch moved, a signal included, is raised as Partial carrying that result; a signal before
-    any move as NotRun."""
+    a move or the upstream's configuration write is held until it is done (_signals_held); one no later
+    call acts on is dropped, the result standing. Any exception once the branch moved, a signal included,
+    is raised as Partial carrying that result; a signal before any move as NotRun."""
     previous = {}
     for s in _SIGNALS:
         try:
@@ -1779,6 +1782,7 @@ def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, 
                 else:  # origin's holds every commit the branch does
                     got = {"tip": onto, "replayed": [], "dropped": [], "numbers": None}
                 tip = got["tip"]
+                _act_on_signal()  # one recorded since the last call returned: nothing moves
                 with _signals_held():  # a signal waits until the branch and the checkout agree, and the result says so
                     if tip != old:
                         # where the checkout stands is read again here, not trusted from before the replay,
@@ -1830,8 +1834,9 @@ def replay(root, branch, register_rebuild=None, set_upstream=False, attempts=3, 
     finally:
         for s, h in previous.items():
             signal.signal(s, signal.SIG_DFL if h is None else h)
-        # what is left recorded, a second signal or one after the last call returned, is dropped: the
-        # result stands, since all it reports has happened; a signal after this meets the caller's own handling
+        # what is left recorded is dropped: a second signal, or one no later call acted on -- it came after the
+        # last call returned, or as the push exited by itself with no call after it. The result stands, since
+        # all it reports has happened; a signal after this meets the caller's own handling
         del _pending[:]
     return result
 
@@ -3996,6 +4001,30 @@ def selftest():
                     return False
                 time.sleep(0.05)
 
+        def in_child(fn, seconds=15):
+            """fn() in a forked child, which exits with what it returns: that exit code, or None where the
+            child hung and was killed after <seconds>."""
+            sys.stdout.flush()
+            sys.stderr.flush()
+            pid = os.fork()
+            if pid == 0:
+                code = 99
+                try:
+                    code = fn()
+                except BaseException as e:
+                    sys.stderr.write("in_child: %s: %s\n" % (type(e).__name__, e))
+                finally:
+                    os._exit(code & 0xFF if isinstance(code, int) else 98)
+            deadline = time.monotonic() + seconds
+            while time.monotonic() < deadline:
+                done, status = os.waitpid(pid, os.WNOHANG)
+                if done:
+                    return os.waitstatus_to_exitcode(status)
+                time.sleep(0.05)
+            os.kill(pid, signal.SIGKILL)
+            os.waitpid(pid, 0)
+            return None
+
         def pworld(tmp):
             """rworld's origin (no hook) and two clones, plus a tracked note of the user's own: (a, b,
             the stub rebuild script, origin's path)."""
@@ -4906,6 +4935,35 @@ def selftest():
                           "the signal, nothing moved (%r, %r, done %r)" % (r.returncode, err, os.path.exists(done)))
                 guarded("a signal during a local git call", signal_in_call)
 
+                # a signal recorded after the replay's last call before the move returned is acted on before the
+                # move starts, so nothing moves (D46): here it comes just as replay_commits returns, in a forked
+                # child running the replay
+                def signal_before_move():
+                    a, b, stub, remote = pworld(where("signal-before-move"))
+                    diverge(a, b)
+                    old = a.git("rev-parse", "main")
+
+                    def fn():
+                        real = globals()["replay_commits"]
+
+                        def then_signalled(*args):
+                            got = real(*args)
+                            os.kill(os.getpid(), signal.SIGTERM)
+                            return got
+                        globals()["replay_commits"] = then_signalled
+                        try:
+                            replay(a.path, "main")
+                        except Partial:
+                            return 5
+                        except NotRun as e:
+                            return 0 if str(e) == "ended by signal %d" % int(signal.SIGTERM) else 3
+                        return 4
+                    rc = in_child(fn, 60)
+                    check(rc == 0 and a.git("rev-parse", "main") == a.git("rev-parse", "HEAD") == old,
+                          "[move: a signal just before the move] acted on before the move starts: nothing moved "
+                          "(%r)" % rc)
+                guarded("a signal just before the move", signal_before_move)
+
                 # a signal while the push runs is passed on to git's whole process group at once, as before
                 # D46: here a pre-receive hook that would hold the push for 30 s
                 def signal_in_push():
@@ -4956,34 +5014,12 @@ def selftest():
             move_cases()
 
         # ---- a signal is never raised inside subprocess's wait (D46): git_bounded in a forked child whose
-        # Popen is patched, so the signal lands where a handler that raised did harm. NOT_FIRED: this Python
-        # never takes the wait lock non-blocking while git runs, so the first case has nothing to stand in for
+        # Popen is patched, so the signal lands where a handler that raised did harm, or where git_bounded
+        # could throw a finished call's result away. NOT_FIRED: this Python never takes the wait lock
+        # non-blocking while git runs, so the first case has nothing to stand in for
         if hasattr(os, "fork"):
             with tempfile.TemporaryDirectory() as tmp:
                 NOT_FIRED = 97
-
-                def in_child(fn, seconds=15):
-                    """fn() in a forked child: its exit code, or None where it hung and was killed."""
-                    sys.stdout.flush()
-                    sys.stderr.flush()
-                    pid = os.fork()
-                    if pid == 0:
-                        code = 99
-                        try:
-                            code = fn()
-                        except BaseException as e:
-                            sys.stderr.write("in_child: %s: %s\n" % (type(e).__name__, e))
-                        finally:
-                            os._exit(code & 0xFF)
-                    deadline = time.monotonic() + seconds
-                    while time.monotonic() < deadline:
-                        done, status = os.waitpid(pid, os.WNOHANG)
-                        if done:
-                            return os.waitstatus_to_exitcode(status)
-                        time.sleep(0.05)
-                    os.kill(pid, signal.SIGKILL)
-                    os.waitpid(pid, 0)
-                    return None
 
                 def fake_git(name, body):
                     d = os.path.join(tmp, name)
@@ -4993,20 +5029,22 @@ def selftest():
                     os.chmod(os.path.join(d, "git"), 0o755)
                     return d
 
-                def bounded_fetch(fake, patch):
-                    """git_bounded's fetch, run with <fake> first on PATH and Popen replaced by patch(real):
-                    0 where it raised NotRun naming the signal, 3 where it raised another, 4 where it returned."""
+                def bounded(fake, patch, verb="fetch", seconds=10):
+                    """git_bounded's <verb>, run with <fake> first on PATH and Popen replaced by patch(real): 0
+                    where it raised NotRun naming SIGTERM, 3 where it raised another, 4 where it returned git's
+                    exit 0, 5 where it returned another code."""
                     os.environ["PATH"] = fake + os.pathsep + os.environ.get("PATH", "")
                     subprocess.Popen = patch(subprocess.Popen)
                     try:
-                        git_bounded(tmp, 10, "fetch")
+                        got = git_bounded(tmp, seconds, verb)
                     except NotRun as e:
-                        return 0 if str(e) == "git fetch ended by signal %d" % int(signal.SIGTERM) else 3
-                    return 4
+                        return 0 if str(e) == "git %s ended by signal %d" % (verb, int(signal.SIGTERM)) else 3
+                    return 4 if got.returncode == 0 else 5
 
                 # SIGTERM the instant a non-blocking acquire takes the wait lock, while a handler of this
                 # script's is installed -- the timing a CI run hit on Python 3.11 in bounded.py: a handler that
-                # raised there left the lock held, and _end_group's last communicate() blocked for good
+                # raised there left the lock held, and _end_group's last communicate() blocked for good. git has
+                # exited by then, so the call has run to its end and its own result is returned
                 def lock_window():
                     fired = []
 
@@ -5038,19 +5076,52 @@ def selftest():
                                 real.__init__(self, *args, **kwargs)
                                 self._waitpid_lock = Lock(self._waitpid_lock)
                         return Popen
-                    code = bounded_fetch(fake_git("lock-window", "exit 0\n"), patch)
+                    code = bounded(fake_git("lock-window", "exit 0\n"), patch)
                     return code if fired else NOT_FIRED
 
-                probe = subprocess.Popen(["true"])
-                probe.wait()
-                if hasattr(probe, "_waitpid_lock"):
+                def lock_case():
+                    probe = subprocess.Popen(["true"])
+                    probe.wait()
+                    if not hasattr(probe, "_waitpid_lock"):
+                        return
                     rc = in_child(lock_window)
                     if rc == NOT_FIRED:
                         print("NOTE a signal inside the wait lock: skipped, this Python never takes it non-blocking "
                               "while git runs")
                     else:
-                        check(rc == 0, "[git_bounded] a signal the instant the wait lock is taken ends the call with "
-                                       "'git fetch ended by signal %d', never a hang (%r)" % (int(signal.SIGTERM), rc))
+                        check(rc == 4, "[git_bounded] a signal the instant the wait lock is taken, as git exits: "
+                                       "git's own result, never a hang (%r)" % rc)
+                guarded("git_bounded: a signal inside the wait lock", lock_case)
+
+                # SIGTERM once git has exited by itself and communicate() has read all of it, before git_bounded
+                # looks again: the call has run to its end, so its own result is returned -- a push that landed
+                # is never reported as not pushed -- and the signal is left for the replay's next check
+                def exit_window():
+                    def patch(real):
+                        class Popen(real):
+                            def communicate(self, *args, **kwargs):
+                                got = real.communicate(self, *args, **kwargs)
+                                os.kill(os.getpid(), signal.SIGTERM)
+                                return got
+                        return Popen
+                    return bounded(fake_git("exit-window", "exit 0\n"), patch, "push")
+
+                def exit_case():
+                    rc = in_child(exit_window)
+                    check(rc == 4, "[git_bounded] a signal as git exits by itself: git's own result (%r)" % rc)
+                guarded("git_bounded: a signal as git exits", exit_case)
+
+                # SIGTERM while the cap's group end waits out a group that ignores the cap's own SIGTERM: the
+                # call ends by the signal, never by the cap alone, as it did before D46
+                def cap_window():
+                    body = "trap '' TERM\np=$PPID\n(sleep 1.5; kill -TERM $p) &\nsleep 30\n"
+                    return bounded(fake_git("cap-window", body), lambda real: real, "fetch", 1)
+
+                def cap_case():
+                    rc = in_child(cap_window)
+                    check(rc == 0, "[git_bounded] a signal while the cap ends git's group: 'git fetch ended by "
+                                   "signal %d' (%r)" % (int(signal.SIGTERM), rc))
+                guarded("git_bounded: a signal during the cap's group end", cap_case)
 
                 # SIGTERM once git has started and before Popen has returned it to git_bounded: it is passed on
                 # once git_bounded holds the process, so git's group is ended, never left running
@@ -5066,22 +5137,24 @@ def selftest():
                                     time.sleep(0.01)
                                 os.kill(os.getpid(), signal.SIGTERM)
                         return Popen
-                    return bounded_fetch(fake_git("start-window", "echo $$ > %s\nexec sleep 30\n" % sh_quote(pidfile)),
-                                         patch)
-                rc = in_child(start_window)
-                try:
-                    with open(pidfile) as fh:
-                        started = int(fh.read())
-                except (OSError, ValueError):
-                    started = None
-                gone = started is not None and pid_gone(started)
-                if started is not None and not gone:
+                    return bounded(fake_git("start-window", "echo $$ > %s\nexec sleep 30\n" % sh_quote(pidfile)), patch)
+
+                def start_case():
+                    rc = in_child(start_window)
                     try:
-                        os.killpg(started, signal.SIGKILL)
-                    except OSError:
-                        pass
-                check(rc == 0 and gone, "[git_bounded] a signal while git starts is passed on once it has started: "
-                                        "its group is ended (%r, gone %r)" % (rc, gone))
+                        with open(pidfile) as fh:
+                            started = int(fh.read())
+                    except (OSError, ValueError):
+                        started = None
+                    gone = started is not None and pid_gone(started)
+                    if started is not None and not gone:
+                        try:
+                            os.killpg(started, signal.SIGKILL)
+                        except OSError:
+                            pass
+                    check(rc == 0 and gone, "[git_bounded] a signal while git starts is passed on once it has started: "
+                                            "its group is ended (%r, gone %r)" % (rc, gone))
+                guarded("git_bounded: a signal while git starts", start_case)
 
         # an unexpected exception is "not run" on one line, exit 2: §6 quotes the first stderr line
         with tempfile.TemporaryDirectory() as tmp:
