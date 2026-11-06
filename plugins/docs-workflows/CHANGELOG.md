@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.0] — 2026-11-06
+
+DOC-D-G5. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **`/release-notes` now says what state the release starts from, where the PRD states it as already done and a reader sees it on the day the release ships.** `BOOK-2-01`'s Goal says every existing rating was removed before go-live, yet three drafts of its note, by three `docs-workflows` releases, left that out, so none told a reader that the store starts with no ratings. Nothing in `release-note-types.md` asked for it, so whether a draft carried it was chance. Its §6 now requires it: something the PRD's live text states as already done outside the release's own work, such as data removed, reset, migrated or imported beforehand, that sets what a reader sees when the release ships goes into the note as one plain sentence — in a titled note's first paragraph, or after its list, and inside a fix's resolution. A starting state the PRD gives only as an assumption, a plan or a step still to be done stays out, and so does one no reader sees. `release-notes-writer` notes one while it gathers the PRD and, before it renders, re-reads the PRD for one and adds the sentence where the body leaves it out. §4's first-paragraph length and the writer's handoff contract count that sentence on top (DOC-D-G5).
+- The `/release-notes` docs page said a fix takes a second sentence only where its conditions need one; `release-note-types.md` §3 allows one for the resolution too, and the page now says so. `docs/reference/references.md`'s entry for `release-note-types.md` now also names the effective-version rule and what a `/dev-workflows:conformance` entry does to the draft, both of which the reference already owned.
+
 ## [1.34.2] — 2026-11-04
 
 Needs nothing from the other plugins' releases.

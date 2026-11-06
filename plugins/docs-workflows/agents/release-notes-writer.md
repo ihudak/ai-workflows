@@ -73,7 +73,8 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
 
 4. **Gather substance.** From the PRD/ticket file in the handoff, read the summary and the
    `prd-format.md` spine sections — `## Problem`, `## Goal`, `## User Stories`,
-   `## Acceptance Criteria`, and `## Scope` — their live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement). When
+   `## Acceptance Criteria`, and `## Scope` — their live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement). Note any state the release starts from
+   that this live text states (§6): step 6 places it, and step 7 checks the body for it. When
    `diff_summaries` is present, use it only to confirm what actually shipped — never to
    add implementation detail that is not user-visible.
 
@@ -111,7 +112,8 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
 6. **Build the authored body, shaped by the destination (§3, §4):**
    - **`fixes`** — render **one self-contained past-tense sentence** (two only when the conditions or
      the resolution need a second): symptom + resolution, opening with a past-tense verb, per §4
-     Fixes, and under §6's general rules like every other body. NO category label line, NO `###`
+     Fixes, and under §6's general rules like every other body, a state the release starts from
+     among them, which goes inside the resolution. NO category label line, NO `###`
      title, NO key. Skip the remaining bullets in this
      step; they apply only to the titled shapes.
    - **Category label** (titled shapes only) — the value resolved in step 2, rendered verbatim. When it
@@ -132,9 +134,10 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
      deprecated + end-of-life date, optional end-of-support date, or the `<!-- TODO:
      end-of-life date -->` placeholder). Name a release version only as step 5 allows (§6).
      Apply §6's general rules to every titled body — link text that names its target, no
-     internal names, no superlatives. Choose the New-technology-support shape from the content:
+     internal names, no superlatives, and a state the release starts from said in the first
+     paragraph, or after the list where the body takes the list shape below. Choose the New-technology-support shape from the content:
      - **Default: a short prose paragraph — about two sentences, roughly 35 words** (§4 Titled
-       sections). This fits most entries (a single capability, an upgrade, a behavioural
+       sections), with the sentence for a state the release starts from on top (§6). This fits most entries (a single capability, an upgrade, a behavioural
        change). Prefer prose unless a structure below clearly helps. Add a second paragraph only
        for one of §4's three jobs — compatibility, scope, or a required action.
      - **Enumeration / comparison → a short intro sentence + a bulleted list.** When
@@ -161,7 +164,14 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
      no-hard-wrap convention in `workflows-core:prose-formatting` — each
      paragraph is one unbroken line.
 
-7. **Render.** For a **titled** destination (`breaking-changes`, `feature-updates`), render the
+7. **Check the body for a state the release starts from, then render.** Re-read the live text of
+   the spine sections step 4 read for a statement, made as already done, of something outside the
+   release's own work that sets what a reader sees when the release ships (§6). Where the body
+   leaves out one a reader sees on day one, add its sentence where §6 places it. One the PRD gives
+   only as an assumption, a plan or a step still to be done stays out, and so does one no reader
+   sees.
+
+   Then, for a **titled** destination (`breaking-changes`, `feature-updates`), render the
    Summary body as exactly:
 
    ```markdown
@@ -234,6 +244,8 @@ Return YAML exactly as defined in `${CLAUDE_PLUGIN_ROOT}/references/handoff/rele
 - NEVER emit a `{{#internal-note}}` block — the docs automation generates it.
 - NEVER invent user-visible behaviour not supported by the PRD content (or the diff
   summaries, or a conformance entry's `shipped`, when provided); flag unverifiable claims as a `gaps` entry.
+- NEVER leave out a state the release starts from that §6 puts in the note (Process step 7), and
+  NEVER state one the PRD gives only as an assumption, a plan or a step still to be done.
 - ALWAYS produce exactly ONE Summary per run.
 
 <!-- untrusted-content:begin -->

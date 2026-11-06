@@ -26,7 +26,7 @@ How the two documentation commands find the code a feature changed, beyond the i
 
 ## Authoring formats
 
-- `release-note-types.md` — the release-note section map (`## Breaking changes` / `## Feature updates` / `## Fixes`, all three in one **release-notes.md** under a release-version heading, each draft under a scope comment naming the PRD or Epic it was drafted for and every commit its run read, which is what bounds a later run rather than any date), the per-section draft shape and prose rules, the deprecation-note rule, and Change Type sourcing; consulted by `release-notes-writer`, cited by `/release-notes` for its own invariants, and named by `docs-workflow/scaffold-tree.md` and by two `workflows-core` references, `prd-format` and `implementation-format`.
+- `release-note-types.md` — the release-note section map (`## Breaking changes` / `## Feature updates` / `## Fixes`, all three in one **release-notes.md** under a release-version heading, each draft under a scope comment naming the PRD or Epic it was drafted for and every commit its run read, which is what bounds a later run rather than any date), the per-section draft shape and prose rules, the deprecation-note rule, the effective-version rule, the rule for a state the release starts from, Change Type sourcing, and what a `/dev-workflows:conformance` entry does to the draft; consulted by `release-notes-writer`, cited by `/release-notes` for its own invariants, and named by `docs-workflow/scaffold-tree.md` and by two `workflows-core` references, `prd-format` and `implementation-format`.
 
 ## The documentation-portal scaffold
 
