@@ -85,10 +85,10 @@ Measured at batch B31: 135 mentions on 33 pages, each fixed by linking the first
 ### Check 29
 
 **Check 29 holds a plugin's README to listing its pages.** A reader who opens a plugin on GitHub meets its README first, and the README's Documentation table is the list of pages the plugin ships, so a page the table leaves out is one that reader never learns exists.
-- **The section** is an ATX heading reading `Documentation`, at any level, down to the next heading of its level or above: a `###` under it is inside it, and `## Documentation workflow` is not it. Its links are the navigation scan's, resolved from the README.
-- **Held:** a README with the section links every `*.md` under its plugin's `docs/` but the command pages, which check 15 holds the README to naming. A README without the section links `docs/README.md`, as `prose-style`'s does, and check 3 holds the index to reaching every page.
+- **The section** is a heading reading `Documentation` — ATX at any level, or setext — down to the next heading of its level or above: a `###` under it is inside it, a nested `Documentation` heading too, and `## Documentation workflow` is not it. Two such sections count together. Its links are the navigation scan's, resolved from the README, and a reference link (`[text][label]`, `[label][]`, `[label]`) whose label a definition anywhere in the README names.
+- **Held:** a README with the section links every `*.md` under its plugin's `docs/` but the command pages, which check 15 holds the README to naming. A README without the section links `docs/README.md`, as `prose-style`'s does; check 3 holds every page reachable from that index or the README.
 - **Population:** each `PLUGIN_RELS` plugin's `README.md`. **Vacuity:** no README under any plugin fails, as does a scan that does not run to its end.
 
 Measured at batch B32: nine pages left out of four tables — `workflows-core`'s Grounding sources, `dev-workflows`' Commit convention, four of `docs-workflows`' reference pages and three of `product-workflows'` — and none after.
 
-**What it cannot see:** a setext heading, so a README that underlines `Documentation` is held to the index link alone; whether a row's description is true; and a page outside `docs/`.
+**What it cannot see:** whether a row's description is true; a page outside `docs/`; a heading inside an HTML block; and a setext underline after a line opening like a list item, which it does not read as a heading.

@@ -1331,7 +1331,7 @@ def _selftest_body(tmp):
           == tokens(whole["models"]),
           "claims + remainder are token-exact against the unsplit window")
     check(two["cost_statusline_usd"] is None,
-          "a claimed window reports no statusline delta (option B cannot split)")
+          "a claimed window reports no statusline delta (the status-line cross-check cannot split)")
 
     pre = run("--claim", "/prompt")
     check(pre is not None and pre["unmatched_claims"] == ["/prompt"]

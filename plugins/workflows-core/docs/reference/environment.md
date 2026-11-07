@@ -101,7 +101,7 @@ Three flags change what a run does around its work, and each has an environment 
 - a family's newest model named by version, such as `opus5.5` or `claude-opus-5-5`, which runs as the family, since Claude Code's agent tool chooses models by family only; an older version stops the run and says to name the family instead;
 - `routing`, which turns enforcement off, as an unset variable does.
 
-Any other value, or a model the session cannot reach, stops the run before it writes anything. A command a flag does not apply to ignores it. For example, `/dev-workflows:implement ACME-77-01 --enforce-model=opus --skip-feedback` runs every dispatch on Opus and writes no Lessons Learned report. Each pipeline plugin's Model routing page says what enforcing one model changes for its own commands.
+Any other value, or a model the session cannot reach, stops the run before it writes anything. A command a flag does not apply to ignores it. For example, `/dev-workflows:implement ACME-77-01 --enforce-model=opus --skip-feedback` runs every dispatch on Opus and writes no Lessons Learned report. The Model routing pages of `dev-workflows` and `product-workflows` say what enforcing one model changes for their commands.
 
 ## `$WORKFLOWS_SKIP_COSTS`
 

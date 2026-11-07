@@ -13,7 +13,7 @@ User pages only: batch B32, the family's entry points. Needs nothing from the ot
 
 - **The getting-started page has an "Install the status line" section**, as dev-workflows' and workflows-core's have: what it adds, the status-line cross-check it enables, and the qualified form to type.
 - **The workflow diagram draws the Product Engineer's PRD-level `/dev-workflows:conformance` offering the documentation commands** once its decisions are settled, and the edge from `/implement` says every Epic has merged. The paragraph naming the diagram's other plugins' nodes counts seven, with the two `/conformance` nodes it left out.
-- The README's documentation table lists the Session feedback, Resume and checkpoints, and Effort proposals pages.
+- The README's documentation table lists the Session feedback, Resume and checkpoints, and Effort proposals pages, and the README and the plugin description say twelve reference files, not twelve reference pages, which the nine pages under the documentation's reference folder are not.
 
 ## [3.78.3] — 2026-11-07
 

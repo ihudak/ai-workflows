@@ -22,7 +22,7 @@ already omitted every `/brd-*` emitter.
 The orchestrator owns every prompt; this reference owns session-artifact resolution,
 the chained-checkpoint model, the transcript-window computation, the price table,
 the report format, the persistence ladder, pending/reconciliation, and the
-optional statusline augmentation.
+optional status-line cross-check.
 
 **Purpose.** Know how many **dollars** a Product Requirements Document (PRD) cost across its
 whole lifecycle, broken down by **phase**, **role**, and **model** — persisted

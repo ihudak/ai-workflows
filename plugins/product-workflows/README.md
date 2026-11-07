@@ -17,7 +17,7 @@ A role-based pipeline of 17 slash commands for the product-definition side of th
 | PM *(effort proposal — optional, gates nothing on the build ladder)* | [`/prd-proposal`](docs/commands/prd-proposal.md) | Price one PRD folder: work packages, hours by role, a range from per-package confidence, every driver evidenced. Graded by readiness rather than gated on an ARD or a specification. |
 | PM *(effort proposal — optional, gates nothing on the build ladder)* | [`/brd-proposal`](docs/commands/brd-proposal.md) | Roll a BRD container's priced slices into one programme umbrella: one row per included slice, the cross-slice effort no slice holds, and coverage from the root ledger. Not a sum. |
 
-Fourteen agents (see [Agents](docs/reference/agents.md)) carry the BRD grounding and reconciliation, PRD/ARD/spec/proposal review, and Epic writing and review these commands share. Twelve reference pages (see [References](docs/reference/references.md)) define the BRD, code-defect-log, decision-register, coverage-ledger, customer-review, idea, ARD, specification and effort-proposal artifact formats, and the link walk `/brd-intake` and `/idea` share.
+Fourteen agents (see [Agents](docs/reference/agents.md)) carry the BRD grounding and reconciliation, PRD/ARD/spec/proposal review, and Epic writing and review these commands share. Twelve reference files (see [References](docs/reference/references.md)) define the BRD, code-defect-log, decision-register, coverage-ledger, customer-review, idea, ARD, specification and effort-proposal artifact formats, and the link walk `/brd-intake` and `/idea` share.
 
 ## Documentation
 

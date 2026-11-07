@@ -2809,7 +2809,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQD-B5 — MINOR — "`dev-workflows` reads five environment variables" counts one it never reads
+### DQD-B5 — MINOR — "`dev-workflows` reads five environment variables" counts one it never reads — **Fixed in dev-workflows 4.59.2 (batch B32), with DQC-B10, into which it merged**
 - **Where:** `plugins/dev-workflows/docs/getting-started.md:38`; `plugins/dev-workflows/docs/reference/environment.md:3` ("The plugin reads five user-settable variables")
 - **What is wrong:** One of the five is `DOCS_PATH`. The same page says "None of this plugin's own six commands grounds against it … It is documented here only because `code-handoff.md`'s git finish states plainly that it never touches this path either — a boundary statement, not a consumer" (`getting-started.md:50`). `grep -rn DOCS_PATH plugins/dev-workflows/{commands,agents,references,hooks,scripts}` hits only `references/code-handoff.md:360`, a "never touches" sentence.
 - **Failure scenario:** A new user setting up from *What you set on your machine* spends time on a docs clone and `DOCS_PATH` that this plugin never uses. Or they conclude that `/implement` reads their docs.

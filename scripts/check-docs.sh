@@ -329,8 +329,8 @@ check_links_and_anchors() {
 }
 
 # ------------------------------------------------------------------- check 3
-# No orphan pages. Reachability is transitive from docs/README.md, so a page
-# linked only from another orphan is still an orphan.
+# No orphan pages. Reachability is transitive from docs/README.md and the plugin README, so a
+# page linked only from another orphan is still an orphan.
 check_orphans() {
   local root="$1" docs="$1/$PLUGIN_REL/docs" seen frontier next f target abs
   [ -f "$docs/README.md" ] || { fail 3 "docs/README.md is missing -- nothing to reach from"; return; }
@@ -355,7 +355,7 @@ $abs"
     frontier="$next"
   done
   while IFS= read -r f; do
-    case "$seen" in *"$f"*) ;; *) fail 3 "orphan page (unreachable from docs/README.md): ${f#$root/}" ;; esac
+    case "$seen" in *"$f"*) ;; *) fail 3 "orphan page (unreachable from docs/README.md or the plugin README): ${f#$root/}" ;; esac
   done < <(cd "$docs" && find . -name '*.md' -exec sh -c 'cd "$(dirname "$1")" && printf "%s/%s\n" "$(pwd)" "$(basename "$1")"' _ {} \;)
 }
 
@@ -3054,6 +3054,10 @@ import glob, json, os, re, sys
 root, cdir, form = sys.argv[1:4]
 OPEN = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 HEADING = re.compile(r"^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$")
+SETEXT = re.compile(r"^ {0,3}(=+|-+)[ \t]*$")
+NOTPARA = re.compile(r"^ {0,3}(?:[-+*>|]|\d{1,9}[.)])(?:[ \t]|$)")
+REFLABEL = re.compile(r"^ {0,3}\[((?:[^\[\]\\]|\\.)+)\]:\s*(<[^>\n]*>|\S+)")
+REFUSE = re.compile(r"!?\[((?:[^\[\]\\]|\\.)+)\](?:\[((?:[^\[\]\\]|\\.)*)\])?(?![(:\[])")
 SPAN = re.compile(r"(`+)(?!`).*?(?<!`)\1(?!`)")
 LINK = re.compile(r"\]\(\s*(<[^>\n]*>|[^)\s]+)(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)")
 REFDEF = re.compile(r"^ {0,3}\[[^\]]+\]:\s*(<[^>\n]*>|\S+)")
@@ -3128,7 +3132,21 @@ def links(vis):
     return found
 
 def bare(t):
-    return re.split(r"[#?]", t, 1)[0]
+    return re.split(r"[#?]", t, maxsplit=1)[0]
+
+def norm(label):
+    return re.sub(r"\s+", " ", label.strip()).casefold()
+
+def reflinks(vis, defs):
+    """Targets of the reference links ([text][label], [label][], [label]) on these lines,
+    resolved against the page's definitions, as CommonMark matches a label."""
+    found = []
+    for _, t in vis:
+        for m in REFUSE.finditer(SPAN.sub(lambda x: " " * len(x.group(0)), t)):
+            v = defs.get(norm(m.group(2) or m.group(1)))
+            if v:
+                found.append(v)
+    return found
 
 for spec in sys.stdin.read().split("\n"):
     if "\t" not in spec:
@@ -3186,19 +3204,32 @@ for spec in sys.stdin.read().split("\n"):
     # a README with no such section links docs/README.md.
     readme = os.path.join(base, "README.md")
     if readme in read:
-        sect, level, found = [], 0, False
+        defs = {}
+        for _, t in read[readme]:
+            m = REFLABEL.match(SPAN.sub(lambda x: " " * len(x.group(0)), t))
+            if m:
+                v = m.group(2).strip()
+                defs.setdefault(norm(m.group(1)), v[1:-1] if v.startswith("<") and v.endswith(">") else v)
+        sect, level, found, prev = [], 0, False, ""
         for no, t in read[readme]:
-            h = HEADING.match(t)
-            if h and level and len(h.group(1)) <= level:
+            h, u, lvl, title = HEADING.match(t), SETEXT.match(t), 0, ""
+            if h:
+                lvl, title = len(h.group(1)), (h.group(2) or "").strip()
+            elif u and prev.strip() and not HEADING.match(prev) and not NOTPARA.match(prev):
+                lvl, title = (1 if u.group(1)[0] == "=" else 2), prev.strip()
+                if level and lvl <= level and sect and sect[-1][1] is prev:
+                    sect.pop()
+            prev = t
+            if lvl and level and lvl <= level:
                 level = 0
-            if h and (h.group(2) or "").strip() == "Documentation":
-                level, found = len(h.group(1)), True
+            if lvl and not level and title == "Documentation":
+                level, found = lvl, True
                 continue
             if level:
                 sect.append((no, t))
         if found:
             have = set()
-            for t in links(sect):
+            for t in links(sect) + reflinks(sect, defs):
                 b = bare(t)
                 if b and not SCHEME.match(b):
                     have.add(os.path.normpath(os.path.join(base, b)))
@@ -3352,17 +3383,19 @@ check_named_commands_linked() {
 # out of four READMEs' tables: workflows-core's Grounding sources page, dev-workflows' commit
 # convention, four of docs-workflows' reference pages and three of product-workflows'. A
 # README with no Documentation section -- prose-style's, which points at its index instead --
-# links docs/README.md, which check 3 holds to reaching every page.
-# THE SECTION is an ATX heading reading `Documentation`, at any level, down to the next heading
-# of its level or above, so a `###` under it is inside it; a README may hold more than one, and
-# their links count together. A LINK is the navigation scan's (above), resolved from the README.
+# links docs/README.md; check 3 holds every page reachable from that index or the README.
+# THE SECTION is a heading reading `Documentation` -- ATX at any level, or setext -- down to the
+# next heading of its level or above, so a `###` under it is inside it, a nested `Documentation`
+# heading among them; a README may hold more than one, and their links count together. A LINK
+# is the navigation scan's (above), resolved from the README, plus a reference link
+# (`[text][label]`, `[label][]` or `[label]`) whose label a definition anywhere in the README
+# names, matched as CommonMark matches one, case and runs of space aside.
 # POPULATION: each plugin's README in PLUGIN_RELS. A page it must list is every *.md under the
 # plugin's docs/ but the command pages under docs/$DOC_CMD_DIR/, which check 15 holds the README
 # to naming by command. VACUITY: no README under any plugin fails, as does a scan that does not
 # run to its end.
-# What it cannot see: a setext heading (`Documentation` underlined), which it does not read as
-# the section, so such a README is held to the index link alone; whether a row's description
-# is true; and a page outside docs/.
+# What it cannot see: whether a row's description is true; a page outside docs/; and a heading
+# inside an HTML block, or a setext underline after a paragraph line opening like a list item.
 check_readme_lists_pages() {
   local root="$1" rel n=0 h
   for rel in $PLUGIN_RELS; do [ -f "$root/$rel/README.md" ] && n=$((n + 1)); done
@@ -5093,6 +5126,18 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "{ printf '\n## Documentation\n\n'; $all29 | grep -v getting-started; printf '\n## License\n\n- [x](docs/getting-started.md)\n'; } >> $r29"
   expect_pass_after "a heading that only begins with Documentation is not the section" \
     "printf '\n## Documentation workflow\n\nSee [the index](docs/README.md).\n' >> $r29"
+  expect_fail_msg "a link under a heading above the section's level is outside it" 29 "does not list docs/getting-started.md" \
+    "{ printf '\n## Documentation\n\n'; $all29 | grep -v getting-started; printf '\n# Other\n\n- [x](docs/getting-started.md)\n'; } >> $r29"
+  expect_pass_after "two Documentation sections count together" \
+    "{ printf '\n## Documentation\n\n'; $all29 | grep -v getting-started; printf '\n## License\n\nMIT.\n\n## Documentation\n\n- [x](docs/getting-started.md)\n'; } >> $r29"
+  expect_pass_after "a nested Documentation heading stays inside the section" \
+    "{ printf '\n## Documentation\n\n### Documentation\n\n'; $all29 | head -n 2; printf '\n### More\n\n'; $all29 | tail -n +3; } >> $r29"
+  expect_pass_after "a reference link in the section resolves against a definition anywhere in the README" \
+    "{ printf '\n## Documentation\n\n'; $all29 | grep -v 'getting-started\|/workflow\.md'; printf '%s\n' '- [Getting started][gs29]' '- [Workflow]' '' '## License' '' '[gs29]: docs/getting-started.md' '[workflow]: docs/workflow.md'; } >> $r29"
+  expect_fail_msg "a setext heading closes the section" 29 "does not list docs/getting-started.md" \
+    "{ printf '\n## Documentation\n\n'; $all29 | grep -v getting-started; printf '\nLicense\n-------\n\n- [x](docs/getting-started.md)\n'; } >> $r29"
+  expect_fail_msg "a setext Documentation heading is the section" 29 "does not list docs/getting-started.md" \
+    "{ printf '\nDocumentation\n=============\n\n'; $all29 | grep -v getting-started; } >> $r29"
   expect_fail_msg "a README with no Documentation section and no link to its index is rejected" 29 "does not link docs/README.md" \
     "sed -i.bak '/](docs\/README\.md)/d' $r29"
   expect_fail_msg "no README under any plugin trips check 29's empty-scan guard" 29 "would examine nothing" \

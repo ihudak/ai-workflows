@@ -11,7 +11,7 @@ User pages only: batch B32, the family's entry points. Needs nothing from the ot
 
 ### Fixed
 
-- **The workflow diagram draws the steps between the last Epic and the documentation**: the security scan hands on to the Product Engineer's PRD-level `/conformance` once every Epic has merged, and that run offers the documentation commands once its decisions are settled. The page's prose and the README say the same, in place of the documentation commands hanging off `/implement`.
+- **The workflow diagram draws the steps between the last Epic and the documentation**: the security scan, where no finding went to fix, hands on to the Product Engineer's PRD-level `/conformance` once every Epic has merged, and that run offers the documentation commands once its decisions are settled. The page's prose, the README and the getting-started page say the same, in place of the documentation commands hanging off `/implement`, and the page counts six other plugins' nodes, `/product-workflows:update-spec` among them, where it said three.
 - The getting-started page says the plugin reads four environment variables and lists `DOCS_PATH` only to say it is never touched, and its `DOCS_PATH` section counts ten grounding commands, with `/update-spec`; the Environment page says which four it reads.
 - The README's documentation table lists the Commit convention page.
 - The getting-started and Session cost pages call the status line's second cost figure the status-line cross-check, not "Option B" or "the cost cross-check".
