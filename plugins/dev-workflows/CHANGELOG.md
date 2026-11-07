@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.58.7] — 2026-11-07
+
+User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The pages drop the internal names the first pass left.** Run-record fields (`specs_git: misrooted`, an ARD's `status:` values, `docs_grounding: OFF`, the routing block), the `unit-branch` and `run-flags` names and the code-handoff file name are said in plain words on `/design`, `/ready`, `/implement`, `/conformance`, `/upgrade`, `/vuln`, Agents, Environment, Follow-ups, Model routing, Resume and checkpoints, Session cost, Session feedback and References.
+- **Test-suite detection drops its history** of how its rows were added; the provenance stays in a comment for maintainers.
+- **The ARD bullets on `/design`, `/implement` and `/ready` say which ARD stops a run**: one on an unmerged branch the commands cut, or a merged one whose copy in your checkout differs from the default branch's. One only in your working tree, or on a branch of your own, counts as none and is skipped.
+- **The report-only cases are whole**: Follow-ups and Resume and checkpoints name a run whose environment changed since its preflight beside one that found `$SPECS_PATH` misplaced.
+- **Environment counts ten docs-grounding commands**, adding `/update-spec`; `/upgrade`'s LTS lookup names its fallback to endoflife.date; `/implement` names `code-writer`'s `needs_decision` status as the agent returns it; Test-suite detection says why its two rows were measured.
+
 ## [4.58.6] — 2026-11-07
 
 User pages only, batch B30. Needs nothing from the other plugins' releases.

@@ -16,8 +16,8 @@ Product Requirements Document (or any ticket) from the resolved PRD folder.
 It optionally grounds the prose in the diffs of the refs the implementation record and the commit scan name, renders the example-docs authored
 release-notes body — a plain **Category:** label + `### title` + prose for the `feature-updates` /
 `breaking-changes` destinations, or one or two bare past-tense sentences for `fixes` — with **no
-`{{#internal-note}}`, no identifiers, no PR links** (the docs automation adds the metadata
-wrapper), runs a light style gate, and writes the draft to a persistent destination for the
+`{{#internal-note}}`, no identifiers, no PR links** (whoever publishes the draft adds any identifiers or
+wrapper their publishing process needs), runs a light style gate, and writes the draft to a persistent destination for the
 user to paste wherever their release notes are published.
 
 Usage: `/release-notes <ADDRESS> [--version <v>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`. `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. Here `<ADDRESS>` is a key or an
@@ -747,7 +747,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Style check: <applied N safe fixes | report only (M findings) | skipped — you chose "Skip style check"> — rules: <the checker's rules_source, where it ran><; DEGRADED — Phase 7's reason, where Phase 7 recorded it>
    - Model routing: <under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatch above already carries the enforced id, per `workflows-core:model-routing/classification` §10 | "MODERATE — detection chain throughout, no degradation (Phase 1.5)">
    - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 9's own output; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
-   - Reminder: paste the draft just appended to <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>, wherever your release notes are published — but not before every `document-as-spec` gap above is fixed, where there is one, since the note describes behaviour the code does not have yet; the docs automation adds the {{#internal-note}} metadata and emits it into example-docs.
+   - Reminder: paste the draft just appended to <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>, wherever your release notes are published — but not before every `document-as-spec` gap above is fixed, where there is one, since the note describes behaviour the code does not have yet; you, or whoever publishes it, add any identifiers or wrapper your publishing process needs.
 
    ### Next step
    [leaf/closure per the whole of `workflows-core:next-phase-offer`, whose Dev node for this command continues any pending PA or PE phase, which the other lanes define — guidance only, never auto-invoked: the release note is drafted. If earlier pipeline phases remain, continue — hand to PA → `/product-workflows:create-ard <PRD>` or PE → `/product-workflows:epics <PRD>`; if the change is already built and documented, the PRD is fully processed.]

@@ -44,4 +44,4 @@ No reviewer. The safeguards are rules every reader follows: measure a transcript
 
 The run asks which session and which turn, confirms the problem statement with you, locates the transcripts, writes the case file, dispatches the seven analysts, checks the lines its verdict rests on, and writes the report — then shows it, with its path, and records its own cost.
 
-See [`references/session-diagnosis.md`](../reference/references.md) for the rules it follows.
+The rules it follows are in the shared session-diagnosis reference ([References](../reference/references.md)).

@@ -2,7 +2,7 @@
 
 A documentation portal usually has to publish two things at once: pages anyone may read, and pages only the team that builds the product should. This page describes how this plugin's scaffolding commands separate the two, why the two obvious ways of *checking* that separation both fail, and what CI asserts instead.
 
-It documents `references/docs-workflow/visibility.md`, which is the file the commands actually execute. If the two ever disagree, that file is right.
+It documents the plugin's own visibility reference, listed on [References](references.md), which is the file the commands actually execute. If the two ever disagree, that file is right.
 
 ## One source tree, two builds
 
@@ -82,4 +82,4 @@ Neither step is written unconditionally. A size budget under `cdn` checks a dire
 
 The size budget does pass when the image directory does not exist yet, and that is not the same thing. Git tracks no empty directory, so a freshly scaffolded repository that has committed no image — every scaffold whose branding applied no logo — has no image directory on the CI runner at all, and a bare scan over it would fail its very first run as though an image were over budget. The step checks for the directory first; the moment an image is committed the directory exists and the budget applies. It cannot hide an oversized image, because an oversized image is a file, and a file means the directory is there.
 
-The fields themselves are documented in [the docs-profile schema](../../references/docs-profiles/docs-profile-schema.md), which is the authority on what each policy means.
+The fields themselves are defined in the docs-profile schema, listed on [References](references.md), which is the authority on what each policy means.

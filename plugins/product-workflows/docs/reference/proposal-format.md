@@ -95,7 +95,7 @@ Corrections come first, in the customer's own terms, and are never netted off ag
 
 Every proposal ends with a `priced-against` record: an HTML comment, invisible wherever the markdown renders, naming the exact version of every input the run priced. A slice's proposal records its PRD, decision register, grounding, ARD, specification, interview records, defect sources, Epics and the shared proposal profile, and the prior estimate a `--baseline` run reconciles against (a symlink counts as what it points at; an editor's backup file does not count); an umbrella's records each slice's link and proposal, the root coverage ledger, the container's own defect sources and the profile, which slices it excluded, and — for an excluded slice not yet priced — that slice's own inputs, so its becoming estimable shows.
 
-Whether a proposal is current is decided by comparing that record with what is on disk — contents, not dates, so a fresh clone, a squash merge or a local edit cannot make a stale proposal look current. [`/brd-proposal`](../commands/brd-proposal.md) runs the comparison for every slice in its readiness walk, and first for the umbrella itself: where nothing has moved since the umbrella was written, it says so and offers to stop. Because the profile is shared, correcting it makes every proposal priced under the old one stale. A proposal written before the record existed falls back to comparing times until it is next re-priced.
+Whether a proposal is current is decided by comparing that record with what is on disk — contents, not dates, so a fresh clone, a squash merge or a local edit cannot make a stale proposal look current. [`/brd-proposal`](../commands/brd-proposal.md) runs the comparison for every slice in its readiness walk, and first for the umbrella itself: where nothing has moved since the umbrella was written, it says so and offers to stop. Because the profile is shared, correcting it makes every proposal priced under the old one stale. A proposal with no such record falls back to comparing times until it is next re-priced.
 
 ## The programme umbrella
 
@@ -123,7 +123,7 @@ Two limits are worth knowing rather than discovering. The umbrella's de-duplicat
 
 - [`/prd-proposal`](../commands/prd-proposal.md) — prices one PRD folder: the flags, the gate, the phases, and what each tier changes in a live run.
 - [`/brd-proposal`](../commands/brd-proposal.md) — the programme umbrella: the readiness walk, the three adjustments, and the coverage statement.
-- [`proposal-format.md`](../../references/proposal-format.md) — the authority both commands author against and the reviewer checks: the full section sets, the tier and confidence tables, and the closed evidence set.
+- [References](references.md) — `proposal-format.md`, the authority both commands author against and the reviewer checks: the full section sets, the tier and confidence tables, and the closed evidence set.
 - [Agents](agents.md) — `proposal-reviewer`, the Opus-pinned review gate both commands dispatch.
 - [Roles and phases](../roles-and-phases.md) — the `proposal` cost phase, and why it is its own phase rather than part of the BRD route.
 - [Session cost](session-cost.md) — the other quantity called cost, and why it is never the one in the document.

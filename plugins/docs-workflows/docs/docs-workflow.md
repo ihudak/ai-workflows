@@ -2,7 +2,7 @@
 
 A portal is not finished when it builds. [`/docs-init`](commands/docs-init.md) gives you a site that builds, lints and serves with a stub in every section, and [`/docs-audit`](commands/docs-audit.md) gives you a prioritised list of every page that site is missing — and then you are holding a backlog with no stated order to work through it. This page is that order: from an empty repository to a portal whose coverage grid says the work is done, step by step, with the parts no command runs written out as the procedure a person actually follows.
 
-**Four of the eight steps below run a command. The other four you do by hand, and this page says how.** Read *by hand* as **no command of this plugin does that step for you** — not as *no command helps*: [`/document`](commands/document.md) will draft and style-check a page you describe to it, and step 4 says which half of the work that leaves with you. Where a later release will automate a step it is named at the end of that step, as what changes later and never as something to type. **Nothing on this page asks you to run a command that is not installed.**
+**Four of the eight steps below run a command. The other four you do by hand, and this page says how.** Read *by hand* as **no command of this plugin does that step for you** — not as *no command helps*: [`/document`](commands/document.md) will draft and style-check a page you describe to it, and step 4 says which half of the work that leaves with you. Where a command is planned to automate a step, it is named at the end of that step, as what may change later and never as something to type. **Nothing on this page asks you to run a command that is not installed.**
 
 ## The route
 
@@ -112,13 +112,13 @@ Mark every claim you could not ground with `[NEEDS CLARIFICATION: why]`, in the 
 
 **What helps today.** [`/document`](commands/document.md) in direct mode will apply a described edit to pages and run the style check over them, which is real work off your hands — but it reads no backlog: it does not open the unit, does not write the `unit:` key, does not move a `status`, and does not add the page to the `nav:` blocks. The prose is its half; the unit is yours.
 
-*Later: `/docs-write` is specified to take the highest-priority missing unit and draft it, leaving it `drafted` with its unresolved claims marked, and to regenerate both `nav:` blocks whenever it adds or renames a page. It is not part of this release.*
+*Later: `/docs-write` is planned to take the highest-priority missing unit and draft it, leaving it `drafted` with its unresolved claims marked, and to regenerate both `nav:` blocks whenever it adds or renames a page. No such command exists yet.*
 
 ### 5. Capture what the page shows — by hand
 
 A `how-to` or a `tutorial` needs the sequence of screens it describes, and **that sequence is not derivable from routes** — which is why this step exists whether or not a command ever runs it.
 
-**Walk the flow in a real environment** and screenshot each step the page describes. Where the unit names a `walkthrough`, follow it; nothing in this release composes one, so a unit has one only because somebody wrote it. Where there is none, walk the flow yourself and consider writing the file as you go — the format is frozen now so that a browser driver can execute the very same file later, without anybody rewriting it.
+**Walk the flow in a real environment** and screenshot each step the page describes. Where the unit names a `walkthrough`, follow it; no command composes one, so a unit has one only because somebody wrote it. Where there is none, walk the flow yourself and consider writing the file as you go — the format is frozen now so that a browser driver can execute the very same file later, without anybody rewriting it.
 
 A walkthrough lives at **`<top>/.dev-workflows/walkthroughs/<id>.yml`**, where `<top>` is the git top level of the documentation repository — the same home as the backlog and the profile, and not the content root, which matters where the site sits in a `site/` or `website/` directory below it. The unit records the **id** and never the path. This is the whole shape:
 
@@ -154,7 +154,7 @@ Under `in-repo`, `images.max_bytes` (default 300 KB) is the CI budget checked pe
 
 **Under `in-repo`, an image only internal pages may see belongs under `docs/internal/` and never under `images.root`.** This is the trap in the step, and it is invisible from inside the repository: a file under `images.root` is copied into **both** builds whether or not any page references it, because MkDocs copies the content tree and does not trace references. So a screenshot of an internal screen, saved to the shared assets directory and referenced only by an internal page, **ships in the public site** — and neither CI gate fires. The first sees no cross-link, because there is no link; the second greps the public output for the visibility marker, which an image cannot carry. Knowing the rule alone is not enough here, which is why the mechanism is spelled out: the instinct that an unreferenced file is harmless is exactly the instinct that is wrong. The same separation that drops internal *pages* from the public build drops internal *files*, and it works on path and on nothing else. [Documentation visibility](reference/docs-visibility.md) is the whole model.
 
-*Later: `/docs-capture` is specified to drive the capture and fill the slots a walkthrough names. It is not part of this release.*
+*Later: `/docs-capture` is planned to drive the capture and fill the slots a walkthrough names. No such command exists yet.*
 
 ### 6. Verify the marked claims — by hand
 
@@ -189,9 +189,9 @@ Answers go back into the walkthrough file, on the step they belong to, and **eac
 
 **Then set the status, and the two cases end differently.** A page you resolved every marker on goes `status: verified`, and then `published` when the page actually ships. **A page still carrying a marker takes `drafted` and stops there** — it may be merged and deployed with the marker showing, which is what *ships marked* means, but its unit may not reach `published` by any route: not the ordinary one, which runs through `verified`, and not the `--refresh` reconciliation, which reads the page, finds the marker and lands the unit on `drafted` itself. Resolve the marker and the unit moves on; until then the grid says, correctly, that this one is not finished.
 
-**`verified → published` has no command behind it in any specification of this family, now or later** — that transition is a branch merged and a site deployed, which happens in your repository. It is worth knowing which arrow that is, because `published` is the state the coverage fraction counts, and there is deliberately no arrow from `drafted` straight to it: if there were, the grid could go green over pages the family knows it never walked.
+**`verified → published` has no command behind it, now or later** — that transition is a branch merged and a site deployed, which happens in your repository. It is worth knowing which arrow that is, because `published` is the state the coverage fraction counts, and there is deliberately no arrow from `drafted` straight to it: if there were, the grid could go green over pages the family knows it never walked.
 
-*Later: `/docs-verify` is specified to render the checklist, take the answers and write them back. It is not part of this release.*
+*Later: `/docs-verify` is planned to render the checklist, take the answers and write them back. No such command exists yet.*
 
 ---
 
@@ -209,7 +209,7 @@ Run it after a new integration, a new role or a new release, so the denominator 
 
 `review_by` in a page's frontmatter is the calendar backstop for the rot no diff can see: a product renamed, a process changed, a policy that moved, none of which touches a line of the code a page's evidence points at. Sort your pages by that date and re-read what has aged past it. A page that is still right takes a new date; one that is not goes back to step 4, and a claim you can no longer ground is marked rather than left standing.
 
-*Later: `/docs-drift` is specified to watch the evidence side of this — diffing a surface's evidence paths between the ref the backlog recorded and today, and re-queueing the units that fan out from it. The calendar side stays a human judgement either way, so this step does not disappear when that command ships.*
+*Later: `/docs-drift` is planned to watch the evidence side of this — diffing a surface's evidence paths between the ref the backlog recorded and today, and re-queueing the units that fan out from it. The calendar side stays a human judgement either way, so this step does not disappear when that command ships.*
 
 ---
 

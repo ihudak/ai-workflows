@@ -48,4 +48,4 @@ The command logs the corrective triple, commits it to the specs repo immediately
 - [`/prompt`](prompt.md) — the same corrective triple, applied directly instead of explored.
 - [`/prompt-grill-me`](prompt-grill-me.md) — the same corrective triple, interrogated inline instead of handed off to a separate skill.
 - [Workflow overview](../workflow.md#cross-cutting-commands) — where these four commands sit relative to the role pipeline.
-- [`specs-repo-git.md`](../../references/specs-repo-git.md) — the `specs-preflight`/`commit-artifacts` entry points, and why this command's commit runs before its final phase rather than after.
+- [References](../reference/references.md) — the shared specs-repository git reference, which holds the `specs-preflight`/`commit-artifacts` entry points and explains why this command's commit runs before its final phase rather than after.

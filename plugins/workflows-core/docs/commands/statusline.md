@@ -18,7 +18,7 @@ Takes no arguments. None of the three run flags apply to this command ([`environ
 
 ## What it needs
 
-- **Local access to `~/.claude/settings.json`** and write access under `~/.claude/dev-workflows/` — nothing else. This command reads no `$SPECS_PATH`, runs no specs-repo preflight, and creates no branch.
+- **Local access to `~/.claude/settings.json`**, which it reads and writes, first backing up any `statusLine` block it already holds to `settings.json.dev-workflows.bak` beside it, and write access under `~/.claude/dev-workflows/` — nothing else. This command reads no `$SPECS_PATH`, runs no specs-repo preflight, and creates no branch.
 - **`bash` and `jq`** — the installed script reads every field Claude Code hands it with `jq`, and renders nothing and writes no cost snapshot without it on the `PATH` it runs with — the one Claude Code started with, which need not be your shell's. Where the command's own shell finds no `jq` it says so above the confirmation question and again in its report, still installs on confirm — the line works from its next render once `jq` is installed — and does the settings merge with `python3` rather than hand-editing the JSON.
 
 ## What it produces

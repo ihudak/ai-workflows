@@ -23,13 +23,12 @@ sweep without freezing, applying or sweeping anything twice — the records the 
 reopened counting as the re-run's own, and any of those writes a freeze cut off part-way did not
 make written by the re-run. It takes the corrections the stopped run disposed without asking again
 where the review was read in schema mode; read in free-text mode, it shows you that run's
-dispositions beside each correction to match. A pass a release before 3.55.0 opened records none of
-this, so the re-run asks you to check what its interrupted freeze wrote (a re-run over a *different* review stops with
+dispositions beside each correction to match. Where a pass records none of this, the re-run asks you to check what its
+interrupted freeze wrote (a re-run over a *different* review stops with
 `BRD_RECONCILE_INTERRUPTED_PASS` until the unfinished one is finished); to sweep a dependent it could
 only record, once that dependent has its own register on the default branch, against the changed ids
-the earlier pass recorded; and, on a slice reconciled
-before 3.33.1, to close the questions raised only about the defects of a requirement the customer
-withdrew.
+the earlier pass recorded; and, on a slice whose reconciliation left questions held that were
+raised only about the defects of a requirement the customer withdrew, to close them.
 
 ## Synopsis
 
@@ -63,8 +62,8 @@ withdrew.
   in free-text mode rather than detecting the mode. It never forces a schema parse. It is the
   remedy `BRD_RECONCILE_EMPTY_DIGEST` names for a prose review the schema pass could not see.
 - **`--sent <path>`** (optional, repeatable) — the material the customer was *actually* sent, for a
-  review that answers a package this plugin did not build: one authored by hand before the route
-  existed, or sent out of band. Each path may be a file or a directory and may sit anywhere. The
+  review that answers a package this plugin did not build: one authored by hand outside this route,
+  or sent out of band. Each path may be a file or a directory and may sit anywhere. The
   run copies every path verbatim into the BRD folder's **customer-sent-`<YYYYMMDD>`/** and commits
   it beside the review, before anything reads either.
 
@@ -134,10 +133,10 @@ flowchart TD
     p12 --> p13["Phase 13 — Handoff"]
     p13 --> p14["Phase 14 — Next steps"]
     p14 --> p15["Phase 15 — Session maintenance, feedback & cost"]
-    p14 -.->|"advance_ready + no unallocated row and one covered-here"| prd["/create-prd (PM)"]
-    p14 -.->|"advance_ready"| ard["/create-ard (PA, optional)"]
-    p14 -.->|"advance_ready"| spec["/specify (PE)"]
-    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
+    p14 -.->|"nothing left to re-enter for + no unallocated row and one covered-here"| prd["/create-prd (PM)"]
+    p14 -.->|"nothing left to re-enter for"| ard["/create-ard (PA, optional)"]
+    p14 -.->|"nothing left to re-enter for"| spec["/specify (PE)"]
+    p14 -.->|"something to re-enter for — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
 ```
 
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the
@@ -165,8 +164,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   idea route — `/create-ard` or `/specify`, or, where the folder holds a `prd.md`, `/update-prd` to revise that PRD from what the review says. A resolved root stops with
   `BRD_RECONCILE_ROOT_LEVEL`, naming `/brd-split <BRD-KEY> "<how to cut it>"` to carve a slice and
   then `/brd-reconcile <SLICE-KEY> @<review-file>` on it; where the root already carries
-  reconciliation artifacts written under the earlier two-level model, the stop names those files and
-  leaves them in place, unread.
+  reconciliation artifacts, the stop names those files and leaves them in place, unread.
 - **An existing BRD folder.** No folder for `<BRD-KEY>` — searched at every level
   `resolve-address` bounds (three below `specifications/`) — stops with `BRD_RECONCILE_NOT_FOUND`, which names both ways a folder comes to
   exist rather than asserting one.
@@ -394,7 +392,7 @@ command removes none of them; the next `/brd-interview` run does.
   is unconfirmed. The four values are `confirm`, `correct`, `reject` and `ask-the-customer`, and a
   candidate answering no question the package put takes one of two instead — recorded for a human,
   quoting the customer, or rejected — and is never frozen on that form, save that a free-text answer
-  naming the question it does answer re-points it onto the array its target takes; the picker carries no bulk
+  naming the question it does answer re-points it onto the options its target takes; the picker carries no bulk
   confirmation, and a free-text answer is otherwise **normalised into those values or the candidate
   is re-asked** — never written through as another. *Reject* reads **no decision to freeze**: the
   customer declined to answer, or the row is not an answer at all (context, thanks, scheduling). It
@@ -444,11 +442,11 @@ command removes none of them; the next `/brd-interview` run does.
   *what still needs a human*, and a later answer to it is walked against that record — one that
   completes or replaces it with a reason closes the question. Where the
   defects were already withdrawn before this review and the question has no record of its own, the
-  walk offers such a reply the two record-or-reject options only. A slice reconciled before 3.33.1 closes such questions when you re-run
+  walk offers such a reply the two record-or-reject options only. A slice whose reconciliation left such questions held closes them when you re-run
   `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md`. That
   re-run skips every decision the earlier pass froze, and offers again every answer to a question it
   froze nothing for. Its section-12 corrections are put again with every earlier pass's listing beside
-  each, since a record from before 3.33.1 names no row by position: point each to the listing that
+  each, since that earlier pass's record names no row by position: point each to the listing that
   applied or refused it, and it is reported already disposed; one matched to a deferral, or to none, is
   disposed again. A live record `open` for want of its reason is **completed**,
   minting nothing, by an answer with its own `chosen` and a reason now stated — never on an entry
@@ -707,11 +705,11 @@ the customer, [`/prd-ground --rebaseline`](prd-ground.md) where the review chall
 and a second `/brd-reconcile` pass on this same review once a dependent recorded-not-written has its
 own register on the default branch.
 
-**Advancing and re-entering are two lists, and a run gets exactly one of them.** Phase 14 resolves
-`advance_ready` from what the run left behind — any reopened decision, any `[C]` still held for the
+**Advancing and re-entering are two lists, and a run gets exactly one of them.** Phase 14 decides
+whether the slice can advance from what the run left behind — any reopened decision, any `[C]` still held for the
 customer, any finding the review left to re-derive, any dependent it could only record — and where
-any of those is true the three the BRD route options are **dropped**, not annotated. That is a
-refusal only this phase can make, unlike the level refusal above, which each of the three now makes
+any of those is true the three BRD-route options are **dropped**, not annotated. That is a
+refusal only this phase can make, unlike the level refusal above, which each of the three makes
 for itself: `/create-ard` on the BRD route and `/specify` on the BRD route run no gate
 that catches a reopened decision — their gate on `decisions.md` tests which ref the register is on,
 never what it holds — since routing an `open` or `reopened` record into their own
@@ -753,7 +751,7 @@ position, and writes `reconciliation-<date>.md`.
 
 Phase 14 then hands the route over. Nothing this run left behind reopened a decision, held a `[C]`
 for the customer, left a finding to re-derive, or left a dependent only recorded — so
-`advance_ready` is `yes` — and this slice's ledger leaves no row `unallocated` and at least one
+the slice can advance — and this slice's ledger leaves no row `unallocated` and at least one
 `covered-here`, so all three exits are offered off the same key:
 
 ```
@@ -765,7 +763,7 @@ for the customer, left a finding to re-derive, or left a dependent only recorded
 Had this ledger left a row `unallocated`, or left none `covered-here`, the first line would be
 dropped from the offer and the stop would say which test failed; the other two would still be
 offered. Had the run instead reopened a decision or left a question held for the customer,
-`advance_ready` would be `no`, and Phase 14 would offer the re-entry the trigger names — another
+the slice could not advance, and Phase 14 would offer the re-entry the trigger names — another
 `/brd-interview` round where every round is closed, or the resume of an open one that is not held
 only for the customer, a re-package, or a `/prd-ground --rebaseline` pass — never the three above. Whatever else it offers, a record its propagation sweep reopened in a
 dependent BRD is named beside the list with `/brd-interview` on that dependent's key.
@@ -774,25 +772,9 @@ dependent BRD is named beside the list with `/brd-interview` on that dependent's
 
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
-- [`customer-review-schema.md`](../../references/customer-review-schema.md) — the twelve sections the
-  returned review carries, and the one-new-file rule that makes section 12 the only channel for a
-  change to a package document.
+- [References](../reference/references.md) — the plugin's own formats this command applies: the customer review schema (the twelve sections the returned review carries, and the one-new-file rule that makes section 12 the only channel for a change to a package document), the decision register format (the `[CD#n]` record, the mandatory `argumentation`, the two causes that may reopen a decision, `conditional_on`, and the will-change rule the freeze applies to a `[CD#n]`), interview tagging (the `[C]` tag and the round vocabulary whose terminal disposition *answered by the customer* this command writes), the coverage ledger format (the dispositions, and the roll-up behind the ledger line every run ends with), the BRD format (the four defect resolutions, three of which this command writes — `customer-amended <SLICE-KEY> <date>`, `withdrawn`, and `resolved-by: <SLICE-KEY>/[CD#n]` for a defect whose question the customer answered, the first and the last qualified by the slice's key because each slice keeps its own reviews and numbers its own decisions — and the slice's one-hop inheritance of its parent's defect log) and bundle packaging (why the committed bundle is the permanent record, and therefore why nothing inside it is bannered).
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record the register carries, and the upstream
   check run on the grounding files.
-- [`decision-register-format.md`](../../references/decision-register-format.md) — the `[CD#n]` record,
-  the mandatory `argumentation`, the two causes that may reopen a decision, `conditional_on`, and the
-  will-change rule the freeze applies to a `[CD#n]`.
-- [`interview-tagging.md`](../../references/interview-tagging.md) — the `[C]` tag and the round
-  vocabulary whose terminal disposition *answered by the customer* this command writes.
-- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the dispositions, and
-  the roll-up behind the ledger line every run ends with.
-- [`brd-format.md`](../../references/brd-format.md) — the four defect resolutions, three of which
-  this command writes — `customer-amended <SLICE-KEY> <date>`, `withdrawn`, and
-  `resolved-by: <SLICE-KEY>/[CD#n]` for a defect whose question the customer answered, the first and
-  the last qualified by the slice's key because each slice keeps its own reviews and numbers its own
-  decisions — and the slice's one-hop inheritance of its parent's defect log.
-- [`bundle-packaging.md`](../../references/bundle-packaging.md) — why the committed bundle is the
-  permanent record, and therefore why nothing inside it is bannered.
 - [Agents](../reference/agents.md) — `customer-review-reader`'s and `impl-maintenance`'s full
   contracts.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),

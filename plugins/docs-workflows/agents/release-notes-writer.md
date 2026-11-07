@@ -8,9 +8,9 @@ tools: ["Read", "Glob", "Grep", "Skill"]
 
 Render a release-notes draft for a resolved Product Requirements Document in the
 example-docs feature-update format. You produce only the **authored body** that a
-PM publishes wherever release notes are published; the docs team's automation adds
-the `{{#internal-note}}` metadata wrapper (Ticket URL, assignee, status, release
-versions) from the ticket itself.
+PM publishes wherever release notes are published; whoever publishes it adds any
+metadata wrapper, such as an `{{#internal-note}}` block (ticket URL, assignee, status,
+release versions), and any identifiers their publishing process needs.
 
 You do NOT write files — you return the rendered draft to the caller.
 
@@ -244,10 +244,10 @@ Return YAML exactly as defined in `${CLAUDE_PLUGIN_ROOT}/references/handoff/rele
 - NEVER write or modify files. This agent renders; the command writes.
 - NEVER include an identifier (e.g. `PRODUCT-1234`, `[[KEY]]`, or a browse URL)
   anywhere in `category_label`, `feature_title`, `prose`, or `combined_rendered`. The draft is
-  published wherever release notes are published; the automation associates the ID.
+  published wherever release notes are published; whoever publishes it adds any identifiers their publishing process needs.
 - NEVER include a Bitbucket/GitHub/GitLab PR URL or PR number in any output field.
   Release notes are customer-facing.
-- NEVER emit a `{{#internal-note}}` block — the docs automation generates it.
+- NEVER emit a `{{#internal-note}}` block — whoever publishes the draft adds any wrapper their publishing process needs.
 - NEVER invent user-visible behaviour not supported by the PRD content (or the diff
   summaries, or a conformance entry's `shipped`, when provided); flag unverifiable claims as a `gaps` entry.
 - NEVER leave out a state the release starts from that §6 puts in the note (Process step 7), and

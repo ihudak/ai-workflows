@@ -11,7 +11,7 @@ Plain markdown, in a plain checklist:
 
     - [ ] <one imperative line naming the out-of-scope action> — <why it is out of scope>
 
-No effort symbols, no priority glyphs, no tags, no dates. **That is a simplification, not an
+No effort symbols, no priority glyphs, no tags, no dates. **That is deliberate, not an
 omission**: the list lives in the specs repo, where none of that would render and all of it would be
 noise.
 
@@ -27,8 +27,8 @@ as a section below the checklist, and the line links it.
 **No folder resolved → report-only.** The follow-ups stay in the Final Report and the run says so.
 Nothing is ever written into your working directory, which may be a code repository.
 
-**The run carries `specs_git: misrooted` → report-only too**, whether or not a folder resolved: `$SPECS_PATH` is
-misplaced, so nothing is written under it, and the notice says that is the reason.
+**The run found `$SPECS_PATH` misplaced or its environment changed since its preflight, or stopped because its environment no longer matched its session file's → report-only too**, whether or not a folder resolved: nothing is written
+under `$SPECS_PATH`, and the notice says that is the reason.
 
 That is the whole ladder.
 

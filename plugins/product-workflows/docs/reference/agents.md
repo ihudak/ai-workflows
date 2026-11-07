@@ -22,7 +22,7 @@ Read-only discovery and grounding — each returns a structured digest rather th
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `brd-reader` | opus | Read, Glob, Grep | Extracts `[BR#n]` rows — `source_anchor`, unconfirmed `defect_candidates` — from a BRD's document, linked markdown and image transcriptions; an image-only obligation gets an `ambiguity`. Read-only. | `/brd-intake` |
+| `brd-reader` | opus | Read, Glob, Grep | Extracts `[BR#n]` rows — `source_anchor`, unconfirmed candidate defects — from a BRD's document, linked markdown and image transcriptions; an image-only obligation gets an `ambiguity`. Read-only. | `/brd-intake` |
 | `code-grounder` | opus | Read, Glob, Grep, Bash, Skill | Grounds specific BRD claims against one repository at a pinned commit — one `[CG#n]` finding per claim, verifying `HEAD` matches the pin before grounding anything. | `/prd-ground` |
 | `customer-review-reader` | per routing | Read, Glob, Grep | Reads a returned customer review in two modes — parses a schema-shaped file, or drafts that schema from prose; every free-text inference returns an unconfirmed candidate. | `/brd-reconcile` |
 | `design-grounder` | opus | Read, Glob, Grep, Skill | Reconciles a BRD against an exported design frame set — one `[DG#n]` per divergence in four classes; refuses without an index file; the code-capture class cites a `[CG#n]` instead of asserting it. | `/prd-ground` |

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.2 — 2026-11-07
+
+### Fixed
+- The agents page describes the untrusted-content block in words rather than by another plugin's file path (batch B30).
+
 ## 0.8.1 — 2026-10-29
 
 ### Fixed

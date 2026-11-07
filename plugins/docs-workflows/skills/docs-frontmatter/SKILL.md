@@ -60,8 +60,8 @@ Set/validate the core frontmatter fields per the guidelines reference:
 - `meta.content-type` — **mandatory on new pages**; one of the enum
   (`how-to`, `tutorial`, `explanation`, `reference`, `get-started`,
   `troubleshooting`, `upgrade`, `best-practices`, `app`, `extension`).
-  **Never `overview`** (deprecated); `release-notes` pages are automation-generated,
-  not authored here.
+  **Never `overview`** (deprecated); `release-notes` pages are
+  not authored here: `/release-notes` drafts the note.
 - `meta.i18n-priority` — optional number (lower = higher priority).
 - `meta.generation` — `latest` / `classic` array (advisory; a `latest`-only page
   that surfaces in Self-hosted breaks the build — use both when unsure).

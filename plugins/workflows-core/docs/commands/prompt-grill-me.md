@@ -23,7 +23,7 @@ Write the flag before or after the request, never inside it: a leading run of fl
 - **The request itself, verbatim** — the correction to interrogate, and the corrective-triple's User prompt block, verbatim save the redactions above.
 - **Recent session context**, to infer the target `command`.
 - **`$SPECS_PATH`** — for the specs-preflight/commit-artifacts bookkeeping only.
-- **No plugin dependency.** Unlike [`/prompt-brainstorm`](prompt-brainstorm.md), which hands off to the separate `superpowers` plugin's `brainstorming` skill, this command's grill runs entirely on the bundled `references/grilling-technique.md` — nothing outside `workflows-core` is required.
+- **No plugin dependency.** Unlike [`/prompt-brainstorm`](prompt-brainstorm.md), which hands off to the separate `superpowers` plugin's `brainstorming` skill, this command's grill runs entirely on the grilling technique `workflows-core` bundles — nothing outside `workflows-core` is required.
 
 ## What it produces
 
@@ -48,4 +48,4 @@ The command logs the corrective triple, commits it to the specs repo immediately
 - [`/prompt`](prompt.md) — the same corrective triple, applied directly with no interrogation.
 - [`/prompt-brainstorm`](prompt-brainstorm.md) — the same corrective triple, explored with the separate `superpowers:brainstorming` skill instead of grilled inline.
 - [Workflow overview](../workflow.md#cross-cutting-commands) — where these four commands sit relative to the role pipeline.
-- [`specs-repo-git.md`](../../references/specs-repo-git.md) — the `specs-preflight`/`commit-artifacts` entry points, and why this command's commit runs before its final phase rather than after.
+- [References](../reference/references.md) — the shared specs-repository git reference, which holds the `specs-preflight`/`commit-artifacts` entry points and explains why this command's commit runs before its final phase rather than after.

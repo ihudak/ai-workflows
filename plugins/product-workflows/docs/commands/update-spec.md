@@ -16,7 +16,7 @@ Revises a merged `specification.md` in place — keeping its IDs and its `Create
 - **`[<what is wrong>]`** (optional) — every token from the first one after the address that is neither a flag nor a flag's value: free text saying what to correct, kept as typed. Without it, the run takes what moved upstream and the notes already in the specification, and asks for a correction only where those name nothing.
 - **`[--no-docs]`**, **`[--docs <path>]`**, **`[--no-arch]`** — as [`/specify`](specify.md)'s: documentation and architecture grounding for the items that changed.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and persists only defects. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) runs every dispatched step on that model — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and persists only defects. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) runs every dispatched step on that model — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
@@ -90,5 +90,5 @@ The run diffs the PRD from the version the specification's lineage record names 
 - [`/epics`](epics.md) — refines the Epics whose `## Covers` this run named.
 - [Roles and phases](../roles-and-phases.md) — what the `pe` role owns.
 - [Model routing](../reference/model-routing.md), [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md) and [Resume and checkpoints](../reference/resume-and-checkpoints.md).
-- [`specification-format.md`](../../references/specification-format.md) — the lineage record and the legacy `inputs_at` field, the superseded and withdrawn markers, the live-items rule and the archive rule.
+- [References](../reference/references.md) — `specification-format.md`: the lineage record and the legacy `inputs_at` field, the superseded and withdrawn markers, the live-items rule and the archive rule.
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record this command diffs from and re-stamps, and the upstream check it runs above the base — on the PRD, the ARDs, the decision register and the grounding files and, for an Epic-level specification, the Epic. Of the register and the grounding, only implementation-level records count.

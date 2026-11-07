@@ -26,7 +26,7 @@ How the two documentation commands find the code a feature changed, beyond the i
 
 ## Authoring formats
 
-- `release-note-types.md` — the release-note section map (`## Breaking changes` / `## Feature updates` / `## Fixes`, all three in one **release-notes.md** under a release-version heading, each draft under a scope comment naming the PRD or Epic it was drafted for and every commit its run read, which is what bounds a later run rather than any date), the per-section draft shape and prose rules, the deprecation-note rule, the effective-version rule, the rule for a state the release starts from, Change Type sourcing, and what a `/dev-workflows:conformance` entry does to the draft; consulted by `release-notes-writer`, cited by `/release-notes` for its own invariants, and named by `docs-workflow/scaffold-tree.md` and by two `workflows-core` references, `prd-format` and `implementation-format`.
+- `release-note-types.md` — the release-note section map (`## Breaking changes` / `## Feature updates` / `## Fixes`, all three in one **release-notes.md** under a release-version heading, each draft under a scope comment naming the PRD or Epic it was drafted for and every commit its run read, which is what bounds a later run rather than any date), the per-section draft shape and prose rules, the deprecation-note rule, the effective-version rule, the rule for a state the release starts from, Change Type sourcing, and what a `/dev-workflows:conformance` entry does to the draft; consulted by `release-notes-writer`, cited by `/release-notes` for its own invariants, and named by `docs-workflow/scaffold-tree.md` and by two shared references on the companion `workflows-core` plugin's References page, the PRD format and the implementation record.
 
 ## The documentation-portal scaffold
 
@@ -52,7 +52,7 @@ Two further subtrees carry bundled guidance too large or too domain-specific to 
 - `docs-profiles/` (5) — docs-profile authoring conventions for the built-in `example-docs` worked example (frontmatter, changelog, anchors, render verification, the docs-profile schema). Every command here but `/release-notes` reads a file in it, and so do the `doc-planner`, `doc-writer` and `doc-reviewer` agents, the `docs-frontmatter` skill and the `changelog-owners-reminder` hook.
 - `handoff/` (4) — one input/output document-format contract per agent, read by the agent itself — and, for `docs-auditor` and `ia-planner`, also by `/docs-audit`, which builds each dispatch's brief from the file: one each for `diff-summarizer`, `release-notes-writer`, `docs-auditor` and `ia-planner`. The last two are a matched pair — `ia-planner`'s input block is `docs-auditor`'s output block, verbatim — so a field added to one is added to the other in the same edit, and the volatility window and its buckets are written once, in `docs-auditor`'s, for both of them to read.
 
-One of these subtrees (`docs-profiles/`) also holds the data and template files named in the introduction above, so its `*.md` count here is smaller than `find <dir> -type f` would report; `handoff/`, `docs-workflow/` and `docs-audit/` are markdown only, and for them the two counts agree.
+One of these subtrees (`docs-profiles/`) also holds the data and template files named in the introduction above, so its markdown-page count here is smaller than its file count; `handoff/`, `docs-workflow/` and `docs-audit/` are markdown only, and for them the two counts agree.
 
 ## Skills
 
