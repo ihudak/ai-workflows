@@ -29,7 +29,7 @@ claude plugin marketplace update shipwright
 claude plugin update product-workflows@shipwright
 ```
 
-**Both steps are needed, and the second is the one that changes what runs.** `marketplace update` refreshes the catalogue — what the marketplace advertises — while an already-installed plugin stays at the version you installed. `claude plugin update product-workflows@shipwright` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same thing with a picker. This page used to say the first line alone was enough; it is not, and the symptom is quiet — `claude plugins list` keeps reporting the old version while the catalogue advertises the new one.
+**Both steps are needed, and the second is the one that changes what runs.** `marketplace update` refreshes the catalogue — what the marketplace advertises — while an already-installed plugin stays at the version you installed. `claude plugin update product-workflows@shipwright` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same thing with a picker. The first line alone is not enough, and the symptom is quiet — `claude plugins list` keeps reporting the old version while the catalogue advertises the new one.
 
 ## What you set on your machine
 

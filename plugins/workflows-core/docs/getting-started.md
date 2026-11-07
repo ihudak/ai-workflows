@@ -14,7 +14,7 @@ claude plugin marketplace update shipwright
 claude plugin update workflows-core@shipwright
 ```
 
-**Both steps are needed, and the second is the one that changes what runs.** `marketplace update` refreshes the catalogue — what the marketplace advertises — while an already-installed plugin stays at the version you installed. `claude plugin update` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same with a picker. This page used to say the first line alone was enough; it is not, and the symptom is quiet — `claude plugins list` keeps reporting the old version while the catalogue advertises the new one.
+**Both steps are needed, and the second is the one that changes what runs.** `marketplace update` refreshes the catalogue — what the marketplace advertises — while an already-installed plugin stays at the version you installed. `claude plugin update` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same with a picker. Running `marketplace update` alone is not enough, and the symptom is quiet — `claude plugins list` keeps reporting the old version while the catalogue advertises the new one.
 
 ## What this plugin is
 
@@ -26,11 +26,11 @@ It does ship seven commands of its own, and one of them is worth running first �
 
 ## What you set on your machine
 
-`workflows-core` reads nine environment variables, and every one of them is read by a reference this plugin ships — for eight of the nine, the only read anywhere in this plugin. `SPECS_PATH` is the exception: `/frames` gates on it in its own Phase 0 and refuses to run without it. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
+`workflows-core` reads nine environment variables, on behalf of every plugin in the family. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
 
 ### `SPECS_PATH`
 
-The **shared, team-visible store for the AI-authored documents** and for every run's bookkeeping — cost entries, session feedback, follow-ups. It has no default: nothing is guessed, and with it unset those entries degrade to report-only rather than being written somewhere else. `/frames` is the exception among this plugin's commands — *"every path this command reads or writes is under it"* — so it stops in Phase 0 rather than degrading. Set it to the root of a dedicated specs repository, the directory that holds `specifications/`, never to `specifications/` itself: a run that resolves an address against the latter stops and names the value to set instead ([Environment](reference/environment.md)).
+The **shared, team-visible store for the AI-authored documents** and for every run's bookkeeping — cost entries, session feedback, follow-ups. It has no default: nothing is guessed, and with it unset those entries degrade to report-only rather than being written somewhere else. `/frames` is the exception among this plugin's commands — *"every path this command reads or writes is under it"* — so it stops before it reads its address rather than degrading. Set it to the root of a dedicated specs repository, the directory that holds `specifications/`, never to `specifications/` itself: a run that resolves an address against the latter stops and names the value to set instead ([Environment](reference/environment.md)).
 
 ### `REPOS_PATH`
 
@@ -54,15 +54,15 @@ An optional path to your own price table, overriding the bundled `references/cos
 
 ### `WORKFLOWS_SKIP_COSTS`
 
-Persistent default for the `--skip-costs` run flag every applicable command accepts — the command still advances the session-cost checkpoint, but never writes a cost entry. `workflows-core:run-flags` is the single source of truth for this and the other two run flags.
+Persistent default for the `--skip-costs` run flag every applicable command accepts — the command still advances the session-cost checkpoint, but never writes a cost entry. The `run-flags` reference, listed on the [References](reference/references.md#environment-and-routing) page, defines this flag and the other two.
 
 ### `WORKFLOWS_SKIP_FEEDBACK`
 
-Persistent default for the `--skip-feedback` run flag — narrows an applicable command's maintenance phase to bug capture only, dropping the in-session Lessons Learned report. See `workflows-core:run-flags`.
+Persistent default for the `--skip-feedback` run flag — narrows an applicable command's maintenance phase to bug capture only, dropping the in-session Lessons Learned report.
 
 ### `WORKFLOWS_ENFORCE_MODEL`
 
-Persistent default for the `--enforce-model` run flag — pins every subagent an applicable command dispatches to one model (an alias, a full model id, or `routing` for no enforcement), bypassing model-routing's own per-step selection. Where the agent tool selects models by family only, a version-specific value is honoured only for its family's newest model and runs as the family name; the harness picks the version. See `workflows-core:run-flags`.
+Persistent default for the `--enforce-model` run flag — pins every subagent an applicable command dispatches to one model (an alias, a full model id, or `routing` for no enforcement), bypassing model-routing's own per-step selection. Where the agent tool selects models by family only, a version-specific value is honoured only for its family's newest model and runs as the family name; the harness picks the version.
 
 ### Claude Code's skill-listing budget
 

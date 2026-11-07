@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.2.6] — 2026-11-07
+
+User pages only, batch B30. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **Getting started drops a line of the page's own history** ("This page used to say the first line alone was enough") and keeps the warning: `marketplace update` alone does not update an installed plugin.
+
 ## [1.2.5] — 2026-10-29
 
 ### Fixed

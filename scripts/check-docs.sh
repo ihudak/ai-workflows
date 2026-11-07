@@ -6,16 +6,16 @@
 # in the two restructures this one follows (a sibling plugin repo,
 # ai-containers#78).
 #
-# TWENTY-FOUR checks, numbered 1-24 in the order their functions appear below. The number is
+# TWENTY-FIVE checks, numbered 1-25 in the order their functions appear below. The number is
 # written here and nowhere else in this file, and nothing gates it -- re-derive it with
 # `grep -oE '\bfail [0-9]+ ' "$0" | awk '{print $2}' | sort -un` -- the numbers a fail() call
 # can actually report -- rather than trusting this sentence, and update it in the commit that
-# adds a check. Counting the banner comments instead gives 23: checks 1 and 2 share one. Every
-# edition carries all twenty-four: a check an edition has no use for is switched off by its
+# adds a check. Counting the banner comments instead gives 24: checks 1 and 2 share one. Every
+# edition carries all twenty-five: a check an edition has no use for is switched off by its
 # config block (checks 13, 16 and 19 in the internal editions, check 22 here and in the Copilot
 # edition, check 23 in any edition whose escalation rules name no path-unset rule, check 24 in
 # any edition that ships no hook preloading context for a keyed command), never cut from the
-# body.
+# body. Check 25 has no switch: every edition ships pages a user reads.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -2748,6 +2748,97 @@ check_keyed_hooks() {
   return 0
 }
 
+# ------------------------------------------------------------------ check 25
+# Maintainer vocabulary stays off the user's pages. A plugin's docs/ pages and its README are
+# what an installing user reads, and they had come to carry two tokens only a maintainer of the
+# repository can resolve: a `§` section citation into a reference written for the agents that
+# run a command, not for the user, and a design-decision id, `(D17)` or `decision row D14`,
+# numbering a row of a design spec that is not shipped and that numbers from D1 like every
+# other, so the id resolves for nobody.
+# MEASURED at batch B30, on the tree before its fixes: 257 lines in 63 files, every one a
+# section citation or a decision id but one, a page quoting a customer's own section number and
+# decision id as the user's content, which the batch reworded rather than marked.
+#
+# POPULATION: every *.md under $PLUGIN_REL/docs/ and $PLUGIN_REL/README.md, per plugin of the
+# dispatch loop. It is derived from PLUGIN_RELS, so the check has no config name and no switch:
+# every edition ships user pages, and an edition takes the check by rewriting its own.
+# A `§` fails ANYWHERE on a line, a fenced block included, because a mermaid label is drawn for
+# the reader -- the one fenced hit the measurement found was a mermaid label. A decision id, `D`
+# and one to three digits as a whole word, fails only OUTSIDE fenced blocks: inside one it is
+# as likely a mermaid node id (`D1 --> D2`), which no reader sees.
+#
+# THE MARKER, `<!-- docs-vocab-ok: <why> -->`, sanctions the line it sits on, and on a
+# fence-OPENING line the block it opens -- check 13's rule, for check 13's reason: a line inside
+# a mermaid or quoted block cannot carry an HTML comment without corrupting what it holds. It is
+# for a literal that is the user's own content, and every use is audited by its reason, so a
+# marker whose reason is empty, or that is not written as that HTML comment, fails on its own
+# line and sanctions nothing.
+#
+# What this deliberately does NOT catch, stated so nobody mistakes green for safe: a bare
+# `workflows-core:<name>` reference citation, whose form also names an agent or a command a page
+# must name; change history; a maintainer recipe (a grep over plugins/); a decision id inside a
+# fenced block or on a fence's own delimiter line, and a fence it misreads (any line starting,
+# after its indent, with three backticks or tildes toggles it, whatever the fence's character or
+# length); the repository-root README, outside every plugin; and the other id families a design
+# spec numbers (C2, E1, L2), whose shapes are ordinary keys and words. Review holds those. VACUITY: no docs page and no README to read.
+check_docs_vocabulary() {
+  local root="$1" p="$1/$PLUGIN_REL" files f hits h
+  files=$( { find "$p/docs" -type f -name '*.md' 2>/dev/null; [ -f "$p/README.md" ] && printf '%s\n' "$p/README.md"; } | sort)
+  [ -n "$files" ] \
+    || { fail 25 "no docs page and no README under $PLUGIN_REL to scan -- this check would examine nothing"; return; }
+  hits=$(while IFS= read -r f; do
+           [ -n "$f" ] || continue
+           awk -v FILE="${f#$root/}" '
+             # Every decision id on the line, as a quoted list: `D` and one to three digits, a whole
+             # word -- no word character before it, no letter or `_` after. No interval
+             # expression: an older awk reads `{1,3}` as literal braces.
+             function dids(s,   out, off, rest, st, pre, nxt) {
+               out = ""; off = 0; rest = s
+               while (match(rest, /D[0-9]+/)) {
+                 st = off + RSTART
+                 pre = (st > 1) ? substr(s, st - 1, 1) : ""
+                 nxt = substr(s, st + RLENGTH, 1)
+                 if (pre !~ /[A-Za-z0-9_]/ && nxt !~ /[A-Za-z_]/ && RLENGTH <= 4)
+                   out = out (out == "" ? "" : ", ") "\"" substr(s, st, RLENGTH) "\""
+                 off = st + RLENGTH - 1
+                 rest = substr(s, off + 1)
+               }
+               return out
+             }
+             {
+               isfence = ($0 ~ /^[ \t]*(```|~~~)/)
+               mk = 0
+               if (index($0, "docs-vocab-ok")) {
+                 mk = -1
+                 if (match($0, /<!--[ \t]*docs-vocab-ok:/)) {
+                   rest = substr($0, RSTART + RLENGTH); j = index(rest, "-->")
+                   r = j ? substr(rest, 1, j - 1) : ""; gsub(/[ \t]/, "", r)
+                   if (r != "") mk = 1
+                 }
+               }
+               # The fence state is updated BEFORE the skip tests, so an opening line is covered
+               # by its own marker -- the order check 13 keeps.
+               if (isfence) {
+                 if (infence) { infence = 0; fok = 0 } else { infence = 1; fok = (mk > 0) }
+               }
+               if (mk < 0) { printf "M %s:%d\n", FILE, NR; next }
+               if (mk > 0) next
+               if (infence && !isfence && fok) next
+               t = ""
+               if (index($0, "§")) t = "\"§\""
+               if (!infence && !isfence) { d = dids($0); if (d != "") t = t (t == "" ? "" : ", ") d }
+               if (t != "") printf "V %s:%d carries %s\n", FILE, NR, t
+             }' "$f"
+         done <<<"$files")
+  [ -n "$hits" ] || return 0
+  while IFS= read -r h; do
+    case "$h" in
+      M\ *) fail 25 "${h#M } carries a docs-vocab-ok marker with no reason, or one not written as the HTML comment -- write it \`<!-- docs-vocab-ok: <why> -->\`; a marker sanctions a literal that is the user's own content, and its reason is what the audit reads" ;;
+      V\ *) fail 25 "${h#V } -- maintainer vocabulary on a user's page: a § cites a reference written for the agents, not the reader, and a design-decision id numbers a row of a spec that is not shipped; say the rule in words, or, where the literal is the user's own content, mark the line (or its opening fence) \`<!-- docs-vocab-ok: <why> -->\`" ;;
+    esac
+  done <<<"$hits"
+}
+
 # ------------------------------------------------------------------ selftest
 # One passing fixture tree; each check gets a mutation of a fresh copy. Asserting
 # the exit code alone would let a mutation that trips a DIFFERENT check register
@@ -4268,6 +4359,33 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     printf 'skip  the keyed-hook cases (the fixture ships no hook its KEYED_HOOKS names)\n'
   fi
 
+  # Check 25 -- maintainer vocabulary on a user's page. The fixture's docs pages and READMEs carry
+  # none, so the unmutated pass proves the check reads them without firing; each case appends a
+  # line, or a fenced block, to a docs page of the first plugin or to the second plugin's README,
+  # so both plugins of the dispatch loop are read. The green cases are the pairs of red ones: a
+  # check that skipped no fence would fail the fenced `D1`, and one that ignored the marker, or
+  # skipped every fence, would fail the marked line or pass the mermaid label.
+  local d25="$PLUGIN_REL/docs/$DOC_CMD_DIR/alpha.md" p25="${PLUGIN_RELS#* }"; p25="${p25%% *}"
+  local n25; n25=$(( $(wc -l < "$fixture/$p25/README.md") + 2 ))
+  expect_fail_msg "a § on a docs page is rejected" 25 'carries "§"' \
+    "printf '\nThe run stops there (phase-handoff §3.4).\n' >> $d25"
+  expect_fail_msg "a § in a plugin README is rejected" 25 "$p25/README.md:$n25 carries \"§\"" \
+    "printf '\nIts rules are in the shared reference, §2.\n' >> $p25/README.md"
+  expect_fail_msg "a design-decision id in prose is rejected" 25 'carries "D17"' \
+    "printf '\nThe reviewer runs on Opus regardless of class (D17).\n' >> $d25"
+  expect_pass_after "a D1 inside a fenced block is a node id and passes" \
+    "printf '\n\`\`\`mermaid\nflowchart LR\n  D1 --> D2\n\`\`\`\n' >> $d25"
+  expect_fail_msg "a § in a fenced block, a mermaid label, is rejected" 25 'carries "§"' \
+    "printf '\n\`\`\`mermaid\nflowchart LR\n  A -->|\"§4.3 consent\"| B\n\`\`\`\n' >> $d25"
+  expect_pass_after "a § in a fenced block whose opening line is marked passes" \
+    "printf '\n\`\`\`text <!-- docs-vocab-ok: fixture quote of a user document -->\nSee § 4.2 of the brief.\n\`\`\`\n' >> $d25"
+  expect_pass_after "a marked line with a reason passes" \
+    "printf '\nA section number such as § 4.2, or a decision id such as D3, is left as written. <!-- docs-vocab-ok: the user document quoted -->\n' >> $d25"
+  expect_fail_msg "a marked line with an empty reason is rejected" 25 "with no reason" \
+    "printf '\nA section number such as § 4.2 is left as written. <!-- docs-vocab-ok: -->\n' >> $d25"
+  expect_fail_msg "a plugin with no docs page and no README trips the empty-scan guard" 25 "would examine nothing" \
+    "find $p25/docs -name '*.md' -exec rm {} +; rm -f $p25/README.md"
+
   # Every config name is set by the config block, and none is taken from the environment: the
   # block above `FAILURES=0` is sourced with each name exported as a sentinel, and no name may
   # come out holding it (or unset, which aborts under set -u). This reads THIS edition's own
@@ -4331,6 +4449,7 @@ for PLUGIN_REL in $PLUGIN_RELS; do
   check_vendor_tokens       "$ROOT"
   check_foreign_identity    "$ROOT"
   check_index_membership    "$ROOT"
+  check_docs_vocabulary     "$ROOT"
 done
 
 # Check 16 sits OUTSIDE the loop, unlike every check above it. The loader contract is a

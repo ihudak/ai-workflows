@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.5] — 2026-11-07
+
+User pages only, batch B30. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The user pages speak to users.** No page carries a `§` section citation or a bare reference citation; the scan page's `choices:` arrays read as prose options; the Environment page drops the inventory-check internals; Roles and phases and Session cost say what the run records in plain words rather than in the cost reference's field names.
+- **Session cost defines a *ceded* run once**, under *Ceded runs*.
+
 ## [0.10.4] — 2026-11-04
 
 Needs nothing from the other plugins' releases.

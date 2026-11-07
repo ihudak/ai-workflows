@@ -88,11 +88,11 @@ withdrew.
 There is **no `--no-docs` flag**, because this command does no documentation grounding at all — see
 [What it does not do](#what-it-does-not-do).
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 15's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 15's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `customer-review-reader`, `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model, and it is also the flag that changes a degrade path: if no Opus resolves, Phase 1 otherwise degrades to the best-available model and records it; under enforcement no degradation is recorded, dispatched agents use the enforced model, while the confirmation walk, the freeze and the sweep still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 15's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 15's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `customer-review-reader`, `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model, and it is also the flag that changes a degrade path: if no Opus resolves, Phase 1 otherwise degrades to the best-available model and records it; under enforcement no degradation is recorded, dispatched agents use the enforced model, while the confirmation walk, the freeze and the sweep still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## No inferred decision becomes a `[CD#n]` without a human
 
-That single rule is what the command is built around, and it is decision row D14: **normalising
+That single rule is what the command is built around, because **normalising
 prose into a decision register is inference, and promoting inference to customer authority silently
 is the one way this workflow could fabricate a mandate the customer never gave.** A `[CD#n]` reads
 downstream as frozen customer authority, decisions are built on it, and nothing on the page would
@@ -323,7 +323,7 @@ unmatched row can be told apart from a question set nobody passed.
 **A torn write matches nothing.** An entry, a record or a code-defect entry stamped with a round
 whose `interview/round-<N>.md` does not exist or does not name it — what a
 [`/brd-interview`](brd-interview.md) run left when it stopped before writing that record — counts
-for nothing ([`decision-register-format.md`](../../references/decision-register-format.md) §8). An
+for nothing. An
 answer citing a torn entry or a torn `[AS#n]` is carried `unmatched` and never frozen, a torn record
 is neither superseded, reopened nor swept, and the final report names each torn write found. This
 command removes none of them; the next `/brd-interview` run does.
@@ -402,7 +402,7 @@ command removes none of them; the next `/brd-interview` run does.
   nothing the register can take, so it is neither confirmed nor sent back to the customer, and a
   held question it answers stays held, to be put again by the next package, save the two cases
   below where the question has stopped applying.
-  `workflows-core:escalation-rules` names this picker for that reason:
+  The family's shared question rules name this picker for that reason:
   the prompt's free-text option is supplied by the harness and no picker can decline it, so a picker through which customer authority enters the register — this one, the missing-reason picker, the conflicting-answer picker and the propagation sweep's — is protected by what the run does with
   the answer rather than by what the array leaves out. Aborting the walk stops the run with **nothing
   frozen**: no record exists until the freeze phase, so an aborted walk loses its confirmations and
@@ -513,8 +513,7 @@ command removes none of them; the next `/brd-interview` run does.
   shipping, a `--rebaseline` grounding pass that supersedes the findings it rests on, and a later
   interview round — proposed once every round is closed, and only once the new findings no longer
   carry `will-change` — that puts the question against them on an entry naming the record on a
-  `- **Re-puts:**` line, whose answer, frozen by a later run of this command, supersedes it
-  ([`decision-register-format.md`](../../references/decision-register-format.md) §6). A record held
+  `- **Re-puts:**` line, whose answer, frozen by a later run of this command, supersedes it. A record held
   `open` fires no re-entry option of its own, and is named in what remains. One written
   `conditional_on` is decided and consumable downstream, fires no re-entry option either, and has a
   second exit: the propagation sweep reaches it by that field when the prerequisite's decision
@@ -533,12 +532,12 @@ command removes none of them; the next `/brd-interview` run does.
   cross-BRD writes, and each runs `require-on-main` against the
   target first — a write into a dependent BRD, under a `BRD-` folder other than this run's, also
   checks, once per such folder, that the branch the specs checkout stands on is not one the default
-  branch has moved past there, and a stop of that check is a stopping row too. Any stopping row — including the artifact being on no branch the commands cut — means **record,
+  branch has moved past there, and that check stopping counts as the gate stopping. Either one stopping — including on the artifact being on no branch the commands cut — means **record,
   never write**, naming the intended change and the branch/PR state — save the parent's defect log,
   which the run settles before confirming any answer and waits on rather than record (above).
   Recording never stops the run: letting
-  a dependent's open pull request block the prerequisite's own customer loop is the D20 failure
-  arriving from the other direction.
+  a dependent's open pull request block the prerequisite's own customer loop would let any downstream
+  BRD stall the BRD its own positions rest on.
 - **Phase 10 — the sweep gate.** Every position the propagation sweep reaches takes
   `inherited-unchanged`, `reverted`, `reopened` or `withdrawn`, and an `inherited-unchanged` row is
   written too: an item checked and found unaffected and an item never reached are different facts.
@@ -682,20 +681,20 @@ Both `/create-prd` tests are read over the slice's **own claimed ledger rows** �
 `brd-link.md`'s `claims:` — and
 off the ledger **file**, never off a `ledger:` line, whose `unallocated` term is a resolved count
 that also holds rows a child has not walked yet. Where either test fails the option is **dropped from
-the array** rather than annotated, and the text says which one failed: a row still `unallocated` is
+the choice list** rather than annotated, and the text says which one failed: a row still `unallocated` is
 walked to a terminal disposition by [`/brd-split`](brd-split.md), while a slice with no `covered-here`
 row holds no PRD of its own at all.
 
 Each takes **one** address: a second positional token is refused (`CREATE_ARD_ONE_ADDRESS` / `SPECIFY_ONE_ADDRESS`), on every route,
 so neither of the optional two is ever offered with an Epic beside it. The three are **alternatives,
-not a sequence** — neither of the unconditional two waits on the PRD — and **all three carry the
-`<merge-clause>` placeholder**, because each runs `require-on-main` on the slice's `decisions.md`
+not a sequence** — neither of the unconditional two waits on the PRD — and **all three carry a merge
+clause** — a note of what must reach the default branch first, worded for how this run's handoff ended — because each runs `require-on-main` on the slice's `decisions.md`
 before it reads the register, and the register is one of the files this command hands off: each
-would stop on a register this run wrote and has not merged (`workflows-core:next-phase-offer`). The
+would stop on a register this run wrote and has not merged. The
 clause names that wait and no other — `/create-prd`'s gate on `idea.md` and the other two's on
 `prd.md` target files this command does not write. No option in either of
-Phase 14's arrays carries `(Recommended)`: which one is right depends entirely on what the reconciliation left behind.
-An option whose condition this run did not meet is **dropped** from the array rather than annotated,
+Phase 14's choice lists carries `(Recommended)`: which one is right depends entirely on what the reconciliation left behind.
+An option whose condition this run did not meet is **dropped** from the choice list rather than annotated,
 so every option an operator sees is one that applies.
 
 The same phase also offers the route's **re-entries** — another [`/brd-interview`](brd-interview.md)
@@ -778,7 +777,7 @@ dependent BRD is named beside the list with `/brd-interview` on that dependent's
 - [`customer-review-schema.md`](../../references/customer-review-schema.md) — the twelve sections the
   returned review carries, and the one-new-file rule that makes section 12 the only channel for a
   change to a package document.
-- `workflows-core:document-lineage` — the lineage record the register carries, and the upstream
+- The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record the register carries, and the upstream
   check run on the grounding files.
 - [`decision-register-format.md`](../../references/decision-register-format.md) — the `[CD#n]` record,
   the mandatory `argumentation`, the two causes that may reopen a decision, `conditional_on`, and the
@@ -786,7 +785,7 @@ dependent BRD is named beside the list with `/brd-interview` on that dependent's
 - [`interview-tagging.md`](../../references/interview-tagging.md) — the `[C]` tag and the round
   vocabulary whose terminal disposition *answered by the customer* this command writes.
 - [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the dispositions, and
-  §6's roll-up behind the ledger line every run ends with.
+  the roll-up behind the ledger line every run ends with.
 - [`brd-format.md`](../../references/brd-format.md) — the four defect resolutions, three of which
   this command writes — `customer-amended <SLICE-KEY> <date>`, `withdrawn`, and
   `resolved-by: <SLICE-KEY>/[CD#n]` for a defect whose question the customer answered, the first and

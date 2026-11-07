@@ -1,17 +1,35 @@
 # Roles and phases
 
-The `dev-workflows` plugin family charges every cost-emitting run to a `phase` and a `role`. The phases are the **lifecycle** phases `references/cost-emission.md` §7 carries — read them off its table, as fixed pairs, and off the inference paragraphs beside it, which alone name the phases a command reaches only by inference, `conformance` and `security-audit` among them; this page keeps no count of them, because a count here went stale each time a plugin added a phase — plus this plugin's own `plugin-feedback` phase, which §7 has no fixed row for: the feedback commands reach it only when there is nothing to inherit, and `/diagnose-session` through a target it always passes as `n/a`. The lifecycle vocabulary belongs to the pipeline plugins whose commands own the lifecycle. A sibling page that counts lifecycle phases counts them without the fallback, which is not a disagreement: each treats the fallback apart from the lifecycle phases it lists. This page says only what `workflows-core`'s own seven commands do with it, because that is the part a reader of *these* commands needs.
+The `dev-workflows` plugin family charges every cost-emitting run to a `phase` and a `role`. The phases are the stages of a product's lifecycle; each is listed here with the role it is charged to and the pipeline commands that charge it, and the sections below say how this plugin's own commands land on them:
+
+- **`prd-creation`** (`pm`) — shaping an idea and writing its PRD: `/idea`, `/create-prd`, and a `/release-notes` run on a PRD with no specification or design yet.
+- **`prd-update`** (`pm`) — revising an existing PRD: `/update-prd`.
+- **`brd-to-prd`** (`pm`) — taking a customer's business requirements document to its PRDs: `/brd-intake`, `/brd-split`, `/brd-interview`, `/brd-package` and `/brd-reconcile`, and `/prd-ground`, which charges this phase on either route.
+- **`proposal`** (`pm`) — an effort proposal over a set of requirements: `/prd-proposal` and `/brd-proposal`.
+- **`architecture`** (`pa`) — the architecture record: `/create-ard`.
+- **`specification`** (`pe`) — writing or revising a specification: `/specify` and `/update-spec`.
+- **`epic-refinement`** (`pe`) — breaking a PRD into Epics, or refining one: `/epics`.
+- **`planning`** (`dev`) — an engineering design: `/design`.
+- **`readiness`** (`dev`) — the readiness check of a PRD or an Epic: `/ready`.
+- **`implementation`** (`dev`) — writing the code: `/implement`.
+- **`conformance`** — checking delivered work against its documents: `/conformance`, charged to `dev` on an Epic and to `pe` on a PRD, or on a BRD container it refuses.
+- **`security-audit`** — a code repository's security scan and its findings register: `/security-workflows:scan`, charged to `dev` for a key run without `--triage` or `--verify-fixes` and to `sec` for every other run.
+- **`documenting`** (`dev`) — writing documentation: `/document`, and a `/release-notes` run on a PRD that already has a specification or a design.
+- **`docs-scaffold`** (`dev`) — setting up and branding a documentation repository: `/docs-init` and a standalone `/docs-brand` (a `/docs-brand` that `/docs-init` runs inline is charged to `/docs-init`).
+- **`docs-audit`** (`dev`) — finding what documentation a product is missing: `/docs-audit`.
+
+One more phase is this plugin's own rather than a lifecycle stage: **`plugin-feedback`**, with role `n/a`, for a run about the plugin itself ([below](#plugin-feedback)). This page says what `workflows-core`'s own seven commands do with these labels.
 
 ## No command here owns a phase
 
 None of the seven commands in this plugin advances a product increment, so none of them mints a lifecycle phase of its own. Two mechanisms get them a label anyway:
 
-- **Inheritance.** `/feedback`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me` resolve the **target command** whose output they are correcting or remarking on, and take that command's `phase`/`role` pair: its fixed pair in §7, or, where §7 infers it, the pair that command's own inference resolves to. A `/prompt` correcting a `/specify` output is priced as `specification`/`pe`; one correcting a `/design` output as `planning`/`dev`. The cost of fixing a phase's output belongs to that phase. **A `/security-workflows:scan` target is the exception**: its role comes from the scan run's own `run_role`, which reaches no command correcting it, so these four inherit its phase and record the role as `n/a` (*security-audit*, below).
+- **Inheritance.** `/feedback`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me` resolve the **target command** whose output they are correcting or remarking on, and take that command's `phase`/`role` pair: its fixed pair from the list above, or, for a command whose pair is worked out at run time — `/release-notes`, `/frames` or `/conformance` — the pair that command's own run resolves to. A `/prompt` correcting a `/specify` output is priced as `specification`/`pe`; one correcting a `/design` output as `planning`/`dev`. The cost of fixing a phase's output belongs to that phase. **A `/security-workflows:scan` target is the exception**: its role is known only inside the scan run itself and reaches no command correcting it, so these four inherit its phase and record the role as `n/a` (*security-audit*, below).
 - **Inference from the folder.** `/frames` reads the `kind` of the folder it resolved and charges accordingly — a frame set in a folder asserting `kind: brd`, a BRD container or a BRD-route slice, to `brd-to-prd`/`pm`, and one in a folder asserting `prd` or `epic` to `prd-creation`/`pm`, an Epic folder under a slice included.
 
 `/statusline` emits nothing at all: it sets a configuration value rather than running a task. `/diagnose-session` is charged to `plugin-feedback` outright, below.
 
-The four phases these commands can land on with a pair of their own, rather than one inherited whole, are described below: the two `/frames` reaches from a folder, the `plugin-feedback` fallback, and `security-audit`, whose phase a correction inherits without its role. Every other phase in §7 is reachable here only by inheritance, its pair taken whole. `product-workflows`, `dev-workflows` and `security-workflows` each describe the ones their own commands emit on their roles-and-phases pages; `docs-workflows` has no such page, so its phases — `documenting`, `docs-scaffold` and `docs-audit` — are defined by §7's rows, and that plugin's own session-cost reference page (`docs/reference/session-cost.md` in `docs-workflows`) says which of its commands emits each.
+The four phases these commands can land on with a pair of their own, rather than one inherited whole, are described below: the two `/frames` reaches from a folder, the `plugin-feedback` fallback, and `security-audit`, whose phase a correction inherits without its role. Every other phase in the list above is reachable here only by inheritance, its pair taken whole. `product-workflows`, `dev-workflows` and `security-workflows` each describe the ones their own commands emit on their own Roles and phases page; `docs-workflows` has no such page, and its Session cost page says which of its commands emits `documenting`, `docs-scaffold` and `docs-audit`.
 
 ### prd-creation
 
@@ -23,7 +41,7 @@ Role `pm`. Reached by `/frames` when the folder it resolved asserts `kind: brd` 
 
 ### security-audit
 
-Role `n/a` here. Reached by any of the four correction commands whose target command is `/security-workflows:scan`: they inherit its phase and record no role, because the scan's own role, `dev` for a key run without `--triage` or `--verify-fixes` and `sec` for every other run, is the run's `run_role`, which the scan passes to its own cost entry and which reaches no command correcting it (`references/cost-emission.md` §7, *`/scan` inference*). Being in this phase means the spend is a code repository's security audit — a scan, an import, a triage or a fix verification recorded in that repository's findings register — or the correction of one. `security-workflows`' own Roles and phases page describes the phase and the two roles the scan itself records.
+Role `n/a` here. Reached by any of the four correction commands whose target command is `/security-workflows:scan`: they inherit its phase and record no role, because the scan's own role, `dev` for a key run without `--triage` or `--verify-fixes` and `sec` for every other run, is known only inside the scan run, which passes it to its own cost entry, and it reaches no command correcting it. Being in this phase means the spend is a code repository's security audit — a scan, an import, a triage or a fix verification recorded in that repository's findings register — or the correction of one. `security-workflows`' own Roles and phases page describes the phase and the two roles the scan itself records.
 
 ### plugin-feedback
 

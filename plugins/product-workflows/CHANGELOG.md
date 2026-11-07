@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.1] — 2026-11-07
+
+User pages only, batch B30. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The user pages speak to users.** No page carries a `§` section citation, a design-decision id such as `(D4)` or `the D20 failure`, or a bare reference citation: each was dropped where its sentence already stated the rule, said in plain words, or, in a *See also* list, named as a reference shipped in `workflows-core`. Change history ("this increment", "used to", "past the old bounds") is gone, keeping each present-tense rule, and so are run-state fields, routing fields and raw `choices:` arrays.
+- **Roles and phases lists the commands that stop on an absent input**, and where `/brd-reconcile` and `/brd-interview` go on instead, rather than pointing at a reference section. Session cost defines a *ceded* run once, under *Ceded runs*, and every page that uses the word links it.
+- **Garbled sentences fixed** on the BRD workflow and `/prd-ground` pages: a doubled condition, a sentence starting in lower case, and "their the BRD route form".
+- **Corrected:** the Environment page counted eight commands taking `--docs` (nine do) and "six" authoring and intake commands (seven, now named); the Hooks page said thirteen other commands resolve their own address (fourteen do); and the Environment page said a command goes on without the default-branch check wherever no default branch can be read, where `/update-spec` and a `/brd-reconcile` with no review file stop.
+
 ## [3.78.0] — 2026-11-05
 
 D45. Needs nothing from the other plugins' releases.

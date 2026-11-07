@@ -1,6 +1,6 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what the variable is *for* and what to export before your first run. This page says what it **is**: where its value comes from, what happens when it is unset, and what happens when it points somewhere the plugin cannot use. The plugin reads one user-settable variable. The other names its own inventory check meets while scanning for `$VAR` reads are never user-settable: `CLAUDE_PLUGIN_ROOT` and `ARGUMENTS` are runtime plumbing Claude Code sets for every plugin invocation. The run flags' environment defaults, `WORKFLOWS_SKIP_COSTS`, `WORKFLOWS_SKIP_FEEDBACK` and `WORKFLOWS_ENFORCE_MODEL`, are read by `workflows-core`, whose own environment page documents them.
+[Getting started](../getting-started.md) says what the variable is *for* and what to export before your first run. This page says what it **is**: where its value comes from, what happens when it is unset, and what happens when it points somewhere the plugin cannot use. The plugin reads one user-settable variable; nothing else it reads is yours to set. The run flags' environment defaults, `WORKFLOWS_SKIP_COSTS`, `WORKFLOWS_SKIP_FEEDBACK` and `WORKFLOWS_ENFORCE_MODEL`, are read by `workflows-core`, whose own environment page documents them.
 
 ## `SPECS_PATH`
 

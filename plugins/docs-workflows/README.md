@@ -16,7 +16,7 @@ Seven slash commands for a product's documentation and release notes: `/docs-ini
 
 ## Documentation workflow
 
-Four of those commands stand a portal up and keep it honest about what it is still missing, and the work between them is done by hand. The cold-start trio — `/docs-init`, `/docs-brand`, `/docs-serve` — shipped first, and `/docs-audit` followed with the coverage grid and the backlog. **The iteration stage has not shipped**: turning a unit of that backlog into a published page is a manual procedure today. Writing the page, capturing what it shows and walking its claims are each specified for a later command, and each is written out step by step in [The documentation route](docs/docs-workflow.md), which is the page to read next.
+Four of those commands stand a portal up and keep it honest about what it is still missing, and the work between them is done by hand. The cold-start trio — `/docs-init`, `/docs-brand`, `/docs-serve` — stands the portal up, and `/docs-audit` adds the coverage grid and the backlog. **The iteration stage has not shipped**: turning a unit of that backlog into a published page is a manual procedure today. Writing the page, capturing what it shows and walking its claims are each specified for a later command, and each is written out step by step in [The documentation route](docs/docs-workflow.md), which is the page to read next.
 
 That page draws the route: its eight steps, which of them a command runs and which you do by hand, and the cadence that keeps a portal current.
 

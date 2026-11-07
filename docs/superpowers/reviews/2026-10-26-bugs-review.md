@@ -2593,7 +2593,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high (the holes); medium (whether each one deserves its own page)
 
-### DQS-B7 — MINOR — Internal design-decision IDs (D4 … D25) leak into user pages with nothing to resolve them against
+### DQS-B7 — MINOR — Internal design-decision IDs (D4 … D25) leak into user pages with nothing to resolve them against — **Fixed in docs-workflows 1.34.3 and product-workflows 3.78.1 (batch B30)**
 - **Where:**
   - `plugins/docs-workflows/docs/commands/docs-brand.md:33`: "**Opus review regardless of class (D17, D20)**", "**There is no dedicated fixer for this diff (D25)**"
   - `docs-serve.md:34`: "**No review gate, by design (D17).**"
@@ -2609,7 +2609,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQS-B8 — MINOR — 317 bare `workflows-core:<name>` citations and 306 `§` section citations on user pages, none linked
+### DQS-B8 — MINOR — 317 bare `workflows-core:<name>` citations and 306 `§` section citations on user pages, none linked — **Fixed in workflows-core 1.78.8, dev-workflows 4.58.6, product-workflows 3.78.1, docs-workflows 1.34.3 and security-workflows 0.10.5 (batch B30)**
 - **Where:** bare `` `workflows-core:<name>` `` citations per plugin's `docs/`: dev-workflows 74 (15 files), docs-workflows 48 (11), product-workflows 179 (25), security-workflows 6 (2), workflows-core 10 (4). `§` counts: 52 / 43 / 135 / 6 / 70. Examples in *See also* lists: `dev-workflows/docs/commands/design.md` ("`workflows-core:ard-resolution` — how the optional ARD is resolved and inherited"), `implement.md`, `upgrade.md`, `vuln.md` (`workflows-core:finding-triage`), `docs-workflows/docs/commands/document.md:115` and `release-notes.md:103` (`workflows-core:model-routing/classification`), `workflows-core/docs/commands/feedback.md` ("`references/cost-emission.md` §7").
 - **What is wrong:** `workflows-core:<name>` is the agents' citation form (CLAUDE.md § Internal reference convention). On a human page it reads as a *See also* entry with nothing to click. A user-facing inventory of every such file exists, `plugins/workflows-core/docs/reference/references.md`, but no page in another plugin can link it (see DQS-B5), and the pages do not name it either.
 - **Failure scenario:** A reader follows *See also* → "`workflows-core:finding-triage` — the triage step run between `code-review` and `review-fixer`" and has no way to open it from the plugin's docs.
@@ -2679,7 +2679,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B4 — MINOR — maintainer `grep` recipes over `plugins/*/…` are given to users as the way to find things
+### DQC-B4 — MINOR — maintainer `grep` recipes over `plugins/*/…` are given to users as the way to find things — **Fixed in workflows-core 1.78.8, dev-workflows 4.58.6, docs-workflows 1.34.3 and the repository README (batch B30)**
 - **Where:** `README.md:93` ("Required by the commands that stop without it — `grep -lE 'Set SPECS_PATH|Required path environment variable unset' plugins/*/commands/*.md` lists them"); `plugins/dev-workflows/docs/getting-started.md:21` ("`grep -ln 'WebFetch\|WebSearch' plugins/dev-workflows/agents/*.md` re-derives that set rather than trusting this list"); `plugins/workflows-core/docs/reference/agents.md:22` ("re-derive both halves with `ls plugins/workflows-core/commands/` and `grep -n subagent_type …`"); `plugins/workflows-core/docs/reference/references.md:3` (the "36 + 2 = 38" arithmetic)
 - **What is wrong:** these recipes belong to the repository's maintainer discipline (CLAUDE.md, *Re-measure in one place*). In user-facing pages they replace the answer. The paths `plugins/…` exist only in a clone of this repository, not in the installed cache (`~/.claude/plugins/cache/shipwright/<plugin>/<version>/`).
 - **Failure scenario:** a new user reads the root README to learn which commands need `SPECS_PATH`. They get a shell command to run against a repository they have not cloned, and no list.
@@ -2688,7 +2688,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B5 — MINOR — internal vocabulary and § citations into references a user never opens, on the core plugin's user pages
+### DQC-B5 — MINOR — internal vocabulary and § citations into references a user never opens, on the core plugin's user pages — **Fixed in workflows-core 1.78.8, dev-workflows 4.58.6 and docs-workflows 1.34.3 (batch B30)**
 - **Where:** `plugins/workflows-core/docs/roles-and-phases.md:3` ("the **lifecycle** phases `references/cost-emission.md` §7 carries — read them off its table, as fixed pairs, and off the inference paragraphs beside it … A sibling page that counts lifecycle phases counts them without the fallback, which is not a disagreement"), `:9`, `:14`, `:26`; `plugins/workflows-core/docs/reference/environment.md:3` ("the names its own inventory check encounters … `OWNER_REPO` are … internal template names"), `:5` (a paragraph on which sibling plugin reads four of the five variables); `plugins/workflows-core/docs/getting-started.md:29` ("for eight of the nine, the only read anywhere in this plugin"), `:57`, `:61`, `:65` ("`workflows-core:run-flags` is the single source of truth"); `plugins/dev-workflows/docs/getting-started.md:108` ("as `workflows-core:phase-handoff` §3.4 lists"); `plugins/workflows-core/docs/commands/statusline.md:17` and `plugins/docs-workflows/docs/getting-started.md:23` (bare "Phase 4" / "the Phase 0 toolchain preflight")
 - **What is wrong:** the opening paragraph of roles-and-phases is addressed to someone maintaining page counts, not to someone asking what phase their run was charged to. It never names the phases, and sends the reader to a § of a file the docs do not link. environment.md opens with which *source files* read which variable. The getting-started pages use `plugin:reference` ids (`workflows-core:run-flags`) as if they were page names.
 - **Failure scenario:** a user who opens Roles and phases to learn which phase `/create-prd` costs land in is told to read `references/cost-emission.md` §7. A user who reads "See `workflows-core:run-flags`" finds no page by that name and no link.
@@ -2697,7 +2697,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B6 — MINOR — stale and changelog-style statements on user pages
+### DQC-B6 — MINOR — stale and changelog-style statements on user pages — **Fixed in workflows-core 1.78.8, dev-workflows 4.58.6, product-workflows 3.78.1, docs-workflows 1.34.3, guideline-reviewers 1.2.6 and the repository README (batch B30)**
 - **Also found as:** DQW-B17 (merged here)
 - **Where:** `plugins/workflows-core/docs/reference/session-cost.md:33` ("Before the manifest existed the rule was … which, once the family spanned four, made a *sibling's* run … invisible"); `plugins/workflows-core/docs/commands/frames.md:108` ("Before this, such a file was reported and never read…"), `:112` ("Three such exports once rejoined the describe set on every future run, forever"), `:120` ("Design grounding on the `/product-workflows:idea` route ships in this same increment as the BRD route's own — §6.1 says so … now on both routes"); `README.md:161` and the five getting-started pages (`dev :34`, `product :32`, `docs :33`, `workflows-core :17`, `guideline-reviewers :17`): "This page used to say the first line alone was enough"
 - **What is wrong:** these are change history, not documentation. "Once the family spanned four" is now false: the family has five plugins (README:23, family-map:3). "Ships in this same increment" has no meaning for a reader, and on the frames page it is a claim with an expiry date that has passed. "This page used to say…" corrects a page the new reader never saw.
@@ -2818,7 +2818,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQD-B6 — MINOR — The dev Session cost page's worked example names product-workflows commands as "dev-workflows commands", and leaks an internal team count
+### DQD-B6 — MINOR — The dev Session cost page's worked example names product-workflows commands as "dev-workflows commands", and leaks an internal team count — **Fixed in dev-workflows 4.58.6 (batch B30, ahead of B33: its page was open for the vocabulary pass)**
 - **Where:** `plugins/dev-workflows/docs/reference/session-cost.md:13`
 - **What is wrong:** "A single session that runs several dev-workflows commands in a row — `/idea` then `/create-prd` then `/specify`, say — appends one entry per command invocation". Those three ship in `product-workflows`. Line 38 of the same page says so: "Twelve more commands that used to make this list — `/idea`, `/create-prd` … — ship in the companion `product-workflows` plugin now". The same paragraph also says "the largest PRD to date was worked by 23 teams". That is a statistic about the organisation the plugin came from, which no user can check or use.
 - **Failure scenario:** A dev-workflows user is told that `/idea` is one of this plugin's commands, contradicting the README's command table. The "23 teams" figure reads as an operational fact about the user's own repository.
@@ -2827,7 +2827,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQD-B7 — MINOR — Maintainer vocabulary and change history fill the user pages
+### DQD-B7 — MINOR — Maintainer vocabulary and change history fill the user pages — **Fixed in dev-workflows 4.58.6 and security-workflows 0.10.5 (batch B30)**
 - **Where (examples, not exhaustive):**
   - change history addressed to no user: `plugins/dev-workflows/docs/getting-started.md:34` ("This page used to say the first line alone was enough"); `commands/vuln.md:7` and `commands/upgrade.md:7` ("the rule lived only on this page until it was restated there"); `reference/follow-ups.md:34` ("It used to have four rungs, the first of which was a vault"); `commands/ready.md:23` ("A block an `/implement` run before 4.1.2 left…"); `reference/agents.md:3` (the 19 agent names that moved out); `reference/hooks.md:9`, `:11`, `:17` (how `preload-context` was split)
   - maintainer recipes: `getting-started.md:21` ("`grep -ln 'WebFetch\|WebSearch' plugins/dev-workflows/agents/*.md` re-derives that set rather than trusting this list" — a repository path a user of the installed cache does not have); `reference/environment.md:3` ("the names the plugin's own inventory check encounters while scanning for `$VAR` reads … `OSTYPE`, `BASH_SOURCE`, `BASH_REMATCH`, `ROOT`, and `OWNER_REPO`"); `security-workflows/docs/reference/environment.md:3` (the same)
@@ -2938,7 +2938,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B7 — MINOR — Internal rulings and reference-section citations leak into user pages, with no link a user could follow
+### DQP-B7 — MINOR — Internal rulings and reference-section citations leak into user pages, with no link a user could follow — **Fixed in product-workflows 3.78.1 (batch B30)**
 - **Where (rulings, `D<n>`):** `roles-and-phases.md:24` *"(D5)"*; `workflow.md:168` *"(D4)"*; `commands/create-prd.md:49` *"(D7)"*; `commands/specify.md:15` *"(D4)"*; `commands/brd-reconcile.md:80` *"it is decision row D14"*, `:498` *"the D20 failure"*; `reference/references.md:12` *"the D23 roll-up"*, `:13` *"the D19 rule"*, `:16` *"(D12)"* and *"(D18)"*, `:17` *"the D13 rule"*.
 - **Where (`§` citations):** 135 occurrences across 23 of the 31 pages (`grep -o "§" …`). Examples: `roles-and-phases.md:10` *"`workflows-core:phase-handoff` §3.4 lists them"*, `:12` *"§3.7"*; `commands/idea.md:26` *"(`workflows-core:run-flags` §5 step 3)"*, `:44` *"the §2.1 Sonnet chain"*; `brd-workflow.md:380` *"`workflows-core:grounding-format` §6.1"*.
 - **Where (internal field names and gate mechanics):** `roles-and-phases.md:41` *"(`vi_spec_present: false`)"*; `commands/idea.md:44` *"`detection_model` … `current_model`"*; `commands/prd-ground.md:11-14` and `commands/epics.md:19` open on how the kind gate tests a directory prefix and not the asserted `kind:`.
@@ -2965,7 +2965,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B10 — NIT — `brd-workflow.md` and `prd-ground.md` carry search-and-replace residue and development-history wording
+### DQP-B10 — NIT — `brd-workflow.md` and `prd-ground.md` carry search-and-replace residue and development-history wording — **Fixed in product-workflows 3.78.1 (batch B30)**
 - **Where:** `brd-workflow.md:12` and `commands/prd-ground.md:56` (*"where so, a PA or PE runs it instead where the PM cannot clone the code repositories"*, with the condition doubled); `brd-workflow.md:234` (a sentence starting in lower case: *"the BRD route **ships** on …"*); `:273` (*"shown in their the BRD route form only"*); `:243` (*"the one this increment added"*); `:272` (*"not a preview of what a later increment adds"*); `getting-started.md:32` (*"This page used to say the first line alone was enough"*); `commands/idea.md:51` (*"past the old bounds"*), `:53` (*"exactly as a broken link always has"*), `:141` (*"the finder that searched a personal store … is gone"*); `commands/update-prd.md:59` (*"The run used to end with a manual reminder …"*); `reference/environment.md:13` (*"it used to be indistinguishable"*)
 - **What is wrong:** A new user has no "increment" and no earlier version to compare against. These sentences describe a change history that belongs in `CHANGELOG.md`. The garbled ones read as errors.
 - **Suggested fix:** Fix the three garbled sentences. Delete or rewrite the history clauses as present-tense facts.
@@ -3099,7 +3099,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B10 — MINOR — The docs-workflows docs leak maintainer vocabulary a user cannot resolve: design-decision ids, `§` citations into references, "ceded" runs and "the split"
+### DQW-B10 — MINOR — The docs-workflows docs leak maintainer vocabulary a user cannot resolve: design-decision ids, `§` citations into references, "ceded" runs and "the split" — **Fixed in docs-workflows 1.34.3 (batch B30)**
 - **Where (representative):**
   - `plugins/docs-workflows/docs/commands/docs-serve.md:7` ("D17, the docs-workflow family design's rule … That family is the one the design's §4 table lists") and `:34`
   - `docs/commands/docs-brand.md:33` ("D17, D20", "D25")
@@ -3116,7 +3116,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B11 — MINOR — `/document` and `/release-notes` pages refer to "the tracker" and "the docs automation" as if every reader had them
+### DQW-B11 — MINOR — `/document` and `/release-notes` pages refer to "the tracker" and "the docs automation" as if every reader had them — **Fixed in docs-workflows 1.34.3 (batch B30)**
 - **Where:** `plugins/docs-workflows/docs/commands/document.md:25`; `plugins/docs-workflows/docs/commands/release-notes.md:3`, `:61`; `plugins/docs-workflows/docs/workflow.md:84`
 - **What is wrong:** `document.md:25` says "`/document` never writes release-notes or what's-new pages, since those are generated from the tracker by the docs team's own automation". The same sentence opens "For release notes, use `/release-notes`". `release-notes.md:61` says the draft never carries "a `{{#internal-note}}` block, since the docs automation adds that metadata wrapper when it publishes". No page defines "the tracker", "the docs team's own automation" or the `{{#internal-note}}` syntax. These are leftovers from the environment the plugin was extracted from.
 - **Failure scenario:** A user without such automation reads that release notes are "generated from the tracker" and cannot tell whether `/release-notes` is meant for them. They also do not learn that they must add identifiers or metadata themselves when they publish the draft.
