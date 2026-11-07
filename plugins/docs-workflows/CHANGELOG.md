@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.4] — 2026-11-07
+
+User pages only: batch B32, the family's entry points. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **The getting-started page has an "Install the status line" section**: what it adds, the status-line cross-check it enables for this plugin's five cost-emitting commands, and the qualified form to type.
+- **The workflow diagram draws the Product Engineer's PRD-level `/dev-workflows:conformance`**, which offers `/document` once every Epic has merged and its decisions are settled, and the page's introduction and node note say so.
+- The README's documentation table lists the Coverage model, Documentation backlog, Evidence and walkthroughs, and Documentation visibility pages.
+
 ## [1.35.3] — 2026-11-07
 
 User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.

@@ -1,11 +1,12 @@
 # Workflow overview
 
-`docs-workflows` carries the documentation tail of the pipeline the companion `product-workflows` and `dev-workflows` plugins drive. Every command it ships is shown below. The spine is short: once a Product Requirements Document's Epics are implemented, [`/docs-workflows:document`](commands/document.md) writes the product documentation and [`/docs-workflows:release-notes`](commands/release-notes.md) drafts the note that announces it. Before that spine can run at all there has to be a documentation repository, and [`/docs-workflows:docs-init`](commands/docs-init.md) is the cold-start command that creates one — a portal skeleton that builds, serves, lints and carries a profile — running [`/docs-workflows:docs-brand`](commands/docs-brand.md) inline as one of its own phases. [`/docs-workflows:docs-profile`](commands/docs-profile.md), `/docs-workflows:docs-brand`, and [`/docs-workflows:docs-serve`](commands/docs-serve.md) also stand alone outside the spine — setup utilities reached at any point: the first teaches `/document` what an existing documentation repository looks like, the second extracts a logo and a rough colour pair from the product's own code and applies them to the docs site, and the third runs that repository's own dev server so you can look at it. Between the cold start and the spine sits [`/docs-workflows:docs-audit`](commands/docs-audit.md), which answers what the portal is still missing: against a documentation repository that already exists, it reads the code repositories the profile records and the specs tree, and writes a coverage grid and a prioritised backlog into that repository for a person to work through — so it runs after `/docs-init` on a fresh portal, and at any later point on one that has been filling up. The ▶ node, outlined in red, is where the documentation flow starts: `/docs-workflows:docs-init`, for a project with no documentation repository yet.
+`docs-workflows` carries the documentation tail of the pipeline the companion `product-workflows` and `dev-workflows` plugins drive. Every command it ships is shown below. The spine is short: once a Product Requirements Document's Epics are implemented and merged and the Product Engineer's conformance check of the PRD is settled, [`/docs-workflows:document`](commands/document.md) writes the product documentation and [`/docs-workflows:release-notes`](commands/release-notes.md) drafts the note that announces it. Before that spine can run at all there has to be a documentation repository, and [`/docs-workflows:docs-init`](commands/docs-init.md) is the cold-start command that creates one — a portal skeleton that builds, serves, lints and carries a profile — running [`/docs-workflows:docs-brand`](commands/docs-brand.md) inline as one of its own phases. [`/docs-workflows:docs-profile`](commands/docs-profile.md), `/docs-workflows:docs-brand`, and [`/docs-workflows:docs-serve`](commands/docs-serve.md) also stand alone outside the spine — setup utilities reached at any point: the first teaches `/document` what an existing documentation repository looks like, the second extracts a logo and a rough colour pair from the product's own code and applies them to the docs site, and the third runs that repository's own dev server so you can look at it. Between the cold start and the spine sits [`/docs-workflows:docs-audit`](commands/docs-audit.md), which answers what the portal is still missing: against a documentation repository that already exists, it reads the code repositories the profile records and the specs tree, and writes a coverage grid and a prioritised backlog into that repository for a person to work through — so it runs after `/docs-init` on a fresh portal, and at any later point on one that has been filling up. The ▶ node, outlined in red, is where the documentation flow starts: `/docs-workflows:docs-init`, for a project with no documentation repository yet.
 
 ```mermaid
 flowchart TD
     subgraph UP["Upstream — in the product-workflows and dev-workflows plugins"]
         implement["/dev-workflows:implement"]:::dev
+        conformanceprd["/dev-workflows:conformance (PRD)"]:::dev
         createprd["/product-workflows:create-prd"]:::prod
         createard["/product-workflows:create-ard"]:::prod
     end
@@ -32,7 +33,8 @@ flowchart TD
         docsserve["/docs-workflows:docs-serve"]:::docs
     end
 
-    implement -->|every Epic implemented — implementation.md| document
+    implement -->|"every Epic merged — implementation.md"| document
+    conformanceprd -.->|"action: once settled — the PE, every Epic merged"| document
     implement -.->|implementation.md — diff grounding on| rndev
     createprd -.->|prd.md, before any spec or design| rnpm
     createprd -->|prd.md| rndev
@@ -59,7 +61,7 @@ flowchart TD
     class init entry
 ```
 
-Three nodes are drawn for continuity and are not this plugin's commands: `/dev-workflows:implement` ships in the companion `dev-workflows` plugin, and `/product-workflows:create-prd` and `/product-workflows:create-ard` in the companion `product-workflows` plugin, and each is documented there.
+Four nodes are drawn for continuity and are not this plugin's commands: `/dev-workflows:implement` and `/dev-workflows:conformance` ship in the companion `dev-workflows` plugin, and `/product-workflows:create-prd` and `/product-workflows:create-ard` in the companion `product-workflows` plugin, and each is documented there. `/document` reads what `/implement` recorded, and it is the Product Engineer's `/dev-workflows:conformance` of the PRD that offers it, once every Epic has merged and that run's decisions are settled.
 
 **`/release-notes` is drawn twice** because it runs at two moments: an early draft from `prd.md`, before any specification or design, and a final note once the Epics are implemented. It reads nothing `/document` writes — its inputs are `prd.md`, the Epic folder an Epic address names, its own earlier notes, `/dev-workflows:conformance`'s `_conformance.md` records where there are any, and `implementation.md` where diff grounding is on — so the edge between the two documentation commands is the order `/document` suggests, not a handover.
 

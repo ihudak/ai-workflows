@@ -28,7 +28,7 @@ All three run flags apply to this command ([`environment.md`](../reference/envir
 
 ```mermaid
 flowchart TD
-    p0["Phase 0 — Resolve the address (kind-gated) + model routing"] --> p1["Phase 1 — Enumerate the frame sets"]
+    p0["Phase 0 — Resolve the address + model routing"] --> p1["Phase 1 — Enumerate the frame sets"]
     p1 --> p2["Phase 2 — Reconcile, describe (frame-describer), write each index"]
     p2 --> p3["Phase 3 — Handoff (only where an index is not on the default branch as written)"]
     p3 --> p4["Phase 4 — Session maintenance, feedback & cost"]

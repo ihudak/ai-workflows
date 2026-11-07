@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.11] — 2026-11-07
+
+User pages, and the name of the status-line cross-check in the `/statusline` command and the cost reference: batch B32, the family's entry points. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **The Session cost page explains the status-line cross-check** that the `/statusline` page and the repository README point at: what the snapshot is, where it is kept, when an entry carries `cost_statusline_usd`, and how to read it against the computed figure. "Option B", a name left from a design discussion, is gone from the pages, the `/statusline` command's description and report, the cost reference, a comment in the status-line script and a comment and a test label in the cost script, and the getting-started page calls it by the same name.
+- **The Environment page has a Run flags section** — the three flags, what each does, the values `--enforce-model` accepts and an example — with a row in the documentation index, and the getting-started page links it from each of the three variables that set a flag's default.
+- **The family map draws the two steps it left out**: the Product Engineer's PRD-level `/dev-workflows:conformance` offers `/document` once its decisions are settled, and the security scan, where no finding went to fix, hands on to it once every Epic has merged. The edge from `/implement` to `/document` says every Epic has merged.
+- The README, getting-started, workflow, roles-and-phases and References pages, the plugin description and the source-truth reference call the five plugins the workflow plugin family, not the `dev-workflows` plugin family.
+- The README's documentation table lists the Grounding sources page, and names the run flags beside the Environment page.
+- The session-feedback page describes feedback's own ladder — the docs repository's folder for a documentation run, otherwise an unfiled file at the top of `$SPECS_PATH` — instead of calling it the same as cost's, and says a documentation run's feedback is one file per day.
+- The workflow page counts the three solid edges into a pipeline command, not "three dashed and solid", and the `/frames` page's diagram no longer calls Phase 0 kind-gated.
+
 ## [1.78.10] — 2026-11-07
 
 User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.

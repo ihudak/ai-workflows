@@ -1331,7 +1331,7 @@ def _selftest_body(tmp):
           == tokens(whole["models"]),
           "claims + remainder are token-exact against the unsplit window")
     check(two["cost_statusline_usd"] is None,
-          "a claimed window reports no statusline delta (option B cannot split)")
+          "a claimed window reports no statusline delta (the status-line cross-check cannot split)")
 
     pre = run("--claim", "/prompt")
     check(pre is not None and pre["unmatched_claims"] == ["/prompt"]
@@ -1887,7 +1887,7 @@ def main():
         base_dt = min(candidates) if candidates else now_dt
     duration_s = int(max(0, (now_dt - base_dt).total_seconds()))
 
-    # Option B (statusline cross-check) measures whole renders, so it cannot be
+    # The status-line cross-check measures whole renders, so it cannot be
     # apportioned once part of the window has been carved off. With any claim the
     # field is omitted rather than over-reported against the remainder.
     cost_statusline = None

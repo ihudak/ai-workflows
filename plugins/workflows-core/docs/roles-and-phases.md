@@ -1,6 +1,6 @@
 # Roles and phases
 
-The `dev-workflows` plugin family charges every cost-emitting run to a `phase` and a `role`. The phases are the stages of a product's lifecycle; each is listed here with the role it is charged to and the pipeline commands that charge it, and the sections below say how this plugin's own commands land on them:
+The workflow plugin family charges every cost-emitting run to a `phase` and a `role`. The phases are the stages of a product's lifecycle; each is listed here with the role it is charged to and the pipeline commands that charge it, and the sections below say how this plugin's own commands land on them:
 
 - **`prd-creation`** (`pm`) — shaping an idea and writing its PRD: `/idea`, `/create-prd`, and a `/release-notes` run on a PRD with no specification or design yet.
 - **`prd-update`** (`pm`) — revising an existing PRD: `/update-prd`.

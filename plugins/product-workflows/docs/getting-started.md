@@ -61,6 +61,18 @@ Your shipped product documentation's clone — **read-only** in its role as a gr
 
 That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for what is listed, never for the budget, and the change applies from the next session. **Check that it is enough**: start one session with `claude --debug`, then search `~/.claude/debug/latest` for `Skill listing over budget: <N> skills, <X> chars > <Y> budget`. If that line is there, the list still overflows: set the fraction to at least X ÷ 800,000 (for X = 32,000, `0.04`), or turn off skills you do not use with `/skills`. The `SLASH_COMMAND_TOOL_CHAR_BUDGET` environment variable sets a fixed number of characters instead, and overrides the setting.
 
+## Install the status line
+
+**Worth doing before your first real run.** The command that installs it ships in the companion `workflows-core` plugin rather than this one, so its form is qualified:
+
+```
+/workflows-core:statusline
+```
+
+It puts a multi-line status line at the bottom of your terminal — session identity, git state, context usage, running cost, tokens and rate limits — so you can watch a long command spend while it runs. Given `jq`, it also enables the **status-line cross-check**: every command of this plugin that writes a cost entry gains it, so each cost entry then carries Claude Code's own figure for the run beside the one computed from the bundled price table, and a gap between the two over a window with no compaction says the price table needs refreshing. Skip it and you still get a cost report, with nothing to check it against; even with it, a session's first cost phase has no baseline yet and leaves the second figure out. See [Session cost](reference/session-cost.md) for what an entry holds; the companion plugin's Session cost page describes the cross-check in full. The command is idempotent, backs up anything it would overwrite, and changes no command's behaviour.
+
+Claude Code ships its own built-in `/statusline` command, so typing the bare form reaches that instead of the companion plugin's — always use the qualified `/workflows-core:statusline`.
+
 ## Your first run
 
 `/idea` is the pipeline's entry point. It takes **one argument you choose yourself** — the key that names the folder this idea will live in — because there is nowhere keyless to write: the brief lands in its final folder on the first write and is never moved afterwards. Point it at whatever you already have in mind: an inline prompt, or a markdown file with `@path`.

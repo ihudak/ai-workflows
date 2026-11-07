@@ -22,7 +22,7 @@ already omitted every `/brd-*` emitter.
 The orchestrator owns every prompt; this reference owns session-artifact resolution,
 the chained-checkpoint model, the transcript-window computation, the price table,
 the report format, the persistence ladder, pending/reconciliation, and the
-optional statusline augmentation.
+optional status-line cross-check.
 
 **Purpose.** Know how many **dollars** a Product Requirements Document (PRD) cost across its
 whole lifecycle, broken down by **phase**, **role**, and **model** — persisted
@@ -243,7 +243,7 @@ rates are used deliberately — never promotional/introductory rates** — so co
 stays comparable across PRDs over time (a temporary promo would make identical
 work look cheaper now and dearer later, distorting efficiency comparisons).
 
-## 5. Statusline augmentation (optional — "Option B")
+## 5. Status-line cross-check (optional)
 
 An authoritative cross-check, available only when the plugin statusline is
 installed (via `/workflows-core:statusline`):
@@ -255,8 +255,8 @@ installed (via `/workflows-core:statusline`):
   render — bounded size).
 - `emit-cost` passes `--snapshot`; `session-cost.py` sets `cost_statusline_usd` =
   (current snapshot `cost_usd`) - (the `last_snapshot_cost` stored in the
-  checkpoint) — a **per-invocation delta on this entry only**, chained
-  identically to Option A. **Never an aggregate, never a shared source of truth**
+  checkpoint) — a **per-invocation delta on this entry only**, chained through
+  the checkpoint exactly as the computed figure (§2, §3) is. **Never an aggregate, never a shared source of truth**
   -> immune to the merge concern.
 - **Auto-detect:** the field is emitted only when the current snapshot file
   exists, a prior checkpoint baseline (`last_snapshot_cost`) is already recorded,
@@ -266,19 +266,20 @@ installed (via `/workflows-core:statusline`):
   configuration. In practice, the **first** cost phase in a session always omits
   the field — even with the statusline installed, there is no baseline yet — and
   the **second and later** commands emit the delta against it.
-- **Boundary caveat:** B is authoritative on price but lags at the tail (the
-  statusline renders *after* the final turn); A reads the per-turn transcript so
+- **Boundary caveat:** the status-line figure is authoritative on price but lags at the tail (the
+  statusline renders *after* the final turn); the computed figure reads the per-turn transcript so
   it is more complete at the boundary. **Over a window with no compaction**, the
   two differing by cents is the intended calibration signal (drift => refresh
   the price table).
-- **Compaction caveat:** B includes every compaction in the window and A
-  includes none (§2's `compactions`), so over a window that held one, B exceeds A
+- **Compaction caveat:** the status-line figure includes every compaction in the window and the
+  computed figure includes none (§2's `compactions`), so over a window that held one, the
+  status-line figure exceeds the computed one
   by roughly what the compactions cost — dollars, not cents, on a large context:
   a live `/specify` window holding one manual `/compact` of a 675,221-token
   context differed by $3.23. That gap is not price-table drift, and the entry's
   `compactions:` field (§6) is what tells a reader so.
 - Where a Claude Code version omits `.cost.total_cost_usd` from the statusline
-  stdin, B is unavailable and A stands alone; the live window above shows the
+  stdin, the status-line figure is unavailable and the computed figure stands alone; the live window above shows the
   field present.
 
 ## 6. Report artifact & entry format
@@ -325,7 +326,7 @@ models:
 ````
 
 Machine-friendly YAML so the maintainer can filter/sum with Claude Code. No prose
-block (unlike feedback). `cost_statusline_usd` is omitted when Option B is
+block (unlike feedback). `cost_statusline_usd` is omitted when the status-line cross-check is
 unavailable; `compactions` is omitted when §2 returned 0, and otherwise says that
 `cost_computed_usd` leaves that many billed compactions out (§5's compaction
 caveat); a model priced `null` carries a `note:` saying why — `unpriced-model`
@@ -933,7 +934,7 @@ since finished, which is why it could never have committed its own.
   advanced past that boundary, so no later run could ever match it, and leaving
   the file would re-print the same line every run for the rest of the session.
   Nothing is lost that was not already lost; only the attribution is.
-- **It does not split Option B.** The statusline cross-check (§5) measures whole
+- **It does not split the status-line cross-check.** That figure (§5) measures whole
   renders and cannot be apportioned, so a window in which any claim **matched**
   omits `cost_statusline_usd` rather than over-reporting it against the remainder.
   A window whose claims all went unmatched was never split, so it keeps the

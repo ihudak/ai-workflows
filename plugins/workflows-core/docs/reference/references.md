@@ -2,7 +2,7 @@
 
 `workflows-core` bundles 39 files under `references/`: top-level markdown files, `cost-prices.yaml`, `model-routing/classification.md`, and the `handoff/` subtree. This page names each of them, grouped by concern below, save the files under `handoff/`, which it counts rather than lists. `classification.md` is listed like a top-level file, because it is a reference page a reader opens rather than one of a bundled set.
 
-This is the corpus the whole `dev-workflows` plugin family reads. A sibling plugin cites a file here by name rather than copying it: one copy, one place a rule is stated, and every plugin bound by the same version of it.
+This is the corpus the whole workflow plugin family reads. A sibling plugin cites a file here by name rather than copying it: one copy, one place a rule is stated, and every plugin bound by the same version of it.
 
 ## Addressing and artifact formats
 

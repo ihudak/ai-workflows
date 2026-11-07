@@ -18,7 +18,7 @@ claude plugin update workflows-core@shipwright
 
 ## What this plugin is
 
-`workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and eleven agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
+`workflows-core` is the shared foundation of the workflow plugin family: `product-workflows`, `dev-workflows`, `docs-workflows` and `security-workflows`. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and eleven agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
 
 It does ship seven commands of its own, and one of them is worth running first — see below. Type them: each is typed-only (`disable-model-invocation: true`), which keeps it out of the list of skills the model picks from and that list inside Claude Code's budget, so asking in prose does not start one. The same holds for every command of `dev-workflows`, for those of `product-workflows` save `/prd-ground`, for those of `docs-workflows` save `/docs-profile` and `/docs-brand` — the three that other commands run for you — and for `security-workflows`' one command. Every getting-started page's *Claude Code's skill-listing budget* section says what to set so the list fits.
 
@@ -54,15 +54,15 @@ An optional path to your own price table, overriding the bundled `references/cos
 
 ### `WORKFLOWS_SKIP_COSTS`
 
-Persistent default for the `--skip-costs` run flag every applicable command accepts — the command still advances the session-cost checkpoint, but never writes a cost entry. The `run-flags` reference, listed on the [References](reference/references.md#environment-and-routing) page, defines this flag and the other two.
+Persistent default for the `--skip-costs` run flag every applicable command accepts — the command still advances the session-cost checkpoint, but never writes a cost entry. [Run flags](reference/environment.md#run-flags) lists all three flags and the values each accepts.
 
 ### `WORKFLOWS_SKIP_FEEDBACK`
 
-Persistent default for the `--skip-feedback` run flag — narrows an applicable command's maintenance phase to bug capture only, dropping the in-session Lessons Learned report.
+Persistent default for the `--skip-feedback` run flag — narrows an applicable command's maintenance phase to bug capture only, dropping the in-session Lessons Learned report. See [Run flags](reference/environment.md#run-flags).
 
 ### `WORKFLOWS_ENFORCE_MODEL`
 
-Persistent default for the `--enforce-model` run flag — pins every subagent an applicable command dispatches to one model (an alias, a full model id, or `routing` for no enforcement), bypassing model-routing's own per-step selection. Where the agent tool selects models by family only, a version-specific value is honoured only for its family's newest model and runs as the family name; the harness picks the version.
+Persistent default for the `--enforce-model` run flag — pins every subagent an applicable command dispatches to one model (an alias, a full model id, or `routing` for no enforcement), bypassing model-routing's own per-step selection. Where the agent tool selects models by family only, a version-specific value is honoured only for its family's newest model and runs as the family name; the harness picks the version. [Run flags](reference/environment.md#run-flags) lists every value it accepts.
 
 ### Claude Code's skill-listing budget
 
@@ -80,7 +80,7 @@ That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for 
 
 The visible half is a permanent multi-line status line at the bottom of your terminal — session identity, git state, context usage, running cost, tokens, and rate limits — so you can see a long command spending your budget while it spends it.
 
-The half you don't see is the **cost cross-check**: Claude Code's own reported cost, captured per render, which the cost phase differences into a per-invocation delta. Where that disagrees with the computed figure over a window with no compaction, the gap is the signal that the bundled price table has drifted; a compaction is billed but leaves no token usage in the transcript, so a window holding one — its entry says `compactions:` — runs Claude Code's figure ahead by what it cost. See [Session cost](reference/session-cost.md).
+The half you don't see is the **status-line cross-check**: Claude Code's own reported cost, captured per render, which the cost phase differences into a per-invocation delta. Where that disagrees with the computed figure over a window with no compaction, the gap is the signal that the bundled price table has drifted; a compaction is billed but leaves no token usage in the transcript, so a window holding one — its entry says `compactions:` — runs Claude Code's figure ahead by what it cost. See [the status-line cross-check](reference/session-cost.md#status-line-cross-check).
 
 ```
 /workflows-core:statusline

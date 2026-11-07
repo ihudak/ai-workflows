@@ -61,6 +61,18 @@ The shared, team-visible specs repository. The findings register lives in it, on
 
 Set it once, whichever plugins you install: the repo-root [installation step](https://github.com/ihudak/ai-workflows#4-raise-claude-codes-skill-listing-budget) says how, and how to check that it is enough. `/security-workflows:scan` is typed-only (`disable-model-invocation: true`), so it takes no room in the list of skills the model picks from, and asking in prose does not start it: type the command. Claude Security's own skill is model-invocable, so it does take room.
 
+## Install the status line
+
+**Worth doing before your first real run.** The command that installs it ships in the companion `workflows-core` plugin rather than this one, so its form is qualified:
+
+```
+/workflows-core:statusline
+```
+
+It puts a multi-line status line at the bottom of your terminal — session identity, git state, context usage, running cost, tokens and rate limits — so you can watch a long command spend while it runs. Given `jq`, it also enables the **status-line cross-check**: a scan writes a cost entry, so each cost entry then carries Claude Code's own figure for the run beside the one computed from the bundled price table, and a gap between the two over a window with no compaction says the price table needs refreshing. Skip it and you still get a cost report, with nothing to check it against; even with it, a session's first cost phase has no baseline yet and leaves the second figure out. See [Session cost](reference/session-cost.md) for what an entry holds; the companion plugin's Session cost page describes the cross-check in full. The command is idempotent, backs up anything it would overwrite, and changes no command's behaviour.
+
+Claude Code ships its own built-in `/statusline` command, so typing the bare form reaches that instead of the companion plugin's — always use the qualified `/workflows-core:statusline`.
+
 ## Where it sits in the delivery
 
 The command runs at two moments, by two roles ([Roles and phases](roles-and-phases.md)):

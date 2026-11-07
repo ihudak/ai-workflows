@@ -1,7 +1,7 @@
 # Source-Code Truth (Shared Policy)
 
 This document is the **single source of truth** for one of the most important
-rules in the `dev-workflows` plugin family:
+rules in the workflow plugin family:
 
 > **Verify against the implementation; escalate every discrepancy to the user.**
 > The source code is what customers will use. PRDs, design specs,

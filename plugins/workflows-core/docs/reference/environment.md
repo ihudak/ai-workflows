@@ -85,6 +85,24 @@ Until that pull request merges, your specs checkout shows those files as modifie
 
 **Its name keeps the `DEV_WORKFLOWS_` prefix deliberately**: renaming it would silently ignore every setting already exported on a working machine. See [Session cost](session-cost.md) for what the table prices.
 
+## Run flags
+
+Three flags change what a run does around its work, and each has an environment variable, below, as its persistent default. A flag on the command line always wins over its variable; with neither, the flag is off. A flag may stand anywhere in a command's arguments — save inside the free-text request of a command that takes one, such as `/implement` or `/feedback`, where only the flags before the request starts and those it ends with are read.
+
+| Flag | What it does | Its default |
+|---|---|---|
+| `--skip-costs` | The run writes no cost entry. The session's cost checkpoint still advances, so the next run's window starts where it should. | `$WORKFLOWS_SKIP_COSTS` |
+| `--skip-feedback` | The maintenance phase records bugs in the plugin only, and drops the in-session Lessons Learned report. | `$WORKFLOWS_SKIP_FEEDBACK` |
+| `--enforce-model=<model>` | Every subagent the run dispatches runs on one model, in place of model routing's choice for each step. | `$WORKFLOWS_ENFORCE_MODEL` |
+
+`--skip-costs` and `--skip-feedback` are on when given bare, and `=false` turns one off for a single run against its variable. `--enforce-model` takes its model after `=` or as the next argument, and accepts:
+
+- a family — `opus`, `sonnet`, `haiku` or `fable` — which runs every dispatch on that family's model;
+- a family's newest model named by version, such as `opus5.5` or `claude-opus-5-5`, which runs as the family, since Claude Code's agent tool chooses models by family only; an older version stops the run and says to name the family instead;
+- `routing`, which turns enforcement off, as an unset variable does.
+
+Any other value, or a model the session cannot reach, stops the run before it writes anything. A command a flag does not apply to ignores it. For example, `/dev-workflows:implement ACME-77-01 --enforce-model=opus --skip-feedback` runs every dispatch on Opus and writes no Lessons Learned report. The Model routing pages of `dev-workflows` and `product-workflows` say what enforcing one model changes for their commands.
+
 ## `$WORKFLOWS_SKIP_COSTS`
 
 - **`$WORKFLOWS_SKIP_COSTS`** — the persistent default for the `--skip-costs` run flag; a command it applies to still advances the session-cost checkpoint (pricing nothing), but never writes a cost entry into `$SPECS_PATH`.

@@ -1,6 +1,6 @@
 ---
 name: statusline
-description: Install the plugin family's multi-line status line (session identity, git, context bar, cost, tokens, rate limits) into your Claude Code settings. Vendors the script to a stable per-user path, backs up anything it would overwrite, and — given jq — enables the Option B cost snapshot used by session cost reporting.
+description: Install the plugin family's multi-line status line (session identity, git, context bar, cost, tokens, rate limits) into your Claude Code settings. Vendors the script to a stable per-user path, backs up anything it would overwrite, and — given jq — writes the cost snapshot behind session cost reporting's status-line cross-check.
 allowed-tools: Read Write Edit Bash Skill
 disable-model-invocation: true
 ---
@@ -10,8 +10,8 @@ Install the plugin family's status line: $ARGUMENTS
 `/workflows-core:statusline` installs the plugin's multi-line, truecolor status
 line and wires it into `~/.claude/settings.json`. Given `jq` on the `PATH` it runs
 with — which Phase 2 can test only in this run's shell (Phase 5) — the shipped
-script also writes the per-session **cost snapshot** that enables Option B of session cost
-reporting (see `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` §5).
+script also writes the per-session **cost snapshot** that enables session cost reporting's
+status-line cross-check (see `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` §5).
 Installation is **idempotent** and **backs up** anything it would overwrite.
 This is the only change the command makes; it changes no workflow-command
 behavior.
@@ -80,7 +80,7 @@ place, so a failed merge never truncates `settings.json`. Preserve all other key
 
 Confirm the install path, the settings change, and any backups created. Where
 `jq_missing` is not set, tell the user the status line takes effect on the next
-render / new session, and that the per-session cost snapshot (Option B) is now
+render / new session, and that the per-session cost snapshot behind the status-line cross-check is now
 enabled — both given `jq` on the `PATH` the status line runs with, which is the
 one Claude Code started with and not necessarily the one Phase 2 found `jq` on,
 since this run's shell loads the user's profile. Where it is set, say neither: print Phase 4's `jq` line again, since

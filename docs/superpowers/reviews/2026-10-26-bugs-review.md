@@ -627,7 +627,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### CORE-B15 — NIT — the session-feedback page says the feedback ladder's second rung is "a pending location"
+### CORE-B15 — NIT — the session-feedback page says the feedback ladder's second rung is "a pending location" — **Fixed in workflows-core 1.78.11 (batch B32)**
 - **Where:** `plugins/workflows-core/docs/reference/session-feedback.md` § *Where files land* ("The resolution ladder is the same as cost's: a resolved folder in `$SPECS_PATH` first, a pending location where no folder resolves, and report-only where nothing does.")
 - **What is wrong:** feedback's tier 2 is not a pending location. It is the docs-repo branch or the **unfiled** `$SPECS_PATH/dev-workflows-feedback/<KEY-or-date>.md` (`feedback-emission.md` §2). Only cost has a pending file (§9) that a later run reconciles, and cost also has a per-repository security branch that feedback lacks. "The same as cost's" is false on both counts.
 - **Failure scenario:** a reader looks for a feedback pending file that never gets reconciled and does not find their entry, which sits in the unfiled directory.
@@ -635,7 +635,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### CORE-B16 — NIT — the workflows-core README's documentation table omits the Grounding sources reference page
+### CORE-B16 — NIT — the workflows-core README's documentation table omits the Grounding sources reference page — **Fixed in workflows-core 1.78.11 (batch B32)**
 - **Where:** `plugins/workflows-core/README.md` (documentation table, "## Documentation") at 0e02e28b
 - **What is wrong:** the table lists six `docs/reference/` pages (Agents, References, Environment, Hooks, Session cost, Session feedback); `plugins/workflows-core/docs/reference/` holds seven — `grounding.md` ("Grounding sources", linked from `docs/README.md:14` and `:33`) is missing from the README table.
 - **Failure scenario:** a reader starting from the plugin README does not find the page that says what each authoring command grounds on and how to switch a source off.
@@ -2661,7 +2661,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## documentation quality — family entry points and workflows-core
 
-### DQC-B2 — MINOR — "Option B" cost snapshot and `cost_statusline_usd` point at a page that never mentions either
+### DQC-B2 — MINOR — "Option B" cost snapshot and `cost_statusline_usd` point at a page that never mentions either — **Fixed in workflows-core 1.78.11, dev-workflows 4.59.2 and the repository README (batch B32)**
 - **Where:** `README.md:111` ("enables the Option-B snapshot used by session-cost reporting"); `plugins/workflows-core/docs/commands/statusline.md:26` ("the per-session **cost snapshot** ("Option B") that [Session cost](../reference/session-cost.md) reads when computing `cost_statusline_usd`"), `:43` ("the Option B cost snapshot this command enables")
 - **What is wrong:** `plugins/workflows-core/docs/reference/session-cost.md` contains neither "Option B", "snapshot" nor `cost_statusline_usd` (`grep -n "snapshot\|cost_statusline_usd\|Option" …/session-cost.md` returns nothing). It mentions the cross-check only to send the reader to `references/cost-emission.md` (`:45`). "Option B" is a name left over from a design discussion, and no user page defines it.
 - **Failure scenario:** a user who wants to know what the status line adds to cost reporting follows the link and finds nothing about a snapshot or `cost_statusline_usd`. The getting-started pages (`plugins/workflows-core/docs/getting-started.md:83`) describe it as "the cost cross-check" instead, so the reader meets three names for one thing.
@@ -2670,7 +2670,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B3 — MINOR — three of the five family getting-started pages skip the status-line step the root README calls step 5 and the core index says to "run first"
+### DQC-B3 — MINOR — three of the five family getting-started pages skip the status-line step the root README calls step 5 and the core index says to "run first" — **Fixed in product-workflows 3.78.4, docs-workflows 1.35.4 and security-workflows 0.10.8 (batch B32)**
 - **Where:** `README.md:109-111` ("### 5. Run `/workflows-core:statusline` first"); `plugins/workflows-core/docs/README.md:12` ("**run this first**"); present in `plugins/dev-workflows/docs/getting-started.md:70-84` and `plugins/workflows-core/docs/getting-started.md:77-89`; absent from `plugins/product-workflows/docs/getting-started.md`, `plugins/docs-workflows/docs/getting-started.md` and `plugins/security-workflows/docs/getting-started.md`. Their headings (`grep -n '^#'`) have no status-line section, and each mentions the status line only inside the `jq` prerequisite sentence.
 - **What is wrong:** the install path a user follows depends on which plugin's page they open. Three of them never say to install the status line. Without it, the cost report has no figure to check the price table against: dev's page `:76` explains this, and the others do not.
 - **Failure scenario:** a PM who installs `product-workflows` from its getting-started page runs `/idea` and `/create-prd` with no status line. The cost entries carry no cross-check figure, and nothing told them why.
@@ -2707,7 +2707,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B7 — MINOR — the family map omits two forward steps the commands offer
+### DQC-B7 — MINOR — the family map omits two forward steps the commands offer — **Fixed in workflows-core 1.78.11, dev-workflows 4.59.2, product-workflows 3.78.4 and docs-workflows 1.35.4 (batch B32)**
 - **Where:** `plugins/workflows-core/docs/family-map.md:137-144` (the `conformanceprd` and `secscan` edges)
 - **What is wrong:** `workflows-core:next-phase-offer` says the PRD-level `/dev-workflows:conformance <PRD>` → "once settled → `/docs-workflows:document <PRD>`" (`plugins/workflows-core/references/next-phase-offer.md:333`). It also says the Dev's `/security-workflows:scan <EPIC>` → "… then the PE's `/dev-workflows:conformance <PRD>`" (`:334`). The map's `conformanceprd` node has only the two amendment edges (to `specify` and `updateprd`), and `secscan` has no edge to `conformanceprd`. The map's only edge into `/document` comes from `/implement` (`:134`), but `/implement` offers `/document` only after the PE's PRD conformance (`next-phase-offer.md:330-331`).
 - **Failure scenario:** a PE reading the map sees PRD conformance end in amendments, with no forward path. A reader may conclude that `/document` follows each Epic's `/implement` directly, when the offer puts it after every Epic has merged and the PRD has been checked.
@@ -2716,7 +2716,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium. The map says "An artifact edge is not an automatic invocation" (`:176`), so the missing edges may be deliberate. Nothing on the page says so.
 
-### DQC-B8 — MINOR — the core docs never point a user to the three run flags under their own name
+### DQC-B8 — MINOR — the core docs never point a user to the three run flags under their own name — **Fixed in workflows-core 1.78.11 (batch B32)**
 - **Where:** `plugins/workflows-core/docs/README.md` (no row or entry for run flags); `plugins/workflows-core/README.md:22-33` (same); `plugins/workflows-core/docs/getting-started.md:57`, `:61`, `:65` ("See `workflows-core:run-flags`", unlinked)
 - **What is wrong:** `workflows-core` owns `--skip-costs`, `--skip-feedback` and `--enforce-model`. Its docs describe them only under environment-variable headings (getting-started, environment.md) and in pieces across session-cost.md and session-feedback.md. The accepted `--enforce-model` values are explained only in environment.md:105 with § citations to `run-flags.md` §2. The fuller user explanation is in the dev and product `docs/reference/model-routing.md` pages ("Enforcing one model"), which the core docs do not link.
 - **Failure scenario:** a user who wants to know what `--enforce-model=` accepts, or what `--skip-feedback` drops, looks at the core docs index and finds no entry.
@@ -2725,7 +2725,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B9 — NIT — root README's "three core environment variables" cannot be matched to the five it exports
+### DQC-B9 — NIT — root README's "three core environment variables" cannot be matched to the five it exports — **Fixed in the repository README (batch B32)**
 - **Where:** `README.md:83-90`
 - **What is wrong:** "three core environment variables — plus an optional `DOCS_PATH` … and an optional `ARCHITECTURE_REPO_PATH`". The block that follows exports five variables, and only `SPECS_PATH` and `REPOS_PATH` are not marked optional. The third `GIT_USER_INITIALS`, is marked "optional" in the block.
 - **Failure scenario:** a new user cannot tell which three are "core" and which they must set. Only `SPECS_PATH` is required.
@@ -2733,28 +2733,28 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B10 — NIT — dev-workflows' getting-started says it reads five variables, and the core environment page says four
+### DQC-B10 — NIT — dev-workflows' getting-started says it reads five variables, and the core environment page says four — **Fixed in dev-workflows 4.59.2 (batch B32)**
 - **Where:** `plugins/dev-workflows/docs/getting-started.md:38` ("`dev-workflows` reads five environment variables"), `:50` (`DOCS_PATH`: "None of this plugin's own six commands grounds against it … documented here only because … a boundary statement, not a consumer"); `plugins/workflows-core/docs/reference/environment.md:5` ("`dev-workflows` reads four of the five — … `$DOCS_PATH` is not among the variables its own commands or references read")
 - **What is wrong:** the two pages give different counts, and the dev page's own `DOCS_PATH` section says the plugin does not read the variable.
 - **Suggested fix:** "reads four … and `DOCS_PATH` is listed only to say it is never touched", or drop the `DOCS_PATH` section from dev.
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B11 — NIT — workflow.md counts "three dashed and solid edges" where the diagram draws five
+### DQC-B11 — NIT — workflow.md counts "three dashed and solid edges" where the diagram draws five — **Fixed in workflows-core 1.78.11 (batch B32)**
 - **Where:** `plugins/workflows-core/docs/workflow.md:38` against `:25-32`
 - **What is wrong:** five edges run into `pipeline`: `loader`, `skill` and `agents` (solid), and `setup` and `repair` (dashed). The sentence means the three solid ones (read a reference, load the skill, dispatch an agent).
 - **Suggested fix:** "The three solid edges into …".
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B12 — NIT — /frames' diagram labels Phase 0 "kind-gated" on a page that says no kind is passed
+### DQC-B12 — NIT — /frames' diagram labels Phase 0 "kind-gated" on a page that says no kind is passed — **Fixed in workflows-core 1.78.11 (batch B32)**
 - **Where:** `plugins/workflows-core/docs/commands/frames.md:78` (`"Phase 0 — Resolve the address (kind-gated) + model routing"`) against `:54` ("with no kind narrowing") and `:70` ("No kind is passed, because `design/` is reserved at every level"); the command's heading is `## Phase 0 — Resolve the address + model routing` (`plugins/workflows-core/commands/frames.md:35`)
 - **What is wrong:** the diagram adds a qualifier that contradicts its own page and is not in the command.
 - **Suggested fix:** drop "(kind-gated)", or say "(any BRD, PRD or Epic folder)".
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B13 — NIT — core pages call the five-plugin family "the `dev-workflows` plugin family"
+### DQC-B13 — NIT — core pages call the five-plugin family "the `dev-workflows` plugin family" — **Fixed in workflows-core 1.78.11 (batch B32)**
 - **Where:** `plugins/workflows-core/README.md:3`; `plugins/workflows-core/docs/getting-started.md:21`; `plugins/workflows-core/docs/workflow.md:3`; `plugins/workflows-core/docs/roles-and-phases.md:3`; `plugins/workflows-core/docs/reference/references.md:5`
 - **What is wrong:** the root README and family map call it "the workflow plugin family" or "the family" of five plugins (`README.md:14`, `:23`). The core plugin's first sentence calls it the `dev-workflows` family.
 - **Failure scenario:** a docs-workflows or security-workflows user who reads only the core README's first line takes `workflows-core` to be a `dev-workflows` add-on.
@@ -2762,7 +2762,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQC-B14 — NIT — the root README's "Directory structure" leaves out three of the layouts the variables expect
+### DQC-B14 — NIT — the root README's "Directory structure" leaves out three of the layouts the variables expect — **Fixed in the repository README (batch B32)**
 - **Where:** `README.md:163-176`
 - **What is wrong:** it shows `$SPECS_PATH/specifications/PRD-<KEY>-<slug>/` only. It leaves out `BRD-<KEY>-<slug>/` (the second entry route, `README.md:28`), `$SPECS_PATH/security/<repo-slug>/` (the findings register; `plugins/security-workflows/docs/getting-started.md:56`) and `$SPECS_PATH/architecture/` (team decision records; `plugins/workflows-core/docs/reference/grounding.md:35`). `ARCHITECTURE_REPO_PATH`, which the section above exports, is also absent.
 - **Failure scenario:** a team setting up a new specs repository from this section does not expect `security/` and `architecture/` to appear at its root, or the BRD folders.
@@ -2791,7 +2791,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQD-B3 — MINOR — The dev workflow diagram skips the PE's PRD-level `/conformance` before documentation, and sends every *amend the document* to `/specify`
+### DQD-B3 — MINOR — The dev workflow diagram skips the PE's PRD-level `/conformance` before documentation, and sends every *amend the document* to `/specify` — **Partly fixed in dev-workflows 4.59.2 (batch B32): the edge to the documentation commands; the amend edge stays with B33**
 - **Where:** `plugins/dev-workflows/docs/workflow.md:28`, `:31`
 - **What is wrong:** The diagram draws `implement -.->|code + implementation.md, in docs-workflows| docsplugin` directly. It has no edge for the lane's "once ALL Epics implemented and merged → PE → `/dev-workflows:conformance <PRD>` → `/docs-workflows:document <PRD>`" (`next-phase-offer.md:319`), nor for "`/dev-workflows:conformance <PRD>` … once settled → `/docs-workflows:document <PRD>`" (`:321`). The single `conformance -.->|"PRD: the PE, every Epic merged — amend the document"| specify` edge says an amendment always goes to `/specify`. The lane sends it to "the command its note names" (`:321`), which can be `/update-prd` or `/create-ard` too.
 - **Failure scenario:** A reader takes the diagram as the order of work. They go from the last `/implement` straight to `/document`, without the PE's PRD conformance run the docs and offers expect first. Or they run `/specify` to amend a PRD-level requirement.
@@ -2809,7 +2809,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQD-B5 — MINOR — "`dev-workflows` reads five environment variables" counts one it never reads
+### DQD-B5 — MINOR — "`dev-workflows` reads five environment variables" counts one it never reads — **Fixed in dev-workflows 4.59.2 (batch B32), with DQC-B10, into which it merged**
 - **Where:** `plugins/dev-workflows/docs/getting-started.md:38`; `plugins/dev-workflows/docs/reference/environment.md:3` ("The plugin reads five user-settable variables")
 - **What is wrong:** One of the five is `DOCS_PATH`. The same page says "None of this plugin's own six commands grounds against it … It is documented here only because `code-handoff.md`'s git finish states plainly that it never touches this path either — a boundary statement, not a consumer" (`getting-started.md:50`). `grep -rn DOCS_PATH plugins/dev-workflows/{commands,agents,references,hooks,scripts}` hits only `references/code-handoff.md:360`, a "never touches" sentence.
 - **Failure scenario:** A new user setting up from *What you set on your machine* spends time on a docs clone and `DOCS_PATH` that this plugin never uses. Or they conclude that `/implement` reads their docs.
@@ -2913,7 +2913,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B5 — MINOR — The main workflow diagram routes `/implement` straight to the docs commands, leaves out the security scan, and gives the PE's PRD conformance no edge onward
+### DQP-B5 — MINOR — The main workflow diagram routes `/implement` straight to the docs commands, leaves out the security scan, and gives the PE's PRD conformance no edge onward — **Partly fixed in product-workflows 3.78.4 (batch B32): the edge to the documentation commands; the scan node and the cross-cutting bullet stay with B34**
 - **Where:** `plugins/product-workflows/docs/workflow.md:65-70`, `:91`, `:192-198`
 - **What is wrong:** The diagram draws `implement -.->|code + implementation.md, in docs-workflows| docsplugin` (`:91`), and `conformanceprd` has edges only back to `specify`, `epics` and `updatevi` (`:68-70`). The routing graph is different. `/implement` goes to `/conformance <EPIC>`, then `/security-workflows:scan <EPIC>`, then the remaining Epics. Once all have merged, `/conformance <PRD>` goes to `/docs-workflows:document` and then `/release-notes`, and `/conformance <PRD>` → *"once settled → `/docs-workflows:document <PRD>`"* (`workflows-core/references/next-phase-offer.md`, part `dev`). `/security-workflows:scan` appears nowhere in `workflow.md`. Its *Cross-cutting commands* list (`:192-198`) names the commands of `workflows-core`, `docs-workflows` and `dev-workflows` but not `security-workflows`. Meanwhile `roles-and-phases.md:46` does name `/security-workflows:scan`.
 - **Failure scenario:** A PE following the diagram thinks the docs run follows `/implement` directly. They never learn that `/conformance <PRD>` is the gate before docs, or that a security scan sits between an Epic's implementation and its merge.
@@ -2993,7 +2993,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B14 — NIT — The README's documentation table leaves out three reference pages that the sibling README lists
+### DQP-B14 — NIT — The README's documentation table leaves out three reference pages that the sibling README lists — **Fixed in product-workflows 3.78.4 (batch B32)**
 - **Where:** `plugins/product-workflows/README.md:24-36`
 - **What is wrong:** The table has no rows for [Effort proposals](docs/reference/proposal-format.md), [Session feedback](docs/reference/session-feedback.md) or [Resume and checkpoints](docs/reference/resume-and-checkpoints.md). `plugins/dev-workflows/README.md:35,37` lists its Session feedback and Resume pages. Effort proposals is the one page a PM sends a customer about. `README.md:20` also calls the twelve `references/` files "reference pages", although the docs tree has nine pages under `docs/reference/`.
 - **Suggested fix:** Add the three rows. Say "twelve reference files (see References)".

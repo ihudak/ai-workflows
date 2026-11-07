@@ -1003,6 +1003,8 @@ Entries:
 
 **Version bumps:** workflows-core patch, dev-workflows patch.
 
+Done in batch B32 (workflows-core 1.78.11, dev-workflows 4.59.2, product-workflows 3.78.4, docs-workflows 1.35.4, security-workflows 0.10.8 and the repository README): the twelve entries. DQC-B7 is confirmed: `/dev-workflows:conformance` on a PRD offers `/document` once settled, the scan offers that run after the merge, and `/implement` offers `/document` only after it. By the user's rulings the edge from the PRD-level `/conformance` to `/document` went onto all four diagrams that drew `/document` after `/implement` — the family map and the dev-, product- and docs-workflows workflow pages — and the scan's hand-on to that run, offered only where no finding went to fix, onto the two that draw the scan, the family map and the dev page; that fixes DQD-B3's and DQP-B5's documentation edges early; a new check 29 holds each README's Documentation table to every page but the command pages, which on the tree before the fixes fired nine times, CORE-B16 and DQP-B14 among them, and on none after; and product-, docs- and security-workflows' getting-started pages each gained a status-line section. "Option B" is renamed the status-line cross-check wherever it named the cost snapshot, the cost reference and two code comments included. Fixing DQC-B10 also corrected the same paragraph's grounding consumers to ten, with `/update-spec`, and marks DQD-B5, merged into it, fixed; the product and dev workflow pages' counts of other plugins' nodes became seven and six; product-workflows' README and description now say twelve reference files, which completes DQP-B14; and `gates.md` and check 3's message now say it reaches a page from the plugin README as well as the index.
+
 ### B33 — dev-, security- and docs-workflows pages and page-set parity
 
 **Tier:** Documentation only. **Entries:** 7, 0 MAJOR.
@@ -1026,7 +1028,7 @@ Entries:
 
 **Confirm first:** DQD-B3 (medium); DQS-B9 (medium).
 
-**Notes:** DQD-B6 was fixed early, in batch B30 (dev-workflows 4.58.6), whose vocabulary pass had its page open. New pages change the page counts `.claude/rules/docs-workflows.md` and `.claude/rules/security-workflows.md` state; re-derive and update them (no gate checks those numbers).
+**Notes:** DQD-B6 was fixed early, in batch B30 (dev-workflows 4.58.6), whose vocabulary pass had its page open. DQD-B3's edge to the documentation commands was drawn early, in batch B32 (dev-workflows 4.59.2); its amend edge is still this batch's. New pages change the page counts `.claude/rules/docs-workflows.md` and `.claude/rules/security-workflows.md` state; re-derive and update them (no gate checks those numbers).
 
 **Version bumps:** dev-workflows patch, docs-workflows patch, security-workflows patch.
 
@@ -1061,7 +1063,7 @@ Entries:
 
 **Confirm first:** DQP-B16 (medium).
 
-**Notes:** Run after B07, B08, B10 and B23, so the pages describe the fixed commands. DQP-G4's section on each page must be read from the command's own next-step phase, not from the retired README.
+**Notes:** Run after B07, B08, B10 and B23, so the pages describe the fixed commands. DQP-G4's section on each page must be read from the command's own next-step phase, not from the retired README. DQP-B14 was fixed early, in batch B32 (product-workflows 3.78.4), by check 29's README rows, and DQP-B5's edge to the documentation commands was drawn there too; its scan node and cross-cutting bullet are still this batch's.
 
 **Version bumps:** product-workflows patch.
 
