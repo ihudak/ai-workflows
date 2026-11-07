@@ -2526,7 +2526,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (user observation, BRIEF-DOCS)
 - **Confidence:** high
 
-### DQS-B2 — MINOR — Workflow, BRD-route, roles and getting-started pages draw or name every command but link to none of the command pages — **Fixed in dev-workflows 4.58.8, docs-workflows 1.35.3, product-workflows 3.78.3, security-workflows 0.10.7 and workflows-core 1.78.10 (batch B31)**
+### DQS-B2 — MINOR — Workflow, BRD-route, roles and getting-started pages draw or name every command but link to none of the command pages — **Fixed in dev-workflows 4.59.1, docs-workflows 1.35.3, product-workflows 3.78.3, security-workflows 0.10.7 and workflows-core 1.78.10 (batch B31)**
 - **Where:**
   - `plugins/dev-workflows/docs/workflow.md` (4 links, 0 to `commands/`; it names `/design` 11×, `/implement` 11×, `/ready` 8×)
   - `plugins/product-workflows/docs/workflow.md` (3 links, 0 to `commands/`; it names `/specify` 12×, `/brd-reconcile` 15×, `/create-prd` 10×)
@@ -2542,7 +2542,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQS-B3 — MINOR — 18 command pages do not link back to their plugin's workflow page — **Fixed in dev-workflows 4.58.8, docs-workflows 1.35.3 and product-workflows 3.78.3 (batch B31)**
+### DQS-B3 — MINOR — 18 command pages do not link back to their plugin's workflow page — **Fixed in dev-workflows 4.59.1, docs-workflows 1.35.3 and product-workflows 3.78.3 (batch B31)**
 - **Where:** each page's *See also* list:
   - `dev-workflows/docs/commands/` — all six: `conformance.md:103`, `design.md:90`, `implement.md:110`, `ready.md:80`, `upgrade.md:72`, `vuln.md:70`
   - `docs-workflows/docs/commands/` — `docs-brand.md:61`, `document.md:109`, `release-notes.md:97`
@@ -2554,7 +2554,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQS-B4 — MINOR — Next and previous commands named in prose but not linked; `/harvest-decisions` never mentions `/promote-decisions`; no command page links `/docs-audit` — **Fixed in dev-workflows 4.58.8, docs-workflows 1.35.3, product-workflows 3.78.3 and workflows-core 1.78.10 (batch B31)**
+### DQS-B4 — MINOR — Next and previous commands named in prose but not linked; `/harvest-decisions` never mentions `/promote-decisions`; no command page links `/docs-audit` — **Fixed in dev-workflows 4.59.1, docs-workflows 1.35.3, product-workflows 3.78.3 and workflows-core 1.78.10 (batch B31)**
 - **Where:**
   - `plugins/product-workflows/docs/commands/harvest-decisions.md`: no occurrence of "promote" in the page (`grep -c promote` → 0), although `promote-decisions.md:7` says it runs "after [`/harvest-decisions`]". The harvest command's own handoff text names `/promote-decisions` (`commands/harvest-decisions.md:46`). `promote-decisions.md` has no inbound link from any command page.
   - `plugins/docs-workflows/docs/commands/docs-audit.md` has no inbound link from any command page. `docs-init.md` names `/docs-audit` 5× (`:3`, `:23`, `:35`, `:62`) and `docs-serve.md` names it 3×, all unlinked. The README diagram draws `SERVE --> AUDIT` (`plugins/docs-workflows/README.md:30`).
@@ -2567,7 +2567,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQS-B5 — MINOR — 18 relative links leave the plugin directory and break in the installed cache — **Fixed in dev-workflows 4.58.8, docs-workflows 1.35.3, product-workflows 3.78.3, security-workflows 0.10.7, workflows-core 1.78.10 and guideline-reviewers 1.2.8 (batch B31)**
+### DQS-B5 — MINOR — 18 relative links leave the plugin directory and break in the installed cache — **Fixed in dev-workflows 4.59.1, docs-workflows 1.35.3, product-workflows 3.78.3, security-workflows 0.10.7, workflows-core 1.78.10 and guideline-reviewers 1.2.8 (batch B31)**
 - **Where:**
   - Seven plugin READMEs → `../../README.md`: `dev-workflows/README.md:5`, `docs-workflows/README.md:5`, `product-workflows/README.md:5`, `security-workflows/README.md:5`, `workflows-core/README.md:5`, `obsidian-llm-wiki/README.md:80`, `prose-style/README.md:407`.
   - Nine getting-started links → `../../../README.md`: `dev-workflows/docs/getting-started.md:21` (`#prerequisites`) and `:25`, `docs-workflows/...:23`, `guideline-reviewers/...:19`, `product-workflows/...:21` and `:23`, `security-workflows/...:34` (`#prerequisites`) and `:62` (`#4-raise-claude-codes-skill-listing-budget`), `workflows-core/...:25`.

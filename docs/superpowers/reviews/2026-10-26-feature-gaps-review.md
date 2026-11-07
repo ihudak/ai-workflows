@@ -477,7 +477,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `implement-specs-doc-finding-unrouted` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B35 — MINOR — Gap: tests that do not compile reach the Opus review — **Recorded in to-fix.md as D47 (batch B30): to build**
+### FBB-B35 — MINOR — Gap: tests that do not compile reach the Opus review — **Recorded in to-fix.md as D47 (batch B30); built in dev-workflows 4.59.0**
 - **Where:** `plugins/dev-workflows/commands/implement.md:872` (type-checks run with lint and build in Phase 3.5 step 3, after the review); `code-writer` and `test-writer` run none.
 - **What is wrong:** `test-writer` output that fails `tsc` is reviewed as written. The review then spends findings on compile errors. The design deliberately places every check after the review, so this is a gap, not a contradiction.
 - **Suggested fix:** Allow a non-running type-check of test sources before the review diff, stating that it is not a test run, or record why this is refused.

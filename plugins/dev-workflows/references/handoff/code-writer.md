@@ -76,8 +76,9 @@ failure_input: /tmp/dw-impl-failure-AbC123
                            # EVIDENCE on mode: fix; none on mode: step. A file holding test-baseliner's whole
                            # `## Test Verify Report` (Phase 3.5 step 6), or a failing check's command — a
                            # lint, a build, a type-check, or another check a step left to the caller —
-                           # the directory it ran in and its output, each lint failure the caller found
-                           # on the tree before the change marked pre-existing (Phase 3.5 step 3).
+                           # the directory it ran in and its output, each lint or type-check failure the
+                           # caller found on the tree before the change marked pre-existing (Phase 3.5
+                           # step 3).
 model_routing:             # CONTEXT, inline. The run's model_routing block
   classification: SIGNIFICANT     # (workflows-core:model-routing/classification §4), as far as this
   implementation_model: claude-opus-5-5   # handoff declares it: the class `class` carries, the model
