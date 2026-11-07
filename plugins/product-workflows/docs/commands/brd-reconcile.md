@@ -772,25 +772,9 @@ dependent BRD is named beside the list with `/brd-interview` on that dependent's
 
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
-- [`customer-review-schema.md`](../../references/customer-review-schema.md) — the twelve sections the
-  returned review carries, and the one-new-file rule that makes section 12 the only channel for a
-  change to a package document.
+- [References](../reference/references.md) — the plugin's own formats this command applies: the customer review schema (the twelve sections the returned review carries, and the one-new-file rule that makes section 12 the only channel for a change to a package document), the decision register format (the `[CD#n]` record, the mandatory `argumentation`, the two causes that may reopen a decision, `conditional_on`, and the will-change rule the freeze applies to a `[CD#n]`), interview tagging (the `[C]` tag and the round vocabulary whose terminal disposition *answered by the customer* this command writes), the coverage ledger format (the dispositions, and the roll-up behind the ledger line every run ends with), the BRD format (the four defect resolutions, three of which this command writes — `customer-amended <SLICE-KEY> <date>`, `withdrawn`, and `resolved-by: <SLICE-KEY>/[CD#n]` for a defect whose question the customer answered, the first and the last qualified by the slice's key because each slice keeps its own reviews and numbers its own decisions — and the slice's one-hop inheritance of its parent's defect log) and bundle packaging (why the committed bundle is the permanent record, and therefore why nothing inside it is bannered).
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record the register carries, and the upstream
   check run on the grounding files.
-- [`decision-register-format.md`](../../references/decision-register-format.md) — the `[CD#n]` record,
-  the mandatory `argumentation`, the two causes that may reopen a decision, `conditional_on`, and the
-  will-change rule the freeze applies to a `[CD#n]`.
-- [`interview-tagging.md`](../../references/interview-tagging.md) — the `[C]` tag and the round
-  vocabulary whose terminal disposition *answered by the customer* this command writes.
-- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the dispositions, and
-  the roll-up behind the ledger line every run ends with.
-- [`brd-format.md`](../../references/brd-format.md) — the four defect resolutions, three of which
-  this command writes — `customer-amended <SLICE-KEY> <date>`, `withdrawn`, and
-  `resolved-by: <SLICE-KEY>/[CD#n]` for a defect whose question the customer answered, the first and
-  the last qualified by the slice's key because each slice keeps its own reviews and numbers its own
-  decisions — and the slice's one-hop inheritance of its parent's defect log.
-- [`bundle-packaging.md`](../../references/bundle-packaging.md) — why the committed bundle is the
-  permanent record, and therefore why nothing inside it is bannered.
 - [Agents](../reference/agents.md) — `customer-review-reader`'s and `impl-maintenance`'s full
   contracts.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),

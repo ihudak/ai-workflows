@@ -62,4 +62,4 @@ Where the environment's agent tool selects models by family name only (`opus`, `
 
 ---
 
-The full policy — the classification triggers in detail, the `model_routing` handoff block, the mid-tier detection chain used for mechanical steps, and enforced-model routing — is authoritative in the shared `model-routing/classification` reference, which the companion `workflows-core` plugin ships rather than this one. This page is a summary of it, not a substitute for it.
+The full policy — the classification triggers in detail, the record each run keeps of the models it chose, the mid-tier detection chain used for mechanical steps, and enforced-model routing — is authoritative in the shared `model-routing/classification` reference, which the companion `workflows-core` plugin ships rather than this one. This page is a summary of it, not a substitute for it.

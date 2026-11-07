@@ -335,9 +335,9 @@ reads was already independently verified by `/prd-ground`'s own agents.
   on file stops the run with `BRD_SPLIT_UNVERIFIED: N findings have no verifier verdict — run
   /product-workflows:prd-ground first.`
 - **On a slice: every finding block is well-formed.** The finding record's field set is closed to
-  its own — `id`, `claim`, `verdict`, `prior_verdict`, `evidence`, `control`, `commit`, `altitude`, `horizon`, `class`, `cites`, `prerequisite` and `consumed_by` — plus `outcome` and `notes`. A block carrying
+  the finding record's own fields plus `outcome` and `notes`. A block carrying
   any other key stops the run with `BRD_SPLIT_MALFORMED_FINDING`, naming each finding and key. The
-  keys that actually occur are the verifier's own return fields — `own_verdict` above all, with `control_outcome` beside it, the verifier's own judgement of whether a finding's `control` fired. `own_verdict` is a field the verifier *returns* to its caller, which
+  keys that actually occur are the verifier's own return fields — `own_verdict` above all, with `control_outcome` beside it. `own_verdict` is a field the verifier *returns* to its caller, which
   leaves a block that carries it stating two verdicts at once while `verdict` is the one every
   consumer reads. The verified-outcome test above cannot catch it, because such a block does carry
   an outcome; the repair is to remove the offending key by hand, not to re-derive the corpus.
@@ -370,8 +370,7 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   parent's row written first, so a run interrupted between the two leaves the parent pointing one hop
   at the receiver rather than a second hop through the donor. No row returns to `unallocated` on
   either ledger, and no ledger row is ever deleted.
-- `slices.md` — written in the layout
-  [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) fixes: frontmatter
+- `slices.md` — written in a fixed layout: frontmatter
   `kind: slices` and `key:`, then one heading per block type in a fixed order — structural only:
   no script parses it, [`/brd-package`](brd-package.md) reads the slice keys under `## Slices`, and
   every other reader reads the blocks as prose. A file with no such frontmatter is left in its own layout by every in-place edit
@@ -644,15 +643,9 @@ and the run says what has to happen first.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<BRD-KEY>` grammar and folder
-  resolution this command uses by name (`read-key` for its address, `key-valid` for a slice key it mints, `resolve-address`), including how a slice
+  resolution this command uses, including how a slice
   nests inside its parent and why that nesting — and only the nesting — is capped at one level.
-- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the authority for
-  the ledger row shape, the six dispositions, the allocation gate this command enforces, the
-  PRD-eligibility rule a slice's `covered-here` rows satisfy, and the re-cut: what makes a row
-  movable, which rows change and in what order, who may receive one, and what the mechanism does not
-  relax.
-- [`decision-register-format.md`](../../references/decision-register-format.md) — the two causes for
-  reopening a decision, which is why a sibling holding decisions cannot receive a re-pointed row.
+- [References](../reference/references.md) — the plugin's own formats this command applies: the coverage ledger format (the authority for the ledger row shape, the six dispositions, the allocation gate this command enforces, the PRD-eligibility rule a slice's `covered-here` rows satisfy, and the re-cut: what makes a row movable, which rows change and in what order, who may receive one, and what the mechanism does not relax) and the decision register format (the two causes for reopening a decision, which is why a sibling holding decisions cannot receive a re-pointed row).
 - The `grounding-format` reference (shipped in `workflows-core`, listed on its References page) — the four verification outcomes,
   which this command's Phase 0 gate depends on.
 - [Agents](../reference/agents.md) — `impl-maintenance`'s full contract.

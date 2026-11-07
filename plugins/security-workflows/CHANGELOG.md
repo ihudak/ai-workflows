@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.6] — 2026-11-07
+
+User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The pages drop the internal names the first pass left**: `specs_git: blocked` and `misrooted`, phase step numbers and the register's field names (`reserved_moves`, `held_by`) are said in plain words on Session cost, Environment, Roles and phases and the register page, and Session cost states the role rule once.
+
 ## [0.10.5] — 2026-11-07
 
 User pages only, batch B30. Needs nothing from the other plugins' releases.

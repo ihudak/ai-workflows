@@ -10,7 +10,7 @@ It emits a session-cost entry all the same, with `phase`/`role` inferred from th
 
 ## Why it exists
 
-The shared [`grounding-format.md`](../../references/grounding-format.md) reference makes a frame set's index **mandatory, and a set without one a refusal**: `design-grounder` returns `NO_INDEX` rather than reading a set without one, because a filename is not a reliable statement of what a frame shows.
+A frame set's index is **mandatory, and a set without one a refusal**: `design-grounder` returns `NO_INDEX` rather than reading a set without one, because a filename is not a reliable statement of what a frame shows.
 
 That is strict on purpose, and it leaves the obvious workflow with no way out. A human exports the frames of a screen flow, drops the folder into `design/`, and has a set the plugin refuses to read — recoverable only by hand-authoring an index. `/idea` writes one for the images it vendors, and no other command does. `/frames` is the repair.
 
@@ -45,7 +45,7 @@ flowchart TD
 
 ## What it produces
 
-One `index.md` per frame set, in the format the shared [`grounding-format.md`](../../references/grounding-format.md) reference fixes — the same format and the same reconciliation contract `/product-workflows:idea` Phase 4.5 follows — that command ships in the sibling pipeline plugin, and this is the one file the two write in common, so two writers never leave one directory holding an index neither would have written. The index is rebuilt from the set **as it stands on disk**: every existing row whose image is still there is preserved verbatim — with one exception, and it is the whole convergence mechanism for a capped set: a row carrying `_no description on record_` holds no description to preserve, so the next writer that can obtain one fills it — a row is appended for each frame this run described, a row whose image is gone is dropped and reported, and a frame the run could not account for gets a placeholder row and is reported. There are **two** placeholders, and which one a row gets turns on whether a re-run would do anything different: `_no description on record_` where the run never looked (the cap bit, or the whole dispatch failed), which the next run retries; and `_could not be read: <reason>_` where the describer looked at that file and could not read it, which it does not.
+One `index.md` per frame set, in the one format `/frames` and `/product-workflows:idea` (its Phase 4.5) both follow, with the same reconciliation contract — that command ships in the sibling pipeline plugin, and this is the one file the two write in common, so two writers never leave one directory holding an index neither would have written. The index is rebuilt from the set **as it stands on disk**: every existing row whose image is still there is preserved verbatim — with one exception, and it is the whole convergence mechanism for a capped set: a row carrying `_no description on record_` holds no description to preserve, so the next writer that can obtain one fills it — a row is appended for each frame this run described, a row whose image is gone is dropped and reported, and a frame the run could not account for gets a placeholder row and is reported. There are **two** placeholders, and which one a row gets turns on whether a re-run would do anything different: `_no description on record_` where the run never looked (the cap bit, or the whole dispatch failed), which the next run retries; and `_could not be read: <reason>_` where the describer looked at that file and could not read it, which it does not.
 
 Descriptions come from the `frame-describer` agent, which looks at the frames and returns one plain-language description each — an agent whose whole tool list is `Read`, `Glob`, `Grep`, so it cannot write the index it describes into. The command hands the frames to it rather than opening them itself, so every description in an index is one that something which actually saw the frame produced, and "transcribed, never inferred" is a rule about copying rather than a hope about restraint.
 
@@ -55,7 +55,7 @@ The indexes are deliverables, so they reach the default branch through the phase
 
 **Forty frames described per run**, counted across every set the run touches. `/idea` has no such cap: it reads mockups incidentally, to write a brief, and asks before reading past six images, then reads what you allow ten to an agent. This command is invoked *to* index and asks nothing first, so stopping at six would make it useless on the first real export it met, and it describes a whole set in one agent, which is the context forty bounds.
 
-**What counts as a frame** is the extension set the same reference fixes — `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.webp`. One vocabulary, shared with `/idea`, because two writers of one index listing by two different sets would each drop the other's rows as frames that had gone missing. Anything else in the directory is not a frame, gets no row, and is named once in the report so it is visibly not indexed rather than invisibly absent.
+**What counts as a frame** is a fixed extension set — `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.webp`. One vocabulary, shared with `/idea`, because two writers of one index listing by two different sets would each drop the other's rows as frames that had gone missing. Anything else in the directory is not a frame, gets no row, and is named once in the report so it is visibly not indexed rather than invisibly absent.
 
 **Where nothing is written, nothing is created.** A folder with no `design/`, a `design/` holding no subdirectory, and a frame set holding no frames are all clean outcomes reported as such — no directory is created, no index is written, and no handoff is offered, because there would be nothing to open a pull request for. Images dropped *directly* into `design/` rather than into a set are called out with the fix: a set is a subdirectory of `design/`.
 
@@ -85,7 +85,7 @@ Resolves `PRD-ACME-77-<slug>/`, finds `design/checkout-flow/` holding eleven PNG
 
 ## See also
 
-- [`grounding-format.md`](../../references/grounding-format.md) — reserves `design/`, makes each set's index mandatory, and fixes the index format and the reconciliation contract both writers execute.
+- [References](../reference/references.md) — the shared grounding-format reference, which reserves `design/`, makes each set's index mandatory and fixes the index format and the reconciliation contract both writers execute, and the addressing reference, the resolver that turns one address into a folder of any kind.
 - `/idea` (in the `product-workflows` plugin) — the other writer: it indexes the images it vendors into `design/idea-sources/`, and leaves a placeholder row for any frame it cannot speak for.
 - `/prd-ground` (in the `product-workflows` plugin) — the one command that *reads* a frame set as evidence, through `design-grounder`.
 - [Agents](../reference/agents.md) — `frame-describer`, the bounded read this command dispatches once per set.

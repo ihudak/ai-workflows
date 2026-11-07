@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.9] — 2026-11-07
+
+User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The pages drop the internal names the first pass left.** Run-record fields (`specs_git: misrooted`, `phase: inferred, role: inferred`, the run-flags record), entry-point names and `references/<name>.md` paths are said in plain words on Session cost, Session feedback, Agents, References, Environment, Getting started, Hooks, Grounding and the `/feedback`, `/prompt`, `/frames`, `/prompt-brainstorm`, `/prompt-grill-me` and `/diagnose-session` pages. Each pointer to a shared reference goes to the References page.
+- **`/statusline`'s page names the backup it writes**: it reads and writes `~/.claude/settings.json`, first backing up any `statusLine` block it holds to `settings.json.dev-workflows.bak` beside it.
+- **The References page's load-by-part paragraphs** keep every rule and drop the build's own checks and the loader's file path.
+
 ## [1.78.8] — 2026-11-07
 
 User pages only, batch B30. Needs nothing from the other plugins' releases.

@@ -28,7 +28,7 @@ as a section below the checklist, and the line links it.
 Nothing is ever written into your working directory, which may be a code repository.
 
 **The run found `$SPECS_PATH` misplaced → report-only too**, whether or not a folder resolved: nothing is written
-under it, and the notice says that is the reason.
+under `$SPECS_PATH`, and the notice says that is the reason.
 
 That is the whole ladder.
 

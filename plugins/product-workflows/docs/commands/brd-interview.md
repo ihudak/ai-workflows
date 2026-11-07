@@ -124,8 +124,7 @@ There is **no `--no-docs` flag**, because this command does no documentation gro
 | `[V]` | A delivery-side design decision | The **operator**, with recorded argumentation. Never the customer |
 | `[C]` | A genuine business decision | The **customer**, and only via a review package |
 
-The two "never"s are rules, not tendencies, and the reasons they exist are in
-[`interview-tagging.md`](../../references/interview-tagging.md). A `[G]` put to a person
+The two "never"s are rules, not tendencies, and the reasons are these. A `[G]` put to a person
 returns their belief about the system rather than the system, and that belief then becomes a
 requirement nobody re-checks; a `[V]` dressed as a `[C]` extracts authority the customer never meant
 to give and cannot defend later.
@@ -259,9 +258,8 @@ subagent is dispatched — every finding this command reads was already independ
   `[CG#n]` at all stops first, with `BRD_INTERVIEW_NO_FINDINGS`: the outcome count is satisfied by an
   empty finding set, and every `[G]` this command answers is answered from the findings and from
   nothing else.
-- **Every finding block is well-formed.** The record's field set is closed to the finding record's own —
-  `id`, `claim`, `verdict`, `prior_verdict`, `evidence`, `control`, `commit`, `altitude`, `horizon`, `class`, `cites`, `prerequisite` and `consumed_by` — plus `outcome` and `notes`; a block carrying any other
-  key stops the run with `BRD_INTERVIEW_MALFORMED_FINDING`. The keys that occur are the verifier's own return fields — `own_verdict` above all, and `control_outcome` beside it, the verifier's own judgement of whether a finding's `control` fired. `own_verdict` is a
+- **Every finding block is well-formed.** The record's field set is closed to the finding record's own fields plus `outcome` and `notes`; a block carrying any other
+  key stops the run with `BRD_INTERVIEW_MALFORMED_FINDING`. The keys that occur are the verifier's own return fields — `own_verdict` above all, and `control_outcome` beside it. `own_verdict` is a
   verifier **return** field, and a block carrying it states two verdicts at once. That matters more
   here than anywhere else on the route: every `[G]` is answered from the findings and from nothing
   else, so such a finding freezes a `[VD#n]` against whichever half the run happened to read, and
@@ -294,12 +292,12 @@ Under the resolved BRD folder — `$SPECS_PATH/specifications/BRD-<BRD-KEY>-<slu
 BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
 
 - `decisions.md` — the decision register: one block per `[VD#n]` delivery-team decision and per
-  `[AS#n]` assumption. A decision carries the thirteen fields
-  [`decision-register-format.md`](../../references/decision-register-format.md) defines; an
-  assumption carries every one of them the format admits on an assumption, and omits rather than
-  writes empty the three it marks *not applicable* there — `options_considered`, `chosen` and
-  `settles`; the format accounts for all thirteen, and says of each whether it is
-  as-is, means something different, or does not apply. Ids are contiguous within their
+  `[AS#n]` assumption. A decision carries thirteen fields — `id`, `statement`,
+  `options_considered`, `chosen`, `argumentation`, `evidence`, `defects`, `settles`, `altitude`,
+  `conditional_on`, `status`, `consumed_by` and `round`; an assumption carries every one that applies to it
+  and omits the three that do not — `options_considered`, `chosen` and `settles` — rather than writing them empty, and its
+  `argumentation` and `evidence` mean something different there: why the package proceeds without
+  establishing the assumption, and why no evidence exists. Ids are contiguous within their
   own prefix, assigned once, never renumbered, and never reused after a terminal status, a removed
   torn write (below) aside. A record
   already on file moves only three ways here: reopened, with a closing `Reopened` paragraph naming
@@ -341,8 +339,7 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   makes a round resumable — an interrupted run returns to the first question carrying no terminal
   disposition rather than restarting the round. Each question sits under a
   `### <position>. [<tag>] — <rows>` heading, with each state it reaches on a line of its own
-  labelled `- **State:**` beneath it; [`decision-register-format.md`](../../references/decision-register-format.md)
-  works an example of a whole record, the later writes to it, and the question-set entry it names.
+  labelled `- **State:**` beneath it.
 - `interview/customer-questions.md` — the `[C]` questions held for the customer, each with the
   findings that bear on it, on its own line labelled `- **Findings:**` and reading `none` where none
   does, which [`/brd-package`](brd-package.md) renders into the customer prompt and
@@ -504,8 +501,7 @@ option is picked.
   again. Only a round can answer one, so an unanswered flag opens one: a run that finds every round closed
   opens the next round for it, and where the flags alone made it askable that round holds no question
   and closes once their answers are written. This is what [`/brd-package`](brd-package.md)'s flag gate
-  sends you back here for. The rule for what flags an entry and what answers it is set by
-  `code-defect-log-format.md`.
+  sends you back here for.
 - **Phase 8 — the will-change rule.** A decision whose `evidence` list is *entirely*
   `horizon: will-change` findings may not be closed. Three resolutions are offered and exactly three:
   re-base it on a `current` finding, make it explicitly `conditional_on` the prerequisite decision —
@@ -624,20 +620,13 @@ Re-opening a closed round later, with its cause recorded:
 
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
-- [`interview-tagging.md`](../../references/interview-tagging.md) — the authority for the three tags,
-  who may answer each, re-tagging and its recorded cause, the split that fixes an untaggable
-  question, and how a round opens and closes.
+- [References](../reference/references.md) — the plugin's own formats this command applies: interview tagging (the authority for the three tags, who may answer each, re-tagging and its recorded cause, the split that fixes an untaggable question, and how a round opens and closes), the decision register format (the `[VD#n]` / `[CD#n]` / `[AS#n]` record, the five statuses, the mandatory `argumentation`, `conditional_on`, and the will-change rule this command enforces), the code-defect log format (what flags an entry and what answers it) and the coverage ledger format (the dispositions the allocation gate reads, and the ledger line the final report ends with).
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record the register carries, and the upstream
   check run on the grounding files.
-- [`decision-register-format.md`](../../references/decision-register-format.md) — the `[VD#n]` /
-  `[CD#n]` / `[AS#n]` record, the five statuses, the mandatory `argumentation`, `conditional_on`, and
-  the will-change rule this command enforces.
 - The `grounding-format` reference (shipped in `workflows-core`, listed on its References page) — the finding record, the six
   verdicts, the two horizons, and the verification outcomes the Phase 0 gate depends on.
 - The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<BRD-KEY>` grammar and folder
-  resolution this command uses by name (`read-key`, `resolve-address`).
-- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the dispositions the
-  allocation gate reads, and the ledger line the final report ends with.
+  resolution this command uses.
 - [Agents](../reference/agents.md) — `impl-maintenance`'s full contract.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),
   and [Resume and checkpoints](../reference/resume-and-checkpoints.md) — the terminal bookkeeping

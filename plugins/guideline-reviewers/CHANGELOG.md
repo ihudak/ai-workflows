@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.2.7] — 2026-11-07
+
+User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The command, agents and workflow pages** say in plain words what the routing block and the untrusted-content reference's path said, and `/guideline-reviewer`'s page drops a line of history.
+
 ## [1.2.6] — 2026-11-07
 
 User pages only, batch B30. Needs nothing from the other plugins' releases.

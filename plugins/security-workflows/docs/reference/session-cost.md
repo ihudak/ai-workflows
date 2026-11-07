@@ -6,7 +6,7 @@ Cost attribution is one of the subsystems the companion `workflows-core` plugin 
 
 Every cost-emitting command charges its run to a `phase` and a `role`. A command that cannot label itself in advance leaves both to be resolved at its cost phase, from the run's own context.
 
-One command emits a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)): `/security-workflows:scan`, with `phase: security-audit` and the run's role — `dev` for a key run without `--triage` or `--verify-fixes`, `sec` otherwise.
+One command emits a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)): `/security-workflows:scan`, charged to the phase `security-audit` and to the role the run works out, as the next paragraph says.
 
 The scan cannot label its role in advance, so it works out the run's role as it goes — `dev` for a key run without `--triage` or `--verify-fixes`, which is the Dev's pre-merge scan or an `--import` for a unit, and `sec` for every other run — and hands it to the cost phase, which charges the run to `security-audit` under that role. The role is handed over rather than read back because it cannot be read from disk: the run record that carries it is written only by a run that changed the register, and a run that stopped, or recorded a scan the register already held, wrote none. A role that is missing or carries any other value is recorded as `n/a`, never guessed.
 
@@ -34,7 +34,7 @@ None of this touches git directly. The entry is committed later, once, by the ru
 
 The script reads the assistant-turn `usage` and `model` fields already present in the session's main transcript, plus every subagent transcript dispatched during the window being measured, sums token counts per model, and multiplies by the price table in effect. **That includes Claude Security's own agents.** Claude Security runs its scan as a dynamic workflow, whose agents write their transcripts under the session's subagent directory, in `workflows/<run-id>/`, and the script reads those too, so a scan's entry carries the scan itself and not only the run around it. Claude Code's own running dollar total reaches the transcript only now and then, so cost is always **computed** rather than read, and it drifts from Claude Code's own accounting by the accuracy of the price table and by every compaction in the window, which the entry's `compactions:` field counts.
 
-The window is **chained, not fixed**: a small local checkpoint file, keyed by session id and never committed, records where the last cost phase left off, and the next one picks up exactly there. A session that runs `/dev-workflows:conformance` and then this command produces two entries whose windows are contiguous. The `cost-emission` reference owns the full mechanics, the entry format and the attribution table itself, which this page describes rather than restates.
+The window is **chained, not fixed**: a small local checkpoint file, keyed by session id and never committed, records where the last cost phase left off, and the next one picks up exactly there. A session that runs `/dev-workflows:conformance` and then this command produces two entries whose windows are contiguous. The companion `workflows-core` plugin's shared cost-emission reference, listed on its References page, holds the full mechanics, the entry format and the attribution table, which this page describes rather than restates.
 
 ### Ceded runs
 

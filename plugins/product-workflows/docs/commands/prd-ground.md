@@ -627,13 +627,12 @@ baseline finding the run writes per repository is `CONFIRMED` too, and is not on
   route.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<KEY>` grammar and folder
-  resolution this command uses by name (`read-key`, `resolve-address`), including how a slice
+  resolution this command uses, including how a slice
   nests inside its parent.
 - The `grounding-format` reference (shipped in `workflows-core`, listed on its References page) — the authority for the finding
-  record, the six verdicts, the two horizons, the `baseline-integrity` procedure this command's
+  record, the six verdicts, the two horizons, the baseline-integrity procedure this command's
   Phase 3 runs, and the four verification outcomes this command's Phase 7 acts on.
-- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the ledger line every
-  command of the BRD-to-PRD route ends its final report with, this one included on the BRD route.
+- [References](../reference/references.md) — the coverage ledger format: the ledger line every command of the BRD-to-PRD route ends its final report with, this one included on the BRD route.
 - The `prd-format` reference (shipped in `workflows-core`, listed on its References page) — the `[AC#n]`/`[FR#n]`/`[US#n]` grammar this
   command reads its claim list from, on the idea route.
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record each grounding file carries, and the

@@ -259,8 +259,8 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
   grounding runs, and [`/prd-ground`](prd-ground.md) fills it when it does.
 - **Phase 4 — interactive defect confirmation**, not an agent gate, and a triage that resolves
   nothing: the walk opens by saying so, every question closes by asking whether its candidate is a
-  real defect in the customer's text, and no option is marked recommended. Every `defect_candidates`
-  entry not already logged (below) is walked one class at a time, in the fixed order of the six classes — `ambiguity`, `conflict`, `untestable`, `unsourced`,
+  real defect in the customer's text, and no option is marked recommended. Every candidate defect
+  not already logged (below) is walked one class at a time, in the fixed order of the six classes — `ambiguity`, `conflict`, `untestable`, `unsourced`,
   `duplicate`, `scope-leak` — via `AskUserQuestion`,
   each put with the same facts — its class, its row and that row's text, its reason, the rows a
   `conflict` or `duplicate` names, and an image-drawn row's picture. A split of one requirement into
@@ -316,16 +316,8 @@ offers to branch, commit, push, and open a pull request.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<BRD-KEY>` grammar and folder
-  resolution this command uses by name (`read-key`, `resolve-address`, and `key-summary` beneath its
-  missing-key stop).
-- [`brd-format.md`](../../references/brd-format.md) — the `[BR#n]` row shape, the immutability rule,
-  its account of what `brd/source/` and `brd/source-external/` hold and of the link log beside
-  them, its figures file, and the six defect classes this command confirms against.
-- [`linked-sources.md`](../../references/linked-sources.md) — how Phase 1 finds, resolves and walks
-  the document's links.
-- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the ledger row shape,
-  the six dispositions, and the ledger line every command of the BRD-to-PRD route ends its final
-  report with.
+  resolution this command uses.
+- [References](../reference/references.md) — the plugin's own formats this command applies: the BRD format (the `[BR#n]` row shape, the immutability rule, what `brd/source/` and `brd/source-external/` hold and the link log beside them, the figures file, and the six defect classes this command confirms against), linked sources (how Phase 1 finds, resolves and walks the document's links) and the coverage ledger format (the ledger row shape, the six dispositions, and the ledger line every command of the BRD-to-PRD route ends its final report with).
 - The `docs-grounding` reference (shipped in `workflows-core`, listed on its References page) — the `$DOCS_PATH` resolution gate,
   the `docs grounding:` line this command shows verbatim, and the grill-rank consumption mode.
 - [Agents](../reference/agents.md) — `figure-reader`'s, `brd-reader`'s and `docs-grounder`'s full

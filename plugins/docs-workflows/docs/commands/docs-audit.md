@@ -22,7 +22,7 @@ All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_CO
 
 ## What it needs
 
-- **A documentation repository that already exists** — resolved by `resolve-docs-repo`, the signal-positive ladder: the given path, else the working directory or `$DOCS_PATH` where either carries a documentation signal, else a search one level under `$REPOS_PATH`, else it asks. The rung that answered is always reported.
+- **A documentation repository that already exists** — resolved by the signal-positive ladder: the given path, else the working directory or `$DOCS_PATH` where either carries a documentation signal, else a search one level under `$REPOS_PATH`, else it asks. The rung that answered is always reported.
 - **The code repositories the portal documents.** Read from the profile's `source_repos[]` where `/docs-init` or an earlier audit recorded it. Where the key is absent the run prints the candidates under `$REPOS_PATH` and confirms the set with you, then writes it into the profile so the next run does not ask again.
 - **A profile is wanted but not required.** With one, the run reads the content roots it reconciles pages over and hands the reviewer the site layout. Without one it still runs — it says so, reconciles over the whole repository instead, and reports the reviewer's layout check as not performed rather than as passed.
 - **A resolved repository it can write into.** Checked at Phase 0, not at the write: the resolver hands that check to its caller, and a refusal is only worth anything while you are still being asked things. An unwritable one stops with `DOCS_AUDIT_NOT_WRITEABLE`.

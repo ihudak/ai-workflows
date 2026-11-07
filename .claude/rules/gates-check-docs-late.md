@@ -22,4 +22,27 @@ Loaded with `.claude/rules/gates.md`, whose `paths:` it shares and whose opening
 
 ### Check 25
 
-**Check 25 keeps maintainer vocabulary off a user's page**: every line of each `*.md` under a `PLUGIN_RELS` plugin's `docs/`, and of its `README.md`, fails on a `§` anywhere — a fenced block included, since a mermaid label is drawn for the reader — and on a design-decision id, `D` and one to three digits as a whole word, outside fenced blocks, since inside one it is as likely a mermaid node id. A line carrying `<!-- docs-vocab-ok: <why> -->` passes, and on a fence-opening line the marker sanctions the block it opens, as check 13's does; a marker with an empty reason, or not written as that HTML comment, fails on its own line and sanctions nothing. It has no config name and no switch: its population is derived from `PLUGIN_RELS`, and every edition ships pages a user reads. None at all to read fails as vacuous. A `§` cites a section of a reference written for the agents that run a command, not for the user, and a decision id numbers a row of a design spec that is not shipped and numbers from D1 like every other, so neither resolves for the reader. Measured at batch B30: on the tree before its fixes (`a3a887cf`) it fired on 257 lines in 63 files, every one a section citation or a decision id but one, `brd-package`'s page quoting a customer's own section number and decision id, which the batch reworded rather than marked; its one fenced hit was a mermaid label. It fires on none after the fixes. **What it cannot see:** a bare `` `workflows-core:<name>` `` reference citation, whose form also names an agent or a command a page must name; change history; a maintainer recipe, such as a `grep` over `plugins/`; a `D<n>` inside a fenced block or on a fence's own delimiter line, and a fence it misreads, since any line that starts, after its indent, with three backticks or three tildes toggles it, whatever the fence's character or length; the repository-root `README.md`, outside every plugin; and the other id families a design spec numbers, such as `C2`, `E1` or `L2`, whose shapes are also ordinary keys and words. Review holds those.
+**Check 25 keeps maintainer vocabulary off a user's page.** Its pages are each `*.md` under a `PLUGIN_RELS` plugin's `docs/`, each such plugin's `README.md`, and the repository-root `README.md`. A line fails on any of three things:
+- **a `§`**, anywhere a reader sees it: a fenced block and a mermaid label included;
+- **a design-decision id**, `D` and one to three digits standing as a word (`D3.js` is not one). In a mermaid block only the labels a diagram shows are read, never a node id;
+- **`<plugin>:<name>`, where the name or its longest leading path is a markdown file under that plugin's `references/`.** This is resolved against every plugin in the tree, by directory and by declared name, never parsed by shape. So an agent, a skill (`workflows-core:model-routing`, a reference subtree but no file) and a command pass.
+
+**What is not read:** an HTML comment in prose, on one line or several, where a recipe re-deriving a number on the page is kept. A `<!--` inside a code span or a fenced block opens nothing. A fence closes only on a run of its own character at least as long as the one that opened it.
+
+**The marker.** A line carrying `<!-- docs-vocab-ok: <why> -->` passes, and on a fence-opening line the marker sanctions the block it opens, as check 13's does. It is for the user's own content or output a run prints verbatim. A marker with an empty reason, or not written as that HTML comment, fails on its own line and sanctions nothing.
+
+**Population.** It has no config name and no switch: its population is derived from `PLUGIN_RELS`, and every edition ships pages a user reads. A plugin with no page to read fails as vacuous. It runs outside the loop, because the root README is no plugin's. It needs `python3`.
+
+**Why.** A `§` cites a section of a reference written for the agents, a reference id names a file the reader never opens, and a decision id numbers a row of a design spec that is not shipped. None resolves for the reader.
+
+**Measured at batch B30.** On the tree before its fixes (`9d9292b4`) it found 488 findings on 372 lines of 71 pages: 248 `§`, 225 reference ids and 15 decision ids. It finds none after the fixes, and no line carries the marker.
+
+**What it cannot see:**
+- the path form `references/<name>.md`, which also names files a user acts on;
+- change history;
+- a maintainer recipe outside a comment;
+- an internal field name such as `specs_git`;
+- a code span that runs across lines;
+- the other id families a design spec numbers, such as `C2`, `E1` or `L2`, whose shapes are also ordinary keys and words.
+
+Review holds those. It also fires on a `D1` that is no decision id, such as a product's own name, which takes the marker.

@@ -111,14 +111,13 @@ A same-session typo fix on an unrelated page runs direct mode instead — `/docs
 
 ## See also
 
-- Roles and phases — what the `dev` role owns, including why both of this command's modes emit the same fixed `documenting`/`dev` cost attribution. The shared `cost-emission` reference in `workflows-core` is what assigns this command its fixed pair; `dev-workflows`' `docs/roles-and-phases.md` describes the `dev` role, and `documenting` has no roles page — [Session cost](../reference/session-cost.md) says which commands emit it; `workflows-core`'s `docs/roles-and-phases.md` does not describe `documenting`, which its own commands reach only by inheritance.
+- Roles and phases — what the `dev` role owns, including why both of this command's modes emit the same fixed `documenting`/`dev` cost attribution. `dev-workflows`' `docs/roles-and-phases.md` describes the `dev` role; the companion `workflows-core` plugin's page of the same name lists every lifecycle phase with the role it is charged to, `documenting` (`dev`) among them. [Session cost](../reference/session-cost.md) says which commands emit `documenting`.
 - `/dev-workflows:implement` — the command to use instead for a change that touches both code and docs; it ships in the companion pipeline plugin.
 - `/product-workflows:epics` — writes child Epic drafts from a PRD; a different output from either mode of this command.
 - [`/release-notes`](release-notes.md) — the recommended next step once a PRD is fully documented, and the sibling command whose own phase/role IS inferred rather than fixed.
 - The model-routing `classification` reference (shipped in `workflows-core`, listed on its References page) — the classification rules, and the `doc-planner` / `doc-writer` / `doc-reviewer` Opus pins used in keyed runs only.
 - [Session cost](../reference/session-cost.md) — the terminal bookkeeping both modes emit, at Phase 9–11 in keyed mode and Phase 5–7 in direct mode. The other two emitters have pages elsewhere: session feedback in `workflows-core`, follow-ups in `dev-workflows`.
 - The `finding-triage` reference (shipped in `workflows-core`, listed on its References page) — the triage step run between `doc-reviewer` and `doc-fixer` in keyed runs only.
-- [`gate-ledger.md`](../../references/gate-ledger.md) — the six verification-gate outcomes, the full per-mode gate registry, and the reviewer-BLOCKER rule for a missing or unconverted row.
+- [References](../reference/references.md) — the plugin's gate ledger (the six verification-gate outcomes, the full per-mode gate registry, and the reviewer-BLOCKER rule for a missing or unconverted row) and its repo-verification-gates file (how a docs repo's own pre-PR checklist is extracted into the `repo_checklist` gate).
 - The `source-truth` reference (shipped in `workflows-core`, listed on its References page) — the PRD-vs-spec-vs-code discrepancy-escalation protocol Phase 5.8 runs.
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage check keyed mode reports on in Phase 0, in the form that never asks anything.
-- [`repo-verification-gates.md`](../../references/repo-verification-gates.md) — how a docs repo's own pre-PR checklist is extracted into the `repo_checklist` gate.

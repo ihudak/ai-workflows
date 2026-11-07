@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.2] — 2026-11-07
+
+User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The pages drop the internal names the first pass left.** The BRD route's format-file names (`coverage-ledger-format.md`, `decision-register-format.md`, `interview-tagging.md` and the rest), entry-point names (`read-key`, `key-valid`, `resolve-address`, `baseline-integrity`), run-record fields (`specs_git: misrooted`, `status: unmerged`, `fixed_headings`, `defect_candidates`, the routing block) and `references/` paths are said in plain words on the BRD-route command pages, `/create-prd`, `/create-ard`, `/epics`, `/idea`, `/specify`, `/update-prd`, `/update-spec`, both proposal commands, Roles and phases, Environment, Model routing, Resume and checkpoints, Session cost, Session feedback, References and the proposal format page. Each pointer to the plugin's own formats goes to the References page, and `/brd-interview`'s decisions bullet names the register's fields itself.
+- **Session cost's ceded runs** say whose cost file the replayed entry lands in — the folder the ceded run worked on — and that a claim matching no command invocation is dropped with a line naming it.
+
 ## [3.78.1] — 2026-11-07
 
 User pages only, batch B30. Needs nothing from the other plugins' releases.

@@ -90,5 +90,5 @@ The run diffs the PRD from the version the specification's lineage record names 
 - [`/epics`](epics.md) — refines the Epics whose `## Covers` this run named.
 - [Roles and phases](../roles-and-phases.md) — what the `pe` role owns.
 - [Model routing](../reference/model-routing.md), [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md) and [Resume and checkpoints](../reference/resume-and-checkpoints.md).
-- [`specification-format.md`](../../references/specification-format.md) — the lineage record and the legacy `inputs_at` field, the superseded and withdrawn markers, the live-items rule and the archive rule.
+- [References](../reference/references.md) — `specification-format.md`: the lineage record and the legacy `inputs_at` field, the superseded and withdrawn markers, the live-items rule and the archive rule.
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record this command diffs from and re-stamps, and the upstream check it runs above the base — on the PRD, the ARDs, the decision register and the grounding files and, for an Epic-level specification, the Epic. Of the register and the grounding, only implementation-level records count.
