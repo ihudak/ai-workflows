@@ -1,12 +1,12 @@
 ---
 name: test-writer
-description: Writes tests for new or changed behavior based on a diff. Does NOT run tests. Takes the framework from the required test-baseliner baseline rather than re-detecting it — one framework, or several where the repository has several suites; where that baseline names none at all, returns "not detected" immediately so the caller can apply the decision it already took when the baseline was captured. Model tier assigned by the caller per the model-routing policy (no fixed pin).
+description: Writes tests for new or changed behavior based on a diff. Does NOT run tests. Takes the framework from the required test-baseliner baseline rather than re-detecting it — one framework, or several where the repository has several suites; where that baseline names none at all, returns "not detected" immediately so the caller can apply the decision it already took when the baseline was captured. Handed type-check errors, fixes them in the tests it wrote, in one correction round. Model tier assigned by the caller per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Write", "Edit"]
 ---
 
 Write tests for new or changed behavior based on a diff. DO NOT run the tests — the caller (the command) runs `test-baseliner` in verify mode separately.
 
-Invoked from `/implement` at Phase 3.5 (SIMPLE, after Phase 3A implementation completes) and at Phase 3B step 4a (SIGNIFICANT / HIGH-RISK, and MODERATE through Phase 3A step 6's review gate — after implementation completes but before the diff is captured for Opus review). This agent runs after the edits, so it settles nothing about which framework the project has: it relays what the baseline recorded before them.
+Invoked from `/implement` at Phase 3.5 (SIMPLE, after Phase 3A implementation completes) and at Phase 3B step 4a (SIGNIFICANT / HIGH-RISK, and MODERATE through Phase 3A step 6's review gate — after implementation completes but before the diff is captured for Opus review), and once more at Phase 3B step 4b, a correction round, where the caller's type-check found errors in the test files the step 4a dispatch wrote (*A correction round*, below). This agent runs after the edits, so it settles nothing about which framework the project has: it relays what the baseline recorded before them.
 
 ## Inputs
 
@@ -25,6 +25,8 @@ The caller passes a structured brief:
 - **Baseline** — the `## Test Baseline` block captured by `test-baseliner` in Pre-Phase 3.5 (identifies the detected framework + the command used + the set of pre-existing passing / failing tests). It is the sole source of framework and command here, and the list of test names already taken
 
 - **Owns** (optional) — on a test set the caller split across several writers: `shared support`, which means write only the fixtures, factories and helpers the tests have in common and no test case, or a list of test files and test-case ids that are yours alone. Write and edit only what you own; the shared support, and every file another writer owns, is read-only to you — use what the support provides rather than writing a second copy. Without the line, every test the diff calls for is yours. **With it, report only on what you own**: `### Tests added` and `### Notes` name only behaviour in your files and your test-case ids, never one another writer owns; the shared-support writer names no behaviour as untested, since it writes no test case.
+
+- **Type-check errors** (optional) — only on `/implement`'s correction round (its Phase 3B step 4b): an absolute file path holding, verbatim, the errors the project's own type-checker reported in the test files this run's step 4a `test-writer` dispatch wrote. `Read` it first; with it, this dispatch is a correction round (*A correction round*, below). On a read failure, follow the **read-failure contract** in `${CLAUDE_PLUGIN_ROOT}/references/context-management.md` — **Type-check errors** is *evidence* for this round, the errors it exists to fix: hard stop, return the `Type-check errors: unreadable at <path>` shape below (see Output), and **never re-derive the errors** with a tool of your own.
 
 Refuse to write tests without a diff and a baseline — ask the caller to supply them.
 
@@ -69,6 +71,15 @@ Refuse to write tests without a diff and a baseline — ask the caller to supply
 
 7. **Verify syntax.** Re-read each written file end-to-end after the final edit to confirm it parses and follows the discovered conventions. Do NOT run the tests — that's the caller's job via `test-baseliner` verify.
 
+## A correction round
+
+With a **Type-check errors** input, the caller has run the project's own type-checker over the test files this run's step 4a dispatch wrote, which the **Diff** now shows, and it found the errors the file lists in them. This round fixes those errors and writes nothing else. Take the framework as step 1 says; then, in place of steps 3–6:
+
+- With an **Owns** line, pass over every listed error located in a file you do not own, and name it nowhere: the writer that owns that file has the same list, and your report names only your own files.
+- Fix each other listed error that lies in a test file this run's diff adds or changes, editing only test files — with an **Owns** line, only those you own — and never production code (*Hard rules*). Write no new test case.
+- Leave an error located in such a file whose fix lies outside the files you may edit — in production code, in a file another writer owns, in a test file this run did not change — or that the file had before this run, and name it under `### Notes`, with why.
+- Re-read each file you edited as step 7 says, and return the report in its usual shape: `**Tests written**` and `### Tests added` count and name only tests this round added — none, since it writes no test case: `0` and `none (correction round)` — so the caller does not count the earlier report's tests twice; `### Skipped (pre-existing untested code)` `none`; `**Files touched**` the files this round edited, or `none`.
+
 ## Output
 
 Return this exact shape (no preamble, no chatter):
@@ -84,6 +95,7 @@ Return this exact shape (no preamble, no chatter):
 - `[test name]` in `[file:line]` — covers [what behavior][; for a negative DOM assertion, `against [template file:line]`, the line step 5 cites]
 - ...
 - _or_ "none (no new testable behavior in the diff)"
+- _or_, on a correction round, "none (correction round)"
 
 ### Skipped (pre-existing untested code)
 - `[file:line]` — [one-line reason]
@@ -123,6 +135,23 @@ The **Diff** evidence input could not be read at the path above — an orchestra
 file it wrote is missing or unreadable), not a user choice. Caller: surface the path and stop;
 never prompt for a test command, never offer to skip tests, and never re-derive the diff with
 a tool of your own.
+```
+
+If the **Type-check errors** input could not be read, return this shape — its FIRST LINE is the
+literal marker `Type-check errors: unreadable at <path>` — and STOP:
+
+```markdown
+Type-check errors: unreadable at <path>
+
+## Test Writer Report
+- **Framework**: n/a
+- **Command**: n/a
+- **Tests written**: 0
+
+### Reason
+The **Type-check errors** evidence input could not be read at the path above — an orchestrator
+bug (the file it wrote is missing or unreadable), not a user choice. Caller: surface the path and
+stop; never re-derive the errors with a tool of your own.
 ```
 
 ## Hard rules
