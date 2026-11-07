@@ -301,7 +301,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes. These are the family's most prose-heavy commands (`/docs-audit`: thirteen phases, three agents, a schema with edge rules), and B1 is the kind of defect a single end-to-end run of the route would surface.
 - **Suggested scope:** one bookstore-demo pass through `docs-workflow.md` steps 1–4 and 7: `/docs-init`, `/docs-serve`, `/docs-audit`, a hand-written unit, then `/docs-audit --refresh`. Record what fails.
 
-### DOC-D-G5 — `/release-notes` drops the PRD's starting-state fact, and no record tracks it — **Recorded in to-fix.md (batch B29): open**
+### DOC-D-G5 — `/release-notes` drops the PRD's starting-state fact, and no record tracks it — **Recorded in to-fix.md (batch B29)** — **Fixed in `docs-workflows` 1.35.0: `release-note-types` §6**
 - **Also found as:** FBB-B8 (merged here)
 - **Designed in:** none. It was observed in `docs/superpowers/verification/2026-10-20-lean-context-loader.md:91` ("only its run noticed that all three notes drop the PRD's starting-state fact … the gap is not part 1's") and in the ledger, `2026-10-20-lean-context-loader-ledger.md:357` ("All three miss the PRD's starting-state fact; only B (1.14.3) noticed and filed it").
 - **Current state:** the finding was attributed away from part 1 and never filed. It is not in `docs/superpowers/to-fix.md`, and nothing in `release-note-types.md` or `release-notes-writer` was changed for it. The note quality has regressed since docs-workflows 1.14.3 on a known input (demo `BOOK-2-01`).

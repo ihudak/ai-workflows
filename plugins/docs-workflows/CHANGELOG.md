@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.34.3] — 2026-11-07
+## [1.35.1] — 2026-11-07
 
 User pages only, batch B30. Needs nothing from the other plugins' releases.
 
@@ -13,6 +13,14 @@ User pages only, batch B30. Needs nothing from the other plugins' releases.
 - **The user pages speak to users.** No page carries a `§` section citation, a design-decision id such as `(D17, D20)`, or a bare reference citation: `/docs-serve`'s page states its rule itself — it writes nothing, so it has no review gate — and the rest were dropped where their sentence already stated the rule or said in plain words. Repository `grep` recipes give their answers; change history ("the third increment of the marketplace split", "after the split") is gone; `$ARGUMENTS` and raw `choices:` arrays are gone.
 - **No page assumes a tracker or a docs team's automation.** The `/document`, `/release-notes` and Workflow pages say the release-note draft is the body only, and whoever publishes it adds any identifiers or wrapper their own process needs.
 - **Session cost defines a *ceded* run once**, under *Ceded runs*, and the command pages link it. Getting started says what the toolchain preflight checks.
+
+## [1.35.0] — 2026-11-06
+
+DOC-D-G5. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **`/release-notes` now says what state the release starts from, where the PRD states it as already done and a reader sees it on the day the release ships.** `BOOK-2-01`'s Goal says every existing rating was removed before go-live, yet three drafts of its note, by three `docs-workflows` releases, left that out, so none told a reader that the store starts with no ratings. Nothing in `release-note-types.md` asked for it, so whether a draft carried it was chance. Its §6 now requires it: something the PRD's live text — its `summary:` or any section of its body — states as already done outside the release's own work, such as data removed, reset, migrated or imported beforehand, that sets what a reader sees when the release ships goes into the note as one plain sentence. It sits in a titled note's first paragraph, or in a paragraph of its own straight after the note's list, and is worked into a fix's resolution within its two sentences. An item marked settled under `## Assumptions & open questions` counts, since what matters is that the PRD states it as done. A starting state the PRD gives only as an assumption, a plan or a step still to be done stays out, and so does one no reader sees; one a `/dev-workflows:conformance` entry names stays as that entry's decision settles it. `release-notes-writer` notes one while it gathers the PRD and, before it renders, re-reads the whole PRD for one and adds it where the body leaves it out. §4's first-paragraph length and the writer's handoff contract count that sentence on top (DOC-D-G5).
+- The `/release-notes` docs page said a fix takes a second sentence only where its conditions need one; `release-note-types.md` §3 allows one for the resolution too, and the page now says so. The page's own description of `release-note-types.md`, which also left out Change Type sourcing, and `docs/reference/references.md`'s entry for it now also name the effective-version rule and what a `/dev-workflows:conformance` entry does to the draft, both of which the reference already owned.
 
 ## [1.34.2] — 2026-11-04
 
