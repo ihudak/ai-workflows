@@ -57,7 +57,7 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   as a `[V]` already disposed *decided* and puts to nobody (*What it produces*, below) — and opens that round only where some question source puts a question, so a
   `--rebaseline` pass that confirms every decision it bears on, or leaves it waiting on its
   prerequisite, is reported as re-grounded with nothing moved and opens nothing — **or, on a BRD with no round record at all, generates round 1's questions and branches on
-  what it finds.** At least one question opens the round as ever; none at all writes
+  what it finds.** At least one question opens the round; none at all writes
   `interview/round-1.md` recording the walk and what it found nothing of, and the run completes
   there. That record is not an empty round: it names each question source and what this BRD held
   under it, so a reader meets an account of a completed walk rather than a silence. **It is also why
@@ -315,7 +315,7 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   line labelled `- **Re-puts:**`, whatever the tag, and on every other `[V]` the same line reading
   `none`, written by the write that first records the question as `[V]` — its first write, or the
   one recording a re-tag from `[G]` or a rewrite out of *untagged* — so a deferred `[V]` whose
-  `[V]` tag is on file without the line — one an earlier release wrote — is tied
+  `[V]` tag is on file without the line is tied
   when its round is resumed: the run asks the operator which reopened or held decision it puts
   again, from those that could be, or none, and writes the answer as the line, so it is asked once;
   an ordinary `[V]` carries `none` and is never asked about — every re-tag with the finding that caused it,
@@ -386,8 +386,8 @@ each slice's [`/brd-reconcile`](brd-reconcile.md) stops on the log until it is o
 — the parent's defect log apart, whose one write is Phase 10's, after it. Phase 9 writes
 `code-defect-log.md`, then `decisions.md` — the log first, so no decision cites a defect entry that
 is on no file — then `interview/customer-questions.md`, then the round record. A round record
-that lacks its `code defects:` and `requirement defects:` lines first gets a baseline
-line naming what was already on file, so nothing this run adds is mistaken for an old item. A
+that lacks either its `code defects:` or its `requirement defects:` line first gets a baseline
+line for each it lacks, naming what was already on file, so nothing this run adds is mistaken for an old item. A
 re-disposition of a code defect is applied to the log only after the round record names it, and a
 run that stopped in between is completed by the next one's Phase 0. Every phase before it — the `[V]` answers, the held `[C]` entries, a defect line added to a
 held entry, a `--round N` re-open, a question the round-1 test adds — builds its part and holds it
@@ -396,8 +396,7 @@ the BRD folder — the one earlier write being Phase 0's completion of a code-de
 round record already names, which decides nothing.
 The round record is the commit point: an item stamped
 with a round whose record does not exist or does not name it — what a run that stopped between those
-writes leaves behind, or what an earlier release left when a run was cancelled
-after holding its `[C]` questions — is a **torn write**. No reader counts one: not this command's
+writes leaves behind — is a **torn write**. No reader counts one: not this command's
 *asked* test or generation, not [`/brd-package`](brd-package.md), which refuses a folder holding one,
 not [`/brd-reconcile`](brd-reconcile.md), and not the PRD, ARD and specification commands. Phase 0
 reports each one it finds, and Phase 9 removes them before it appends its own — the one deletion
@@ -423,8 +422,8 @@ Behind the handoff phase's consent choice, these are committed, pushed, and a pu
 against the specs repo's default branch under the shared `brd/<BRD-KEY>-<slug>` branch prefix. That
 choice is preceded by a read-only probe for an `origin` remote, and where the specs repo has none
 the run says so in a line above the choice: the first option still branches and commits locally,
-but the push and the pull request cannot run. On a run carrying `specs_git: blocked` (a detached
-HEAD in the specs repository) or `specs_git: misrooted` (a misplaced `$SPECS_PATH`), the line above
+but the push and the pull request cannot run. On a run that found a detached
+HEAD in the specs repository or a misplaced `$SPECS_PATH`, the line above
 the choice says instead that the first option will be refused, and nothing is committed whichever
 option is picked.
 

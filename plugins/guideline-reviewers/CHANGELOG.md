@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.2.6] — 2026-11-07
 
 ### Fixed
-- The getting-started page no longer says what it "used to say", and the agents page describes the untrusted-content block in words rather than by another plugin's file path (batch B30: DQC-B6).
+- The getting-started page no longer says what it "used to say" or how a step behaved before it existed, the agents page describes the untrusted-content block in words rather than by another plugin's file path, and the command and workflow pages no longer name a `model_routing` block (batch B30: DQC-B6).
 
 ## [1.2.5] — 2026-10-29
 

@@ -112,7 +112,7 @@ Mark every claim you could not ground with `[NEEDS CLARIFICATION: why]`, in the 
 
 **What helps today.** [`/document`](commands/document.md) in direct mode will apply a described edit to pages and run the style check over them, which is real work off your hands — but it reads no backlog: it does not open the unit, does not write the `unit:` key, does not move a `status`, and does not add the page to the `nav:` blocks. The prose is its half; the unit is yours.
 
-*Later: `/docs-write` is planned to take the highest-priority missing unit and draft it, leaving it `drafted` with its unresolved claims marked, and to regenerate both `nav:` blocks whenever it adds or renames a page. It is not installed.*
+*Later: `/docs-write` is planned to take the highest-priority missing unit and draft it, leaving it `drafted` with its unresolved claims marked, and to regenerate both `nav:` blocks whenever it adds or renames a page. No such command exists yet.*
 
 ### 5. Capture what the page shows — by hand
 
@@ -154,7 +154,7 @@ Under `in-repo`, `images.max_bytes` (default 300 KB) is the CI budget checked pe
 
 **Under `in-repo`, an image only internal pages may see belongs under `docs/internal/` and never under `images.root`.** This is the trap in the step, and it is invisible from inside the repository: a file under `images.root` is copied into **both** builds whether or not any page references it, because MkDocs copies the content tree and does not trace references. So a screenshot of an internal screen, saved to the shared assets directory and referenced only by an internal page, **ships in the public site** — and neither CI gate fires. The first sees no cross-link, because there is no link; the second greps the public output for the visibility marker, which an image cannot carry. Knowing the rule alone is not enough here, which is why the mechanism is spelled out: the instinct that an unreferenced file is harmless is exactly the instinct that is wrong. The same separation that drops internal *pages* from the public build drops internal *files*, and it works on path and on nothing else. [Documentation visibility](reference/docs-visibility.md) is the whole model.
 
-*Later: `/docs-capture` is planned to drive the capture and fill the slots a walkthrough names. It is not installed.*
+*Later: `/docs-capture` is planned to drive the capture and fill the slots a walkthrough names. No such command exists yet.*
 
 ### 6. Verify the marked claims — by hand
 
@@ -191,7 +191,7 @@ Answers go back into the walkthrough file, on the step they belong to, and **eac
 
 **`verified → published` has no command behind it, now or later** — that transition is a branch merged and a site deployed, which happens in your repository. It is worth knowing which arrow that is, because `published` is the state the coverage fraction counts, and there is deliberately no arrow from `drafted` straight to it: if there were, the grid could go green over pages the family knows it never walked.
 
-*Later: `/docs-verify` is planned to render the checklist, take the answers and write them back. It is not installed.*
+*Later: `/docs-verify` is planned to render the checklist, take the answers and write them back. No such command exists yet.*
 
 ---
 

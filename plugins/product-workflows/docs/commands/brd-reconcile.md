@@ -23,13 +23,12 @@ sweep without freezing, applying or sweeping anything twice — the records the 
 reopened counting as the re-run's own, and any of those writes a freeze cut off part-way did not
 make written by the re-run. It takes the corrections the stopped run disposed without asking again
 where the review was read in schema mode; read in free-text mode, it shows you that run's
-dispositions beside each correction to match. A pass opened by an earlier release records none of
-this, so the re-run asks you to check what its interrupted freeze wrote (a re-run over a *different* review stops with
+dispositions beside each correction to match. Where a pass records none of this, the re-run asks you to check what its
+interrupted freeze wrote (a re-run over a *different* review stops with
 `BRD_RECONCILE_INTERRUPTED_PASS` until the unfinished one is finished); to sweep a dependent it could
 only record, once that dependent has its own register on the default branch, against the changed ids
-the earlier pass recorded; and, on a slice an earlier release
-reconciled, to close the questions raised only about the defects of a requirement the customer
-withdrew.
+the earlier pass recorded; and, on a slice whose reconciliation left questions held that were
+raised only about the defects of a requirement the customer withdrew, to close them.
 
 ## Synopsis
 
@@ -134,10 +133,10 @@ flowchart TD
     p12 --> p13["Phase 13 — Handoff"]
     p13 --> p14["Phase 14 — Next steps"]
     p14 --> p15["Phase 15 — Session maintenance, feedback & cost"]
-    p14 -.->|"advance_ready + no unallocated row and one covered-here"| prd["/create-prd (PM)"]
-    p14 -.->|"advance_ready"| ard["/create-ard (PA, optional)"]
-    p14 -.->|"advance_ready"| spec["/specify (PE)"]
-    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
+    p14 -.->|"nothing left to re-enter for + no unallocated row and one covered-here"| prd["/create-prd (PM)"]
+    p14 -.->|"nothing left to re-enter for"| ard["/create-ard (PA, optional)"]
+    p14 -.->|"nothing left to re-enter for"| spec["/specify (PE)"]
+    p14 -.->|"something to re-enter for — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
 ```
 
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the
@@ -393,7 +392,7 @@ command removes none of them; the next `/brd-interview` run does.
   is unconfirmed. The four values are `confirm`, `correct`, `reject` and `ask-the-customer`, and a
   candidate answering no question the package put takes one of two instead — recorded for a human,
   quoting the customer, or rejected — and is never frozen on that form, save that a free-text answer
-  naming the question it does answer re-points it onto the array its target takes; the picker carries no bulk
+  naming the question it does answer re-points it onto the options its target takes; the picker carries no bulk
   confirmation, and a free-text answer is otherwise **normalised into those values or the candidate
   is re-asked** — never written through as another. *Reject* reads **no decision to freeze**: the
   customer declined to answer, or the row is not an answer at all (context, thanks, scheduling). It
@@ -402,7 +401,7 @@ command removes none of them; the next `/brd-interview` run does.
   held question it answers stays held, to be put again by the next package, save the two cases
   below where the question has stopped applying.
   A free-text answer cannot be refused at the prompt: its free-text option is supplied by the harness and no picker can decline it, so a picker through which customer authority enters the register — this one, the missing-reason picker, the conflicting-answer picker and the propagation sweep's — is protected by what the run does with
-  the answer rather than by what the array leaves out. Aborting the walk stops the run with **nothing
+  the answer rather than by what the options leave out. Aborting the walk stops the run with **nothing
   frozen**: no record exists until the freeze phase, so an aborted walk loses its confirmations and
   a re-run re-offers every candidate.
 - **Phase 4 — a resumed run never re-asks what it already settled.** Every target is first
@@ -442,11 +441,11 @@ command removes none of them; the next `/brd-interview` run does.
   *what still needs a human*, and a later answer to it is walked against that record — one that
   completes or replaces it with a reason closes the question. Where the
   defects were already withdrawn before this review and the question has no record of its own, the
-  walk offers such a reply the two record-or-reject options only. A slice an earlier release reconciled closes such questions when you re-run
+  walk offers such a reply the two record-or-reject options only. A slice whose reconciliation left such questions held closes them when you re-run
   `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md`. That
   re-run skips every decision the earlier pass froze, and offers again every answer to a question it
   froze nothing for. Its section-12 corrections are put again with every earlier pass's listing beside
-  each, since a record from that release names no row by position: point each to the listing that
+  each, since that earlier pass's record names no row by position: point each to the listing that
   applied or refused it, and it is reported already disposed; one matched to a deferral, or to none, is
   disposed again. A live record `open` for want of its reason is **completed**,
   minting nothing, by an answer with its own `chosen` and a reason now stated — never on an entry
@@ -678,7 +677,7 @@ Both `/create-prd` tests are read over the slice's **own claimed ledger rows** �
 `brd-link.md`'s `claims:` — and
 off the ledger **file**, never off a `ledger:` line, whose `unallocated` term is a resolved count
 that also holds rows a child has not walked yet. Where either test fails the option is **dropped from
-the array** rather than annotated, and the text says which one failed: a row still `unallocated` is
+the list** rather than annotated, and the text says which one failed: a row still `unallocated` is
 walked to a terminal disposition by [`/brd-split`](brd-split.md), while a slice with no `covered-here`
 row holds no PRD of its own at all.
 
@@ -690,8 +689,8 @@ before it reads the register, and the register is one of the files this command 
 would stop on a register this run wrote and has not merged. The
 clause names that wait and no other — `/create-prd`'s gate on `idea.md` and the other two's on
 `prd.md` target files this command does not write. No option in either of
-Phase 14's arrays carries `(Recommended)`: which one is right depends entirely on what the reconciliation left behind.
-An option whose condition this run did not meet is **dropped** from the array rather than annotated,
+Phase 14's two lists carries `(Recommended)`: which one is right depends entirely on what the reconciliation left behind.
+An option whose condition this run did not meet is **dropped** from the list rather than annotated,
 so every option an operator sees is one that applies.
 
 The same phase also offers the route's **re-entries** — another [`/brd-interview`](brd-interview.md)
@@ -704,11 +703,11 @@ the customer, [`/prd-ground --rebaseline`](prd-ground.md) where the review chall
 and a second `/brd-reconcile` pass on this same review once a dependent recorded-not-written has its
 own register on the default branch.
 
-**Advancing and re-entering are two lists, and a run gets exactly one of them.** Phase 14 resolves
-`advance_ready` from what the run left behind — any reopened decision, any `[C]` still held for the
+**Advancing and re-entering are two lists, and a run gets exactly one of them.** Phase 14 decides
+whether the slice can advance from what the run left behind — any reopened decision, any `[C]` still held for the
 customer, any finding the review left to re-derive, any dependent it could only record — and where
-any of those is true the three the BRD route options are **dropped**, not annotated. That is a
-refusal only this phase can make, unlike the level refusal above, which each of the three now makes
+any of those is true the three BRD-route options are **dropped**, not annotated. That is a
+refusal only this phase can make, unlike the level refusal above, which each of the three makes
 for itself: `/create-ard` on the BRD route and `/specify` on the BRD route run no gate
 that catches a reopened decision — their gate on `decisions.md` tests which ref the register is on,
 never what it holds — since routing an `open` or `reopened` record into their own
@@ -750,7 +749,7 @@ position, and writes `reconciliation-<date>.md`.
 
 Phase 14 then hands the route over. Nothing this run left behind reopened a decision, held a `[C]`
 for the customer, left a finding to re-derive, or left a dependent only recorded — so
-`advance_ready` is `yes` — and this slice's ledger leaves no row `unallocated` and at least one
+the slice can advance — and this slice's ledger leaves no row `unallocated` and at least one
 `covered-here`, so all three exits are offered off the same key:
 
 ```
@@ -762,7 +761,7 @@ for the customer, left a finding to re-derive, or left a dependent only recorded
 Had this ledger left a row `unallocated`, or left none `covered-here`, the first line would be
 dropped from the offer and the stop would say which test failed; the other two would still be
 offered. Had the run instead reopened a decision or left a question held for the customer,
-`advance_ready` would be `no`, and Phase 14 would offer the re-entry the trigger names — another
+the slice could not advance, and Phase 14 would offer the re-entry the trigger names — another
 `/brd-interview` round where every round is closed, or the resume of an open one that is not held
 only for the customer, a re-package, or a `/prd-ground --rebaseline` pass — never the three above. Whatever else it offers, a record its propagation sweep reopened in a
 dependent BRD is named beside the list with `/brd-interview` on that dependent's key.

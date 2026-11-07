@@ -47,7 +47,7 @@ else: no plugin to resolve a path against, nobody to ask what a citation means, 
 missing file from a withheld one.
 So the rendered prompt, the delivery note and every document in the bundle carry **no path rooted at
 the plugin's install directory, no citation of the plugin's reference files, no slash command, no agent or skill name,
-and no numbered section cross-reference** of the plugin's own.
+and no section-sign character** outside the customer's own words.
 
 **How the command guarantees that** is a property of its phase order, not of its prose. The review
 schema is rendered out of its own file from the boundary that file declares, never in full — the
@@ -308,7 +308,7 @@ attack.
   is keyed on **every finding carrying a non-`undisposed` value**, and on nothing else: the reviewer
   agent returns no severity and no PASS/BLOCK verdict by design, so the disposition is the only gate
   there is. The four values are `fixed`, `accepted-risk`, `escalated-to-customer` and
-  `rejected-with-reason`, and each array draws only on those four values — the second offers
+  `rejected-with-reason`, and each question's options draw only on those four values — the second offers
   *Agreed* (`accepted-risk` with a `fixed-by:` marker, below) in place of `fixed`, and either drops
   *Escalated* where the customer's authority does not settle the finding. The harness always
   supplies a free-text option, so the picker cannot decline one — what protects the closed vocabulary
@@ -354,7 +354,7 @@ attack.
   with `BRD_PACKAGE_SCHEMA_BOUNDARY` if that file no longer declares where its boundary falls. The
   rendered headings are renumbered under the part they are rendered into (`10.1`–`10.5`), so the
   copy neither visibly begins at 2 nor restarts at 1; that is safe because the schema refers to its own sections by name and never by number, which
-  the render verifies by requiring the extracted body to contain no numbered section cross-reference at all. It verifies, too,
+  the render verifies by requiring the extracted body to contain no section-sign character at all. It verifies, too,
   that the body holds no identifier with a number in it, and stops with
   `BRD_PACKAGE_SCHEMA_EXAMPLE_ID` on one: the schema writes every example as a placeholder,
   `[BR#n]`, because the prompt is a bundle document and the citation-resolution check would resolve
@@ -435,8 +435,8 @@ attack.
   answer or a reason the register quotes — is reported and put to the operator rather than stopping
   the run by itself, for the same reason the plugin-free scan treats it that way, and only the
   operator's *hold* stops it. A reference that resolves to nothing stops with
-  `BRD_PACKAGE_DEAD_CITATION`. A requirement this slice does not claim, cited bare in a question, a
-  held entry or a register record that an earlier release wrote, is such a reference — the package carries
+  `BRD_PACKAGE_DEAD_CITATION`. A requirement this slice does not claim, cited bare in a question, a held
+  entry or a register record, is such a reference — the package carries
   this slice's inventory alone, and the interview, the PRD's
   assumptions, the reconciliation and this command's prompt write such a row `<PARENT-KEY> [BR#n]` —
   so where the stop names one, qualify that id by hand in that form, with this slice's `parent:` as

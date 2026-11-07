@@ -2,7 +2,7 @@
 
 The `dev-workflows` plugin family charges every cost-emitting run to a `phase` and a `role`. The lifecycle phases, each with the role it is charged to, are:
 
-- `prd-creation` (`pm`) — a PRD is being refined or authored, or the design frame sets of a PRD or Epic folder are being indexed.
+- `prd-creation` (`pm`) — a PRD is being refined or authored, the design frame sets of a PRD or Epic folder are being indexed, or release notes are being drafted early, before any specification or design exists.
 - `prd-update` (`pm`) — an existing PRD is being refreshed or re-done.
 - `brd-to-prd` (`pm`) — a customer-supplied BRD is on its route to PRDs: extracted, grounded, split, decided, packaged or reconciled.
 - `proposal` (`pm`) — a requirement set is being priced into an effort proposal.
@@ -26,7 +26,7 @@ Beside these this plugin has its own `plugin-feedback` phase: the feedback comma
 
 None of the seven commands in this plugin advances a product increment, so none of them mints a lifecycle phase of its own. Two mechanisms get them a label anyway:
 
-- **Inheritance.** `/feedback`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me` resolve the **target command** whose output they are correcting or remarking on, and take that command's `phase`/`role` pair: the fixed pair it always emits, or, for a command whose pair depends on the run — `/release-notes`, `/frames` and `/conformance` — the pair that run resolves to. A `/prompt` correcting a `/specify` output is priced as `specification`/`pe`; one correcting a `/design` output as `planning`/`dev`. The cost of fixing a phase's output belongs to that phase. **A `/security-workflows:scan` target is the exception**: its role comes from the scan run's own `run_role`, which reaches no command correcting it, so these four inherit its phase and record the role as `n/a` (*security-audit*, below).
+- **Inheritance.** `/feedback`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me` resolve the **target command** whose output they are correcting or remarking on, and take that command's `phase`/`role` pair: the fixed pair it always emits, or, for a command whose pair depends on the run — `/release-notes`, `/frames` and `/conformance` — the pair that run resolves to. A `/prompt` correcting a `/specify` output is priced as `specification`/`pe`; one correcting a `/design` output as `planning`/`dev`. The cost of fixing a phase's output belongs to that phase. **A `/security-workflows:scan` target is the exception**: its role is the one the scan run itself ran under, which reaches no command correcting it, so these four inherit its phase and record the role as `n/a` (*security-audit*, below).
 - **Inference from the folder.** `/frames` reads the `kind` of the folder it resolved and charges accordingly — a frame set in a folder asserting `kind: brd`, a BRD container or a BRD-route slice, to `brd-to-prd`/`pm`, and one in a folder asserting `prd` or `epic` to `prd-creation`/`pm`, an Epic folder under a slice included.
 
 `/statusline` emits nothing at all: it sets a configuration value rather than running a task. `/diagnose-session` is charged to `plugin-feedback` outright, below.

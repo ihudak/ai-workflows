@@ -400,7 +400,7 @@ failure: the run rewords it out before writing and the final report lists it.
 
 **The three grounding files are written for a reader with no plugin, and name nothing of your
 machine.** On the BRD route they go to the customer in the review bundle as written, and
-[`/brd-package`](brd-package.md) stops on any command, agent or skill name, numbered section reference,
+[`/brd-package`](brd-package.md) stops on any command, agent or skill name, section-sign character,
 decision-row id or model id it finds in them, save a model id in the naming a finding quotes (below),
 which it puts to you to rule on. So every note, heading and lead-in the run writes says
 what happened in plain words; nothing it writes names the model or the tier the corpus was ground at
@@ -420,7 +420,7 @@ in a script, `/api/v1/…` — so the run leaves it alone; only the literal valu
 own paths marks a path as your machine's. A model your requirement, code, configuration or documents
 name counts as such naming too — `claude-sonnet-4-6` in a requirement or a configuration line — and
 is quoted as given, beside the requirement or the path it comes from; only a model your own tooling
-ran on — this run's, a pass's or a tool's — and the record of a tier are kept out. Where a plugin token — a numbered section reference or a command name, say — sits inside such naming,
+ran on — this run's, a pass's or a tool's — and the record of a tier are kept out. Where a plugin token — a section-sign character or a command name, say — sits inside such naming,
 the final report names it, because on the BRD route `/brd-package` will still stop on it; it names a
 model id there too, as one `/brd-package` will put to you to rule on as the customer's own. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand — an earlier run's tier line or local path among them.
 
@@ -470,7 +470,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   commit, since naming it would resolve nothing. A clone with no readable `origin` is named by its
   directory's basename, so before that check, where the file records no entry under that basename
   but records a name no clone carries at this clone's commit, an ancestor of it or a descendant of it — a renamed
-  directory, or an entry an earlier release wrote — the run asks whether it is the same repository,
+  directory, or an entry recorded under another name for it — the run asks whether it is the same repository,
   and on *Same repository* records it under the earlier name, so one repository is never recorded
   under two. The one case it
   does not cover is the earlier pin of a repository a `--rebaseline` pass re-pins, where

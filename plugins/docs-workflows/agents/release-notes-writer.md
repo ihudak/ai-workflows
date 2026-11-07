@@ -244,7 +244,7 @@ Return YAML exactly as defined in `${CLAUDE_PLUGIN_ROOT}/references/handoff/rele
 - NEVER write or modify files. This agent renders; the command writes.
 - NEVER include an identifier (e.g. `PRODUCT-1234`, `[[KEY]]`, or a browse URL)
   anywhere in `category_label`, `feature_title`, `prose`, or `combined_rendered`. The draft is
-  published wherever release notes are published; whatever publishes it adds the ID.
+  published wherever release notes are published; whatever publishes it adds any identifier it needs.
 - NEVER include a Bitbucket/GitHub/GitLab PR URL or PR number in any output field.
   Release notes are customer-facing.
 - NEVER emit a `{{#internal-note}}` block — whatever publishes the note adds any wrapper.

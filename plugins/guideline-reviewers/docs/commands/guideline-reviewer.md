@@ -6,7 +6,7 @@ Accessibility findings are reported in a machine-checkable vocabulary: each rule
 
 ## Who runs it
 
-`/guideline-reviewer` is **standalone**: it consumes no workflow artifact and produces none, needs no `$SPECS_PATH` and opens no branch, and runs no LLM-model classification step — the command file carries no classification phase, no `model_routing` block, and no Opus/Sonnet chain reference. [Workflow overview](../workflow.md) shows it alongside [`/api-guideline-reviewer`](api-guideline-reviewer.md), its sibling reviewer for OpenAPI specs rather than app code and UI.
+`/guideline-reviewer` is **standalone**: it consumes no workflow artifact and produces none, needs no `$SPECS_PATH` and opens no branch, and runs no LLM-model classification step — the command file has no classification phase and picks no model tier. [Workflow overview](../workflow.md) shows it alongside [`/api-guideline-reviewer`](api-guideline-reviewer.md), its sibling reviewer for OpenAPI specs rather than app code and UI.
 
 ## Synopsis
 

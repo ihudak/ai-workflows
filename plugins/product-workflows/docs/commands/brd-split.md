@@ -183,9 +183,8 @@ A slice's walk offers no `covered-by`, and the reason is about **who writes** it
 a slice may carry one. On a slice the disposition names a **sibling under the same parent, or that
 parent** — never a child, since no child can exist below a slice — only its Epics — and it records an
 **orphan row**: a ledger row for a `[BR#n]` this slice no longer claims, whose claim the **parent's**
-own walk withdrew. **Two routes reach that one state — the only two that
-write `covered-by` — and neither is a second kind of row.** On the
-first the claim was never more than provisional: Phase 3 writes a child's `claims:` provisionally, and
+own walk withdrew. **Of the three routes to that one state, two can write `covered-by` onto the row, and neither is a second kind of row** (on the third, the slice's own walk had already settled the row, and its disposition stands). On the
+first of the two the claim was never more than provisional: Phase 3 writes a child's `claims:` provisionally, and
 where Phase 4 settles a claimed requirement elsewhere the claim and the copied inventory row are
 withdrawn while the ledger row stays and takes that walk's terminal disposition. On the second the
 claim was committed by an earlier run and then deferred by the slice itself, and a re-cut moved it to a
@@ -371,8 +370,8 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
 - `slices.md` — written in a fixed layout: frontmatter
   `kind: slices` and `key:`, then one heading per block type in a fixed order — structural only:
   no script parses it, [`/brd-package`](brd-package.md) reads the slice keys under `## Slices`, and
-  every other reader reads the blocks as prose. A file with no such
-  frontmatter, written by an earlier release, is left in its own layout by every in-place edit and only rewritten in this layout by
+  every other reader reads the blocks as prose. A file with no such frontmatter is left in its own layout by every in-place edit
+  and only rewritten in this layout by
   a full run. One block per confirmed slice (its key, its folder,
   and the rationale that grouped its rows: what in the instruction placed it); one block per row deferred this run; one block for the
   Phase 4 Step 1 bulk offer where it fired, naming what it wrote and what was held back; and, when the run
@@ -627,7 +626,7 @@ the recommended option on a root run whose pull request is open (or that had not
 you pick the children — all of them by default, or the ones you will work on soon, since grounding
 a slice nobody touches for weeks spends Opus time on a baseline that goes stale — name the
 repositories once, from the clones it lists, and see each child's cost before you confirm. The
-split then finishes as it always does — its cost entry, its session commit, its report — and waits:
+split then finishes — its cost entry, its session commit, its report — and waits:
 **you merge its pull request**, the plugin never does, and tell it so; it checks the merge, squash
 and rebase included, and asks again if it finds none. Then it runs
 [`/prd-ground`](prd-ground.md) once per chosen child, one after another, each a complete run with
