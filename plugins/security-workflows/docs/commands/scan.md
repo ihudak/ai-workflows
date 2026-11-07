@@ -44,7 +44,7 @@ All three run flags apply. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips the 
 
 ```mermaid
 flowchart TD
-    p0["Phase 0 — Setup: run flags, arguments and role, SPECS_PATH, address, specs preflight, repository, reservations, leftover worktrees, prerequisites, session-model check"] --> p1["Phase 1 — Scope: commit, kind and scope; a change scan acts on unit-branch's state, after a switch question where the branch is elsewhere; for --verify-fixes, the changed files of findings being fixed; for --triage, the triage plan"]
+    p0["Phase 0 — Setup: run flags, arguments and role, SPECS_PATH, address, specs preflight, repository, reservations, leftover worktrees, prerequisites, session-model check"] --> p1["Phase 1 — Scope: commit, kind and scope; a change scan acts on the branch's state, after a switch question where the branch is elsewhere; for --verify-fixes, the changed files of findings being fixed; for --triage, the triage plan"]
     p1 --> mode{"Mode?"}
     mode -->|"KEY, repo path or --verify-fixes"| p2["Phase 2 — Checkout: in place, or a temporary worktree for --verify-fixes"]
     mode -->|"--import dir"| p4
@@ -70,7 +70,7 @@ flowchart TD
 | 7 — Close | Refresh the reservations, commit the register with `register.py commit`, append the unit note, remove the worktree, and print the report. |
 | 7.6 — Tail | Maintenance and feedback, the follow-ups after their preview, the maintenance proposals you consent to, the cost entry, the resume pointer, and the terminal commit of the specs repository. |
 
-**Phase 0 finds the Epic's branch, and Phase 1 acts on it.** A change scan reads the branch from the latest block for this repository in the unit's `implementation.md`, fetches it by name, and asks `workflows-core`'s `unit-branch` what state it is in. A state of `none`, a record naming no block for this repository, stops there with `SECURITY_NO_IMPLEMENTATION`. Phase 1 then acts on the others:
+**Phase 0 finds the Epic's branch, and Phase 1 acts on it.** A change scan reads the branch from the latest block for this repository in the unit's `implementation.md`, fetches it by name, and looks up what state it is in. A state of `none`, a record naming no block for this repository, stops there with `SECURITY_NO_IMPLEMENTATION`. Phase 1 then acts on the others:
 
 - **checked out** — scans the branch's tip in place. A local branch behind `origin`'s copy is fast-forwarded first, and the confirmation says so; a tip that review commits moved past the recorded commit is no error, and the confirmation says that too.
 - **local or remote** — on a clean tree, asks whether to *Switch to `<branch>`* (recommended) or *Cancel*, and on *Switch* switches to it — creating the local branch from `origin`'s where only the remote has it — fast-forwarding where the remote's copy is ahead.

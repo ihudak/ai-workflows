@@ -12,7 +12,7 @@ It emits a session-cost entry all the same, with `phase`/`role` inferred from th
 
 A frame set's index is **mandatory, and a set without one a refusal**: `design-grounder` returns `NO_INDEX` rather than reading a set without one, because a filename is not a reliable statement of what a frame shows.
 
-That is strict on purpose, and it leaves the obvious workflow with no way out. A human exports the frames of a screen flow, drops the folder into `design/`, and has a set the plugin refuses to read — recoverable only by hand-authoring an index. `/idea` writes one for the images it vendors, and no other command does. `/frames` is the repair.
+That is strict on purpose, and without a command that writes the index it would leave the obvious workflow with no way out: a human exports the frames of a screen flow, drops the folder into `design/`, and has a set the plugin refuses to read — recoverable only by hand-authoring an index, since `/idea` writes one only for the images it vendors. `/frames` is the repair.
 
 ## Synopsis
 

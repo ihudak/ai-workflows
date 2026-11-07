@@ -335,9 +335,9 @@ reads was already independently verified by `/prd-ground`'s own agents.
   on file stops the run with `BRD_SPLIT_UNVERIFIED: N findings have no verifier verdict — run
   /product-workflows:prd-ground first.`
 - **On a slice: every finding block is well-formed.** The finding record's field set is closed to
-  the finding record's own fields plus `outcome` and `notes`. A block carrying
+  its own — `id`, `claim`, `verdict`, `prior_verdict`, `evidence`, `control`, `commit`, `altitude`, `horizon`, `class`, `cites`, `prerequisite` and `consumed_by` — plus `outcome` and `notes`. A block carrying
   any other key stops the run with `BRD_SPLIT_MALFORMED_FINDING`, naming each finding and key. The
-  keys that actually occur are the verifier's own return fields — `own_verdict` above all, with `control_outcome` beside it. `own_verdict` is a field the verifier *returns* to its caller, which
+  keys that actually occur are the verifier's own return fields — `own_verdict` above all, with `control_outcome` beside it, the verifier's own judgement of whether a finding's `control` fired. `own_verdict` is a field the verifier *returns* to its caller, which
   leaves a block that carries it stating two verdicts at once while `verdict` is the one every
   consumer reads. The verified-outcome test above cannot catch it, because such a block does carry
   an outcome; the repair is to remove the offending key by hand, not to re-derive the corpus.

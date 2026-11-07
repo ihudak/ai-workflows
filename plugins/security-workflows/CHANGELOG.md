@@ -11,6 +11,7 @@ User pages only, a second pass on batch B30 laid on the first. Needs nothing fro
 
 ### Fixed
 - **The pages drop the internal names the first pass left**: `specs_git: blocked` and `misrooted`, phase step numbers and the register's field names (`reserved_moves`, `held_by`) are said in plain words on Session cost, Environment, Roles and phases and the register page, and Session cost states the role rule once.
+- **`/security-workflows:scan`'s page** says a change scan looks up its branch's state, without the entry point's name.
 
 ## [0.10.5] — 2026-11-07
 

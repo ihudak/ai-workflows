@@ -24,14 +24,14 @@ Loaded with `.claude/rules/gates.md`, whose `paths:` it shares and whose opening
 
 **Check 25 keeps maintainer vocabulary off a user's page.** Its pages are each `*.md` under a `PLUGIN_RELS` plugin's `docs/`, each such plugin's `README.md`, and the repository-root `README.md`. A line fails on any of three things:
 - **a `§`**, anywhere a reader sees it: a fenced block and a mermaid label included;
-- **a design-decision id**, `D` and one to three digits standing as a word (`D3.js` is not one). In a mermaid block only the labels a diagram shows are read, never a node id;
+- **a design-decision id**, `D` and one to three digits standing as a word (`D3.js` is not one), in prose and in an ordinary fenced block. In a mermaid block only the labels a diagram shows are read, never a node id;
 - **`<plugin>:<name>`, where the name or its longest leading path is a markdown file under that plugin's `references/`.** This is resolved against every plugin in the tree, by directory and by declared name, never parsed by shape. So an agent, a skill (`workflows-core:model-routing`, a reference subtree but no file) and a command pass.
 
-**What is not read:** an HTML comment in prose, on one line or several, where a recipe re-deriving a number on the page is kept. A `<!--` inside a code span or a fenced block opens nothing. A fence closes only on a run of its own character at least as long as the one that opened it.
+**What is not read:** an HTML comment in prose, where a recipe re-deriving a number on the page is kept, and a mermaid `%%` comment line. A comment that opens a line runs to the next `-->`; one inside a line hides text only where it closes before the paragraph ends, and is literal text otherwise. A `<!--` inside a code span or a fenced block opens nothing. A fence closes only on a run of its own character at least as long as the one that opened it.
 
-**The marker.** A line carrying `<!-- docs-vocab-ok: <why> -->` passes, and on a fence-opening line the marker sanctions the block it opens, as check 13's does. It is for the user's own content or output a run prints verbatim. A marker with an empty reason, or not written as that HTML comment, fails on its own line and sanctions nothing.
+**The marker.** A prose line carrying `<!-- docs-vocab-ok: <why> -->`, closed on that line, passes, and on a fence-opening line the marker sanctions the block it opens, as check 13's does. It is for the user's own content or output a run prints verbatim. A marker with an empty reason, one not written as that HTML comment, and one a reader sees, in a code span or on a line inside a fenced block, fails on its own line and sanctions nothing. A hidden comment that only mentions the marker's name is a note.
 
-**Population.** It has no config name and no switch: its population is derived from `PLUGIN_RELS`, and every edition ships pages a user reads. A plugin with no page to read fails as vacuous. It runs outside the loop, because the root README is no plugin's. It needs `python3`.
+**Population.** It has no config name and no switch: its population is derived from `PLUGIN_RELS`, and every edition ships pages a user reads. A plugin with no page to read fails as vacuous. It runs outside the loop, because the root README is no plugin's. A page that is not valid UTF-8 fails, since a `§` a Latin-1 editor writes is a byte the scan would otherwise miss, and so does a scan that does not run to its end. Without `python3` the vacuity guard still runs, and the check prints a note and passes, as checks 12 and 24 do.
 
 **Why.** A `§` cites a section of a reference written for the agents, a reference id names a file the reader never opens, and a decision id numbers a row of a design spec that is not shipped. None resolves for the reader.
 
@@ -43,6 +43,9 @@ Loaded with `.claude/rules/gates.md`, whose `paths:` it shares and whose opening
 - a maintainer recipe outside a comment;
 - an internal field name such as `specs_git`;
 - a code span that runs across lines;
+- a fenced block indented four or more spaces inside a list item, which it reads as prose;
+- a decision id in a mermaid label written in none of the bracketed or quoted forms, such as edge text in `A -- text --> B`, a state label after `:`, an unbracketed subgraph title, or a sequence message;
+- a citation of a reference that is not markdown, such as `cost-prices.yaml`;
 - the other id families a design spec numbers, such as `C2`, `E1` or `L2`, whose shapes are also ordinary keys and words.
 
 Review holds those. It also fires on a `D1` that is no decision id, such as a product's own name, which takes the marker.

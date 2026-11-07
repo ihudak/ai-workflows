@@ -1864,7 +1864,7 @@ check_index_membership() {
 #                  $CORE_PLUGIN_REL/$REF_DIR/. The FIRST whitespace token is the reference;
 #                  a second token is an entry point WITHIN it (`specs-repo-git
 #                  specs-preflight`) or, on a reference that loads by part, the part to
-#                  read (`session-hygiene resume-pointer`), and 500 of this tree's 643 real
+#                  read (`session-hygiene resume-pointer`), and 616 of this tree's 747 real
 #                  invocations carry one.
 #                  An implementation matching the whole argument string reports every one of
 #                  them as unresolvable.
@@ -1886,8 +1886,8 @@ check_index_membership() {
 #
 # THE PLACEHOLDER TRAP, which is the single most likely way to get this wrong. The preamble
 # quotes the invocation form literally -- `args: "<name>"` -- as documentation of the
-# convention, on 92 files in this tree. A forward direction that resolves every `args:`
-# string it finds opens `<name>.md`, fails, and reports 92 defects on entirely correct
+# convention, on 93 files in this tree. A forward direction that resolves every `args:`
+# string it finds opens `<name>.md`, fails, and reports 93 defects on entirely correct
 # content. A bracketed first token is therefore the PREAMBLE MARKER, not an argument: it is
 # what relation 3 looks for, and it is skipped by relations 1 and 4. Anything else that is
 # not a plausible reference name is still reported -- skipping "implausible" arguments
@@ -1921,9 +1921,9 @@ check_index_membership() {
 # of them should carry a runtime loader instruction: the three preload-context.sh hooks, and
 # core's own scripts, generated reference parts and model-routing skill (23 files at batch B30,
 # counted with this check's TOKEN and cite_target over every PLUGIN_RELS plugin outside
-# $CMD_DIR/, agents/ and $REF_DIR/, CHANGELOG.md excluded). The docs pages cited them too until
-# B30; check 25 now holds a page to none. A relation-3 implemented as "every file that cites"
-# fires on each of them on a correct tree. The same bound is what keeps relation 2 falsifiable: core's own
+# $CMD_DIR/, agents/ and $REF_DIR/, CHANGELOG.md excluded). The docs pages cited them too
+# until B30; check 25 now holds a page to no markdown one. A relation-3 implemented as "every
+# file that cites" fires on each of them on a correct tree. The same bound is what keeps relation 2 falsifiable: core's own
 # docs/reference/references.md enumerates every reference file by name, so admitting docs/
 # as a citation source would make the reverse direction unfalsifiable by construction.
 # CHANGELOG.md is excluded for the same reason it is excluded everywhere else -- history
@@ -1935,9 +1935,9 @@ check_index_membership() {
 # to keep a constraint that currently holds by discipline from quietly stopping to hold --
 # the same profile as check 14, not the profile of the two rejected widenings, which produced
 # false positives. Widening it to the whole plugin fires ONCE, on correct content:
-# docs/reference/session-cost.md names the companion plugin's `references/cost-prices.yaml`
-# while explaining in the same sentence why it is named as a path and not in the loader's
-# form. One false positive and zero true ones is the result on which the other widenings were
+# dev-workflows' docs/reference/session-cost.md names the companion plugin's
+# `references/cost-prices.yaml`, a data file the loader cannot serve, so a path is the one form
+# that names it. One false positive and zero true ones is the result on which the other widenings were
 # refused, so the scope stops where relation 3's does.
 #
 # WHAT THIS DELIBERATELY DOES NOT GATE, stated so nobody mistakes green for safe:
@@ -2767,8 +2767,9 @@ check_keyed_hooks() {
 #     under that plugin's $REF_DIR, extension dropped and subtree kept
 #     (`model-routing/classification`, and `addressing/resolve-address`, which cites
 #     `addressing`) -- resolved against the tree, never parsed by shape, so an agent
-#     (`workflows-core:code-review`), a skill (`workflows-core:model-routing`, whose name is also
-#     a reference SUBTREE but no file) and a command (`/workflows-core:feedback`) pass. The
+#     (`workflows-core:impl-maintenance`, though `handoff/impl-maintenance` is a reference), a
+#     skill (`workflows-core:model-routing`, whose name is also a reference SUBTREE but no file)
+#     and a command (`/workflows-core:feedback`, a `/` before it) pass. The
 #     plugin set is every plugin directory in the tree, by directory and by declared name, so a
 #     page citing a sibling's reference is held too.
 # MEASURED at batch B30 on the tree before its fixes (9d9292b4), by this check's own reading:
@@ -2776,20 +2777,24 @@ check_keyed_hooks() {
 # line carrying more than one kind. The batch rewrote every one in plain words; no line carries
 # the marker.
 #
-# What the reader does not see is not read: an HTML comment in prose, on one line or across
-# several, where a recipe that re-derives a number on the page is kept for the maintainer. A
+# What the reader does not see is not read: an HTML comment in prose, where a recipe that
+# re-derives a number on the page is kept for the maintainer, and a mermaid `%%` comment line.
+# A comment that opens a line runs to the next `-->`, as an HTML block does; one inside a line
+# hides text only where it closes before the paragraph ends, and is literal text otherwise. A
 # `<!--` inside a code span or a fenced block opens no comment -- a renderer shows both
 # verbatim -- and a fence closes only on a run of its own character at least as long as the one
 # that opened it, so a ```` block may quote a ``` one. A fenced block is otherwise read like
-# prose: an example a page shows is something its reader reads.
+# prose, decision ids and citations included: an example a page shows is something its reader
+# reads.
 #
-# THE MARKER, `<!-- docs-vocab-ok: <why> -->`, sanctions the line it sits on, and on a
-# fence-OPENING line the block it opens -- check 13's rule, for check 13's reason: a line inside
-# a mermaid or quoted block cannot carry an HTML comment without corrupting what it holds. It is
-# for a literal that is the user's own content, such as a customer's `§ 4.2` quoted as theirs,
-# or output a run prints verbatim. Every use is audited by its reason, so a marker whose reason
-# is empty, or that is not written as that HTML comment, fails on its own line and sanctions
-# nothing.
+# THE MARKER, `<!-- docs-vocab-ok: <why> -->`, sanctions the prose line it sits on, as an HTML
+# comment closed on that line, and on a fence-OPENING line the block it opens -- check 13's rule,
+# for check 13's reason: a line inside a mermaid or quoted block cannot carry an HTML comment
+# without corrupting what it holds. It is for a literal that is the user's own content, such as
+# a customer's `§ 4.2` quoted as theirs, or output a run prints verbatim. Every use is audited
+# by its reason: a marker whose reason is empty, one not written as that HTML comment, and one
+# a reader sees -- in a code span, or on a line inside a fenced block -- fails on its own line
+# and sanctions nothing. A hidden comment that only mentions the marker's name is a note.
 #
 # POPULATION: every *.md under $PLUGIN_REL/docs/ and $PLUGIN_REL/README.md for each plugin of
 # PLUGIN_RELS, and the repo-root README where there is one. It is derived from PLUGIN_RELS, so
@@ -2800,11 +2805,18 @@ check_keyed_hooks() {
 #
 # What this deliberately does NOT catch, stated so nobody mistakes green for safe: the path form
 # `references/<name>.md`, which also names files a user acts on (a bundled default, the price
-# table); change history ("used to", "before 4.1.2"); a maintainer recipe outside a comment; an
-# internal field name (`specs_git`); a code span that runs across lines; and the other id
-# families a design spec numbers (C2, E1, L2), whose shapes are ordinary keys and words. It
-# fires on a `D1` that is no decision id -- a product's own name -- which takes the marker.
-# Review holds the rest. It needs python3, and says so where there is none.
+# table); a citation of a reference that is not markdown (`cost-prices.yaml`); change history
+# ("used to", "before 4.1.2"); a maintainer recipe outside a comment; an internal field name
+# (`specs_git`); a code span that runs across lines; a fenced block indented four or more
+# spaces inside a list item, which it reads as prose; a decision id in a mermaid label written
+# in none of the five bracketed forms LABEL names -- `A -- text --> B`, `-. text .->`,
+# `== text ==>`, a state label after `:`, an unbracketed subgraph title, a sequence message or
+# note; and the other id families a design spec numbers (C2, E1, L2), whose shapes are ordinary
+# keys and words. It fires on a `D1` that is no decision id -- a product's own name -- which
+# takes the marker. Review holds the rest. A page it cannot read as UTF-8 fails, since a `§`
+# written by a Latin-1 editor is the very byte it would miss, and a scan that does not run to
+# its end fails rather than passing on silence. Without python3 the vacuity guard still runs,
+# the check prints a note and passes, as checks 12 and 24 do.
 check_docs_vocabulary() {
   local root="$1" rel files out h prog
   for rel in $PLUGIN_RELS; do
@@ -2823,10 +2835,12 @@ check_docs_vocabulary() {
 import glob, json, os, re, sys
 
 # argv: root, plugin parent (`plugins/` or empty), reference dir name; stdin: page paths.
+# Prints `V <page>:<line> <what>` per finding, `M <page>:<line>` per marker that sanctions
+# nothing, `U <page>` per page it cannot read as UTF-8, and a closing sentinel.
 root, parent, refdir = sys.argv[1], sys.argv[2], sys.argv[3]
 MARK = "docs-vocab-ok"
-# The marker, written as an HTML comment with a reason; any other mention sanctions nothing.
-MARKED = re.compile(r"<!--[ \t]*docs-vocab-ok:(.*?)-->")
+# A fence-opening line's marker: the HTML comment, with a reason.
+FENCE_MARK = re.compile(r"<!--[ \t]*docs-vocab-ok:(.*?)-->")
 # Every plugin of the tree, by directory name and by declared name, mapped to the markdown
 # reference FILES it ships, extension dropped and subtree kept: `model-routing/classification`
 # is one, while a subtree alone (`upgrade/`) is not, since a command or skill may carry its name.
@@ -2836,10 +2850,10 @@ for d in sorted(glob.glob(os.path.join(root, parent + "*", ""))):
     names = {os.path.basename(d)}
     try:
         with open(os.path.join(d, ".claude-plugin", "plugin.json"), encoding="utf-8") as fh:
-            declared = json.load(fh).get("name")
+            declared = (json.load(fh) or {}).get("name")
         if isinstance(declared, str) and declared:
             names.add(declared)
-    except (OSError, ValueError):
+    except (OSError, ValueError, TypeError, AttributeError):
         pass
     base = os.path.join(d, refdir)
     files = {os.path.relpath(f, base)[:-3] for f in glob.glob(os.path.join(base, "**", "*.md"), recursive=True)}
@@ -2865,15 +2879,6 @@ def cited(ns, name):
     return None
 
 
-def marker(raw):
-    """1 for a marker written as the HTML comment with a reason, -1 for any other mention of
-    one (an empty reason, or not that comment), 0 for none."""
-    if MARK not in raw:
-        return 0
-    m = MARKED.search(raw)
-    return 1 if m and m.group(1).strip() else -1
-
-
 def comment_start(text, i):
     """The first `<!--` at or after i that is not inside a code span, or -1."""
     spans = [(m.start(), m.end()) for m in SPAN.finditer(text)]
@@ -2883,28 +2888,52 @@ def comment_start(text, i):
     return j
 
 
+def closes_in_paragraph(lines, start):
+    """Whether a `-->` comes on a line from `start` on before the paragraph ends (a blank line)."""
+    for l in lines[start:]:
+        if not l.strip():
+            return False
+        if "-->" in l:
+            return True
+    return False
+
+
+def report(rel, no, text):
+    if "§" in text:
+        print(f"V {rel}:{no} cites a section (§)")
+    m = DID.search(text)
+    if m:
+        print(f"V {rel}:{no} names a design-decision id ({m.group(0)})")
+    if CITE:
+        for m in CITE.finditer(text):
+            r = cited(m.group(1), m.group(2))
+            if r:
+                print(f"V {rel}:{no} cites the internal reference `{m.group(1)}:{r}`")
+                break
+
+
 for path in sys.stdin.read().split("\n"):
     if not path:
         continue
+    rel = os.path.relpath(path, root)
     try:
         with open(path, encoding="utf-8") as fh:
             lines = fh.read().split("\n")
     except (OSError, UnicodeDecodeError):
+        print(f"U {rel}")
         continue
-    rel = os.path.relpath(path, root)
     fence = None          # (char, length, sanctioned, mermaid) while inside a fenced block
-    incomment = False
+    incomment = False     # inside an HTML comment carried over from an earlier line
     for no, raw in enumerate(lines, 1):
-        mk = marker(raw)
-        marked = mk == 1
-        if mk < 0:
-            # Reported, and the line sanctions nothing -- a fence it opens included.
-            print(f"M {rel}:{no}")
         if fence is None and not incomment:
             m = OPEN.match(raw)
             if m and not (m.group(1)[0] == "`" and "`" in m.group(2)):
                 info = m.group(2).strip().split()
-                fence = (m.group(1)[0], len(m.group(1)), marked, bool(info) and info[0] == "mermaid")
+                fm = FENCE_MARK.search(m.group(2))
+                ok = bool(fm and fm.group(1).strip())
+                if MARK in m.group(2) and not ok:
+                    print(f"M {rel}:{no}")
+                fence = (m.group(1)[0], len(m.group(1)), ok, bool(info) and info[0] == "mermaid")
                 # The opening line's info string is shown by no renderer; nothing to read.
                 continue
         elif fence is not None:
@@ -2912,8 +2941,13 @@ for path in sys.stdin.read().split("\n"):
             if re.match(r"^ {0,3}" + re.escape(char) + "{" + str(length) + r",}[ \t]*$", raw):
                 fence = None
                 continue
-            # Inside a fence everything is shown verbatim, an HTML comment included.
-            if sanctioned or mk:
+            if sanctioned:
+                continue
+            # Inside a fence everything is shown verbatim, an HTML comment and a marker included,
+            # so a marker here sanctions nothing; a mermaid `%%` comment line is drawn for nobody.
+            if MARK in raw:
+                print(f"M {rel}:{no}")
+            if mermaid and raw.lstrip().startswith("%%"):
                 continue
             seen = "".join(LABEL.findall(raw)) if mermaid else raw
             hits = []
@@ -2931,9 +2965,11 @@ for path in sys.stdin.read().split("\n"):
             for h in hits:
                 print(f"V {rel}:{no} {h}")
             continue
-        # Prose: an HTML comment, on one line or across several, is not shown, and neither
-        # is a `<!--` inside a code span the start of one.
-        text, out, i = raw, "", 0
+        # Prose. An HTML comment is not shown: one that opens a line runs to the next `-->`, as an
+        # HTML block does, and one inside a line hides text only where it closes before the
+        # paragraph ends -- otherwise its `<!--` is literal text. A `<!--` inside a code span opens
+        # nothing. A comment whose text starts `docs-vocab-ok:` is a marker attempt.
+        text, out, i, mk = raw, "", 0, 0
         while i < len(text):
             if incomment:
                 j = text.find("-->", i)
@@ -2941,33 +2977,45 @@ for path in sys.stdin.read().split("\n"):
                     i = len(text)
                     break
                 incomment, i = False, j + 3
+                continue
+            j = comment_start(text, i)
+            if j < 0:
+                out += text[i:]
+                break
+            out += text[i:j]
+            k = text.find("-->", j + 4)
+            body = text[j + 4:k if k >= 0 else len(text)].strip()
+            if body.startswith(MARK + ":"):
+                if k >= 0 and body[len(MARK) + 1:].strip():
+                    mk = mk or 1
+                else:
+                    mk = -1
+            if k >= 0:
+                i = k + 3
+            elif (i == 0 and not out.strip() and j <= 3) or closes_in_paragraph(lines, no):
+                incomment, i = True, len(text)
             else:
-                j = comment_start(text, i)
-                if j < 0:
-                    out += text[i:]
-                    break
-                out += text[i:j]
-                incomment, i = True, j + 4
+                out += "<!--"
+                i = j + 4
+        if MARK in out:
+            mk = -1
+        if mk < 0:
+            print(f"M {rel}:{no}")
         if mk:
             continue
-        if "§" in out:
-            print(f"V {rel}:{no} cites a section (§)")
-        m = DID.search(out)
-        if m:
-            print(f"V {rel}:{no} names a design-decision id ({m.group(0)})")
-        if CITE:
-            for m in CITE.finditer(out):
-                r = cited(m.group(1), m.group(2))
-                if r:
-                    print(f"V {rel}:{no} cites the internal reference `{m.group(1)}:{r}`")
-                    break
+        report(rel, no, out)
+print("__CHECK25_RAN__")
 PYEOF25
 )
-  out=$(printf '%s\n' "$files" | sort | python3 -c "$prog" "$root" "$(plugin_parent)" "$REF_DIR")
-  [ -n "$out" ] || return 0
+  out=$(printf '%s\n' "$files" | sort | python3 -c "$prog" "$root" "$(plugin_parent)" "$REF_DIR" 2>&1)
+  case "$out" in
+    *__CHECK25_RAN__*) : ;;
+    *) fail 25 "the user-page scan did not run to the end (python3 said: $(printf '%s\n' "$out" | tail -1)) -- this check would examine nothing"; return ;;
+  esac
   while IFS= read -r h; do
     case "$h" in
-      M\ *) fail 25 "${h#M } carries a docs-vocab-ok marker with no reason, or one not written as the HTML comment -- write it \`<!-- docs-vocab-ok: <why> -->\`; a marker sanctions a literal that is the user's own content, and its reason is what the audit reads" ;;
+      M\ *) fail 25 "${h#M } carries a docs-vocab-ok marker that sanctions nothing: one with no reason, one not written as the HTML comment in prose, or one a reader sees in a code span or a fenced block -- write it \`<!-- docs-vocab-ok: <why> -->\` on the line, or on the fence's opening line; a marker sanctions a literal that is the user's own content, and its reason is what the audit reads" ;;
+      U\ *) fail 25 "${h#U } is not valid UTF-8 -- a \`§\` an editor wrote as one Latin-1 byte would pass unseen; save the page as UTF-8" ;;
       V\ *) fail 25 "${h#V } -- maintainer vocabulary on a user's page: a reader cannot open a reference or a design spec; say the rule in plain words, or, where the literal is the user's own content or output a run prints verbatim, mark the line (or its opening fence) \`<!-- docs-vocab-ok: <why> -->\`" ;;
     esac
   done <<<"$out"
@@ -3959,9 +4007,9 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     # Relation 3, and its SCOPE, which is the half a red case cannot prove. Measured on the
     # live tree, and counted in check 16's own header, the one place those figures are
     # written: within $CMD_DIR/, agents/ and $REF_DIR/ the match is exact -- every file that
-    # cites a core reference carries the preamble -- while files OUTSIDE them cite one -- a
-    # hook, a script, and a docs page quoting a citation under check 25's marker, as this case
-    # does -- and none of them should carry a runtime loader instruction. An implementation reading "every file that cites" fires once for each of
+    # cites a core reference carries the preamble -- while files OUTSIDE them cite one (on the
+    # live tree a hook, a script, a generated reference part and a skill; here, a docs page
+    # quoting a citation under check 25's marker) -- and none should carry a loader instruction. An implementation reading "every file that cites" fires once for each of
     # them on a correct tree; here it turns the green case red.
     expect_fail "a consuming file that cites core without the preamble is rejected" 16 \
       "sed '/^\*\*Core references\.\*\*/d' $(cmd_file $(plugin_parent)fixture-two omega) > c16.tmp && mv c16.tmp $(cmd_file $(plugin_parent)fixture-two omega)"
@@ -4508,7 +4556,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   local cmd25; cmd25=$(cmd_names "$fixture/$CORE_PLUGIN_REL" | head -1)
   local sub25; sub25=$(ls -d "$fixture/$PLUGIN_REL/$REF_DIR"/*/ "$fixture/$(plugin_parent)"*/"$REF_DIR"/*/ 2>/dev/null | head -1); sub25="${sub25%/}"
   local subf25; subf25=$(ls "$fixture/$(plugin_parent)"*/"$REF_DIR"/*/*.md 2>/dev/null | head -1)
-  local subfns25="${subf25%/$REF_DIR/*}"; subfns25="${subfns25##*/}"; subf25="${subf25#*/$REF_DIR/}"; subf25="${subf25%.md}"
+  local subfns25="${subf25%/$REF_DIR/*}"; subfns25="${subfns25##*/}"; subf25="${subf25#$fixture/}"; subf25="${subf25#*/$REF_DIR/}"; subf25="${subf25%.md}"
   local d2_25; d2_25=$(ls "$fixture/$p25/docs"/*.md 2>/dev/null | head -1); d2_25="$p25/docs/${d2_25##*/}"
   # A plugin whose declared name differs from its directory, and that name.
   local decl25="" decldir25="" pj25
@@ -4563,7 +4611,25 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '\nA section number such as § 4.2 is left as written. docs-vocab-ok: the user document\n' >> $d25"
   expect_fail_msg "a fence opened under an empty marker is not sanctioned" 25 "cites a section" \
     "printf '\n%s\n%s\n%s\n' '\`\`\`text <!-- docs-vocab-ok: -->' 'See § 4.2 of the brief.' '\`\`\`' >> $d25"
-  expect_pass_after "agent and command names, a reference subtree, a marked line, marked fences, mermaid node ids and a comment pass" \
+  expect_fail_msg "a decision id in an ordinary fenced block is rejected" 25 "names a design-decision id" \
+    "printf '\n%s\n%s\n%s\n' '\`\`\`text' 'see D7' '\`\`\`' >> $d25"
+  expect_fail_msg "a reference cited in an ordinary fenced block is rejected" 25 "cites the internal reference \`$ns25:$ref25\`" \
+    "printf '\n%s\n%s\n%s\n' '\`\`\`text' 'see $ns25:$ref25' '\`\`\`' >> $d25"
+  expect_fail_msg "text after a comment that closed on a later line is read" 25 "cites a section" \
+    "printf '\n%s\n%s\n%s\n%s\n' '<!--' 'a note' '-->' 'The rule is in §5.' >> $d25"
+  expect_fail_msg "text before a comment on its line is read" 25 "cites a section" \
+    "printf '\nThe rule is in §6 <!-- a note -->\n' >> $d25"
+  expect_fail_msg "a comment opened inside a line and never closed in its paragraph hides nothing" 25 "cites a section" \
+    "printf '\n%s\n\n%s\n' 'Write it opening with <!-- and a reason.' 'The rule is in §3.' >> $d25"
+  expect_fail_msg "a backtick in a fence's info string opens no fence" 25 "cites a section" \
+    "printf '\n%s\n%s\n' '\`\`\`text\` <!-- docs-vocab-ok: not a fence -->' 'The rule is in §7.' >> $d25"
+  expect_fail_msg "a marker in a code span sanctions nothing" 25 "sanctions nothing" \
+    "printf '\n%s\n' 'See §3 \`<!-- docs-vocab-ok: shown -->\`.' >> $d25"
+  expect_fail_msg "a marker on a line inside a fenced block sanctions nothing" 25 "cites a section" \
+    "printf '\n%s\n%s\n%s\n' '\`\`\`text' 'see §3 <!-- docs-vocab-ok: shown -->' '\`\`\`' >> $d25"
+  expect_fail_msg "a page that is not valid UTF-8 is rejected" 25 "is not valid UTF-8" \
+    "printf '\nThe rule is in \247 3.\n' >> $d25"
+  expect_pass_after "agent and command names, a reference subtree, marked lines and fences, mermaid node ids and comments, and hidden comments pass" \
     "printf '\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
        'The \`$ns25:$ag25\` agent runs, after \`/$ns25:$cmd25\`, with \`$subns25:$sub25\`.' \
        'The customer wrote §4.2 and D3. <!-- docs-vocab-ok: quotes the customer -->' \
@@ -4574,7 +4640,13 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
        '<!--' 'a comment across lines naming $ns25:$ref25 -->' >> $d25
      printf '\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
        '\`\`\`\`markdown <!-- docs-vocab-ok: quotes a page verbatim -->' '\`\`\`text' 'see §2 (D5)' '\`\`\`' '\`\`\`\`' \
-       '\`\`\`mermaid' 'flowchart LR' '  D1[Start] --> D2[End]' '\`\`\`' 'Charts are drawn with D3.js.' >> $d25"
+       '\`\`\`mermaid' 'flowchart LR' '  D1[Start] --> D2[End]' '\`\`\`' 'Charts are drawn with D3.js.' >> $d25
+     printf '\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
+       'Run \`/$ns25:$ref25\` to see it.' \
+       '~~~text <!-- docs-vocab-ok: a tilde block quoting a backtick one -->' '\`\`\`' 'see §2' '~~~' \
+       '\`\`\`mermaid' 'flowchart LR' '%% see §3 and $ns25:$ref25' '  A --> B' '\`\`\`' \
+       '<!--' 'maintainers: docs-vocab-ok is the marker' '-->' 'Text <!-- a note' >> $d25
+     printf '%s\n' 'spanning two lines --> ends here.' >> $d25"
   expect_fail_msg "a plugin with no docs page and no README trips the empty-scan guard" 25 "would examine nothing" \
     "find $p25/docs -name '*.md' -exec rm {} +; rm -f $p25/README.md"
 

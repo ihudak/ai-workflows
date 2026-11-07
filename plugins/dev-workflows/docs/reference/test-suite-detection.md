@@ -80,7 +80,7 @@ The coverage is a table, and the machinery around it is general. Adding a techno
 1. A row in the agent's detection table — the marker, the framework it selects, the qualifier that turns the marker into a candidate, and the command. The command carries whatever verbosity flag that runner needs, because the parse also collects each passing and failing test's identifier out of the same output.
 2. A row in its parse table — the patterns that runner's output prints its passing, failing and skipped counts in. That table has sixteen rows today, SwiftPM and Xcode sharing one.
 
-Measure both rows against the runner rather than writing them from its documentation. Elixir 1.20 prints its summary in a new format, and sbt prints its own count line for MUnit but not for ScalaTest.
+Measure both rows against the runner rather than writing them from its documentation, which would get two of the current rows wrong: Elixir 1.20's summary is not in the format its documentation shows, and sbt prints its own count line for MUnit but not for ScalaTest.
 
 Everything between those two tables is written against a row rather than against a framework, and a new row inherits all of it: the rooted, pruned scan; the containment rule; the per-suite run directory and the per-suite bound; the suite prefix on every identifier; the one `Status` computed from the set; and the pairing a `verify` call does against the baseline's `### Suites` rows.
 

@@ -10,9 +10,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.
 
 ### Fixed
-- **The pages drop the internal names the first pass left.** Run-record fields (`specs_git: misrooted`, `phase: inferred, role: inferred`, the run-flags record), entry-point names and `references/<name>.md` paths are said in plain words on Session cost, Session feedback, Agents, References, Environment, Getting started, Hooks, Grounding and the `/feedback`, `/prompt`, `/frames`, `/prompt-brainstorm`, `/prompt-grill-me` and `/diagnose-session` pages. Each pointer to a shared reference goes to the References page.
+- **The pages drop the internal names the first pass left.** Run-record fields (`specs_git: misrooted`, `phase: inferred, role: inferred`, the run-flags record), entry-point names and `references/<name>.md` paths are said in plain words on the docs index, Session cost, Session feedback, Agents, References, Environment, Getting started, Hooks, Grounding and the `/feedback`, `/prompt`, `/frames`, `/prompt-brainstorm`, `/prompt-grill-me` and `/diagnose-session` pages. Each pointer to a shared reference goes to the References page.
 - **`/statusline`'s page names the backup it writes**: it reads and writes `~/.claude/settings.json`, first backing up any `statusLine` block it holds to `settings.json.dev-workflows.bak` beside it.
 - **The References page's load-by-part paragraphs** keep every rule and drop the build's own checks and the loader's file path.
+- **`/frames`' page no longer contradicts itself**: it says the index rule would leave the obvious workflow with no way out without a command that writes the index, which `/frames` is.
+- **The Environment and References pages drop two leftover phrases of history** ("runs as before", "as before").
 
 ## [1.78.8] — 2026-11-07
 

@@ -258,9 +258,9 @@ subagent is dispatched — every finding this command reads was already independ
   `[CG#n]` at all stops first, with `BRD_INTERVIEW_NO_FINDINGS`: the outcome count is satisfied by an
   empty finding set, and every `[G]` this command answers is answered from the findings and from
   nothing else.
-- **Every finding block is well-formed.** The record's field set is closed to the finding record's own fields plus `outcome` and `notes`; a block carrying any other
-  key stops the run with `BRD_INTERVIEW_MALFORMED_FINDING`. The keys that occur are the verifier's own return fields — `own_verdict` above all, and `control_outcome` beside it. `own_verdict` is a
-  verifier **return** field, and a block carrying it states two verdicts at once. That matters more
+- **Every finding block is well-formed.** The record's field set is closed to the finding record's own —
+  `id`, `claim`, `verdict`, `prior_verdict`, `evidence`, `control`, `commit`, `altitude`, `horizon`, `class`, `cites`, `prerequisite` and `consumed_by` — plus `outcome` and `notes`; a block carrying any other
+  key stops the run with `BRD_INTERVIEW_MALFORMED_FINDING`. The keys that occur are the verifier's own return fields — `own_verdict` above all, and `control_outcome` beside it, the verifier's own judgement of whether a finding's `control` fired. `own_verdict` is a
   here than anywhere else on the route: every `[G]` is answered from the findings and from nothing
   else, so such a finding freezes a `[VD#n]` against whichever half the run happened to read, and
   [`/brd-package`](brd-package.md) then puts that decision in front of the customer.
@@ -318,7 +318,7 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   `[V]` tag is on file without the line is tied
   when its round is resumed: the run asks the operator which reopened or held decision it puts
   again, from those that could be, or none, and writes the answer as the line, so it is asked once;
-  an ordinary `[V]` carries `none` and is never asked about — every re-tag with the finding that caused it,
+  an ordinary `[V]` the run tags carries `none` and is never asked about — every re-tag with the finding that caused it,
   every split with the parts it became, and each question's state — either a **terminal disposition** (*answered from findings*,
   *decided*, *answered by the customer*, *re-tagged*, *split*) or a **holding state** (*held for the
   customer*, *deferred*, *needs grounding*, *untagged*). A re-tagged question keeps its number, so
@@ -423,7 +423,7 @@ against the specs repo's default branch under the shared `brd/<BRD-KEY>-<slug>` 
 choice is preceded by a read-only probe for an `origin` remote, and where the specs repo has none
 the run says so in a line above the choice: the first option still branches and commits locally,
 but the push and the pull request cannot run. On a run that found a detached
-HEAD in the specs repository or a misplaced `$SPECS_PATH`, the line above
+HEAD in the specs repository, a misplaced `$SPECS_PATH` or its environment changed since its preflight, the line above
 the choice says instead that the first option will be refused, and nothing is committed whichever
 option is picked.
 

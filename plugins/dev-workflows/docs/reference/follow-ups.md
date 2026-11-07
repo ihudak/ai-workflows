@@ -27,7 +27,7 @@ as a section below the checklist, and the line links it.
 **No folder resolved → report-only.** The follow-ups stay in the Final Report and the run says so.
 Nothing is ever written into your working directory, which may be a code repository.
 
-**The run found `$SPECS_PATH` misplaced → report-only too**, whether or not a folder resolved: nothing is written
+**The run found `$SPECS_PATH` misplaced or its environment changed since its preflight, or stopped because its environment no longer matched its session file's → report-only too**, whether or not a folder resolved: nothing is written
 under `$SPECS_PATH`, and the notice says that is the reason.
 
 That is the whole ladder.
