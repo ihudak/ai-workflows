@@ -18,7 +18,7 @@ Two of the three run flags apply to this command — `--skip-costs` does not, si
 
 ## How it runs
 
-`/vuln` is the plugin's **only `## Step N` command** — six steps, where every other command that uses either heading dialect uses `## Phase N`; the diagram below adapts its Step headings rather than reproducing them verbatim — it drops Step 0's "(mandatory)" qualifier, splits Step 3's single heading into two rewritten labels, one per classification path, and draws Step 3.9, *Code-repo handoff*, under a label of its own saying what it does.
+`/vuln` runs in six steps. The diagram below follows them, with Step 3 drawn as its two classification paths and Step 3.9 as the code-repo handoff.
 
 ```mermaid
 flowchart TD

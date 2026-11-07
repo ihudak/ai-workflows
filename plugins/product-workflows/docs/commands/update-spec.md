@@ -16,7 +16,7 @@ Revises a merged `specification.md` in place — keeping its IDs and its `Create
 - **`[<what is wrong>]`** (optional) — every token from the first one after the address that is neither a flag nor a flag's value: free text saying what to correct, kept as typed. Without it, the run takes what moved upstream and the notes already in the specification, and asks for a correction only where those name nothing.
 - **`[--no-docs]`**, **`[--docs <path>]`**, **`[--no-arch]`** — as [`/specify`](specify.md)'s: documentation and architecture grounding for the items that changed.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and persists only defects. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) runs every dispatched step on that model — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and persists only defects. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) runs every dispatched step on that model — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 

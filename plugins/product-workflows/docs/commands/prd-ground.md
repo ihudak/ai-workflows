@@ -41,7 +41,7 @@ prefix** — `BRD-`, `EPIC-` or `PRD-` — and, for a `PRD-` folder, off whether
   carries neither BRD file and lands here too; `/brd-intake` refuses it as well, so the
   remedy is the same. It is no BRD container, so the stop names a fresh `/brd-intake` under a new
   key rather than a re-run over this folder, which that command refuses. **Where the folder holds an
-  `idea.md` and no `prd.md`** — an idea handed off before the kind prefixes — the stop also names
+  `idea.md` and no `prd.md`** — an idea in that unprefixed folder — the stop also names
   [`/create-prd`](create-prd.md) on the same key, which accepts the folder and writes the `prd.md`
   that puts a re-run of this command on the idea route.
 
@@ -473,12 +473,11 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   commit, since naming it would resolve nothing. A clone with no readable `origin` is named by its
   directory's basename, so before that check, where the file records no entry under that basename
   but records a name no clone carries at this clone's commit, an ancestor of it or a descendant of it — a renamed
-  directory, or an entry written before 3.33.3 — the run asks whether it is the same repository,
+  directory, or an entry recorded under another name for it — the run asks whether it is the same repository,
   and on *Same repository* records it under the earlier name, so one repository is never recorded
   under two. The one case it
   does not cover is the earlier pin of a repository a `--rebaseline` pass re-pins, where
-  `grounding/baselines.md` already records a second repository at that pin from a run before this
-  check existed: that pass retires every finding at the pin, whichever repository ground it, and
+  `grounding/baselines.md` already records a second repository at that pin: that pass retires every finding at the pin, whichever repository ground it, and
   a class-4 `[DG#n]` citing one of them is superseded through the cascade, with its note.
 - **Phase 4.5 — documentation is a lead and a divergence, never evidence.** No `[CG#n]` or
   `[DG#n]` may cite a documentation page in its `evidence`, under any verdict, in any phase — and

@@ -34,7 +34,7 @@ The **shared, team-visible store for the AI-authored documents** and for every r
 
 ### `REPOS_PATH`
 
-Where your code clones live — one directory, or a colon-separated list of them. It has a sensible built-in default, so most readers never need to set it. The command resolves a repository under it and hands `code-scanner` an absolute `repo_path` — no agent reads `REPOS_PATH` itself.
+Where your code clones live — one directory, or a colon-separated list of them. It has a sensible built-in default, so most readers never need to set it. The command resolves a repository under it and hands `code-scanner` the repository's absolute path — no agent reads `REPOS_PATH` itself.
 
 ### `DOCS_PATH`
 

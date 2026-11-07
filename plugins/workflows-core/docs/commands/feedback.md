@@ -49,4 +49,4 @@ The command confirms the inferred `command` (`/specify`) and `category`, appends
 - [Session feedback](../reference/session-feedback.md) — the entry format, the two capture paths, and the specs-first ladder that resolves where a note lands.
 - [`/prompt`](prompt.md), [`/prompt-brainstorm`](prompt-brainstorm.md), and [`/prompt-grill-me`](prompt-grill-me.md) — the three sibling commands that log a corrective interaction (`origin: prompt`) rather than a standalone note.
 - [Workflow overview](../workflow.md#cross-cutting-commands) — where these four commands sit relative to the role pipeline.
-- [`specs-repo-git.md`](../../references/specs-repo-git.md) — the `specs-preflight` and `commit-artifacts` entry points every one of these four commands runs.
+- [References](../reference/references.md) — the shared specs-repository git reference, which holds the `specs-preflight` and `commit-artifacts` entry points every one of these four commands runs.

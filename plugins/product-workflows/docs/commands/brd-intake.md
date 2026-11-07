@@ -168,9 +168,9 @@ name the run creates:
   whatever it is called, even after a run that copied it stopped before reconciling; where the new
   read returns a row over an unchanged file that could be a kept row reworded, it asks you whether it
   is the same requirement; a row the new read does not find again is kept, never renumbered away;
-  and every id it mints is reported by id. An inventory written before 3.7.0 carries no such record,
-  so the first re-run over it on 3.7.0 rewords every row it matches to the new read's wording, once,
-  reporting each change, and keeps the record from then on. Before it copies anything, that re-run
+  and every id it mints is reported by id. On an inventory with no such record, the first re-run rewords
+  every row it matches to the new read's wording, once, reporting each change, and keeps the record from then
+  on. Before it copies anything, that re-run
   records which document the rows were last read from — out of the link log it is about to rewrite,
   where there is one — so a run that stops before reconciling still leaves the document on record
   for [`/brd-split`](brd-split.md) and [`/brd-package`](brd-package.md) to name.
@@ -195,7 +195,7 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
 
 - **Phase 3 — `brd-reader`** (Opus, frontmatter-pinned; no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one). Read-only extraction from the document, its
   linked markdown and the image transcriptions: it proposes a `[BR#n]` row per requirement plus
-  unconfirmed `defect_candidates` — an `ambiguity` on any obligation only an image states — and
+  unconfirmed candidate defects — an `ambiguity` on any obligation only an image states — and
   never decides a defect itself. `EMPTY` (no identifiable requirement) short-circuits Phase 4. On a
   first intake it writes the inventory and the ledger with no row — and the run says so plainly,
   because the route stops on a claimless BRD: Phase 8 then offers a re-run of this command with a

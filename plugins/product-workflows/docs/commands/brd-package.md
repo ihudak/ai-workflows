@@ -97,8 +97,8 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   and stops with `BRD_PACKAGE_NOT_A_SLICE` before any gate runs: it has no register and no customer to package for, so the stop sends it on along the
   idea route — `/create-ard` or `/specify`. A resolved root stops with
   `BRD_PACKAGE_ROOT_LEVEL`, naming `/brd-split <BRD-KEY> "<how to cut it>"` to carve a slice and
-  then `/brd-package <SLICE-KEY>` on it; where the root already carries package artifacts written
-  under the earlier two-level model, the stop names those files and leaves them in place, unread.
+  then `/brd-package <SLICE-KEY>` on it; where the root already carries package artifacts,
+  the stop names those files and leaves them in place, unread.
 - **An existing BRD folder.** No folder for `<BRD-KEY>` — searched at every level
   `resolve-address` bounds (three below `specifications/`) — stops with `BRD_PACKAGE_NOT_FOUND`, which names both ways a folder comes to exist
   rather than asserting one.
@@ -128,7 +128,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   at all, the run **splits a state the gate cannot**, as [`/brd-reconcile`](brd-reconcile.md) does for
   a file that is on no branch at all: no `decisions.md` in the folder means no interview has written one
   (`BRD_PACKAGE_NEEDS_INTERVIEW`, run [`/brd-interview`](brd-interview.md)). That run writes it for
-  a BRD never interviewed, and for one interviewed before it wrote the register on every round —
+  a BRD never interviewed, and for one whose rounds left none —
   resuming a round still open, or on its no-new-round path where every round is closed; for a BRD
   whose every row is delegated it stops instead, since that BRD kept nothing to package. A
   register in the folder means the run that wrote it — the interview, ordinarily, or
@@ -310,7 +310,7 @@ attack.
   is keyed on **every finding carrying a non-`undisposed` value**, and on nothing else: the reviewer
   agent returns no severity and no PASS/BLOCK verdict by design, so the disposition is the only gate
   there is. The four values are `fixed`, `accepted-risk`, `escalated-to-customer` and
-  `rejected-with-reason`, and each array draws only on those four values — the second offers
+  `rejected-with-reason`, and each question's options draw only on those four values — the second offers
   *Agreed* (`accepted-risk` with a `fixed-by:` marker, below) in place of `fixed`, and either drops
   *Escalated* where the customer's authority does not settle the finding. The harness always
   supplies a free-text option, so the picker cannot decline one — what protects the closed vocabulary
@@ -437,9 +437,9 @@ attack.
   answer or a reason the register quotes — is reported and put to the operator rather than stopping
   the run by itself, for the same reason the plugin-free scan treats it that way, and only the
   operator's *hold* stops it. A reference that resolves to nothing stops with
-  `BRD_PACKAGE_DEAD_CITATION`. A requirement this slice does not claim, cited bare in a question, a
-  held entry or a register record written before 3.7.0, is such a reference — the package carries
-  this slice's inventory alone, and 3.7.0 is the release from which the interview, the PRD's
+  `BRD_PACKAGE_DEAD_CITATION`. A requirement this slice does not claim, cited bare in a question, a held
+  entry or a register record, is such a reference — the package carries
+  this slice's inventory alone, and the interview, the PRD's
   assumptions, the reconciliation and this command's prompt write such a row `<PARENT-KEY> [BR#n]` —
   so where the stop names one, qualify that id by hand in that form, with this slice's `parent:` as
   the key, and change nothing else in the sentence. One that resolves to the wrong requirement stops

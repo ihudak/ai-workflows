@@ -1,6 +1,6 @@
 # Session feedback
 
-Session feedback is the family's channel for friction about **the plugin itself**, and for defects in the ai-containers environment the family runs in, as distinct from the product it is used to build. `references/feedback-emission.md` is the contract; this page says what the four feedback commands in this plugin put through it. The plugin's fifth emitter, `/frames`, puts through only the automatic end-of-run feedback every long-running command emits, described below.
+Session feedback is the family's channel for friction about **the plugin itself**, and for defects in the ai-containers environment the family runs in, as distinct from the product it is used to build. The shared feedback-emission reference is the contract; this page says what the four feedback commands in this plugin put through it. The plugin's fifth emitter, `/frames`, puts through only the automatic end-of-run feedback every long-running command emits, described below.
 
 ## What gets logged, and by what
 
@@ -33,4 +33,4 @@ Any defect `defect-reporter` returns lands through `emit-bugs` in the same `<KEY
 
 A `/prompt*` or `/feedback` run is charged to the phase of the command it is correcting, not to a phase of its own — see [Roles and phases](../roles-and-phases.md#plugin-feedback) for the inheritance rule and the `plugin-feedback` fallback, and [Session cost](session-cost.md) for the mechanics.
 
-The entry format, the ladder's exact tiers, and the automatic-emission contract live in `references/feedback-emission.md`, which is the single source of truth this page describes rather than restates.
+The entry format, the ladder's exact tiers, and the automatic-emission contract live in the shared feedback-emission reference ([References](references.md)), which this page describes rather than restates.

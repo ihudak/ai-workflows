@@ -12,7 +12,7 @@ It emits a session-cost entry all the same, with `phase`/`role` inferred from th
 
 The shared [`grounding-format.md`](../../references/grounding-format.md) reference makes a frame set's index **mandatory, and a set without one a refusal**: `design-grounder` returns `NO_INDEX` rather than reading a set without one, because a filename is not a reliable statement of what a frame shows.
 
-That is strict on purpose, and it left the obvious workflow with no way out. A human exports the frames of a screen flow, drops the folder into `design/`, and has a set the plugin refuses to read — recoverable only by hand-authoring an index. `/idea` writes one for the images it vendors, and nothing else did. `/frames` is the repair.
+That is strict on purpose, and it leaves the obvious workflow with no way out. A human exports the frames of a screen flow, drops the folder into `design/`, and has a set the plugin refuses to read — recoverable only by hand-authoring an index. `/idea` writes one for the images it vendors, and no other command does. `/frames` is the repair.
 
 ## Synopsis
 
@@ -49,7 +49,7 @@ One `index.md` per frame set, in the format the shared [`grounding-format.md`](.
 
 Descriptions come from the `frame-describer` agent, which looks at the frames and returns one plain-language description each — an agent whose whole tool list is `Read`, `Glob`, `Grep`, so it cannot write the index it describes into. The command hands the frames to it rather than opening them itself, so every description in an index is one that something which actually saw the frame produced, and "transcribed, never inferred" is a rule about copying rather than a hope about restraint.
 
-The indexes are deliverables, so they reach the default branch through the [phase handoff](../../references/phase-handoff.md) — each named as one literal path, behind the phase handoff's consent choice — the **advisory** variant, whose second option says no command stops on these and that what reads them reads your working copy. No gate consumes a frame-set index, but the design-grounding pass does read one, and refuses to reconcile a frame set that has none. The handoff is offered only where at least one index the run wrote is absent from the default branch or differs from it there: a re-run over an unchanged frame set from the default branch rebuilds each index byte for byte, has nothing to commit, and instead prints `Phase handoff: not offered — every index this run wrote is already on <default> as written.` An index committed on a plugin branch that was never pushed is absent from the default branch, so it still gets the offer. Declining therefore leaves them written and on no ref, and that is an unshared repair rather than a blocked one: your own grounding runs read the frame set from the working tree and see the index, and nobody else's do.
+The indexes are deliverables, so they reach the default branch through the phase handoff — each named as one literal path, behind the phase handoff's consent choice — the **advisory** variant, whose second option says no command stops on these and that what reads them reads your working copy. No gate consumes a frame-set index, but the design-grounding pass does read one, and refuses to reconcile a frame set that has none. The handoff is offered only where at least one index the run wrote is absent from the default branch or differs from it there: a re-run over an unchanged frame set from the default branch rebuilds each index byte for byte, has nothing to commit, and instead prints `Phase handoff: not offered — every index this run wrote is already on <default> as written.` An index committed on a plugin branch that was never pushed is absent from the default branch, so it still gets the offer. Declining therefore leaves them written and on no ref, and that is an unshared repair rather than a blocked one: your own grounding runs read the frame set from the working tree and see the index, and nobody else's do.
 
 ## The cap
 
@@ -67,7 +67,7 @@ When the cap bites, every remaining frame still gets a row — `_no description 
 
 ## Gates
 
-No reviewer, and nothing to review — an index states what a directory holds. The checkpoints are the specs-repo git guards (`specs-preflight` at the start, `commit-artifacts` at the end, [`specs-repo-git.md`](../../references/specs-repo-git.md)), the branch check after the preflight, and the handoff's own consent choice. **Nothing in the indexing pass is fatal**: a frame that will not open, a set that could not be described, an index that could not be written — each is recorded and the run moves to the next set. Phase 0 is the exception and is where every hard stop lives (`FRAMES_NEEDS_ADDRESS`, `FRAMES_EXTRA_ARGUMENT`, `FRAMES_NO_FOLDER`, `FRAMES_NO_CARRIER`, `FRAMES_NOT_A_SPEC_FOLDER`, an ambiguous key, an unset `SPECS_PATH`, and the branch check's stop) — the run refuses before it has resolved anything to index.
+No reviewer, and nothing to review — an index states what a directory holds. The checkpoints are the specs-repo git guards (`specs-preflight` at the start, `commit-artifacts` at the end), the branch check after the preflight, and the handoff's own consent choice. **Nothing in the indexing pass is fatal**: a frame that will not open, a set that could not be described, an index that could not be written — each is recorded and the run moves to the next set. Phase 0 is the exception and is where every hard stop lives (`FRAMES_NEEDS_ADDRESS`, `FRAMES_EXTRA_ARGUMENT`, `FRAMES_NO_FOLDER`, `FRAMES_NO_CARRIER`, `FRAMES_NOT_A_SPEC_FOLDER`, an ambiguous key, an unset `SPECS_PATH`, and the branch check's stop) — the run refuses before it has resolved anything to index.
 
 ## What it is not
 
@@ -89,4 +89,3 @@ Resolves `PRD-ACME-77-<slug>/`, finds `design/checkout-flow/` holding eleven PNG
 - `/idea` (in the `product-workflows` plugin) — the other writer: it indexes the images it vendors into `design/idea-sources/`, and leaves a placeholder row for any frame it cannot speak for.
 - `/prd-ground` (in the `product-workflows` plugin) — the one command that *reads* a frame set as evidence, through `design-grounder`.
 - [Agents](../reference/agents.md) — `frame-describer`, the bounded read this command dispatches once per set.
-- [`addressing.md`](../../references/addressing.md) — the resolver that turns one address into a folder of any kind.

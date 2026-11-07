@@ -50,4 +50,4 @@ The command applies the fix to `design.md` directly, confirms the inferred `comm
 - [`/feedback`](feedback.md) — logs a standalone note with no corrective triple and no fix.
 - [`/prompt-brainstorm`](prompt-brainstorm.md) and [`/prompt-grill-me`](prompt-grill-me.md) — the same corrective triple, explored with a brainstorming skill or interrogated inline instead of applied directly.
 - [Workflow overview](../workflow.md#cross-cutting-commands) — where these four commands sit relative to the role pipeline.
-- [`specs-repo-git.md`](../../references/specs-repo-git.md) — the `specs-preflight` and `commit-artifacts` entry points this command runs.
+- [References](../reference/references.md) — the shared specs-repository git reference, which holds the `specs-preflight` and `commit-artifacts` entry points this command runs.

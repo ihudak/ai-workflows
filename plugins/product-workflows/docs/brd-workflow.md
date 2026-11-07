@@ -248,8 +248,8 @@ never reaches this phase at all: `/brd-reconcile` refuses a resolved root at its
 `BRD_RECONCILE_ROOT_LEVEL`, naming `/brd-split <BRD-KEY> "<how to cut it>"` as the way to carve a
 slice first — so the level question is already settled by the time this next-step phase runs.
 
-That phase then resolves an `advance_ready`: a reopened decision, a `[C]` still held for the
-customer, a finding the review left to re-derive, or a dependent it could only record all drop the three advance options:
+That phase then decides whether the slice can advance: a reopened decision, a `[C]` still held for the
+customer, a finding the review left to re-derive, or a dependent it could only record each drops the three advance options:
 a `reopened` record may not be consumed downstream and all three consume the register, and a
 dependent recorded-not-written still reads a position the customer has since settled. On an advancing slice run, `/create-prd` on the BRD route carries one further condition —
 the reconciled ledger leaves no row `unallocated` and at least one `covered-here` (the two refusals
@@ -423,9 +423,9 @@ root outright.
 
 `--sort-existing <dir>` on `/brd-intake` additionally writes `prd-seed.md`, `ard-seed.md`, and
 `spec-seed.md` at the BRD folder's own level — a one-time migration path for a package written by
-hand before this route existed, not an output of the normal flow. **It is the only writer of any of
-the three**, which is worth stating plainly because the BRD route on `/create-prd`, `/create-ard` and
-`/specify` each reads one: a reconciled BRD normally holds no seed at all, so each of those runs
+hand outside this route, not an output of the normal flow. **It is the only writer of any of
+the three**, which is worth stating plainly because `/create-prd`, `/create-ard` and
+`/specify` each read one on the BRD route: a reconciled BRD normally holds no seed at all, so each of those runs
 reports its seed absent as the **ordinary** case rather than as a gap. What actually carries content
 to all three altitudes is `decisions.md` — every one of them reads the same register and filters it
 by each record's `altitude` — together with the grounding findings, and, for `/specify`, the

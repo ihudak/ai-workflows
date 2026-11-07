@@ -69,7 +69,7 @@ The dollar figure attached to a phase depends on which price table priced it —
 
 ## Reading a cost file
 
-Here is one persisted entry, in the shape the shared reference this page is derived from shows:
+Here is one persisted entry:
 
 ````markdown
 ## 2026-07-09T14:22:33Z — /implement — implementation
