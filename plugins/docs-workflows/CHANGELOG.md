@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.3] — 2026-11-07
+
+User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- The `/document`, `/release-notes` and `/docs-brand` pages link the Workflow overview from their See also, and `/docs-brand`'s also links the documentation route, whose first step, `/docs-init`, runs it.
+- The getting-started and workflow pages link each command the first time they name it, and every command page links the sibling commands it names: `/docs-audit` is now reached from the pages that name it.
+- The README links this plugin's own getting-started page for install and prerequisites, and the getting-started page links the repository README's prerequisites by the repository's URL: a relative link out of the plugin breaks in the installed copy.
+
 ## [1.35.2] — 2026-11-07
 
 User pages and the executed prose named below: a second pass on batch B30, laid on the first. Needs nothing from the other plugins' releases.

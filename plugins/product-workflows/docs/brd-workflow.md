@@ -8,7 +8,7 @@ could build against without first finding out which of its claims are actually s
 route exists to turn that document into a requirement inventory every row of which has been
 checked against real code and design, given a recorded fate, decided, and put back in front of the
 customer who wrote it — before a PRD is ever written from it. It is PM-owned end to end: all six of its commands run as PM.
-`/prd-ground` is the step that opens the mounted repositories and design assets to check a claim,
+[`/prd-ground`](commands/prd-ground.md) is the step that opens the mounted repositories and design assets to check a claim,
 so it needs the code cloned, which a PM often does not have; where the PM cannot clone the code repositories, a PA or PE runs it instead — both have them cloned for their own work, and teams have fewer PAs than PEs, so either may. The
 entry is `pm` either way.
 
@@ -62,16 +62,16 @@ flowchart TD
 ```
 
 **The right-hand box is not part of the route.** Its three nodes are the PRD pipeline's own
-commands, drawn here because `/brd-reconcile` is where this route hands over to them — and `/brd-interview`, on a slice that needs no customer review — and a reader
+commands, drawn here because [`/brd-reconcile`](commands/brd-reconcile.md) is where this route hands over to them — and [`/brd-interview`](commands/brd-interview.md), on a slice that needs no customer review — and a reader
 following the diagram needs somewhere to go next. The route itself is still the six commands above —
 five `/brd-*` commands and `/prd-ground`: nothing in that box extracts a requirement or allocates a ledger row —
 each of the three reads what this route already wrote, at its own altitude, beside the documentation
-under `$DOCS_PATH` and, for `/create-ard` and `/specify`, the code under `$REPOS_PATH`, and stamps
+under `$DOCS_PATH` and, for [`/create-ard`](commands/create-ard.md) and `/specify`, the code under `$REPOS_PATH`, and stamps
 `consumed_by` on what it took. The one record any of them adds to the route's own is
 `/create-prd`'s: an `[AS#n]` in `decisions.md` for a gap only the customer can settle, which
-`/brd-package` then carries to the customer.
+[`/brd-package`](commands/brd-package.md) then carries to the customer.
 
-**The proposals box is not part of the route either.** `/prd-proposal` prices one slice — any slice
+**The proposals box is not part of the route either.** [`/prd-proposal`](commands/prd-proposal.md) prices one slice — any slice
 the split carved, at whatever readiness it has reached — and `/brd-proposal` rolls the included
 slices' proposals up into one for the BRD. Both are optional, and neither gates a step of the
 route.
@@ -86,7 +86,7 @@ why `/brd-reconcile` runs only once somebody says *this file is the answer* — 
 or by confirming the one the customer's merged pull request committed beside the bundle — and not
 before.
 
-**`/brd-split` runs at least twice, and grounding sits between the first two runs.** The first run stands on the
+**[`/brd-split`](commands/brd-split.md) runs at least twice, and grounding sits between the first two runs.** The first run stands on the
 root: a root is never ground, so it carves candidate slices from a mandatory slicing instruction
 instead, and forces every row of the root's own ledger to a recorded fate — assigning it to a named
 slice, deferring it, rejecting it against a logged defect, or marking it superseded. Each confirmed
@@ -95,7 +95,7 @@ slice re-enters at `/prd-ground`, and the second `/brd-split` run — on that sa
 offering a different four: `covered-here` in place of `covered-by`, since nothing can exist below a
 slice but its Epics. That second run is what hands on to `/brd-interview`; the root's own key takes
 no further step **forward**. It still takes other runs — `/brd-split` again (to carve a further
-slice, to resolve a child left standing empty, or for the sibling re-cut below), `/brd-intake` again
+slice, to resolve a child left standing empty, or for the sibling re-cut below), [`/brd-intake`](commands/brd-intake.md) again
 on a revised document, `/frames` over its `design/`, and
 [`/brd-proposal`](commands/brd-proposal.md), which rolls its slices' proposals up and gates nothing downstream —
 while every one of `/prd-ground`, `/brd-interview`, `/brd-package` and `/brd-reconcile` refuses a

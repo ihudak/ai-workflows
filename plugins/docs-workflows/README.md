@@ -2,7 +2,7 @@
 
 Seven slash commands for a product's documentation and release notes: `/docs-init` scaffolds a documentation repository for a project that has none — one that builds, serves, lints and carries a profile — `/docs-audit` enumerates what documentation that product is missing, into a coverage grid and a prioritised backlog, `/document` synthesises product documentation from a resolved PRD's implementation diffs (or makes a one-shot prose edit in direct mode), `/docs-profile` bootstraps and refreshes the machine-readable profile `/document` consumes, `/docs-brand` extracts a logo and a rough colour pair from a product's own code and applies them to the docs site, `/docs-serve` runs a profiled repo's dev server and reports a URL that opens from the host, and `/release-notes` drafts a destination-shaped release-notes entry from the same PRD folder. It depends on the shared `workflows-core` foundation and on `prose-style` for its style-check gate.
 
-> Part of the `shipwright` marketplace — see the [repo-root setup guide](../../README.md) for marketplace install + prerequisites.
+> Part of the `shipwright` marketplace — see [Getting started](docs/getting-started.md) for marketplace install + prerequisites.
 
 ## What it does
 

@@ -2516,7 +2516,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## documentation quality — links, navigation, page-set parity (all plugins)
 
-### DQS-B1 — MINOR — `guideline-reviewers`: README does not link its workflow diagram or getting-started page, and the repo-root table has no Docs link for it
+### DQS-B1 — MINOR — `guideline-reviewers`: README does not link its workflow diagram or getting-started page, and the repo-root table has no Docs link for it — **Fixed in guideline-reviewers 1.2.8 and the repository README (batch B31)**
 - **Also found as:** DQW-B7 (merged here)
 - **Where:** `plugins/guideline-reviewers/README.md:5`, `:7`; `README.md:13`
 - **What is wrong:** The plugin README links the two command pages (`:5`) and "[the documentation index](docs/README.md)" (`:7`), and nothing else. It does not link `docs/workflow.md`, which holds the plugin's only mermaid diagram, or `docs/getting-started.md`. All five sibling `PLUGIN_RELS` READMEs link both. The repo-root table row (`README.md:13`) ends after its description, with no `[Docs](plugins/guideline-reviewers/docs/README.md)`. The rows for dev-, product-, docs-, security-workflows and workflows-core all carry one (`README.md:11,12,14,15,16`).
@@ -2526,7 +2526,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (user observation, BRIEF-DOCS)
 - **Confidence:** high
 
-### DQS-B2 — MINOR — Workflow, BRD-route, roles and getting-started pages draw or name every command but link to none of the command pages
+### DQS-B2 — MINOR — Workflow, BRD-route, roles and getting-started pages draw or name every command but link to none of the command pages — **Fixed in dev-workflows 4.59.1, docs-workflows 1.35.3, product-workflows 3.78.3, security-workflows 0.10.7 and workflows-core 1.78.10 (batch B31)**
 - **Where:**
   - `plugins/dev-workflows/docs/workflow.md` (4 links, 0 to `commands/`; it names `/design` 11×, `/implement` 11×, `/ready` 8×)
   - `plugins/product-workflows/docs/workflow.md` (3 links, 0 to `commands/`; it names `/specify` 12×, `/brd-reconcile` 15×, `/create-prd` 10×)
@@ -2542,7 +2542,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQS-B3 — MINOR — 18 command pages do not link back to their plugin's workflow page
+### DQS-B3 — MINOR — 18 command pages do not link back to their plugin's workflow page — **Fixed in dev-workflows 4.59.1, docs-workflows 1.35.3 and product-workflows 3.78.3 (batch B31)**
 - **Where:** each page's *See also* list:
   - `dev-workflows/docs/commands/` — all six: `conformance.md:103`, `design.md:90`, `implement.md:110`, `ready.md:80`, `upgrade.md:72`, `vuln.md:70`
   - `docs-workflows/docs/commands/` — `docs-brand.md:61`, `document.md:109`, `release-notes.md:97`
@@ -2554,7 +2554,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQS-B4 — MINOR — Next and previous commands named in prose but not linked; `/harvest-decisions` never mentions `/promote-decisions`; no command page links `/docs-audit`
+### DQS-B4 — MINOR — Next and previous commands named in prose but not linked; `/harvest-decisions` never mentions `/promote-decisions`; no command page links `/docs-audit` — **Fixed in dev-workflows 4.59.1, docs-workflows 1.35.3, product-workflows 3.78.3 and workflows-core 1.78.10 (batch B31)**
 - **Where:**
   - `plugins/product-workflows/docs/commands/harvest-decisions.md`: no occurrence of "promote" in the page (`grep -c promote` → 0), although `promote-decisions.md:7` says it runs "after [`/harvest-decisions`]". The harvest command's own handoff text names `/promote-decisions` (`commands/harvest-decisions.md:46`). `promote-decisions.md` has no inbound link from any command page.
   - `plugins/docs-workflows/docs/commands/docs-audit.md` has no inbound link from any command page. `docs-init.md` names `/docs-audit` 5× (`:3`, `:23`, `:35`, `:62`) and `docs-serve.md` names it 3×, all unlinked. The README diagram draws `SERVE --> AUDIT` (`plugins/docs-workflows/README.md:30`).
@@ -2567,7 +2567,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQS-B5 — MINOR — 18 relative links leave the plugin directory and break in the installed cache
+### DQS-B5 — MINOR — 18 relative links leave the plugin directory and break in the installed cache — **Fixed in dev-workflows 4.59.1, docs-workflows 1.35.3, product-workflows 3.78.3, security-workflows 0.10.7, workflows-core 1.78.10 and guideline-reviewers 1.2.8 (batch B31)**
 - **Where:**
   - Seven plugin READMEs → `../../README.md`: `dev-workflows/README.md:5`, `docs-workflows/README.md:5`, `product-workflows/README.md:5`, `security-workflows/README.md:5`, `workflows-core/README.md:5`, `obsidian-llm-wiki/README.md:80`, `prose-style/README.md:407`.
   - Nine getting-started links → `../../../README.md`: `dev-workflows/docs/getting-started.md:21` (`#prerequisites`) and `:25`, `docs-workflows/...:23`, `guideline-reviewers/...:19`, `product-workflows/...:21` and `:23`, `security-workflows/...:34` (`#prerequisites`) and `:62` (`#4-raise-claude-codes-skill-listing-budget`), `workflows-core/...:25`.
@@ -2628,7 +2628,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DQS-B10 — NIT — workflows-core's README does not link the family map, the one diagram that draws the whole family
+### DQS-B10 — NIT — workflows-core's README does not link the family map, the one diagram that draws the whole family — **Fixed in workflows-core 1.78.10 (batch B31)**
 - **Where:** `plugins/workflows-core/README.md` (the family map's inbound links are `README.md:23` at the repo root, `plugins/workflows-core/docs/README.md` and `docs/workflow.md`)
 - **What is wrong:** `docs/family-map.md` is the family-wide diagram that `CLAUDE.md` and the repo-root README point to, but the README of the plugin that ships it does not link it. Reaching it from that README takes two clicks. In the installed cache it is reachable only through the index, because the root README is absent there.
 - **Failure scenario:** A user who opens workflows-core's README to see how the plugins fit together does not find the map.
@@ -3000,7 +3000,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B15 — MINOR — Nine of the 16 command pages never link to either workflow page
+### DQP-B15 — MINOR — Nine of the 16 command pages never link to either workflow page — **Fixed in product-workflows 3.78.3 (batch B31)**
 - **Where:** `docs/commands/brd-intake.md`, `brd-interview.md`, `brd-package.md`, `brd-reconcile.md`, `brd-split.md`, `prd-ground.md`, `epics.md`, `idea.md`, `update-prd.md` (`grep -c "workflow.md"` = 0 on each)
 - **What is wrong:** None of the six BRD-route pages links [BRD workflow](../brd-workflow.md), the page that shows how they chain together. `idea.md`, `epics.md` and `update-prd.md` do not link [Workflow overview](../workflow.md). The other seven pages do.
 - **Failure scenario:** A PM who lands on `/brd-interview` from a search cannot reach the route diagram or the parameter table from that page.
@@ -3125,7 +3125,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DQW-B13 — MINOR — Three docs-workflows command pages never link back to the Workflow overview
+### DQW-B13 — MINOR — Three docs-workflows command pages never link back to the Workflow overview — **Fixed in docs-workflows 1.35.3 (batch B31)**
 - **Where:** `plugins/docs-workflows/docs/commands/document.md`, `release-notes.md`, `docs-brand.md` (whole files)
 - **What is wrong:** `docs-init.md`, `docs-audit.md`, `docs-profile.md` and `docs-serve.md` each link `../workflow.md`. These three do not, though `/document` and `/release-notes` are the spine of that diagram (`workflow.md:15-18`).
 - **Failure scenario:** A user who lands on `/document` from a search or the README table has no path to the diagram that shows where `/release-notes` and the PRD inputs fit.

@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.59.1] — 2026-11-07
+
+User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- Each of the six command pages links the Workflow overview from its See also, so a reader who lands on one can reach the diagram that shows where it sits.
+- The getting-started, roles-and-phases and workflow pages link each of this plugin's commands the first time they name it, 17 links across the three, and the `/design` and `/ready` pages link the sibling commands they name.
+- The README links this plugin's own getting-started page for install and prerequisites instead of the repository root, which an installed plugin does not have beside it. The getting-started page links the repository README's prerequisites and the marketplace README by the repository's URL, and the Hooks and Model routing pages name `workflows-core`'s Hooks and Environment pages in words: a relative link out of the plugin breaks in the installed copy.
+
 ## [4.59.0] — 2026-11-07
 
 D47: `/implement` type-checks the tests `test-writer` wrote before the Opus review. Needs nothing from the other plugins' releases.

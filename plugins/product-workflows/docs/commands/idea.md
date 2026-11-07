@@ -178,6 +178,7 @@ Here the run walks every link that note makes, has each linked image transcribed
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off at the `prd-creation` seam.
 - [`/create-prd`](create-prd.md) — the next phase; finds `idea.md` in the folder `/idea` wrote it into, once the pull request `/idea`'s handoff opened is merged. While that pull request is open `/create-prd <KEY>` stops on it. Where nothing was handed off — a declined handoff, one whose gate failed or whose branch switch git refused, or a draft — `/create-prd <KEY>` names a new brief without reading it in contract, and stops on a refined brief whose merged copy it no longer matches until the edit is committed; `/create-prd <KEY> @<path>` reads it where it sits either way: the form `/idea` offers in each case.
 - [Model routing](../reference/model-routing.md) — the classification and model-fallback rules `/idea` applies in Phase 0.

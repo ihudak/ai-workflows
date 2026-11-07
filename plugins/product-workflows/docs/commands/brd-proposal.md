@@ -111,6 +111,7 @@ Same run, now including four slices. The prior umbrella is archived under `revis
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns, and what the `proposal` phase means on a cost report.
 - [`/prd-proposal`](prd-proposal.md) — the sibling that prices one slice, and whose `proposal.md` this run gates on and reads. Run it once per slice before running this.
 - [Effort proposals](../reference/proposal-format.md) — the subsystem from the reader's side: hours never money, how to read a tier and a range, and what the umbrella adds over a slice's own proposal.

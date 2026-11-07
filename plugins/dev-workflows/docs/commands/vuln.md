@@ -73,6 +73,7 @@ Both CVEs are researched in parallel via `vuln-research`; each `READY` result is
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - [`/upgrade`](upgrade.md) — the plugin's other maintenance command outside the PRD pipeline, sharing the same no-cost-attribution fact, the same resume-phase vocabulary, and the same review/triage/fixer/test gate shape for version bumps instead of CVEs.
 - [`/implement`](implement.md) — the pipeline command `/vuln` borrows its review machinery from: `code-review`, `review-fixer`, and the shared finding-triage step between them.
 - [Roles and phases](../roles-and-phases.md#cost-attribution-phases) — the closing note distinguishing the cost-attribution `phase:` vocabulary from the resume-protocol `phase:` vocabulary `/vuln` passes.

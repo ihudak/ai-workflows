@@ -117,6 +117,7 @@ The run resolves `ACME-77-01` as the focus Epic, gates its in-scope `specificati
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - [`/conformance`](conformance.md) — the next step after an Epic: it checks the Epic against what its documents require, before its pull request merges, on its branch; once every Epic has merged, the PE runs it on the PRD.
 - [Roles and phases](../roles-and-phases.md) — what the `dev` role owns, including how an unmerged in-scope spec/design stops the run while an absent one does not.
 - [`/design`](design.md) — the upstream command whose merged `design.md` `/implement` gates on when it's in scope (a resolved `specification.md` with no `design.md` yet is gated the same way, independently).

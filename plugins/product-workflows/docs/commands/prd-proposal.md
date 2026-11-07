@@ -103,6 +103,7 @@ Same run, graded **tier 1 · Indicative**, ceiling **Low**. Every package is gra
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns, and what the `proposal` phase means on a cost report.
 - [Effort proposals](../reference/proposal-format.md) — the subsystem from the reader's side: hours never money, how to read a tier and a range, what a driver citation buys you, and what a revision owes the customer.
 - The proposal format, listed on the plugin's [References](../reference/references.md) page — the canonical shape of both artifacts: the section sets, the `[WP#n]`/`[ED#n]` namespaces, the readiness tiers, the confidence grades and bands, and the closed set of evidence classes a cost driver may cite.

@@ -83,6 +83,7 @@ The run resolves the feature folder, reads its `prd.md` as the base, grills the 
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record this command diffs from and re-stamps.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off at the `prd-update` seam.
 - [`/create-prd`](create-prd.md) — the greenfield sibling that authors a PRD from scratch. `/create-prd` stops and names this command when it finds a PRD already authored; going the other way, a resolved folder holding no `prd.md` stops this run with `UPDATE_PRD_NO_PRD`, and that stop names `/create-prd` only where that command can itself run — it refuses three BRD-route shapes, not one (and an Epic folder, which this run has already refused), so on a BRD-route slice the stop resolves to [`/brd-split`](brd-split.md) against the slice or its parent, or to no command at all, where a data refusal would fire or the slice's coverage ledger is missing or unreadable.

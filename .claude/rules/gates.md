@@ -8,7 +8,7 @@ paths:
 
 Loaded when a file under `scripts/` or `.github/` is read. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
-Split out to keep this file under 20,000 characters, into files beside it that share its `paths:`, so load with it, and are bound by its opening rule: `gates-id-grammar.md` (the ID-grammar gate), `gates-validate-catalog.md` (`scripts/validate-catalog.py`), `gates-mermaid.md` (the mermaid gate), `gates-reference-parts.md` (`scripts/reference-parts.py`), `gates-branch-check.md` (its `check-branch-check`) and `gates-check-docs-late.md` (`check-docs.sh`'s checks 22 to 25).
+Split out to keep this file under 20,000 characters, into files beside it that share its `paths:`, so load with it, and are bound by its opening rule: `gates-id-grammar.md` (the ID-grammar gate), `gates-validate-catalog.md` (`scripts/validate-catalog.py`), `gates-mermaid.md` (the mermaid gate), `gates-reference-parts.md` (`scripts/reference-parts.py`), `gates-branch-check.md` (its `check-branch-check`) and `gates-check-docs-late.md` (`check-docs.sh`'s checks 22 to 28).
 
 **A gate widening or a scope change is measured before it is taken, and one that would fire only on correct content is refused.** Each refused widening below records that result; do not re-propose one without new evidence.
 
@@ -124,6 +124,6 @@ Every `choices:` option in the `/brd-*` and `/prd-*` families — the families c
 
 **Check 21 gates install-time code**: every install command in `ITC_PLUGIN_REL`'s three install references, two agents and two commands — each code span and each command of a chained line on its own, prose included — carries its ecosystem's flag — npm, pnpm, yarn, pip, pipenv, uv and Composer, each named with its flag in check 21's header comment in `scripts/check-docs.sh` — and never `:all:` for no-binary; none at all fails as vacuous.
 
-### Checks 22 to 25
+### Checks 22 to 28
 
 In `gates-check-docs-late.md`.
