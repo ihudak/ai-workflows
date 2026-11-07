@@ -41,8 +41,8 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   still holding a question without a terminal disposition; with every round closed it generates the
   next round's questions from what changed after the last one was generated — a finding added or
   superseded, or its verdict or verifier outcome changed, whenever that happened, read against the
-  `generated against:` line the last round's record carries (a record without that line
-  is compared at the earliest commit on any ref, any branch included, that holds it exactly
+  `generated against:` line the last round's record carries (a record written before that line
+  existed is compared at the earliest commit on any ref, any branch included, that holds it exactly
   as it stands on disk, which misses a grounding change committed before that commit or in it — one
   made while that round was still open, or one a squash commit or a late commit of the record
   carries, which the report flags where that commit itself changed a grounding file — and, where no
@@ -57,7 +57,7 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   as a `[V]` already disposed *decided* and puts to nobody (*What it produces*, below) — and opens that round only where some question source puts a question, so a
   `--rebaseline` pass that confirms every decision it bears on, or leaves it waiting on its
   prerequisite, is reported as re-grounded with nothing moved and opens nothing — **or, on a BRD with no round record at all, generates round 1's questions and branches on
-  what it finds.** At least one question opens the round; none at all writes
+  what it finds.** At least one question opens the round as ever; none at all writes
   `interview/round-1.md` recording the walk and what it found nothing of, and the run completes
   there. That record is not an empty round: it names each question source and what this BRD held
   under it, so a reader meets an account of a completed walk rather than a silence. **It is also why
@@ -87,12 +87,12 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   [`/brd-reconcile`](brd-reconcile.md) freezes from the customer's answer, save the customer's own
   quoted words. Where a defect's owner cannot be told yet — a row it joins still unallocated, or a
   sibling's ledger or question set unreadable — the run withholds the defect and says why. **Round
-  1's record decides which round a defect goes into.** Where round 1's record has no requirement-defect
-  line, its defects belong in round 1: an
+  1's record decides which round a defect goes into.** On a slice interviewed before this source
+  existed, round 1's record has no requirement-defect line, so its defects belong in round 1: an
   open round 1 takes them at once, and a closed one is re-opened with `--round 1` and the cause
   *requirement defects became a question source* — a bare run names those defects and offers that
   re-open rather than asking them itself, and a new round it opens for a changed finding or decision
-  proceeds without them. Where round 1's record carries that line, a defect that becomes its to ask later goes
+  proceeds without them. On a slice interviewed since, a defect that becomes its to ask later goes
   into a new round — the one this run opens on the defect's own account, where every round was
   already closed, so it is asked in the round it made askable. Where this run instead resumed a
   round already open, it waits for the next one, and the run names it as waiting rather than letting
@@ -124,7 +124,8 @@ There is **no `--no-docs` flag**, because this command does no documentation gro
 | `[V]` | A delivery-side design decision | The **operator**, with recorded argumentation. Never the customer |
 | `[C]` | A genuine business decision | The **customer**, and only via a review package |
 
-The two "never"s are rules, not tendencies, and the reasons are these. A `[G]` put to a person
+The two "never"s are rules, not tendencies, and the reasons they exist are in
+[`interview-tagging.md`](../../references/interview-tagging.md). A `[G]` put to a person
 returns their belief about the system rather than the system, and that belief then becomes a
 requirement nobody re-checks; a `[V]` dressed as a `[C]` extracts authority the customer never meant
 to give and cannot defend later.
@@ -214,7 +215,7 @@ subagent is dispatched — every finding this command reads was already independ
   them. A resolved root stops with
   `BRD_INTERVIEW_ROOT_LEVEL`, naming `/brd-split <BRD-KEY> "<how to cut it>"` to carve a slice and
   then `/brd-interview <SLICE-KEY>` on it; where the root already carries decisions or interview
-  records, the stop names those files and leaves them in
+  records written under the earlier two-level model, the stop names those files and leaves them in
   place, unread.
 - **An existing BRD folder.** No folder for `<BRD-KEY>` — searched at every level
   `resolve-address` bounds (three below `specifications/`) — stops the run with `BRD_INTERVIEW_NOT_FOUND`, which names both ways a folder comes
@@ -248,7 +249,7 @@ subagent is dispatched — every finding this command reads was already independ
   that state, the table telling the two causes apart by the slice's `claims:` and the parent's
   ledger; and where the parent's ledger cannot be read, no `/brd-split` form is named. For a folder naming no
   parent, the fix is a fresh intake under a new key — and, where the folder holds an `idea.md` and
-  no `prd.md` (an idea in a legacy, unprefixed folder), also [`/create-prd`](create-prd.md) on
+  no `prd.md` (an idea handed off before the kind prefixes), also [`/create-prd`](create-prd.md) on
   the same key, which accepts the folder, then — once its handoff is merged, since both gate
   `prd.md` on the default branch — [`/create-ard`](create-ard.md) or [`/specify`](specify.md). Such a folder carries neither a coverage ledger nor an inventory,
   so it is no BRD container, and `/brd-intake` refuses to re-run over it (`BRD_INTAKE_NOT_A_BRD`).
@@ -258,8 +259,9 @@ subagent is dispatched — every finding this command reads was already independ
   `[CG#n]` at all stops first, with `BRD_INTERVIEW_NO_FINDINGS`: the outcome count is satisfied by an
   empty finding set, and every `[G]` this command answers is answered from the findings and from
   nothing else.
-- **Every finding block is well-formed.** The record's field set is closed to the finding record's own fields plus `outcome` and `notes`; a block carrying any other
-  key stops the run with `BRD_INTERVIEW_MALFORMED_FINDING`. The keys that occur are the verifier's own return fields — `own_verdict` above all, and `control_outcome` beside it. `own_verdict` is a
+- **Every finding block is well-formed.** The record's field set is closed to the finding record's own —
+  `id`, `claim`, `verdict`, `prior_verdict`, `evidence`, `control`, `commit`, `altitude`, `horizon`, `class`, `cites`, `prerequisite` and `consumed_by` — plus `outcome` and `notes`; a block carrying any other
+  key stops the run with `BRD_INTERVIEW_MALFORMED_FINDING`. The keys that occur are the verifier's own return fields — `own_verdict` above all, and `control_outcome` beside it, the verifier's own judgement of whether a finding's `control` fired. `own_verdict` is a
   verifier **return** field, and a block carrying it states two verdicts at once. That matters more
   here than anywhere else on the route: every `[G]` is answered from the findings and from nothing
   else, so such a finding freezes a `[VD#n]` against whichever half the run happened to read, and
@@ -292,12 +294,12 @@ Under the resolved BRD folder — `$SPECS_PATH/specifications/BRD-<BRD-KEY>-<slu
 BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
 
 - `decisions.md` — the decision register: one block per `[VD#n]` delivery-team decision and per
-  `[AS#n]` assumption. A decision carries thirteen fields — `id`, `statement`,
-  `options_considered`, `chosen`, `argumentation`, `evidence`, `defects`, `settles`, `altitude`,
-  `conditional_on`, `status`, `consumed_by` and `round`; an assumption carries every one that applies to it
-  and omits the three that do not — `options_considered`, `chosen` and `settles` — rather than writing them empty, and its
-  `argumentation` and `evidence` mean something different there: why the package proceeds without
-  establishing the assumption, and why no evidence exists. Ids are contiguous within their
+  `[AS#n]` assumption. A decision carries the thirteen fields
+  [`decision-register-format.md`](../../references/decision-register-format.md) defines; an
+  assumption carries every one of them the format admits on an assumption, and omits rather than
+  writes empty the three it marks *not applicable* there — `options_considered`, `chosen` and
+  `settles`; the format accounts for all thirteen, and says of each whether it is
+  as-is, means something different, or does not apply. Ids are contiguous within their
   own prefix, assigned once, never renumbered, and never reused after a terminal status, a removed
   torn write (below) aside. A record
   already on file moves only three ways here: reopened, with a closing `Reopened` paragraph naming
@@ -315,10 +317,10 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   line labelled `- **Re-puts:**`, whatever the tag, and on every other `[V]` the same line reading
   `none`, written by the write that first records the question as `[V]` — its first write, or the
   one recording a re-tag from `[G]` or a rewrite out of *untagged* — so a deferred `[V]` whose
-  `[V]` tag is on file without the line is tied
+  `[V]` tag is on file without the line is one an earlier version wrote, and it is tied
   when its round is resumed: the run asks the operator which reopened or held decision it puts
   again, from those that could be, or none, and writes the answer as the line, so it is asked once;
-  an ordinary `[V]` carries `none` and is never asked about — every re-tag with the finding that caused it,
+  an ordinary `[V]` written since carries `none` and is never asked about — every re-tag with the finding that caused it,
   every split with the parts it became, and each question's state — either a **terminal disposition** (*answered from findings*,
   *decided*, *answered by the customer*, *re-tagged*, *split*) or a **holding state** (*held for the
   customer*, *deferred*, *needs grounding*, *untagged*). A re-tagged question keeps its number, so
@@ -339,7 +341,8 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   makes a round resumable — an interrupted run returns to the first question carrying no terminal
   disposition rather than restarting the round. Each question sits under a
   `### <position>. [<tag>] — <rows>` heading, with each state it reaches on a line of its own
-  labelled `- **State:**` beneath it.
+  labelled `- **State:**` beneath it; [`decision-register-format.md`](../../references/decision-register-format.md)
+  works an example of a whole record, the later writes to it, and the question-set entry it names.
 - `interview/customer-questions.md` — the `[C]` questions held for the customer, each with the
   findings that bear on it, on its own line labelled `- **Findings:**` and reading `none` where none
   does, which [`/brd-package`](brd-package.md) renders into the customer prompt and
@@ -372,7 +375,8 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   `id`, `statement`, `behaviour`, `intent` and `intent_basis` never move, because they record what was
   true of the pinned commit the cited finding names. Shipped to the customer in the review package,
   because a defect disposed `in-scope` is part of the delivery boundary rather than delivery-side
-  bookkeeping.
+  bookkeeping. Format:
+  [`code-defect-log-format.md`](../../references/code-defect-log-format.md).
 
 **Outside the slice folder, one file, and only a resolution in it**: the parent BRD's
 `brd/brd-defect-log.md`, where Phase 10 writes `resolved-by: <SLICE-KEY>/[CG#n]` for an `unsourced`
@@ -386,8 +390,8 @@ each slice's [`/brd-reconcile`](brd-reconcile.md) stops on the log until it is o
 — the parent's defect log apart, whose one write is Phase 10's, after it. Phase 9 writes
 `code-defect-log.md`, then `decisions.md` — the log first, so no decision cites a defect entry that
 is on no file — then `interview/customer-questions.md`, then the round record. A round record
-that lacks either its `code defects:` or its `requirement defects:` line first gets a baseline
-line for each it lacks, naming what was already on file, so nothing this run adds is mistaken for an old item. A
+written before its `code defects:` and `requirement defects:` lines existed first gets a baseline
+line naming what was already on file, so nothing this run adds is mistaken for an old item. A
 re-disposition of a code defect is applied to the log only after the round record names it, and a
 run that stopped in between is completed by the next one's Phase 0. Every phase before it — the `[V]` answers, the held `[C]` entries, a defect line added to a
 held entry, a `--round N` re-open, a question the round-1 test adds — builds its part and holds it
@@ -396,7 +400,8 @@ the BRD folder — the one earlier write being Phase 0's completion of a code-de
 round record already names, which decides nothing.
 The round record is the commit point: an item stamped
 with a round whose record does not exist or does not name it — what a run that stopped between those
-writes leaves behind — is a **torn write**. No reader counts one: not this command's
+writes leaves behind, or what an earlier version of this command left when a run was cancelled
+after holding its `[C]` questions — is a **torn write**. No reader counts one: not this command's
 *asked* test or generation, not [`/brd-package`](brd-package.md), which refuses a folder holding one,
 not [`/brd-reconcile`](brd-reconcile.md), and not the PRD, ARD and specification commands. Phase 0
 reports each one it finds, and Phase 9 removes them before it appends its own — the one deletion
@@ -422,8 +427,8 @@ Behind the handoff phase's consent choice, these are committed, pushed, and a pu
 against the specs repo's default branch under the shared `brd/<BRD-KEY>-<slug>` branch prefix. That
 choice is preceded by a read-only probe for an `origin` remote, and where the specs repo has none
 the run says so in a line above the choice: the first option still branches and commits locally,
-but the push and the pull request cannot run. On a run that found a detached
-HEAD in the specs repository or a misplaced `$SPECS_PATH`, the line above
+but the push and the pull request cannot run. On a run carrying `specs_git: blocked` (a detached
+HEAD in the specs repository) or `specs_git: misrooted` (a misplaced `$SPECS_PATH`), the line above
 the choice says instead that the first option will be refused, and nothing is committed whichever
 option is picked.
 
@@ -449,8 +454,8 @@ option is picked.
   horizon that finding carried — or the decision is reopened, naming the successors as the cause,
   and its question put again in the round this run opens. The test is the same for a
   `[VD#n]` and a `[CD#n]`, a finding the re-grounding did not supersede stands as cited, and a
-  decision that confirms raises nothing. A superseded finding that
-  carries no `prior_verdict` cannot confirm the premise, so a decision resting on one is reopened. A `[V]` is
+  decision that confirms raises nothing. A finding superseded before
+  `prior_verdict` existed carries none, so a decision resting on one is reopened. A `[V]` is
   re-decided in place here, and a `[C]` by `/brd-reconcile` from the customer's answer in the next
   package, each keeping its id — unless another run has meanwhile left the record `withdrawn` or
   `superseded`, when it does not move: a `[V]` answer is then a new record named beside it under
@@ -501,7 +506,8 @@ option is picked.
   again. Only a round can answer one, so an unanswered flag opens one: a run that finds every round closed
   opens the next round for it, and where the flags alone made it askable that round holds no question
   and closes once their answers are written. This is what [`/brd-package`](brd-package.md)'s flag gate
-  sends you back here for.
+  sends you back here for. The rule for what flags an entry and what answers it is set by
+  `code-defect-log-format.md`.
 - **Phase 8 — the will-change rule.** A decision whose `evidence` list is *entirely*
   `horizon: will-change` findings may not be closed. Three resolutions are offered and exactly three:
   re-base it on a `current` finding, make it explicitly `conditional_on` the prerequisite decision —
@@ -526,7 +532,7 @@ option is picked.
   it had; until then the record waits on its prerequisite, and the run says so — unless a superseded
   finding it rests on is one no successor will come to, when the record is put again at once, naming
   that finding: it cannot be matched to a successor — its source cannot be read, or it is a
-  frame-only finding that names no field — or the `/prd-ground` run that retired it re-ground
+  frame-only finding written before such findings named their field — or the `/prd-ground` run that retired it re-ground
   its frame set and found nothing to succeed it. Its answer is a new
   record, and the held one — where it reads `open` or `decided` — is superseded by it: here for a
   `[V]`, by `/brd-reconcile` for a `[C]`. One a propagation sweep reopened meanwhile is re-decided
@@ -596,7 +602,7 @@ to branch, commit, push, and open a pull request. Its next-step offer names
 every question in every round carrying a terminal disposition or held for the customer, *and* the
 register actually holding something for a customer to decide. A round still holding a deferred,
 needs-grounding or untagged question is offered another interview round or a re-grounding pass
-instead. A BRD whose closed round 1 record carries no requirement-defect line, and which owns
+instead. A BRD whose closed round 1 predates the requirement-defect question source, and which owns
 defects nobody has asked, is not offered the packaging step either: it is offered the `--round 1`
 re-open that asks them, recommended, because a package built first would go out without them. A BRD
 whose questions were all settled from the findings — nothing left for a customer at all — is told
@@ -620,9 +626,20 @@ Re-opening a closed round later, with its cause recorded:
 
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
-- [References](../reference/references.md) — the plugin's own formats this command applies: interview tagging (the authority for the three tags, who may answer each, re-tagging and its recorded cause, the split that fixes an untaggable question, and how a round opens and closes), the decision register format (the `[VD#n]` / `[CD#n]` / `[AS#n]` record, the five statuses, the mandatory `argumentation`, `conditional_on`, and the will-change rule this command enforces), the code-defect log format (what flags an entry and what answers it) and the coverage ledger format (the dispositions the allocation gate reads, and the ledger line the final report ends with).
-- The shared `document-lineage`, `grounding-format` and `addressing` references, listed on the companion `workflows-core` plugin's References page — the lineage record the register carries and the upstream check run on the grounding files; the finding record, the six verdicts, the two horizons and the verification outcomes the Phase 0 gate depends on; and the `<BRD-KEY>` grammar and folder resolution this command uses.
-
+- [`interview-tagging.md`](../../references/interview-tagging.md) — the authority for the three tags,
+  who may answer each, re-tagging and its recorded cause, the split that fixes an untaggable
+  question, and how a round opens and closes.
+- The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record the register carries, and the upstream
+  check run on the grounding files.
+- [`decision-register-format.md`](../../references/decision-register-format.md) — the `[VD#n]` /
+  `[CD#n]` / `[AS#n]` record, the five statuses, the mandatory `argumentation`, `conditional_on`, and
+  the will-change rule this command enforces.
+- The `grounding-format` reference (shipped in `workflows-core`, listed on its References page) — the finding record, the six
+  verdicts, the two horizons, and the verification outcomes the Phase 0 gate depends on.
+- The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<BRD-KEY>` grammar and folder
+  resolution this command uses by name (`read-key`, `resolve-address`).
+- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the dispositions the
+  allocation gate reads, and the ledger line the final report ends with.
 - [Agents](../reference/agents.md) — `impl-maintenance`'s full contract.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),
   and [Resume and checkpoints](../reference/resume-and-checkpoints.md) — the terminal bookkeeping

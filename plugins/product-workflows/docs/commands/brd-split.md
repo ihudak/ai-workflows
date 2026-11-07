@@ -54,8 +54,8 @@ already made mandatory for carving a root.
   to group, whether the run is a no-op or is there to resolve a standing empty child or reconcile a child out of step. **That is the
   one run on which the argument is otherwise free, and it is given a meaning there rather than a
   flag being added for it** — on a fully allocated root it selects the sibling re-cut (below). On a slice it stays optional and seeds only the
-  walk's per-row recommendation; omitted there, the walk runs as it does for any run with no
-  instruction. It is prose and is never validated against anything — what it means is settled
+  walk's per-row recommendation; omitted there, the walk offers each row with no instruction-seeded
+  recommendation. It is prose and is never validated against anything — what it means is settled
   against this BRD's own rows in Phase 1.5. The three run flags below are stripped only where they
   are written before the key, or form a trailing run after the instruction, at the very end of the
   argument list; a flag written right after the key, with no such trailing run reaching back to it,
@@ -90,8 +90,8 @@ slice is ground, which is why grounding runs next. It is the slice's own walk �
 that resolves a blocked row's disposition, with the finding already in hand.
 
 **Nothing is invented for a row it could not place.** That row is left unclustered and walked with no
-recommendation in Phase 4 — the same fate a row nothing clusters with has, and the same
-picker a run with no instruction shows. `slices.md` records the instruction verbatim
+recommendation in Phase 4 — the same fate a row nothing clusters with already had, and the same
+picker a run with no instruction has always shown. `slices.md` records the instruction verbatim
 alongside how it was read.
 
 **On a `full` run whose ledger is already fully allocated, and which finds at least one row it can move, it
@@ -183,8 +183,10 @@ A slice's walk offers no `covered-by`, and the reason is about **who writes** it
 a slice may carry one. On a slice the disposition names a **sibling under the same parent, or that
 parent** — never a child, since no child can exist below a slice — only its Epics — and it records an
 **orphan row**: a ledger row for a `[BR#n]` this slice no longer claims, whose claim the **parent's**
-own walk withdrew. **Of the three routes to that one state, two can write `covered-by` onto the row, and neither is a second kind of row** (on the third, the slice's own walk had already settled the row, and its disposition stands). On the
-first of the two the claim was never more than provisional: Phase 3 writes a child's `claims:` provisionally, and
+own walk withdrew. **Two routes reach that one state — the first two of the three routes
+by which the parent's walk withdraws a claim a slice had, the only two that
+write `covered-by` — and neither is a second kind of row.** On the
+first the claim was never more than provisional: Phase 3 writes a child's `claims:` provisionally, and
 where Phase 4 settles a claimed requirement elsewhere the claim and the copied inventory row are
 withdrawn while the ledger row stays and takes that walk's terminal disposition. On the second the
 claim was committed by an earlier run and then deferred by the slice itself, and a re-cut moved it to a
@@ -245,9 +247,9 @@ allocated ledger satisfies the front of two of them and only one is the run the 
   step reachable by the one command that writes a slice's claims.
 - **The ordinary run** — anything else: Phases 2–6 as written, in whichever mode Phase 0 resolved.
 
-**The re-cut branch and the reconcile branch exist for the same reason.** Deciding the no-op on the ledger alone would leave a
+**The re-cut branch and the reconcile branch were each added for the same reason.** Deciding the no-op on the ledger alone made a
 standing empty child, and a child a stopped carve left out of step, unreachable in every run after the one that left it so; deciding it before the
-candidate set was built would swallow the re-cut, whose starting state is indistinguishable
+candidate set was built would have swallowed the re-cut, whose starting state is indistinguishable
 from a no-op's until that set exists. The decision is taken in **both** run modes, so a fully allocated
 slice reaches it exactly as a parent does — `allocate-only` simply satisfies the other parts by
 construction, since no child exists or can be created below a slice and the candidate set is built in
@@ -283,7 +285,8 @@ reads was already independently verified by `/prd-ground`'s own agents.
   does not.
 - **Nothing more, at either level.** A key that resolves to a **slice** does not stop the run; it
   sets `allocate-only` (see "Two modes" above) and emits the `BRD_SPLIT_ON_SLICE` notice. What the
-  one-level cap forbids is creating anything below a slice but its Epics: a slice of a slice would inherit
+  one-level cap forbids is creating anything below a slice but its Epics:
+  a slice of a slice would inherit
   `brd/source/` and a requirement defect log from a parent that holds neither, so its inventory
   header would name a path that does not exist.
 - **A specs checkout not behind for the BRD.** Once the folder resolves and the specs-repo
@@ -315,8 +318,8 @@ reads was already independently verified by `/prd-ground`'s own agents.
   `claims:` and the parent's ledger, and tells the two causes apart — a slice claiming nothing gets
   the empty-inventory remedy.
 - **On a slice: there is grounding to verify.** Two presence tests run before the count below,
-  because a count is vacuously satisfied by an empty set — a BRD with two indexed frame sets and no
-  design grounding at all would pass it, and its
+  because a count is vacuously satisfied by an empty set and this gate once shipped as the count
+  alone — a BRD with two indexed frame sets and no design grounding at all passed it, and its
   slices could reach build with their designs never reconciled. A `code-grounding.md` that is on
   main but records no `[CG#n]` stops with `BRD_SPLIT_NO_FINDINGS`. Where the folder's **design/**
   holds any frame set, `design-grounding.md` must itself be on the default branch — the run
@@ -332,9 +335,9 @@ reads was already independently verified by `/prd-ground`'s own agents.
   on file stops the run with `BRD_SPLIT_UNVERIFIED: N findings have no verifier verdict — run
   /product-workflows:prd-ground first.`
 - **On a slice: every finding block is well-formed.** The finding record's field set is closed to
-  the finding record's own fields plus `outcome` and `notes`. A block carrying
+  its own — `id`, `claim`, `verdict`, `prior_verdict`, `evidence`, `control`, `commit`, `altitude`, `horizon`, `class`, `cites`, `prerequisite` and `consumed_by` — plus `outcome` and `notes`. A block carrying
   any other key stops the run with `BRD_SPLIT_MALFORMED_FINDING`, naming each finding and key. The
-  keys that actually occur are the verifier's own return fields — `own_verdict` above all, with `control_outcome` beside it. `own_verdict` is a field the verifier *returns* to its caller, which
+  keys that actually occur are the verifier's own return fields — `own_verdict` above all, with `control_outcome` beside it, the verifier's own judgement of whether a finding's `control` fired. `own_verdict` is a field the verifier *returns* to its caller, which
   leaves a block that carries it stating two verdicts at once while `verdict` is the one every
   consumer reads. The verified-outcome test above cannot catch it, because such a block does carry
   an outcome; the repair is to remove the offending key by hand, not to re-derive the corpus.
@@ -346,7 +349,7 @@ reads was already independently verified by `/prd-ground`'s own agents.
   a coverage ledger nor an inventory, and no `prd.md` the idea-route refusal could act on, also runs
   in this mode and stops the same way; it is no container, and `/brd-intake` refuses to re-run over
   it, so its stop names a fresh intake under a new key instead — and, where the folder holds an
-  `idea.md` and no `prd.md` (an idea in a legacy, unprefixed folder), also
+  `idea.md` and no `prd.md` (an idea handed off before the kind prefixes), also
   [`/create-prd`](create-prd.md) on the same key, which accepts the folder and writes the `prd.md`
   that turns a re-run into the idea-route refusal above.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.
@@ -367,11 +370,12 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   parent's row written first, so a run interrupted between the two leaves the parent pointing one hop
   at the receiver rather than a second hop through the donor. No row returns to `unallocated` on
   either ledger, and no ledger row is ever deleted.
-- `slices.md` — written in a fixed layout: frontmatter
+- `slices.md` — written in the layout
+  [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) fixes: frontmatter
   `kind: slices` and `key:`, then one heading per block type in a fixed order — structural only:
   no script parses it, [`/brd-package`](brd-package.md) reads the slice keys under `## Slices`, and
-  every other reader reads the blocks as prose. A file with no such frontmatter is left in its own layout by every in-place edit
-  and only rewritten in this layout by
+  every other reader reads the blocks as prose. A file written before this layout existed, with no such
+  frontmatter, is left in its own layout by every in-place edit and only rewritten in this layout by
   a full run. One block per confirmed slice (its key, its folder,
   and the rationale that grouped its rows: what in the instruction placed it); one block per row deferred this run; one block for the
   Phase 4 Step 1 bulk offer where it fired, naming what it wrote and what was held back; and, when the run
@@ -559,7 +563,7 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   recorded that it will not build it, and never to `unallocated`, which `/brd-split` never writes onto
   a row already carrying a fate — so a removal never reopens the allocation gate. Every such write lands **before** the deletion, so an
   interrupted run leaves an empty folder still on disk and every reading accurate, rather than a key
-  naming a folder that is gone. This repair matters only after a re-cut, which is what lets a
+  naming a folder that is gone. A re-cut is what lets a
   child that a ledger still names end a run claiming nothing; where the read finds no such
   row nothing extra is written, which is every removal on a tree no re-cut has touched.
 - **No-op on a fully-allocated ledger, with three exceptions.** Re-running `/brd-split` once every row
@@ -608,8 +612,8 @@ resolutions, writes `slices.md`, and offers to branch, commit, push, and open a 
 next-step offer names [`/prd-ground`](prd-ground.md) on **each child that gained a row this run** —
 the slices this run keyed and still claiming a row after the empty-child phase, and any child that
 already stood which the walk newly resolved a row to or Phase 4's Step 3 added a row to — once
-this run's deliverables reach the specs repo's default branch — the `<merge-clause>` placeholder
-resolves that, since a no-op run, a reconcile-path run that wrote nothing, and a declined handoff open no
+this run's deliverables reach the specs repo's default branch — a clause beside the offer says what has to happen first, worded
+for how this run's handoff ended, since a no-op run, a reconcile-path run that wrote nothing, and a declined handoff open no
 pull request to wait on. The offer says which of three cases each child is, because only one of them
 is a re-run: a slice keyed this run and a standing child nobody ever ground are each a first pass,
 while a standing child that is **already** ground needs `/prd-ground` again — the row arrived after
@@ -626,12 +630,12 @@ the recommended option on a root run whose pull request is open (or that had not
 you pick the children — all of them by default, or the ones you will work on soon, since grounding
 a slice nobody touches for weeks spends Opus time on a baseline that goes stale — name the
 repositories once, from the clones it lists, and see each child's cost before you confirm. The
-split then finishes — its cost entry, its session commit, its report — and waits:
+split then finishes as it always does — its cost entry, its session commit, its report — and waits:
 **you merge its pull request**, the plugin never does, and tell it so; it checks the merge, squash
 and rebase included, and asks again if it finds none. Then it runs
 [`/prd-ground`](prd-ground.md) once per chosen child, one after another, each a complete run with
 its own pull request in that child's folder and its own cost entry under that child's key. Each grounding run asks its own questions — the repository it cannot find, its handoff, its next step — and a *Stop here* or *Cancel* there, its handoff's *Cancel* included, ends the children not yet ground, while *Just write the files* at its handoff lets the next child run; the split tells you so before the first run. *Ground
-each child later* names the command and runs nothing; on an outcome that
+each child later* names the command and runs nothing, as this phase always did; on an outcome that
 is neither an open pull request nor nothing to commit with the children's files already on the default branch — a declined handoff, no remote, a failed push, a pull request not opened, or nothing to commit while those files are not on the default branch yet — *Ground now* is not offered,
 and the run says what has to happen first.
 
@@ -639,8 +643,18 @@ and the run says what has to happen first.
 
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
-- [References](../reference/references.md) — the plugin's own formats this command applies: the coverage ledger format (the authority for the ledger row shape, the six dispositions, the allocation gate this command enforces, the PRD-eligibility rule a slice's `covered-here` rows satisfy, and the re-cut: what makes a row movable, which rows change and in what order, who may receive one, and what the mechanism does not relax) and the decision register format (the two causes for reopening a decision, which is why a sibling holding decisions cannot receive a re-pointed row).
-- The shared `addressing` and `grounding-format` references, listed on the companion `workflows-core` plugin's References page — the `<BRD-KEY>` grammar and folder resolution this command uses, including how a slice nests inside its parent and why that nesting — and only the nesting — is capped at one level, and the four verification outcomes this command's Phase 0 gate depends on.
+- The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<BRD-KEY>` grammar and folder
+  resolution this command uses by name (`read-key` for its address, `key-valid` for a slice key it mints, `resolve-address`), including how a slice
+  nests inside its parent and why that nesting — and only the nesting — is capped at one level.
+- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the authority for
+  the ledger row shape, the six dispositions, the allocation gate this command enforces, the
+  PRD-eligibility rule a slice's `covered-here` rows satisfy, and the re-cut: what makes a row
+  movable, which rows change and in what order, who may receive one, and what the mechanism does not
+  relax.
+- [`decision-register-format.md`](../../references/decision-register-format.md) — the two causes for
+  reopening a decision, which is why a sibling holding decisions cannot receive a re-pointed row.
+- The `grounding-format` reference (shipped in `workflows-core`, listed on its References page) — the four verification outcomes,
+  which this command's Phase 0 gate depends on.
 - [Agents](../reference/agents.md) — `impl-maintenance`'s full contract.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),
   and [Resume and checkpoints](../reference/resume-and-checkpoints.md) — the terminal Phase 8

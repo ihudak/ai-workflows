@@ -11,9 +11,9 @@ Plain markdown, in a plain checklist:
 
     - [ ] <one imperative line naming the out-of-scope action> — <why it is out of scope>
 
-No effort symbols, no priority glyphs, no tags, no dates. **That is deliberate, not an
-omission**: a follow-up goes into the specs repo, where effort checkboxes and tags would not
-render and would be noise.
+No effort symbols, no priority glyphs, no tags, no dates. **That is a simplification, not an
+omission**: the list lives in the specs repo, where none of that would render and all of it would be
+noise.
 
 Where a follow-up refers to something the run already wrote, the line links it rather than
 summarising it — a summary in two places is one that drifts in one of them.
@@ -27,8 +27,8 @@ as a section below the checklist, and the line links it.
 **No folder resolved → report-only.** The follow-ups stay in the Final Report and the run says so.
 Nothing is ever written into your working directory, which may be a code repository.
 
-**The run found `$SPECS_PATH` misplaced → report-only too**, whether or not a folder resolved: nothing is written
-under it, and the notice says that is the reason.
+**The run carries `specs_git: misrooted` → report-only too**, whether or not a folder resolved: `$SPECS_PATH` is
+misplaced, so nothing is written under it, and the notice says that is the reason.
 
 That is the whole ladder.
 
@@ -42,9 +42,8 @@ The same command writes one line the duplicate check below would skip: when the 
 
 ## What never becomes a follow-up
 
-Three chores are never emitted, so do not go looking for them: *paste
-the PRD into the tracker*, *paste the release note into the tracker*, and *re-import the increment*. No command
-performs a round-trip, so none of the three is ever emitted.
+No command performs a round-trip with a tracker, so no follow-up ever asks you to *paste the PRD
+into the tracker*, *paste the release note into the tracker* or *re-import the increment*.
 
 ## What qualifies as a follow-up
 

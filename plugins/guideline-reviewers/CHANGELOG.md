@@ -7,8 +7,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.2.6] — 2026-11-07
 
+User pages only, batch B30. Needs nothing from the other plugins' releases.
+
 ### Fixed
-- The getting-started page no longer says what it "used to say" or how a step behaved before it existed, the agents page describes the untrusted-content block in words rather than by another plugin's file path, and the command and workflow pages no longer name a `model_routing` block (batch B30: DQC-B6).
+- **Getting started drops a line of the page's own history** ("This page used to say the first line alone was enough") and keeps the warning: `marketplace update` alone does not update an installed plugin.
 
 ## [1.2.5] — 2026-10-29
 

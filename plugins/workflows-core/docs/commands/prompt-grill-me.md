@@ -4,7 +4,7 @@ Logs a corrective interaction, then grills the fix inline with a bounded (≤5-q
 
 ## Who runs it
 
-`/prompt-grill-me` runs outside the role pipeline and, alone with [`/prompt-brainstorm`](prompt-brainstorm.md) among the four feedback commands, **defers** its cost entry rather than writing one itself. Its Phase 3 is a long interactive grill that cedes the session, so the expensive part of the run happens after this command's last controllable step, and a cost line written here would price only the logging prologue. Phase 2 therefore records the labels the entry will carry, and the next cost-emitting run in the session writes it — attributed to the phase whose output you were correcting, not to whatever you happened to run next — unless `--skip-costs` applies, to this run (the record is marked `"skip": true` and no entry is written for it) or to that next run (which drops the record unreplayed). [Workflow overview](../workflow.md#cross-cutting-commands) groups it under Plugin improvement, alongside [`/feedback`](feedback.md), [`/prompt`](prompt.md), and [`/prompt-brainstorm`](prompt-brainstorm.md). Reach for this one when a correction deserves more scrutiny than a one-shot fix but doesn't need a full brainstorming session — same logging, a short interrogation instead. Logging every correction here, not only the dramatic ones, is what lets the maintainer see the same friction recurring across engineers.
+`/prompt-grill-me` runs outside the role pipeline and, alone with [`/prompt-brainstorm`](prompt-brainstorm.md) among the four feedback commands, **defers** its cost entry rather than writing one itself. Its Phase 3 is a long interactive grill that [cedes the session](../reference/session-cost.md#ceded-runs), so the expensive part of the run happens after this command's last controllable step, and a cost line written here would price only the logging prologue. Phase 2 therefore records the labels the entry will carry, and the next cost-emitting run in the session writes it — attributed to the phase whose output you were correcting, not to whatever you happened to run next — unless `--skip-costs` applies, to this run (the record is marked `"skip": true` and no entry is written for it) or to that next run (which drops the record unreplayed). [Workflow overview](../workflow.md#cross-cutting-commands) groups it under Plugin improvement, alongside [`/feedback`](feedback.md), [`/prompt`](prompt.md), and [`/prompt-brainstorm`](prompt-brainstorm.md). Reach for this one when a correction deserves more scrutiny than a one-shot fix but doesn't need a full brainstorming session — same logging, a short interrogation instead. Logging every correction here, not only the dramatic ones, is what lets the maintainer see the same friction recurring across engineers.
 
 ## Synopsis
 
@@ -14,16 +14,16 @@ Logs a corrective interaction, then grills the fix inline with a bounded (≤5-q
 
 `--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) writes the deferred record (described under What it produces below) with `"skip": true`, so the next cost-emitting run in the session still carves this segment out of its own window and then writes no entry for it; it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/prompt-grill-me` dispatches no `impl-maintenance` and invokes no model routing.
 
-`$ARGUMENTS`, once the run flag above is stripped, is the corrective request, captured **verbatim** as the User prompt block — save that secrets, home-directory paths, non-public hosts, IP addresses and email addresses are replaced before it is written ([Session feedback](../reference/session-feedback.md#what-is-redacted)). Phase 1 infers the target command from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
+What you type after the command, once the run flag above is stripped, is the corrective request, captured **verbatim** as the User prompt block — save that secrets, home-directory paths, non-public hosts, IP addresses and email addresses are replaced before it is written ([Session feedback](../reference/session-feedback.md#what-is-redacted)). Phase 1 infers the target command from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
 
 Write the flag before or after the request, never inside it: a leading run of flag tokens and a trailing run of flag tokens are stripped, so a `--skip-costs` written in the middle of the request text itself is kept as part of the verbatim request, not read as a flag.
 
 ## What it needs
 
-- **`$ARGUMENTS` itself, verbatim** — the correction to interrogate, and the corrective-triple's User prompt block, verbatim save the redactions above.
+- **The request itself, verbatim** — the correction to interrogate, and the corrective-triple's User prompt block, verbatim save the redactions above.
 - **Recent session context**, to infer the target `command`.
 - **`$SPECS_PATH`** — for the specs-preflight/commit-artifacts bookkeeping only.
-- **No plugin dependency.** Unlike [`/prompt-brainstorm`](prompt-brainstorm.md), which hands off to the separate `superpowers` plugin's `brainstorming` skill, this command's grill runs entirely on the grilling technique `workflows-core` bundles — nothing outside `workflows-core` is required.
+- **No plugin dependency.** Unlike [`/prompt-brainstorm`](prompt-brainstorm.md), which hands off to the separate `superpowers` plugin's `brainstorming` skill, this command's grill runs entirely on the bundled `references/grilling-technique.md` — nothing outside `workflows-core` is required.
 
 ## What it produces
 
@@ -48,4 +48,4 @@ The command logs the corrective triple, commits it to the specs repo immediately
 - [`/prompt`](prompt.md) — the same corrective triple, applied directly with no interrogation.
 - [`/prompt-brainstorm`](prompt-brainstorm.md) — the same corrective triple, explored with the separate `superpowers:brainstorming` skill instead of grilled inline.
 - [Workflow overview](../workflow.md#cross-cutting-commands) — where these four commands sit relative to the role pipeline.
-- [References](../reference/references.md) — the shared specs-repository git reference, which holds the `specs-preflight`/`commit-artifacts` entry points and explains why this command's commit runs before its final phase rather than after.
+- [`specs-repo-git.md`](../../references/specs-repo-git.md) — the `specs-preflight`/`commit-artifacts` entry points, and why this command's commit runs before its final phase rather than after.

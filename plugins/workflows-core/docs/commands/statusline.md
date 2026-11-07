@@ -14,12 +14,12 @@ Installs the plugin's multi-line status line into your Claude Code settings, ena
 /workflows-core:statusline
 ```
 
-Takes no arguments. None of the three run flags apply to this command ([`environment.md`](../reference/environment.md)) — `strip-run-flags` still runs first, so an explicit `--skip-costs`, `--skip-feedback` or `--enforce-model` is recognized and reported ignored rather than misread as a positional argument. Before it changes your settings, the command shows the exact change and asks you to *Install* or *Cancel*. By then it has already backed up an existing `statusLine` block and an existing installed script, if you have either, and copied the script into place; `~/.claude/settings.json` is not written until you answer *Install*.
+Takes no arguments. None of the three run flags apply to this command ([`environment.md`](../reference/environment.md)) — `strip-run-flags` still runs first, so an explicit `--skip-costs`, `--skip-feedback` or `--enforce-model` is recognized and reported ignored rather than misread as a positional argument. Before it changes your settings, it shows the exact change and asks you to confirm: *Install* or *Cancel*.
 
 ## What it needs
 
-- **Local access to `~/.claude/settings.json`**, which it reads and writes, first backing up any `statusLine` block it already holds to `settings.json.dev-workflows.bak` beside it, and write access under `~/.claude/dev-workflows/` — nothing else. This command reads no `$SPECS_PATH`, runs no specs-repo preflight, and creates no branch.
-- **`bash` and `jq`** — the installed script reads every field Claude Code hands it with `jq`, and renders nothing and writes no cost snapshot without it on the `PATH` it runs with — the one Claude Code started with, which need not be your shell's. Where the command's own shell finds no `jq` it says so above that confirmation and again in its report, still installs on confirm — the line works from its next render once `jq` is installed — and does the settings merge with `python3` rather than hand-editing the JSON.
+- **Local access to `~/.claude/settings.json`** and write access under `~/.claude/dev-workflows/` — nothing else. This command reads no `$SPECS_PATH`, runs no specs-repo preflight, and creates no branch.
+- **`bash` and `jq`** — the installed script reads every field Claude Code hands it with `jq`, and renders nothing and writes no cost snapshot without it on the `PATH` it runs with — the one Claude Code started with, which need not be your shell's. Where the command's own shell finds no `jq` it says so above the confirmation question and again in its report, still installs on confirm — the line works from its next render once `jq` is installed — and does the settings merge with `python3` rather than hand-editing the JSON.
 
 ## What it produces
 
@@ -27,7 +27,7 @@ Installs the vendored script to a stable per-user path (`~/.claude/dev-workflows
 
 ## Gates
 
-No reviewer, no branch, no commit. The one checkpoint is the explicit confirmation prompt (*Install* or *Cancel*), shown against the exact settings change, before your settings are changed.
+No reviewer, no branch, no commit. The one checkpoint is the explicit confirmation question, shown against the exact settings diff, before your settings are written.
 
 ## Example
 

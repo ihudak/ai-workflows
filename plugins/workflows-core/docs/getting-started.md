@@ -14,7 +14,7 @@ claude plugin marketplace update shipwright
 claude plugin update workflows-core@shipwright
 ```
 
-**Both steps are needed, and the second is the one that changes what runs.** `marketplace update` refreshes the catalogue — what the marketplace advertises — while an already-installed plugin stays at the version you installed. `claude plugin update` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same with a picker. Running only the first line fails quietly — `claude plugins list` keeps reporting the old version while the catalogue advertises the new one.
+**Both steps are needed, and the second is the one that changes what runs.** `marketplace update` refreshes the catalogue — what the marketplace advertises — while an already-installed plugin stays at the version you installed. `claude plugin update` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same with a picker. Running `marketplace update` alone is not enough, and the symptom is quiet — `claude plugins list` keeps reporting the old version while the catalogue advertises the new one.
 
 ## What this plugin is
 
@@ -26,15 +26,15 @@ It does ship seven commands of its own, and one of them is worth running first �
 
 ## What you set on your machine
 
-`workflows-core` reads nine environment variables, almost all of them through the shared references its commands load rather than in a command of their own. `SPECS_PATH` is the exception: `/frames` checks it before it starts and refuses to run without it. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
+`workflows-core` reads nine environment variables, on behalf of every plugin in the family. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
 
 ### `SPECS_PATH`
 
-The **shared, team-visible store for the AI-authored documents** and for every run's bookkeeping — cost entries, session feedback, follow-ups. It has no default: nothing is guessed, and with it unset those entries degrade to report-only rather than being written somewhere else. `/frames` is the exception among this plugin's commands — *"every path this command reads or writes is under it"* — so it stops in Phase 0 rather than degrading. Set it to the root of a dedicated specs repository, the directory that holds `specifications/`, never to `specifications/` itself: a run that resolves an address against the latter stops and names the value to set instead ([Environment](reference/environment.md)).
+The **shared, team-visible store for the AI-authored documents** and for every run's bookkeeping — cost entries, session feedback, follow-ups. It has no default: nothing is guessed, and with it unset those entries degrade to report-only rather than being written somewhere else. `/frames` is the exception among this plugin's commands — *"every path this command reads or writes is under it"* — so it stops before it reads its address rather than degrading. Set it to the root of a dedicated specs repository, the directory that holds `specifications/`, never to `specifications/` itself: a run that resolves an address against the latter stops and names the value to set instead ([Environment](reference/environment.md)).
 
 ### `REPOS_PATH`
 
-Where your code clones live — one directory, or a colon-separated list of them. It has a sensible built-in default, so most readers never need to set it. The command resolves a repository under it and hands `code-scanner` the repository's absolute path — no agent reads `REPOS_PATH` itself.
+Where your code clones live — one directory, or a colon-separated list of them. It has a sensible built-in default, so most readers never need to set it. The command resolves a repository under it and hands `code-scanner` an absolute `repo_path` — no agent reads `REPOS_PATH` itself.
 
 ### `DOCS_PATH`
 
@@ -54,7 +54,7 @@ An optional path to your own price table, overriding the bundled `references/cos
 
 ### `WORKFLOWS_SKIP_COSTS`
 
-Persistent default for the `--skip-costs` run flag every applicable command accepts — the command still advances the session-cost checkpoint, but never writes a cost entry. The three run flags are defined in the shared `run-flags` reference ([References](reference/references.md)).
+Persistent default for the `--skip-costs` run flag every applicable command accepts — the command still advances the session-cost checkpoint, but never writes a cost entry. The `run-flags` reference, listed on the [References](reference/references.md#environment-and-routing) page, defines this flag and the other two.
 
 ### `WORKFLOWS_SKIP_FEEDBACK`
 

@@ -7,12 +7,13 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.78.8] — 2026-11-07
 
-Batch B30 of the 2026-10-26 review. Needs nothing from the other plugins' releases.
+User pages only, batch B30. Needs nothing from the other plugins' releases.
 
 ### Fixed
-- **The docs pages speak to the person using the plugin, not to its maintainers.** Roles and phases opens with the lifecycle phases, each with its role and what it means, where it sent the reader to a section of `cost-emission.md`; the environment page drops the variable names only an inventory check meets, says in one sentence per plugin which reads what, and no longer calls all three run-flag variables boolean; the getting-started, Session cost and `/frames` pages lose their change history; the References page keeps its file count, its arithmetic in an HTML comment, and says what loading by part means for a reader without the build's own rules; and `§` citations, reference ids and internal field names (`run_role`, `review_model`, `run_flags`, `model_routing`, `specs_git`, `repo_path`) are plain words. `check-docs.sh` check 25 now fails a page that cites a section by `§`, names a design-decision id or cites a reference by its `<plugin>:<name>` id. (DQS-B8, DQC-B4, DQC-B5, DQC-B6)
-- The Session cost page defines a **ceded run** and a **replaying run**, and the command pages that mention one link to it (DQW-B10's class).
-- `/statusline`'s page said it writes nothing before you confirm and touches nothing outside `~/.claude/dev-workflows/`: it backs up and installs its script first, and backs up an existing `statusLine` block beside `settings.json`; the page now says your settings are not changed until you answer *Install*.
+- **The user pages speak to users.** No page carries a `§` section citation or a bare `workflows-core:<name>` reference citation any more: each was dropped where its sentence already stated the rule, said in plain words, or turned into a link to the References page. Change history ("this page used to say", the manifest's history on Session cost, `/frames`' "before this" and "this same increment") is gone, keeping each present-tense rule, and so are `$ARGUMENTS` and other harness internals.
+- **Roles and phases opens with the lifecycle phases** — each phase's role, the commands that charge it and what it means — instead of a note on how to count them. The Environment page says in one sentence per plugin which variables each sibling reads.
+- **Session cost defines a *ceded* run once**, under *Ceded runs*, and the pages that use the word link it. The Agents page names the commands that dispatch no agent instead of giving a `grep` recipe.
+- **The `/statusline` page no longer says it confirms "before writing anything".** The command installs its script first and confirms before it changes your settings, which the page now says.
 
 ## [1.78.7] — 2026-11-06
 

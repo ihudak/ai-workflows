@@ -7,13 +7,12 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.35.1] — 2026-11-07
 
-Batch B30 of the 2026-10-26 review. Needs nothing from the other plugins' releases.
+User pages only, batch B30. Needs nothing from the other plugins' releases.
 
 ### Fixed
-- **The docs pages speak to the person using the plugin, not to its maintainers.** The design-decision ids (`D17`, `D20`, `D23`, `D25`) and every `§` citation and `<plugin>:<name>` reference id on the README and `docs/` pages are now the rule in plain words — `/docs-serve` has no review gate because it writes no artefact, where every portal command that writes one passes a review — or a pointer to a References page, the plugin's own or the companion `workflows-core` plugin's. History ("the third increment of the marketplace split", "after the split") is gone; the environment page's `grep` recipe is now its answer; internal field names (`run_phase`, `phase: inferred, role: inferred`, `specs_git`, `run_flags`, `docs_root`) are said in words; the hooks page cites no script line numbers; and the planned commands read "No such command exists yet" rather than "It is not installed". `check-docs.sh` check 25 now fails a page that cites a section by `§`, names a design-decision id or cites a reference by its `<plugin>:<name>` id. (DQS-B7, DQS-B8, DQW-B10)
-- The Session cost page defines a **ceded run**, and each command page's run-flag paragraph links to it (DQW-B10).
-- The `/document` and `/release-notes` pages said `workflows-core`'s Roles and phases page does not describe the `documenting` phase; it now lists every lifecycle phase with its role, and the pages point there. The docs README said the companion plugins each ship a preload hook; `dev-workflows` and `product-workflows` do.
-- **Release notes no longer presume the environment the plugin was extracted from.** `/document`'s page said release-notes pages are "generated from the tracker by the docs team's own automation", and `/release-notes`' page that "the docs automation adds" the `{{#internal-note}}` wrapper. The pages now say the draft is the body only and whatever publishes it adds any identifier or wrapper it needs, and the same reason is reworded in `/document`, `/release-notes` and its closing reminder, `release-notes-writer`, `doc-planner`, `release-note-types` and the frontmatter guidelines; what each of them does is unchanged (DQW-B11).
+- **The user pages speak to users.** No page carries a `§` section citation, a design-decision id such as `(D17, D20)`, or a bare reference citation: `/docs-serve`'s page states its rule itself — it writes nothing, so it has no review gate — and the rest were dropped where their sentence already stated the rule or said in plain words. Repository `grep` recipes give their answers; change history ("the third increment of the marketplace split", "after the split") is gone; `$ARGUMENTS` and raw `choices:` arrays are gone.
+- **No page assumes a tracker or a docs team's automation.** The `/document`, `/release-notes` and Workflow pages say the release-note draft is the body only, and whoever publishes it adds any identifiers or wrapper their own process needs.
+- **Session cost defines a *ceded* run once**, under *Ceded runs*, and the command pages link it. Getting started says what the toolchain preflight checks.
 
 ## [1.35.0] — 2026-11-06
 

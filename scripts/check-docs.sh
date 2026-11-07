@@ -14,8 +14,8 @@
 # edition carries all twenty-five: a check an edition has no use for is switched off by its
 # config block (checks 13, 16 and 19 in the internal editions, check 22 here and in the Copilot
 # edition, check 23 in any edition whose escalation rules name no path-unset rule, check 24 in
-# any edition that ships no hook preloading context for a keyed command, check 25 in the
-# internal editions until their user pages are rewritten), never cut from the body.
+# any edition that ships no hook preloading context for a keyed command), never cut from the
+# body. Check 25 has no switch: every edition ships pages a user reads.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -199,12 +199,6 @@ KEYED_HOOKS="plugins/dev-workflows/hooks/preload-context.sh:/implement plugins/d
                                      # internal editions: their own keyed preload hooks;
                                      # copilot: "" where it ships none
 KEYED_HOOK_MARKER="=== Auto-injected project context (specs workflow) ==="
-
-# Check 25 runs where this is 1: no user page -- a plugin's README and docs/ tree, and the
-# repo-root README -- cites a section by `§`, a design-decision id, or a reference by its
-# `<plugin>:<name>` id. The internal editions set 0 until their own pages are rewritten in plain
-# words, and check 25 passes there without opening a file.
-USER_PAGE_VOCAB=1                    # internal editions: 0 until their pages are rewritten
 
 FAILURES=0
 
@@ -2755,187 +2749,94 @@ check_keyed_hooks() {
 }
 
 # ------------------------------------------------------------------ check 25
-# A user page speaks the reader's language. A plugin's README and its docs/ pages, and the
-# repo-root README, are read by people using the installed plugin, who have neither the
-# reference corpus nor the design specs in front of them. When batch B30 of the 2026-10-26
-# review began, this check's own reading of them (at 9d9292b4: every plugin README and docs/
-# page under PLUGIN_RELS, and the repo-root README) found 488 findings on 372 lines of 71 pages
-# -- 248 citing a section by `§`, 225 citing a reference by its `<plugin>:<name>` id and 15
-# naming a design-decision id (`(D4)`, `D17, D20`), a line carrying more than one kind -- the
-# agents' citation forms and the specs' row numbers, none of which a reader can open or look
-# up. The batch rewrote every one in plain words but one line, which quotes a customer's own
-# `§ 4.2` and `D3` and carries the marker below. This holds them out:
-#   * a `§` anywhere a reader sees it;
-#   * a design-decision id, `D` and one to three digits standing as a word (`D3.js` is not one);
-#     in a mermaid block it is read only in the labels a diagram shows, never in a node id;
-#   * `<plugin>:<name>` where <name>, or its longest leading path, RESOLVES to a markdown file
-#     under that plugin's $REF_DIR, extension dropped and subtree kept
-#     (`model-routing/classification`, and `addressing/resolve-address`, which cites
-#     `addressing`) -- resolved against the tree, never parsed by shape, so an agent
-#     (`workflows-core:code-review`), a skill (`workflows-core:model-routing`, whose name is also
-#     a reference SUBTREE but no file) and a command (`/workflows-core:feedback`, and a bare name
-#     with no reference file) pass.
-# The plugin set is every plugin directory in the tree, by directory and by declared name, so a
-# page citing a sibling's reference is held too.
-# What the reader does not see is not read: an HTML comment in prose, on one line or across
-# several, where a recipe that re-derives a number on the page is kept for the maintainer. A
-# `<!--` inside a code span or a fenced block opens no comment -- a renderer shows both
-# verbatim -- and a fence closes only on a run of its own character at least as long as the one
-# that opened it, so a ```` block may quote a ``` one. The marker `internal-ref-ok:` sanctions
-# the line it sits on, and on a fence-opening line the block it opens -- a customer's own
-# `§ 4.2` quoted as theirs, or output a run prints verbatim. A fenced block is NOT skipped by
-# default: an example a page shows is read like its prose.
-# What it cannot see: the path form `references/<name>.md`, which also names files a user acts
-# on; change history ("used to", "before 4.1.2"); maintainer recipes outside a comment; internal
-# field names; and a code span that runs across lines. It fires on a `D1` that is no decision
-# id -- a product's own name -- which takes the marker. Those are review's. Sits outside the
-# loop for check 17's reason: its vacuity guard is a claim about every page under PLUGIN_RELS
-# at once, and the root README is no plugin's.
-check_user_page_vocab() {
-  local root="$1" rel files out h prog
-  [ "$USER_PAGE_VOCAB" = 1 ] || { note "check 25 not applicable: this edition keeps its user pages' citations (USER_PAGE_VOCAB=$USER_PAGE_VOCAB)"; return 0; }
-  [ "$HAVE_PY" = 1 ] || { note "check 25 not run: python3 not found"; return 0; }
-  files=$(for rel in $PLUGIN_RELS; do
-            [ -f "$root/$rel/README.md" ] && printf '%s\n' "$root/$rel/README.md"
-            [ -d "$root/$rel/docs" ] && find "$root/$rel/docs" -type f -name '*.md'
-          done
-          [ -f "$root/README.md" ] && printf '%s\n' "$root/README.md"
-          true)
-  [ -n "$files" ] || { fail 25 "no README or docs page under $PLUGIN_RELS -- this check would examine nothing"; return; }
-  prog=$(cat <<'PYEOF25'
-import glob, json, os, re, sys
-
-# argv: root, plugin parent (`plugins/` or empty), reference dir name; stdin: page paths.
-root, parent, refdir = sys.argv[1], sys.argv[2], sys.argv[3]
-MARK = "internal-ref-ok:"
-# Every plugin of the tree, by directory name and by declared name, mapped to the markdown
-# reference FILES it ships, extension dropped and subtree kept: `model-routing/classification`
-# is one, while a subtree alone (`upgrade/`) is not, since a command or skill may carry its name.
-refs = {}
-for d in sorted(glob.glob(os.path.join(root, parent + "*", ""))):
-    d = d.rstrip("/")
-    names = {os.path.basename(d)}
-    try:
-        with open(os.path.join(d, ".claude-plugin", "plugin.json"), encoding="utf-8") as fh:
-            declared = json.load(fh).get("name")
-        if isinstance(declared, str) and declared:
-            names.add(declared)
-    except (OSError, ValueError):
-        pass
-    base = os.path.join(d, refdir)
-    files = {os.path.relpath(f, base)[:-3] for f in glob.glob(os.path.join(base, "**", "*.md"), recursive=True)}
-    for n in names:
-        refs.setdefault(n, set()).update(files)
-ns = "|".join(sorted((re.escape(n) for n in refs), key=len, reverse=True))
-CITE = re.compile(r"(?<![/\w.-])(" + ns + r"):([a-z0-9][a-z0-9_/-]*[a-z0-9])") if ns else None
-# A design-decision id: D and one to three digits standing as a word -- not `D3.js`.
-DID = re.compile(r"(?<![\w-])D[0-9]{1,3}(?![\w]|\.\w)")
-OPEN = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
-SPAN = re.compile(r"(`+)(?!`).*?(?<!`)\1(?!`)")
-# What a mermaid diagram shows: its labels, never its node ids.
-LABEL = re.compile(r'"[^"]*"|\[[^\]]*\]|\([^)]*\)|\{[^}]*\}|\|[^|]*\|')
-
-
-def cited(ns, name):
-    """The reference file a `<ns>:<name>` names: the name, or its longest leading path that is
-    one (`addressing/resolve-address` cites `addressing`), else None."""
-    parts, have = name.split("/"), refs.get(ns, ())
-    for k in range(len(parts), 0, -1):
-        if "/".join(parts[:k]) in have:
-            return "/".join(parts[:k])
-    return None
-
-
-def comment_start(text, i):
-    """The first `<!--` at or after i that is not inside a code span, or -1."""
-    spans = [(m.start(), m.end()) for m in SPAN.finditer(text)]
-    j = text.find("<!--", i)
-    while j >= 0 and any(a <= j < b for a, b in spans):
-        j = text.find("<!--", j + 1)
-    return j
-
-
-for path in sys.stdin.read().split("\n"):
-    if not path:
-        continue
-    try:
-        with open(path, encoding="utf-8") as fh:
-            lines = fh.read().split("\n")
-    except (OSError, UnicodeDecodeError):
-        continue
-    rel = os.path.relpath(path, root)
-    fence = None          # (char, length, sanctioned, mermaid) while inside a fenced block
-    incomment = False
-    for no, raw in enumerate(lines, 1):
-        marked = MARK in raw
-        if fence is None and not incomment:
-            m = OPEN.match(raw)
-            if m and not (m.group(1)[0] == "`" and "`" in m.group(2)):
-                info = m.group(2).strip().split()
-                fence = (m.group(1)[0], len(m.group(1)), marked, bool(info) and info[0] == "mermaid")
-                # The opening line's info string is shown by no renderer; nothing to read.
-                continue
-        elif fence is not None:
-            char, length, sanctioned, mermaid = fence
-            if re.match(r"^ {0,3}" + re.escape(char) + "{" + str(length) + r",}[ \t]*$", raw):
-                fence = None
-                continue
-            # Inside a fence everything is shown verbatim, an HTML comment included.
-            if sanctioned or marked:
-                continue
-            seen = "".join(LABEL.findall(raw)) if mermaid else raw
-            hits = []
-            if "§" in raw:
-                hits.append("cites a section (§)")
-            d = DID.search(seen)
-            if d:
-                hits.append(f"names a design-decision id ({d.group(0)})")
-            if CITE:
-                for c in CITE.finditer(raw):
-                    r = cited(c.group(1), c.group(2))
-                    if r:
-                        hits.append(f"cites the internal reference `{c.group(1)}:{r}`")
-                        break
-            for h in hits:
-                print(f"{rel}:{no} {h}")
-            continue
-        # Prose: an HTML comment, on one line or across several, is not shown, and neither
-        # is a `<!--` inside a code span the start of one.
-        text, out, i = raw, "", 0
-        while i < len(text):
-            if incomment:
-                j = text.find("-->", i)
-                if j < 0:
-                    i = len(text)
-                    break
-                incomment, i = False, j + 3
-            else:
-                j = comment_start(text, i)
-                if j < 0:
-                    out += text[i:]
-                    break
-                out += text[i:j]
-                incomment, i = True, j + 4
-        if marked:
-            continue
-        if "§" in out:
-            print(f"{rel}:{no} cites a section (§)")
-        m = DID.search(out)
-        if m:
-            print(f"{rel}:{no} names a design-decision id ({m.group(0)})")
-        if CITE:
-            for m in CITE.finditer(out):
-                r = cited(m.group(1), m.group(2))
-                if r:
-                    print(f"{rel}:{no} cites the internal reference `{m.group(1)}:{r}`")
-                    break
-PYEOF25
-)
-  out=$(printf '%s\n' "$files" | sort | python3 -c "$prog" "$root" "$(plugin_parent)" "$REF_DIR")
-  [ -n "$out" ] || return 0
+# Maintainer vocabulary stays off the user's pages. A plugin's docs/ pages and its README are
+# what an installing user reads, and they had come to carry two tokens only a maintainer of the
+# repository can resolve: a `§` section citation into a reference written for the agents that
+# run a command, not for the user, and a design-decision id, `(D17)` or `decision row D14`,
+# numbering a row of a design spec that is not shipped and that numbers from D1 like every
+# other, so the id resolves for nobody.
+# MEASURED at batch B30, on the tree before its fixes: 257 lines in 63 files, every one a
+# section citation or a decision id but one, a page quoting a customer's own section number and
+# decision id as the user's content, which the batch reworded rather than marked.
+#
+# POPULATION: every *.md under $PLUGIN_REL/docs/ and $PLUGIN_REL/README.md, per plugin of the
+# dispatch loop. It is derived from PLUGIN_RELS, so the check has no config name and no switch:
+# every edition ships user pages, and an edition takes the check by rewriting its own.
+# A `§` fails ANYWHERE on a line, a fenced block included, because a mermaid label is drawn for
+# the reader -- the one fenced hit the measurement found was a mermaid label. A decision id, `D`
+# and one to three digits as a whole word, fails only OUTSIDE fenced blocks: inside one it is
+# as likely a mermaid node id (`D1 --> D2`), which no reader sees.
+#
+# THE MARKER, `<!-- docs-vocab-ok: <why> -->`, sanctions the line it sits on, and on a
+# fence-OPENING line the block it opens -- check 13's rule, for check 13's reason: a line inside
+# a mermaid or quoted block cannot carry an HTML comment without corrupting what it holds. It is
+# for a literal that is the user's own content, and every use is audited by its reason, so a
+# marker whose reason is empty, or that is not written as that HTML comment, fails on its own
+# line and sanctions nothing.
+#
+# What this deliberately does NOT catch, stated so nobody mistakes green for safe: a bare
+# `workflows-core:<name>` reference citation, whose form also names an agent or a command a page
+# must name; change history; a maintainer recipe (a grep over plugins/); a decision id inside a
+# fenced block or on a fence's own delimiter line, and a fence it misreads (any line starting,
+# after its indent, with three backticks or tildes toggles it, whatever the fence's character or
+# length); the repository-root README, outside every plugin; and the other id families a design
+# spec numbers (C2, E1, L2), whose shapes are ordinary keys and words. Review holds those. VACUITY: no docs page and no README to read.
+check_docs_vocabulary() {
+  local root="$1" p="$1/$PLUGIN_REL" files f hits h
+  files=$( { find "$p/docs" -type f -name '*.md' 2>/dev/null; [ -f "$p/README.md" ] && printf '%s\n' "$p/README.md"; } | sort)
+  [ -n "$files" ] \
+    || { fail 25 "no docs page and no README under $PLUGIN_REL to scan -- this check would examine nothing"; return; }
+  hits=$(while IFS= read -r f; do
+           [ -n "$f" ] || continue
+           awk -v FILE="${f#$root/}" '
+             # Every decision id on the line, as a quoted list: `D` and one to three digits, a whole
+             # word -- no word character before it, no letter or `_` after. No interval
+             # expression: an older awk reads `{1,3}` as literal braces.
+             function dids(s,   out, off, rest, st, pre, nxt) {
+               out = ""; off = 0; rest = s
+               while (match(rest, /D[0-9]+/)) {
+                 st = off + RSTART
+                 pre = (st > 1) ? substr(s, st - 1, 1) : ""
+                 nxt = substr(s, st + RLENGTH, 1)
+                 if (pre !~ /[A-Za-z0-9_]/ && nxt !~ /[A-Za-z_]/ && RLENGTH <= 4)
+                   out = out (out == "" ? "" : ", ") "\"" substr(s, st, RLENGTH) "\""
+                 off = st + RLENGTH - 1
+                 rest = substr(s, off + 1)
+               }
+               return out
+             }
+             {
+               isfence = ($0 ~ /^[ \t]*(```|~~~)/)
+               mk = 0
+               if (index($0, "docs-vocab-ok")) {
+                 mk = -1
+                 if (match($0, /<!--[ \t]*docs-vocab-ok:/)) {
+                   rest = substr($0, RSTART + RLENGTH); j = index(rest, "-->")
+                   r = j ? substr(rest, 1, j - 1) : ""; gsub(/[ \t]/, "", r)
+                   if (r != "") mk = 1
+                 }
+               }
+               # The fence state is updated BEFORE the skip tests, so an opening line is covered
+               # by its own marker -- the order check 13 keeps.
+               if (isfence) {
+                 if (infence) { infence = 0; fok = 0 } else { infence = 1; fok = (mk > 0) }
+               }
+               if (mk < 0) { printf "M %s:%d\n", FILE, NR; next }
+               if (mk > 0) next
+               if (infence && !isfence && fok) next
+               t = ""
+               if (index($0, "§")) t = "\"§\""
+               if (!infence && !isfence) { d = dids($0); if (d != "") t = t (t == "" ? "" : ", ") d }
+               if (t != "") printf "V %s:%d carries %s\n", FILE, NR, t
+             }' "$f"
+         done <<<"$files")
+  [ -n "$hits" ] || return 0
   while IFS= read -r h; do
-    [ -n "$h" ] && fail 25 "$h -- a user page cannot send its reader into a reference or a design spec; say the rule in plain words, or, for a customer's own text or verbatim run output, mark the line (or its opening fence) \`<!-- internal-ref-ok: <why> -->\`"
-  done <<<"$out"
+    case "$h" in
+      M\ *) fail 25 "${h#M } carries a docs-vocab-ok marker with no reason, or one not written as the HTML comment -- write it \`<!-- docs-vocab-ok: <why> -->\`; a marker sanctions a literal that is the user's own content, and its reason is what the audit reads" ;;
+      V\ *) fail 25 "${h#V } -- maintainer vocabulary on a user's page: a § cites a reference written for the agents, not the reader, and a design-decision id numbers a row of a spec that is not shipped; say the rule in words, or, where the literal is the user's own content, mark the line (or its opening fence) \`<!-- docs-vocab-ok: <why> -->\`" ;;
+    esac
+  done <<<"$hits"
 }
 
 # ------------------------------------------------------------------ selftest
@@ -3930,8 +3831,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     # them on a correct tree; here it turns the green case red.
     expect_fail "a consuming file that cites core without the preamble is rejected" 16 \
       "sed '/^\*\*Core references\.\*\*/d' $(cmd_file $(plugin_parent)fixture-two omega) > c16.tmp && mv c16.tmp $(cmd_file $(plugin_parent)fixture-two omega)"
-    # Check 25 fails that citation on a user page; switched off here, the case isolates check 16.
-    expect_pass_after_env "a docs page citing core without the preamble is accepted" "USER_PAGE_VOCAB=0" \
+    expect_pass_after "a docs page citing core without the preamble is accepted" \
       "printf -- '\nThis page describes what \`dev-workflows:phase-handoff\` does, for a reader.\n' >> $(plugin_parent)fixture-two/docs/$DOC_CMD_DIR/omega.md"
     # Relation 4 -- the fence, earned rather than designed: a fix round put a loader call
     # inside a report TEMPLATE, a block the command prints to the user, where it would be read
@@ -4459,87 +4359,38 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     printf 'skip  the keyed-hook cases (the fixture ships no hook its KEYED_HOOKS names)\n'
   fi
 
-  # Check 25 -- a user page speaks the reader's language. Each red case appends one line to a
-  # page of the first plugin, to the second plugin's README or to the root README, so the walk
-  # over PLUGIN_RELS and the root page are each proven; each green case is a token the check
-  # must let through. The reference cited is a real file of the fixture's corpus, read from
-  # CORE_PLUGIN_REL; the agent and command names are the fixture's own, and the directory-only
-  # name is a reference subtree with no file of its name.
-  local d25="$PLUGIN_REL/docs/workflow.md" r25="${PLUGIN_RELS#* }/README.md"
-  local ns25="${CORE_PLUGIN_REL##*/}"
-  local ref25; ref25=$(ls "$fixture/$CORE_PLUGIN_REL/$REF_DIR"/*.md 2>/dev/null | head -1); ref25="${ref25##*/}"; ref25="${ref25%.md}"
-  local ag25; ag25=$(ls "$fixture/$CORE_PLUGIN_REL/agents"/*.md 2>/dev/null | head -1); ag25="${ag25##*/}"; ag25="${ag25%.md}"
-  local cmd25; cmd25=$(cmd_names "$fixture/$CORE_PLUGIN_REL" | head -1)
-  local sub25; sub25=$(ls -d "$fixture/$PLUGIN_REL/$REF_DIR"/*/ "$fixture/$(plugin_parent)"*/"$REF_DIR"/*/ 2>/dev/null | head -1); sub25="${sub25%/}"
-  local subf25; subf25=$(ls "$fixture/$(plugin_parent)"*/"$REF_DIR"/*/*.md 2>/dev/null | head -1)
-  local subfns25="${subf25%/$REF_DIR/*}"; subfns25="${subfns25##*/}"; subf25="${subf25#*/$REF_DIR/}"; subf25="${subf25%.md}"
-  local p2_25="${PLUGIN_RELS#* }"; p2_25="${p2_25%% *}"
-  local d2_25; d2_25=$(ls "$fixture/$p2_25/docs"/*.md 2>/dev/null | head -1); d2_25="$p2_25/docs/${d2_25##*/}"
-  # A plugin whose declared name differs from its directory, and that name.
-  local decl25="" decldir25="" pj25
-  for pj25 in "$fixture/$(plugin_parent)"*/.claude-plugin/plugin.json; do
-    [ -f "$pj25" ] || continue
-    local dn25; dn25=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("name",""))' "$pj25" 2>/dev/null)
-    local dd25="${pj25%/.claude-plugin/plugin.json}"; dd25="${dd25##*/}"
-    if [ -n "$dn25" ] && [ "$dn25" != "$dd25" ]; then decl25="$dn25"; decldir25="$(plugin_parent)$dd25"; break; fi
-  done
-  local subns25; subns25="${sub25%/$REF_DIR/*}"; subns25="${subns25##*/}"; sub25="${sub25##*/}"
-  expect_fail_msg "a section sign on a docs page is rejected" 25 "cites a section" \
-    "printf '\nThe gate is in the reference, §4.\n' >> $d25"
-  expect_fail_msg "a design-decision id on a docs page is rejected" 25 "names a design-decision id" \
-    "printf '\nNo command takes a chain (D4).\n' >> $d25"
-  expect_fail_msg "a citation of an internal reference on a docs page is rejected" 25 "cites the internal reference" \
-    "printf '\nSee \`%s:%s\` for the rule.\n' '$ns25' '$ref25' >> $d25"
-  expect_fail_msg "a section sign in an unmarked fenced block is rejected" 25 "cites a section" \
-    "printf '\n%s\n%s\n%s\n' '\`\`\`text' 'read §3 first' '\`\`\`' >> $d25"
-  expect_fail_msg "the second plugin's README is read too" 25 "README.md:" \
-    "printf '\nIts rules are in §2.\n' >> $r25"
-  expect_fail_msg "the repo-root README is read too" 25 "names a design-decision id" \
-    "printf '\nEach plugin follows D12.\n' >> README.md"
-  expect_fail_msg "a citation of a reference file in a subtree is rejected" 25 "cites the internal reference \`$subfns25:$subf25\`" \
-    "printf '\nSee \`%s\` for the rule.\n' '$subfns25:$subf25' >> $d25"
-  expect_fail_msg "a citation naming the reference file with its .md is rejected" 25 "cites the internal reference \`$ns25:$ref25\`" \
-    "printf '\nSee \`%s.md\` for the rule.\n' '$ns25:$ref25' >> $d25"
-  expect_fail_msg "a citation of a reference and an entry point in it is rejected" 25 "cites the internal reference \`$ns25:$ref25\`" \
-    "printf '\nSee %s/some-entry for the rule.\n' '$ns25:$ref25' >> $d25"
-  expect_fail_msg "a sibling plugin's reference cited from another plugin's page is rejected" 25 "$d2_25:" \
-    "printf '\nSee \`%s\` for the rule.\n' '$ns25:$ref25' >> $d2_25"
-  if [ -n "$decl25" ]; then
-    expect_fail_msg "a reference cited by its plugin's declared name is rejected" 25 "cites the internal reference \`$decl25:zeta\`" \
-      "mkdir -p $decldir25/$REF_DIR && printf '# Zeta\n' > $decldir25/$REF_DIR/zeta.md && printf '\nSee %s for the rule.\n' '$decl25:zeta' >> $d25"
-  else
-    printf 'skip  the declared-name case (no fixture plugin declares a name its directory does not carry)\n'
-  fi
-  expect_fail_msg "text after a comment closed on the same line is read" 25 "cites a section" \
-    "printf '\n<!-- a note --> The rule is in §1.\n' >> $d25"
-  expect_fail_msg "a comment opener inside a code span hides nothing" 25 "cites a section" \
-    "printf '\n%s\n%s\n' 'The syntax is \`<!--\` and nothing more.' 'The rule is in §2.' >> $d25"
-  expect_fail_msg "a comment opener inside a fenced block hides nothing after the fence" 25 "names a design-decision id" \
-    "printf '\n%s\n%s\n%s\n%s\n' '\`\`\`html' '<!-- shown verbatim' '\`\`\`' 'No command takes a chain (D4).' >> $d25"
-  expect_fail_msg "a marked fence sanctions nothing past its closing fence" 25 "cites a section" \
-    "printf '\n%s\n%s\n%s\n%s\n' '\`\`\`text <!-- internal-ref-ok: verbatim -->' '<!-- shown verbatim' '\`\`\`' 'The rule is in §14.' >> $d25"
-  expect_fail_msg "a decision id in a mermaid label is rejected" 25 "names a design-decision id" \
-    "printf '\n%s\n%s\n%s\n%s\n' '\`\`\`mermaid' 'flowchart LR' '  A[\"see D4\"] --> B' '\`\`\`' >> $d25"
-  expect_pass_after "agent and command names, a reference subtree, a marked line, marked fences, mermaid node ids and a comment pass" \
-    "printf '\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
-       'The \`$ns25:$ag25\` agent runs, after \`/$ns25:$cmd25\`, with \`$subns25:$sub25\`.' \
-       'The customer wrote §4.2 and D3. <!-- internal-ref-ok: quotes the customer -->' \
-       '\`\`\`text <!-- internal-ref-ok: a run prints this verbatim -->' \
-       'see $ns25:$ref25 §3 (D9)' \
-       '\`\`\`' \
-       '<!-- re-derive: grep the reference §3 for D9 -->' \
-       '<!--' 'a comment across lines naming $ns25:$ref25 -->' >> $d25
-     printf '\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
-       '\`\`\`\`markdown <!-- internal-ref-ok: quotes a page verbatim -->' '\`\`\`text' 'see §2 (D5)' '\`\`\`' '\`\`\`\`' \
-       '\`\`\`mermaid' 'flowchart LR' '  D1[Start] --> D2[End]' '\`\`\`' 'Charts are drawn with D3.js.' >> $d25"
-  expect_pass_saying "USER_PAGE_VOCAB=0 says check 25 does not apply" "USER_PAGE_VOCAB=0" \
-    "check 25 not applicable" "printf '\nSee §1 (D2).\n' >> $d25"
+  # Check 25 -- maintainer vocabulary on a user's page. The fixture's docs pages and READMEs carry
+  # none, so the unmutated pass proves the check reads them without firing; each case appends a
+  # line, or a fenced block, to a docs page of the first plugin or to the second plugin's README,
+  # so both plugins of the dispatch loop are read. The green cases are the pairs of red ones: a
+  # check that skipped no fence would fail the fenced `D1`, and one that ignored the marker, or
+  # skipped every fence, would fail the marked line or pass the mermaid label.
+  local d25="$PLUGIN_REL/docs/$DOC_CMD_DIR/alpha.md" p25="${PLUGIN_RELS#* }"; p25="${p25%% *}"
+  local n25; n25=$(( $(wc -l < "$fixture/$p25/README.md") + 2 ))
+  expect_fail_msg "a § on a docs page is rejected" 25 'carries "§"' \
+    "printf '\nThe run stops there (phase-handoff §3.4).\n' >> $d25"
+  expect_fail_msg "a § in a plugin README is rejected" 25 "$p25/README.md:$n25 carries \"§\"" \
+    "printf '\nIts rules are in the shared reference, §2.\n' >> $p25/README.md"
+  expect_fail_msg "a design-decision id in prose is rejected" 25 'carries "D17"' \
+    "printf '\nThe reviewer runs on Opus regardless of class (D17).\n' >> $d25"
+  expect_pass_after "a D1 inside a fenced block is a node id and passes" \
+    "printf '\n\`\`\`mermaid\nflowchart LR\n  D1 --> D2\n\`\`\`\n' >> $d25"
+  expect_fail_msg "a § in a fenced block, a mermaid label, is rejected" 25 'carries "§"' \
+    "printf '\n\`\`\`mermaid\nflowchart LR\n  A -->|\"§4.3 consent\"| B\n\`\`\`\n' >> $d25"
+  expect_pass_after "a § in a fenced block whose opening line is marked passes" \
+    "printf '\n\`\`\`text <!-- docs-vocab-ok: fixture quote of a user document -->\nSee § 4.2 of the brief.\n\`\`\`\n' >> $d25"
+  expect_pass_after "a marked line with a reason passes" \
+    "printf '\nA section number such as § 4.2, or a decision id such as D3, is left as written. <!-- docs-vocab-ok: the user document quoted -->\n' >> $d25"
+  expect_fail_msg "a marked line with an empty reason is rejected" 25 "with no reason" \
+    "printf '\nA section number such as § 4.2 is left as written. <!-- docs-vocab-ok: -->\n' >> $d25"
+  expect_fail_msg "a plugin with no docs page and no README trips the empty-scan guard" 25 "would examine nothing" \
+    "find $p25/docs -name '*.md' -exec rm {} +; rm -f $p25/README.md"
 
   # Every config name is set by the config block, and none is taken from the environment: the
   # block above `FAILURES=0` is sourced with each name exported as a sentinel, and no name may
   # come out holding it (or unset, which aborts under set -u). This reads THIS edition's own
   # block, so each edition's selftest proves its own. ASSERT_PUBLISHED is not config.
-  local cfg_names="PLUGIN_RELS CMD_DIR CMD_SUFFIX CMD_EXCLUDE REF_DIR REF_FLAT_EXTRA DOC_CMD_DIR CMD_FORM CLI CLI_VERBS CLI_REQUIRED HAS_COST HAS_CHOICE_CAP HAS_AUTO_OTHER CHANGELOG_GLOB NS_MAP_REL COST_PLUGIN_RELS HANDOFF_PLUGIN_RELS GUARD_PLUGIN_RELS ITC_PLUGIN_REL CORE_PLUGIN_REL LOADER_SKILL RUNTIME_VARS RUNTIME_VARS_FROZEN EDITION_FORBIDDEN_B64 VENDOR_NEUTRAL CHECK11_FAMILY CHECK11_PROSE CHECK11_OFFER_SCOPE INSTRUCTION_TIERS VENDORED_COPIES PATH_UNSET_RULE KEYED_HOOKS KEYED_HOOK_MARKER USER_PAGE_VOCAB" leaked
+  local cfg_names="PLUGIN_RELS CMD_DIR CMD_SUFFIX CMD_EXCLUDE REF_DIR REF_FLAT_EXTRA DOC_CMD_DIR CMD_FORM CLI CLI_VERBS CLI_REQUIRED HAS_COST HAS_CHOICE_CAP HAS_AUTO_OTHER CHANGELOG_GLOB NS_MAP_REL COST_PLUGIN_RELS HANDOFF_PLUGIN_RELS GUARD_PLUGIN_RELS ITC_PLUGIN_REL CORE_PLUGIN_REL LOADER_SKILL RUNTIME_VARS RUNTIME_VARS_FROZEN EDITION_FORBIDDEN_B64 VENDOR_NEUTRAL CHECK11_FAMILY CHECK11_PROSE CHECK11_OFFER_SCOPE INSTRUCTION_TIERS VENDORED_COPIES PATH_UNSET_RULE KEYED_HOOKS KEYED_HOOK_MARKER" leaked
   leaked=$(env $(for n in $cfg_names; do printf '%s=env-sentinel ' "$n"; done) bash -c '
     eval "$(sed -n "1,/^FAILURES=0\$/p" "$1")"
     for n in $2; do [ "${!n}" = env-sentinel ] && printf "%s " "$n"; done; true' _ "$0" "$cfg_names" 2>&1)
@@ -4598,6 +4449,7 @@ for PLUGIN_REL in $PLUGIN_RELS; do
   check_vendor_tokens       "$ROOT"
   check_foreign_identity    "$ROOT"
   check_index_membership    "$ROOT"
+  check_docs_vocabulary     "$ROOT"
 done
 
 # Check 16 sits OUTSIDE the loop, unlike every check above it. The loader contract is a
@@ -4639,10 +4491,6 @@ check_path_rule_cited     "$ROOT"
 # Check 24 sits outside the loop: its population is the hooks KEYED_HOOKS names, which need not
 # follow PLUGIN_RELS.
 check_keyed_hooks         "$ROOT"
-
-# Check 25 sits outside the loop for check 17's reason: its vacuity guard is a claim about every
-# page under PLUGIN_RELS, and it reads the repo-root README, which belongs to no plugin.
-check_user_page_vocab     "$ROOT"
 
 if [ "$FAILURES" -gt 0 ]; then
   echo "FAIL: $FAILURES problem(s) under $PLUGIN_RELS" >&2

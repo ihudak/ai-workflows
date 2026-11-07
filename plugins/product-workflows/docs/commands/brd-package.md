@@ -46,8 +46,10 @@ customer's reviewer has the bundle and whatever repositories they were able to o
 else: no plugin to resolve a path against, nobody to ask what a citation means, and no way to tell a
 missing file from a withheld one.
 So the rendered prompt, the delivery note and every document in the bundle carry **no path rooted at
-the plugin's install directory, no citation of the plugin's reference files, no slash command, no agent or skill name,
-and no section-sign character** outside the customer's own words.
+the plugin's install directory, no `references/…` citation, no slash command, no agent or skill name,
+and no section-sign reference** of the plugin's own — the rules in
+[`bundle-packaging.md`](../../references/bundle-packaging.md) and
+[`customer-review-schema.md`](../../references/customer-review-schema.md).
 
 **How the command guarantees that** is a property of its phase order, not of its prose. The review
 schema is rendered out of its own file from the boundary that file declares, never in full — the
@@ -95,8 +97,8 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   and stops with `BRD_PACKAGE_NOT_A_SLICE` before any gate runs: it has no register and no customer to package for, so the stop sends it on along the
   idea route — `/create-ard` or `/specify`. A resolved root stops with
   `BRD_PACKAGE_ROOT_LEVEL`, naming `/brd-split <BRD-KEY> "<how to cut it>"` to carve a slice and
-  then `/brd-package <SLICE-KEY>` on it; where the root already carries package artifacts,
-  the stop names those files and leaves them in place, unread.
+  then `/brd-package <SLICE-KEY>` on it; where the root already carries package artifacts written
+  under the earlier two-level model, the stop names those files and leaves them in place, unread.
 - **An existing BRD folder.** No folder for `<BRD-KEY>` — searched at every level
   `resolve-address` bounds (three below `specifications/`) — stops with `BRD_PACKAGE_NOT_FOUND`, which names both ways a folder comes to exist
   rather than asserting one.
@@ -123,10 +125,10 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 - **`/brd-interview`'s register already merged to the specs repo's default branch.**
   `require-on-main` runs against `decisions.md` before any content is read; an unmerged pull
   request stops the run naming the branch/PR state. Where the gate reports the register is on no ref
-  at all, the run **splits a state the gate cannot**, as [`/brd-reconcile`](brd-reconcile.md) does on
-  its own row F: no `decisions.md` in the folder means no interview has written one
+  at all, the run **splits a state the gate cannot**, as [`/brd-reconcile`](brd-reconcile.md) does for
+  a file that is on no branch at all: no `decisions.md` in the folder means no interview has written one
   (`BRD_PACKAGE_NEEDS_INTERVIEW`, run [`/brd-interview`](brd-interview.md)). That run writes it for
-  a BRD never interviewed, and for one whose rounds left none —
+  a BRD never interviewed, and for one interviewed before it wrote the register on every round —
   resuming a round still open, or on its no-new-round path where every round is closed; for a BRD
   whose every row is delegated it stops instead, since that BRD kept nothing to package. A
   register in the folder means the run that wrote it — the interview, ordinarily, or
@@ -198,8 +200,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 ## What it produces
 
 Under the resolved BRD folder — `$SPECS_PATH/specifications/BRD-<BRD-KEY>-<slug>/` for a root
-BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
-all stamped with one date taken once:
+BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice, all stamped with one date taken once:
 
 | Artifact | What it is | In the bundle? |
 |---|---|---|
@@ -218,7 +219,8 @@ to read without this plugin, and `escalated-to-customer` findings under *the dec
 must make*. Shipping the file would defeat that filter and hand the customer an internal
 disagreement to referee. The self-review is still committed with the folder, so anyone the specs
 repository is shared with can read it — on the repository route, the customer too. What the bundle
-*does* hold is an allow-list, not a deny-list: the prompt; the
+*does* hold is an allow-list, not a deny-list, and
+[`bundle-packaging.md`](../../references/bundle-packaging.md) is its authority: the prompt; the
 customer's own source document, every markdown file captured with it, its defect log and — where one
 exists — the transcription of each image (the parent's on a slice); the inventory; the coverage
 ledger; the three grounding files; the decision register; the code-defect log where the folder holds
@@ -308,7 +310,7 @@ attack.
   is keyed on **every finding carrying a non-`undisposed` value**, and on nothing else: the reviewer
   agent returns no severity and no PASS/BLOCK verdict by design, so the disposition is the only gate
   there is. The four values are `fixed`, `accepted-risk`, `escalated-to-customer` and
-  `rejected-with-reason`, and each question's options draw only on those four values — the second offers
+  `rejected-with-reason`, and each array draws only on those four values — the second offers
   *Agreed* (`accepted-risk` with a `fixed-by:` marker, below) in place of `fixed`, and either drops
   *Escalated* where the customer's authority does not settle the finding. The harness always
   supplies a free-text option, so the picker cannot decline one — what protects the closed vocabulary
@@ -354,7 +356,7 @@ attack.
   with `BRD_PACKAGE_SCHEMA_BOUNDARY` if that file no longer declares where its boundary falls. The
   rendered headings are renumbered under the part they are rendered into (`10.1`–`10.5`), so the
   copy neither visibly begins at 2 nor restarts at 1; that is safe because the schema refers to its own sections by name and never by number, which
-  the render verifies by requiring the extracted body to contain no section-sign character at all. It verifies, too,
+  the render verifies by requiring the extracted body to contain no section sign at all. It verifies, too,
   that the body holds no identifier with a number in it, and stops with
   `BRD_PACKAGE_SCHEMA_EXAMPLE_ID` on one: the schema writes every example as a placeholder,
   `[BR#n]`, because the prompt is a bundle document and the citation-resolution check would resolve
@@ -385,18 +387,18 @@ attack.
   other class stops there as anywhere. And a hit inside the customer's own verbatim
   content (their captured files, and the parts of the transcription, the inventory, the coverage
   ledger and the register that quote them) or a locator naming their own files, headings and links,
-  in the positions where the bundle-packaging rules recognise one — and a model id in their naming a
+  in the positions where `bundle-packaging.md` recognises one — and a model id in their naming a
   grounding finding quotes — does not stop the run by itself;
-  those rules define these spans once. In that content a `§ 4.2` or a `D3` is the customer's own and the only fix would falsify it, so the <!-- internal-ref-ok: a customer's own section and decision numbers, named as theirs -->
-  hit is reported, grouped by file and token with a count, and put to the operator on one question per pass —
+  these sets are defined there, once. There a section-sign reference or a decision id is the customer's own and the only fix would falsify it, so the
+  hit is reported, grouped as `bundle-packaging.md` fixes, and put to the operator on one question per pass —
   ship it as the customer's own (recommended), or hold the package, which stops with
   `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` and hands nothing off — a model id the report shows there that
   records what your own tooling ran on is yours: hold the package over it, and remove it by hand from
   the file it came from before the re-run; a hit an earlier ruling in the run
   covered is not asked about again, and the report opens its list of them with a
-  `Customer content:` line — or, where the bundle-packaging rules say so, it is no hit at all. The identifiers
+  `Customer content:` line — or, where `bundle-packaging.md` says so, it is no hit at all. The identifiers
   the package's own registers, logs and grounding files mint are **not** in the scan's classes and
-  are meant to travel — the identifier classes are enumerated once, in the bundle-packaging rules,
+  are meant to travel — the classes are enumerated once, in a table in `bundle-packaging.md`,
   rather than restated here. They are how the returned review cites the package without minting
   identifiers of its own; whether each one actually lands is what the citation-resolution check
   below verifies.
@@ -428,16 +430,16 @@ attack.
   tested like any other; nor the manifest's
   quotation of a customer's target as written, which sits beside the bundled filename it maps to,
   nor a captured file's own link to another captured file. Besides a prerequisite's copied package,
-  below, its exemptions are the ones the bundle-packaging rules list: `[SR#n]` is exempt entirely, because the self-review file it would resolve against is
+  below, its exemptions are the ones `bundle-packaging.md` sets: `[SR#n]` is exempt entirely, because the self-review file it would resolve against is
   excluded from the bundle by rule and the prompt carries its content filtered;
   and a hit inside the customer's own verbatim content or a locator naming their files and headings
   — a `[BR#n]` or a filename visible in their screenshot among them, or one they wrote into an
   answer or a reason the register quotes — is reported and put to the operator rather than stopping
   the run by itself, for the same reason the plugin-free scan treats it that way, and only the
   operator's *hold* stops it. A reference that resolves to nothing stops with
-  `BRD_PACKAGE_DEAD_CITATION`. A requirement this slice does not claim, cited bare in a question, a held
-  entry or a register record, is such a reference — the package carries
-  this slice's inventory alone, and the interview, the PRD's
+  `BRD_PACKAGE_DEAD_CITATION`. A requirement this slice does not claim, cited bare in a question, a
+  held entry or a register record written before 3.7.0, is such a reference — the package carries
+  this slice's inventory alone, and 3.7.0 is the release from which the interview, the PRD's
   assumptions, the reconciliation and this command's prompt write such a row `<PARENT-KEY> [BR#n]` —
   so where the stop names one, qualify that id by hand in that form, with this slice's `parent:` as
   the key, and change nothing else in the sentence. One that resolves to the wrong requirement stops
@@ -528,8 +530,20 @@ repeating them, then prints the repo→SHA table and the ledger line.
 
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
-- [References](../reference/references.md) — the plugin's own formats this command applies: bundle packaging (the authority for plugin-free construction, the de-Obsidianising pass, the three degradation tiers, the delivery note's ceiling, the citation-resolution and set-resolution checks, and where the bundle lands), the customer review schema (the twelve sections the returned review carries, and the file whose body this command inlines from section 2 onward), the decision register format (the `[VD#n]` / `[CD#n]` / `[AS#n]` record, `conditional_on`, and the rule that every open assumption reaches the customer), interview tagging (the `[C]` tag, and the rule that a customer question reaches the customer only through this package) and the coverage ledger format (the dispositions the review-scope part reads, and the ledger line the final report ends with).
-- The shared `grounding-format` reference, listed on the companion `workflows-core` plugin's References page — the finding record and the pin-verification commands the prompt hands the customer to re-run.
+- [`bundle-packaging.md`](../../references/bundle-packaging.md) — the authority for plugin-free
+  construction, the de-Obsidianising pass, the three degradation tiers, the delivery note's ceiling,
+  the citation-resolution and set-resolution checks, and where the bundle lands.
+- [`customer-review-schema.md`](../../references/customer-review-schema.md) — the twelve sections the
+  returned review carries, and the file whose body this command inlines from section 2 onward.
+- [`decision-register-format.md`](../../references/decision-register-format.md) — the `[VD#n]` /
+  `[CD#n]` / `[AS#n]` record, `conditional_on`, and the rule that every open assumption reaches the
+  customer.
+- [`interview-tagging.md`](../../references/interview-tagging.md) — the `[C]` tag, and the rule that
+  a customer question reaches the customer only through this package.
+- The `grounding-format` reference (shipped in `workflows-core`, listed on its References page) — the finding record and the
+  `baseline-integrity` commands the prompt hands the customer to re-run.
+- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the dispositions the
+  review-scope part reads, and the ledger line the final report ends with.
 - [Agents](../reference/agents.md) — `brd-package-reviewer`'s and `impl-maintenance`'s full
   contracts.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),

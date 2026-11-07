@@ -7,10 +7,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [0.10.5] — 2026-11-07
 
-Batch B30 of the 2026-10-26 review. Needs nothing from the other plugins' releases.
+User pages only, batch B30. Needs nothing from the other plugins' releases.
 
 ### Fixed
-- **The docs pages speak to the person using the plugin, not to its maintainers.** The Session cost and Roles and phases pages say in plain words which phase and role a `/scan` run is charged to, where they cited a reference's section and its internal fields; the environment page drops the variable names only an inventory check meets; internal field names (`specs_git`, `reserved_moves`, `held_by`) are said in words; and the `/scan` page's raw `choices:` arrays read as prose. The Session cost page defines a **ceded run**. `check-docs.sh` check 25 now fails a page that cites a section by `§`, names a design-decision id or cites a reference by its `<plugin>:<name>` id. (DQS-B8, DQD-B7)
+- **The user pages speak to users.** No page carries a `§` section citation or a bare reference citation; the scan page's `choices:` arrays read as prose options; the Environment page drops the inventory-check internals; Roles and phases and Session cost say what the run records in plain words rather than in the cost reference's field names.
+- **Session cost defines a *ceded* run once**, under *Ceded runs*.
 
 ## [0.10.4] — 2026-11-04
 

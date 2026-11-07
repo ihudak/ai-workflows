@@ -7,13 +7,12 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.58.6] — 2026-11-07
 
-Batch B30 of the 2026-10-26 review. Needs nothing from the other plugins' releases.
+User pages only, batch B30. Needs nothing from the other plugins' releases.
 
 ### Fixed
-- **The docs pages speak to the person using the plugin, not to its maintainers.** Every `§` section citation, every citation of a shared reference by its `workflows-core:<name>` id and every design-decision id on the `docs/` pages is now the rule in plain words, or one pointer to the companion `workflows-core` plugin's References page. Change history ("This page used to say…", "before 4.1.2", how `preload-context` was split, "the rule lived only on this page until…") is gone, keeping the rule it explained. A `grep` recipe given as the way to a list is now the list — the commands that stop without `SPECS_PATH`, the eight that build the slug→clone map — with the recipe kept in an HTML comment beside it. Raw `choices:` arrays read as prose; internal field names (`detection_model`, `current_model`, `implementation_model`, `specs_git`, the ARD resolver's `status:` values, `run_flags`) are said in words; and the `/brd-reconcile` gate caveat restated on the Roles and phases and `/ready` pages is cut to what applies here: `/ready` is the one command whose gate never stops it. `check-docs.sh` check 25 now fails a page that cites a section by `§`, names a design-decision id or cites a reference by its `<plugin>:<name>` id. (DQS-B8, DQC-B4, DQC-B5, DQC-B6, DQD-B7)
-- The Session cost page defines a **ceded run**, and the command pages that mention one link to it.
-- The Session cost page's example of several commands run in one session named `/idea`, `/create-prd` and `/specify`, which are `product-workflows` commands; it names `/design` and `/ready`. It also said the shared attribution table names `/vuln` and `/upgrade`; the shared cost rules name them only in their prose.
-- The test-suite detection page names the agent's detection and parse tables without citing the agent file's step numbers, and its provenance note is an HTML comment for maintainers; the `/vuln` page's note on how its diagram adapts the command's headings is one plain sentence.
+- **The user pages speak to users.** No page carries a `§` section citation or a bare reference citation; each was dropped where its sentence already stated the rule, said in plain words, or, in a *See also* list, named as a reference shipped in `workflows-core`. Repository `grep` recipes give their answers instead; change history (the agents and hooks that moved, "before 4.1.2", the follow-up ladder's old rungs, "This page used to say") is gone; `choices:` arrays read as prose options; `$ARGUMENTS` and the routing fields are gone.
+- **Roles and phases and the `/ready` page drop the `/brd-reconcile` caveat**, a product-workflows detail: `/ready` is the one command here whose gate never stops it. The `/design` page names its gated inputs. Session cost defines a *ceded* run once, under *Ceded runs*.
+- **Corrected:** Session cost's example of a session running several dev-workflows commands named three product-workflows commands — it now names `/design`, `/implement` and `/ready` — and it no longer quotes a team count; the Model routing page's command counts missed `/update-spec`; the Environment page's list of commands that stop without `SPECS_PATH` missed `/security-workflows:scan`.
 
 ## [4.58.5] — 2026-11-04
 

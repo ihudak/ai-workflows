@@ -72,4 +72,5 @@ A failing repository test, or a mark the script refuses, stops it before the com
 - [`/harvest-decisions`](harvest-decisions.md) — builds the records this command promotes.
 - [`/create-ard`](create-ard.md), [`/specify`](specify.md) and `/dev-workflows:design` — ground on the records, and skip one once its ADR is accepted.
 - [Architecture knowledge base](../workflow.md#architecture-knowledge-base) — the whole loop, from merged ARDs to organisation ADRs and back into grounding.
-- The shared `architecture-promotion` and `architecture-kb` references, listed on the companion `workflows-core` plugin's References page — the procedure, and the record format.
+- The `architecture-promotion` reference (shipped in `workflows-core`, listed on its References page) — the procedure.
+- The `architecture-kb` reference (shipped in `workflows-core`, listed on its References page) — the record format.
