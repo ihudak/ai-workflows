@@ -3021,32 +3021,195 @@ PYEOF25
   done <<<"$out"
 }
 
-# ------------------------------------------------------- shared: a page's link targets
-# Each inline link target on a markdown page, outside fenced blocks -- the set check 1 resolves,
-# by the same parse: an anchor kept, a CommonMark title or angle brackets dropped, a scheme
-# (`https:`, `mailto:`) skipped.
-link_targets() { # <markdown file> -> one target per line
-  strip_fences "$1" | grep -oE '\]\([^)#][^)]*\)|\]\(#[^)]*\)' \
-    | sed -E 's/^\]\(//; s/\)$//; s/[[:space:]]+"[^"]*"$//; s/^<//; s/>$//' \
-    | grep -vE '^(https?|mailto):'
+# ------------------------------------------------- shared: the navigation scan (checks 26-28)
+# One reading of a page, shared by checks 26, 27 and 28 so the three agree on what a link is.
+# READ: prose outside fenced blocks, a fence opening on three or more backticks or tildes (a
+# backtick fence's info string holding no backtick) and closing only on a run of its own
+# character at least as long, as CommonMark has it -- so a ```` block may quote a ``` one and a
+# ~~~ block may hold a ``` line. An HTML comment is not read: one that opens a line runs to the
+# next `-->`; one inside a line hides text only where it closes before the paragraph ends, and
+# is literal text otherwise; a `<!--` inside a code span opens nothing -- check 25's reading.
+# A LINK is an inline link `[text](target)` (a title in "", '' or () allowed, the target in <>
+# allowed), a reference definition `[label]: target`, or an `<a href>`/`<img src>` attribute,
+# none of them inside a code span. A target with a scheme (`https:`) or only an `#anchor` is
+# no relative link; an anchor or query is dropped before a target is resolved.
+# MENTIONS (check 28) are read from that prose with its comments taken out, code spans kept,
+# since a command is written in one. Without python3 none of the three runs, and each says so;
+# their vacuity guards are counted in bash and run all the same.
+NAV_DONE=0 NAV_OUT=""
+nav_scan() { # <root> -> NAV_OUT, computed once per run
+  local root="$1" rel spec="" prog
+  [ "$NAV_DONE" = 1 ] && return 0
+  NAV_DONE=1
+  [ "$HAVE_PY" = 1 ] || return 0
+  for rel in $PLUGIN_RELS; do
+    spec="$spec$rel	$(cmd_names "$root/$rel" | tr '\n' ' ')
+"
+  done
+  prog=$(cat <<'PYEOF26'
+import glob, json, os, re, sys
+# argv: root, docs command dir, command form; stdin: `<plugin rel>\t<command names>` lines.
+# Prints `B <page>` (check 26), `E <page>\t<target>` (27), `N <page>\t<name>` (28), a sentinel.
+root, cdir, form = sys.argv[1:4]
+OPEN = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+SPAN = re.compile(r"(`+)(?!`).*?(?<!`)\1(?!`)")
+LINK = re.compile(r"\]\(\s*(<[^>\n]*>|[^)\s]+)(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)")
+REFDEF = re.compile(r"^ {0,3}\[[^\]]+\]:\s*(<[^>\n]*>|\S+)")
+HTMLREF = re.compile(r"<(?:a|img)\b[^>]*?\b(?:href|src)\s*=\s*[\"']([^\"']+)[\"']", re.I)
+SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+
+def prose(path):
+    """(lineno, visible text) per prose line: fences dropped, HTML comments taken out."""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            lines = fh.read().split("\n")
+    except OSError:
+        return []
+    out, fence, incomment = [], None, False
+    for no, raw in enumerate(lines, 1):
+        if fence is None and not incomment:
+            m = OPEN.match(raw)
+            if m and not (m.group(1)[0] == "`" and "`" in m.group(2)):
+                fence = (m.group(1)[0], len(m.group(1)))
+                continue
+        elif fence is not None:
+            if re.match(r"^ {0,3}" + re.escape(fence[0]) + "{" + str(fence[1]) + r",}[ \t]*$", raw):
+                fence = None
+            continue
+        text, vis, i = raw, "", 0
+        while i < len(text):
+            if incomment:
+                j = text.find("-->", i)
+                if j < 0:
+                    i = len(text)
+                    break
+                incomment, i = False, j + 3
+                continue
+            spans = [(m.start(), m.end()) for m in SPAN.finditer(text)]
+            j = text.find("<!--", i)
+            while j >= 0 and any(a <= j < b for a, b in spans):
+                j = text.find("<!--", j + 1)
+            if j < 0:
+                vis += text[i:]
+                break
+            vis += text[i:j]
+            k = text.find("-->", j + 4)
+            if k >= 0:
+                i = k + 3
+            elif (i == 0 and not vis.strip() and j <= 3) or closes(lines, no):
+                incomment, i = True, len(text)
+            else:
+                vis += "<!--"
+                i = j + 4
+        out.append((no, vis))
+    return out
+
+def closes(lines, start):
+    for l in lines[start:]:
+        if not l.strip():
+            return False
+        if "-->" in l:
+            return True
+    return False
+
+def links(vis):
+    """Every link target on the page's visible prose, code spans masked first."""
+    found = []
+    for _, t in vis:
+        masked = SPAN.sub(lambda m: " " * len(m.group(0)), t)
+        for rx in (LINK, REFDEF, HTMLREF):
+            for m in rx.finditer(masked):
+                v = m.group(1).strip()
+                if v.startswith("<") and v.endswith(">"):
+                    v = v[1:-1]
+                found.append(v)
+    return found
+
+def bare(t):
+    return re.split(r"[#?]", t, 1)[0]
+
+for spec in sys.stdin.read().split("\n"):
+    if "\t" not in spec:
+        continue
+    rel, cnames = spec.split("\t", 1)
+    base = os.path.join(root, rel)
+    docs = os.path.join(base, "docs")
+    cmds = [c for c in cnames.split() if c]
+    names = {os.path.basename(rel)}
+    try:
+        with open(os.path.join(base, ".claude-plugin", "plugin.json"), encoding="utf-8") as fh:
+            declared = (json.load(fh) or {}).get("name")
+        if isinstance(declared, str) and declared:
+            names.add(declared)
+    except (OSError, ValueError, TypeError, AttributeError):
+        pass
+    cmdpages = sorted(glob.glob(os.path.join(docs, cdir, "*.md")))
+    overview = sorted(glob.glob(os.path.join(docs, "*.md")))
+    pages = sorted(glob.glob(os.path.join(docs, "**", "*.md"), recursive=True))
+    if os.path.isfile(os.path.join(base, "README.md")):
+        pages.append(os.path.join(base, "README.md"))
+    read = {p: prose(p) for p in pages}
+    # Check 27: a relative target climbing above the plugin's directory at any step -- the
+    # installed copy has nothing above it, even where the path would come back down into it.
+    for p in pages:
+        depth = len(os.path.relpath(os.path.dirname(p), base).split(os.sep)) if os.path.dirname(p) != base else 0
+        for t in links(read[p]):
+            b = bare(t)
+            if not b or SCHEME.match(b):
+                continue
+            d, out = depth, b.startswith("/")
+            for part in b.split("/"):
+                if out:
+                    break
+                if part in ("", "."):
+                    continue
+                d = d - 1 if part == ".." else d + 1
+                out = d < 0
+            if out:
+                print(f"E {os.path.relpath(p, root)}\t{t}")
+    def targets(p):
+        res = set()
+        for t in links(read[p]):
+            b = bare(t)
+            if b and not SCHEME.match(b):
+                res.add(os.path.normpath(os.path.join(os.path.dirname(p), b)))
+        return res
+    # Check 26: a command page links docs/workflow.md.
+    wf = os.path.normpath(os.path.join(docs, "workflow.md"))
+    for p in cmdpages:
+        if wf not in targets(p):
+            print(f"B {os.path.relpath(p, root)}")
+    # Check 28: an overview or command page links each of its plugin's commands it names.
+    if not cmds:
+        continue
+    alt = "|".join(sorted((re.escape(c) for c in cmds), key=len, reverse=True))
+    palt = "|".join(sorted((re.escape(n) for n in names), key=len, reverse=True))
+    MENTION = [re.compile(r"(?<![A-Za-z0-9_./>}~$-])/(?:(?:" + palt + r"):)?(" + alt + r")(?![A-Za-z0-9_/-]|\.[A-Za-z0-9])")]
+    if form == "trigger":
+        MENTION.append(re.compile(r"(?<![A-Za-z0-9_./-])(" + alt + r"):"))
+    cmddir = os.path.normpath(os.path.join(docs, cdir))
+    for p in overview + cmdpages:
+        own = os.path.basename(p)[:-3] if os.path.dirname(os.path.normpath(p)) == cmddir else None
+        named = set()
+        for _, t in read[p]:
+            for rx in MENTION:
+                named.update(m.group(1) for m in rx.finditer(t))
+        named.discard(own)
+        linked = {os.path.basename(r)[:-3] for r in targets(p) if os.path.dirname(r) == cmddir and r.endswith(".md")}
+        for c in sorted(named - linked):
+            print(f"N {os.path.relpath(p, root)}\t{c}")
+print("__NAV_RAN__")
+PYEOF26
+)
+  NAV_OUT=$(printf '%s' "$spec" | python3 -c "$prog" "$root" "$DOC_CMD_DIR" "$CMD_FORM" 2>&1)
 }
-# Each relative link's target as a path, lexically normalised from the page's own directory
-# with no filesystem access, so a link to a file that is absent here (the installed cache's
-# missing parent) still resolves to where it points. A bare `#anchor` and any `scheme:` target
-# are skipped. Printed as `<normalised path><TAB><target as written>`.
-resolved_links() { # <markdown file> -> lines
-  link_targets "$1" | awk -v dir="$(cd "$(dirname "$1")" && pwd)" '
-    { t = $0; sub(/#.*/, "", t)
-      if (t == "" || t ~ /^[A-Za-z][A-Za-z0-9+.-]*:/) next
-      p = (substr(t, 1, 1) == "/") ? t : dir "/" t
-      n = split(p, a, "/"); k = 0
-      for (i = 1; i <= n; i++) {
-        if (a[i] == "" || a[i] == ".") continue
-        if (a[i] == ".." && k > 0 && o[k] != "..") { k--; continue }
-        o[++k] = a[i]
-      }
-      s = ""; for (i = 1; i <= k; i++) s = s "/" o[i]
-      print s "\t" $0 }'
+# nav_ran <check> -- 0 where the shared scan ran to its end; otherwise reports it under <check>.
+nav_ran() {
+  case "$NAV_OUT" in
+    *__NAV_RAN__*) return 0 ;;
+  esac
+  fail "$1" "the navigation scan did not run to the end (python3 said: $(printf '%s\n' "$NAV_OUT" | tail -1)) -- this check would examine nothing"
+  return 1
 }
 
 # ------------------------------------------------------------------ check 26
@@ -3057,59 +3220,59 @@ resolved_links() { # <markdown file> -> lines
 # command in it. Batch B31 found 24 command pages that linked no docs/workflow.md -- 19 linking
 # no workflow page at all, every one of dev-workflows' among them, and 5 only the BRD route's.
 # A page may link more (the BRD-route pages also link their route page); it must link this one.
-# POPULATION: docs/$DOC_CMD_DIR/*.md under each plugin of PLUGIN_RELS. VACUITY: no command page
-# under any of them fails, since the check would examine nothing. It sits outside the loop for
-# that guard, check 17's reason.
-# What it cannot see: whether the link sits where a reader looks for it (a See-also list) or in
-# a sentence that says something else.
+# A link is the navigation scan's (above): one in a fenced block, an HTML comment or a code span
+# is none. POPULATION: docs/$DOC_CMD_DIR/*.md under each plugin of PLUGIN_RELS. VACUITY: no
+# command page under any of them fails. It sits outside the loop for that guard, check 17's
+# reason. What it cannot see: whether the link sits where a reader looks for it.
 check_command_backlink() {
-  local root="$1" rel d f n=0 targets
+  local root="$1" rel f n=0 h
   for rel in $PLUGIN_RELS; do
-    d="$root/$rel/docs"
-    for f in "$d/$DOC_CMD_DIR"/*.md; do
-      [ -f "$f" ] || continue
-      n=$((n + 1))
-      targets=$(resolved_links "$f" | cut -f1)
-      grep -qxF -- "$d/workflow.md" <<<"$targets" \
-        || fail 26 "${f#$root/} does not link its plugin's workflow page ($rel/docs/workflow.md) -- a reader who lands on a command page needs the way to the diagram that shows where the command sits; add it to the page's See also"
-    done
+    for f in "$root/$rel/docs/$DOC_CMD_DIR"/*.md; do [ -f "$f" ] && n=$((n + 1)); done
   done
   [ "$n" -gt 0 ] || fail 26 "no command page under docs/$DOC_CMD_DIR/ of any plugin in PLUGIN_RELS -- this check would examine nothing"
+  [ "$HAVE_PY" = 1 ] || { note "check 26 not run: python3 not found"; return 0; }
+  nav_scan "$root"; nav_ran 26 || return 0
+  while IFS= read -r h; do
+    case "$h" in
+      B\ *) fail 26 "${h#B } does not link its plugin's workflow page (docs/workflow.md) -- a reader who lands on a command page needs the way to the diagram that shows where the command sits; add it to the page's See also" ;;
+    esac
+  done <<<"$NAV_OUT"
 }
 
 # ------------------------------------------------------------------ check 27
 # No relative link leaves its plugin. An installed plugin sits alone in Claude Code's plugin cache
 # (`cache/<marketplace>/<plugin>/<version>/`), with no repository root above it and no sibling
 # plugin beside it, so a link climbing out of plugins/<name>/ resolves on GitHub and in a checkout
-# and breaks for the user reading the installed copy. Batch B31 found 18: the plugin READMEs'
-# and getting-started pages' links to the repo-root README, and four links into a sibling
-# plugin's pages. Say the other plugin's page in words, link the plugin's own page that covers
-# it, or, on a getting-started page, which check 10 lets name the repository, use its URL.
-# POPULATION: check 1's pages -- every *.md under each plugin's docs/, and its README. A
-# root-relative target (`/x`) leaves the plugin too. Lexical, so it needs no file to exist.
-# MEASURED at B31 over every *.md under the plugins instead: the one further hit was an example
-# in product-workflows' idea-format reference showing a user's absolute image path, which
-# /idea rewrites -- correct content -- so the commands, agents and references stay out.
-# VACUITY: no page under any of them fails.
+# and breaks for the user reading the installed copy -- even one that climbs out and comes back
+# down into a directory of the plugin's own name, since the cache's directory above it is
+# `<plugin>/`, holding versions. So a target fails the moment a `..` takes it above the plugin's
+# directory, and a root-relative one (`/x`) fails outright. Batch B31 found 18: the plugin
+# READMEs' and getting-started pages' links to the repo-root README, and four links into a
+# sibling plugin's pages. Say the other plugin's page in words, link the plugin's own page that
+# covers it, or, on a getting-started page, which check 10 lets name the repository, use its URL.
+# POPULATION: every *.md under each plugin's docs/, and its README -- check 1's pages. MEASURED
+# at B31 over every *.md under the plugins instead: the one further hit was an example in
+# product-workflows' idea-format reference showing a user's absolute image path, which /idea
+# rewrites -- correct content -- so commands, agents and references stay out. VACUITY: no page
+# under any of them fails.
 # What it cannot see: a link that stays inside the plugin and is wrong (check 1's), a link in a
-# command, agent or reference file, a link in a file that is not markdown, and an absolute URL
-# to the repository's own tree, which works in the cache.
+# command, agent or reference file, a link in a file that is not markdown, and whether a
+# getting-started page's repository URL still names this repository in a fork.
 check_links_stay_in_plugin() {
-  local root="$1" rel base f n=0 line
+  local root="$1" rel n=0 h
   for rel in $PLUGIN_RELS; do
-    base="$root/$rel"
-    while IFS= read -r f; do
-      [ -n "$f" ] || continue
-      n=$((n + 1))
-      while IFS= read -r line; do
-        [ -n "$line" ] || continue
-        case "${line%%	*}/" in "$base"/*) continue ;; esac
-        fail 27 "${f#$root/} -> ${line#*	} leaves $rel -- an installed plugin sits alone in the plugin cache, so this link breaks for anyone reading the installed copy; name the page in words, link this plugin's own page, or, on getting-started.md, use the repository URL"
-      done < <(resolved_links "$f")
-    done < <({ find "$base/docs" -type f -name '*.md' 2>/dev/null
-               [ -f "$base/README.md" ] && printf '%s\n' "$base/README.md"; } | sort)
+    [ -f "$root/$rel/README.md" ] && n=$((n + 1))
+    n=$((n + $(find "$root/$rel/docs" -type f -name '*.md' 2>/dev/null | wc -l)))
   done
   [ "$n" -gt 0 ] || fail 27 "no docs page and no README under any plugin in PLUGIN_RELS -- this check would examine nothing"
+  [ "$HAVE_PY" = 1 ] || { note "check 27 not run: python3 not found"; return 0; }
+  nav_scan "$root"; nav_ran 27 || return 0
+  while IFS= read -r h; do
+    case "$h" in
+      E\ *) h="${h#E }"
+            fail 27 "${h%%	*} -> ${h#*	} climbs out of its plugin -- an installed plugin sits alone in the plugin cache, so this link breaks for anyone reading the installed copy; name the page in words, link this plugin's own page, or, on getting-started.md, use the repository URL" ;;
+    esac
+  done <<<"$NAV_OUT"
 }
 
 # ------------------------------------------------------------------ check 28
@@ -3121,95 +3284,37 @@ check_links_stay_in_plugin() {
 # A MENTION is `/<name>`, or `/<plugin>:<name>` where <plugin> is this plugin by directory or
 # declared name, in this edition's command form (CMD_FORM=trigger also reads `<name>:`), for a
 # <name> cmd_names lists -- resolved against that set, never parsed by shape -- standing as a
-# word: not inside a path (`docs/commands/design.md`, `<KEY>/design.md`, `epics/`). A fenced
-# block and an HTML comment are not read, since a link cannot be written in the one and a reader
-# sees neither the comment nor a click target there. A LINK is an inline link, or a reference
-# definition, whose target resolves to docs/$DOC_CMD_DIR/<name>.md, an anchor allowed.
+# word: not inside a path (`docs/commands/design.md`, `<KEY>/design.md`, `epics/`). It is read
+# from the navigation scan's prose (above), so not in a fenced block or an HTML comment, and a
+# LINK is that scan's, resolving to docs/$DOC_CMD_DIR/<name>.md, an anchor allowed.
 # POPULATION, the user's ruling at B31: every docs/*.md (the index, the workflow, roles,
-# getting-started and route pages) and every command page, its own command excepted. Reference
-# pages are not held: they name commands to say what reads a setting, and the B31 count there
-# (199 on 34 pages) was left as it stands. The plugin README is not held: check 15 holds it to
-# naming every command, and on this tree every README links each command it names. A command of
-# another plugin is not held either -- check 27 forbids the relative link it would need.
-# VACUITY: no page examined under any plugin fails, as does a scan that does not run to its end.
-# Without python3 the check prints a note and passes, as checks 12, 24 and 25 do.
-# What it cannot see: a mention whose link goes to the wrong command, a command named in words
-# ("the design command"), a reference page and the plugin README.
+# getting-started and route pages, and workflows-core's family map) and every command page, its
+# own command excepted. Reference pages are not held: they name commands to say what reads a
+# setting, and the B31 count there (199 on 34 pages) was left as it stands. The plugin README is
+# not held: check 15 holds it to naming every command, and on this tree every README links each
+# command it names. A command of another plugin is not held either -- check 27 forbids the
+# relative link it would need. VACUITY: no such page under any plugin fails, as does a scan that
+# does not run to its end.
+# What it cannot see, and where it fires on correct content: a link to the wrong command; a
+# command named in words ("the design command"); a reference page and the plugin README; a
+# mention in an indented code block, which it reads as prose; and a bare name a Claude Code
+# built-in shares (`/statusline`, `/feedback`, `/upgrade`), which it takes for the plugin's own
+# command -- link the plugin's page in the same sentence, as workflows-core's getting-started
+# page does.
 check_named_commands_linked() {
-  local root="$1" rel d f out h prog n=0 names declared
-  [ "$HAVE_PY" = 1 ] || { note "check 28 not run: python3 not found"; return 0; }
-  prog=$(cat <<'PYEOF28'
-import json, os, re, sys
-# argv: plugin dir, docs command dir, command form, plugin names (space-separated), command names
-# (space-separated); stdin: page paths. Prints `V <page>\t<name>` per named-but-unlinked command.
-base, cdir, form, pnames, cnames = sys.argv[1:6]
-cmds = [c for c in cnames.split() if c]
-plugs = [p for p in pnames.split() if p]
-docs = os.path.join(base, "docs")
-if cmds:
-    alt = "|".join(sorted((re.escape(c) for c in cmds), key=len, reverse=True))
-    palt = "|".join(sorted((re.escape(p) for p in plugs), key=len, reverse=True))
-    pref = r"(?:(?:" + palt + r"):)?" if palt else ""
-    MENTION = [re.compile(r"(?<![A-Za-z0-9_./>}~$-])/" + pref + r"(" + alt + r")(?![A-Za-z0-9_/-]|\.[A-Za-z0-9])")]
-    if form == "trigger":
-        MENTION.append(re.compile(r"(?<![A-Za-z0-9_./-])(" + alt + r"):"))
-LINK = re.compile(r"\]\(<?([^)>\s]+)>?(?:\s+\"[^\"]*\")?\)")
-REFDEF = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?([^>\s]+)>?", re.M)
-FENCE = re.compile(r"^[ \t]*(```|~~~)")
-for path in sys.stdin.read().split("\n"):
-    if not path or not cmds:
-        continue
-    with open(path, encoding="utf-8", errors="replace") as fh:
-        lines = fh.read().split("\n")
-    kept, infence = [], False
-    for l in lines:
-        if FENCE.match(l):
-            infence = not infence
-            continue
-        if not infence:
-            kept.append(l)
-    text = re.sub(r"<!--.*?-->", "", "\n".join(kept), flags=re.S)
-    own = None
-    if os.path.dirname(path) == os.path.join(docs, cdir):
-        own = os.path.basename(path)[:-3]
-    named = set()
-    for rx in MENTION:
-        named.update(m.group(1) for m in rx.finditer(text))
-    named.discard(own)
-    linked = set()
-    here = os.path.dirname(path)
-    for t in LINK.findall(text) + REFDEF.findall(text):
-        t = t.split("#", 1)[0]
-        if not t or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", t):
-            continue
-        r = os.path.normpath(os.path.join(here, t))
-        if os.path.dirname(r) == os.path.join(docs, cdir) and r.endswith(".md"):
-            linked.add(os.path.basename(r)[:-3])
-    for c in sorted(named - linked):
-        print(f"V {path}\t{c}")
-print("__CHECK28_RAN__")
-PYEOF28
-)
+  local root="$1" rel f n=0 h
   for rel in $PLUGIN_RELS; do
-    d="$root/$rel/docs"
-    declared=$(sed -nE 's/^[[:space:]]*"name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$root/$rel/.claude-plugin/plugin.json" 2>/dev/null | head -1)
-    names=$(cmd_names "$root/$rel" | tr '\n' ' ')
-    f=$(for h in "$d"/*.md "$d/$DOC_CMD_DIR"/*.md; do [ -f "$h" ] && printf '%s\n' "$h"; done)
-    [ -n "$f" ] || continue
-    n=$((n + $(printf '%s\n' "$f" | grep -c .)))
-    out=$(printf '%s\n' "$f" | python3 -c "$prog" "$root/$rel" "$DOC_CMD_DIR" "$CMD_FORM" "${rel##*/} $declared" "$names" 2>&1)
-    case "$out" in
-      *__CHECK28_RAN__*) : ;;
-      *) fail 28 "the scan of $rel did not run to the end (python3 said: $(printf '%s\n' "$out" | tail -1)) -- this check would examine nothing of it"; continue ;;
-    esac
-    while IFS= read -r h; do
-      case "$h" in
-        V\ *) h="${h#V }"; h="${h#$root/}"
-              fail 28 "${h%%	*} names $(cmd_ref "${h#*	}") but links no page of it -- link the first mention to $rel/docs/$DOC_CMD_DIR/${h#*	}.md, so a reader can go from the name to the page" ;;
-      esac
-    done <<<"$out"
+    for f in "$root/$rel/docs"/*.md "$root/$rel/docs/$DOC_CMD_DIR"/*.md; do [ -f "$f" ] && n=$((n + 1)); done
   done
   [ "$n" -gt 0 ] || fail 28 "no docs page under any plugin in PLUGIN_RELS -- this check would examine nothing"
+  [ "$HAVE_PY" = 1 ] || { note "check 28 not run: python3 not found"; return 0; }
+  nav_scan "$root"; nav_ran 28 || return 0
+  while IFS= read -r h; do
+    case "$h" in
+      N\ *) h="${h#N }"
+            fail 28 "${h%%	*} names $(cmd_ref "${h#*	}") but links no page of it -- link the first mention to docs/$DOC_CMD_DIR/${h#*	}.md, so a reader can go from the name to the page" ;;
+    esac
+  done <<<"$NAV_OUT"
 }
 
 # ------------------------------------------------------------------ selftest
@@ -4852,6 +4957,10 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "sed -i.bak '/(\.\.\/workflow\.md)/d' $c26 && printf '\n%s\n%s\n%s\n' '\`\`\`text' '[Workflow overview](../workflow.md)' '\`\`\`' >> $c26"
   expect_pass_after "a link to the workflow page written with ./ and an anchor passes" \
     "sed -i.bak 's|(\.\./workflow\.md)|(./../workflow.md#workflow-overview)|' $c26"
+  expect_pass_after "a reference definition to the workflow page is a link back" \
+    "sed -i.bak 's|\[Workflow overview\](\.\./workflow\.md)|[Workflow overview][wf26]|' $c26 && printf '\n[wf26]: ../workflow.md\n' >> $c26"
+  expect_fail "a link back in an HTML comment or a code span does not count" 26 \
+    "sed -i.bak '/(\.\.\/workflow\.md)/d' $c26 && printf '\n%s\n\n%s\n' '<!-- [Workflow overview](../workflow.md) -->' 'Written \`[Workflow overview](../workflow.md)\`.' >> $c26"
   expect_fail_msg "no command page under any plugin trips check 26's empty-scan guard" 26 "would examine nothing" \
     "for r in $PLUGIN_RELS; do rm -f \$r/docs/$DOC_CMD_DIR/*.md; done"
   expect_fail "a page link that climbs to the repository root is rejected" 27 \
@@ -4862,8 +4971,14 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '\nSee [its index](../../${two27##*/}/docs/README.md).\n' >> $g27"
   expect_fail "a root-relative link is rejected" 27 \
     "printf '\nSee [the index](/README.md).\n' >> $g27"
-  expect_pass_after "a link that climbs and comes back, a URL, a fenced link and a reference file's example pass" \
-    "printf '\n%s\n%s\n%s\n%s\n' 'See [the index](../../${PLUGIN_REL##*/}/docs/README.md) and [the site](https://example.com/x).' '\`\`\`text' '[root](${up27}README.md)' '\`\`\`' >> $g27
+  expect_fail "a link that climbs out of the plugin and back into a directory of its name is rejected" 27 \
+    "printf '\nSee [the index](../../${PLUGIN_REL##*/}/docs/README.md).\n' >> $g27"
+  expect_fail "a reference definition that leaves the plugin is rejected" 27 \
+    "printf '\nSee the [root guide][r27].\n\n[r27]: ${up27}README.md\n' >> $g27"
+  expect_fail "an HTML link that leaves the plugin is rejected" 27 \
+    "printf '\nSee <a href=\"${up27}README.md\">the root guide</a>.\n' >> $g27"
+  expect_pass_after "a URL, a link in a fence, a comment or a code span, and a reference file's example pass" \
+    "printf '\n%s\n%s\n%s\n%s\n%s\n' 'See [the site](https://example.com/x), and \`[root](${up27}README.md)\` as written.' '\`\`\`text' '[root](${up27}README.md)' '\`\`\`' '<!-- [root](${up27}README.md) -->' >> $g27
      printf '\n%s\n' 'An image the user links as [x](${up27}x.png) is copied in.' >> $PLUGIN_REL/$REF_DIR/gamma.md"
   expect_fail_msg "no docs page and no README under any plugin trips check 27's empty-scan guard" 27 "would examine nothing" \
     "for r in $PLUGIN_RELS; do find \$r/docs -name '*.md' -exec rm {} +; rm -f \$r/README.md; done"
@@ -4880,6 +4995,16 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_pass_after "a command page naming itself, and a mention in a fence, a comment or a path, pass" \
     "printf '\n%s\n' 'Run \`/alpha\` again.' >> $c26
      printf '\n%s\n%s\n%s\n%s\n%s\n' '\`\`\`text' '/alpha-two' '\`\`\`' '<!-- maintainers: /alpha-two -->' 'Written to \`<KEY>/alpha-two.md\`, \`docs/$DOC_CMD_DIR/alpha-two\` and \`/alpha/\`.' >> $g27"
+  expect_pass_after "a four-backtick fence quoting a three-backtick block hides its mentions" \
+    "printf '\n%s\n%s\n%s\n%s\n%s\n' '\`\`\`\`markdown' '\`\`\`text' 'Run /alpha-two.' '\`\`\`' '\`\`\`\`' >> $g27"
+  expect_fail_msg "a mention after a tilde fence holding a backtick line is read" 28 "$(cmd_ref alpha-two) but links no page" \
+    "printf '\n%s\n%s\n%s\n\n%s\n' '~~~text' '\`\`\`' '~~~' 'Then run \`/alpha-two\`.' >> $g27"
+  expect_fail_msg "a comment opener in a code span opens no comment" 28 "$(cmd_ref alpha-two) but links no page" \
+    "printf '\n%s\n' 'Write \`<!--\` to open a comment, then run \`/alpha-two\`.' >> $g27"
+  expect_fail_msg "a link written in a code span is no link" 28 "$(cmd_ref alpha) but links no page" \
+    "printf '\n%s\n' 'Run \`/alpha\`, written \`[x]($DOC_CMD_DIR/alpha.md)\` on the page.' >> $g27"
+  expect_fail_env "the trigger form reads a bare <name>: as a mention" 28 "CMD_FORM=trigger" \
+    "printf '\nRun alpha: first.\n' >> $g27" "alpha: but links no page"
   expect_pass_after "another plugin's qualified command is not held" \
     "printf '\nRun \`/${two27##*/}:alpha\`.\n' >> $g27"
   expect_fail_msg "no docs page under any plugin trips check 28's empty-scan guard" 28 "would examine nothing" \

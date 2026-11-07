@@ -86,7 +86,7 @@ The half you don't see is the **cost cross-check**: Claude Code's own reported c
 /workflows-core:statusline
 ```
 
-Claude Code ships its own built-in [`/statusline`](commands/statusline.md) command, so typing the bare form reaches that instead of this plugin's — always use the qualified form.
+Claude Code ships its own built-in `/statusline` command, so typing the bare form reaches that instead of [this plugin's](commands/statusline.md) — always use the qualified form.
 
 ## The other six commands
 
