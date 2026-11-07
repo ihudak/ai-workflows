@@ -2,7 +2,7 @@
 
 A documentation page makes claims: this button is called that, this endpoint takes those fields, this service talks to that one. **Evidence is what a claim rests on**, and this family treats it as a recorded thing rather than an assumption — because the alternative is a page that was right when somebody wrote it and has been quietly wrong ever since.
 
-This page explains what counts as evidence, what happens to a claim nobody could check, and how to walk a verification checklist by hand. The runnable version is the plugin's own `references/docs-audit/evidence-contract.md`.
+This page explains what counts as evidence, what happens to a claim nobody could check, and how to walk a verification checklist by hand. The runnable version is the plugin's own evidence-contract reference, listed on [References](references.md).
 
 ## What counts as evidence depends on who the page is for
 

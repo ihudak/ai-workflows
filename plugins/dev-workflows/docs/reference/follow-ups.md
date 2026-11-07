@@ -11,10 +11,9 @@ Plain markdown, in a plain checklist:
 
     - [ ] <one imperative line naming the out-of-scope action> — <why it is out of scope>
 
-No effort symbols, no priority glyphs, no tags, no dates. **That is a simplification, not an
-omission**: this used to render an Obsidian-Tasks line, with a Fibonacci effort checkbox and tags
-reused from a vault's own tag index, because it was written into a vault. It goes into the specs repo
-now, where none of that renders and all of it is noise.
+No effort symbols, no priority glyphs, no tags, no dates. **That is deliberate, not an
+omission**: a follow-up goes into the specs repo, where effort checkboxes and tags would not
+render and would be noise.
 
 Where a follow-up refers to something the run already wrote, the line links it rather than
 summarising it — a summary in two places is one that drifts in one of them.
@@ -31,8 +30,7 @@ Nothing is ever written into your working directory, which may be a code reposit
 **The run carries `specs_git: misrooted` → report-only too**, whether or not a folder resolved: `$SPECS_PATH` is
 misplaced, so nothing is written under it, and the notice says that is the reason.
 
-That is the whole ladder. It used to have four rungs, the first of which was a vault; with no vault
-and no import, two of them described places that no longer exist.
+That is the whole ladder.
 
 ## A withdrawn follow-up
 
@@ -42,9 +40,9 @@ One command edits a follow-up after writing it: `/conformance`, when a *fix the 
 
 The same command writes one line the duplicate check below would skip: when the PE confirms a Dev's *fix the code* decision whose follow-up is no longer open — ticked, never written because it was cancelled at the Epic run's preview, or equal to a line the PRD's own record carries as `withdraws:`, which `/implement` would skip — the PRD run queues a new line ending `— confirmed: <PRD-KEY>/[DD#n]`. A line the Dev's unmerged `conformance/` branch holds open is not re-queued, since it arrives with that branch. A line only a session branch holds is one the PRD run cannot see, so it is re-queued, and the two stand side by side once that branch merges. The PE's confirmation is a new request for that change, so a ticked line naming it does not block it; a line already carrying the same `— confirmed:` suffix does, so a re-run does not write it twice.
 
-## What no longer becomes a follow-up
+## What never becomes a follow-up
 
-The three chores this emitter mostly used to carry are gone, so do not go looking for them: *paste
+Three chores are never emitted, so do not go looking for them: *paste
 the PRD into the tracker*, *paste the release note into the tracker*, and *re-import the increment*. No command
 performs a round-trip, so none of the three is ever emitted.
 

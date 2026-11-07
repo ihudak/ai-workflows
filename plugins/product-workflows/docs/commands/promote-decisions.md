@@ -14,7 +14,7 @@ The product architect, after [`/harvest-decisions`](harvest-decisions.md) has bu
 
 - `--reconsider` proposes records marked `declined` or `rejected` again.
 - `--max <n>` caps each shortlist (default 10).
-- Run flags (`workflows-core:run-flags`): `--skip-feedback` and `--enforce-model`. The command emits no cost entry, so `--skip-costs` does not apply.
+- Run flags: `--skip-feedback` and `--enforce-model`. The command emits no cost entry, so `--skip-costs` does not apply.
 
 ## How it runs
 
@@ -72,4 +72,4 @@ A failing repository test, or a mark the script refuses, stops it before the com
 - [`/harvest-decisions`](harvest-decisions.md) — builds the records this command promotes.
 - [`/create-ard`](create-ard.md), [`/specify`](specify.md) and `/dev-workflows:design` — ground on the records, and skip one once its ADR is accepted.
 - [Architecture knowledge base](../workflow.md#architecture-knowledge-base) — the whole loop, from merged ARDs to organisation ADRs and back into grounding.
-- `workflows-core:architecture-promotion` — the procedure; `workflows-core:architecture-kb` — the record format.
+- The shared `architecture-promotion` and `architecture-kb` references, listed on the companion `workflows-core` plugin's References page — the procedure, and the record format.

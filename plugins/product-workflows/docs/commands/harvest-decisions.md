@@ -23,7 +23,7 @@ The Product Architect, whenever ARDs have merged since the last harvest — [`/c
 
 ## What it produces
 
-`$SPECS_PATH/architecture/`: a `decisions/<id>.md` record per `[AD#N]` (id `<KEY>-AD<N>`), an `index.yaml` catalog and a `README.md`, in the format `workflows-core:architecture-kb` sets. Each record carries the decision's **Binds**, **Prevents**, **Rule** and **Alternatives** verbatim, its status (`accepted`, `superseded`, `withdrawn`), the designs that apply it and every `- ARD deviation:` line its own PRD's folder records against it. A later ARD of another PRD replaces a record with `**Supersedes:**`, and the next harvest marks the record superseded; a record of the same PRD changes only by refining the ARD it came from. Records are generated: to change one, refine its ARD and harvest again. Nothing is ever deleted.
+`$SPECS_PATH/architecture/`: a `decisions/<id>.md` record per `[AD#N]` (id `<KEY>-AD<N>`), an `index.yaml` catalog and a `README.md`, in the shared architecture knowledge-base format. Each record carries the decision's **Binds**, **Prevents**, **Rule** and **Alternatives** verbatim, its status (`accepted`, `superseded`, `withdrawn`), the designs that apply it and every `- ARD deviation:` line its own PRD's folder records against it. A later ARD of another PRD replaces a record with `**Supersedes:**`, and the next harvest marks the record superseded; a record of the same PRD changes only by refining the ARD it came from. Records are generated: to change one, refine its ARD and harvest again. Nothing is ever deleted.
 
 ## Gates
 
@@ -43,4 +43,4 @@ The first shows what would change and every problem (an unparseable decision, a 
 - [`/create-ard`](create-ard.md) — grounds on the live records, and writes the `Supersedes` the next harvest applies.
 - [`/specify`](specify.md) and `/dev-workflows:design` — ground on the live records too.
 - [Architecture knowledge base](../workflow.md#architecture-knowledge-base) — the whole loop, from merged ARDs to organisation ADRs and back into grounding.
-- `workflows-core:architecture-kb` — the format: identity, statuses, citations and every problem kind with its fix.
+- The shared `architecture-kb` reference, listed on the companion `workflows-core` plugin's References page — the format: identity, statuses, citations and every problem kind with its fix.

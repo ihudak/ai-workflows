@@ -1,6 +1,6 @@
 # Grounding sources
 
-The family's authoring commands read more than the folder they were given: the shipped product docs, the organisation's architecture repository, the team's own harvested decisions, the mounted code, and — for `/prd-ground` — exported design frames. This page lists every one of those sources in one place: what it feeds, which commands read it, what turns it on, the line a run prints about it, and how to turn it off. Every source is **read-only** and **advisory** — a miss turns that source off with a reason and never stops the run — except where a command's own page says a repository is required. The shared references under `references/` are the authority; each command's page says how it uses what it reads.
+The family's authoring commands read more than the folder they were given: the shipped product docs, the organisation's architecture repository, the team's own harvested decisions, the mounted code, and — for `/prd-ground` — exported design frames. This page lists every one of those sources in one place: what it feeds, which commands read it, what turns it on, the line a run prints about it, and how to turn it off. Every source is **read-only** and **advisory** — a miss turns that source off with a reason and never stops the run — except where a command's own page says a repository is required. The shared grounding references ([References](references.md)) are the authority; each command's page says how it uses what it reads.
 
 ## At a glance
 
@@ -20,21 +20,21 @@ The status lines are printed in the command's configure or plan step; the off sw
 - **Turned on by:** `$DOCS_PATH`, default `/workspace/docs`, when it is a readable directory with at least one markdown file; `--docs <path>` points a run at another root. Retrieval uses a `qmd` index where one covers the root, else keyword search.
 - **Status line:** `docs grounding: ON <root> (retrieval: …)` or `docs grounding: OFF (<reason>)`.
 - **Off switch:** `--no-docs`.
-- **Not used by** `/document`, which treats `$DOCS_PATH` only as a hint for which docs repository to write, nor by `/brd-split`. Reference: `references/docs-grounding.md`.
+- **Not used by** `/document`, which treats `$DOCS_PATH` only as a hint for which docs repository to write, nor by `/brd-split`.
 
 ## Architecture repository
 
 - **Feeds:** the organisation's technology radar, standards, principles, patterns and accepted ADRs. `architecture-grounder` returns what binds the work and what it contradicts — a decision or standard it breaks, a hold or retire ring, a technology the radar does not list.
 - **Turned on by:** `$ARCHITECTURE_REPO_PATH` alone — nothing scans for a clone. The root must hold a catalog, a radar file or an ADR folder; a set but invalid value turns grounding off with a reason naming it. The clone is never fetched, pulled or switched.
 - **Status line:** `architecture grounding: ON <root> (<branch> @ <sha>, <date>)` — with `; uncommitted changes`, `; HEAD on no remote branch — links omitted` or `; last commit <N> days old — refresh the clone` where they apply — or `architecture grounding: OFF (<reason>)`.
-- **Off switch:** `--no-arch`. Reference: `references/architecture-grounding.md`.
+- **Off switch:** `--no-arch`.
 
 ## Team decision records
 
 - **Feeds:** the team's own architecture decisions — one record per `[AD#N]` of every merged ARD, under `$SPECS_PATH/architecture/` — to the same `architecture-grounder` as a second, team root. A run does not re-read the decisions it already inherits from its own ARD, and skips a record whose decision has been promoted to an accepted organisation ADR or marked as covered by one; it cites that ADR instead. The `product-workflows` Workflow overview page draws how `/harvest-decisions` builds the records and `/promote-decisions` promotes them.
 - **Turned on by:** `$SPECS_PATH/architecture/` holding `index.yaml` or a record under `decisions/`. It is resolved independently of `$ARCHITECTURE_REPO_PATH`, so it is read where no architecture repository is set.
 - **Status line:** `team decisions: ON <specs>/architecture (<N> live records)` — `; differs from <default-ref>` when your working copy of the records is not the default branch's — or `team decisions: OFF (<reason>)`.
-- **Off switch:** `--no-arch`, which turns off both architecture roots. References: `references/architecture-grounding.md`, `references/architecture-kb.md`.
+- **Off switch:** `--no-arch`, which turns off both architecture roots.
 
 ## Mounted code
 
@@ -55,4 +55,4 @@ The status lines are printed in the command's configure or plan step; the off sw
 
 - **Feeds:** what an exported design shows — `design-grounder` reads each frame set and writes `[DG#n]` findings beside `/prd-ground`'s code findings.
 - **Turned on by:** a frame set under the resolved folder's `design/` subdirectory, one subdirectory per set, carrying the index `/frames` builds; no `design/` folder means the pass is skipped and the run says so.
-- **Off switch:** `--no-design`. Reference: `references/grounding-format.md`.
+- **Off switch:** `--no-design`.

@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.2.6] — 2026-11-07
+
+### Fixed
+- The getting-started page no longer says what it "used to say", and the agents page describes the untrusted-content block in words rather than by another plugin's file path (batch B30: DQC-B6).
+
 ## [1.2.5] — 2026-10-29
 
 ### Fixed

@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.1] — 2026-11-07
+
+Batch B30 of the 2026-10-26 review. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The docs pages speak to the person using the plugin, not to its maintainers.** The design-decision ids (`D17`, `D20`, `D23`, `D25`) and every `§` citation and `<plugin>:<name>` reference id on the README and `docs/` pages are now the rule in plain words — `/docs-serve` has no review gate because it writes no artefact, where every portal command that writes one passes a review — or a pointer to the plugin's own References page. History ("the third increment of the marketplace split", "after the split") is gone; the environment page's `grep` recipe is now its answer; the hooks page cites no script line numbers. `check-docs.sh` check 25 now fails a page that cites a section by `§`, names a design-decision id or cites a reference by its `<plugin>:<name>` id. (DQS-B7, DQS-B8, DQW-B10)
+- The Session cost page defines a **ceded run**, and each command page's run-flag paragraph links to it (DQW-B10).
+- **Release notes no longer presume the environment the plugin was extracted from.** `/document`'s page said release-notes pages are "generated from the tracker by the docs team's own automation", and `/release-notes`' page that "the docs automation adds" the `{{#internal-note}}` wrapper. The pages now say the draft is the body only and whatever publishes it adds any identifier or wrapper it needs, and the same reason is reworded in `/document`, `/release-notes`, `release-notes-writer`, `doc-planner`, `release-note-types` and `/release-notes`' closing reminder; what each of them does is unchanged (DQW-B11).
+
 ## [1.35.0] — 2026-11-06
 
 DOC-D-G5. Needs nothing from the other plugins' releases.

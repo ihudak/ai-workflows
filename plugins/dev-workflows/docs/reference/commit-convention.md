@@ -73,6 +73,6 @@ the one writing the subject the scan will look for.
 
 ## See also
 
-- `workflows-core:implementation-format` — the record `/implement`
+- The shared `implementation-format` reference, listed on the companion `workflows-core` plugin's References page — the record `/implement`
   writes, the scan that supplements it, and the different boundary each consumer takes.
 - [`/implement`](../commands/implement.md) — where the branch and the handover happen.

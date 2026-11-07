@@ -22,7 +22,7 @@ Accessibility findings are reported in a machine-checkable vocabulary: each rule
 - **`python3` 3.11 on your `PATH`.** Before its review passes, the subagent runs this plugin's own heuristic scanner, `references/guidelines/check_guidelines.py`, over the code it reviews; its findings come from the bundled guidelines, not from your repository's tooling.
 - Nothing else — no `$SPECS_PATH`, no branch, no specs-repo preflight.
 
-The accessibility tooling below is **optional**. Nothing is installed, and a repo that configures none of it is reviewed exactly as it was before the step existed.
+The accessibility tooling below is **optional**. Nothing is installed, and a repo that configures none of it is reviewed exactly as if the step were not there.
 
 ## What it produces
 

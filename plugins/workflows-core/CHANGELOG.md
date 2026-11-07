@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.8] — 2026-11-07
+
+Batch B30 of the 2026-10-26 review. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The docs pages speak to the person using the plugin, not to its maintainers.** Roles and phases opens with the lifecycle phases and what each means, where it sent the reader to a section of `cost-emission.md`; the environment page drops the variable names only an inventory check meets, and says in one sentence per plugin which reads what; the getting-started, Session cost and `/frames` pages lose their change history; the References page keeps its file count, its arithmetic in an HTML comment, and says what loading by part means for a reader without the build's rules; `/statusline` says what its confirmation step does; the agents page says "review model" for the `review_model` field; and `§` citations and reference ids are plain words. `check-docs.sh` check 25 now fails a page that cites a section by `§`, names a design-decision id or cites a reference by its `<plugin>:<name>` id. (DQS-B8, DQC-B4, DQC-B5, DQC-B6)
+- The Session cost page defines a **ceded run** and a **replaying run**, and the command pages that mention one link to it (DQW-B10's class).
+
 ## [1.78.7] — 2026-11-06
 
 The re-review of 1.72.1 (to-fix PR9), whose fix was pushed after that release merged and never reached `main` until now. Needs nothing from the other plugins' releases.

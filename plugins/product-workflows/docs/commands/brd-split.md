@@ -54,14 +54,14 @@ already made mandatory for carving a root.
   to group, whether the run is a no-op or is there to resolve a standing empty child or reconcile a child out of step. **That is the
   one run on which the argument is otherwise free, and it is given a meaning there rather than a
   flag being added for it** — on a fully allocated root it selects the sibling re-cut (below). On a slice it stays optional and seeds only the
-  walk's per-row recommendation; omitted there, the command behaves exactly as it did before the
-  argument existed. It is prose and is never validated against anything — what it means is settled
+  walk's per-row recommendation; omitted there, the walk runs as it does for any run with no
+  instruction. It is prose and is never validated against anything — what it means is settled
   against this BRD's own rows in Phase 1.5. The three run flags below are stripped only where they
   are written before the key, or form a trailing run after the instruction, at the very end of the
   argument list; a flag written right after the key, with no such trailing run reaching back to it,
   is instruction text.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 8's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 8's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; Phase 1.5's reading and grill and Phase 4's walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 8's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 8's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; Phase 1.5's reading and grill and Phase 4's walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## What an instruction does
 
@@ -90,8 +90,8 @@ slice is ground, which is why grounding runs next. It is the slice's own walk �
 that resolves a blocked row's disposition, with the finding already in hand.
 
 **Nothing is invented for a row it could not place.** That row is left unclustered and walked with no
-recommendation in Phase 4 — the same fate a row nothing clusters with already had, and the same
-picker a run with no instruction has always shown. `slices.md` records the instruction verbatim
+recommendation in Phase 4 — the same fate a row nothing clusters with has, and the same
+picker a run with no instruction shows. `slices.md` records the instruction verbatim
 alongside how it was read.
 
 **On a `full` run whose ledger is already fully allocated, and which finds at least one row it can move, it
@@ -111,14 +111,13 @@ building this, so the parent re-points against a refusal the row's owner wrote d
 commitment: a row A still intends to build reads `covered-here` and cannot be moved, and a row A never took
 does not read `covered-by: <A>` here to begin with. That is what makes this the one case in which
 `/brd-split` re-allocates a row already carrying a fate, apart from the key repair a removal performs
-(Phase 4.5) ([`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §3.2).
+(Phase 4.5).
 
 **The receiver has not been interviewed.** An eligible receiver is a child of this same parent holding no
 `decisions.md` with a `[VD#n]` or `[CD#n]` record in it and no `interview/round-*.md` on disk, and
 missing neither its inventory nor its ledger — or a slice this same run carves, which has none of these
 by construction. A register that exists and holds decisions is closed to added scope, since adding
-scope is neither of the two causes that may reopen a decision
-([`decision-register-format.md`](../../references/decision-register-format.md) §4); and a child missing
+scope is neither of the two causes that may reopen a decision; and a child missing
 a file is never reconciled, so it could never take the row. Being interviewed disqualifies a
 **receiver** and never a **donor**, so an uninterviewed donor stays eligible for every other row; what
 excludes it is a per-row clause instead — **a row's own donor is never that row's receiver**, so a standing
@@ -145,7 +144,7 @@ indistinguishable from an instruction the command failed to parse.
 **Nothing travels with the row.** The donor ground it before deferring it, so a `[CG#n]` or `[DG#n]` in the
 donor's grounding files may cite a `[BR#n]` it no longer owns: those findings cannot move, because an id is
 assigned once and never renumbered, and they cannot be inherited either, because a finding carried in from
-an earlier run is unverified by definition (`workflows-core:grounding-format` §8). The receiver re-derives
+an earlier run is unverified by definition. The receiver re-derives
 against the same pins, at the cost of one row's grounding. The donor's decisions stay too, and stay true —
 a `[VD#n]` or a frozen `[CD#n]` about deferring the row records *the donor's refusal to build it*, which the
 move acts on rather than reverses. The run **reports** every decision in the donor's register whose
@@ -176,7 +175,7 @@ declaration.
 | Phase 4 Step 1 — the bulk offer | on an ordinary run, fires on ≥2 offerable rows where **one** slice stands, or where **several** do and every offered row is in a confirmed group this run keyed (below) | fires where ≥2 rows are still `unallocated` and not placed on another disposition by the instruction; writes `covered-here`, and carries the marker the per-row picker already carries |
 | Phase 4 Step 2R — the re-cut walk | runs **in place of** the walk above on a fully allocated ledger an instruction found a re-cuttable row on | never — the candidate set is built in `full` mode only |
 | Phase 4.5 — resolve standing empty children | runs | skipped — a slice has no children |
-| `rejected: [DEF#n]` resolves in | this BRD's own defect log | the **parent's** log, one hop ([`brd-format.md`](../../references/brd-format.md) §4) |
+| `rejected: [DEF#n]` resolves in | this BRD's own defect log | the **parent's** log, one hop |
 | Phase 7 — next steps | ground each child that **gained a row this run**, never every non-empty one — *Ground now* runs it here, after the pull request merges | **the route does not end here** — [`/brd-interview`](brd-interview.md) on this slice, Recommended; *Stop here* is the other option, not the only one |
 | Announced? | no — the ordinary case | yes, `BRD_SPLIT_ON_SLICE`, a **notice, not a stop**, at Phase 0 and again in the final report |
 
@@ -184,20 +183,18 @@ A slice's walk offers no `covered-by`, and the reason is about **who writes** it
 a slice may carry one. On a slice the disposition names a **sibling under the same parent, or that
 parent** — never a child, since no child can exist below a slice — only its Epics — and it records an
 **orphan row**: a ledger row for a `[BR#n]` this slice no longer claims, whose claim the **parent's**
-own walk withdrew. **Two routes reach that one state — the first two of the three routes
-[`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §2 names, the only two that
+own walk withdrew. **Two routes reach that one state — the only two that
 write `covered-by` — and neither is a second kind of row.** On the
 first the claim was never more than provisional: Phase 3 writes a child's `claims:` provisionally, and
 where Phase 4 settles a claimed requirement elsewhere the claim and the copied inventory row are
 withdrawn while the ledger row stays and takes that walk's terminal disposition. On the second the
 claim was committed by an earlier run and then deferred by the slice itself, and a re-cut moved it to a
-sibling — the same withdrawal, over a row that already carried a fate
-([`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §2, §3, §3.2). Either way
+sibling — the same withdrawal, over a row that already carried a fate. Either way
 the ledger row stays: a ledger row is never deleted. Every row a
 slice's own walk stands on is a row that slice claims, so there is nothing for it to delegate. The
 walk states that reason before its first row rather than presenting a shorter list without
 explanation. **The cap is on nesting, not on allocation**: a slice whose rows could never leave
-`unallocated` could never become PRD-eligible (§5), which is the deadlock the coverage ledger exists
+`unallocated` could never become PRD-eligible, which is the deadlock the coverage ledger exists
 to prevent.
 
 ## How it runs
@@ -249,9 +246,9 @@ allocated ledger satisfies the front of two of them and only one is the run the 
   step reachable by the one command that writes a slice's claims.
 - **The ordinary run** — anything else: Phases 2–6 as written, in whichever mode Phase 0 resolved.
 
-**The re-cut branch and the reconcile branch were each added for the same reason.** Deciding the no-op on the ledger alone made a
+**The re-cut branch and the reconcile branch exist for the same reason.** Deciding the no-op on the ledger alone would leave a
 standing empty child, and a child a stopped carve left out of step, unreachable in every run after the one that left it so; deciding it before the
-candidate set was built would have swallowed the re-cut, whose starting state is indistinguishable
+candidate set was built would swallow the re-cut, whose starting state is indistinguishable
 from a no-op's until that set exists. The decision is taken in **both** run modes, so a fully allocated
 slice reaches it exactly as a parent does — `allocate-only` simply satisfies the other parts by
 construction, since no child exists or can be created below a slice and the candidate set is built in
@@ -287,8 +284,7 @@ reads was already independently verified by `/prd-ground`'s own agents.
   does not.
 - **Nothing more, at either level.** A key that resolves to a **slice** does not stop the run; it
   sets `allocate-only` (see "Two modes" above) and emits the `BRD_SPLIT_ON_SLICE` notice. What the
-  one-level cap forbids is creating anything below a slice but its Epics
-  (`workflows-core:addressing` §6): a slice of a slice would inherit
+  one-level cap forbids is creating anything below a slice but its Epics: a slice of a slice would inherit
   `brd/source/` and a requirement defect log from a parent that holds neither, so its inventory
   header would name a path that does not exist.
 - **A specs checkout not behind for the BRD.** Once the folder resolves and the specs-repo
@@ -320,8 +316,8 @@ reads was already independently verified by `/prd-ground`'s own agents.
   `claims:` and the parent's ledger, and tells the two causes apart — a slice claiming nothing gets
   the empty-inventory remedy.
 - **On a slice: there is grounding to verify.** Two presence tests run before the count below,
-  because a count is vacuously satisfied by an empty set and this gate once shipped as the count
-  alone — a BRD with two indexed frame sets and no design grounding at all passed it, and its
+  because a count is vacuously satisfied by an empty set — a BRD with two indexed frame sets and no
+  design grounding at all would pass it, and its
   slices could reach build with their designs never reconciled. A `code-grounding.md` that is on
   main but records no `[CG#n]` stops with `BRD_SPLIT_NO_FINDINGS`. Where the folder's **design/**
   holds any frame set, `design-grounding.md` must itself be on the default branch — the run
@@ -337,9 +333,9 @@ reads was already independently verified by `/prd-ground`'s own agents.
   on file stops the run with `BRD_SPLIT_UNVERIFIED: N findings have no verifier verdict — run
   /product-workflows:prd-ground first.`
 - **On a slice: every finding block is well-formed.** The finding record's field set is closed to
-  the ones `workflows-core:grounding-format` §2 defines plus `outcome` and `notes`. A block carrying
+  the finding record's own fields plus `outcome` and `notes`. A block carrying
   any other key stops the run with `BRD_SPLIT_MALFORMED_FINDING`, naming each finding and key. The
-  keys that actually occur are the verifier's own return fields — `own_verdict` above all, with `control_outcome` beside it since the record gained a `control` field. `own_verdict` is a field the verifier *returns* to its caller, which
+  keys that actually occur are the verifier's own return fields — `own_verdict` above all, with `control_outcome` beside it. `own_verdict` is a field the verifier *returns* to its caller, which
   leaves a block that carries it stating two verdicts at once while `verdict` is the one every
   consumer reads. The verified-outcome test above cannot catch it, because such a block does carry
   an outcome; the repair is to remove the offending key by hand, not to re-derive the corpus.
@@ -351,7 +347,7 @@ reads was already independently verified by `/prd-ground`'s own agents.
   a coverage ledger nor an inventory, and no `prd.md` the idea-route refusal could act on, also runs
   in this mode and stops the same way; it is no container, and `/brd-intake` refuses to re-run over
   it, so its stop names a fresh intake under a new key instead — and, where the folder holds an
-  `idea.md` and no `prd.md` (an idea handed off before the kind prefixes), also
+  `idea.md` and no `prd.md` (an idea in a legacy, unprefixed folder), also
   [`/create-prd`](create-prd.md) on the same key, which accepts the folder and writes the `prd.md`
   that turns a re-run into the idea-route refusal above.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.
@@ -362,8 +358,7 @@ reads was already independently verified by `/prd-ground`'s own agents.
 ## What it produces
 
 Under the resolved BRD folder — `$SPECS_PATH/specifications/BRD-<BRD-KEY>-<slug>/` for a root
-BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
-([addressing](../reference/references.md) §2, §6):
+BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
 
 - `coverage-ledger.md` — updated so no row remains `unallocated`: each row now reads
   `covered-by: <SLICE-KEY>`, `deferred-to: <this BRD>`, `rejected: [DEF#n]`, or
@@ -373,12 +368,11 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
   parent's row written first, so a run interrupted between the two leaves the parent pointing one hop
   at the receiver rather than a second hop through the donor. No row returns to `unallocated` on
   either ledger, and no ledger row is ever deleted.
-- `slices.md` — written in the layout
-  [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §7 fixes: frontmatter
+- `slices.md` — written in a fixed layout: frontmatter
   `kind: slices` and `key:`, then one heading per block type in a fixed order — structural only:
   no script parses it, [`/brd-package`](brd-package.md) reads the slice keys under `## Slices`, and
-  every other reader reads the blocks as prose. A file written before this layout existed, with no such
-  frontmatter, is left in its own layout by every in-place edit and only rewritten in this layout by
+  every other reader reads the blocks as prose. A file with no such
+  frontmatter, written by an earlier release, is left in its own layout by every in-place edit and only rewritten in this layout by
   a full run. One block per confirmed slice (its key, its folder,
   and the rationale that grouped its rows: what in the instruction placed it); one block per row deferred this run; one block for the
   Phase 4 Step 1 bulk offer where it fired, naming what it wrote and what was held back; and, when the run
@@ -410,8 +404,7 @@ In `allocate-only` mode the run writes exactly the two files above, `coverage-le
   parent and its claimed `[BR#n]` rows; `brd/brd-inventory.md`, the claimed rows copied verbatim
   from this BRD's inventory under a header naming the parent's source document, every
   `source_anchor` in it still resolving against the parent's files — its `brd/source/`,
-  `brd/source-external/` or `brd/brd-figures.md`, by the anchor's form
-  ([`brd-format.md`](../../references/brd-format.md) §2.1); and its own `coverage-ledger.md` with
+  `brd/source-external/` or `brd/brd-figures.md`, by the anchor's form; and its own `coverage-ledger.md` with
   every row `unallocated`. The claim list is **provisional** until the walk ends and Phase 4's Step 3
   reconciles every standing child against this BRD's ledger — a run cancelled before that leaves
   the three files provisional, [`/prd-ground`](prd-ground.md) refuses such a slice, and the next run
@@ -431,8 +424,7 @@ In `allocate-only` mode the run writes exactly the two files above, `coverage-le
   are then allocated by `/brd-split` run on the child itself, in `allocate-only` mode, which is what
   makes the child PRD-eligible. The same requirement carries a fate at both levels, saying two
   different things: `covered-by: <CHILD-KEY>` here records **which** BRD owns it, and the child's own
-  row records **what that BRD decided to do with it**
-  ([`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §3). A slice whose
+  row records **what that BRD decided to do with it**. A slice whose
   every row ends up resolved elsewhere is either removed or kept empty with a recorded reason
   (Phase 4.5).
 
@@ -534,7 +526,7 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   quoted from the two ledgers rather than asserted, the receiver Phase 2 fixed, and every decision in
   the donor's register whose `evidence` touches the row. The picker is two options — re-point, or
   leave it with the donor — and an answer the step cannot use falls to the second, the answer that
-  writes least and changes nothing. §4's allocation gate does **not** bear on any of this: a candidate
+  writes least and changes nothing. The allocation gate does **not** bear on any of this: a candidate
   already carries a terminal disposition on both ledgers, so a run that ends with every candidate left
   where it was is a complete run rather than a stalled one. **There is no no-receiver stop, and adding
   one would be wrong.** A candidate set with no eligible child standing is not a failure — Phase 3 can
@@ -568,8 +560,8 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   recorded that it will not build it, and never to `unallocated`, which `/brd-split` never writes onto
   a row already carrying a fate — so a removal never reopens the allocation gate. Every such write lands **before** the deletion, so an
   interrupted run leaves an empty folder still on disk and every reading accurate, rather than a key
-  naming a folder that is gone. This repair became reachable with the re-cut, which is what made a
-  child that a ledger still names able to end a run claiming nothing; where the read finds no such
+  naming a folder that is gone. This repair matters only after a re-cut, which is what lets a
+  child that a ledger still names end a run claiming nothing; where the read finds no such
   row nothing extra is written, which is every removal on a tree no re-cut has touched.
 - **No-op on a fully-allocated ledger, with three exceptions.** Re-running `/brd-split` once every row
   already has a disposition changes nothing **unless** a child is standing empty, in which case
@@ -618,7 +610,7 @@ next-step offer names [`/prd-ground`](prd-ground.md) on **each child that gained
 the slices this run keyed and still claiming a row after the empty-child phase, and any child that
 already stood which the walk newly resolved a row to or Phase 4's Step 3 added a row to — once
 this run's deliverables reach the specs repo's default branch — the `<merge-clause>` placeholder
-(`workflows-core:next-phase-offer`) resolves that, since a no-op run, a reconcile-path run that wrote nothing, and a declined handoff open no
+resolves that, since a no-op run, a reconcile-path run that wrote nothing, and a declined handoff open no
 pull request to wait on. The offer says which of three cases each child is, because only one of them
 is a re-run: a slice keyed this run and a standing child nobody ever ground are each a first pass,
 while a standing child that is **already** ground needs `/prd-ground` again — the row arrived after
@@ -640,7 +632,7 @@ split then finishes as it always does — its cost entry, its session commit, it
 and rebase included, and asks again if it finds none. Then it runs
 [`/prd-ground`](prd-ground.md) once per chosen child, one after another, each a complete run with
 its own pull request in that child's folder and its own cost entry under that child's key. Each grounding run asks its own questions — the repository it cannot find, its handoff, its next step — and a *Stop here* or *Cancel* there, its handoff's *Cancel* included, ends the children not yet ground, while *Just write the files* at its handoff lets the next child run; the split tells you so before the first run. *Ground
-each child later* names the command and runs nothing, as this phase always did; on an outcome that
+each child later* names the command and runs nothing; on an outcome that
 is neither an open pull request nor nothing to commit with the children's files already on the default branch — a declined handoff, no remote, a failed push, a pull request not opened, or nothing to commit while those files are not on the default branch yet — *Ground now* is not offered,
 and the run says what has to happen first.
 
@@ -648,19 +640,8 @@ and the run says what has to happen first.
 
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
-- `workflows-core:addressing` — the `<BRD-KEY>` grammar and folder
-  resolution this command uses by name (`read-key` for its address, `key-valid` for a slice key it mints, `resolve-address`), including how a slice
-  nests inside its parent and why that nesting — and only the nesting — is capped at one level
-  (§3).
-- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the authority for
-  the ledger row shape, the six dispositions, the allocation gate this command enforces, the
-  PRD-eligibility rule a slice's `covered-here` rows satisfy, and §3.2's re-cut: what makes a row
-  movable, which rows change and in what order, who may receive one, and what the mechanism does not
-  relax.
-- [`decision-register-format.md`](../../references/decision-register-format.md) — §4's two causes for
-  reopening a decision, which is why a sibling holding decisions cannot receive a re-pointed row.
-- `workflows-core:grounding-format` — §8's four verification outcomes,
-  which this command's Phase 0 gate depends on.
+- [References](../reference/references.md) — the plugin's own formats this command applies: the coverage ledger format (the authority for the ledger row shape, the six dispositions, the allocation gate this command enforces, the PRD-eligibility rule a slice's `covered-here` rows satisfy, and the re-cut: what makes a row movable, which rows change and in what order, who may receive one, and what the mechanism does not relax) and the decision register format (the two causes for reopening a decision, which is why a sibling holding decisions cannot receive a re-pointed row).
+- The shared `addressing` and `grounding-format` references, listed on the companion `workflows-core` plugin's References page — the `<BRD-KEY>` grammar and folder resolution this command uses, including how a slice nests inside its parent and why that nesting — and only the nesting — is capped at one level, and the four verification outcomes this command's Phase 0 gate depends on.
 - [Agents](../reference/agents.md) — `impl-maintenance`'s full contract.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),
   and [Resume and checkpoints](../reference/resume-and-checkpoints.md) — the terminal Phase 8

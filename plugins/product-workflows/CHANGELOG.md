@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.1] — 2026-11-07
+
+Batch B30 of the 2026-10-26 review. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The docs pages speak to the person using the plugin, not to its maintainers.** The design-decision ids (`D4`, `D5`, `D7`, `D12`, `D13`, `D14`, `D18`, `D19`, `D20`, `D23`) and every `§` citation and `<plugin>:<name>` reference id on the README and `docs/` pages are now the rule in plain words. Roles and phases lists the commands that stop on an absent input, where it sent the reader to a section of a shared reference. Internal field names (`vi_spec_present`, `detection_model`, `current_model`) are said in words, and the `/epics` and `/prd-ground` pages open on what the command does rather than how its kind gate tests a folder. History is gone, keeping the rule it explained, and three garbled sentences on the BRD workflow and `/prd-ground` pages read as meant. Raw `choices:` arrays read as prose. The one exception is `/brd-package`'s page quoting a customer's own `§ 4.2` and `D3`, marked as such. `check-docs.sh` check 25 now fails a page that cites a section by `§`, names a design-decision id or cites a reference by its `<plugin>:<name>` id. (DQS-B7, DQS-B8, DQP-B7, DQP-B10)
+- The Session cost page has a **Ceded runs** section, and the command pages that mention a ceded run link to it.
+- The hooks page said thirteen other commands are keyed; fourteen are.
+
 ## [3.78.0] — 2026-11-05
 
 D45. Needs nothing from the other plugins' releases.

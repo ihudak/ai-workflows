@@ -7,10 +7,7 @@ handed over as-is — typically long, internally inconsistent in places, and not
 could build against without first finding out which of its claims are actually still true. This
 route exists to turn that document into a requirement inventory every row of which has been
 checked against real code and design, given a recorded fate, decided, and put back in front of the
-customer who wrote it — before a PRD is ever written from it. It is PM-owned end to end: all six of its commands run as PM.
-`/prd-ground` is the step that opens the mounted repositories and design assets to check a claim,
-so it needs the code cloned, which a PM often does not have; where so, a PA or PE runs it instead where the PM cannot clone the code repositories — both have them cloned for their own work, and teams have fewer PAs than PEs, so either may. The
-entry is `pm` either way.
+customer who wrote it — before a PRD is ever written from it. It is PM-owned end to end: all six of its commands run as PM. `/prd-ground` is the step that opens the mounted repositories and design assets to check a claim, so it needs the code cloned, which a PM often does not have. Where the PM cannot clone the code repositories, a PA or PE runs it instead — both have them cloned for their own work, and teams have fewer PAs than PEs, so either may. The entry is `pm` either way.
 
 ## The six commands, and where they hand over
 
@@ -231,7 +228,7 @@ each command ties the answer back to the decision.
 
 **Where the route hands over is `/brd-reconcile`**: a BRD whose customer decisions are frozen and
 whose tree holds nothing the review made false is the state the PRD pipeline is entered from.
-the BRD route **ships** on `/create-prd`, `/create-ard` and `/specify`, and `/brd-reconcile`'s
+The BRD route continues into `/create-prd`, `/create-ard` and `/specify`, and `/brd-reconcile`'s
 next-step phase names all three — **against a slice key, and on a run that left nothing to re-enter
 for.** **A slice that needs no customer review hands over one step earlier**: where `/brd-interview`
 settled every question from the findings, it names the same three on the same conditions, since each
@@ -240,7 +237,7 @@ written for `/brd-reconcile`'s phase and bind `/brd-interview`'s offer the same 
 `/brd-interview` makes its own advance/re-entry split: a reopened decision waiting on the next round
 takes a list of its own, which offers that round and none of the three.
 
-**The first condition is the level, and it is the one this increment added.** A BRD is a container:
+**The first condition is the level.** A BRD is a container:
 `prd.md`, `ard.md` and `specification.md` are authored in the `PRD-` slice folders under it, one of
 each per slice, and all three commands refuse a `BRD-` folder in their own Phase 0
 (`CREATE_PRD_BRD_NOT_SLICED`, `CREATE_ARD_BRD_NOT_SLICED`, `SPECIFY_BRD_NOT_SLICED`). A root BRD
@@ -268,10 +265,7 @@ the same three edges with the same labels, into the same three commands.
 
 ## Parameters
 
-One row per command, derived from its own argument parsing — the flags below are exactly what each
-command accepts today, not a preview of what a later increment adds. The first six rows are the
-route; the last three are the handover the diagram draws, shown in their the BRD route form only —
-each of those three also has a keyed form that this route never uses.
+One row per command, derived from its own argument parsing — the flags below are exactly what each command accepts. The first six rows are the route; the last three are the handover the diagram draws, shown in their BRD route form only — each of those three also has a keyed form that this route never uses.
 
 | Command | Required | Optional | Notes |
 |---|---|---|---|
@@ -291,9 +285,7 @@ documentation that `/brd-intake` and `/prd-ground` do when `$DOCS_PATH` resolves
 docs grounding to turn off — `/brd-split` allocates requirements, and the last three work on
 decisions already taken, on which a documentation page (a claim *about* behaviour, not the
 behaviour) settles nothing. The pair reappears on all three **handover** rows, where it turns off or
-re-points that same grounding in the authoring run itself rather than in the route. See
-`workflows-core:docs-grounding` for the resolution gate and the two
-consumption modes this route uses.
+re-points that same grounding in the authoring run itself rather than in the route. The grounding runs only where `$DOCS_PATH` (or the `--docs` path) resolves to a readable directory holding at least one markdown file; in `/brd-intake` it reorders the defect walk and may raise a docs challenge as an extra candidate, behind the same human confirmation, and in `/prd-ground` it steers only where to look and is never cited as evidence.
 
 `<BRD-KEY>` follows the same shape everywhere in this route: `^[A-Z][A-Z0-9_]*(-\d+)+$`, checked
 for shape only and never against a tracker — a BRD is a markdown file under `$SPECS_PATH`, not a
@@ -369,17 +361,13 @@ specifications/BRD-<BRD-KEY>-<slug>/
     └── attachments/             # reserved at either level; no command writes it on this route (/idea, its one writer, refuses a slice)
 ```
 
-A root written before grounding moved to the slice may still hold `grounding/`, `decisions.md`,
-`interview/` and the packaging and review files at its own level. No command creates them there
-any more — `/prd-ground`, `/brd-interview`, `/brd-package` and `/brd-reconcile` each refuse a
-resolved root — and they are left in place rather than moved. (A slice's `/brd-reconcile` can still
+A root written by an earlier release may still hold `grounding/`, `decisions.md`, `interview/` and the packaging and review files at its own level. No command creates them there — `/prd-ground`, `/brd-interview`, `/brd-package` and `/brd-reconcile` each refuse a resolved root — and they are left in place rather than moved. (A slice's `/brd-reconcile` can still
 edit one: its stale cross-reference sweep reads every markdown file under the parent, and may
 update the argumentation of a record in a leftover root `decisions.md`.)
 
 Two of those entries are **reserved subdirectory names** rather than this route's own files, and both
 are shared with the idea route: `design/` holds exported frame sets, one immediate subdirectory each,
-images plus an index that `workflows-core:grounding-format` §6.1 makes
-mandatory — `design-grounder` returns `NO_INDEX` rather than read a frame set without one, because a
+images plus an index that is mandatory — `design-grounder` returns `NO_INDEX` rather than read a frame set without one, because a
 filename is not a reliable statement of what a frame shows. `attachments/` holds the text and markdown
 sources a run copied into the folder; [`/idea`](commands/idea.md) is its only writer — the companion
 `docs-workflows` plugin's `/document` reads an image it finds there as one of its screenshot sources
@@ -421,7 +409,7 @@ root outright.
 
 `--sort-existing <dir>` on `/brd-intake` additionally writes `prd-seed.md`, `ard-seed.md`, and
 `spec-seed.md` at the BRD folder's own level — a one-time migration path for a package written by
-hand before this route existed, not an output of the normal flow. **It is the only writer of any of
+hand outside this route, not an output of the normal flow. **It is the only writer of any of
 the three**, which is worth stating plainly because the BRD route on `/create-prd`, `/create-ard` and
 `/specify` each reads one: a reconciled BRD normally holds no seed at all, so each of those runs
 reports its seed absent as the **ordinary** case rather than as a gap. What actually carries content

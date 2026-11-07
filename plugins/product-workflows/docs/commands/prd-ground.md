@@ -9,9 +9,7 @@ prerequisite BRDs.
 
 ## Which route, and how it is detected
 
-The moment `<KEY>` resolves to a folder, this command tests the **directory prefix**, never the
-folder's asserted `kind:` — a BRD-route slice's own `brd-link.md` asserts `kind: brd` while being
-exactly the folder this command must accept, so a kind-based test would refuse every slice.
+The route is read off the folder `<KEY>` resolves to, never declared: a root or an Epic folder is refused, a `PRD-` folder carrying a `brd-link.md` is on the BRD route, and a `PRD-` folder carrying none is on the idea route unless it sits inside a BRD folder, which stops the run. The folder is placed by its directory prefix and not by the `kind:` its files assert, because a BRD-route slice's own `brd-link.md` asserts `kind: brd` while being exactly the folder this command must accept.
 
 - **A resolved `BRD-` folder is a root** — refused (`PRD_GROUND_ROOT_LEVEL`); a root BRD is never
   ground — grounding happens at a `PRD-` folder, a slice or an idea-route PRD folder.
@@ -36,12 +34,10 @@ exactly the folder this command must accept, so a kind-based test would refuse e
 - **Resolved through the legacy unprefixed fallback, with no ledger and no inventory** — split on
   `prd.md` being present and asserting `kind: prd`: present → the idea route; absent, or present
   without `kind: prd` → the BRD route's no-link branch, which stops naming what the folder carries
-  (`PRD_GROUND_NO_INVENTORY` or `PRD_GROUND_NEEDS_INTAKE`). Since product-workflows 3.7.0
-  `/brd-intake` writes the inventory's header before it copies anything; a folder an earlier intake
-  left with `brd/source/` alone carries neither BRD file, and `/brd-intake` refuses it too, so the
+  (`PRD_GROUND_NO_INVENTORY` or `PRD_GROUND_NEEDS_INTAKE`). `/brd-intake` writes the inventory's header before it copies anything, so a folder holding `brd/source/` alone is one an earlier intake left; it carries neither BRD file, and `/brd-intake` refuses it too, so the
   remedy is the same. It is no BRD container, so the stop names a fresh `/brd-intake` under a new
   key rather than a re-run over this folder, which that command refuses. **Where the folder holds an
-  `idea.md` and no `prd.md`** — an idea handed off before the kind prefixes — the stop also names
+  `idea.md` and no `prd.md`** — an idea in that unprefixed folder — the stop also names
   [`/create-prd`](create-prd.md) on the same key, which accepts the folder and writes the `prd.md`
   that puts a re-run of this command on the idea route.
 
@@ -53,7 +49,7 @@ command of the BRD route, so the route is PM's end to end. **The PM runs it by d
 inputs are the repositories to ground against, which it proposes from the clones under
 `$REPOS_PATH`, and the handoff answer — neither needs an architect, since `code-grounder` and the
 blind `grounding-verifier` do the grounding. **What it does need is the code cloned**, which a PM
-often does not have; where so, a PA or PE runs it instead where the PM cannot clone the code repositories — both have them cloned for their own work, and teams have fewer PAs than PEs, so either may. Whoever runs it, its cost entry reads `pm`. A PA
+often does not have. Where the PM cannot clone the code repositories, a PA or PE runs it instead — both have them cloned for their own work, and teams have fewer PAs than PEs, so either may. Whoever runs it, its cost entry reads `pm`. A PA
 may still review the grounding pull request. A slice reaches it already carved by
 [`/brd-split`](brd-split.md) — whose *Ground now* can run it straight after the split's pull
 request merges — and its findings hand back to `/brd-split`, for that same slice's ledger to be
@@ -92,8 +88,7 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
 - **`--depends-on <BRD-KEY>`** (optional, repeatable, **BRD route only**) — declares a prerequisite
   BRD. Persisted to `brd-link.md` additively across runs; the file may also be edited by hand. A
   prerequisite contributes a `will-change` horizon only through its **frozen** decisions, and frozen
-  is a field test rather than a judgement — `status: decided` in that BRD's own register
-  ([`decision-register-format.md`](../../references/decision-register-format.md) §3), never a record
+  is a field test rather than a judgement — `status: decided` in that BRD's own register, never a record
   that merely reads as settled. A prerequisite declared while it is still in flight carries `open`
   records and contributes nothing, which is ordinary and is reported as its own state rather than as
   a silent absence. A horizon a new prerequisite moves on a finding an earlier run wrote — an
@@ -127,7 +122,7 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   is present. Frame sets live in the resolved folder's reserved **design/** subdirectory, one
   subdirectory per set — images plus an index file naming what each frame depicts, which
   `design-grounder` refuses to run without, since a filename is not a reliable statement of what a
-  frame shows (`workflows-core:grounding-format` §6.1). No **design/**
+  frame shows. No **design/**
   folder means the pass is skipped and the run says so.
 - **`--no-docs`** (optional) — turn documentation grounding off for this run.
 - **`--docs <path>`** (optional) — point documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`. The flag and its value are stripped together before the address is parsed.
@@ -137,7 +132,7 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   which is what lets [`/brd-interview`](brd-interview.md) tell a re-grounding that came back as it
   stood from one that moved a decision's ground.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 11's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `code-grounder`, `design-grounder`, `grounding-verifier` (overriding their frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; if no Opus resolves, the three grounding agents otherwise degrade to the best-available model and record it, and `ground_tier` records that degraded tier, which does not happen under enforcement since the enforced model is used instead and `ground_tier` records that enforced id — see [Model routing](../reference/model-routing.md). `ground_tier` is printed on its own line of the final report, from the run's model-routing record, and nowhere else: no grounding file names the model or the tier its corpus was ground at.
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 11's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `code-grounder`, `design-grounder`, `grounding-verifier` (overriding their frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; if no Opus resolves, the three grounding agents otherwise degrade to the best-available model and record it, and `ground_tier` records that degraded tier, which does not happen under enforcement since the enforced model is used instead and `ground_tier` records that enforced id — see [Model routing](../reference/model-routing.md). `ground_tier` is printed on its own line of the final report, from the run's model-routing record, and nowhere else: no grounding file names the model or the tier its corpus was ground at.
 
 ## How it runs
 
@@ -275,9 +270,7 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   rows is still `unallocated` there, and otherwise the hand edit that empties the left-over `claims:`
   followed by the parent re-run in the form its ledger calls for; otherwise it says the ledger was lost after it was written, with the inventory where that is missing too, and what is missing must be restored from the ref that carried it; and it names no form where the
   parent's ledger cannot be read — because a slice has no
-  source document of its own to intake and its ledger and inventory are written by the parent's split
-  ([`brd-format.md`](../../references/brd-format.md) §2.1,
-  [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §3). A ledger **in** the
+  source document of its own to intake and its ledger and inventory are written by the parent's split. A ledger **in** the
   folder and on no ref means it was produced, but not whether the carve that wrote it finished:
   `/brd-split` writes a slice's three files before its walk places a row and reconciles them against
   the parent's ledger only when the walk completes. So the run reads the **parent's** ledger first
@@ -357,7 +350,7 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
 ## What it produces
 
 Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside a BRD on that route
-([addressing](../reference/references.md) §2, §6), or `/create-prd`'s own
+or `/create-prd`'s own
 `PRD-<KEY>-<slug>/` folder on the idea route:
 
 - `grounding/baselines.md` — one dated entry per repository, named by its remote slug (the last
@@ -407,7 +400,7 @@ failure: the run rewords it out before writing and the final report lists it.
 
 **The three grounding files are written for a reader with no plugin, and name nothing of your
 machine.** On the BRD route they go to the customer in the review bundle as written, and
-[`/brd-package`](brd-package.md) stops on any command, agent or skill name, `§` reference,
+[`/brd-package`](brd-package.md) stops on any command, agent or skill name, numbered section reference,
 decision-row id or model id it finds in them, save a model id in the naming a finding quotes (below),
 which it puts to you to rule on. So every note, heading and lead-in the run writes says
 what happened in plain words; nothing it writes names the model or the tier the corpus was ground at
@@ -427,7 +420,7 @@ in a script, `/api/v1/…` — so the run leaves it alone; only the literal valu
 own paths marks a path as your machine's. A model your requirement, code, configuration or documents
 name counts as such naming too — `claude-sonnet-4-6` in a requirement or a configuration line — and
 is quoted as given, beside the requirement or the path it comes from; only a model your own tooling
-ran on — this run's, a pass's or a tool's — and the record of a tier are kept out. Where a plugin token — a `§` or a command name, say — sits inside such naming,
+ran on — this run's, a pass's or a tool's — and the record of a tier are kept out. Where a plugin token — a numbered section reference or a command name, say — sits inside such naming,
 the final report names it, because on the BRD route `/brd-package` will still stop on it; it names a
 model id there too, as one `/brd-package` will put to you to rule on as the customer's own. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand — an earlier run's tier line or local path among them.
 
@@ -461,7 +454,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   Each repository's outcome is recorded as a `[CG#n]` finding like any other and is verified like
   any other — but it answers a question about a *repository* rather than about a requirement row, so
   it is never `consumed_by` anything, and the downstream reports that list what is still unconsumed
-  exclude it (`workflows-core:grounding-format` §4.1). Counting it would
+  exclude it. Counting it would
   put one item per repository into every such report forever, with no action that could close one.
   It owes no positive control: the three commands are git's own report over the whole checkout, not
   a search that could have missed something. And each run that grounds code records a fresh one per
@@ -477,12 +470,11 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   commit, since naming it would resolve nothing. A clone with no readable `origin` is named by its
   directory's basename, so before that check, where the file records no entry under that basename
   but records a name no clone carries at this clone's commit, an ancestor of it or a descendant of it — a renamed
-  directory, or an entry written before 3.33.3 — the run asks whether it is the same repository,
+  directory, or an entry an earlier release wrote — the run asks whether it is the same repository,
   and on *Same repository* records it under the earlier name, so one repository is never recorded
   under two. The one case it
   does not cover is the earlier pin of a repository a `--rebaseline` pass re-pins, where
-  `grounding/baselines.md` already records a second repository at that pin from a run before this
-  check existed: that pass retires every finding at the pin, whichever repository ground it, and
+  `grounding/baselines.md` already records a second repository at that pin: that pass retires every finding at the pin, whichever repository ground it, and
   a class-4 `[DG#n]` citing one of them is superseded through the cascade, with its note.
 - **Phase 4.5 — documentation is a lead and a divergence, never evidence.** No `[CG#n]` or
   `[DG#n]` may cite a documentation page in its `evidence`, under any verdict, in any phase — and
@@ -495,8 +487,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   stated in words, so naming a README searched is not citing it), and the orchestrator rejects a
   finding that does: a grounder's is re-dispatched once into the same finding id, then stops the run
   with `PRD_GROUND_DOC_EVIDENCE`.
-  Grounding answers whether a claim is true of a *specific commit*
-  (`workflows-core:grounding-format` §1), and a document is a claim
+  Grounding answers whether a claim is true of a *specific commit*, and a document is a claim
   *about* behaviour rather than the behaviour: citing one would let a confident, stale page satisfy
   a claim the code does not — exactly the failure the `NOT-PROVABLE` verdict exists to make
   sayable. The digest is therefore never passed into `code-grounder`, `design-grounder`, or
@@ -506,7 +497,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   in Phase 8. A divergence gets **no identifier of its own** — it names the verified `[CG#n]` it
   diverges from instead, because a divergence is not an answer to a requirement premise, and a new
   prefix would sit permanently unverified in a namespace where an unverified id blocks
-  [`/brd-split`](brd-split.md) (`workflows-core:grounding-format` §8).
+  [`/brd-split`](brd-split.md).
 - **Phase 7 — `grounding-verifier` over every finding, frontmatter-pinned to Opus (no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one).** Every finding the run holds
   is verified, except any already reading `SUPERSEDED`: its own, and every `[CG#n]` already on file
   pinned to a repository whose `HEAD` still matches its recorded pin (none under `--no-code`), but
@@ -557,7 +548,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   lines, keeping its note, and any other is appended). Which anchor each finding
   is verified against depends on what it rests on: a `[CG#n]` and a class-4 `[DG#n]` are re-derived
   against the pinned repository, a class-1/2/3 `[DG#n]` against the frame set it was reconciled
-  from — see `workflows-core:grounding-format` §8. A verifier that
+  from. A verifier that
   refuses rather than verifying (a moved `HEAD`, a repository or frame set no longer resolvable)
   stops the run before Phase 8 writes anything, and so does a finding this run produced that is still
   incomplete after its retry in the pass that dispatched it (`PRD_GROUND_VERIFY_INCOMPLETE`), so no finding is ever written
@@ -621,7 +612,7 @@ the excluded prefixes), then runs the same repository resolution, pinning, fan-o
 and write as the BRD route. Its next-step offer names [`/create-ard`](create-ard.md) and
 [`/specify`](specify.md) side by side, with [`/update-prd`](update-prd.md) named first, marked
 `(Recommended)`, wherever a *requirement* claim came back `CONFIRMED` — the one of
-`workflows-core:grounding-format` §3's six verdicts that says the premise holds with evidence, so a
+the six verdicts that says the premise holds with evidence, so a
 PRD asking for something the code already does is worth revising before an architecture or a
 specification is authored against it. The count beside it is of distinct requirement claims; the
 baseline finding the run writes per repository is `CONFIRMED` too, and is not one of them.
@@ -631,23 +622,9 @@ baseline finding the run writes per repository is `CONFIRMED` too, and is not on
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off, on either
   route.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
-- `workflows-core:addressing` — the `<KEY>` grammar and folder
-  resolution this command uses by name (`read-key`, `resolve-address`), including how a slice
-  nests inside its parent.
-- `workflows-core:grounding-format` — the authority for the finding
-  record, the six verdicts, the two horizons, the `baseline-integrity` procedure this command's
-  Phase 3 runs, and the four verification outcomes this command's Phase 7 acts on.
-- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the ledger line every
-  command of the BRD-to-PRD route ends its final report with, this one included on the BRD route.
-- `workflows-core:prd-format` — the `[AC#n]`/`[FR#n]`/`[US#n]` grammar this
-  command reads its claim list from, on the idea route.
-- `workflows-core:document-lineage` — the lineage record each grounding file carries, and the
-  upstream check run on `prd.md` on the idea route.
-- `workflows-core:docs-grounding` — the `$DOCS_PATH` resolution gate,
-  the `docs grounding:` line this command shows verbatim, and the lead-only consumption mode this
-  command's Phase 4.5 applies.
-- `workflows-core:read-only-repos` — the read-only posture this command
-  holds toward every repository it resolves.
+- [References](../reference/references.md) — the coverage ledger format: the ledger line every command of the BRD-to-PRD route ends its final report with, this one included on the BRD route.
+- The shared `addressing`, `grounding-format`, `prd-format`, `document-lineage`, `docs-grounding` and `read-only-repos` references, listed on the companion `workflows-core` plugin's References page — the `<KEY>` grammar and folder resolution this command uses, including how a slice nests inside its parent; the finding record, the six verdicts, the two horizons, the baseline-integrity procedure this command's Phase 3 runs and the four verification outcomes its Phase 7 acts on; the `[AC#n]`/`[FR#n]`/`[US#n]` grammar its claim list is read from on the idea route; the lineage record each grounding file carries and the upstream check run on `prd.md` on the idea route; the `$DOCS_PATH` resolution gate, the `docs grounding:` line this command shows verbatim and the lead-only mode its Phase 4.5 applies; and the read-only posture it holds toward every repository it resolves.
+
 - [Agents](../reference/agents.md) — the full contracts for `docs-grounder`, `code-grounder`,
   `design-grounder`, and `grounding-verifier`.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),

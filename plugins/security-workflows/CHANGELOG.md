@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.5] — 2026-11-07
+
+Batch B30 of the 2026-10-26 review. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The docs pages speak to the person using the plugin, not to its maintainers.** The Session cost, Roles and phases and environment pages say in plain words which phase and role a `/scan` run is charged to, where they cited a reference's section and its internal fields, and the `/scan` page's raw `choices:` arrays read as prose. The Session cost page defines a **ceded run**. `check-docs.sh` check 25 now fails a page that cites a section by `§`, names a design-decision id or cites a reference by its `<plugin>:<name>` id. (DQS-B8, DQD-B7)
+
 ## [0.10.4] — 2026-11-04
 
 Needs nothing from the other plugins' releases.

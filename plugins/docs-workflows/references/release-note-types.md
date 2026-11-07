@@ -149,7 +149,7 @@ Omit the category label entirely when the PRD carries no `release_notes_category
 ### `## Fixes`
 
 Render **one self-contained sentence**, or two when the conditions or the resolution need a second —
-no category label, no `###` title, and no key (the automation appends the key when it publishes). A
+no category label, no `###` title, and no key (whatever publishes the note adds one where it needs one). A
 shipped entry looks like:
 
 ```markdown

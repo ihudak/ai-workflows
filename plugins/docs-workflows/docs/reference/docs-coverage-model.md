@@ -2,7 +2,7 @@
 
 An audit cannot tell you what documentation is missing without first agreeing what "all of it" would have been. That set is the **denominator**, and this family builds it from the product's own code and the documents committed to its specs tree, rather than from anybody's memory of what the product does. This page explains the two nouns the backlog is written in — a **surface** and a **unit** — how they differ, what decides which units get written first, and what "done" means when documentation work has no natural end.
 
-The runnable version of everything here lives in the plugin's own `references/docs-audit/coverage-model.md`, which the audit command and its agents read. This page is the same model written for a person.
+The runnable version of everything here lives in the plugin's own coverage-model reference, listed on [References](references.md), which the audit command and its agents read. This page is the same model written for a person.
 
 ## Surfaces: what the audit counts
 

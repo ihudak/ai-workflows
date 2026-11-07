@@ -123,7 +123,7 @@ Two limits are worth knowing rather than discovering. The umbrella's de-duplicat
 
 - [`/prd-proposal`](../commands/prd-proposal.md) — prices one PRD folder: the flags, the gate, the phases, and what each tier changes in a live run.
 - [`/brd-proposal`](../commands/brd-proposal.md) — the programme umbrella: the readiness walk, the three adjustments, and the coverage statement.
-- [`proposal-format.md`](../../references/proposal-format.md) — the authority both commands author against and the reviewer checks: the full section sets, the tier and confidence tables, and the closed evidence set.
+- [References](references.md) — `proposal-format.md`, the authority both commands author against and the reviewer checks: the full section sets, the tier and confidence tables, and the closed evidence set.
 - [Agents](agents.md) — `proposal-reviewer`, the Opus-pinned review gate both commands dispatch.
 - [Roles and phases](../roles-and-phases.md) — the `proposal` cost phase, and why it is its own phase rather than part of the BRD route.
 - [Session cost](session-cost.md) — the other quantity called cost, and why it is never the one in the document.

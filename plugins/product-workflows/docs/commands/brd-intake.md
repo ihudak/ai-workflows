@@ -48,7 +48,7 @@ there and prints the value to write by hand. Every command of the route runs as 
 - **`[--no-docs]`** (optional) — turn documentation grounding off for this run.
 - **`[--docs <path>]`** — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`. The flag and its value are stripped together before the address is parsed.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 9's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `figure-reader` and `brd-reader` (overriding their frontmatter Opus pin), `workflows-core:docs-grounder`, `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the interactive Phase 1 confirmation and Phase 4 defect classification still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 9's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `figure-reader` and `brd-reader` (overriding their frontmatter Opus pin), `workflows-core:docs-grounder`, `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the interactive Phase 1 confirmation and Phase 4 defect classification still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
@@ -127,7 +127,7 @@ ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-
 ## What it produces
 
 Under `$SPECS_PATH/specifications/BRD-<BRD-KEY>-<slug>/` — the `BRD-` kind prefix is part of the
-name the run creates ([addressing](../reference/references.md) §2):
+name the run creates:
 
 - `brd/source/<basename>` — the customer's source, copied byte-for-byte and never edited. Byte-for-byte
   is its content, not its file mode: every copy under `brd/source/` and `brd/source-external/` is
@@ -168,8 +168,8 @@ name the run creates ([addressing](../reference/references.md) §2):
   whatever it is called, even after a run that copied it stopped before reconciling; where the new
   read returns a row over an unchanged file that could be a kept row reworded, it asks you whether it
   is the same requirement; a row the new read does not find again is kept, never renumbered away;
-  and every id it mints is reported by id. An inventory written before 3.7.0 carries no such record,
-  so the first re-run over it on 3.7.0 rewords every row it matches to the new read's wording, once,
+  and every id it mints is reported by id. An inventory written by an earlier release carries no such record,
+  so the first re-run over it rewords every row it matches to the new read's wording, once,
   reporting each change, and keeps the record from then on. Before it copies anything, that re-run
   records which document the rows were last read from — out of the link log it is about to rewrite,
   where there is one — so a run that stops before reconciling still leaves the document on record
@@ -184,8 +184,7 @@ name the run creates ([addressing](../reference/references.md) §2):
 The link log, the inventory, the defect log and the ledger each have one fixed layout — frontmatter,
 an opening line where a reader needs one, and a markdown table — and share one cell encoding: a
 literal `|` is written `\|` and a line break `<br>`, and the requirement text is verbatim once those
-two are decoded, which every reader does before it shows, hands over or compares a cell
-([`brd-format.md`](../../references/brd-format.md) §2.3).
+two are decoded, which every reader does before it shows, hands over or compares a cell.
 
 Behind Phase 7's consent choice, these are committed, pushed, and a pull request opened against the
 specs repo's default branch under a new `brd/<BRD-KEY>-<slug>` branch prefix. Declining leaves them
@@ -211,8 +210,7 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
   `brd-reader` said each image illustrates; nothing is written to the inventory until this check has
   settled, save where a dangling anchor stops the run — every row the run holds is written first
   then, so the anchor can be corrected by hand. Every `source_anchor` must resolve, in whichever of
-  the format's three forms it takes — the document, a linked markdown file, or an image — by
-  [`brd-format.md`](../../references/brd-format.md) §2.2's rules. One that resolves to nothing is a
+  the format's three forms it takes — the document, a linked markdown file, or an image. One that resolves to nothing is a
   row nobody can trace back and the run stops, **except a row a re-run kept because its anchor no
   longer resolves — the revised source dropped what it named**: that is a recorded state, and
   stopping on it would refuse a customer's revised BRD with a remedy nobody could perform. And every **top-level section** — of
@@ -263,7 +261,7 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
   nothing: the walk opens by saying so, every question closes by asking whether its candidate is a
   real defect in the customer's text, and no option is marked recommended. Every `defect_candidates`
   entry not already logged (below) is walked one class at a time, in the fixed order
-  [`brd-format.md`](../../references/brd-format.md) §3 lists its six classes, via `AskUserQuestion`,
+  of the six defect classes (`ambiguity`, `conflict`, `untestable`, `unsourced`, `duplicate`, `scope-leak`), via `AskUserQuestion`,
   each put with the same facts — its class, its row and that row's text, its reason, the rows a
   `conflict` or `duplicate` names, and an image-drawn row's picture. A split of one requirement into
   several rows is one `duplicate`, asked once, and any other `conflict` or `duplicate` is raised from
@@ -317,19 +315,8 @@ offers to branch, commit, push, and open a pull request.
 
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
-- `workflows-core:addressing` — the `<BRD-KEY>` grammar and folder
-  resolution this command uses by name (`read-key`, `resolve-address`, and `key-summary` beneath its
-  missing-key stop).
-- [`brd-format.md`](../../references/brd-format.md) — the `[BR#n]` row shape, the immutability rule,
-  §1.1's account of what `brd/source/` and `brd/source-external/` hold and of the link log beside
-  them, §1.2's figures file, and the six defect classes this command confirms against.
-- [`linked-sources.md`](../../references/linked-sources.md) — how Phase 1 finds, resolves and walks
-  the document's links.
-- [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the ledger row shape,
-  the six dispositions, and the ledger line every command of the BRD-to-PRD route ends its final
-  report with.
-- `workflows-core:docs-grounding` — the `$DOCS_PATH` resolution gate,
-  the `docs grounding:` line this command shows verbatim, and the grill-rank consumption mode.
+- [References](../reference/references.md) — the plugin's own formats this command applies: the BRD format (the `[BR#n]` row shape, the immutability rule, what `brd/source/` and `brd/source-external/` hold and the link log beside them, the figures file, and the six defect classes this command confirms against), linked sources (how Phase 1 finds, resolves and walks the document's links) and the coverage ledger format (the ledger row shape, the six dispositions, and the ledger line every command of the BRD-to-PRD route ends its final report with).
+- The shared `addressing` and `docs-grounding` references, listed on the companion `workflows-core` plugin's References page — the `<BRD-KEY>` grammar and folder resolution this command uses, and the `$DOCS_PATH` resolution gate, the `docs grounding:` line this command shows verbatim and how its digest ranks Phase 4's defect walk.
 - [Agents](../reference/agents.md) — `figure-reader`'s, `brd-reader`'s and `docs-grounder`'s full
   contracts.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),

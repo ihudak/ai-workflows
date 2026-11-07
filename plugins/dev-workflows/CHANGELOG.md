@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.58.6] — 2026-11-07
+
+Batch B30 of the 2026-10-26 review. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The docs pages speak to the person using the plugin, not to its maintainers.** Every `§` section citation, every citation of a shared reference by its `workflows-core:<name>` id and every design-decision id on the README and `docs/` pages is now the rule in plain words, or one pointer to the companion `workflows-core` plugin's References page. Change history ("This page used to say…", "before 4.1.2", how `preload-context` was split, "the rule lived only on this page until…") is gone, keeping the rule it explained. A `grep` recipe given as the way to a list is now the list, the recipe kept in an HTML comment beside the number it re-derives. A raw `choices:` array reads as prose, the routing fields `detection_model` and `current_model` are said in words, and the `/brd-reconcile` gate caveat restated on the Roles and phases and `/ready` pages is cut to what applies here: `/ready` is the one command whose gate never stops it. `check-docs.sh` check 25 now fails a page that cites a section by `§`, names a design-decision id or cites a reference by its `<plugin>:<name>` id. (DQS-B8, DQC-B4, DQC-B5, DQC-B6, DQD-B7)
+- The Session cost page defines a **ceded run**, and the command pages that mention one link to it.
+- The Session cost page's example of several commands run in one session named `/idea`, `/create-prd` and `/specify`, which are `product-workflows` commands; it names `/design` and `/ready`.
+- The test-suite detection page names the agent's detection and parse tables without citing the agent file's step numbers, and its provenance note is an HTML comment for maintainers; the `/vuln` page's note on how its diagram adapts the command's headings is one plain sentence.
+
 ## [4.58.5] — 2026-11-04
 
 Released with `workflows-core` 1.78.5.
