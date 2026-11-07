@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.59.3] — 2026-11-07
+## [4.59.3] — 2026-11-08
 
 User pages only: batch B33. Needs nothing from the other plugins' releases.
 
@@ -13,7 +13,7 @@ User pages only: batch B33. Needs nothing from the other plugins' releases.
 
 - **The workflow diagram draws every route a PRD-level `/conformance` amendment takes that it has a node for**: to `/product-workflows:update-spec` for the specification and to `/product-workflows:create-ard` for an `[AD#n]` Rule, where it drew only the first. The prose names the other two, `/product-workflows:update-prd` and `/product-workflows:epics`.
 - **Environment's directory layout no longer files follow-ups under `dev-workflows/`.** `follow-ups.md` and `implementation.md` sit in the PRD or Epic folder they are about, as the Follow-ups page says.
-- **Getting started takes you through a first `/implement`**: run it from the code repository, the five things it needs that `/design` did not (an Opus session, a clean working tree, a test suite it can find, `gh` for the pull request, one run per working tree), what it ends with, and the next step. The page now types `/dev-workflows:implement` in its qualified form.
+- **Getting started takes you through a first `/implement`**: run it from the code repository, the five things to check before it runs (an Opus session, which it asks about on every run, a clean working tree, a test suite it can find, `gh` for the code repository's pull request, one run per working tree), what it ends with, and the next step. The page now types `/dev-workflows:implement` in its qualified form.
 
 ## [4.59.2] — 2026-11-07
 

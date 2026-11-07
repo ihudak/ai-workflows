@@ -34,7 +34,7 @@ The diagram shows the run's flow. A dotted edge is a stop or a Cancel; each one 
 flowchart TD
     p0["Phase 0 — Resolve and validate: the run flags and its own flags, the target and its rung, specs-repo preflight, a git work tree's top level, no docs signal"]
     p0 -.->|"a run-flag stop or DOCS_INIT_UNKNOWN_GENERATOR, before a target resolves"| runend["Run ends — no report, no emitter tail"]
-    p0 -.->|"a named DOCS_INIT stop, or Cancel at the git init offer — nothing written"| p85
+    p0 -.->|"DOCS_INIT_EXISTING_DOCS_REPO, NOT_A_GIT_WORKTREE, TARGET_BELOW_TOPLEVEL or TARGET_NOT_WRITEABLE, or Cancel at the git init offer — nothing written"| p85
     p0 --> p1["Phase 1 — Model routing: MODERATE, review pinned to Opus"]
     p1 --> p2["Phase 2 — Source repos, product and major version, toolchain preflight"]
     p2 -.->|"Cancel at the toolchain prompt — DOCS_INIT_TOOLCHAIN_INCOMPLETE"| p85

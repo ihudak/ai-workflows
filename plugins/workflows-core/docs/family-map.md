@@ -138,10 +138,10 @@ flowchart TD
     implement -->|"Epic: the Dev, before its pull request merges"| conformanceepic
     conformanceepic -.->|"fix the code — a follow-up"| implement
     conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd
-    conformanceprd -.->|"PRD: the PE, every Epic merged — amend the specification"| updatespec
-    conformanceprd -.->|"amend the PRD"| updateprd
-    conformanceprd -.->|"amend an epic.md"| epics
-    conformanceprd -.->|"amend the ARD — an [AD#n] Rule"| createard
+    conformanceprd -.->|"action: the PE, every Epic merged — amend the specification"| updatespec
+    conformanceprd -.->|"action: amend the PRD"| updateprd
+    conformanceprd -.->|"action: amend an epic.md"| epics
+    conformanceprd -.->|"action: amend the ARD — an [AD#n] Rule"| createard
     conformanceprd -.->|"action: once settled, document the PRD"| document
     implement -.->|"implementation.md — diff grounding on"| rnfinal
     conformanceepic -.->|"action: then the security scan, still before the merge"| secscan

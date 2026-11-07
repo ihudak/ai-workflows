@@ -4,7 +4,7 @@ Session feedback is the family's channel for friction about **the plugin family 
 
 ## Which commands emit it
 
-Five commands end with an automatic feedback step, after their report:
+Five commands end with an automatic feedback step, after their report — save `/document`, whose maintenance phase comes before its report:
 
 | Command | Step |
 |---|---|
@@ -36,7 +36,7 @@ Every entry is redacted before it is written, because it is committed and pushed
 
 `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows the feedback step of the five commands above to bug capture. The step dispatches `workflows-core`'s `defect-reporter` in place of `impl-maintenance`, on the same Sonnet chain or the run's enforced model, with the same session handoff plus a `Plugin root:` line naming this plugin's own directory, where it looks for the command, reference or agent file a candidate defect names. It returns only real defects — a wrong or self-contradictory instruction, a broken script, gate or hook, a missing or wrong reference, a command contradicting its own documentation, a crash, or a defect in the ai-containers environment — and drops friction, wishes and polish. Any defect it returns lands in the same file as above, `origin: auto`; a run with none writes nothing. The run reports `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of the persisted path.
 
-Nothing else changes: `/document`'s other three maintenance agents still run, capture at a block still fires, and the follow-up, cost and resume steps run as before. `/docs-profile` and `/docs-serve` report the flag as ignored.
+What you lose is the Lessons Learned report itself, so the advice about your documentation repository — a `CLAUDE.md` rule, a hook — that would stay in the run's report is not produced. Nothing else changes: `/document`'s other three maintenance agents still run, capture at a block still fires, and the follow-up, cost and resume steps run as before. `/docs-profile` and `/docs-serve` report the flag as ignored.
 
 ## See also
 

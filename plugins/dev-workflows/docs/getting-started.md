@@ -119,12 +119,12 @@ Once `design.md` is on the specs repo's default branch, start Claude Code inside
 
 It changes the repository it is run from. Run from the specs repository, a keyed run stops: that is no code repository. It reads the same Epic folder `/design` wrote into, and writes its own record there, as the directory layout on [Environment](reference/environment.md#directory-layout) shows.
 
-It needs five things `/design` did not:
+Before your first run, check five things:
 
-- **A session on Opus.** Below Opus it asks before it reads anything, recommending you relaunch with `claude --model opus`. Going on anyway is recorded in the report and in the pull request.
+- **A session on Opus.** Unlike `/design`, which stops below Opus only on `SIGNIFICANT` or `HIGH-RISK` work, it asks on every run below Opus, before it reads anything, recommending you relaunch with `claude --model opus`. Going on anyway is recorded in the report and in the pull request.
 - **A clean working tree.** Where the clone has uncommitted changes, it shows them and asks whether to stash your tracked changes (recommended), go on with them in the diff, or cancel.
 - **A test suite it can find.** It records a test baseline before it edits anything. Where it finds no test command, or no suite it ran gives a result, it asks before the first edit whether to name the command, skip tests for this run, giving a reason the report records, or cancel.
-- **`gh`, signed in, for the pull request.** The commit is made without asking, unless its scan of the added lines finds a possible secret, and the push and the pull request sit behind one question. Where `gh` cannot open the pull request, the branch is still pushed and the run prints the title and a body file, for you to open it in the web UI.
+- **`gh`, signed in, for the pull request**, as `/design`'s handoff needs it, here for the code repository's pull request. The commit is made without asking, unless its scan of the added lines finds a possible secret, and the push and the pull request sit behind one question. Where `gh` cannot open the pull request, the branch is still pushed and the run prints the title and a body file, for you to open it in the web UI.
 - **One run per working tree at a time.** Its run state lives in the clone's git directory, one file per worktree, so a second run at once needs a second worktree.
 
 It ends with the code committed on a feature branch, `implementation.md` in the Epic folder recording the repository, the branch and the commit, a report, and the next steps: `/dev-workflows:conformance ACME-77-01`, then the companion `security-workflows` plugin's `/security-workflows:scan ACME-77-01`, both before the pull request merges. [`/implement`](commands/implement.md) has the whole run, and [`/conformance`](commands/conformance.md) the check that follows it.

@@ -19,7 +19,7 @@ A run that found `$SPECS_PATH` misplaced, or its environment changed since its p
 
 `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) replaces the session-maintenance agent with `workflows-core`'s `defect-reporter`, on the Sonnet chain or the run's enforced model, given the same handoff plus a `Plugin root:` line naming this plugin's directory. It keeps only real defects — a wrong or self-contradictory instruction, a broken script, gate or hook, a missing or wrong reference, a command contradicting its own documentation, a crash, or an ai-containers defect — and drops friction, wishes and polish. Any defect lands in the same file as above; a run with none writes nothing. The run reports `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects`.
 
-Nothing else in the tail changes: the other three maintenance agents run where they would, and every later step runs as before.
+What you lose is the in-session Lessons Learned report, so the run's advice about the repository it scanned — a `CLAUDE.md` rule, a hook — is not produced either. Nothing else in the tail changes: the other three maintenance agents run where they would, and every later step runs as before.
 
 ## Follow-ups
 

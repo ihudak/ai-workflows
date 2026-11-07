@@ -1,6 +1,6 @@
 # Resume and checkpoints
 
-A pipeline command ends by doing two separate things: it writes a small pointer file recording where things stand, then it suggests — never performs — the right context action for what comes next, `/compact`, `/clear` or a session `/rename`. The mechanism is shared across the family and belongs to the companion `workflows-core` plugin's session-hygiene reference; this page says what this plugin's seven commands do with it, and names the one other piece of state a command here keeps between runs.
+A pipeline command ends by doing two separate things: in its report it suggests — never performs — the right context action for what comes next, `/compact`, `/clear` or a session `/rename`, and then, in its terminal cost phase, it writes a small pointer file recording where things stand. The mechanism is shared across the family and belongs to the companion `workflows-core` plugin's session-hygiene reference; this page says what this plugin's seven commands do with it, and names the one other piece of state a command here keeps between runs.
 
 ## Which commands write `resume.md`
 

@@ -38,9 +38,11 @@ flowchart TD
     p0 -.->|"a flag stop, or Cancel at the repository question"| runend["Run ends — nothing resolved, nothing recorded"]
     p0 -.->|"DOCS_AUDIT_NOT_WRITEABLE, NO_SOURCES or UNKNOWN_SCHEMA"| p6
     p0 --> d0{"A backlog already there, without --refresh?"}
-    d0 -.->|"Cancel — nothing written"| p6
+    p0 -.->|"Cancel at an unresolved source repository"| p6
+    d0 -.->|"Cancel — no backlog written"| p6
     d0 -->|"no, or Treat this as a --refresh run"| p1["Phase 1 — Model routing: SIGNIFICANT, review pinned to Opus"]
-    p1 --> p2["Phase 2 — Scan: one code-scanner @Sonnet per repository, capped at 4, then one narrow second round"]
+    p1 --> p2["Phase 2 — Scan: one code-scanner @Sonnet per repository, capped at 4; one narrow second round for an inconclusive theme"]
+    p2 -.->|"Cancel at a scan escalation: a dirty tree, a missing repository, a blocked refresh"| p6
     p2 --> p25["Phase 2.5 — The specs-tree read: the decision and release surfaces"]
     p25 --> p3["Phase 3 — Enumerate surfaces: docs-auditor @Sonnet"]
     p3 -.->|"NO_SURFACES — no backlog written, or DOCS_AUDIT_AUDITOR_INPUT_MISSING"| p6
@@ -95,14 +97,14 @@ Findings are triaged by the orchestrator before anything is applied: each is ver
 - `DOCS_AUDIT_BAD_THRESHOLD` — `--threshold` was not a positive integer.
 - `DOCS_AUDIT_UNKNOWN_FLAG` — a token beginning `--` survived flag stripping. Any such token stops the run rather than being read as a path, because the resolver takes the first positional token as given and a mistyped flag would otherwise become the repository. `--docs` and `--no-docs` are among them: this command is not a documentation-grounding consumer under any of that subsystem's three modes, so neither is one of its flags.
 - `DOCS_AUDIT_NO_SOURCES` — no code repository resolved and no specs tree to read, so there is nothing to enumerate surfaces from.
-- `DOCS_AUDIT_UNKNOWN_SCHEMA` — the backlog already there declares a schema version this release does not read. Nothing is written: a run that carried on would silently drop whatever the later version added.
+- `DOCS_AUDIT_UNKNOWN_SCHEMA` — the backlog already there declares a schema version this release does not read. No backlog is written: a run that carried on would silently drop whatever the later version added.
 - `DOCS_AUDIT_AUDITOR_INPUT_MISSING` / `DOCS_AUDIT_PLANNER_INPUT_MISSING` — one of the two agents refused to start because an input it enumerates was absent. The stop names it.
 - `DOCS_AUDIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-audit-reviewer` was neither fixed nor accepted by you, or you kept a `BLOCK` verdict after triage left no finding behind it standing. The backlog the run wrote stays on disk, reviewed and not fixed.
 - `DOCS_AUDIT_NOT_WRITEABLE` — the resolved repository's git top level cannot be written to, so there is nowhere to put the backlog.
 
 **Every one of those stops still finishes the run's bookkeeping.** A stop prints its line, reports it, and then runs the emitter tail: the cost entry and any feedback are recorded and the terminal commit into `$SPECS_PATH` still happens. The exceptions are the three flag stops — `DOCS_AUDIT_UNKNOWN_AUDIENCE`, `DOCS_AUDIT_BAD_THRESHOLD` and `DOCS_AUDIT_UNKNOWN_FLAG` — and a Cancel where the repository ladder asks you to choose or name one: each ends the run before any repository is resolved, and so has nothing to file an entry against.
 - A run that enumerated no surface at all is not a failure: no plan is made, no backlog is written, an existing one is left exactly as it was, and the report says whether the product genuinely has none of these things or the scan could not tell.
-- Cancelling at the overwrite prompt — the one a run without `--refresh` raises when a backlog is already there — writes nothing. The cost entry is still recorded.
+- Cancelling at the overwrite prompt — the one a run without `--refresh` raises when a backlog is already there — writes no backlog; a source-repository set the run has just recorded in the profile stays there. The cost entry is still recorded.
 
 ## Example
 
