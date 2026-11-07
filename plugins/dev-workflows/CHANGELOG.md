@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.58.6] — 2026-11-07
+
+User pages only, batch B30. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The user pages speak to users.** No page carries a `§` section citation or a bare reference citation; each was dropped where its sentence already stated the rule, said in plain words, or, in a *See also* list, named as a reference shipped in `workflows-core`. Repository `grep` recipes give their answers instead; change history (the agents and hooks that moved, "before 4.1.2", the follow-up ladder's old rungs, "This page used to say") is gone; `choices:` arrays read as prose options; `$ARGUMENTS` and the routing fields are gone.
+- **Roles and phases and the `/ready` page drop the `/brd-reconcile` caveat**, a product-workflows detail: `/ready` is the one command here whose gate never stops it. The `/design` page names its gated inputs. Session cost defines a *ceded* run once, under *Ceded runs*.
+- **Corrected:** Session cost's example of a session running several dev-workflows commands named three product-workflows commands — it now names `/design`, `/implement` and `/ready` — and it no longer quotes a team count; the Model routing page's command counts missed `/update-spec`; the Environment page's list of commands that stop without `SPECS_PATH` missed `/security-workflows:scan`.
+
 ## [4.58.5] — 2026-11-04
 
 Released with `workflows-core` 1.78.5.

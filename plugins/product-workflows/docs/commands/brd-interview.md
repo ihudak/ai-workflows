@@ -125,7 +125,7 @@ There is **no `--no-docs` flag**, because this command does no documentation gro
 | `[C]` | A genuine business decision | The **customer**, and only via a review package |
 
 The two "never"s are rules, not tendencies, and the reasons they exist are in
-[`interview-tagging.md`](../../references/interview-tagging.md) §1–§2. A `[G]` put to a person
+[`interview-tagging.md`](../../references/interview-tagging.md). A `[G]` put to a person
 returns their belief about the system rather than the system, and that belief then becomes a
 requirement nobody re-checks; a `[V]` dressed as a `[C]` extracts authority the customer never meant
 to give and cannot defend later.
@@ -142,7 +142,7 @@ whose verifier outcome is `unprovable`, whatever verdict it keeps.
 **The round is scoped to the rows this BRD is answerable for.** Questions are generated over the
 ledger rows reading `covered-here`, `deferred-to`, `rejected` or `superseded-by` — never over a row
 reading `covered-by: <OTHER-KEY>`, whose requirement that BRD owns and whose questions belong to its
-own round ([`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §3.1), and never
+own round, and never
 over an **orphan row**: a row for a requirement the slice's `claims:` no longer names, which its
 parent's walk withdrew and settled elsewhere, and which carries the parent's `rejected` or
 `superseded-by` across unchanged where the parent settled it that way — so it reads like a row the
@@ -154,7 +154,7 @@ it may not be is the thing asked about.
 
 **A question carrying two tags is a defect in the question**, not a gap in the taxonomy: it is split
 until each part carries exactly one, and the `[G]` part is answered first, because its answer
-routinely changes what the business question should ask (§4). A question nobody can tag is
+routinely changes what the business question should ask. A question nobody can tag is
 under-specified and is rewritten — never filed with a guessed tag.
 
 **A requirement whose grounding settled nothing raises a question for a person.** That is a
@@ -165,7 +165,7 @@ that outcome, and the run reads the outcome as well as the verdict, so a require
 settle is never treated as grounded. The question arrives at tagging carrying that finding, and is
 tagged `[V]` or `[C]`, never `[G]`.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 12's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the round's reading, tagging and interactive walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 12's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the round's reading, tagging and interactive walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
@@ -259,9 +259,9 @@ subagent is dispatched — every finding this command reads was already independ
   `[CG#n]` at all stops first, with `BRD_INTERVIEW_NO_FINDINGS`: the outcome count is satisfied by an
   empty finding set, and every `[G]` this command answers is answered from the findings and from
   nothing else.
-- **Every finding block is well-formed.** The record's field set is closed to the ones
-  `workflows-core:grounding-format` §2 defines plus `outcome` and `notes`; a block carrying any other
-  key stops the run with `BRD_INTERVIEW_MALFORMED_FINDING`. The keys that occur are the verifier's own return fields — `own_verdict` above all, and `control_outcome` beside it since the record gained a `control` field. `own_verdict` is a
+- **Every finding block is well-formed.** The record's field set is closed to the finding record's own —
+  `id`, `claim`, `verdict`, `prior_verdict`, `evidence`, `control`, `commit`, `altitude`, `horizon`, `class`, `cites`, `prerequisite` and `consumed_by` — plus `outcome` and `notes`; a block carrying any other
+  key stops the run with `BRD_INTERVIEW_MALFORMED_FINDING`. The keys that occur are the verifier's own return fields — `own_verdict` above all, and `control_outcome` beside it, the verifier's own judgement of whether a finding's `control` fired. `own_verdict` is a
   verifier **return** field, and a block carrying it states two verdicts at once. That matters more
   here than anywhere else on the route: every `[G]` is answered from the findings and from nothing
   else, so such a finding freezes a `[VD#n]` against whichever half the run happened to read, and
@@ -291,14 +291,14 @@ subagent is dispatched — every finding this command reads was already independ
 ## What it produces
 
 Under the resolved BRD folder — `$SPECS_PATH/specifications/BRD-<BRD-KEY>-<slug>/` for a root
-BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
-([addressing](../reference/references.md) §2, §6):
+BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
 
 - `decisions.md` — the decision register: one block per `[VD#n]` delivery-team decision and per
   `[AS#n]` assumption. A decision carries the thirteen fields
-  [`decision-register-format.md`](../../references/decision-register-format.md) §1 defines; an
-  assumption carries every one of them §7 admits and none it marks *not applicable*, which §1.1 has
-  omitted rather than written empty — §7 accounts for all thirteen, and says of each whether it is
+  [`decision-register-format.md`](../../references/decision-register-format.md) defines; an
+  assumption carries every one of them the format admits on an assumption, and omits rather than
+  writes empty the three it marks *not applicable* there — `options_considered`, `chosen` and
+  `settles`; the format accounts for all thirteen, and says of each whether it is
   as-is, means something different, or does not apply. Ids are contiguous within their
   own prefix, assigned once, never renumbered, and never reused after a terminal status, a removed
   torn write (below) aside. A record
@@ -342,7 +342,7 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
   disposition rather than restarting the round. Each question sits under a
   `### <position>. [<tag>] — <rows>` heading, with each state it reaches on a line of its own
   labelled `- **State:**` beneath it; [`decision-register-format.md`](../../references/decision-register-format.md)
-  §9 shows a whole record, the later writes to it, and the question-set entry it names.
+  works an example of a whole record, the later writes to it, and the question-set entry it names.
 - `interview/customer-questions.md` — the `[C]` questions held for the customer, each with the
   findings that bear on it, on its own line labelled `- **Findings:**` and reading `none` where none
   does, which [`/brd-package`](brd-package.md) renders into the customer prompt and
@@ -398,8 +398,7 @@ held entry, a `--round N` re-open, a question the round-1 test adds — builds i
 there, so a `Cancel`, an abort or an interruption before Phase 9 writes nothing the run decided into
 the BRD folder — the one earlier write being Phase 0's completion of a code-defect re-disposition a
 round record already names, which decides nothing.
-The round record is the commit point
-([`decision-register-format.md`](../../references/decision-register-format.md) §8): an item stamped
+The round record is the commit point: an item stamped
 with a round whose record does not exist or does not name it — what a run that stopped between those
 writes leaves behind, or what an earlier version of this command left when a run was cancelled
 after holding its `[C]` questions — is a **torn write**. No reader counts one: not this command's
@@ -443,8 +442,7 @@ option is picked.
   else is read. The allocation gate reads the **dispositions in the ledger file**, never the ledger
   line: the line's `unallocated` term is a resolved count that follows every `covered-by` row into
   the BRD it names — a child here, a sibling or the parent on a slice — so a fully-allocated parent
-  routinely reports a non-zero term for work that belongs to another BRD's walk
-  ([`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §6.1).
+  routinely reports a non-zero term for work that belongs to another BRD's walk.
 - **Phase 3 — a decision a re-grounding moved is put again.** Where a re-grounding — a
   [`/prd-ground --rebaseline`](prd-ground.md) pass, or any `/prd-ground` run whose verifier
   contradicts an on-file finding, or whose horizon pass moves one's horizon — has superseded any
@@ -508,8 +506,8 @@ option is picked.
   again. Only a round can answer one, so an unanswered flag opens one: a run that finds every round closed
   opens the next round for it, and where the flags alone made it askable that round holds no question
   and closes once their answers are written. This is what [`/brd-package`](brd-package.md)'s flag gate
-  sends you back here for. The rule for what flags an entry and what answers it is
-  `code-defect-log-format.md` §7.
+  sends you back here for. The rule for what flags an entry and what answers it is set by
+  `code-defect-log-format.md`.
 - **Phase 8 — the will-change rule.** A decision whose `evidence` list is *entirely*
   `horizon: will-change` findings may not be closed. Three resolutions are offered and exactly three:
   re-base it on a `current` finding, make it explicitly `conditional_on` the prerequisite decision —
@@ -586,8 +584,7 @@ option is picked.
   it differently, and a [`/brd-split`](brd-split.md) **re-cut** on the parent re-points a row this
   BRD's own walk sent to `deferred-to: <itself>` onto a sibling that will build it — writing
   `covered-by` on this BRD's row for it. Being interviewed disqualifies a re-cut's *receiver* and
-  never its *donor*, so a BRD that has reached this command is an ordinary donor
-  ([`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) §3.2).
+  never its *donor*, so a BRD that has reached this command is an ordinary donor.
 
 ## Example
 
@@ -632,17 +629,17 @@ Re-opening a closed round later, with its cause recorded:
 - [`interview-tagging.md`](../../references/interview-tagging.md) — the authority for the three tags,
   who may answer each, re-tagging and its recorded cause, the split that fixes an untaggable
   question, and how a round opens and closes.
-- `workflows-core:document-lineage` — the lineage record the register carries, and the upstream
+- The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record the register carries, and the upstream
   check run on the grounding files.
 - [`decision-register-format.md`](../../references/decision-register-format.md) — the `[VD#n]` /
   `[CD#n]` / `[AS#n]` record, the five statuses, the mandatory `argumentation`, `conditional_on`, and
   the will-change rule this command enforces.
-- `workflows-core:grounding-format` — the finding record, the six
-  verdicts, the two horizons, and §8's verification outcomes the Phase 0 gate depends on.
-- `workflows-core:addressing` — the `<BRD-KEY>` grammar and folder
+- The `grounding-format` reference (shipped in `workflows-core`, listed on its References page) — the finding record, the six
+  verdicts, the two horizons, and the verification outcomes the Phase 0 gate depends on.
+- The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<BRD-KEY>` grammar and folder
   resolution this command uses by name (`read-key`, `resolve-address`).
 - [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the dispositions the
-  allocation gate reads, and §6's ledger line the final report ends with.
+  allocation gate reads, and the ledger line the final report ends with.
 - [Agents](../reference/agents.md) — `impl-maintenance`'s full contract.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),
   and [Resume and checkpoints](../reference/resume-and-checkpoints.md) — the terminal bookkeeping

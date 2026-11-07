@@ -222,13 +222,13 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes. Composer plugins and scripts and Poetry/uv source builds are the same supply-chain path the 4.14.0 entry calls "the supply-chain path these two commands open themselves". The fix is partly cheap: `composer … --no-scripts --no-plugins`, `uv … --no-build` / `--only-binary :all:`, and Poetry's `installer.no-binary` / `only-binary` configuration.
 - **Suggested scope:** rows for uv and Composer first (each has a clear flag), then Poetry. Extend check 21, and update the `Install scripts` paragraph on both docs pages.
 
-### VU-G2 — The `/vuln` baseline-symmetry change has never been run live
+### VU-G2 — The `/vuln` baseline-symmetry change has never been run live — **Recorded in to-test-on-real-project.md (batch B30)**
 - **Designed in:** `docs/superpowers/verification/2026-09-22-vuln-baseline-symmetry.md:29-33` ("The shipping tree has never been executed … the last commit, `fdc73f53`, closes the eight residuals and is **unrun**"; "No live `/vuln` or `/upgrade` run was made against a real repository").
 - **Current state:** no later verification record covers `/vuln` or `/upgrade` (`grep -rln "/vuln\|/upgrade" docs/superpowers/verification/` finds no later run of either). The `--allow-install-scripts` rerun path and the berry hooks were measured (CHANGELOG 4.15.2), but not as an end-to-end `/vuln` run. "Open findings: None" in the record is correct only within those stated limits.
 - **Still worth doing?:** yes. VU-B1, VU-B2 and VU-B4 would show up on a first live run against a fixture with an API-breaking bump and a stale local `main`.
 - **Suggested scope:** one live `/vuln` and one `/upgrade` against the bookstore fixture: a MODERATE bump with a test the bump breaks, a local `main` behind `origin`, and an annotated-tag action pin.
 
-### VU-G3 — `/upgrade` cannot be tied to a unit (no address token)
+### VU-G3 — `/upgrade` cannot be tied to a unit (no address token) — **Decided: the dead prose went with VU-B10's fix (dev-workflows 4.39.0, batch B06); no address token until a user asks for one — recorded in batch B30**
 - **Designed in:** nothing promises it. The prose assumes it (VU-B10), and `implementation-format` §3 says "All three code-changing commands … write a compliant subject" with `[<key>]`.
 - **Current state:** `/upgrade` commits never carry `[<key>]`, so `/release-notes` and `/document`'s two-source read (`implementation-format` §4) never find an upgrade made for an Epic.
 - **Still worth doing?:** low priority. Either add `ADDRESS:` like `/vuln`, or drop the dead prose (VU-B10's fix). Recorded so that dropping the prose is a deliberate choice.
@@ -265,13 +265,13 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** Yes, at least as a recorded decision. The entry names the risky case: no interview round is planned before packaging, and an item carried only in a report is lost.
 - **Suggested scope:** Decide on the within-parent common path, as E-8 asks. Either record "a report line is sufficient" with a sentence in `/brd-package`'s gate, or widen `/brd-interview`'s re-disposition trigger to `[CDF#n]` entries the latest reconciliation record flagged `needs-a-human`. Move the item into to-fix.md either way.
 
-### BRD-G2 — Blind-verification live checks the verifier-blind record deferred, never re-run
+### BRD-G2 — Blind-verification live checks the verifier-blind record deferred, never re-run — **Recorded in to-test-on-real-project.md (batch B30)**
 - **Designed in:** `docs/superpowers/verification/2026-10-02-verifier-blind-batched.md` §4.1 and §8 (*Known residuals*): "`INPUT_UNBLIND` has not been re-run since 9A"; R21 (a control-forced `contradict` is never disputable) and R22(b) (a dispute settled `unprovable` has notes that state the disagreement only) are "Verified by reading only"; and "A headless Phase 1 compresses its printed lines" (the cost statement went unprinted in four headless runs).
 - **Current state:** The design is fully shipped. `INPUT_UNBLIND`, `blind_disputed`, `PRD_GROUND_VERIFY_INCOMPLETE`, the cap of 25 with its five quoting sites, the Phase 1 cost statement (`prd-ground.md:640-644`), the Final report's `Verification:` block (`:2306-2310`) and the rationale section all match the spec. Lean context D's re-runs (8e) exercised the dispute machinery. No record shows a live `INPUT_UNBLIND` refusal, or a control-forced `contradict` left undisputed, on a current tree.
 - **Still worth doing?:** Low priority. It is a verification gap, not a missing feature, and the next live `/prd-ground` run could cover it cheaply with one direct derive dispatch carrying an `evidence` field.
 - **Suggested scope:** One direct `grounding-verifier` derive dispatch with an answer field, plus one planted control-forced `contradict`. Record both in the next verification record.
 
-### BRD-G3 — BRD-figures case rows the 2026-09-22 record left unverified on the shipping tree
+### BRD-G3 — BRD-figures case rows the 2026-09-22 record left unverified on the shipping tree — **Recorded in to-test-on-real-project.md (batch B30)**
 - **Designed in:** `docs/superpowers/verification/2026-09-22-brd-figures-execution-runs.md`, Tier 2 and Tier 3 tables:
   - B1/B2/B2′: "The **re-run** path is the one half of `/brd-intake` no later run took".
   - E1–E5: "nothing E2 reported has been re-executed".
@@ -295,7 +295,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes, after G1. The design itself says it "is meaningless before pages exist", and pages exist today only by hand.
 - **Suggested scope:** as §12.4. `diff-summarizer` over each surface's evidence paths from the backlog's `sources[].ref`; `sources[].ref` advances only after re-verification; `docs-audit-reviewer` gates the staleness calls.
 
-### DOC-D-G4 — the increment-2 commands' behaviour has still never been executed
+### DOC-D-G4 — the increment-2 commands' behaviour has still never been executed — **Recorded in to-test-on-real-project.md (batch B30)**
 - **Designed in:** `docs/superpowers/verification/2026-09-22-docs-family-increment-2.md` *What is NOT verified* 1 ("No command body was executed … The first real invocation is the first execution") and 4 ("`/docs-brand` rung 2's new behaviour is specified, not exercised").
 - **Current state:** no verification record, review or ledger since then records a run of `/docs-audit`, `/docs-init` with `source_repos[]`, or `/docs-brand` rung 2. `grep -rln 'docs-audit\|docs-init' docs/superpowers/verification docs/superpowers/reviews` finds only records about counts and caller sets. The live runs of lean context part 1 and D covered `/release-notes` and no cold-start command. `plugins/docs-workflows/CHANGELOG.md` mentions no live run of any of the four.
 - **Still worth doing?:** yes. These are the family's most prose-heavy commands (`/docs-audit`: thirteen phases, three agents, a schema with edge rules), and B1 is the kind of defect a single end-to-end run of the route would surface.
@@ -420,7 +420,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `specify-tc-assertion-absent-from-ac`, `specify-fault-precedence-unspecified`, `specify-sibling-states-and-inverse-unstated` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B16 — NIT — Gap: no shipped tooling for mechanical spec edits and checks
+### FBB-B16 — NIT — Gap: no shipped tooling for mechanical spec edits and checks — **Recorded in to-fix.md (batch B30): deferred**
 - **Where:** `plugins/product-workflows/scripts/` (holds `architecture-harvest.py`, `bounded.py`, `ledger-evidence.py`, `promotion-signals.py`, `proposal-record.py`; there is no spec tool).
 - **What is wrong:** Every large `/specify` run rewrites ad-hoc Python for inserting test cases, exact-match replacements, and structural checks.
 - **Suggested fix:** Ship a `spec-tool.py` with `insert-tcs`, `replace` and `check`, and call it from `/specify`. This overlaps B13's deterministic checks.
@@ -477,7 +477,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `implement-specs-doc-finding-unrouted` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B35 — MINOR — Gap: tests that do not compile reach the Opus review
+### FBB-B35 — MINOR — Gap: tests that do not compile reach the Opus review — **Recorded in to-fix.md as D47 (batch B30): to build**
 - **Where:** `plugins/dev-workflows/commands/implement.md:872` (type-checks run with lint and build in Phase 3.5 step 3, after the review); `code-writer` and `test-writer` run none.
 - **What is wrong:** `test-writer` output that fails `tsc` is reviewed as written. The review then spends findings on compile errors. The design deliberately places every check after the review, so this is a gap, not a contradiction.
 - **Suggested fix:** Allow a non-running type-check of test sources before the review diff, stating that it is not a test run, or record why this is refused.

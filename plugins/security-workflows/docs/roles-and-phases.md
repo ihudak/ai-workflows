@@ -35,10 +35,10 @@ That is a deliberate price. Until the Security Engineer reviews it, a risk the D
 
 ## Cost-attribution phases
 
-Every cost-emitting command tags its cost line with a `phase` and a `role`. This plugin's one command reaches one phase. The family's other lifecycle phases belong to the companion plugins' commands, and `workflows-core:cost-emission` §7 is the authority for every pair.
+Every cost-emitting command tags its cost line with a `phase` and a `role`. This plugin's one command reaches one phase. The family's other lifecycle phases belong to the companion plugins' commands and are documented there.
 
 ### security-audit
 
-Emitted by `/security-workflows:scan`, role `dev` for a key run without `--triage` or `--verify-fixes` and `sec` for every other run. The command passes `phase: inferred, role: inferred` with the run's role as `run_role`, and the cost phase resolves the pair from it: the role cannot be read from disk, because the run record that carries it is written only by a run that changed the register. Being in this phase means a code repository's security is being audited: a scan, an import, a triage or a fix verification recorded in its register.
+Emitted by `/security-workflows:scan`, role `dev` for a key run without `--triage` or `--verify-fixes` and `sec` for every other run. The command works out the run's role as it goes and hands it to the cost phase, which charges the run under it: the role cannot be read from disk, because the run record that carries it is written only by a run that changed the register. Being in this phase means a code repository's security is being audited: a scan, an import, a triage or a fix verification recorded in its register.
 
-It is also reached by inheritance, without a role: `/workflows-core:prompt`, `/workflows-core:feedback`, `/workflows-core:prompt-brainstorm` and `/workflows-core:prompt-grill-me` correcting a scan run inherit its phase and record the role as `n/a`, since `run_role` lives in the scan run alone. [Session cost](reference/session-cost.md) says where each entry lands.
+It is also reached by inheritance, without a role: `/workflows-core:prompt`, `/workflows-core:feedback`, `/workflows-core:prompt-brainstorm` and `/workflows-core:prompt-grill-me` correcting a scan run inherit its phase and record the role as `n/a`, since the scan's role lives in the scan run alone. [Session cost](reference/session-cost.md) says where each entry lands.

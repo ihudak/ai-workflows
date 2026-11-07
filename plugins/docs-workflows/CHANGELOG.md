@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.1] — 2026-11-07
+
+User pages only, batch B30. Needs nothing from the other plugins' releases.
+
+### Fixed
+- **The user pages speak to users.** No page carries a `§` section citation, a design-decision id such as `(D17, D20)`, or a bare reference citation: `/docs-serve`'s page states its rule itself — it writes nothing, so it has no review gate — and the rest were dropped where their sentence already stated the rule or said in plain words. Repository `grep` recipes give their answers; change history ("the third increment of the marketplace split", "after the split") is gone; `$ARGUMENTS` and raw `choices:` arrays are gone.
+- **No page assumes a tracker or a docs team's automation.** The `/document`, `/release-notes` and Workflow pages say the release-note draft is the body only, and whoever publishes it adds any identifiers or wrapper their own process needs.
+- **Session cost defines a *ceded* run once**, under *Ceded runs*, and the command pages link it. Getting started says what the toolchain preflight checks.
+
 ## [1.35.0] — 2026-11-06
 
 DOC-D-G5. Needs nothing from the other plugins' releases.
