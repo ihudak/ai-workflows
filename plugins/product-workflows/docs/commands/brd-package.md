@@ -183,7 +183,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   command opens a round is its own rule, which the stop cites rather than restates. Where
   `/brd-interview` would open a new round, or names the `--round 1` re-open for open requirement
   defects no round has asked, running it is the fix; a bare run says which, and hands off nothing
-  where neither applies. `/prd-ground <BRD-KEY> --rebaseline` can also make a round askable, where the re-grounding moves a
+  where neither applies. [`/prd-ground <BRD-KEY> --rebaseline`](prd-ground.md) can also make a round askable, where the re-grounding moves a
   decision or raises a question; a status change alone opens no round. Where none of
   that applies, the BRD is decided — a **finished** state rather than a missing step. A package
   carrying `[VD#n]` positions and no `[C]` question is legitimate and is packaged.
@@ -483,7 +483,7 @@ attack.
 
 ## What it does not do
 
-- **No documentation grounding, and no `--no-docs` flag.** `/brd-intake` and `/prd-ground` already
+- **No documentation grounding, and no `--no-docs` flag.** [`/brd-intake`](brd-intake.md) and `/prd-ground` already
   ground this BRD against the shipped product documentation when `$DOCS_PATH` resolves. This command
   establishes no claim of its own at all — it renders what other commands recorded — so a
   documentation page could only introduce an ungrounded sentence into a bundle whose whole value is
@@ -525,6 +525,8 @@ repeating them, then prints the repo→SHA table and the ledger line.
 
 ## See also
 
+- [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.
+- [Workflow overview](../workflow.md) — the whole plugin on one diagram, the BRD route beside the idea route.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - [References](../reference/references.md) — the plugin's own formats this command applies: bundle packaging (the authority for plugin-free construction, the de-Obsidianising pass, the three degradation tiers, the delivery note's ceiling, the citation-resolution and set-resolution checks, and where the bundle lands), the customer review schema (the twelve sections the returned review carries, and the file whose body this command inlines from section 2 onward), the decision register format (the `[VD#n]` / `[CD#n]` / `[AS#n]` record, `conditional_on`, and the rule that every open assumption reaches the customer), interview tagging (the `[C]` tag, and the rule that a customer question reaches the customer only through this package) and the coverage ledger format (the dispositions the review-scope part reads, and the ledger line the final report ends with).

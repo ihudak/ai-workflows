@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.7] — 2026-11-07
+
+User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- The README links this plugin's own getting-started page for install and prerequisites, and the getting-started page links the repository README's prerequisites and its skill-listing step by the repository's URL: a relative link out of the plugin breaks in the installed copy.
+- The Roles and phases page links `/security-workflows:scan`'s page.
+
 ## [0.10.6] — 2026-11-07
 
 User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.

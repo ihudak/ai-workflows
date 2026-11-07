@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.3] — 2026-11-07
+
+User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- Every command page now links the Workflow overview, and the six BRD-route pages also link the BRD route page, first.
+- The workflow, BRD route, roles-and-phases and getting-started pages link each command the first time they name it, and the command pages link the sibling commands they name.
+- `/harvest-decisions`' page names its next step, `/promote-decisions`, which it did not mention at all.
+- The README links this plugin's own getting-started page for install and prerequisites, and the getting-started page links the repository README by the repository's URL. `/update-spec`'s page names `/dev-workflows:design` without a link into `dev-workflows`' pages: a relative link out of the plugin breaks in the installed copy.
+
 ## [3.78.2] — 2026-11-07
 
 User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.

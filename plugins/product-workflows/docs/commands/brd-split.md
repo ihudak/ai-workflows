@@ -277,7 +277,7 @@ reads was already independently verified by `/prd-ground`'s own agents.
 - **Not an idea-route PRD folder.** A `PRD-` folder carrying no `brd-link.md` — `/create-prd`'s own
   output, never carved from a BRD — has no ledger and no inventory to allocate, and would otherwise
   be read as a root that owns its source document. It stops with `BRD_SPLIT_NOT_A_BRD` before the
-  run mode is set, naming `/create-ard` and `/specify` as the way the idea route goes on, and
+  run mode is set, naming [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way the idea route goes on, and
   `/brd-intake` where the key was meant to name a BRD.
 - **Not an Epic folder.** An `EPIC-` folder carries no `brd-link.md` either, and would be read the
   same way; it stops with `BRD_SPLIT_EPIC_LEVEL` before the run mode is set, naming
@@ -640,6 +640,8 @@ and the run says what has to happen first.
 
 ## See also
 
+- [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.
+- [Workflow overview](../workflow.md) — the whole plugin on one diagram, the BRD route beside the idea route.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<BRD-KEY>` grammar and folder

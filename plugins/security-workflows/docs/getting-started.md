@@ -31,7 +31,7 @@ An unsatisfied dependency disables the plugin instead of letting it half-run, wh
 
 **What you also need, and it is not a plugin.**
 
-- **`python3` 3.9 or newer on your `PATH`.** Claude Security needs it, and every run but `--triage` stops at setup with `SECURITY_PREREQ_PYTHON` on an older one. The family's own scripts want 3.11: the repo-root [Prerequisites](../../../README.md#prerequisites) give each tool's minimum and the reason for it.
+- **`python3` 3.9 or newer on your `PATH`.** Claude Security needs it, and every run but `--triage` stops at setup with `SECURITY_PREREQ_PYTHON` on an older one. The family's own scripts want 3.11: the repo-root [Prerequisites](https://github.com/ihudak/ai-workflows#prerequisites) give each tool's minimum and the reason for it.
 - **Dynamic workflows.** Claude Security runs its scan as a dynamic workflow, through the `Workflow` tool. Turn on the *Dynamic workflows* row in `/config`; on Pro it is off by default. A run that scans stops at setup with `SECURITY_PREREQ_WORKFLOWS` where the tool is not available. `--import` and `--triage` scan nothing, and do not need it.
 - **A session on Opus, recommended.** Claude Security's scan agents run on your session model, and nothing inside a running command can change it. On Opus the run asks nothing about it. On Sonnet or below it asks first, recommending that you cancel and rerun after `/model opus`, since the scan may find fewer or weaker issues. On Fable it asks nothing, since you chose Fable, and its confirmation says that Fable's safety filters will re-run some of the scan's requests on Opus. The scan never moves to Fable on its own.
 - **`git`, and a code repository with an `origin` remote.** The register is kept per code repository, under the last path segment of `origin`'s URL, and a repository with no `origin` stops with `SECURITY_USAGE`.
@@ -59,7 +59,7 @@ The shared, team-visible specs repository. The findings register lives in it, on
 
 ### Claude Code's skill-listing budget
 
-Set it once, whichever plugins you install: the repo-root [installation step](../../../README.md#4-raise-claude-codes-skill-listing-budget) says how, and how to check that it is enough. `/security-workflows:scan` is typed-only (`disable-model-invocation: true`), so it takes no room in the list of skills the model picks from, and asking in prose does not start it: type the command. Claude Security's own skill is model-invocable, so it does take room.
+Set it once, whichever plugins you install: the repo-root [installation step](https://github.com/ihudak/ai-workflows#4-raise-claude-codes-skill-listing-budget) says how, and how to check that it is enough. `/security-workflows:scan` is typed-only (`disable-model-invocation: true`), so it takes no room in the list of skills the model picks from, and asking in prose does not start it: type the command. Claude Security's own skill is model-invocable, so it does take room.
 
 ## Where it sits in the delivery
 

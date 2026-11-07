@@ -6,7 +6,7 @@
 |---|---|---|---|
 | `preload-context` | `UserPromptSubmit` | — | On a matched `/implement`, `/vuln` or `/dev-workflows:upgrade` prompt, injects git/model-routing/specs context; a near-instant no-op otherwise. |
 
-**`notify-done` and `test-notify` ship from `workflows-core`.** Both are session-wide — one fires on every `Stop`, the other on every `Bash` tool call — so neither is specific to this plugin's commands. They ship from `workflows-core`, which every plugin in the family declares as a dependency, so a user who installs `product-workflows` or `docs-workflows` without this plugin gets them too. See [`workflows-core`'s hooks reference](../../../workflows-core/docs/reference/hooks.md).
+**`notify-done` and `test-notify` ship from `workflows-core`.** Both are session-wide — one fires on every `Stop`, the other on every `Bash` tool call — so neither is specific to this plugin's commands. They ship from `workflows-core`, which every plugin in the family declares as a dependency, so a user who installs `product-workflows` or `docs-workflows` without this plugin gets them too. Their page is the Hooks page in `workflows-core`'s docs.
 
 The companion `docs-workflows` and `product-workflows` plugins each ship their own `preload-context` — `docs-workflows`'s covering `/document` and `/docs-workflows:release-notes`, `product-workflows`'s covering `/epics` — plus `docs-workflows`'s `changelog-owners-reminder`, which warns about a docs page's changelog and owners frontmatter. Each plugin's `preload-context` preloads only for its own commands.
 

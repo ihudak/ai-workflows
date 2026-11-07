@@ -9,8 +9,8 @@ coverage ledger where every requirement starts `unallocated`.
 ## Who runs it
 
 `/brd-intake` runs in the [pm](../roles-and-phases.md#pm--product-management) role, cost-attribution
-phase `brd-to-prd` — the phase shared by every command of the BRD-to-PRD route, the way `/idea` and
-`/create-prd` share `prd-creation`. It is the route's entry point, and the only command in it that
+phase `brd-to-prd` — the phase shared by every command of the BRD-to-PRD route, the way [`/idea`](idea.md) and
+[`/create-prd`](create-prd.md) share `prd-creation`. It is the route's entry point, and the only command in it that
 is handed a customer-supplied source document: later commands read the copies and the inventory this
 run made, and none extracts requirements from the customer's files again. Downstream, each command
 of the route gates on what an earlier command in the chain produced, and on anything this command
@@ -115,7 +115,7 @@ ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-
 - **`$DOCS_PATH`** (optional, default `/workspace/docs`) — documentation grounding, resolved once
   in Phase 1 and consumed with grill-rank ranking over Phase 4's defect walk. Missing, unreadable,
   or carrying no markdown file is a silent, non-blocking skip. Turned off explicitly with
-  `--no-docs`. The `/epics` consent-ordering exception does not apply here: `/brd-intake` runs no
+  `--no-docs`. The [`/epics`](epics.md) consent-ordering exception does not apply here: `/brd-intake` runs no
   `require-on-main` gate, so resolving in the ordinary confirmation step already puts the one
   consent-bearing step ahead of every write.
 - **No repos.** `/brd-intake` is cwd-agnostic and needs no `$REPOS_PATH` — grounding against code
@@ -313,6 +313,8 @@ offers to branch, commit, push, and open a pull request.
 
 ## See also
 
+- [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.
+- [Workflow overview](../workflow.md) — the whole plugin on one diagram, the BRD route beside the idea route.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<BRD-KEY>` grammar and folder

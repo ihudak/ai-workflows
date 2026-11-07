@@ -251,7 +251,7 @@ subagent is dispatched — every finding this command reads was already independ
   no `prd.md` (an idea in a legacy, unprefixed folder), also [`/create-prd`](create-prd.md) on
   the same key, which accepts the folder, then — once its handoff is merged, since both gate
   `prd.md` on the default branch — [`/create-ard`](create-ard.md) or [`/specify`](specify.md). Such a folder carries neither a coverage ledger nor an inventory,
-  so it is no BRD container, and `/brd-intake` refuses to re-run over it (`BRD_INTAKE_NOT_A_BRD`).
+  so it is no BRD container, and [`/brd-intake`](brd-intake.md) refuses to re-run over it (`BRD_INTAKE_NOT_A_BRD`).
 - **Every finding verified.** A finding with no recorded verifier outcome is not evidence, and a
   decision's `evidence` list is a list of findings — so any such finding on file stops the run with
   `BRD_INTERVIEW_UNVERIFIED`. A `code-grounding.md` that is on the default branch and records **no**
@@ -618,6 +618,8 @@ Re-opening a closed round later, with its cause recorded:
 
 ## See also
 
+- [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.
+- [Workflow overview](../workflow.md) — the whole plugin on one diagram, the BRD route beside the idea route.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - [References](../reference/references.md) — the plugin's own formats this command applies: interview tagging (the authority for the three tags, who may answer each, re-tagging and its recorded cause, the split that fixes an untaggable question, and how a round opens and closes), the decision register format (the `[VD#n]` / `[CD#n]` / `[AS#n]` record, the five statuses, the mandatory `argumentation`, `conditional_on`, and the will-change rule this command enforces), the code-defect log format (what flags an entry and what answers it) and the coverage ledger format (the dispositions the allocation gate reads, and the ledger line the final report ends with).

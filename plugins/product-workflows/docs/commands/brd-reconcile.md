@@ -161,7 +161,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
   folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-reconcile <SLICE-KEY>` on the slice above it where there is one, and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
   and stops with `BRD_RECONCILE_NOT_A_SLICE` before any gate runs: it has no package, ledger or inventory for a returned review to land in, and `--sent` does not lift it, so the stop sends it on along the
-  idea route — `/create-ard` or `/specify`, or, where the folder holds a `prd.md`, `/update-prd` to revise that PRD from what the review says. A resolved root stops with
+  idea route — `/create-ard` or `/specify`, or, where the folder holds a `prd.md`, [`/update-prd`](update-prd.md) to revise that PRD from what the review says. A resolved root stops with
   `BRD_RECONCILE_ROOT_LEVEL`, naming `/brd-split <BRD-KEY> "<how to cut it>"` to carve a slice and
   then `/brd-reconcile <SLICE-KEY> @<review-file>` on it; where the root already carries
   reconciliation artifacts, the stop names those files and leaves them in place, unread.
@@ -770,6 +770,8 @@ dependent BRD is named beside the list with `/brd-interview` on that dependent's
 
 ## See also
 
+- [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.
+- [Workflow overview](../workflow.md) — the whole plugin on one diagram, the BRD route beside the idea route.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - [References](../reference/references.md) — the plugin's own formats this command applies: the customer review schema (the twelve sections the returned review carries, and the one-new-file rule that makes section 12 the only channel for a change to a package document), the decision register format (the `[CD#n]` record, the mandatory `argumentation`, the two causes that may reopen a decision, `conditional_on`, and the will-change rule the freeze applies to a `[CD#n]`), interview tagging (the `[C]` tag and the round vocabulary whose terminal disposition *answered by the customer* this command writes), the coverage ledger format (the dispositions, and the roll-up behind the ledger line every run ends with), the BRD format (the four defect resolutions, three of which this command writes — `customer-amended <SLICE-KEY> <date>`, `withdrawn`, and `resolved-by: <SLICE-KEY>/[CD#n]` for a defect whose question the customer answered, the first and the last qualified by the slice's key because each slice keeps its own reviews and numbers its own decisions — and the slice's one-hop inheritance of its parent's defect log) and bundle packaging (why the committed bundle is the permanent record, and therefore why nothing inside it is bannered).

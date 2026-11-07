@@ -107,6 +107,7 @@ Where you report a customer decision the register does not hold — one taken in
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the lineage record `prd.md` carries.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off at the `prd-creation` seam.
 - [`/idea`](idea.md) — the upstream command that authors the `idea.md` this command consumes, in the folder this command then resolves.

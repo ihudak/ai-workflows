@@ -40,7 +40,7 @@ flowchart TD
 
 - **Upstream** — what changed in the specification's inputs since it was written: the PRD, the ARDs, the Epic's `epic.md`, the grounding files and, on the BRD route, the slice's `decisions.md`, each diffed from the exact version the specification's **lineage record** names, or, on an older specification that carries an `inputs_at` field instead, from the commit that field names. Each change is mapped to the stories, criteria and test cases it bears on. A specification carrying neither has a **null baseline**: the run says it cannot tell what moved upstream, takes the other two sources, and the revision it writes records its lineage, so the next one can. Of the decision register and the grounding, only implementation-altitude records and the derivation matrix count, and a grounding re-run's fresh repository pin, re-verification outcomes, and divergences, frame-set and dated run sections are not changes. On an Epic-level specification the run also checks the Epic's own lineage, and asks before going on where the Epic is behind its PRD.
 - **Your correction** — the `<what is wrong>` text, resolved against the specification's own IDs and headings.
-- **Notes other commands left** — open items under `## Engineering review` and the `Engineering proposal (/design): …` answers [`/dev-workflows:design`](../../../dev-workflows/docs/commands/design.md) writes, and the notes `/implement` and `/conformance` add.
+- **Notes other commands left** — open items under `## Engineering review` and the `Engineering proposal (/design): …` answers `/dev-workflows:design` writes, and the notes `/implement` and `/conformance` add.
 
 **IDs never move.** For each item that changes, the first question is whether its meaning changed: a wording fix keeps its ID; a change of meaning takes the next free number and the old item stays, marked `Superseded by` it; a removal stays, marked `Withdrawn` with the reason. Nothing is renumbered or reused, so every design, conformance record or Epic that cites an ID still finds it, and no old citation silently changes meaning. Superseded and withdrawn items are skipped by every reader that counts, covers or traces requirements.
 
@@ -84,9 +84,10 @@ The run diffs the PRD from the version the specification's lineage record names 
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - [`/specify`](specify.md) — authors a specification from scratch; on an existing one it archives and rewrites, and names this command for a revision instead.
 - [`/update-prd`](update-prd.md) — the PRD's revision command, whose next step offers this one where a merged specification exists.
-- [`/dev-workflows:design`](../../../dev-workflows/docs/commands/design.md) — revises a design this run named.
+- `/dev-workflows:design` — revises a design this run named; it ships in the companion `dev-workflows` plugin.
 - [`/epics`](epics.md) — refines the Epics whose `## Covers` this run named.
 - [Roles and phases](../roles-and-phases.md) — what the `pe` role owns.
 - [Model routing](../reference/model-routing.md), [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md) and [Resume and checkpoints](../reference/resume-and-checkpoints.md).

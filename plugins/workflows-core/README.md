@@ -2,7 +2,7 @@
 
 Shared foundation for the `dev-workflows` plugin family: the addressing grammar and specs-repo git entry points, phase handoff, model routing, escalation and finding-triage rules, cost/feedback/follow-up emission, and the grounding and grilling conventions every authoring command applies. It also carries seven slash commands — the family-meta utilities, `/frames`, the design-frame-set indexer, and `/diagnose-session`, which reads a session's transcripts to say why a run went wrong — plus the agents any plugin in the family may dispatch.
 
-> Part of the `shipwright` marketplace — see the [repo-root setup guide](../../README.md) for marketplace install + prerequisites.
+> Part of the `shipwright` marketplace — see [Getting started](docs/getting-started.md) for marketplace install + prerequisites.
 
 ## What it does
 
@@ -24,6 +24,7 @@ Most of this plugin is not a command at all. It is the corpus a sibling plugin r
 | [Documentation index](docs/README.md) | The command list and the reference inventories. |
 | [Getting started](docs/getting-started.md) | Install, environment variables, and what this plugin is for. |
 | [Workflow overview](docs/workflow.md) | Where these seven commands sit relative to the pipeline they serve. |
+| [Family map](docs/family-map.md) | The whole plugin family on one diagram: every command of the five plugins, by role. |
 | [Roles and phases](docs/roles-and-phases.md) | The cost-attribution phases these commands reach, and how. |
 | [Agents](docs/reference/agents.md) | The eleven agents this plugin bundles and who dispatches them. |
 | [References](docs/reference/references.md) | The reference corpus under `references/`. |

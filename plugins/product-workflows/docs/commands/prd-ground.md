@@ -367,7 +367,7 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
   folder's design/ with its disposition** — `ground`, `skipped: --no-design`, `skipped: no index` or `skipped: stale index`.
   That census is written on every run, including one that ground no designs at all, and it is what
   `/brd-split`'s design gate reads on the BRD route. On this route the frame sets it names are the
-  idea's own source images, vendored under `design/idea-sources/` by `/idea` Phase 4.5. **Under
+  idea's own source images, vendored under `design/idea-sources/` by [`/idea`](idea.md) Phase 4.5. **Under
   `--no-code` this is the only grounding file the run writes**: `code-grounding.md` and
   `baselines.md` are held read-only and stand exactly as the run that wrote them left them. The
   ledger's `evidence` column below is rebuilt in that mode too, and is the one other thing such a
@@ -430,7 +430,7 @@ model id there too, as one `/brd-package` will put to you to rule on as the cust
 Behind Phase 9's consent choice, these are committed, pushed, and a pull request opened against the
 specs repo's default branch — under the shared `brd/<KEY>-<slug>` branch prefix on the BRD route
 (shared by every `/brd-*` command), or `prd/<KEY>-<slug>` on the idea route (shared with
-`/create-prd`, `/update-prd` and `/prd-proposal`). A collision between the two is unreachable in the
+`/create-prd`, `/update-prd` and [`/prd-proposal`](prd-proposal.md)). A collision between the two is unreachable in the
 sanctioned flow: an idea-route run has already gated `prd.md` with `require-on-main`, so it only
 ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
 
@@ -623,6 +623,8 @@ baseline finding the run writes per repository is `CONFIRMED` too, and is not on
 
 ## See also
 
+- [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.
+- [Workflow overview](../workflow.md) — the whole plugin on one diagram, the BRD route beside the idea route.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off, on either
   route.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.

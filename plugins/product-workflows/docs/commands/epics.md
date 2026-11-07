@@ -99,6 +99,7 @@ The run resolves the PRD, derives where the Epics land rather than asking (an `E
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - [Roles and phases](../roles-and-phases.md) — what the `pe` role owns, including `/epics`' Phase 2.6 gate, which always targets the PRD dir's `specification.md` rather than a nested per-Epic one, since Epics don't exist yet when `/epics` runs.
 - [`/create-prd`](create-prd.md) and [`/create-ard`](create-ard.md) — the upstream commands whose PRD and (optional) ARD `/epics` reads.
 - [`/specify`](specify.md) — the downstream command normally run once per drafted Epic, which stops while that Epic is on an unmerged `epics/` branch; a PRD with 0 Epics that reaches `/specify` first is itself offered a link back to `/epics`, but nothing gates the order.

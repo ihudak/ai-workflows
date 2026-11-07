@@ -4,7 +4,7 @@ Reads a session's transcripts on disk and reports what happened in a run of this
 
 ## Who runs it
 
-Whoever wants to know why a run went the way it did: the engineer who ran it, or the family's maintainer reading a report someone else wrote. It runs outside the role pipeline, at any time, on the current session or a past one. Its spend is charged to [`plugin-feedback`](../roles-and-phases.md#plugin-feedback)/`n/a` whichever command it reads, since a diagnosis is about the plugin itself; it dispatches no maintenance agent and routes no model. [Workflow overview](../workflow.md#cross-cutting-commands) groups it with the commands that improve the plugin family; where `/feedback` logs a note in your words, this command finds the evidence for one.
+Whoever wants to know why a run went the way it did: the engineer who ran it, or the family's maintainer reading a report someone else wrote. It runs outside the role pipeline, at any time, on the current session or a past one. Its spend is charged to [`plugin-feedback`](../roles-and-phases.md#plugin-feedback)/`n/a` whichever command it reads, since a diagnosis is about the plugin itself; it dispatches no maintenance agent and routes no model. [Workflow overview](../workflow.md#cross-cutting-commands) groups it with the commands that improve the plugin family; where [`/feedback`](feedback.md) logs a note in your words, this command finds the evidence for one.
 
 ## Synopsis
 
