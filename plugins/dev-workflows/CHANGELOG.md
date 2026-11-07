@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.59.2] — 2026-11-07
+
+User pages only: batch B32, the family's entry points. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **The workflow diagram draws the steps between the last Epic and the documentation**: the security scan hands on to the Product Engineer's PRD-level `/conformance` once every Epic has merged, and that run offers the documentation commands once its decisions are settled. The page's prose and the README say the same, in place of the documentation commands hanging off `/implement`.
+- The getting-started page says the plugin reads four environment variables and lists `DOCS_PATH` only to say it is never touched, and its `DOCS_PATH` section counts ten grounding commands, with `/update-spec`; the Environment page says which four it reads.
+- The README's documentation table lists the Commit convention page.
+- The getting-started and Session cost pages call the status line's second cost figure the status-line cross-check, not "Option B" or "the cost cross-check".
+
 ## [4.59.1] — 2026-11-07
 
 User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.

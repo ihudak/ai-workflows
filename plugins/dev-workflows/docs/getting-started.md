@@ -35,7 +35,7 @@ claude plugin update dev-workflows@shipwright
 
 ## What you set on your machine
 
-`dev-workflows` reads five environment variables. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip.
+`dev-workflows` reads four environment variables, and this page lists a fifth, `DOCS_PATH`, only to say the plugin never touches it. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the other three are optional and each degrades to a documented default or a silent skip.
 
 ### `SPECS_PATH`
 
@@ -47,7 +47,7 @@ Where your code clones live — one directory, or a colon-separated list of them
 
 ### `DOCS_PATH`
 
-Your shipped product documentation's clone — **read-only** in its role as a grounding root. None of this plugin's own six commands grounds against it. Nine commands do, and every one of them ships from a companion plugin: eight from `product-workflows` (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/brd-intake` and `/prd-ground`) and `/docs-workflows:release-notes` from `docs-workflows`. Separately, `/docs-workflows:document` prefers this variable as a docs-repo discovery **hint** — a write target, not grounding. It is documented here only because [`code-handoff.md`](reference/references.md)'s git finish states plainly that it never touches this path either — a boundary statement, not a consumer. The plugin never writes to `DOCS_PATH`.
+Your shipped product documentation's clone — **read-only** in its role as a grounding root. None of this plugin's own six commands grounds against it. Ten commands do, and every one of them ships from a companion plugin: nine from `product-workflows` (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/epics`, `/brd-intake` and `/prd-ground`) and `/docs-workflows:release-notes` from `docs-workflows`. Separately, `/docs-workflows:document` prefers this variable as a docs-repo discovery **hint** — a write target, not grounding. It is documented here only because [`code-handoff.md`](reference/references.md)'s git finish states plainly that it never touches this path either — a boundary statement, not a consumer. The plugin never writes to `DOCS_PATH`.
 
 ### `ARCHITECTURE_REPO_PATH`
 
@@ -73,7 +73,7 @@ That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for 
 
 The visible half is a permanent multi-line status line at the bottom of your terminal — session identity, git state, context usage, running cost, tokens, and rate limits — so you can see a long command spending your budget while it spends it, rather than finding out in the final report.
 
-The half you don't see is the **cost cross-check**. Session-cost reporting works without the status line: it reads the session transcript and prices it against the bundled table. What the status line adds is a second, independent figure — Claude Code's own reported cost, captured per render — which the cost phase differences into a per-invocation delta. Where the two disagree over a window with no compaction, the gap is the signal that the bundled price table has drifted and needs refreshing; a compaction is billed but leaves no token usage in the transcript, so a window holding one — its entry says `compactions:` — runs the second figure ahead by what it cost. Install it and you get both numbers; skip it and you still get a cost report, just without anything to calibrate it against. (Even with it installed, the first cost phase of a session has no baseline yet and omits the second figure; it appears from the second command onward.)
+The half you don't see is the **status-line cross-check**. Session-cost reporting works without the status line: it reads the session transcript and prices it against the bundled table. What the status line adds is a second, independent figure — Claude Code's own reported cost, captured per render — which the cost phase differences into a per-invocation delta. Where the two disagree over a window with no compaction, the gap is the signal that the bundled price table has drifted and needs refreshing; a compaction is billed but leaves no token usage in the transcript, so a window holding one — its entry says `compactions:` — runs the second figure ahead by what it cost. Install it and you get both numbers; skip it and you still get a cost report, just without anything to calibrate it against. (Even with it installed, the first cost phase of a session has no baseline yet and omits the second figure; it appears from the second command onward.)
 
 See [Session cost](reference/session-cost.md) for what the report contains and where it lands. The command is idempotent, backs up anything it would overwrite, and changes no workflow-command behaviour.
 

@@ -1887,7 +1887,7 @@ def main():
         base_dt = min(candidates) if candidates else now_dt
     duration_s = int(max(0, (now_dt - base_dt).total_seconds()))
 
-    # Option B (statusline cross-check) measures whole renders, so it cannot be
+    # The status-line cross-check measures whole renders, so it cannot be
     # apportioned once part of the window has been carved off. With any claim the
     # field is omitted rather than over-reported against the remainder.
     cost_statusline = None

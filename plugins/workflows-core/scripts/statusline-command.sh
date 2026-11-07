@@ -86,7 +86,7 @@ if [ -n "$cost_direct" ] && [ "$cost_direct" != "null" ]; then
   session_cost=$(printf "%.4f" "$cost_direct")
 fi
 
-# ── plugin-family cost snapshot (Option B enabler) ────────────────────────────
+# ── plugin-family cost snapshot (the status-line cross-check) ─────────────────
 # Persist the authoritative session cost (.cost.total_cost_usd) so the
 # family's terminal cost phase can cross-check its transcript-computed
 # estimate. Overwrites a single-object snapshot each render (bounded size).

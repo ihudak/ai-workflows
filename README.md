@@ -78,7 +78,7 @@ claude plugin install security-workflows@shipwright
 
 ### 3. Configure environment variables
 
-The workflow plugins resolve their inputs and outputs through three core environment variables — plus an optional `DOCS_PATH`, read-only as a documentation-grounding root and a write target for the docs commands that write a docs repository, and an optional `ARCHITECTURE_REPO_PATH` for architecture grounding. Export them in your shell profile (or rely on the AI-Container defaults):
+The workflow plugins resolve their inputs and outputs through five environment variables: `SPECS_PATH`, which most commands stop without; `REPOS_PATH`, which defaults to `/workspace`; and three optional ones — `DOCS_PATH`, read-only as a documentation-grounding root and a write target for the docs commands that write a docs repository, `ARCHITECTURE_REPO_PATH` for architecture grounding, and `GIT_USER_INITIALS`, a branch prefix. Export them in your shell profile (or rely on the AI-Container defaults):
 
 ```bash
 export SPECS_PATH="/workspace/specs"   # shared store: specifications, designs, ARDs
@@ -106,7 +106,7 @@ That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for 
 
 ### 5. Run `/workflows-core:statusline` first
 
-After installing, run `/workflows-core:statusline` once. The command ships in `workflows-core`, so install that plugin too (step 2 above lists it). It installs the family's multi-line status line (session identity, git, context, cost, tokens, rate limits) into `~/.claude/settings.json` and, given `jq`, enables the Option-B snapshot used by session-cost reporting. It is idempotent and backs up anything it would overwrite, and it changes no workflow-command behavior.
+After installing, run `/workflows-core:statusline` once. The command ships in `workflows-core`, so install that plugin too (step 2 above lists it). It installs the family's multi-line status line (session identity, git, context, cost, tokens, rate limits) into `~/.claude/settings.json` and, given `jq`, writes the cost snapshot behind session-cost reporting's status-line cross-check. It is idempotent and backs up anything it would overwrite, and it changes no workflow-command behavior.
 
 ```
 /workflows-core:statusline
@@ -166,12 +166,18 @@ The environment variables expect these layouts:
 ```
 $SPECS_PATH/                      # shared, team-visible store
   specifications/PRD-<KEY>-<slug>/  # prd.md, ard.md (+ EPIC-<KEY>-NN-<slug>/ holding specification.md, design.md)
+  specifications/BRD-<KEY>-<slug>/  # a customer's BRD on the BRD route, with its PRD- slice folders inside it
+  architecture/                   # the team's decision records, harvested from merged ARDs
+  security/<repo-slug>/           # one code repository's security findings register
 
 $REPOS_PATH/                      # code clones (default /workspace)
   <repo>/                         # discovered by directory name; matched by origin slug where the command was handed one
 
 $DOCS_PATH/                       # optional: product docs clone (default /workspace/docs)
   ...                             # e.g. an example-docs checkout; read-only for grounding, written by the docs commands
+
+$ARCHITECTURE_REPO_PATH/          # optional: your organisation's architecture repository (no default)
+  ...                             # radar, standards, principles, patterns, ADRs; read-only for grounding
 ```
 
 ## Adding new plugins

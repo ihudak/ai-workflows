@@ -1,6 +1,6 @@
 # workflows-core
 
-Shared foundation for the `dev-workflows` plugin family: the addressing grammar and specs-repo git entry points, phase handoff, model routing, escalation and finding-triage rules, cost/feedback/follow-up emission, and the grounding and grilling conventions every authoring command applies. It also carries seven slash commands — the family-meta utilities, `/frames`, the design-frame-set indexer, and `/diagnose-session`, which reads a session's transcripts to say why a run went wrong — plus the agents any plugin in the family may dispatch.
+Shared foundation for the workflow plugin family — `product-workflows`, `dev-workflows`, `docs-workflows` and `security-workflows`: the addressing grammar and specs-repo git entry points, phase handoff, model routing, escalation and finding-triage rules, cost/feedback/follow-up emission, and the grounding and grilling conventions every authoring command applies. It also carries seven slash commands — the family-meta utilities, `/frames`, the design-frame-set indexer, and `/diagnose-session`, which reads a session's transcripts to say why a run went wrong — plus the agents any plugin in the family may dispatch.
 
 > Part of the `shipwright` marketplace — see [Getting started](docs/getting-started.md) for marketplace install + prerequisites.
 
@@ -28,7 +28,8 @@ Most of this plugin is not a command at all. It is the corpus a sibling plugin r
 | [Roles and phases](docs/roles-and-phases.md) | The cost-attribution phases these commands reach, and how. |
 | [Agents](docs/reference/agents.md) | The eleven agents this plugin bundles and who dispatches them. |
 | [References](docs/reference/references.md) | The reference corpus under `references/`. |
-| [Environment](docs/reference/environment.md) | Every environment variable this plugin reads. |
+| [Environment](docs/reference/environment.md) | Every environment variable this plugin reads, and the three run flags. |
+| [Grounding sources](docs/reference/grounding.md) | What each authoring command grounds on, and how to turn a source off. |
 | [Hooks](docs/reference/hooks.md) | The two session-wide hooks this plugin bundles, and why they live here. |
 | [Session cost](docs/reference/session-cost.md) | How a run's dollar cost is computed, attributed, and persisted. |
 | [Session feedback](docs/reference/session-feedback.md) | What `/feedback` and `/prompt*` record, and where it lands. |

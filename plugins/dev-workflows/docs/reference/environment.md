@@ -1,6 +1,6 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, what happens when it points somewhere the plugin cannot read or write, and the directory layout it expects underneath it. The plugin reads five user-settable variables, each below; nothing else it reads is yours to set. The run flags' environment defaults, `WORKFLOWS_SKIP_COSTS`, `WORKFLOWS_SKIP_FEEDBACK` and `WORKFLOWS_ENFORCE_MODEL`, are read by `workflows-core`, whose own environment page documents them.
+[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, what happens when it points somewhere the plugin cannot read or write, and the directory layout it expects underneath it. This page documents five user-settable variables, each below: the plugin reads four, and documents `$DOCS_PATH` only because its git finish says it never touches it. Nothing else it reads is yours to set. The run flags' environment defaults, `WORKFLOWS_SKIP_COSTS`, `WORKFLOWS_SKIP_FEEDBACK` and `WORKFLOWS_ENFORCE_MODEL`, are read by `workflows-core`, whose own environment page documents them.
 
 ## `$SPECS_PATH`
 
@@ -32,7 +32,7 @@
 
 ## `$DOCS_PATH`
 
-- **`$DOCS_PATH`** — your shipped product documentation's clone, read-only in its role as a docs-grounding root; defaults to `/workspace/docs` when unset. (`docs-workflows`' docs commands also use it as a write target for a docs repository — a different role, not a contradiction.)
+- **`$DOCS_PATH`** — your shipped product documentation's clone, read-only in its role as a docs-grounding root; defaults to `/workspace/docs` when unset. (`docs-workflows`' docs commands also use it as a write target for a docs repository — a different role, not a contradiction.) None of this plugin's own commands reads it: what follows is how the companion plugins' grounding commands resolve it.
 
 **Resolution.** Flags first — `--no-docs` forces grounding off regardless of `$DOCS_PATH`; `--docs <path>` overrides it for that run. Otherwise the root is `${DOCS_PATH:-/workspace/docs}`. A validity gate then has to pass for grounding to turn on at all: that root must be non-empty, an existing readable directory, and contain at least one markdown file.
 

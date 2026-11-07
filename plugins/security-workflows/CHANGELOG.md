@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.8] — 2026-11-07
+
+User pages only: batch B32, the family's entry points. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **The getting-started page has an "Install the status line" section**: what it adds, the status-line cross-check it enables for a scan's cost entry, and the qualified form to type.
+
 ## [0.10.7] — 2026-11-07
 
 User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.

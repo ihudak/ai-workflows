@@ -6,16 +6,16 @@
 # in the two restructures this one follows (a sibling plugin repo,
 # ai-containers#78).
 #
-# TWENTY-EIGHT checks, numbered 1-28 in the order their functions appear below. The number is
+# TWENTY-NINE checks, numbered 1-29 in the order their functions appear below. The number is
 # written here and nowhere else in this file, and nothing gates it -- re-derive it with
 # `grep -oE '\bfail [0-9]+ ' "$0" | awk '{print $2}' | sort -un` -- the numbers a fail() call
 # can actually report -- rather than trusting this sentence, and update it in the commit that
-# adds a check. Counting the banner comments instead gives 27: checks 1 and 2 share one. Every
-# edition carries all twenty-eight: a check an edition has no use for is switched off by its
+# adds a check. Counting the banner comments instead gives 28: checks 1 and 2 share one. Every
+# edition carries all twenty-nine: a check an edition has no use for is switched off by its
 # config block (checks 13, 16 and 19 in the internal editions, check 22 here and in the Copilot
 # edition, check 23 in any edition whose escalation rules name no path-unset rule, check 24 in
 # any edition that ships no hook preloading context for a keyed command), never cut from the
-# body. Checks 25 to 28 have no switch: every edition ships pages a user reads.
+# body. Checks 25 to 29 have no switch: every edition ships pages a user reads.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -3021,8 +3021,8 @@ PYEOF25
   done <<<"$out"
 }
 
-# ------------------------------------------------- shared: the navigation scan (checks 26-28)
-# One reading of a page, shared by checks 26, 27 and 28 so the three agree on what a link is.
+# ------------------------------------------------- shared: the navigation scan (checks 26-29)
+# One reading of a page, shared by checks 26 to 29 so the four agree on what a link is.
 # READ: prose outside fenced blocks, a fence opening on three or more backticks or tildes (a
 # backtick fence's info string holding no backtick) and closing only on a run of its own
 # character at least as long, as CommonMark has it -- so a ```` block may quote a ``` one and a
@@ -3034,7 +3034,7 @@ PYEOF25
 # none of them inside a code span. A target with a scheme (`https:`) or only an `#anchor` is
 # no relative link; an anchor or query is dropped before a target is resolved.
 # MENTIONS (check 28) are read from that prose with its comments taken out, code spans kept,
-# since a command is written in one. Without python3 none of the three runs, and each says so;
+# since a command is written in one. Without python3 none of the four runs, and each says so;
 # their vacuity guards are counted in bash and run all the same.
 NAV_DONE=0 NAV_OUT=""
 nav_scan() { # <root> -> NAV_OUT, computed once per run
@@ -3049,9 +3049,11 @@ nav_scan() { # <root> -> NAV_OUT, computed once per run
   prog=$(cat <<'PYEOF26'
 import glob, json, os, re, sys
 # argv: root, docs command dir, command form; stdin: `<plugin rel>\t<command names>` lines.
-# Prints `B <page>` (check 26), `E <page>\t<target>` (27), `N <page>\t<name>` (28), a sentinel.
+# Prints `B <page>` (check 26), `E <page>\t<target>` (27), `N <page>\t<name>` (28),
+# `D <readme>\t<page>` and `I <readme>` (29), then a sentinel.
 root, cdir, form = sys.argv[1:4]
 OPEN = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+HEADING = re.compile(r"^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$")
 SPAN = re.compile(r"(`+)(?!`).*?(?<!`)\1(?!`)")
 LINK = re.compile(r"\]\(\s*(<[^>\n]*>|[^)\s]+)(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)")
 REFDEF = re.compile(r"^ {0,3}\[[^\]]+\]:\s*(<[^>\n]*>|\S+)")
@@ -3179,6 +3181,33 @@ for spec in sys.stdin.read().split("\n"):
     for p in cmdpages:
         if wf not in targets(p):
             print(f"B {os.path.relpath(p, root)}")
+    cmddir = os.path.normpath(os.path.join(docs, cdir))
+    # Check 29: the README's Documentation section links every docs page but the command pages;
+    # a README with no such section links docs/README.md.
+    readme = os.path.join(base, "README.md")
+    if readme in read:
+        sect, level, found = [], 0, False
+        for no, t in read[readme]:
+            h = HEADING.match(t)
+            if h and level and len(h.group(1)) <= level:
+                level = 0
+            if h and (h.group(2) or "").strip() == "Documentation":
+                level, found = len(h.group(1)), True
+                continue
+            if level:
+                sect.append((no, t))
+        if found:
+            have = set()
+            for t in links(sect):
+                b = bare(t)
+                if b and not SCHEME.match(b):
+                    have.add(os.path.normpath(os.path.join(base, b)))
+            for p in pages:
+                q = os.path.normpath(p)
+                if q != os.path.normpath(readme) and not q.startswith(cmddir + os.sep) and q not in have:
+                    print(f"D {os.path.relpath(readme, root)}\t{os.path.relpath(q, base)}")
+        elif os.path.normpath(os.path.join(docs, "README.md")) not in targets(readme):
+            print(f"I {os.path.relpath(readme, root)}")
     # Check 28: an overview or command page links each of its plugin's commands it names.
     if not cmds:
         continue
@@ -3187,7 +3216,6 @@ for spec in sys.stdin.read().split("\n"):
     MENTION = [re.compile(r"(?<![A-Za-z0-9_./>}~$-])/(?:(?:" + palt + r"):)?(" + alt + r")(?![A-Za-z0-9_/-]|\.[A-Za-z0-9])")]
     if form == "trigger":
         MENTION.append(re.compile(r"(?<![A-Za-z0-9_./-])(" + alt + r"):"))
-    cmddir = os.path.normpath(os.path.join(docs, cdir))
     for p in overview + cmdpages:
         own = os.path.basename(p)[:-3] if os.path.dirname(os.path.normpath(p)) == cmddir else None
         named = set()
@@ -3313,6 +3341,39 @@ check_named_commands_linked() {
     case "$h" in
       N\ *) h="${h#N }"
             fail 28 "${h%%	*} names $(cmd_ref "${h#*	}") but links no page of it -- link the first mention to docs/$DOC_CMD_DIR/${h#*	}.md, so a reader can go from the name to the page" ;;
+    esac
+  done <<<"$NAV_OUT"
+}
+
+# ------------------------------------------------------------------ check 29
+# A plugin's README lists its pages. The README is the first page a reader of the repository
+# opens for a plugin, and its Documentation section is the table of the pages it ships, so a
+# page the table leaves out is one that reader never learns exists. Batch B32 found nine left
+# out of four READMEs' tables: workflows-core's Grounding sources page, dev-workflows' commit
+# convention, four of docs-workflows' reference pages and three of product-workflows'. A
+# README with no Documentation section -- prose-style's, which points at its index instead --
+# links docs/README.md, which check 3 holds to reaching every page.
+# THE SECTION is an ATX heading reading `Documentation`, at any level, down to the next heading
+# of its level or above, so a `###` under it is inside it; a README may hold more than one, and
+# their links count together. A LINK is the navigation scan's (above), resolved from the README.
+# POPULATION: each plugin's README in PLUGIN_RELS. A page it must list is every *.md under the
+# plugin's docs/ but the command pages under docs/$DOC_CMD_DIR/, which check 15 holds the README
+# to naming by command. VACUITY: no README under any plugin fails, as does a scan that does not
+# run to its end.
+# What it cannot see: a setext heading (`Documentation` underlined), which it does not read as
+# the section, so such a README is held to the index link alone; whether a row's description
+# is true; and a page outside docs/.
+check_readme_lists_pages() {
+  local root="$1" rel n=0 h
+  for rel in $PLUGIN_RELS; do [ -f "$root/$rel/README.md" ] && n=$((n + 1)); done
+  [ "$n" -gt 0 ] || fail 29 "no README under any plugin in PLUGIN_RELS -- this check would examine nothing"
+  [ "$HAVE_PY" = 1 ] || { note "check 29 not run: python3 not found"; return 0; }
+  nav_scan "$root"; nav_ran 29 || return 0
+  while IFS= read -r h; do
+    case "$h" in
+      D\ *) h="${h#D }"
+            fail 29 "${h%%	*}'s Documentation section does not list ${h#*	} -- the README is where a reader finds a plugin's pages; add a row linking it" ;;
+      I\ *) fail 29 "${h#I } has no Documentation section and does not link docs/README.md -- link the documentation index, or list every page under a Documentation heading" ;;
     esac
   done <<<"$NAV_OUT"
 }
@@ -4950,7 +5011,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_fail_msg "a plugin with no docs page and no README trips the empty-scan guard" 25 "would examine nothing" \
     "find $p25/docs -name '*.md' -exec rm {} +; rm -f $p25/README.md"
 
-  # Checks 26, 27 and 28: the links a reader navigates by. The paths are built from the layout,
+  # Checks 26 to 29: the links a reader navigates by. The paths are built from the layout,
   # so they hold in a layout that keeps plugins at the repository root as in one under plugins/.
   local c26="$PLUGIN_REL/docs/$DOC_CMD_DIR/alpha.md" g27="$PLUGIN_REL/docs/getting-started.md"
   local two27="${PLUGIN_RELS#* }"; two27="${two27%% *}"
@@ -5014,6 +5075,29 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_fail_msg "no docs page under any plugin trips check 28's empty-scan guard" 28 "would examine nothing" \
     "for r in $PLUGIN_RELS; do rm -f \$r/docs/*.md \$r/docs/$DOC_CMD_DIR/*.md; done"
   expect_fail_env "a scan that dies is reported, not passed" 28 \
+    "python3() { echo 'Traceback: a simulated crash'; return 1; }" ":" "did not run to the end"
+  # Check 29: a README's Documentation section lists every page but the command pages. all29
+  # prints one list item per such page of the first plugin, so a case can leave one out.
+  local r29="$PLUGIN_REL/README.md"
+  local all29="(cd $PLUGIN_REL && find docs -name '*.md' -not -path 'docs/$DOC_CMD_DIR/*' | sort | while read -r f; do printf -- '- [x](%s)\n' \"\$f\"; done)"
+  expect_pass_after "a Documentation section listing every page but the command pages passes" \
+    "{ printf '\n## Documentation\n\n'; $all29; } >> $r29"
+  expect_fail_msg "a Documentation section that leaves a page out is rejected" 29 "does not list docs/getting-started.md" \
+    "{ printf '\n## Documentation\n\n'; $all29 | grep -v getting-started; } >> $r29"
+  expect_fail_msg "a page linked only above the section, or in a code span inside it, is not listed" 29 "does not list docs/getting-started.md" \
+    "printf '\nStart with [Getting started](docs/getting-started.md).\n' >> $r29
+     { printf '\n## Documentation\n\n'; $all29 | grep -v getting-started; printf '%s\n' 'Also \`[x](docs/getting-started.md)\`.'; } >> $r29"
+  expect_pass_after "a subsection under the Documentation heading is inside it" \
+    "{ printf '\n## Documentation\n\n### Pages\n\n'; $all29; } >> $r29"
+  expect_fail_msg "a link under the next heading of the section's level is outside it" 29 "does not list docs/getting-started.md" \
+    "{ printf '\n## Documentation\n\n'; $all29 | grep -v getting-started; printf '\n## License\n\n- [x](docs/getting-started.md)\n'; } >> $r29"
+  expect_pass_after "a heading that only begins with Documentation is not the section" \
+    "printf '\n## Documentation workflow\n\nSee [the index](docs/README.md).\n' >> $r29"
+  expect_fail_msg "a README with no Documentation section and no link to its index is rejected" 29 "does not link docs/README.md" \
+    "sed -i.bak '/](docs\/README\.md)/d' $r29"
+  expect_fail_msg "no README under any plugin trips check 29's empty-scan guard" 29 "would examine nothing" \
+    "for r in $PLUGIN_RELS; do rm -f \$r/README.md; done"
+  expect_fail_env "a scan that dies is reported under check 29 too" 29 \
     "python3() { echo 'Traceback: a simulated crash'; return 1; }" ":" "did not run to the end"
 
   # Every config name is set by the config block, and none is taken from the environment: the
@@ -5125,11 +5209,12 @@ check_keyed_hooks         "$ROOT"
 # page of one plugin may cite another plugin's reference.
 check_docs_vocabulary     "$ROOT"
 
-# Checks 26, 27 and 28 sit outside the loop for check 17's reason: each one's vacuity guard is a
+# Checks 26 to 29 sit outside the loop for check 17's reason: each one's vacuity guard is a
 # claim about every plugin of PLUGIN_RELS at once. Each loops PLUGIN_RELS itself.
 check_command_backlink    "$ROOT"
 check_links_stay_in_plugin "$ROOT"
 check_named_commands_linked "$ROOT"
+check_readme_lists_pages  "$ROOT"
 
 if [ "$FAILURES" -gt 0 ]; then
   echo "FAIL: $FAILURES problem(s) under $PLUGIN_RELS" >&2

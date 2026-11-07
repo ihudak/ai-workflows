@@ -23,7 +23,7 @@ Takes no arguments. None of the three run flags apply to this command ([`environ
 
 ## What it produces
 
-Installs the vendored script to a stable per-user path (`~/.claude/dev-workflows/statusline-command.sh`, `chmod +x`'d) and merges a `statusLine` block into `~/.claude/settings.json`, preserving every other key. **It is idempotent and backs up anything it would overwrite** — an existing `statusLine` block, or an existing installed script — suffixing `-2`, `-3`, … rather than clobbering a prior backup. Installing it also enables — given `jq`, as *What it needs* says — the per-session **cost snapshot** ("Option B") that [Session cost](../reference/session-cost.md) reads when computing `cost_statusline_usd`. **This is the only settings change the command makes**, and it never commits anything; every write stays under `~/.claude/` — though enabling the cost snapshot does change what every cost-emitting command's Session cost line reports.
+Installs the vendored script to a stable per-user path (`~/.claude/dev-workflows/statusline-command.sh`, `chmod +x`'d) and merges a `statusLine` block into `~/.claude/settings.json`, preserving every other key. **It is idempotent and backs up anything it would overwrite** — an existing `statusLine` block, or an existing installed script — suffixing `-2`, `-3`, … rather than clobbering a prior backup. Installing it also enables — given `jq`, as *What it needs* says — the per-session **cost snapshot** behind the [status-line cross-check](../reference/session-cost.md#status-line-cross-check), the `cost_statusline_usd` figure a cost entry carries beside the computed one. **This is the only settings change the command makes**, and it never commits anything; every write stays under `~/.claude/` — though enabling the cost snapshot does change what every cost-emitting command's Session cost line reports.
 
 ## Gates
 
@@ -40,5 +40,5 @@ Run this once, first, right after installing the plugin. It backs up any existin
 ## See also
 
 - [Workflow overview](../workflow.md) — where this command sits among the cross-cutting commands, and why its qualified form is the only one that reaches it.
-- [Session cost](../reference/session-cost.md) — the Option B cost snapshot this command enables, given `jq`.
+- [Session cost](../reference/session-cost.md#status-line-cross-check) — the status-line cross-check this command's cost snapshot enables, given `jq`.
 - [`/feedback`](feedback.md), in this plugin, `/release-notes`, in the `docs-workflows` plugin, and `/upgrade`, in `dev-workflows` — the other three commands whose bare form also reaches a Claude Code built-in; `/design`, in `dev-workflows`, can reach one on the accounts Claude Code's own `/design` is switched on for.

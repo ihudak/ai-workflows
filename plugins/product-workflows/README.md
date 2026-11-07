@@ -34,6 +34,9 @@ Fourteen agents (see [Agents](docs/reference/agents.md)) carry the BRD grounding
 | [Hooks](docs/reference/hooks.md) | The one bundled hook, what it injects, and why it never blocks Claude. |
 | [Model routing](docs/reference/model-routing.md) | The task-complexity classification and model fallback chain. |
 | [Session cost](docs/reference/session-cost.md) | Which commands emit a cost entry, what they charge to, and where it lands. |
+| [Session feedback](docs/reference/session-feedback.md) | Two signals: what you report, and what your corrections reveal. |
+| [Resume and checkpoints](docs/reference/resume-and-checkpoints.md) | Session hygiene for a long-running command. |
+| [Effort proposals](docs/reference/proposal-format.md) | The two estimate documents: hours, never money, readiness tiers and confidence bands. |
 
 ## Recommended environment
 

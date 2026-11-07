@@ -9,6 +9,7 @@
 | tell the plugin family it got something wrong | [`/feedback`](commands/feedback.md), [`/prompt`](commands/prompt.md) |
 | turn a correction into a redesign or a grilling | [`/prompt-brainstorm`](commands/prompt-brainstorm.md), [`/prompt-grill-me`](commands/prompt-grill-me.md) |
 | find out, with evidence, why a run went wrong | [`/diagnose-session`](commands/diagnose-session.md) |
+| skip cost or feedback, or pin one model for a run | [Run flags](reference/environment.md#run-flags) |
 | see live cost and context while you work | [`/statusline`](commands/statusline.md) — **run this first** |
 | make a folder of exported design frames readable | [`/frames`](commands/frames.md) |
 | see what a command grounds on, and how to turn a source off | [Grounding sources](reference/grounding.md) |
@@ -29,7 +30,7 @@
 - [Agents](reference/agents.md) — the eleven agents this plugin bundles, and which commands dispatch them.
 - [References](reference/references.md) — the reference corpus under `references/`, which the whole plugin family reads.
 - [Skills](reference/references.md#skills) — the two bundled skills, `model-routing` and `reference`: what each is for, and whether it is user-invocable.
-- [Environment](reference/environment.md) — every environment variable this plugin reads, and what it configures.
+- [Environment](reference/environment.md) — every environment variable this plugin reads, and what it configures, and the three run flags — `--skip-costs`, `--skip-feedback` and `--enforce-model` — whose defaults three of them set.
 - [Grounding sources](reference/grounding.md) — every source the family's authoring commands ground on — shipped docs, the architecture repository and the team's decision records, mounted code, design frames — what turns each on, its status line and its off switch.
 - [Hooks](reference/hooks.md) — the two session-wide hooks this plugin bundles, and why they live here rather than in a pipeline plugin.
 - [Session cost](reference/session-cost.md) — how a run's dollar cost is computed, attributed, and persisted.

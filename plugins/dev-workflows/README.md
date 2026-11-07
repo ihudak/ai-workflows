@@ -1,6 +1,6 @@
 # dev-workflows
 
-A role-based pipeline of 6 slash commands for the engineering side of the workflow plugin family. Its spine runs design → implementation, with readiness verification alongside it and a conformance check closing it — `/design → /implement → /conformance`, `/ready` — picking up from the merged `specification.md` that the companion `product-workflows` plugin's PRD → architecture → Epic breakdown → specification ladder (and its six-command BRD-to-PRD route) hands off, with Opus-backed risk planning, code review, and design review gates along the way; around that spine sit CVE remediation and dependency upgrades. The table below is the complete list. The shared foundation every command here draws on — the addressing grammar, the git and phase-handoff entry points, model routing, escalation and triage, and the emitters — ships in the companion `workflows-core` plugin; the documentation tail `/implement` hands off to — `/docs-workflows:document` and `/docs-workflows:release-notes` — ships in the companion `docs-workflows` plugin.
+A role-based pipeline of 6 slash commands for the engineering side of the workflow plugin family. Its spine runs design → implementation, with readiness verification alongside it and a conformance check closing it — `/design → /implement → /conformance`, `/ready` — picking up from the merged `specification.md` that the companion `product-workflows` plugin's PRD → architecture → Epic breakdown → specification ladder (and its six-command BRD-to-PRD route) hands off, with Opus-backed risk planning, code review, and design review gates along the way; around that spine sit CVE remediation and dependency upgrades. The table below is the complete list. The shared foundation every command here draws on — the addressing grammar, the git and phase-handoff entry points, model routing, escalation and triage, and the emitters — ships in the companion `workflows-core` plugin; the documentation tail the PE's PRD-level `/conformance` hands off to once every Epic has merged — `/docs-workflows:document` and `/docs-workflows:release-notes` — ships in the companion `docs-workflows` plugin.
 
 > Part of the `shipwright` marketplace — see [Getting started](docs/getting-started.md) for marketplace install + prerequisites.
 
@@ -34,6 +34,7 @@ Every command owns one role's step in the pipeline and hands a concrete artifact
 | [Session cost](docs/reference/session-cost.md) | How a run's dollar cost is computed, attributed, and persisted. |
 | [Session feedback](docs/reference/session-feedback.md) | Two signals: what you report, and what your corrections reveal. |
 | [Follow-ups](docs/reference/follow-ups.md) | How a command emits follow-up tasks into the specs tree. |
+| [Commit convention](docs/reference/commit-convention.md) | End a commit subject with the work's key in square brackets, so the documentation commands find the commit. |
 | [Resume and checkpoints](docs/reference/resume-and-checkpoints.md) | Session hygiene for a long-running command. |
 
 ## Recommended environment

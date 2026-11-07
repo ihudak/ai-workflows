@@ -93,7 +93,8 @@ flowchart TD
     brdinterview -.->|nothing for the customer to review, PRD-eligible — no reconciliation needed| createvi
     brdinterview -.->|nothing for the customer to review — no reconciliation needed| createard
     brdinterview -.->|nothing for the customer to review — no reconciliation needed| specify
-    implement -.->|code + implementation.md, in docs-workflows| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs
+    implement -.->|"code + implementation.md, in docs-workflows — every Epic merged"| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs
+    conformanceprd -.->|"once settled, in docs-workflows"| docsplugin
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
     classDef dev fill:#dcfce7,stroke:#15803d,color:#14532d
@@ -115,7 +116,7 @@ The `Off-platform` box is the one node in this diagram no command runs. It is th
 
 The two dashed edges leaving `/brd-reconcile` go to different commands on purpose, and are drawn separately rather than merged under one label: a decision the review reopened is settled by another interview round, while a question the customer left unanswered goes back out in the next package — unless it was raised only about the defects of a requirement the customer withdrew and carries no decision of its own, which closes it. Every BRD-route edge in [BRD workflow](brd-workflow.md) appears here in the same style, including the authoring alternatives from both `/brd-reconcile` and `/brd-interview`. The labels agree except on the edge into `/prd-ground`, which names the slice's claimed `[BR#n]` rows here and its folder kind there.
 
-Five nodes in the diagram are not this plugin's commands and are drawn for continuity only: `/dev-workflows:design`, `/dev-workflows:implement`, and `/dev-workflows:ready` — where this plugin's spine hands off — plus `/docs-workflows:release-notes` as the PM's PRD-driven draft or refresh and the combined `/docs-workflows:document · /docs-workflows:release-notes` handoff hanging off `/dev-workflows:implement`. `/dev-workflows:design`, `/dev-workflows:implement`, and `/dev-workflows:ready` ship in the companion `dev-workflows` plugin; `/docs-workflows:document` and `/docs-workflows:release-notes` ship in the companion `docs-workflows` plugin. All are documented there, not here.
+Seven nodes in the diagram are not this plugin's commands and are drawn for continuity only: `/dev-workflows:design`, `/dev-workflows:implement`, and `/dev-workflows:ready` — where this plugin's spine hands off — and `/dev-workflows:conformance`, drawn once per role; plus `/docs-workflows:release-notes` as the PM's PRD-driven draft or refresh and the combined `/docs-workflows:document · /docs-workflows:release-notes` node, which reads what `/dev-workflows:implement` recorded and which the PE's PRD-level `/dev-workflows:conformance` offers once every Epic has merged and its decisions are settled. `/dev-workflows:design`, `/dev-workflows:implement`, `/dev-workflows:ready` and `/dev-workflows:conformance` ship in the companion `dev-workflows` plugin; `/docs-workflows:document` and `/docs-workflows:release-notes` ship in the companion `docs-workflows` plugin. All are documented there, not here.
 
 The diagram above shows where each command sits in the pipeline; [Roles and phases](roles-and-phases.md) says what each role is accountable for and what it hands over at each seam.
 

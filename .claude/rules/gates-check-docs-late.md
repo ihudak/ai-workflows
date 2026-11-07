@@ -4,7 +4,7 @@ paths:
   - ".github/**"
 ---
 
-# Gates — `check-docs.sh`'s checks 22 to 28
+# Gates — `check-docs.sh`'s checks 22 to 29
 
 Loaded with `.claude/rules/gates.md`, whose `paths:` it shares and whose opening rule binds every gate. Split out of `.claude/rules/gates.md` to keep that file under 20,000 characters; the rest of `scripts/check-docs.sh`, its one body across three editions included, is there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
@@ -50,13 +50,13 @@ Loaded with `.claude/rules/gates.md`, whose `paths:` it shares and whose opening
 
 Review holds those. It also fires on a `D1` that is no decision id, such as a product's own name, which takes the marker.
 
-### Checks 26 to 28: one reading of a page
+### Checks 26 to 29: one reading of a page
 
-Checks 26, 27 and 28 read a page the same way, so they agree on what a link is.
+Checks 26 to 29 read a page the same way, so the four agree on what a link is.
 - **Read:** prose outside fenced blocks. A fence closes only on a run of its own character at least as long as the one that opened it, so a ```` block may quote a ``` one.
 - **Not read:** an HTML comment, read as check 25 reads one, and a code span's contents as a link.
 - **A link** is an inline link (a title in `""`, `''` or `()` allowed), a reference definition, or an `<a href>` or `<img src>`. A target with a scheme, or only an anchor, is no relative link.
-- **Without `python3`** none of the three runs, and each says so; their vacuity guards run all the same.
+- **Without `python3`** none of the four runs, and each says so; their vacuity guards run all the same.
 
 ### Check 26
 
@@ -81,3 +81,14 @@ Measured at batch B31: 18 links, the plugin READMEs' and getting-started pages' 
 Measured at batch B31: 135 mentions on 33 pages, each fixed by linking the first one. A code span naming a chain (`` `/idea → /create-prd` ``) is never the one linked.
 
 **What it cannot see, and where it fires on correct content:** a link to the wrong command; a command named in words; a reference page and the plugin README; a mention in an indented code block, which it reads as prose; and a bare name a Claude Code built-in shares (`/statusline`, `/feedback`, `/upgrade`), which it takes for the plugin's own command — link the plugin's page in the same sentence, as `workflows-core`'s getting-started page does.
+
+### Check 29
+
+**Check 29 holds a plugin's README to listing its pages.** A reader who opens a plugin on GitHub meets its README first, and the README's Documentation table is the list of pages the plugin ships, so a page the table leaves out is one that reader never learns exists.
+- **The section** is an ATX heading reading `Documentation`, at any level, down to the next heading of its level or above: a `###` under it is inside it, and `## Documentation workflow` is not it. Its links are the navigation scan's, resolved from the README.
+- **Held:** a README with the section links every `*.md` under its plugin's `docs/` but the command pages, which check 15 holds the README to naming. A README without the section links `docs/README.md`, as `prose-style`'s does, and check 3 holds the index to reaching every page.
+- **Population:** each `PLUGIN_RELS` plugin's `README.md`. **Vacuity:** no README under any plugin fails, as does a scan that does not run to its end.
+
+Measured at batch B32: nine pages left out of four tables — `workflows-core`'s Grounding sources, `dev-workflows`' Commit convention, four of `docs-workflows`' reference pages and three of `product-workflows'` — and none after.
+
+**What it cannot see:** a setext heading, so a README that underlines `Documentation` is held to the index link alone; whether a row's description is true; and a page outside `docs/`.
