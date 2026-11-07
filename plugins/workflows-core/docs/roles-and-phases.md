@@ -29,7 +29,7 @@ None of the seven commands in this plugin advances a product increment, so none 
 
 [`/statusline`](commands/statusline.md) emits nothing at all: it sets a configuration value rather than running a task. [`/diagnose-session`](commands/diagnose-session.md) is charged to `plugin-feedback` outright, below.
 
-The four phases these commands can land on with a pair of their own, rather than one inherited whole, are described below: the two `/frames` reaches from a folder, the `plugin-feedback` fallback, and `security-audit`, whose phase a correction inherits without its role. Every other phase in the list above is reachable here only by inheritance, its pair taken whole. `product-workflows`, `dev-workflows` and `security-workflows` each describe the ones their own commands emit on their own Roles and phases page; `docs-workflows` has no such page, and its Session cost page says which of its commands emits `documenting`, `docs-scaffold` and `docs-audit`.
+The four phases these commands can land on with a pair of their own, rather than one inherited whole, are described below: the two `/frames` reaches from a folder, the `plugin-feedback` fallback, and `security-audit`, whose phase a correction inherits without its role. Every other phase in the list above is reachable here only by inheritance, its pair taken whole. `product-workflows`, `dev-workflows`, `docs-workflows` and `security-workflows` each describe the ones their own commands emit on their own Roles and phases page.
 
 ### prd-creation
 

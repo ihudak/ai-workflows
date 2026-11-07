@@ -16,6 +16,28 @@ Scans a documentation repository and writes or refreshes its machine-readable `.
 
 Only one of the three run flags applies to a **standalone** run: `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins both the Phase 2 detection dispatch and the Phase 3 synthesis dispatch to one model, bypassing the Sonnet-detection / Opus-synthesis split described below. `--skip-costs` and `--skip-feedback` do not apply — this command emits no cost entry and dispatches no `impl-maintenance` — so either, given explicitly, is reported ignored rather than acted on. **`--inline` never re-strips these from its own arguments**: `/document` (keyed mode) Phase 0 constructs that run's whole argument list itself (the resolved docs-repo directory and `--inline`), which never carries a run-flag token, so this run instead inherits the flag settings `/document` already resolved at its own Mode detection — its enforced model, where set, reaches this run's Phase 2 detection and Phase 3 synthesis dispatches the same way.
 
+## How it runs
+
+A dotted edge is a stop, or a refresh that writes nothing. The run has no emitter tail: it records no cost entry and dispatches no maintenance agent.
+
+```mermaid
+flowchart TD
+    p0["Phase 0 — Resolve and validate: the docs repo and its rung, a writable git work tree"]
+    p0 -.->|"NOT_A_GIT_WORKTREE, REPO_NOT_WRITEABLE, or DOCS_PROFILE_BOOTSTRAP_BRANCH_EXISTS under --inline"| halt["Stop and report — nothing written"]
+    p0 --> d0{"A docs-repo signal in the repo or at its top level?"}
+    d0 -.->|"none — Cancel at Profile it anyway?"| halt
+    d0 -->|"yes, or Proceed"| p1["Phase 1 — Model routing: SIGNIFICANT"]
+    p1 --> p2["Phase 2 — Detect: a read-only general-purpose agent @Sonnet"]
+    p2 --> p3["Phase 3 — Synthesize the draft profile: a general-purpose agent @Opus"]
+    p3 --> p4["Phase 4 — Confirm and fill gaps, and on a refresh a field-level diff against the existing profile"]
+    p4 --> d4{"Anything to write?"}
+    d4 -->|"a new profile, or Apply the diff"| p5["Phase 5 — Write as a reviewable PR: branch, profile and CLAUDE.md additions, format, commit, and the PR draft on a standalone run — never pushed"]
+    d4 -.->|"Keep existing, write nothing — or the diff lists no change"| mode{"Standalone or --inline?"}
+    p5 --> mode
+    mode -->|"standalone"| p6["Phase 6 — Final report"]
+    mode -->|"--inline, from /document"| ret["Back to /document, which reports — the branch and commit where Phase 5 made one, any stash record, the fixed-port and command-defect lists"]
+```
+
 ## What it needs
 
 - **A docs repository** — resolved by the same signal-positive ladder `/docs-workflows:docs-serve`, [`/docs-workflows:docs-brand`](docs-brand.md) and [`/docs-workflows:docs-audit`](docs-audit.md) use: the given path, else the working directory when it carries a docs signal, else `$DOCS_PATH` when it carries one, else a search under `$REPOS_PATH`, else a question — each conditional rung tested against a docs-repo signal; the first rung takes an explicit path as given, with no signal test. It must additionally be a writeable git work tree; not a work tree, or not writeable, stops with a named error. The profile is read and written at that work tree's top level — its one home, where every path it records is rooted and every command it records runs — even where the resolved path is a site below it. A resolved target that still carries zero signals — reachable only through that first, untested rung, or through the resolver's own generic question — is not refused: this command asks its own, narrower question, specifically whether to profile it anyway, since a repo the resolver would never have found on its own is exactly the case `/docs-profile` still needs to serve.

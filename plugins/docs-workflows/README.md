@@ -32,6 +32,7 @@ Eleven agents and twenty-two reference pages carry the docs-repo discovery, diff
 | [Getting started](docs/getting-started.md) | Install, environment variables, your first `/docs-profile` and `/document` runs. |
 | [Workflow overview](docs/workflow.md) | The seven commands as one diagram, and the two modes of `/document`. |
 | [The documentation route](docs/docs-workflow.md) | The ordered procedure from an empty repository to a populated portal, with every manual step written out. |
+| [Roles and phases](docs/roles-and-phases.md) | Which role runs each command, what it hands over, and what each cost phase means. |
 | [Coverage model](docs/reference/docs-coverage-model.md) | What counts as a documentation surface, and how an audit finds each kind. |
 | [Documentation backlog](docs/reference/docs-backlog.md) | The file an audit writes and you keep: what each block holds and the states a page moves through. |
 | [Evidence and walkthroughs](docs/reference/docs-evidence.md) | What a page's claims may rest on for each audience, and how to walk a claim. |
@@ -41,6 +42,9 @@ Eleven agents and twenty-two reference pages carry the docs-repo discovery, diff
 | [Environment](docs/reference/environment.md) | Every environment variable the plugin reads. |
 | [Hooks](docs/reference/hooks.md) | The two bundled hooks, what each injects or reminds about, and why neither blocks Claude. |
 | [Session cost](docs/reference/session-cost.md) | Which commands emit a cost entry, what they charge to, and where it lands. |
+| [Session feedback](docs/reference/session-feedback.md) | Which commands emit automatic feedback, where it lands, and what `--skip-feedback` keeps. |
+| [Resume and checkpoints](docs/reference/resume-and-checkpoints.md) | The resume pointer two commands write, and the state `/docs-serve` keeps. |
+| [Model routing](docs/reference/model-routing.md) | How each command classifies, which steps run on Opus, and `--enforce-model`. |
 
 ## Recommended environment
 

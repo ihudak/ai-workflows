@@ -16,7 +16,7 @@ Scaffolds a documentation repository for a project that has none — one that bu
 
 Every recognized flag is stripped from the arguments before the remaining token is read as the optional docs-repo path (Phase 0 step 0). `--generator` accepts `mkdocs-material` and nothing else today; any other value stops the run. `--no-brand` skips the branding phase. `--public-only` omits the internal build config, the `internal/` tree, and the marker gate that separates them. `--with-pricing` and `--with-compliance` each add their optional stubs under `discover/`.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 9's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance`: under the flag only real defects are persisted, never the in-session Lessons Learned report — `docs-workflows` ships no dedicated session-feedback reference page, so this paragraph is that explanation. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `docs-scaffold-reviewer` included, overriding its frontmatter Opus pin — to one model, bypassing the detection/Opus-review split described below; a `--inline` `/docs-brand` phase inherits this run's flag settings rather than resolving its own, so the enforced model reaches its work too.
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 9's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance`: under the flag only real defects are persisted, never the in-session Lessons Learned report. [Session feedback](../reference/session-feedback.md#bugs-only---skip-feedback) has the rest. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `docs-scaffold-reviewer` included, overriding its frontmatter Opus pin — to one model, bypassing the detection/Opus-review split described below; a `--inline` `/docs-brand` phase inherits this run's flag settings rather than resolving its own, so the enforced model reaches its work too.
 
 ## What it needs
 
@@ -27,6 +27,31 @@ All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_CO
 - **`$SPECS_PATH`**, for its own session bookkeeping only. Nothing about the scaffold is read from there.
 
 ## Phases
+
+The diagram shows the run's flow. A dotted edge is a stop or a Cancel; each one that reaches the Phase 8.5 report still runs the emitter tail after it.
+
+```mermaid
+flowchart TD
+    p0["Phase 0 — Resolve and validate: the run flags and its own flags, the target and its rung, specs-repo preflight, a git work tree's top level, no docs signal"]
+    p0 -.->|"a run-flag stop or DOCS_INIT_UNKNOWN_GENERATOR, before a target resolves"| runend["Run ends — no report, no emitter tail"]
+    p0 -.->|"a named DOCS_INIT stop, or Cancel at the git init offer — nothing written"| p85
+    p0 --> p1["Phase 1 — Model routing: MODERATE, review pinned to Opus"]
+    p1 --> p2["Phase 2 — Source repos, product and major version, toolchain preflight"]
+    p2 -.->|"Cancel at the toolchain prompt — DOCS_INIT_TOOLCHAIN_INCOMPLETE"| p85
+    p2 --> p25{"Phase 2.5 — Branch, before any write"}
+    p25 -.->|"Cancel — nothing written"| p85
+    p25 -->|"branch created"| p34["Phase 3 — Scaffold / 4 — Vale"]
+    p34 --> d5{"--no-brand?"}
+    d5 -->|"no"| p5["Phase 5 — /docs-brand --inline"]
+    d5 -->|"yes"| p6
+    p5 -->|"branding applied, or no branding applied — carry on as if --no-brand"| p6["Phase 6 — Profile"]
+    p6 --> p7["Phase 7 — Verify: public build, internal build, Vale, visibility gate — a failure is reported, never worked around"]
+    p7 --> p75["Phase 7.5 — Review gate: docs-scaffold-reviewer @Opus → triage → the orchestrator applies survivors"]
+    p75 -.->|"Cancel, verdict kept, or DOCS_INIT_UNRESOLVED_BLOCKER — scaffold left uncommitted"| p85
+    p75 -->|"cleared"| p8["Phase 8 — Finish: ignore test, commit, draft the PR — never pushed"]
+    p8 --> p85["Phase 8.5 — Report"]
+    p85 --> tail["Phases 9–11 — Maintenance & feedback, follow-ups, session cost, resume pointer, commit-artifacts"]
+```
 
 | Phase | What happens |
 |---|---|

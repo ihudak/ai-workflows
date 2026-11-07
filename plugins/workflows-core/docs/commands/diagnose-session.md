@@ -16,6 +16,28 @@ Only the first token can name the session: an existing `.jsonl` file is its tran
 
 `--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) skips this run's session-cost entry, still advancing the checkpoint; `--skip-feedback` and `--enforce-model` are reported ignored, since the run dispatches no `impl-maintenance` and routes no model.
 
+## How it runs
+
+The analysts of Phase 3 are the run's only dispatch, and nothing past Phase 1 starts until you have agreed the problem statement.
+
+```mermaid
+flowchart TD
+    p0["Phase 0 — Arguments and specs-repo preflight: the session token, then your description"]
+    p0 --> p1["Phase 1 — Problem intake: one question at a time until the statement is agreed — a scoped request is its own statement"]
+    p1 --> p2["Phase 2 — Locate: every transcript measured, the case directory and case.md written"]
+    p2 --> p3["Phase 3 — Triage: read the region around the problem first"]
+    p3 --> d3{"Main transcript past 20,000 lines?"}
+    d3 -->|"no"| fan["One session-analyst per dimension, in one response — all seven, or only those named"]
+    d3 -->|"yes"| fsplit["Three dimensions split into 20,000-line ranges, plus one dispatch each over the subagent transcripts — the other four whole"]
+    fan --> afterfan["On return: an analyst that could not run is re-dispatched once or named, and a finding with no path:line is discarded"]
+    fsplit --> afterfan
+    afterfan --> p4["Phase 4 — Report: check each cited line, then write and show report.md"]
+    p4 --> d5{"Family involvement possible or likely, or a feedback line asked for?"}
+    d5 -->|"yes"| p5["Phase 5 — Print a ready-to-run /workflows-core:feedback line, never run by this command"]
+    d5 -->|"not indicated"| p6
+    p5 --> p6["Phase 6 — Session cost, commit-artifacts, the final report"]
+```
+
 ## What it needs
 
 - **A problem statement you agree to.** Phase 1 asks one question at a time until it can name the session, the turn range if you know it, what you expected, what happened, and what you care about — wall-clock, tokens, repeated actions, or one specific action. *"It took too long"* is where that starts, not where it ends. A request already scoped to one event, to what a running session is doing now, or to named dimensions is its own statement. Nothing is read until you have answered.

@@ -14,6 +14,28 @@ The Product Architect, whenever ARDs have merged since the last harvest — [`/c
 
 `--dry-run` prints the plan and stops.
 
+## How it runs
+
+Every step is the command or its bundled script: no agent, no model. A dotted edge ends the run.
+
+```mermaid
+flowchart TD
+    p0["Phase 0 — Preflight: SPECS_PATH set, python3, the specs-repo preflight, the default branch checked out, no earlier kb/ harvest unmerged"]
+    p0 -.->|"a check fails — a stop naming what to fix"| halt["Stop"]
+    p0 --> p1["Phase 1 — Plan: the harvest script, as a dry run"]
+    p1 -.->|"no ARD, already up to date, or the script fails — nothing written"| halt
+    p1 --> d1{"--dry-run?"}
+    d1 -.->|"yes — the plan and every problem with its fix"| halt
+    d1 -->|"no"| p2{"Phase 2 — Apply or Cancel, on the printed plan"}
+    p2 -.->|"Cancel — nothing written"| halt
+    p2 -->|"Apply"| wr["The script writes the plan, at the commit the dry run read"]
+    wr -.->|"the script fails"| halt
+    wr --> p3{"Phase 3 — Hand off: the commit-and-pull-request choice"}
+    p3 -->|"Branch + commit + push + open PR"| pr["A kb/harvest-YYYY-MM-DD branch and its pull request"]
+    p3 -->|"Just write the files, or Cancel — the files stay written, uncommitted"| p4
+    pr --> p4["Phase 4 — Terminal commit-artifacts, then the final report"]
+```
+
 ## What it needs
 
 - **`$SPECS_PATH`** — the specs repository. The harvest reads only its default branch, so an ARD on an open pull request is harvested once that pull request merges.

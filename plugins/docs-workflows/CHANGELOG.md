@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.5] — 2026-11-07
+
+User pages only: batch B33. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **New pages: Roles and phases, Session feedback, Resume and checkpoints, and Model routing**, each about this plugin's own commands, as dev- and product-workflows carry. The *See also* bullets on `/document` and `/release-notes` that named a roles page without a link now link it. The index and the README list the four.
+- **`/docs-init`, `/docs-audit`, `/docs-brand` and `/docs-profile` draw their flow**, as `/document` and `/release-notes` do. `/docs-serve`, which only starts a server, stays prose only.
+
 ## [1.35.4] — 2026-11-07
 
 User pages only: batch B32, the family's entry points. Needs nothing from the other plugins' releases.

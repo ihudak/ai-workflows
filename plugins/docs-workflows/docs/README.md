@@ -4,6 +4,7 @@
 |---|---|
 | install this and set it up | [Getting started](getting-started.md) |
 | see how the seven commands fit together | [Workflow overview](workflow.md) |
+| know which role runs each command, and what each cost phase means | [Roles and phases](roles-and-phases.md) |
 | go from no documentation at all to a populated portal | [The documentation route](docs-workflow.md) |
 | start documenting a project that has no docs | [`/docs-init`](commands/docs-init.md) |
 | work out what documentation the product is missing | [`/docs-audit`](commands/docs-audit.md) |
@@ -16,8 +17,11 @@
 | draft the note that announces a change | [`/release-notes`](commands/release-notes.md) |
 | keep internal pages out of a published documentation site | [Documentation visibility](reference/docs-visibility.md) |
 | understand what a run cost | [Session cost](reference/session-cost.md) |
+| know where a run's session feedback lands, or what `--skip-feedback` keeps | [Session feedback](reference/session-feedback.md) |
+| pick a run back up in a new session | [Resume and checkpoints](reference/resume-and-checkpoints.md) |
+| know which model a step runs on, or pin one with `--enforce-model` | [Model routing](reference/model-routing.md) |
 
-Three pages orient you before you touch a command: [Getting started](getting-started.md) installs the plugin and sets the environment variables it reads, [Workflow overview](workflow.md) shows the seven commands as one diagram, including the two modes of `/document`, and [The documentation route](docs-workflow.md) is the ordered procedure from an empty repository to a populated portal — the steps that run a command and, written out in full, the ones you do by hand. Every other page below documents one command, one shared subsystem, or one whole inventory.
+Four pages orient you before you touch a command: [Getting started](getting-started.md) installs the plugin and sets the environment variables it reads, [Workflow overview](workflow.md) shows the seven commands as one diagram, including the two modes of `/document`, [The documentation route](docs-workflow.md) is the ordered procedure from an empty repository to a populated portal — the steps that run a command and, written out in full, the ones you do by hand — and [Roles and phases](roles-and-phases.md) says which role runs each command and what each cost phase means. Every other page below documents one command, one shared subsystem, or one whole inventory.
 
 ## Commands
 
@@ -41,6 +45,9 @@ Three pages orient you before you touch a command: [Getting started](getting-sta
 - [Documentation backlog](reference/docs-backlog.md) — the file an audit writes and you keep: where it lives, what each block holds, the states a page moves through and which of them anything automates yet, and what the coverage fraction actually counts.
 - [Evidence and walkthroughs](reference/docs-evidence.md) — what a page's claims are allowed to rest on for each audience, the three kinds of evidence, what an unverified claim looks like on the page, and how to walk a verification checklist by hand.
 - [Session cost](reference/session-cost.md) — which commands here emit a cost entry, what they charge to, and where the file lands.
+- [Session feedback](reference/session-feedback.md) — which commands here emit automatic feedback, where the file lands, what is redacted, and what `--skip-feedback` keeps.
+- [Resume and checkpoints](reference/resume-and-checkpoints.md) — the resume pointer keyed `/document` and `/release-notes` write, the context suggestion beside it, and the state `/docs-serve` keeps between runs.
+- [Model routing](reference/model-routing.md) — how each command classifies, which steps run on Opus, the agents pinned by frontmatter, and `--enforce-model`.
 
 ## Where the rest lives
 

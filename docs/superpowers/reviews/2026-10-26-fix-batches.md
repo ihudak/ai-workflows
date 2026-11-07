@@ -1032,6 +1032,8 @@ Entries:
 
 **Version bumps:** dev-workflows patch, docs-workflows patch, security-workflows patch.
 
+Done in batch B33 (dev-workflows 4.59.3, docs-workflows 1.35.5, security-workflows 0.10.9, product-workflows 3.78.5 and workflows-core 1.78.12): the seven entries and DQD-G2. DQD-B3 is confirmed: a PRD run's *amend the document* names `/update-spec`, `/update-prd`, `/epics` or `/create-ard`, by the document holding the requirement, so each diagram draws an edge to every one of those it has as a node — the family map and product-workflows' page as well as dev-workflows'. DQS-B9 is confirmed for the pipeline pages: by the user's ruling, `docs-init`, `docs-audit`, `docs-brand`, `docs-profile`, `harvest-decisions` and `diagnose-session` gain a diagram, and `docs-serve` and workflows-core's five logging and setup commands stay prose only, which the rules record. DQS-B6 is fixed with short pages, by the user's ruling: docs-workflows gains `roles-and-phases.md` and reference pages for session feedback, resume and checkpoints, and model routing; security-workflows gains a session-feedback page that also covers its follow-ups and resume pointer (DQD-G2). DQD-B6 was fixed in batch B30 and DQD-B11 in D30 (dev-workflows 4.53.0); their headings say so.
+
 ### B34 — product-workflows docs: getting started, workflow pages, glossary
 
 **Tier:** Documentation only. **Entries:** 15, 0 MAJOR.
@@ -1063,7 +1065,7 @@ Entries:
 
 **Confirm first:** DQP-B16 (medium).
 
-**Notes:** Run after B07, B08, B10 and B23, so the pages describe the fixed commands. DQP-G4's section on each page must be read from the command's own next-step phase, not from the retired README. DQP-B14 was fixed early, in batch B32 (product-workflows 3.78.4), by check 29's README rows, and DQP-B5's edge to the documentation commands was drawn there too; its scan node and cross-cutting bullet are still this batch's.
+**Notes:** Run after B07, B08, B10 and B23, so the pages describe the fixed commands. DQP-G4's section on each page must be read from the command's own next-step phase, not from the retired README. DQP-B14 was fixed early, in batch B32 (product-workflows 3.78.4), by check 29's README rows, and DQP-B5's edge to the documentation commands was drawn there too; its scan node and cross-cutting bullet are still this batch's. DQP-B6's amend edge from `/dev-workflows:conformance` to `/create-ard` was drawn early, in batch B33 (product-workflows 3.78.5), and DQP-G6, merged into DQS-B9, was done there: `harvest-decisions.md` has its diagram.
 
 **Version bumps:** product-workflows patch.
 

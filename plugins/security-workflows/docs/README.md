@@ -13,6 +13,7 @@
 | read the findings register, or know how a finding is closed | [Security register](reference/security-register.md) |
 | set the environment variable it reads | [Environment](reference/environment.md) |
 | understand what a run cost | [Session cost](reference/session-cost.md) |
+| know where a run's feedback, follow-ups and resume pointer go | [Session feedback, follow-ups and resume](reference/session-feedback.md) |
 
 Three pages orient you before you run the command: [Getting started](getting-started.md) installs the plugin, its two dependencies and what Claude Security needs on your machine; [Workflow overview](workflow.md) shows the command's runs, by role, beside `/dev-workflows:implement` and Claude Security as one diagram; and [Roles and phases](roles-and-phases.md) says what the Dev and the Security Engineer each run and decide. Every other page below documents the command or one part of what it keeps.
 
@@ -25,6 +26,7 @@ Three pages orient you before you run the command: [Getting started](getting-sta
 - [Security register](reference/security-register.md) — the findings register the command keeps per code repository: where it lives, why it is bookkeeping, the statuses and their diagram, a false positive against an accepted risk, what awaits security review, how a finding is closed, and how findings are numbered.
 - [Environment](reference/environment.md) — the one environment variable the plugin reads, and what happens when it is unset or misplaced.
 - [Session cost](reference/session-cost.md) — which commands emit a cost entry, what they charge to, and where it lands.
+- [Session feedback, follow-ups and resume](reference/session-feedback.md) — where a run's session feedback lands and what `--skip-feedback` keeps, where its follow-ups go, and what its resume pointer carries.
 
 ## Where the rest lives
 
