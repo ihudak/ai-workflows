@@ -3777,7 +3777,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # inventing a command -- which would also have to be registered in check 9's count sentence,
   # a different check's surface this case is not about).
   expect_pass_after "a command the diagram's own intro prose exempts is not required in it" \
-    "sed -i.bak 's|alpha|zzz-placeholder|; s|Every command shown here\\.|Every command shown here, except \`/alpha\` (\`alpha:\`), which is not a pipeline node and is omitted below.|' $PLUGIN_REL/docs/workflow.md"
+    "sed -i.bak 's|alpha|zzz-placeholder|; s|Every command shown here\\.|Every command shown here, except [\`/alpha\`]($DOC_CMD_DIR/alpha.md) (\`alpha:\`), which is not a pipeline node and is omitted below.|' $PLUGIN_REL/docs/workflow.md"
   # ...and its red twin: naming a command in the intro is not exempting it. Only the sentence
   # that says its names are omitted counts -- an intro that merely mentions a command
   # ("`/document` and `/release-notes` close it out") exempted both until this case existed.
@@ -4850,6 +4850,10 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   local ref25; ref25=$(ls "$fixture/$CORE_PLUGIN_REL/$REF_DIR"/*.md 2>/dev/null | head -1); ref25="${ref25##*/}"; ref25="${ref25%.md}"
   local ag25; ag25=$(ls "$fixture/$CORE_PLUGIN_REL/agents"/*.md 2>/dev/null | head -1); ag25="${ag25##*/}"; ag25="${ag25%.md}"
   local cmd25; cmd25=$(cmd_names "$fixture/$CORE_PLUGIN_REL" | head -1)
+  # Check 28 holds a page to linking its own plugin's command, so where the corpus plugin is the
+  # page's, the mention below is a link; another plugin's command stays a bare name (check 27).
+  local cref25="\`/$ns25:$cmd25\`"
+  [ "$CORE_PLUGIN_REL" = "$PLUGIN_REL" ] && cref25="[\`/$ns25:$cmd25\`]($cmd25.md)"
   local sub25; sub25=$(ls -d "$fixture/$PLUGIN_REL/$REF_DIR"/*/ "$fixture/$(plugin_parent)"*/"$REF_DIR"/*/ 2>/dev/null | head -1); sub25="${sub25%/}"
   local subf25; subf25=$(ls "$fixture/$(plugin_parent)"*/"$REF_DIR"/*/*.md 2>/dev/null | head -1)
   local subfns25="${subf25%/$REF_DIR/*}"; subfns25="${subfns25##*/}"; subf25="${subf25#$fixture/}"; subf25="${subf25#*/$REF_DIR/}"; subf25="${subf25%.md}"
@@ -4927,7 +4931,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '\nThe rule is in \247 3.\n' >> $d25"
   expect_pass_after "agent and command names, a reference subtree, marked lines and fences, mermaid node ids and comments, and hidden comments pass" \
     "printf '\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
-       'The \`$ns25:$ag25\` agent runs, after \`/$ns25:$cmd25\`, with \`$subns25:$sub25\`.' \
+       'The \`$ns25:$ag25\` agent runs, after $cref25, with \`$subns25:$sub25\`.' \
        'The customer wrote §4.2 and D3. <!-- docs-vocab-ok: quotes the customer -->' \
        '\`\`\`text <!-- docs-vocab-ok: a run prints this verbatim -->' \
        'see $ns25:$ref25 §3 (D9)' \
