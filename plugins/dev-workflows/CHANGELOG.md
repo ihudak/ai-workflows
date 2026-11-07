@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.59.0] — 2026-11-07
+
+D47: `/implement` type-checks the tests `test-writer` wrote before the Opus review. Needs nothing from the other plugins' releases.
+
+### Added
+- **`/implement` type-checks the test sources before the review (Phase 3B step 4b).** On a `MODERATE`, `SIGNIFICANT` or `HIGH-RISK` run, once `test-writer`'s reports are in, the orchestrator runs the type-checker the repository configures for the files they touched — `tsc --noEmit -p` on a spec configuration such as `tsconfig.spec.json`, `vue-tsc`, `pyright`, `mypy` or `go vet` — directly, on a configuration that includes them, with a binary the project installed or one on `PATH` outside the repository: never a build tool, a project script or a checker set to load a plugin at all, so it runs no test and none of the repository's own code, and Java, Kotlin, C# and Rust tests get no check there. It writes nothing into the tree where the tool allows it (a temporary `--tsBuildInfoFile`, `mypy --cache-dir=/dev/null`) and is read around as a check run. An error in a file `test-writer` wrote gets one `test-writer` correction round and one more type-check; every other error, and any the round leaves, goes to the review as written. A field run's Angular specs failed `tsc -p web/tsconfig.spec.json --noEmit` in 7 files that nothing had compiled before the review.
+- **`test-writer` takes a `Type-check errors:` input**, an evidence file: its correction round fixes the listed errors in this run's test files and in no production code, writes no test case, reports `0` tests written so no total counts a test twice, and names under `### Notes` an error it leaves. An unreadable file returns `Type-check errors: unreadable at <path>`, which stops the run as `Diff: unreadable` does.
+- **Run-state keys `test_typechecks` and `files.typecheck_file`.**
+
+### Changed
+- **Phase 3.5 step 3 runs step 4b's type-checks again after the review**, with the lint and the build, each once: a failure the tree before the change reports too, at the same file with the same message, is pre-existing, as a lint failure is, and every other goes to the fix loop.
+- **The rule that nothing runs against the working tree between the first edit and the review now names its one exception** wherever it is stated — `/implement` Phase 3B step 1 and Phase 3A step 6, `bug-diagnosis.md`, `risk-planner`, `code-writer` and the `/implement` page. A plan still carries no step that runs a check before the review.
+
 ## [4.58.7] — 2026-11-07
 
 User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.

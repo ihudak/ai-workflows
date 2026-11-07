@@ -54,12 +54,15 @@ change — a scan's patch applied included, a probe's tagged line not — dividi
   places is placed and read there too, and the cleanup gate strips any tagged line that reached the
   working tree all the same.
 - **From the first edit until a non-BLOCK review, nothing runs against the working tree**, which
-  holds the change: no check — a lint, a build, a type-check or a test — and no repro or probe. A
+  holds the change: no check — a lint, a build, a type-check or a test — and no repro or probe,
+  save one: the type-check of the test sources `test-writer` wrote, before the review (`/implement`
+  Phase 3B step 4b) — a standalone checker, no build tool, project script or plugin, the
+  orchestrator's own, that compiles them and runs no test and none of the repository's own code. A
   command that writes the change rather than checks it, as an install, a code generation or a
-  formatting does, is none of these: what it writes is part of the change, and the review diff
-  carries it. A probe or the repro runs only in the scratch checkout of `HEAD` (below), the tree
-  before the change. That takes a probe placed once the edits have begun and every run of the repro
-  a plan step makes, which `code-writer` carries out there; and step 1's repro **on a re-plan**
+  formatting does, is no check, repro or probe: what it writes is part of the change, and the review
+  diff carries it. A probe or the repro runs only in the scratch checkout of `HEAD` (below), the
+  tree before the change. That takes a probe placed once the edits have begun and every run of the
+  repro a plan step makes, which `code-writer` carries out there; and step 1's repro **on a re-plan**
   (`/implement` Phase 3A step 5's, or a `blocked` return's Revise at its Phase 3A step 1), which
   `risk-planner` runs there before the first edit as after it. Neither runs a test the run
   created or changed, in that checkout or any other: it is unreviewed change. `risk-planner`'s
