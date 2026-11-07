@@ -6,16 +6,16 @@
 # in the two restructures this one follows (a sibling plugin repo,
 # ai-containers#78).
 #
-# TWENTY-FIVE checks, numbered 1-25 in the order their functions appear below. The number is
+# TWENTY-EIGHT checks, numbered 1-28 in the order their functions appear below. The number is
 # written here and nowhere else in this file, and nothing gates it -- re-derive it with
 # `grep -oE '\bfail [0-9]+ ' "$0" | awk '{print $2}' | sort -un` -- the numbers a fail() call
 # can actually report -- rather than trusting this sentence, and update it in the commit that
-# adds a check. Counting the banner comments instead gives 24: checks 1 and 2 share one. Every
-# edition carries all twenty-five: a check an edition has no use for is switched off by its
+# adds a check. Counting the banner comments instead gives 27: checks 1 and 2 share one. Every
+# edition carries all twenty-eight: a check an edition has no use for is switched off by its
 # config block (checks 13, 16 and 19 in the internal editions, check 22 here and in the Copilot
 # edition, check 23 in any edition whose escalation rules name no path-unset rule, check 24 in
 # any edition that ships no hook preloading context for a keyed command), never cut from the
-# body. Check 25 has no switch: every edition ships pages a user reads.
+# body. Checks 25 to 28 have no switch: every edition ships pages a user reads.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -3021,6 +3021,197 @@ PYEOF25
   done <<<"$out"
 }
 
+# ------------------------------------------------------- shared: a page's link targets
+# Each inline link target on a markdown page, outside fenced blocks -- the set check 1 resolves,
+# by the same parse: an anchor kept, a CommonMark title or angle brackets dropped, a scheme
+# (`https:`, `mailto:`) skipped.
+link_targets() { # <markdown file> -> one target per line
+  strip_fences "$1" | grep -oE '\]\([^)#][^)]*\)|\]\(#[^)]*\)' \
+    | sed -E 's/^\]\(//; s/\)$//; s/[[:space:]]+"[^"]*"$//; s/^<//; s/>$//' \
+    | grep -vE '^(https?|mailto):'
+}
+# Each relative link's target as a path, lexically normalised from the page's own directory
+# with no filesystem access, so a link to a file that is absent here (the installed cache's
+# missing parent) still resolves to where it points. A bare `#anchor` and any `scheme:` target
+# are skipped. Printed as `<normalised path><TAB><target as written>`.
+resolved_links() { # <markdown file> -> lines
+  link_targets "$1" | awk -v dir="$(cd "$(dirname "$1")" && pwd)" '
+    { t = $0; sub(/#.*/, "", t)
+      if (t == "" || t ~ /^[A-Za-z][A-Za-z0-9+.-]*:/) next
+      p = (substr(t, 1, 1) == "/") ? t : dir "/" t
+      n = split(p, a, "/"); k = 0
+      for (i = 1; i <= n; i++) {
+        if (a[i] == "" || a[i] == ".") continue
+        if (a[i] == ".." && k > 0 && o[k] != "..") { k--; continue }
+        o[++k] = a[i]
+      }
+      s = ""; for (i = 1; i <= k; i++) s = s "/" o[i]
+      print s "\t" $0 }'
+}
+
+# ------------------------------------------------------------------ check 26
+# A command page links back to its plugin's workflow page. A reader lands on a command page from
+# a search or another page, and the workflow page is where the command's place among the others
+# is drawn: check 15 holds every command to that page's diagram, save one the page's
+# introduction says it leaves out, so a link to docs/workflow.md reaches a picture with the
+# command in it. Batch B31 found 24 command pages that linked no docs/workflow.md -- 19 linking
+# no workflow page at all, every one of dev-workflows' among them, and 5 only the BRD route's.
+# A page may link more (the BRD-route pages also link their route page); it must link this one.
+# POPULATION: docs/$DOC_CMD_DIR/*.md under each plugin of PLUGIN_RELS. VACUITY: no command page
+# under any of them fails, since the check would examine nothing. It sits outside the loop for
+# that guard, check 17's reason.
+# What it cannot see: whether the link sits where a reader looks for it (a See-also list) or in
+# a sentence that says something else.
+check_command_backlink() {
+  local root="$1" rel d f n=0 targets
+  for rel in $PLUGIN_RELS; do
+    d="$root/$rel/docs"
+    for f in "$d/$DOC_CMD_DIR"/*.md; do
+      [ -f "$f" ] || continue
+      n=$((n + 1))
+      targets=$(resolved_links "$f" | cut -f1)
+      grep -qxF -- "$d/workflow.md" <<<"$targets" \
+        || fail 26 "${f#$root/} does not link its plugin's workflow page ($rel/docs/workflow.md) -- a reader who lands on a command page needs the way to the diagram that shows where the command sits; add it to the page's See also"
+    done
+  done
+  [ "$n" -gt 0 ] || fail 26 "no command page under docs/$DOC_CMD_DIR/ of any plugin in PLUGIN_RELS -- this check would examine nothing"
+}
+
+# ------------------------------------------------------------------ check 27
+# No relative link leaves its plugin. An installed plugin sits alone in Claude Code's plugin cache
+# (`cache/<marketplace>/<plugin>/<version>/`), with no repository root above it and no sibling
+# plugin beside it, so a link climbing out of plugins/<name>/ resolves on GitHub and in a checkout
+# and breaks for the user reading the installed copy. Batch B31 found 18: the plugin READMEs'
+# and getting-started pages' links to the repo-root README, and four links into a sibling
+# plugin's pages. Say the other plugin's page in words, link the plugin's own page that covers
+# it, or, on a getting-started page, which check 10 lets name the repository, use its URL.
+# POPULATION: check 1's pages -- every *.md under each plugin's docs/, and its README. A
+# root-relative target (`/x`) leaves the plugin too. Lexical, so it needs no file to exist.
+# MEASURED at B31 over every *.md under the plugins instead: the one further hit was an example
+# in product-workflows' idea-format reference showing a user's absolute image path, which
+# /idea rewrites -- correct content -- so the commands, agents and references stay out.
+# VACUITY: no page under any of them fails.
+# What it cannot see: a link that stays inside the plugin and is wrong (check 1's), a link in a
+# command, agent or reference file, a link in a file that is not markdown, and an absolute URL
+# to the repository's own tree, which works in the cache.
+check_links_stay_in_plugin() {
+  local root="$1" rel base f n=0 line
+  for rel in $PLUGIN_RELS; do
+    base="$root/$rel"
+    while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      n=$((n + 1))
+      while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        case "${line%%	*}/" in "$base"/*) continue ;; esac
+        fail 27 "${f#$root/} -> ${line#*	} leaves $rel -- an installed plugin sits alone in the plugin cache, so this link breaks for anyone reading the installed copy; name the page in words, link this plugin's own page, or, on getting-started.md, use the repository URL"
+      done < <(resolved_links "$f")
+    done < <({ find "$base/docs" -type f -name '*.md' 2>/dev/null
+               [ -f "$base/README.md" ] && printf '%s\n' "$base/README.md"; } | sort)
+  done
+  [ "$n" -gt 0 ] || fail 27 "no docs page and no README under any plugin in PLUGIN_RELS -- this check would examine nothing"
+}
+
+# ------------------------------------------------------------------ check 28
+# A page that names one of its own plugin's commands links that command's page. GitHub draws a
+# mermaid diagram without click-through, so on a workflow page the prose is the only way from a
+# command to its page, and a command page names the command before and after it. Batch B31
+# found 135 mentions on 33 such pages with no link to the page they named; the fix linked the
+# first mention on each, and one link anywhere on the page satisfies the check.
+# A MENTION is `/<name>`, or `/<plugin>:<name>` where <plugin> is this plugin by directory or
+# declared name, in this edition's command form (CMD_FORM=trigger also reads `<name>:`), for a
+# <name> cmd_names lists -- resolved against that set, never parsed by shape -- standing as a
+# word: not inside a path (`docs/commands/design.md`, `<KEY>/design.md`, `epics/`). A fenced
+# block and an HTML comment are not read, since a link cannot be written in the one and a reader
+# sees neither the comment nor a click target there. A LINK is an inline link, or a reference
+# definition, whose target resolves to docs/$DOC_CMD_DIR/<name>.md, an anchor allowed.
+# POPULATION, the user's ruling at B31: every docs/*.md (the index, the workflow, roles,
+# getting-started and route pages) and every command page, its own command excepted. Reference
+# pages are not held: they name commands to say what reads a setting, and the B31 count there
+# (199 on 34 pages) was left as it stands. The plugin README is not held: check 15 holds it to
+# naming every command, and on this tree every README links each command it names. A command of
+# another plugin is not held either -- check 27 forbids the relative link it would need.
+# VACUITY: no page examined under any plugin fails, as does a scan that does not run to its end.
+# Without python3 the check prints a note and passes, as checks 12, 24 and 25 do.
+# What it cannot see: a mention whose link goes to the wrong command, a command named in words
+# ("the design command"), a reference page and the plugin README.
+check_named_commands_linked() {
+  local root="$1" rel d f out h prog n=0 names declared
+  [ "$HAVE_PY" = 1 ] || { note "check 28 not run: python3 not found"; return 0; }
+  prog=$(cat <<'PYEOF28'
+import json, os, re, sys
+# argv: plugin dir, docs command dir, command form, plugin names (space-separated), command names
+# (space-separated); stdin: page paths. Prints `V <page>\t<name>` per named-but-unlinked command.
+base, cdir, form, pnames, cnames = sys.argv[1:6]
+cmds = [c for c in cnames.split() if c]
+plugs = [p for p in pnames.split() if p]
+docs = os.path.join(base, "docs")
+if cmds:
+    alt = "|".join(sorted((re.escape(c) for c in cmds), key=len, reverse=True))
+    palt = "|".join(sorted((re.escape(p) for p in plugs), key=len, reverse=True))
+    pref = r"(?:(?:" + palt + r"):)?" if palt else ""
+    MENTION = [re.compile(r"(?<![A-Za-z0-9_./>}~$-])/" + pref + r"(" + alt + r")(?![A-Za-z0-9_/-]|\.[A-Za-z0-9])")]
+    if form == "trigger":
+        MENTION.append(re.compile(r"(?<![A-Za-z0-9_./-])(" + alt + r"):"))
+LINK = re.compile(r"\]\(<?([^)>\s]+)>?(?:\s+\"[^\"]*\")?\)")
+REFDEF = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?([^>\s]+)>?", re.M)
+FENCE = re.compile(r"^[ \t]*(```|~~~)")
+for path in sys.stdin.read().split("\n"):
+    if not path or not cmds:
+        continue
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        lines = fh.read().split("\n")
+    kept, infence = [], False
+    for l in lines:
+        if FENCE.match(l):
+            infence = not infence
+            continue
+        if not infence:
+            kept.append(l)
+    text = re.sub(r"<!--.*?-->", "", "\n".join(kept), flags=re.S)
+    own = None
+    if os.path.dirname(path) == os.path.join(docs, cdir):
+        own = os.path.basename(path)[:-3]
+    named = set()
+    for rx in MENTION:
+        named.update(m.group(1) for m in rx.finditer(text))
+    named.discard(own)
+    linked = set()
+    here = os.path.dirname(path)
+    for t in LINK.findall(text) + REFDEF.findall(text):
+        t = t.split("#", 1)[0]
+        if not t or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", t):
+            continue
+        r = os.path.normpath(os.path.join(here, t))
+        if os.path.dirname(r) == os.path.join(docs, cdir) and r.endswith(".md"):
+            linked.add(os.path.basename(r)[:-3])
+    for c in sorted(named - linked):
+        print(f"V {path}\t{c}")
+print("__CHECK28_RAN__")
+PYEOF28
+)
+  for rel in $PLUGIN_RELS; do
+    d="$root/$rel/docs"
+    declared=$(sed -nE 's/^[[:space:]]*"name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$root/$rel/.claude-plugin/plugin.json" 2>/dev/null | head -1)
+    names=$(cmd_names "$root/$rel" | tr '\n' ' ')
+    f=$(for h in "$d"/*.md "$d/$DOC_CMD_DIR"/*.md; do [ -f "$h" ] && printf '%s\n' "$h"; done)
+    [ -n "$f" ] || continue
+    n=$((n + $(printf '%s\n' "$f" | grep -c .)))
+    out=$(printf '%s\n' "$f" | python3 -c "$prog" "$root/$rel" "$DOC_CMD_DIR" "$CMD_FORM" "${rel##*/} $declared" "$names" 2>&1)
+    case "$out" in
+      *__CHECK28_RAN__*) : ;;
+      *) fail 28 "the scan of $rel did not run to the end (python3 said: $(printf '%s\n' "$out" | tail -1)) -- this check would examine nothing of it"; continue ;;
+    esac
+    while IFS= read -r h; do
+      case "$h" in
+        V\ *) h="${h#V }"; h="${h#$root/}"
+              fail 28 "${h%%	*} names $(cmd_ref "${h#*	}") but links no page of it -- link the first mention to $rel/docs/$DOC_CMD_DIR/${h#*	}.md, so a reader can go from the name to the page" ;;
+      esac
+    done <<<"$out"
+  done
+  [ "$n" -gt 0 ] || fail 28 "no docs page under any plugin in PLUGIN_RELS -- this check would examine nothing"
+}
+
 # ------------------------------------------------------------------ selftest
 # One passing fixture tree; each check gets a mutation of a fresh copy. Asserting
 # the exit code alone would let a mutation that trips a DIFFERENT check register
@@ -3312,7 +3503,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # check 7 in every edition, regardless of which verbs exist there. The target names
   # a line absent from the root README, so it is extracted AND counts as extra.
   expect_fail "an install line absent from the root README is rejected" 7 "printf '\n$CLI plugin ${CLI_VERBS##*|} ${PLUGIN_REL##*/}@extra-fixture-target\n' >> $PLUGIN_REL/docs/getting-started.md"
-  expect_fail "a drifted prose count is rejected"              9 "mkdir -p $(dirname $(cmd_file $PLUGIN_REL gamma)) 2>/dev/null; printf -- '---\nname: gamma\n---\n' > $(cmd_file $PLUGIN_REL gamma) && printf -- '# /gamma\n\nPage.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/gamma.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/gamma\`]($DOC_CMD_DIR/gamma.md)|' $PLUGIN_REL/docs/README.md"
+  expect_fail "a drifted prose count is rejected"              9 "mkdir -p $(dirname $(cmd_file $PLUGIN_REL gamma)) 2>/dev/null; printf -- '---\nname: gamma\n---\n' > $(cmd_file $PLUGIN_REL gamma) && printf -- '# /gamma\n\nPage. See the [workflow](../workflow.md).\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/gamma.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/gamma\`]($DOC_CMD_DIR/gamma.md)|' $PLUGIN_REL/docs/README.md"
   # The five cases below read the fixture's COMMAND count, and that count moved 1 -> 2 when
   # check 11's per-command coverage assertion needed a second command in the offer family to be
   # provable against (with one family member, emptying its writer set also empties the run-wide
@@ -3329,7 +3520,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # ENUMERATED compound would not discriminate -- leftmost-longest reads it whole either way.
   expect_fail "an unenumerated compound numeral is not read as its own tail" 9 "sed -i.bak 's|two slash commands|forty-two slash commands|' $PLUGIN_REL/README.md"
   expect_fail "a compound count whose tail matches a shorter number word is rejected" 9 \
-    "mkdir -p $(dirname $(cmd_file $PLUGIN_REL delta)) 2>/dev/null && printf -- '---\nname: delta\n---\n' > $(cmd_file $PLUGIN_REL delta) && printf -- '# /delta\n\nPage.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/delta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/delta\`]($DOC_CMD_DIR/delta.md)|' $PLUGIN_REL/docs/README.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL epsilon)) 2>/dev/null && printf -- '---\nname: epsilon\n---\n' > $(cmd_file $PLUGIN_REL epsilon) && printf -- '# /epsilon\n\nPage.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/epsilon.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/epsilon\`]($DOC_CMD_DIR/epsilon.md)|' $PLUGIN_REL/docs/README.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL zeta)) 2>/dev/null && printf -- '---\nname: zeta\n---\n' > $(cmd_file $PLUGIN_REL zeta) && printf -- '# /zeta\n\nPage.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/zeta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/zeta\`]($DOC_CMD_DIR/zeta.md)|' $PLUGIN_REL/docs/README.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL eta)) 2>/dev/null && printf -- '---\nname: eta\n---\n' > $(cmd_file $PLUGIN_REL eta) && printf -- '# /eta\n\nPage.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/eta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/eta\`]($DOC_CMD_DIR/eta.md)|' $PLUGIN_REL/docs/README.md && sed -i.bak2 's|two slash commands|twenty-six slash commands|' $PLUGIN_REL/README.md"
+    "mkdir -p $(dirname $(cmd_file $PLUGIN_REL delta)) 2>/dev/null && printf -- '---\nname: delta\n---\n' > $(cmd_file $PLUGIN_REL delta) && printf -- '# /delta\n\nPage. See the [workflow](../workflow.md).\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/delta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/delta\`]($DOC_CMD_DIR/delta.md)|' $PLUGIN_REL/docs/README.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL epsilon)) 2>/dev/null && printf -- '---\nname: epsilon\n---\n' > $(cmd_file $PLUGIN_REL epsilon) && printf -- '# /epsilon\n\nPage. See the [workflow](../workflow.md).\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/epsilon.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/epsilon\`]($DOC_CMD_DIR/epsilon.md)|' $PLUGIN_REL/docs/README.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL zeta)) 2>/dev/null && printf -- '---\nname: zeta\n---\n' > $(cmd_file $PLUGIN_REL zeta) && printf -- '# /zeta\n\nPage. See the [workflow](../workflow.md).\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/zeta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/zeta\`]($DOC_CMD_DIR/zeta.md)|' $PLUGIN_REL/docs/README.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL eta)) 2>/dev/null && printf -- '---\nname: eta\n---\n' > $(cmd_file $PLUGIN_REL eta) && printf -- '# /eta\n\nPage. See the [workflow](../workflow.md).\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/eta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/eta\`]($DOC_CMD_DIR/eta.md)|' $PLUGIN_REL/docs/README.md && sed -i.bak2 's|two slash commands|twenty-six slash commands|' $PLUGIN_REL/README.md"
   # Discriminates the word-boundary anchor on the reference-files alternation specifically: the
   # fixture ships 9 reference files, so an unanchored "nine" matches the tail of "twenty-nine"
   # and compares 9 against 9 -- a wrong claim passing on a coincidentally-correct numeral.
@@ -3349,7 +3540,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # Verified red (this case FAILs: "no count sentence found") with the word2num/alternation
   # additions stashed, green with them applied.
   expect_pass_after "a correctly-worded seventeen-command count is accepted" \
-    "for n in cmd01 cmd02 cmd03 cmd04 cmd05 cmd06 cmd07 cmd08 cmd09 cmd10 cmd11 cmd12 cmd13 cmd14 cmd15; do mkdir -p \$(dirname \$(cmd_file $PLUGIN_REL \$n)) 2>/dev/null; printf -- '---\nname: %s\n---\n' \$n > \$(cmd_file $PLUGIN_REL \$n); printf -- '# /%s\n\nPage.\n' \$n > $PLUGIN_REL/docs/$DOC_CMD_DIR/\$n.md; printf -- '\n- [%s](%s/%s.md)\n' \$n $DOC_CMD_DIR \$n >> $PLUGIN_REL/docs/README.md; done && sed -i.bak 's|two slash commands|seventeen slash commands|' $PLUGIN_REL/README.md && for n in cmd01 cmd02 cmd03 cmd04 cmd05 cmd06 cmd07 cmd08 cmd09 cmd10 cmd11 cmd12 cmd13 cmd14 cmd15; do printf -- '\nCommand: \`/%s\`.\n' \$n >> $PLUGIN_REL/README.md; done && { printf -- '\n\`\`\`mermaid\nflowchart TD\n'; for n in cmd01 cmd02 cmd03 cmd04 cmd05 cmd06 cmd07 cmd08 cmd09 cmd10 cmd11 cmd12 cmd13 cmd14 cmd15; do printf -- '    x%s[\"/%s\"]\n' \$n \$n; done; printf -- '\`\`\`\n'; } >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
+    "for n in cmd01 cmd02 cmd03 cmd04 cmd05 cmd06 cmd07 cmd08 cmd09 cmd10 cmd11 cmd12 cmd13 cmd14 cmd15; do mkdir -p \$(dirname \$(cmd_file $PLUGIN_REL \$n)) 2>/dev/null; printf -- '---\nname: %s\n---\n' \$n > \$(cmd_file $PLUGIN_REL \$n); printf -- '# /%s\n\nPage. See the [workflow](../workflow.md).\n' \$n > $PLUGIN_REL/docs/$DOC_CMD_DIR/\$n.md; printf -- '\n- [%s](%s/%s.md)\n' \$n $DOC_CMD_DIR \$n >> $PLUGIN_REL/docs/README.md; done && sed -i.bak 's|two slash commands|seventeen slash commands|' $PLUGIN_REL/README.md && for n in cmd01 cmd02 cmd03 cmd04 cmd05 cmd06 cmd07 cmd08 cmd09 cmd10 cmd11 cmd12 cmd13 cmd14 cmd15; do printf -- '\nCommand: \`/%s\`.\n' \$n >> $PLUGIN_REL/README.md; done && { printf -- '\n\`\`\`mermaid\nflowchart TD\n'; for n in cmd01 cmd02 cmd03 cmd04 cmd05 cmd06 cmd07 cmd08 cmd09 cmd10 cmd11 cmd12 cmd13 cmd14 cmd15; do printf -- '    x%s[\"/%s\"]\n' \$n \$n; done; printf -- '\`\`\`\n'; } >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
   if [ "$HAS_COST" = 1 ]; then
     # The same proof for the OTHER gated alternation. The case above exercises the commands
     # alternation only; the cost-emitting-commands alternation in check 9 has its own word list,
@@ -3364,7 +3555,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     # applied -- and the seventeen-command case above stays green throughout, which is what shows
     # the two cases cover different alternations.
     expect_pass_after "a correctly-worded seventeen cost-emitting-command count is accepted" \
-      "for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do mkdir -p \$(dirname \$(cmd_file $PLUGIN_REL \$n)) 2>/dev/null; printf -- '---\nname: %s\n---\n' \$n > \$(cmd_file $PLUGIN_REL \$n); printf -- '# /%s\n\nPage.\n' \$n > $PLUGIN_REL/docs/$DOC_CMD_DIR/\$n.md; printf -- '\n- [%s](%s/%s.md)\n' \$n $DOC_CMD_DIR \$n >> $PLUGIN_REL/docs/README.md; done && for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do printf -- '\nCall \`emit-cost\` with \`command: /%s\`, \`phase: fixture-phase\`, \`role: pm\`, done.\n' \$n >> \$(cmd_file $PLUGIN_REL \$n); done && { printf -- '# Cost emission (fixture)\n\n## 7. Attribution (phase / role)\n\n| Command | phase | role |\n|---------|-------|------|\n| \`/alpha\` | fixture-phase | pm |\n'; for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do printf -- '| \`/%s\` | fixture-phase | pm |\n' \$n; done; printf -- '\n## 8. Persistence\n\nNot modelled in the fixture.\n'; } > $PLUGIN_REL/$REF_DIR/cost-emission.md && sed -i.bak 's|two slash commands|eighteen slash commands|' $PLUGIN_REL/README.md && sed -i.bak 's|One commands emit a cost entry|Seventeen commands emit a cost entry|' $PLUGIN_REL/docs/reference/session-cost.md && for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do printf -- '\nCommand: \`/%s\`.\n' \$n >> $PLUGIN_REL/README.md; done && { printf -- '\n\`\`\`mermaid\nflowchart TD\n'; for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do printf -- '    x%s[\"/%s\"]\n' \$n \$n; done; printf -- '\`\`\`\n'; } >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
+      "for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do mkdir -p \$(dirname \$(cmd_file $PLUGIN_REL \$n)) 2>/dev/null; printf -- '---\nname: %s\n---\n' \$n > \$(cmd_file $PLUGIN_REL \$n); printf -- '# /%s\n\nPage. See the [workflow](../workflow.md).\n' \$n > $PLUGIN_REL/docs/$DOC_CMD_DIR/\$n.md; printf -- '\n- [%s](%s/%s.md)\n' \$n $DOC_CMD_DIR \$n >> $PLUGIN_REL/docs/README.md; done && for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do printf -- '\nCall \`emit-cost\` with \`command: /%s\`, \`phase: fixture-phase\`, \`role: pm\`, done.\n' \$n >> \$(cmd_file $PLUGIN_REL \$n); done && { printf -- '# Cost emission (fixture)\n\n## 7. Attribution (phase / role)\n\n| Command | phase | role |\n|---------|-------|------|\n| \`/alpha\` | fixture-phase | pm |\n'; for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do printf -- '| \`/%s\` | fixture-phase | pm |\n' \$n; done; printf -- '\n## 8. Persistence\n\nNot modelled in the fixture.\n'; } > $PLUGIN_REL/$REF_DIR/cost-emission.md && sed -i.bak 's|two slash commands|eighteen slash commands|' $PLUGIN_REL/README.md && sed -i.bak 's|One commands emit a cost entry|Seventeen commands emit a cost entry|' $PLUGIN_REL/docs/reference/session-cost.md && for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do printf -- '\nCommand: \`/%s\`.\n' \$n >> $PLUGIN_REL/README.md; done && { printf -- '\n\`\`\`mermaid\nflowchart TD\n'; for n in bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec; do printf -- '    x%s[\"/%s\"]\n' \$n \$n; done; printf -- '\`\`\`\n'; } >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
   else
     printf 'skip  the cost-emitting-count case (the fixture has no cost subsystem)\n'
   fi
@@ -3596,9 +3787,9 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # for the wrong reason (there is nothing there to catch either way), and only the red case
   # discriminates.
   expect_fail_env "a command matched only by the scope line's SECOND glob with no <merge-clause> is rejected" 11 "CHECK11_FAMILY=glob" \
-    "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL nu-ground)) && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended)\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
+    "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL nu-ground)) && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended)\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family. See the [workflow](../workflow.md).\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
   expect_pass_after_env "the same second-glob-only command is accepted once its offer carries <merge-clause>" "CHECK11_FAMILY=glob" \
-    "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL nu-ground)) && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended) <merge-clause>\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
+    "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL nu-ground)) && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended) <merge-clause>\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family. See the [workflow](../workflow.md).\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
 
   # ---- where the offers are read (CHECK11_OFFER_SCOPE) ----
   # A clause-free offer of omega in an array ABOVE alpha's next-step heading: read where the
@@ -4083,7 +4274,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # below -- disagreed with the block by the time anyone counted it.
   if [ "$HAS_COST" = 1 ]; then
     expect_fail "a drifted emit-cost call site is rejected" 8 "sed -i.bak 's|\`command: /alpha\`, \`phase: fixture-phase\`, \`role: pm\`|\`command: /alpha\`, \`role: pm\`, \`phase: fixture-phase\`|' $(cmd_file $PLUGIN_REL alpha)"
-    expect_fail "an unattributed emit-cost call is rejected" 8 "mkdir -p $(dirname $(cmd_file $PLUGIN_REL zeta)) 2>/dev/null; printf -- '---\nname: zeta\n---\n\nCall \`emit-cost\` with \`command: /zeta\`, \`phase: fixture-phase\`, \`role: pm\`, done.\n' > $(cmd_file $PLUGIN_REL zeta) && printf -- '# /zeta\n\nFixture page.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/zeta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/zeta\`]($DOC_CMD_DIR/zeta.md)|' $PLUGIN_REL/docs/README.md"
+    expect_fail "an unattributed emit-cost call is rejected" 8 "mkdir -p $(dirname $(cmd_file $PLUGIN_REL zeta)) 2>/dev/null; printf -- '---\nname: zeta\n---\n\nCall \`emit-cost\` with \`command: /zeta\`, \`phase: fixture-phase\`, \`role: pm\`, done.\n' > $(cmd_file $PLUGIN_REL zeta) && printf -- '# /zeta\n\nFixture page. See the [workflow](../workflow.md).\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/zeta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/zeta\`]($DOC_CMD_DIR/zeta.md)|' $PLUGIN_REL/docs/README.md"
     expect_fail "a section-7 row backed only by look-alike prose is rejected" 8 \
       "sed -i.bak 's|Call \`emit-cost\` with |Recorded as |' $(cmd_file $PLUGIN_REL alpha)"
     expect_fail "a drifted attributed role is rejected"      8 "sed -i.bak 's;| \`/alpha\` | fixture-phase | pm |;| \`/alpha\` | fixture-phase | pe |;' $PLUGIN_REL/$REF_DIR/cost-emission.md"
@@ -4650,6 +4841,52 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_fail_msg "a plugin with no docs page and no README trips the empty-scan guard" 25 "would examine nothing" \
     "find $p25/docs -name '*.md' -exec rm {} +; rm -f $p25/README.md"
 
+  # Checks 26, 27 and 28: the links a reader navigates by. The paths are built from the layout,
+  # so they hold in a layout that keeps plugins at the repository root as in one under plugins/.
+  local c26="$PLUGIN_REL/docs/$DOC_CMD_DIR/alpha.md" g27="$PLUGIN_REL/docs/getting-started.md"
+  local two27="${PLUGIN_RELS#* }"; two27="${two27%% *}"
+  local up27="../../"; [ -n "$(plugin_parent)" ] && up27="../../../"
+  expect_fail "a command page with no link to its workflow page is rejected" 26 \
+    "sed -i.bak '/(\.\.\/workflow\.md)/d' $c26"
+  expect_fail "a link to the workflow page inside a fenced block does not count" 26 \
+    "sed -i.bak '/(\.\.\/workflow\.md)/d' $c26 && printf '\n%s\n%s\n%s\n' '\`\`\`text' '[Workflow overview](../workflow.md)' '\`\`\`' >> $c26"
+  expect_pass_after "a link to the workflow page written with ./ and an anchor passes" \
+    "sed -i.bak 's|(\.\./workflow\.md)|(./../workflow.md#workflow-overview)|' $c26"
+  expect_fail_msg "no command page under any plugin trips check 26's empty-scan guard" 26 "would examine nothing" \
+    "for r in $PLUGIN_RELS; do rm -f \$r/docs/$DOC_CMD_DIR/*.md; done"
+  expect_fail "a page link that climbs to the repository root is rejected" 27 \
+    "printf '\nSee the [root guide](${up27}README.md).\n' >> $g27"
+  expect_fail "a README link to the repository root is rejected" 27 \
+    "printf '\nSee the [root guide](${up27#../}README.md).\n' >> $PLUGIN_REL/README.md"
+  expect_fail "a link into a sibling plugin's pages is rejected" 27 \
+    "printf '\nSee [its index](../../${two27##*/}/docs/README.md).\n' >> $g27"
+  expect_fail "a root-relative link is rejected" 27 \
+    "printf '\nSee [the index](/README.md).\n' >> $g27"
+  expect_pass_after "a link that climbs and comes back, a URL, a fenced link and a reference file's example pass" \
+    "printf '\n%s\n%s\n%s\n%s\n' 'See [the index](../../${PLUGIN_REL##*/}/docs/README.md) and [the site](https://example.com/x).' '\`\`\`text' '[root](${up27}README.md)' '\`\`\`' >> $g27
+     printf '\n%s\n' 'An image the user links as [x](${up27}x.png) is copied in.' >> $PLUGIN_REL/$REF_DIR/gamma.md"
+  expect_fail_msg "no docs page and no README under any plugin trips check 27's empty-scan guard" 27 "would examine nothing" \
+    "for r in $PLUGIN_RELS; do find \$r/docs -name '*.md' -exec rm {} +; rm -f \$r/README.md; done"
+  expect_fail_msg "a docs page naming its plugin's command without linking it is rejected" 28 "$(cmd_ref alpha) but links no page" \
+    "printf '\nRun \`/alpha\` first.\n' >> $g27"
+  expect_fail_msg "a qualified mention of the plugin's own command is held" 28 "$(cmd_ref alpha) but links no page" \
+    "printf '\nRun \`/${PLUGIN_REL##*/}:alpha\`.\n' >> $g27"
+  expect_fail_msg "a command page naming a sibling command without linking it is rejected" 28 "$(cmd_ref alpha-two) but links no page" \
+    "printf '\nThen run \`/alpha-two\`.\n' >> $c26"
+  expect_pass_after "a command linked once, with an anchor, passes wherever else it is named" \
+    "printf '\n%s\n' 'Run [\`/alpha\`]($DOC_CMD_DIR/alpha.md#notes) first, then \`/alpha\` again.' >> $g27"
+  expect_pass_after "a reference definition is a link" \
+    "printf '\n%s\n\n%s\n' 'Run \`/alpha\` ([its page][a28]).' '[a28]: $DOC_CMD_DIR/alpha.md' >> $g27"
+  expect_pass_after "a command page naming itself, and a mention in a fence, a comment or a path, pass" \
+    "printf '\n%s\n' 'Run \`/alpha\` again.' >> $c26
+     printf '\n%s\n%s\n%s\n%s\n%s\n' '\`\`\`text' '/alpha-two' '\`\`\`' '<!-- maintainers: /alpha-two -->' 'Written to \`<KEY>/alpha-two.md\`, \`docs/$DOC_CMD_DIR/alpha-two\` and \`/alpha/\`.' >> $g27"
+  expect_pass_after "another plugin's qualified command is not held" \
+    "printf '\nRun \`/${two27##*/}:alpha\`.\n' >> $g27"
+  expect_fail_msg "no docs page under any plugin trips check 28's empty-scan guard" 28 "would examine nothing" \
+    "for r in $PLUGIN_RELS; do rm -f \$r/docs/*.md \$r/docs/$DOC_CMD_DIR/*.md; done"
+  expect_fail_env "a scan that dies is reported, not passed" 28 \
+    "python3() { echo 'Traceback: a simulated crash'; return 1; }" ":" "did not run to the end"
+
   # Every config name is set by the config block, and none is taken from the environment: the
   # block above `FAILURES=0` is sourced with each name exported as a sentinel, and no name may
   # come out holding it (or unset, which aborts under set -u). This reads THIS edition's own
@@ -4758,6 +4995,12 @@ check_keyed_hooks         "$ROOT"
 # Check 25 sits outside the loop: it reads the repo-root README, which is no plugin's, and a
 # page of one plugin may cite another plugin's reference.
 check_docs_vocabulary     "$ROOT"
+
+# Checks 26, 27 and 28 sit outside the loop for check 17's reason: each one's vacuity guard is a
+# claim about every plugin of PLUGIN_RELS at once. Each loops PLUGIN_RELS itself.
+check_command_backlink    "$ROOT"
+check_links_stay_in_plugin "$ROOT"
+check_named_commands_linked "$ROOT"
 
 if [ "$FAILURES" -gt 0 ]; then
   echo "FAIL: $FAILURES problem(s) under $PLUGIN_RELS" >&2

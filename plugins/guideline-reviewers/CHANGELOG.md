@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.2.8] — 2026-11-07
+
+User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- The README carries the documentation table its siblings carry: the index, getting started, the workflow diagram, both command pages and the three reference pages.
+- The getting-started page links the repository README's prerequisites by the repository's URL: a relative link out of the plugin breaks in the installed copy.
+
 ## [1.2.7] — 2026-11-07
 
 User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.

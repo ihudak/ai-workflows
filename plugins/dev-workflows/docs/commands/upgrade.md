@@ -77,6 +77,7 @@ Upgrade a framework to its latest stable release and a runtime to its latest LTS
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - [`/vuln`](vuln.md) — the plugin's other maintenance command outside the PRD pipeline, sharing the same no-cost-attribution fact, the same resume-phase vocabulary, and the same review/triage/fixer/test gate shape for CVEs instead of version bumps.
 - [`/implement`](implement.md) — the pipeline command `/upgrade` borrows its review machinery from: `risk-planner`, `code-review`, `review-fixer`, and the shared finding-triage step between them.
 - [Roles and phases](../roles-and-phases.md#cost-attribution-phases) — the closing note distinguishing the cost-attribution `phase:` vocabulary from the resume-protocol `phase:` vocabulary `/upgrade` passes.

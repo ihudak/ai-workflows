@@ -40,6 +40,7 @@ The first shows what would change and every problem (an unparseable decision, a 
 
 ## See also
 
+- [`/promote-decisions`](promote-decisions.md) — the next step for the product architect: promotes the team's decisions this command harvests to organisation ADRs. It stops while the knowledge base has uncommitted changes.
 - [`/create-ard`](create-ard.md) — grounds on the live records, and writes the `Supersedes` the next harvest applies.
 - [`/specify`](specify.md) and `/dev-workflows:design` — ground on the live records too.
 - [Architecture knowledge base](../workflow.md#architecture-knowledge-base) — the whole loop, from merged ARDs to organisation ADRs and back into grounding.

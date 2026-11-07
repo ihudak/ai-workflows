@@ -107,6 +107,7 @@ Maintenance runs as on `/ready`, on both sides of the handoff. Before it, in Pha
 
 ## See also
 
+- [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
 - [`/implement`](implement.md) — offers this command as its next step after an Epic, to run before its pull request merges, on the Epic's branch.
 - [`/ready`](ready.md) — the readiness gate before implementation; this command is the check after it.
 - The `document-lineage` reference (shipped in `workflows-core`, listed on its References page) — the upstream check run on the documents traced, and where a *proceed* is recorded.

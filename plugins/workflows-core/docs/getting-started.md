@@ -22,7 +22,7 @@ claude plugin update workflows-core@shipwright
 
 It does ship seven commands of its own, and one of them is worth running first — see below. Type them: each is typed-only (`disable-model-invocation: true`), which keeps it out of the list of skills the model picks from and that list inside Claude Code's budget, so asking in prose does not start one. The same holds for every command of `dev-workflows`, for those of `product-workflows` save `/prd-ground`, for those of `docs-workflows` save `/docs-profile` and `/docs-brand` — the three that other commands run for you — and for `security-workflows`' one command. Every getting-started page's *Claude Code's skill-listing budget* section says what to set so the list fits.
 
-**What you also need, and it is not a plugin.** Claude Code itself — no other agent runs these plugins — with a session started on Opus 5.5 or later, on macOS, Linux or WSL2 rather than native Windows, and `git`, `bash` 5 and `python3` 3.11 on your `PATH`, plus `jq` for the status line and `/workflows-core:diagnose-session`; the repo-root [Prerequisites](../../../README.md#prerequisites) give each one's minimum version and the reason for it.
+**What you also need, and it is not a plugin.** Claude Code itself — no other agent runs these plugins — with a session started on Opus 5.5 or later, on macOS, Linux or WSL2 rather than native Windows, and `git`, `bash` 5 and `python3` 3.11 on your `PATH`, plus `jq` for the status line and `/workflows-core:diagnose-session`; the repo-root [Prerequisites](https://github.com/ihudak/ai-workflows#prerequisites) give each one's minimum version and the reason for it.
 
 ## What you set on your machine
 
@@ -86,7 +86,7 @@ The half you don't see is the **cost cross-check**: Claude Code's own reported c
 /workflows-core:statusline
 ```
 
-Claude Code ships its own built-in `/statusline` command, so typing the bare form reaches that instead of this plugin's — always use the qualified form.
+Claude Code ships its own built-in [`/statusline`](commands/statusline.md) command, so typing the bare form reaches that instead of this plugin's — always use the qualified form.
 
 ## The other six commands
 

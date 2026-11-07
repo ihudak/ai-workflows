@@ -2,7 +2,7 @@
 
 A role-based pipeline of 17 slash commands for the product-definition side of the workflow plugin family. Its spine runs idea refinement → Product Requirements Document → architecture → Epic breakdown → specification, with an Opus-backed review gate behind every artifact from the PRD onward — `/idea` is gated by its own bounded grill instead; alongside it sits a six-command BRD-to-PRD route that grounds a customer's requirements document, settles it with them, and seeds the PRD, ARD and specification the ladder above hands off to — its grounding step, `/prd-ground`, also runs optionally on the idea route's own PRD, after `/create-prd`. The table below is the complete list. The shared foundation every command here draws on — the addressing grammar, the git and phase-handoff entry points, model routing, escalation and triage, and the emitters — ships in the companion `workflows-core` plugin; the engineering half of the pipeline this hands off to — `/design`, `/implement`, `/ready` — ships in the companion `dev-workflows` plugin.
 
-> Part of the `shipwright` marketplace — see the [repo-root setup guide](../../README.md) for marketplace install + prerequisites.
+> Part of the `shipwright` marketplace — see [Getting started](docs/getting-started.md) for marketplace install + prerequisites.
 
 ## What it does
 

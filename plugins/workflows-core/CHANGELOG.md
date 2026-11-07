@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.10] — 2026-11-07
+
+User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- The README's documentation table links the family map, the one diagram that draws the whole family.
+- The getting-started, workflow, roles-and-phases and family-map pages link each of this plugin's commands the first time they name it, and the `/frames` and `/diagnose-session` pages link the sibling commands they name.
+- The README links this plugin's own getting-started page for install and prerequisites, and the getting-started page links the repository README's prerequisites by the repository's URL: a relative link out of the plugin breaks in the installed copy.
+
 ## [1.78.9] — 2026-11-07
 
 User pages only, a second pass on batch B30 laid on the first. Needs nothing from the other plugins' releases.

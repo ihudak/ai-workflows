@@ -27,3 +27,7 @@ A wide cell inside a `~~~` fence must NOT be measured by check 6:
   | indented | row |
   |---|---|
   | still | measured |
+
+## See also
+
+- [Workflow overview](../workflow.md) — where this command sits.

@@ -4,7 +4,7 @@ paths:
   - ".github/**"
 ---
 
-# Gates — `check-docs.sh`'s checks 22 to 25
+# Gates — `check-docs.sh`'s checks 22 to 28
 
 Loaded with `.claude/rules/gates.md`, whose `paths:` it shares and whose opening rule binds every gate. Split out of `.claude/rules/gates.md` to keep that file under 20,000 characters; the rest of `scripts/check-docs.sh`, its one body across three editions included, is there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
@@ -49,3 +49,28 @@ Loaded with `.claude/rules/gates.md`, whose `paths:` it shares and whose opening
 - the other id families a design spec numbers, such as `C2`, `E1` or `L2`, whose shapes are also ordinary keys and words.
 
 Review holds those. It also fires on a `D1` that is no decision id, such as a product's own name, which takes the marker.
+
+### Check 26
+
+**Check 26 holds a command page to a link back to its plugin's workflow page**: each `*.md` under a `PLUGIN_RELS` plugin's `docs/$DOC_CMD_DIR/` must carry a link that resolves to that plugin's `docs/workflow.md`, an anchor allowed. Check 15 holds every command to that page's diagram, save one the page's introduction says it leaves out, so the link reaches a picture with the command in it. A page may link more, as the BRD-route pages also link their route page. No command page under any plugin fails as vacuous. Measured at batch B31: 24 command pages linked no `workflow.md`, all six of `dev-workflows`' among them. **What it cannot see:** whether the link sits where a reader looks for it.
+
+### Check 27
+
+**Check 27 keeps a relative link inside its plugin.** An installed plugin sits alone in the plugin cache, `cache/<marketplace>/<plugin>/<version>/`, with no repository root above it and no sibling beside it. So a link that climbs out of `plugins/<name>/` works on GitHub and in a checkout, and breaks in the installed copy. Its pages are check 1's: each `*.md` under a plugin's `docs/`, and its `README.md`. A root-relative target (`/x`) also leaves. The test is lexical, so it needs no file to exist. No page under any plugin fails as vacuous.
+
+Measured at batch B31: 18 links, the plugin READMEs' and getting-started pages' links to the root README and four links into a sibling's pages. The fix: a README links its own getting-started page; a getting-started page, which check 10 lets name the repository, uses its URL; a sibling's page is named in words. Widening to every `*.md` under the plugin found one more, an example in `product-workflows`' `idea-format` reference of a user's absolute image path, which is correct content, so commands, agents and references stay out.
+
+**What it cannot see:** a link inside the plugin that is wrong, which is check 1's; a link in a command, agent or reference; and whether a getting-started page's repository URL still names this repository in a fork.
+
+### Check 28
+
+**Check 28 holds a page that names one of its plugin's commands to linking that command's page.** GitHub draws a mermaid diagram without click-through, so the prose is the only way from a command's name to its page.
+- **A mention** is `/<name>`, or `/<plugin>:<name>` for this plugin by directory or declared name, for a name the commands directory lists. It must stand as a word, never inside a path (`docs/commands/design.md`, `<KEY>/design.md`). `CMD_FORM=trigger` also reads `<name>:`.
+- **A link** is an inline link or a reference definition resolving to `docs/$DOC_CMD_DIR/<name>.md`. One link anywhere on the page satisfies the check.
+- **Not read:** a fenced block and an HTML comment.
+- **Population, the user's ruling at B31:** each `docs/*.md` (the index, workflow, roles, getting-started and route pages) and each command page, its own command excepted. Reference pages are not held: they had 199 such mentions on 34 pages, left as they stand. The plugin README is not held either: check 15 holds it to naming every command, and every README links each one it names. Another plugin's command is not held, since check 27 forbids the link it would need.
+- **Vacuity:** no page under any plugin fails, as does a scan that does not run to its end. Without `python3` it prints a note and passes.
+
+Measured at batch B31: 135 mentions on 33 pages, each fixed by linking the first one. A code span naming a chain (`` `/idea → /create-prd` ``) is never the one linked.
+
+**What it cannot see:** a link to the wrong command, a command named in words, a reference page and the plugin README.

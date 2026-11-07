@@ -2,7 +2,7 @@
 
 A role-based pipeline of 6 slash commands for the engineering side of the workflow plugin family. Its spine runs design → implementation, with readiness verification alongside it and a conformance check closing it — `/design → /implement → /conformance`, `/ready` — picking up from the merged `specification.md` that the companion `product-workflows` plugin's PRD → architecture → Epic breakdown → specification ladder (and its six-command BRD-to-PRD route) hands off, with Opus-backed risk planning, code review, and design review gates along the way; around that spine sit CVE remediation and dependency upgrades. The table below is the complete list. The shared foundation every command here draws on — the addressing grammar, the git and phase-handoff entry points, model routing, escalation and triage, and the emitters — ships in the companion `workflows-core` plugin; the documentation tail `/implement` hands off to — `/docs-workflows:document` and `/docs-workflows:release-notes` — ships in the companion `docs-workflows` plugin.
 
-> Part of the `shipwright` marketplace — see the [repo-root setup guide](../../README.md) for marketplace install + prerequisites.
+> Part of the `shipwright` marketplace — see [Getting started](docs/getting-started.md) for marketplace install + prerequisites.
 
 ## What it does
 

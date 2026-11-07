@@ -969,6 +969,8 @@ Entries:
 
 **Version bumps:** a patch bump for every plugin whose `docs/` or README changes.
 
+Done in batch B31 (dev-workflows 4.58.8, docs-workflows 1.35.3, product-workflows 3.78.3, security-workflows 0.10.7, workflows-core 1.78.10, guideline-reviewers 1.2.8 and the repository README): the eight entries. Three checks were added, not two, by the user's ruling: check 26 holds every command page to a link back to its plugin's `workflow.md`, check 27 holds every link on a plugin's pages and README inside the plugin, and check 28 holds every `docs/*.md` page and command page that names one of its plugin's commands to linking that command's page; E1 step 9 carries them to the editions. On the tree before the fixes (`7b5fec97`) they fired 24, 18 and 135 times, and they fire on none after. Check 28 leaves reference pages and the plugin README out, by the same ruling: the reference pages named their plugin's commands 199 times on 34 pages without a link, left as they stand. DQS-B5 is confirmed: an installed plugin's cache folder, `cache/<marketplace>/<plugin>/<version>/`, holds that plugin alone, so a link that climbs out of it finds nothing.
+
 ### B32 — Family entry points and workflows-core docs
 
 **Tier:** Documentation only. **Entries:** 12, 0 MAJOR.

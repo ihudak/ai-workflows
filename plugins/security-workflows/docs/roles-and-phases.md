@@ -2,7 +2,7 @@
 
 [Workflow overview](workflow.md) shows where the command sits in the family's delivery. This page says what each of its two roles is accountable for, what each decides, and, at the end, what its cost-attribution phase means when you see it on a cost report or in a run's output.
 
-**A run's role is fixed by its address and flags, never chosen.** `/security-workflows:scan` sets it at the start of the run: **`dev`** for a key run without `--triage` or `--verify-fixes` — the Dev's pre-merge scan, or an `--import` for a unit — and **`sec`** for every other run. It writes the role into every run record it writes, beside every decision it records, and passes it to its cost entry. The plugin enforces no access control: who may confirm a decision is a matter of team practice, and the register records who decided, in which role, and when.
+**A run's role is fixed by its address and flags, never chosen.** [`/security-workflows:scan`](commands/scan.md) sets it at the start of the run: **`dev`** for a key run without `--triage` or `--verify-fixes` — the Dev's pre-merge scan, or an `--import` for a unit — and **`sec`** for every other run. It writes the role into every run record it writes, beside every decision it records, and passes it to its cost entry. The plugin enforces no access control: who may confirm a decision is a matter of team practice, and the register records who decided, in which role, and when.
 
 ## Dev — the scan before the merge
 
