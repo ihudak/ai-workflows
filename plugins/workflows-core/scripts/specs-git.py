@@ -26,6 +26,7 @@ import importlib.util
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -175,6 +176,48 @@ def push_scope(root, branch, session_default_ref=None):
     return {"base": base, "commits": commits, "in_scope": failed is None, "failed": failed}
 
 
+_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*://")
+_USER = re.compile(r"^[^/@]+@")
+
+
+def owner_repo(url, resolve_alias=True, ssh_config=None):
+    """phase-handoff §2.6.1's owner-repo: the [HOST/]OWNER/REPO a gh -R call names, from a remote URL.
+    The host is kept save github.com; a non-http(s) host other than github.com is resolved through
+    ssh -G first, its alias's HostName taken (ssh.github.com is github.com) — skipped where
+    <resolve_alias> is false, as specs-repo-git §2.1's <docs-repo-slug> requires. A slug that is not
+    OWNER/REPO gives owner_repo null. <ssh_config> is passed to ssh as -F (the selftest's)."""
+    if not url:
+        return {"url": None, "host": None, "slug": None, "owner_repo": None}
+    host = re.sub(r"[:/].*$", "", _USER.sub("", _SCHEME.sub("", url, count=1), count=1), count=1)
+    slug = _USER.sub("", _SCHEME.sub("", url, count=1), count=1)
+    slug = re.sub(r"^[^/:]+(:[0-9]+)?[/:]", "", slug, count=1)
+    slug = re.sub(r"/+$", "", slug, count=1)
+    slug = re.sub(r"\.git$", "", slug, count=1)
+    if resolve_alias and not url.startswith(("http://", "https://")) and host != "github.com" \
+            and re.match(r"^[A-Za-z0-9]", host) and shutil.which("ssh"):
+        cmd = ["ssh"] + (["-F", ssh_config] if ssh_config else []) + ["-G", host]
+        try:
+            out = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10).stdout
+        except (OSError, subprocess.TimeoutExpired):
+            out = b""
+        real = next((line.split()[1] for line in out.decode("utf-8", "replace").splitlines()
+                     if len(line.split()) > 1 and line.split()[0] == "hostname"), "")
+        if real == "ssh.github.com":
+            host = "github.com"
+        elif real:
+            host = real
+    value = slug if host == "github.com" else "%s/%s" % (host, slug)
+    return {"url": url, "host": host, "slug": slug,
+            "owner_repo": value if re.match(r"^[^/]+/[^/]+$", slug) else None}
+
+
+def owner_repo_of(repo, resolve_alias=True):
+    """owner_repo over <repo>'s origin remote; nulls where it has none."""
+    sb.git(repo, "rev-parse", "--git-dir")
+    r = sb.git(repo, "remote", "get-url", "origin", check=False)
+    return owner_repo(sb.text(r) if r.returncode == 0 else None, resolve_alias)
+
+
 class Parser(argparse.ArgumentParser):
     """A usage error is one "not run" line, as every exit 2 is."""
 
@@ -198,6 +241,9 @@ def main():
     p = sub.add_parser("push-scope")
     p.add_argument("--branch", required=True)
     p.add_argument("--session-default-ref")
+    p = sub.add_parser("owner-repo")
+    p.add_argument("--repo", required=True)
+    p.add_argument("--no-alias", action="store_true")
     a = ap.parse_args()
     try:
         sys.stdout.reconfigure(errors="backslashreplace")
@@ -209,6 +255,9 @@ def main():
         print("specs-git: not run (a subcommand is required)", file=sys.stderr)
         return 2
     try:
+        if a.cmd == "owner-repo":
+            print(json.dumps(owner_repo_of(a.repo, not a.no_alias), indent=2))
+            return 0
         if not a.specs:
             raise NotRun("--specs is required")
         top = sb.text(sb.git(a.specs, "rev-parse", "--show-toplevel"))
@@ -546,12 +595,43 @@ def selftest():
         got = cli("--specs", r.path, "push-scope", "--branch", "no-such")
         check(one_not_run_line(got), "push-scope: a branch that does not exist exits 2 (%r)" % got)
 
+    def scenarios_owner_repo(tmp):
+        conf = os.path.join(tmp, "ssh_config")
+        with open(conf, "w", encoding="utf-8") as fh:
+            fh.write("Host github-ig.com\n  HostName github.com\n")
+        cases = [
+            ("git@github.com:acme/docs.git", True, "acme/docs"),
+            ("https://github.com/acme/docs", True, "acme/docs"),
+            ("ssh://git@git.example.com:2222/team/docs.git", True, "git.example.com/team/docs"),
+            ("https://git.example.com/team/docs/", True, "git.example.com/team/docs"),
+            ("git@github-ig.com:acme/repo.git", False, "github-ig.com/acme/repo"),
+            ("https://github.com/", True, None),
+        ]
+        if shutil.which("ssh"):
+            cases.append(("git@github-ig.com:acme/repo.git", True, "acme/repo"))
+        for url, alias, want in cases:
+            got = owner_repo(url, resolve_alias=alias, ssh_config=conf)
+            check(got["owner_repo"] == want and got["url"] == url,
+                  "owner-repo: %s (alias %s) gives %r (%r)" % (url, alias, want, got))
+        r = new_repo(tmp, "owner-none")
+        got = cli("owner-repo", "--repo", r.path)
+        check(got["_rc"] == 0 and all(got.get(k) is None for k in ("url", "host", "slug", "owner_repo")),
+              "owner-repo: a repository with no origin gives nulls (%r)" % got)
+        r.git("remote", "add", "origin", "https://github.com/acme/docs.git")
+        got = cli("owner-repo", "--repo", r.path, "--no-alias")
+        check(got["_rc"] == 0 and got.get("owner_repo") == "acme/docs", "owner-repo: the CLI (%r)" % got)
+        plain = os.path.join(tmp, "plain-owner")
+        os.makedirs(plain)
+        got = cli("owner-repo", "--repo", plain)
+        check(one_not_run_line(got), "owner-repo: a path that is no repository exits 2 (%r)" % got)
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
             scenarios_branch_merged(tmp)
             scenarios_branch_key(tmp)
             scenarios_push_scope(tmp)
+            scenarios_owner_repo(tmp)
 
     try:
         scenarios()
