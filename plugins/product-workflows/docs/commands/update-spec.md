@@ -57,6 +57,7 @@ Five subagents can be dispatched, under the same rules as in [`/specify`](specif
   - `Published: yes` → `UPDATE_SPEC_PUBLISHED`: its IDs are contracts. To revise it anyway, set `Published: no` and land that edit on the default branch.
 - **Its inputs on the default branch**, gated as [`/specify`](specify.md) gates them — the PRD, on the BRD route the slice's decision register, the Epic, and the applicable ARD, whose `[AD#N]` Rules every revised item keeps or records a deviation from.
 - **Documentation and architecture grounding** (optional) — as in [`/specify`](specify.md), for the items that changed.
+- **Mounted repos under `$REPOS_PATH`**, where a changed item bears on code — derived, gated and scanned as in [`/specify`](specify.md), whose refresh question this run asks too: where the repository the session runs in stands on a branch other than its default and the run knows that default, it recommends reading the default branch's tip by ref — one fetch, your checkout left on its branch and its working tree unread — and a read by ref whose fetch fails is reported as stale in the final report.
 
 ## What it produces
 

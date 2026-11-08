@@ -47,8 +47,8 @@ The caller passes:
 
 Read each repository at the commit its **Repositories** line gives, because that is what the design
 was grounded on. Where the line says the working tree is at it, read the tree with Read, Glob and
-Grep at `<path>/<file>` — it is what `/design`'s scan read: the commit's content, and on a writable
-clone its uncommitted changes too. Where the line says it is not — a read-only mount whose
+Grep at `<path>/<file>` — it is what `/design`'s scan read: the commit's content, and, on a writable
+clone the scan read in place rather than by ref, its uncommitted changes too. Where the line says it is not — a read-only mount, or a writable clone `/design` read at its default ref by ref, whose
 checkout stands on another commit or carries uncommitted changes, or a checkout moved since the scan
 — the tree is not what was scanned, so read at the commit with git commands that write nothing:
 
