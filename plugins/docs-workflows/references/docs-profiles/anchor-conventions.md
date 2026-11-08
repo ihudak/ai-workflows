@@ -88,9 +88,11 @@ If the docs anchor genuinely cannot be made to match the product's deep link
 (for example, the target section was restructured and no single heading
 maps to it), do not resolve the mismatch silently — record it and route it
 through the normal Phase 5.8 discrepancy-escalation path (see
-`workflows-core:source-truth` §7 for the protocol:
-present the analysis, ask the user, and record the decision — never
-auto-resolve).
+`workflows-core:source-truth` §7 for the protocol: take the decision a
+conformance record already holds where an open entry matches the claim
+by its requirement (§7.8, Phase 5.8 step 0); otherwise present the
+analysis, ask the user, and record the decision — never pick a side on
+the run's own judgment).
 
 ## 5. Consumers
 

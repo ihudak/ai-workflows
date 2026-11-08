@@ -35,6 +35,8 @@ flowchart TD
 
     implement -->|"every Epic merged, after the PE's PRD run — implementation.md"| document
     conformanceprd -.->|"action: once settled — the PE, every Epic merged"| document
+    conformanceprd -.->|"_conformance.md — recorded decisions, taken without asking"| document
+    conformanceprd -.->|"_conformance.md — recorded decisions, taken without asking"| rndev
     implement -.->|implementation.md — diff grounding on| rndev
     createprd -.->|prd.md, before any spec or design| rnpm
     createprd -->|prd.md| rndev
@@ -61,7 +63,7 @@ flowchart TD
     class init entry
 ```
 
-Four nodes are drawn for continuity and are not this plugin's commands: `/dev-workflows:implement` and `/dev-workflows:conformance` ship in the companion `dev-workflows` plugin, and `/product-workflows:create-prd` and `/product-workflows:create-ard` in the companion `product-workflows` plugin, and each is documented there. `/document` reads what `/implement` recorded, and it is the Product Engineer's `/dev-workflows:conformance` of the PRD that offers it, once every Epic has merged and that run's decisions are settled; `/implement` offers it only after that run.
+Four nodes are drawn for continuity and are not this plugin's commands: `/dev-workflows:implement` and `/dev-workflows:conformance` ship in the companion `dev-workflows` plugin, and `/product-workflows:create-prd` and `/product-workflows:create-ard` in the companion `product-workflows` plugin, and each is documented there. `/document` reads what `/implement` recorded, and it is the Product Engineer's `/dev-workflows:conformance` of the PRD that offers it, once every Epic has merged and that run's decisions are settled; `/implement` offers it only after that run. The two dashed `_conformance.md` edges are the records `/dev-workflows:conformance` writes, which both documentation commands read: each record in scope — the PRD's, and each Epic's, whose decisions stay a Dev's proposals until the PE rules on them — read from your specs checkout. A decision recorded there on a requirement is taken without asking you again: a claim whose entry says *fix the code* is left out, since the fix has not landed, and one whose entry says *amend the document* or *accept* describes what the code does. `/document` takes one only for a discrepancy it still finds in the code; `/release-notes` follows each open entry without re-checking the code. Neither drafts a bug report or holds the release for a decision so taken, and each report names every entry it took.
 
 **`/release-notes` is drawn twice** because it runs at two moments: an early draft from `prd.md`, before any specification or design, and a final note once the Epics are implemented. It reads nothing `/document` writes — its inputs are `prd.md`, the Epic folder an Epic address names, its own earlier notes, `/dev-workflows:conformance`'s `_conformance.md` records where there are any, and `implementation.md` where diff grounding is on — so the edge between the two documentation commands is the order `/document` suggests, not a handover.
 

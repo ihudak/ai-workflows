@@ -5,7 +5,7 @@
 Consulted by `release-notes-writer` to decide **where a release note lands and what shape it must
 take**. This file is the single authority for the section map, the per-section draft shape,
 the per-section prose rules, the deprecation-note rule, the effective-version rule (§6), the rule
-for a state the release starts from (§6), Change Type sourcing, and what a conformance entry does to the draft (§8). The `/release-notes` command cites this file for its own invariants (§1/§3 for the
+for a state the release starts from (§6), Change Type sourcing, and how a claim a conformance entry settled is worded in the draft (§8 — which entries are open, which of two entries on one claim wins and what each decision maps to are `workflows-core:source-truth` §7.8's). The `/release-notes` command cites this file for its own invariants (§1/§3 for the
 draft shape, §4 for the documentation-link rule, §6 for the effective version, §8 for the conformance entries) but never re-derives
 the writer's decision; the agent applies it and returns a proposed destination plus any gaps.
 
@@ -344,16 +344,19 @@ so the PRD is the only place either can be authored (see `workflows-core:prd-for
 
 `/release-notes` hands the writer each **open** entry of the `/dev-workflows:conformance` records in
 its scope as `conformance` — a requirement the code it traced does not satisfy as written, with the
-decision a person recorded on it (the command's Phase 3 says which entries are open). The record
-already checked the code against the requirement and someone decided what the difference means, so
-the draft follows that decision and never re-opens it. For each entry, find the claim the draft would
-make from the requirement it names (`requirement`, `requirement_text`), then:
+decision a person recorded on it (the command's Phase 3 takes the open entries as
+`workflows-core:source-truth` §7.8 says). The record already checked the code against the requirement
+and someone decided what the difference means, so the draft follows that decision and never re-opens
+it. What each decision maps to, and which of two entries on one claim wins, are that §7.8's, the
+one authority on them — load it with `Skill(skill: "workflows-core:reference", args: "source-truth")`;
+this section says only how a claim so settled is worded in a release note. For each entry, find the
+claim the draft would make from the requirement it names (`requirement`, `requirement_text`), then:
 
-| `decision` | What it says about the code | What the draft does |
+| `decision` | What it says about the code, and what `source-truth` §7.8 maps it to | What the draft does |
 |---|---|---|
-| `fix-code` | It does not do what the requirement says, and a fix is queued | Leaves the claim out: the note says only what ships. A `partial` verdict is left out whole, since the decision is that the code is to change |
-| `amend-document` | What it does is right, and the document is to change | States what `shipped` says, never the requirement's wording |
-| `accept` | It differs from the requirement, and that was accepted | States what `shipped` says, never the requirement's wording |
+| `fix-code` | It does not do what the requirement says, and a fix is queued: `skip-and-report` | Leaves the claim out: the note says only what ships. A `partial` verdict is left out whole, since the decision is that the code is to change |
+| `amend-document` | What it does is right, and the document is to change: `document-as-code` | States what `shipped` says, never the requirement's wording |
+| `accept` | It differs from the requirement, and that was accepted: `document-as-code` | States what `shipped` says, never the requirement's wording |
 
 - **An entry the draft makes no claim from changes nothing** — an architecture rule, a contract
   between components, a requirement no customer sees. It is returned as `not claimed`.
@@ -367,12 +370,11 @@ make from the requirement it names (`requirement`, `requirement_text`), then:
   `field: prose` gap (`recommended_action: "ask user"`) rather than writing a note about nothing. It
   is the one question the entries lead to, and the command checks the wording it gets against the
   claims left out.
-- **Two open entries on one claim** — a PRD-level entry on `prd.md` and an Epic's on its
-  specification, say — are settled by status and then by caution. A `final` decision beats a
-  `proposed` one. Between two of the same status, `fix-code` beats either other decision and the claim
-  is left out, since one of them says the code does not do it yet; between an `amend-document` and an
-  `accept`, the claim states what both `shipped` sentences say where they agree, and is left out where
-  they do not — returned as `left out — the entries disagree`, since the note never takes one
-  record's account of the code over another's.
-- **An entry whose `status` is `proposed`** is a Dev's decision no PRD run has ruled on yet. It is
-  applied like a `final` one, and the command's report says it was a proposal.
+- **Two or more open entries on one claim** — a PRD-level entry on `prd.md` and an Epic's on its
+  specification, say — are settled in two steps. First, `source-truth` §7.8's precedence picks the
+  winning entries: every entry another outranks — a `proposed` one beside a `final`, say — is set
+  aside and never affects the wording, so the winners are of equal standing. Then the table above
+  words the claim from the winners alone: a winning `fix-code` leaves it out; where two or more
+  winners map to `document-as-code`, the claim states what their `shipped` sentences say where they
+  agree, and is left out where any two of them disagree — returned as `left out — the entries
+  disagree`, since the note never takes one record's account of the code over another's.
