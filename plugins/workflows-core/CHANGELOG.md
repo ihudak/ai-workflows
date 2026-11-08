@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.79.0] — 2026-11-08
+
+The specs-repository git primitives move into one tested script: GIT-G1 Part 1. Needs nothing from the other plugins' releases.
+
+### Changed
+
+- **`scripts/specs-git.py` carries the deterministic git primitives of `specs-repo-git` and `phase-handoff`**, one subcommand each, each printing one JSON object: `status`, the §2.1 classifier over `git status --porcelain -z` (a rename's original path is never a record of its own); `branch-merged`, §3.5's four tests; `branch-key`, resolved against the run's own keys, never read out of the branch name; `push-scope`, §4 step 5's test and §8.4's session-branch form; `owner-repo`, `phase-handoff` §2.6.1's derivation with its SSH-alias resolution (skipped for §2.1's `<docs-repo-slug>`); and `mode`, §8.1's. It reuses `session-branch.py`'s classifier, push-scope walk and `mode`, so none exists twice, and its selftest — 52 checks on repositories built at run time, among them GIT-B1's drifted squash and a change hidden inside a merge commit — runs in CI.
+- **`specs-repo-git` and `phase-handoff` call the script** where they spelled those steps out as git commands for an agent to run by hand: §2.1's listing and classification, §3.5's merged test and branch-key resolution, §4 step 5's and §8.4's push-scope, §8.1's mode, and §2.6.1's owner-repo. Every rule and its reason stays in the reference as the contract the script follows. An exit 2 is reported and read as the answer that moves nothing: unmerged, no key, nothing pushed, nothing staged.
+
 ## [1.78.16] — 2026-11-08
 
 Handover and start-of-run bugs the GIT-G1 audit found: batch B36. Update with `dev-workflows` 4.59.7, `docs-workflows` 1.35.9 and `product-workflows` 3.78.9.
