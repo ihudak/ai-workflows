@@ -82,6 +82,17 @@ The PRD was updated after the Epic's specification merged:
 
 The run diffs the PRD from the version the specification's lineage record names to now, proposes the two acceptance criteria the changed requirement touches, and asks you to confirm the list. One criterion's meaning changed, so it becomes `[AC04]` and `[AC02]` is marked `Superseded by [AC04]`; the other only needed clearer wording and keeps its ID. After the review, the run names the Epic's `design.md`, which cites `[U01]/[AC02]`, and offers `/dev-workflows:design ACME-77-01` to revise it.
 
+## What it offers next
+
+Phase 8 ends the report with a *Next step* built from the downstream report, and runs nothing itself. Each route that gates this specification says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
+
+- **The review blocked, or left `- [ ]` items open** → resolve those first.
+- **Each design named as citing a superseded or withdrawn ID** → `/dev-workflows:design <ITS-KEY>` (Dev), to revise it.
+- **An Epic's `## Covers` or the PRD's `_coverage.md` was named** → [`/epics <PRD>`](epics.md) (PE), to refine the Epics.
+- **Nothing was named** → the next step [`/specify`](specify.md) gives a specification at the same altitude — see its *What it offers next*.
+
+With more routes than the question holds, it lists them all in prose and names in the question the ones it leaves out.
+
 ## See also
 
 - [Workflow overview](../workflow.md) — where this command sits among the plugin's others.

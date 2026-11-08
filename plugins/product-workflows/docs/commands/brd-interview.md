@@ -616,6 +616,18 @@ Re-opening a closed round later, with its cause recorded:
 /product-workflows:brd-interview ACME-001-01 --round 1
 ```
 
+## What it offers next
+
+Phase 11 offers what the state this run leaves allows, and runs nothing itself. The deciding question is whether [`/brd-package`](brd-package.md) would accept this BRD now. Only the `--round 1` re-open carries a recommendation; an offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
+
+- **Ready to package** → `/brd-package <BRD-KEY>`, after the merge; or another round of this command, only if something changed (findings, a requirement defect, a re-grounding, a flagged code defect, or a decision reopened elsewhere); or interview another BRD or slice.
+- **A question still in a state packaging refuses** (deferred, needs grounding, untagged) → another round of this command, or [`/prd-ground <BRD-KEY>`](prd-ground.md) for a question no finding bears on yet; `/brd-package` is left out.
+- **Requirement defects nobody has asked yet** → `/brd-interview <BRD-KEY> --round 1` (recommended), which re-opens round 1 to ask them; `/brd-package` is left out.
+- **Nothing left for the customer** → the slice is decided and needs no reconciliation: [`/create-ard <BRD-KEY>`](create-ard.md) (PA, optional), [`/specify <BRD-KEY>`](specify.md) (PE), and [`/create-prd <BRD-KEY>`](create-prd.md) (PM) only where the slice is PRD-eligible — each after the merge — or `/prd-ground <BRD-KEY> --rebaseline`, the one thing that could make a new round askable. Neither packaging nor another round is offered.
+- **Nothing left for the customer, but a decision reopened elsewhere waits on this round** → another round of this command, which puts its question; the BRD is not decided.
+
+Beside every list the run names each requirement defect left waiting on an open round, and each reopened decision waiting on this round. [`/brd-reconcile`](brd-reconcile.md) is never offered here: no review has been asked for yet.
+
 ## See also
 
 - [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.

@@ -81,6 +81,18 @@ Refresh a PRD with new call notes, after the specs draft has already been review
 
 The run resolves the feature folder, reads its `prd.md` as the base, grills the changes against it, and rewrites the canonical file while archiving the prior revision. **Requirement ids never move**: a requirement whose meaning changes gets a new id and the old one is marked `Superseded by` it, a dropped one is marked `Withdrawn` in place, and none is renumbered, reused or deleted, so every Epic, coverage row and grounding finding citing an id still points at the same requirement. `prd-reviewer` checks the update against the archived base.
 
+## What it offers next
+
+An updated PRD can invalidate what was built from it, so Phase 6 offers a re-run only of a downstream artifact that already exists, and runs nothing itself. A route whose artifact this update changed something in is recommended and listed first, naming the artifact, its path and what changed; one the update did not touch carries no recommendation. With nothing downstream to re-run, no question is asked.
+
+- **A specification exists** → [`/update-spec <KEY>`](update-spec.md) (PE) — a revision that keeps the specification's IDs, never [`/specify`](specify.md), which would rewrite it.
+- **An ARD exists** → [`/create-ard <KEY>`](create-ard.md) (PA).
+- **Re-run the Epics** → [`/epics <KEY>`](epics.md) (PE).
+- **A release note exists** (`release-notes.md` in the folder) → `/docs-workflows:release-notes <KEY>` (PM), from the companion `docs-workflows` plugin.
+- **Stop here.**
+
+The spec and architecture routes gate this PRD on the specs repo's default branch, so each says what has to reach it first, worded for how this run's handoff ended; the Epics and release-note routes wait for nothing. With more than three routes, the question carries the three most likely and names the rest in its own text, reachable by typing them.
+
 ## See also
 
 - [Workflow overview](../workflow.md) — where this command sits among the plugin's others.

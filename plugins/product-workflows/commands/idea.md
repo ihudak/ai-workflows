@@ -1,6 +1,6 @@
 ---
 name: idea
-description: "Refines one source — an inline prompt, a markdown file (its links and images walked, asking before it goes deep), a community post, or a saved file such as product feedback or an existing PRD — into a lean one-page idea.md through a bounded one-question-at-a-time grill (--deep for a relentless one). Copies the sources it read into the PRD folder and points idea.md's links at the copies; changes no code. Writes PRD-<KEY>-<slug>/idea.md. Next: /create-prd."
+description: "Refines one source — an inline prompt or a markdown file (a note, a saved community post, product feedback, an existing PRD; its links and images walked, asking before it goes deep) — into a lean one-page idea.md through a bounded one-question-at-a-time grill (--deep for a relentless one). Copies the sources it read into the PRD folder and points idea.md's links at the copies; changes no code. Writes PRD-<KEY>-<slug>/idea.md. Next: /create-prd."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
 disable-model-invocation: true
 ---
@@ -150,8 +150,8 @@ step skips on it.
 Classify what is left of `$ARGUMENTS` once **the Phase 0 key token — or the `@<path>` address, and any bare token step 1 dropped as the same address — and every recognised flag with its value** are removed (`--deep`, `--no-docs`, `--docs <path>` with its value, and `--ground-code` with its optional comma-separated repo value), by precedence. Remove them all before classifying: an unstripped flag lands inside the `prompt` branch's raw idea text and is handed to `idea-reader` as if the user had written it; an unstripped key does the same on every prompt run, and turns a correct `<KEY> @<file>` invocation into a path that resolves to nothing — Case B below, on a run with nothing wrong. The token after `--ground-code` is its value **only** when it contains no whitespace and every comma-separated part matches a top-level directory basename under `${REPOS_PATH:-/workspace}`; otherwise the flag is bare and the token is idea text — strip only the flag itself. **A leading `@` marks a file, and the path is the text after it**: that path, never the `@`, is what rule 1 tests and what Phase 2 hands `idea-reader`.
 
 1. An existing `.md` path, written `@<path>` or bare → **markdown** (a community post is just a
-   markdown file, typically under `Projects/Products/…` — the reader tags it `community-post`; an
-   existing `idea.md` passed back for re-refinement is detected here too).
+   markdown file — the reader tags it `community-post`; an existing `idea.md` passed back for
+   re-refinement is detected here too).
 2. Otherwise → **prompt** (the argument text is the raw idea).
 
 **No idea at all is not a prompt.** Where nothing is left once the key and every recognised flag are removed, or what is left is only unfilled placeholders such as `<idea>` or `<source>` copied from a synopsis, there is no idea to refine: ask for it in one question in prose — the idea as text, or a path to a markdown file — before the source is classified, and classify the answer by the precedence above. Never grill a placeholder as though it were the idea.

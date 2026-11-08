@@ -1069,6 +1069,8 @@ Entries:
 
 **Version bumps:** product-workflows patch.
 
+Done in batch B34 (product-workflows 3.78.6, dev-workflows 4.59.4, docs-workflows 1.35.6 and workflows-core 1.78.13): the thirteen entries left to it, and DQP-G2 with DQP-B5. PRD-B7 had been fixed in batch B30 (product-workflows 3.78.1); its heading now says so. DQP-B16 is confirmed, and by the user's ruling the batch broke up the five product-workflows paragraphs over 3,000 characters and the twins of two of them: the resume pointer's carry-forward paragraph on dev-workflows' page, and the paragraph on `SPECS_PATH` inside the specs tree on the dev-, docs- and workflows-core pages. Paragraphs over 3,000 characters on other command pages, `/implement`'s, `/design`'s and `/docs-serve`'s among them, were left as they are. By the user's ruling, DQP-B6 draws every offer from one command to a different one and names the same-command re-runs in prose; DQP-G1's walkthrough is a section of `getting-started.md`; and DQP-G4 gives all 17 command pages a *What it offers next* section, with no new check. The sweeps behind DQP-B11 and DQP-B13 reached further pages: `/idea`'s four-form source lists on the index, the BRD route page, both roles pages and `idea-reader`'s description; and the "degrades to a documented default or a silent skip" claim on the dev-, docs- and workflows-core getting-started pages. Two command texts were corrected on the way: `/idea`'s description, and `/specify`'s BRD-route `/epics <PRD>` offer, which now carries its merge clause.
+
 ## Merged entries
 
 Each of these is the same defect or gap as another entry and is fixed by that entry's edit. Mark both headings fixed in the same commit.

@@ -311,6 +311,16 @@ dispatches `brd-reader` to extract the `[BR#n]` inventory from all of it, walks 
 candidates with you class by class, writes the coverage ledger with every row `unallocated`, and
 offers to branch, commit, push, and open a pull request.
 
+## What it offers next
+
+Phase 8 offers the next step from the inventory and ledger this run leaves, and runs nothing itself:
+
+- **At least one `[BR#n]` row still `unallocated`** (the ordinary case) → [`/brd-split <BRD-KEY> "<how to cut it>"`](brd-split.md) (recommended), to carve slices. `<how to cut it>` is left for you to fill with your own slicing instruction: a root with rows to place refuses to run without one. It waits for nothing, since `/brd-split` on a root reads this run's files without gating them.
+- **Rows on file, none `unallocated`** (an empty read over an earlier intake that `/brd-split` already walked) → re-run `/brd-intake <BRD-KEY> @<brd-file>` with a corrected source, or stop; neither is recommended. A re-run whose read finds a requirement resets every row to `unallocated`.
+- **No `[BR#n]` row at all** → the same two choices, neither recommended; `/brd-split` is left out because it would refuse the BRD. The run says which file or conversion it read, so you can judge the source.
+
+[`/prd-ground`](prd-ground.md) is never offered here: it refuses a root BRD, and grounding happens on the slices `/brd-split` carves.
+
 ## See also
 
 - [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.

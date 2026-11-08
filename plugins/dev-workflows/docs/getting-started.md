@@ -35,7 +35,7 @@ claude plugin update dev-workflows@shipwright
 
 ## What you set on your machine
 
-`dev-workflows` reads four environment variables, and this page lists a fifth, `DOCS_PATH`, only to say the plugin never touches it. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the other three are optional and each degrades to a documented default or a silent skip.
+`dev-workflows` reads four environment variables, and this page lists a fifth, `DOCS_PATH`, only to say the plugin never touches it. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the other three are optional, and each behaves differently when it is missing. `REPOS_PATH` falls back to `/workspace`; where no entry of it exists, [`/design`](commands/design.md) asks you to set it or cancel. An unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off, with a line naming the variable. `GIT_USER_INITIALS` is used only where a repository's branch convention has a name-or-initials segment.
 
 ### `SPECS_PATH`
 

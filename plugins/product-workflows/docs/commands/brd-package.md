@@ -523,6 +523,16 @@ archive route, or a line saying none was produced because the customer pulls the
 with the branch and pull request the note waits on — and the report names both rather than
 repeating them, then prints the repo→SHA table and the ledger line.
 
+## What it offers next
+
+Phase 10 first prints the delivery note in full and, right after it, the delivery route. Then it asks, with no option recommended — whether to send is your judgement — and runs nothing itself:
+
+- **Send it** → send the delivery note. On the archive route, now, with the archive attached. On the repository route, once the handoff's pull request merges, since the customer pulls the default branch — or now, with the branch named beside the note, for a customer who will check that branch out.
+- **Reconcile the review once it comes back** → [`/brd-reconcile <BRD-KEY>`](brd-reconcile.md), after this run's work is on the default branch; the offer says what has to happen first, worded for how the handoff ended. On the archive route you give it `@<review-file>`; on the repository route it finds the review committed beside the bundle once you merge the customer's pull request, or takes `@<review-file>` where they sent a file back instead.
+- **Package another BRD or slice**, or **Stop here**.
+
+[`/create-prd`](create-prd.md), [`/create-ard`](create-ard.md) and [`/specify`](specify.md) are not offered: the customer questions this package carries are still open, and the slice advances from `/brd-reconcile`'s own offer once the answers are frozen.
+
 ## See also
 
 - [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.

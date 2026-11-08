@@ -3,6 +3,8 @@
 | I want to… | Go to |
 |---|---|
 | install this and set it up | [Getting started](getting-started.md) |
+| take a customer's BRD through the route for the first time, one command at a time | [Your first BRD-route run](getting-started.md#your-first-brd-route-run) |
+| look up a term a page uses before it defines it — slice, ledger, `covered-here`, `[G]`/`[V]`/`[C]` | [Glossary](reference/glossary.md) |
 | understand the whole pipeline first | [Workflow overview](workflow.md) |
 | know what my role is responsible for | [Roles and phases](roles-and-phases.md) |
 | see all six commands of the BRD-to-PRD route as one diagram, plus the edges it hands over on, with a parameter table | [BRD workflow](brd-workflow.md) |
@@ -24,7 +26,7 @@
 | read an effort proposal, or know what one guarantees before sending it | [Effort proposals](reference/proposal-format.md) |
 | understand what a run cost | [Session cost](reference/session-cost.md) |
 
-Four pages orient you before you touch a command: [Getting started](getting-started.md) installs the plugin and sets your environment variables; [Workflow overview](workflow.md) shows the whole pipeline as one diagram; [BRD workflow](brd-workflow.md) shows the second route into a PRD — from a customer-supplied BRD to a grounded, allocated, decided inventory, back out through a customer review the plugin waits on, and on into the PRD pipeline through the BRD route — as its own diagram; [Roles and phases](roles-and-phases.md) says what each role owns and hands off. Every other page below documents one command, one shared subsystem, or — for [Agents](reference/agents.md) and [References](reference/references.md) — one whole inventory.
+Four pages orient you before you touch a command: [Getting started](getting-started.md) installs the plugin, sets your environment variables and walks a first run on each route; [Workflow overview](workflow.md) shows the whole pipeline as one diagram; [BRD workflow](brd-workflow.md) shows the second route into a PRD — from a customer-supplied BRD to a grounded, allocated, decided inventory, back out through a customer review the plugin waits on, and on into the PRD pipeline through the BRD route — as its own diagram; [Roles and phases](roles-and-phases.md) says what each role owns and hands off. Every other page below documents one command, one shared subsystem, or — for [Agents](reference/agents.md) and [References](reference/references.md) — one whole inventory.
 
 ## Commands
 
@@ -40,7 +42,7 @@ Four pages orient you before you touch a command: [Getting started](getting-star
 - [`/epics`](commands/epics.md) — break a Product Requirements Document into reviewed child Epic drafts.
 - [`/harvest-decisions`](commands/harvest-decisions.md) — harvest every merged ARD's decisions into the team architecture knowledge base `/create-ard`, `/specify` and `/dev-workflows:design` ground on.
 - [`/promote-decisions`](commands/promote-decisions.md) — rank the team's decisions and the ADRs teams depart from, draft the organisation ADRs the architect picks, and record the outcome on the records.
-- [`/idea`](commands/idea.md) — refine a raw prompt, file, community post, or existing PRD into a one-page idea brief.
+- [`/idea`](commands/idea.md) — refine a raw prompt or a markdown file — a note, a saved community post, product feedback or an existing PRD — into a one-page idea brief.
 - [`/prd-proposal`](commands/prd-proposal.md) — author an effort proposal for one PRD folder: work packages, hours by package and role, and a range whose width comes from per-package confidence, with every cost driver citing a record on disk.
 - [`/specify`](commands/specify.md) — author an org-standard specification for one item through a relentless grill.
 - [`/update-prd`](commands/update-prd.md) — refresh an existing Product Requirements Document.
@@ -48,6 +50,7 @@ Four pages orient you before you touch a command: [Getting started](getting-star
 
 ## Reference
 
+- [Glossary](reference/glossary.md) — the terms these pages use, often before they define them, each in a sentence or two with a link to the page that owns it.
 - [Agents](reference/agents.md) — the subagent inventory: what each helper agent does and which command calls it.
 - [References](reference/references.md) — the reference-doc inventory under `references/`, grouped by concern.
 - Skills — this plugin ships 0 bundled skills of its own. The `model-routing` skill every command here but `/harvest-decisions` loads at its classification step ships in `workflows-core`, alongside the classification reference it resolves.

@@ -35,7 +35,7 @@ claude plugin update prose-style@shipwright
 
 ## What you set on your machine
 
-This plugin reads four environment variables. None is required for a direct-mode `/document` edit, for [`/docs-profile`](commands/docs-profile.md), or for `/docs-init`; a keyed run wants the first, and the rest degrade to a documented default or a silent skip. [Environment](reference/environment.md) has the exact resolution order and failure behaviour for each.
+This plugin reads four environment variables. None is required for a direct-mode `/document` edit, for [`/docs-profile`](commands/docs-profile.md), or for `/docs-init`; a keyed run wants the first. The rest are optional, and each behaves differently when it is missing. `REPOS_PATH` falls back to `/workspace`; where no entry of it exists, a keyed `/document`, and `/release-notes` with diff grounding on, ask you to set it, go on without the repositories, or cancel. `DOCS_PATH` falls back to `/workspace/docs`. `GIT_USER_INITIALS` is used only where a repository's branch convention has a name-or-initials segment. [Environment](reference/environment.md) has the exact resolution order and failure behaviour for each.
 
 ### `SPECS_PATH`
 

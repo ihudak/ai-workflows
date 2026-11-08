@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.13] — 2026-11-08
+
+User pages only: batch B34. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **Environment: the paragraph on `SPECS_PATH` set inside the specs tree is broken up.** It now opens with a short summary of what you see and what to do, then short bullets. The page also says that a run the preflight notices commits nothing to the specs repository, and that a checkout whose `.git` is read-only gets no notice.
+- **Getting started says what each optional variable does when it is missing.** It used to say each one degrades to a default or a silent skip, but two do not: an unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off with a line naming the variable, and a command that needs the code asks for `REPOS_PATH` where no entry of it exists.
+
 ## [1.78.12] — 2026-11-08
 
 User pages only: batch B33. Needs nothing from the other plugins' releases.

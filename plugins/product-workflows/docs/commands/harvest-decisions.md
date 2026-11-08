@@ -60,9 +60,13 @@ No reviewer and no model: the script is deterministic, and its self-test runs in
 
 The first shows what would change and every problem (an unparseable decision, a `Supersedes` naming no record) with its fix; the second applies it and opens the pull request.
 
+## What it offers next
+
+It asks no next-step question. The final report ends with one line: the next [`/create-ard`](create-ard.md), [`/specify`](specify.md) or `/dev-workflows:design` run grounds on the harvested records once this run's pull request is on the default branch. A `--dry-run`, a run with nothing to harvest and a run that finds the knowledge base up to date stop after their report, and name nothing.
+
 ## See also
 
-- [`/promote-decisions`](promote-decisions.md) — the next step for the product architect: promotes the team's decisions this command harvests to organisation ADRs. It stops while the knowledge base has uncommitted changes.
+- [`/promote-decisions`](promote-decisions.md) — a later step for the product architect, which this run does not offer: promotes the team's decisions this command harvests to organisation ADRs. It stops while the knowledge base has uncommitted changes.
 - [`/create-ard`](create-ard.md) — grounds on the live records, and writes the `Supersedes` the next harvest applies.
 - [`/specify`](specify.md) and `/dev-workflows:design` — ground on the live records too.
 - [Architecture knowledge base](../workflow.md#architecture-knowledge-base) — the whole loop, from merged ARDs to organisation ADRs and back into grounding.

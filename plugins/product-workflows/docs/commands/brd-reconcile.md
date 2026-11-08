@@ -653,7 +653,65 @@ only in a report.
   what was sent and its whole value is that it is byte-identical to the customer's copy. An
   overturned bundle document is named in the reconciliation record instead.
 
-## Where the route goes next
+## Example
+
+Reconcile the review that came back for a synthetic customer BRD's slice, from wherever the
+attachment was saved:
+
+```
+/product-workflows:brd-reconcile ACME-001-01 "@~/Downloads/ACME-001-01 Customer Review 20260422.md"
+```
+
+The `@<review-file>` token is **quoted**, because the command parses its arguments positionally and
+a returned review routinely arrives under a name with spaces in it — the same reason
+[`/brd-package`](brd-package.md)'s customer-facing note tells reviewers to quote the filename they
+send back. Unquoted, `Customer`, `Review` and `20260422.md` are three further positional tokens and
+the path the run resolves is not the file the customer sent.
+
+The date in the name is the reviewer's own — `ACME-001-01` was **packaged** on 15 April and the
+review came back finished on the 22nd — which is what makes the filename rung usable here. Had the
+reviewer returned the file still carrying the packaging date, the run would have rejected that rung
+and asked.
+
+The run gates on the package being merged — the ordinary path, where a review answering a
+hand-authored package takes `--sent` instead — copies the file to `customer-review-20260422.md` and
+offers to commit it, dispatches `customer-review-reader`, surfaces every schema anomaly before
+anything is confirmed, walks each candidate against its verbatim quotation, freezes the confirmed
+answers as `[CD#n]` and closes their `[C]` questions, applies the review's required changes, banners
+the dated prompt and self-review the answers overturned, writes `customer-amended ACME-001-01 20260422`
+and `withdrawn` rows to the defect log, moves the ledger rows the decisions settled, sweeps `ACME-001-02`
+and every other dependent starting with its `conditional_on` positions, sweeps every artifact under
+`ACME-001` — this slice's parent — for the changed ids and for prose still asserting the old
+position, and writes `reconciliation-<date>.md`.
+
+Phase 14 then hands the route over. Nothing this run left behind reopened a decision, held a `[C]`
+for the customer, left a finding to re-derive, or left a dependent only recorded — so
+the slice can advance — and this slice's ledger leaves no row `unallocated` and at least one
+`covered-here`, so all three exits are offered off the same key:
+
+```
+/product-workflows:create-prd ACME-001-01
+/product-workflows:create-ard ACME-001-01
+/product-workflows:specify ACME-001-01
+```
+
+Had this ledger left a row `unallocated`, or left none `covered-here`, the first line would be
+dropped from the offer and the offer would say which test failed; the other two would still be
+offered. Had the run instead reopened a decision or left a question held for the customer,
+the slice could not advance, and Phase 14 would offer the re-entry the trigger names — another
+`/brd-interview` round where every round is closed, or the resume of an open one that is not held
+only for the customer, a re-package, or a `/prd-ground --rebaseline` pass — never the three above. Whatever else it offers, a record its propagation sweep reopened in a
+dependent BRD is named beside the list with `/brd-interview` on that dependent's key.
+
+## What it offers next
+
+Phase 14 presents one of two lists, decided by what this run left behind, and runs nothing itself. No option is recommended, and an option whose condition does not hold is dropped rather than annotated. An offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
+
+- **Nothing left to re-enter for** → [`/create-ard <SLICE-KEY>`](create-ard.md) and [`/specify <SLICE-KEY>`](specify.md), and [`/create-prd <SLICE-KEY>`](create-prd.md) where the slice is PRD-eligible — each after the merge. Reconciling another BRD or slice is named in the prose list.
+- **A decision reopened, a question held for the customer, a code claim challenged, or a dependent only recorded** → only the re-entries those triggers fire: another [`/brd-interview`](brd-interview.md) round; [`/brd-package`](brd-package.md) again, after the merge; [`/prd-ground <BRD-KEY> --rebaseline`](prd-ground.md), after the merge; or this command again on the same review, after the merge and once each dependent's register is on the default branch.
+- **Beside either list** → `/brd-interview <DEPENDENT-KEY>` for each dependent BRD whose decision the propagation sweep reopened; and, where this run froze a `[CD#n]`, [`/prd-proposal <SLICE-KEY>`](prd-proposal.md), which prices the slice once its `prd.md` is on the default branch.
+
+The detail follows.
 
 This is where the BRD-to-PRD route **hands over** for a slice the customer reviewed — a slice needing no review hands over from [`/brd-interview`](brd-interview.md) — not where it ends. A reconciled BRD — decisions
 frozen, dependents swept, every artifact under the parent checked — is the state the PRD pipeline
@@ -717,56 +775,6 @@ open-questions section is correct behaviour rather than a stop, so an operator s
 an artifact built around a hole with nothing having refused it. Each re-entry option is likewise
 conditioned on its own trigger and dropped otherwise, so the list an operator actually sees is
 short and every option on it names something this run genuinely left.
-
-## Example
-
-Reconcile the review that came back for a synthetic customer BRD's slice, from wherever the
-attachment was saved:
-
-```
-/product-workflows:brd-reconcile ACME-001-01 "@~/Downloads/ACME-001-01 Customer Review 20260422.md"
-```
-
-The `@<review-file>` token is **quoted**, because the command parses its arguments positionally and
-a returned review routinely arrives under a name with spaces in it — the same reason
-[`/brd-package`](brd-package.md)'s customer-facing note tells reviewers to quote the filename they
-send back. Unquoted, `Customer`, `Review` and `20260422.md` are three further positional tokens and
-the path the run resolves is not the file the customer sent.
-
-The date in the name is the reviewer's own — `ACME-001-01` was **packaged** on 15 April and the
-review came back finished on the 22nd — which is what makes the filename rung usable here. Had the
-reviewer returned the file still carrying the packaging date, the run would have rejected that rung
-and asked.
-
-The run gates on the package being merged — the ordinary path, where a review answering a
-hand-authored package takes `--sent` instead — copies the file to `customer-review-20260422.md` and
-offers to commit it, dispatches `customer-review-reader`, surfaces every schema anomaly before
-anything is confirmed, walks each candidate against its verbatim quotation, freezes the confirmed
-answers as `[CD#n]` and closes their `[C]` questions, applies the review's required changes, banners
-the dated prompt and self-review the answers overturned, writes `customer-amended ACME-001-01 20260422`
-and `withdrawn` rows to the defect log, moves the ledger rows the decisions settled, sweeps `ACME-001-02`
-and every other dependent starting with its `conditional_on` positions, sweeps every artifact under
-`ACME-001` — this slice's parent — for the changed ids and for prose still asserting the old
-position, and writes `reconciliation-<date>.md`.
-
-Phase 14 then hands the route over. Nothing this run left behind reopened a decision, held a `[C]`
-for the customer, left a finding to re-derive, or left a dependent only recorded — so
-the slice can advance — and this slice's ledger leaves no row `unallocated` and at least one
-`covered-here`, so all three exits are offered off the same key:
-
-```
-/product-workflows:create-prd ACME-001-01
-/product-workflows:create-ard ACME-001-01
-/product-workflows:specify ACME-001-01
-```
-
-Had this ledger left a row `unallocated`, or left none `covered-here`, the first line would be
-dropped from the offer and the stop would say which test failed; the other two would still be
-offered. Had the run instead reopened a decision or left a question held for the customer,
-the slice could not advance, and Phase 14 would offer the re-entry the trigger names — another
-`/brd-interview` round where every round is closed, or the resume of an open one that is not held
-only for the customer, a re-package, or a `/prd-ground --rebaseline` pass — never the three above. Whatever else it offers, a record its propagation sweep reopened in a
-dependent BRD is named beside the list with `/brd-interview` on that dependent's key.
 
 ## See also
 

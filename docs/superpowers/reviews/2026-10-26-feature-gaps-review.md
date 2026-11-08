@@ -529,30 +529,30 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## documentation quality — product-workflows
 
-### DQP-G1 — No walkthrough for a first BRD-route run
+### DQP-G1 — No walkthrough for a first BRD-route run — **Done in product-workflows 3.78.6 (batch B34)**
 - **Designed in:** the docs addendum's bar (*"a getting-started page that would not get a new user to a first successful run"*). No spec covers it.
 - **Current state:** `getting-started.md:82` gives one sentence: *"`/brd-intake` in place of `/idea`"*. `brd-workflow.md` has the diagram, a parameter table and long prose, but no ordered list of commands with one key carried through. The list should run intake → merge → `/brd-split <BRD> "<instruction>"` → merge → `/prd-ground <SLICE> --repos …` → merge → `/brd-split <SLICE>` → `/brd-interview` → `/brd-package` → send → `/brd-reconcile`. Nor does any page say what to do before `/prd-ground`: clone the code under `$REPOS_PATH`, export design frames into `design/<set>/`, and run `/workflows-core:frames` to index them (the frame need is mentioned only at `brd-workflow.md:355` and `prd-ground.md:566`).
 - **Still worth doing?:** yes. The route has nine runs and several merges, and a first-time PM cannot reconstruct the order from six long pages.
 - **Suggested scope:** A "Your first BRD run" section in `getting-started.md` or at the top of `brd-workflow.md`: one key family, one line per command, the merge between steps, and the prerequisites for `/prd-ground`.
 
-### DQP-G2 — Conformance design D22 is only partly reflected in `product-workflows/docs/workflow.md`
+### DQP-G2 — Conformance design D22 is only partly reflected in `product-workflows/docs/workflow.md` — **Done in product-workflows 3.78.4 and 3.78.6 (batches B32 and B34), with DQP-B5**
 - **Designed in:** `docs/superpowers/specs/2026-10-12-conformance-design.md` D22: *"**PE:** `product-workflows/docs/workflow.md`'s two diagrams, as the PE step … (`/conformance <PRD>` after every Epic's `/implement`, feeding `/update-prd`, `/specify`, `/epics` and the docs commands)"*.
 - **Current state:** `workflow.md:34`, `:67-70` draw `conformanceprd` feeding `specify`, `epics` and `updatevi`, but not the docs node. The docs edge still leaves from `implement` (`:91`). The second diagram (architecture knowledge base) has no conformance node. That may be deliberate, since it is an architecture diagram.
 - **Still worth doing?:** yes, for the docs edge (see DQP-B5). The second-diagram half is probably superseded, because that diagram is not the pipeline.
 - **Suggested scope:** One edge `conformanceprd -.-> docsplugin`, and drop `implement -.-> docsplugin`.
 
-### DQP-G3 — No glossary; route vocabulary is used before it is defined
+### DQP-G3 — No glossary; route vocabulary is used before it is defined — **Done in product-workflows 3.78.6 (batch B34)**
 - **Designed in:** the docs addendum (*"jargon used before it is defined"*).
 - **Current state:** `README.md:3` and `:12-16` use BRD, PRD, ARD, PM/PA/PE, "slice", "grounding" and "ledger" before any page defines them. BRD is first spelled out at `brd-workflow.md:5`, and PM/PA/PE only in `roles-and-phases.md` headings. Terms such as root, slice, `covered-here`, `allocate-only`, `[G]`/`[V]`/`[C]`, horizon/`will-change`, readiness tier and `<merge-clause>` are defined only inside individual command pages. `grep -i glossary` over the docs finds nothing.
 - **Still worth doing?:** yes. Every BRD page assumes the reader already knows these terms.
 - **Suggested scope:** A `docs/reference/glossary.md` (about 25 terms, each linked to the page that owns it), linked from the README and the index. Expand BRD/PRD/ARD/PM/PA/PE at first use in the README.
 
-### DQP-G4 — Command pages lack a "What it offers next" section (only `/brd-reconcile` has one)
+### DQP-G4 — Command pages lack a "What it offers next" section (only `/brd-reconcile` has one) — **Done in product-workflows 3.78.6 (batch B34)**
 - **Current state:** Of the 16 pages, only `commands/brd-reconcile.md` has a section for its next step (*"Where the route goes next"*). The others leave it to a *See also* bullet (`idea.md:180`), to prose inside *Gates* or *Example* (`prd-ground.md:580-587`), or say nothing. This is how DQP-B6's missing edges stay invisible.
 - **Still worth doing?:** yes. Each command's next-step offer is its most useful fact for a new user.
 - **Suggested scope:** A short "Next step" section on each page, listing the offers from that command's next-step phase with their conditions.
 
-### DQP-G5 — Getting started has no "Where to run it" or untrusted-input note, though this plugin reads more customer-supplied content than its siblings
+### DQP-G5 — Getting started has no "Where to run it" or untrusted-input note, though this plugin reads more customer-supplied content than its siblings — **Done in product-workflows 3.78.6 (batch B34)**
 - **Current state:** `dev-workflows/docs/getting-started.md:86-90` and `docs-workflows/docs/getting-started.md:65-69` both have *"Where to run it"*. It recommends a container and says that agents treat repository text as data. `product-workflows` has no such section, yet `/brd-intake` and `/idea` walk and transcribe customer-supplied documents, their links and their images. The only related note is in `reference/agents.md`.
 - **Still worth doing?:** yes, as a short parity section.
 - **Suggested scope:** Add a "Where to run it" section that matches its siblings, adapted for customer BRDs and community posts.

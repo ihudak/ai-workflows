@@ -1359,8 +1359,9 @@ the same folder, this run has just written into:
   folder holds Epics, where it designs an Epic from that Epic's own merged specification and is
   named, as the opening paragraph says, with no `<merge-clause>` and with its sentence on the older
   Epic specification.
-- **`/product-workflows:epics <PRD>`**, on a PRD-level spec only (`focus_key` null), as on the idea route — it reads the PRD folder and gates nothing this run
-  produced, so it carries no clause; it is subject to the `prd.md` precondition above, which is the
+- **`/product-workflows:epics <PRD>`**, on a PRD-level spec only (`focus_key` null), as on the idea route — it gates the PRD-level `specification.md` this run
+  wrote (`require-on-main`, `/product-workflows:epics` Phase 2.6), so it carries `<merge-clause>` on the
+  terms the opening paragraph gives; it is subject to the `prd.md` precondition above, which is the
   same test on both routes and not a BRD-route qualification. **Its replacement is not**: only a
   BRD-route slice has a gate set, so the table above is where a slice with no `prd.md` and no
   `covered-here` row stops the `/create-prd` recommendation from being made at all.
