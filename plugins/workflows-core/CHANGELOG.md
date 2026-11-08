@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.80.1] — 2026-11-08
+
+Wording only. `phase-handoff` §4.0 names `/dev-workflows:ready` among the readers of `release-notes.md`. Update with `dev-workflows` 4.61.0.
+
+### Changed
+
+- **`phase-handoff` §4.0's `release-notes.md` row:** `/dev-workflows:ready` Phase 1 step 2c reads the file at `<default-ref>`, never the working copy, for a draft whose scope comment carries `stage: dev`, so it joins `/docs-workflows:docs-audit` as a reader for which "what reads it reads your working copy" does not hold, where the row called `/docs-audit` the one. The class stays advisory.
+
 ## [1.80.0] — 2026-11-08
 
 The specs-repository git primitives move into one tested script: GIT-G1 Part 1. Needs nothing from the other plugins' releases.

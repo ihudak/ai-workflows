@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.11] — 2026-11-08
+
+Docs only. Update with `dev-workflows` 4.61.0, whose `/ready` the page now describes; needs nothing from `workflows-core`.
+
+### Changed
+
+- **The workflow page's *Sources of truth*** says `/dev-workflows:ready` reads two stages from the specs repo's default branch: the optional *Delivery verified*, as before, and *Release Preparation*, from the documentation run's pull-request draft and a release note drafted at the dev stage.
+
 ## [3.78.10] — 2026-11-08
 
 Docs only. Update with `dev-workflows` 4.60.0, whose `/ready` the page now describes; needs nothing from `workflows-core`.

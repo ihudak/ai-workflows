@@ -206,6 +206,13 @@ best-effort-checks repos under `$REPOS_PATH`; cwd need not be inside either.
 
    **What the step records:** `delivery: {state: verified | not-verified, line}`, `line` being the text the `_readiness.md` line carries after `- Delivery: ` — `- Delivery: verified — <PRD>/_conformance.md (checked <the record's Run: date>) on <default-ref>` where the test holds, else `- Delivery: not verified — <reason>`, the reason as above, with `<default-ref>` written as the ref's name. It is a note, never a finding: it adds no stop and no question, and never caps or lowers the verdict. Phase 3(0) decides the rung from `delivery.state`.
 
+2c. **Read the PRD's release-preparation signals — report them, never ask.** The PRD ladder's *Release Preparation* rung (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, its PRD row) expects documentation and a release note drafted, which this step reads as two signals, both in the PRD folder and both from `<default-ref>`, never from the working tree, on a PRD-level and an Epic-level run alike, since both derive the PRD's phase: a draft only in the working tree, or only on an unmerged branch, has not landed and is read as absent. It reads no docs or code repository, so a signal says a draft landed, never that what it drafts was published. No `require-on-main` call is made for either, and nothing here asks, retries or stops.
+   - **No ref.** Where step 2b found no ref — its `git rev-parse --verify` of `<default-ref>` failed — neither signal is read.
+   - **Documentation.** `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<PRD-dir, relative to $SPECS_PATH>/pr-draft.md"` succeeds: the pull-request draft a keyed `/docs-workflows:document` run writes into the PRD folder, on a run for the PRD or for one of its Epics, once it has committed its pages on a branch of the documentation repository — one of the session files `workflows-core:specs-repo-git` §2.1 bounds, so that run's terminal `commit-artifacts` step commits it wherever it commits at all. A run that commits no pages on such a branch — its pages left uncommitted, or written into a folder that is no documentation repository — writes none, and its documentation does not show here. Its presence is the signal; its text is not read.
+   - **A dev-stage release note.** `git -C "$SPECS_PATH" show "<default-ref>:./<PRD-dir, relative to $SPECS_PATH>/release-notes.md"` — the file `/docs-workflows:release-notes` appends its drafts to — succeeds and holds a draft whose scope comment carries `stage: dev`. A scope comment opens on a line beginning `<!-- release-note scope:` — a line that also ends in `-->` is the whole comment, and otherwise it runs to the first later line that reads `-->` — and it carries the stage where a line of it after its first reads exactly `stage: dev`; the comment's first line, its `read:` lines and the draft beneath it are not read. Any such comment counts, whichever key it names — the PRD's or one of its Epics' — under whichever version and section, and whether or not a line opening `<!-- superseded by` stands above it. **A draft whose comment carries no `stage:` line counts for no stage**: a comment of the one-line form `<!-- release-note scope: <KEY> <YYYY-MM-DD> -->` carries none, and nor does any draft `/docs-workflows:release-notes` appended before `docs-workflows` 1.37.0, which wrote none — a run at the dev stage appends one that does, and nothing infers a stage from a draft's date or place. `docs-workflows:release-note-types` §1 fixes the comment's form and names this command among its readers, and `dev-workflows` cannot load it, so this step states what it reads: a change to the `stage:` line there is a change here too.
+
+   **What the step records:** `release_preparation: {state: shown | not-shown, line}`, `line` being the text the `_readiness.md` line carries after `- Release preparation: ` — `shown — <PRD>/pr-draft.md and a dev-stage draft in <PRD>/release-notes.md, on <default-ref>` where both signals hold, else `not shown — <reason>`: `no ref to read the drafts on` where step 2b found no ref; otherwise each signal that does not hold, in this order and joined by `; ` — `no pr-draft.md on <default-ref>`, and `no dev-stage release note on <default-ref>`, followed, where the file on `<default-ref>` holds a scope comment carrying no `stage:` line, by ` — <n> draft(s) there carry no stage: line; a /docs-workflows:release-notes <PRD> run at the dev stage appends one that does` — with `<default-ref>` written as the ref's name. It is a note, never a finding: it adds no stop and no question, and never caps or lowers the verdict — documentation and release notes come after the readiness gate this command guards. `shown` is not a phase: Phase 3(0) derives *Release Preparation* from it only where the rungs below hold.
+
 3. **The status peek is retired, and nothing replaces it.** It read a
    `| Key | Type | Status | Summary | Role |` table out of a per-key index file that a tracker export
    wrote. Nothing in `$SPECS_PATH` writes such a file, so the read had no source — and D8 removed its
@@ -311,8 +318,9 @@ already is. Nothing is read out of the PRD's title for it, and no title is inven
   `implementation.md` is the PRD folder's record, so a block an earlier `/dev-workflows:implement`
   left there for an Epic is counted toward the slice until the operator moves it into the Epic's
   folder (`workflows-core:implementation-format` §1). **This is what Phase 3(0) derives the phase
-  from**: it is the input every mandatory rung of the *derivation* takes, and Phase 1 step 2b's
-  `delivery` decides the PRD ladder's optional rung, *Delivery verified (optional)*. The
+  from**: it is the input every mandatory rung of the *derivation* takes — save the PRD ladder's
+  *Release Preparation*, whose own expected artifacts are Phase 1 step 2c's two signals — and Phase
+  1 step 2b's `delivery` decides the PRD ladder's optional rung, *Delivery verified (optional)*. The
   inventory is not the only status the run holds: a
   `--claimed` value enters at Phase 0 step 1a and is carried into the reviewer dispatch and the report,
   compared against this derivation and never substituted for it, as the paragraph below says outright.
@@ -377,6 +385,17 @@ names: `Delivery verified` and `Delivery verified (optional)` are one rung (Phas
 either sits *at* a PRD derived there, never above or below it. On an Epic-level run the claim is on
 the Epic ladder, which has no such rung, so step 1a has already re-prompted either spelling.
 
+**The PRD ladder's *Release Preparation* is a mandatory rung whose expected artifacts are Phase 1
+step 2c's two signals**, so `release_preparation.state` `shown` is that rung's expected artifacts
+all existing, and the furthest-rung and straddle rules take it as they take any rung's: a PRD whose
+rungs below hold through *Implementation* and whose signals are shown is derived at *Release
+Preparation*, the two drafts named as what placed it there; one whose signals are shown while a
+rung below is short of an artifact straddles and is derived at the lower rung. The optional rung
+does not stand in the way: it lifts only a PRD the mandatory rungs leave at *Implementation*, so a
+PRD derived at *Release Preparation* stays there whatever its `delivery.state`, its `Delivery:` line
+a note. Nothing this run reads shows *Post GA*'s shipped release, so no PRD is derived past
+*Release Preparation*.
+
 **When `--claimed` was given** (Phase 0 step 1a), compare it against `derived_phase` and record any
 divergence as a readiness finding. A claim **above** the derived phase is the interesting one — work
 declared done that the artifacts do not support — and it caps the verdict exactly as an unmerged
@@ -409,7 +428,7 @@ whichever ⚠ reason applies — for a spec or design, the one Phase 1 step 2 re
 authority on the reasons and is cited here rather than counted; for an ARD, Phase 2.5's "ARD authored,
 not handed off" — against Phase 1's inventory. So is each stale lineage link, and each lineage check that failed to run, Phase 1 step 2a recorded, carried here against the document it names. A ⚠ artifact of any of those reasons is a finding for the reviewer's "Status consistency" dimension, at no less than MAJOR
 severity — it does not satisfy the status the way a merged ✅ does, but it is not a BLOCKER and never stops
-this run. This is the mechanical half of that dimension. **The optional rung is never ❌**: where the PRD is derived at *Delivery verified (optional)*, its one expected artifact is ✅; where the PRD is derived at *Implementation*, the checklist carries Phase 1 step 2b's `Delivery:` line beneath that rung as a note — no ✅, no ❌, no ⚠, and no finding. **On a multi-component PRD** (Phase 1 step 2), the rung's *ARD with `## Contracts`* is ✅ only where Phase 2.5 returned `contracts` not null: an ARD without the section is ❌ for it, however present the file is.
+this run. This is the mechanical half of that dimension. **The optional rung is never ❌**: where the PRD is derived at *Delivery verified (optional)*, its one expected artifact is ✅; where the PRD is derived at *Implementation*, the checklist carries Phase 1 step 2b's `Delivery:` line beneath that rung as a note — no ✅, no ❌, no ⚠, and no finding. **Nor is *Release Preparation* ❌ for a PRD below it**: where the PRD is derived at *Release Preparation*, its two expected artifacts, Phase 1 step 2c's signals, are ✅; where it is derived at *Implementation* or *Delivery verified (optional)*, the checklist carries step 2c's `Release preparation:` line beneath that rung as a note — no ✅, no ❌, no ⚠, and no finding, since a PRD there is fully at its phase without documentation or a release note. **On a multi-component PRD** (Phase 1 step 2), *Ready for Implementation*'s *ARD with `## Contracts`* is ✅ only where Phase 2.5 returned `contracts` not null: an ARD without the section is ❌ for it, however present the file is.
 
 **(c) Repo-availability presence-check (best-effort, presence only — never scanning).**
 
@@ -479,7 +498,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
 1. **Compose the readiness artifact.** Build the report content: a header stamping the run timestamp
    (ISO 8601 UTC), the specs-repo git rev (`git -C $SPECS_PATH rev-parse --short HEAD`), the derived
-   phase(s) exactly as Phase 3(0) recorded them, Phase 1 step 2b's `Delivery:` line, any `--claimed` value verbatim, the verdict, the coverage
+   phase(s) exactly as Phase 3(0) recorded them, Phase 1 step 2b's `Delivery:` line, step 2c's `Release preparation:` line, any `--claimed` value verbatim, the verdict, the coverage
    roll-up (N/M requirements covered, P%, each ❌ gap requirement ID named), and the full Findings section
    from Phase 4.
 
@@ -498,6 +517,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    - Specs repo rev: <short HEAD>
    - Derived phase: PRD=<phase>[, Epic <KEY>=<phase>, …][, broad slice=<phase>]
    - Delivery: verified — <PRD>/_conformance.md (checked <the record's Run: date>) on <default-ref> | not verified — <reason> — _Phase 1 step 2b's line, as it recorded it_
+   - Release preparation: shown — <PRD>/pr-draft.md and a dev-stage draft in <PRD>/release-notes.md, on <default-ref> | not shown — <reason> — _Phase 1 step 2c's line, as it recorded it_
    - Claimed status: <the --claimed value verbatim> — _or omit the line entirely when the flag was absent_
    - Verdict: SUPPORTED | PARTIAL | NOT-SUPPORTED
 
@@ -601,6 +621,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    - Epic <EPIC>: <phase> — _or omit when PRD-level_
    - Broad slice: <phase> — _only on a PRD-level run whose PRD folder holds a flat `specification.md` and is not multi-component, or was built whole by the override (Phase 1 step 2, Phase 2); omit otherwise_
    - Delivery: [Phase 1 step 2b's line, the text after "- Delivery: " — `verified — <PRD>/_conformance.md (checked <the record's Run: date>) on <default-ref>` or `not verified — <reason>`; a note, never a finding]
+   - Release preparation: [Phase 1 step 2c's line, the text after "- Release preparation: " — `shown — <PRD>/pr-draft.md and a dev-stage draft in <PRD>/release-notes.md, on <default-ref>` or `not shown — <reason>`; a note, never a finding]
    - Claimed (`--claimed`): <value verbatim> — _or omit the line when the flag was absent_
 
    ### Artifact inventory (Phase 1)
@@ -884,6 +905,12 @@ a code or docs repository, or the current working directory, where it is not the
   or lowers the verdict — on a PRD-level run, a `--claimed` value naming the rung, with or without its `(optional)` suffix,
   is compared as any claim is; on an Epic-level run either spelling is off the Epic ladder and re-prompted (Phase 0
   step 1a, Phase 3(0))
+- NEVER let the `Release preparation:` line (Phase 1 step 2c) count against the run — it is a note, never a finding: the
+  PRD folder's `pr-draft.md` and `release-notes.md` are read from `<default-ref>` with `git`, without a `require-on-main`
+  call, and never asked about; a draft counts toward *Release Preparation* only where its scope comment carries
+  `stage: dev`, so one with no `stage:` line — every draft written before `docs-workflows` 1.37.0 — counts for no
+  stage; a PRD short of either signal is derived as the rungs below give it, and the line never caps or lowers the
+  verdict
 - ALWAYS resolve the `model_routing` block at Phase 1.5 and pin the detection steps to the §2.1 Sonnet chain;
   `readiness-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + the Phase 3
   deterministic skeleton run on `current_model`
