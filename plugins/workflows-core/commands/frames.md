@@ -140,6 +140,10 @@ retry an artifact commit that failed to push, and settle the branch. Prompt-free
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
+**Record what the run reads.** From the preflight on, note each file under `$SPECS_PATH` that this
+run or an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names
+aside — as `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
+
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: frames`; a stop it makes ends the run here.
 
 ---
@@ -354,13 +358,14 @@ end the same way; it offers no handoff and prints
 `Phase handoff: not offered — every index this run wrote is already on <default> as written.`
 with `<default>` the default branch's name, then goes on to Phase 4.
 
-Report what each set now holds, then present
-`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.3's consent choice verbatim (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` loads the file holding it) — the **advisory** variant, as the handoff's register of classes records, whose second option says no command stops on this and that what reads it reads your working copy. **Nothing gates a frame-set index, but something reads one**: `product-workflows:design-grounder` refuses to run on a frame set holding no index at all, and `product-workflows:grounding-verifier` returns `NO_INDEX`/`STALE_INDEX` on one — both from the working tree, neither off a ref. The **gated** class is wrong outright — the gate's row table names no row for a frame-set index, so neither of its two arrays applies, and its **stopping** one would promise a refusal no consumer makes — and the **unread** variant — which this phase presented until the handoff's register of classes was verified against the tree — told the operator to ignore a file `/prd-ground` refuses a frame set without, three lines above a paragraph of this same phase saying the set stays `NO_INDEX` for everybody else. That contradiction is the reason §4.3 asks a producer to name its reader rather than infer the class from the absence of a gate row. On the first
-option, execute `handoff-to-main` (§2) with all five of its §2.9 inputs: `prefix: frames`;
+Report what each set now holds, then run `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.3's push-target probe and present
+its consent choice verbatim (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` loads the file holding it), with the one line §4.3 puts immediately above the array where one applies — its flag line, or its no-remote line — the **advisory** variant, as the handoff's register of classes records, whose second option says no command stops on this and that what reads it reads your working copy. **Nothing gates a frame-set index, but something reads one**: `product-workflows:design-grounder` refuses to run on a frame set holding no index at all, and `product-workflows:grounding-verifier` returns `NO_INDEX`/`STALE_INDEX` on one — both from the working tree, neither off a ref. The **gated** class is wrong outright — the gate's row table names no row for a frame-set index, so neither of its two arrays applies, and its **stopping** one would promise a refusal no consumer makes — and the **unread** variant — which this phase presented until the handoff's register of classes was verified against the tree — told the operator to ignore a file `/prd-ground` refuses a frame set without, three lines above a paragraph of this same phase saying the set stays `NO_INDEX` for everybody else. That contradiction is the reason §4.3 asks a producer to name its reader rather than infer the class from the absence of a gate row. On the first
+option, execute `handoff-to-main` (§2) with all six of its §2.9 inputs: `prefix: frames`;
 `feature_folder` = the folder Phase 0 resolved; `deliverable_paths` = **every `index.md` this run
-wrote, one literal path each, repo-relative as Phase 2 held them**; `title: <KEY> Index design frame sets`; and
+wrote, one literal path each, repo-relative as Phase 2 held them**; `title: <KEY> Index design frame sets`;
 `body_facts` = each set with its row count, how many rows this run added, how many carry no
-description on record and why, and every row dropped.
+description on record and why, and every row dropped; and `inputs_read` = the record of reads Phase 0
+began, every frame `frame-describer` read and every index Phase 1 read among them.
 
 **The indexes are named literally, one path each — never a directory and never a glob.** §2.3 stages
 by enumeration and classifies everything it was not handed as OTHER, so an index left out of this
@@ -374,7 +379,7 @@ repair rather than a blocked one. Say that, and say one thing more, because it i
 index is an OTHER path under `design/**`, so on the next run of any command sharing this repo
 `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §3.3's **G1** matches — the preflight ends there
 at advisory severity listing the paths, and §3.4's leftover flush and §3.5's branch disposition are
-suppressed for the rest of that session — unless that run carries `specs_git: misrooted`, under
+suppressed for that run — unless that run carries `specs_git: misrooted`, under
 which no guard runs. G1 does not set `specs_git: blocked`, so nothing is lost or
 halted, and the suppression repeats until the paths are committed or the handoff is taken. Beyond
 those two facts, neither more nor less — and name no command that could not run against the folder
@@ -446,7 +451,8 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
 4. **Commit session artifacts (terminal).** Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md`
    and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session
-   artifacts (/frames)` and pushes per §4 step 5. It NEVER touches a code/docs repo or the current working
+   artifacts (/frames)` — `<KEY>` the resolved folder's own key, an Epic folder's and never its
+   parent's, or `NOISSUE` where the run resolved none — and pushes per §4 step 5. It NEVER touches a code/docs repo or the current working
    directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final
    report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.

@@ -107,6 +107,10 @@ not work: a flag is a token, so `--redo` would arrive as the address.
    folder asserts no key gives an empty set, a keyless run (§3.2). A run that stops on its address
    in step 2 runs no preflight.
 
+   **Record what the run reads.** From here on, note each file under `$SPECS_PATH` that this run or
+   an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names
+   aside — as `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
+
 4. **Refuse a `PRD-` slice**, structurally, **on the directory prefix, before any file inside the
    folder is read**. The umbrella aggregates slices; pricing one is the sibling's job, and the two
    are different documents priced from different inputs.
@@ -790,7 +794,7 @@ less.
 
 ## Phase 11 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies — its flag line, or its no-remote line:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
@@ -817,7 +821,8 @@ a revision, the archived prior under `revisions/` at the name §2's first-free r
 archived beside it, where one was, at the name the same rule wrote for it — and, on any run, a
 revision or not, a brief Phase 9 archived that stood without a `proposal.md` (Phase 0 step 5), at the
 name that rule wrote for it —
-`title: <BRD-KEY> Programme effort proposal <YYYYMMDD>`, and `body_facts` = the slices included and
+`title: <BRD-KEY> Programme effort proposal <YYYYMMDD>`, `inputs_read` = the files Phase 0 step 3's
+*Record what the run reads* noted, and `body_facts` = the slices included and
 the slices excluded, each by key; the umbrella tier with the slice that set it and the tier mix; the
 `[WP#n]` count and the total expected hours with its summed range; every named adjustment and what it
 came to; the coverage proportion and the count of requirements left unpriced; the `proposal-reviewer` verdict with its version line and every finding left open (`workflows-core:escalation-rules`, *A recorded verdict names the version it was taken against*); and whether a rationale brief was rendered. Emit its §4.1 outcome line in the final report.

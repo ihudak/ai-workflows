@@ -149,8 +149,12 @@ cannot review, and they will not tell you that — they will review it anyway, b
    *Set SPECS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
-   the same ordering `/brd-interview` uses and for the same reason. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+   the same ordering `/brd-interview` uses and for the same reason. **This run's key set (§3.2) is the one key step 1 read** — the `<BRD-KEY>` it read with `read-key`, or the key an `@<path>` address's carrier asserts — **and never a `--depends-on` key**, though step 2 reads those with `read-key` too: they name other folders, and a branch of theirs is not this run's to stay on — with one in the set, `workflows-core:specs-repo-git` §3.5's B3 would keep the run on a prerequisite's unmerged `brd/` branch, where the checkout stood on one, instead of settling it, so the run would read this slice's files from another BRD's open work, and `workflows-core:phase-handoff` §2.2 could cut this slice's handoff branch on top of it. So `workflows-core:specs-repo-git` §3's order for a key set `read-key` reads off the arguments applies, the preflight running before step 5 resolves the folder. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
+
+   **Record what the run reads.** From here on, note each file under `$SPECS_PATH` that this run or an
+   agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names aside — as
+   `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` — or `resolve-address @<path>`, as typed, where step 1 found an `@<path>` address — (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns. Absent
    → stop, without asserting which command would have created it:
@@ -212,6 +216,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
 
     Stop:
     `BRD_PACKAGE_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Packaging bundles a BRD slice's decision register for the customer who wrote the BRD, and this folder has no customer BRD, no coverage ledger and no interview behind it, so there is no register to bundle. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>' where the folder holds no prd.md yet). Re-running this command on this folder stops here again.`
+**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
 5c. **Refuse a folder holding a torn write — before any gate, so no gate's remedy lands one.** Read
     `decisions.md`, `interview/customer-questions.md`, `code-defect-log.md` and every
     `interview/round-<N>.md` from the worktree, each where it is present, and find every **torn
@@ -220,7 +225,13 @@ cannot review, and they will not tell you that — they will review it anyway, b
     run left when it stopped before writing that record. This step reads the worktree only and gates
     nothing on a ref, so it runs before step 6: a torn record is most often an uncommitted block in
     `decisions.md`, and step 6's remedy for an uncommitted register is to commit it, which would land
-    the torn write on the default branch before anything said what it was. No reader counts one, and
+    the torn write on the default branch before anything said what it was. It runs after the branch
+    check above, which `workflows-core:phase-handoff` §6 places before anything reads the folder's
+    documents: a §6.2 *Switch* taken after this read would leave its verdict about a checkout the run
+    had left. That check's remedies — a merge into the run's branch, a switch, a pull request
+    settled — never land a torn write on the default branch: the one that names uncommitted files,
+    a refused switch, leaves committing them to you on the branch you stand on, and this step reads
+    what the files hold, not what is committed, so the re-run still finds the torn write. No reader counts one, and
     this command cannot simply leave them out: the bundle carries `decisions.md`,
     `interview/customer-questions.md` and `code-defect-log.md` whole
     (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1), so a torn record or entry would
@@ -243,7 +254,6 @@ cannot review, and they will not tell you that — they will review it anyway, b
       `BRD_PACKAGE_TORN_WRITES: <BRD-KEY> kept no requirement of its own — every coverage-ledger row is an orphan row — so there is nothing to package. <where torn writes were found:> It holds items a /product-workflows:brd-interview run left when it stopped before writing the round record that would name them (<each, by id or heading, with the round it claims>); no reader counts them, and /product-workflows:brd-interview stops on this slice with BRD_INTERVIEW_ALL_DELEGATED without removing them, so delete them by hand if the files should read clean. <where half-applied re-dispositions were found:> Its code-defect-log.md has not yet taken moves a round record already names (<each [CDF#n] #k <old> → <new>>) — the round record was written and the run stopped before the log was; run '/product-workflows:brd-interview <BRD-KEY>', whose first phase applies them before it stops, then commit and merge code-defect-log.md yourself, since that run hands nothing off. Nothing was written.`
     - **Otherwise:**
       `BRD_PACKAGE_TORN_WRITES: <BRD-KEY>'s folder is not in a state a package can ship. <where torn writes were found:> It holds items a /product-workflows:brd-interview run left when it stopped before writing the round record that would name them (<each, by id or heading, with the round it claims>); no reader counts them. <where half-applied re-dispositions were found:> Its code-defect-log.md has not yet taken moves a round record already names (<each [CDF#n] #k <old> → <new>>) — the round record was written and the run stopped before the log was. Run '/product-workflows:brd-interview <BRD-KEY>' and merge its handoff: any run of it that reaches its handoff removes the torn writes, and any run that passes its input gates applies the pending moves in its first phase. Nothing was written.`
-**Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
 
 6. **Gate the decision register on main.** This command **consumes** a `$SPECS_PATH` deliverable it
    did not write, so per `workflows-core:phase-handoff` §5 rule 2 it executes
@@ -1450,9 +1460,8 @@ Take all three here, step 1 loading the handoff contract that states them:
 
 1. **Take the handoff's consent now.** Invoke
    `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, test §2.1's gate conditions —
-   each is a read — and run its push-target probe, printing the one line §4.3 puts above the array
-   where one applies: its flag line on a run carrying either flag, otherwise its no-remote line where
-   the probe set `remote: none`. Then present its §4.3 choice array verbatim:
+   each is a read — and run its push-target probe, printing the one line §4.3 puts above the array where one applies —
+   its flag line, or its no-remote line. Then present its §4.3 choice array verbatim:
 
    ```
    choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
@@ -1981,7 +1990,8 @@ table, where `brd` is the prefix every `/brd-*` command shares), `feature_folder
 under `<BRD-dir>` (`self-review-<YYYYMMDD>.md`, `customer-review-prompt-<YYYYMMDD>.md`,
 `customer-delivery-note-<YYYYMMDD>.md`, every file under `bundle-<YYYYMMDD>/`, and `brd-link.md`
 when this run added a prerequisite to it), `title: <BRD-KEY> Package for customer review
-<YYYYMMDD>`, and `body_facts` = the degradation tier; the `[SR#n]` counts by disposition; the count
+<YYYYMMDD>`, `inputs_read` = the files the *Resolve inputs and gate the decided BRD* phase's
+*Record what the run reads* noted, and `body_facts` = the degradation tier; the `[SR#n]` counts by disposition; the count
 of `[C]` questions and open `[AS#n]` the prompt carries; every prerequisite named under *what could
 still move*; and the repo→SHA table. Hand it the `remote` value Phase 7's probe set, which §2.1
 has the entry point carry rather than probe a second time. Emit its §4.1 outcome line in the final

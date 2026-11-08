@@ -100,6 +100,8 @@ four-resolution one.
 3. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
    `commit-artifacts` step skips on it.
+
+   **Record what the run reads.** From here on, note each file under `$SPECS_PATH` that this run or an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names aside — as `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
 4. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` — or `resolve-address @<path>`, as typed, where step 1 found an `@<path>` address — (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback (§2 step 2) — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5 answers the level question on what it returns. Absent → stop, without asserting which command would create it, because nothing on disk
    says whether this key names a BRD with a source document or a slice of one:
@@ -1398,7 +1400,7 @@ that path this phase rewrites only what the removal and the reconcile changed �
 
 ## Phase 6 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim — **two arrays, selected by the `deliverable_paths` set below, per §4.0's rule that a set spanning classes takes the strongest class.** Where that set holds any **slice-level** `coverage-ledger.md` or `brd/brd-inventory.md` — every path but the ones named next — present §4.3's **gated — stopping** array (§4.1 bullet 1), because `/prd-ground` stops on both, by its own gate rows:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies — its flag line, or its no-remote line. **There are two arrays, selected by the `deliverable_paths` set below, per §4.0's rule that a set spanning classes takes the strongest class.** Where that set holds any **slice-level** `coverage-ledger.md` or `brd/brd-inventory.md` — every path but the ones named next — present §4.3's **gated — stopping** array (§4.1 bullet 1), because `/prd-ground` stops on both, by its own gate rows:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
@@ -1436,7 +1438,8 @@ Phase 0 step 9 re-enumerates the child as still standing. —
 §2.3's `-A` staging is what stages a removal, exactly as it does for `/idea`'s or `/update-prd`'s
 own deletions — and it stages a Phase 4.5 removal on the reconcile path the same way), `title:` — `<BRD-KEY> Split into slices and allocate coverage` in `full` mode,
 `<BRD-KEY> Allocate slice coverage` in `allocate-only`, because a pull request titled "split" that
-created nothing would misdescribe itself — and `body_facts` = the run mode,
+created nothing would misdescribe itself — `inputs_read` = the files Phase 0 step 3's *Record what
+the run reads* noted, and `body_facts` = the run mode,
 the slice count and keys (`full` only), the walk's resolution tally by disposition, whether Phase 4's
 Step 1 offer fired and — where it was taken — how many rows it wrote in one confirmation and how many
 were held back to the walk, every standing

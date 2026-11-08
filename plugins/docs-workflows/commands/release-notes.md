@@ -179,6 +179,10 @@ in is untouched (§1 rule 1). Prompt-free; it prints its `Environment:` line, an
 if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole
 run — the terminal `commit-artifacts` step skips on it.
 
+**Record what the run reads.** From this preflight on, note each file under `$SPECS_PATH` that this
+run or an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names
+aside — as `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
+
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the PRD folder this run carries — the resolved folder, or the PRD folder above an Epic address — which its handoff names, with `prefix: prd`; a stop it makes ends the run here.
 
 **Resolve the run's stage, and find the conformance records — before Phase 1 asks anything.** Both bear on how Phase 1 asks about diff grounding.
@@ -690,13 +694,15 @@ Outside that one case there is no question to ask and no option that replaces th
    prints a directory and the folder's `realpath` is neither that directory's `realpath` nor beneath
    it; where that command fails there is no work tree to be outside of, and the offer goes ahead for
    `handoff-to-main`'s gate to refuse. On every other run, invoke
-   `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 consent
-   choice verbatim — the **advisory** array, `release-notes.md` being read by a later run of this
+   `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3
+   push-target probe, then present its §4.3 consent choice verbatim — the **advisory** array,
+   `release-notes.md` being read by a later run of this
    command and by others and gated by none, as the handoff's register of classes records — `/docs-workflows:docs-audit` excepted, which reads
    the drafts at the specs repository's `HEAD` and so misses one left uncommitted. **Say what a
    declined handoff costs, before the choice**, since neither the array nor §4.1's *Declined by the
    user* line says it: print this one line above the array — immediately above it, or above §4.3's
-   flag or no-remote line where that section prints one — then present the array itself unchanged:
+   flag or no-remote line where that section prints one, the no-remote line where the probe set
+   `remote: none` — then present the array itself unchanged:
    ```
    If you decline, this draft stays uncommitted: every later run of any command reports it as a dirty path that is not its own and skips its leftover flush, catch-up and branch settling until you commit or remove it; a later /release-notes run reads it only while the checkout stays where it was written; and /docs-workflows:docs-audit, which reads the drafts at HEAD, does not see it at all, whatever the second option says about your working copy.
    ```
@@ -707,7 +713,8 @@ Outside that one case there is no question to ask and no option that replaces th
    (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with
    `prefix: prd`; `feature_folder` the resolved PRD folder; `deliverable_paths` = `release-notes.md`
    in it, its one literal path; `title: <KEY> Release-notes draft <version | Unreleased>`, `<KEY>`
-   being `focus_key` where it is set and the PRD's key where it is null; and `body_facts` = the
+   being `focus_key` where it is set and the PRD's key where it is null; `inputs_read` = the files
+   Phase 0's *Record what the run reads* noted; and `body_facts` = the
    version and Change Type section the draft was filed under, its shape, whether it superseded
    an earlier `# Unreleased` note, and each claim it left out for a fix still pending, by its
    conformance entry `<KEY>/[DD#n]`, and, where Phase 6 recorded any `document-as-spec` gap, a first
@@ -791,7 +798,8 @@ persists the plugin-facing slice of its report as session feedback.
    > - Project root: [the resolved PRD folder]"
 2. **Persist plugin feedback (automatic).** Project the report's plugin-facing
    slice into the specs repo by invoking `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and calling its `emit-auto` entry point (§6). Pass the Lessons Learned report,
-   `command: /release-notes`, the run's `key` and `source`, and
+   `command: /release-notes`, the run's `key` — `focus_key` on an Epic address, `<PRD>` on a
+   PRD-level one, as the terminal commit takes it — and `source`, and
    `plugin_version` (read from
    `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). `emit-auto` renders only
    the report's **Command workflow improvements**, **New agents / skills**, plugin
@@ -847,7 +855,7 @@ token-cost contribution to the PRD — through `emit-cost`, or, under `run_flags
 Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")`. `/release-notes` runs at two different phases by two roles (a PM's early bare-PRD
 run and a dev's documenting re-run), so DO NOT pass a fixed phase/role: call
 `emit-cost` with `command: /release-notes`, `phase: inferred`, `role: inferred`,
-the run's `key` (or `null`) and `source`, and `plugin_version` (read from
+the run's `key` (the one the feedback step passed, or `null`) and `source`, and `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). `emit-cost` applies the §7
 inference: **no `specification.md` or `design.md` under the PRD's specs dir ->
 `phase: prd-creation`, `role: pm`; either present -> `phase: documenting`, `role:
@@ -867,8 +875,10 @@ guidance already appeared in the Phase 8 report.
 
 **Then commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It
 stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
-`<KEY> Add dev-workflows session artifacts (/release-notes)`, and pushes per
-§4 step 5. **The draft is not one of those paths**: Phase 8 step 1a handed
+`<KEY> Add dev-workflows session artifacts (/release-notes)` — `<KEY>` the
+key the run addressed (§4 step 4): `focus_key` on an Epic address, `<PRD>` on
+a PRD-level one, as the handoff's `title` takes it, or `NOISSUE` where the
+run resolved no key — and pushes per §4 step 5. **The draft is not one of those paths**: Phase 8 step 1a handed
 `release-notes.md` off behind the consent choice, and this step neither stages
 nor edits it.
 It NEVER writes into a docs repo, NEVER touches a code repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run;

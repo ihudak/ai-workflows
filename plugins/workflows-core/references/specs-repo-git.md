@@ -646,10 +646,13 @@ has a deliverable, a branch or a handoff (the exception is named below), and not
 follow-ups, the cost entry and `resume.md` still fire. They do, and the answer
 is each member's own rather than a new condition here:
 
-- **Feedback writes nothing.** `feedback-emission.md`'s `emit-auto` is called
-  by a command's maintenance phase, which a refused run never reaches, and
-  `emit-block` fires at the halt rather than here and excludes an environment
-  or operator halt by its own predicate — which every Phase 0 refusal is.
+- **Feedback writes nothing**, save where a command's own stop route runs its
+  maintenance phase. `feedback-emission.md`'s `emit-auto` is called by a
+  command's maintenance phase, which a refused run reaches only where its
+  command's *Ending early* sends a stop through it — as the docs setup
+  commands do for their stops past their earliest ones — and `emit-block`
+  fires at the halt rather than here and excludes an environment or operator
+  halt by its own predicate — which every Phase 0 refusal is.
 
 - **Follow-ups are a no-op.** No signal qualifies, so that phase resolves no
   target, writes nothing and ends silently (`followup-emission.md` §6).
@@ -749,7 +752,12 @@ is resolved, and `/docs-workflows:document` for a direct-mode stop before its wr
    `<KEY> Add dev-workflows session artifacts (<command>)`, or
    `NOISSUE Add dev-workflows session artifacts (<command>)` when the run
    resolved no key. This matches the specs repo's own `<KEY|NOISSUE> <summary>`
-   convention. **No `Co-Authored-By` trailer** (§1 rule 6).
+   convention. **No `Co-Authored-By` trailer** (§1 rule 6). **`<KEY>` is the
+   one key the run addressed**: an Epic run's own key, never the parent PRD
+   key §3.2 adds to the run key set only to match branches; a BRD-route
+   slice's key; and, where a command addresses several, the first it
+   resolved. §3.4's flush, which commits through this step at run start,
+   takes the same key, or `NOISSUE` where the run has none yet.
 
    Commit the paths step 2 staged that git still lists as staged, and
    nothing else. List them with

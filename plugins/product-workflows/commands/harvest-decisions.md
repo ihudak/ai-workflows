@@ -49,7 +49,7 @@ Invoke Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-
 
 `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]`
 
-On the first choice, execute `handoff-to-main` (Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main"), §2) with `prefix: kb`; no `feature_folder` (§2.2's keyless form names the branch `kb/harvest-<YYYY-MM-DD>`); `deliverable_paths` = the plan's `files`; `title: NOISSUE Harvest ARD decisions into architecture/`; and `body_facts` = the counts per change kind, the live count, the problem count and the `sha` harvested. Emit its §4.1 outcome line in the final report.
+On the first choice, execute `handoff-to-main` (Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main"), §2) with `prefix: kb`; no `feature_folder` (§2.2's keyless form names the branch `kb/harvest-<YYYY-MM-DD>`); `deliverable_paths` = the plan's `files`; no `inputs_read`, since the script reads `<sha>`'s objects and never a file in the working tree, and step 4 held the checkout on the default branch, where §2.2's stack test does not apply; `title: NOISSUE Harvest ARD decisions into architecture/`; and `body_facts` = the counts per change kind, the live count, the problem count and the `sha` harvested. Emit its §4.1 outcome line in the final report.
 
 ## Phase 4 — Terminal commit
 
