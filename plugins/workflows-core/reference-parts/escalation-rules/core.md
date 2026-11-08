@@ -37,6 +37,7 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Findings a review leaves open — the offer to apply them` → `review`
 - `A decision a finding needs — one question per finding` → `review`
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
+- `The read after the last review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`
 - `A BLOCK review's other findings — folded into its fix cycle` → `review`

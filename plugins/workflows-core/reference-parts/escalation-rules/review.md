@@ -37,6 +37,7 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Findings a review leaves open — the offer to apply them` → `review`
 - `A decision a finding needs — one question per finding` → `review`
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
+- `The read after the last review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`
 - `A BLOCK review's other findings — folded into its fix cycle` → `review`
@@ -207,12 +208,12 @@ through a resumed verify step, and `/upgrade`'s own results table carries a `Rev
 is behavioural: **a command records a review verdict, and anything it does afterwards can change what
 that verdict was about.**
 
-**Once the cap is spent, this is deliberately a reporting rule and not another cycle.** Raising the
+**Once the cap is spent, this is deliberately a reporting rule and not another cycle**, for every command, save that a command that dispatches `overlap-reader` — `/design`, `/specify` and `/update-spec` — first has it read, once, the edits answering the last review and the decisions settled at its questions (*The read after the last review*, which part `review` holds); that read is not a review and raises no cap. Raising the
 cap trades one unreviewed version for a later one and has no fixed point, since each new review can
 find something the previous fix introduced. What actually costs the reader is not the unreviewed
 edit — a run has to stop somewhere — but believing the verdict covers it. Saying which version it
 covers costs nothing, cannot itself introduce a defect, and leaves the decision about the residue
-where it belongs — with the user. **Where no edit followed the verdict,
+where it belongs — with the user. Where that read ran, the version line names it and the number of conflicts it returned, zero included, and still says the verdict predates the edits. **Where no edit followed the verdict,
 say that too**, so a clean run reads as checked rather than as unreported. A run whose verdict was
 not `BLOCK` has not spent the cap. Two offers can follow such a review, each under a rule of its own that part `review` holds and that names the commands making it: *Findings a review leaves open — the offer to apply them*, which puts the residue to the user, and *Edits after a verdict that is not BLOCK — the unspent re-review*, which offers the re-review the cap still holds.
 
@@ -250,7 +251,7 @@ answer naming some of the findings applies those.
   first review the unspent re-review offer (*Edits after a verdict that is not BLOCK — the unspent
   re-review*, below) follows, after the asking set's decision questions (next paragraph) too, so a
   re-review taken there covers the decisions settled at them as well; after the re-review no review
-  follows, and the version line above names these edits.
+  follows, and the version line above names these edits, which a command that dispatches `overlap-reader` has it read first (*The read after the last review*, below).
 - **Declined**, the findings stay open, listed in the final report and the pull request, as the
   option says.
 
@@ -312,7 +313,7 @@ nothing is asked once more, and a second that settles nothing is taken as *Leave
 reaches, that cycle's re-review covers it; after a verdict that is not `BLOCK`, it is an edit
 answering the verdict's findings, and the unspent re-review offer, made after these questions where
 the cap still holds one, covers it where it is taken; after the last review the version line names
-it among the edits the verdict predates. **Leave it open** leaves the finding open, recorded as *A
+it among the edits the verdict predates, and a command that dispatches `overlap-reader` has it read first (*The read after the last review*, below). **Leave it open** leaves the finding open, recorded as *A
 finding left open that needs a decision is recorded in the artifact* says for the command —
 `/specify` and `/update-spec` as a `- [ ]` open question; `/design`, which keeps no open question,
 lists it in the final report and the pull request — and the run does not put it to the user again.
@@ -351,7 +352,7 @@ and makes no offer.
   below, or `/implement`'s stayed-blocked stop; any other verdict, or **Proceed** at a settle prompt,
   goes on to the step that follows the review gate, as after the command's own re-review, and none
   starts a fix cycle: a command that fixes inline, or `/implement`, puts its findings to the offer above — and a command of the asking set each decision one needs to its own question — whose edits no review follows, and every other reports them. The version line then names the re-review's verdict, and
-  an edit after it falls back to the reporting rule above, the cap now spent.
+  an edit after it falls back to the reporting rule above, the cap now spent — read first, in a command that dispatches `overlap-reader`, as *The read after the last review* (below) says.
 - **Declined**, the run goes on exactly as before, and the version line says the verdict predates
   the edits.
 
@@ -366,6 +367,16 @@ and `/implement` `review-fixer`, over the findings and over those the user appli
 recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
 fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and
 `/docs-audit` cap at no re-review, so there is none to offer.
+
+### The read after the last review
+
+**Where the cap's last review — its re-review, whether after a `BLOCK`'s fix cycle or taken at the unspent re-review offer above — is followed by an edit answering its findings, or by a decision settled at a finding's question, a command that dispatches `overlap-reader` (`/design`, `/specify`, `/update-spec`) dispatches it once more, before the handoff.** A live `/design` run applied its re-review's findings, settled four more decisions at their questions, and handed off a design whose verdict predated seven substantive edits that nothing but the version line named. An edit answering the review's findings is one applied at the offer to apply what it leaves open, or an escalation's manual fix notes; an edit of any other kind — a deferral's note, an open question *A finding left open that needs a decision is recorded in the artifact* writes, a style pass — makes no read, and the version line alone names it. The read comes once the questions that review led to are settled, and before any such open question is written.
+
+- **The brief.** `caller` is the read after the last review, and `scope` is `all`. `artifact_path` is the written artifact's path, never `none`. `changed` lists each of those edits made after that review — its id, or its section where it has none, and its source: `review` for an edit answering a finding, `decision` for a decision settled at its question. The command's other inputs are those its whole-artifact read passes: `session_path` (absent on `/update-spec`), `spec_path` (on `/design` only), and `ard_paths` and `applicable_ard`.
+- **Its conflicts.** Each conflict it returns is asked at its own question, as the command asks a play-back's conflicts; a read that returns none asks nothing. On `status: ERROR`, or a dispatch that fails, the orchestrator runs the read inline over the brief's inputs, as for its whole-artifact read, and the version line says the agent failed and why.
+- **No loop.** An edit answering one of this read's conflicts is not read again by the agent, and *An inline fix is read against what it overlaps*, which reaches an inline edit answering a review finding, does not reach it. The version line names each such edit as read by nothing further.
+
+**Where the unspent re-review was declined**, the cap was never spent and no such read follows: the version line says the verdict predates the edits, as before, since the person chose to go on without a review. **A command that dispatches no `overlap-reader`** reports the edits after its last review under the version line alone, as before.
 
 ## An inline fix is read against what it overlaps
 

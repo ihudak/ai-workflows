@@ -62,7 +62,7 @@ Thirty commands invoke the `workflows-core:model-routing` skill (`grep -l 'workf
 
 ## Workflow map
 
-The `workflows-core` command's line of the family workflow map, the logging commands' note, and the caller lines of the agents `plugins/workflows-core/agents/` ships. In the `## Workflow map` blocks of `.claude/rules/*.md`, agents marked `(workflows-core)`, `(docs-workflows)`, or `(product-workflows)` ship from a plugin other than `dev-workflows`, invoked as `subagent_type: "<plugin>:<agent>"` like every other dispatch in the family.
+The `workflows-core` command's line of the family workflow map, the logging commands' note, and the caller lines of the agents `plugins/workflows-core/agents/` ships. In the `## Workflow map` blocks of `.claude/rules/*.md`, agents marked `(workflows-core)`, `(docs-workflows)`, or `(product-workflows)` ship from a plugin other than `dev-workflows`, invoked as `subagent_type: "<plugin>:<agent>"`.
 
 ```
 /diagnose-session (core) → [problem intake: one question at a time; nothing is read before the user answers] → locate the session's transcripts (`workflows-core:session-diagnosis` §2) → case.md → [session-analyst×1 per dimension (all seven, or those named), in parallel; repeated-work, stumbles, claims-and-evidence split past 20,000 lines, where run] → report.md, outside every repository → a ready-to-run /feedback line where the family was involved   (its only specs-repo write is its cost entry; no maintenance agent, never a fix)
@@ -73,7 +73,7 @@ The `workflows-core` command's line of the family workflow map, the logging comm
                       └── session-analyst (workflows-core)      (used by /diagnose-session)
                       └── docs-grounder (workflows-core)        (used by /idea, /create-prd, /update-prd, /create-ard, /specify, /update-spec, /epics, /release-notes, /brd-intake, /prd-ground)
                       └── architecture-grounder (workflows-core) (used by /create-ard, /specify, /update-spec, /design)
-                      └── overlap-reader (workflows-core)       (used by /design, /specify, /update-spec — the whole-artifact overlap read before the play-back that precedes the first review; and /specify's Stage 4 Rule read, scope: rules, before that stage's gate)
+                      └── overlap-reader (workflows-core)       (used by /design, /specify, /update-spec — the whole-artifact read before the play-back that precedes the first review, and the read after the last review; and /specify's Stage 4 Rule read, scope: rules, before that stage's gate)
                       └── promotion-scout, adr-drafter (workflows-core) (used by /promote-decisions)
                       └── impl-maintenance (workflows-core)     (used by 29 of the 38 commands — `grep -l 'workflows-core:impl-maintenance' plugins/*/commands/*.md | wc -l` against `find plugins/dev-workflows/commands plugins/product-workflows/commands plugins/docs-workflows/commands plugins/workflows-core/commands plugins/security-workflows/commands -maxdepth 1 -name '*.md' | wc -l` — all but /docs-profile, /docs-serve, /harvest-decisions, /statusline, /feedback, /prompt, /prompt-brainstorm, /prompt-grill-me and /diagnose-session — replaced by defect-reporter under --skip-feedback)
                       └── defect-reporter (workflows-core)      (used under --skip-feedback by the same commands as impl-maintenance)

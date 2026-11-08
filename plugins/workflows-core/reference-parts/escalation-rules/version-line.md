@@ -37,6 +37,7 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Findings a review leaves open — the offer to apply them` → `review`
 - `A decision a finding needs — one question per finding` → `review`
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
+- `The read after the last review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
 - `A finding left open that needs a decision is recorded in the artifact` → `review`
 - `A BLOCK review's other findings — folded into its fix cycle` → `review`
@@ -207,11 +208,11 @@ through a resumed verify step, and `/upgrade`'s own results table carries a `Rev
 is behavioural: **a command records a review verdict, and anything it does afterwards can change what
 that verdict was about.**
 
-**Once the cap is spent, this is deliberately a reporting rule and not another cycle.** Raising the
+**Once the cap is spent, this is deliberately a reporting rule and not another cycle**, for every command, save that a command that dispatches `overlap-reader` — `/design`, `/specify` and `/update-spec` — first has it read, once, the edits answering the last review and the decisions settled at its questions (*The read after the last review*, which part `review` holds); that read is not a review and raises no cap. Raising the
 cap trades one unreviewed version for a later one and has no fixed point, since each new review can
 find something the previous fix introduced. What actually costs the reader is not the unreviewed
 edit — a run has to stop somewhere — but believing the verdict covers it. Saying which version it
 covers costs nothing, cannot itself introduce a defect, and leaves the decision about the residue
-where it belongs — with the user. **Where no edit followed the verdict,
+where it belongs — with the user. Where that read ran, the version line names it and the number of conflicts it returned, zero included, and still says the verdict predates the edits. **Where no edit followed the verdict,
 say that too**, so a clean run reads as checked rather than as unreported. A run whose verdict was
 not `BLOCK` has not spent the cap. Two offers can follow such a review, each under a rule of its own that part `review` holds and that names the commands making it: *Findings a review leaves open — the offer to apply them*, which puts the residue to the user, and *Edits after a verdict that is not BLOCK — the unspent re-review*, which offers the re-review the cap still holds.
