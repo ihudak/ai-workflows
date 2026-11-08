@@ -14,7 +14,8 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py owner-repo --repo <path> [--no-alias]
   specs-git.py --selftest
 
-<root> is the specs repository's top level. Nothing here writes the working tree, the index or a
+<root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
+where specs-repo-git §3.5 classifies under specs_git: misrooted). Nothing here writes the working tree, the index or a
 ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it found. Exit 2: it could not
 run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
@@ -42,7 +43,11 @@ def _load_session_branch():
     return module
 
 
-sb = _load_session_branch()
+try:
+    sb = _load_session_branch()
+except Exception as e:  # a missing or broken session-branch.py is "not run" on one line, never a traceback
+    print("specs-git: not run (session-branch.py could not be loaded: %s)" % " ".join(str(e).split()), file=sys.stderr)
+    sys.exit(2)
 NotRun = sb.NotRun
 
 
@@ -185,9 +190,11 @@ def owner_repo(url, resolve_alias=True, ssh_config=None):
     The host is kept save github.com; a non-http(s) host other than github.com is resolved through
     ssh -G first, its alias's HostName taken (ssh.github.com is github.com) — skipped where
     <resolve_alias> is false, as specs-repo-git §2.1's <docs-repo-slug> requires. A slug that is not
-    OWNER/REPO gives owner_repo null. <ssh_config> is passed to ssh as -F (the selftest's)."""
+    OWNER/REPO gives owner_repo null; name is the same derivation unvalidated, null only where the
+    slug is empty — specs-repo-git §2.1's <docs-repo-slug> source, which a gh-only check must not
+    change. <ssh_config> is passed to ssh as -F (the selftest's)."""
     if not url:
-        return {"url": None, "host": None, "slug": None, "owner_repo": None}
+        return {"host": None, "slug": None, "name": None, "owner_repo": None}
     host = re.sub(r"[:/].*$", "", _USER.sub("", _SCHEME.sub("", url, count=1), count=1), count=1)
     slug = _USER.sub("", _SCHEME.sub("", url, count=1), count=1)
     slug = re.sub(r"^[^/:]+(:[0-9]+)?[/:]", "", slug, count=1)
@@ -207,7 +214,9 @@ def owner_repo(url, resolve_alias=True, ssh_config=None):
         elif real:
             host = real
     value = slug if host == "github.com" else "%s/%s" % (host, slug)
-    return {"url": url, "host": host, "slug": slug,
+    # The URL itself is never returned: a remote can carry a credential in its userinfo, which
+    # the host and slug expressions strip and an echoed URL would print into the transcript.
+    return {"host": host, "slug": slug, "name": value if slug else None,
             "owner_repo": value if re.match(r"^[^/]+/[^/]+$", slug) else None}
 
 
@@ -247,8 +256,8 @@ def main():
     p = sub.add_parser("mode")
     p.add_argument("--default", required=True)
     a = ap.parse_args()
-    try:
-        sys.stdout.reconfigure(errors="backslashreplace")
+    try:  # a path comes back as git's -z record gave it, a byte that is no UTF-8 included
+        sys.stdout.reconfigure(encoding="utf-8", errors="surrogateescape")
     except AttributeError:
         pass
     if a.selftest:
@@ -258,12 +267,14 @@ def main():
         return 2
     try:
         if a.cmd == "owner-repo":
-            print(json.dumps(owner_repo_of(a.repo, not a.no_alias), indent=2))
+            print(json.dumps(owner_repo_of(a.repo, not a.no_alias), indent=2, ensure_ascii=False))
             return 0
         if not a.specs:
             raise NotRun("--specs is required")
         top = sb.text(sb.git(a.specs, "rev-parse", "--show-toplevel"))
-        if os.path.realpath(top) != os.path.realpath(a.specs):
+        # branch-merged reads refs and branch-key no repository at all, so both run where
+        # $SPECS_PATH sits below the top level: specs-repo-git §3.5 classifies under misrooted.
+        if a.cmd not in ("branch-merged", "branch-key") and os.path.realpath(top) != os.path.realpath(a.specs):
             raise NotRun("%s is not its repository's top level (%s)" % (a.specs, top))
         result = dispatch(a)
     except (NotRun, OSError) as e:
@@ -272,7 +283,7 @@ def main():
     except Exception as e:  # anything unexpected is "not run" on one line, never a traceback
         print("specs-git: not run (%s: %s)" % (type(e).__name__, " ".join(str(e).split())), file=sys.stderr)
         return 2
-    print(json.dumps(result, indent=2))
+    print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
 
@@ -346,6 +357,7 @@ def selftest():
             got = json.loads(out) if out.strip() else {}
         except ValueError:
             got = {"_stdout": out}
+        got["_raw"] = r.stdout
         got["_rc"] = r.returncode
         got["_err"] = r.stderr.decode("utf-8", "replace")
         return got
@@ -372,7 +384,7 @@ def selftest():
         got = status(r.path)
         check(set(got["artifact"]) == {resume, follow, reg, "dev-workflows-cost/y.md"},
               "status: the artifact list (%r)" % got)
-        check("dev-workflows-cost/x.md" not in got["artifact"] + got["other"],
+        check(not any(p.endswith("/x.md") for p in got["artifact"] + got["other"]),
               "status: a rename's original path is no record of its own (%r)" % got)
         check(set(got["other"]) == {frames, shot, prd, threat}, "status: the other list (%r)" % got)
         check(got["artifact"] == sorted(got["artifact"]) and got["other"] == sorted(got["other"]),
@@ -380,6 +392,8 @@ def selftest():
         got = cli("--specs", r.path, "status")
         check(got["_rc"] == 0 and set(got.get("artifact", [])) == {resume, follow, reg, "dev-workflows-cost/y.md"},
               "status: the CLI prints the same object (%r)" % got)
+        check(resume.encode("utf-8") in got["_raw"],
+              "status: a non-ASCII path is printed as git gave it, never as a \\u escape (%r)" % got["_raw"][:300])
         got = cli("--specs", os.path.join(r.path, "specifications"), "status")
         check(one_not_run_line(got) and "_stdout" not in got and "artifact" not in got,
               "a subdirectory is not the top level: exit 2, one line, no JSON (%r)" % got)
@@ -389,6 +403,14 @@ def selftest():
         check(one_not_run_line(got), "a directory that is no repository: exit 2, one line (%r)" % got)
         got = cli("status")
         check(one_not_run_line(got), "no --specs: exit 2, one line (%r)" % got)
+        lone = os.path.join(tmp, "lone")
+        os.makedirs(lone)
+        shutil.copy(me, os.path.join(lone, "specs-git.py"))
+        rr = subprocess.run([sys.executable, os.path.join(lone, "specs-git.py"), "--specs", r.path, "status"],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        err = rr.stderr.decode("utf-8", "replace").splitlines()
+        check(rr.returncode == 2 and len(err) == 1 and err[0].startswith("specs-git: not run ("),
+              "a missing session-branch.py exits 2 with one line, no traceback (%r)" % rr.stderr)
         got = cli("--specs", r.path, "no-such-subcommand")
         check(one_not_run_line(got), "an unknown subcommand: exit 2, one line (%r)" % got)
 
@@ -489,6 +511,10 @@ def selftest():
               "branch-merged: open work is unmerged")
         got = cli("--specs", r.path, "branch-merged", "--ref", "prd/A-7-x", "--default-ref", "main")
         check(got["_rc"] == 0 and got.get("merged") is False and "test" in got, "branch-merged: the CLI (%r)" % got)
+        r.write("specifications/x.md", "x\n")
+        got = cli("--specs", os.path.join(r.path, "specifications"), "branch-merged", "--ref", "prd/A-7-x", "--default-ref", "main")
+        check(got["_rc"] == 0 and got.get("merged") is False,
+              "branch-merged: runs where $SPECS_PATH is below the top level, as §3.5 does under misrooted (%r)" % got)
         got = cli("--specs", r.path, "branch-merged", "--ref", "prd/no-such", "--default-ref", "main")
         check(one_not_run_line(got), "branch-merged: a ref that does not resolve exits 2 (%r)" % got)
 
@@ -518,6 +544,11 @@ def selftest():
         r = new_repo(tmp, "branch-key")
         got = cli("--specs", r.path, "branch-key", "--branch", "spec/ACME-77-01-x", "--key", "ACME-77", "--key", "ACME-77-01")
         check(got["_rc"] == 0 and got.get("key") == "ACME-77-01", "branch-key: the CLI (%r)" % got)
+        sub_dir = os.path.join(r.path, "specifications")
+        os.makedirs(sub_dir)
+        got = cli("--specs", sub_dir, "branch-key", "--branch", "spec/ACME-77-01-x", "--key", "ACME-77-01")
+        check(got["_rc"] == 0 and got.get("key") == "ACME-77-01",
+              "branch-key: runs where $SPECS_PATH is below the top level (%r)" % got)
         got = cli("--specs", r.path, "branch-key", "--branch", "spec/ACME-77-01-x")
         check(got["_rc"] == 0 and got.get("key") is None, "branch-key: no --key is a keyless run (%r)" % got)
 
@@ -596,6 +627,32 @@ def selftest():
               "push-scope: the session branch's whole change must name session files only (%r)" % got)
         got = cli("--specs", r.path, "push-scope", "--branch", "session/ab", "--session-default-ref", "origin/main")
         check(got["_rc"] == 0 and got.get("in_scope") is False, "push-scope: the CLI (%r)" % got)
+
+        r = with_origin(tmp, "scope-session-2")
+        r.git("switch", "-q", "-c", "session/cd")
+        r.write("specifications/PRD-A-5-x/prd.md", "p\n")
+        bad = r.commit_all("a deliverable, unpushed")
+        got = push_scope(r.path, "session/cd", session_default_ref="origin/main")
+        check(got["base"] is None and got["failed"] == {"sha": bad, "reason": "paths", "path": "specifications/PRD-A-5-x/prd.md"},
+              "push-scope: a never-pushed session branch walks --remotes=origin and fails a deliverable commit (%r)" % got)
+        r.git("switch", "-q", "--orphan", "session/ef")
+        r.write("specifications/PRD-A-6-x/dev-workflows/resume.md", "r\n")
+        r.git("add", "specifications/PRD-A-6-x/dev-workflows/resume.md")
+        r.git("commit", "-q", "-m", "a root commit")
+        root = r.git("rev-parse", "HEAD")
+        got = push_scope(r.path, "session/ef", session_default_ref="origin/main")
+        check(got["failed"] == {"sha": root, "reason": "merge", "path": None}, "push-scope: a root commit fails as merge (%r)" % got)
+
+        r = with_origin(tmp, "scope-session-3")
+        r.git("switch", "-q", "-c", "session/gh")
+        r.write("specifications/PRD-A-7-x/prd.md", "p\n")
+        r.commit_all("a deliverable")
+        r.git("push", "-q", "-u", "origin", "session/gh")
+        r.write("specifications/PRD-A-7-x/dev-workflows/resume.md", "r\n")
+        r.commit_all("session")
+        got = push_scope(r.path, "session/gh", session_default_ref="origin/main")
+        check(got["failed"] == {"sha": None, "reason": "branch-path", "path": "specifications/PRD-A-7-x/prd.md"},
+              "push-scope: branch-path with no merge commit names sha null (%r)" % got)
         got = cli("--specs", r.path, "push-scope", "--branch", "no-such")
         check(one_not_run_line(got), "push-scope: a branch that does not exist exits 2 (%r)" % got)
 
@@ -615,15 +672,25 @@ def selftest():
             cases.append(("git@github-ig.com:acme/repo.git", True, "acme/repo"))
         for url, alias, want in cases:
             got = owner_repo(url, resolve_alias=alias, ssh_config=conf)
-            check(got["owner_repo"] == want and got["url"] == url,
+            check(got["owner_repo"] == want and "url" not in got,
                   "owner-repo: %s (alias %s) gives %r (%r)" % (url, alias, want, got))
+        for url, name in [("https://bitbucket.example.com/scm/proj/docs.git", "bitbucket.example.com/scm/proj/docs"),
+                          ("https://gitlab.example.com/group/sub/docs.git", "gitlab.example.com/group/sub/docs"),
+                          ("/srv/git/docs.git", "//srv/git/docs"),
+                          ("git@github.com:acme/docs.git", "acme/docs"),
+                          ("https://github.com/", None)]:
+            got = owner_repo(url, resolve_alias=False)
+            check(got["name"] == name, "owner-repo: %s's unvalidated derivation, the <docs-repo-slug> source, is %r (%r)"
+                  % (url, name, got))
         r = new_repo(tmp, "owner-none")
         got = cli("owner-repo", "--repo", r.path)
-        check(got["_rc"] == 0 and all(got.get(k) is None for k in ("url", "host", "slug", "owner_repo")),
+        check(got["_rc"] == 0 and all(got.get(k) is None for k in ("host", "slug", "name", "owner_repo")),
               "owner-repo: a repository with no origin gives nulls (%r)" % got)
-        r.git("remote", "add", "origin", "https://github.com/acme/docs.git")
+        r.git("remote", "add", "origin", "https://x-access-token:ghp_FAKE0123@github.com/acme/docs.git")
         got = cli("owner-repo", "--repo", r.path, "--no-alias")
         check(got["_rc"] == 0 and got.get("owner_repo") == "acme/docs", "owner-repo: the CLI (%r)" % got)
+        check(b"ghp_FAKE0123" not in got["_raw"] and b"x-access-token" not in got["_raw"],
+              "owner-repo: a credential in the remote URL is never printed (%r)" % got["_raw"])
         plain = os.path.join(tmp, "plain-owner")
         os.makedirs(plain)
         got = cli("owner-repo", "--repo", plain)
