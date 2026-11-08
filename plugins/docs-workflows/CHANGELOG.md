@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.37.0] — 2026-11-08
+
+`/docs-audit` asks the shared refresh question, and `/document` reads its before and after through one script. Update with `workflows-core` 1.80.0.
+
+### Added
+
+- **`tree-snapshot.py` (LC34, K7).** `/document`'s before-and-after read of the docs tree goes through this plugin's own copy of the script, so an edit to a path with a space, a quote or a non-ASCII character is named exactly and a file a check run created is never reported as the writer's.
+- **`/docs-audit` asks the refresh question (LC33)** through `workflows-core:scan-refresh`.
+
+### Changed
+
+- **Pages.** The `/document` and `/docs-audit` pages describe the read and the question.
+
 ## [1.36.0] — 2026-11-08
 
 `/document` takes a decision a conformance record already holds instead of asking again, and both documentation commands follow one shared rule for it. Update with `workflows-core` 1.79.0 and `dev-workflows` 4.60.0.

@@ -263,7 +263,8 @@ jobs:
 
       - name: Self-test the tree snapshot
         # /implement, /upgrade and /vuln hand off what a run changed by comparing two reads of the
-        # tree. Its failure modes are silent: an agent's edit to a path git quotes or splits goes
+        # tree, and /ready, /conformance, /document and /epics compare two reads around their
+        # maintenance agents' edits. Its failure modes are silent: an agent's edit to a path git quotes or splits goes
         # unreported, and the operator's own edit, or a file a check run created, is handed off as the
         # agent's. Fixtures are throwaway git repositories built at run time.
         run: python3 plugins/workflows-core/scripts/tree-snapshot.py --selftest

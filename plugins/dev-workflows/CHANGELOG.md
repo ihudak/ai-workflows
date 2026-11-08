@@ -5,6 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.61.0] — 2026-11-08
+
+`/design` names a rollback target per workload and plays back what its write adds; `/implement` recommends revising the plan where only the plan's own text conflicts; every many-path before-and-after read goes through one script. Update with `workflows-core` 1.80.0.
+
+### Added
+
+- **`tree-snapshot.py` (LC34, K7).** `/implement`, `/upgrade`, `/vuln`, `/ready` and `/conformance` compare two reads of the tree through it, instead of each command's own `git status` recipe: an agent's edit to a path with a space, a quote or a non-ASCII character is named exactly, and a file a check run created is never handed off as an agent's edit (on `/implement` it keeps its *Delete* option). The script is this plugin's own copy.
+- **`/design` asks the refresh question (LC33)** through `workflows-core:scan-refresh`, and `design-reviewer` and `interface-designer` read at the commit the scan read.
+
+### Fixed
+
+- **`/design` names a rollback target per workload (LC30).** `design-format` asks for the target of each workload, not one for the design.
+- **`/design` plays back what its write adds, and rests a what-changed claim on an unfiltered diff (LC37).** What the writing added to a confirmed section goes to the whole-artifact gate, and a claim that something changed is checked against the whole diff.
+- **`/implement` recommends *Revise the plan* where only the plan's own text conflicts (R1).** A `DEFERRED — plan-conflict` finding that contradicts neither `design.md` nor the specification gets the recommendation; one that also contradicts either asks with no option recommended and says why.
+- **`run-state.py append` refuses an array value (K1).** It exits `2`, writes nothing and names `set` and one value per pair.
+- **"The folder read" is no longer named as an agent's model route (K4)** in `/implement`'s run state and the other commands that said so.
+- **`readiness-reviewer` has a read scope (K5):** the artifacts the brief and `derived_phase` name and the `dev-workflows/` bookkeeping, nothing in a code repository; a fact only a code repository would show is reported as unverified.
+- **Pages.** The `/design`, `/implement`, `/ready`, `/conformance` and Agents pages describe each change.
+
 ## [4.60.0] — 2026-11-08
 
 `/ready` places a PRD at the optional *Delivery verified* stage once the PE's PRD conformance record is settled on the default branch and no work was implemented after it, and the record says what it left untraced. Update with `workflows-core` 1.79.0 and `docs-workflows` 1.36.0.
