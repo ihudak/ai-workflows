@@ -117,8 +117,7 @@ flowchart TD
     createprd -->|"prd.md"| epics
     createprd -->|"prd.md"| specify
     createprd -.->|"prd.md"| rnearly
-    createprd -.->|"idea route — the PRD folder, at any readiness"| prdproposal
-    splitroot -.->|"BRD route — each slice, at any readiness"| prdproposal
+    createprd -.->|"prd.md, once on the default branch — an idea-route PRD or a BRD slice"| prdproposal
     prdproposal -->|"BRD route — each slice's proposal.md, rolled up for the BRD"| brdproposal
     createard -.->|"ard.md"| epics
     epics -->|"epic.md"| specify
@@ -134,7 +133,7 @@ flowchart TD
     design -->|"design.md"| implement
     design -.->|"design.md + specification.md"| ready
     ready -.->|"_readiness.md — advisory"| implement
-    implement -->|"code + implementation.md — every Epic merged"| document
+    implement -->|"code + implementation.md — every Epic merged, after the PE's PRD run"| document
     implement -->|"Epic: the Dev, before its pull request merges"| conformanceepic
     conformanceepic -.->|"fix the code — a follow-up"| implement
     conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd

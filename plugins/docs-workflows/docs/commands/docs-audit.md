@@ -42,7 +42,7 @@ flowchart TD
     d0 -.->|"Cancel — no backlog written"| p6
     d0 -->|"no, or Treat this as a --refresh run"| p1["Phase 1 — Model routing: SIGNIFICANT, review pinned to Opus"]
     p1 --> p2["Phase 2 — Scan: one code-scanner @Sonnet per repository, capped at 4; one narrow second round for an inconclusive theme"]
-    p2 -.->|"Cancel at a scan escalation: a dirty tree, a missing repository, a blocked refresh"| p6
+    p2 -.->|"Cancel at a scan escalation: a dirty tree, a missing repository, a blocked refresh, a stale or diverged read-only mount"| p6
     p2 --> p25["Phase 2.5 — The specs-tree read: the decision and release surfaces"]
     p25 --> p3["Phase 3 — Enumerate surfaces: docs-auditor @Sonnet"]
     p3 -.->|"NO_SURFACES — no backlog written, or DOCS_AUDIT_AUDITOR_INPUT_MISSING"| p6

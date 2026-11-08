@@ -1,6 +1,6 @@
 # Getting started
 
-This page takes you from zero to your first successful run — install the plugin, set the environment variables it reads, install the status line, and run [`/design`](commands/design.md) end to end. Once you have done this once, [Workflow overview](workflow.md) shows the whole pipeline and [Roles and phases](roles-and-phases.md) says what your role owns at each step.
+This page takes you from zero to your first successful run — install the plugin, set the environment variables it reads, install the status line, run [`/design`](commands/design.md) end to end, and then a first [`/implement`](commands/implement.md) on the design it lands. Once you have done this once, [Workflow overview](workflow.md) shows the whole pipeline and [Roles and phases](roles-and-phases.md) says what your role owns at each step.
 
 ## Install
 
@@ -35,7 +35,7 @@ claude plugin update dev-workflows@shipwright
 
 ## What you set on your machine
 
-`dev-workflows` reads four environment variables, and this page lists a fifth, `DOCS_PATH`, only to say the plugin never touches it. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the other three are optional, and each behaves differently when it is missing. `REPOS_PATH` falls back to `/workspace`; where no entry of it exists, [`/design`](commands/design.md) asks you to set it or cancel. An unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off, with a line naming the variable. `GIT_USER_INITIALS` fills the name-or-initials part of a branch name where a repository's convention has one, and the whole branch prefix where the repository documents no convention at all.
+`dev-workflows` reads four environment variables, and this page lists a fifth, `DOCS_PATH`, only to say the plugin never touches it. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the other three are optional, and each behaves differently when it is missing. `REPOS_PATH` falls back to `/workspace`; where no entry of it exists, [`/design`](commands/design.md) asks you to set it or cancel. An unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off, with a line naming the variable. `GIT_USER_INITIALS` fills the name-or-initials part of a branch name where a repository's convention has one, and the whole branch prefix where the repository documents no convention at all; unset, with neither `git config user.initials` nor the repository's existing branch names to supply an identifier, a run that creates a branch asks you for a prefix or your initials before it creates it; and where your specs repository's default branch takes no push from the plugin, so its session files go to a branch named after you, a run with no identifier commits none of them, its `Specs repo:` line naming the variable to set.
 
 ### `SPECS_PATH`
 

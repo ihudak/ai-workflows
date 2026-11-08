@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.11] — 2026-11-08
+
+Docs only: follow-up to batches B33 and B34. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **Getting started and the environment page name `GIT_USER_INITIALS`.** The plugin reads only `SPECS_PATH` itself, but where the specs repository takes no direct push, `workflows-core` names your session branch from `GIT_USER_INITIALS`, and with no identifier a run commits none of its session files; the pages said one variable was all there was.
+
 ## [0.10.10] — 2026-11-08
 
 User pages only: batch B35. Update with `workflows-core` 1.78.14.

@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.8] — 2026-11-08
+
+Follow-up to batches B33 and B34. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **`/create-prd`, `/update-prd` and `/specify` say what `/epics` gates**: `<PRD-dir>/specification.md` and the PRD-level ARD, neither of which the run writes. They said it gated the specification alone.
+- **The workflow diagrams draw the offers B34 left out.** `/implement`'s of the PE's PRD conformance run and the Epic scan, with the docs edge waiting on the PE's PRD run; on the BRD page, `/create-prd`'s of `/create-ard` and `/specify` and `/create-ard`'s of `/specify`; and `/release-notes`' hand-back to `/create-ard` or `/epics`. The edges into `/prd-proposal` from `/brd-split` and `/create-prd`, neither of which offers it, are gone, and `/brd-reconcile`'s says the slice is priced once its `prd.md` is on the default branch.
+- **Getting started.** `/brd-intake` reads only the markdown and image files a document links; three commands stop on a specs directory that is not a git repository; the BRD walkthrough names `/prd-ground` as the step that waits on the split's merge; and `GIT_USER_INITIALS` is named for `/promote-decisions` and session branches, here and on the environment page.
+- **Command pages and tables.** `/update-prd`'s recommended reruns, `/brd-reconcile`'s and `/brd-interview`'s next steps, the ARD-consumers paragraph, the four amend commands' links and the roles table's PE row.
+
 ## [3.78.7] — 2026-11-08
 
 Every command now ends each stop through its terminal commit: batch B35. Needs nothing from the other plugins' releases.

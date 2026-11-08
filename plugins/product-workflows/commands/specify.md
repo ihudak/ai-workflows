@@ -242,8 +242,8 @@ nothing.
        not a directory to make:
        `SPECIFY_EPIC_NOT_FOUND: no Epic folder for <EPIC> under <the resolved PRD dir> — an EPIC- folder is created by /product-workflows:epics and by no other command. Run '/product-workflows:epics <PRD>' to draft this PRD's Epics, then re-run '/product-workflows:specify <EPIC>'.`
        That remedy runs in the state this stop reports: `/product-workflows:epics` takes the PRD address
-       this step already resolved, and gates only `<PRD-dir>/specification.md` — a file this run has
-       not written.
+       this step already resolved, and gates no file this run has written — its gates are
+       `<PRD-dir>/specification.md` and the PRD-level ARD, and this run has written neither.
      - `focus_key` null → the item is a **PRD** for which the broad-PRD-spec choice is made
        (Phase 2, Step A) → `specifications/<PRD>-<vslug>/specification.md` — flat at the PRD-dir level, no
        per-Epic subfolder; the feature folder is the PRD dir itself. **This is now the only

@@ -34,7 +34,8 @@ flowchart TD
     p4 --> d4{"Anything to write?"}
     d4 -->|"a new profile, or Apply the diff"| p5["Phase 5 — Write as a reviewable PR: branch, profile and CLAUDE.md additions, format, commit, and the PR draft on a standalone run — never pushed"]
     d4 -.->|"Keep existing, write nothing — or the diff lists no change"| mode{"Standalone or --inline?"}
-    p5 -.->|"Cancel at the dirty-tree question"| halt
+    p5 -.->|"standalone: Cancel at the dirty-tree question, or at its re-offer after a failed pull"| halt
+    p5 -.->|"--inline: the same Cancel — /document stops, naming any stash and the branch to go back to"| ret
     p5 --> mode
     mode -->|"standalone"| p6["Phase 6 — Final report"]
     mode -->|"--inline, from /document"| ret["Back to /document, which reports — the branch and commit where Phase 5 made one, any stash record, the fixed-port and command-defect lists"]
@@ -57,6 +58,8 @@ The report also lists the dev-server commands that break the schema's field rule
 ## Gates
 
 No reviewer agent, and no Opus review gate in the code-review sense — every checkpoint here is a user confirmation rather than an automated review: whether to proceed at all when no docs-repo signal is detected (Phase 0), each field the synthesis flagged as unconfirmed plus a field-level diff before overwriting an existing profile (Phase 4), and the branch name and a dirty working tree before anything is written (Phase 5). Nothing downstream re-reviews the profile once written.
+
+**A Cancel at the dirty-tree question writes nothing and commits nothing.** The question is asked again where the pull that brings the default branch up to date fails, and by then the run has already switched the repository to that branch: a Cancel there leaves it on the default branch, and the run names the branch you were on and the command that switches back. A stash you chose is never applied, and is named with the commands that restore it. A standalone run says all of this in its report; run inline, it hands it back to [`/document`](document.md), which stops with `PROFILE_REQUIRED` and says it there.
 
 ## Example
 

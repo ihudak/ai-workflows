@@ -45,6 +45,8 @@ flowchart TD
     end
 
     createvi -->|prd.md| createard
+    rnpm -.->|"an earlier phase still pending — hand to PA"| createard
+    rnpm -.->|"an earlier phase still pending — hand to PE"| epics
     createard -.->|merged ARD| harvest
     harvest -.->|team decisions| createard
     harvest -.->|team decisions| specify
@@ -73,6 +75,8 @@ flowchart TD
     conformanceepic -.->|"fix the code — a follow-up"| implement
     conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd
     conformanceepic -.->|"Epic: then the security scan, in security-workflows"| secplugin["/security-workflows:scan — an Epic, before its pull request merges"]:::sec
+    implement -.->|"each Epic, after its conformance check — before its pull request merges"| secplugin
+    implement -.->|"every Epic implemented and merged — the PE's PRD run"| conformanceprd
     secplugin -.->|"fix — a follow-up, on the Epic's branch"| implement
     secplugin -.->|"nothing to fix — after the merge, every Epic merged: the PE's PRD run"| conformanceprd
     conformanceprd -.->|"fix the code — a follow-up"| implement
@@ -85,15 +89,13 @@ flowchart TD
     groundbrd -->|"verified [CG#n]/[DG#n] — required before the walk"| brdsplitslice
     createvi -.->|"idea route only — optional, PRD's own [AC#n]/[FR#n]"| groundprd
     groundprd -.->|"a claim came back CONFIRMED — recommended"| updatevi
-    createvi -.->|"idea route — the PRD folder, at any readiness"| prdproposal
-    brdsplitroot -.->|"BRD route — each slice, a PRD- folder, at any readiness"| prdproposal
     prdproposal -->|"BRD route — each included slice's proposal.md, rolled up for the BRD"| brdproposal
     prdproposal -.->|"tier 2 — raise the tier, then re-price"| createard
     prdproposal -.->|"tier 3 — raise the tier, then re-price"| specify
     brdproposal -.->|"a slice stale or excluded — re-price it"| prdproposal
     createard -.->|"a prd.md — price against the ARD"| prdproposal
     specify -.->|"a prd.md — price against the specification"| prdproposal
-    brdreconcile -.->|"a [CD#n] frozen — re-price the slice"| prdproposal
+    brdreconcile -.->|"a [CD#n] frozen — price the slice once its prd.md is on the default branch"| prdproposal
     createard -.->|"no prd.md — author the PRD"| createvi
     specify -.->|"no prd.md — author the PRD"| createvi
     createard -.->|"BRD slice, no prd.md — a row still unallocated"| brdsplitslice
@@ -107,7 +109,7 @@ flowchart TD
     brdreview -->|answers come back as one file| brdreconcile
     brdreconcile -.->|"a decision reopened, a question askable again, or a dependent slice to re-decide"| brdinterview
     brdreconcile -.->|questions still held for the customer| brdpackage
-    brdreconcile -.->|"the review challenged a code claim — --rebaseline"| groundbrd
+    brdreconcile -.->|"the review challenged a code claim — --rebaseline, or a question needing grounding before its round resumes"| groundbrd
     brdinterview -.->|"a question no finding bears on yet, or a --rebaseline"| groundbrd
     brdreconcile -->|slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here| createvi
     brdreconcile -->|slice key + the BRD route — nothing left to re-enter for| createard
@@ -115,7 +117,7 @@ flowchart TD
     brdinterview -.->|nothing for the customer to review, PRD-eligible — no reconciliation needed| createvi
     brdinterview -.->|nothing for the customer to review — no reconciliation needed| createard
     brdinterview -.->|nothing for the customer to review — no reconciliation needed| specify
-    implement -.->|"code + implementation.md, in docs-workflows — every Epic merged"| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs
+    implement -.->|"code + implementation.md, in docs-workflows — every Epic merged, after the PE's PRD run"| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs
     conformanceprd -.->|"once settled, in docs-workflows"| docsplugin
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
@@ -127,7 +129,7 @@ flowchart TD
     class idea,brdintake entry
 ```
 
-The diagram draws the ARD reaching [`/epics`](commands/epics.md), and an Epic-level ARD reaching `/dev-workflows:design`, but those are two of five consumers: `/epics`, `/specify`, and the companion `dev-workflows` plugin's `/dev-workflows:design`, `/dev-workflows:implement`, and `/dev-workflows:ready` all resolve the applicable ARD once it exists. The edges are drawn sparingly to keep the diagram readable, not because the others do not consult it. Accepted organisation ADRs also ground `/specify` and `/dev-workflows:design`; the knowledge-base loop is drawn in [Architecture knowledge base](#architecture-knowledge-base).
+The diagram draws the ARD reaching [`/epics`](commands/epics.md) and `/specify`, and an Epic-level ARD reaching `/dev-workflows:design`, because `/create-ard` offers each of them. More commands than those three read it: `/epics`, `/specify` and `/update-spec` here, and the companion `dev-workflows` plugin's `/dev-workflows:design`, `/dev-workflows:implement`, `/dev-workflows:ready` and `/dev-workflows:conformance`, all resolve the applicable ARD once it exists. The rest read it without `/create-ard` offering them, and the diagram draws offers, not reads. Accepted organisation ADRs also ground `/specify` and `/dev-workflows:design`; the knowledge-base loop is drawn in [Architecture knowledge base](#architecture-knowledge-base).
 
 The dashed return paths from [`/update-prd`](commands/update-prd.md) refresh existing downstream artifacts, not artifacts that have never been authored. A changed requirement that invalidates one makes its rerun recommended; otherwise the existing artifact's rerun remains optional.
 
@@ -139,9 +141,9 @@ The BRD-to-PRD route hands over at [`/brd-reconcile`](commands/brd-reconcile.md)
 
 The `Off-platform` box is the one node in this diagram no command runs. It is the customer reviewing the bundle [`/brd-package`](commands/brd-package.md) built, with a vanilla agent and nothing installed, and the route waits there — which is why `/brd-reconcile` runs only once somebody says which file is the answer — by passing its path, or by confirming the one the customer's merged pull request committed beside the bundle.
 
-The three dashed re-entry edges leaving `/brd-reconcile` go to different commands on purpose, and are drawn separately rather than merged under one label: a decision the review reopened is settled by another interview round; a question the customer left unanswered goes back out in the next package — unless it was raised only about the defects of a requirement the customer withdrew and carries no decision of its own, which closes it; and a code claim the review challenged leaves a finding that only a `/prd-ground --rebaseline` pass re-derives. The fourth re-entry, `/brd-reconcile` again on the same review, is the command offering itself, so it is not drawn. Every BRD-route edge in [BRD workflow](brd-workflow.md) appears here in the same style, including the authoring alternatives from both `/brd-reconcile` and `/brd-interview`, and the edges from `/create-ard` and `/specify` back into the route. `/brd-reconcile`'s fourth dashed edge, into `/prd-proposal`, is not a re-entry: a run that froze a customer decision names it, because that decision can change the slice's price. The labels agree except on the edge from the root's `/brd-split` into `/prd-ground`, which names the slice's claimed `[BR#n]` rows here and its folder kind there.
+The three dashed re-entry edges leaving `/brd-reconcile` go to different commands on purpose, and are drawn separately rather than merged under one label: a decision the review reopened is settled by another interview round; a question the customer left unanswered goes back out in the next package — unless it was raised only about the defects of a requirement the customer withdrew and carries no decision of its own, which closes it; and a code claim the review challenged leaves a finding that only a `/prd-ground --rebaseline` pass re-derives — the same edge carries the plain `/prd-ground` run named before another interview round, where the round it resumes holds a question that needs grounding. The fourth re-entry, `/brd-reconcile` again on the same review, is the command offering itself, so it is not drawn. Every BRD-route edge in [BRD workflow](brd-workflow.md) appears here in the same style, including the authoring alternatives from both `/brd-reconcile` and `/brd-interview`, and the edges from `/create-ard` and `/specify` back into the route. `/brd-reconcile`'s fourth dashed edge, into `/prd-proposal`, is not a re-entry: a run that froze a customer decision names it, because that decision can change the slice's price, and names it as pricing the slice once its `prd.md` is on the default branch — after `/create-prd`, where the slice holds none yet, which is the ordinary state there, since `/prd-proposal` stops on a folder with no PRD. The labels agree except on the edge from the root's `/brd-split` into `/prd-ground`, which names the slice's claimed `[BR#n]` rows here and its folder kind there.
 
-Eight nodes in the diagram are not this plugin's commands and are drawn for continuity only: `/dev-workflows:design`, `/dev-workflows:implement`, and `/dev-workflows:ready` — where this plugin's spine hands off — and `/dev-workflows:conformance`, drawn once per role, whose PRD run sends a decision to amend a document to the command that revises the document holding the requirement — [`/update-spec`](commands/update-spec.md), `/update-prd`, `/epics` or `/create-ard`; `/security-workflows:scan`, which the Dev runs on each Epic after its `/dev-workflows:conformance` and before its pull request merges — a finding it marks fix goes back to `/dev-workflows:implement`, which continues on the Epic's branch, and where nothing is to fix the PE's PRD-level `/dev-workflows:conformance` follows once every Epic has merged; plus `/docs-workflows:release-notes` as the PM's PRD-driven draft or refresh and the combined `/docs-workflows:document · /docs-workflows:release-notes` node, which reads what `/dev-workflows:implement` recorded and which the PE's PRD-level `/dev-workflows:conformance` offers once every Epic has merged and its decisions are settled. `/dev-workflows:design`, `/dev-workflows:implement`, `/dev-workflows:ready` and `/dev-workflows:conformance` ship in the companion `dev-workflows` plugin; `/security-workflows:scan` in the companion `security-workflows` plugin; `/docs-workflows:document` and `/docs-workflows:release-notes` in the companion `docs-workflows` plugin. All are documented there, not here.
+Eight nodes in the diagram are not this plugin's commands and are drawn for continuity only: `/dev-workflows:design`, `/dev-workflows:implement`, and `/dev-workflows:ready` — where this plugin's spine hands off — and `/dev-workflows:conformance`, drawn once per role, whose PRD run, for a decision to amend a document, writes a note on the document holding the requirement and recommends the command that revises it — [`/update-spec`](commands/update-spec.md), [`/update-prd`](commands/update-prd.md), [`/epics`](commands/epics.md) or [`/create-ard`](commands/create-ard.md); `/security-workflows:scan`, which the Dev runs on each Epic after its `/dev-workflows:conformance` and before its pull request merges — a finding it marks fix goes back to `/dev-workflows:implement`, which continues on the Epic's branch, and where nothing is to fix the PE's PRD-level `/dev-workflows:conformance` follows once every Epic has merged; plus `/docs-workflows:release-notes` as the PM's PRD-driven draft or refresh, which hands on to `/create-ard` or `/epics` where an earlier phase is still pending, and the combined `/docs-workflows:document · /docs-workflows:release-notes` node, which reads what `/dev-workflows:implement` recorded. Two commands offer that node once every Epic has merged: `/dev-workflows:implement`, which names it next after the PE's PRD-level `/dev-workflows:conformance`, and that PRD run itself, once its decisions are settled. `/dev-workflows:design`, `/dev-workflows:implement`, `/dev-workflows:ready` and `/dev-workflows:conformance` ship in the companion `dev-workflows` plugin; `/security-workflows:scan` in the companion `security-workflows` plugin; `/docs-workflows:document` and `/docs-workflows:release-notes` in the companion `docs-workflows` plugin. All are documented there, not here.
 
 The diagram above shows where each command sits in the pipeline; [Roles and phases](roles-and-phases.md) says what each role is accountable for and what it hands over at each seam.
 
@@ -206,7 +208,7 @@ The three edges leaving `/brd-reconcile` into the PRD pipeline, as each command'
 | **PM** | `/idea`, `/create-prd`, `/update-prd` (and an early `/docs-workflows:release-notes`); also `/brd-intake`, `/brd-split`, `/prd-ground` (either route), `/brd-interview`, `/brd-package`, `/brd-reconcile` | `idea.md`, then the PRD, in `$SPECS_PATH/specifications/PRD-<KEY>-<slug>/`; on the BRD route, the inventory, ledger, grounding findings, decision register, customer package and reconciliation record |
 | **PM** *(effort proposals — optional, gates nothing on the build ladder)* | [`/prd-proposal`](commands/prd-proposal.md), [`/brd-proposal`](commands/brd-proposal.md) | `proposal.md` and its rationale brief: in the `PRD-` slice folder for one slice, and in the `BRD-` container above a set of priced slices for the programme umbrella |
 | **PA** *(optional)* | `/create-ard`, then `/harvest-decisions` once ARDs have merged, and `/promote-decisions` inside the architecture repository; `/prd-ground` where the PM cannot clone the code repositories | the ARD, in the same specs feature folder as the PRD; the team's decision records under `$SPECS_PATH/architecture/`; proposed organisation ADRs on a pull request in the architecture repository |
-| **PE** | `/epics`, `/specify`, `/update-spec`; once every Epic has merged, `/dev-workflows:conformance <PRD-KEY>`; `/prd-ground` where the PM cannot clone the code repositories | `epic.md` per `EPIC-` folder under the PRD folder; `specification.md` in the PRD folder (PRD-level) or in each `EPIC-` folder — each on the specs repo's default branch; the PRD-level `_conformance.md` |
+| **PE** | `/epics`, `/specify`, `/update-spec`; once every Epic has merged, `/dev-workflows:conformance <PRD-KEY>`; `/prd-ground` where the PM cannot clone the code repositories | `epic.md` per `EPIC-` folder, `_coverage.md` in the PRD folder, `specification.md` there (PRD-level) or per `EPIC-` folder — each on the specs repo's default branch; the PRD-level `_conformance.md` |
 
 See [Roles and phases](roles-and-phases.md) for what each role owns, consumes, and hands off — this table only shows where the commands sit. The Dev role, downstream of this plugin's spine, is documented on the companion `dev-workflows` plugin's own Roles and phases page.
 
