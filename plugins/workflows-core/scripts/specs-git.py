@@ -65,6 +65,46 @@ def status(root):
     return {"artifact": sorted(artifact), "other": sorted(other)}
 
 
+def _commit(root, ref):
+    """The commit <ref> names, or NotRun where it names none."""
+    r = sb.git(root, "rev-parse", "--verify", "--quiet", ref + "^{commit}", check=False)
+    if r.returncode != 0:
+        raise NotRun("%s does not resolve to a commit" % ref)
+    return sb.text(r)
+
+
+def _patch_id(root, diff):
+    """The first field of git patch-id --stable over <diff>, or None for a diff with no patch id."""
+    out = sb.text(sb.git(root, "patch-id", "--stable", data=diff))
+    return out.split()[0] if out else None
+
+
+def branch_merged(root, ref, default_ref):
+    """specs-repo-git §3.5's branch-merged: whether the work on <ref> is on <default_ref>. The first
+    of the four tests that holds answers merged, with its number; none holding answers unmerged."""
+    _commit(root, default_ref)
+    _commit(root, ref)
+    if sb.git(root, "merge-base", "--is-ancestor", ref, default_ref, check=False).returncode == 0:
+        return {"merged": True, "test": 1}
+    cherry = sb.text(sb.git(root, "cherry", default_ref, ref)).splitlines()
+    merges = sb.text(sb.git(root, "rev-list", "--merges", "%s..%s" % (default_ref, ref)))
+    if cherry and all(line.startswith("-") for line in cherry) and not merges:
+        return {"merged": True, "test": 2}
+    base = sb.text(sb.git(root, "merge-base", ref, default_ref))
+    whole = _patch_id(root, sb.git(root, "diff", "--no-renames", base, ref).stdout)
+    if whole:
+        since = sb.text(sb.git(root, "patch-id", "--stable", data=sb.git(
+            root, "log", "-p", "--no-renames", "--no-merges", "%s..%s" % (base, default_ref)).stdout))
+        if whole in (line.split()[0] for line in since.splitlines() if line.strip()):
+            return {"merged": True, "test": 3}
+    if sb.git(root, "diff", "--quiet", base, ref, check=False).returncode == 1:
+        tree = sb.git(root, "merge-tree", "--write-tree", default_ref, ref, check=False)
+        lines = sb.text(tree).splitlines()
+        if tree.returncode == 0 and lines and lines[0] == sb.text(sb.git(root, "rev-parse", default_ref + "^{tree}")):
+            return {"merged": True, "test": 4}
+    return {"merged": False, "test": None}
+
+
 class Parser(argparse.ArgumentParser):
     """A usage error is one "not run" line, as every exit 2 is."""
 
@@ -79,6 +119,9 @@ def main():
     ap.add_argument("--selftest", action="store_true", help="run the built-in fixtures and exit")
     sub = ap.add_subparsers(dest="cmd")
     sub.add_parser("status")
+    p = sub.add_parser("branch-merged")
+    p.add_argument("--ref", required=True)
+    p.add_argument("--default-ref", required=True)
     a = ap.parse_args()
     try:
         sys.stdout.reconfigure(errors="backslashreplace")
@@ -109,6 +152,8 @@ def main():
 def dispatch(a):
     if a.cmd == "status":
         return status(a.specs)
+    if a.cmd == "branch-merged":
+        return branch_merged(a.specs, a.ref, a.default_ref)
     raise NotRun("unknown subcommand %s" % a.cmd)
 
 
@@ -214,9 +259,110 @@ def selftest():
         got = cli("--specs", r.path, "no-such-subcommand")
         check(one_not_run_line(got), "an unknown subcommand: exit 2, one line (%r)" % got)
 
+    def lines30(changes=None):
+        rows = ["line %02d\n" % n for n in range(1, 31)]
+        for n, body in (changes or {}).items():
+            rows[n - 1] = body
+        return "".join(rows)
+
+    def scenarios_branch_merged(tmp):
+        def case(name):
+            r = new_repo(tmp, "merged-" + name)
+            r.write("f.txt", lines30())
+            r.commit_all("thirty lines")
+            return r
+
+        r = case("ff")
+        r.git("switch", "-q", "-c", "prd/A-1-x")
+        r.write("a.md", "a\n")
+        r.commit_all("a")
+        r.git("switch", "-q", "main")
+        r.git("merge", "-q", "--ff-only", "prd/A-1-x")
+        check(branch_merged(r.path, "prd/A-1-x", "main") == {"merged": True, "test": 1},
+              "branch-merged: a fast-forward is test 1")
+
+        r = case("rebase")
+        r.git("switch", "-q", "-c", "prd/A-2-x")
+        r.write("a.md", "a\n")
+        c1 = r.commit_all("a")
+        r.write("b.md", "b\n")
+        c2 = r.commit_all("b")
+        r.git("switch", "-q", "main")
+        r.write("other.md", "o\n")
+        r.commit_all("other")
+        r.git("cherry-pick", c1, c2)
+        check(branch_merged(r.path, "prd/A-2-x", "main") == {"merged": True, "test": 2},
+              "branch-merged: a rebase merge is test 2 (%r)" % branch_merged(r.path, "prd/A-2-x", "main"))
+
+        r = case("evil-merge")
+        r.git("switch", "-q", "-c", "side")
+        r.write("s.md", "s\n")
+        s1 = r.commit_all("side")
+        r.git("switch", "-q", "main")
+        r.git("switch", "-q", "-c", "prd/A-3-x")
+        r.git("merge", "-q", "--no-ff", "--no-commit", "side")
+        r.write("extra.md", "the branch's own change, inside the merge commit\n")
+        r.git("add", "extra.md")
+        r.git("commit", "-q", "-m", "merge side, with a change of its own")
+        r.git("switch", "-q", "main")
+        r.git("cherry-pick", s1)
+        got = branch_merged(r.path, "prd/A-3-x", "main")
+        check(got == {"merged": False, "test": None},
+              "branch-merged: a change of its own inside a merge commit is not merged by test 2 (%r)" % got)
+
+        r = case("squash")
+        r.git("switch", "-q", "-c", "prd/A-4-x")
+        r.write("a.md", "a\n")
+        r.commit_all("a")
+        r.write("b.md", "b\n")
+        r.commit_all("b")
+        r.git("switch", "-q", "main")
+        r.git("merge", "-q", "--squash", "prd/A-4-x")
+        r.git("commit", "-q", "-m", "squash")
+        r.write("specifications/PRD-A-4-x/dev-workflows/resume.md", "dirty\n")
+        check(branch_merged(r.path, "prd/A-4-x", "main") == {"merged": True, "test": 3},
+              "branch-merged: a squash merge is test 3, with a dirty session file in the tree (GIT-B2) (%r)"
+              % branch_merged(r.path, "prd/A-4-x", "main"))
+
+        r = case("drift")
+        r.git("switch", "-q", "-c", "prd/A-5-x")
+        r.write("f.txt", lines30({10: "branch line 10\n"}))
+        r.commit_all("line 10")
+        r.git("switch", "-q", "main")
+        r.write("f.txt", lines30({12: "main line 12\n"}))
+        r.commit_all("line 12")
+        check(branch_merged(r.path, "prd/A-5-x", "main") == {"merged": False, "test": None},
+              "branch-merged: before its squash the drifted branch is unmerged")
+        r.git("merge", "-q", "--squash", "prd/A-5-x")
+        r.git("commit", "-q", "-m", "squash line 10")
+        got = branch_merged(r.path, "prd/A-5-x", "main")
+        check(got == {"merged": True, "test": 4}, "branch-merged: GIT-B1's drifted squash is test 4 (%r)" % got)
+
+        r = case("empty")
+        r.git("switch", "-q", "-c", "prd/A-6-x")
+        check(branch_merged(r.path, "prd/A-6-x", "main") == {"merged": True, "test": 1},
+              "branch-merged: a branch with no commit of its own is test 1")
+        r.git("commit", "-q", "--allow-empty", "-m", "nothing")
+        r.git("switch", "-q", "main")
+        got = branch_merged(r.path, "prd/A-6-x", "main")
+        check(got == {"merged": False, "test": None}, "branch-merged: an empty change is never merged by 3 or 4 (%r)" % got)
+
+        r = case("open")
+        r.git("switch", "-q", "-c", "prd/A-7-x")
+        r.write("a.md", "a\n")
+        r.commit_all("a")
+        r.git("switch", "-q", "main")
+        check(branch_merged(r.path, "prd/A-7-x", "main") == {"merged": False, "test": None},
+              "branch-merged: open work is unmerged")
+        got = cli("--specs", r.path, "branch-merged", "--ref", "prd/A-7-x", "--default-ref", "main")
+        check(got["_rc"] == 0 and got.get("merged") is False and "test" in got, "branch-merged: the CLI (%r)" % got)
+        got = cli("--specs", r.path, "branch-merged", "--ref", "prd/no-such", "--default-ref", "main")
+        check(one_not_run_line(got), "branch-merged: a ref that does not resolve exits 2 (%r)" % got)
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
+            scenarios_branch_merged(tmp)
 
     try:
         scenarios()
