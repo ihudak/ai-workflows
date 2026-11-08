@@ -3,13 +3,13 @@
 This document is the **single source of truth** for one of the most important
 rules in the workflow plugin family:
 
-> **Verify against the implementation; escalate every discrepancy to the user.**
+> **Verify against the implementation; escalate every discrepancy to the user, save one a conformance record already decides.**
 > The source code is what customers will use. PRDs, design specs,
 > and prose descriptions are the *starting point*, not the *spec* — they may
 > be outdated, aspirational, simplified, or wrong. Every user-visible claim in
 > generated documentation MUST be verified against the implementation, and
 > every disagreement between the description and the source MUST be surfaced
-> to the user for an explicit decision. **The plugin is the analyst; the user
+> to the user for an explicit decision — or, where a person already decided it in a conformance record, report that decision (§7.8). **The plugin is the analyst; the user
 > is the decision-maker.**
 > The plugin never silently picks a winner; where a person already picked one in a conformance record, it takes that pick and says so (§7.8).
 

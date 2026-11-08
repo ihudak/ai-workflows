@@ -136,6 +136,8 @@ The first items here were found by the 2026-10-15 review or its re-review (line 
 
   Design what each writer records, and how `/ready` reads it, before changing the derivation. Until then the derivation stops at *Implementation*, or at the optional rung, by design (A5).
 
+- **D50 — known limit: `/ready` cannot order same-day work against the conformance record.** Found by the `/conformance` Plan 2 final review (2026-11-08), which added the reach test's sixth condition (`docs/superpowers/specs/2026-10-12-conformance-design.md`, *Plan 2 amendments*, A13): `/dev-workflows:ready` Phase 1 step 2b leaves a PRD short of *Delivery verified* where an `implementation.md` block in the PRD's tree is dated later than the PRD record's `Run:` date. The record's `- **Run:**` line (`dev-workflows:conformance-format` §2) and a block's `## <YYYY-MM-DD> — /implement` heading (`workflows-core:implementation-format` §1) carry a date and no time, so a block dated the record's own day is not counted: work implemented after the PE's run on the same day leaves the PRD at *Delivery verified*. What would close it: a time on both the `Run:` line and the block heading, each a format with readers of its own; or comparing the commits the record traced (`Code checked:`) with each block's `commit:`, which needs a code repository, and `/ready`'s presence-only rule forbids reading one.
+
 ## From lean context D — any machine
 
 Found while D was built and run (`docs/superpowers/verification/2026-10-22-lean-context-handoff-part.md` §7).

@@ -11,7 +11,7 @@ Docs only. Update with `dev-workflows` 4.60.0, whose `/ready` the page now descr
 
 ### Changed
 
-- **The workflow diagram draws `/dev-workflows:ready` reading the PE's PRD conformance record and offering the PE's PRD run**, and the page's prose and *Sources of truth* say that the optional *Delivery verified* stage is read from that record on the specs repo's default branch alone.
+- **The workflow diagram draws `/dev-workflows:ready` reading the PE's PRD conformance record and offering the PE's PRD run**, and the page's prose and *Sources of truth* say that the optional *Delivery verified* stage is read from that record, taken from the specs repo's default branch, and from the dates of the implementation records, since work implemented after the record leaves the stage unreached. The prose also names the diagram's read edges, the grounding edges and that record's, where it said the diagram draws offers alone.
 
 ## [3.78.9] — 2026-11-08
 
