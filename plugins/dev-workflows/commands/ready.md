@@ -94,7 +94,13 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
     Validate it against `${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`'s ladder for the
     altitude step 1 placed the folder at — never for the resolved `kind`, which on a slice is `brd`;
     an unrecognised value is **re-prompted with the ladder shown**, never coerced to the nearest
-    match.
+    match. **An optional rung is recognised by its name with or without its `(optional)` suffix**:
+    `Delivery verified` and `Delivery verified (optional)` both name the PRD ladder's optional rung
+    and neither is re-prompted — the suffix marks the rung on the ladder and is not part of what an
+    operator has to type. Nothing else is read more loosely: every other value is validated as the
+    ladder writes it, so a suffix on a mandatory rung's name (`Release Preparation (optional)`) is
+    still unrecognised. The value is reported verbatim wherever the run reports it; Phase 3(0)
+    compares the rung it names.
 
     **Without the flag, a derived phase cannot contradict itself**, so the run reports what the
     artifacts show and catches nothing. That is the honest cost of having no mirror to check against,
@@ -361,7 +367,9 @@ derived at *Delivery verified (optional)* instead. Every other PRD passes the ru
 straddle, never a finding — and the derivation continues as though the rung did not exist: the
 furthest-rung and straddle rules read the mandatory rungs alone, and the PRD keeps the phase they
 give it, with the `Delivery:` line as a note. A `--claimed` value is still placed on the ladder as
-`workflow-states.md` writes it, this rung included.
+`workflow-states.md` writes it, this rung included, by the rung it names: `Delivery verified` and
+`Delivery verified (optional)` are one rung (Phase 0 step 1a), so either sits *at* a PRD derived
+there, never above or below it.
 
 **When `--claimed` was given** (Phase 0 step 1a), compare it against `derived_phase` and record any
 divergence as a readiness finding. A claim **above** the derived phase is the interesting one — work
@@ -852,7 +860,8 @@ a code or docs repository, or the current working directory, where it is not the
 - NEVER let the `Delivery:` line (Phase 1 step 2b) count against the run — it is a note, never a finding: the PRD folder's
   `_conformance.md` is read from `<default-ref>` with `git show`, without a `require-on-main` call, and never asked about;
   a PRD that does not reach *Delivery verified (optional)* is derived exactly as without the rung, and the line never caps
-  or lowers the verdict — a `--claimed` value naming the rung is compared as any claim is (Phase 3(0))
+  or lowers the verdict — a `--claimed` value naming the rung, with or without its `(optional)` suffix, is compared as any
+  claim is (Phase 0 step 1a, Phase 3(0))
 - ALWAYS run `specs-preflight` at Phase 0 and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - doc-only — repo check is presence-only, no scanning (Phase 3c; never dispatches `code-scanner`)
 - ALWAYS end with a `### Next step` per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never
