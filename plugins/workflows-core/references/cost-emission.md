@@ -784,7 +784,7 @@ both used to carry:
 3. **Every site that names the old head.** A new chain head replaces the old one
    wherever a file names a family's newest row — `run-flags` §2's family-only
    reachability rule, `classification.md`'s §4 example, the chain statement in
-   `.claude/rules/workflows-core.md`, the chains printed on the dev- and
+   `.claude/rules/workflows-core-model-routing.md`, the chains printed on the dev- and
    product-workflows `docs/reference/model-routing.md` pages, and the
    getting-started pages among them. Find them all with
    `grep -rln '<old head id>' plugins/ .claude/rules README.md` (excluding
