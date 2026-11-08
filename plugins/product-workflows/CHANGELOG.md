@@ -11,7 +11,7 @@ Docs only. Update with `dev-workflows` 4.61.0, whose `/ready` the page now descr
 
 ### Changed
 
-- **The workflow page's *Sources of truth*** says `/dev-workflows:ready` reads two stages from the specs repo's default branch: the optional *Delivery verified*, as before, and *Release Preparation*, from the documentation run's pull-request draft and a release note drafted at the dev stage.
+- **The workflow page's *Sources of truth*** says `/dev-workflows:ready` reads two stages from the specs repo's default branch: the optional *Delivery verified*, as before, and *Release Preparation*, from the documentation run's pull-request draft and a release note drafted at the dev stage, neither dated before the latest work implemented. Its prose says `/dev-workflows:ready` offers the PE's PRD run wherever a PRD at *Implementation* or a later stage is not delivery verified.
 
 ## [3.78.10] — 2026-11-08
 

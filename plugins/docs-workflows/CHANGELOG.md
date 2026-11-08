@@ -11,11 +11,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Added
 
-- **A `stage:` line in each draft's scope comment** (`release-note-types` §1): its second line, `stage: pm` or `stage: dev` — the run's `run_phase`, as Phase 0 infers it — which Phase 8 now writes. It bounds nothing: the boundary rules read the first line and the `read:` lines alone, as before. A draft appended before this release carries none, and a reader takes it as stating no stage. `/dev-workflows:ready` counts a draft toward *Release Preparation* only where its comment says `stage: dev` and it is on the specs repository's default branch; §1 names it among the comment's readers.
+- **A `stage:` line in each draft's scope comment** (`release-note-types` §1): its second line, `stage: pm` or `stage: dev` — the run's `run_phase`, as Phase 0 infers it — which Phase 8 now writes. It bounds nothing: the boundary rules read the first line and the `read:` lines alone, as before. A draft appended before this release carries none, and a reader takes it as stating no stage. `/dev-workflows:ready` counts a draft toward *Release Preparation* only where its comment says `stage: dev`, it is on the specs repository's default branch, and its first-line date is no earlier than the latest work implemented on the PRD; §1 names it among the comment's readers.
 
 ### Changed
 
-- **Pages:** the `/release-notes` page names the stage line and says `/dev-workflows:ready` reads it, and misses a declined draft; the `/document` page says what Phase 8.5's `pr-draft.md` is, and that `/dev-workflows:ready` reads it once it is on the default branch; the references page names the stage line, and `/dev-workflows:ready` and its conformance-record format among the files that name `release-note-types`.
+- **Pages:** the `/release-notes` page names the stage line and says `/dev-workflows:ready` reads it, and misses a declined draft; the `/document` page says what Phase 8.5's `pr-draft.md` is — written by a run that does not cancel at its push prompt — and that `/dev-workflows:ready` reads it once it is on the default branch, while no later work is dated after it; the references page names the stage line, and `/dev-workflows:ready` and its conformance-record format among the files that name `release-note-types`.
 
 ## [1.36.0] — 2026-11-08
 

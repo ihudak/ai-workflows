@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.80.1] — 2026-11-08
+
+Wording and pages only. The routing graph's `/ready` offer, and the family map, follow `dev-workflows` 4.61.0, which derives *Release Preparation*. Update with `dev-workflows` 4.61.0.
+
+### Changed
+
+- **`next-phase-offer`'s *Dev* lane:** `/dev-workflows:ready` offers the PE's `/dev-workflows:conformance <PRD>` wherever the PRD is at *Implementation* or later and its delivery is not verified, not at *Implementation* alone, so a PRD at *Release Preparation* with an unsettled record is still offered it. Its generated part is regenerated.
+- **The family map** draws `/document`'s `pr-draft.md` and `/release-notes`' dev-stage release note into `/ready`, and its `/ready` note says the two drafts, once on the default branch and dated no earlier than the latest work implemented on the PRD, place a PRD at *Release Preparation*, and that the PE's run is offered from *Implementation* on.
+
 ## [1.80.0] — 2026-11-08
 
 The specs-repository git primitives move into one tested script: GIT-G1 Part 1. Needs nothing from the other plugins' releases.

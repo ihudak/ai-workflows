@@ -50,12 +50,14 @@ neither its first nor a `read:` line, and it bounds nothing: the boundary rules 
 and its read set off the `read:` lines alone, so they pass over it. **A draft appended before
 `docs-workflows` 1.37.0 carries no `stage:` line**, nor does a comment of the one-line form described
 below; it states no stage, and a reader takes it as neither `pm` nor `dev` —
-never guessing one from its date or its place in the file. `/dev-workflows:ready` reads this line:
-a draft counts toward the PRD's *Release Preparation* only where its comment carries `stage: dev`
-and the file holding it is on the specs repository's default branch, so a draft without the line
-counts toward no stage, and a `/release-notes` run at the dev stage appends one that does.
-`dev-workflows` cannot load this reference, so `/dev-workflows:ready` states the form it reads
-itself, and a change to this line is a change to that command too. Each `read:` line names a
+never guessing one from its date or its place in the file. `/dev-workflows:ready` reads this line,
+and the first line's date: a draft counts toward the PRD's *Release Preparation* only where its
+comment carries `stage: dev`, the file holding it is on the specs repository's default branch, and
+the newest such draft is dated no earlier than the latest `implementation.md` block in the PRD's
+tree — so a draft without the line counts toward no stage, and a `/release-notes` run at the dev
+stage, after the latest work, appends one that does. `dev-workflows` cannot load this reference,
+so `/dev-workflows:ready` states the form it reads itself, and a change to either line is a change
+to that command too. Each `read:` line names a
 repository, by the `repo:` name the implementation records use or, for one only the scan reached, the
 slug the run resolved it by, and then **every commit the run read there**: each block's `commit:`
 whose diff it read, each commit its scan kept whose diff it read, and each commit a key-commit
