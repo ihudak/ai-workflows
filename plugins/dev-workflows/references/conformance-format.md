@@ -26,6 +26,8 @@ Where `/dev-workflows:conformance`'s lineage check was answered *Proceed*, an `a
 
 - **Run:** <Epic | PRD> — role `<dev | pe>` — <YYYY-MM-DD>
 - **Code checked:** <repo slug> at <the ref traced: its default branch, or on an Epic run the Epic's branch> @ <commit>, one line per repository
+- **Not traced:** none, or <n> requirement(s) — <each document not read; each repository with no clone or no default branch>
+- **Not shown merged:** none, or <EPIC-KEY>, one per Epic traced under Phase 1 (c)'s *Trace anyway*
 - **Verdicts:** <n> satisfied · <n> partial · <n> missing · <n> contradicts · <n> not-checkable · <n> unverified
 
 ## Satisfied
@@ -42,6 +44,8 @@ Where `/dev-workflows:conformance`'s lineage check was answered *Proceed*, an `a
 
 ## Discrepancies
 ```
+
+**`Not traced:` and `Not shown merged:` hold what the report's *Scope* lines *Not traced* and *Traced where not shown merged* say** (`/dev-workflows:conformance` Phase 7), save an Epic that gave no requirement of its own, which that *Not traced* line also names and which leaves no requirement untraced. `<n>` counts the requirements the report lists as not traced; a document not read adds none, since its requirements were never listed. `Not shown merged:` names, by key and comma-separated, each Epic a PRD run traced under *Trace anyway* (`/dev-workflows:conformance` Phase 1 (c)). Each line reads `none` where it names nothing, and on an Epic run `Not shown merged:` always does. A re-run rewrites both, as it does the rest of the header. **A record without them predates them**, and a reader never takes their absence for `none`.
 
 A re-run rewrites the header and the three lists. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. An Epic run before the Epic's pull request merges names the Epic's branch under **Code checked**, its commit that branch's tip, which a squash merge leaves out of the default branch's history and a deleted branch out of any clone that never fetched it; a record an Epic run wrote from `dev-workflows` 4.26.0 until 4.28.0 names the default branch alone. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, or where that commit does not resolve in the clone, so a record without the list has every requirement re-traced.
 
@@ -112,6 +116,10 @@ A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overr
 
 ## 6. Readers
 
-A reader takes a `final` decision over a `proposed` one and says where it used a proposal; it treats a missing record as the absence of one, never as a prerequisite. Which reader maps which decision to what is its own reference's to say.
+A reader takes a `final` decision over a `proposed` one and says where it used a proposal; it treats a missing record as the absence of one, never as a prerequisite. **A reader that turns a recorded decision into a documentation decision takes which entries are open, the precedence between two entries and the mapping from `workflows-core:source-truth` §7.8**, the one authority on them. Three commands read the record.
 
 **`/docs-workflows:release-notes` reads the record from another plugin and cannot load this reference.** It reads every record in its scope, with diff grounding on or off, and states in its own Phase 0 and Phase 3 what it reads: §2's `Run:`, `Code checked:` and `Verdicts:` lines, and each `### [DD#n]` entry's heading, `document:`, `verdict:`, `shipped:`, `decision:`, `status:`, `flags:`, `ruling:`, `lists:` and `superseded-by:`. `docs-workflows:release-note-types` §8 maps each decision to what the release note says. A change to any of those fields, or to what a status or flag means (§4), is a change to that command too.
+
+**`/docs-workflows:document` reads the record from another plugin too, and cannot load this reference either.** Its Phase 5.8 takes the decision a record already holds on a claim, matched and mapped as §7.8 says, in place of asking the PE again.
+
+**`/dev-workflows:ready` reads the PRD folder's record from the default branch, never the working tree,** and tests from it whether the PRD reaches the optional *Delivery verified* stage, as its Phase 1 states: §2's `Run:`, `Not traced:` and `Not shown merged:` lines, `## Unverified`, and each entry's `decision:`, `status:`, `flags:` and `lists:`. It maps no decision, so its test is its own, not §7.8's. A change to any of those, or to what a status or flag means (§4), is a change to that command too.

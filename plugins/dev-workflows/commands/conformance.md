@@ -387,7 +387,7 @@ deletes a requirement.
   entry, ruling `resolved <EPIC-KEY>/[DD#k]`.
 
 **Write `_conformance.md`** into the unit's folder per `conformance-format.md`: §2's header — with the
-ref and commit each repository was traced at, and the counts, `unverified` included — then the `## Satisfied`
+ref and commit each repository was traced at; its `Not traced:` and `Not shown merged:` lines, written from the same facts Phase 7's *Scope* lines *Not traced* and *Traced where not shown merged* report, as `conformance-format.md` §2 says, each `none` where it names nothing; and the counts, `unverified` included — then the `## Satisfied`
 list, one line per satisfied requirement with its evidence paths, followed on an Epic run by each sibling Epic's part it places (`conformance-format.md` §2) — those whose discrepancy the re-check dropped included, with the evidence that settled it — then the `## Unverified` list, one line per unverified requirement with what would settle it, then the `## Not checkable` list, one line per `not-checkable` requirement with the tracer's `reason` — on an Epic run, a Rule that binds only components other than this Epic's naming each component it binds and the sibling Epic that targets it, as the report's *Verdicts* does — left out where there is none, then the `## Discrepancies` heading and §3's entries under it. On a re-run, apply
 §5: carry each decided entry forward while its discrepancy persists, mark it `resolved` once the code
 satisfies its requirement, mark it `requirement withdrawn` where its requirement is superseded or
@@ -500,10 +500,10 @@ Emit the terminal report:
 ### Scope
 - Run: [Epic <EPIC> — Dev | PRD <PRD> — PE]
 - Code checked: [<repo> at <the ref traced> @ <commit>, one per repository — the ref Phase 1 (c) traced: its default branch, or on an Epic run the Epic's branch; where `after_merge` was true, that the Epic's pull request has merged and the branch has gone on since, so the trace covers the merged work and what followed it; each repository traced at its default branch on the Dev's word that its pull request merged, and, where its clone was read as last fetched, its `<ref>` as read as last fetched, with its newest commit's age; each clone whose fetch in (a) failed or timed out, with git's error or the timeout, read as last fetched; each where (c)'s branch fetch failed or timed out, and each stale tracking ref (c) removed; each where `unit-branch`, or the PRD run's merged test, could not compare the tip; each shallow clone (a) found, where the merge state may read as open; any ref older than fourteen days on a read-only mount, with its age]
-- Traced where not shown merged: [PRD run only — each Epic traced under (c)'s *Trace anyway*, its requirements marked as traced where its merge was not shown; omit otherwise]
+- Traced where not shown merged: [PRD run only — each Epic traced under (c)'s *Trace anyway*, its requirements marked as traced where its merge was not shown — the Epics the record's `Not shown merged:` line names (Phase 5); omit otherwise]
 - Conformance branches: [the `conformance/` fetch's failure, where Phase 0 step 5 could not fetch — the record check read those branches as last fetched; omit otherwise]
 - Lineage: [the `Lineage:` line (`workflows-core:document-lineage` §7), naming each accepted link]
-- Not traced: [each document not read, each repository with no clone or no default branch, and its requirements — on an Epic run, its branch as not traced; on a PRD run each Epic that gave no requirement of its own — or "none"]
+- Not traced: [each document not read, each repository with no clone or no default branch, and its requirements — on an Epic run, its branch as not traced; on a PRD run each Epic that gave no requirement of its own — or "none"; the record's `Not traced:` line names the same documents and repositories and counts the same requirements (Phase 5)]
 
 ### Verdicts
 [N satisfied · N partial · N missing · N contradicts · N not-checkable · N unverified]
