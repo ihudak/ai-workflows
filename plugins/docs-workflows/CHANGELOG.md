@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.5] — 2026-11-08
+
+User pages, and three command texts corrected: batch B33. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **New pages: Roles and phases, Session feedback, Resume and checkpoints, and Model routing**, each about this plugin's own commands, as dev- and product-workflows carry. The *See also* bullets on `/document` and `/release-notes` that named a roles page without a link now link it. The index and the README list the four.
+- **`/docs-init`, `/docs-audit`, `/docs-brand` and `/docs-profile` draw their flow**, as `/document` and `/release-notes` do. `/docs-serve`, a utility that starts, stops or checks a dev server or runs the site's build, stays prose only.
+- **`/docs-audit` says where every Cancel goes.** A Cancel at Phase 0 step 5's unresolved-repository question or at a Phase 2 escalation takes the stop route, to the report and the emitter tail, as the step 8 Cancel did; each site, the opening rule, Phase 9 and the report's note now say so. The overwrite prompt's Cancel reads *no backlog is written*, since a `source_repos[]` step 5 recorded stays in the profile, and `DOCS_AUDIT_UNKNOWN_SCHEMA`'s message says *The backlog was not written*. The opening rule no longer says a stop's report states nothing else: it fills the sections the run reached.
+- **`/docs-profile`'s dirty-tree Cancel stops and reports**, naming any stash, where the command said nothing of it.
+- **`/docs-brand` no longer reads as if `/docs-profile` reviews its diff**: it reviews its own and, as `/docs-profile` does, finishes on a branch with a drafted pull request.
+
 ## [1.35.4] — 2026-11-07
 
 User pages only: batch B32, the family's entry points. Needs nothing from the other plugins' releases.

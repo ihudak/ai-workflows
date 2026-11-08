@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.12] — 2026-11-08
+
+User pages only: batch B33. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **The family map draws every route a PRD-level `/dev-workflows:conformance` amendment takes**: to `/update-spec`, `/update-prd`, `/epics` and `/create-ard`, by the document holding the requirement, where it drew only the first two. The conformance bullet under the map says the same.
+- **`/diagnose-session`'s page draws its flow**, as `/frames`' does.
+
 ## [1.78.11] — 2026-11-07
 
 User pages, and the name of the status-line cross-check in the `/statusline` command and the cost reference: batch B32, the family's entry points. Needs nothing from the other plugins' releases.

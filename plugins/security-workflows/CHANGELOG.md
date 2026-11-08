@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.9] — 2026-11-08
+
+User pages only: batch B33. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **New Session feedback page**: where `/security-workflows:scan`'s feedback lands, what `--skip-feedback` keeps, where its follow-ups go, and its resume pointer. The scan page's tail links it; the index and the README list it.
+
 ## [0.10.8] — 2026-11-07
 
 User pages only: batch B32, the family's entry points. Needs nothing from the other plugins' releases.

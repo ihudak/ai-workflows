@@ -22,7 +22,7 @@ Every command owns one role's step in the pipeline and hands a concrete artifact
 | Page | What's there |
 |------|--------------|
 | [Documentation index](docs/README.md) | The full "I want to…" lookup table, plus the command and reference inventories. |
-| [Getting started](docs/getting-started.md) | Install, environment variables, status line, your first `/design` run. |
+| [Getting started](docs/getting-started.md) | Install, environment variables, status line, your first `/design` and `/implement` runs. |
 | [Workflow overview](docs/workflow.md) | The whole pipeline as one diagram. |
 | [Roles and phases](docs/roles-and-phases.md) | What each role owns and hands off. |
 | [Agents](docs/reference/agents.md) | The subagent inventory the commands dispatch internally. |

@@ -12,9 +12,33 @@ Scans a documentation repository and writes or refreshes its machine-readable `.
 /docs-profile [<repo-path>] [--inline] [--enforce-model=<model>]
 ```
 
-`--inline` is stripped from the arguments before the remaining token is read as the optional docs-repo path (Phase 0). `--inline` is the flag `/document` (keyed mode) passes when it invokes this flow itself, from its own Phase 0 — it skips the branch-name prompt in favour of a deterministic branch name, and hands the PR draft back to `/document` instead of reporting one itself, together with the fixed-port and dev-server command defect lists its own report would carry (below), which `/document` shows you. Where a branch of that name is already there, left by an earlier inline run that stopped after profiling, it stops with `DOCS_PROFILE_BOOTSTRAP_BRANCH_EXISTS`, naming the branch, its base and where it forked, rather than switch onto it — at once, before it scans the repository or asks anything; delete or merge that branch, then re-run.
+`--inline` is stripped from the arguments before the remaining token is read as the optional docs-repo path (Phase 0). `--inline` is the flag `/document` (keyed mode) passes when it invokes this flow itself, from its own Phase 0 — it skips the branch-name prompt in favour of a deterministic branch name, and, instead of drafting a pull request and reporting, hands `/document` the branch and commit it made, any stash record, and the fixed-port and dev-server command defect lists its own report would carry (below); `/document` drafts the single pull request and shows you those lists. Where a branch of that name is already there, left by an earlier inline run that stopped after profiling, it stops with `DOCS_PROFILE_BOOTSTRAP_BRANCH_EXISTS`, naming the branch, its base and where it forked, rather than switch onto it — at once, before it scans the repository or asks anything; delete or merge that branch, then re-run.
 
 Only one of the three run flags applies to a **standalone** run: `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins both the Phase 2 detection dispatch and the Phase 3 synthesis dispatch to one model, bypassing the Sonnet-detection / Opus-synthesis split described below. `--skip-costs` and `--skip-feedback` do not apply — this command emits no cost entry and dispatches no `impl-maintenance` — so either, given explicitly, is reported ignored rather than acted on. **`--inline` never re-strips these from its own arguments**: `/document` (keyed mode) Phase 0 constructs that run's whole argument list itself (the resolved docs-repo directory and `--inline`), which never carries a run-flag token, so this run instead inherits the flag settings `/document` already resolved at its own Mode detection — its enforced model, where set, reaches this run's Phase 2 detection and Phase 3 synthesis dispatches the same way.
+
+## How it runs
+
+A dotted edge is a stop, a Cancel, or a refresh that writes nothing. The run has no emitter tail: it records no cost entry and dispatches no maintenance agent.
+
+```mermaid
+flowchart TD
+    p0["Phase 0 — Resolve and validate: the docs repo and its rung, a writable git work tree"]
+    p0 -.->|"NOT_A_GIT_WORKTREE, REPO_NOT_WRITEABLE, or DOCS_PROFILE_BOOTSTRAP_BRANCH_EXISTS under --inline"| halt["Stop and report — nothing written"]
+    p0 -.->|"standalone: RUN_FLAGS_BAD_MODEL or RUN_FLAGS_MODEL_UNAVAILABLE, or Cancel at the repository question"| halt
+    p0 --> d0{"A docs-repo signal in the repo or at its top level?"}
+    d0 -.->|"none — Cancel at Profile it anyway?"| halt
+    d0 -->|"yes, or Proceed"| p1["Phase 1 — Model routing: SIGNIFICANT"]
+    p1 --> p2["Phase 2 — Detect: a read-only general-purpose agent @Sonnet"]
+    p2 --> p3["Phase 3 — Synthesize the draft profile: a general-purpose agent @Opus"]
+    p3 --> p4["Phase 4 — Confirm and fill gaps, and on a refresh a field-level diff against the existing profile"]
+    p4 --> d4{"Anything to write?"}
+    d4 -->|"a new profile, or Apply the diff"| p5["Phase 5 — Write as a reviewable PR: branch, profile and CLAUDE.md additions, format, commit, and the PR draft on a standalone run — never pushed"]
+    d4 -.->|"Keep existing, write nothing — or the diff lists no change"| mode{"Standalone or --inline?"}
+    p5 -.->|"Cancel at the dirty-tree question"| halt
+    p5 --> mode
+    mode -->|"standalone"| p6["Phase 6 — Final report"]
+    mode -->|"--inline, from /document"| ret["Back to /document, which reports — the branch and commit where Phase 5 made one, any stash record, the fixed-port and command-defect lists"]
+```
 
 ## What it needs
 

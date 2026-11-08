@@ -26,7 +26,7 @@ The subagents are `diff-summarizer`, `doc-location-finder`, `doc-planner`, `doc-
 
 ## Docs tree
 
-`docs-workflows` carries 20 pages — `README.md`, `getting-started.md`, `workflow.md` and `docs-workflow.md` (the route page, which states the whole procedure from an empty repository to a populated portal, manual steps written out), 7 command pages and 9 reference pages.
+`docs-workflows` carries 24 pages (`find plugins/docs-workflows/docs -name '*.md' | wc -l`) — `README.md`, `getting-started.md`, `workflow.md`, `roles-and-phases.md` and `docs-workflow.md` (the route page, which states the whole procedure from an empty repository to a populated portal, manual steps written out), 7 command pages (`ls plugins/docs-workflows/docs/commands | wc -l`) and 12 reference pages (`ls plugins/docs-workflows/docs/reference | wc -l`). Every command page but `docs-serve.md` draws its command's phase flow; `/docs-serve` starts, stops or checks a dev server or runs the site's build, a utility with no phase flow to draw, so its page is prose only.
 
 ## Workflow map
 

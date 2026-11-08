@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.5] — 2026-11-08
+
+User pages only: batch B33. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **The workflow diagram draws the PRD-level `/dev-workflows:conformance` amendment to `/create-ard`** for an `[AD#n]` Rule, beside its edges to `/update-spec`, `/epics` and `/update-prd`, and each edge names the document it amends. The paragraph under the diagram says where an amendment goes.
+- **`/harvest-decisions`' page draws its flow**, as every other command page does.
+
 ## [3.78.4] — 2026-11-07
 
 User pages only: batch B32, the family's entry points. Needs nothing from the other plugins' releases.

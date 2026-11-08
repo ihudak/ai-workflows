@@ -2579,7 +2579,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (the cache layout is from CLAUDE.md; that a user browses the cache is a judgement)
 
-### DQS-B6 — MINOR — Page-set parity holes in `docs-workflows` and `security-workflows`; command pages name a "Roles and phases" page that the plugin does not have
+### DQS-B6 — MINOR — Page-set parity holes in `docs-workflows` and `security-workflows`; command pages name a "Roles and phases" page that the plugin does not have — **Fixed in docs-workflows 1.35.5 and security-workflows 0.10.9 (batch B33): docs-workflows gains a roles page and three reference pages, security-workflows a session-feedback page**
 - **Also found as:** DQW-B12 (merged here)
 - **Where:** parity matrix (*Evidence*). `plugins/docs-workflows/docs/commands/document.md:111` and `release-notes.md:99` (unlinked "Roles and phases —" bullets).
 - **What is wrong:**
@@ -2618,7 +2618,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (the counts are exact; how many to rewrite is a judgement)
 
-### DQS-B9 — NIT — Command pages without a diagram where their siblings have one
+### DQS-B9 — NIT — Command pages without a diagram where their siblings have one — **Fixed in docs-workflows 1.35.5, product-workflows 3.78.5 and workflows-core 1.78.12 (batch B33): six pages gain a diagram; by the user's ruling, `docs-serve.md` and five workflows-core command pages stay prose only**
 - **Also found as:** DQP-G6 (merged here)
 - **Where:** `plugins/docs-workflows/docs/commands/` `docs-audit.md`, `docs-brand.md`, `docs-init.md`, `docs-profile.md`, `docs-serve.md` (no mermaid block; `document.md:31` and `release-notes.md:27` have one); `plugins/product-workflows/docs/commands/harvest-decisions.md` (none; the other 15 product command pages, `promote-decisions.md:21` among them, have one); `plugins/workflows-core/docs/commands/` (only `frames.md:29` has one).
 - **What is wrong:** All six dev-workflows command pages and `scan.md` carry a per-command flow diagram. In docs-workflows five of seven pages lack one, and `/harvest-decisions` is the only product command page without one.
@@ -2791,7 +2791,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQD-B3 — MINOR — The dev workflow diagram skips the PE's PRD-level `/conformance` before documentation, and sends every *amend the document* to `/specify` — **Partly fixed in dev-workflows 4.59.2 (batch B32): the edge to the documentation commands; the amend edge stays with B33**
+### DQD-B3 — MINOR — The dev workflow diagram skips the PE's PRD-level `/conformance` before documentation, and sends every *amend the document* to `/specify` — **Partly fixed in dev-workflows 4.59.2 (batch B32): the edge to the documentation commands; the amend edge stays with B33** — **Fixed in dev-workflows 4.59.3 (batch B33): the amend edges, drawn to each of the four commands a PRD run can name that a diagram has as a node, the rest named in prose, on the family map and product-workflows' workflow page too**
 - **Where:** `plugins/dev-workflows/docs/workflow.md:28`, `:31`
 - **What is wrong:** The diagram draws `implement -.->|code + implementation.md, in docs-workflows| docsplugin` directly. It has no edge for the lane's "once ALL Epics implemented and merged → PE → `/dev-workflows:conformance <PRD>` → `/docs-workflows:document <PRD>`" (`next-phase-offer.md:319`), nor for "`/dev-workflows:conformance <PRD>` … once settled → `/docs-workflows:document <PRD>`" (`:321`). The single `conformance -.->|"PRD: the PE, every Epic merged — amend the document"| specify` edge says an amendment always goes to `/specify`. The lane sends it to "the command its note names" (`:321`), which can be `/update-prd` or `/create-ard` too.
 - **Failure scenario:** A reader takes the diagram as the order of work. They go from the last `/implement` straight to `/document`, without the PE's PRD conformance run the docs and offers expect first. Or they run `/specify` to amend a PRD-level requirement.
@@ -2800,7 +2800,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DQD-B4 — MINOR — The environment layout files follow-ups under `dev-workflows/`, contradicting the follow-ups and roles pages
+### DQD-B4 — MINOR — The environment layout files follow-ups under `dev-workflows/`, contradicting the follow-ups and roles pages — **Fixed in dev-workflows 4.59.3 (batch B33)**
 - **Where:** `plugins/dev-workflows/docs/reference/environment.md:77`
 - **What is wrong:** The layout block says `dev-workflows/                  # bookkeeping: feedback, cost, resume.md, follow-ups`. The follow-ups page says "**`follow-ups.md` in the folder the run resolved**, appended, alongside the artifacts the follow-ups are about" (`reference/follow-ups.md:24`). The roles page says "Two records land outside that subfolder … follow-up tasks, in the folder the run resolved" (`workflow.md:60`).
 - **Failure scenario:** A user looking for the follow-ups `/implement` or `/conformance` wrote searches `<PRD-dir>/dev-workflows/` and finds nothing. The tasks are in the Epic folder's `follow-ups.md`.
@@ -2866,7 +2866,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (`register.py`'s decision validation was not read; `security-register-format` §4 names no restriction)
 
-### DQD-B11 — NIT — Missing space joins two paragraphs on the `/ready` page
+### DQD-B11 — NIT — Missing space joins two paragraphs on the `/ready` page — **Fixed earlier, in dev-workflows 4.53.0 (D30), whose rewrite of the paragraph split it**
 - **Where:** `plugins/dev-workflows/docs/commands/ready.md:62`
 - **What is wrong:** "…never `_readiness.md` itself.Phase 7 additionally emits one follow-up per named readiness gap…"
 - **Failure scenario:** The follow-up rule reads as part of the handoff sentence. Cosmetic.

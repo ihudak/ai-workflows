@@ -74,9 +74,11 @@ The four directory-valued variables above expect this layout. `$GIT_USER_INITIAL
 
 $SPECS_PATH/                        # shared, team-visible store
   specifications/PRD-<KEY>-<slug>/  # idea.md, prd.md, ard.md, release-notes.md, and EPIC-<KEY>-NN-<eslug>/ below it
+    follow-ups.md                   # follow-up tasks about this folder's artifacts; each EPIC- folder keeps its own
+    implementation.md               # /implement's record of a PRD implemented as one unit; each EPIC- folder keeps its own
     attachments/                    # markdown sources /idea vendored into the folder
     design/<frame-set>/             # exported frames + the index.md each set must carry
-    dev-workflows/                  # bookkeeping: feedback, cost, resume.md, follow-ups
+    dev-workflows/                  # bookkeeping: feedback, cost, resume.md
 
 $REPOS_PATH/                        # code clones, one directory or a colon-separated list (default /workspace)
   <repo>/                           # discovered by directory name; matched by origin slug where the command was handed one

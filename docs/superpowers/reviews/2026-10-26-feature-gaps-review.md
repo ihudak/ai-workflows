@@ -508,7 +508,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## documentation quality — dev-workflows and security-workflows
 
-### DQD-G1 — Getting started stops at `/design`; nothing takes a new user through a first `/implement` or tells them what it needs
+### DQD-G1 — Getting started stops at `/design`; nothing takes a new user through a first `/implement` or tells them what it needs — **Done in dev-workflows 4.59.3 (batch B33)**
 - **Designed in:** the brief's reader criterion: "a getting-started page that would not get a new user to a first successful run". `plugins/dev-workflows/README.md:25` advertises the page as "your first `/design` run". The plugin's spine is `/design → /implement`.
 - **Current state:** `plugins/dev-workflows/docs/getting-started.md:92-112` ends at "Once that lands, `/implement EPIC-98760` picks up the design and starts the code change". It uses the bare form, two lines after the page explains why the qualified form is needed. Nothing on the page tells the user what `/implement` needs that `/design` did not:
   - a clean working tree in the code repository (Phase 1.4);
@@ -521,7 +521,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes. The plugin's own README promises a first run, and `/implement` is the command most likely to stop a first-time user (dirty tree, Sonnet session, no detected tests).
 - **Suggested scope:** add a "Your first `/implement`" subsection to `getting-started.md` (5-8 lines: the qualified command, the five preconditions above as a checklist, and what the run ends with: a committed branch, a push and PR question, `implementation.md`, and the next step `/dev-workflows:conformance`). Add a line pointing to `/product-workflows:specify` or describing the minimum specs-repo layout (`environment.md`'s *Directory layout*).
 
-### DQD-G2 — security-workflows has no page for the feedback, follow-up and resume-pointer files its command writes, which every sibling with a pipeline command documents
+### DQD-G2 — security-workflows has no page for the feedback, follow-up and resume-pointer files its command writes, which every sibling with a pipeline command documents — **Done in security-workflows 0.10.9 (batch B33), with DQS-B6**
 - **Designed in:** the parity criterion in BRIEF-DOCS.md. `dev-workflows` and `product-workflows` each ship `reference/session-feedback.md` and `reference/resume-and-checkpoints.md`, and `dev-workflows` ships `reference/follow-ups.md`.
 - **Current state:** `/security-workflows:scan` runs feedback, follow-ups, cost and the resume pointer in its tail (`docs/commands/scan.md:63`, `:168`). It takes `--skip-feedback` (`:29`). `docs/commands/scan.md:166` explains at length how the resume pointer carries its Security Engineer offers. The plugin's 8 pages still have no page saying where feedback lands, what `--skip-feedback` keeps, or what `resume.md` is and where it lives. `grep -rn -i 'resume.md\|session feedback' plugins/security-workflows/docs` finds only passing mentions. A user who installs only `security-workflows` plus its dependencies has no `dev-workflows` pages to fall back on.
 - **Still worth doing?:** yes, at low cost. A short page, or links to `workflows-core`'s equivalents if that plugin's docs carry them, closes the gap. `.claude/rules/security-workflows.md` fixes the page count at 8, so a new page means updating that count too.

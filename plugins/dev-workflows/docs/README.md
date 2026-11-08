@@ -2,7 +2,7 @@
 
 | I want to… | Go to |
 |---|---|
-| install this and set it up | [Getting started](getting-started.md) |
+| install this, set it up, and make a first run | [Getting started](getting-started.md) |
 | understand the whole pipeline first | [Workflow overview](workflow.md) |
 | know what my role is responsible for | [Roles and phases](roles-and-phases.md) |
 | write a specification, then a design | `/product-workflows:specify` — ships in the companion `product-workflows` plugin — then [`/design`](commands/design.md) |

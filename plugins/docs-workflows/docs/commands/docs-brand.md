@@ -4,7 +4,7 @@ Extracts a logo and a rough primary/accent colour pair from a product's own code
 
 ## Who runs it
 
-`/docs-brand` runs two ways. **Standalone** it behaves like `/docs-workflows:docs-profile` — a setup utility reached at any point, gated by its own Opus review, finishing on a branch with a drafted pull request. **`--inline`** it is a phase `/docs-workflows:docs-init` Phase 5 dispatches during a fresh scaffold: its diff and its contrast finding join that command's own single review and single PR rather than opening a second one. And where it cannot brand — any stop below that an `--inline` run can reach, or a Cancel at one of its prompts — it never ends the scaffold: it hands back `no branding applied: <reason>` with an empty diff, and `/docs-init` carries on as if `--no-brand` had been passed. Expectations are deliberately modest — a mark and a colour pair, not a design system — because rebrands happen and re-scaffolding a whole docs site to pick up a new logo would be absurd.
+`/docs-brand` runs two ways. **Standalone** it is a setup utility reached at any point, as `/docs-workflows:docs-profile` is, but gated by its own Opus review, and it finishes on a branch with a drafted pull request. **`--inline`** it is a phase `/docs-workflows:docs-init` Phase 5 dispatches during a fresh scaffold: its diff and its contrast finding join that command's own single review and single PR rather than opening a second one. And where it cannot brand — any stop below that an `--inline` run can reach, or a Cancel at one of its prompts — it never ends the scaffold: it hands back `no branding applied: <reason>` with an empty diff, and `/docs-init` carries on as if `--no-brand` had been passed. Expectations are deliberately modest — a mark and a colour pair, not a design system — because rebrands happen and re-scaffolding a whole docs site to pick up a new logo would be absurd.
 
 ## Synopsis
 
@@ -14,7 +14,38 @@ Extracts a logo and a rough primary/accent colour pair from a product's own code
 
 `--from` and `--inline` are stripped from the arguments before the remaining token is read as the optional docs-repo path (Phase 0). `--from <code-repo-path>` names the product's code repository to extract from; without it, the run falls through the resolved docs profile's own `source_repos[]` — written by `/docs-init` and by [`/docs-audit`](docs-audit.md), so a portal either has touched usually answers here — and then a confirmed listing under `$REPOS_PATH` (Phase 2). `--inline` switches the run to the caller-embedded mode described above, skipping this command's own preflight, review gate, pull request, and emitter tail.
 
-All three run flags apply to a **standalone** run the same way they apply elsewhere in the family: `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 14's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — under the flag only real defects are persisted, never the in-session Lessons Learned report; `docs-workflows` ships no dedicated session-feedback reference page, so this paragraph is that explanation. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every agent a standalone run dispatches — `docs-scaffold-reviewer` (overriding its frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model. **`--inline` never re-strips these from its own arguments**: `/docs-init` Phase 5 constructs that run's whole argument list itself (the resolved docs-repo root, `--from`, `--inline`), which never carries a run-flag token, so this run instead inherits the flag settings `/docs-init` already resolved — its enforced model, where set, is recorded in this run's own Phase 1 routing record the same way, though it changes nothing under `--inline`: that path dispatches no reviewer and no maintenance agent of its own to carry it, and enforcement never changes what Phase 1 classifies, only which model a dispatched step would run on.
+All three run flags apply to a **standalone** run the same way they apply elsewhere in the family: `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 14's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — under the flag only real defects are persisted, never the in-session Lessons Learned report. [Session feedback](../reference/session-feedback.md#bugs-only---skip-feedback) has the rest. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every agent a standalone run dispatches — `docs-scaffold-reviewer` (overriding its frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model. **`--inline` never re-strips these from its own arguments**: `/docs-init` Phase 5 constructs that run's whole argument list itself (the resolved docs-repo root, `--from`, `--inline`), which never carries a run-flag token, so this run instead inherits the flag settings `/docs-init` already resolved — its enforced model, where set, is recorded in this run's own Phase 1 routing record the same way, though it changes nothing under `--inline`: that path dispatches no reviewer and no maintenance agent of its own to carry it, and enforcement never changes what Phase 1 classifies, only which model a dispatched step would run on.
+
+## How it runs
+
+A dotted edge is a stop or a Cancel. On a standalone run each one that reaches the Phase 11 report still runs the emitter tail after it; under `--inline` it hands [`/docs-init`](docs-init.md) `no branding applied` instead.
+
+```mermaid
+flowchart TD
+    p0["Phase 0 — Resolve and validate: the docs repo and its rung, a writable git work tree, a Material config, and the specs-repo preflight on a standalone run"]
+    p0 -.->|"a run-flag stop, or a standalone Cancel at the repository question"| runend["Run ends — no report, no emitter tail"]
+    p0 -.->|"DOCS_BRAND_NOT_A_GIT_WORKTREE, REPO_NOT_WRITEABLE or NOT_MKDOCS"| sm{"Standalone or --inline?"}
+    p0 --> p1["Phase 1 — Model routing: MODERATE, review pinned to Opus"]
+    p1 --> p2["Phase 2 — Resolve the code repo: --from, the profile's source repos, or a confirmed listing"]
+    p2 -.->|"DOCS_BRAND_NO_CODE_REPO"| sm
+    p2 --> p34["Phase 3 — Extract colour / 4 — Extract logo"]
+    p34 -.->|"DOCS_BRAND_NOTHING_TO_APPLY, or Cancel at a prompt"| sm
+    p34 --> p56["Phase 5 — Confirm every value with its source / 6 — Contrast check"]
+    p56 -.->|"Cancel at a prompt"| sm
+    p56 --> mode{"Standalone or --inline?"}
+    mode -->|"standalone"| p7{"Phase 7 — Branch, before any write"}
+    p7 -.->|"Cancel — nothing written"| p11
+    p7 -->|"branch created"| p8s["Phase 8 — Apply: the theme block, extra.css, the logo assets"]
+    p8s --> p9["Phase 9 — Review gate: docs-scaffold-reviewer @Opus → triage → the orchestrator applies survivors"]
+    p9 -.->|"Cancel, verdict kept, or DOCS_BRAND_UNRESOLVED_BLOCKER — branding left uncommitted"| p11
+    p9 -->|"cleared"| p10["Phase 10 — Finish: ignore test, commit, draft the PR — never pushed"]
+    p10 --> p11["Phase 11 — Report"]
+    p11 --> tail["Phases 12–14 — Maintenance & feedback, follow-ups, session cost, resume pointer, commit-artifacts"]
+    mode -->|"--inline, from /docs-init Phase 5"| p8i["Phase 8 — Apply, on the caller's branch"]
+    p8i --> ret["Back to /docs-init — the diff and the contrast finding, or no branding applied with its reason, and no review, PR, report or tail of its own"]
+    sm -.->|"standalone — the stop route"| p11
+    sm -.->|"--inline — no branding applied, empty diff"| ret
+```
 
 ## What it needs
 
@@ -34,7 +65,7 @@ Every extracted value is printed with its source before Phase 8 applies anything
 
 ## Failure modes
 
-On a standalone run every stop below, and a Cancel at one of the extraction, confirmation or contrast prompts, still ends with the report — naming the stop — and the session bookkeeping: the cost entry is recorded and the terminal bookkeeping commit runs. Only an `--enforce-model` value that names no model, or one this session cannot use, ends the run before that.
+On a standalone run every stop below, and a Cancel at one of the extraction, confirmation or contrast prompts, still ends with the report — naming the stop — and the session bookkeeping: the cost entry is recorded and the terminal bookkeeping commit runs. Only an `--enforce-model` value that names no model, or one this session cannot use, or a Cancel at the repository question, ends the run before that.
 
 - `DOCS_BRAND_NOT_A_GIT_WORKTREE` — the resolved docs repo is not inside a git work tree.
 - `DOCS_BRAND_REPO_NOT_WRITEABLE` — the resolved docs repo is not writeable.

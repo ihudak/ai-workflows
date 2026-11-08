@@ -23,7 +23,7 @@ The host installs `workflows-core` alongside any of the four family plugins that
 
 ## Docs tree
 
-`workflows-core` carries 19 pages (`find plugins/workflows-core/docs -name '*.md' | wc -l`) — `docs/README.md` (the index), `getting-started.md`, `workflow.md`, `family-map.md` and `roles-and-phases.md`, 7 command pages under `docs/commands/` (`ls plugins/workflows-core/docs/commands | wc -l`) and 7 reference pages under `docs/reference/` (`ls plugins/workflows-core/docs/reference | wc -l`).
+`workflows-core` carries 19 pages (`find plugins/workflows-core/docs -name '*.md' | wc -l`) — `docs/README.md` (the index), `getting-started.md`, `workflow.md`, `family-map.md` and `roles-and-phases.md`, 7 command pages under `docs/commands/` (`ls plugins/workflows-core/docs/commands | wc -l`) and 7 reference pages under `docs/reference/` (`ls plugins/workflows-core/docs/reference | wc -l`). Only `frames.md` and `diagnose-session.md` draw a flow: the other five commands log or set up.
 
 ## Model routing reference
 

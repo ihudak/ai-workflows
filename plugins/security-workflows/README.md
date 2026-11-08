@@ -24,6 +24,7 @@ A Dev runs the command on their Epic before its pull request merges. A Security 
 | [Security register](docs/reference/security-register.md) | The findings register the command writes into the specs repository. |
 | [Environment](docs/reference/environment.md) | Every environment variable the plugin reads. |
 | [Session cost](docs/reference/session-cost.md) | Which commands emit a cost entry, what they charge to, and where it lands. |
+| [Session feedback, follow-ups and resume](docs/reference/session-feedback.md) | Where a run's feedback, follow-ups and resume pointer go. |
 
 ## Recommended environment
 

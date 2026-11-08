@@ -107,6 +107,26 @@ Here is what to expect:
 
 1. **A gate.** `/design` refuses to start if `specification.md` is not found on the specs repo's default branch — this plugin's one hard exception to the "absent input falls back" rule (the companion `product-workflows` commands whose gated input was never optional stop too: `/update-spec` without a merged specification to revise, `/prd-ground`, `/prd-proposal`, `/brd-proposal`, and the BRD route's `/brd-split`, `/brd-interview`, `/brd-package` and `/brd-reconcile`).
 2. **Grounding and a grill.** It resolves any applicable ARD, derives and confirms the implementation repos under `$REPOS_PATH`, hard-stops if none is mounted, scans the confirmed set, then grills you through challenging the spec and designing the implementation.
-3. **A written design.** It writes `design.md` into the same specs feature folder, then offers to commit, push, and open a pull request against the specs repo's default branch. Once that lands, `/implement ACME-77-01` picks up the design and starts the code change.
+3. **A written design.** It writes `design.md` into the same specs feature folder, then offers to commit, push, and open a pull request against the specs repo's default branch. Once that lands, `/dev-workflows:implement ACME-77-01` picks up the design and starts the code change, as the next section shows.
+
+## Your first `/implement`
+
+Once `design.md` is on the specs repo's default branch, start Claude Code inside the clone of the code repository the Epic changes, under `$REPOS_PATH`, and type:
+
+```
+/dev-workflows:implement ACME-77-01
+```
+
+It changes the repository it is run from. Run from the specs repository, a keyed run stops: that is no code repository. It reads the same Epic folder `/design` wrote into, and writes its own record there, as the directory layout on [Environment](reference/environment.md#directory-layout) shows.
+
+Before your first run, check five things:
+
+- **A session on Opus.** Unlike `/design`, which stops below Opus only on `SIGNIFICANT` or `HIGH-RISK` work, it asks on every run below Opus, before it reads anything, recommending you relaunch with `claude --model opus`. Going on anyway is recorded in the report and in the pull request.
+- **A clean working tree.** Where the clone has uncommitted changes, it shows them and asks whether to stash your tracked changes (recommended), go on with them in the diff, or cancel.
+- **A test suite it can find.** It records a test baseline before it edits anything. Where it finds no test command, or no suite it ran gives a result, it asks before the first edit whether to name the command, skip tests for this run, giving a reason the report records, or cancel.
+- **`gh`, signed in, for the pull request**, as `/design`'s handoff needs it, here for the code repository's pull request. The commit is made without asking, unless its scan of the added lines finds a possible secret, and the push and the pull request sit behind one question. Where `gh` cannot open the pull request, the branch is still pushed and the run prints the title and a body file, for you to open it in the web UI.
+- **One run per working tree at a time.** Its run state lives in the clone's git directory, one file per worktree, so a second run at once needs a second worktree.
+
+It ends with the code committed on a feature branch, `implementation.md` in the Epic folder recording the repository, the branch and the commit, a report, and the next steps: `/dev-workflows:conformance ACME-77-01`, then the companion `security-workflows` plugin's `/security-workflows:scan ACME-77-01`, both before the pull request merges. [`/implement`](commands/implement.md) has the whole run, and [`/conformance`](commands/conformance.md) the check that follows it.
 
 From here, [Workflow overview](workflow.md) shows where every other command sits relative to `/design`, and [Roles and phases](roles-and-phases.md) says what happens at each handoff along the way — including where `product-workflows`'s own PRD → architecture → Epic breakdown → specification ladder hands off into this one.

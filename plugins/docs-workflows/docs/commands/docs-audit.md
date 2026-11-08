@@ -18,7 +18,7 @@ It classifies as **SIGNIFICANT** — a cross-cutting synthesis of every scanned 
 
 Every recognized flag is stripped from the arguments before the remaining token is read as the optional docs-repo path — `--audience` and `--threshold` each together with the value after it, or that value would be read as the path. `--audience` takes `user`, `engineering` or `both` and defaults to `both`; it filters which units are minted and never which units the coverage grid counts. `--threshold <n>` takes a positive integer and sets the priority at or below which a unit has to be published for the backlog to count as done. `--refresh` re-derives the backlog against today's code instead of writing a new one; without it, a run that finds a backlog already there asks before doing anything.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 7's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance`: under the flag only real defects are persisted, never the in-session Lessons Learned report — `docs-workflows` ships no dedicated session-feedback reference page, so this paragraph is that explanation. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `code-scanner`, `docs-auditor` (overriding its frontmatter Sonnet pin), `ia-planner` (overriding its frontmatter Opus pin), `docs-audit-reviewer` (overriding its frontmatter Opus pin) and `impl-maintenance` (or, under `--skip-feedback`, `defect-reporter` in its place) — to one model, bypassing the detection/Opus-review split described below.
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 7's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance`: under the flag only real defects are persisted, never the in-session Lessons Learned report. [Session feedback](../reference/session-feedback.md#bugs-only---skip-feedback) has the rest. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `code-scanner`, `docs-auditor` (overriding its frontmatter Sonnet pin), `ia-planner` (overriding its frontmatter Opus pin), `docs-audit-reviewer` (overriding its frontmatter Opus pin) and `impl-maintenance` (or, under `--skip-feedback`, `defect-reporter` in its place) — to one model, bypassing the detection/Opus-review split described below.
 
 ## What it needs
 
@@ -29,6 +29,32 @@ All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_CO
 - **`$SPECS_PATH`**, for two of the seven surface kinds and for its own session bookkeeping. A run with no specs tree earns its other five kinds and says which two it did not.
 
 ## Phases
+
+The diagram shows the run's flow. A dotted edge is a stop, a Cancel, or a run with nothing to plan; each one that reaches the Phase 6 report still runs the emitter tail after it.
+
+```mermaid
+flowchart TD
+    p0["Phase 0 — Resolve: the run flags and its own flags, the repository and its rung, specs-repo preflight, a writable top level, the profile, the source repositories"]
+    p0 -.->|"a flag stop, or Cancel at the repository question"| runend["Run ends — nothing resolved, nothing recorded"]
+    p0 -.->|"DOCS_AUDIT_NOT_WRITEABLE, NO_SOURCES or UNKNOWN_SCHEMA"| p6
+    p0 --> d0{"A backlog already there, without --refresh?"}
+    p0 -.->|"Cancel at an unresolved source repository"| p6
+    d0 -.->|"Cancel — no backlog written"| p6
+    d0 -->|"no, or Treat this as a --refresh run"| p1["Phase 1 — Model routing: SIGNIFICANT, review pinned to Opus"]
+    p1 --> p2["Phase 2 — Scan: one code-scanner @Sonnet per repository, capped at 4; one narrow second round for an inconclusive theme"]
+    p2 -.->|"Cancel at a scan escalation: a dirty tree, a missing repository, a blocked refresh"| p6
+    p2 --> p25["Phase 2.5 — The specs-tree read: the decision and release surfaces"]
+    p25 --> p3["Phase 3 — Enumerate surfaces: docs-auditor @Sonnet"]
+    p3 -.->|"NO_SURFACES — no backlog written, or DOCS_AUDIT_AUDITOR_INPUT_MISSING"| p6
+    p3 --> p4["Phase 4 — Type and prioritise: ia-planner @Opus"]
+    p4 -.->|"DOCS_AUDIT_PLANNER_INPUT_MISSING"| p6
+    p4 --> p45["Phase 4.5 — Tutorial mint, on a refresh"]
+    p45 --> p5["Phase 5 — Reconcile, merge, and write .dev-workflows/docs-backlog.yml — no branch, no commit"]
+    p5 --> p55["Phase 5.5 — Review gate: docs-audit-reviewer @Opus → triage → the orchestrator applies survivors"]
+    p55 -.->|"Cancel, verdict kept, or DOCS_AUDIT_UNRESOLVED_BLOCKER — the backlog stays on disk"| p6
+    p55 -->|"cleared"| p6["Phase 6 — Report: the coverage grid and the top twenty units"]
+    p6 --> tail["Phases 7–9 — Maintenance & feedback, follow-ups, session cost, resume pointer, commit-artifacts"]
+```
 
 | Phase | What happens |
 |---|---|
@@ -71,14 +97,14 @@ Findings are triaged by the orchestrator before anything is applied: each is ver
 - `DOCS_AUDIT_BAD_THRESHOLD` — `--threshold` was not a positive integer.
 - `DOCS_AUDIT_UNKNOWN_FLAG` — a token beginning `--` survived flag stripping. Any such token stops the run rather than being read as a path, because the resolver takes the first positional token as given and a mistyped flag would otherwise become the repository. `--docs` and `--no-docs` are among them: this command is not a documentation-grounding consumer under any of that subsystem's three modes, so neither is one of its flags.
 - `DOCS_AUDIT_NO_SOURCES` — no code repository resolved and no specs tree to read, so there is nothing to enumerate surfaces from.
-- `DOCS_AUDIT_UNKNOWN_SCHEMA` — the backlog already there declares a schema version this release does not read. Nothing is written: a run that carried on would silently drop whatever the later version added.
+- `DOCS_AUDIT_UNKNOWN_SCHEMA` — the backlog already there declares a schema version this release does not read. No backlog is written: a run that carried on would silently drop whatever the later version added.
 - `DOCS_AUDIT_AUDITOR_INPUT_MISSING` / `DOCS_AUDIT_PLANNER_INPUT_MISSING` — one of the two agents refused to start because an input it enumerates was absent. The stop names it.
 - `DOCS_AUDIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-audit-reviewer` was neither fixed nor accepted by you, or you kept a `BLOCK` verdict after triage left no finding behind it standing. The backlog the run wrote stays on disk, reviewed and not fixed.
 - `DOCS_AUDIT_NOT_WRITEABLE` — the resolved repository's git top level cannot be written to, so there is nowhere to put the backlog.
 
 **Every one of those stops still finishes the run's bookkeeping.** A stop prints its line, reports it, and then runs the emitter tail: the cost entry and any feedback are recorded and the terminal commit into `$SPECS_PATH` still happens. The exceptions are the three flag stops — `DOCS_AUDIT_UNKNOWN_AUDIENCE`, `DOCS_AUDIT_BAD_THRESHOLD` and `DOCS_AUDIT_UNKNOWN_FLAG` — and a Cancel where the repository ladder asks you to choose or name one: each ends the run before any repository is resolved, and so has nothing to file an entry against.
 - A run that enumerated no surface at all is not a failure: no plan is made, no backlog is written, an existing one is left exactly as it was, and the report says whether the product genuinely has none of these things or the scan could not tell.
-- Cancelling at the overwrite prompt — the one a run without `--refresh` raises when a backlog is already there — writes nothing. The cost entry is still recorded.
+- Cancelling at the overwrite prompt — the one a run without `--refresh` raises when a backlog is already there — writes no backlog; a source-repository set the run has just recorded in the profile stays there. The cost entry is still recorded.
 
 ## Example
 

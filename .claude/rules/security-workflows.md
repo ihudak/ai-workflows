@@ -15,7 +15,7 @@ Loaded when a file under `plugins/security-workflows/`, the register format it w
 
 It has two dependencies, in `plugin.json`'s `dependencies`: `workflows-core`, by bare name, and `claude-security@claude-plugins-official`, Anthropic's Claude Security, from another marketplace. Claude Code installs that one only because `.claude-plugin/marketplace.json` allowlists its marketplace in `allowCrossMarketplaceDependenciesOn` — without that line the install completes without Claude Security and this plugin fails to load. Neither carries a version pin: a pin would disable the plugin whenever Claude Security moved past it (spec *Risks*). No other family plugin depends on it (`grep -l security-workflows plugins/*/.claude-plugin/plugin.json` lists its own manifest alone), so removing Claude Security costs this one command and nothing else (spec D1).
 
-Its docs tree carries 8 pages (`find plugins/security-workflows/docs -name '*.md' | wc -l`) — `docs/README.md` (the index), `getting-started.md`, `workflow.md` and `roles-and-phases.md`, 1 command page under `docs/commands/` (`ls plugins/security-workflows/docs/commands | wc -l`) and 3 reference pages under `docs/reference/` (`ls plugins/security-workflows/docs/reference | wc -l`).
+Its docs tree carries 9 pages (`find plugins/security-workflows/docs -name '*.md' | wc -l`) — `docs/README.md` (the index), `getting-started.md`, `workflow.md` and `roles-and-phases.md`, 1 command page under `docs/commands/` (`ls plugins/security-workflows/docs/commands | wc -l`) and 4 reference pages under `docs/reference/` (`ls plugins/security-workflows/docs/reference | wc -l`).
 
 ## Authority
 
