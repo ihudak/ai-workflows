@@ -223,6 +223,10 @@ write would re-ask a question already answered.
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
    the same ordering `/brd-package` uses and for the same reason. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
+
+   **Record what the run reads.** From here on, note each file under `$SPECS_PATH` that this run or an
+   agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names aside — as
+   `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` — or `resolve-address @<path>`, as typed, where step 1 found an `@<path>` address — (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns. Absent
    → stop, without asserting which command would have created it:
@@ -761,7 +765,7 @@ path nobody else can reproduce; the copy is the record.
    the plugin has no record to check against and inventing one would be the failure this whole
    admission exists to avoid.
 
-5. **Hand it off.** Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim — the **advisory** array, which is the class the handoff's register of classes puts the returned review in: read (by this run's own reader dispatch, and by a later run's step-2 overwrite refusal) and gated by nothing, since the gate's row for this command targets the *sent prompt* rather than the returned review. That is the same fact the *Declining does not stop the ingest* paragraph below states, and the **gated — stopping** array contradicted it in the operator's own prompt.
+5. **Hand it off.** Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies, unreworded — its flag line on a run carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the probe set `remote: none`. It is the **advisory** array, which is the class the handoff's register of classes puts the returned review in: read (by this run's own reader dispatch, and by a later run's step-2 overwrite refusal) and gated by nothing, since the gate's row for this command targets the *sent prompt* rather than the returned review. That is the same fact the *Declining does not stop the ingest* paragraph below states, and the **gated — stopping** array contradicted it in the operator's own prompt.
    ```
    choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
    ```
@@ -778,7 +782,10 @@ path nobody else can reproduce; the copy is the record.
    stages by enumeration and classifies anything it was not handed as OTHER, so a declaration naming
    the folder looks complete and ships nothing; `/brd-intake`'s handoff spells out the same trap.
    Step 4 held that list as it copied — pass it unchanged. Then
-   `title: <BRD-KEY> Record the returned customer review <YYYYMMDD>`. Emit its
+   `title: <BRD-KEY> Record the returned customer review <YYYYMMDD>`; `body_facts` = the review's
+   date and the count of files step 4 copied; and `inputs_read` = the files
+   the *Resolve inputs and gate the sent package* phase's *Record what the run reads* has noted so
+   far. Emit its
    §4.1 outcome line in the final report, labelled as the review's handoff so it is not confused with
    the run's own.
 
@@ -790,8 +797,8 @@ path nobody else can reproduce; the copy is the record.
    this caller's own `handoff-to-main`" as an anticipated state.
 
    **Two calls emit two §4.1 outcome lines, and that is the contract rather than a divergence from
-   it.** That section counts **per handoff the run offers**, not per run, and names this command as
-   the only producer in the family that offers two — every other offers it **at most** once, so for
+   it.** That section counts **per handoff the run offers**, not per run, and names this command
+   among the producers in the family that offer more than one — every other offers it **at most** once, so for
    them the two counts are the same number, zero included: a producer that offers no handoff at all
    (§4.1) executes none and prints none. It requires of a multi-handoff producer that
    **each line name which handoff it reports**, which is why neither is printed bare here: one
@@ -2915,7 +2922,7 @@ step 2's `accept` against it with that check's file. **Never `stamp` it** — st
 never another register: every dependent BRD's `decisions.md` the propagation sweep wrote, and any
 register the stale-reference sweep reached, keeps the record its own producers' runs wrote.
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies, unreworded: its flag line on a run carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the probe set `remote: none`:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
@@ -2938,7 +2945,8 @@ every artifact the *Apply the required corrections* phase changed — a transcri
 slice lands in the parent's `brd/brd-figures.md`, and a correction nobody declares here is a
 correction that never reaches the default branch — every dated artifact this run bannered,
 `reconciliation-<YYYYMMDD>.md`, every dependent BRD's `decisions.md` the sweep wrote, and every artifact the stale-reference sweep updated;
-`title: <BRD-KEY> Reconcile the returned customer review <YYYYMMDD>`; and `body_facts` = what the
+`title: <BRD-KEY> Reconcile the returned customer review <YYYYMMDD>`; `inputs_read` = the files the
+*Resolve inputs and gate the sent package* phase's *Record what the run reads* noted; and `body_facts` = what the
 review was reconciled against (a handed-off package, or `--sent` material with its committed path);
 the mode the
 review was read in; the `[CD#n]` ids frozen and the count of candidates rejected or sent back; the

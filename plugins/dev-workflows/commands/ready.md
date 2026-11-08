@@ -114,6 +114,8 @@ retry an artifact commit that failed to push, and settle the branch. Prompt-free
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
+**Record what the run reads.** From the preflight on, note each file under `$SPECS_PATH` that this run or an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names aside — as `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
+
 3. **Read from a clean specs-repo main — never a branch.** The specs repo's `main` (or `master`) branch
    is the handoff surface for every artifact `/ready` judges (per `/design`'s Phase 0 rule). Check
    `git -C "$SPECS_PATH" branch --show-current`, and test dirtiness with
@@ -529,8 +531,8 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    On the second or third choice, `_readiness.md` and what step 2a's agents edited stay written and uncommitted.
    On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2)
    with `prefix: ready`; `feature_folder` = `unit_folder`, the PRD dir or Epic subdir step 2 wrote into;
-   `deliverable_paths` = `_readiness.md` and every path in step 2a's `maintenance_paths`, each by its path relative to `$SPECS_PATH` (§2.9); `title: <PRD|EPIC> Update readiness snapshot`; and `body_facts` =
-   the verdict, the coverage roll-up (N/M, P%), the derived phase(s), and the documentation or `CLAUDE.md` edit at each path in step 2a's `maintenance_paths`, the only edits the handoff carries. Because `_readiness.md`
+   `deliverable_paths` = `_readiness.md` and every path in step 2a's `maintenance_paths`, each by its path relative to `$SPECS_PATH` (§2.9); `title: <PRD|EPIC> Update readiness snapshot`; `body_facts` =
+   the verdict, the coverage roll-up (N/M, P%), the derived phase(s), and the documentation or `CLAUDE.md` edit at each path in step 2a's `maintenance_paths`, the only edits the handoff carries; and `inputs_read` = the record of reads Phase 0 began. Because `_readiness.md`
    is overwritten every run, §2.2's collision rule fires on most re-runs against an already-merged prior
    branch — expect the `-2`/`-3` substitution, and report it via the §4.1 outcome line as that section
    requires. Emit that line in the terminal report's Phase handoff section (step 4).

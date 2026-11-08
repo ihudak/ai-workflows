@@ -27,6 +27,8 @@ Usage: `/prompt <corrective request> [--skip-costs]`
 
 **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
+**Then fix the run key set** (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §3.2), before the preflight below reads it. Where recent context holds the one run whose output this request corrects — a command of this family that resolved an address in this session — the set is that run's own: the key it resolved and, where that was an Epic folder, the key its parent's carrier asserts, both as that run carried them, never read off a branch name or out of the request. Otherwise — no such run in context, or more than one it could be — the set is empty and the run keyless. **The set decides which copy the correction edits.** A producer whose handoff committed its deliverable leaves the checkout on that unmerged branch. On a keyless run the preflight's §3.5 B4 switches to the default branch, so Phase 2's edit would meet the default branch's copy of the file, or none at all; §3.5 B3 keeps the checkout on a branch that a key in the set names. Where the set holds a key, Phase 1's target is that run's command, and Phase 3's `key` the key it resolved — an Epic folder's own, never its parent's.
+
 Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `specs-preflight` entry point (§3) inline: flush any leftover session
 artifacts from an earlier run, retry an artifact commit that failed to push,
@@ -41,7 +43,7 @@ untouched (§1 rule 1). Prompt-free; it prints its `Environment:` line, and is o
 ## Phase 1 — Identify the target
 
 Infer the target command from recent context — which command's output you are
-correcting. Ask only if genuinely ambiguous (one grouped prompt of 2–4 options; the
+correcting; where Phase 0 took the run key set from a run, that run's command. Ask only if genuinely ambiguous (one grouped prompt of 2–4 options; the
 harness supplies the free-text escape). If no command applies, use `n/a`. **Normalise the answer
 before it travels:** `target_command` must be a bare `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md`
 §7 row name (`/document`, never `/document (keyed mode)`), so map a free-text

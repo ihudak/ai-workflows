@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.59.7] — 2026-11-08
+
+Handover and start-of-run bugs the GIT-G1 audit found: batch B36. Update with `workflows-core` 1.78.16.
+
+### Fixed
+
+- **Every handover passes `inputs_read`.** `/design`, `/implement`, `/ready` and `/conformance` record each specs-repository file the run reads and pass the list to the handover, whose stacked-branch test reads it beside the paths the run wrote. No command passed it, so a run that read another phase's unmerged work cut its branch without showing that dependency. `/implement` keeps the record in its run-state file, which gains the key.
+- **`/design`'s *Next Epic* loop hands over cleanly once per Epic.** The loop re-runs the branch check for each Epic it takes; each handover line names its Epic; the final report carries one line per Epic and the next step names `/implement` for each. The second Epic's handover could fail on an open branch of its own, and its line was indistinguishable from the first's. A per-Epic design's read record leaves out other Epics' folders, so its branch is not stacked on the previous Epic's.
+- **`/design` and `/implement` name the push-target probe at their consent step.**
+- **`/conformance` and `/implement` run the branch check after their own placement refusals**, so a BRD container or an unplaceable folder is reported first.
+- **`/vuln` says which key its terminal commit takes** when its address tokens carry several: the first one it resolved.
+- **Pages.** `/design`, `/implement` and `/conformance` pages updated to match.
+
 ## [4.59.6] — 2026-11-08
 
 Docs only: follow-up to batches B33 and B34. Needs nothing from the other plugins' releases.

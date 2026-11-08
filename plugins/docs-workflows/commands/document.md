@@ -68,8 +68,6 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
    stopped on it. Carry the resolved `path`, `kind`, `key`, and the `specs` files found in that
    folder forward.
 
-   **Check the branch the run stands on.** On a keyed run, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with no `prefix`: this command hands nothing off in the specs repository. A stop it makes ends the run here.
-
    **Place the folder, and carry the PRD folder and the focus.** An `EPIC-` address documents one
    Epic, and its folder holds no `prd.md`: the PRD it belongs to is the folder above it. So place the
    resolved folder at a level as `workflows-core:addressing` §4.1 does — by its prefix, never by the
@@ -168,6 +166,8 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
      not PRD-level — no PRD folder stands above the Epic, and the stop reads instead:
      `DOCUMENT_NO_PRD: <focus_key> resolves to an Epic folder at <path> with no PRD folder above it. Move the Epic folder into its PRD folder (git mv) and re-run.`
      — `<path>` here being the Epic folder's own.
+
+   **Check the branch the run stands on.** On a keyed run, once the folder is placed and none of the stops above has ended the run, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with no `prefix`: this command hands nothing off in the specs repository. A stop it makes ends the run here. It runs after the placement stops, as §6 orders it, so a placement stop is reported rather than a stop about the branch the run stands on, and a slice entered at `DOCUMENT_BRD_NOT_SLICED` is checked once its own placement passes.
 
    **Check the lineage under each unit — report it, never ask.** Once the folder is placed and none
    of the stops above has ended the run, execute `Skill(skill: "workflows-core:reference", args: "document-lineage upstream-check")`
@@ -1525,7 +1525,9 @@ guidance already appeared in the Phase 9 report.
 
 **Then commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the
 run. It stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`,
-commits `<KEY> Add dev-workflows session artifacts (/document)`, and pushes
+commits `<KEY> Add dev-workflows session artifacts (/document)` — `<KEY>` the
+key the run addressed (§4 step 4): `focus_key` on an Epic address, `<PRD>` on
+a PRD-level one, or `NOISSUE` where the run resolved no key — and pushes
 per §4 step 5. It NEVER writes into the docs repo this run just changed —
 the documentation commit, branch, and PR are untouched — NEVER touches a
 code repo, anything outside `$SPECS_PATH`;

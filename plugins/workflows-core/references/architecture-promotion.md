@@ -230,7 +230,8 @@ Then `workflows-core:phase-handoff` §4.3's push-target probe and its **gated �
 - `prefix: kb`, no `feature_folder` (§2.2's keyless form names `kb/promote-<YYYY-MM-DD>`);
 - `deliverable_paths` = the `written` list;
 - `title: NOISSUE Record promotion of team decisions`;
-- `body_facts` = the counts per key value, and the architecture pull request's URL.
+- `body_facts` = the counts per key value, and the architecture pull request's URL;
+- no `inputs_read`: §1 step 4 held the specs checkout on `<default-ref>`'s branch, where `workflows-core:phase-handoff` §2.2's stack test does not apply.
 
 Declining the handoff leaves the marks uncommitted in the working tree; the next run stops at §1.4 until they are committed or discarded.
 

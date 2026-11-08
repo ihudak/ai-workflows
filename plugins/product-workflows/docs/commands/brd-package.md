@@ -100,18 +100,8 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 - **An existing BRD folder.** No folder for `<BRD-KEY>` — searched at every level
   `resolve-address` bounds (three below `specifications/`) — stops with `BRD_PACKAGE_NOT_FOUND`, which names both ways a folder comes to exist
   rather than asserting one.
-- **No torn write in the folder.** An item stamped with a round whose `interview/round-<N>.md` does
-  not exist or does not name it — what a [`/brd-interview`](brd-interview.md) run left when it
-  stopped before writing that record — counts for nothing, and the bundle
-  carries the register, the question set and the code-defect log whole, so a package built now
-  would ship them. The run stops with `BRD_PACKAGE_TORN_WRITES`, naming each; any
-  `/brd-interview` run that reaches its handoff removes them, save on a slice that kept no
-  requirement of its own, which that command refuses and this stop says so. A round record that
-  exists and cannot be read stops the run with `BRD_PACKAGE_ROUND_UNREADABLE` instead, since it
-  decides nothing. This test runs before the register gate below, so that gate's remedy — commit
-  the register — never lands a torn write first.
-- **A specs checkout not behind for the BRD.** After that test and before the register gate, the
-  run checks the branch the specs checkout stands on. Where it is a plugin branch the default
+- **A specs checkout not behind for the BRD.** Before the torn-write test below and the register
+  gate, the run checks the branch the specs checkout stands on. Where it is a plugin branch the default
   branch has moved past under the slice's parent `BRD-` folder — a document there, a sibling
   slice's included, added, changed or removed since that branch was cut, session files aside — the
   run stops, naming the paths and what to run: merge the default branch in, where this run builds
@@ -120,6 +110,17 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   reuse is open and has changed something under that folder, it asks first whether to switch to
   that branch and continue there, or stop until its pull request is merged, or closed and the
   branch deleted.
+- **No torn write in the folder.** An item stamped with a round whose `interview/round-<N>.md` does
+  not exist or does not name it — what a [`/brd-interview`](brd-interview.md) run left when it
+  stopped before writing that record — counts for nothing, and the bundle
+  carries the register, the question set and the code-defect log whole, so a package built now
+  would ship them. The run stops with `BRD_PACKAGE_TORN_WRITES`, naming each; any
+  `/brd-interview` run that reaches its handoff removes them, save on a slice that kept no
+  requirement of its own, which that command refuses and this stop says so. A round record that
+  exists and cannot be read stops the run with `BRD_PACKAGE_ROUND_UNREADABLE` instead, since it
+  decides nothing. This test runs after the branch check above, so it reads the checkout the run
+  goes on to work on, and before the register gate below, so that gate's remedy — commit the
+  register — never lands a torn write first.
 - **`/brd-interview`'s register already merged to the specs repo's default branch.**
   `require-on-main` runs against `decisions.md` before any content is read; an unmerged pull
   request stops the run naming the branch/PR state. Where the gate reports the register is on no ref

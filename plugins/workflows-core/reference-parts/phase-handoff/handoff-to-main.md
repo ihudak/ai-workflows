@@ -2,7 +2,7 @@
 
 # Phase handoff — Shared Reference — entry point handoff-to-main
 
-This file holds entry point `handoff-to-main` of `phase-handoff`: §1, §2, §4.1, §4.2 and §4.3, and in part §4.0 ("What declining costs", "takes the strongest class" and "Classify by naming the reader"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 348 lines long.
+This file holds entry point `handoff-to-main` of `phase-handoff`: §1, §2, §4.1, §4.2 and §4.3, and in part §4.0 ("What declining costs", "takes the strongest class" and "Classify by naming the reader"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 350 lines long.
 
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
@@ -23,7 +23,7 @@ Where this reference **differs** — each difference is deliberate, and a reader
 
 ## 2. `handoff-to-main` — the producer entry point
 
-Called from a producing command's Handoff phase, and **only** when the user picked the branch-and-PR choice of §4.3. **A producer requests it at that consent step** — `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` reads this entry point's own file, which holds §4.3 as well as this section — and presents §4.3's choice from that file first; this section then runs only on the choice's first option. §2.7.1 is the exception to that *only*: `dev-workflows:code-handoff` §2.7 and `docs-workflows:finish-and-handoff` §5 also run it, under their own consent. A request made after this handoff's own choice was answered — the step that follows the choice, or a later phase carrying its answer — does not present it again: it runs this section on that answer. A choice the user reopens after answering — an interruption, then the question put again — is §4.1's *A consent choice asked again*, not such a request. A second handoff in one run (§4.1's *One producer offers two handoffs*) presents its own choice at its own consent step. **One step of it runs earlier, and it is read-only:** §2.1's push-target probe, which §4.3 runs before it presents the choice, because the probe's result decides what that section prints above the array.
+Called from a producing command's Handoff phase, and **only** when the user picked the branch-and-PR choice of §4.3. **A producer requests it at that consent step** — `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` reads this entry point's own file, which holds §4.3 as well as this section — and presents §4.3's choice from that file first; this section then runs only on the choice's first option. §2.7.1 is the exception to that *only*: `dev-workflows:code-handoff` §2.7 and `docs-workflows:finish-and-handoff` §5 also run it, under their own consent. A request made after this handoff's own choice was answered — the step that follows the choice, or a later phase carrying its answer — does not present it again: it runs this section on that answer. A choice the user reopens after answering — an interruption, then the question put again — is §4.1's *A consent choice asked again*, not such a request. A second handoff in one run (§4.1's *A producer that offers more than one handoff prints one line for each*) presents its own choice at its own consent step. **One step of it runs earlier, and it is read-only:** §2.1's push-target probe, which §4.3 runs before it presents the choice, because the probe's result decides what that section prints above the array.
 
 ### 2.1 Gate
 
@@ -232,12 +232,14 @@ ask, `/implement`'s Phase 4.5 is a silent no-op where step 7.5 wrote no conforma
 it first* — and there the *Declined by the user* row would assert a decision nobody was asked to
 make.
 
-**One producer offers two handoffs, and it prints two lines.** `/brd-reconcile` hands off the
+**A producer that offers more than one handoff prints one line for each.** `/brd-reconcile` hands off the
 returned customer review it canonicalised, then its own reconciliation record on the branch that
 first handoff created (§2.2 rule 3): two deliverables, two consent choices, two outcomes that can
 differ — so one line cannot report both, and collapsing them would drop whichever it did not report.
 **Where a run offers more than one handoff, each line names which handoff it reports**, as that
-command already does. It is the only such producer today; every other command in the family offers
+command already does. It and the *Next Epic* loops of `/dev-workflows:design` and
+`/product-workflows:specify`, which hand off once per Epic the run takes, are the only such
+producers today; every other command in the family offers
 `handoff-to-main` **at most** once — at most, because a producer may reach no offer at all (the
 skips named above are examples of that, not its whole extent: a run that stops before its handoff
 phase reaches none either), and because a declined offer still prints its line while §2 never runs —
@@ -311,7 +313,7 @@ No two of the four are interchangeable, and each wrong pick misleads in its own 
 
 **Selecting an array is not the whole of this section, and a producer that takes only its array offers a `(Recommended)` push it may be unable to run.** Three steps below run **before** whichever array is selected here: the flag line a run carrying `specs_git: blocked` or `specs_git: misrooted` prints (*Before anything else*), §2.1's push-target probe, and the no-remote line that probe decides (*Before presenting the array*). They are written after the arrays because all three are identical for all four, and they are named here because a reader who finds their class, copies its array and stops never reaches them — which is exactly how a producer came to present a push-and-open-PR option, marked `(Recommended)`, on a repository with no `origin` and with no notice above it, the live state §2.1 records that probe as having been added for.
 
-**The obvious remedy — a copy of the probe step beside each quoted array — was measured and refused, and the measurement is recorded here so it is not re-proposed without new evidence.** Re-derive it with `grep -n 'Branch + commit + push + open PR to main' plugins/*/commands/*.md` and read the lines above each hit: every inlined copy of these arrays in the family is preceded, within its handoff section, by the `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` request that loads `handoff-to-main`'s own file, which holds this section — so a producer presenting an array has this section open, and the probe and its notice are reached from exactly where the copier lands. A copy at each producer would restate a rule the caller contract's never-restate rule forbids restating, whose one exception is the arrays themselves and nothing around them, and it would put the probe's wording in as many places as there are producers to keep in step. What is *not* covered by that measurement, and is review's: a producer that presents an array it never loaded this section to get.
+**A producer names the probe at its consent step, by citation, and never copies the probe's steps.** A copy beside each quoted array was once measured and refused on the reasoning that every producer presenting an array has loaded `handoff-to-main`'s own file, which holds this section, so the probe is reached from exactly where the copier lands — re-derive that with `grep -n 'Branch + commit + push + open PR to main' plugins/*/commands/*.md` and the lines above each hit. A live `/product-workflows:brd-interview` run then loaded it, presented the quoted array and ran no probe, offering a `(Recommended)` push-and-open-PR on a specs repository with no `origin`: having this section open is not enough. So each producer's consent step now says to run §4.3's push-target probe and to print the one line this section puts above the array, and points here for both. A copy of the probe's own steps at each producer stays refused: it would restate a rule the caller contract's never-restate rule forbids, whose one exception is the arrays themselves, and put the probe's wording in as many places as there are producers to keep in step. What is still review's: a producer that presents an array it never loaded this section to get.
 
 **gated — stopping** (§4.1 bullet 1) — some consumer stops on this artifact, by a §3.4 row or by its own guard; `architecture/**` is the guard's case, with `/harvest-decisions` and `/promote-decisions` its producers:
 

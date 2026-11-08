@@ -116,6 +116,10 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    folder asserts no key gives an empty set, a keyless run (§3.2). A run that stops on its address
    in step 2 runs no preflight.
 
+   **Record what the run reads.** From here on, note each file under `$SPECS_PATH` that this run or
+   an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names
+   aside — as `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
+
 4. **Refuse a `BRD-` container**, structurally, **on the directory prefix, before any file inside the
    folder is read**. An effort proposal for a container is the umbrella rather than a slice's own
    estimate, and the two are different documents priced from different inputs.
@@ -717,7 +721,7 @@ less.
 
 ## Phase 10 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies, unreworded: its flag line on a run carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the probe set `remote: none`:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
@@ -749,7 +753,7 @@ unchanged), and, on a revision, the archived prior under `revisions/` at the nam
 first-free rule actually wrote — `<KEY>_proposal_<YYYYMMDD>.md`, or the first free `-2`, `-3` form
 where that was taken — and the brief archived beside it, where one was, at the name the same rule
 wrote for it — and, on any run, a revision or not, a brief Phase 8 archived that stood without a
-`proposal.md` (Phase 0), at the name that rule wrote for it — `title: <KEY> Effort proposal <YYYYMMDD>`, and `body_facts` = the readiness tier and what
+`proposal.md` (Phase 0), at the name that rule wrote for it — `title: <KEY> Effort proposal <YYYYMMDD>`, `inputs_read` = the files Phase 0 step 3's *Record what the run reads* noted, and `body_facts` = the readiness tier and what
 capped it; the `[WP#n]` count and the total expected hours with its range; the count of packages graded
 Low and how many carry a declared re-estimate gate; the `proposal-reviewer` verdict with its version line and every finding left open (`workflows-core:escalation-rules`, *A recorded verdict names the version it was taken against*); and whether a rationale brief was rendered. Emit its §4.1 outcome line in the final report.
 

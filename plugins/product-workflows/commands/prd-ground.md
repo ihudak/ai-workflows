@@ -142,6 +142,8 @@ behaviour, not the behaviour.
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort
    one, the same ordering `/design` Phase 0 uses and for the same reason. **This run's key set (§3.2) is the one key step 1 read** — the `<BRD-KEY>` it read with `read-key`, or the key an `@<path>` address's carrier asserts — **and never a `--depends-on` or `--from-split` key**, though step 2 reads those with `read-key` too: they name other folders, and a branch of theirs is not this run's to stay on. So §3's order for a key set `read-key` reads off the arguments applies, the preflight running before step 5 resolves the folder. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
+
+   **Record what the run reads.** From here on, note each file under `$SPECS_PATH` that this run or an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names aside — as `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` — or `resolve-address @<path>`, as typed, where step 1 found an `@<path>` address — (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns.
    Absent → stop, without asserting which command would create it: no folder exists, so no
@@ -2240,7 +2242,7 @@ that check's file as the same step says. Nothing in this run writes either file 
 
 ## Phase 9 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim — the **gated — stopping** variant (§4.1 bullet 1), **in every mode including `--no-code`**:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim — the **gated — stopping** variant (§4.1 bullet 1), **in every mode including `--no-code`** — with the one line §4.3 puts immediately above the array where one applies, unreworded: its flag line on a run carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the probe set `remote: none`:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
@@ -2300,7 +2302,8 @@ resolved in Phase 0; `deliverable_paths` = every file this run wrote or updated 
   3 and Phase 8 both leave `code-grounding.md` and `baselines.md` untouched under that mode
   regardless of route.
 
-`title: <BRD-KEY> Ground requirements against code and design`, and `body_facts` =
+`title: <BRD-KEY> Ground requirements against code and design`, `inputs_read` = the files Phase 0
+step 4's *Record what the run reads* noted, and `body_facts` =
 the finding counts by verdict, the verifier agreement/extend/contradict/unprovable tally, and the
 prerequisite-readiness block — **on `route: idea` the prerequisite-readiness block is
 `prerequisites: none declared` on every run, since `--depends-on` cannot reach Phase 4 there**, and
