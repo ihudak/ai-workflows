@@ -34,7 +34,8 @@ flowchart TD
     p4 --> d4{"Anything to write?"}
     d4 -->|"a new profile, or Apply the diff"| p5["Phase 5 — Write as a reviewable PR: branch, profile and CLAUDE.md additions, format, commit, and the PR draft on a standalone run — never pushed"]
     d4 -.->|"Keep existing, write nothing — or the diff lists no change"| mode{"Standalone or --inline?"}
-    p5 -.->|"Cancel at the dirty-tree question, or at its re-offer after a failed pull"| halt
+    p5 -.->|"standalone: Cancel at the dirty-tree question, or at its re-offer after a failed pull"| halt
+    p5 -.->|"--inline: the same Cancel — /document stops, naming any stash and the branch to go back to"| ret
     p5 --> mode
     mode -->|"standalone"| p6["Phase 6 — Final report"]
     mode -->|"--inline, from /document"| ret["Back to /document, which reports — the branch and commit where Phase 5 made one, any stash record, the fixed-port and command-defect lists"]

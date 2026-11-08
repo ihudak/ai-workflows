@@ -9,6 +9,8 @@ The nine are what the whole family needs: each is read by a reference this plugi
 - `docs-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$DOCS_PATH` and `$GIT_USER_INITIALS`, since it branches a docs repository — not `$ARCHITECTURE_REPO_PATH`, since it authors no ARD.
 - `security-workflows` uses `$SPECS_PATH` alone.
 
+All four also read `$GIT_USER_INITIALS` to name your session branch where your specs repository is in session-branch mode (*Session branch*, under `$GIT_USER_INITIALS` below) — `security-workflows` there and nowhere else.
+
 ## `$SPECS_PATH`
 
 - **`$SPECS_PATH`** — the shared, team-visible store the whole family writes its artifacts and bookkeeping into. It is the one write root with no default: nothing is guessed.

@@ -13,7 +13,7 @@ Follow-up to batches B33 and B34. Needs nothing from the other plugins' releases
 
 - **`/docs-audit`: a Cancel at any escalation of the repository step takes the stop route**, the stale or diverged read-only mount's included, which no sentence covered; the opening *Ending early* list names those four and Phase 5.5's review questions.
 - **`/docs-profile`: a Cancel at the dirty-tree re-offer says where HEAD stands.** That Cancel comes after the switch to the default branch, so the stop names the branch HEAD was on and the command that goes back. The report has a form for a Cancel and names any stash with its restore commands on every outcome; run inline, `/document`'s `PROFILE_REQUIRED` stop names them.
-- **Docs.** The roles page says what `/docs-audit --refresh` keeps and what it re-derives; the model-routing page names the writing these commands do on the session's model; the environment page says `$GIT_USER_INITIALS` also names your session branch, and its prompt's fallback is `docs/`; getting started names the variable among those that say so when missing.
+- **Docs.** The roles page says what `/docs-audit --refresh` keeps and what it re-derives; the model-routing page names the writing these commands do on the session's model; the environment page says `$GIT_USER_INITIALS` also names your session branch, and its prompt's fallback is `docs/`; getting started names the variable among those that say so when missing; and the workflow diagram's `/implement` edge into `/document` waits on the PE's PRD run, as the page's prose now says.
 
 ## [1.35.7] — 2026-11-08
 

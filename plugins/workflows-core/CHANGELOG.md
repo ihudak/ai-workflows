@@ -7,13 +7,13 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.78.15] — 2026-11-08
 
-Follow-up to batches B33 and B34: what an independent review of the merged batches found. Update with `product-workflows` 3.78.8.
+Follow-up to batches B33 and B34: what an independent review of the merged batches found. Needs nothing from the other plugins' releases.
 
 ### Fixed
 
 - **The routing graph gives `/create-ard`, offered after `/create-prd`, its `<merge-clause>`**, as `/create-prd`'s own array does; `/specify` beside it already carried one.
 - **`/diagnose-session` splits only the dimensions it dispatches.** Past 20,000 lines, each of `repeated-work`, `stumbles` and `claims-and-evidence` that the run dispatches is split by line range, and the split adds no dimension a scoped request left out. The command page's diagram, which said "the other four whole", says the same.
-- **Docs.** The family map's `/create-prd` → `/prd-proposal` edge says the PRD must be on the default branch, and the `/brd-split` edge into `/prd-proposal`, which no fresh slice can take, is gone; `/implement`'s edge into `/document` waits on the PE's PRD run. The environment page says `product-workflows` reads `$GIT_USER_INITIALS` too, for the branch `/promote-decisions` cuts in the architecture repository, and getting started names it among the optional variables that say so when they are missing.
+- **Docs.** The family map's `/create-prd` → `/prd-proposal` edge says the PRD must be on the default branch, and the `/brd-split` edge into `/prd-proposal`, which no fresh slice can take, is gone; `/implement`'s edge into `/document` waits on the PE's PRD run. The environment page says `product-workflows` reads `$GIT_USER_INITIALS` too, for the branch `/promote-decisions` cuts in the architecture repository, and that every plugin's runs read it to name the session branch; getting started names it among the optional variables that say so when they are missing.
 
 ## [1.78.14] — 2026-11-08
 

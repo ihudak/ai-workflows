@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.78.8] — 2026-11-08
 
-Follow-up to batches B33 and B34. Update with `workflows-core` 1.78.15.
+Follow-up to batches B33 and B34. Needs nothing from the other plugins' releases.
 
 ### Fixed
 

@@ -49,7 +49,7 @@ claude plugin update dev-workflows@shipwright
 
 ## What you set on your machine
 
-This plugin reads one environment variable, and every run needs it. [Environment](reference/environment.md) has its exact resolution and failure behaviour.
+This plugin reads one environment variable, and every run needs it. A second, `GIT_USER_INITIALS`, is read on its behalf by the companion `workflows-core` plugin only where your specs repository's default branch takes no direct push: a run then keeps its session files on a branch named from it, and with no identifier from it, `git config user.initials` or your existing branches, commits none of them, its `Specs repo:` line naming the variable to set. [Environment](reference/environment.md) has its exact resolution and failure behaviour.
 
 ### `SPECS_PATH`
 
