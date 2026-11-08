@@ -209,7 +209,9 @@ and its repository, so a later run can make the merged check, and an item that a
 be removed, written or committed names the repository it lies in and the path from that
 repository's root, so a later run can make the absence or presence check. An item that asks for a
 command to run is carried with its line ending `(waiting since <ISO datetime>)`, its waiting
-datetime copied as the old pointer writes it, and every run that carries the item keeps that
+datetime copied as the old pointer writes it, and this holds whatever else the item waits on, a pull
+request's merge included: such an item carries the marker too, and its waiting datetime is the one it was
+first carried with. Every run that carries the item keeps that
 datetime, never replacing it with the run's own *Last completed* datetime: so a record that reaches
 the checkout only after a later run wrote its pointer — pushed from another clone while a run that
 carried the item was under way, held on another session branch until its pull request merged, or
