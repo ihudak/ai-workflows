@@ -143,6 +143,8 @@ retry an artifact commit that failed to push, and settle the branch. Prompt-free
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
+**Record what the run reads.** From this preflight on, note each file under `$SPECS_PATH` that this run or an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names aside — as `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
+
 **Check the branch the run stands on.** Where step 1 found the folder, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: idea`; a stop it makes ends the run here. A folder this run is about to create has nothing on any branch to compare.
 
 ---
@@ -647,7 +649,9 @@ Report where `idea.md` was written and its `status`, and what Phase 4.5 vendored
 the next phase — **adapted to status**:
 
 - **`status: refined`** — offer the handoff. Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`
-  and present its §4.3 consent choice verbatim — the **gated — falling back** variant (§4.1
+  and run its §4.3 push-target probe, printing the one line §4.3 puts immediately above the array
+  where one applies — its flag line, or its no-remote line — then present its §4.3 consent choice
+  verbatim — the **gated — falling back** variant (§4.1
   bullet 2), because `/product-workflows:create-prd <KEY>` runs `require-on-main` on this `idea.md`
   (the gate's first row-F row), which settles the class as **gated**, and that row is the *only* one naming
   this file: it preserves the Phase 0 idea ladder instead of stopping, so §4.1's quantifier takes
@@ -659,18 +663,20 @@ the next phase — **adapted to status**:
   before the offer): a declined edit of a merged copy meets `/create-prd`'s gate at the C rows, a
   stop (`workflows-core:phase-handoff` §4.1, *Row F is the next phase's reading only where …*), so that run presents the
   **gated — stopping** array instead: `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]`.
-  Then on the first option execute `handoff-to-main` (§2) with all five of its §2.9 inputs: `prefix: idea`;
+  Then on the first option execute `handoff-to-main` (§2) with all six of its §2.9 inputs: `prefix: idea`;
   `feature_folder` = the folder Phase 4 wrote `idea.md` into; `deliverable_paths` = `idea.md`,
   **plus every file Phase 4.5 wrote or reused** — each copy under `attachments/`, each image copy
   under `design/idea-sources/`, and that frame set's `index.md`. **Reused counts**: a copy the
   collision rule matched byte-for-byte was not written by this run, but `idea.md`'s link points at it
   and an earlier run may have left it on no ref — naming a path whose content is unchanged stages
   nothing, while omitting one is a link to a file that never lands; `title: <KEY> Add idea brief`;
-  and `body_facts` = the idea's one-line goal, the number of `[NEEDS CLARIFICATION]` markers left
-  open, the logged assumptions, whether docs grounding ran, and what was vendored.
-  **All five are required** — §2.4's commit subject and §2.7's pull-request title are both derived
+  `body_facts` = the idea's one-line goal, the number of `[NEEDS CLARIFICATION]` markers left
+  open, the logged assumptions, whether docs grounding ran, and what was vendored; and
+  `inputs_read` = the files Phase 0's *Record what the run reads* noted.
+  **All six are required** — §2.4's commit subject and §2.7's pull-request title are both derived
   from `title`, and §2.6 supplies every `gh` argument precisely so the run never blocks on an
-  interactive editor; passing three of five leaves both unsourced.
+  interactive editor; passing three of six leaves both unsourced, and a handoff without
+  `inputs_read` cuts its branch blind to what this run read on another phase's open branch (§2.2).
 
   **The vendored files are named literally, one path each — never a directory and never a glob.**
   §2.3 stages by enumeration and classifies everything it was not handed as OTHER, so a copy left out

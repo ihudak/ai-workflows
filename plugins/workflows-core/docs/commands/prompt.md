@@ -23,7 +23,7 @@ Write the flag before or after the request, never inside it: a leading run of fl
 ## What it needs
 
 - **The request itself, verbatim** — the correction to apply, and the corrective-triple's User prompt block, verbatim save the redactions above.
-- **Recent session context**, to infer the target `command` (or ask once if ambiguous).
+- **Recent session context**, to infer the target `command` (or ask once if ambiguous). Where that context holds the one run this request corrects, its key keeps the specs checkout on that run's own unmerged branch, so the correction meets the copy that run wrote rather than the default branch's.
 - **`$SPECS_PATH`** — for the feedback entry, the session-cost entry, and the specs-preflight/commit-artifacts bookkeeping; the correction itself is applied to your target files directly, wherever they are, never to the specs repo.
 
 ## What it produces

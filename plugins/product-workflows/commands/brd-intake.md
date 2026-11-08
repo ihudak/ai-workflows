@@ -68,6 +68,8 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
 6. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
    `commit-artifacts` step skips on it.
+
+   **Record what the run reads.** From here on, note each file under `$SPECS_PATH` that this run or an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names aside — as `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
 7. **Resolve or derive the BRD folder** via `resolve-address <BRD-KEY>` — or `resolve-address @<path>`, as typed, where step 1 found an `@<path>` address — (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Found → an existing folder, and where it is a
    root BRD this invocation is a re-run over it; use it. Only a root is: the slice test below and the
    level test after it refuse every other folder. **A slice is never a legitimate target here** —
@@ -1469,7 +1471,7 @@ grounding has actually run. When `--sort-existing` was not given, this phase is 
 
 ## Phase 7 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and present its §4.3 choice array verbatim — the **gated — stopping** array: every slice's
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies — its flag line, or its no-remote line. It is the **gated — stopping** array: every slice's
 `/product-workflows:brd-reconcile` executes `require-on-main` on this BRD's `brd/brd-defect-log.md`
 before it confirms any answer, and stops while the log is on no ref (its own gate on main), since it writes its defect resolutions into that file. Every other artifact of this handoff
 is read from the worktree — `/product-workflows:brd-split` on a root reads them with a plain worktree
@@ -1492,7 +1494,8 @@ interrupted — found by `git -C "$SPECS_PATH" status --porcelain -z --untracked
 two directories and named one literal path each: nothing else in the plugin ever stages it, so
 undeclared it stays untracked and the specs-repo preflight reports it as an unrelated dirty path
 (`workflows-core:specs-repo-git` §3.3 G1) on every later run),
-`title: <BRD-KEY> Intake BRD source and requirement inventory`, and `body_facts` = the requirement
+`title: <BRD-KEY> Intake BRD source and requirement inventory`, `inputs_read` = the files Phase 0
+step 6's *Record what the run reads* noted, and `body_facts` = the requirement
 count, the confirmed-defect count by class, and whether Phase 6 wrote seeds; emit its §4.1 outcome
 line in the final report.
 

@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.16] — 2026-11-08
+
+Handover and start-of-run bugs the GIT-G1 audit found: batch B36. Update with `dev-workflows` 4.59.7, `docs-workflows` 1.35.9 and `product-workflows` 3.78.9.
+
+### Fixed
+
+- **`specs-repo-git` §4 step 4 says which key the terminal commit takes.** It is the one key the run addressed: an Epic run's own key, never the parent PRD key the run key set carries only to match branches. §3.4's flush, which commits through the same step, takes the same key. The reference used to say the commit "resolves its own key" without saying how.
+- **`specs-repo-git` §4 no longer says a stopped run writes no feedback in every command.** A command whose own stop route runs its maintenance phase — the docs setup commands, past their earliest stops — can write feedback on a stop.
+- **`phase-handoff` names every producer that hands off more than once.** `/design`'s and `/specify`'s *Next Epic* loops hand off once per Epic, like `/brd-reconcile`'s two handoffs; each line names what it reports. `next-phase-offer` resolves a `<merge-clause>` from the right line on such a run.
+- **`phase-handoff` §4.3: a producer names the push-target probe at its consent step.** A copy of the probe beside each array had been refused on the reasoning that every producer has this section loaded; a live `/brd-interview` run loaded it and still skipped the probe, offering a recommended push to a repository with no `origin`. Producers now name the probe by citation; its steps still live here only.
+- **`architecture-promotion` §11.2 says why `/promote-decisions` passes no `inputs_read`.**
+- **`/frames`:** its handover names the push-target probe, passes `inputs_read` (it said the handover takes five inputs; it takes six), and states its commit key. A G1 guard's suppression is per run, not "for the rest of that session".
+- **`/prompt`, `/prompt-brainstorm` and `/prompt-grill-me` correct a run's output on the branch it was left on.** They ran their preflight keyless, so it moved the checkout off the corrected run's unmerged branch to the default branch, and the correction then edited the wrong copy or found no file. Where recent context holds the run being corrected, its own keys now form the run key set, and the preflight keeps its branch.
+
 ## [1.78.15] — 2026-11-08
 
 Follow-up to batches B33 and B34: what an independent review of the merged batches found. Needs nothing from the other plugins' releases.

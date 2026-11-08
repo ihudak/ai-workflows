@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.9] — 2026-11-08
+
+Handover and start-of-run bugs the GIT-G1 audit found: batch B36. Update with `workflows-core` 1.78.16.
+
+### Fixed
+
+- **Every handover names the push-target probe.** Seven handovers — `/prd-ground`, `/prd-proposal`, `/brd-proposal`, `/brd-intake`, `/brd-split` and both of `/brd-reconcile`'s — said only to present the consent choice, and the same wording in `/brd-interview` once led a live run to skip the probe and offer a recommended push to a repository with no `origin`. `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec` and `/epics` gain the same words.
+- **Every handover passes `inputs_read`.** Each producer records the specs-repository files the run reads and passes them to the handover's stacked-branch test; none did. `/idea` said the handover takes five inputs; it takes six. `/harvest-decisions` says why it passes none.
+- **`/specify`'s *Next Epic* loop hands over cleanly once per Epic**, as `/design`'s does: a branch check per Epic, one labelled line per Epic, and a read record that leaves out other Epics' folders.
+- **`/brd-package` states its run key set**, leaving out its `--depends-on` keys, so the preflight never keeps the run on a prerequisite BRD's unmerged branch. Its branch check now runs before step 5c reads the slice's records.
+- **`/brd-interview`'s *Ending early* paragraph** said a *Cancel* on the repair offer anywhere in Phase 0 lets the run go on; that holds at step 8a only (batch B35's wording).
+- **`/create-prd` places its branch check after its placement refusals** and says it does not run for a folder the run is about to create. `/epics` states its commit key. `/brd-reconcile`'s first handover passes `body_facts`.
+- **Pages.** The `/brd-package` and `/specify` pages updated to match.
+
 ## [3.78.8] — 2026-11-08
 
 Follow-up to batches B33 and B34. Needs nothing from the other plugins' releases.

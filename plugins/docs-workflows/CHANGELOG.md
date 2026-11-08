@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.9] — 2026-11-08
+
+Handover and start-of-run bugs the GIT-G1 audit found: batch B36. Update with `workflows-core` 1.78.16.
+
+### Fixed
+
+- **`/release-notes` passes `inputs_read` and names the push-target probe** at its handover, and says which key its commit, feedback and cost entry take on an Epic address: the Epic's own.
+- **`/document` runs the branch check after its folder-placement refusals**, as `/release-notes` already did, and says which key its keyed-mode commit takes on an Epic address.
+- **Pages.** The `/document` page no longer says the branch check runs before the folder is placed.
+
 ## [1.35.8] — 2026-11-08
 
 Follow-up to batches B33 and B34. Needs nothing from the other plugins' releases.

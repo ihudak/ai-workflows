@@ -21,7 +21,7 @@ Write the flag before or after the request, never inside it: a leading run of fl
 ## What it needs
 
 - **The request itself, verbatim** — the correction to explore, and the corrective-triple's User prompt block, verbatim save the redactions above.
-- **Recent session context**, to infer the target `command`.
+- **Recent session context**, to infer the target `command`. Where that context holds the one run this request corrects, its key keeps the specs checkout on that run's own unmerged branch, so the correction meets the copy that run wrote rather than the default branch's.
 - **`$SPECS_PATH`** — for the specs-preflight/commit-artifacts bookkeeping only.
 - **The `superpowers` plugin's `brainstorming` skill**, invoked directly in Phase 3 with no declared install-time dependency. Without it the command still logs the correction, says the skill is not installed, and points you to `/prompt-grill-me` or `/prompt` instead.
 

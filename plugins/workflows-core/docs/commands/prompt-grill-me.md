@@ -21,7 +21,7 @@ Write the flag before or after the request, never inside it: a leading run of fl
 ## What it needs
 
 - **The request itself, verbatim** — the correction to interrogate, and the corrective-triple's User prompt block, verbatim save the redactions above.
-- **Recent session context**, to infer the target `command`.
+- **Recent session context**, to infer the target `command`. Where that context holds the one run this request corrects, its key keeps the specs checkout on that run's own unmerged branch, so the correction meets the copy that run wrote rather than the default branch's.
 - **`$SPECS_PATH`** — for the specs-preflight/commit-artifacts bookkeeping only.
 - **No plugin dependency.** Unlike [`/prompt-brainstorm`](prompt-brainstorm.md), which hands off to the separate `superpowers` plugin's `brainstorming` skill, this command's grill runs entirely on the grilling technique `workflows-core` bundles — nothing outside `workflows-core` is required.
 
