@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.36.0] — 2026-11-08
+
+`/document` takes a decision a conformance record already holds instead of asking again, and both documentation commands follow one shared rule for it. Update with `workflows-core` 1.79.0 and `dev-workflows` 4.60.0.
+
+### Added
+
+- **`/document` reads the conformance records in scope** (keyed mode, Phase 3): the PRD folder's `_conformance.md` and each Epic's, or, on an Epic address, that Epic's and the PRD record's entries about it — from the specs checkout's working tree, as data. A missing record is simply absent; one that cannot be read or is malformed gets a ⚠ line and is treated as absent. Nothing is asked and nothing is written.
+- **Phase 5.8 takes a recorded decision without asking** (step 0). A discrepancy the code still shows is matched to an open entry by its exact requirement — the same document in the same folder, and the same id, or the same quoted text where it has none — never by an id alone. *Fix the code* leaves the claim out; *amend the document* or *accept* documents what the source says today, never the record's account of it. Where two entries match, a final decision beats a proposal, and between equals *fix the code* wins; a proposal nothing outranks is taken and marked as one. A discrepancy with no source evidence, or one where the code offers several candidate wordings, has no single wording to document, so it is still asked unless *fix the code* decides it. A decision so taken drafts no bug report, holds no release and puts no banner on the pull-request draft. The run prints one line for each before the analysis table, and asks nothing where the records decided every discrepancy.
+- **The final report's `### Conformance` section** names each entry applied, outranked, asked anyway, overtaken by the code or matching no discrepancy, and, for each record, how many commits each repository's default branch has gained since the commit it checked: `may have moved` where it checked an Epic's branch before the merge, `not measured` where no clone was resolved.
+- **`doc-planner` names each warning's requirement**, `{key, document, id}`, `{key, document, text}` for an `epic.md` acceptance bullet, or `null`, resolved against the documents it read and the folder key `/document` hands with each, and returns `VERIFIED` claims too, so an entry the code has overtaken can be reported. `doc-writer` takes `recorded_decisions` and writes no gap entry for any of them.
+
+### Changed
+
+- **`/release-notes` takes which entries are open, which of two wins and what each decision maps to from `workflows-core`'s `source-truth` §7.8**, the rule `/document` follows too, in place of its own copy; `release-note-types` §8 keeps how a claim so settled is worded.
+- **Pages.** `/document`, `/release-notes` and the workflow diagram describe the records both commands read and what each does with a recorded decision.
+
+### Fixed
+
+- **`/release-notes` sets aside a malformed conformance record** — no frontmatter `key:`, a merge-conflict marker, or no `Run:` line naming the run and its date — with a ⚠ line, as it sets aside one it cannot read.
+- **`release-note-types` §8 leaves a claim out wherever the winning entries' accounts of what shipped disagree**, two entries of one decision included; it covered only an *amend the document* beside an *accept*. An entry a final decision outranks never affects the wording.
+
 ## [1.35.9] — 2026-11-08
 
 Handover and start-of-run bugs the GIT-G1 audit found: batch B36. Update with `workflows-core` 1.78.16.

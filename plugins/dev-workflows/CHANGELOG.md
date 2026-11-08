@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.60.0] — 2026-11-08
+
+`/ready` places a PRD at the optional *Delivery verified* stage once the PE's PRD conformance record is settled on the default branch, and the record says what it left untraced. Update with `workflows-core` 1.79.0 and `docs-workflows` 1.36.0.
+
+### Added
+
+- **The PRD ladder's optional *Delivery verified* stage** (`workflow-states`), between *Implementation* and *Release Preparation*. Its artifact is the PRD folder's `_conformance.md`, settled and on the specs repo's default branch. A PRD without it passes the stage over — never a straddle, never a finding — and is derived as though the stage did not exist.
+- **`/ready` reads the PRD folder's conformance record from the default branch** (Phase 1 step 2b), on a PRD and an Epic address alike, never from the working tree, and without asking or stopping. The record settles the stage only where it is a PRD run's, both coverage lines are present and read `none`, nothing stands under `## Unverified`, every entry is final or resolved, and no `fix-code` entry is unresolved — an entry whose requirement was withdrawn or is gone from its document aside. Every run reports a `Delivery:` line, `verified — <PRD>/_conformance.md on <default branch>` or `not verified — <reason>`, the reason naming each entry still open, in its report and in `_readiness.md`. It is a note, never a finding, and never lowers the verdict. `readiness-reviewer` is handed it as `delivery`, reports it and never judges it, and never flags a PRD for lacking the optional stage.
+- **`/ready` offers the PE's PRD run.** Whatever the verdict, where the PRD is at *Implementation* and its delivery is not verified, the next step adds `PE → /dev-workflows:conformance <PRD>`.
+- **`--claimed` names the optional stage either way**, `Delivery verified` or `Delivery verified (optional)`, on a PRD address only; on an Epic address, whose ladder has no such stage, both are asked for again. Every other stage is matched as the ladder writes it.
+- **The conformance record carries its coverage.** `Not traced:` names each document holding requirements that the run could not read — `prd.md`, an `epic.md` or a specification, never a `design.md` — and each repository with no clone or no default branch, with the count of requirements it left untraced. `Not shown merged:` names each unit a PRD run traced under *Trace anyway*. Each reads `none` where it names nothing, and a re-run rewrites both. A record without them predates them: `/ready` never reads their absence as `none`, and its note says to re-run `/conformance` on the PRD.
+
+### Changed
+
+- **`conformance-format` §6 names the record's readers**: `/conformance`'s own re-runs, `/implement`'s read of the follow-ups a PRD record withdraws, `/ready`, and the two documentation commands, which take which entries are open, which of two wins and what each decision maps to from `workflows-core`'s `source-truth` §7.8.
+- **Pages.** `/ready`, `/conformance`, References and the workflow diagram describe the optional stage, the record's coverage lines and `/ready`'s offer; the `/conformance` page says what `/docs-workflows:document` does with a recorded decision.
+
+### Fixed
+
+- **`/conformance` asks before tracing a PRD with no Epic folder whose own work is not shown merged**, as it asks about an Epic; its question named an Epic only. *Stop until it is merged* names that PRD, and *Trace anyway* marks its requirements as traced where the merge was not shown.
+
 ## [4.59.7] — 2026-11-08
 
 Handover and start-of-run bugs the GIT-G1 audit found: batch B36. Update with `workflows-core` 1.78.16.

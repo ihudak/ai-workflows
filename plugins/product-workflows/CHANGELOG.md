@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.10] — 2026-11-08
+
+Docs only. Update with `dev-workflows` 4.60.0, whose `/ready` the page now describes; needs nothing from `workflows-core`.
+
+### Changed
+
+- **The workflow diagram draws `/dev-workflows:ready` reading the PE's PRD conformance record and offering the PE's PRD run**, and the page's prose and *Sources of truth* say that the optional *Delivery verified* stage is read from that record on the specs repo's default branch alone.
+
 ## [3.78.9] — 2026-11-08
 
 Handover and start-of-run bugs the GIT-G1 audit found: batch B36. Update with `workflows-core` 1.78.16.
