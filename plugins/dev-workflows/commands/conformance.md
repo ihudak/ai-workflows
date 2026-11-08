@@ -453,10 +453,10 @@ verbatim:
   the unit folder's `CLAUDE.md` and a documentation page in it are both advisory, as the handoff's register of artifacts records, so neither
   lifts the class — is **advisory**: later runs of this command read it, and so does `/dev-workflows:implement`'s follow-up read-back, a PRD record's
   `withdraws:` lines; `/docs-workflows:document` and `/docs-workflows:release-notes` read it from the working tree; and
-  `/dev-workflows:ready` reads a PRD record from `<default-ref>` alone (the line below). None runs `require-on-main` on it. A later run stops on it only where it
+  `/dev-workflows:ready` reads a PRD record from `<default-ref>` alone (the `/ready` line printed above the array). None runs `require-on-main` on it. A later run of this command stops on it only where it
   sits on a branch unmerged, or where the default branch holds a copy the checkout lacks or predates
   (Phase 0 step 5) — states this array's first option can leave and a decline never does: a declined
-  record stays in the working copy, where the next run reads it:
+  record stays in the working copy, where this command's next run reads it:
   ```
   choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
   ```
@@ -466,7 +466,7 @@ presents, verbatim with the count filled in: `This record withdraws <N> follow-u
 on another clone skips them only once the record is on the default branch; declined, it keeps them in
 this working copy alone.`
 
-On every PRD run, print one more line above whichever array this phase presents, below the `withdraws:` line where there is one, verbatim: `/dev-workflows:ready reads this record only on the default branch — declined, its delivery check reports not verified until the record merges.` The advisory array's second option speaks of the working copy, which `/ready` does not read, and the handoff's register of classes provides for such a line in its *advisory* class.
+On every PRD run, print one more line above whichever array this phase presents, below the `withdraws:` line where there is one, verbatim: `/dev-workflows:ready reads this record only on the default branch — declined, its delivery check reads whatever record the default branch holds (none, or the one this run replaces) until this one merges.` The advisory array's second option speaks of the working copy, which `/ready` does not read, and the handoff's register of classes provides for such a line in its *advisory* class.
 
 **Print the edits Phase 5.5 declares** above whichever array this phase presents — above the
 `withdraws:` line and the `/ready` line, where they are printed, and before the one line §4.3 prints immediately above the array

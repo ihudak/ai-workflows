@@ -12,7 +12,7 @@ The conformance record's handoff tells you what `/ready` sees: batch B37. Update
 ### Fixed
 
 - **`/conformance` Phase 6 names every reader of the record**, `/docs-workflows:document`, `/docs-workflows:release-notes` and `/ready` among them, where it named only its own later runs and `/implement`.
-- **Every PRD run's consent choice says that `/ready` reads the record only on the default branch**, so declining leaves its delivery check at *not verified* until the record merges. The advisory array's "what reads it reads your working copy" was false for `/ready`. The command page says the same.
+- **Every PRD run's consent choice says that `/ready` reads the record only on the default branch**, so after a decline its delivery check reads whatever record the default branch holds — none, or the one the run replaces — until the new one merges. The advisory array's "what reads it reads your working copy" was false for `/ready`. The command page says the same.
 
 ## [4.60.0] — 2026-11-08
 
