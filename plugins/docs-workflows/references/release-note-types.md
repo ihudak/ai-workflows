@@ -370,10 +370,9 @@ claim the draft would make from the requirement it names (`requirement`, `requir
   `field: prose` gap (`recommended_action: "ask user"`) rather than writing a note about nothing. It
   is the one question the entries lead to, and the command checks the wording it gets against the
   claims left out.
-- **Two open entries on one claim** — a PRD-level entry on `prd.md` and an Epic's on its
-  specification, say — are settled by `source-truth` §7.8's precedence, and the entry it picks is worded by the
-  table above: where that is a `fix-code`, the claim is left out. Where the two left are an
-  `amend-document` and an `accept`, both of which `source-truth` §7.8 maps to `document-as-code`, the claim states
-  what both `shipped` sentences say where they agree, and is left out where they do not — returned as
-  `left out — the entries disagree`, since the note never takes one record's account of the code over
-  another's.
+- **Two or more open entries on one claim** — a PRD-level entry on `prd.md` and an Epic's on its
+  specification, say — take their decision from `source-truth` §7.8's precedence, and the table above
+  words it: where that is a `fix-code`, the claim is left out. Where it is `document-as-code`, the
+  claim states what the entries' `shipped` sentences say where they all agree, and is left out where
+  any two disagree, whatever those entries' decisions — returned as `left out — the entries
+  disagree`, since the note never takes one record's account of the code over another's.
