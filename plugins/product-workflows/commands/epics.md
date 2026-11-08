@@ -960,7 +960,7 @@ On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:re
 
 On the second or third choice the drafts, and what Phase 7.4's agents edited, stay written and uncommitted, and §4.1's *Declined by the user* line is the report's `### Handoff`. Beyond the clause that line carries, an uncommitted draft costs what any path outside the bounded artifact set does: `workflows-core:specs-repo-git` §3.3's G1 advisory fires on every later run of any command until it is committed or removed.
 
-A run that ends before this phase — a *Cancel* at an earlier choice — reaches no offer and prints no `Phase handoff:` line (§4.1); its stop message says the drafts are written and uncommitted, and it ends as *Ending early* says.
+A run that ends before this phase — a *Cancel* at an earlier choice — reaches no offer and prints no `Phase handoff:` line (§4.1); its stop message says which drafts, if any, are written and uncommitted — one before Phase 6 has drafted none — and it ends as *Ending early* says.
 
 ---
 

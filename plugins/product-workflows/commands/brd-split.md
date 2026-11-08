@@ -1635,7 +1635,7 @@ nothing is auto-run.
 ## Phase 8 — Session maintenance, feedback & cost
 
 Terminal phase — runs after Phase 7, NEVER interrupts an earlier phase, and runs on the Phase 0
-no-op path step 10 decides exactly as on any other, in either run mode, and on the reconcile path too.
+no-op path step 10 decides exactly as on any other, in either run mode, and on the reconcile path too. A run that took *Ending early*'s refusal tail runs only this phase's cost-entry and commit steps.
 
 **Capture-at-block invariant.** If an EARLIER phase halts on a plugin / skill / command / reference
 gap, `emit-block` (`workflows-core:feedback-emission`) fires at that halt before escalating. **One
@@ -1682,13 +1682,13 @@ mid-walk in Phase 4 — each a user halt that reports what it left written. The 
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-split`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
+4. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
    the commit step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run, or, where Phase 7's *Ground now* was confirmed, the last before the continuation, which cedes control (§4 allows exactly that). It stages ONLY the §2.1 bounded artifact paths
    inside `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-split)` with
    no `Co-Authored-By` trailer, and pushes the branch Phase 6's handoff created per §4 step 5. It NEVER touches
    a code repo, a docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER
-   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final report.
+   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable
 is offered only in Phase 6), and NEVER writes into a code/docs repo or the current working

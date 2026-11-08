@@ -868,7 +868,7 @@ Guidance only — see `workflows-core:session-hygiene` §5.
 
 ## Phase 13 — Session maintenance, feedback & cost
 
-Terminal phase — runs after Phase 12, and NEVER interrupts an earlier phase. The order below is the
+Terminal phase — runs after Phase 12, and NEVER interrupts an earlier phase. A run that took *Ending early*'s refusal tail runs only this phase's cost-entry and commit steps. The order below is the
 canonical emitter tail (`workflows-core:session-hygiene` §5 rule 2): feedback → follow-ups → cost →
 `resume.md` → `commit-artifacts`.
 
@@ -902,7 +902,7 @@ either: that is the gate working. The one exception is a halt on a tool the ai-c
    target via its §2 ladder, dedupe per §5, and preview + confirm per §7. ADDITIVE: the same items
    also stay in the final report.
 4. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-proposal`, `phase: proposal`, `role: pm`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or the report-only notice). **This entry records model spend in USD and has no relationship whatever to the human hours the artifacts contain.**
-5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")`
+5. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")`
    and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry
    above, so the pointer reflects the completed run, and before the commit step below, so it is
    included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared.
@@ -912,7 +912,7 @@ either: that is the gate working. The one exception is a halt on a tool the ai-c
    `<KEY> Add dev-workflows session artifacts (/brd-proposal)` with no `Co-Authored-By` trailer, and pushes the branch this run's handoff phase created (§4.1) per §4 step 5. It NEVER touches anything outside
    `$SPECS_PATH`; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final
-   report.
+   report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable is
 offered only in Phase 11; the terminal step above commits only the bounded session-artifact paths in

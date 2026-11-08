@@ -654,7 +654,7 @@ is each member's own rather than a new condition here:
 - **Follow-ups are a no-op.** No signal qualifies, so that phase resolves no
   target, writes nothing and ends silently (`followup-emission.md` §6).
 
-- **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing, or unless the run carries `specs_git: misrooted` (§3.1), in which case `cost-emission.md` §8 reports it in the run's output and writes nothing, or unless no transcript holds the run's own invocation, in which case `cost-emission.md` §1 says so in one line and measures nothing** — and on the one stop that is no run at all, named below, none of this tail runs. `cost-emission.md` §11 settles it already —
+- **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing, or unless the run carries `specs_git: misrooted` (§3.1), in which case `cost-emission.md` §8 reports it in the run's output and writes nothing, or unless no transcript holds the run's own invocation, in which case `cost-emission.md` §1 says so in one line and measures nothing** — and on the one stop that is no run at all, and on a refusal a command states takes no tail, both named below, none of this tail runs. `cost-emission.md` §11 settles it already —
   *Cost runs unless the user skipped it* — and it is the member that makes this tail matter on a
   refusal: the run spent the session's tokens whether or not it wrote a file,
   and a keyless one has a home too: that file's §9 pending file, save where its §8 tier 2 files it per docs or code repository, or reports it only. A refusal
@@ -668,7 +668,7 @@ is each member's own rather than a new condition here:
   so writing one here would replace a live pointer to a real position with a
   run that did nothing, and what it replaced cannot be recovered.
 
-- **This step runs**, for the cost entry above (under `--skip-costs` there is none, and the gates below settle the step exactly as they would for any run with nothing new to stage). Where the refusal was `specs-root-check`'s stop, the run carries `specs_git: misrooted`, and step 1's gate skips the step with the stop repeated. Where the refusal came before
+- **This step runs**, save on those two kinds of stop, for the cost entry above (under `--skip-costs` there is none, and the gates below settle the step exactly as they would for any run with nothing new to stage). Where the refusal was `specs-root-check`'s stop, the run carries `specs_git: misrooted`, and step 1's gate skips the step with the stop repeated. Where the refusal came before
   `$SPECS_PATH` was resolved, step 1's gate no-ops it silently; on a detached HEAD with something to stage, step 1 refuses it with G0's notice; where that
   entry is the only new path, step 4 commits it alone; where nothing is dirty,
   step 3's `nothing to commit` line stands.
@@ -690,8 +690,9 @@ to state. **One stop is no run at all, and takes no tail**: `/product-workflows:
 spend before it is the conversation's. **And a command may state that a refusal taken before it
 has resolved its target takes no tail** where its cost entry is filed per that target and would
 otherwise wait in `cost-emission.md` §9's pending file for a reconciliation that never comes
-(`cost-emission.md` §8 says why): `/docs-workflows:docs-init` and a standalone
-`/docs-workflows:docs-brand` state it for their stops before a docs repository is resolved.
+(`cost-emission.md` §8 says why): `/docs-workflows:docs-init`, `/docs-workflows:docs-audit`
+and a standalone `/docs-workflows:docs-brand` state it for their stops before a docs repository
+is resolved, and `/docs-workflows:document` for a direct-mode stop before its write target is.
 
 1. **Gate.** All of §3.1's environment conditions, **plus** the run must not
    carry `specs_git: blocked` from §3.3 G0 or `specs_git: misrooted`, whichever
@@ -1292,10 +1293,11 @@ Omitting any one of them is a defect, not a style choice.
    after `resume.md` (where one is written) and after the cost phase — or, where
    a later phase cedes control to another skill or to an open-ended interactive
    stretch, immediately before that hand-off (§4's exception). **A run that
-   stops reaches it too**: the command states once, in a paragraph headed
-   **Ending early.**, what every stop it can take once `specs-preflight` has run leads to —
-   §4's refusal tail, save where a stop's own text names another route — because
-   a `stop` read on its own ends the run where it stands, short of this step.
+   stops reaches it too**: a command that can stop states once, in a paragraph
+   headed **Ending early.**, what each of its stops leads to — §4's refusal tail,
+   a stop before the preflight skipping only the preflight (§3), save where a
+   stop's own text names another route — because a `stop` read on its own ends
+   the run where it stands, short of this step.
 3. **Emit the §6 outcome line exactly once**, wherever `commit-artifacts`
    ran — at the end of the run, or immediately before the hand-off in the
    cede-control case above.

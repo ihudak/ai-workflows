@@ -20,7 +20,7 @@
 
 **What lives under it.**
 
-- `security/<repo-slug>/` holds one code repository's register: its scans, its run records, the derived `register.json` and `register.md`, and the cost entries of the runs on that repository that had no key. [Security register](security-register.md) describes the layout.
+- `security/<repo-slug>/` holds one code repository's register: its scans, its run records, the derived `register.json` and `register.md`, and the cost entries and session feedback of the runs on that repository that had no key. [Security register](security-register.md) describes the layout.
 - `_security.md` in a PRD or Epic folder is the unit note a run addressed by a key appends to.
 - A run addressed by a key files its cost entry under the unit's PRD folder ([Session cost](session-cost.md)).
 

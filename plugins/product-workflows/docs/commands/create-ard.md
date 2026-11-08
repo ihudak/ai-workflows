@@ -115,7 +115,7 @@ Phase 5 dispatches `ard-reviewer`, Opus-pinned by frontmatter (`model: opus`, no
 
 Before the review, Phase 4.5 runs a structural pre-lint — advisory only, never blocking — that inline-fixes mechanical issues (a duplicate `[AD#N]`, a stray placeholder) and leaves content gaps for the grill and the author to close.
 
-**A stop ends the run short, not silently.** Every stop under *What it needs* and *The BRD route*, *Stop — no ARD needed* at the optionality advisory, a relaunch at the model gate, and each *Cancel* that ends the run — at the refine-or-fresh question, the repos question, the model gate, the mount-or-descope gate or the review escalation — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, follow-ups or resume pointer; *Cancel* at Phase 6's handoff choice only declines the handoff, and the run goes on.
+**A stop ends the run short, not silently.** Every stop under *What it needs* and *The BRD route*, *Stop — no ARD needed* at the optionality advisory, a relaunch at the model gate, and each *Cancel* that ends the run — at the refine-or-fresh question, the repos question, the model gate, the mount-or-descope gate or the review escalation — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, follow-ups or resume pointer; *Cancel* at Phase 6's handoff choice only declines the handoff, and the run goes on. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
 
 ## Example
 

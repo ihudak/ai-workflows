@@ -33,7 +33,7 @@ The four phases these commands can land on with a pair of their own, rather than
 
 ### prd-creation
 
-Role `pm`. Reached by `/frames` when the folder it resolved asserts `kind: prd` or `kind: epic` — an idea-route PRD folder, or any Epic folder, one under a BRD-route slice included — or when it stopped before resolving a folder of a kind it indexes, and by any of the four correction commands whose target command emits it. On either path, being in this phase means the spend is the PM's product-definition work on a PRD or one of its Epics — refining an idea, authoring the PRD, or indexing the frame sets that are the folder's own design record — and it says nothing about how far that folder has come: `/frames` lands here on a folder already holding a merged specification or design as readily as on one holding neither.
+Role `pm`. Reached by `/frames` when the folder it resolved asserts `kind: prd` or `kind: epic` — an idea-route PRD folder, or any Epic folder, one under a BRD-route slice included and by any of the four correction commands whose target command emits it. On either path, being in this phase means the spend is the PM's product-definition work on a PRD or one of its Epics — refining an idea, authoring the PRD, or indexing the frame sets that are the folder's own design record — and it says nothing about how far that folder has come: `/frames` lands here on a folder already holding a merged specification or design as readily as on one holding neither. A `/frames` run that stopped before it resolved a folder of a kind it indexes is charged here too, for want of a kind to charge it by; that spend is a refused run's, not product-definition work.
 
 ### brd-to-prd
 

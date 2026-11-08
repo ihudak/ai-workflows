@@ -552,7 +552,7 @@ command removes none of them; the next `/brd-interview` run does.
   dependent that pass could only record — otherwise merging that dependent's pull request, which is
   exactly what unblocks the sweep, would never let it land.
 
-A run that stops — on a refusal under *What it needs*, a gate above, or a *Cancel* or an abort that ends the run — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer. That commit holds only the session's own bookkeeping: what the run wrote after the returned review's handoff stays in the folder uncommitted. Cancelling either handoff is not a stop: the run goes on.
+A run that stops — on a refusal under *What it needs*, a gate above, or a *Cancel* or an abort that ends the run — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer. That commit holds only the session's own bookkeeping: what the run wrote after the returned review's handoff stays in the folder uncommitted. Cancelling either handoff is not a stop: the run goes on. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
 
 ## The two sweeps
 

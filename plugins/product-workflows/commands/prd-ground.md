@@ -2543,13 +2543,13 @@ fire `emit-block`. The one exception is a halt on a tool the ai-containers image
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-ground`, `phase: brd-to-prd`, `role: pm`,
    the run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the
    report-only notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
+4. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
    commit step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
    `<BRD-KEY> Add dev-workflows session artifacts (/prd-ground)` with no `Co-Authored-By` trailer, and pushes the branch Phase 9's handoff created per §4 step 5. NEVER touches a code repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; skips entirely when the run
    carries `specs_git: blocked` or `specs_git: misrooted`, re-emitting that notice. Hold its §6 outcome line for the final
-   report.
+   report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable
 is offered only in Phase 9), and NEVER writes into a code repo, or the current working
