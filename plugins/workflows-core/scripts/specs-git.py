@@ -105,6 +105,21 @@ def branch_merged(root, ref, default_ref):
     return {"merged": False, "test": None}
 
 
+# specs-repo-git §2.2's plugin-branch prefixes, in its order; the selftest fails where they differ.
+PREFIXES = ("idea", "prd", "ard", "spec", "epics", "design", "ready", "brd", "frames", "kb", "conformance")
+
+
+def branch_key(branch, keys):
+    """specs-repo-git §3.5's branch-key: the key in the run's own set <keys> the branch was named for.
+    Resolved against the keys the run already holds, never read out of the name: a key K is a
+    candidate where the rest of the name, past its prefix, is K or begins K- or K_; the longest wins."""
+    prefix, _, rest = branch.partition("/")
+    if not _ or prefix not in PREFIXES:
+        return {"plugin_branch": False, "prefix": None, "key": None}
+    found = [k for k in keys if rest == k or rest.startswith(k + "-") or rest.startswith(k + "_")]
+    return {"plugin_branch": True, "prefix": prefix, "key": max(found, key=len) if found else None}
+
+
 class Parser(argparse.ArgumentParser):
     """A usage error is one "not run" line, as every exit 2 is."""
 
@@ -122,6 +137,9 @@ def main():
     p = sub.add_parser("branch-merged")
     p.add_argument("--ref", required=True)
     p.add_argument("--default-ref", required=True)
+    p = sub.add_parser("branch-key")
+    p.add_argument("--branch", required=True)
+    p.add_argument("--key", action="append", default=[])
     a = ap.parse_args()
     try:
         sys.stdout.reconfigure(errors="backslashreplace")
@@ -154,6 +172,8 @@ def dispatch(a):
         return status(a.specs)
     if a.cmd == "branch-merged":
         return branch_merged(a.specs, a.ref, a.default_ref)
+    if a.cmd == "branch-key":
+        return branch_key(a.branch, a.key)
     raise NotRun("unknown subcommand %s" % a.cmd)
 
 
@@ -359,10 +379,40 @@ def selftest():
         got = cli("--specs", r.path, "branch-merged", "--ref", "prd/no-such", "--default-ref", "main")
         check(one_not_run_line(got), "branch-merged: a ref that does not resolve exits 2 (%r)" % got)
 
+    def scenarios_branch_key(tmp):
+        cases = [
+            ("spec/PRODUCT-1234-2fa-rollout", ["PRODUCT-1234"], "PRODUCT-1234"),
+            ("spec/PRODUCT-1234-2fa-rollout", ["PRODUCT-1234", "PRODUCT-1234-2"], "PRODUCT-1234"),
+            ("spec/ACME-77-01-checkout", ["ACME-77", "ACME-77-01"], "ACME-77-01"),
+            ("ard/EPIC-008-01_slug", ["EPIC-008-01"], "EPIC-008-01"),
+            ("prd/ACME-7", ["ACME-7"], "ACME-7"),
+            ("prd/ACME-77-x", ["ACME-7"], None),
+            ("prd/ACME-7-x", [], None),
+        ]
+        for branch, keys, want in cases:
+            got = branch_key(branch, keys)
+            check(got["plugin_branch"] is True and got["key"] == want,
+                  "branch-key: %s with %r resolves to %r (%r)" % (branch, keys, want, got))
+        got = branch_key("kb/harvest-2026-11-08", ["ACME-7"])
+        check(got == {"plugin_branch": True, "prefix": "kb", "key": None}, "branch-key: a kb/ branch holds no key (%r)" % got)
+        got = branch_key("feature/ACME-7-x", ["ACME-7"])
+        check(got == {"plugin_branch": False, "prefix": None, "key": None},
+              "branch-key: a branch outside the prefixes is no plugin branch (%r)" % got)
+        with open(SPECS_REPO_GIT, encoding="utf-8") as fh:
+            m = re.search(r"its name matches `\^\(([a-z|]+)\)/`", fh.read())
+        check(m is not None and tuple(m.group(1).split("|")) == PREFIXES,
+              "branch-key: PREFIXES is specs-repo-git §2.2's alternation (%r)" % (m and m.group(1)))
+        r = new_repo(tmp, "branch-key")
+        got = cli("--specs", r.path, "branch-key", "--branch", "spec/ACME-77-01-x", "--key", "ACME-77", "--key", "ACME-77-01")
+        check(got["_rc"] == 0 and got.get("key") == "ACME-77-01", "branch-key: the CLI (%r)" % got)
+        got = cli("--specs", r.path, "branch-key", "--branch", "spec/ACME-77-01-x")
+        check(got["_rc"] == 0 and got.get("key") is None, "branch-key: no --key is a keyless run (%r)" % got)
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
             scenarios_branch_merged(tmp)
+            scenarios_branch_key(tmp)
 
     try:
         scenarios()
