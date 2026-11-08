@@ -81,6 +81,7 @@ These come from the contract's variation points (V-ids) and the audits' new opti
 - `register_rebuild` passed through (V1.13; `/scan` alone).
 - A direct `/implement` run inside the specs repository: G2's notice variant and the §8.3 `lift`/`put-back` around its own branch and commit (V1.10, V4.4); session-branch `commit`, `lift` and `put-back` callable by a command (audit-A §2 item 15).
 - Standalone primitives a command can call: `mode` before any preflight (audit-A §2 item 2), `branch-merged` for a named branch or a recorded commit, `branch-key`, the §2.1 ARTIFACT/OTHER classifier over porcelain `-z`, `owner-repo` for any repository path (audit-A §2 items 3, 5; audit-C N6, N7; audit-B N7).
+- The start call prints two lines as script output, each at the point it fires, for the run to copy verbatim: the session branch's creation line (`specs-repo-git` §3.4, `specs-repo-git.md:442`), and each guard's four-part §5 notice at detection. Three live runs dropped them (LC31, runs R1, R2, S5a and S5b of `docs/superpowers/verification/2026-11-04-live-checks.md`) because each rested on the run remembering a rule it had read earlier.
 
 ### 5.2 Handover (`handoff-to-main`, the consent choice, the outcome line)
 
