@@ -64,6 +64,8 @@ feature is described and not at all on what it costs to build — and this run's
 still: the slice proposals, the root ledger and the profile. There is no flag to turn off, no
 `resolve-docs-grounding` call, and no `docs grounding:` line in this command's report.
 
+**Ending early.** Every stop this run takes — each `BRD_PROPOSAL_*` stop (Phase 0's, Phase 2's `BRD_PROPOSAL_NO_SLICES`, Phase 4's `BRD_PROPOSAL_SLICE_NOT_HANDED_OFF`, Phase 5's `BRD_PROPOSAL_NEEDS_PROFILE`, and `BRD_PROPOSAL_RECORD_FAILED` wherever a script fails), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s, a stopping row of Phase 4's `require-on-main` sweep), the `$SPECS_PATH` *Cancel*, Phase 1's model gate — its *Cancel* and its relaunch answer — and every answer in Phase 10 that ends the run (a settle prompt's **Keep the verdict** where it ends the run, its **Cancel**, and the BLOCK escalation's) — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 13's step 4, the cost entry (unless `--skip-costs`), and its step 6, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md`, no follow-ups and no maintenance or feedback step. Three ends keep the route their own text names — the whole emitter tail, as a completed run takes it: Phase 2's **Stop — the umbrella is current**, Phase 3's "Price the slice first" and "Re-price it first", and Phase 6's *End the run* answer. `emit-block` still fires wherever a stop's own text calls it, at the halt — Phase 13's capture-at-block rule names the cause of `BRD_PROPOSAL_RECORD_FAILED` that does. A stopped run's output is the stop message, then the cost and `Specs repo:` lines; the Final report is not printed. A stop after Phase 8 leaves `proposal.md` written and uncommitted: the tail commits only the bookkeeping paths. Phase 11's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the artifacts stay written, and the run goes on through Phases 12 and 13.
+
 ---
 
 ## Phase 0 — Resolve the address, preflight, and refuse a slice
@@ -933,7 +935,7 @@ enumerated with the basis that decided it, and that no artifact was written.
 **On a run the walk ended** — the operator answered "Price the slice first" or "Re-price it first" —
 the report is that walk plus the list of slices still to price, and it says plainly that no artifact
 was written and nothing was excluded; the rest of this list describes a run that reached Phase 8.
-Every run, an ended one included, carries the emitter tail's lines at the end of this list — the
+Every run that prints this report, an ended one included, carries the emitter tail's lines at the end of this list — the
 feedback, follow-up and cost paths, or their skip lines, and the `Specs repo:` line.
 Otherwise:
 the umbrella check's verdict at Phase 2 with every reason it printed, or that the folder held no

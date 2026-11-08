@@ -58,6 +58,8 @@ reviewer**, written out with the repository and the commit substituted, so the c
 the pin against their own checkout rather than taking the package's word for it
 (`workflows-core:grounding-format` §4).
 
+**Ending early.** Every stop this run takes — each `BRD_PACKAGE_*` stop, from Phase 0's through Phase 8's scan, citation and set checks, a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s, a stopping row of a `require-on-main` gate), Phase 8's failed `mkdir` or move, the `$SPECS_PATH` *Cancel*, and every run-ending answer — Phase 0 step 7a's **Stop**, an aborted disposition walk, an aborted tier choice — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 11's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt — Phase 11's capture-at-block rule names the stops that do. Where a stop says nothing was written, that means the run's own work: the cost entry is bookkeeping and is written all the same. What a later stop leaves written — Phase 2's `depends-on:` merge, the self-review, the dispositions — stays written and uncommitted: the tail commits only the bookkeeping paths, and the handoff that would commit the rest never ran. The stop message, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. Phase 7's handoff consent choice is not one of these: its *Cancel* declines the handoff and nothing else, and the run goes on through Phases 8 to 11.
+
 ---
 
 ## How nothing plugin-internal reaches the customer

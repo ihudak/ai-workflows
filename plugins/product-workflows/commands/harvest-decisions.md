@@ -15,6 +15,8 @@ These shared references load by part — `escalation-rules`, `finding-triage`, `
 
 Usage: `/product-workflows:harvest-decisions [--dry-run]` — `--dry-run` shows the plan and stops. Any other argument stops the run with this usage line.
 
+**Ending early.** Every stop in this run — the usage line, each Phase 0 stop, an exit 2, Phase 1's *Nothing to harvest* and *Knowledge base up to date* reports, the `--dry-run` plan and Phase 2's **Cancel** — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 4 alone, `commit-artifacts`, which commits what an earlier run left and prints the run's `Specs repo:` line once (§7). This command writes no cost entry, `resume.md` or feedback. The final report is the stop's own output followed by that line. Phase 4 needs no preflight to run: where `$SPECS_PATH` is unset it does nothing and prints nothing (§4 step 1), and after step 3's `specs_git: misrooted` stop it repeats the notice that set the flag and commits nothing. Phase 3's **Cancel** is not one of these: on the handoff's consent choice it declines the handoff, the harvested records stay written, and the run goes on to Phase 4 and the full final report.
+
 ## Phase 0 — Preflight
 
 **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
@@ -55,4 +57,4 @@ Execute `commit-artifacts` (Skill(skill: "workflows-core:reference", args: "spec
 
 ## Final report
 
-The plan's counts and ids; every problem with its fix; the `Phase handoff:` outcome line; the `Specs repo:` outcome line; then `The next /product-workflows:create-ard, /product-workflows:specify or /dev-workflows:design grounds on <live> live records once this is on <default-ref>.`
+A run that stopped reports as *Ending early* says. Otherwise: the plan's counts and ids; every problem with its fix; the `Phase handoff:` outcome line; the `Specs repo:` outcome line; then `The next /product-workflows:create-ard, /product-workflows:specify or /dev-workflows:design grounds on <live> live records once this is on <default-ref>.`

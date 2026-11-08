@@ -30,6 +30,8 @@ single Epic. Address an `EPIC-` folder to scope the check to one Epic
 
 Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
+**Ending early.** `/ready` never stops on a gate it records as a finding, but every stop it does take once the specs-repo preflight has run — Phase 0's `READY_BRD_NOT_SLICED` and its stop on a folder it cannot place, step 4's `ambiguous` and `misrooted` stops, every stop of `branch-check`'s that ends this run (§6.2's, and §6.1's after its *Switch*), the *Cancel* of step 3's checkout warning and of Phase 2's `READY_FOCUS_NOT_FOUND` question, and Phase 4's plugin-gap halt on a reviewer run that returns no verdict — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 8's session cost (unless `--skip-costs`) and its terminal `commit-artifacts`, which prints the run's `Specs repo:` line after the stop message — with no Phase 5 report, no Phase 6 maintenance or feedback, no Phase 7 follow-ups and no `resume.md`. `emit-block` still fires at that halt, before it escalates, as the Invariants say. Phase 5's handoff *Cancel* is not a stop: on the handoff's consent choice it declines the handoff, `_readiness.md` stays written, and the run goes on through Phases 6–8; nor is a *cancel* at Phase 7's follow-up preview, which drops only what it names.
+
 ---
 
 ## Phase 0 — Resolve input
@@ -757,7 +759,8 @@ a code or docs repository, or the current working directory, where it is not the
 
 ## Phase 8 — Session cost
 
-Terminal phase — runs after Phase 7 and NEVER interrupts an earlier phase. Records this command's
+Terminal phase — runs after Phase 7 and NEVER interrupts an earlier phase — and, on a stop, runs without
+Phases 6 and 7: its cost entry and terminal commit alone, with no resume pointer (*Ending early*). Records this command's
 token-cost contribution to the PRD. **Cost ALWAYS runs** — it never "writes nothing" (short of `run_flags.skip_costs`, below, which writes no entry).
 
 **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.

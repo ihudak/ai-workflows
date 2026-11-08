@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.10.10] — 2026-11-08
+
+User pages only: batch B35. Update with `workflows-core` 1.78.14.
+
+### Fixed
+
+- **Session feedback, follow-ups and resume: a scan on a repository path files its feedback per repository.** It goes to `security/<repo-slug>/dev-workflows/feedback/<date>.md`, beside the register and the run's cost entry. The page said it went unfiled to `dev-workflows-feedback/`, which `workflows-core` 1.78.14 no longer does.
+- **Security register: the layout lists that feedback folder** beside the cost folder, outside the register.
+
 ## [0.10.9] — 2026-11-08
 
 User pages only: batch B33. Needs nothing from the other plugins' releases.

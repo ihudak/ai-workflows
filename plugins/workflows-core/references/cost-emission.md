@@ -448,9 +448,17 @@ unlike the `target_command` one below:
   **An Epic folder under a BRD-route slice lands here too**: it asserts `epic`,
   and `/prd-ground` grounds the slice's own `design/`, never an Epic's.
 
-**There is no third branch**, because §3 of
+- **A refused run whose `key` names no folder asserting one of those kinds, or is
+  `null` -> `phase: prd-creation`, `role: pm`.** `/frames` refuses an address
+  that resolves to none of them, and that refusal still takes its cost entry
+  (`/frames`' *Ending early*, `specs-repo-git.md` §4): it spent the session's
+  tokens with no kind to attribute them by, and `prd-creation` is the phase
+  this command's only branch outside the BRD route already uses.
+
+**No indexing run reaches a third kind**, because §3 of
 `${CLAUDE_PLUGIN_ROOT}/references/addressing.md` returns exactly those three kinds
-and `/frames` refuses to run on an address that resolves to none of them. Indexing
+and `/frames` refuses an address that resolves to none of them; that refusal's own
+entry takes the branch above. Indexing
 a frame set is real spend on a real artifact in the specs tree, which is why this
 command emits at all — the alternative is not "unmeasured" but *misattributed*, per
 §3's semantics rolling it into whatever command runs next.
@@ -691,8 +699,9 @@ Inputs:
   - `/release-notes` — resolved from `specification.md` / `design.md` presence
     under the PRD's specs dir. `emit-cost` reads that itself; nothing is passed.
   - `/frames` — resolved from the resolved folder's own `kind` (§7's `/frames`
-    inference), re-derivable from the folder `key` names. `emit-cost` reads that
-    itself; nothing is passed beyond the `key`.
+    inference), re-derivable from the folder `key` names — or, where `key` is
+    `null` or names no folder of those kinds, a refused run's branch there.
+    `emit-cost` reads that itself; nothing is passed beyond the `key`.
   - `/conformance` — resolved from where `addressing` §4.1 places the resolved
     folder (§7's `/conformance` inference), never from its asserted `kind`. `emit-cost` reads that itself;
     nothing is passed beyond the `key`.

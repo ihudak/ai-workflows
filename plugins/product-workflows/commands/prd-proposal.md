@@ -72,6 +72,8 @@ feature is described and not at all on what it costs to build. The inputs to an 
 specs tree and the profile. There is no flag to turn off, no `resolve-docs-grounding` call, and no
 `docs grounding:` line in this command's report.
 
+**Ending early.** Every stop this run takes — each `PRD_PROPOSAL_*` stop (Phase 0's, Phase 2's `PRD_PROPOSAL_NEEDS_PROFILE`, Phase 2's and Phase 7's `PRD_PROPOSAL_RECORD_FAILED`), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s, step 5's `require-on-main` gate), the `$SPECS_PATH` *Cancel*, Phase 1's model gate — its *Cancel* and its relaunch answer — and every answer in Phase 9 that ends the run (a settle prompt's **Keep the verdict** where it ends the run, its **Cancel**, and the BLOCK escalation's) — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 12's step 4, the cost entry (unless `--skip-costs`), and its step 6, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md`, no follow-ups and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt — Phase 12's capture-at-block rule names the cause of `PRD_PROPOSAL_RECORD_FAILED` that does. The stop message, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. A stop after Phase 7 leaves `proposal.md` written and uncommitted: the tail commits only the bookkeeping paths. Phase 10's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the artifacts stay written, and the run goes on through Phases 11 and 12.
+
 ---
 
 ## Phase 0 — Resolve the address, preflight, and gate the PRD

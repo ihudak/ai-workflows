@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.59.5] — 2026-11-08
+
+Five commands now end every stop through their terminal commit: batch B35. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **`/design`, `/implement`, `/ready`, `/upgrade` and `/vuln` say what a stop does.** Each has an **Ending early.** paragraph. Every stop after the specs-repo preflight — a named stop, a *Cancel*, a relaunch, or any other answer that ends the run — writes the session-cost entry (unless `--skip-costs`; `/upgrade` and `/vuln` write none) and runs the terminal `commit-artifacts`, which prints the `Specs repo:` line. It runs no maintenance and writes no follow-ups or resume pointer. Before, those stops ended the run where they stood: no cost entry, and nothing an earlier run left was committed. `/implement`'s stops after its branch exists still run Phase 4.6 first. `/design` and `/implement` no longer say their gates end the run before the bookkeeping.
+- **`/design`: a run that created or resumed its session file compares its run environment before that tail**, as the shared session-hygiene rules require of every such run.
+- **Pages.** Each of the five command pages, and Session cost, say what a stopped run still does.
+
 ## [4.59.4] — 2026-11-08
 
 User pages only: batch B34. Needs nothing from the other plugins' releases.

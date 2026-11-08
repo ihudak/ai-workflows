@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.14] — 2026-11-08
+
+Two defects found during batch B33, and the rule that every stopped run still reaches its terminal commit: batch B35. Update with `security-workflows` 0.10.10.
+
+### Fixed
+
+- **A repository scan's session feedback is filed beside its cost entry.** `/security-workflows:scan` on a repository path filed its cost entry under the repository's register folder, `security/<repo-slug>/`, but wrote its feedback unfiled at the top of the specs repository, under `dev-workflows-feedback/`. `feedback-emission`'s ladder now has the same security branch `cost-emission`'s has: `security/<repo-slug>/dev-workflows/feedback/<date>.md`. The register layout in `security-register-format` and `specs-repo-git`'s staging notes list the folder; the staging shape already admitted it.
+- **`specs-repo-git` §7 says a run that stops reaches its terminal commit too.** Every command that runs `specs-preflight` now states, in one paragraph headed **Ending early.**, what each stop it can take after the preflight leads to: §4's refusal tail, save where a stop's own text names another route. Most commands said nothing, so a stop ended the run where it stood, with no cost entry and no commit.
+- **`/frames` ends every stop through its cost entry and terminal commit.** `FRAMES_NO_CARRIER` and `FRAMES_NOT_A_SPEC_FOLDER`, taken after the preflight, ended the run with neither. The command also said its earlier Phase 0 stops reach none of its terminal phase, which contradicted `addressing` §3 and `specs-repo-git` §4. Every stop now takes both.
+- **`cost-emission` attributes a refused `/frames` run.** The `/frames` inference had no branch for a run whose key is `null` or names no folder of a kind it indexes, and said none was needed. Such a run is charged to `prd-creation`/`pm`; the Roles and phases page says so.
+- **Pages.** Session cost says a run that ends early still writes its entry. Session feedback names the scan's per-repository folder. The `/frames` page says every stop takes the commit. The docs commands' stop paragraphs carry the **Ending early.** heading.
+
 ## [1.78.13] — 2026-11-08
 
 User pages, and the routing graph aligned with two commands: batch B34. Update with `product-workflows` 3.78.6.

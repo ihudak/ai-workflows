@@ -22,6 +22,8 @@ row has been given a fate.
 
 Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
+**Ending early.** Every stop this run takes — each `BRD_INTAKE_*` stop (Phase 0's, Phase 1's `BRD_INTAKE_UNREAD_ATTACHMENTS`, Phase 3's `BRD_INTAKE_DANGLING_ANCHOR`), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s), Phase 3's stop where no anchor parses and its `NOT_FOUND` stop — and every run-ending answer — the `$SPECS_PATH` *Cancel*, Phase 0's re-run *Cancel*, Phase 1's *Stop*, *Stop and convert* and *Cancel*, and every *Cancel* in Phases 3 and 4 — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 9's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt. Where a stop or answer says nothing is written, that means the run's own work: the cost entry is bookkeeping and is written all the same. A stop after Phase 2's first write leaves what the run wrote in the BRD folder uncommitted, since the tail commits only the bookkeeping paths. The stop message, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. Phase 7's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the files stay written, and the run goes on through Phases 8 and 9.
+
 ---
 
 ## Phase 0 — Resolve inputs

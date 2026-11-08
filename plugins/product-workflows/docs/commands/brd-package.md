@@ -481,6 +481,8 @@ attack.
   empty source side with `BRD_PACKAGE_SET_UNREADABLE`; and a note's commit abbreviated so far that
   it prefixes two different baseline commits with `BRD_PACKAGE_SET_AMBIGUOUS`.
 
+A run that stops — at any gate or check above, on a refusal under *What it needs*, or on an answer that ends the run, such as an aborted disposition walk — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer. What it wrote before the stop, the self-review and the dispositions among it, stays in the folder uncommitted: only the handoff commits the package. Cancelling the handoff at the delivery note is not a stop: the run goes on and the note takes the archive route.
+
 ## What it does not do
 
 - **No documentation grounding, and no `--no-docs` flag.** [`/brd-intake`](brd-intake.md) and `/prd-ground` already

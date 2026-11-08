@@ -15,6 +15,7 @@ $SPECS_PATH/security/<repo-slug>/
   register.json                      the folded state: derived, never edited
   register.md                        rendered from it for people to read: derived, never edited
   dev-workflows/cost/<sid8>.md       a keyless run's session-cost entry: beside the register, never part of it
+  dev-workflows/feedback/<date>.md   a keyless run's session feedback: beside the register, never part of it
 ```
 
 - **`<repo-slug>`** is the last path segment of the code repository's `origin` URL, a trailing `.git` stripped. A repository with no `origin` has no slug, and so no register: the run stops.

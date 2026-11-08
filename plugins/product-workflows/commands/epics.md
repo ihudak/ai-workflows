@@ -21,6 +21,8 @@ Key distinction from `/document` (keyed mode): the PRD being Epic-ized is **not 
 
 Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
+**Ending early.** Every stop in this command — each `EPICS_*` stop, the lineage stops `EPICS_LINEAGE_FAILED` and `EPICS_UPSTREAM_STALE` among them, the `$SPECS_PATH` *Cancel*, Phase 0's address stops, a `branch-check` stop, a stopping `require-on-main` state, Phase 2.5's `ard-resolution` `unmerged` stop and Phase 6's `DONE` return with no Epic written — and every run-ending answer — each *Cancel* that ends the run (Phase 1's `REPOS_PATH` question, Phase 2's plan, Phase 2.7's prerequisites, Phases 4–5's repository questions, Phase 5.5's components, Phase 6's size and missing-input questions, and Phase 7's *Cancel the whole run*) and Phase 2.7's *Stop*, which names the earliest gap's remedy for the user to run — takes `workflows-core:specs-repo-git` §4's refusal tail, once Phase 7.4's removal has run on every file `temp_files` holds by then: Phase 11's cost entry (unless `--skip-costs`) and its `commit-artifacts`, which prints the run's `Specs repo:` line after the stop's own message, with no `resume.md`, no follow-ups and no maintenance phase. A stop before step 1's preflight skips only the preflight (that reference's §3). `emit-block` still fires at the halt wherever the Invariants call for it. Phase 7.5's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the drafts and what Phase 7.4's agents edited stay written, and the run goes on through Phases 8–11; a *cancel* at Phase 10's follow-up preview drops only the items it names.
+
 ---
 
 ## Phase 0 — Load
@@ -958,7 +960,7 @@ On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:re
 
 On the second or third choice the drafts, and what Phase 7.4's agents edited, stay written and uncommitted, and §4.1's *Declined by the user* line is the report's `### Handoff`. Beyond the clause that line carries, an uncommitted draft costs what any path outside the bounded artifact set does: `workflows-core:specs-repo-git` §3.3's G1 advisory fires on every later run of any command until it is committed or removed.
 
-A run that ends before this phase — a *Cancel* at an earlier choice — reaches no offer and prints no `Phase handoff:` line (§4.1); its report says the drafts are written and uncommitted.
+A run that ends before this phase — a *Cancel* at an earlier choice — reaches no offer and prints no `Phase handoff:` line (§4.1); its stop message says the drafts are written and uncommitted, and it ends as *Ending early* says.
 
 ---
 
@@ -1176,11 +1178,12 @@ NEVER writes into the current working directory, where it is not the specs repos
 ## Phase 11 — Session cost
 
 Terminal phase — the NEW final operational phase; runs after Phase 10 (the
-follow-up phase) and NEVER interrupts an earlier phase. Records this command's
+follow-up phase) and NEVER interrupts an earlier phase; a run that ended early
+(*Ending early*, above Phase 0) runs it too, with no resume pointer. Records this command's
 token-cost contribution to the PRD — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. Unlike feedback, **cost ALWAYS runs** — it never "writes
 nothing" (short of `run_flags.skip_costs`, below, which writes no entry).
 
-**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`), printed after the Phase 9 report as this phase's own output. The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /epics`, `phase: epic-refinement`, `role: pe`,
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`), printed after the Phase 9 report — or, on a run that ended early, after the stop's own message — as this phase's own output. The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /epics`, `phase: epic-refinement`, `role: pe`,
 the run's `key` (or `null`) and `source`, and `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). It resolves the session
 transcript + subagents (§1), loads and **advances the chained checkpoint** (§3),
@@ -1192,7 +1195,7 @@ reconciliation (§9) when no PRD key resolves. **The checkpoint advances even in
 the pending / report-only tiers.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
-**Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
+**Then write the resume pointer** — not on a run that ended early (*Ending early*), which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it is
 included in it. Redact per §1. Silent; the printed `### Context hygiene`
@@ -1207,7 +1210,7 @@ force-pushes; NEVER fails the run; and skips entirely when the run carries
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because the Phase 9
 report was composed before this phase, **print its §6 outcome line here**, as
 the run's last output — prefixed `Specs repo:`, with any guard notice repeated
-in full.
+in full; on a run that ended early, it follows the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (that
 is Phase 7.5's handoff, behind its consent choice; the terminal step above

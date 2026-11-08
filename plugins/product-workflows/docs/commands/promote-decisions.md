@@ -61,6 +61,8 @@ Each of these stops the run before anything is written:
 
 A failing repository test, or a mark the script refuses, stops it before the commit, on the run's branch: the stop names it and how to go on. No secret scanner ships with product-workflows, and the final report says so.
 
+Every stop still ends with the run's terminal commit of the specs repository, which commits what an earlier run left there and prints the `Specs repo:` line. A stopped run runs no session maintenance and writes no feedback.
+
 ## Example
 
 ```
