@@ -100,7 +100,9 @@ Compose the draft and BOTH write and show it:
   template, filled with these facts, per `workflows-core:phase-handoff` §2.7.1,
   with the DO-NOT-MERGE banner below, where there is one, as its required first line.
 - **DO-NOT-MERGE banner** at the very top WHEN Phase 5.8 recorded any
-  `document-as-spec` / `skip-and-report` decision:
+  `document-as-spec` / `skip-and-report` decision — never counting one its
+  step 0 took from a conformance record, which drafts no gap and holds nothing
+  (`workflows-core:source-truth` §7.8):
   `> ⚠ DO NOT MERGE until <KEY>-implementation-gaps.md is resolved.`
   WHEN any of those is `document-as-spec`, a second line beneath it:
   `> ⚠ These pages describe behaviour the code does not have yet (gaps <n>, …): hold the release until each is fixed.`

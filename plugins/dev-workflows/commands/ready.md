@@ -94,7 +94,15 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
     Validate it against `${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`'s ladder for the
     altitude step 1 placed the folder at — never for the resolved `kind`, which on a slice is `brd`;
     an unrecognised value is **re-prompted with the ladder shown**, never coerced to the nearest
-    match.
+    match. **An optional rung of the ladder being validated against is recognised by its name with or
+    without its `(optional)` suffix**: at PRD altitude, `Delivery verified` and
+    `Delivery verified (optional)` both name the PRD ladder's optional rung and neither is re-prompted
+    — the suffix marks the rung on the ladder and is not part of what an operator has to type; at
+    Epic altitude both are off the Epic ladder, which has no such rung, and are re-prompted like any
+    other unrecognised value. Nothing else is read more loosely: every other value is validated as
+    the ladder writes it, so a suffix on a mandatory rung's name (`Release Preparation (optional)`)
+    is still unrecognised. The value is reported verbatim wherever the run reports it; Phase 3(0)
+    compares the rung it names.
 
     **Without the flag, a derived phase cannot contradict itself**, so the run reports what the
     artifacts show and catches nothing. That is the honest cost of having no mirror to check against,
@@ -183,6 +191,20 @@ best-effort-checks repos under `$REPOS_PATH`; cwd need not be inside either.
    For each `specification.md` and `design.md` path located above (the `ard.md` files are handled by Phase 2.5's `workflows-core:ard-resolution`, not here), execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against its path relative to `$SPECS_PATH` (§3.2 there) and map its §3.7 return value by `stopped` first, never by `on_main` alone — never a stop, per this command's defining trait: `stopped: false` with `on_main: pass`/`pass_amending` → **present** (with its absolute path); `stopped: false` with `on_main: absent` → **missing**, exactly as before this feature (§3.4's `/ready` row — this is row F only, never rows D/E, which also read not-on-ref against `<default-ref>` (`workflows-core:phase-handoff` §3.2) but return `stopped: true`); `stopped: false` with `on_main: unmanaged` → fall back to a raw filesystem presence check, exactly as before this feature (row H's own silent-skip contract); `stopped: true` → still never a stop for `/ready` — map the row to exactly one of four ⚠ reasons, never conflating them, because they are four different states, not one: rows D/E → ⚠ **authored only on `<branch>`, not merged** (naming the branch and any open PR); rows B′, C′/C″, and row C where the repair it offered failed its one re-test or was declined (`Cancel`) → ⚠ **on `<default>` but your local checkout is stale or dirty, so it could not be confirmed** — B′ belongs here as the stale case: the branch this run stands on holds the copy it was cut with, or none where the document reached `<default>` only after the cut, or its own change to it made without `<default>`'s, and so misses what has merged on `<default>` since — or holds only an uncommitted copy identical to `<default>`'s, and so carries none of `<default>`'s commits of it — and the finding carries B′'s own message, naming the merge that catches it up where it names one; C″ belongs here and not with G/I: it is a local divergence (an uncommitted edit, or since 3.21.0 a committed-but-unpushed one) on the default branch, which is the same *state* C′ and C describe and a different one from "no ref to verify against"; row C where it offered no repair — on a run carrying `specs_git: misrooted` (`workflows-core:phase-handoff` §3.3 row C), or on a read-only specs mount (§3.6 there) → ⚠ **on `<default>` but your checkout differs, and no repair was offered** (naming the files, and the flag or the read-only mount as the reason) — in both cases row C stops at once with no prompt and no retry. **The two row-C reasons split on whether a repair was offered**, never on how the offer ended: an accepted repair whose re-test fails and a declined one both had it put to the operator, while the flag and the mount never let it be, so every row-C stop lands in exactly one of the two, and neither is a ref problem. There are **eight** stopping rows and each must land in exactly one reason; mapping six left C″ with none, and the never-conflate rule forbids the obvious fallback; rows G/I (including the run's own `specs_git: blocked`) → ⚠ **could not be verified against any ref** (naming the returned `degraded` clause where present). Each is recorded verbatim as a readiness finding — `/ready` itself never asks a further question, retries, or stops on top of what came back: row C's own prompt-once-and-re-test-once (`workflows-core:phase-handoff` §3.3 row C and its prompt-once-then-re-test-once rule), a `Cancel` at that prompt included, or its immediate stop with no prompt where it offered no repair, and row C′'s own immediate stop naming the blocking files are `require-on-main`'s contract, already executed synchronously inside this very step; `/ready` only records whichever `stopped`/`degraded` state the call returned. Record each ARD as present (with its absolute path) or absent — its on-main state is Phase 2.5's job. Do not open/read file contents yet beyond what's needed for these checks — full reads happen in Phase 4 via the reviewer.
 
 2a. **Check the lineage under each unit — report it, never ask.** Execute `Skill(skill: "workflows-core:reference", args: "document-lineage upstream-check")` §6 by its step 6, the caller that never asks: **once per unit** — for each Epic in scope, with `docs` and each `--accepted-from` that Epic's `specification.md` and `design.md` step 2 recorded **present**, and, on a PRD-level run, once more with the PRD folder's own `specification.md` and `design.md` where present — and no `--output`, a unit with no present document being skipped. A link accepted by a document of the same unit is reported as *accepted in this unit* and is no finding: the check's JSON names no accepting document. **Each stale link is a ⚠ readiness finding** — `stale lineage: <downstream> ← <upstream> <recorded> → <current>: changed <keys>; new <keys>; withdrawn <keys>; revise <highest> with <reviser>`, its keys and its remedy as §6 step 3 words them, each (downstream, upstream) pair once across the units as §6 step 6 lists them — which caps the verdict at `PARTIAL` exactly as an unmerged artifact does (Phase 3(b)): the document was built against a version of its upstream that is no longer the product's. **Each missing record is a note line only** — `<doc>: no lineage record` — never a finding and never a downgrade: nothing is known to have moved. A non-zero exit of the script is itself a ⚠ finding naming its first stderr line, never a stop, per this command's defining trait — and it caps the verdict at `PARTIAL` as a stale link does (Phase 3(b)): a chain that could not be checked is not known to be current. Nothing is accepted: this command writes no lineage anywhere.
+
+2b. **Read the PRD's delivery record — report it, never ask.** The PRD ladder's optional rung, *Delivery verified (optional)* (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, *An optional rung*), is decided by the PRD folder's `_conformance.md` — the record the PE's `/dev-workflows:conformance <PRD>` writes, read on a PRD-level and an Epic-level run alike, since both derive the PRD's rung; never an Epic's `_conformance.md` — and by whether work was implemented after that PRD record (the test's condition 6). The record is read from `<default-ref>`, the ref step 2 locates on, never from the working tree: a record only in the working tree, or only on an unmerged `conformance/` branch, has not landed and is read as no record. No `require-on-main` call is made for it, no code repository is read, and nothing here asks, retries or stops.
+   - **No ref.** Where `$SPECS_PATH` is no git repository or holds no `<default-ref>` — `git -C "$SPECS_PATH" rev-parse --verify --quiet "<default-ref>^{commit}"` fails, the two cases step 2 names as `require-on-main`'s rows H and G — the record is not read: `not verified — no ref to confirm the record on`.
+   - **The read.** Otherwise read it with `git -C "$SPECS_PATH" show "<default-ref>:./<PRD-dir, relative to $SPECS_PATH>/_conformance.md"`. A read that fails gives `not verified — no conformance record on <default-ref>`, naming the ref; a read whose text does not parse — no `- **Run:**` line in its header, one whose `<YYYY-MM-DD>` date cannot be read, or an entry whose `status:` cannot be read — gives `not verified — record unreadable`.
+   - **The test.** The record settles the rung only where every one of these holds — `${CLAUDE_PLUGIN_ROOT}/references/conformance-format.md` §2–§4 give the lines and fields conditions 1–5 read, and `workflows-core:implementation-format` §1 the block heading condition 6 reads:
+     1. its `- **Run:**` line says `PRD`;
+     2. both coverage lines are present, `- **Not traced:**` and `- **Not shown merged:**`, and each reads `none` — a record without them predates them, and a missing line is never read as `none`;
+     3. `## Unverified` is empty: no `- ` line stands under it (in a record whose entries follow that heading, one written before `dev-workflows` 4.26.0, its `- ` lines alone are its list);
+     4. every `### [DD#n]` entry, wherever it sits, has the status `final` or `resolved` — save an entry that only lists an Epic entry (it carries `lists:`) whose `flags:` hold `orphaned` or `requirement withdrawn`, since it keeps that Epic entry's `proposed` for good;
+     5. no entry whose decision is `fix-code` has a status other than `resolved` — save a `fix-code` entry flagged `orphaned` or `requirement withdrawn`, whether condition 4's exception or one of the record's own entries a re-run marked so, since the record's re-runs never count such an entry as an open fix;
+     6. no work was implemented after the record: no `## <YYYY-MM-DD> — /implement` block in the PRD's tree is dated later than the record's `- **Run:**` date. The tree is the PRD folder's own `implementation.md` and that of each folder of step 2's Epic set — every `EPIC-` folder directly under `<PRD-dir>`, on an Epic-level run too — each read in the working tree, as Phase 2's inventory reads it, and on `<default-ref>` with `git -C "$SPECS_PATH" show "<default-ref>:./<folder, relative to $SPECS_PATH>/implementation.md"`; a copy either side lacks, or a read that fails, adds no block. **A block dated the record's own day is not counted**: the `Run:` line and a block heading carry a date and no time, so they cannot order work done on one day. **Nor a zone**: each date is its writer's, and a block heading is taken as written, never converted (`workflows-core:implementation-format` §4), so where the record and a block were written in different zones the two dates can sit a day apart either way — a block dated the day after the record for work done before it fails this condition, which costs only the re-run its reason names, and a block dated the record's own day, or the day before, for work done after it is missed. Both are known limits; the dates are compared as written. Read the PRD folder's file first, then each Epic's in folder-name order, each copy from its top, the working tree's before `<default-ref>`'s: the first block dated later fails the condition, its unit key that of the folder it sits in — the PRD's for the PRD folder's file, an Epic's own `key` for its folder's, as Phase 2 reads it — since a block names no unit (`workflows-core:implementation-format` §1).
+   - **The reason, where the test fails,** names the first condition that fails, in that order: `the record is not a PRD run's`; `record predates its coverage lines — re-run /dev-workflows:conformance <PRD>` where either line is missing, else `not traced: <the Not traced: line's text>` where that line is not `none`, else `not shown merged: <the keys it names>`; `<n> requirement(s) unverified`; `entries not settled`; `fix-code entries not resolved`; `work implemented since the record (<unit key>, <block date>) — re-run /dev-workflows:conformance <PRD>`. **Where open entries remain** — an entry failing condition 4 or 5 — the reason then lists each, in id order, whichever condition it names: `; open: <PRD>/[DD#n], …`.
+
+   **What the step records:** `delivery: {state: verified | not-verified, line}`, `line` being the text the `_readiness.md` line carries after `- Delivery: ` — `- Delivery: verified — <PRD>/_conformance.md (checked <the record's Run: date>) on <default-ref>` where the test holds, else `- Delivery: not verified — <reason>`, the reason as above, with `<default-ref>` written as the ref's name. It is a note, never a finding: it adds no stop and no question, and never caps or lowers the verdict. Phase 3(0) decides the rung from `delivery.state`.
 
 3. **The status peek is retired, and nothing replaces it.** It read a
    `| Key | Type | Status | Summary | Role |` table out of a per-key index file that a tracker export
@@ -289,7 +311,9 @@ already is. Nothing is read out of the PRD's title for it, and no title is inven
   `implementation.md` is the PRD folder's record, so a block an earlier `/dev-workflows:implement`
   left there for an Epic is counted toward the slice until the operator moves it into the Epic's
   folder (`workflows-core:implementation-format` §1). **This is what Phase 3(0) derives the phase
-  from**, and it is the only input the *derivation* takes. It is not the only status the run holds: a
+  from**: it is the input every mandatory rung of the *derivation* takes, and Phase 1 step 2b's
+  `delivery` decides the PRD ladder's optional rung, *Delivery verified (optional)*. The
+  inventory is not the only status the run holds: a
   `--claimed` value enters at Phase 0 step 1a and is carried into the reviewer dispatch and the report,
   compared against this derivation and never substituted for it, as the paragraph below says outright.
 
@@ -341,6 +365,18 @@ report cannot defend.
 artifact is missing to leave it. That is the verdict this command exists to produce: *"this PRD is at
 Ready for Implementation, and here is what is missing to leave it."*
 
+**The PRD ladder's optional rung, *Delivery verified (optional)*, sits above *Implementation* and is
+decided apart from the rest** (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, *An optional
+rung*). A PRD derived at *Implementation* whose `delivery.state` (Phase 1 step 2b) is `verified` is
+derived at *Delivery verified (optional)* instead. Every other PRD passes the rung over — never a
+straddle, never a finding — and the derivation continues as though the rung did not exist: the
+furthest-rung and straddle rules read the mandatory rungs alone, and the PRD keeps the phase they
+give it, with the `Delivery:` line as a note. On a PRD-level run, a `--claimed` value is still
+placed on the PRD ladder as `workflow-states.md` writes it, this rung included, by the rung it
+names: `Delivery verified` and `Delivery verified (optional)` are one rung (Phase 0 step 1a), so
+either sits *at* a PRD derived there, never above or below it. On an Epic-level run the claim is on
+the Epic ladder, which has no such rung, so step 1a has already re-prompted either spelling.
+
 **When `--claimed` was given** (Phase 0 step 1a), compare it against `derived_phase` and record any
 divergence as a readiness finding. A claim **above** the derived phase is the interesting one — work
 declared done that the artifacts do not support — and it caps the verdict exactly as an unmerged
@@ -373,7 +409,7 @@ whichever ⚠ reason applies — for a spec or design, the one Phase 1 step 2 re
 authority on the reasons and is cited here rather than counted; for an ARD, Phase 2.5's "ARD authored,
 not handed off" — against Phase 1's inventory. So is each stale lineage link, and each lineage check that failed to run, Phase 1 step 2a recorded, carried here against the document it names. A ⚠ artifact of any of those reasons is a finding for the reviewer's "Status consistency" dimension, at no less than MAJOR
 severity — it does not satisfy the status the way a merged ✅ does, but it is not a BLOCKER and never stops
-this run. This is the mechanical half of that dimension. **On a multi-component PRD** (Phase 1 step 2), the rung's *ARD with `## Contracts`* is ✅ only where Phase 2.5 returned `contracts` not null: an ARD without the section is ❌ for it, however present the file is.
+this run. This is the mechanical half of that dimension. **The optional rung is never ❌**: where the PRD is derived at *Delivery verified (optional)*, its one expected artifact is ✅; where the PRD is derived at *Implementation*, the checklist carries Phase 1 step 2b's `Delivery:` line beneath that rung as a note — no ✅, no ❌, no ⚠, and no finding. **On a multi-component PRD** (Phase 1 step 2), the rung's *ARD with `## Contracts`* is ✅ only where Phase 2.5 returned `contracts` not null: an ARD without the section is ❌ for it, however present the file is.
 
 **(c) Repo-availability presence-check (best-effort, presence only — never scanning).**
 
@@ -404,7 +440,7 @@ this run. This is the mechanical half of that dimension. **On a multi-component 
 
 Dispatch `readiness-reviewer` (Opus, frontmatter-pinned — no override unless §10 enforces a model) with the Phase 3 skeleton, the
 artifact paths from Phase 1 (the reviewer Reads each end-to-end itself — it carries `Read`/`Glob`/
-`Grep`), the Phase 3(0) derived phase and any `--claimed` value, `applicable_ard` (omit entirely when Phase 2.5 was `none`),
+`Grep`), the Phase 3(0) derived phase, Phase 1 step 2b's `Delivery:` line and any `--claimed` value, `applicable_ard` (omit entirely when Phase 2.5 was `none`),
 and a pointer to the rubric.
 
 → Agent (subagent_type: "dev-workflows:readiness-reviewer", model: `<review_model — §2 Opus chain; frontmatter-pinned, recorded, no override unless §10 enforces a model; under §10, run_flags.enforced_model>`):
@@ -423,11 +459,12 @@ and a pointer to the rubric.
   >   specs:   [absolute path(s) in scope]
   >   designs: [absolute path(s) in scope]
   > derived_phase:           [PRD: <phase>; Epics: <key>=<phase>, …; broad slice: <phase>, where Phase 2 carried one — each naming the artifacts that placed it, per Phase 3(0)]
+  > delivery:                [Phase 1 step 2b's line, the text after "- Delivery: " — a note on the PRD's optional rung, reported and never judged]
   > claimed_status:          [the --claimed value verbatim — omit this line entirely when the flag was absent]
   > applicable_ard:          [the Phase 2.5 invariants, or omit entirely if status was none]
   > workflow_states_rubric:  ${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md"
 
-**There is no `declared_status` field, and adding one back would be the defect this pair replaced.** Nothing in `$SPECS_PATH` declares a per-PRD or per-Epic workflow phase for this run to paste (Phase 1 step 3, Phase 2) — `prd.md`'s frontmatter `status:` (`workflows-core:prd-format`) is never read as one — so the two fields above are the whole of what the run holds: `derived_phase`, which Phase 3(0) derived from the artifacts, and `claimed_status`, which exists only on a `--claimed` run. The reviewer's own dimension 1 compares the second against the first; sending neither, or sending a field with nothing to fill it, silently degrades that comparison to "absent, there is nothing to diverge from".
+**There is no `declared_status` field, and adding one back would be the defect this pair replaced.** Nothing in `$SPECS_PATH` declares a per-PRD or per-Epic workflow phase for this run to paste (Phase 1 step 3, Phase 2) — `prd.md`'s frontmatter `status:` (`workflows-core:prd-format`) is never read as one — so the two phase fields above are the whole of what the run holds: `derived_phase`, which Phase 3(0) derived from the artifacts, and `claimed_status`, which exists only on a `--claimed` run. `delivery` is no phase: it is the note Phase 3(0) read the optional rung from, and `derived_phase` already reflects it. The reviewer's own dimension 1 compares `claimed_status` against `derived_phase`; sending neither, or sending a field with nothing to fill it, silently degrades that comparison to "absent, there is nothing to diverge from".
 
 Carry back the verdict (`SUPPORTED` / `PARTIAL` / `NOT-SUPPORTED`) and the full Findings section
 (by dimension) for Phase 5. `readiness-reviewer` never modifies files and never re-derives the phase — a
@@ -442,7 +479,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
 1. **Compose the readiness artifact.** Build the report content: a header stamping the run timestamp
    (ISO 8601 UTC), the specs-repo git rev (`git -C $SPECS_PATH rev-parse --short HEAD`), the derived
-   phase(s) exactly as Phase 3(0) recorded them, any `--claimed` value verbatim, the verdict, the coverage
+   phase(s) exactly as Phase 3(0) recorded them, Phase 1 step 2b's `Delivery:` line, any `--claimed` value verbatim, the verdict, the coverage
    roll-up (N/M requirements covered, P%, each ❌ gap requirement ID named), and the full Findings section
    from Phase 4.
 
@@ -460,6 +497,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
    - Specs repo rev: <short HEAD>
    - Derived phase: PRD=<phase>[, Epic <KEY>=<phase>, …][, broad slice=<phase>]
+   - Delivery: verified — <PRD>/_conformance.md (checked <the record's Run: date>) on <default-ref> | not verified — <reason> — _Phase 1 step 2b's line, as it recorded it_
    - Claimed status: <the --claimed value verbatim> — _or omit the line entirely when the flag was absent_
    - Verdict: SUPPORTED | PARTIAL | NOT-SUPPORTED
 
@@ -562,6 +600,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    - PRD: <phase>
    - Epic <EPIC>: <phase> — _or omit when PRD-level_
    - Broad slice: <phase> — _only on a PRD-level run whose PRD folder holds a flat `specification.md` and is not multi-component, or was built whole by the override (Phase 1 step 2, Phase 2); omit otherwise_
+   - Delivery: [Phase 1 step 2b's line, the text after "- Delivery: " — `verified — <PRD>/_conformance.md (checked <the record's Run: date>) on <default-ref>` or `not verified — <reason>`; a note, never a finding]
    - Claimed (`--claimed`): <value verbatim> — _or omit the line when the flag was absent_
 
    ### Artifact inventory (Phase 1)
@@ -614,7 +653,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
    ### Next step
    [Per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked. SUPPORTED → `/dev-workflows:implement <ADDRESS>` — the same single address this run judged (D4), no handoff. PARTIAL / NOT-SUPPORTED → resolve the named gaps above and update
-   any status you keep elsewhere to match the artifacts, then re-run `/dev-workflows:ready <ADDRESS>`.]
+   any status you keep elsewhere to match the artifacts, then re-run `/dev-workflows:ready <ADDRESS>`. Whatever the verdict, where the PRD is derived at *Implementation* and Phase 1 step 2b's delivery is not verified, add `PE → /dev-workflows:conformance <PRD>` — the PE's run once every Epic has merged, whose settled record reaches the optional *Delivery verified* rung.]
 
    ### Context hygiene
    The resume pointer is written in the terminal cost phase (Phase 8), per
@@ -623,6 +662,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
    - **SUPPORTED → `/dev-workflows:implement <ADDRESS>` (still Dev)?** → run **`/compact`** — context stays relevant.
    - **PARTIAL / NOT-SUPPORTED → resolving the gaps yourself now?** → **`/compact`**.
+   - **PE → `/dev-workflows:conformance <PRD>`, where the Next step offers it?** → **`/clear`** — a role handoff, even to yourself; `/compact` if continuing right away.
    - Consider **`/rename <PRD-ID>-<slug>-dev`** to relocate this session later.
 
    Guidance only — see `workflows-core:session-hygiene` §5.
@@ -838,6 +878,12 @@ a code or docs repository, or the current working directory, where it is not the
 - ALWAYS read artifacts from the specs repo's clean **main** — never a branch; clean as Phase 0 step 3 tests it, where a session file in session-branch mode and this command's own `_readiness.md` are not dirt
 - ALWAYS pass the Phase 3(0) derived phase to `readiness-reviewer` with the artifacts that placed it there, plus any `--claimed` value verbatim — never inferred,
   never re-derived, and never as a `declared_status` field, which has no producer anywhere in this command
+- NEVER let the `Delivery:` line (Phase 1 step 2b) count against the run — it is a note, never a finding: the PRD folder's
+  `_conformance.md` is read from `<default-ref>` with `git show`, without a `require-on-main` call, and never asked about;
+  a PRD that does not reach *Delivery verified (optional)* is derived exactly as without the rung, and the line never caps
+  or lowers the verdict — on a PRD-level run, a `--claimed` value naming the rung, with or without its `(optional)` suffix,
+  is compared as any claim is; on an Epic-level run either spelling is off the Epic ladder and re-prompted (Phase 0
+  step 1a, Phase 3(0))
 - ALWAYS resolve the `model_routing` block at Phase 1.5 and pin the detection steps to the §2.1 Sonnet chain;
   `readiness-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + the Phase 3
   deterministic skeleton run on `current_model`

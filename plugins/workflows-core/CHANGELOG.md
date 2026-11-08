@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.79.0] — 2026-11-08
+## [1.80.0] — 2026-11-08
 
 The specs-repository git primitives move into one tested script: GIT-G1 Part 1. Needs nothing from the other plugins' releases.
 
@@ -13,6 +13,22 @@ The specs-repository git primitives move into one tested script: GIT-G1 Part 1. 
 
 - **`scripts/specs-git.py` carries the deterministic git primitives of `specs-repo-git` and `phase-handoff`**, one subcommand each, each printing one JSON object: `status`, the §2.1 classifier over `git status --porcelain -z` (a rename's original path is never a record of its own); `branch-merged`, §3.5's four tests; `branch-key`, resolved against the run's own keys, never read out of the branch name; `push-scope`, §4 step 5's test and §8.4's session-branch form; `owner-repo`, `phase-handoff` §2.6.1's derivation with its SSH-alias resolution, its `name` field the unvalidated form §2.1's `<docs-repo-slug>` takes, alias resolution skipped, and never the remote URL itself, which can carry a credential; and `mode`, §8.1's. `branch-merged` and `branch-key` also run where `$SPECS_PATH` sits below its repository's top level, as §3.5's classification under `specs_git: misrooted` needs, and every path is printed as git gave it, never as a JSON escape a later `git add` could not match. It reuses `session-branch.py`'s classifier, push-scope walk and `mode`, so none exists twice, and its selftest — 65 checks on repositories built at run time, among them GIT-B1's drifted squash and a change hidden inside a merge commit — runs in CI.
 - **`specs-repo-git` and `phase-handoff` call the script** where they spelled those steps out as git commands for an agent to run by hand: §2.1's listing and classification, §3.5's merged test and branch-key resolution, §4 step 5's and §8.4's push-scope, §8.1's mode, and §2.6.1's owner-repo. Every rule and its reason stays in the reference as the contract the script follows. An exit 2 is reported and read as the answer that deletes, pushes and stages nothing: unmerged, no key, nothing pushed, nothing staged.
+
+## [1.79.0] — 2026-11-08
+
+`/document` and `/release-notes` take a decision a conformance record already holds by one shared rule, and the routing graph gives `/ready` its offer of the PE's PRD conformance run. Update with `dev-workflows` 4.60.0 and `docs-workflows` 1.36.0.
+
+### Added
+
+- **`source-truth` §7.8: a decision a conformance record already holds.** One authority on how a documentation command takes the decision `/dev-workflows:conformance` recorded instead of asking again. It says which records are in scope — on an Epic address that Epic's record and the PRD record's entries about it, otherwise the PRD's and each Epic's — read from the working tree, as data; which records are malformed — no frontmatter `key:`, a merge-conflict marker, or no `Run:` line naming `Epic` or `PRD` and a date — and set aside with a ⚠ line like an unreadable one; which entries are open; which of two entries on one claim wins, a final decision over a proposed one and then `fix-code` over the others; and what each decision maps to: `amend-document` or `accept` → `document-as-code`, an open `fix-code` → `skip-and-report`. An entry decides only the claims drawn from the requirement it names, matched by exact identity — never by an id alone — and, in `/document`, only while the code still shows the discrepancy: a claim the run now verifies is documented as found, and the entry is reported as met by the code, which now matches its requirement. A decision so taken drafts no implementation gap and holds no release, and the run names each entry it took. `/document` also reports how many commits each repository's default branch has gained since the commit the record checked. `/document` (Phase 5.8) and `/release-notes` (Phase 3 and its writer) apply it; with no record in scope, nothing changes.
+- **The routing graph's `/ready` line offers the PE's `/dev-workflows:conformance <PRD>`**, whatever the verdict, for a PRD at *Implementation* whose delivery is not verified, for whatever reason: that run's settled record reaches the optional *Delivery verified* stage.
+
+### Changed
+
+- **`source-truth` names its one exception to asking.** Its headline rule, principle, hard rules and escalation protocol say that where a person already picked a side in a conformance record, the run takes that pick and says so; §7's table and questions carry only the discrepancies no record decides, and where a record decides every one, nothing is asked. A release-note claim a record settled is worded from the record's `shipped:` sentence, which `/dev-workflows:conformance` wrote from the code it traced, and raises no gap.
+- **`cost-emission`'s list of the sites that name a model chain's head** points at the instruction file that now holds the chain statement.
+- **`implementation-format` names `/dev-workflows:ready` as a reader of each block's date**, which its *Delivery verified* test compares with the PRD conformance record's.
+- **Docs.** The family map draws `/ready` reading the PE's PRD record and offering the PE's PRD run, and says what the optional stage needs; the References page says what `source-truth` now owns.
 
 ## [1.78.16] — 2026-11-08
 
