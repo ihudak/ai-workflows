@@ -1,6 +1,6 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, and what happens when it points somewhere the plugin cannot read or write. The plugin reads four user-settable variables. Claude Code also sets variables of its own for every plugin run; you never set those, and they are not listed here.
+[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, and what happens when it points somewhere the plugin cannot read or write. The plugin reads four user-settable variables. A fifth, `GIT_USER_INITIALS`, is read on its behalf by the companion `workflows-core` plugin's branch-naming rules — for the branch `/promote-decisions` cuts in the architecture repository, and for your session branch where the specs repository takes no direct push — and is described in [Getting started](../getting-started.md) and on `workflows-core`'s own environment page. Claude Code also sets variables of its own for every plugin run; you never set those, and they are not listed here.
 
 ## `$SPECS_PATH`
 

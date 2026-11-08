@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.15] — 2026-11-08
+
+Follow-up to batches B33 and B34: what an independent review of the merged batches found. Update with `product-workflows` 3.78.8.
+
+### Fixed
+
+- **The routing graph gives `/create-ard`, offered after `/create-prd`, its `<merge-clause>`**, as `/create-prd`'s own array does; `/specify` beside it already carried one.
+- **`/diagnose-session` splits only the dimensions it dispatches.** Past 20,000 lines, each of `repeated-work`, `stumbles` and `claims-and-evidence` that the run dispatches is split by line range, and the split adds no dimension a scoped request left out. The command page's diagram, which said "the other four whole", says the same.
+- **Docs.** The family map's `/create-prd` → `/prd-proposal` edge says the PRD must be on the default branch, and the `/brd-split` edge into `/prd-proposal`, which no fresh slice can take, is gone; `/implement`'s edge into `/document` waits on the PE's PRD run. The environment page says `product-workflows` reads `$GIT_USER_INITIALS` too, for the branch `/promote-decisions` cuts in the architecture repository, and getting started names it among the optional variables that say so when they are missing.
+
 ## [1.78.14] — 2026-11-08
 
 Two defects found during batch B33, and the rule that every stopped run still reaches its terminal commit: batch B35. Update with `security-workflows` 0.10.10.

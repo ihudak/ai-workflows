@@ -202,7 +202,7 @@ array carries every option.
   the operator types (`/product-workflows:idea` Phase 5).
 - `/product-workflows:create-prd <ADDRESS>`:
   `/docs-workflows:release-notes <PRD>` (PM — draft the release note; recommended clear next step); hand to PA
-  *(optional)* → `/product-workflows:create-ard <PRD>`; or hand to PE → `/product-workflows:epics <PRD>` (or `/product-workflows:specify <PRD>`, which gates this PRD and so carries `<merge-clause>`).
+  *(optional)* → `/product-workflows:create-ard <PRD>`, which gates this PRD and so carries `<merge-clause>`; or hand to PE → `/product-workflows:epics <PRD>` (or `/product-workflows:specify <PRD>`, which gates this PRD and so carries `<merge-clause>` too).
 - `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:update-spec <PRD>` (PE) — the revision of an existing specification, which `/product-workflows:specify` would rewrite from scratch.
 <!-- /part -->
 

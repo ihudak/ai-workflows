@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.59.6] — 2026-11-08
+
+Docs only: follow-up to batches B33 and B34. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **The workflow diagram draws `/implement`'s offers of the PE's PRD conformance run and the Epic's security scan**, and its edge to the documentation commands waits on the PE's PRD run. A decision to amend a document is described as `/conformance` does it: a note on the document and a recommended command, not a hand-off.
+- **Getting started** says it walks a first `/implement` too, and names `GIT_USER_INITIALS` among the optional variables that say so when they are missing.
+- **The environment page counts `/product-workflows:promote-decisions`** among the commands whose branch name `$GIT_USER_INITIALS` feeds, and says it also names your session branch where the specs repository takes no direct push.
+
 ## [4.59.5] — 2026-11-08
 
 Five commands now end every stop through their terminal commit: batch B35. Needs nothing from the other plugins' releases.

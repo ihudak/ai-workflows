@@ -28,7 +28,7 @@ flowchart TD
     p2 --> p3["Phase 3 — Triage: read the region around the problem first"]
     p3 --> d3{"Main transcript past 20,000 lines?"}
     d3 -->|"no"| fan["One session-analyst per dimension, in one response — all seven, or only those named"]
-    d3 -->|"yes"| fsplit["Three dimensions split into 20,000-line ranges, plus one dispatch each over the subagent transcripts — the other four whole"]
+    d3 -->|"yes"| fsplit["Of the dimensions that run — all seven, or only those named — repeated-work, stumbles and claims-and-evidence split into 20,000-line ranges, plus one dispatch each over the subagent transcripts, and every other one runs whole"]
     fan --> afterfan["On return: an analyst that could not run is re-dispatched once or named, and a finding with no path:line is discarded"]
     fsplit --> afterfan
     afterfan --> p4["Phase 4 — Report: check each cited line, then write and show report.md"]

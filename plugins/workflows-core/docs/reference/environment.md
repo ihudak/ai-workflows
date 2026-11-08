@@ -5,7 +5,7 @@
 The nine are what the whole family needs: each is read by a reference this plugin ships, inside whichever plugin's command is running, and `/frames` also checks `$SPECS_PATH` itself and stops on an unset one. Four of the nine are the price-table override and the three run-flag defaults; of the other five, the sibling plugins' own commands use these:
 
 - `dev-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$GIT_USER_INITIALS`, since it branches a code repository, and `$ARCHITECTURE_REPO_PATH`, through `/design`'s architecture grounding — not `$DOCS_PATH`, since it grounds nothing in documentation.
-- `product-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$DOCS_PATH` and `$ARCHITECTURE_REPO_PATH`, through `/create-ard`, `/specify`, `/update-spec` and `/promote-decisions` — not `$GIT_USER_INITIALS`, since it creates no branch in a code or docs repository.
+- `product-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$DOCS_PATH` and `$ARCHITECTURE_REPO_PATH`, through `/create-ard`, `/specify`, `/update-spec` and `/promote-decisions`, and `$GIT_USER_INITIALS`, since `/promote-decisions` branches the architecture repository.
 - `docs-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$DOCS_PATH` and `$GIT_USER_INITIALS`, since it branches a docs repository — not `$ARCHITECTURE_REPO_PATH`, since it authors no ARD.
 - `security-workflows` uses `$SPECS_PATH` alone.
 

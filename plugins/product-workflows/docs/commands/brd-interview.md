@@ -628,7 +628,7 @@ Phase 11 offers what the state this run leaves allows, and runs nothing itself. 
 - **Nothing left for the customer** → the slice is decided and needs no reconciliation: [`/create-ard <BRD-KEY>`](create-ard.md) (PA, optional), [`/specify <BRD-KEY>`](specify.md) (PE), and [`/create-prd <BRD-KEY>`](create-prd.md) (PM) only where the slice is PRD-eligible — each after the merge — then `/prd-ground <BRD-KEY> --rebaseline`, the one thing this run can offer that could make a new round askable, and interviewing another BRD or slice. The question has room for only some of these: interviewing another BRD or slice is listed in prose only, and so is the `--rebaseline` pass where the slice is PRD-eligible; type either to take it. Neither packaging nor another round is offered.
 - **Nothing left for the customer, but a decision reopened elsewhere waits on this round** → another round of this command, which puts its question; the BRD is not decided.
 
-Beside every list the run names each requirement defect left waiting on an open round, and each reopened decision waiting on this round. [`/brd-reconcile`](brd-reconcile.md) is never offered here: no review has been asked for yet.
+Beside every list the run names each requirement defect left waiting on an open round, and each reopened decision waiting on this round. It also names each requirement defect it withheld as undecidable, with what decides it: where a row the defect joins is still `unallocated`, that row and the BRD whose [`/brd-split`](brd-split.md) run allocates it; otherwise the sibling whose ledger or question set could not be read. [`/brd-reconcile`](brd-reconcile.md) is never offered here: no review has been asked for yet.
 
 ## See also
 

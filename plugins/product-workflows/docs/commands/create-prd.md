@@ -165,7 +165,7 @@ After the handoff, Phase 6 asks where to go next and runs nothing itself. Every 
 
 - **Draft the release note** (PM, recommended) → `/docs-workflows:release-notes <ADDRESS>`, from the companion `docs-workflows` plugin. It waits for nothing.
 - **Hand to a Product Architect** (PA, optional) → [`/create-ard <ADDRESS>`](create-ard.md). It gates this PRD on the specs repo's default branch — and on the BRD route the `decisions.md` this run hands off too — so the offer says what has to reach the default branch first, worded for how this run's handoff ended.
-- **Hand to a Product Engineer** (PE) → [`/epics <ADDRESS>`](epics.md), or [`/specify <ADDRESS>`](specify.md) for a PRD-level specification. `/specify` gates this PRD on the specs repo's default branch and stops while it sits on a branch, so it is named with what has to reach the default branch first, as `/create-ard` is. `/epics` waits on nothing this run wrote: the one file it gates is a PRD-level `specification.md`.
+- **Hand to a Product Engineer** (PE) → [`/epics <ADDRESS>`](epics.md), or [`/specify <ADDRESS>`](specify.md) for a PRD-level specification. `/specify` gates this PRD on the specs repo's default branch and stops while it sits on a branch, so it is named with what has to reach the default branch first, as `/create-ard` is. `/epics` waits on nothing this run wrote: what it gates is a PRD-level `specification.md` and a PRD-level ARD, and this run writes neither.
 - **Stop here.**
 
 ## See also
