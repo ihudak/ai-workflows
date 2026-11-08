@@ -217,8 +217,10 @@ aside — as `inputs_read`, as it reads it, for the handoff contract, which take
   record's header — its `Run:` line (an Epic or a PRD run, the role, the date), its `Code
   checked:` line, one repository, ref and commit per line, and its `Verdicts:` line — and print one line per record before
   Phase 1 asks anything: `Conformance: <the folder's key> checked <date> (<Epic | PRD> run) — <repo> @ <commit>, …`,
-  or `Conformance: no record in scope` where there is none. A record that cannot be read is a ⚠
-  line naming it and the read error, and the run goes on as if it were absent.
+  or `Conformance: no record taken` where there is none, or each is set aside as below. A record that cannot be read is a ⚠
+  line naming it and the read error, and the run goes on as if it were absent; so is a record
+  `workflows-core:source-truth` §7.8's *The copy read* finds malformed, its ⚠ line naming what that
+  rule found in place of the read error.
 
 **Check the lineage above the note — report it, never ask.** Then execute `Skill(skill: "workflows-core:reference", args: "document-lineage upstream-check")`
 §6 by its step 6 — the caller that never asks, with no gate — over this run's scope, which is Phase
@@ -356,25 +358,19 @@ cannot load, so what it reads is stated here, and that reference's §6 names thi
 readers. Every `### [DD#n]` heading is an entry, wherever it sits in the file; the heading names the
 requirement — its id, or its quoted text where it has none — and the entry's fields are
 `document:`, `verdict:`, `shipped:`, `decision:` with its `status:`, and, where present, `flags:`,
-`ruling:`, `lists:` and `superseded-by:`. Nothing here is asked, and no record is written.
+`ruling:`, `lists:` and `superseded-by:`. Which of those entries are open, what each decision maps
+to and which of two entries on one claim wins are `workflows-core:source-truth` §7.8's to say, the
+one authority on them (`Skill(skill: "workflows-core:reference", args: "source-truth")`). Nothing
+here is asked, and no record is written.
 
-1. **One entry speaks for a requirement.** Where the PRD folder's record holds an entry whose
-   `ruling:` or `lists:` names an Epic entry, `<EPIC-KEY>/[DD#k]`, with the same heading and the same
-   `document:`, that entry stands for the Epic entry, which is not read on its own: a PRD run's
-   `final` decision wins over an Epic run's `proposed` one. **Save where the Epic run came later:**
-   where the Epic's record carries a later `Run:` date than the PRD folder's and closes that Epic
-   entry by rule 2's test, the Epic run traced the code after the PE ruled — a confirmed fix has
-   landed — and neither entry is read. On a run with `focus_key` set, the PRD folder's record
-   contributes only its entries about the focus Epic: those that so name one of its entries, and
-   those whose `document:` names the focus Epic's key, which a PRD run writes for a requirement of
-   that Epic it traced itself. The rest of it is about other work.
-2. **Only open entries count.** Drop an entry whose `status:` is `resolved`; whose `flags:` name
-   `fixed` or `stale`, the code now satisfying the requirement; whose `flags:` name
-   `requirement withdrawn` or `orphaned`, the requirement being gone; or that carries
-   `superseded-by:`. Every other entry is open.
-3. **Carry each open entry** to Phase 6 as the writer's `conformance` input:
+1. **Take the open entries as §7.8 says.** Apply its *Which entries are open*, rules 1 and 2, to
+   every record Phase 0 found. On a run with `focus_key` set, its *The records in scope* says which
+   of the PRD folder's entries count: only those about the focus Epic.
+2. **Carry each open entry** to Phase 6 as the writer's `conformance` input:
    `{entry: <KEY>/[DD#n], requirement: <its heading>, requirement_text: <that requirement's text, read from the document and folder its document: names>, verdict, shipped, decision, status}`.
-   The writer applies `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §8 to them. Take, per
+   The writer applies `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §8 to them, which
+   takes the mapping of each decision and the precedence between two entries on one claim from
+   `workflows-core:source-truth` §7.8. Take, per
    record, the `unverified` and `not-checkable` counts off the `Verdicts:` line Phase 0 read: no
    entry carries those requirements, and the report names them as requirements the record did not
    settle. The header is read rather than the lists, which a record from an older `dev-workflows`
@@ -747,7 +743,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Deprecation: <EOL <date> (end-of-support <date | —>) | none>
    - Implementation gaps: <<path> — per gap its number, claim and decision; for `document-as-spec`: hold the release and the publication of this note until it is fixed; for `skip-and-report`: omitted from the note, raise the defect; for `document-as-code`: documented as shipped, correct the PRD | none>
    - Diff grounding: <on (repos: …) | off><; the plan's `Code check:` line, where Phase 2 showed one>
-   - Conformance: <per record Phase 0 found: <the folder's key> checked <date> (<Epic | PRD> run) — <repo> @ <commit>, …; then each open entry by `<KEY>/[DD#n]` and what the draft did with it — left out, the fix still pending (once it lands, re-run /dev-workflows:conformance on the key whose record holds the entry — the PRD's, for an entry its record stands in for — then this command) | left out, its entries disagreeing on what shipped | worded as shipped (<amend-document | accept>) | not claimed — with `(a Dev's proposal, not yet ruled on)` where its `status:` was `proposed`; then <n> unverified and <m> not-checkable requirements the record did not settle; then each ⚠ line Phase 5 printed for it | no record in scope>
+   - Conformance: <per record Phase 0 found: <the folder's key> checked <date> (<Epic | PRD> run) — <repo> @ <commit>, …; then each open entry by `<KEY>/[DD#n]` and what the draft did with it — left out, the fix still pending (once it lands, re-run /dev-workflows:conformance on the key whose record holds the entry — the PRD's, for an entry its record stands in for — then this command) | left out, its entries disagreeing on what shipped | worded as shipped (<amend-document | accept>) | not claimed — with `(a Dev's proposal, not yet ruled on)` where its `status:` was `proposed`; then <n> unverified and <m> not-checkable requirements the record did not settle; then each ⚠ line Phase 5 printed for it | no record taken>
    - Lineage: <the `Lineage:` line (`workflows-core:document-lineage` §7) for Phase 0's check, then each stale link ⚠ with its remedy, each link accepted in its unit marked so, each missing record, each document not on `<default-ref>` and each this checkout changed from it as a note>
    - Blocks used: <each block by its record and heading date | none>; dropped by §4's date fallback: <each block by its record and heading date, and each commit the date rule dropped by its own date, by SHA, date and subject — a commit dropped with a block recording it is accounted for by that block's listing | none> — on a run with diff grounding on
    - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — usually a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again

@@ -19,7 +19,7 @@ stated cost of removing the mirror, not an oversight.
 
 ## PRD status ladder
 
-`Open → Problem stated → Usecases defined → Ready for Implementation → Implementation → Release Preparation → Post GA`
+`Open → Problem stated → Usecases defined → Ready for Implementation → Implementation → Delivery verified (optional) → Release Preparation → Post GA`
 
 | Status | Role | Transition command | Expected artifacts |
 |---|---|---|---|
@@ -28,10 +28,13 @@ stated cost of removing the mirror, not an oversight.
 | Usecases defined | PM | /create-prd | PRD with user stories / use cases |
 | Ready for Implementation | PE→Dev | /epics, /specify, /design | Epics defined, or a broad PRD-level slice — the PRD folder holding a flat specification.md — or both; each in-scope Epic, and the slice where one stands, Refined+ with specification.md AND design.md; coverage complete; ARD (if any) respected; no cross-artifact contradictions. **On a multi-component PRD** (below): the ARD with `## Contracts`, the PRD-level specification.md, Epics defined, and each in-scope Epic Refined+ with specification.md AND design.md — no PRD-level design.md (where the PRD folder holds one, or an `implementation.md` with a block, the 0-Epic override built the PRD whole, and the first clause applies); coverage complete; ARD respected; no cross-artifact contradictions |
 | Implementation | Dev | /implement | code in progress (past the readiness gate) |
+| Delivery verified (optional) | PE | /conformance | the PRD's `_conformance.md` on the default branch, settled, with no work implemented after it — `/dev-workflows:ready` states the test's six conditions |
 | Release Preparation | Dev/PM | /document, /release-notes | docs + release notes |
 | Post GA | PM | — | shipped |
 
 **A multi-component PRD** (`workflows-core:components` §3 — its known set has two or more `kind: code` components) reads the *Ready for Implementation* row's second clause. There the flat `specification.md` is a **requirements source**: its end-to-end acceptance criteria are split across one-component Epics, each designed and implemented on its own, so the slice is not a unit of design or implementation — save by `/design`'s and `/implement`'s override — and no PRD-level `design.md` is expected. The ARD's `## Contracts` is what makes those Epics fit together, which is why it is expected there rather than optional. A single-component PRD reads the first clause, unchanged, and so does a multi-component PRD whose folder holds a PRD-level `design.md` or an `implementation.md` with a block — the override taken, the PRD built whole as a slice.
+
+**An optional rung** is reached only where its artifact is present and settled. *Delivery verified (optional)* is one: its artifact is the PRD folder's `_conformance.md`, which the PE's `/dev-workflows:conformance <PRD>` writes, on the default branch and passing the test `/dev-workflows:ready` states in its Phase 1 — six conditions, the last that no `implementation.md` block in the PRD's tree is dated after the record. A PRD whose record is absent, not on the default branch, not settled, or older than work implemented since passes the rung over — never a straddle, never a finding — and the derivation continues as though the rung did not exist: a PRD derived at *Implementation* stays there, and one whose artifacts reach a later rung reaches it without the record. The run carries a note instead, `Delivery: not verified — <reason>`, and the note lowers no verdict.
 
 ## Epic status ladder
 
@@ -71,4 +74,4 @@ changes for it, and an Epic, which can hold an `epic.md`, is read from `Open` as
 - **PRD** — "ready for AI-driven development" = the artifacts support the transition into **Ready for Implementation**.
 - **Epic** — = the artifacts support the transition into **Refined** (spec **and** design present). **In Progress / In Review / Closed** are *past* the gate — `/ready` reports the gate is moot.
 
-The rubric is advisory: an org may skip an optional artifact (e.g. no ARD) — that downgrades to a MINOR finding, never a hard block on its own. **Except on a multi-component PRD**, where the ARD with `## Contracts` and the PRD-level specification are expected artifacts of *Ready for Implementation* (above): their absence leaves the PRD below that rung, as any other missing expected artifact does.
+The rubric is advisory: an org may skip an optional artifact (e.g. no ARD) — that downgrades to a MINOR finding, never a hard block on its own — save an optional rung's artifact, whose absence, or presence without settling the rung, is no finding at any severity, only the note *An optional rung* names. **Except on a multi-component PRD**, where the ARD with `## Contracts` and the PRD-level specification are expected artifacts of *Ready for Implementation* (above): their absence leaves the PRD below that rung, as any other missing expected artifact does.

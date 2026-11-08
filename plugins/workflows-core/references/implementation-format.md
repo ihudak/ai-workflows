@@ -7,6 +7,8 @@ Design authority: `docs/superpowers/specs/2026-08-31-specs-native-pipeline-desig
 **Written by `/implement`. Read by `/document` and `/release-notes`**, which hand the refs it records
 to `diff-summarizer`; and, for whether it holds a block (§1) or for the repositories its entries
 name, by `references/epic-picker.md`'s ● marker, `/ready`, `/specify` and `/epics`; and, for the
+date each block's heading carries, by `/dev-workflows:ready`'s *Delivery verified* test, which
+counts a block dated after the PRD's conformance record as work implemented since; and, for the
 branch that carries a unit's work and whether it has merged, by the consumers of §5's `unit-branch`,
 which §5 names. §3's commit
 convention is a separate thing with a wider writer set — all three of the commands that change code
