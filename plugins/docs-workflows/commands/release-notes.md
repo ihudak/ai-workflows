@@ -352,25 +352,19 @@ cannot load, so what it reads is stated here, and that reference's §6 names thi
 readers. Every `### [DD#n]` heading is an entry, wherever it sits in the file; the heading names the
 requirement — its id, or its quoted text where it has none — and the entry's fields are
 `document:`, `verdict:`, `shipped:`, `decision:` with its `status:`, and, where present, `flags:`,
-`ruling:`, `lists:` and `superseded-by:`. Nothing here is asked, and no record is written.
+`ruling:`, `lists:` and `superseded-by:`. Which of those entries are open, what each decision maps
+to and which of two entries on one claim wins are `workflows-core:source-truth` §7.8's to say, the
+one authority on them (`Skill(skill: "workflows-core:reference", args: "source-truth")`). Nothing
+here is asked, and no record is written.
 
-1. **One entry speaks for a requirement.** Where the PRD folder's record holds an entry whose
-   `ruling:` or `lists:` names an Epic entry, `<EPIC-KEY>/[DD#k]`, with the same heading and the same
-   `document:`, that entry stands for the Epic entry, which is not read on its own: a PRD run's
-   `final` decision wins over an Epic run's `proposed` one. **Save where the Epic run came later:**
-   where the Epic's record carries a later `Run:` date than the PRD folder's and closes that Epic
-   entry by rule 2's test, the Epic run traced the code after the PE ruled — a confirmed fix has
-   landed — and neither entry is read. On a run with `focus_key` set, the PRD folder's record
-   contributes only its entries about the focus Epic: those that so name one of its entries, and
-   those whose `document:` names the focus Epic's key, which a PRD run writes for a requirement of
-   that Epic it traced itself. The rest of it is about other work.
-2. **Only open entries count.** Drop an entry whose `status:` is `resolved`; whose `flags:` name
-   `fixed` or `stale`, the code now satisfying the requirement; whose `flags:` name
-   `requirement withdrawn` or `orphaned`, the requirement being gone; or that carries
-   `superseded-by:`. Every other entry is open.
-3. **Carry each open entry** to Phase 6 as the writer's `conformance` input:
+1. **Take the open entries as §7.8 says.** Apply its *Which entries are open*, rules 1 and 2, to
+   every record Phase 0 found. On a run with `focus_key` set, its *The records in scope* says which
+   of the PRD folder's entries count: only those about the focus Epic.
+2. **Carry each open entry** to Phase 6 as the writer's `conformance` input:
    `{entry: <KEY>/[DD#n], requirement: <its heading>, requirement_text: <that requirement's text, read from the document and folder its document: names>, verdict, shipped, decision, status}`.
-   The writer applies `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §8 to them. Take, per
+   The writer applies `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §8 to them, which
+   takes the mapping of each decision and the precedence between two entries on one claim from
+   `workflows-core:source-truth` §7.8. Take, per
    record, the `unverified` and `not-checkable` counts off the `Verdicts:` line Phase 0 read: no
    entry carries those requirements, and the report names them as requirements the record did not
    settle. The header is read rather than the lists, which a record from an older `dev-workflows`
