@@ -103,13 +103,13 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |
 | `workflows-core-bounded-run.md` | `*/scripts/bounded.py`, `*/commands/*.md`, `*/agents/*.md`, `*/references/**`; `.github/workflows/validate-catalog.yml` (repo root) | the bounded-run authority |
 | `workflows-core-triage.md` | as `workflows-core.md` | the finding-triage authority |
-| `workflows-core-git.md` | `workflows-core/scripts/session-branch.py`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
+| `workflows-core-git.md` | `workflows-core/scripts/`: `session-branch.py`, `specs-git.py`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
 | `workflows-core-read-only.md` | as `workflows-core-git.md` | the read-only-repos authority |
 | `claim-sweep.md` | `**` (any file) | the claim-expiry sweep's refinements |
 | `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |
 | `plugin-updates-coupling.md` | `*/.claude-plugin/plugin.json`, `*/CHANGELOG.md`; `.claude-plugin/marketplace.json` (repo root) | which plugins to update together, one bullet per release pair |
 | `plugin-updates-coupling-history.md` | as `plugin-updates-coupling.md` | its older bullets, up to `workflows-core` 1.58.0 |
-| `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.64.0 |
+| `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.65.0 |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
