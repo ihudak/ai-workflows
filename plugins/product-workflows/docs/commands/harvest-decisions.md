@@ -62,7 +62,7 @@ The first shows what would change and every problem (an unparseable decision, a 
 
 ## What it offers next
 
-It asks no next-step question. The final report ends with one line: the next [`/create-ard`](create-ard.md), [`/specify`](specify.md) or `/dev-workflows:design` run grounds on the harvested records once this run's pull request is on the default branch. A `--dry-run`, a run with nothing to harvest and a run that finds the knowledge base up to date stop after their report, and name nothing.
+It asks no next-step question. The final report ends with one line: the next [`/create-ard`](create-ard.md), [`/specify`](specify.md) or `/dev-workflows:design` run grounds on the harvested records once they are on the default branch, which a declined handoff leaves to you. A `--dry-run`, a run with nothing to harvest and a run that finds the knowledge base up to date stop after their report, and name nothing.
 
 ## See also
 

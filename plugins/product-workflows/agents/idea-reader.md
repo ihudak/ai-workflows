@@ -33,7 +33,7 @@ Distill it into `raw_context`; `source_refs: []`.
 **markdown** (`provenance_hint: markdown`) — resolve `argument` to an existing `.md` file (accept an
 absolute path, or one relative to the caller's working directory). Read it, then read every page the
 `walk` took and every transcription in `figures` (*What the caller hands over*, below). For a
-community post (a markdown file under a `Projects/Products/` path, or with a thread/comment shape),
+community post (a markdown file with a thread or comment shape),
 return `provenance: community-post` and additionally extract **demand signals** — requester
 names/handles, upvote/vote counts, recurring asks — into `signals`.
 

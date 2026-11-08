@@ -87,11 +87,11 @@ An updated PRD can invalidate what was built from it, so Phase 6 offers a re-run
 
 - **A specification exists** → [`/update-spec <KEY>`](update-spec.md) (PE) — a revision that keeps the specification's IDs, never [`/specify`](specify.md), which would rewrite it.
 - **An ARD exists** → [`/create-ard <KEY>`](create-ard.md) (PA).
-- **Re-run the Epics** → [`/epics <KEY>`](epics.md) (PE).
+- **Epics exist** (an `epic.md` in an `EPIC-` folder under the PRD folder) → [`/epics <KEY>`](epics.md) (PE), to re-run them.
 - **A release note exists** (`release-notes.md` in the folder) → `/docs-workflows:release-notes <KEY>` (PM), from the companion `docs-workflows` plugin.
 - **Stop here.**
 
-The spec and architecture routes gate this PRD on the specs repo's default branch, so each says what has to reach it first, worded for how this run's handoff ended; the Epics and release-note routes wait for nothing. With more than three routes, the question carries the three most likely and names the rest in its own text, reachable by typing them.
+The spec and architecture routes gate this PRD on the specs repo's default branch, so each says what has to reach it first, worded for how this run's handoff ended; the Epics and release-note routes wait on nothing this run wrote, since `/epics` gates only a PRD-level `specification.md` and `/docs-workflows:release-notes` gates nothing. With more than three routes, the question carries the three most likely and names the rest in its own text, reachable by typing them.
 
 ## See also
 

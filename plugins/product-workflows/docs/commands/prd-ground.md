@@ -634,7 +634,7 @@ Phase 10's offer depends on the route, and nothing is run for you. An offer mark
 
 - **No frame set left unreconciled** → [`/brd-split <BRD-KEY>`](brd-split.md) (recommended), after the merge. It runs `allocate-only` on a slice, so no child is created. [`/brd-interview`](brd-interview.md) comes after it and is offered by `/brd-split`, not here.
 - **A frame set with no index, or on disk and missing from the census** → `/workflows-core:frames <BRD-KEY>` (recommended), from the companion `workflows-core` plugin, to write the index, then a `--no-code` re-run of this command. `/brd-split` is not offered: it would refuse the slice.
-- **A frame set whose index is intact but whose frames are gone** → restore the frames, then `/prd-ground <BRD-KEY> --no-code` (recommended).
+- **A frame set whose index is intact but whose frames are gone, and no set lacks an index or is missing from the census** → restore the frames, then `/prd-ground <BRD-KEY> --no-code` (recommended). Where both kinds of set stand, the `/workflows-core:frames` offer above is shown instead, with each set whose frames are gone named above it, by its index path, with this repair.
 - **A declared prerequisite slice whose decisions are not frozen yet** → *Decide a prerequisite first* beside the options above. It prints `/brd-interview <PREREQ-KEY>` for each such slice and a re-run of this command once its decisions are frozen, and runs nothing.
 
 Above any of these lists, the run names every customer image a row of this slice cites that no frame set holds — a report only.

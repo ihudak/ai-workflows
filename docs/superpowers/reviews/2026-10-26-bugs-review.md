@@ -2922,7 +2922,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (and spec `docs/superpowers/specs/2026-10-12-conformance-design.md` D22, see DQP-G2)
 - **Confidence:** high
 
-### DQP-B6 — MINOR — Both workflow diagrams leave out offers their commands make, and `brd-workflow.md` describes the re-entry from `/brd-reconcile` as two edges when it is four — **Fixed in product-workflows 3.78.6 (batch B34): by the user's ruling, every offer from one command to a different one is drawn, and the same-command re-runs are named in prose**
+### DQP-B6 — MINOR — Both workflow diagrams leave out offers their commands make, and `brd-workflow.md` describes the re-entry from `/brd-reconcile` as two edges when it is four — **Fixed in product-workflows 3.78.6 (batch B34): by the user's ruling, every offer one command makes of another command the diagrams draw is an edge; a command offering itself again is listed on its page, and `/prd-ground`'s offer of `/workflows-core:frames`, which has no node, is named in prose**
 - **Where:** `plugins/product-workflows/docs/workflow.md:46-90`; `plugins/product-workflows/docs/brd-workflow.md:41-58`, `:104-106` (*"The two dashed edges leaving `/brd-reconcile` are different in kind … either state is settled by running the command that owns it again"*)
 - **What is wrong:** The routing graph (`next-phase-offer.md`, parts `pa`, `pe`, `brd`, `proposals`) makes these offers, and neither diagram draws them:
   - `/create-ard <PRD>` → `/specify <PRD>`, and Epic-level `/create-ard <EPIC>` → `/specify <EPIC>` (recommended). `createard` has no edge to `specify`.

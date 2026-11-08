@@ -70,7 +70,7 @@ Five subagents can be dispatched, under the same rules as in [`/specify`](specif
 
 - **Phase 4 — the overlap read**, `workflows-core:overlap-reader` on Opus, over the changed items against what they overlap, then the whole-artifact confirmation gate — as in [`/specify`](specify.md).
 - **Phase 4.5 — Structural pre-lint**, advisory — it counts superseded and withdrawn items for contiguity and checks only live ones for coverage.
-- **Phase 5 — `spec-reviewer`**, Opus-pinned, reviewing **the whole** revised specification, with the archived base and the change list in its brief: a change outside the list that alters a live item's meaning, a meaning change passed off as a wording fix, or a renumbered ID is a BLOCKER; a change outside the list that alters no meaning is a MINOR. Its verdict is acted on as [`/specify`](specify.md) acts on it — findings whose fix is only an edit offered to apply, and each finding that needs a product decision put to you as a question of its own, with the reviewer's options and *Leave it open*; one you leave open is written into the specification as a `- [ ]` open question, and every edit made after the first review, a settled decision's among them, joins the change list before any re-review.
+- **Phase 5 — `spec-reviewer`**, Opus-pinned, reviewing **the whole** revised specification, with the archived base and the change list in its brief: a change outside the list that alters a live item's meaning, a meaning change passed off as a wording fix, or a renumbered ID is a BLOCKER; a change outside the list that alters no meaning is a MINOR. Its verdict is acted on as [`/specify`](specify.md) acts on it — findings whose fix is only an edit offered to apply, and each finding that needs a product decision put to you as a question of its own, with the reviewer's options and *Leave it open* — save one still open when the re-review returns `BLOCK`, which is left open without a question; one left open is written into the specification as a `- [ ]` open question, and every edit made after the first review, a settled decision's among them, joins the change list before any re-review.
 
 ## Example
 
@@ -87,7 +87,7 @@ The run diffs the PRD from the version the specification's lineage record names 
 Phase 8 ends the report with a *Next step* built from the downstream report, and runs nothing itself. Each route that gates this specification says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
 
 - **The review blocked, or left `- [ ]` items open** → resolve those first.
-- **Each design named as citing a superseded or withdrawn ID** → `/dev-workflows:design <ITS-KEY>` (Dev), to revise it.
+- **Each design the downstream report named** — one citing an ID this run superseded or withdrew, and one built on the version this run replaces, whether or not it cites a changed ID → `/dev-workflows:design <ITS-KEY>` (Dev), to revise it.
 - **An Epic's `## Covers` or the PRD's `_coverage.md` was named** → [`/epics <PRD>`](epics.md) (PE), to refine the Epics.
 - **Nothing was named** → the next step [`/specify`](specify.md) gives a specification at the same altitude — see its *What it offers next*.
 

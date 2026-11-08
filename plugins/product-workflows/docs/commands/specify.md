@@ -127,15 +127,15 @@ The run resolves `ACME-001-01`'s folder two levels under `specifications/`, insi
 The final report ends with a *Next step* recommendation; nothing is run for you. An offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
 
 - **The review blocked, or left `- [ ]` items open** → resolve those first.
-- **An Epic chosen from a picker of two or more** → right after the handoff, *Next Epic* re-opens the picker for a sibling Epic and runs again for it.
-- **Epic-level spec** → `/dev-workflows:design <EPIC>` (Dev), after the merge — it will not start until this spec is on the default branch; and `/specify <SIBLING-EPIC>` for a sibling Epic, which waits for nothing.
+- **An Epic chosen from a picker of two or more** → right after the handoff, the run asks whether to go on: *Next Epic* (recommended) or *Stop here*. *Next Epic* re-opens the picker without the Epic just specified and runs again for the one you choose.
+- **Epic-level spec** → `/dev-workflows:design <EPIC>` (Dev), after the merge — it will not start until this spec is on the default branch; and `/specify <SIBLING-EPIC>` for a sibling Epic, which waits on nothing this run produced.
 - **PRD-level spec** → [`/epics <PRD>`](epics.md) (PE), after the merge, where the folder holds an authored `prd.md`; and `/dev-workflows:design <PRD>` (Dev), after the merge, to design the spec whole rather than through Epics. On a multi-component PRD, `/dev-workflows:design <PRD>` designs it whole only as an override and only where no Epic folder exists; where Epics exist it is named instead as designing an Epic from that Epic's own older, merged specification, with no wait — and only where an Epic's specification is on the default branch.
 - **PRD-level spec, no authored `prd.md`** → in place of `/epics`, [`/create-prd <PRD>`](create-prd.md), only where it can run. On a BRD slice the slice's ledger decides:
   - `/create-prd <SLICE-KEY>` (after the merge) where no claimed row is `unallocated` and at least one is `covered-here`;
-  - [`/brd-split <SLICE-KEY>`](brd-split.md) where a claimed row is still `unallocated`;
+  - [`/brd-split <SLICE-KEY>`](brd-split.md) (after the merge) where a claimed row is still `unallocated`: it gates the slice's `grounding/code-grounding.md`, which this run hands off wherever the slice holds `grounding/`;
   - `/brd-split <PARENT-KEY>`, to keep or remove the slice, where it claims nothing — with a slicing instruction where the parent's ledger still holds an `unallocated` row, bare where it holds none;
   - neither `/create-prd` nor `/epics` where every claimed row is allocated with none `covered-here`, or a ledger cannot be read; `/dev-workflows:design` is still named there, on the terms above.
-- **Where the PRD folder holds an authored `prd.md`** → [`/prd-proposal <PRD>`](prd-proposal.md), optional and waiting for nothing. For a PRD-level spec on the BRD route with an `ard.md` in place, this specification takes the folder to tier 4; on the idea route it stays at tier 1. Without a PRD, the step says a proposal becomes available once `/create-prd` has written one.
+- **Where the PRD folder holds an authored `prd.md`** → [`/prd-proposal <PRD>`](prd-proposal.md), optional and waiting on nothing this run wrote: it gates `prd.md`, which this run does not write. For a PRD-level spec on the BRD route with an `ard.md` in place, this specification takes the folder to tier 4; on the idea route it stays at tier 1. Without a PRD, the step says a proposal becomes available once `/create-prd` has written one.
 
 ## See also
 

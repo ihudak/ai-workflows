@@ -47,10 +47,10 @@ flowchart TD
     interview -->|"decisions.md + held [C] questions"| package
     package -->|bundle sent| review
     review -->|answers come back as one file| reconcile
-    reconcile -.->|a decision reopened, or a question askable again| interview
+    reconcile -.->|"a decision reopened, a question askable again, or a dependent slice to re-decide"| interview
     reconcile -.->|questions still held for the customer| package
     reconcile -.->|"the review challenged a code claim — --rebaseline"| ground
-    interview -.->|"a question no finding bears on yet"| ground
+    interview -.->|"a question no finding bears on yet, or a --rebaseline"| ground
     reconcile -->|slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here| createprd
     reconcile -->|slice key + the BRD route — nothing left to re-enter for| createard
     reconcile -->|slice key + the BRD route — nothing left to re-enter for| specify
@@ -62,6 +62,16 @@ flowchart TD
     prdproposal -.->|"tier 2 — raise the tier, then re-price"| createard
     prdproposal -.->|"tier 3 — raise the tier, then re-price"| specify
     brdproposal -.->|"a slice stale or excluded — re-price it"| prdproposal
+    createard -.->|"a prd.md — price against the ARD"| prdproposal
+    specify -.->|"a prd.md — price against the specification"| prdproposal
+    reconcile -.->|"a [CD#n] frozen — re-price the slice"| prdproposal
+    createard -.->|"no prd.md — author the PRD"| createprd
+    specify -.->|"no prd.md — author the PRD"| createprd
+    createard -.->|"BRD slice, no prd.md — a row still unallocated"| splitslice
+    specify -.->|"BRD slice, no prd.md — a row still unallocated"| splitslice
+    createard -.->|"an empty slice — keep or remove it"| splitroot
+    specify -.->|"an empty slice — keep or remove it"| splitroot
+    ground -.->|"decide a prerequisite slice first"| interview
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
     classDef cust fill:#f3f4f6,stroke:#6b7280,color:#1f2937
@@ -75,7 +85,11 @@ each of the three reads what this route already wrote, at its own altitude, besi
 under `$DOCS_PATH` and, for [`/create-ard`](commands/create-ard.md) and `/specify`, the code under `$REPOS_PATH`, and stamps
 `consumed_by` on what it took. The one record any of them adds to the route's own is
 `/create-prd`'s: an `[AS#n]` in `decisions.md` for a gap only the customer can settle, which
-[`/brd-package`](commands/brd-package.md) then carries to the customer.
+[`/brd-package`](commands/brd-package.md) then carries to the customer. Two of them also hand back
+into the route: on a slice with no `prd.md`, `/create-ard` and `/specify` offer `/create-prd` where
+the slice can take a PRD, and otherwise `/brd-split` — on the slice, to allocate a row still
+`unallocated`, or on its parent, to keep or remove a slice left empty. Where a `prd.md` exists,
+both name `/prd-proposal`, priced against what they just wrote.
 
 **The proposals box is not part of the route either.** [`/prd-proposal`](commands/prd-proposal.md) prices one slice — any slice
 the split carved, at whatever readiness it has reached — and `/brd-proposal` rolls the included
@@ -118,8 +132,10 @@ decision, the next `/brd-package` for a question still held for the customer, a
 `/prd-ground --rebaseline` pass for a challenged code claim, and `/brd-reconcile` itself, again on
 the same review, where its run could only record a dependent's sweep. The diagram draws the first
 three as dashed edges; the fourth is the command offering itself, so it is not drawn.
-`/brd-interview` likewise offers another round, or a `/prd-ground` run for a question no finding
-bears on yet.
+`/brd-interview` likewise offers another round, or a `/prd-ground` run — for a question no finding
+bears on yet, or a `--rebaseline` pass — and `/brd-reconcile` offers `/brd-interview` on a dependent slice its sweep reached.
+`/prd-ground` offers `/brd-interview` on a prerequisite slice whose frozen decisions this slice
+waits on, and `/brd-reconcile` names `/prd-proposal` wherever its run froze a customer decision.
 
 **There is a third occasion, and it is a re-run on the parent: the sibling re-cut.** The route carves a
 slice before it is ground, so *"this slice is larger than one deliverable"* is a normal discovery,

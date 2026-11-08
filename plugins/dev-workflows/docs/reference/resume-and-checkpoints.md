@@ -50,6 +50,7 @@ The test is one: the run settled the item itself, or the check for what the item
 - **A path to be removed, or to be written or committed** — inside a repository the item names with it — once the path is absent from, or present at, that repository's default branch. The default branch is shared, so the answer is the same on every machine that holds current refs.
 - **More than one of these.** An item that waits on more than one — a push and then its pull request's merge, say — is settled only once each of its checks shows it settled.
 - **A path named for any other reason** — a command's argument (the `<repo-path>` of `/security-workflows:scan`'s Security Engineer offers among them), the deliverable a merge carries, a file a decision is about — is settled with its item, by the check for what the item waits on.
+- **A worktree an older scan left.** An item naming a worktree that `/security-workflows:scan` 0.2.0 or older failed to remove — the line that version wrote into *Carry-forward decisions* — is settled at once, as one the pointer never carries.
 
 ### Why an item stays longer than it needs
 
@@ -85,7 +86,6 @@ The mechanics behind a command item's check, for anyone tracing why one stayed o
   - Blame names the commit that put a line on the branch the checkout stands on. So a block or a `_conformance.md` of an item's waiting datetime's own day that a later commit of that same day carried — a squash merge, a hand commit of a handoff its run declined, a later run's flush — is dated by that commit, and can settle the item though it was written before that datetime.
   - So can a block whose heading, or a `_conformance.md` whose `Run:` line, carries a local date ahead of UTC, written between local midnight and UTC midnight: its day is later than the UTC day it was written on, so the day-first rule reads it as later than a waiting datetime of that UTC day that came after it.
   - An item whose waiting datetime an older pointer wrote in a local time behind UTC with no offset, or as a date alone written behind UTC after UTC midnight, can leave sooner too, since that datetime is read as UTC, or as the end of its UTC day, and so as earlier than it was.
-- **A worktree an older scan left.** An item naming a worktree that `/security-workflows:scan` 0.2.0 or older failed to remove — the line that version wrote into *Carry-forward decisions* — is settled at once, as one the pointer never carries.
 
 ## The suggestion: `/compact` or `/clear`
 

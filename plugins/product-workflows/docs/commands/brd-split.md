@@ -644,8 +644,8 @@ Phase 7's offer depends on the mode. An offer marked *after the merge* says what
 
 **On a root (`full`):**
 
-- **Each child that gained a row this run** → [`/prd-ground <CHILD-KEY>`](prd-ground.md), after the merge. The offer says which case each child is: a slice keyed this run, or a standing child never ground, is a first pass; a standing child already ground is a re-run, since no finding on file covers the row it gained. A child that gained nothing, and a child left claiming nothing, is not offered.
-- ***Ground now*** (recommended) → runs that grounding here, one complete run per child you choose, once this run's files are on the default branch — you merge its pull request; the run never does. It is offered only where the handoff opened a pull request or the files are already on the default branch; otherwise *Ground each child later*, which names the command and runs nothing, is the recommended option.
+- **Each child that gained a row this run** → [`/prd-ground <CHILD-KEY>`](prd-ground.md), after the merge. The offer says which case each child is: a slice keyed this run, or a standing child never ground, is a first pass; a standing child already ground is a re-run, since no finding on file covers the row it gained. A child that gained nothing, and a child left claiming nothing, is not offered. Where no child gained a row this run, both child-grounding options — this one and *Ground now* — are dropped, and the run says so.
+- ***Ground now*** (recommended) → runs that grounding here, one complete run per child you choose, once this run's files are on the default branch — you merge its pull request; the run never does. Once you confirm, it tells you to merge it only when the run asks, since the run's own session commit rides in the same pull request. It is offered only where the handoff opened a pull request or found one already open, or the files are already on the default branch; otherwise *Ground each child later*, which names the command and runs nothing, is the recommended option.
 - ***Split another BRD*** → always offered, naming no key.
 - Nothing for the root itself: [`/brd-interview`](brd-interview.md) refuses a root.
 

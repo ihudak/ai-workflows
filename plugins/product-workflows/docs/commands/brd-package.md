@@ -527,7 +527,7 @@ repeating them, then prints the repo→SHA table and the ledger line.
 
 Phase 10 first prints the delivery note in full and, right after it, the delivery route. Then it asks, with no option recommended — whether to send is your judgement — and runs nothing itself:
 
-- **Send it** → send the delivery note. On the archive route, now, with the archive attached. On the repository route, once the handoff's pull request merges, since the customer pulls the default branch — or now, with the branch named beside the note, for a customer who will check that branch out.
+- **Send it** → send the delivery note. On the archive route, now, with the archive attached. On the repository route, once the condition the delivery-route item printed holds, since the customer pulls the default branch: where the handoff pushed a branch, once its pull request merges — or now, with the branch named beside the note, for a customer who will check that branch out; where it pushed nothing, only after what the item says must happen first. Either way the note stays untrue for any path the handoff declared and staged nothing for, which no merge puts in the bundle.
 - **Reconcile the review once it comes back** → [`/brd-reconcile <BRD-KEY>`](brd-reconcile.md), after this run's work is on the default branch; the offer says what has to happen first, worded for how the handoff ended. On the archive route you give it `@<review-file>`; on the repository route it finds the review committed beside the bundle once you merge the customer's pull request, or takes `@<review-file>` where they sent a file back instead.
 - **Package another BRD or slice**, or **Stop here**.
 

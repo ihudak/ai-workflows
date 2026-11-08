@@ -46,7 +46,7 @@ A clone of your organisation's architecture repository — its technology radar,
 
 ### `GIT_USER_INITIALS`
 
-Your branch identifier. Branch naming is repo-rule-first: where the target repo's own documented convention has a name-or-initials segment, this fills it; where it does not, the variable is simply unused for that repo.
+Your branch identifier. Branch naming is repo-rule-first: where the target repo's own documented convention has a name-or-initials segment, this fills it; where that convention has none, the variable is unused for that repo; and where the repo documents no convention at all, this is the whole branch prefix.
 
 ### `DEV_WORKFLOWS_COST_PRICES`
 

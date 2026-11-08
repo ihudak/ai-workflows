@@ -86,7 +86,7 @@ Usage: `/update-prd <KEY> [@transcript-or-notes ...] [--no-docs] [--docs <path>]
    **This used to be a ladder, and the ladder's premise is what went.** The authoritative PRD text lived in a tracker, so this step read an imported copy, stopped when none existed, and offered a refresh when one was more than three days old. There is one copy now and it is in the folder this run resolved: nothing to import, nothing to go stale, and no second copy to disagree with.
 5. **Secondary grounding (read-only).** Discover in the feature folder: the folder's `prd.md`, any `ard.md`, `specification.md`, `grounding/code-grounding.md` and `grounding/design-grounding.md`; plus any `@transcript` / notes path(s) passed in `$ARGUMENTS` — every `@` token save the `@<path>` address step 1 took, which is the folder and never a grounding source.
 
-5a. **Downstream-artifact discovery (read-only) — what this update may INVALIDATE.** Step 5 finds what grounds the update; this step finds what the update could falsify. Glob for artifacts a **later** phase already produced from the document you are about to change, in every place one can land: `<feature-folder>/release-notes.md` (the one destination Phase 1 derives), plus the `ard.md`, `specification.md` and `design.md` step 5 already found. Read-only, never gated, and **never a reason to stop**.
+5a. **Downstream-artifact discovery (read-only) — what this update may INVALIDATE.** Step 5 finds what grounds the update; this step finds what the update could falsify. Glob for artifacts a **later** phase already produced from the document you are about to change, in every place one can land: `<feature-folder>/release-notes.md` (the one destination Phase 1 derives), plus the `ard.md`, `specification.md` and `design.md` step 5 already found, and the `epic.md` of every `EPIC-` folder under the PRD folder. Read-only, never gated, and **never a reason to stop**.
 
    Report every hit in the Phase 1 confirmation as a **downstream artifact that may be invalidated by this update**, naming its path and its last commit time (`git -C "$SPECS_PATH" log -1 --format=%ci -- <path>`), or its modification time where it is uncommitted or modified — on a fresh clone every file's modification time is its checkout time. Carry the list into the next-phase offer.
 
@@ -198,12 +198,12 @@ The following menu is a candidate set, not a prompt to emit before filtering. Ap
 An updated PRD can invalidate what was derived from it. Where this run can go next:
   • Revise the spec         — /product-workflows:update-spec <KEY> <merge-clause> (PE, if one exists)
   • Re-run architecture     — /product-workflows:create-ard <KEY> <merge-clause> (PA, if one exists)
-  • Re-run epics            — /product-workflows:epics <KEY>                     (PE)
+  • Re-run epics            — /product-workflows:epics <KEY>                     (PE, if Epics exist)
   • Re-draft the release note — /docs-workflows:release-notes <KEY>          (PM)
 ```
 
 ```
-choices: ["Revise the spec — /product-workflows:update-spec <KEY> (PE, if one exists) <merge-clause>", "Re-run architecture — /product-workflows:create-ard <KEY> (PA, if one exists) <merge-clause>", "Re-run epics — /product-workflows:epics <KEY> (PE)", "Stop here"]
+choices: ["Revise the spec — /product-workflows:update-spec <KEY> (PE, if one exists) <merge-clause>", "Re-run architecture — /product-workflows:create-ard <KEY> (PA, if one exists) <merge-clause>", "Re-run epics — /product-workflows:epics <KEY> (PE, if Epics exist)", "Stop here"]
 ```
 
 **The offer is conditional on Phase 0 step 5a, not flat.** Where step 5a found `release-notes.md`, add `"Re-draft the release note — /docs-workflows:release-notes <KEY> (PM)"` to the candidate options before applying the cap. That command lives in `docs-workflows`, but its artifact is one an update can invalidate just as it can a spec or an ARD.
