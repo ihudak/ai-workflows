@@ -371,8 +371,10 @@ claim the draft would make from the requirement it names (`requirement`, `requir
   is the one question the entries lead to, and the command checks the wording it gets against the
   claims left out.
 - **Two or more open entries on one claim** — a PRD-level entry on `prd.md` and an Epic's on its
-  specification, say — take their decision from `source-truth` §7.8's precedence, and the table above
-  words it: where that is a `fix-code`, the claim is left out. Where it is `document-as-code`, the
-  claim states what the entries' `shipped` sentences say where they all agree, and is left out where
-  any two disagree, whatever those entries' decisions — returned as `left out — the entries
+  specification, say — are settled in two steps. First, `source-truth` §7.8's precedence picks the
+  winning entries: every entry another outranks — a `proposed` one beside a `final`, say — is set
+  aside and never affects the wording, so the winners are of equal standing. Then the table above
+  words the claim from the winners alone: a winning `fix-code` leaves it out; where two or more
+  winners map to `document-as-code`, the claim states what their `shipped` sentences say where they
+  agree, and is left out where any two of them disagree — returned as `left out — the entries
   disagree`, since the note never takes one record's account of the code over another's.
