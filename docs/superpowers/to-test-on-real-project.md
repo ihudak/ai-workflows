@@ -32,6 +32,10 @@ Install all five together. The defects are in `docs/superpowers/verification/202
 - **LC17 — a review's decisions are asked, not written as open questions: *Leave it open*, and three commands** (A1, A6a, A6b). Runs S1, S2 and S3 of `docs/superpowers/verification/2026-11-04-live-checks.md` saw the question on `/specify` and `/design`: one per finding needing a decision, the reviewer's options and *Leave it open* last, asked after the offer to apply the edit-only findings, each answer applied as an edit and named in the version line. Every run accepted the offer to apply the edit-only findings, and every decision there was answered with the recommended option. Still to see: *Leave it open* chosen at such a question, recording the finding as an open question as before; the decision questions still asked where the offer to apply the edit-only findings is declined; and the same shape on `/create-prd`, `/update-prd` and `/create-ard`.
 - **LC21 — `/document`'s report heading carries no "keyed".** Seen in any keyed `/docs-workflows:document` run. Run R2 of `docs/superpowers/verification/2026-11-04-live-checks.md` saw `/epics`' heading without it, and LC20's and LC26's wording held in R2 and S6.
 
+## Live-check fixes LC29–LC37, R1 and K1–K5 — versions to be set by the batch's last task
+
+- **LC34, K7 — `tree-snapshot.py` on a real repository.** In a repository with a file whose name holds a space, a `"` and an `é`, one tracked file edited before the run, and a rename staged, run `python3 plugins/workflows-core/scripts/tree-snapshot.py snapshot --dir <repo>` before and after an edit to a clean tracked file and a new untracked file, then `compare` the two. Expect each path named exactly, the clean file `clean_before: true`, the new file `created: true`, and the file already edited before the run `changed: false`.
+
 ## D31 parts 2 and 3 — `product-workflows` 3.77.0
 
 Install it alone; it needs nothing from the other plugins' releases. Neither BOOK-2 slice on the e2e specs copy has a code-defect log, so both items ride with the next live run of the BRD route that raises one.
