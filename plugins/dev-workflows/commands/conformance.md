@@ -452,7 +452,8 @@ verbatim:
 - **The record alone, or with Epic records it marked `superseded-by`, the edits at Phase 5.5's `maintenance_paths`, or both** —
   the unit folder's `CLAUDE.md` and a documentation page in it are both advisory, as the handoff's register of artifacts records, so neither
   lifts the class — is **advisory**: later runs of this command read it, and so does `/dev-workflows:implement`'s follow-up read-back, a PRD record's
-  `withdraws:` lines, and none runs `require-on-main` on it. A later run stops on it only where it
+  `withdraws:` lines; `/docs-workflows:document` and `/docs-workflows:release-notes` read it from the working tree; and
+  `/dev-workflows:ready` reads a PRD record from `<default-ref>` alone (the line below). None runs `require-on-main` on it. A later run stops on it only where it
   sits on a branch unmerged, or where the default branch holds a copy the checkout lacks or predates
   (Phase 0 step 5) — states this array's first option can leave and a decline never does: a declined
   record stays in the working copy, where the next run reads it:
@@ -465,8 +466,10 @@ presents, verbatim with the count filled in: `This record withdraws <N> follow-u
 on another clone skips them only once the record is on the default branch; declined, it keeps them in
 this working copy alone.`
 
+On every PRD run, print one more line above whichever array this phase presents, below the `withdraws:` line where there is one, verbatim: `/dev-workflows:ready reads this record only on the default branch — declined, its delivery check reports not verified until the record merges.` The advisory array's second option speaks of the working copy, which `/ready` does not read (`workflows-core:phase-handoff` §4.0's *advisory* class).
+
 **Print the edits Phase 5.5 declares** above whichever array this phase presents — above the
-`withdraws:` line where there is one, and before the one line §4.3 prints immediately above the array
+`withdraws:` line and the `/ready` line, where they are printed, and before the one line §4.3 prints immediately above the array
 (the `specs_git` flag line, or the no-remote line its push-target probe decides), which keeps that
 place — each path in `maintenance_paths`, relative to `$SPECS_PATH`, with a one-line summary of its edit
 from the agent's return, or `Maintenance edits: none`, so the operator consents to those edits knowing
