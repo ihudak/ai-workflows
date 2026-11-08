@@ -41,7 +41,9 @@ calls, never two runs.
                                      append each value to its key's list, the key written again
                                      before each value -- append assumptions '"a"' assumptions '"b"'
                                      -- or a JSON object on stdin; a key that is null becomes a
-                                     one-element list.
+                                     one-element list. Each value is one entry, so a value that is a
+                                     JSON array, in either form, exits 2, nothing written: give one
+                                     value per pair, or write the whole list with set.
   run-state.py remove [--keep <path>] ...
                                      the end-of-run removal: every temp file `files` names, each
                                      `step_groups` report, each `reviews` diff and return file and each `patches` path marked `temp`
@@ -65,8 +67,8 @@ Exit codes:
   0  done
   1  there is no run-state file (and nothing was created)
   2  usage: bad arguments -- set's or append's among them an odd count, or a key opening with `"`,
-     `[` or `{`, a value written where its key belongs -- a value that does not parse, input that
-     is not UTF-8, a path through null, no such list entry
+     `[` or `{`, a value written where its key belongs, and append's a JSON array value -- a value
+     that does not parse, input that is not UTF-8, a path through null, no such list entry
   3  a key the file does not hold (set, append, read), or an init object or a set call adding a key
      or member KEYS lacks, or giving one the wrong type
   4  the file could not be reached: an OSError reading or writing it -- an unreadable directory on
@@ -475,6 +477,11 @@ def cmd_set(f, args, stdin, out):
 
 def cmd_append(f, args, stdin):
     todo = pairs(args, stdin, "append")
+    lists = [show(key) for key, v in todo if isinstance(v, list)]
+    if lists:
+        raise Fail(2, "append: the value for %s is a JSON array, which append would add as one entry -- "
+                   "give one value per pair (append %s '<a>' %s '<b>'), or write the whole list with "
+                   "set %s '<json>'" % (", ".join(lists), lists[0], lists[0], lists[0]))
     require(f)
     with locked(f):
         d = load(f)
@@ -765,6 +772,20 @@ def selftest():
         d = json.load(open(f, encoding="utf-8"))
         check("append into the last list entry", code == 0 and d["triage"][-1]["followed_by"] == ["review-fixer pass"])
         check("append refuses a non-list", call(["append", "class", '"x"'], repo=repo)[0] == 2)
+        # an array value is refused, never taken as one entry: argv and the stdin object alike
+        two = [{"pass": "a", "followed_by": None}, {"pass": "b", "followed_by": None}]
+        before = open(f, encoding="utf-8").read()
+        code, _ = call(["append", "triage", json.dumps(two)], repo=repo)
+        check("append refuses an array value, naming set and one value per pair, writing nothing", code == 2
+              and "set triage" in said[0] and "one value per pair" in said[0]
+              and open(f, encoding="utf-8").read() == before)
+        code, _ = call(["append"], json.dumps({"triage": two}), repo)
+        check("append's stdin object refuses an array value the same way", code == 2
+              and "set triage" in said[0] and "one value per pair" in said[0]
+              and open(f, encoding="utf-8").read() == before)
+        code, _ = call(["append", "deferred", '"d"', "triage", json.dumps(two)], repo=repo)
+        check("an array value in a later pair writes neither pair", code == 2
+              and open(f, encoding="utf-8").read() == before)
         code, out = call(["read", "triage.0.pass"], repo=repo)
         check("read a list entry's member", code == 0 and json.loads(out) == "first")
         check("read refuses an unknown key", call(["read", "phasee"], repo=repo)[0] == 3)

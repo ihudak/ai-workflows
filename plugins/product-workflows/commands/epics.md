@@ -362,7 +362,7 @@ model_routing:
   current_model: <the model this orchestrator is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   defect_model: <§2.1 Sonnet chain — only under --skip-feedback; under §10, run_flags.enforced_model>
-  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # the folder read, code-scanner, prose-style-checker, doc-fixer, the maintenance agents of Phases 7.4 and 8, epic-writer (MODERATE)
+  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # code-scanner, prose-style-checker, doc-fixer, the maintenance agents of Phases 7.4 and 8, epic-writer (MODERATE)
   review_model:    <§2 Opus chain>     # epic-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   implementation_model: <= detection_model>   # the epic-writer subagent (Phase 6); planning_model if SIGNIFICANT/HIGH-RISK
   opus_available: <true if a §2 Opus model resolved, else false>
@@ -1028,7 +1028,7 @@ MODERATE — Epic drafting for a single PRD
 ### Model Routing
 - Session model (current_model): [model]
 - epic-writer (implementation_model): [model] — detection (MODERATE) | reasoning (SIGNIFICANT)
-- Detection steps — the folder read, code-scanner, prose-style-checker, doc-fixer (detection_model): [model]
+- Detection steps — code-scanner, prose-style-checker, doc-fixer (detection_model): [model]
 - epic-reviewer (review_model): [model]
 - [`Model routing: bypassed — enforced <id> (flag|env)` in place of the `epic-reviewer (review_model)` line above, wherever `run_flags.enforced_model` is set — no Sonnet-floor degradation applies, per `workflows-core:model-routing/classification` §10.]
 - Opus available: [yes | no — unaffected by enforcement; reports the environment truthfully (§10: `opus_available` is never rewritten to agree with the enforced id)]
@@ -1226,7 +1226,7 @@ user name is ever written (§10 privacy).
 - ALWAYS escalate missing repos before proceeding — never silent skip
 - ALWAYS invoke `epic-reviewer` before Phase 7.4's maintenance, Phase 7.5's handoff and Phase 8's maintenance
 - ALWAYS run the maintenance agents that edit files in the specs repository — Agent 1 (Documentation) and Agent 3 (Instructions) — in Phase 7.4, before the handoff, so that an edit they make to a file that stood committed and clean before them is declared in Phase 7.5's `deliverable_paths` and rides its pull request, every other path they touch reported and NEVER declared; they edit only existing files inside the PRD folder — Agent 1 a documentation page that is none of the family's artifacts, Agent 3 `<prd_dir>/CLAUDE.md` alone — and a path outside that set is reported as an out-of-scope write and NEVER declared; the specs repository's top-level `CLAUDE.md` and `~/.claude/CLAUDE.md` are NEVER edited, an edit to either proposed in the Phase 9 report. Phase 8's agents write nothing a pull request would carry: Agent 2 writes only under `~/.claude/memory/`, proposing a project-specific entry in the report, and Agent 4 writes nothing
-- ALWAYS resolve the `model_routing` block at Phase 1.5 and pin each subagent dispatch to its §9 chain via `model:` — the mechanical steps (the folder read, `code-scanner`, `prose-style-checker`, `doc-fixer`, the maintenance agents of Phases 7.4 and 8) and `epic-writer` (MODERATE) to the §2.1 Sonnet chain; `epic-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + interactive gates run on `current_model`
+- ALWAYS resolve the `model_routing` block at Phase 1.5 and pin each subagent dispatch to its §9 chain via `model:` — the mechanical steps (`code-scanner`, `prose-style-checker`, `doc-fixer`, the maintenance agents of Phases 7.4 and 8) and `epic-writer` (MODERATE) to the §2.1 Sonnet chain; `epic-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + interactive gates run on `current_model`
 - ALWAYS delegate Phase 6 writing to the `epic-writer` subagent (write-only); the orchestrator never writes Epics itself, save the edits this command names as its own — folding in an answer the user gave (Phase 6.1, and *User-resolved text*), Phase 6.1's inline leftover assignment, Phase 7's refinement notes and markers, Phase 6 step 4's `kept_whole` line, written from the operator's answer, and a size split's slice renames and re-pointed `## Dependencies` lines — and commits the drafts only through Phase 7.5's handoff — the terminal `commit-artifacts` step never stages them
 - NEVER hand a fixer a finding on text a Phase 6.1 answer put into an Epic — the user settles it instead (Phase 6.2's *User-resolved text*)
 - ALWAYS cap review/fix cycles: 1 fix + 1 re-review max

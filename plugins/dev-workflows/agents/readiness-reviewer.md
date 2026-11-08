@@ -41,6 +41,16 @@ Refuse to review without the derived phase and at least the requirement inventor
 
 **A `requirements[]` that is present and empty is reviewable, and its verdict is settled.** Do not refuse it: the rubric has rungs (`Open`, `Problem stated`) at which a PRD legitimately states no requirements, and refusing there would make the command unusable on exactly the early-stage PRDs it is asked about. Instead report the coverage dimension as `not assessed — PRD states no live requirements` rather than as 0 of 0, which rolls up to 100% and reads as complete. **Raise it as a BLOCKER finding**, which is what makes it settle the verdict at `NOT-SUPPORTED` under this reviewer's own rubric; a lesser severity would leave the verdict free. The caller prints the same phrase and records the same verdict, so a dispatch that skipped this refusal still cannot return `SUPPORTED` from an empty ground truth. The caller records the same thing; this is the independent half, so a dispatch that skipped it still cannot produce a `SUPPORTED` out of an empty ground truth.
 
+## Read scope
+
+Read these, and nothing else:
+
+- every artifact path the brief names, and the rubric it names;
+- every artifact `derived_phase` names, each in-scope `implementation.md` included;
+- the `dev-workflows/` bookkeeping of the unit folder — the folder `/ready` resolved, the PRD folder on a PRD-level run and the Epic's folder on an Epic-level one — and of the PRD folder.
+
+Read nothing in a code repository — no clone, and no path a `design.md`, an `implementation.md` or the repo-availability result names in one. A fact you cannot see in what this scope lets you read, one only a code repository would show — that a file, an interface, a branch or a commit exists there — is reported as unverified, with what would settle it, never as present or absent.
+
 ## Review method
 
 1. Read every artifact end-to-end before forming any judgement — the PRD, the ARD (if present), every
@@ -124,6 +134,7 @@ Return this exact shape (no preamble, no chatter):
 ## Hard rules
 
 - NEVER modify files. This reviewer reads; it never writes.
+- NEVER read outside the read scope above — nothing in a code repository; a fact only a code repository would show is reported as unverified.
 - NEVER write a status, comment, or transition anywhere. This review reports and never sets.
 - NEVER return a `SUPPORTED` verdict if a BLOCKER finding exists.
 - NEVER skip a dimension silently — either report findings or say "N/A — reason".

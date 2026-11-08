@@ -222,7 +222,7 @@ model_routing:
   current_model: <the model this orchestrator is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   defect_model: <§2.1 Sonnet chain — only under --skip-feedback; under §10, run_flags.enforced_model>
-  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # the folder read (Phase 2) and the maintenance agents of Phase 5 step 2a and Phase 6; the Phase 3 deterministic skeleton is mechanical and runs orchestrator-inline, not delegated
+  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # the maintenance agents of Phase 5 step 2a and Phase 6; Phase 2's read and the Phase 3 deterministic skeleton are mechanical and run orchestrator-inline, not delegated
   review_model:    <§2 Opus chain>     # readiness-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -407,6 +407,8 @@ artifact paths from Phase 1 (the reviewer Reads each end-to-end itself — it ca
 `Grep`), the Phase 3(0) derived phase and any `--claimed` value, `applicable_ard` (omit entirely when Phase 2.5 was `none`),
 and a pointer to the rubric.
 
+**The brief states what the reviewer may read, and it reads nothing else.** It reads every artifact path its brief names, and the rubric; every artifact `derived_phase` names, each in-scope `implementation.md` included; and the `dev-workflows/` bookkeeping of the unit folder — the resolved folder, `<PRD-dir>` on a PRD-level run and the Epic's folder on an Epic-level one — and of the PRD folder, `<PRD-dir>`. It reads nothing in a code repository — no clone under `${REPOS_PATH:-/workspace}`, and no path a `design.md`, an `implementation.md` or Phase 3(c)'s result names in one — and a fact it cannot see in what it may read, one only a code repository would show, it reports as unverified, never as present or absent.
+
 → Agent (subagent_type: "dev-workflows:readiness-reviewer", model: `<review_model — §2 Opus chain; frontmatter-pinned, recorded, no override unless §10 enforces a model; under §10, run_flags.enforced_model>`):
   > "Review readiness for this brief:
   >
@@ -425,7 +427,8 @@ and a pointer to the rubric.
   > derived_phase:           [PRD: <phase>; Epics: <key>=<phase>, …; broad slice: <phase>, where Phase 2 carried one — each naming the artifacts that placed it, per Phase 3(0)]
   > claimed_status:          [the --claimed value verbatim — omit this line entirely when the flag was absent]
   > applicable_ard:          [the Phase 2.5 invariants, or omit entirely if status was none]
-  > workflow_states_rubric:  ${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md"
+  > workflow_states_rubric:  ${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md
+  > read_scope:              Read every artifact path this brief names, and the rubric; every artifact derived_phase names, each in-scope implementation.md included; and the dev-workflows/ bookkeeping of [the resolved folder's absolute path, and on an Epic-level run <PRD-dir>'s]. Read nothing in a code repository. A fact you cannot see in those, one only a code repository would show, report as unverified, never as present or absent."
 
 **There is no `declared_status` field, and adding one back would be the defect this pair replaced.** Nothing in `$SPECS_PATH` declares a per-PRD or per-Epic workflow phase for this run to paste (Phase 1 step 3, Phase 2) — `prd.md`'s frontmatter `status:` (`workflows-core:prd-format`) is never read as one — so the two fields above are the whole of what the run holds: `derived_phase`, which Phase 3(0) derived from the artifacts, and `claimed_status`, which exists only on a `--claimed` run. The reviewer's own dimension 1 compares the second against the first; sending neither, or sending a field with nothing to fill it, silently degrades that comparison to "absent, there is nothing to diverge from".
 
@@ -547,7 +550,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
    ### Model Routing
    - Session model (current_model): [model]
-   - Detection steps — the folder read (detection_model): [model]
+   - Detection steps — the maintenance agents of Phase 5 step 2a and Phase 6 (detection_model): [model]
    - readiness-reviewer (review_model): [model]
    - Opus available: [yes | no]
    - [`Model routing: bypassed — enforced <id> (flag|env)` in place of the `readiness-reviewer (review_model)` line above, wherever `run_flags.enforced_model` is set — no Sonnet-floor degradation applies, per `workflows-core:model-routing/classification` §10. The `Opus available` line above is unaffected and still reports the environment truthfully (§10: `opus_available` is a property of the environment, never rewritten to agree with the enforced id).]
@@ -840,8 +843,8 @@ a code or docs repository, or the current working directory, where it is not the
 - ALWAYS pass the Phase 3(0) derived phase to `readiness-reviewer` with the artifacts that placed it there, plus any `--claimed` value verbatim — never inferred,
   never re-derived, and never as a `declared_status` field, which has no producer anywhere in this command
 - ALWAYS resolve the `model_routing` block at Phase 1.5 and pin the detection steps to the §2.1 Sonnet chain;
-  `readiness-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + the Phase 3
-  deterministic skeleton run on `current_model`
+  `readiness-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination, Phase 2's read and the Phase 3
+  deterministic skeleton run on `current_model`, orchestrator-inline
 - ALWAYS invoke `readiness-reviewer` before Phase 5 — no verdict is written or reported without it
 - ALWAYS pass `Change type: docs` in the change summary block (Phase 5 step 2a)
 - ALWAYS pass `Command run: /ready` in the Phase 6 Agent 4 session handoff
