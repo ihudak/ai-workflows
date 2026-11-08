@@ -120,6 +120,61 @@ def branch_key(branch, keys):
     return {"plugin_branch": True, "prefix": prefix, "key": max(found, key=len) if found else None}
 
 
+def _parents(root, sha):
+    """How many parents <sha> has: rev-list --parents prints the commit, then each parent."""
+    return len(sb.text(sb.git(root, "rev-list", "--parents", "-n", "1", sha)).split()) - 1
+
+
+def _first_other(root, paths):
+    return next((p for p in paths if not sb.classify(p)), None)
+
+
+def _commit_paths(root, sha):
+    return sb.nul_list(sb.git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", "--root", "--no-renames", sha))
+
+
+def push_scope(root, branch, session_default_ref=None):
+    """specs-repo-git §4 step 5's push-scope: whether every commit a push of <branch> to origin would
+    publish is a session-file commit. With <session_default_ref>, §8.4's form for the session branch:
+    the default branch counts as published, a merge with exactly two parents passes, and the branch's
+    whole change against the default branch must name session files only."""
+    _commit(root, "refs/heads/" + branch)
+    remote = "refs/remotes/origin/" + branch
+    base = remote if sb.git(root, "show-ref", "--verify", "-q", remote, check=False).returncode == 0 else None
+    head = "refs/heads/" + branch
+    if session_default_ref is None:
+        commits, bad = sb.push_scope(root, head, base or "--remotes=origin")
+        failed = None
+        if bad:
+            if _parents(root, bad) == 1:
+                failed = {"sha": bad, "reason": "paths", "path": _first_other(root, _commit_paths(root, bad))}
+            else:
+                failed = {"sha": bad, "reason": "merge", "path": None}
+        return {"base": base, "commits": commits, "in_scope": failed is None, "failed": failed}
+    _commit(root, session_default_ref)
+    nots = [base, session_default_ref] if base else ["--remotes=origin"]
+    commits = sb.text(sb.git(root, "rev-list", "--reverse", head, "--not", *nots)).split()
+    failed = None
+    for c in commits:
+        parents = _parents(root, c)
+        if parents == 2:
+            continue
+        paths = _commit_paths(root, c)
+        if parents != 1:
+            failed = {"sha": c, "reason": "merge", "path": None}
+        elif not paths or _first_other(root, paths) is not None:
+            failed = {"sha": c, "reason": "paths", "path": _first_other(root, paths)}
+        if failed:
+            break
+    if failed is None:
+        whole = sb.nul_list(sb.git(root, "diff", "--name-only", "-z", "--no-renames", "%s...%s" % (session_default_ref, head)))
+        other = _first_other(root, whole)
+        if other is not None:
+            merge = sb.text(sb.git(root, "rev-list", "--merges", "-n", "1", head)) or None
+            failed = {"sha": merge, "reason": "branch-path", "path": other}
+    return {"base": base, "commits": commits, "in_scope": failed is None, "failed": failed}
+
+
 class Parser(argparse.ArgumentParser):
     """A usage error is one "not run" line, as every exit 2 is."""
 
@@ -140,6 +195,9 @@ def main():
     p = sub.add_parser("branch-key")
     p.add_argument("--branch", required=True)
     p.add_argument("--key", action="append", default=[])
+    p = sub.add_parser("push-scope")
+    p.add_argument("--branch", required=True)
+    p.add_argument("--session-default-ref")
     a = ap.parse_args()
     try:
         sys.stdout.reconfigure(errors="backslashreplace")
@@ -174,6 +232,8 @@ def dispatch(a):
         return branch_merged(a.specs, a.ref, a.default_ref)
     if a.cmd == "branch-key":
         return branch_key(a.branch, a.key)
+    if a.cmd == "push-scope":
+        return push_scope(a.specs, a.branch, a.session_default_ref)
     raise NotRun("unknown subcommand %s" % a.cmd)
 
 
@@ -408,11 +468,90 @@ def selftest():
         got = cli("--specs", r.path, "branch-key", "--branch", "spec/ACME-77-01-x")
         check(got["_rc"] == 0 and got.get("key") is None, "branch-key: no --key is a keyless run (%r)" % got)
 
+    def with_origin(tmp, name):
+        bare = os.path.join(tmp, name + ".git")
+        subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)
+        r = new_repo(tmp, name)
+        r.git("remote", "add", "origin", bare)
+        r.git("push", "-q", "-u", "origin", "main")
+        return r
+
+    def scenarios_push_scope(tmp):
+        session_file = "specifications/PRD-A-1-x/dev-workflows/resume.md"
+        r = with_origin(tmp, "scope-plugin")
+        r.git("switch", "-q", "-c", "prd/A-1-x")
+        r.write("specifications/PRD-A-1-x/prd.md", "prd\n")
+        r.commit_all("deliverable")
+        r.git("push", "-q", "-u", "origin", "prd/A-1-x")
+        r.write(session_file, "resume\n")
+        c = r.commit_all("session")
+        got = push_scope(r.path, "prd/A-1-x")
+        check(got == {"base": "refs/remotes/origin/prd/A-1-x", "commits": [c], "in_scope": True, "failed": None},
+              "push-scope: one session-file commit past the pushed branch (%r)" % got)
+        r.write("specifications/PRD-A-1-x/prd.md", "changed\n")
+        bad = r.commit_all("deliverable again")
+        got = push_scope(r.path, "prd/A-1-x")
+        check(got["in_scope"] is False and got["failed"] == {"sha": bad, "reason": "paths",
+              "path": "specifications/PRD-A-1-x/prd.md"}, "push-scope: a deliverable path fails (%r)" % got)
+
+        r = with_origin(tmp, "scope-merge")
+        r.git("switch", "-q", "-c", "prd/A-2-x")
+        r.git("push", "-q", "-u", "origin", "prd/A-2-x")
+        r.git("switch", "-q", "-c", "side")
+        r.write("specifications/PRD-A-2-x/dev-workflows/resume.md", "r\n")
+        r.commit_all("session on side")
+        r.git("switch", "-q", "prd/A-2-x")
+        r.git("merge", "-q", "--no-ff", "-m", "merge side", "side")
+        merge = r.git("rev-parse", "HEAD")
+        got = push_scope(r.path, "prd/A-2-x")
+        check(got["in_scope"] is False and got["failed"] == {"sha": merge, "reason": "merge", "path": None},
+              "push-scope: a merge commit fails (%r)" % got)
+
+        r = with_origin(tmp, "scope-new")
+        r.git("switch", "-q", "-c", "prd/A-3-x")
+        r.write("specifications/PRD-A-3-x/dev-workflows/resume.md", "r\n")
+        c = r.commit_all("session")
+        got = push_scope(r.path, "prd/A-3-x")
+        check(got == {"base": None, "commits": [c], "in_scope": True, "failed": None},
+              "push-scope: a branch never pushed is walked over --remotes=origin (%r)" % got)
+
+        r = with_origin(tmp, "scope-session")
+        r.git("switch", "-q", "-c", "session/ab")
+        r.write("specifications/PRD-A-4-x/dev-workflows/resume.md", "1\n")
+        r.commit_all("session 1")
+        r.git("push", "-q", "-u", "origin", "session/ab")
+        r.git("switch", "-q", "main")
+        r.write("main.md", "m\n")
+        r.commit_all("main moves")
+        r.git("push", "-q", "origin", "main")
+        r.git("switch", "-q", "session/ab")
+        r.git("merge", "-q", "--no-ff", "-m", "NOISSUE Merge main into session/ab", "main")
+        r.write("specifications/PRD-A-4-x/dev-workflows/resume.md", "2\n")
+        r.commit_all("session 2")
+        got = push_scope(r.path, "session/ab", session_default_ref="origin/main")
+        check(got["in_scope"] is True and got["base"] == "refs/remotes/origin/session/ab" and len(got["commits"]) == 2,
+              "push-scope: the session branch admits its merge of the default branch (%r)" % got)
+        r.write("specifications/PRD-A-4-x/prd.md", "p\n")
+        r.commit_all("a deliverable on the session branch")
+        r.git("push", "-q", "origin", "session/ab")
+        r.write("specifications/PRD-A-4-x/dev-workflows/resume.md", "3\n")
+        r.commit_all("session 3")
+        got = push_scope(r.path, "session/ab", session_default_ref="origin/main")
+        newest_merge = r.git("rev-list", "--merges", "-n", "1", "refs/heads/session/ab")
+        check(got["in_scope"] is False and got["failed"] == {"sha": newest_merge, "reason": "branch-path",
+              "path": "specifications/PRD-A-4-x/prd.md"},
+              "push-scope: the session branch's whole change must name session files only (%r)" % got)
+        got = cli("--specs", r.path, "push-scope", "--branch", "session/ab", "--session-default-ref", "origin/main")
+        check(got["_rc"] == 0 and got.get("in_scope") is False, "push-scope: the CLI (%r)" % got)
+        got = cli("--specs", r.path, "push-scope", "--branch", "no-such")
+        check(one_not_run_line(got), "push-scope: a branch that does not exist exits 2 (%r)" % got)
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
             scenarios_branch_merged(tmp)
             scenarios_branch_key(tmp)
+            scenarios_push_scope(tmp)
 
     try:
         scenarios()
