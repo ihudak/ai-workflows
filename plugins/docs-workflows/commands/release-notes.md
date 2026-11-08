@@ -214,7 +214,9 @@ run — the terminal `commit-artifacts` step skips on it.
   checked:` line, one repository, ref and commit per line, and its `Verdicts:` line — and print one line per record before
   Phase 1 asks anything: `Conformance: <the folder's key> checked <date> (<Epic | PRD> run) — <repo> @ <commit>, …`,
   or `Conformance: no record in scope` where there is none. A record that cannot be read is a ⚠
-  line naming it and the read error, and the run goes on as if it were absent.
+  line naming it and the read error, and the run goes on as if it were absent; so is a record
+  `workflows-core:source-truth` §7.8's *The copy read* finds malformed, its ⚠ line naming what that
+  rule found in place of the read error.
 
 **Check the lineage above the note — report it, never ask.** Then execute `Skill(skill: "workflows-core:reference", args: "document-lineage upstream-check")`
 §6 by its step 6 — the caller that never asks, with no gate — over this run's scope, which is Phase
