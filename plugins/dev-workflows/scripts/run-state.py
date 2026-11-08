@@ -124,7 +124,8 @@ KEYS = [
     ("files", {"task_description_file": None, "plan_file": None, "pending_plan_file": None,
                "summary_file": None, "baseline_file": None, "test_diff_file": None,
                "test_report_file": None, "typecheck_file": None, "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
-               "review_file": None, "claims_file": None, "failure_file": None}),
+               "review_file": None, "claims_file": None, "failure_file": None,
+               "snapshot_before": None, "snapshot_after": None}),
     ("step_groups", []), ("pieces", []), ("reviews", []), ("patches", []),
     ("triage", []),
     ("conformance", {"summary": None, "annotated": [], "gaps": [], "handoff_line": None}),
@@ -939,6 +940,21 @@ def selftest():
         check("remove leaves a non-temp path", os.path.exists(user) and "left: %s" % user in out)
         check("stale file survives remove", len([n for n in os.listdir(here) if STALE_RE.match(n)]) == 1)
         check("remove with no file is a no-op", call(["remove"], repo=repo)[0] == 0)
+
+        # the check run's two snapshot files: files members, a fresh one replacing the last
+        sb1, sa1, sb2 = mk("dw-impl-snapshot-1"), mk("dw-impl-snapshot-2"), mk("dw-impl-snapshot-3")
+        check("files holds snapshot_before and snapshot_after",
+              {"snapshot_before", "snapshot_after"} <= set(dict(KEYS)["files"]))
+        call(["init"], json.dumps(fresh()), repo)
+        code, _ = call(["set", "files.snapshot_before", json.dumps(sb1),
+                        "files.snapshot_after", json.dumps(sa1)], repo=repo)
+        check("set takes the snapshot paths", code == 0)
+        code, out = call(["set", "files.snapshot_before", json.dumps(sb2)], repo=repo)
+        check("a fresh snapshot_before removes the one it replaces", code == 0 and not os.path.exists(sb1)
+              and "removed: %s" % sb1 in out and os.path.exists(sa1))
+        code, out = call(["remove"], repo=repo)
+        check("remove takes both snapshot files", code == 0 and not os.path.exists(sb2)
+              and not os.path.exists(sa1))
 
         # reviews' diff and return files: set and remove take them like a files member
         rd1, rr1, rd2, rr2 = (mk("dw-impl-diff-1"), mk("dw-impl-return-1"),
