@@ -56,6 +56,8 @@ four-resolution one.
   (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5), which would make slicing
   pointless. The run announces the mode rather than quietly behaving differently.
 
+**Ending early.** Every stop this run takes — each `BRD_SPLIT_*` stop (`BRD_SPLIT_ON_SLICE` is a notice, not one), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s, a stopping row of Phase 0 step 6's or step 7's `require-on-main` gate), the `$SPECS_PATH` *Cancel*, and every *Cancel* that ends the run — in Phase 1.5, at Phase 2's proposal, mid-key-taking in Phase 3, and mid-walk in Phase 4 — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 8's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt — `BRD_SPLIT_MALFORMED_FINDING`'s, as Phase 8's capture-at-block rule says. Where a stop says nothing was written, that means the run's own work: the cost entry is bookkeeping and is written all the same; a *Cancel* mid-walk leaves every row it already wrote written and uncommitted, since the tail commits only the bookkeeping paths. The stop message, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. Three later ends are not these stops: Phase 6's *Cancel* declines the handoff on its consent choice, and the run goes on through Phases 7 and 8; Phase 7's *Stop here* answers, and every *Cancel* its *Ground now* questions borrow, end the run through the whole of Phase 8, as *Ground each child later* does; and the *Ground now* continuation runs after Phase 8's `commit-artifacts` has already run (§4's cede-control case), so a stop there — its merge gate's *Stop here*, or a child run's — takes nothing more.
+
 ---
 
 ## Phase 0 — Resolve inputs and gate on verification
@@ -1556,7 +1558,8 @@ On *Ground now*, record the commit Phase 6's handoff pushed — `git -C "$SPECS_
    candidate list, its two arrays and its zero-match escalation — once for every child chosen:
    they are slices of one root, ground against the same code. **Borrowed into this run, every
    *Cancel* these carry means *Stop here — ground later by hand*** — never "end the run before
-   anything is written", which here would skip Phase 8's cost entry and commit. A clone named
+   anything is written", which here would end a run whose allocation is complete as a stop, taking
+   only the refusal tail (*Ending early*) and skipping Phase 8's maintenance and resume pointer. A clone named
    through *Specify a different absolute path for this repo* is carried as that absolute path, which
    `--repos` takes as it takes a slug. Then print that phase's cost
    statement once per chosen child — its N that child's inventory claims, its M that child's
@@ -1632,7 +1635,7 @@ nothing is auto-run.
 ## Phase 8 — Session maintenance, feedback & cost
 
 Terminal phase — runs after Phase 7, NEVER interrupts an earlier phase, and runs on the Phase 0
-no-op path step 10 decides exactly as on any other, in either run mode, and on the reconcile path too.
+no-op path step 10 decides exactly as on any other, in either run mode, and on the reconcile path too. A run that took *Ending early*'s refusal tail runs only this phase's cost-entry and commit steps.
 
 **Capture-at-block invariant.** If an EARLIER phase halts on a plugin / skill / command / reference
 gap, `emit-block` (`workflows-core:feedback-emission`) fires at that halt before escalating. **One
@@ -1679,13 +1682,13 @@ mid-walk in Phase 4 — each a user halt that reports what it left written. The 
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-split`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
+4. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
    the commit step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run, or, where Phase 7's *Ground now* was confirmed, the last before the continuation, which cedes control (§4 allows exactly that). It stages ONLY the §2.1 bounded artifact paths
    inside `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-split)` with
    no `Co-Authored-By` trailer, and pushes the branch Phase 6's handoff created per §4 step 5. It NEVER touches
    a code repo, a docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER
-   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final report.
+   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable
 is offered only in Phase 6), and NEVER writes into a code/docs repo or the current working

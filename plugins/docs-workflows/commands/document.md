@@ -53,6 +53,8 @@ run — the terminal `commit-artifacts` step skips on it.
 
 Echo the detected mode, then proceed to that mode's phases. The two modes share the same style pass and the same fixer — `docs-workflows:docs-style-checker`, which reports and never modifies a file, and `workflows-core:doc-fixer`, which applies what it reports; the two ship from different plugins and are dispatched by their qualified `subagent_type` everywhere below; only Keyed mode also runs `doc-reviewer` (each mode emits its own final report).
 
+**Ending early.** Every stop in either mode — this section's `$SPECS_PATH` *Cancel* and address stops, the `key dir not found` *Cancel* among them; a `branch-check` stop; Mode A Phase 0's named stops (step 1's `DOCUMENT_*` stops and `DOCUMENT_BRD_NOT_SLICED`'s *Cancel*, `REPO_NOT_WRITEABLE`, `PROFILE_REQUIRED` or the error inline profiling stops on, `TOOLCHAIN_UNAVAILABLE`); Mode B Phase 0's `REPO_NOT_WRITEABLE` and `TOOLCHAIN_UNAVAILABLE` — and every run-ending answer — each *Cancel* that stops the run (Mode A Phase 1's opening rule, Phase 0 step 2's and the in-repo guard's *Cancel*, Phase 7's *Cancel the whole run* and Phase 8.5's *Cancel* among them), *Cancel the run* on a `gate-ledger.md` §5 list, Mode A Phase 1.5's relaunch, and Mode B Phase 1.5's two *Re-run* options, which print a command for the user to type — takes `workflows-core:specs-repo-git` §4's refusal tail: the terminal cost phase's cost entry (Mode A Phase 11, Mode B Phase 7; unless `--skip-costs`) and its `commit-artifacts`, which prints the run's `Specs repo:` line after the stop's own message, with no `resume.md`, no follow-ups and no maintenance phase the run had not already reached. `emit-block` still fires at the halt wherever the Invariants call for it. A stop before the preflight skips only the preflight (that reference's §3). **A direct-mode stop taken before the run has resolved a write target takes no tail at all** — Mode B's unreadable `@file`, and a run-flag stop on a run whose arguments carry no address: its cost entry would have no documentation repository to be filed under and would wait in the pending file for nothing, which §4 lets this command state. **Where a Mode A stop ends with Phase 0 step 4(c)'s left-on-a-branch notice, the notice comes after the `Specs repo:` line**, as the run's last printed output: `commit-artifacts` is still the run's last action, run before that output as §4 allows — its step 7 lets a line the command names follow the outcome line — and it never touches the docs repository the notice describes. Phase 8.6's *Cancel* and a *cancel* at a follow-up preview are not stops: each declines only what it names, and the run goes on.
+
 ---
 
 # Mode A — keyed documentation (address argument)
@@ -234,7 +236,8 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
      `TOOLCHAIN_UNAVAILABLE`, a Cancel at any Phase 1, 1.5 or 2 prompt (Phase 1.5's relaunch
      included, which ends this run), every stop in Phases 3 to 6.1, and a Cancel at Phase 6.2's
      step 2 clean-tree or step 4 branch-name prompt, both of which come before step 5 renames the
-     branch — ends, after its own message,
+     branch — ends, after its own message and the `Specs repo:` line its refusal tail prints
+     (*Ending early*, in *Mode detection*),
      with this notice in the family's four-part form (`workflows-core:specs-repo-git` §5), as the
      run's last printed output. `<base>` is resolved at the stop exactly as the in-repo guard below
      resolves it — the branch Phase 6.2 would have cut from, and the one profiling cut from:
@@ -1497,7 +1500,8 @@ into the docs repo or the current working directory, where it is not the specs r
 ## Phase 11 — Session cost
 
 Terminal phase — the NEW final operational phase; runs after Phase 10 (the
-follow-up phase) and NEVER interrupts an earlier phase. Records this command's
+follow-up phase) and NEVER interrupts an earlier phase; a run that ended early
+(*Ending early*, in *Mode detection*) runs it too, with no resume pointer. Records this command's
 token-cost contribution to the PRD — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. Unlike feedback, **cost ALWAYS runs** — unless `run_flags.skip_costs` (see below) — it never "writes
 nothing".
 
@@ -1510,10 +1514,10 @@ transcript + subagents (§1), loads and **advances the chained checkpoint** (§3
 computes the per-model token-cost delta against
 the price table (§4), records the optional statusline cross-check (§5), and
 appends one per-invocation entry to `<PRD-dir>/dev-workflows/cost/<sid8>.md` via
-the specs-first ladder (§8). Keyed mode always resolves its folder — an absent one is a stop in the Mode detection section — so that is where the entry lands whenever `$SPECS_PATH` is writable, never in pending; with a key resolved, §9's opportunistic move-then-delete reconciliation offers any pending files earlier keyless runs left. **The checkpoint advances in every tier, report-only included.** Surface the persisted path (or the
+the specs-first ladder (§8). A keyed run past the Mode detection section has resolved its folder — an absent one is a stop there — so, wherever §8 places that folder, that is where the entry lands whenever `$SPECS_PATH` is writable, never in pending; a run that stopped on its address, or on a folder §8 places nowhere (*Ending early*: `DOCUMENT_FOLDER_NOT_PLACED`, say), files its entry as §8 files a keyless one. With a key resolved, §9's opportunistic move-then-delete reconciliation offers any pending files earlier keyless runs left. **The checkpoint advances in every tier, report-only included.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
-**Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
+**Then write the resume pointer** — not on a run that ended early (*Ending early*), which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it
 is included in it. Redact per §1. Silent; the printed `### Context hygiene`
@@ -1529,7 +1533,9 @@ NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because the Phase 9
 report was composed before this phase, **print its §6 outcome line here**,
 as the run's last output — prefixed `Specs repo:`, with any guard notice
-repeated in full.
+repeated in full. On a run that ended early it follows the stop's own message
+instead, and Phase 0 step 4(c)'s left-on-a-branch notice, where the stop
+prints one, follows it as the last output (*Ending early*).
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (the
 documentation commit, branch, and PR are handled in Phase 8.5; the terminal
@@ -1971,7 +1977,8 @@ into the docs repo or the current working directory, where it is not the specs r
 ## Phase 7 — Session cost
 
 Terminal phase — the NEW final operational phase; runs after Phase 6 (the
-follow-up phase) and NEVER interrupts an earlier phase. Records this command's
+follow-up phase) and NEVER interrupts an earlier phase; a run that ended early
+(*Ending early*, in *Mode detection*) runs it too. Records this command's
 token-cost contribution — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. Unlike feedback, **cost ALWAYS runs** — unless `run_flags.skip_costs` (see below) — it never "writes
 nothing".
 
@@ -1984,7 +1991,7 @@ and `plugin_version` (read from
 transcript + subagents (§1), loads and **advances the chained checkpoint** (§3),
 computes the per-model token-cost delta against
 the price table (§4), records the optional statusline cross-check (§5), and
-appends one per-invocation entry via the specs-first ladder (§8). A direct-mode run with no PRD folder — the ordinary case — takes that ladder's documentation branch (design D19): `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `workflows-core:specs-repo-git` §2.1 defines for the write target Phase 0 step 3 resolved, whether or not that target is a git work tree. Under `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.1) it is not written there: the entry stays in the run's output. Every direct-mode run resolves a write target, so none parks an entry in pending; a run whose key does resolve a PRD folder lands in `<PRD-dir>/dev-workflows/cost/<sid8>.md` instead. **The checkpoint advances in every tier, report-only included.** Surface the persisted path (or the
+appends one per-invocation entry via the specs-first ladder (§8). A direct-mode run with no PRD folder — the ordinary case — takes that ladder's documentation branch (design D19): `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `workflows-core:specs-repo-git` §2.1 defines for the write target Phase 0 step 3 resolved, whether or not that target is a git work tree. Under `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.1) it is not written there: the entry stays in the run's output. Every direct-mode run past its `@file` read resolves a write target, so none parks an entry in pending — one that stopped on an unreadable `@file` resolved none and reaches no part of this phase (*Ending early*); a run whose key does resolve a PRD folder lands in `<PRD-dir>/dev-workflows/cost/<sid8>.md` instead. **The checkpoint advances in every tier, report-only included.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
 **Then commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It

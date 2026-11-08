@@ -20,6 +20,8 @@ Usage: `/product-workflows:promote-decisions [--reconsider] [--max <n>] [--skip-
 - `--max <n>` caps each shortlist (default 10);
 - any other argument stops the run with this usage line.
 
+**Ending early.** Every stop in this run — the usage line, each Phase 0 and `promotion-guards` stop, the model gate's **Cancel** and its relaunch answer, a script's exit 2, Phase 3's stop with nothing to promote, a scout `ERROR`, any other answer that ends the run, and every stop `architecture-promotion.md` names after the branch is cut — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 7's step 4 alone, `commit-artifacts`, which commits what an earlier run left and prints the run's `Specs repo:` line once. It runs no maintenance or feedback step (steps 1–2), and this command writes no cost entry (step 3). The stop's own message — which, after the branch is cut, names the branch and the paths left on it, as that reference says — and the `Specs repo:` line end the run; the final report is not printed. Declining Phase 6's specs-repository handoff is not one of these: the marks stay written and uncommitted, and the run goes on through Phase 7.
+
 ## Phase 0 — Guards
 
 **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
@@ -28,7 +30,7 @@ Usage: `/product-workflows:promote-decisions [--reconsider] [--max <n>] [--skip-
 
 1. Parse `--reconsider` and `--max <n>` from what `strip-run-flags` leaves. `<n>` must be a positive integer.
 2. `command -v python3` fails → stop: `/product-workflows:promote-decisions needs python3 — its signals are a bundled script.`
-3. Run `promotion-guards` (`architecture-promotion.md` §1); its step 4 runs **`specs-preflight`** (`workflows-core:specs-repo-git` §3, `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")`) as a keyless run. Keep `<root>`, `<arch-ref>` and the specs `<default-ref>`. Every stop there ends the run before any write.
+3. Run `promotion-guards` (`architecture-promotion.md` §1); its step 4 runs **`specs-preflight`** (`workflows-core:specs-repo-git` §3, `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")`) as a keyless run. Keep `<root>`, `<arch-ref>` and the specs `<default-ref>`. Every stop there writes nothing.
 
 Show: `architecture repository: <root> (the session's repository | $ARCHITECTURE_REPO_PATH; <branch> @ <short-sha>[, N behind origin])` and `team knowledge base: <SPECS_PATH>/architecture (<default-ref> @ <short-sha>)`.
 
@@ -92,7 +94,7 @@ Terminal phase. It never interrupts an earlier phase, and it never fails the run
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<detection_model — §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) with a compact handoff:
    - command `/product-workflows:promote-decisions`;
    - what was done: counts of drafted, declined and covered records, and the reconciled keys;
-   - key events: a guard stop, a number collision, a decision-test failure, a scout or drafter ERROR — or 'none';
+   - key events: a number collision, a decision-test failure, a drafter ERROR — or 'none';
    - workarounds;
    - test result: the decision-test line;
    - project root: the architecture repository.

@@ -27,6 +27,8 @@ route the run is seeded from a decided BRD slice and the address is the **`PRD-`
 `/brd-split` carved; a `BRD-` container is refused (Phase 0 step 0). One address on every route: a
 second positional token is refused (Phase 0 step 1, `SPECIFY_ONE_ADDRESS`).
 
+**Ending early.** Every stop in this command — each `SPECIFY_*` stop, the lineage stops `SPECIFY_LINEAGE_FAILED` and `SPECIFY_UPSTREAM_STALE` among them, Phase 0's `$SPECS_PATH` *Cancel* and address stops, a `key dir not found` *Cancel*, a `branch-check` stop, a stopping `require-on-main` state at *Gate the PRD* or *Gate the Epic*, and Phase 2.5's `ard-resolution` `unmerged` stop — and every run-ending answer — each *Cancel* that ends the run (Phase 1's resume and `REPOS_PATH` questions, Phase 2 Step A's, Phases 3–4's repository questions, Phase 5's archive question and Phase 6's *Cancel the whole run*) and Step A's *Split into Epics first*, which points at `/product-workflows:epics` for the user to type — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 9's cost entry (unless `--skip-costs`) and its `commit-artifacts`, which prints the run's `Specs repo:` line after the stop's own message, with no `resume.md`, no follow-ups and no maintenance phase — save that, where this run created or resumed `_session.md`, Phase 8's opening run-environment comparison runs first, as that phase says. A stop before the preflight skips only the preflight (that reference's §3). `emit-block` fires at a halt only where Phase 8's capture-at-block invariant says it does. Where a stop says it wrote nothing, that means the run's own work: the cost entry is bookkeeping, written all the same. A run-environment *Stop* — at Phase 1's comparison on a resume (`workflows-core:session-hygiene` §6 point 1) or at Phase 7's (point 2) — keeps its own route, on through Phases 8–9 under `specs_git: misrooted`, as §6 says; Phase 7's handoff *Cancel* is not a stop: it declines the handoff, the specification stays written, and the run goes on through Phases 8–9.
+
 ---
 
 ## Phase 0 — Resolve input
@@ -1174,7 +1176,7 @@ of what this increment is for.
 ## Phase 8 — Session maintenance & feedback
 
 Terminal phase — runs after Phase 7 and before the Final report is presented;
-NEVER interrupts an earlier phase. Where this run created or resumed `_session.md`, it opens by comparing the session file's `## Run environment`, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 3 — loading that part afresh, as §6 says — before the tail's first write, unless an earlier comparison this run ended in *Stop*. A *Stop* sets `specs_git: misrooted`, under which this phase's feedback, Phase 9's cost entry and resume pointer are report-only and the terminal `commit-artifacts` skips. `/specify` has no built-in maintenance agent,
+NEVER interrupts an earlier phase; on a run that ended early (*Ending early*, above Phase 0) only its opening comparison runs. Where this run created or resumed `_session.md`, it opens by comparing the session file's `## Run environment`, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 3 — loading that part afresh, as §6 says — before the tail's first write, unless an earlier comparison this run ended in *Stop*. A *Stop* sets `specs_git: misrooted`, under which this phase's feedback, Phase 9's cost entry and resume pointer are report-only and the terminal `commit-artifacts` skips. `/specify` has no built-in maintenance agent,
 so this phase invokes `impl-maintenance` on the Sonnet detection chain and then
 persists the plugin-facing slice of its report as session feedback.
 
@@ -1232,7 +1234,7 @@ file inside `$SPECS_PATH`, alongside the feature folder — the intended home.
 ## Phase 9 — Session cost
 
 Terminal phase — the NEW final operational phase; runs after Phase 8 (feedback)
-and NEVER interrupts an earlier phase. Records this command's token-cost
+and NEVER interrupts an earlier phase; a run that ended early (*Ending early*, above Phase 0) runs it too, with no resume pointer. Records this command's token-cost
 contribution to the PRD — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. Unlike feedback, **cost ALWAYS runs** — it never "writes
 nothing" (short of `run_flags.skip_costs`, below, which writes no entry).
 
@@ -1248,7 +1250,7 @@ reconciliation (§9) when no PRD key resolves. **The checkpoint advances even in
 the pending / report-only tiers.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
-**Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
+**Write the resume pointer** — not on a run that ended early (*Ending early*), which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it is
 included in it. Redact per §1. Silent; the printed `### Context hygiene`
@@ -1261,7 +1263,7 @@ trailer, and pushes the branch this run's handoff phase created (§4.1) per §4 
 NEVER touches a code repo, a docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the
 run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice — the flag a §6 comparison this run ended in *Stop* sets (`workflows-core:session-hygiene`), with its `RESUME_ENVIRONMENT_CHANGED:` line as that notice, or the flag its §7 `env-check` sets, with its `Environment changed:` line. Hold its
-§6 outcome line for the Final report.
+§6 outcome line for the Final report — or, on a run that ended early, print it after the stop's own message.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git
 for the deliverable is offered only in Phase 7; the terminal step above commits

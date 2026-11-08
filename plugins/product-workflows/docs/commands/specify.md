@@ -104,6 +104,8 @@ Phase 6 dispatches `spec-reviewer`, Opus-pinned by frontmatter (`model: opus`, n
 
 Ahead of the review, Phase 5.5 runs a structural pre-lint — advisory only — checking the Universal checks and the spec block, including that the header's `Open questions` count matches the actual `- [ ]` count.
 
+**A stop ends the run short, not silently.** Every stop under *What it needs* and on the BRD route, *Split into Epics first*, and each *Cancel* that ends the run — at the diagram's Epic-count question, a configuration or repository question, the archive question, or the review escalation — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, follow-ups or resume pointer; *Cancel* at Phase 7's handoff choice only declines the handoff, and the run goes on. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
+
 ## Example
 
 Author a specification for a single Epic already selected:

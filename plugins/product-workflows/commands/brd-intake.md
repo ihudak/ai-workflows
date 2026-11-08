@@ -22,6 +22,8 @@ row has been given a fate.
 
 Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
+**Ending early.** Every stop this run takes — each `BRD_INTAKE_*` stop (Phase 0's, Phase 1's `BRD_INTAKE_UNREAD_ATTACHMENTS`, Phase 3's `BRD_INTAKE_DANGLING_ANCHOR`), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s), Phase 3's stop where no anchor parses and its `NOT_FOUND` stop — and every run-ending answer — the `$SPECS_PATH` *Cancel*, Phase 0's re-run *Cancel*, Phase 1's *Stop*, *Stop and convert* and *Cancel*, and every *Cancel* in Phases 3 and 4 — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 9's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt. Where a stop or answer says nothing is written, that means the run's own work: the cost entry is bookkeeping and is written all the same. A stop after Phase 2's first write leaves what the run wrote in the BRD folder uncommitted, since the tail commits only the bookkeeping paths. The stop message, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. Phase 7's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the files stay written, and the run goes on through Phases 8 and 9.
+
 ---
 
 ## Phase 0 — Resolve inputs
@@ -1604,7 +1606,7 @@ nothing is auto-run.
 
 ## Phase 9 — Session maintenance, feedback & cost
 
-Terminal phase — runs after Phase 8, NEVER interrupts an earlier phase.
+Terminal phase — runs after Phase 8, NEVER interrupts an earlier phase. A run that took *Ending early*'s refusal tail runs only this phase's cost-entry and commit steps.
 
 **Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command /
 reference gap**, `emit-block` (per `workflows-core:feedback-emission`) at that
@@ -1632,13 +1634,13 @@ as Phase 1 says where it stops. The one exception is a halt on a tool the ai-con
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-intake`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
+4. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
    the commit step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages ONLY the §2.1 bounded artifact paths
    inside `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-intake)` with
    no `Co-Authored-By` trailer, and pushes the branch Phase 7's handoff created per §4 step 5. It NEVER touches
    a code repo, a docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER
-   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final report.
+   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable is
 offered only in Phase 7), and NEVER writes into a code/docs repo or the current working directory, where it is not the specs repository;

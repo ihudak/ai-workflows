@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.7] — 2026-11-08
+
+Two commands now end every stop through their terminal commit: batch B35. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **`/document` and `/release-notes` say what a stop does.** Each has an **Ending early.** paragraph — `/document`'s in its shared *Mode detection* section, covering both modes. Every stop, *Cancel*, relaunch or redirect writes the session-cost entry (unless `--skip-costs`) and runs the terminal `commit-artifacts`, which prints the `Specs repo:` line, with no maintenance, follow-ups or resume pointer. Before, those stops ended the run where they stood. Where a `/document` stop leaves a docs-repository branch behind from inline profiling, that notice now follows the `Specs repo:` line. A direct-mode stop before `/document` has a write target — an unreadable `@file`, or a run-flag stop with no address — writes no cost entry, since it would wait in the pending file for nothing.
+- **`/docs-init`, `/docs-audit` and `/docs-brand`: the stop-route paragraph carries the Ending early heading** that `workflows-core`'s specs-repo contract now names; `/docs-brand`'s is now a paragraph of its own. What their stops do is unchanged.
+- **Pages.** The `/document` and `/release-notes` pages, and Session cost, say what a stopped run still does.
+
 ## [1.35.6] — 2026-11-08
 
 User pages only: batch B34. Needs nothing from the other plugins' releases.

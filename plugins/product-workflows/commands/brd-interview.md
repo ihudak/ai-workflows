@@ -66,6 +66,8 @@ round record already names (step 9); and *Resolve the round*'s no-new-round path
 that never reaches that phase, writes the register's header where none is on file, removes and
 reports torn writes and re-stamps the register's lineage frontmatter before its handoff.
 
+**Ending early.** Every stop this run takes — each `BRD_INTERVIEW_*` stop (Phase 0's, its lineage stops `BRD_INTERVIEW_LINEAGE_FAILED` and `BRD_INTERVIEW_UPSTREAM_STALE` among them, and the round stops of Phases 2 and 3, `BRD_INTERVIEW_ALL_DELEGATED` among them), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, a `depends-on:` key's `ambiguous` stop, `branch-check`'s, a stopping row of a `require-on-main` gate), the `$SPECS_PATH` *Cancel*, and every run-ending answer — an abort in Phase 6, Phase 8's `Cancel` — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 12's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt — `BRD_INTERVIEW_MALFORMED_FINDING`'s, as Phase 12's capture-at-block rule says. Where a stop or answer writes nothing, that means the run's own work: the cost entry is bookkeeping and is written all the same, and Phase 0 step 9's completion of a re-disposition, where it wrote, stays uncommitted, since the tail commits only the bookkeeping paths. The stop message, then the cost and `Specs repo:` lines, end the run; it reaches neither *Next steps* nor the Final report. Two *Cancel*s are not stops: row C's repair offer in Phase 0 and the handoff's consent choice in Phase 10 each decline what they offer, and the run goes on.
+
 ---
 
 ## How no `[G]` reaches a human
@@ -2628,7 +2630,7 @@ repo, not from this session. Guidance only — nothing is auto-run.
 ## Phase 12 — Session maintenance, feedback & cost
 
 Terminal phase — runs after *Next steps*, NEVER interrupts an earlier phase, and runs on the
-no-new-round path exactly as on any other.
+no-new-round path exactly as on any other. A run that took *Ending early*'s refusal tail runs only this phase's cost-entry and commit steps.
 
 **Capture-at-block invariant.** If an EARLIER phase halts on a plugin / skill / command / reference
 gap, `emit-block` (`workflows-core:feedback-emission`) fires at that halt before escalating. **One
@@ -2672,14 +2674,14 @@ this command reports correctly, not a capability it lacks. The one exception is 
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-interview`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
+4. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
    step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages ONLY the §2.1 bounded artifact paths inside
    `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-interview)` with no
    `Co-Authored-By` trailer, and pushes the branch the handoff phase created per §4 step 5. NEVER touches a code
    repo, a docs repo or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the
    run; skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice.
-   Hold its §6 outcome line for the final report.
+   Hold its §6 outcome line for the final report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable is
 offered only in the handoff phase), and NEVER writes into a code/docs repo, or the current

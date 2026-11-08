@@ -36,6 +36,8 @@ behaviour, not the behaviour.
 
 **`--no-code` is a run mode, not a step skip.** It exists so a BRD whose code grounding is already verified can gain the design grounding it is missing — the state `/brd-split`'s design-presence gate reports — without re-deriving what is already on file. Under it, **`<BRD-dir>/grounding/code-grounding.md` is read-only for the whole run**: this invocation produces no `[CG#n]` at all, its finding set is the new `[DG#n]` only, and every `[CG#n]` already on file keeps the verdict, evidence and verifier outcome it carries — never renumbered by Phase 5, never re-dispatched by Phase 7, never rewritten by Phase 8. Phases 1 and 3 still run in full, because a class-4 `[DG#n]` is pinned to the commit of the `[CG#n]` it cites and Phase 7 re-derives it against that repository. Documentation grounding is off for this run, and so is the derivation matrix: Phase 8 appends both into that same read-only file. Four flag states are refused rather than reconciled, all in Phase 0 step 2.
 
+**Ending early.** Every stop this run takes once it has started — each Phase 0 stop but `PRD_GROUND_TYPED_ONLY` (its `PRD_GROUND_*` stops, step 7a's lineage stops among them, a `RUN_FLAGS_*` stop, and every stop a shared reference's return leads it to take — an address stop, `branch-check`'s, a `require-on-main` gate's), the `$SPECS_PATH` and `$REPOS_PATH` *Cancel*s, Phase 1's *Cancel*s, Phase 3's typed *cancel* (an answer, not one of that phase's stops), and any other answer that ends the run — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 11's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. Two routes stand where a stop's own text names them: `PRD_GROUND_TYPED_ONLY` takes no tail at all (Phase 0 step 0), and a stop in Phase 3, 5 or 7 comes to Phase 11, which states its members — `PRD_GROUND_DOC_EVIDENCE` among Phase 5's, taken where Phase 5 applies Phase 4.5's rule before its design pass. `emit-block` still fires wherever a stop's own text calls it, at the halt. Where a stop says nothing is written, that means the run's own work: the cost entry is bookkeeping and is written all the same. The stop message, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. Phase 9's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the files stay written, and the run goes on through Phases 10 and 11.
+
 ---
 
 ## Phase 0 — Resolve inputs and gate on main
@@ -2487,7 +2489,7 @@ session. Grounding another repository for the same PRD? → run
 
 ## Phase 11 — Session maintenance, feedback & cost
 
-Terminal phase — runs after Phase 10, NEVER interrupts an earlier phase.
+Terminal phase — runs after Phase 10, NEVER interrupts an earlier phase; a run that stops comes here as *Ending early* (above Phase 0) and the paragraph below say.
 
 **After a stop in Phase 3, 5 or 7, the run comes here, and which members run is stated once.**
 Every such stop comes before Phase 8's first write, so no grounding file was written; and besides
@@ -2541,13 +2543,13 @@ fire `emit-block`. The one exception is a halt on a tool the ai-containers image
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-ground`, `phase: brd-to-prd`, `role: pm`,
    the run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the
    report-only notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
+4. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
    commit step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
    `<BRD-KEY> Add dev-workflows session artifacts (/prd-ground)` with no `Co-Authored-By` trailer, and pushes the branch Phase 9's handoff created per §4 step 5. NEVER touches a code repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; skips entirely when the run
    carries `specs_git: blocked` or `specs_git: misrooted`, re-emitting that notice. Hold its §6 outcome line for the final
-   report.
+   report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable
 is offered only in Phase 9), and NEVER writes into a code repo, or the current working

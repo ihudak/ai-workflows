@@ -72,6 +72,8 @@ feature is described and not at all on what it costs to build. The inputs to an 
 specs tree and the profile. There is no flag to turn off, no `resolve-docs-grounding` call, and no
 `docs grounding:` line in this command's report.
 
+**Ending early.** Every stop this run takes — each `PRD_PROPOSAL_*` stop (Phase 0's, Phase 2's `PRD_PROPOSAL_NEEDS_PROFILE`, Phase 2's and Phase 7's `PRD_PROPOSAL_RECORD_FAILED`), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s, step 5's `require-on-main` gate), the `$SPECS_PATH` *Cancel*, Phase 1's model gate — its *Cancel* and its relaunch answer — and every answer in Phase 9 that ends the run (a settle prompt's **Keep the verdict** where it ends the run, its **Cancel**, and the BLOCK escalation's) — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 12's step 4, the cost entry (unless `--skip-costs`), and its step 6, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md`, no follow-ups and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt — Phase 12's capture-at-block rule names the cause of `PRD_PROPOSAL_RECORD_FAILED` that does. The stop message, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. A stop after Phase 7 leaves `proposal.md` written and uncommitted: the tail commits only the bookkeeping paths. Phase 10's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the artifacts stay written, and the run goes on through Phases 11 and 12.
+
 ---
 
 ## Phase 0 — Resolve the address, preflight, and gate the PRD
@@ -829,7 +831,7 @@ Guidance only — see `workflows-core:session-hygiene` §5.
 
 ## Phase 12 — Session maintenance, feedback & cost
 
-Terminal phase — runs after Phase 11, and NEVER interrupts an earlier phase. The order below is the
+Terminal phase — runs after Phase 11, and NEVER interrupts an earlier phase. A run that took *Ending early*'s refusal tail runs only this phase's cost-entry and commit steps. The order below is the
 canonical emitter tail (`workflows-core:session-hygiene` §5 rule 2): feedback → follow-ups → cost →
 `resume.md` → `commit-artifacts`.
 
@@ -861,7 +863,7 @@ plugin lacks. **`PRD_PROPOSAL_RECORD_FAILED` qualifies only by its cause**: wher
    write target via its §2 ladder, dedupe per §5, and preview + confirm per §7. ADDITIVE: the same
    items also stay in the final report.
 4. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-proposal`, `phase: proposal`, `role: pm`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or the report-only notice). **This entry records model spend in USD and has no relationship whatever to the human hours the artifacts contain.**
-5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")`
+5. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")`
    and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry
    above, so the pointer reflects the completed run, and before the commit step below, so it is
    included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared.
@@ -871,7 +873,7 @@ plugin lacks. **`PRD_PROPOSAL_RECORD_FAILED` qualifies only by its cause**: wher
    `<KEY> Add dev-workflows session artifacts (/prd-proposal)` with no `Co-Authored-By` trailer, and pushes the branch this run's handoff phase created (§4.1) per §4 step 5. It NEVER touches anything outside
    `$SPECS_PATH`; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final
-   report.
+   report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable is
 offered only in Phase 10; the terminal step above commits only the bounded session-artifact paths in

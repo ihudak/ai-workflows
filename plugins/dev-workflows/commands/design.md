@@ -27,6 +27,8 @@ Flags: `--design-twice` forces the Phase 5 interface fan-out on the run's load-b
 
 Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
+**Ending early.** Every stop in this run takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 9's session cost (unless `--skip-costs`) and its terminal `commit-artifacts`, which prints the run's `Specs repo:` line after the stop message — with no Phase 8 maintenance or feedback, no `resume.md` and no Final report — save that, where this run created or resumed `_design-session.md`, Phase 8's opening run-environment comparison (`workflows-core:session-hygiene` §6 point 3) runs first, as that phase says, and a *Stop* there makes the tail's cost entry report-only and skips its commit. That is every named `DESIGN_*` stop (`DESIGN_BRD_NOT_SLICED`, `DESIGN_NO_SPEC`, which is step 3's row F turned into a stop, `DESIGN_LINEAGE_FAILED`, `DESIGN_UPSTREAM_STALE`); Phase 0's stop on a folder it cannot place, and step 4's stops on a PRD with nothing to design; every stop a shared reference's return leads the run to — `branch-check`'s, `require-on-main`'s stopping states, step 3's `ambiguous` or `misrooted` PRD dir, Phase 2.5's `unmerged` ARD and the lineage check's *Stop*; every *Cancel* that ends the run, an escalation rule's at Phase 3 or 4 included, and Phase 6's *Cancel the whole run*; and every other answer or refusal that ends it — Phase 0 step 4's *Split*, Phase 1.5's relaunch on Opus, Phase 3's re-split or add-the-component-first option, the strict gate's *I've remounted — re-scan* wherever Phase 3, 4 or 5 reaches that gate, and Phase 7's refusal of a `design.md` holding an unresolved `- [ ]`. A stop before the specs-repo preflight — on the address (none given, `invalid`, `ambiguous`, `misrooted`, `absent`) or on a run flag — takes the same tail, skipping only the preflight (`workflows-core:addressing` §3, that reference's §3). `emit-block` still fires at a plugin-gap halt, before it escalates, as Phase 8's capture-at-block invariant says. A run-environment *Stop* — at Phase 1's comparison on a resume (`workflows-core:session-hygiene` §6 point 1) or at Phase 7's (point 2) — keeps its own route, on through Phases 8–9 under `specs_git: misrooted`, as §6 says. Phase 7's handoff *Cancel* is not a stop: on the handoff's consent choice it declines the handoff, the files stay written, and the run goes on through Phases 8–9 — as it does after *Stop here* at the Next-Epic offer, which ends only the loop.
+
 ---
 
 ## Phase 0 — Resolve input
@@ -554,7 +556,7 @@ actionable set), then, on selection, set `<EPIC>`, re-point the feature folder t
 ## Phase 8 — Session maintenance & feedback
 
 Terminal phase — runs after Phase 7 and before the Final report is presented;
-NEVER interrupts an earlier phase. Where this run created or resumed `_design-session.md`, it opens by comparing the session file's `## Run environment`, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 3 — loading that part afresh, as §6 says — before the tail's first write, unless an earlier comparison this run ended in *Stop*. A *Stop* sets `specs_git: misrooted`, under which this phase's feedback, Phase 9's cost entry and resume pointer are report-only and the terminal `commit-artifacts` skips. `/design` has no built-in maintenance agent,
+NEVER interrupts an earlier phase; on a run that ended early (*Ending early*, above Phase 0) only its opening comparison runs. Where this run created or resumed `_design-session.md`, it opens by comparing the session file's `## Run environment`, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` §6 point 3 — loading that part afresh, as §6 says — before the tail's first write, unless an earlier comparison this run ended in *Stop*. A *Stop* sets `specs_git: misrooted`, under which this phase's feedback, Phase 9's cost entry and resume pointer are report-only and the terminal `commit-artifacts` skips. `/design` has no built-in maintenance agent,
 so this phase invokes `impl-maintenance` on the Sonnet detection chain and then
 persists the plugin-facing slice of its report as session feedback.
 
@@ -602,7 +604,8 @@ file inside `$SPECS_PATH`, alongside the feature folder — the intended home.
 ## Phase 9 — Session cost
 
 Terminal phase — the NEW final operational phase; runs after Phase 8 (feedback)
-and NEVER interrupts an earlier phase. Records this command's token-cost
+and NEVER interrupts an earlier phase — and, on a stop, runs after Phase 8's opening comparison alone, where that runs: its cost entry and terminal
+commit, with no resume pointer (*Ending early*, above). Records this command's token-cost
 contribution to the PRD. Unlike feedback, **cost ALWAYS runs** — it never "writes
 nothing" (short of `run_flags.skip_costs`, below, which writes no entry).
 
@@ -620,7 +623,7 @@ reconciliation (§9) when no PRD key resolves. **The checkpoint advances even in
 the pending / report-only tiers.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
-**Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
+**Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it is
 included in it. Redact per §1. Silent; the printed `### Context hygiene`
@@ -633,7 +636,7 @@ trailer, and pushes the branch this run's handoff phase created (§4.1) per §4 
 NEVER touches a code repo, a docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the
 run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice — the flag a §6 comparison this run ended in *Stop* sets (`workflows-core:session-hygiene`), with its `RESUME_ENVIRONMENT_CHANGED:` line as that notice, or the flag its §7 `env-check` sets, with its `Environment changed:` line. Hold its
-§6 outcome line for the Final report.
+§6 outcome line for the Final report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git
 for the deliverable is offered only in Phase 7; the terminal step above commits
@@ -654,7 +657,7 @@ and the `### Next step` recommendation (below).
 
 Also repeat the `Run flags: …` line whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6), and carry the `Session feedback: …` line wherever Phase 8 printed one (under `--skip-feedback`) and the `Session cost: …` line wherever Phase 9 printed one (under `--skip-costs`).
 
-The report always states exactly one of the Phase 5 interface fan-out outcomes whenever the run reaches the Final report (a Phase 1.5 model gate or a Phase 3 strict-repo hard stop ends the run before it):
+The report always states exactly one of the Phase 5 interface fan-out outcomes whenever the run reaches the Final report (a stop — a Phase 1.5 model gate or a Phase 3 strict-repo hard stop among them — never reaches it, taking the refusal tail *Ending early* names instead):
 
 - **Interface fan-out:** [one of — `ran — <interface>, <N> of 3 takes returned, chose <A|B|C|hybrid>` — `<N>` counted from the takes that actually returned, naming the constraint of any that returned `BLOCKED` | `offered and declined — <interface>` | `not offered — no contested interface (no signal in design-format.md ## Seams)`]
 

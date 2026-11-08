@@ -30,6 +30,8 @@ For full feature documentation use `/document`; for Epic drafting use `/epics`.
 
 This command makes **no external API calls but two**: key discovery's optional, read-only `gh search prs` and `gh pr view` — with diff grounding on, where a scanned clone is on GitHub and `gh` is installed and logged in — and, on the operator's consent, the draft's handoff, whose `gh` calls (its authentication check, its open-pull-request probe and `gh pr create`) are the handoff's own. It **never writes into the docs repo**.
 
+**Ending early.** Every stop in this command — each `RELEASE_NOTES_*` stop and `RELEASE_NOTES_BRD_NOT_SLICED`'s *Cancel*, Phase 0 step 1's `$SPECS_PATH` *Cancel* and address stops, the `key dir not found` *Cancel* among them, and a `branch-check` stop — and every run-ending answer — the *Cancel* of Phase 1's diff-grounding and `REPOS_PATH` questions, Phase 2's plan *Cancel* and Phase 4's repository *Cancel* — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 11's cost entry (unless `--skip-costs`) and its `commit-artifacts`, which prints the run's `Specs repo:` line after the stop's own message, with no `resume.md`, no follow-ups (Phase 10) and no maintenance phase (Phase 9). `emit-block` still fires at the halt wherever the Invariants call for it. A stop before the specs-repo preflight — on the address or an unset `$SPECS_PATH` — skips only the preflight (that reference's §3). Phase 8 step 1a's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the draft stays written, and the run goes on through Phases 9–11; a *cancel* at Phase 10's follow-up preview drops only the items it names.
+
 ---
 
 ## Phase 0 — Load
@@ -836,7 +838,8 @@ working directory, where it is not the specs repository.
 ## Phase 11 — Session cost
 
 Terminal phase — the NEW final operational phase; runs after Phase 10
-(follow-ups) and NEVER interrupts an earlier phase. Records this command's
+(follow-ups) and NEVER interrupts an earlier phase; a run that ended early
+(*Ending early*, above Phase 0) runs it too, with no resume pointer. Records this command's
 token-cost contribution to the PRD — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. Unlike feedback, **cost ALWAYS runs** — unless `run_flags.skip_costs` (see below).
 
 **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
@@ -856,7 +859,7 @@ statusline cross-check (§5), and appends one entry to
 the pending / report-only tiers.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
-**Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
+**Then write the resume pointer** — not on a run that ended early (*Ending early*), which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it
 is included in it. Redact per §1. Silent; the printed `### Context hygiene`
@@ -871,7 +874,8 @@ nor edits it.
 It NEVER writes into a docs repo, NEVER touches a code repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run;
 and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because the Phase 8 report was composed before this
 phase, **print its §6 outcome line here**, as the run's last output — prefixed
-`Specs repo:`, with any guard notice repeated in full.
+`Specs repo:`, with any guard notice repeated in full; on a run that ended
+early, it follows the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run and makes no deliverable handoff
 commit — the draft's is Phase 8's, in the specs repository and never in a docs

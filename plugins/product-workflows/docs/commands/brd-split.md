@@ -572,6 +572,8 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   row, in which case it is the sibling re-cut. A **bare** re-run builds no candidate set at all,
   so with no child standing empty or out of step it reports the ledger line and stops.
 
+A run that refuses — at a gate above or under *What it needs* — or ends on a *Cancel* before its handoff still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer; rows a cancelled walk already wrote stay written, uncommitted. Cancelling the handoff is not a stop: the files stay written and the run goes on to its next-step offer. A stop inside *Ground now* comes after the split's own session commit, and adds nothing to it. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
+
 ## Example
 
 Split a synthetic customer BRD once its intake pull request has merged, naming the slicing

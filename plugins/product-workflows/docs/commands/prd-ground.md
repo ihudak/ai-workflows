@@ -623,7 +623,7 @@ baseline finding the run writes per repository is `CONFIRMED` too, and is not on
 
 ## What it offers next
 
-Phase 10's offer depends on the route, and nothing is run for you. An offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended. A run that stops before it writes findings makes no offer beyond the stop's own remedy.
+Phase 10's offer depends on the route, and nothing is run for you. An offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended. A run that stops before it writes findings makes no offer beyond the stop's own remedy. A stop or *Cancel* still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no resume pointer — and with no session maintenance or feedback either, save after a stop in Phase 3, 5 or 7, which runs both; the one stop that runs none of this is `PRD_GROUND_TYPED_ONLY`, where the model started the command and nobody elected a run. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
 
 **On the idea route:**
 

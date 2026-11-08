@@ -26,6 +26,8 @@ Flags: `--deep` switches the grill from bounded (≤10 questions) to relentless 
 
 Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--ground-code [<repo>[,<repo>…]]] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
+**Ending early.** Every stop in this command — each `IDEA_*` stop, the `$SPECS_PATH` *Cancel*, Phase 0's address stops and a `branch-check` stop — and every run-ending answer — Phase 1's *Cancel* at a path that resolved to no file, Phase 1.5's *Stop*, Phase 2's *Cancel*, Phase 2.6's repository *Cancel* and Phase 4's *Cancel* at an existing `idea.md` — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 6's step 3, the cost entry (unless `--skip-costs`), and its step 4, `commit-artifacts`, which prints the run's `Specs repo:` line after the stop's own message, with no follow-ups and no maintenance phase (this command writes no `resume.md` on any run). A stop before step 1's preflight skips only the preflight (that reference's §3). `emit-block` fires at a halt only where Phase 6's capture-at-block invariant says it does. Where a stop says nothing is written, that means the run's own work: the cost entry is bookkeeping, written all the same. Phase 5's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, `idea.md` stays written, and the run goes on through Phase 6.
+
 ---
 
 ## Phase 0 — Resolve the address + model routing
@@ -757,7 +759,7 @@ phase is short (§4).) Guidance only — see
 
 ## Phase 6 — Session maintenance, feedback & cost
 
-Terminal phase — runs after Phase 5, NEVER interrupts an earlier phase.
+Terminal phase — runs after Phase 5, NEVER interrupts an earlier phase; a run that ended early (*Ending early*, above Phase 0) runs only its steps 3 and 4.
 
 **Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference
 gap** (a capability the run needed but the plugin lacked), `emit-block` (per
@@ -791,14 +793,16 @@ this run hands its brief off in the same run rather than being a phase a later r
    ladder, and writes silently. Surface the persisted path (or "no plugin-facing signal — nothing
    persisted").
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The terminal `commit-artifacts` step below runs unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /idea`, `phase: prd-creation`, `role: pm`, `key` = the run's own key,
-   the run's `source`, and `plugin_version`. The key is always present — `/idea` refuses to run without
-   one — so the entry lands on the keyed tier and never on the pending ladder (§9), which
+   the run's `source`, and `plugin_version`. On a run that wrote `idea.md` the key's folder exists —
+   `/idea` refuses to run without a key — so the entry lands on the keyed tier and never on the
+   pending ladder (§9); a run that ended early (*Ending early*) with no folder yet, or no key, files
+   it wherever §8 places it, pending included. Either way `emit-cost`
    **advances the chained checkpoint** (§3); surface the persisted path (or the report-only notice).
 4. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows
-   session artifacts (/idea)` — the key is mandatory here, so `NOISSUE` never applies — and pushes per §4 step 5. It NEVER
+   session artifacts (/idea)` — the key is mandatory past step 1, so `NOISSUE` applies only to a run that stopped there without one (*Ending early*) — and pushes per §4 step 5. It NEVER
    touches a code/docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER
-   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final report.
+   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final report — or, on a run that ended early, print it after the stop's own message.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (idea.md itself is handed off separately, before this phase, via `workflows-core:phase-handoff` §2, behind Phase 5's §4.3 consent choice; the terminal step above commits only the bounded session-artifact paths in `$SPECS_PATH`), and NEVER writes into a code/docs repo or the current working directory, where it is not the specs repository; no user name is ever written.
 

@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.7] — 2026-11-08
+
+Every command now ends each stop through its terminal commit: batch B35. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **`/harvest-decisions` ends every stop through its terminal commit.** A run that found the knowledge base up to date — its most common outcome — or stopped on a check, an exit 2, `--dry-run` or a *Cancel* never reached Phase 4, so it never committed what an earlier run left or printed its `Specs repo:` line. Found during batch B33.
+- **`/promote-decisions` does the same.** Every stop, a guard's or a later one, now takes Phase 7's terminal commit alone, after the stop's own message. Its maintenance handoff no longer lists stops among the key events, since no stop reaches it.
+- **The other fifteen commands say what a stop does.** `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/epics`, `/prd-ground`, `/prd-proposal`, `/brd-proposal`, `/brd-intake`, `/brd-split`, `/brd-package`, `/brd-interview` and `/brd-reconcile` each have an **Ending early.** paragraph. Every stop, *Cancel*, relaunch or redirect writes the session-cost entry (unless `--skip-costs`) and runs the terminal `commit-artifacts`, which prints the `Specs repo:` line, with no maintenance, follow-ups or resume pointer. Before, those stops ended the run where they stood. The routes some stops already named are kept: `/prd-ground`'s Phase 11 for stops in Phases 3, 5 and 7, and the three `/brd-proposal` ends that run the full tail. A *Cancel* that declines a handoff is not a stop, and each paragraph says so.
+- **Pages.** All seventeen command pages, and Session cost, say what a stopped run still does.
+
 ## [3.78.6] — 2026-11-08
 
 User pages, and six command and agent texts corrected: batch B34. Update with `workflows-core` 1.78.13, whose routing graph says the same of `/create-prd`'s `/specify` offer.

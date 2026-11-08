@@ -64,6 +64,8 @@ feature is described and not at all on what it costs to build — and this run's
 still: the slice proposals, the root ledger and the profile. There is no flag to turn off, no
 `resolve-docs-grounding` call, and no `docs grounding:` line in this command's report.
 
+**Ending early.** Every stop this run takes — each `BRD_PROPOSAL_*` stop (Phase 0's, Phase 2's `BRD_PROPOSAL_NO_SLICES`, Phase 4's `BRD_PROPOSAL_SLICE_NOT_HANDED_OFF`, Phase 5's `BRD_PROPOSAL_NEEDS_PROFILE`, and `BRD_PROPOSAL_RECORD_FAILED` wherever a script fails), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s, a stopping row of Phase 4's `require-on-main` sweep), the `$SPECS_PATH` *Cancel*, Phase 1's model gate — its *Cancel* and its relaunch answer — and every answer in Phase 10 that ends the run (a settle prompt's **Keep the verdict** where it ends the run, its **Cancel**, and the BLOCK escalation's) — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 13's step 4, the cost entry (unless `--skip-costs`), and its step 6, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md`, no follow-ups and no maintenance or feedback step. Three ends keep the route their own text names — the whole emitter tail, as a completed run takes it: Phase 2's **Stop — the umbrella is current**, Phase 3's "Price the slice first" and "Re-price it first", and Phase 6's *End the run* answer. `emit-block` still fires wherever a stop's own text calls it, at the halt — Phase 13's capture-at-block rule names the cause of `BRD_PROPOSAL_RECORD_FAILED` that does. A stopped run's output is the stop message, then the cost and `Specs repo:` lines; the Final report is not printed. A stop after Phase 8 leaves `proposal.md` written and uncommitted: the tail commits only the bookkeeping paths. Phase 11's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the artifacts stay written, and the run goes on through Phases 12 and 13.
+
 ---
 
 ## Phase 0 — Resolve the address, preflight, and refuse a slice
@@ -866,7 +868,7 @@ Guidance only — see `workflows-core:session-hygiene` §5.
 
 ## Phase 13 — Session maintenance, feedback & cost
 
-Terminal phase — runs after Phase 12, and NEVER interrupts an earlier phase. The order below is the
+Terminal phase — runs after Phase 12, and NEVER interrupts an earlier phase. A run that took *Ending early*'s refusal tail runs only this phase's cost-entry and commit steps. The order below is the
 canonical emitter tail (`workflows-core:session-hygiene` §5 rule 2): feedback → follow-ups → cost →
 `resume.md` → `commit-artifacts`.
 
@@ -900,7 +902,7 @@ either: that is the gate working. The one exception is a halt on a tool the ai-c
    target via its §2 ladder, dedupe per §5, and preview + confirm per §7. ADDITIVE: the same items
    also stay in the final report.
 4. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-proposal`, `phase: proposal`, `role: pm`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or the report-only notice). **This entry records model spend in USD and has no relationship whatever to the human hours the artifacts contain.**
-5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")`
+5. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")`
    and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry
    above, so the pointer reflects the completed run, and before the commit step below, so it is
    included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared.
@@ -910,7 +912,7 @@ either: that is the gate working. The one exception is a halt on a tool the ai-c
    `<KEY> Add dev-workflows session artifacts (/brd-proposal)` with no `Co-Authored-By` trailer, and pushes the branch this run's handoff phase created (§4.1) per §4 step 5. It NEVER touches anything outside
    `$SPECS_PATH`; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final
-   report.
+   report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable is
 offered only in Phase 11; the terminal step above commits only the bounded session-artifact paths in
@@ -933,7 +935,7 @@ enumerated with the basis that decided it, and that no artifact was written.
 **On a run the walk ended** — the operator answered "Price the slice first" or "Re-price it first" —
 the report is that walk plus the list of slices still to price, and it says plainly that no artifact
 was written and nothing was excluded; the rest of this list describes a run that reached Phase 8.
-Every run, an ended one included, carries the emitter tail's lines at the end of this list — the
+Every run that prints this report, an ended one included, carries the emitter tail's lines at the end of this list — the
 feedback, follow-up and cost paths, or their skip lines, and the `Specs repo:` line.
 Otherwise:
 the umbrella check's verdict at Phase 2 with every reason it printed, or that the folder held no

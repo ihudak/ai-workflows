@@ -16,12 +16,12 @@ The Product Architect, whenever ARDs have merged since the last harvest — [`/c
 
 ## How it runs
 
-Every step is the command or its bundled script: no agent, no model. A dotted edge ends the run.
+Every step is the command or its bundled script: no agent, no model. A dotted edge stops the run, and a stopped run still takes Phase 4's terminal commit: it commits what an earlier run left in the specs repository, never a harvested record, and prints its `Specs repo:` line.
 
 ```mermaid
 flowchart TD
     p0["Phase 0 — Preflight: SPECS_PATH set, python3, the specs-repo preflight, the default branch checked out, no earlier kb/ harvest unmerged"]
-    p0 -.->|"a check fails — a stop naming what to fix"| halt["Stop"]
+    p0 -.->|"a check fails — a stop naming what to fix"| halt["Stop — its own line"]
     p0 --> p1["Phase 1 — Plan: the harvest script, as a dry run"]
     p1 -.->|"no ARD, already up to date, or the script fails — nothing written"| halt
     p1 --> d1{"--dry-run?"}
@@ -34,6 +34,7 @@ flowchart TD
     p3 -->|"Branch + commit + push + open PR"| pr["A kb/harvest-YYYY-MM-DD branch and its pull request"]
     p3 -->|"Just write the files, or Cancel — the files stay written, uncommitted"| p4
     pr --> p4["Phase 4 — Terminal commit-artifacts, then the final report"]
+    halt --> p4
 ```
 
 ## What it needs
@@ -62,7 +63,7 @@ The first shows what would change and every problem (an unparseable decision, a 
 
 ## What it offers next
 
-It asks no next-step question. The final report ends with one line: the next [`/create-ard`](create-ard.md), [`/specify`](specify.md) or `/dev-workflows:design` run grounds on the harvested records once they are on the default branch, which a declined handoff leaves to you. A `--dry-run`, a run with nothing to harvest and a run that finds the knowledge base up to date stop after their report, and name nothing.
+It asks no next-step question. The final report ends with one line: the next [`/create-ard`](create-ard.md), [`/specify`](specify.md) or `/dev-workflows:design` run grounds on the harvested records once they are on the default branch, which a declined handoff leaves to you. A `--dry-run`, a run with nothing to harvest and a run that finds the knowledge base up to date end after their report and the terminal commit's `Specs repo:` line, and name nothing.
 
 ## See also
 

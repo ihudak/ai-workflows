@@ -111,7 +111,7 @@ set is ever staged.
 <specs-root>/documentation/*/dev-workflows/**                 # the documentation run with no PRD (D19): feedback, cost
 <specs-root>/dev-workflows-feedback/**                        # feedback-emission.md §2 tier 2 (keyless runs)
 <specs-root>/dev-workflows-cost/**                            # cost-emission.md §9 pending files (keyless runs)
-<specs-root>/security/*/{runs/**|scans/**|dev-workflows/**|register.json|register.md}  # security-register-format.md §1: the register of one code repository (/security-workflows:scan), its own paths only, and its keyless scans' cost (cost-emission.md §8)
+<specs-root>/security/*/{runs/**|scans/**|dev-workflows/**|register.json|register.md}  # security-register-format.md §1: the register of one code repository (/security-workflows:scan), its own paths only, and its keyless scans' cost and feedback (cost-emission.md §8, feedback-emission.md §2)
 <specs-root>/{specs|specifications|vis}/**/implementation.md  # implementation-format.md §1, appended by /implement
 <specs-root>/{specs|specifications|vis}/**/follow-ups.md      # followup-emission.md §2, appended per PRD/Epic folder
 <specs-root>/{specs|specifications|vis}/**/_security.md       # security-register-format.md §1: a unit's scan note, appended
@@ -119,7 +119,7 @@ set is ever staged.
 <specs-root>/{specs|specifications|vis}/**/*-implementation-gaps.md  # the <KEY>-implementation-gaps.md draft (source-truth.md §7.5)
 ```
 
-**The security register is bookkeeping**: its records are a run's own and must not wait on anyone's review, so `commit-artifacts` (§4) commits them and no pull request hands them off, as `${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §1 says. The same directory holds a keyless scan's cost entry, under `dev-workflows/cost/` beside the register, filed per code repository as the `documentation/` shape files a documentation run's (`cost-emission.md` §8). **The shape names the register's own paths and nothing else under `security/`** — `runs/`, `scans/`, `dev-workflows/`, `register.json` and `register.md` in each `security/<repo-slug>/` — because a specs repository can already hold a team's own `security/<dir>/` documents, a threat model or a policy, and a wider shape would sweep an uncommitted edit there into a prompt-free session commit of any family command, and push it.
+**The security register is bookkeeping**: its records are a run's own and must not wait on anyone's review, so `commit-artifacts` (§4) commits them and no pull request hands them off, as `${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §1 says. The same directory holds a keyless scan's cost and feedback entries, under `dev-workflows/cost/` and `dev-workflows/feedback/` beside the register, filed per code repository as the `documentation/` shape files a documentation run's (`cost-emission.md` §8, `feedback-emission.md` §2). **The shape names the register's own paths and nothing else under `security/`** — `runs/`, `scans/`, `dev-workflows/`, `register.json` and `register.md` in each `security/<repo-slug>/` — because a specs repository can already hold a team's own `security/<dir>/` documents, a threat model or a policy, and a wider shape would sweep an uncommitted edit there into a prompt-free session commit of any family command, and push it.
 
 **The `documentation/` shape is the `docs-workflows` family's, and it exists because that family's normal run has no PRD and never will.** A documentation run against a repository nobody has written a PRD for would otherwise park every entry as *pending*, awaiting a reconciliation into a PRD directory that is never coming — so those entries accumulate forever and reconcile against nothing. The rung `feedback-emission.md` §2 and `cost-emission.md` §8 insert before pending writes instead to `<specs-root>/documentation/<docs-repo-slug>/dev-workflows/{cost,feedback}/`, where `<docs-repo-slug>` is the one-segment name the next paragraph defines. **Per docs repo, not one flat `documentation/` bucket**, for exactly the reason the PRD-directory rung exists for the pipeline: a person documenting two products must still be able to answer what documenting each one cost. The docs repo is that family's unit of attribution.
 
@@ -654,7 +654,7 @@ is each member's own rather than a new condition here:
 - **Follow-ups are a no-op.** No signal qualifies, so that phase resolves no
   target, writes nothing and ends silently (`followup-emission.md` §6).
 
-- **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing, or unless the run carries `specs_git: misrooted` (§3.1), in which case `cost-emission.md` §8 reports it in the run's output and writes nothing, or unless no transcript holds the run's own invocation, in which case `cost-emission.md` §1 says so in one line and measures nothing** — and on the one stop that is no run at all, named below, none of this tail runs. `cost-emission.md` §11 settles it already —
+- **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing, or unless the run carries `specs_git: misrooted` (§3.1), in which case `cost-emission.md` §8 reports it in the run's output and writes nothing, or unless no transcript holds the run's own invocation, in which case `cost-emission.md` §1 says so in one line and measures nothing** — and on the one stop that is no run at all, and on a refusal a command states takes no tail, both named below, none of this tail runs. `cost-emission.md` §11 settles it already —
   *Cost runs unless the user skipped it* — and it is the member that makes this tail matter on a
   refusal: the run spent the session's tokens whether or not it wrote a file,
   and a keyless one has a home too: that file's §9 pending file, save where its §8 tier 2 files it per docs or code repository, or reports it only. A refusal
@@ -668,7 +668,7 @@ is each member's own rather than a new condition here:
   so writing one here would replace a live pointer to a real position with a
   run that did nothing, and what it replaced cannot be recovered.
 
-- **This step runs**, for the cost entry above (under `--skip-costs` there is none, and the gates below settle the step exactly as they would for any run with nothing new to stage). Where the refusal was `specs-root-check`'s stop, the run carries `specs_git: misrooted`, and step 1's gate skips the step with the stop repeated. Where the refusal came before
+- **This step runs**, save on those two kinds of stop, for the cost entry above (under `--skip-costs` there is none, and the gates below settle the step exactly as they would for any run with nothing new to stage). Where the refusal was `specs-root-check`'s stop, the run carries `specs_git: misrooted`, and step 1's gate skips the step with the stop repeated. Where the refusal came before
   `$SPECS_PATH` was resolved, step 1's gate no-ops it silently; on a detached HEAD with something to stage, step 1 refuses it with G0's notice; where that
   entry is the only new path, step 4 commits it alone; where nothing is dirty,
   step 3's `nothing to commit` line stands.
@@ -687,7 +687,12 @@ later phase, has written something, and what its tail does is that command's
 to state. **One stop is no run at all, and takes no tail**: `/product-workflows:prd-ground`'s
 `PRD_GROUND_TYPED_ONLY`, where the model started the command without `/brd-split`'s
 `--from-split` — nobody elected a run, so a cost entry would bill one that never was, and the
-spend before it is the conversation's.
+spend before it is the conversation's. **And a command may state that a refusal taken before it
+has resolved its target takes no tail** where its cost entry is filed per that target and would
+otherwise wait in `cost-emission.md` §9's pending file for a reconciliation that never comes
+(`cost-emission.md` §8 says why): `/docs-workflows:docs-init`, `/docs-workflows:docs-audit`
+and a standalone `/docs-workflows:docs-brand` state it for their stops before a docs repository
+is resolved, and `/docs-workflows:document` for a direct-mode stop before its write target is.
 
 1. **Gate.** All of §3.1's environment conditions, **plus** the run must not
    carry `specs_git: blocked` from §3.3 G0 or `specs_git: misrooted`, whichever
@@ -1287,7 +1292,12 @@ Omitting any one of them is a defect, not a style choice.
 2. **Cite and execute `commit-artifacts` (§4)** as the last action of the run,
    after `resume.md` (where one is written) and after the cost phase — or, where
    a later phase cedes control to another skill or to an open-ended interactive
-   stretch, immediately before that hand-off (§4's exception).
+   stretch, immediately before that hand-off (§4's exception). **A run that
+   stops reaches it too**: a command that can stop states once, in a paragraph
+   headed **Ending early.**, what each of its stops leads to — §4's refusal tail,
+   a stop before the preflight skipping only the preflight (§3), save where a
+   stop's own text names another route — because a `stop` read on its own ends
+   the run where it stands, short of this step.
 3. **Emit the §6 outcome line exactly once**, wherever `commit-artifacts`
    ran — at the end of the run, or immediately before the hand-off in the
    cede-control case above.

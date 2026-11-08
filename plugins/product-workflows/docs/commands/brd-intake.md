@@ -292,6 +292,8 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
   `unallocated` row may survive), not a merge-state one, and it belongs to
   [`/brd-split`](brd-split.md), which walks it on both the root and each slice.
 
+A run that stops — on a refusal under *What it needs*, a stop above, *Stop* or *Stop and convert* at the confirmation, or a *Cancel* that ends the run — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer; what it copied or wrote before the stop stays in the folder, uncommitted. Cancelling the handoff is not a stop: the files stay written and the run goes on to its next-step offer. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
+
 ## Example
 
 Intake a synthetic customer BRD for a new BRD key:

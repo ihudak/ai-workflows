@@ -124,14 +124,15 @@ capture, §5). Walk the ladder top-down and stop at the first tier that applies:
    the PRD dir itself, an `EPIC-` folder's is the folder above it →
    `<PRD-dir>/dev-workflows/<KEY>-feedback.md`. *[primary — the whole point]*
 2. **`$SPECS_PATH` writable but no PRD dir matched** (no `key`, or no
-   matching spec dir) — two destinations, and the documentation branch is tried
-   first:
+   matching spec dir) — three destinations, and the documentation and security
+   branches are tried first:
    - **The run is `/docs-init`, `/docs-audit`, `/docs-brand` on its standalone path, or `/document` in direct mode**, and it resolved the target it writes into (design D19) → `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/feedback/<date>.md`, where `<docs-repo-slug>` is the one-segment name `specs-repo-git.md` §2.1 defines for that repo — for direct mode, the write target its own Phase 0 step 3 resolved, which every direct-mode run holds from that step on — cited, never re-derived here, because the staging classifier admits exactly one segment there. Filed, not unfiled: the docs repo is that family's unit of attribution exactly as the PRD directory is the pipeline's, so there is nothing to move it under later. **Per docs repo, not one flat bucket**, and the inner `dev-workflows/` names the *family*, not the emitting plugin. `specs-repo-git.md` §2.1's `<specs-root>/documentation/*/dev-workflows/**` shape stages it.
+   - **The run is `/security-workflows:scan` with no key** — one addressed by a repository path, whatever its mode — and it resolved the repository's `<repo-slug>` → `$SPECS_PATH/security/<repo-slug>/dev-workflows/feedback/<date>.md`, where `<repo-slug>` is the one-segment name that repository's register lives under (`security-register-format.md` §1), cited, never re-derived here. Filed, not unfiled, beside the run's cost entry (`cost-emission.md` §8's security branch): a repository scan has no PRD and never will, so the code repository is its unit of attribution. The layout below `<repo-slug>/` is the documentation branch's, its inner `dev-workflows/` naming the *family*; it sits beside the register's `runs/` and `scans/`, the only directories `register.py` reads, and `specs-repo-git.md` §2.1's `<specs-root>/security/*/{runs/**|scans/**|dev-workflows/**|register.json|register.md}` shape stages it, through its `dev-workflows/**` member. A scan that resolved no `<repo-slug>` takes the next branch.
    - **Otherwise** → `$SPECS_PATH/dev-workflows-feedback/<KEY-or-date>.md` at
      the top of `$SPECS_PATH`. Still committed & aggregated; notice:
      `unfiled — move under the PRD dir if it belongs to one.`
 
-   **The branch names the runs it serves rather than testing "did the run resolve a
+   **The documentation branch names the runs it serves rather than testing "did the run resolve a
    docs repo"** — the same four, for the same reasons, as `cost-emission.md` §8
    gives. `/document` direct mode joined it after shipping outside it, when its
    entries landed unfiled at the top of `$SPECS_PATH` with no PRD to be moved under;

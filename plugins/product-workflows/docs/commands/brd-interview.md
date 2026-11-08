@@ -560,6 +560,8 @@ option is picked.
   `[C]` still waiting on a customer. The resume rule and the closure rule are stated in the same
   vocabulary so they cannot drift apart.
 
+A run that stops — on a refusal under *What it needs*, a gate above, or a `Cancel` or an abort that ends the run — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer, and makes no next-step offer. That commit holds only the session's own bookkeeping, so the decisions the stopped run took are lost, as above. Cancelling the handoff is not a stop: the files stay written and the run goes on to its next-step offer. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
+
 ## What it does not do
 
 - **No documentation grounding, and no `--no-docs` flag.** `/brd-intake` and `/prd-ground` already

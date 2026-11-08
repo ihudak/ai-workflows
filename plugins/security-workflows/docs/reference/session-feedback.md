@@ -11,7 +11,7 @@ Session feedback is about **the plugin family itself**, and defects in the ai-co
 Where the entry lands depends on the address:
 
 - **A key, or an `@<path>` to the unit's folder:** `<PRD-dir>/dev-workflows/<KEY>-feedback.md`, one file per PRD; an Epic's run files under the PRD folder above it.
-- **A repository path:** there is no PRD folder, so the entry goes to `$SPECS_PATH/dev-workflows-feedback/<date>.md` at the top of the specs repository, marked unfiled. Unlike the cost entry, which this run files under `security/<repo-slug>/`, feedback has no per-repository folder.
+- **A repository path:** there is no PRD folder, so the entry is filed per code repository, at `$SPECS_PATH/security/<repo-slug>/dev-workflows/feedback/<date>.md`, one file per repository per day, beside the register and the run's [cost entry](session-cost.md) and never part of the register, which reads only its `runs/` and `scans/`.
 
 A run that found `$SPECS_PATH` misplaced, or its environment changed since its preflight printed it, keeps the entry in its printed output and writes nothing. Every entry is redacted before it is written — secrets become `[SECRET-n]`, home-directory paths `~/…`, private hosts and addresses `[HOST-n]`, email addresses `[EMAIL-n]` — and the run says what it redacted. The terminal commit carries the file with the run's other session files.
 

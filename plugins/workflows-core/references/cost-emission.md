@@ -448,9 +448,17 @@ unlike the `target_command` one below:
   **An Epic folder under a BRD-route slice lands here too**: it asserts `epic`,
   and `/prd-ground` grounds the slice's own `design/`, never an Epic's.
 
-**There is no third branch**, because §3 of
+- **A refused run whose `key` names no folder asserting one of those kinds, or is
+  `null` -> `phase: prd-creation`, `role: pm`.** `/frames` refuses an address
+  that resolves to none of them, and that refusal still takes its cost entry
+  (`/frames`' *Ending early*, `specs-repo-git.md` §4): it spent the session's
+  tokens with no kind to attribute them by, and `prd-creation` is the phase
+  this command's only branch outside the BRD route already uses.
+
+**No indexing run reaches a third kind**, because §3 of
 `${CLAUDE_PLUGIN_ROOT}/references/addressing.md` returns exactly those three kinds
-and `/frames` refuses to run on an address that resolves to none of them. Indexing
+and `/frames` refuses an address that resolves to none of them; that refusal's own
+entry takes the branch above. Indexing
 a frame set is real spend on a real artifact in the specs tree, which is why this
 command emits at all — the alternative is not "unmeasured" but *misattributed*, per
 §3's semantics rolling it into whatever command runs next.
@@ -500,8 +508,9 @@ not attempt to infer it from anything else.
   `/docs-serve`, `/statusline`, `/harvest-decisions` and `/promote-decisions`, none of which emits cost and so has
   nothing to inherit.
 - **Target is `/frames` or `/conformance` -> resolve ITS inference first**, then inherit
-  the result, exactly as for `/release-notes`. One level only. Where no folder resolves
-  — which for either means the run never started — treat it as the `n/a` case.
+  the result, exactly as for `/release-notes`. One level only. Where no folder resolves,
+  a `/conformance` run never started, so treat it as the `n/a` case; a `/frames` run
+  stopped before it resolved one, and its inference's refused-run branch gives the result.
 - **Target is `/scan` -> `phase: security-audit`, `role: n/a`.** Its inference reads
   `run_role`, which lives in the scan run's own context and reaches no feedback
   command, so the phase is inherited and the role is recorded as absent rather than
@@ -588,7 +597,7 @@ subdir. Walk top-down; stop at the first tier that applies:
 2. `$SPECS_PATH` writable but no PRD dir (or no key resolved) — three branches,
    and the documentation and security branches are tried first:
    - **The run is `/docs-init`, `/docs-audit`, `/docs-brand` on its standalone path, or `/document` in direct mode**, and it resolved the target it writes into (design D19) -> `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `specs-repo-git.md` §2.1 defines for that repo — for direct mode, the write target its own Phase 0 step 3 resolved, which every direct-mode run holds from that step on — cited, never re-derived here, because the staging classifier admits exactly one segment there. **Per docs repo, not one flat bucket**, for the same reason the PRD-directory rung exists for the pipeline: a person documenting two products must still be able to answer what documenting each one cost. The inner `dev-workflows/` names the *family*, not the emitting plugin — `specs-repo-git.md` §2.1 says why — and that section's `<specs-root>/documentation/*/dev-workflows/**` shape is what stages it.
-   - **The run is `/security-workflows:scan` with no key** — one addressed by a repository path, whatever its mode. Where it resolved the repository's `<repo-slug>` -> `$SPECS_PATH/security/<repo-slug>/dev-workflows/cost/<sid8>.md`, where `<repo-slug>` is the one-segment name that repository's register lives under (`security-register-format.md` §1), cited, never re-derived here. Where it resolved none — a path that is no repository, or a repository `components.md` §1 derives no slug for, on a run that stops before resolving it — -> **report-only**, as in tier 4: never pending, which such an entry would never leave. **Per code repository, not one flat bucket**, as the documentation branch is per docs repo: a repository scan has no PRD and never will, and the register is the unit a Security Engineer's spend is asked about. The layout below `<repo-slug>/` is the documentation branch's, its inner `dev-workflows/` naming the *family*. It sits beside the register's `runs/` and `scans/`, the only directories `register.py` reads, so the register never sees it, and `specs-repo-git.md` §2.1's `<specs-root>/security/*/**` shape stages it. A `/scan` run whose key resolved its folder is tier 1's.
+   - **The run is `/security-workflows:scan` with no key** — one addressed by a repository path, whatever its mode. Where it resolved the repository's `<repo-slug>` -> `$SPECS_PATH/security/<repo-slug>/dev-workflows/cost/<sid8>.md`, where `<repo-slug>` is the one-segment name that repository's register lives under (`security-register-format.md` §1), cited, never re-derived here. Where it resolved none — a path that is no repository, or a repository `components.md` §1 derives no slug for, on a run that stops before resolving it — -> **report-only**, as in tier 4: never pending, which such an entry would never leave. **Per code repository, not one flat bucket**, as the documentation branch is per docs repo: a repository scan has no PRD and never will, and the register is the unit a Security Engineer's spend is asked about. The layout below `<repo-slug>/` is the documentation branch's, its inner `dev-workflows/` naming the *family*. It sits beside the register's `runs/` and `scans/`, the only directories `register.py` reads, so the register never sees it, and `specs-repo-git.md` §2.1's `<specs-root>/security/*/{runs/**|scans/**|dev-workflows/**|register.json|register.md}` shape stages it, through its `dev-workflows/**` member. A `/scan` run whose key resolved its folder is tier 1's.
    - **Otherwise** -> **pending** (§9).
 
    **Why this rung is inserted before pending rather than folded into it.**
@@ -691,8 +700,9 @@ Inputs:
   - `/release-notes` — resolved from `specification.md` / `design.md` presence
     under the PRD's specs dir. `emit-cost` reads that itself; nothing is passed.
   - `/frames` — resolved from the resolved folder's own `kind` (§7's `/frames`
-    inference), re-derivable from the folder `key` names. `emit-cost` reads that
-    itself; nothing is passed beyond the `key`.
+    inference), re-derivable from the folder `key` names — or, where `key` is
+    `null` or names no folder of those kinds, a refused run's branch there.
+    `emit-cost` reads that itself; nothing is passed beyond the `key`.
   - `/conformance` — resolved from where `addressing` §4.1 places the resolved
     folder (§7's `/conformance` inference), never from its asserted `kind`. `emit-cost` reads that itself;
     nothing is passed beyond the `key`.

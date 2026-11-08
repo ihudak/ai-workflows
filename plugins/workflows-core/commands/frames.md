@@ -30,6 +30,8 @@ adjacent to it would invite an operator who wanted an index into the wrong comma
 
 Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
+**Ending early.** Every stop this command takes once the specs-repo preflight has run — Phase 0's `FRAMES_NO_CARRIER` and `FRAMES_NOT_A_SPEC_FOLDER`, every stop `branch-check` makes (its §6.2 question's *Stop* answer included), and a halt on a plugin gap — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 4's session cost (step 3, unless `--skip-costs`) and its terminal `commit-artifacts` (step 4), which prints the run's `Specs repo:` line after the stop message — with no maintenance or feedback (steps 1–2), no Final report and, as on every run, no `resume.md` and no follow-ups. `emit-block` still fires at a plugin-gap halt, before it escalates, as Phase 4's capture-at-block invariant says. Phase 0's stops before the preflight — the run flags' own, `FRAMES_EXTRA_ARGUMENT`, an unset `$SPECS_PATH`, `SPECS_PATH_INSIDE_TREE` and step 1's address stops — take the same two steps, as §4 settles a refusal and `workflows-core:addressing` §3 an address stop: the commit does nothing where `$SPECS_PATH` is unset, and repeats the notice where it is misplaced. Phase 3's *Cancel* is not a stop: on the handoff's consent choice it declines the handoff, every index stays written, and the run goes on through Phase 4.
+
 ---
 
 ## Phase 0 — Resolve the address + model routing
@@ -407,7 +409,8 @@ see `${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md` §5.
 ## Phase 4 — Session maintenance, feedback & cost
 
 Terminal phase — runs after Phase 3, NEVER interrupts an earlier phase, and **runs on every path that reached Phase 1**,
-including the run that found no `design/` at all.
+including the run that found no `design/` at all. A stop reaches its steps 3 and 4
+alone (*Ending early*, above).
 
 **Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference
 gap** (a capability the run needed but the plugin lacked), `emit-block` (per
@@ -438,9 +441,7 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
    resolved folder's own `kind`, which Phase 0 already read: `brd` attributes the run to
    `brd-to-prd`/`pm`, `prd` and `epic` to `prd-creation`/`pm`. A BRD-route slice is a `PRD-` folder
    asserting `brd`, so its frame set is `brd-to-prd`; an Epic folder under it asserts `epic`, and
-   is `prd-creation`. The key is always present on any path that reaches here — Phase 0's stops (`FRAMES_NEEDS_ADDRESS`, `FRAMES_EXTRA_ARGUMENT`, `FRAMES_NO_FOLDER`, `FRAMES_NO_CARRIER`, `FRAMES_NOT_A_SPEC_FOLDER`, an ambiguous key, an unset `SPECS_PATH`, a `SPECS_PATH` set inside the specs tree (`SPECS_PATH_INSIDE_TREE`)) all stop Phase 0 before it has a spec folder whose kind and key it can index — `FRAMES_NO_CARRIER` among them, taken on a folder asserting neither — and this phase runs after them, which is why its scope is stated as *every path that reached Phase 1* rather than every path. This
-   command refuses to run without a resolved folder — so the entry lands on the keyed tier and never
-   on the pending ladder (§9), which **advances the chained checkpoint** (§3); surface the persisted
+   is `prd-creation`. On every path that reached Phase 1 the key is present and the kind is one of those three — Phase 0's stops (`FRAMES_NEEDS_ADDRESS`, `FRAMES_EXTRA_ARGUMENT`, `FRAMES_NO_FOLDER`, `FRAMES_NO_CARRIER`, `FRAMES_NOT_A_SPEC_FOLDER`, an ambiguous key, an unset `SPECS_PATH`, a `SPECS_PATH` set inside the specs tree (`SPECS_PATH_INSIDE_TREE`)) all stop Phase 0 before it has a spec folder whose kind and key it can index — `FRAMES_NO_CARRIER` among them, taken on a folder asserting neither — so a run that reached Phase 1 files its entry on the keyed tier and never on the pending ladder (§9). Every one of those stops reaches this step and step 4 (*Ending early*), passing as `key` the one the resolution record carries, or `null` where the run resolved none or the folder asserts no key — an `@<path>` to such a folder, or an address stop — whose entry lands on the pending ladder, or is reported only where `$SPECS_PATH` is unset or misplaced; §7's inference attributes a refused run whose key names no folder of those three kinds by a branch of its own; a stop `branch-check` makes passes the resolved folder's key. Every such call **advances the chained checkpoint** (§3); surface the persisted
    path (or the report-only notice).
 4. **Commit session artifacts (terminal).** Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md`
    and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages
@@ -448,7 +449,7 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
    artifacts (/frames)` and pushes per §4 step 5. It NEVER touches a code/docs repo or the current working
    directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final
-   report.
+   report. On a run that took *Ending early*'s refusal tail, print it after the stop's own message instead.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits a deliverable (each `index.md` is handed off
 separately, before this phase, via `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §2, behind
