@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.80.1] — 2026-11-08
+
+The conformance record's readers, and a reader of the default branch alone at the handoff: batch B37. Update with `dev-workflows` 4.60.1.
+
+### Fixed
+
+- **`phase-handoff` §4.0 names every reader of `_conformance.md`.** `/dev-workflows:ready` reads a PRD folder's record from the default branch alone, for the optional *Delivery verified* stage `dev-workflows` 4.60.0 added; `/docs-workflows:document` and `/docs-workflows:release-notes` read every record in scope from the working tree. The row named only `/conformance`'s own later runs and `/implement`'s follow-up read-back.
+- **The advisory class allows for a reader of the default branch alone.** The advisory array promises that what reads the artifact reads your working copy, which is false for `/ready` and the PRD record: declined, its delivery check reports *not verified* until the record merges. §4.0 now says the producer names such a reader in a line above the array, and §4.1's advisory clause defers to that line.
+
 ## [1.80.0] — 2026-11-08
 
 The specs-repository git primitives move into one tested script: GIT-G1 Part 1. Needs nothing from the other plugins' releases.

@@ -466,7 +466,7 @@ presents, verbatim with the count filled in: `This record withdraws <N> follow-u
 on another clone skips them only once the record is on the default branch; declined, it keeps them in
 this working copy alone.`
 
-On every PRD run, print one more line above whichever array this phase presents, below the `withdraws:` line where there is one, verbatim: `/dev-workflows:ready reads this record only on the default branch — declined, its delivery check reports not verified until the record merges.` The advisory array's second option speaks of the working copy, which `/ready` does not read (`workflows-core:phase-handoff` §4.0's *advisory* class).
+On every PRD run, print one more line above whichever array this phase presents, below the `withdraws:` line where there is one, verbatim: `/dev-workflows:ready reads this record only on the default branch — declined, its delivery check reports not verified until the record merges.` The advisory array's second option speaks of the working copy, which `/ready` does not read, and the handoff's register of classes provides for such a line in its *advisory* class.
 
 **Print the edits Phase 5.5 declares** above whichever array this phase presents — above the
 `withdraws:` line and the `/ready` line, where they are printed, and before the one line §4.3 prints immediately above the array
