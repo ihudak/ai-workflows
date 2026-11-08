@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Fix every defect the 2026-11-04 live-check round found: the nine filed in to-fix as LC29–LC37, R1's plan-conflict question, and the five more (K1–K5) its run feedback shows in the shipped text. The next live round can then verify them.
+**Goal:** Fix every defect the 2026-11-04 live-check round found: the nine filed in to-fix as LC29–LC37, R1's plan-conflict question, and six more (K1–K5 and K7) that its run feedback shows in the shipped text. The next live round can then verify them.
 
 **Architecture:** A fix batch over five plugins:
 1. Two new shared pieces in `workflows-core`, a script and a reference, then their callers.
@@ -140,7 +140,7 @@ Almost every change is command, agent or reference prose. Two Python scripts cha
     - `created` = `before_xy == null and not in_head and after_xy != null`.
     - `changed` = `before_xy != after_xy or before_fp != after_fp`.
   - **Exit codes:** `0` done; `2` cannot run (not a git work tree, bad arguments, an unreadable snapshot file).
-  - **Encoding.** Path bytes are decoded with `surrogateescape`, and `json.dumps` carries the surrogates as escapes, so `compare` reads a non-UTF-8 path back to the same key.
+  - **Encoding.** Path bytes are decoded with `surrogateescape`. Output is `json.dumps(…, ensure_ascii=False)`, written to stdout as UTF-8 with `errors='backslashreplace'`. So every valid character appears as itself, and only a lone surrogate from a non-UTF-8 byte appears as a `\udcXX` escape. `compare` reads that back to the same key, and the orchestrator never decodes an escape for an ordinary path.
 
 - [ ] **Step 1: Write the failing selftest** `tree-snapshot.py --selftest`. It builds temporary repositories and asserts each of the following:
   - **Records and fingerprints.** A modified tracked file, an untracked file inside an untracked directory, and a deleted file each give their own record. Their fingerprints are the `git hash-object --no-filters` sha, the same sha form, and `-`.
@@ -171,7 +171,7 @@ Almost every change is command, agent or reference prose. Two Python scripts cha
 
 ### Task 2: every multi-path porcelain-and-fingerprint read goes through `tree-snapshot.py` (LC34, K7, part 2)
 
-**Files** (enumerate the sites with `grep -rn -- '--no-filters' plugins/*/commands plugins/*/references` before editing; the list below is the expected set):
+**Files.** Enumerate the sites before editing with `grep -rn -e 'no-filters' -e '§2.2' plugins/*/commands plugins/*/references`, and read every hit. A site may spell the recipe out, or cite `code-handoff` §2.2 for it. The list below is the expected set:
 - `plugins/product-workflows/commands/epics.md`: Phase 7.4 step c, `:915–925`, and its comparison paragraph after the agents return, `:927`.
 - `plugins/dev-workflows/commands/ready.md`: Phase 5 step 2a, `:491–503`.
 - `plugins/dev-workflows/commands/conformance.md`: Phase 5.5, `:421–429`.
@@ -181,7 +181,8 @@ Almost every change is command, agent or reference prose. Two Python scripts cha
 - `plugins/dev-workflows/commands/implement.md`:
   - Phase 1.4 step 1's `pre_existing_dirty` capture, and its Pre-Phase 3.5 re-read, `:756`;
   - the *A check run's files* rule, `:760–775`.
-- `plugins/dev-workflows/commands/vuln.md` Step 1.5 and `plugins/dev-workflows/commands/upgrade.md` Phase 0.5, where each takes the same many-path read.
+- `plugins/dev-workflows/commands/vuln.md`: Step 1.5, and its per-CVE re-read (`:70`).
+- `plugins/dev-workflows/commands/upgrade.md`: Phase 0.5.
 - `plugins/dev-workflows/references/code-handoff.md` §2.2, `:63–73`. It stays the **definition** of the fingerprint. It gains one sentence saying that a read of many paths is taken with `tree-snapshot.py`, which implements this recipe byte for byte. Carve-out 1's single-path fingerprint at commit time (`:65`) stays a one-path command.
 - `plugins/dev-workflows/scripts/run-state.py`: the `files` members below, in `KEYS`, `KEYS_LINE` and the selftest's key list.
 - Each command's docs page, where it describes the read.
@@ -191,7 +192,11 @@ Almost every change is command, agent or reference prose. Two Python scripts cha
 - Produces: `run-state.py` `files` members `snapshot_before` and `snapshot_after`, typed as file paths like the other `files` members. Their files are named from the template `dw-impl-snapshot-XXXXXX`, so `remove` deletes them.
 
 - [ ] **Step 1:** At each site, replace the prose that spells out the porcelain parsing, the prefix stripping and the per-path fingerprint commands with:
-  - one `snapshot` call per read the site already takes, its output in a `command mktemp -t <template>` file under the session's scratchpad (`workflows-core:run-flags` §7). The templates are `dw-impl-snapshot-XXXXXX` for `/implement`, `/vuln` and `/upgrade`; `dw-epics-snapshot-XXXXXX` for `/epics`, listed in its `temp_files` (`epics.md:894`); and each other command's existing temp-file convention, removed where it removes its own;
+  - one `snapshot` call per read the site already takes, its output in a `command mktemp -t <template>` file under the session's scratchpad (`workflows-core:run-flags` §7). The templates:
+    - `dw-impl-snapshot-XXXXXX` for `/implement`, which `run-state.py remove` deletes;
+    - `dw-vuln-snapshot-XXXXXX` and `dw-upgrade-snapshot-XXXXXX`, added to `/vuln`'s and `/upgrade`'s removal lists (`vuln.md:314`, `upgrade.md:243`), since neither uses run state;
+    - `dw-epics-snapshot-XXXXXX` for `/epics`, listed in its `temp_files` (`epics.md:894`);
+    - each other command's existing temp-file convention, removed where it removes its own;
   - after the agents return, or after the check run, the same calls again, then `compare`.
 
   `/implement` records both paths in run state (`files.snapshot_before` / `files.snapshot_after`), so a compaction during a long check run cannot lose them.
@@ -200,10 +205,10 @@ Almost every change is command, agent or reference prose. Two Python scripts cha
   - *a file the agent created* is `created`;
   - *changed while the agents ran* is `changed`.
 
-  On `/implement`:
+  On `/implement`, every category the command distinguishes today stays distinct:
   - **absent** is `created`;
   - **clean tracked** is `clean_before`;
-  - **dirty before** is `before_xy != null`.
+  - each dirty-before category `pre_existing_dirty` splits today stays split, read from `before_xy` and `before_fp` beside `pre_existing_dirty`'s own record. Never collapse them into one `before_xy != null` test.
 
   Each site's check of the paths an agent **returned** still tests `HEAD` itself (`git cat-file -e "HEAD:./<path>"`) for a returned path the snapshots do not list, since an ignored file an agent created has no record on either side.
 - [ ] **Step 3:** Sweep the moved literal strings across `plugins/`, counting each before and after (refinement 7): `hash-object --no-filters`, `readlink -n`, `IFS=`, `show-prefix`, `--untracked-files=all`. Every remaining copy must be one the script does not replace (a single-path read, `code-handoff` §2.2's definition, `phase-handoff` §2.3's staging read), and the commit message says why each stays.
@@ -246,8 +251,13 @@ Almost every change is command, agent or reference prose. Two Python scripts cha
 
 **Interfaces:**
 - Produces: `scan-refresh` with two entry points. The loader recognises each as the first word of a code span in a heading (`plugins/workflows-core/skills/reference/SKILL.md:9–11`):
-  - `### Entry point: \`refresh-question\``, loaded as `Skill(skill: "workflows-core:reference", args: "scan-refresh refresh-question")`. The caller supplies `session_repo` (its top level and slug, or `none`) and `asks` (`true`, or `false` for a caller with a fixed policy). Every asking caller's list is treated as not yet known: each one's repository gate can add repositories after the question. It returns the answer and, per repository, the brief's `refresh:` block: `switch_to_default_branch`, `pull`, and `read_default_by_ref` where true.
-  - `### Entry point: \`late-join\``, run once a caller's repository list settles. Where the session's repository joined the list after the question was answered with an answer that did not consider it, it asks the four-option question then, as `/epics`' Phase 4 step 4 does today.
+  - `### Entry point: \`refresh-question\``, loaded as `Skill(skill: "workflows-core:reference", args: "scan-refresh refresh-question")`. It returns the answer and, per repository, the brief's `refresh:` block: `switch_to_default_branch`, `pull`, and `read_default_by_ref` where true. The caller supplies:
+    - `session_repo`: its top level and slug, or `none`;
+    - `asks`: `true`, or `false` for a caller with a fixed policy;
+    - `scan_list`: `known` with its slugs, or `unknown`.
+
+    `/epics` passes `known` where its picker or manual list has answered, and `unknown` otherwise, as today (`epics.md:349`). `/specify`, `/design`, `/create-ard` and `/update-spec` always pass `unknown`, because each one's repository gate can add repositories after the question.
+  - `### Entry point: \`late-join\``, run by a `known` caller once its repository list settles. Where the session's repository joined that list after the three-option question was answered, it asks the four-option question then, as `/epics`' Phase 4 step 4 and its `REPO_MISSING` re-dispatch do today. An `unknown` caller never needs it, since its question already covered the session's repository.
 
 - [ ] **Step 1: Write the reference.**
   - **Move `/epics`' text into it, unchanged in meaning:**
@@ -260,7 +270,7 @@ Almost every change is command, agent or reference prose. Two Python scripts cha
   - **The fixed-policy case.** Where `asks: false`, the session's own repository on another branch is always read by ref (`read_default_by_ref: true`). `code-scanner` resolves the ref itself with `remote set-head --auto` and `read-only-repos` §3's chain, returning `REFRESH_BLOCKED` only where the chain is exhausted (`code-scanner.md:62–63`).
   - **The authority boundary.** Keep `read-only-repos` §4 as the authority on how a read by ref is done; this reference decides only when.
 - [ ] **Step 2: Rewire the callers.**
-  - `/epics`, `/specify`, `/design` and `/create-ard` replace their refresh step with the citation. `/update-spec` names it where it asks `/specify`'s question.
+  - `/epics`, `/specify`, `/design` and `/create-ard` replace their refresh step with the citation and their own `scan_list` value, as the Interfaces block says. `/update-spec` names it where it asks `/specify`'s question. `/epics`' Phase 4 step 4 and its `REPO_MISSING` re-dispatch cite `late-join`.
   - Each brief's `refresh:` lines become "per `scan-refresh`'s mapping for this repository".
   - Each caller's `prep` handling cites the failed-read handling, and its report gains the stale-ref line.
   - `/docs-audit` cites the fixed-policy case.
@@ -332,12 +342,12 @@ Almost every change is command, agent or reference prose. Two Python scripts cha
 - [ ] **Step 1 (part `version-line`, `:515`).** Amend the paragraph in place. Once the cap is spent, this stays a reporting rule for every command, save that `/design`, `/specify` and `/update-spec` first take one `overlap-reader` read of the edits that followed the last review. That read is not a review and raises no cap. The version line then names the read and its count of conflicts, and still says the verdict predates the edits.
 - [ ] **Step 2 (part `review`).** Add a paragraph after "an edit after it falls back to the reporting rule above, the cap now spent", headed **The read after the last review**. It says:
   - **When it fires.** Where an edit answering the cap's last review's findings, or a decision settled at its question, follows that review, a command that dispatches `overlap-reader` (`/design`, `/specify`, `/update-spec`) dispatches it once more, before the handoff.
-  - **The brief.** `caller` set to the read after the last review, and `scope: all`. `changed` lists each edit made after that review: its id or section, and its source (`review`, or `decision`). The command's own inputs come as its play-back read passes them: `artifact_path`; `session_path` (absent on `/update-spec`); `spec_path` (on `/design` only); `ard_paths` and `applicable_ard`.
+  - **The brief.** `caller` set to the read after the last review, and `scope: all`. `artifact_path` is the written artifact's path, never `none`. `changed` lists each edit made after that review: its id or section, and its source (`review`, or `decision`). The command's other inputs come as its play-back read passes them: `session_path` (absent on `/update-spec`); `spec_path` (on `/design` only); `ard_paths` and `applicable_ard`.
   - **Its conflicts.** Each conflict it returns is asked at its own question, as the command asks a play-back's conflicts. A read that returns none asks nothing.
-  - **No loop.** Edits that answer this read's own conflicts are read by the orchestrator's inline rule (*An inline fix is read against what it overlaps*), which runs on every edit as before, and are not read by the agent again.
+  - **No loop.** Edits that answer this read's own conflicts are not read again by the agent, and the inline-fix rule (*An inline fix is read against what it overlaps*, which covers an inline edit answering a review finding) does not reach them. The version line names each such edit as read by nothing further.
   - **The declined case.** Where the unspent re-review was declined, so the cap was never spent, no such read follows. The version line says the verdict predates the edits, as now: the person chose to go on without a review.
   - **The other commands.** Every other command reports as now. Do not write a list; re-derive which commands the rule reaches from its own text.
-- [ ] **Step 3: The agent.** Add the caller value to `overlap-reader`'s `caller` input. Widen its `description` and first paragraph from "before a play-back gate" to cover this read, keeping the description under 600 characters. Update the three workflow-map lines and the agents page.
+- [ ] **Step 3: The agent.** Add the caller value to `overlap-reader`'s `caller` input, and widen its `changed` input (`overlap-reader.md:18`), which today serves only `/design`'s post-write read and `/update-spec`'s reads, to this read too. Widen its `description` and first paragraph from "before a play-back gate" to cover this read, keeping the description under 600 characters. Update the three workflow-map lines and the agents page.
 - [ ] **Step 4: The commands.**
   - In `/design`'s and `/specify`'s cap paragraphs, add one sentence citing the rule, with no copy of its text.
   - In `/update-spec`, at `:131`, add one sentence saying that its read after the last review omits `session_path`, as its play-back read does (`:111`).
