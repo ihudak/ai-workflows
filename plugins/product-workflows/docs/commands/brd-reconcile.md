@@ -653,71 +653,6 @@ only in a report.
   what was sent and its whole value is that it is byte-identical to the customer's copy. An
   overturned bundle document is named in the reconciliation record instead.
 
-## Where the route goes next
-
-This is where the BRD-to-PRD route **hands over** for a slice the customer reviewed — a slice needing no review hands over from [`/brd-interview`](brd-interview.md) — not where it ends. A reconciled BRD — decisions
-frozen, dependents swept, every artifact under the parent checked — is the state the PRD pipeline
-was waiting for, and Phase 14 offers all three of the route's entry points into the PRD pipeline against the same
-`<SLICE-KEY>` — **on a slice, on a run that left nothing to re-enter for**, and each under the
-precondition the offered command actually enforces:
-
-| Handover | Offered when | Why |
-|---|---|---|
-| [`/create-prd <SLICE-KEY>`](create-prd.md) (PM) | **On a slice**, and only where no ledger row is still `unallocated` and one is `covered-here` | Exactly the three refusals its own Phase 0 raises; offering it otherwise hands over a run that stops immediately |
-| [`/create-ard <SLICE-KEY>`](create-ard.md) (PA, optional) | **On a slice**, with no further condition | Consults no tracker; the PRD gate runs on every route, but its `absent` branch proceeds, so no wait on an unauthored PRD; it reads neither `claims:` nor the ledger as an authoring input |
-| [`/specify <SLICE-KEY>`](specify.md) (PE) | **On a slice**, with no further condition | The same reasons, read out of its own Phase 0 rather than assumed symmetric with `/create-prd`'s |
-
-**A root BRD never reaches this phase.** `/brd-reconcile` refuses one at its own Phase 0, with
-`BRD_RECONCILE_ROOT_LEVEL`, naming `/brd-split <BRD-KEY> "<how to cut it>"` as the way to carve a
-slice first. `prd.md`, `ard.md` and `specification.md` are authored in the `PRD-` slice folders
-under a BRD, one of each per slice, and every one of the three also refuses a `BRD-` folder in its
-own Phase 0 (`CREATE_PRD_BRD_NOT_SLICED`, `CREATE_ARD_BRD_NOT_SLICED`, `SPECIFY_BRD_NOT_SLICED`) —
-so by the time Phase 14 makes this offer, the level question has already been settled twice over,
-once by this command's own Phase 0 and once by each command it offers.
-
-Both `/create-prd` tests are read over the slice's **own claimed ledger rows** — narrowed by
-`brd-link.md`'s `claims:` — and
-off the ledger **file**, never off a `ledger:` line, whose `unallocated` term is a resolved count
-that also holds rows a child has not walked yet. Where either test fails the option is **dropped from
-the choice list** rather than annotated, and the text says which one failed: a row still `unallocated` is
-walked to a terminal disposition by [`/brd-split`](brd-split.md), while a slice with no `covered-here`
-row holds no PRD of its own at all.
-
-Each takes **one** address: a second positional token is refused (`CREATE_ARD_ONE_ADDRESS` / `SPECIFY_ONE_ADDRESS`), on every route,
-so neither of the optional two is ever offered with an Epic beside it. The three are **alternatives,
-not a sequence** — neither of the unconditional two waits on the PRD — and **all three carry a merge
-clause** — a note of what must reach the default branch first, worded for how this run's handoff ended — because each runs `require-on-main` on the slice's `decisions.md`
-before it reads the register, and the register is one of the files this command hands off: each
-would stop on a register this run wrote and has not merged. The
-clause names that wait and no other — `/create-prd`'s gate on `idea.md` and the other two's on
-`prd.md` target files this command does not write. No option in either of
-Phase 14's choice lists carries `(Recommended)`: which one is right depends entirely on what the reconciliation left behind.
-An option whose condition this run did not meet is **dropped** from the choice list rather than annotated,
-so every option an operator sees is one that applies.
-
-The same phase also offers the route's **re-entries** — another [`/brd-interview`](brd-interview.md)
-round where this run reopened a decision and left every round closed, or where the round still
-open holds a deferred or untagged question for the resume to work, after a grounding pass where it
-holds one that needs grounding; a reopened decision behind a round held open only for the customer
-is named as waiting behind the re-package, since `/brd-interview` puts its question only in a round
-it opens — [`/brd-package`](brd-package.md) where questions remain for
-the customer, [`/prd-ground --rebaseline`](prd-ground.md) where the review challenged a code claim,
-and a second `/brd-reconcile` pass on this same review once a dependent recorded-not-written has its
-own register on the default branch.
-
-**Advancing and re-entering are two lists, and a run gets exactly one of them.** Phase 14 decides
-whether the slice can advance from what the run left behind — any reopened decision, any `[C]` still held for the
-customer, any finding the review left to re-derive, any dependent it could only record — and where
-any of those is true the three BRD-route options are **dropped**, not annotated. That is a
-refusal only this phase can make, unlike the level refusal above, which each of the three makes
-for itself: `/create-ard` on the BRD route and `/specify` on the BRD route run no gate
-that catches a reopened decision — their gate on `decisions.md` tests which ref the register is on,
-never what it holds — since routing an `open` or `reopened` record into their own
-open-questions section is correct behaviour rather than a stop, so an operator sent there would get
-an artifact built around a hole with nothing having refused it. Each re-entry option is likewise
-conditioned on its own trigger and dropped otherwise, so the list an operator actually sees is
-short and every option on it names something this run genuinely left.
-
 ## Example
 
 Reconcile the review that came back for a synthetic customer BRD's slice, from wherever the
@@ -761,12 +696,85 @@ the slice can advance — and this slice's ledger leaves no row `unallocated` an
 ```
 
 Had this ledger left a row `unallocated`, or left none `covered-here`, the first line would be
-dropped from the offer and the stop would say which test failed; the other two would still be
+dropped from the offer and the offer would say which test failed; the other two would still be
 offered. Had the run instead reopened a decision or left a question held for the customer,
 the slice could not advance, and Phase 14 would offer the re-entry the trigger names — another
 `/brd-interview` round where every round is closed, or the resume of an open one that is not held
 only for the customer, a re-package, or a `/prd-ground --rebaseline` pass — never the three above. Whatever else it offers, a record its propagation sweep reopened in a
 dependent BRD is named beside the list with `/brd-interview` on that dependent's key.
+
+## What it offers next
+
+Phase 14 presents one of two lists, decided by what this run left behind, and runs nothing itself. No option is recommended, and an option whose condition does not hold is dropped rather than annotated. An offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
+
+- **Nothing left to re-enter for** → [`/create-ard <SLICE-KEY>`](create-ard.md) and [`/specify <SLICE-KEY>`](specify.md), and [`/create-prd <SLICE-KEY>`](create-prd.md) where the slice is PRD-eligible — each after the merge. Where the slice's `coverage-ledger.md` is absent or unreadable while its `brd-link.md` claims rows, `/create-prd` is dropped, nothing is named in its place, and the run reports the ledger's path. Reconciling another BRD or slice is named in the prose list.
+- **A decision reopened, a question held for the customer, a code claim challenged, or a dependent only recorded** → only the re-entries those triggers fire: another [`/brd-interview`](brd-interview.md) round; [`/brd-package`](brd-package.md) again, after the merge; [`/prd-ground <BRD-KEY> --rebaseline`](prd-ground.md), after the merge; or this command again on the same review, after the merge and once each dependent's register is on the default branch.
+- **Beside either list** → `/brd-interview <DEPENDENT-KEY>` for each dependent BRD whose decision the propagation sweep reopened; and, where this run froze a `[CD#n]`, [`/prd-proposal <SLICE-KEY>`](prd-proposal.md), which prices the slice once its `prd.md` is on the default branch.
+
+The detail follows.
+
+This is where the BRD-to-PRD route **hands over** for a slice the customer reviewed — a slice needing no review hands over from [`/brd-interview`](brd-interview.md) — not where it ends. A reconciled BRD — decisions
+frozen, dependents swept, every artifact under the parent checked — is the state the PRD pipeline
+was waiting for, and Phase 14 offers all three of the route's entry points into the PRD pipeline against the same
+`<SLICE-KEY>` — **on a slice, on a run that left nothing to re-enter for**, and each under the
+precondition the offered command actually enforces:
+
+| Handover | Offered when | Why |
+|---|---|---|
+| [`/create-prd <SLICE-KEY>`](create-prd.md) (PM) | **On a slice**, and only where no ledger row is still `unallocated` and one is `covered-here` | Exactly the three refusals its own Phase 0 raises; offering it otherwise hands over a run that stops immediately |
+| [`/create-ard <SLICE-KEY>`](create-ard.md) (PA, optional) | **On a slice**, with no further condition | Consults no tracker; the PRD gate runs on every route, but its `absent` branch proceeds, so no wait on an unauthored PRD; it reads neither `claims:` nor the ledger as an authoring input |
+| [`/specify <SLICE-KEY>`](specify.md) (PE) | **On a slice**, with no further condition | The same reasons, read out of its own Phase 0 rather than assumed symmetric with `/create-prd`'s |
+
+**A root BRD never reaches this phase.** `/brd-reconcile` refuses one at its own Phase 0, with
+`BRD_RECONCILE_ROOT_LEVEL`, naming `/brd-split <BRD-KEY> "<how to cut it>"` as the way to carve a
+slice first. `prd.md`, `ard.md` and `specification.md` are authored in the `PRD-` slice folders
+under a BRD, one of each per slice, and every one of the three also refuses a `BRD-` folder in its
+own Phase 0 (`CREATE_PRD_BRD_NOT_SLICED`, `CREATE_ARD_BRD_NOT_SLICED`, `SPECIFY_BRD_NOT_SLICED`) —
+so by the time Phase 14 makes this offer, the level question has already been settled twice over,
+once by this command's own Phase 0 and once by each command it offers.
+
+Both `/create-prd` tests are read over the slice's **own claimed ledger rows** — narrowed by
+`brd-link.md`'s `claims:` — and
+off the ledger **file**, never off a `ledger:` line, whose `unallocated` term is a resolved count
+that also holds rows a child has not walked yet. Where either test fails the option is **dropped from
+the choice list** rather than annotated, and the text says which one failed: a row still `unallocated` is
+walked to a terminal disposition by [`/brd-split`](brd-split.md), while a slice with no `covered-here`
+row holds no PRD of its own at all. Where `coverage-ledger.md` is absent, or present and unreadable, while `brd-link.md` claims rows — reachable on a `--sent` run, since this command gates no ledger of its own — neither test can be read: the option is dropped, nothing is named in its place, and the run reports the path, as missing or as unreadable with the read error, since a ledger that cannot be read is not an empty gate set.
+
+Each takes **one** address: a second positional token is refused (`CREATE_ARD_ONE_ADDRESS` / `SPECIFY_ONE_ADDRESS`), on every route,
+so neither `/create-ard` nor `/specify` is ever offered with an Epic beside it. The three are **alternatives,
+not a sequence** — neither of the unconditional two waits on an unauthored PRD, though either stops on a `prd.md` that sits on an unmerged branch, a state this command cannot test for you — and **all three carry a merge
+clause** — a note of what must reach the default branch first, worded for how this run's handoff ended — because each runs `require-on-main` on the slice's `decisions.md`
+before it reads the register, and the register is one of the files this command hands off: each
+would stop on a register this run wrote and has not merged. The
+clause names that wait and no other — `/create-prd`'s gate on `idea.md` and the other two's on
+`prd.md` target files this command does not write. No option in either of
+Phase 14's choice lists carries `(Recommended)`: which one is right depends entirely on what the reconciliation left behind.
+An option whose condition this run did not meet is **dropped** from the choice list rather than annotated,
+so every option an operator sees is one that applies.
+
+The same phase also offers the route's **re-entries** — another [`/brd-interview`](brd-interview.md)
+round where this run reopened a decision and left every round closed, or where the round still
+open holds a deferred or untagged question for the resume to work, after a grounding pass where it
+holds one that needs grounding; a reopened decision behind a round held open only for the customer
+is named as waiting behind the re-package, since `/brd-interview` puts its question only in a round
+it opens — [`/brd-package`](brd-package.md) where questions remain for
+the customer, [`/prd-ground --rebaseline`](prd-ground.md) where the review challenged a code claim,
+and a second `/brd-reconcile` pass on this same review once a dependent recorded-not-written has its
+own register on the default branch.
+
+**Advancing and re-entering are two lists, and a run gets exactly one of them.** Phase 14 decides
+whether the slice can advance from what the run left behind — any reopened decision, any `[C]` still held for the
+customer, any finding the review left to re-derive, any dependent it could only record — and where
+any of those is true the three BRD-route options are **dropped**, not annotated. That is a
+refusal this phase can make and their own Phase 0s cannot — `/brd-interview` makes the same split for a slice that needs no customer review — unlike the level refusal above, which each of the three makes
+for itself: `/create-ard` on the BRD route and `/specify` on the BRD route run no gate
+that catches a reopened decision — their gate on `decisions.md` tests which ref the register is on,
+never what it holds — since routing an `open` or `reopened` record into their own
+open-questions section is correct behaviour rather than a stop, so an operator sent there would get
+an artifact built around a hole with nothing having refused it. Each re-entry option is likewise
+conditioned on its own trigger and dropped otherwise, so the list an operator actually sees is
+short and every option on it names something this run genuinely left.
 
 ## See also
 

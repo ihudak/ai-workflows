@@ -35,7 +35,7 @@ claude plugin update dev-workflows@shipwright
 
 ## What you set on your machine
 
-`dev-workflows` reads four environment variables, and this page lists a fifth, `DOCS_PATH`, only to say the plugin never touches it. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the other three are optional and each degrades to a documented default or a silent skip.
+`dev-workflows` reads four environment variables, and this page lists a fifth, `DOCS_PATH`, only to say the plugin never touches it. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the other three are optional, and each behaves differently when it is missing. `REPOS_PATH` falls back to `/workspace`; where no entry of it exists, [`/design`](commands/design.md) asks you to set it or cancel. An unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off, with a line naming the variable. `GIT_USER_INITIALS` fills the name-or-initials part of a branch name where a repository's convention has one, and the whole branch prefix where the repository documents no convention at all.
 
 ### `SPECS_PATH`
 
@@ -55,7 +55,7 @@ A **read-only** clone of your organisation's architecture repository — its tec
 
 ### `GIT_USER_INITIALS`
 
-Your branch identifier. Branch naming is **repo-rule-first**: every branch-creating command reads the target repo's own documented convention and follows it as written. Where that convention has a name-or-initials segment, `GIT_USER_INITIALS` fills it; where it does not, the convention is followed without it, and this variable is simply unused for that repo.
+Your branch identifier. Branch naming is **repo-rule-first**: every branch-creating command reads the target repo's own documented convention and follows it as written. Where that convention has a name-or-initials segment, `GIT_USER_INITIALS` fills it; where it does not, the convention is followed without it, and this variable is unused for that repo. Where the repo documents no convention at all, this variable is the whole branch prefix.
 
 ### Claude Code's skill-listing budget
 

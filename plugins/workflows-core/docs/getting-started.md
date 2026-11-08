@@ -26,7 +26,7 @@ It does ship seven commands of its own, and one of them is worth running first â
 
 ## What you set on your machine
 
-`workflows-core` reads nine environment variables, on behalf of every plugin in the family. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
+`workflows-core` reads nine environment variables, on behalf of every plugin in the family. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional. Most fall back to a documented default or are skipped silently, but two say so: an unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off with a line naming the variable, and where no entry of `REPOS_PATH`, or of its `/workspace` default, exists, a command that needs the code asks you to set it. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
 
 ### `SPECS_PATH`
 
@@ -46,7 +46,7 @@ A clone of your organisation's architecture repository â€” its technology radar,
 
 ### `GIT_USER_INITIALS`
 
-Your branch identifier. Branch naming is repo-rule-first: where the target repo's own documented convention has a name-or-initials segment, this fills it; where it does not, the variable is simply unused for that repo.
+Your branch identifier. Branch naming is repo-rule-first: where the target repo's own documented convention has a name-or-initials segment, this fills it; where that convention has none, the variable is unused for that repo; and where the repo documents no convention at all, this is the whole branch prefix.
 
 ### `DEV_WORKFLOWS_COST_PRICES`
 

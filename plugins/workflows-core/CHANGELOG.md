@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.78.13] — 2026-11-08
+
+User pages, and the routing graph aligned with two commands: batch B34. Update with `product-workflows` 3.78.6.
+
+### Fixed
+
+- **Environment: the paragraph on `SPECS_PATH` set inside the specs tree is broken up.** It now opens with a short summary of what you see and what to do, then short bullets. The page also says that a run the preflight notices commits nothing to the specs repository, and that a checkout whose `.git` is read-only gets no notice.
+- **Getting started says what each optional variable does when it is missing.** It used to say each one degrades to a default or a silent skip, but two do not: an unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off with a line naming the variable, and a command that needs the code asks for `REPOS_PATH` where no entry of it exists. It also says that `GIT_USER_INITIALS` is the whole branch prefix where a repository documents no branch convention.
+- **The routing graph in `next-phase-offer` matches the commands it describes.** `/product-workflows:specify`, offered after `/create-prd`, carries its merge clause, since it gates the PRD that run wrote. `/update-spec` offers `/dev-workflows:design` for every design it names, those built on the specification it replaced included, not only those citing a superseded or withdrawn ID.
+
 ## [1.78.12] — 2026-11-08
 
 User pages only: batch B33. Needs nothing from the other plugins' releases.

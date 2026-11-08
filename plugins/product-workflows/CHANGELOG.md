@@ -5,6 +5,50 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.78.6] — 2026-11-08
+
+User pages, and six command and agent texts corrected: batch B34. Update with `workflows-core` 1.78.13, whose routing graph says the same of `/create-prd`'s `/specify` offer.
+
+### Fixed
+
+- **Getting started takes a new user through a first run on either route.** The `/idea` steps now say three things: an unanswered question leaves the brief a draft, which is never handed off; the handoff is offered only for a refined brief; and its pull request must merge before `/create-prd` runs, or with no `origin` remote you merge the plugin branch yourself. Three new sections:
+  - *Before you start* lists what the specs repository needs.
+  - *Your first BRD-route run* carries one key through the route, with the merge between steps and what to prepare before `/prd-ground`.
+  - *Where to run it* says how customer-supplied documents are treated.
+
+  The sentence on the optional environment variables now says what each does when it is missing.
+- **Every command page has a *What it offers next* section**, read from the command's own next-step phase. `/brd-reconcile`'s *Where the route goes next* is renamed to match.
+- **A glossary** (`docs/reference/glossary.md`) defines the route's vocabulary, and links each term to the page that owns it. The README spells out BRD, PRD, ARD, PM, PA and PE at first use.
+- **Both workflow diagrams draw every offer one command makes of another command they draw.** The new edges:
+  - `/create-ard` → `/specify`;
+  - `/epics` → `/create-ard`;
+  - `/brd-interview` and `/brd-reconcile` → `/prd-ground`, and `/prd-ground` → `/brd-interview` for a prerequisite slice;
+  - `/create-ard` and `/specify` → `/create-prd` where the folder has no `prd.md`, → `/brd-split` on a slice that cannot take a PRD yet, and → `/prd-proposal`;
+  - `/brd-reconcile` → `/prd-proposal` where it froze a customer decision;
+  - `/prd-proposal` → `/create-ard` or `/specify`;
+  - `/brd-proposal` → `/prd-proposal`;
+  - the PRD-level `/dev-workflows:conformance` → `/dev-workflows:implement`, to fix the code.
+
+  The main diagram adds `/security-workflows:scan` between an Epic's conformance check and its merge, and the page adds a `security-workflows` bullet under *Cross-cutting commands*. The prose now names four re-entries from `/brd-reconcile` (it said two), and says that a command offering itself again is listed on its page rather than drawn.
+- **The workflow page's role and artifact-home tables now match the roles page.** The PA also runs `/harvest-decisions` and `/promote-decisions`. The PE also runs `/update-spec` and the PRD-level `/dev-workflows:conformance`. A PRD-level `specification.md` lives in the PRD folder itself.
+- **Long paragraphs broken up.** These now open with a short summary of what you see and what to do, then short bullets:
+  - the resume pointer's carry-forward rules;
+  - `SPECS_PATH` set inside the specs tree;
+  - the longest bullets on the `/idea`, `/create-prd` and `/create-ard` pages.
+
+  Statements corrected along the way:
+  - an open question is settled only once it is recorded with its answer;
+  - the specs preflight prints no notice on a checkout whose `.git` is read-only, and a run it notices commits nothing to the specs repository;
+  - `/brd-split` on a root needs a slicing instruction, not grounding findings.
+- **`/idea`'s sources are named as its two forms: an inline prompt or a markdown file.** This covers its command page, the command's description, `idea-reader`'s description, and the index and roles pages. The personal vault path is gone from the page, the command and `idea-reader`, which now tells a community post by its thread or comment shape alone.
+- **The agents page** no longer presents its list of agents reached through a named procedure as complete.
+- **Next-step offers that sent you into a stop now say to wait for the merge.** Each offered command gates a file this run hands off, so without the clause the offer handed over a run that stopped:
+  - `/specify`'s BRD-route `/epics <PRD>`, after a PRD-level specification, as the idea route already did;
+  - `/specify`'s `/brd-split <SLICE-KEY>`, for a slice with a row still `unallocated`, as `/create-ard`'s identical offer already did;
+  - `/create-prd`'s `/specify`, named beside the PE option.
+- **`/brd-reconcile` treats an unreadable `coverage-ledger.md` as it treats a missing one**, as the ledger format requires: it names nothing in `/create-prd`'s place, and reports the path with the read error.
+- **`/update-prd` offers to re-run `/epics` only where Epics exist**, as it already did for the specification, the ARD and the release note: its discovery step now finds `epic.md` files too.
+
 ## [3.78.5] — 2026-11-08
 
 User pages only: batch B33. Needs nothing from the other plugins' releases.

@@ -1,6 +1,6 @@
 ---
 name: idea-reader
-description: Turns one idea source (an inline prompt, a markdown file, a community post or a saved file) into a structured source digest for /idea. For markdown it reads exactly the pages and image transcriptions its caller hands over, maps them onto the digest's link arrays and summarises each page; for a community post it captures the demand signals. Follows no link and opens no image itself. Read-only. Model tier assigned by the caller per the model-routing policy (no fixed pin).
+description: Turns one idea source (an inline prompt, or a markdown file such as a note, a saved community post, product feedback or an existing PRD) into a structured source digest for /idea. For markdown it reads exactly the pages and image transcriptions its caller hands over, maps them onto the digest's link arrays and summarises each page; for a community post it captures the demand signals. Follows no link and opens no image itself. Read-only. Model tier assigned by the caller per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Skill"]
 ---
 
@@ -33,7 +33,7 @@ Distill it into `raw_context`; `source_refs: []`.
 **markdown** (`provenance_hint: markdown`) — resolve `argument` to an existing `.md` file (accept an
 absolute path, or one relative to the caller's working directory). Read it, then read every page the
 `walk` took and every transcription in `figures` (*What the caller hands over*, below). For a
-community post (a markdown file under a `Projects/Products/` path, or with a thread/comment shape),
+community post (a markdown file with a thread or comment shape),
 return `provenance: community-post` and additionally extract **demand signals** — requester
 names/handles, upvote/vote counts, recurring asks — into `signals`.
 

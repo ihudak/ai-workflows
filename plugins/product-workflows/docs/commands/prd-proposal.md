@@ -101,6 +101,16 @@ Price an idea-route PRD with nothing but a PRD in the folder:
 
 Same run, graded **tier 1 · Indicative**, ceiling **Low**. Every package is graded Low and carries a declared re-estimate gate; the document carries one document-level gate whose trigger is grounding the folder, and its cost-driver section states outright that the drivers are not known. No brief is written — not because of the flag, but because the brief does not render below tier 2 at all, and the report says so.
 
+## What it offers next
+
+Phase 11 picks one of three option lists by the readiness tier, drops any option whose subject does not exist on this run, and runs nothing itself:
+
+- **Roll it into the programme umbrella** → [`/brd-proposal <BRD-KEY>`](brd-proposal.md), where the folder has a parent BRD. It gates the `proposal.md` this run wrote, so the offer says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
+- **Price the next sibling slice** → `/prd-proposal <SIBLING-SLICE-KEY>`, where some sibling holds no current proposal.
+- **Raise the tier first** → at tier 2, [`/create-ard <KEY>`](create-ard.md); at tier 3, [`/specify <KEY>`](specify.md) — then re-run this command to narrow the range. Neither waits for this run: both gate `prd.md`, which it does not write.
+- **Re-derive it from scratch once the inputs move** → `/prd-proposal <KEY> --redo` — at tiers 1 and 4, where no command raises the tier, and on any run where dropping options would leave fewer than two.
+- **Stop here.**
+
 ## See also
 
 - [Workflow overview](../workflow.md) — where this command sits among the plugin's others.

@@ -35,7 +35,7 @@ claude plugin update prose-style@shipwright
 
 ## What you set on your machine
 
-This plugin reads four environment variables. None is required for a direct-mode `/document` edit, for [`/docs-profile`](commands/docs-profile.md), or for `/docs-init`; a keyed run wants the first, and the rest degrade to a documented default or a silent skip. [Environment](reference/environment.md) has the exact resolution order and failure behaviour for each.
+This plugin reads four environment variables. None is required for a direct-mode `/document` edit, for [`/docs-profile`](commands/docs-profile.md), or for `/docs-init`; a keyed run wants the first. The rest are optional, and each behaves differently when it is missing. `REPOS_PATH` falls back to `/workspace`; where no entry of it exists, a keyed `/document`, and `/release-notes` with diff grounding on, ask you to set it, go on without the repositories, or cancel. `DOCS_PATH` falls back to `/workspace/docs`. `GIT_USER_INITIALS` fills the name-or-initials part of a branch name where a repository's convention has one, and the whole branch prefix where the repository documents no convention at all. [Environment](reference/environment.md) has the exact resolution order and failure behaviour for each.
 
 ### `SPECS_PATH`
 
@@ -51,7 +51,7 @@ Where your product documentation's clone lives, defaulting to `/workspace/docs`.
 
 ### `GIT_USER_INITIALS`
 
-Your branch identifier, used by every run that creates a branch in a documentation repository — `/document` in keyed mode, `/docs-profile`, `/docs-init`, and a standalone [`/docs-brand`](commands/docs-brand.md). Branch naming is repo-rule-first: each reads the target repo's own documented convention and follows it as written, and this variable only fills a name-or-initials segment where the convention asks for one. A repository `/docs-init` has just created documents no convention yet, so there the fallback prefix and this variable are the whole of it.
+Your branch identifier, used by every run that creates a branch in a documentation repository — `/document` in keyed mode, `/docs-profile`, `/docs-init`, and a standalone [`/docs-brand`](commands/docs-brand.md). Branch naming is repo-rule-first: each reads the target repo's own documented convention and follows it as written, and this variable fills a name-or-initials segment where the convention asks for one. Where a repository documents no convention — one `/docs-init` has just created, for one — the fallback prefix and this variable are the whole of it.
 
 ### Claude Code's skill-listing budget
 

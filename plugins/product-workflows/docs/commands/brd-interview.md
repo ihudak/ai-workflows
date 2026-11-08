@@ -594,9 +594,9 @@ walks the `[V]`s past the operator one at a time, holds the `[C]`s, writes the r
 to branch, commit, push, and open a pull request. Its next-step offer names
 [`/brd-package`](brd-package.md) **only when both of that command's own content gates would pass** —
 every question in every round carrying a terminal disposition or held for the customer, *and* the
-register actually holding something for a customer to decide. A round still holding a deferred,
+register actually holding something for a customer to decide — and offers another round beside it, to take only if something has changed. A round still holding a deferred,
 needs-grounding or untagged question is offered another interview round or a re-grounding pass
-instead. A BRD whose closed round 1 record carries no requirement-defect line, and which owns
+in place of the packaging step. A BRD whose closed round 1 record carries no requirement-defect line, and which owns
 defects nobody has asked, is not offered the packaging step either: it is offered the `--round 1`
 re-open that asks them, recommended, because a package built first would go out without them. A BRD
 whose questions were all settled from the findings — nothing left for a customer at all — is told
@@ -615,6 +615,18 @@ Re-opening a closed round later, with its cause recorded:
 ```
 /product-workflows:brd-interview ACME-001-01 --round 1
 ```
+
+## What it offers next
+
+Phase 11 offers what the state this run leaves allows, and runs nothing itself. The deciding question is whether [`/brd-package`](brd-package.md) would accept this BRD now. Only the `--round 1` re-open carries a recommendation; an offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
+
+- **Ready to package** → `/brd-package <BRD-KEY>`, after the merge; or another round of this command, only if something changed (findings, a requirement defect, a re-grounding, a flagged code defect, or a decision reopened elsewhere — the last two only once every round is closed); or interview another BRD or slice.
+- **A question still in a state packaging refuses** (deferred, needs grounding, untagged) → another round of this command, or [`/prd-ground <BRD-KEY>`](prd-ground.md) for a question no finding bears on yet; `/brd-package` is left out.
+- **Requirement defects that belong to a closed round 1 and nobody has asked yet** → `/brd-interview <BRD-KEY> --round 1` (recommended), which re-opens round 1 to ask them; `/brd-package` is left out.
+- **Nothing left for the customer** → the slice is decided and needs no reconciliation: [`/create-ard <BRD-KEY>`](create-ard.md) (PA, optional), [`/specify <BRD-KEY>`](specify.md) (PE), and [`/create-prd <BRD-KEY>`](create-prd.md) (PM) only where the slice is PRD-eligible — each after the merge — then `/prd-ground <BRD-KEY> --rebaseline`, the one thing this run can offer that could make a new round askable, and interviewing another BRD or slice. The question has room for only some of these: interviewing another BRD or slice is listed in prose only, and so is the `--rebaseline` pass where the slice is PRD-eligible; type either to take it. Neither packaging nor another round is offered.
+- **Nothing left for the customer, but a decision reopened elsewhere waits on this round** → another round of this command, which puts its question; the BRD is not decided.
+
+Beside every list the run names each requirement defect left waiting on an open round, and each reopened decision waiting on this round. [`/brd-reconcile`](brd-reconcile.md) is never offered here: no review has been asked for yet.
 
 ## See also
 

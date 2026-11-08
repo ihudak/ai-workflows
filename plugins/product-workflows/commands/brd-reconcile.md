@@ -2985,9 +2985,9 @@ this phase offers.
   from the array** and say which one failed: a row still `unallocated` is walked to a
   terminal disposition by `/product-workflows:brd-split <SLICE-KEY>`, which on a slice runs allocate-only,
   while a slice with no `covered-here` row holds no PRD of its own at all and §5 is where its
-  requirements went. **Where `coverage-ledger.md` is absent while that `brd-link.md` claims rows** —
+  requirements went. **Where `coverage-ledger.md` is absent, or present and unreadable, while that `brd-link.md` claims rows** —
   reachable on a `--sent` run, whose step 7 gates no ledger — neither test can be read: drop the
-  option, name nothing in its place, and report the missing path, as
+  option, name nothing in its place, and report the path, as missing or as unreadable with the read error, as
   `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 requires (it is not an empty gate set). Dropping rather than annotating is
   this phase's rule for every option whose condition does not hold, and here the condition is a hard
   refusal in another command's Phase 0.

@@ -28,7 +28,7 @@ The two effort-proposal commands `/prd-proposal` and `/brd-proposal` price a gra
 
 ## Docs tree
 
-`product-workflows` carries 31 pages (`find plugins/product-workflows/docs -name '*.md' | wc -l`) — the four top-level pages `docs/README.md` (the index), `getting-started.md`, `workflow.md` and `roles-and-phases.md`, plus `brd-workflow.md`, 17 command pages under `docs/commands/` (`ls plugins/product-workflows/docs/commands | wc -l`) and 9 reference pages under `docs/reference/`.
+`product-workflows` carries 32 pages (`find plugins/product-workflows/docs -name '*.md' | wc -l`) — the four top-level pages `docs/README.md` (the index), `getting-started.md`, `workflow.md` and `roles-and-phases.md`, plus `brd-workflow.md`, 17 command pages under `docs/commands/` (`ls plugins/product-workflows/docs/commands | wc -l`) and 10 reference pages under `docs/reference/`, `glossary.md` among them.
 
 ## Workflow map
 

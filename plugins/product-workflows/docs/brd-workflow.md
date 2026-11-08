@@ -1,6 +1,7 @@
 # BRD-to-PRD route
 
-`/idea → /create-prd` starts from a prompt, file, community post, or existing PRD that the PM
+`/idea → /create-prd` starts from a prompt or a markdown file — a note, a saved community post,
+product feedback or an existing PRD — that the PM
 already owns and can shape freely before anything is written down. The BRD-to-PRD route starts
 somewhere the PM has far less control: a business requirements document the customer supplied,
 handed over as-is — typically long, internally inconsistent in places, and not something a team
@@ -46,8 +47,10 @@ flowchart TD
     interview -->|"decisions.md + held [C] questions"| package
     package -->|bundle sent| review
     review -->|answers come back as one file| reconcile
-    reconcile -.->|a decision reopened, or a question askable again| interview
+    reconcile -.->|"a decision reopened, a question askable again, or a dependent slice to re-decide"| interview
     reconcile -.->|questions still held for the customer| package
+    reconcile -.->|"the review challenged a code claim — --rebaseline"| ground
+    interview -.->|"a question no finding bears on yet, or a --rebaseline"| ground
     reconcile -->|slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here| createprd
     reconcile -->|slice key + the BRD route — nothing left to re-enter for| createard
     reconcile -->|slice key + the BRD route — nothing left to re-enter for| specify
@@ -56,6 +59,19 @@ flowchart TD
     interview -.->|nothing for the customer to review — no reconciliation needed| specify
     splitroot -.->|"BRD route — each slice, a PRD- folder, at any readiness"| prdproposal
     prdproposal -->|"BRD route — each included slice's proposal.md, rolled up for the BRD"| brdproposal
+    prdproposal -.->|"tier 2 — raise the tier, then re-price"| createard
+    prdproposal -.->|"tier 3 — raise the tier, then re-price"| specify
+    brdproposal -.->|"a slice stale or excluded — re-price it"| prdproposal
+    createard -.->|"a prd.md — price against the ARD"| prdproposal
+    specify -.->|"a prd.md — price against the specification"| prdproposal
+    reconcile -.->|"a [CD#n] frozen — re-price the slice"| prdproposal
+    createard -.->|"no prd.md — author the PRD"| createprd
+    specify -.->|"no prd.md — author the PRD"| createprd
+    createard -.->|"BRD slice, no prd.md — a row still unallocated"| splitslice
+    specify -.->|"BRD slice, no prd.md — a row still unallocated"| splitslice
+    createard -.->|"an empty slice — keep or remove it"| splitroot
+    specify -.->|"an empty slice — keep or remove it"| splitroot
+    ground -.->|"decide a prerequisite slice first"| interview
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
     classDef cust fill:#f3f4f6,stroke:#6b7280,color:#1f2937
@@ -69,12 +85,19 @@ each of the three reads what this route already wrote, at its own altitude, besi
 under `$DOCS_PATH` and, for [`/create-ard`](commands/create-ard.md) and `/specify`, the code under `$REPOS_PATH`, and stamps
 `consumed_by` on what it took. The one record any of them adds to the route's own is
 `/create-prd`'s: an `[AS#n]` in `decisions.md` for a gap only the customer can settle, which
-[`/brd-package`](commands/brd-package.md) then carries to the customer.
+[`/brd-package`](commands/brd-package.md) then carries to the customer. Two of them also hand back
+into the route: on a slice with no `prd.md`, `/create-ard` and `/specify` offer `/create-prd` where
+the slice can take a PRD, and otherwise `/brd-split` — on the slice, to allocate a row still
+`unallocated`, or on its parent, to keep or remove a slice left empty. Where a `prd.md` exists,
+both name `/prd-proposal`, priced against what they just wrote.
 
 **The proposals box is not part of the route either.** [`/prd-proposal`](commands/prd-proposal.md) prices one slice — any slice
 the split carved, at whatever readiness it has reached — and `/brd-proposal` rolls the included
 slices' proposals up into one for the BRD. Both are optional, and neither gates a step of the
-route.
+route. Below tier 4, `/prd-proposal` also offers the command that would raise the slice's tier —
+`/create-ard` at tier 2, `/specify` at tier 3 — saying that a re-run afterwards narrows the range;
+and `/brd-proposal` sends each slice it found stale or excluded back to `/prd-proposal` for
+re-pricing, then offers itself once those land.
 
 **The `Off-platform` box is the route's defining feature, not a decoration.** Everything else in
 the diagram is a command this plugin runs; that box is a wait, and nothing in the plugin can
@@ -101,9 +124,18 @@ on a revised document, `/frames` over its `design/`, and
 while every one of `/prd-ground`, `/brd-interview`, `/brd-package` and `/brd-reconcile` refuses a
 resolved root outright. So a requirement ordinarily reaches a fate twice —
 once by the root's walk, once by the slice's — before it either has a home to be built in or a
-recorded reason it does not. The two dashed edges leaving `/brd-reconcile` are different in kind:
-they are not capped, because a review can legitimately reopen a decision or leave a question the
-customer did not answer, and either state is settled by running the command that owns it again.
+recorded reason it does not. The route's re-entries from `/brd-reconcile` are different in kind:
+they are not capped, because a review can legitimately reopen a decision, leave a question the
+customer did not answer, or challenge a code claim, and each state is settled by running the
+command that owns it again. There are four: another `/brd-interview` round for a reopened
+decision, the next `/brd-package` for a question still held for the customer, a
+`/prd-ground --rebaseline` pass for a challenged code claim, and `/brd-reconcile` itself, again on
+the same review, where its run could only record a dependent's sweep. The diagram draws the first
+three as dashed edges; the fourth is the command offering itself, so it is not drawn.
+`/brd-interview` likewise offers another round, or a `/prd-ground` run — for a question no finding
+bears on yet, or a `--rebaseline` pass — and `/brd-reconcile` offers `/brd-interview` on a dependent slice its sweep reached.
+`/prd-ground` offers `/brd-interview` on a prerequisite slice whose frozen decisions this slice
+waits on, and `/brd-reconcile` names `/prd-proposal` wherever its run froze a customer decision.
 
 **There is a third occasion, and it is a re-run on the parent: the sibling re-cut.** The route carves a
 slice before it is ground, so *"this slice is larger than one deliverable"* is a normal discovery,

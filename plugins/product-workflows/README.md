@@ -1,10 +1,12 @@
 # product-workflows
 
-A role-based pipeline of 17 slash commands for the product-definition side of the workflow plugin family. Its spine runs idea refinement → Product Requirements Document → architecture → Epic breakdown → specification, with an Opus-backed review gate behind every artifact from the PRD onward — `/idea` is gated by its own bounded grill instead; alongside it sits a six-command BRD-to-PRD route that grounds a customer's requirements document, settles it with them, and seeds the PRD, ARD and specification the ladder above hands off to — its grounding step, `/prd-ground`, also runs optionally on the idea route's own PRD, after `/create-prd`. The table below is the complete list. The shared foundation every command here draws on — the addressing grammar, the git and phase-handoff entry points, model routing, escalation and triage, and the emitters — ships in the companion `workflows-core` plugin; the engineering half of the pipeline this hands off to — `/design`, `/implement`, `/ready` — ships in the companion `dev-workflows` plugin.
+A role-based pipeline of 17 slash commands for the product-definition side of the workflow plugin family. Its spine runs idea refinement → Product Requirements Document (PRD) → architecture → Epic breakdown → specification, with an Opus-backed review gate behind every artifact from the PRD onward — `/idea` is gated by its own bounded grill instead; alongside it sits a six-command route from a customer's business requirements document (BRD) to a PRD — the BRD-to-PRD route — that grounds the document, settles it with the customer, and seeds the PRD, the Architecture Requirements/Decision Document (ARD) and the specification the ladder above hands off to — its grounding step, `/prd-ground`, also runs optionally on the idea route's own PRD, after `/create-prd`. The table below is the complete list. The shared foundation every command here draws on — the addressing grammar, the git and phase-handoff entry points, model routing, escalation and triage, and the emitters — ships in the companion `workflows-core` plugin; the engineering half of the pipeline this hands off to — `/design`, `/implement`, `/ready` — ships in the companion `dev-workflows` plugin.
 
 > Part of the `shipwright` marketplace — see [Getting started](docs/getting-started.md) for marketplace install + prerequisites.
 
 ## What it does
+
+Each command belongs to one of three roles: PM (product management), PA (product architecture) or PE (product engineering). [Roles and phases](docs/roles-and-phases.md) says what each one owns.
 
 | Role | Commands | What it does |
 |------|----------|--------------|
@@ -24,7 +26,7 @@ Fourteen agents (see [Agents](docs/reference/agents.md)) carry the BRD grounding
 | Page | What's there |
 |------|--------------|
 | [Documentation index](docs/README.md) | The full "I want to…" lookup table, plus the command, agent, and reference inventories. |
-| [Getting started](docs/getting-started.md) | Install, environment variables, and your first `/idea` run. |
+| [Getting started](docs/getting-started.md) | Install, environment variables, where to run it, and your first `/idea` and BRD-route runs. |
 | [Workflow overview](docs/workflow.md) | The seventeen commands as one diagram. |
 | [Roles and phases](docs/roles-and-phases.md) | What PM, PA, and PE each own and hand off. |
 | [BRD workflow](docs/brd-workflow.md) | The six-command BRD-to-PRD route as its own diagram, with its parameter table. |
@@ -37,6 +39,7 @@ Fourteen agents (see [Agents](docs/reference/agents.md)) carry the BRD grounding
 | [Session feedback](docs/reference/session-feedback.md) | Two signals: what you report, and what your corrections reveal. |
 | [Resume and checkpoints](docs/reference/resume-and-checkpoints.md) | Session hygiene for a long-running command. |
 | [Effort proposals](docs/reference/proposal-format.md) | The two estimate documents: hours, never money, readiness tiers and confidence bands. |
+| [Glossary](docs/reference/glossary.md) | The terms these pages use — BRD, slice, ledger, grounding and the rest — each with the page that owns it. |
 
 ## Recommended environment
 

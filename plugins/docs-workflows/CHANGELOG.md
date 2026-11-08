@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.6] — 2026-11-08
+
+User pages only: batch B34. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **Environment: the paragraph on `SPECS_PATH` set inside the specs tree is broken up.** It now opens with a short summary of what you see and what to do, then short bullets. The page also says that a run the preflight notices commits nothing to the specs repository, and that a checkout whose `.git` is read-only gets no notice.
+- **Getting started says what each optional variable does when it is missing.** It used to say each one degrades to a default or a silent skip, but where no entry of `REPOS_PATH` exists, a keyed `/document` and `/release-notes` with diff grounding on both ask for it. It also says that `GIT_USER_INITIALS` is the whole branch prefix where a repository documents no branch convention.
+
 ## [1.35.5] — 2026-11-08
 
 User pages, and three command texts corrected: batch B33. Needs nothing from the other plugins' releases.

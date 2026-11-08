@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.59.4] — 2026-11-08
+
+User pages only: batch B34. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **Resume and checkpoints: the carry-forward paragraph is broken up**, matching product-workflows' page. It now opens with what stays in the pointer and how to clear an item, then covers what settles each kind of item, why one can stay longer than it needs, and how settled is decided. Corrected against the reference:
+  - an open question is settled only once it is recorded with its answer;
+  - the default-branch check gives the same answer only on machines that hold current refs;
+  - three sentences that had drifted from the shared wording now match it.
+- **Environment: the paragraph on `SPECS_PATH` set inside the specs tree is broken up** the same way. `/conformance` is added to the commands that resolve an address. The page also says that a run the preflight notices commits nothing to the specs repository, and that a checkout whose `.git` is read-only gets no notice.
+- **Getting started: `GIT_USER_INITIALS` is also the whole branch prefix** where a repository documents no branch convention, not only the initials part of one.
+- **Getting started says what each optional variable does when it is missing.** It used to say each one degrades to a default or a silent skip, but two do not: where no entry of `REPOS_PATH` exists, `/design` asks for it, and an unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off with a line naming the variable.
+- **Roles and phases** names `/product-workflows:idea`'s sources as its two forms, an inline prompt or a markdown file.
+
 ## [4.59.3] — 2026-11-08
 
 User pages only: batch B33. Needs nothing from the other plugins' releases.

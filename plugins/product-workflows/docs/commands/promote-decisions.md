@@ -67,6 +67,10 @@ A failing repository test, or a mark the script refuses, stops it before the com
 /product-workflows:promote-decisions --max 5
 ```
 
+## What it offers next
+
+It asks no next-step question. The final report ends with the one step that follows: once the ADR pull request is decided, run `/promote-decisions` again — that run records the outcome on the team records. The report also says the architecture clone is back on its default branch, to pull once that pull request merges.
+
 ## See also
 
 - [`/harvest-decisions`](harvest-decisions.md) — builds the records this command promotes.

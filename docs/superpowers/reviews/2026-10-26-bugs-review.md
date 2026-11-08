@@ -968,7 +968,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD-B5 — MINOR — the agents reference page's exclusivity claim about `docs-grounder` is false
+### PRD-B5 — MINOR — the agents reference page's exclusivity claim about `docs-grounder` is false — **Fixed in product-workflows 3.78.6 (batch B34): 3.51.0 had named all four agents, but kept a list presented as complete**
 - **Where:** `plugins/product-workflows/docs/reference/agents.md:40`.
 - **What is wrong:** The page says *"`workflows-core:docs-grounder` is the one agent no command here dispatches by writing a `subagent_type:` inline — its callers invoke a named procedure"*. Three more agents are reached the same way:
   - `architecture-grounder`, through `dispatch-architecture-grounder` in `/create-ard:586` and `/specify:870`;
@@ -988,7 +988,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** low
 
-### PRD-B7 — NIT — the hooks page miscounts the plugin's other commands and calls them all keyed
+### PRD-B7 — NIT — the hooks page miscounts the plugin's other commands and calls them all keyed — **Fixed earlier, in product-workflows 3.78.1 (batch B30)**
 - **Where:** `plugins/product-workflows/docs/reference/hooks.md:17`.
 - **What is wrong:** The page says *"`/epics` is the one command this plugin ships that this hook covers — the other thirteen are keyed but resolve their own address"*. The plugin ships sixteen commands (`docs/README.md`, `plugin.json`), so there are fifteen others. `/harvest-decisions` and `/promote-decisions` take no address at all; they are keyless runs.
 - **Failure scenario:** A reader sizing the hook's scope gets a wrong count.
@@ -2877,7 +2877,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## documentation quality — product-workflows
 
-### DQP-B1 — MINOR — Getting started promises a handoff and a `/create-prd` takeover that a run with an unanswered question never gets
+### DQP-B1 — MINOR — Getting started promises a handoff and a `/create-prd` takeover that a run with an unanswered question never gets — **Fixed in product-workflows 3.78.6 (batch B34)**
 - **Where:** `plugins/product-workflows/docs/getting-started.md:78`, `:80`
 - **What is wrong:** Step 1 says *"a question you cannot answer yet becomes a logged `[NEEDS CLARIFICATION]` marker rather than a blocker"*. Step 3 says *"At the end it offers to commit the brief, push it, and open a pull request … Once that lands, `/create-prd ACME-77` finds `idea.md`"*. But any open marker makes the brief `status: draft`, and a draft is never handed off and no offer is made: `commands/idea.md:705` (*"`status: draft` … **never hand off**, and do not ask"*), and the command's own docs page says the same at `docs/commands/idea.md:157`. On a draft, `/create-prd ACME-77` with no path does not read the brief in contract (`commands/idea.md:714-723`). Only `/idea <KEY> <same source>` or `/create-prd <KEY> @<path>` work.
 - **Failure scenario:** A new PM skips one of the ten questions, as the page invites. No commit or PR offer appears. They then run `/create-prd ACME-77`, which names the brief but does not read it, and grills from scratch or offers a same-session idea.
@@ -2886,7 +2886,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B2 — MINOR — Getting started never tells the reader to merge the pull request, or what to do with a specs repo that has no remote
+### DQP-B2 — MINOR — Getting started never tells the reader to merge the pull request, or what to do with a specs repo that has no remote — **Fixed in product-workflows 3.78.6 (batch B34)**
 - **Where:** `plugins/product-workflows/docs/getting-started.md:80` (*"Once that lands, `/create-prd ACME-77` finds `idea.md`"*); `:40` (the `SPECS_PATH` section)
 - **What is wrong:** "Once that lands" is the page's only hint that the reader must merge the pull request before the next command. While it is open, `/create-prd` stops (`docs/commands/idea.md:180`). The page also never says the specs repo must be a git repository, or what happens without an `origin` remote. In that case the handoff commits on a plugin branch, pushes nothing, opens no PR, and reports *"The phase is NOT handed off"* (`workflows-core/references/phase-handoff.md:445`). The next command then stops on that unmerged branch until the reader merges it locally. None of this is on the page, and the page has no `export` example either. The root README has one (`README.md:86`), but only the "Prerequisites" anchor is linked from here.
 - **Failure scenario:** A PM runs `/idea`, accepts the PR offer, and runs `/create-prd ACME-77` at once. It stops on the open PR. Or a PM working in a local-only specs repo is told the phase is not handed off, and no page explains how to continue.
@@ -2913,7 +2913,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B5 — MINOR — The main workflow diagram routes `/implement` straight to the docs commands, leaves out the security scan, and gives the PE's PRD conformance no edge onward — **Partly fixed in product-workflows 3.78.4 (batch B32): the edge to the documentation commands; the scan node and the cross-cutting bullet stay with B34**
+### DQP-B5 — MINOR — The main workflow diagram routes `/implement` straight to the docs commands, leaves out the security scan, and gives the PE's PRD conformance no edge onward — **Partly fixed in product-workflows 3.78.4 (batch B32): the edge to the documentation commands; the scan node and the cross-cutting bullet stay with B34** — **Fixed in product-workflows 3.78.6 (batch B34): the scan node and the cross-cutting bullet**
 - **Where:** `plugins/product-workflows/docs/workflow.md:65-70`, `:91`, `:192-198`
 - **What is wrong:** The diagram draws `implement -.->|code + implementation.md, in docs-workflows| docsplugin` (`:91`), and `conformanceprd` has edges only back to `specify`, `epics` and `updatevi` (`:68-70`). The routing graph is different. `/implement` goes to `/conformance <EPIC>`, then `/security-workflows:scan <EPIC>`, then the remaining Epics. Once all have merged, `/conformance <PRD>` goes to `/docs-workflows:document` and then `/release-notes`, and `/conformance <PRD>` → *"once settled → `/docs-workflows:document <PRD>`"* (`workflows-core/references/next-phase-offer.md`, part `dev`). `/security-workflows:scan` appears nowhere in `workflow.md`. Its *Cross-cutting commands* list (`:192-198`) names the commands of `workflows-core`, `docs-workflows` and `dev-workflows` but not `security-workflows`. Meanwhile `roles-and-phases.md:46` does name `/security-workflows:scan`.
 - **Failure scenario:** A PE following the diagram thinks the docs run follows `/implement` directly. They never learn that `/conformance <PRD>` is the gate before docs, or that a security scan sits between an Epic's implementation and its merge.
@@ -2922,7 +2922,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (and spec `docs/superpowers/specs/2026-10-12-conformance-design.md` D22, see DQP-G2)
 - **Confidence:** high
 
-### DQP-B6 — MINOR — Both workflow diagrams leave out offers their commands make, and `brd-workflow.md` describes the re-entry from `/brd-reconcile` as two edges when it is four
+### DQP-B6 — MINOR — Both workflow diagrams leave out offers their commands make, and `brd-workflow.md` describes the re-entry from `/brd-reconcile` as two edges when it is four — **Fixed in product-workflows 3.78.6 (batch B34): by the user's ruling, every offer one command makes of another command the diagrams draw is an edge; a command offering itself again is listed on its page, and `/prd-ground`'s offer of `/workflows-core:frames`, which has no node, is named in prose**
 - **Where:** `plugins/product-workflows/docs/workflow.md:46-90`; `plugins/product-workflows/docs/brd-workflow.md:41-58`, `:104-106` (*"The two dashed edges leaving `/brd-reconcile` are different in kind … either state is settled by running the command that owns it again"*)
 - **What is wrong:** The routing graph (`next-phase-offer.md`, parts `pa`, `pe`, `brd`, `proposals`) makes these offers, and neither diagram draws them:
   - `/create-ard <PRD>` → `/specify <PRD>`, and Epic-level `/create-ard <EPIC>` → `/specify <EPIC>` (recommended). `createard` has no edge to `specify`.
@@ -2972,21 +2972,21 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B11 — NIT — The `/idea` page names a personal-vault path and lists "a file" and "a saved file" as different sources
+### DQP-B11 — NIT — The `/idea` page names a personal-vault path and lists "a file" and "a saved file" as different sources — **Fixed in product-workflows 3.78.6 (batch B34)**
 - **Where:** `commands/idea.md:3` (*"a prompt, a file, a community post, or a saved file"*), `:17` (*"a saved community post the operator downloaded (typically under `Projects/Products/…`)"*)
 - **What is wrong:** The synopsis gives exactly two forms (`:15`, *"one of **two** source forms"*). The four-item opener contradicts it. `Projects/Products/…` is someone's vault layout, not a convention of the plugin.
 - **Suggested fix:** "Refines one raw source — an inline prompt or a markdown file (a note, a saved community post, a PRD) — …". Drop the path.
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B12 — NIT — The workflow page's role and artifact-home tables disagree with the roles page and the `/specify` page
+### DQP-B12 — NIT — The workflow page's role and artifact-home tables disagree with the roles page and the `/specify` page — **Fixed in product-workflows 3.78.6 (batch B34)**
 - **Where:** `workflow.md:176` (PA row: runs only *"`/create-ard` (optional)"*); `:177` (PE row: `/epics`, `/specify` only); `:183` (*"the PRD and the ARD, with `specification.md` in the `EPIC-` folders below it"*)
 - **What is wrong:** `README.md:15` and `roles-and-phases.md:29` give the PA `/harvest-decisions` and `/promote-decisions` too. `roles-and-phases.md:38` gives the PE `/dev-workflows:conformance <PRD-KEY>`. A broad PRD-level `specification.md` lives in the PRD folder itself (`commands/specify.md:92`, and `workflow.md:60`'s own *"PRD-level specification.md"* edge).
 - **Suggested fix:** Bring the two rows into line with the roles page. Say "`specification.md` in the PRD folder (PRD-level) or in each `EPIC-` folder".
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B13 — NIT — Getting started says the three optional variables each "degrade to a documented default or a silent skip"; two do not
+### DQP-B13 — NIT — Getting started says the three optional variables each "degrade to a documented default or a silent skip"; two do not — **Fixed in product-workflows 3.78.6 (batch B34), with the same claim on the dev-, docs- and workflows-core getting-started pages**
 - **Where:** `getting-started.md:36`
 - **What is wrong:** When `$REPOS_PATH` has no existing entry, `/create-ard`, `/specify`, `/epics` and `/prd-ground` ask you to set it, and `/prd-ground` offers only *Set REPOS_PATH* or *Cancel* (`reference/environment.md:25`). An unset `$ARCHITECTURE_REPO_PATH` reports `OFF` *"with a line naming the variable"* (`environment.md:33`). That is neither a default nor silent.
 - **Suggested fix:** "the other three are optional: `DOCS_PATH` is skipped silently, `ARCHITECTURE_REPO_PATH` is reported off, and `REPOS_PATH` defaults to `/workspace` and is asked for where that does not exist".
@@ -3008,7 +3008,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQP-B16 — NIT — Three reference paragraphs are too long for a person to read
+### DQP-B16 — NIT — Three reference paragraphs are too long for a person to read — **Fixed in product-workflows 3.78.6, dev-workflows 4.59.4, docs-workflows 1.35.6 and workflows-core 1.78.13 (batch B34): by the user's ruling, the five product paragraphs over 3,000 characters and the twins of two of them on the other plugins' pages**
 - **Where:** `reference/resume-and-checkpoints.md:19` (one paragraph of 13,886 characters on carry-forward settling, including `git blame --porcelain` dating rules and `/security-workflows:scan` 0.2.0 compatibility); `reference/environment.md:15` (6,051 characters on `SPECS_PATH_INSIDE_TREE`); `commands/idea.md:138` (3,046 characters on `IDEA_NOT_AN_IDEA_FOLDER`'s named next commands)
 - **What is wrong:** These are agent-facing contracts pasted into user pages. A PM looking for "what happens if my `SPECS_PATH` is wrong" or "why is this item still in my resume pointer" cannot pull the answer out of them.
 - **Suggested fix:** Lead each with a short user-facing summary (the symptom, what to do), and move or link the full contract.

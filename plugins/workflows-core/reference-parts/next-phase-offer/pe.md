@@ -166,7 +166,8 @@ array carries every option.
   request where a plugin branch carries it.
 - `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
 - `/product-workflows:update-spec <KEY>` (a merged specification revised in place) → for each design it
-  names as citing a superseded or withdrawn ID, Dev → `/dev-workflows:design <ITS-KEY>` to revise it;
+  names — one citing an ID that changed, or one built on the specification it replaced — Dev →
+  `/dev-workflows:design <ITS-KEY>` to revise it;
   where it names an Epic's `## Covers` or the PRD's `_coverage.md`, `/product-workflows:epics <PRD>` to
   refine; where it names nothing, the next step `/product-workflows:specify` gives a specification at
   the same altitude.

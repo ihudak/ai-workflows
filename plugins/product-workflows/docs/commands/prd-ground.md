@@ -621,6 +621,24 @@ PRD asking for something the code already does is worth revising before an archi
 specification is authored against it. The count beside it is of distinct requirement claims; the
 baseline finding the run writes per repository is `CONFIRMED` too, and is not one of them.
 
+## What it offers next
+
+Phase 10's offer depends on the route, and nothing is run for you. An offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended. A run that stops before it writes findings makes no offer beyond the stop's own remedy.
+
+**On the idea route:**
+
+- [`/specify <KEY>`](specify.md) (PE) and [`/create-ard <KEY>`](create-ard.md) (PA, optional), side by side and both after the merge; neither is recommended over the other.
+- **Where any requirement claim came back `CONFIRMED`** → [`/update-prd <KEY>`](update-prd.md) (PM) first, recommended, with the count of distinct claims; it waits for nothing. The baseline finding does not count.
+
+**On the BRD route** (always a slice):
+
+- **No frame set left unreconciled** → [`/brd-split <BRD-KEY>`](brd-split.md) (recommended), after the merge. It runs `allocate-only` on a slice, so no child is created. [`/brd-interview`](brd-interview.md) comes after it and is offered by `/brd-split`, not here.
+- **A frame set with no index, or on disk and missing from the census** → `/workflows-core:frames <BRD-KEY>` (recommended), from the companion `workflows-core` plugin, to write the index, then a `--no-code` re-run of this command. `/brd-split` is not offered: it would refuse the slice.
+- **A frame set whose index is intact but whose frames are gone, and no set lacks an index or is missing from the census** → restore the frames, then `/prd-ground <BRD-KEY> --no-code` (recommended). Where both kinds of set stand, the `/workflows-core:frames` offer above is shown instead, with each set whose frames are gone named above it, by its index path, with this repair.
+- **A declared prerequisite slice whose decisions are not frozen yet** → *Decide a prerequisite first* beside the options above. It prints `/brd-interview <PREREQ-KEY>` for each such slice and a re-run of this command once its decisions are frozen, and runs nothing.
+
+Above any of these lists, the run names every customer image a row of this slice cites that no frame set holds — a report only.
+
 ## See also
 
 - [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.

@@ -109,6 +109,14 @@ Re-run it after the excluded slice has been priced:
 
 Same run, now including four slices. The prior umbrella is archived under `revisions/`, and the changelog names the cause of every figure that moved — including the ones that moved only because a slice joined the roll-up.
 
+## What it offers next
+
+Phase 12 offers no forward step — the umbrella is the end of this branch, not a phase of the build ladder — and runs nothing itself. No option waits on a merge, since no command it names gates what this run wrote.
+
+- **A slice the readiness walk flagged** (excluded, stale, or recommended for pricing first) → [`/prd-proposal <SLICE-KEY>`](prd-proposal.md), to re-price it. Dropped where the walk flagged nothing.
+- **Re-run the umbrella once those land** → `/brd-proposal <BRD-KEY>`.
+- **Stop here.**
+
 ## See also
 
 - [Workflow overview](../workflow.md) — where this command sits among the plugin's others.

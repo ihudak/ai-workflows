@@ -638,6 +638,21 @@ each child later* names the command and runs nothing; on an outcome that
 is neither an open pull request nor nothing to commit with the children's files already on the default branch — a declined handoff, no remote, a failed push, a pull request not opened, or nothing to commit while those files are not on the default branch yet — *Ground now* is not offered,
 and the run says what has to happen first.
 
+## What it offers next
+
+Phase 7's offer depends on the mode. An offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
+
+**On a root (`full`):**
+
+- **Each child that gained a row this run** → [`/prd-ground <CHILD-KEY>`](prd-ground.md), after the merge. The offer says which case each child is: a slice keyed this run, or a standing child never ground, is a first pass; a standing child already ground is a re-run, since no finding on file covers the row it gained. A child that gained nothing, and a child left claiming nothing, is not offered. Where no child gained a row this run, both child-grounding options — this one and *Ground now* — are dropped, and the run says so.
+- ***Ground now*** (recommended) → runs that grounding here, one complete run per child you choose, once this run's files are on the default branch — you merge its pull request; the run never does. Once you confirm, it tells you to merge it only when the run asks, since the run's own session commit rides in the same pull request. It is offered only where the handoff opened a pull request or found one already open, or the files are already on the default branch; otherwise *Ground each child later*, which names the command and runs nothing, is the recommended option.
+- ***Split another BRD*** → always offered, naming no key.
+- Nothing for the root itself: [`/brd-interview`](brd-interview.md) refuses a root.
+
+**On a slice (`allocate-only`):**
+
+- **The slice's decision step** → [`/brd-interview <BRD-KEY>`](brd-interview.md) (recommended), after the merge. [`/create-prd`](create-prd.md) is not offered yet: it seeds the PRD from the register that `/brd-interview` writes.
+
 ## See also
 
 - [The BRD-to-PRD route](../brd-workflow.md) — the route's own diagram and parameter table, and where this command sits on it.
