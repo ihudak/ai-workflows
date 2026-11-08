@@ -360,7 +360,7 @@ cannot take from the state the report describes.
 - `/dev-workflows:ready <ADDRESS>` → **SUPPORTED** → `/dev-workflows:implement <ADDRESS>` (the same address); **PARTIAL / NOT-SUPPORTED**
   → resolve the named gaps, then re-run `/dev-workflows:ready`. Whatever the verdict, a PRD at
   *Implementation* or later whose delivery is not verified → PE → `/dev-workflows:conformance <PRD>` (PE, every
-  Epic merged), whose settled record verifies it — at *Implementation*, the optional *Delivery verified* rung. *(Read-only verifier;
+  Epic merged), whose settled record verifies it — lifting a PRD at *Implementation* to the optional *Delivery verified* rung. *(Read-only verifier;
   not itself a linear pipeline node — an optional gate before build.)*
 - `/dev-workflows:implement <EPIC>` → first, where it answered a follow-up task its Phase 1 printed, each such task to tick once its change merges, and, where it recorded a change another code repository needs, the run from that repository, addressed to the unit the run implemented (the Epic itself, where it was one); then, before its pull request merges, `/dev-workflows:conformance <EPIC>` and then `/security-workflows:scan <EPIC>` (Dev), from the repository that run branched — the fixes from either return to `/dev-workflows:implement <EPIC>`, which continues on the Epic's branch (`workflows-core:implementation-format` §5); then the remaining Epics (breadth), each named and placed with this Epic's pull request in the ARD's landing order (*The remaining Epics are named*); once ALL Epics implemented and merged →
   PE → `/dev-workflows:conformance <PRD>` → `/docs-workflows:document <PRD>` → `/docs-workflows:release-notes <PRD>`. *(Direct mode → no forward offer.)*
