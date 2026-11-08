@@ -42,6 +42,7 @@ not spent here. Do not escalate it.
 - **`code_context`** (required) — the caller's Phase 4 `code-scanner` findings for the relevant repo(s):
   the existing shape, its callers, and what already depends on it. May arrive inline or as an absolute
   file path — `Read` the file first when given a path. On a read failure follow the **read-failure contract** in `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`: this is an *evidence* input — hard stop, return `status: BLOCKED` naming the unreadable path, and never reconstruct it by scanning on your own initiative.
+- **`scanned_at`** (optional) — one line per repository `code_context` names, `<absolute path> @ <commit>`, the commit the caller's scan read, followed by `— read at the commit` where that scan read it at a ref, by ref or on a read-only mount, rather than in its working tree.
 - **`dependency_category`** (optional) — the seam's category if the caller already settled it (see
   `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` `## Seams`). Absent ⇒ classify it yourself and say
   which you chose.
@@ -68,7 +69,7 @@ not spent here. Do not escalate it.
    every command (`-C`, an absolute path, or a subshell `(builtin cd "<repo_path>" >/dev/null && …)`
    inside one Bash call — `builtin cd`, its output discarded, since your Bash tool's shell carries the
    user's shell functions and aliases, and a `cd` of theirs would otherwise run in its place and
-   could print into what you read), give every `Grep` and `Glob` call `<repo_path>` as its `path`, and `Read` absolute paths.
+   could print into what you read), give every `Grep` and `Glob` call `<repo_path>` as its `path`, and `Read` absolute paths. **Where `scanned_at` marks the repository `— read at the commit`, read it at that commit and never in its working tree**, which holds a branch's unmerged work the scan did not read: `git -C "<repo_path>" grep -n <pattern> <commit> -- <pathspec>` (`-c` to count), `git -C "<repo_path>" log <commit> -- <path>`, and `git -C "<repo_path>" show <commit>:<path>` in place of `Read`, `Grep` and `Glob`.
 3. Design the interface your `constraint` demands. Push the constraint until it costs something, then
    say what it cost — that trade-off is the most useful thing you return.
 4. Do not evaluate your own take against the others. The caller compares.

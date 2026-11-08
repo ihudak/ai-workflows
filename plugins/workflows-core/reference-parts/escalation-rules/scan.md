@@ -331,7 +331,7 @@ Used in `/document` Phase 5 when a diff-summarizer returns `REFRESH_BLOCKED`. `/
 `/docs-audit`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
 reproducing the list, so per the "Choice lists are presented verbatim" convention they use the
 list written under this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list
-inline. A new citer that reproduces a list inline states which one it uses.
+inline. **`/docs-audit` reproduces a list without *Continue with current local state* after a read by ref of the session's own repository**, and says why: its coverage denominator is a claim about the product as it ships, which that checkout's branch is not (`workflows-core:scan-refresh` §6 lets a fixed-policy caller leave it out). A new citer that reproduces a list inline states which one it uses.
 
 ## Read-only mount — ref stale or diverged
 

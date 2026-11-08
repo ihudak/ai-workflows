@@ -8,7 +8,7 @@ Opus-gated quality gates, plus the verifier that re-derives evidence rather than
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `ard-reviewer` | opus | Read, Glob, Grep, Skill | Reviews an ARD for grounding integrity, well-formed `AD#N` rules, non-contradiction with inherited PRD-level invariants, and altitude purity; returns PASS / PASS WITH RECOMMENDATIONS / BLOCK. | `/create-ard` |
+| `ard-reviewer` | opus | Read, Glob, Grep, Bash, Skill | Reviews an ARD for grounding integrity — each cited file checked where the scan read it — well-formed `AD#N` rules, inherited invariants and altitude; returns PASS / PASS WITH RECOMMENDATIONS / BLOCK. | `/create-ard` |
 | `brd-package-reviewer` | opus | Read, Glob, Grep, Skill | Attacks a BRD package before it reaches the customer — unsupported decisions, a `[C]` that is really a `[V]`, assumptions as facts, overclaims, a defect claim nothing holds; returns `[SR#n]`. | `/brd-package` |
 | `epic-reviewer` | opus | Read, Glob, Grep | Reviews Epic drafts for goal clarity, testable acceptance criteria, scope boundaries, cross-Epic dependencies, and non-duplication with existing Epics under the parent PRD. | `/epics` |
 | `grounding-verifier` | opus | Read, Glob, Grep, Bash, Skill | Re-derives `[CG#n]`/`[DG#n]` findings in batches, first blind (`mode: derive`, never handed the answer), then against the original (`mode: compare`); agree / extend / contradict / unprovable. | `/prd-ground` |

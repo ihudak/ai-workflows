@@ -127,7 +127,11 @@ model_routing:
      choices: ["Stash changes and retry this repo", "Skip this repo", "Cancel"]
      ```
      Each choice does what that rule says, the question's own text naming the repository and each dirty path as it says, and the answer holds for a second scan round of the same repository.
-   - **`REFRESH_BLOCKED`** — escalate per that file's *Refresh blocked*, on the same terms. On a read by ref — the session's repository, its brief carrying `read_default_by_ref` — *Continue with current local state* does what `workflows-core:scan-refresh` §6 says.
+   - **`REFRESH_BLOCKED`** — escalate per that file's *Refresh blocked*, on the same terms — save on a read by ref, the session's repository, its brief carrying `read_default_by_ref`, which `code-scanner` returns only where no default branch resolves. There this list is reproduced without that rule's *Continue with current local state*, as `workflows-core:scan-refresh` §6 lets a fixed-policy caller do: a coverage denominator is a claim about the product as it ships, which the checkout's branch, and its unmerged work, is not:
+     ```
+     choices: ["Skip this repo", "Cancel"]
+     ```
+     The question's own text names the repository and the branch its checkout is on, says that its default branch could not be resolved — no `origin/HEAD`, `origin/main` or `origin/master` — and that scanning the checkout as it stands is not offered, for that reason; no option is marked, since whether the audit is worth running without that repository is the operator's to judge. *Skip this repo* goes on without it, and the report names it skipped; *Cancel* takes the stop route.
 
    A read by ref whose fetch failed — `prep.read_only: false`, `prep.refreshed: false`, and `prep.refresh_note` naming the failed fetch — is not a failure, and nothing is asked: per `workflows-core:scan-refresh` §6, Phase 6's `### Sources` line for that repository says that the scan read a stale default ref, and names the failure. `sources[]` records the commit it read, as for every scan.
 
@@ -303,7 +307,7 @@ Run:       <initial | --refresh>   Audience: <both | user | engineering>   Thres
 Profile:   <path | "none resolved — /docs-workflows:docs-profile writes one; source_repos[] was confirmed for this run and not recorded" | "unreadable: <reason> — treated as absent">
 
 ### Sources
-<one line per repository: name, path, scanned_ref, status — followed, for a repository read by ref, by the line `workflows-core:scan-refresh` §7 gives it — and where it came from — the profile's source_repos[] or this run's confirmation>
+<one line per repository: name, path, scanned_ref, status, and where it came from — the profile's source_repos[] or this run's confirmation> [— read by ref at <prep.scanned_ref>; checkout left on <branch> | — read by ref at <prep.scanned_ref> as last fetched — a stale default ref: the fetch failed (<the failure prep.refresh_note names>); checkout left on <branch>] — _the bracket only for a repository its brief read by ref, worded as `workflows-core:scan-refresh` §7 words it; omit it otherwise_
 <every entry that resolved by neither path nor origin, and what the operator chose for it>
 Specs tree: <status READ at <ref> | READ, no git work tree (ref null — drift has nothing to diff these against) | SKIPPED: <reason>>
 <"source_repos[] recorded in the profile" | "not recorded: <why>">
