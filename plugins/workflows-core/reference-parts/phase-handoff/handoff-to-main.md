@@ -2,7 +2,7 @@
 
 # Phase handoff — Shared Reference — entry point handoff-to-main
 
-This file holds entry point `handoff-to-main` of `phase-handoff`: §1, §2, §4.1, §4.2 and §4.3, and in part §4.0 ("What declining costs", "takes the strongest class" and "Classify by naming the reader"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 350 lines long.
+This file holds entry point `handoff-to-main` of `phase-handoff`: §1, §2, §4.1, §4.2 and §4.3, and in part §4.0 ("What declining costs", "takes the strongest class" and "Classify by naming the reader"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 351 lines long.
 
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
@@ -215,7 +215,8 @@ Every failure is reported and the phase is described as **not handed off**. The 
 ### 4.1 `handoff-to-main` outcome line
 
 Exactly one, prefixed `Phase handoff:`, **per handoff the run offers** — one line per run for
-every producer but one.
+every producer but those *A producer that offers more than one handoff* names below, whose lines
+each name the handoff they report inside the prefix: `Phase handoff (<the handoff>): …`.
 
 **Every row here is an outcome of a handoff that was *offered*, and a run prints one line for each
 handoff it offered, whichever way each went.** A decline is inside that scope and not outside it —

@@ -439,7 +439,7 @@ Collect both summaries for the Phase 7 report.
 
 ## Phase 6 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`. The set to hand off is the
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe before presenting the consent choice below. The set to hand off is the
 record, every Epic `_conformance.md` this run marked `superseded-by`, every document it annotated, and
 every path in Phase 5.5's `maintenance_paths`.
 Its class is the strongest among its paths, since a set spanning classes takes the strongest class (§4.0), and the array is §4.3's for that class, presented

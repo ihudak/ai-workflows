@@ -451,7 +451,8 @@ The classes as the tree stands, each derived from the consumer rather than asser
 ### 4.1 `handoff-to-main` outcome line
 
 Exactly one, prefixed `Phase handoff:`, **per handoff the run offers** — one line per run for
-every producer but one.
+every producer but those *A producer that offers more than one handoff* names below, whose lines
+each name the handoff they report inside the prefix: `Phase handoff (<the handoff>): …`.
 
 **Every row here is an outcome of a handoff that was *offered*, and a run prints one line for each
 handoff it offered, whichever way each went.** A decline is inside that scope and not outside it —

@@ -765,7 +765,7 @@ path nobody else can reproduce; the copy is the record.
    the plugin has no record to check against and inventing one would be the failure this whole
    admission exists to avoid.
 
-5. **Hand it off.** Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies, unreworded — its flag line on a run carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the probe set `remote: none`. It is the **advisory** array, which is the class the handoff's register of classes puts the returned review in: read (by this run's own reader dispatch, and by a later run's step-2 overwrite refusal) and gated by nothing, since the gate's row for this command targets the *sent prompt* rather than the returned review. That is the same fact the *Declining does not stop the ingest* paragraph below states, and the **gated — stopping** array contradicted it in the operator's own prompt.
+5. **Hand it off.** Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies — its flag line, or its no-remote line. It is the **advisory** array, which is the class the handoff's register of classes puts the returned review in: read (by this run's own reader dispatch, and by a later run's step-2 overwrite refusal) and gated by nothing, since the gate's row for this command targets the *sent prompt* rather than the returned review. That is the same fact the *Declining does not stop the ingest* paragraph below states, and the **gated — stopping** array contradicted it in the operator's own prompt.
    ```
    choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
    ```
@@ -2922,7 +2922,7 @@ step 2's `accept` against it with that check's file. **Never `stamp` it** — st
 never another register: every dependent BRD's `decisions.md` the propagation sweep wrote, and any
 register the stale-reference sweep reached, keeps the record its own producers' runs wrote.
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies, unreworded: its flag line on a run carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the probe set `remote: none`:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies — its flag line, or its no-remote line:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]

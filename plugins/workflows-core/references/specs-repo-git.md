@@ -649,12 +649,10 @@ is each member's own rather than a new condition here:
 - **Feedback writes nothing**, save where a command's own stop route runs its
   maintenance phase. `feedback-emission.md`'s `emit-auto` is called by a
   command's maintenance phase, which a refused run reaches only where its
-  command says so — `/docs-workflows:docs-init`, `/docs-workflows:docs-audit`
-  and a standalone `/docs-workflows:docs-brand` route every stop through
-  their whole tail, maintenance included (each command's *Ending early*) —
-  and `emit-block` fires at the halt rather than here and excludes an
-  environment or operator halt by its own predicate — which every Phase 0
-  refusal is.
+  command's *Ending early* sends a stop through it — as the docs setup
+  commands do for their stops past their earliest ones — and `emit-block`
+  fires at the halt rather than here and excludes an environment or operator
+  halt by its own predicate — which every Phase 0 refusal is.
 
 - **Follow-ups are a no-op.** No signal qualifies, so that phase resolves no
   target, writes nothing and ends silently (`followup-emission.md` §6).

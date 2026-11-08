@@ -1400,7 +1400,7 @@ that path this phase rewrites only what the removal and the reconcile changed �
 
 ## Phase 6 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies, unreworded — its flag line on a run carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the probe set `remote: none`. **There are two arrays, selected by the `deliverable_paths` set below, per §4.0's rule that a set spanning classes takes the strongest class.** Where that set holds any **slice-level** `coverage-ledger.md` or `brd/brd-inventory.md` — every path but the ones named next — present §4.3's **gated — stopping** array (§4.1 bullet 1), because `/prd-ground` stops on both, by its own gate rows:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim, with the one line §4.3 puts immediately above the array where one applies — its flag line, or its no-remote line. **There are two arrays, selected by the `deliverable_paths` set below, per §4.0's rule that a set spanning classes takes the strongest class.** Where that set holds any **slice-level** `coverage-ledger.md` or `brd/brd-inventory.md` — every path but the ones named next — present §4.3's **gated — stopping** array (§4.1 bullet 1), because `/prd-ground` stops on both, by its own gate rows:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]

@@ -12,7 +12,7 @@ Handover and start-of-run bugs the GIT-G1 audit found: batch B36. Update with `d
 ### Fixed
 
 - **`specs-repo-git` §4 step 4 says which key the terminal commit takes.** It is the one key the run addressed: an Epic run's own key, never the parent PRD key the run key set carries only to match branches. §3.4's flush, which commits through the same step, takes the same key. The reference used to say the commit "resolves its own key" without saying how.
-- **`specs-repo-git` §4 no longer says a stopped run writes no feedback in every command.** `/docs-init`, `/docs-audit` and a standalone `/docs-brand` route every stop through their maintenance phase, so their stops can write feedback.
+- **`specs-repo-git` §4 no longer says a stopped run writes no feedback in every command.** A command whose own stop route runs its maintenance phase — the docs setup commands, past their earliest stops — can write feedback on a stop.
 - **`phase-handoff` names every producer that hands off more than once.** `/design`'s and `/specify`'s *Next Epic* loops hand off once per Epic, like `/brd-reconcile`'s two handoffs; each line names what it reports. `next-phase-offer` resolves a `<merge-clause>` from the right line on such a run.
 - **`phase-handoff` §4.3: a producer names the push-target probe at its consent step.** A copy of the probe beside each array had been refused on the reasoning that every producer has this section loaded; a live `/brd-interview` run loaded it and still skipped the probe, offering a recommended push to a repository with no `origin`. Producers now name the probe by citation; its steps still live here only.
 - **`architecture-promotion` §11.2 says why `/promote-decisions` passes no `inputs_read`.**

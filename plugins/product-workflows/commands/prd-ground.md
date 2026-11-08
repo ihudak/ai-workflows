@@ -2242,7 +2242,7 @@ that check's file as the same step says. Nothing in this run writes either file 
 
 ## Phase 9 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim — the **gated — stopping** variant (§4.1 bullet 1), **in every mode including `--no-code`** — with the one line §4.3 puts immediately above the array where one applies, unreworded: its flag line on a run carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the probe set `remote: none`:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3 push-target probe, then present its §4.3 choice array verbatim — the **gated — stopping** variant (§4.1 bullet 1), **in every mode including `--no-code`** — with the one line §4.3 puts immediately above the array where one applies — its flag line, or its no-remote line:
 
 ```
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]

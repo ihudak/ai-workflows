@@ -229,8 +229,9 @@ cannot review, and they will not tell you that — they will review it anyway, b
     check above, which `workflows-core:phase-handoff` §6 places before anything reads the folder's
     documents: a §6.2 *Switch* taken after this read would leave its verdict about a checkout the run
     had left. That check's remedies — a merge into the run's branch, a switch, a pull request
-    settled — never ask for an uncommitted file to be committed, as step 6's does, so none lands a
-    torn write. No reader counts one, and
+    settled — never land a torn write on the default branch: the one that names uncommitted files,
+    a refused switch, leaves committing them to you on the branch you stand on, and this step reads
+    what the files hold, not what is committed, so the re-run still finds the torn write. No reader counts one, and
     this command cannot simply leave them out: the bundle carries `decisions.md`,
     `interview/customer-questions.md` and `code-defect-log.md` whole
     (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1), so a torn record or entry would
@@ -1459,9 +1460,8 @@ Take all three here, step 1 loading the handoff contract that states them:
 
 1. **Take the handoff's consent now.** Invoke
    `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, test §2.1's gate conditions —
-   each is a read — and run its push-target probe, printing the one line §4.3 puts above the array
-   where one applies: its flag line on a run carrying either flag, otherwise its no-remote line where
-   the probe set `remote: none`. Then present its §4.3 choice array verbatim:
+   each is a read — and run its push-target probe, printing the one line §4.3 puts above the array where one applies —
+   its flag line, or its no-remote line. Then present its §4.3 choice array verbatim:
 
    ```
    choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
