@@ -1,0 +1,23 @@
+---
+paths:
+  - "plugins/dev-workflows/**"
+---
+
+# dev-workflows — `/conformance` and the readers of its record
+
+Loaded with `.claude/rules/dev-workflows.md`, whose `paths:` it shares. Split out of `.claude/rules/dev-workflows.md` to keep that file under 20,000 characters; the plugin's other rules are there, `conformance-tracer`'s caller line and `/ready`'s map line and invariant among them.
+
+## Workflow map
+
+```
+/conformance         → [resolve-address: an EPIC- folder — the Dev, before its pull request merges, on the branch `unit-branch` finds — or a PRD- folder — the PE, every Epic merged; a BRD- container refused] → specs-preflight → [a PRD's Epic folders: two asserting one key stop] → [require-on-main: the documents read] → [record check, every run: conformance/ fetch --prune; the unit's record on an unmerged conformance/ branch, or a checkout behind the default branch's, stops; on a PRD run an Epic's unmerged record is offered, and nothing is written into it] → [lineage check; Proceed in _conformance.md] → [clones: fetch each writable clone's remote refs; read-only-repos §5 ages on a read-only mount; each default branch resolved] → [inventory: every requirement — spec [Uxx]/[ACxx], epic.md criteria and ## Contract lines, the applicable [AD#n] Rules (ard-resolution: an unmerged ARD stops); on a PRD run prd.md's live [AC#n]/[FR#n], the PRD-level spec and every Epic's — an Epic with a record re-checked, its ## Satisfied re-traced only where the evidence moved; nothing to trace stops] → [code: an Epic run fetches each repository's latest block's branch by refspec and traces what `implementation-format` §5's `unit-branch` answers — the branch's tip while it is checked-out, local or remote, the default branch once merged or where no block names the repository; no block at all stops, a missing branch is asked about; a PRD run traces each default branch after §5's merged test, run on each Epic and, on a PRD with no Epic folder, on the PRD folder's own blocks, and asks on a unit not shown merged — an Epic, or that PRD itself — whether to stop or to trace it anyway; no clone with a default branch stops] → [conformance-tracer×N, one per repository, parallel, cap 4, via files] → synthesis → [re-check each finding at its evidence, and each entry on file] → (the walk: fix the code / amend the document / accept, no answer recommended, ≤4 per call, shared-evidence clusters asked once, decided entries carried forward; on a PRD run Dev's implementation-wins entries first) → [effects: a follow-up; an ## Engineering review note on a PRD run; superseded-by and a withdrawn follow-up on an overrule] → write _conformance.md — its header's Not traced: (each requirement-bearing document not read, each repository with no clone or default branch) and Not shown merged: (each unit traced under *Trace anyway*) lines, each `none` where empty — with ## Satisfied, ## Not checkable → [documentation + instructions agents, as on /ready] → [handoff-to-main: the record, the notes and those edits, on conformance/] → [knowledge-base agent: ~/.claude/memory/ only] → impl-maintenance → follow-ups → commit-artifacts
+```
+
+## The record's readers
+
+`plugins/dev-workflows/references/conformance-format.md` §6 names the readers of `_conformance.md` and what each reads, so a change to a field it reads, or to what a status or flag means (§4), is a change to that reader too:
+
+- `/conformance`'s own later runs, which carry each decided entry forward and mark it `resolved` or `requirement withdrawn` (§5);
+- `/implement`, which reads back the `withdraws:` lines of the PRD folder's record so that it never builds a follow-up a PRD run withdrew (§3);
+- `/ready`, which reads the PRD folder's record from `<default-ref>` by `git show`, never the working tree, and tests from it whether the PRD reaches the optional *Delivery verified* rung (its Phase 1 step 2b): it maps no decision, so its test is its own and not `workflows-core:source-truth` §7.8's;
+- `/document` (keyed mode: Phase 3, and Phase 5.8 step 0) and `/release-notes` (Phase 0 and Phase 3), which read every record in their scope from the working tree, as data, and take the decision a person recorded in place of asking again. Which records, which entries are open, which of two entries on one claim wins, what each decision maps to and how far the code has moved since are §7.8's, the one authority on them (`.claude/rules/workflows-core.md`); neither `docs-workflows` nor `workflows-core` can load `conformance-format`, so §7.8, `/document` and `/release-notes` each state the fields they read.
