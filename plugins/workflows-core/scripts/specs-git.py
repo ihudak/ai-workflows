@@ -244,6 +244,8 @@ def main():
     p = sub.add_parser("owner-repo")
     p.add_argument("--repo", required=True)
     p.add_argument("--no-alias", action="store_true")
+    p = sub.add_parser("mode")
+    p.add_argument("--default", required=True)
     a = ap.parse_args()
     try:
         sys.stdout.reconfigure(errors="backslashreplace")
@@ -283,6 +285,8 @@ def dispatch(a):
         return branch_key(a.branch, a.key)
     if a.cmd == "push-scope":
         return push_scope(a.specs, a.branch, a.session_default_ref)
+    if a.cmd == "mode":
+        return sb.mode(a.specs, a.default)
     raise NotRun("unknown subcommand %s" % a.cmd)
 
 
@@ -625,6 +629,15 @@ def selftest():
         got = cli("owner-repo", "--repo", plain)
         check(one_not_run_line(got), "owner-repo: a path that is no repository exits 2 (%r)" % got)
 
+    def scenarios_mode(tmp):
+        r = new_repo(tmp, "mode")
+        got = cli("--specs", r.path, "mode", "--default", "main")
+        check(got["_rc"] == 0 and got.get("mode") == "off" and got.get("source") is None, "mode: off by default (%r)" % got)
+        r.git("config", "workflows.sessionBranch", "true")
+        got = cli("--specs", r.path, "mode", "--default", "main", env={"GIT_USER_INITIALS": "ab"})
+        check(got["_rc"] == 0 and got.get("mode") in ("on", "unsupported") and got.get("source") == "config"
+              and got.get("branch") == "session/ab", "mode: the opt-in key turns it on (%r)" % got)
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
@@ -632,6 +645,7 @@ def selftest():
             scenarios_branch_key(tmp)
             scenarios_push_scope(tmp)
             scenarios_owner_repo(tmp)
+            scenarios_mode(tmp)
 
     try:
         scenarios()
