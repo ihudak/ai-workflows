@@ -5,7 +5,7 @@
 Consulted by `release-notes-writer` to decide **where a release note lands and what shape it must
 take**. This file is the single authority for the section map, the per-section draft shape,
 the per-section prose rules, the deprecation-note rule, the effective-version rule (§6), the rule
-for a state the release starts from (§6), Change Type sourcing, and how a claim a conformance entry settled is worded in the draft (§8 — which entries are open and what each decision maps to are `workflows-core:source-truth` §7.8's). The `/release-notes` command cites this file for its own invariants (§1/§3 for the
+for a state the release starts from (§6), Change Type sourcing, and how a claim a conformance entry settled is worded in the draft (§8 — which entries are open, which of two entries on one claim wins and what each decision maps to are `workflows-core:source-truth` §7.8's). The `/release-notes` command cites this file for its own invariants (§1/§3 for the
 draft shape, §4 for the documentation-link rule, §6 for the effective version, §8 for the conformance entries) but never re-derives
 the writer's decision; the agent applies it and returns a proposed destination plus any gaps.
 

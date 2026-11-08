@@ -7,7 +7,7 @@ paths:
 
 # security-workflows — plugin facts, workflow map, invariants
 
-Loaded when a file under `plugins/security-workflows/`, the register format it writes (`workflows-core:security-register-format`) or the family map that draws its lane is read. Repo-wide rules are in `CLAUDE.md`; the shared authorities its command consumes are in `.claude/rules/workflows-core.md`, `.claude/rules/workflows-core-git.md`, `.claude/rules/workflows-core-read-only.md` and `.claude/rules/workflows-core-model-routing.md`; the design and its decisions (D1–D19, cited below as spec D*n*) are in `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md`.
+Loaded when a file under `plugins/security-workflows/`, the register format it writes (`workflows-core:security-register-format`) or the family map that draws its lane is read. Repo-wide rules are in `CLAUDE.md`; the shared authorities its command consumes are in `.claude/rules/workflows-core.md`, `.claude/rules/workflows-core-git.md`, `.claude/rules/workflows-core-read-only.md`, `.claude/rules/workflows-core-model-routing.md` and `.claude/rules/workflows-core-bounded-run.md`; the design and its decisions (D1–D19, cited below as spec D*n*) are in `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md`.
 
 ## Plugin facts
 
