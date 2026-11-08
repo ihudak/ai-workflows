@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.61.0] — 2026-11-08
 
-`/ready` derives the PRD ladder's *Release Preparation* stage from two drafts on the specs repo's default branch. Update with `docs-workflows` 1.37.0, whose `/release-notes` writes the stage line `/ready` reads, and `workflows-core` 1.80.1.
+`/ready` derives the PRD ladder's *Release Preparation* stage from two drafts on the specs repo's default branch. Update with `docs-workflows` 1.37.0, whose `/release-notes` writes the stage line `/ready` reads; needs nothing new from `workflows-core`.
 
 ### Added
 
