@@ -758,8 +758,9 @@ the artifact's own format keeps its open questions:
   register on either route, so it records the PRD entry alone;
 - `epic.md` — an inline `[NEEDS CLARIFICATION: <question>]` marker at the point in the Epic it
   concerns, which is the form an Epic keeps its open questions in (`product-workflows:epic-writer`,
-  *Uncertainty markers*), within that section's cap of three per Epic: a finding past the cap stays
-  in the final report, which names the Epic as under-specified, as the writer's notes would.
+  *Uncertainty markers*), within that section's cap of three per Epic, the three going to the Epic's open
+  findings that need a decision, ranked highest severity first, then in the order the review listed
+  them: a finding past the cap stays in the final report, which names the Epic as under-specified, as the writer's notes would.
 
 **The question names the requirement it puts in doubt, where it puts one in doubt**, so the next
 run knows which requirement to revisit when it settles the question. **And it is written after the last
