@@ -5,6 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.62.0] — 2026-11-09
+
+`/design` names a rollback target per workload and plays back what its write adds; `/implement` recommends revising the plan where only the plan's own text conflicts; every many-path before-and-after read goes through one script. Update with `workflows-core` 1.81.0.
+
+### Added
+
+- **`tree-snapshot.py` (LC34, K7).** `/implement`, `/upgrade`, `/vuln`, `/ready` and `/conformance` read the tree through it, instead of each command's own `git status` recipe, so a path with a space, a quote or a non-ASCII character is named exactly. `/implement` compares a read before and after each check run, and a file a check run created keeps its *Delete* option; a read that fails twice before the run's first edit stops with nothing committed, naming each file a check run touched and the answer it got, which the run-state file now keeps (`check_run_answers`), and, where the failed read followed a check run, saying that check run may have left output the run could not read. `/ready` and `/conformance` compare a read before and after their maintenance agents, and a file an agent created is reported, never handed off as its edit. The script is this plugin's own copy.
+- **`/design` asks the refresh question (LC33)** through `workflows-core:scan-refresh`, and `design-reviewer` and `interface-designer` read at the commit the scan read.
+
+### Fixed
+
+- **`/design` names a rollback target per workload (LC30).** The rollout question's recommended answer names a target for each workload a moved tag reaches, not one for the design.
+- **`/design` plays back what its write adds, and rests a what-changed claim on an unfiltered diff (LC37).** What the writing added to a confirmed section goes to the whole-artifact gate, and a claim that something changed is checked against the whole diff.
+- **`/implement` recommends *Revise the plan* where only the plan's own text conflicts (R1).** A `DEFERRED — plan-conflict` finding that contradicts none of `design.md`, the specification and the applicable ARD gets the recommendation; one that also contradicts any of them asks with no option recommended and says why: either answer applies the fix, so the code departs from that document, and the answers differ only in whether the plan is revised to carry the departure. Where the fix breaks an ARD Rule, the question says the re-review, where it runs, will block on it unless the departure is recorded; *Apply the fix, keep the plan text* records an `ARD deviation:` line, and every `code-review` brief now passes the run's recorded deviations as `ard_deviations`.
+- **`run-state.py append` refuses an array value (K1).** It exits `2`, writes nothing and names `set` and one value per pair.
+- **"The folder read" is no longer named as an agent's model route (K4)** in `/implement`'s run state and the other commands that said so.
+- **`readiness-reviewer` has a read scope (K5):** the artifacts the brief and `derived_phase` name and the `dev-workflows/` bookkeeping, never the PRD's `_conformance.md`, for which the `Delivery:` note stands, nor 4.61.0's *Release Preparation* drafts, `pr-draft.md` and `release-notes.md`, for which the status-expectation checklist stands, and no file of a code repository outside the specs repository; a fact only a code repository, or a specs file outside the scope, would show is reported as unverified.
+- **Pages.** The `/design`, `/implement`, `/ready`, `/conformance` and Agents pages describe each change.
+
 ## [4.61.1] — 2026-11-08
 
 The conformance record's handoff tells you what `/ready` sees: batch B37. Update with `workflows-core` 1.80.2.

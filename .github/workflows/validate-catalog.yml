@@ -261,21 +261,32 @@ jobs:
         # consumer build on a stale upstream. Fixtures are throwaway git repositories built at run time.
         run: python3 plugins/workflows-core/scripts/lineage.py --selftest
 
-      - name: Every plugin's bounded run is the same script
-        # A command, agent or reference calls ${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py -- the copy in
-        # the calling file's own plugin. A plugin with a call site must ship one, or every capped
-        # call there exits 2 and reads as "skip"; and every copy must equal workflows-core's, the
-        # one the self-test above runs.
+      - name: Self-test the tree snapshot
+        # /implement, /upgrade and /vuln hand off what a run changed by comparing two reads of the
+        # tree, and /ready, /conformance, /document and /epics compare two reads around their
+        # maintenance agents' edits. Its failure modes are silent: an agent's edit to a path git quotes or splits goes
+        # unreported, and the operator's own edit, or a file a check run created, is handed off as the
+        # agent's. Fixtures are throwaway git repositories built at run time.
+        run: python3 plugins/workflows-core/scripts/tree-snapshot.py --selftest
+
+      - name: Every plugin's copied scripts are the same
+        # A command, agent or reference calls ${CLAUDE_PLUGIN_ROOT}/scripts/<name> -- the copy in
+        # the calling file's own plugin, for each of bounded.py and tree-snapshot.py. A plugin with a
+        # call site must ship one, or every such call there exits 2 and reads as "skip"; and every
+        # copy must equal workflows-core's, the one the self-tests above run.
         run: |
           status=0
-          for d in plugins/*/; do
-            p=${d%/}
-            if grep -rqs --include='*.md' 'scripts/bounded\.py' "$p/commands" "$p/agents" "$p/references"; then
-              [ -f "$p/scripts/bounded.py" ] || { echo "::error file=$p::calls scripts/bounded.py but ships none"; status=1; }
-            fi
-            if [ -f "$p/scripts/bounded.py" ]; then
-              cmp -s plugins/workflows-core/scripts/bounded.py "$p/scripts/bounded.py" || { echo "::error file=$p/scripts/bounded.py::differs from plugins/workflows-core/scripts/bounded.py"; status=1; }
-            fi
+          for name in bounded.py tree-snapshot.py; do
+            pat=${name//./\\.}
+            for d in plugins/*/; do
+              p=${d%/}
+              if grep -rqs --include='*.md' "scripts/$pat" "$p/commands" "$p/agents" "$p/references"; then
+                [ -f "$p/scripts/$name" ] || { echo "::error file=$p::calls scripts/$name but ships none"; status=1; }
+              fi
+              if [ -f "$p/scripts/$name" ]; then
+                cmp -s "plugins/workflows-core/scripts/$name" "$p/scripts/$name" || { echo "::error file=$p/scripts/$name::differs from plugins/workflows-core/scripts/$name"; status=1; }
+              fi
+            done
           done
           exit $status
 

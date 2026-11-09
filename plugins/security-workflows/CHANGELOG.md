@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.11.0] — 2026-11-09
+
+Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **`/scan`'s report line *False positives decided* carries the evidence line (LC29).** Each finding recorded false-positive appears under its `[SEC#n]` with the evidence `<path>:<line>` at its commit and the line quoted as code, as read by the check's `git show`; a cited line in another file, or more than 10 lines from the finding's, says so. The page says the same.
+
 ## [0.10.11] — 2026-11-08
 
 Docs only: follow-up to batches B33 and B34. Needs nothing from the other plugins' releases.

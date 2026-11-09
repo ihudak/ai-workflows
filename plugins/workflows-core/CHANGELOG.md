@@ -5,6 +5,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.81.0] — 2026-11-09
+
+A shared refresh question for every command that scans a repository, a read after the last review the cap allows, and `tree-snapshot.py`, the before-and-after read of a tree. Update with `dev-workflows` 4.62.0, `product-workflows` 3.79.0 and `docs-workflows` 1.38.0.
+
+### Added
+
+- **`scan-refresh`, the refresh question every scanning command asks (LC33).** One reference for when a command's `code-scanner` dispatches refresh a clone and when they read the session's own repository at its default ref by ref instead: the `refresh-question` entry point, the `late-join` entry point, a fixed policy, the `refresh:` lines each repository's brief carries, what a read by ref that fails does, and the line a read by ref gets in the run's report. `/specify`, `/design`, `/create-ard`, `/update-spec`, `/docs-audit` and `/epics` cite it; `escalation-rules` points at it.
+- **`tree-snapshot.py` (LC34, K7).** The before-and-after read of a tree, replacing each command's own `git status` and diff recipe. It survives a path git quotes or splits, tells a file an agent or a check run created from one that was already clean, and names the exact path an agent edited. Any failure, a malformed snapshot file included, exits 2, which every caller reads as a read it could not make. It has a selftest, and `dev-workflows`, `product-workflows` and `docs-workflows` each ship a byte-equal copy.
+- **`overlap-reader` takes a new `caller` value (LC36)** for the read after the last review the cap allows, with `changed` carrying the edits answering that review and the decisions settled at its questions.
+
+### Fixed
+
+- **`escalation-rules` reads what was edited after the last review the cap allows (LC36).** In `/design`, `/specify` and `/update-spec`, an edit answering that review's findings, or a decision settled at a finding's question, used to reach the artifact with no read; the run now makes an `overlap-reader` read over those edits, and where it finds nothing the run goes on with no question and its version line names the read and its count of zero.
+- **`session-hygiene`: a merge-conditioned item keeps its waiting marker (LC35).** An item that waits on a pull request's merge carries the marker too, and its waiting datetime is the one it was first carried with, whatever else it waits on.
+- **`model-routing/classification` no longer routes "the folder read" as an agent (K4).** The folder read is the orchestrator's own inline read, so no model tier is assigned to it; the scanning rules name `code-scanner` alone.
+- **`escalation-rules`: the marker cap ranks its findings (K2).** Within an Epic's cap of three, counting the markers it already carries, the open slots go to the open findings that need a decision, highest severity first, then in the order the review listed them.
+- **Docs.** The References and Agents pages and the README describe the new reference and the new `caller` value.
+
 ## [1.80.3] — 2026-11-09
 
 `/ready` named as a second reader of the release-notes draft outside the working copy: batch B38. Update with `docs-workflows` 1.37.1.

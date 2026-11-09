@@ -2,7 +2,7 @@
 name: ard-reviewer
 description: Reviews an Architecture Requirements/Decision Document (ARD) authored by /create-ard for grounding integrity (every as-is claim cites a real file:line), AD#N well-formedness (Binds/Prevents/testable Rule/Alternatives), supersession integrity (a changed decision superseded, never rewritten in place), non-contradiction of inherited live PRD-level invariants, altitude purity (no per-repo solutions at PRD level), and recorded open questions. Read-only; returns findings + a PASS / PASS WITH RECOMMENDATIONS / BLOCK verdict. Uses Claude Opus.
 model: opus
-tools: ["Read", "Glob", "Grep", "Skill"]
+tools: ["Read", "Glob", "Grep", "Bash", "Skill"]
 ---
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
@@ -18,18 +18,31 @@ runs a fix cycle and re-reviews once.
 
 - **ARD path** — absolute path to the ARD (`ard.md`, or an area-scoped `ard-<area>.md`). Required; if absent, stop and report.
 - **Scope** — `prd | epic`. Review at the stated altitude; for an Epic-level ARD also read the inherited PRD-level ARD named in `inherits:` (if any) to check for contradictions.
+- **Repositories** — one line per repository `/create-ard` Phase 3 scanned: `<absolute path> @ <commit> — <by ref | read-only | checkout>`, `<commit>` the id of the commit the scan read and the mode how it read it: `by ref` at its default branch's tip, the checkout left on another branch; `read-only` on a read-only mount, at a ref; `checkout` in the working tree, which a refresh may have moved onto the default branch. Optional; a `grounded_repos` entry no line names — the line absent, or the whole input — is checked in the working tree.
 - **Prior ARD** — absolute path to a copy of the ARD as it stood before this run — a refine, or a fresh start over an ARD already on the specs repo's default branch — or `none`. Optional; absent reads as `none`. Unreadable → say so in the output and review as `none`, since it only sharpens checks below: the Alternatives MINOR, Supersession, and Contract completeness's MINOR for a row it already held.
 
 ## Review method
 
 1. Read the ARD end-to-end before judging.
 2. Verify frontmatter: `scope`; `prd` matches `^[A-Z][A-Z0-9_]*(-\d+)+$` — the grammar `workflows-core:addressing` §1 fixes, a superset of the two-segment form, so that an ARD authored by `/create-ard` on the BRD route carries a well-formed key rather than a finding: on that route a slice's own ARD has `prd` holding its parent BRD's key and `epic` the slice's, and an Epic's ARD under a slice has `prd` holding the slice's key and `epic` the Epic's, any of which may carry a third numeric segment; `grounded_repos` present; Epic-level has `epic` + (if a PRD-level ARD exists) `inherits`. `derived_from` names the PRD the ARD was built from, or — on the BRD route, in a folder that holds no PRD — the `ard-seed.md` it was actually authored from; neither is a finding.
-3. For each "as-is" claim in Grounding findings, confirm it cites a `file:line` in a `grounded_repos` entry — spot-check that the cited path plausibly exists (Glob/Grep). An uncited or clearly-fabricated claim → BLOCKER.
+3. For each "as-is" claim in Grounding findings, confirm it cites a `file:line` in a `grounded_repos` entry — spot-check that the cited path plausibly exists where the scan read it (*Reading the repositories*, below). An uncited or clearly-fabricated claim → BLOCKER; a path absent from the working tree but present at the commit the scan read is neither.
 4. Apply the dimensions below; record findings in the severity schema; route gaps needing human input to **needs architect input**; never fabricate a fix.
+
+## Reading the repositories
+
+Check a cited path where the scan that grounded it read it, matching each `grounded_repos` entry to its **Repositories** line by absolute path:
+
+- **`by ref` or `read-only`** — at the line's commit, never in the working tree, which holds a branch's unmerged work or whatever the host left there: `git -C "<path>" cat-file -e <commit>:<file>` to test that a file exists, `git -C "<path>" show <commit>:<file>` to read it, and `git -C "<path>" grep -n <pattern> <commit> -- <pathspec>` to search.
+- **`checkout`** — in the working tree with Read, Glob and Grep, which is what the scan read; where a cited path is not there, test it at the commit too before calling it fabricated, since the checkout may have moved since the scan.
+- **No line** — in the working tree.
+
+**A claim the ARD cites at a commit of its own is checked at that commit**, whatever the repository's line says — on the BRD route, a grounding finding's evidence cited at the commit that finding is pinned to: test the file with `git -C "<path>" cat-file -e <that commit>:<file>` and read it with `show` there, since a file deleted since that commit is not fabricated.
+
+Those three git reads are your only use of Bash: never another command, never one that writes a file, the index, a ref or `HEAD`, and never `fetch`, `pull`, `switch`, `checkout` or `stash`.
 
 ## Dimensions
 
-- **Grounding integrity (BLOCKER):** every architectural "as-is" statement cites a real `file:line` in a grounded repo; a decision resting on an uncited/fabricated claim → BLOCKER. An ungrounded/descoped repo must appear only as an Open question.
+- **Grounding integrity (BLOCKER):** every architectural "as-is" statement cites a real `file:line` in a grounded repo, real where the scan read it (*Reading the repositories*); a decision resting on an uncited/fabricated claim → BLOCKER. An ungrounded/descoped repo must appear only as an Open question.
 - **`AD#N` well-formed (MAJOR):** each decision has **Binds** / **Prevents** / a single **testable Rule** (an interface row's, stating behaviour with the shape, is still one); vague or untestable → MAJOR. Each live decision has **Alternatives** naming at least one other option and why it lost; missing or empty → MAJOR, or MINOR on a decision the Prior ARD already held without it (it predates the field). "None considered" is not an alternative — the decision fails `ard-format.md`'s real-trade-off test and belongs in Deferred for `/design` — save on an interface row's `AD#N`, which meets that test by what it is, where `none weighed` stands.
 - **Supersession (MAJOR):** a `**Superseded by:**` line names a live `[AD#M]` in this ARD, with a reason, and a `**Withdrawn:**` line gives one; no section of the ARD relies on a superseded or withdrawn decision as binding. With a Prior ARD: a decision it held whose Rule now requires something different, neither superseded nor withdrawn, was rewritten in place → MAJOR, since downstream artifacts cite it by ID (`ard-format.md` § Superseding a decision); a decision it held that is now missing, or under a different ID, → MAJOR.
 - **Supersedes (MAJOR):** each `**Supersedes:**` line is a markdown link whose target, resolved from the ARD's own directory, is an existing `architecture/decisions/<id>.md` record, and whose link text starts with that same `<id>` — the harvest reads the record from the text, a reader follows the target, so the two must name one record; it gives a reason after the link; the record's `prd:` is not this ARD's PRD — the key of the nearest `PRD-` folder holding the ARD (on the BRD route the slice's), never the ARD's own `prd:`, which names the parent BRD on a slice's own ARD (a same-PRD decision changes by refining its ARD with **Superseded by**); and it sits on a live decision. Whether a departure needed a `Supersedes` is not this check's — the reviewer never receives the grounding digest.

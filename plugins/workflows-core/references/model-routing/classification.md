@@ -405,24 +405,16 @@ normal single-explorer path.
 
 ### 8.2 The fan-out pattern
 
-1. the folder read reads each resolved specs folder (read-only) → themes, plus
-   the `EPIC-` folders under a PRD folder, which are the whole of the hierarchy.
-   No PR reference is collected here: a run's refs live in `implementation.md`.
+1. The folder read: the orchestrator itself reads each resolved specs folder, inline and read-only → themes, plus the `EPIC-` folders under a PRD folder, which are the whole of the hierarchy. No agent is dispatched for it, and no PR reference is collected here: a run's refs live in `implementation.md`.
 2. Spec/design folders are read inline and folded into the themes.
 3. `code-scanner` is fanned out **one instance per repository, in a single
    response, capped at 4 concurrent**. Each instance receives the themes and
    its own repo path; it returns capabilities, gaps, and relevant files.
-4. The orchestrator synthesizes the folder read output, all scanner reports,
-   and the spec into one codebase summary that feeds the Opus planner.
+4. The orchestrator synthesizes its own folder read, all scanner reports, and the spec into one codebase summary that feeds the Opus planner.
 
 ### 8.3 Model routing inside the fan-out
 
-- the folder read and `code-scanner` are **pinned to the §2.1 detection (Sonnet)
-  chain** via the `task` tool `model:` override — the same rule as every other
-  mechanical step (§2.1, §9.1). Scanning is mechanical filesystem work; it must
-  not inherit the session model (an Opus session would otherwise burn Opus on a
-  cheap step), and its tier must not depend on which model the session happens
-  to run under.
+- `code-scanner` is **pinned to the §2.1 detection (Sonnet) chain** via the `task` tool `model:` override — the same rule as every other mechanical step (§2.1, §9.1). Scanning is mechanical filesystem work; it must not inherit the session model (an Opus session would otherwise burn Opus on a cheap step), and its tier must not depend on which model the session happens to run under. The folder read (§8.2 step 1) is no dispatch, so there is nothing to pin: it is the orchestrator's own work, on the session model, as all orchestrator-executed work is (§9.1).
 - Because the trigger floors the task at `SIGNIFICANT` (§1.1), synthesis and
   planning run on the strongest available reasoning model via `risk-planner`
   (§2 chain). That is where reasoning power is applied — the mechanical scan
@@ -559,7 +551,7 @@ map govern every command, and §9.4 applies them to scanning.
 |------|-------|
 | Synthesis / planner (e.g. `doc-planner`) | §2 reasoning (Opus) |
 | `/implement`'s `code-writer` and `review-fixer` dispatches | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus or Fable model, else §2 reasoning (Opus) |
-| Reader / summarizer / locator / style-checker / fixer (save `/implement`'s `code-writer` and `review-fixer` dispatches, row above) / maintenance (the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
+| Reader / summarizer / locator / style-checker / fixer (save `/implement`'s `code-writer` and `review-fixer` dispatches, row above) / maintenance (`code-scanner`, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
 | Domain reviewer (`doc-reviewer`, `epic-reviewer`) | §2 review (Opus) — usually already frontmatter-pinned; the orchestrator records it and adds **no** override — unless §10 enforces a model |
 | Delegated writer (`doc-writer` / `epic-writer`) | §2 reasoning (Opus) for SIGNIFICANT/judgment writing; §2.1 detection (Sonnet) for MODERATE writing |
 | Coordination + interactive gates (the orchestrator itself) | session model; where the writing is delegated, a narrowed window advisory for large non-Opus runs, save `/implement`'s session-model gate on every class (§9.1); where the authoring is inline, the command's own (§9.1) |
@@ -587,15 +579,7 @@ rule, and the array offers only what remains reachable —
 
 ### 9.4 One rule across commands (`/implement` included)
 
-Scanning is routed by **step nature**, not by pipeline or session: the folder read and
-`code-scanner` are mechanical, so they run on the §2.1 detection (Sonnet) chain
-in **every** command — `/implement`'s fan-out (§8.3), `/epics`, and `/document`
-alike. There is no "inherit the session model" for scanning and no per-command
-exception. A step's downstream consumer does not change its tier: a mechanical
-scan that feeds an Opus synthesis (e.g. `/implement`'s `risk-planner`) still runs
-on Sonnet — the reasoning power is applied in the synthesis step, not the scan.
-The only carve-out is size-driven, not session-driven: escalate a single
-oversized repo slice's `code-scanner` to Opus (§8.3).
+Scanning is routed by **step nature**, not by pipeline or session: `code-scanner` is mechanical, so it runs on the §2.1 detection (Sonnet) chain in **every** command that dispatches it — `/implement`'s fan-out (§8.3) and `/epics` alike. There is no "inherit the session model" for scanning and no per-command exception. A step's downstream consumer does not change its tier: a mechanical scan that feeds an Opus synthesis (e.g. `/implement`'s `risk-planner`) still runs on Sonnet — the reasoning power is applied in the synthesis step, not the scan. The only carve-out is size-driven, not session-driven: escalate a single oversized repo slice's `code-scanner` to Opus (§8.3). The folder read is no scan in this sense and no dispatched step: it is the command's own inline read of the resolved folder (§8.2 step 1), so no chain names it.
 
 ---
 

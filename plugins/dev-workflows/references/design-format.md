@@ -28,7 +28,7 @@ answers, what a deploy step changes in the running processes, what a running job
 cites the `path:line` it was read at, in the repository and at the commit `/design` Phase 4 scanned —
 or, where Phase 4 recorded that commit `with uncommitted changes`, in the working tree it scanned.
 A precedent or a count claims no more than its citations show: one handler cited proves that
-handler, not every handler like it. `design-reviewer` re-derives each such statement from the
+handler, not every handler like it. A statement of what changed between two commits is such a claim: it rests on an unfiltered `git -C <repo> diff --name-only <old> <new>`, named beside it, and never on a diff limited to the paths a scan was asked about. `design-reviewer` re-derives each such statement from the
 repository, at that commit.
 
 ## Frontmatter

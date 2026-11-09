@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.38.0] — 2026-11-09
+
+`/docs-audit` asks the shared refresh question, and `/document` reads its before and after through one script. Update with `workflows-core` 1.81.0.
+
+### Added
+
+- **`tree-snapshot.py` (LC34, K7).** `/document`'s before-and-after read of the docs tree goes through this plugin's own copy of the script, so a path with a space, a quote or a non-ASCII character is named exactly, and a path that changed while the agents ran is reported as having changed then, never as an agent's edit.
+- **`/docs-audit` asks the refresh question (LC33)** through `workflows-core:scan-refresh`.
+
+### Changed
+
+- **Pages.** The `/document` and `/docs-audit` pages describe the read and the question.
+
 ## [1.37.1] — 2026-11-09
 
 `/release-notes` tells you what `/ready` misses on a declined draft: batch B38. Update with `workflows-core` 1.80.3.
