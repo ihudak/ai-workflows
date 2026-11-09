@@ -26,6 +26,7 @@ Standard library only; every git call is `git --no-optional-locks -C <dir>` with
 """
 
 import argparse
+import io
 import json
 import os
 import posixpath
@@ -59,15 +60,16 @@ def emit(obj):
 
 def fingerprint(directory, path):
     full = os.path.join(directory, path)
-    try:
-        if os.path.islink(full):
-            r = git(directory, "hash-object", "--stdin", data=os.fsencode(os.readlink(full)))
-        elif os.path.isfile(full):
-            r = git(directory, "hash-object", "--no-filters", "--", path)
-        else:
+    if os.path.islink(full):
+        try:
+            target = os.readlink(full)
+        except OSError:
+            # The link vanished or changed kind between the test and the read.
             return "-"
-    except OSError:
-        # The path vanished or changed kind between the test and the read.
+        r = git(directory, "hash-object", "--stdin", data=os.fsencode(target))
+    elif os.path.isfile(full):
+        r = git(directory, "hash-object", "--no-filters", "--", path)
+    else:
         return "-"
     return text(r.stdout).strip() if r.returncode == 0 and r.stdout.strip() else "-"
 
@@ -292,6 +294,25 @@ def selftest():
         finally:
             os.readlink = real_readlink
         check("symlink vanished before readlink fp", got_fp == "-", got_fp)
+
+        # git that cannot be started while fingerprinting is a failure (exit 2), never a "-".
+        put(repo, "tracked.txt", b"dirty for the start failure\n")
+        real_run, real_stdout, real_stderr = subprocess.run, sys.stdout, sys.stderr
+
+        def no_git(cmd, *a, **k):
+            if "hash-object" in cmd:
+                raise OSError(11, "Resource temporarily unavailable")
+            return real_run(cmd, *a, **k)
+        subprocess.run = no_git
+        sys.stdout, sys.stderr = io.TextIOWrapper(io.BytesIO(), encoding="utf-8"), io.StringIO()
+        try:
+            got_rc = main(["snapshot", "--dir", repo])
+        except Exception as e:
+            got_rc = e
+        finally:
+            subprocess.run, sys.stdout, sys.stderr = real_run, real_stdout, real_stderr
+        check("git start failure while fingerprinting exits 2", got_rc == 2, got_rc)
+        sh(repo, "checkout", "-q", "--", "tracked.txt")
 
         # A snapshot run from a deleted working directory.
         gone_cwd = os.path.join(tmp, "gone-cwd")

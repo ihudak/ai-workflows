@@ -108,6 +108,7 @@ LOCK = ".implement-run.lock"
 #             "diff_file", "return_file", "verdict"} -- one per review a split round dispatches;
 #            "paths" a piece's matched paths, or for "overall" the paths no piece matched;
 #            the two files temp files
+#   check_run_answers  {"path", "answer"} -- one per path a check run touched, as its answer settles it
 # commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
 KEYS = [
     ("format", 1), ("phase", "Phase 1.4"), ("mode", None), ("key", None), ("source", None),
@@ -120,7 +121,8 @@ KEYS = [
     ("task_shape", None), ("clarifications", {"settled": [], "answers": []}),
     ("routing", {"block": None, "history": []}), ("class", None), ("coding_model", None),
     ("branch_answer", {"answer": None, "moves": [], "lines": []}), ("branch", None),
-    ("stash_ref", None), ("pre_existing_dirty", None), ("session_branch_lift", False),
+    ("stash_ref", None), ("pre_existing_dirty", None), ("check_run_answers", []),
+    ("session_branch_lift", False),
     ("session_branch_created", None), ("test_decision", None), ("test_typechecks", []),
     ("clean_finish", True),
     ("files", {"task_description_file": None, "plan_file": None, "pending_plan_file": None,
@@ -642,6 +644,11 @@ def selftest():
               and d["report"] == {"commands_run": [], "maintenance": [], "notices": [], "phase1_tasks": [],
                                   "confirmed_cause": None})
         check("init defaults pieces and reviews to empty lists", d["pieces"] == [] and d["reviews"] == [])
+        check("init defaults check_run_answers to an empty list", d.get("check_run_answers") == [])
+        cra = {"path": "core dump.log", "answer": "Commit them with the change"}
+        code, _ = call(["append", "check_run_answers", json.dumps(cra)], repo=repo)
+        check("append records a check run's answer for a later stop", code == 0
+              and json.load(open(f, encoding="utf-8")).get("check_run_answers") == [cra])
         pe = {"name": "p", "files": ["a.py"], "contract": ["c"]}
         re_ = {"round": "first", "scope": "piece:p", "paths": ["a.py"], "diff_file": None,
                "return_file": None, "verdict": None}

@@ -70,7 +70,7 @@ Usage: `/update-spec <ADDRESS> [<what is wrong>] [--no-docs] [--docs <path>] [--
 
 ## Phase 1.5 — Classify + model routing
 
-Invoke the `model-routing` skill (`skill: "workflows-core:model-routing"`) and record the `model_routing` block as `/specify` Phase 1.5 does — `review_model` the §2 Opus chain for `spec-reviewer` and `overlap-reader`, `detection_model` the §2.1 Sonnet chain for `code-scanner` and `impl-maintenance`, the grill and the authoring inline on `current_model` — with §10's enforced model honoured wherever `run_flags.enforced_model` is set.
+Invoke the `model-routing` skill (`skill: "workflows-core:model-routing"`) and record the `model_routing` block as `/specify` Phase 1.5 does — `review_model` the §2 Opus chain for `spec-reviewer` and `overlap-reader`, and `architecture-grounder` dispatched on it, `detection_model` the §2.1 Sonnet chain for `code-scanner`, `docs-grounder` and `impl-maintenance`, the grill and the authoring inline on `current_model` — with §10's enforced model honoured wherever `run_flags.enforced_model` is set.
 
 ---
 
