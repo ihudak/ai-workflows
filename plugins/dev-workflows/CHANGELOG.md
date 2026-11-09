@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.61.0] — 2026-11-08
+## [4.62.0] — 2026-11-09
 
-`/design` names a rollback target per workload and plays back what its write adds; `/implement` recommends revising the plan where only the plan's own text conflicts; every many-path before-and-after read goes through one script. Update with `workflows-core` 1.80.0.
+`/design` names a rollback target per workload and plays back what its write adds; `/implement` recommends revising the plan where only the plan's own text conflicts; every many-path before-and-after read goes through one script. Update with `workflows-core` 1.81.0.
 
 ### Added
 
@@ -21,8 +21,24 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`/implement` recommends *Revise the plan* where only the plan's own text conflicts (R1).** A `DEFERRED — plan-conflict` finding that contradicts none of `design.md`, the specification and the applicable ARD gets the recommendation; one that also contradicts any of them asks with no option recommended and says why: either answer applies the fix, so the code departs from that document, and the answers differ only in whether the plan is revised to carry the departure. Where the fix breaks an ARD Rule, the question says the re-review, where it runs, will block on it unless the departure is recorded; *Apply the fix, keep the plan text* records an `ARD deviation:` line, and every `code-review` brief now passes the run's recorded deviations as `ard_deviations`.
 - **`run-state.py append` refuses an array value (K1).** It exits `2`, writes nothing and names `set` and one value per pair.
 - **"The folder read" is no longer named as an agent's model route (K4)** in `/implement`'s run state and the other commands that said so.
-- **`readiness-reviewer` has a read scope (K5):** the artifacts the brief and `derived_phase` name and the `dev-workflows/` bookkeeping, never the PRD's `_conformance.md`, for which the `Delivery:` note stands, and no file of a code repository outside the specs repository; a fact only a code repository, or a specs file outside the scope, would show is reported as unverified.
+- **`readiness-reviewer` has a read scope (K5):** the artifacts the brief and `derived_phase` name and the `dev-workflows/` bookkeeping, never the PRD's `_conformance.md`, for which the `Delivery:` note stands, nor 4.61.0's *Release Preparation* drafts, `pr-draft.md` and `release-notes.md`, for which the status-expectation checklist stands, and no file of a code repository outside the specs repository; a fact only a code repository, or a specs file outside the scope, would show is reported as unverified.
 - **Pages.** The `/design`, `/implement`, `/ready`, `/conformance` and Agents pages describe each change.
+
+## [4.61.0] — 2026-11-08
+
+`/ready` derives the PRD ladder's *Release Preparation* stage from two drafts on the specs repo's default branch. Update with `docs-workflows` 1.37.0, whose `/release-notes` writes the stage line `/ready` reads, and `workflows-core` 1.80.1, whose routing graph names the widened PE offer.
+
+### Added
+
+- **`/ready` reads the PRD's release-preparation signals** (Phase 1 step 2c), from `<default-ref>` by `git`, never the working tree, with no `require-on-main` call and no question: the PRD folder's `pr-draft.md`, which a keyed `/docs-workflows:document` run writes once it commits its pages on a documentation-repository branch and does not cancel at its push prompt, and a draft in its `release-notes.md` whose scope comment carries `stage: dev`. A draft with no `stage:` line — every one written before `docs-workflows` 1.37.0 — counts for no stage. Neither signal counts where it is dated before the latest `implementation.md` block in the PRD's tree — the blocks and the date-only rule of the *Delivery verified* test's sixth condition, a same-day block not counted — `pr-draft.md` dated by its last commit on `<default-ref>`, the release note by its newest dev-stage draft's scope-comment date; the reason names that block and the command to re-run, so drafts that landed for one delivery no longer place a PRD at *Release Preparation* after more work is implemented. A `Release preparation:` line in the report and in `_readiness.md` reads `shown — …` or `not shown — <reason>`; it is a note, never a finding, and a new invariant keeps it from counting against the run.
+
+### Changed
+
+- **`workflow-states`' *Release Preparation* row expects those two drafts** — documentation and a release note drafted, not published — in place of "docs + release notes", and *An optional rung* says the optional *Delivery verified* rung lifts only a PRD the mandatory rungs leave at *Implementation*.
+- **`/ready` Phase 3(0) derives *Release Preparation*** by the furthest-rung and straddle rules, so a PRD that passes *Delivery verified* over still reaches it when both drafts are there; nothing it reads shows *Post GA*, so no PRD is derived past it. Phase 3(b)'s checklist marks the two drafts ✅ at that rung, and carries the `Release preparation:` line as a note beneath *Implementation* or *Delivery verified*.
+- **The PE's `/dev-workflows:conformance <PRD>` offer** in `/ready`'s `### Next step` fires wherever the PRD is at *Implementation* or later and delivery is not verified, so a PRD at *Release Preparation* with an unsettled record is still offered it.
+- **`readiness-reviewer` never flags a PRD for lacking *Release Preparation*'s drafts**, which it cannot read on the default branch.
+- **Pages:** the `/ready` page, the references page, the workflow overview — an edge from the documentation commands into `/ready` — the index and *Roles and phases* say what *Release Preparation* is read from, and the `/ready` page and the workflow overview where the PE's run is offered.
 
 ## [4.60.0] — 2026-11-08
 

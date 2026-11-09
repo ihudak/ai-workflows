@@ -42,7 +42,7 @@ Emitted by `/implement`, role `dev`. Being in this phase means code is actually 
 
 ### readiness
 
-Emitted by `/ready`, role `dev`. Being in this phase means the workflow phase is being derived from the ARD / spec / design record — and the optional *Delivery verified* stage from the PRD's conformance record — never changed.
+Emitted by `/ready`, role `dev`. Being in this phase means the workflow phase is being derived from the ARD / spec / design record — the optional *Delivery verified* stage from the PRD's conformance record, and *Release Preparation* from the documentation and release-note drafts — never changed.
 
 ### conformance
 

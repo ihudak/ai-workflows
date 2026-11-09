@@ -103,7 +103,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |
 | `workflows-core-bounded-run.md` | `*/scripts/bounded.py`, `*/scripts/tree-snapshot.py`, `*/commands/*.md`, `*/agents/*.md`, `*/references/**`; `.github/workflows/validate-catalog.yml` (repo root) | the bounded-run authority and the copied-scripts rule (`bounded.py`, `tree-snapshot.py`) |
 | `workflows-core-triage.md` | as `workflows-core.md` | the finding-triage authority |
-| `workflows-core-git.md` | `workflows-core/scripts/session-branch.py`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
+| `workflows-core-git.md` | `workflows-core/scripts/`: `session-branch.py`, `specs-git.py`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
 | `workflows-core-read-only.md` | as `workflows-core-git.md` | the read-only-repos authority |
 | `claim-sweep.md` | `**` (any file) | the claim-expiry sweep's refinements |
 | `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |

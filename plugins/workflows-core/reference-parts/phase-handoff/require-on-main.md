@@ -52,7 +52,7 @@ Collision is normal, not exceptional: `_readiness.md` is overwritten on every `/
 
 ### 2.6.1 `owner-repo` — deriving $OWNER_REPO
 
-`$OWNER_REPO` is the `[HOST/]OWNER/REPO` value a `gh -R` call names, derived from a repository's `origin` remote — §2.6's calls and §3.5's probe name the specs repo's. This block derives it from `$SPECS_PATH`'s `origin`; a reader that derives it for another repository reads that repository's `origin` in its place:
+`$OWNER_REPO` is the `[HOST/]OWNER/REPO` value a `gh -R` call names, derived from a repository's `origin` remote — §2.6's calls and §3.5's probe name the specs repo's. Derive it with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/specs-git.py" owner-repo --repo "$SPECS_PATH"`, which prints `{"url", "host", "slug", "owner_repo"}` and takes `owner_repo` — `null` where the repository has no `origin`, or where the slug fails the validation below, which then makes no `gh` call, as that validation says; a reader that derives it for another repository passes that repository as `--repo`. Where the call exits 2, report the first line of its stderr and take `$OWNER_REPO` as unset. The script follows this block, which stays the rule:
 
     url=$(git -C "$SPECS_PATH" remote get-url origin)
     host=$(printf '%s' "$url" | sed -E 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##; s#^[^/@]+@##; s#[:/].*$##')

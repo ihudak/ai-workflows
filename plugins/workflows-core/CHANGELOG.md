@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.80.0] — 2026-11-08
+## [1.81.0] — 2026-11-09
 
-A shared refresh question for every command that scans a repository, a read after the last review the cap allows, and `tree-snapshot.py`, the before-and-after read of a tree. Update with `dev-workflows` 4.61.0, `product-workflows` 3.79.0 and `docs-workflows` 1.37.0.
+A shared refresh question for every command that scans a repository, a read after the last review the cap allows, and `tree-snapshot.py`, the before-and-after read of a tree. Update with `dev-workflows` 4.62.0, `product-workflows` 3.79.0 and `docs-workflows` 1.38.0.
 
 ### Added
 
@@ -22,6 +22,24 @@ A shared refresh question for every command that scans a repository, a read afte
 - **`model-routing/classification` no longer routes "the folder read" as an agent (K4).** The folder read is the orchestrator's own inline read, so no model tier is assigned to it; the scanning rules name `code-scanner` alone.
 - **`escalation-rules`: the marker cap ranks its findings (K2).** Within an Epic's cap of three, counting the markers it already carries, the open slots go to the open findings that need a decision, highest severity first, then in the order the review listed them.
 - **Docs.** The References and Agents pages and the README describe the new reference and the new `caller` value.
+
+## [1.80.1] — 2026-11-08
+
+Wording and pages only. The routing graph's `/ready` offer, and the family map, follow `dev-workflows` 4.61.0, which derives *Release Preparation*. Update with `dev-workflows` 4.61.0.
+
+### Changed
+
+- **`next-phase-offer`'s *Dev* lane:** `/dev-workflows:ready` offers the PE's `/dev-workflows:conformance <PRD>` wherever the PRD is at *Implementation* or later and its delivery is not verified, not at *Implementation* alone, so a PRD at *Release Preparation* with an unsettled record is still offered it. Its generated part is regenerated.
+- **The family map** draws `/document`'s `pr-draft.md` and `/release-notes`' dev-stage release note into `/ready`, and its `/ready` note says the two drafts, once on the default branch and dated no earlier than the latest work implemented on the PRD, place a PRD at *Release Preparation*, and that the PE's run is offered from *Implementation* on.
+
+## [1.80.0] — 2026-11-08
+
+The specs-repository git primitives move into one tested script: GIT-G1 Part 1. Needs nothing from the other plugins' releases.
+
+### Changed
+
+- **`scripts/specs-git.py` carries the deterministic git primitives of `specs-repo-git` and `phase-handoff`**, one subcommand each, each printing one JSON object: `status`, the §2.1 classifier over `git status --porcelain -z` (a rename's original path is never a record of its own); `branch-merged`, §3.5's four tests; `branch-key`, resolved against the run's own keys, never read out of the branch name; `push-scope`, §4 step 5's test and §8.4's session-branch form; `owner-repo`, `phase-handoff` §2.6.1's derivation with its SSH-alias resolution, its `name` field the unvalidated form §2.1's `<docs-repo-slug>` takes, alias resolution skipped, and never the remote URL itself, which can carry a credential; and `mode`, §8.1's. `branch-merged` and `branch-key` also run where `$SPECS_PATH` sits below its repository's top level, as §3.5's classification under `specs_git: misrooted` needs, and every path is printed as git gave it, never as a JSON escape a later `git add` could not match. It reuses `session-branch.py`'s classifier, push-scope walk and `mode`, so none exists twice, and its selftest — 65 checks on repositories built at run time, among them GIT-B1's drifted squash and a change hidden inside a merge commit — runs in CI.
+- **`specs-repo-git` and `phase-handoff` call the script** where they spelled those steps out as git commands for an agent to run by hand: §2.1's listing and classification, §3.5's merged test and branch-key resolution, §4 step 5's and §8.4's push-scope, §8.1's mode, and §2.6.1's owner-repo. Every rule and its reason stays in the reference as the contract the script follows. An exit 2 is reported and read as the answer that deletes, pushes and stages nothing: unmerged, no key, nothing pushed, nothing staged.
 
 ## [1.79.0] — 2026-11-08
 

@@ -297,3 +297,11 @@ jobs:
         # yet on the session branch. Fixtures are built at run time, with a bare remote
         # that refuses its default branch.
         run: python3 plugins/workflows-core/scripts/session-branch.py --selftest
+
+      - name: Self-test the specs-repo git primitives
+        # specs-repo-git and phase-handoff call specs-git.py for the status classifier,
+        # branch-merged, branch-key, push-scope, owner-repo and mode. Its failure mode is
+        # silent: a session file classified OTHER stays dirty forever, a merged branch read
+        # unmerged keeps a run on it, a key read out of a branch name sends a run to the
+        # wrong branch. Fixtures are built at run time, with a bare remote.
+        run: python3 plugins/workflows-core/scripts/specs-git.py --selftest

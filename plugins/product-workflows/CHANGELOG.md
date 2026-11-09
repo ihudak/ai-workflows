@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.79.0] — 2026-11-08
+## [3.79.0] — 2026-11-09
 
-`/specify` prints its run details as one block and records no `epic.md` under a PRD-level specification; the scanning commands ask the shared refresh question; `/epics` ranks its marker cap. Update with `workflows-core` 1.80.0.
+`/specify` prints its run details as one block and records no `epic.md` under a PRD-level specification; the scanning commands ask the shared refresh question; `/epics` ranks its marker cap. Update with `workflows-core` 1.81.0.
 
 ### Added
 
@@ -22,6 +22,14 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **"The folder read" is no longer named as an agent's model route (K4)** in `/create-ard`, `/epics` and `/specify`.
 - **`ard-reviewer` checks a claim the ARD cites at a commit of its own at that commit**, so on the BRD route a grounding finding's evidence, cited at its pinned commit, is not taken for fabricated where its file was deleted since.
 - **Pages.** The `/specify`, `/create-ard`, `/update-spec`, `/epics` and Agents pages describe each change.
+
+## [3.78.11] — 2026-11-08
+
+Docs only. Update with `dev-workflows` 4.61.0, whose `/ready` the page now describes; needs nothing from `workflows-core`.
+
+### Changed
+
+- **The workflow page's *Sources of truth*** says `/dev-workflows:ready` reads two stages from the specs repo's default branch: the optional *Delivery verified*, as before, and *Release Preparation*, from the documentation run's pull-request draft and a release note drafted at the dev stage, neither dated before the latest work implemented. Its prose says `/dev-workflows:ready` offers the PE's PRD run wherever a PRD at *Implementation* or a later stage is not delivery verified.
 
 ## [3.78.10] — 2026-11-08
 

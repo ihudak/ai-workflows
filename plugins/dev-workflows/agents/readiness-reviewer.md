@@ -44,7 +44,7 @@ Refuse to review without the derived phase and at least the requirement inventor
 
 ## Read scope
 
-Read these, and nothing else — and never the PRD folder's `_conformance.md`, wherever the brief or `derived_phase` names it, since `delivery` stands for it: the caller read it from the default branch, never the working tree:
+Read these, and nothing else — and never the PRD folder's `_conformance.md`, wherever the brief or `derived_phase` names it, since `delivery` stands for it: the caller read it from the default branch, never the working tree; nor the PRD folder's `pr-draft.md` or `release-notes.md`, *Release Preparation*'s drafts, wherever the brief or `derived_phase` names them, since the status-expectation table stands for them, by their ✅ marks or the caller's `Release preparation:` note, and the caller read them from the default branch too:
 
 - every artifact path the brief names, and the rubric it names;
 - every artifact `derived_phase` names, each in-scope `implementation.md` included;
@@ -70,7 +70,7 @@ Read no file of a code repository outside the specs repository the brief's artif
 
 | Dimension | Check |
 |---|---|
-| Status consistency | Do the artifacts justify the *derived* phase and support the *next* transition, per that rubric? The headline dimension — a mismatch between the derived phase and what the "Expected artifacts" column requires at that rung is the primary signal for the verdict. Where `claimed_status` was passed, compare it too: a claim above the derived phase caps the verdict, a claim below is reported and does not cap. Never flag a PRD for lacking the optional rung, *Delivery verified (optional)*: a PRD derived at *Implementation* is fully at its phase without a conformance record, an absent or unsettled one being the `delivery` note and not a gap; and a PRD derived at the rung has its artifact confirmed by that note, which this review never re-tests. |
+| Status consistency | Do the artifacts justify the *derived* phase and support the *next* transition, per that rubric? The headline dimension — a mismatch between the derived phase and what the "Expected artifacts" column requires at that rung is the primary signal for the verdict. Where `claimed_status` was passed, compare it too: a claim above the derived phase caps the verdict, a claim below is reported and does not cap. Never flag a PRD for lacking the optional rung, *Delivery verified (optional)*: a PRD derived at *Implementation* is fully at its phase without a conformance record, an absent or unsettled one being the `delivery` note and not a gap; and a PRD derived at the rung has its artifact confirmed by that note, which this review never re-tests. Nor for lacking *Release Preparation*'s drafts — the PRD folder's `pr-draft.md` and a dev-stage release note, which the caller reads from the specs repository's default branch, as this review cannot: a PRD below that rung is fully at its phase without them, and at *Implementation* or *Delivery verified (optional)* the status-expectation table carries the caller's `Release preparation:` note beneath its rung, a note and not a gap; a PRD derived there has them marked ✅ in that table, which this review never re-tests. |
 | Coverage chain | Every PRD requirement traces to ≥1 unit (an Epic, or the broad slice where one was derived) → a spec → a design (to the depth that exists). A PRD requirement with no unit = MAJOR. An in-scope Epic, or the broad slice, missing a spec/design that the PRD's derived phase implies it should have = MAJOR. An absent artifact that is merely optional at this status = MINOR. |
 | Cross-artifact alignment | Terminology drift and outright contradictions across PRD ↔ ARD ↔ spec ↔ design — against the PRD's live requirements only; one marked `Superseded by` or `Withdrawn` is history, so following its replacement is not a contradiction. |
 | ARD conformance (conditional) | Only when `applicable_ard` is present: an artifact that violates an `AD#N` without a matching `- ARD deviation: … flag: architect` line = BLOCKER; with one = allowed-but-flagged. Absent `applicable_ard` → dimension skipped. A decision the ARD text marks `**Superseded by:**` or `**Withdrawn:**` binds nothing, and `applicable_ard` omits it. |
@@ -135,7 +135,7 @@ Return this exact shape (no preamble, no chatter):
 ## Hard rules
 
 - NEVER modify files. This reviewer reads; it never writes.
-- NEVER read outside the read scope above — never the PRD folder's `_conformance.md`, and no file of a code repository outside the specs repository; a fact only a code repository, or a specs file outside the scope, would show is reported as unverified.
+- NEVER read outside the read scope above — never the PRD folder's `_conformance.md`, `pr-draft.md` or `release-notes.md`, and no file of a code repository outside the specs repository; a fact only a code repository, or a specs file outside the scope, would show is reported as unverified.
 - NEVER write a status, comment, or transition anywhere. This review reports and never sets.
 - NEVER return a `SUPPORTED` verdict if a BLOCKER finding exists.
 - NEVER skip a dimension silently — either report findings or say "N/A — reason".

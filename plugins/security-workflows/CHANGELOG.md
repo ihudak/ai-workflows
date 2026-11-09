@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [0.11.0] — 2026-11-08
+## [0.11.0] — 2026-11-09
 
 Needs nothing from the other plugins' releases.
 
