@@ -325,12 +325,18 @@ def _placeholders(text):
 
 
 def _spans(text):
-    """Every placeholder of <text> at its own level, optional segments included, in order."""
+    """Every key fill() takes in <text>, in order: each placeholder at its own level, optional segments included,
+    and, inside an alternation, the placeholders of each alternative, which fill() renders in turn."""
     found, i = [], 0
     while i < len(text):
         if text[i] == "<":
             j = _close(text, i, "<", ">")
-            found.append(text[i:j + 1])
+            span = text[i:j + 1]
+            found.append(span)
+            alternatives = _alternatives(span[1:-1])
+            if len(alternatives) > 1:
+                for alternative in alternatives:
+                    found.extend(_spans(alternative))
             i = j + 1
         else:
             i += 1
@@ -338,8 +344,9 @@ def _spans(text):
 
 
 def placeholder(tid, start):
-    """The placeholder of T[tid] that is <start>, or the one placeholder it begins — the key fill() takes for it,
-    an alternation's whole text included. ValueError where none, or more than one, matches."""
+    """The placeholder of T[tid] that is <start>, or the one placeholder it begins — any key fill() takes for that
+    template, an alternation's whole text and the placeholders inside its alternatives included. ValueError where
+    none, or more than one, matches."""
     spans = _spans(T[tid])
     if start in spans:
         return start

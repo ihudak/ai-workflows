@@ -1166,6 +1166,10 @@ def selftest():
               "l_fill_alternation: a bool for an alternation raises")
         check(raises_naming("beginning", span, "root.one-line", "<the value the walk found"),
               "l_fill_alternation: placeholder() refuses a prefix two placeholders share")
+        check(span("root.one-line", "<key>") == "<key>" and span("pre.stay", "<default>") == "<default>"
+              and span("root.two-readings", "<the parent of") == "<the parent of <value>>",
+              "l_fill_alternation: placeholder() finds a placeholder inside an alternation's alternatives")
+        check(raises_naming("has 0", span, "pre.stay", "<nothing>"), "l_fill_alternation: placeholder() refuses a key it lacks")
 
         # l_fill_count
         got1 = lines.fill("row.pushed-plugin", {"<sha7>": "abc1234", "<N>": 1, "<branch>": "prd/A-1-x"})
