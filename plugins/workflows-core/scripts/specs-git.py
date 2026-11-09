@@ -36,6 +36,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPECS_REPO_GIT = os.path.join(HERE, "..", "references", "specs-repo-git.md")
@@ -208,9 +209,13 @@ def push_scope(root, branch, session_default_ref=None):
 
 def declined(command, paths):
     """The paths the run's user declined to stage, appended (unique, in order) to the record of this session
-    and <command>; a record the command's start never made is created, marked as not started by the script."""
+    and <command>; a record the command's start never made is created, marked as not started by the script.
+    A record load() returns None for (another version, or unparsable) is overwritten and reported created: it
+    serves no later call."""
     state, _ = _flow()
-    if not state.COMMAND_RE.match(command):
+    if not paths:
+        raise NotRun("usage: declined needs at least one --path")
+    if not state.COMMAND_RE.fullmatch(command):
         raise NotRun("usage: --command is /<name>, got %s" % command)
     session = state.session_id()
     rec = state.load(session, command)
@@ -802,6 +807,8 @@ def selftest():
             for bad in ("", "../x", "-x", "a b"):
                 os.environ["CLAUDE_CODE_SESSION_ID"] = bad
                 check(raises(state.NoSession, state.session_id), "s_session_id: %r raises NoSession" % bad)
+            os.environ["CLAUDE_CODE_SESSION_ID"] = "abc\n"
+            check(raises(state.NoSession, state.session_id), "s_session_id: a trailing newline raises NoSession")
             os.environ["CLAUDE_CODE_SESSION_ID"] = "ab-12_x.y"
             check(state.session_id() == "ab-12_x.y", "s_session_id: a good id is returned")
 
@@ -810,6 +817,7 @@ def selftest():
             want = os.path.join(home, ".claude", "dev-workflows", "specs-git", "s1", "create-ard.json")
             check(state.path("s1", "/create-ard") == want, "s_path: the record's home (%r)" % state.path("s1", "/create-ard"))
             check(raises(ValueError, state.path, "s1", "create-ard"), "s_path: a command without its slash is a ValueError")
+            check(raises(ValueError, state.path, "s1", "/idea\n"), "s_path: a trailing newline is a ValueError")
             check(raises(ValueError, state.path, "s1", "/Create"), "s_path: an upper-case command is a ValueError")
 
             # s_roundtrip
@@ -856,7 +864,7 @@ def selftest():
             # s_prune
             def touch(sess, cmd, days):
                 state.save(sess, cmd, state.new(cmd, session=sess))
-                t = __import__("time").time() - days * 86400
+                t = time.time() - days * 86400
                 os.utime(state.path(sess, cmd), (t, t))
 
             touch("old", "/specify", 8)
@@ -874,9 +882,10 @@ def selftest():
             check(state.resumable(rec, {"keys": ["A-1"]}) is True, "s_resumable: a fresh record at settle with the same args")
             check(state.resumable(dict(rec, stage="done"), {"keys": ["A-1"]}) is False, "s_resumable: stage done")
             check(state.resumable(rec, {"keys": ["A-2"]}) is False, "s_resumable: other args")
-            old = __import__("time").strftime(state.STAMP, __import__("time").gmtime(__import__("time").time() - 20 * 60))
+            old = time.strftime(state.STAMP, time.gmtime(time.time() - 20 * 60))
             check(state.resumable(dict(rec, updated=old), {"keys": ["A-1"]}) is False, "s_resumable: twenty minutes old")
             check(state.resumable(dict(rec, updated=""), {"keys": ["A-1"]}) is False, "s_resumable: no timestamp")
+            check(state.resumable(dict(rec, updated=None), {"keys": ["A-1"]}) is False, "s_resumable: a null timestamp")
 
             # s_declined_cli
             shutil.rmtree(os.path.join(home, ".claude"))
@@ -909,6 +918,10 @@ def selftest():
             got = cli("declined", "--path", "a.md", env=clean_env("s1"))
             check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
                   "s_usage_prefix: a usage error says usage (%r)" % got)
+            got = cli("declined", "--command", "/idea", env=clean_env("s1"))
+            check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: ")
+                  and not os.path.exists(state.path("s1", "/idea")),
+                  "s_usage_prefix: no --path is a usage error, nothing written (%r)" % got)
             got = cli("declined", "--command", "idea", "--path", "a.md", env=clean_env("s1"))
             check(one_not_run_line(got), "s_usage_prefix: a command without its slash exits 2 with one line (%r)" % got)
 

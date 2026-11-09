@@ -15,8 +15,8 @@ import tempfile
 import time
 
 VERSION = 1
-SESSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
-COMMAND_RE = re.compile(r"^/[a-z][a-z0-9-]*$")
+SESSION_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+COMMAND_RE = re.compile(r"/[a-z][a-z0-9-]*")
 STAMP = "%Y-%m-%dT%H:%M:%SZ"
 
 # The record's keys and their defaults; a key outside this table is refused on new() and save().
@@ -65,7 +65,7 @@ class NoSession(Exception):
 
 def session_id():
     value = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
-    if not SESSION_RE.match(value):
+    if not SESSION_RE.fullmatch(value):
         raise NoSession("CLAUDE_CODE_SESSION_ID is unset or not a session id")
     return value
 
@@ -75,9 +75,9 @@ def root():
 
 
 def path(session, command):
-    if not COMMAND_RE.match(command):
+    if not COMMAND_RE.fullmatch(command):
         raise ValueError("a command is /<name>, got %r" % command)
-    if not SESSION_RE.match(session):
+    if not SESSION_RE.fullmatch(session):
         raise ValueError("not a session id: %r" % session)
     return os.path.join(root(), session, command.lstrip("/") + ".json")
 
@@ -138,7 +138,7 @@ def resumable(rec, args, minutes=15):
         return False
     try:
         updated = calendar.timegm(time.strptime(rec.get("updated", ""), STAMP))
-    except ValueError:
+    except (ValueError, TypeError):
         return False
     return 0 <= time.time() - updated <= minutes * 60
 
@@ -172,10 +172,17 @@ def prune(keep_session, days=7):
         directory = os.path.join(base, name)
         if name == keep_session or not os.path.isdir(directory):
             continue
-        for entry in sorted(os.listdir(directory)):
+        try:  # best effort: another session's run may remove a file at the same moment
+            entries = sorted(os.listdir(directory))
+        except OSError:
+            continue
+        for entry in entries:
             full = os.path.join(directory, entry)
-            if entry.endswith(".json") and os.path.isfile(full) and os.path.getmtime(full) < cutoff:
-                os.unlink(full)
-                removed.append(full)
+            try:
+                if entry.endswith(".json") and os.path.isfile(full) and os.path.getmtime(full) < cutoff:
+                    os.unlink(full)
+                    removed.append(full)
+            except OSError:
+                continue
         _rmdir_if_empty(directory)
     return removed
