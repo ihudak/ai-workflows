@@ -13,14 +13,17 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py --specs <root> mode --default <name>
   specs-git.py owner-repo --repo <path> [--no-alias]
   specs-git.py declined --command /<name> --path <p> [--path <p>]...
+  specs-git.py --specs "<value>" specs-root-check
   specs-git.py --selftest
 
 declined appends paths to the run's state record (specs_git_state.py, one file per session and command, outside
-every repository), creating the record where the command's start never ran. The state module loads only for the
-subcommands that need it, so a copy of this script without it still runs the primitives above.
+every repository), creating the record where the command's start never ran. specs-root-check runs addressing §3's
+entry point on SPECS_PATH as set, "" meaning unset. The state and lines modules load only for the subcommands that
+need them, so a copy of this script without them still runs the primitives above.
 
 <root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
-where specs-repo-git §3.5 classifies under specs_git: misrooted). Nothing here writes the working tree, the index or a
+where specs-repo-git §3.5 classifies under specs_git: misrooted); specs-root-check's <value> is never checked
+first, so empty, a file or a subdirectory each reaches it. Nothing here writes the working tree, the index or a
 ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it found. Exit 2: it could not
 run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
@@ -279,6 +282,257 @@ def owner_repo_of(repo, resolve_alias=True):
     return owner_repo(sb.text(r) if r.returncode == 0 else None, resolve_alias)
 
 
+# session-hygiene §7's The line., character for character; the selftest fails where they differ.
+SH7_LINE = r'''printf 'Environment: SPECS_PATH=%s (origin %s), REPOS_PATH=%s\n' \
+  "$(if [ -n "${SPECS_PATH-}" ]; then realpath -- "$SPECS_PATH" 2>/dev/null || printf '%s' "$SPECS_PATH"; else printf unset; fi)" \
+  "$(if [ -n "${SPECS_PATH-}" ]; then git -C "$SPECS_PATH" remote get-url origin 2>/dev/null || printf none; else printf none; fi)" \
+  "${REPOS_PATH-unset}"'''
+
+
+def env_line(specs):
+    """session-hygiene §7's Environment: line, as its Bash call prints it in the run's own shell: SH7_LINE run by
+    bash with SPECS_PATH set to <specs>, or removed where <specs> is empty, and every other variable and the
+    working directory inherited. The line is returned without its newline."""
+    env = dict(os.environ)
+    if specs:
+        env["SPECS_PATH"] = specs
+    else:
+        env.pop("SPECS_PATH", None)
+    try:
+        r = subprocess.run(["bash", "-c", SH7_LINE], env=env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                           timeout=60)
+    except subprocess.TimeoutExpired:
+        raise NotRun("the Environment line's Bash call did not finish within 60 s")
+    if r.returncode != 0:
+        raise NotRun("the Environment line's Bash call failed (exit %d)" % r.returncode)
+    out = r.stdout.decode("utf-8", "surrogateescape")
+    return out[:-1] if out.endswith("\n") else out
+
+
+# addressing §2's register of reserved subdirectory names, as a whole-name match; the selftest fails where it
+# differs from that list, or from session-branch.py's EXCLUDED, which holds the same names but dev-workflows.
+RESERVED = re.compile(r"\A(?:brd|grounding|interview|dev-workflows|design|attachments|revisions"
+                      r"|bundle-[0-9]{8}|customer-sent-[0-9]{8}|Doc screenshots)\Z")
+FOLDER_KINDS = {"brd": "BRD", "prd": "PRD", "epic": "EPIC"}
+_FIELD = re.compile(r"^(key|kind):\s*(.+?)\s*$")
+
+
+def _frontmatter(path):
+    """key: and kind: off the lines between a file's opening --- and the next ---, quotes stripped; {} where the
+    file opens no frontmatter, closes none, or cannot be read."""
+    found = {}
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            if fh.readline(4096).lstrip("\ufeff").rstrip() != "---":
+                return {}
+            for line in fh:
+                line = line.rstrip("\r\n")
+                if line.rstrip() == "---":
+                    return found
+                m = _FIELD.match(line)
+                if m and m.group(1) not in found:
+                    value = m.group(2)
+                    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                        value = value[1:-1]
+                    found[m.group(1)] = value
+    except OSError:
+        pass
+    return {}
+
+
+def _names(directory):
+    """The entries of <directory> in byte-wise order of name; none where it cannot be listed."""
+    try:
+        return sorted(os.listdir(directory), key=os.fsencode)
+    except OSError:
+        return []
+
+
+def _carrier(folder):
+    """addressing §4's carrier of <folder>: (kind, key) off the first of its top-level files, in byte-wise order,
+    whose frontmatter holds key: and a kind: of brd, prd or epic, else off brd/brd-inventory.md; None where none."""
+    candidates = [os.path.join(folder, n) for n in _names(folder) if os.path.isfile(os.path.join(folder, n))]
+    for path in candidates + [os.path.join(folder, "brd", "brd-inventory.md")]:
+        fm = _frontmatter(path)
+        if fm.get("key") and fm.get("kind") in FOLDER_KINDS:
+            return fm["kind"], fm["key"]
+    return None
+
+
+def _prefixed(name, key):
+    """addressing §4.1's prefix test: <name> begins <KIND>-<key>-, <KIND> one of §2's three, <key> the carrier's.
+    The key is the one read off the carrier, so nothing is parsed out of the name."""
+    return any(name.startswith("%s-%s-" % (kind, key)) for kind in FOLDER_KINDS.values())
+
+
+def _git_line(path, *args):
+    """One rev-parse answer for <path>, or None where git fails there."""
+    r = sb.git(path, "rev-parse", *args, check=False)
+    return sb.text(r) if r.returncode == 0 else None
+
+
+def _same(a, b):
+    """test's -ef: the same file, by device and inode; False where either cannot be reached."""
+    try:
+        return os.path.samefile(a, b)
+    except OSError:
+        return False
+
+
+def _strays(specs):
+    """(b)'s second half, lazily: each immediate subdirectory of <specs>, in byte-wise order, not a reserved name and
+    not resolving inside <specs>/specifications/, whose carrier passes the prefix test by its own name."""
+    tree = os.path.join(specs, "specifications")
+    tree = os.path.realpath(tree) if os.path.isdir(tree) else None
+    for name in _names(specs):
+        path = os.path.join(specs, name)
+        if not os.path.isdir(path) or RESERVED.match(name):
+            continue
+        real = os.path.realpath(path)
+        if tree and (real == tree or real.startswith(tree.rstrip(os.sep) + os.sep)):
+            continue
+        carrier = _carrier(path)
+        if carrier and _prefixed(name, carrier[1]):
+            yield name
+
+
+def _walk(specs):
+    """addressing §3's value to set: from the physical <specs> up at most three levels, the first D whose
+    D/../specifications is D and whose top level git prints, the same as D/..'s; the physical D/.., or None."""
+    d = os.path.realpath(specs)
+    for _ in range(4):
+        up = os.path.join(d, "..")
+        if _same(os.path.join(up, "specifications"), d):
+            top = _git_line(d, "--show-toplevel")
+            if top is not None and top == _git_line(up, "--show-toplevel"):
+                return os.path.realpath(up)
+        parent = os.path.dirname(d)
+        if parent == d:
+            break
+        d = parent
+    return None
+
+
+def _left_behind(lines, specs, walk, two_readings):
+    """addressing §3's left-behind line for <specs>: the folders of a nested specifications/, then whichever of
+    dev-workflows-feedback/, dev-workflows-cost/ and documentation/<slug>/dev-workflows/ exist; None where none."""
+    nested = os.path.join(specs, "specifications")
+    folders = [n for n in _names(nested) if os.path.isdir(os.path.join(nested, n))] if os.path.isdir(nested) else None
+    dirs = [d for d in ("dev-workflows-feedback", "dev-workflows-cost") if os.path.isdir(os.path.join(specs, d))]
+    docs = os.path.join(specs, "documentation")
+    dirs += ["documentation/%s/dev-workflows" % slug for slug in _names(docs)
+             if os.path.isdir(os.path.join(docs, slug, "dev-workflows"))]
+    return lines.left_behind({"<value>": specs, "<the value the walk found>": walk}, folders, dirs, two_readings)
+
+
+def specs_root_check(specs):
+    """addressing §3's specs-root-check on <specs>, SPECS_PATH as set (empty: unset, which tests nothing).
+
+    signal: the first that holds of (a)'s two tests — a-prefix (--show-prefix begins specifications/), a-ef
+    (<specs>/../specifications is <specs>, which is no work tree's top level) — then (b)'s two halves — b-self
+    (<specs>, by its physical name, is a carrier-bearing folder that passes the prefix test), b-sub (an immediate
+    subdirectory is). form: one-line where the walk found a value or any signal but b-sub held; else stray where
+    --show-prefix succeeds and is empty or <specs>/specifications/ exists; else two-readings. value: the value the
+    walk found. subdirs: the subdirectories the stop names — the first that qualifies, every one in the stray
+    form; [] where b-sub did not fire. lines: the stop, then the left-behind line where one applies (never in the
+    stray form); [] where no signal holds."""
+    result = {"signal": None, "form": None, "value": None, "subdirs": [], "lines": []}
+    if not specs or not os.path.isdir(specs):
+        return result
+    prefix = _git_line(specs, "--show-prefix")
+    key = first = None
+    strays = _strays(specs)
+    if prefix is not None and prefix.startswith("specifications/"):
+        signal, choice = "a-prefix", 0 if prefix == "specifications/" else 1
+    elif _same(os.path.join(specs, "..", "specifications"), specs) and prefix != "":
+        signal, choice = "a-ef", 0
+    else:
+        carrier = _carrier(specs)
+        if carrier and _prefixed(os.path.basename(os.path.realpath(specs)), carrier[1]):
+            signal, choice, key = "b-self", 2, carrier[1]
+        else:
+            first = next(strays, None)
+            if first is None:
+                return result
+            signal, choice = "b-sub", 3
+    lines = _load_module("specs_git_lines")
+    walk = _walk(specs)
+    if walk is not None or signal != "b-sub":
+        form = "one-line"
+    elif prefix is not None and (prefix == "" or os.path.isdir(os.path.join(specs, "specifications"))):
+        form = "stray"
+    else:
+        form = "two-readings"
+    subdirs = [first] if first else []
+    top = _git_line(specs, "--show-toplevel") if prefix else None
+    if form == "one-line":
+        walk_top = _git_line(walk, "--show-toplevel") if walk is not None and _git_line(walk, "--show-prefix") else None
+        line = lines.fill("root.one-line", {
+            "<value>": specs, lines.placeholder("root.one-line", "<is itself"): choice, "<key>": key,
+            "<subdirectory>": first, "<the value the walk found>": walk,
+            lines.placeholder("root.one-line", "<the value the walk found |"): 0 if walk is not None else 1,
+            "<that repository's top level>": walk_top})
+    elif form == "stray":
+        subdirs += list(strays)
+        line = lines.fill("root.stray", {
+            "<value>": specs, lines.placeholder("root.stray", "<the top level"): 0 if prefix == "" else 1,
+            "<subdirectory>": subdirs, "<that repository's top level>": top})
+    else:
+        in_repo = prefix is not None
+        line = lines.fill("root.two-readings", {
+            "<value>": specs, "<subdirectory>": first,
+            lines.placeholder("root.two-readings", "<move them"): 0 if in_repo else 1,
+            "<the parent of <value>>": os.path.dirname(os.path.realpath(specs)) if in_repo else None,
+            lines.placeholder("root.two-readings", "<, and make"): 1 if in_repo else 0,
+            "<that repository's top level>": top})
+    out = [line]
+    if form != "stray":
+        behind = _left_behind(lines, specs, walk, form == "two-readings")
+        if behind:
+            out.append(behind)
+    return {"signal": signal, "form": form, "value": walk, "subdirs": subdirs, "lines": out}
+
+
+def gate(specs, notices=True):
+    """specs-repo-git §3.1's gate on <specs>, SPECS_PATH as set (empty: unset). state: unset; not-a-repo (not a
+    directory, or rev-parse --git-dir fails there); read-only (its git directory is not writable); or pass. top and
+    git_dir where git gives them. With <notices>, also the lines §3.1 prints and whether they set misrooted: on a
+    non-repository path its notice — on the same line as specs-root-check's stop where that finds a signal in a
+    directory, its left-behind line after — and where the gate passes, specs-root-check's lines, else the
+    below-top-level notice where --show-prefix is not empty. With notices off, state, top and git_dir alone."""
+    out = {"state": "unset", "top": None, "git_dir": None}
+    found = []
+    misrooted = False
+    if specs:
+        r = sb.git(specs, "rev-parse", "--git-dir", check=False) if os.path.isdir(specs) else None
+        if r is None or r.returncode != 0:
+            out["state"] = "not-a-repo"
+        else:
+            out["git_dir"] = os.path.realpath(os.path.join(specs, sb.text(r)))
+            out["top"] = _git_line(specs, "--show-toplevel")
+            out["state"] = "pass" if os.access(out["git_dir"], os.W_OK) else "read-only"
+    if not notices:
+        return out
+    if out["state"] == "not-a-repo":
+        lines = _load_module("specs_git_lines")
+        notice = lines.fill("pre.nonrepo", {"<value>": specs,
+                                            lines.placeholder("pre.nonrepo", "<is not"): 0 if r is None else 1})
+        root = specs_root_check(specs) if r is not None else {"lines": []}
+        if root["lines"]:
+            misrooted = True
+            found = [notice + " " + root["lines"][0]] + root["lines"][1:]
+        else:
+            found = [notice]
+    elif out["state"] == "pass":
+        found = specs_root_check(specs)["lines"]
+        misrooted = bool(found)
+        if not found and _git_line(specs, "--show-prefix"):
+            lines = _load_module("specs_git_lines")
+            found = [lines.fill("pre.below-top", {"<value>": specs, "<top>": out["top"]})]
+            misrooted = True
+    return dict(out, misrooted=misrooted, lines=found)
+
+
 class Parser(argparse.ArgumentParser):
     """A usage error is one "not run" line, as every exit 2 is."""
 
@@ -289,7 +543,7 @@ class Parser(argparse.ArgumentParser):
 
 def main():
     ap = Parser(description="The deterministic git primitives of specs-repo-git and phase-handoff.")
-    ap.add_argument("--specs", help="the specs repository's top level")
+    ap.add_argument("--specs", help="the specs repository's top level; for specs-root-check, SPECS_PATH as set")
     ap.add_argument("--selftest", action="store_true", help="run the built-in fixtures and exit")
     sub = ap.add_subparsers(dest="cmd")
     sub.add_parser("status")
@@ -310,6 +564,7 @@ def main():
     p = sub.add_parser("declined")
     p.add_argument("--command", required=True)
     p.add_argument("--path", action="append", default=[])
+    sub.add_parser("specs-root-check")
     a = ap.parse_args()
     try:  # a path comes back as git's -z record gave it, a byte that is no UTF-8 included
         sys.stdout.reconfigure(encoding="utf-8", errors="surrogateescape")
@@ -326,6 +581,11 @@ def main():
             return 0
         if a.cmd == "declined":
             print(json.dumps(declined(a.command, a.path), indent=2, ensure_ascii=False))
+            return 0
+        if a.cmd == "specs-root-check":  # the --specs exception: SPECS_PATH as set, never checked first
+            if a.specs is None:
+                raise NotRun("usage: specs-root-check needs --specs, empty where SPECS_PATH is unset")
+            print(json.dumps(specs_root_check(a.specs), indent=2, ensure_ascii=False))
             return 0
         if not a.specs:
             raise NotRun("--specs is required")
@@ -1208,6 +1468,335 @@ def selftest():
         check(lines.artifacts(spread) == "4 files under specifications", "l_artifacts: four spanning specifications/ (%r)"
               % lines.artifacts(spread))
 
+    def scenarios_gate(tmp):
+        with open(SESSION_HYGIENE, encoding="utf-8") as fh:
+            hygiene = fh.read()
+        with open(ADDRESSING, encoding="utf-8") as fh:
+            addressing = fh.read()
+        section7 = hygiene[hygiene.index("\n## 7. "):]
+        after = section7[section7.index("**The line.**"):]
+        block = after[after.index("```bash\n") + len("```bash\n"):after.index("\n```", after.index("```bash\n"))]
+
+        def carrier(path, key, kind="prd", quote=""):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write("---\nkind: %s%s%s\nkey: %s%s%s\n---\n\n# x\n" % (quote, kind, quote, quote, key, quote))
+
+        real = os.path.realpath
+        inside = ("every folder lives under $SPECS_PATH/specifications/, so this run would look for and create folders "
+                  "in the wrong place; it wrote nothing under that path, and its cost and feedback are reported here "
+                  "instead.")
+        unsupported = ("is not the top level of its repository (%s), and a specs tree inside a larger repository is "
+                       "unsupported: this plugin switches branches and commits in that repository.")
+        close = " Move them yourself, commit the move, then re-run — the plugin moves nothing."
+
+        def nonrepo(value, which):
+            return ("Specs preflight: SPECS_PATH is %s, which %s — nothing this run writes there is committed or handed "
+                    "off; set SPECS_PATH to your specs repository's top level, where it is set, and re-run." % (value, which))
+
+        # g_sh7_pinned
+        check(SH7_LINE == block, "g_sh7_pinned: SH7_LINE is session-hygiene §7's fenced block (%r)" % block)
+
+        # g_env_line_equal
+        r = new_repo(tmp, "env repo")
+        r.git("remote", "add", "origin", "git@github.com:acme/specs.git")
+        link = os.path.join(tmp, "env-link")
+        os.symlink(r.path, link)
+        keep = {k: os.environ.get(k) for k in ("SPECS_PATH", "REPOS_PATH")}
+        cwd = os.getcwd()
+        try:
+            os.chdir(tmp)
+            for repos in (None, "/workspace/repos dir"):
+                if repos is None:
+                    os.environ.pop("REPOS_PATH", None)
+                else:
+                    os.environ["REPOS_PATH"] = repos
+                for value in ("", r.path + "/", link, "env repo", os.path.join(tmp, "no-such"), r.path):
+                    env = dict(os.environ)
+                    env.pop("SPECS_PATH", None)
+                    if value:
+                        env["SPECS_PATH"] = value
+                    want = subprocess.run(["bash", "-c", block], env=env, stdout=subprocess.PIPE).stdout.decode("utf-8")
+                    got = env_line(value)
+                    check(got + "\n" == want, "g_env_line_equal: SPECS_PATH %r, REPOS_PATH %r (%r, %r)" % (value, repos, got, want))
+            os.environ["SPECS_PATH"] = "/somewhere/else"
+            check(env_line("").startswith("Environment: SPECS_PATH=unset (origin none), "),
+                  "g_env_line_equal: an empty value is unset whatever the environment holds (%r)" % env_line(""))
+            check(env_line("env repo") == "Environment: SPECS_PATH=%s (origin git@github.com:acme/specs.git), REPOS_PATH=%s"
+                  % (real(r.path), os.environ.get("REPOS_PATH", "unset")),
+                  "g_env_line_equal: a relative path is its real path, with its origin (%r)" % env_line("env repo"))
+        finally:
+            os.chdir(cwd)
+            for k, v in keep.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+        # g_unset
+        got = gate("")
+        check(got == {"state": "unset", "top": None, "git_dir": None, "misrooted": False, "lines": []},
+              "g_unset: unset is silent (%r)" % got)
+        check(gate("", notices=False) == {"state": "unset", "top": None, "git_dir": None},
+              "g_unset: notices off returns state, top and git_dir alone (%r)" % gate("", notices=False))
+
+        # g_file
+        f = os.path.join(tmp, "a-file")
+        with open(f, "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        got = gate(f)
+        check(got["state"] == "not-a-repo" and got["lines"] == [nonrepo(f, "is not a directory")] and not got["misrooted"],
+              "g_file: a regular file is not a directory (%r)" % got)
+        missing = os.path.join(tmp, "no such dir")
+        got = gate(missing)
+        check(got["state"] == "not-a-repo" and got["lines"] == [nonrepo(missing, "is not a directory")],
+              "g_file: a path that does not exist is not a directory (%r)" % got)
+
+        # g_plain_dir
+        plain = os.path.join(tmp, "gate-plain")
+        os.makedirs(plain)
+        got = gate(plain)
+        check(got["state"] == "not-a-repo" and got["lines"] == [nonrepo(plain, "is not in a git repository")]
+              and got["misrooted"] is False and got["top"] is None and got["git_dir"] is None,
+              "g_plain_dir: a directory in no repository, no signal (%r)" % got)
+
+        # g_mounted_specifications
+        m = os.path.join(tmp, "mount-a", "specifications")
+        carrier(os.path.join(m, "PRD-A-1-x", "prd.md"), "A-1")
+        stop = ("SPECS_PATH_INSIDE_TREE: SPECS_PATH is %s, which is itself a specifications/ directory — %s Set "
+                "SPECS_PATH to the directory that holds specifications/ where it is set, and re-run." % (m, inside))
+        got = gate(m)
+        check(got["state"] == "not-a-repo" and got["misrooted"] is True
+              and got["lines"] == [nonrepo(m, "is not in a git repository") + " " + stop],
+              "g_mounted_specifications: the notice, then on the same line the one-line stop (%r)" % got)
+        got = specs_root_check(m)
+        check(got["signal"] == "a-ef" and got["form"] == "one-line" and got["value"] is None and got["subdirs"] == [],
+              "g_mounted_specifications: signal a-ef, the one-line form, no value (%r)" % got)
+        os.makedirs(os.path.join(m, "specifications", "PRD-A-2-y"))
+        os.makedirs(os.path.join(m, "dev-workflows-cost"))
+        got = gate(m)
+        behind = ("Misrooted runs left: %s/specifications/ (PRD-A-2-y), which belongs in the specs repository's "
+                  "specifications/, and which the first run after SPECS_PATH is fixed searches for keys and commits "
+                  "bookkeeping from, in the wrong place, unless it is moved first; %s/dev-workflows-cost/, which belongs "
+                  "at the same path at the specs repository's top level.%s" % (m, m, close))
+        check(got["misrooted"] is True and got["lines"] == [nonrepo(m, "is not in a git repository") + " " + stop, behind],
+              "g_mounted_specifications: the left-behind line after it, on its own (%r)" % got)
+
+        # g_mounted_other_name
+        t = os.path.join(tmp, "mount-b", "tree")
+        carrier(os.path.join(t, "PRD-A-1-x", "ard.md"), "A-1", kind="ard")
+        carrier(os.path.join(t, "PRD-A-1-x", "prd.md"), "A-1", quote='"')
+        stop = ("SPECS_PATH_INSIDE_TREE: SPECS_PATH is %s, which holds the specs folder PRD-A-1-x directly, and nothing on "
+                "disk says whether %s is a specs tree under another name or a specs root. If it is a specs tree under "
+                "another name, its folders belong in a directory named specifications/, and SPECS_PATH names that "
+                "directory's parent: set SPECS_PATH to the parent of the specifications/ directory %s is a mount of, and "
+                "mount that parent whole rather than the tree alone, where it is set. If it is a specs root, move "
+                "PRD-A-1-x and every other specs folder beside it into %s/specifications/ yourself and commit the move, "
+                "and make %s the top level of a git repository, which it is not. Then re-run — the plugin moves nothing. "
+                "This run wrote nothing under that path, and its cost and feedback are reported here instead."
+                % (t, t, t, t, t))
+        got = gate(t)
+        check(got["state"] == "not-a-repo" and got["misrooted"] is True
+              and got["lines"] == [nonrepo(t, "is not in a git repository") + " " + stop],
+              "g_mounted_other_name: the notice, then on the same line the two-readings stop (%r)" % got)
+        parent = os.path.dirname(t)
+        check(not any(("SPECS_PATH to %s" % p) in line for line in got["lines"] for p in (parent, real(parent)))
+              and not any("the directory that holds specifications/" in line for line in got["lines"]),
+              "g_mounted_other_name: no line names a value addressing §3 rules out (%r)" % got)
+        got = specs_root_check(t)
+        check(got["signal"] == "b-sub" and got["form"] == "two-readings" and got["value"] is None
+              and got["subdirs"] == ["PRD-A-1-x"], "g_mounted_other_name: b-sub, two readings (%r)" % got)
+        cur = os.path.join(tmp, "mount-b", "cur")
+        os.symlink(os.path.join(t, "PRD-A-1-x"), cur)
+        got = specs_root_check(cur)
+        check(got["signal"] == "b-self" and got["form"] == "one-line"
+              and "which is itself a specs folder, asserting key A-1 —" in got["lines"][0],
+              "g_mounted_other_name: a link is judged by the folder it reaches, by its physical name (%r)" % got)
+        named = os.path.join(tmp, "mount-b", "notes")
+        carrier(os.path.join(named, "prd.md"), "A-1")
+        alias = os.path.join(tmp, "mount-b", "PRD-A-1-alias")
+        os.symlink(named, alias)
+        check(specs_root_check(alias)["signal"] is None,
+              "g_mounted_other_name: a link's own name never passes the prefix test for it (%r)" % specs_root_check(alias))
+        inv = os.path.join(tmp, "mount-c", "other")
+        carrier(os.path.join(inv, "BRD-B-1-x", "coverage-ledger.md"), "B-1", kind="coverage-ledger")
+        carrier(os.path.join(inv, "BRD-B-1-x", "brd", "brd-inventory.md"), "B-1", kind="brd")
+        got = specs_root_check(inv)
+        check(got["signal"] == "b-sub" and got["subdirs"] == ["BRD-B-1-x"],
+              "g_mounted_other_name: a root BRD folder's carrier is its brd/brd-inventory.md (%r)" % got)
+
+        # g_inside_tree
+        r = new_repo(tmp, "inside")
+        carrier(os.path.join(r.path, "specifications", "PRD-A-1-x", "prd.md"), "A-1")
+        r.commit_all("a folder")
+        spec_dir = os.path.join(r.path, "specifications")
+        got = gate(spec_dir)
+        stop = ("SPECS_PATH_INSIDE_TREE: SPECS_PATH is %s, which is itself a specifications/ directory — %s Set SPECS_PATH "
+                "to %s where it is set, and re-run." % (spec_dir, inside, real(r.path)))
+        check(got["state"] == "pass" and got["misrooted"] is True and got["lines"] == [stop]
+              and real(got["top"]) == real(r.path) and real(got["git_dir"]) == real(os.path.join(r.path, ".git")),
+              "g_inside_tree: <repo>/specifications names <repo> (%r)" % got)
+        check(specs_root_check(spec_dir)["signal"] == "a-prefix" and specs_root_check(spec_dir)["value"] == real(r.path),
+              "g_inside_tree: signal a-prefix, value <repo> (%r)" % specs_root_check(spec_dir))
+        folder = os.path.join(spec_dir, "PRD-A-1-x")
+        got = gate(folder)
+        check(specs_root_check(folder)["signal"] == "a-prefix" and got["misrooted"] is True
+              and got["lines"] == [stop.replace(spec_dir + ", which is itself a specifications/ directory",
+                                                folder + ", which is inside the specifications/ directory")],
+              "g_inside_tree: a folder inside the tree is the same signal (%r)" % got)
+        via = os.path.join(tmp, "inside-link")
+        os.symlink(folder, via)
+        got = specs_root_check(via)
+        check(got["signal"] == "a-prefix" and got["value"] == real(r.path)
+              and got["lines"][0].endswith("Set SPECS_PATH to %s where it is set, and re-run." % real(r.path)),
+              "g_inside_tree: the walk starts from the physical path, so a link to a folder names <repo> (%r)" % got)
+
+        # g_below_top
+        r = new_repo(tmp, "below")
+        carrier(os.path.join(r.path, "specs", "specifications", "PRD-A-1-x", "prd.md"), "A-1")
+        r.commit_all("a nested tree")
+        specs = os.path.join(r.path, "specs")
+        got = gate(specs)
+        check(got["state"] == "pass" and got["misrooted"] is True and got["lines"] == [
+            "Specs preflight: SPECS_PATH is %s, below the top level of its repository (%s) — a specs tree inside a larger "
+            "repository is unsupported, because this plugin switches branches and commits in the repository SPECS_PATH "
+            "belongs to, so this run switches and commits nothing there; set SPECS_PATH to a dedicated specs "
+            "repository's top level." % (specs, got["top"])] and real(got["top"]) == real(r.path),
+              "g_below_top: one line from pre.below-top naming <repo> (%r)" % got)
+        nested = os.path.join(specs, "specifications")
+        got = gate(nested)
+        want = ("SPECS_PATH_INSIDE_TREE: SPECS_PATH is %s, which is itself a specifications/ directory — %s Set SPECS_PATH "
+                "to %s where it is set, and re-run. %s %s" % (nested, inside, real(specs), real(specs),
+                                                              unsupported % real(r.path)))
+        check(got["misrooted"] is True and got["lines"] == [want] and specs_root_check(nested)["signal"] == "a-ef",
+              "g_below_top: the inside-tree notice skips the below-top one, the unsupported clause carried (%r)" % got)
+
+        # g_stray
+        r = new_repo(tmp, "stray")
+        carrier(os.path.join(r.path, "specifications", "PRD-A-1-x", "prd.md"), "A-1")
+        carrier(os.path.join(r.path, "PRD-S-9-x", "prd.md"), "S-9")
+        r.write("dev-workflows-cost/c.md", "cost\n")
+        got = gate(r.path)
+        check(got["state"] == "pass" and got["misrooted"] is True and got["lines"] == [
+            "SPECS_PATH_INSIDE_TREE: SPECS_PATH is %s, the top level of its repository, and holds the specs folder(s) "
+            "PRD-S-9-x outside %s/specifications/, where every folder lives. SPECS_PATH names the right directory; move "
+            "PRD-S-9-x into %s/specifications/ yourself, commit the move, then re-run — the plugin moves nothing. This run "
+            "wrote nothing under %s, and its cost and feedback are reported here instead." % ((r.path,) * 4)],
+              "g_stray: the stray-folder form, no left-behind line (%r)" % got)
+        carrier(os.path.join(r.path, "EPIC-S-9-01-y", "epic.md"), "S-9-01", kind="epic")
+        got = specs_root_check(r.path)
+        check(got["form"] == "stray" and got["subdirs"] == ["EPIC-S-9-01-y", "PRD-S-9-x"]
+              and got["lines"][0].count("EPIC-S-9-01-y, PRD-S-9-x") == 2 and len(got["lines"]) == 1,
+              "g_stray: the loop finished, every stray named in byte-wise order (%r)" % got)
+        r = new_repo(tmp, "stray-below")
+        carrier(os.path.join(r.path, "specs", "specifications", "PRD-A-1-x", "prd.md"), "A-1")
+        carrier(os.path.join(r.path, "specs", "PRD-S-9-x", "prd.md"), "S-9")
+        specs = os.path.join(r.path, "specs")
+        got = gate(specs)
+        check(got["misrooted"] is True and len(got["lines"]) == 1
+              and got["lines"][0].startswith("SPECS_PATH_INSIDE_TREE: SPECS_PATH is %s, which holds %s/specifications/, "
+                                             "and holds the specs folder(s) PRD-S-9-x outside" % (specs, specs))
+              and got["lines"][0].endswith("reported here instead. %s %s" % (specs, unsupported % real(r.path))),
+              "g_stray: below the top level, which holds specifications/, the unsupported clause (%r)" % got)
+
+        # g_two_readings
+        r = new_repo(tmp, "two")
+        carrier(os.path.join(r.path, "specs", "PRD-A-1-x", "prd.md"), "A-1")
+        specs = os.path.join(r.path, "specs")
+        top = real(r.path)
+        stop = ("SPECS_PATH_INSIDE_TREE: SPECS_PATH is %s, which holds the specs folder PRD-A-1-x directly, and nothing on "
+                "disk says whether %s is a specs tree under another name or a specs root. If it is a specs tree under "
+                "another name, its folders belong in a directory named specifications/, and SPECS_PATH names that "
+                "directory's parent: move them into %s/specifications/ yourself, commit the move, and set SPECS_PATH to "
+                "%s, where it is set. If it is a specs root, move PRD-A-1-x and every other specs folder beside it into "
+                "%s/specifications/ yourself and commit the move; %s %s Then re-run — the plugin moves nothing. This run "
+                "wrote nothing under that path, and its cost and feedback are reported here instead."
+                % (specs, specs, top, top, specs, specs, unsupported % top))
+        got = gate(specs)
+        check(got["state"] == "pass" and got["misrooted"] is True and got["lines"] == [stop],
+              "g_two_readings: the two-readings form with the unsupported-layout clause (%r)" % got)
+        via = os.path.join(tmp, "two-link")
+        os.symlink(specs, via)
+        got = specs_root_check(via)
+        check(got["form"] == "two-readings" and "move them into %s/specifications/ yourself, commit the move, and set "
+              "SPECS_PATH to %s, where it is set." % (top, top) in got["lines"][0],
+              "g_two_readings: the parent the first reading names is the physical one (%r)" % got)
+        os.makedirs(os.path.join(specs, "dev-workflows-feedback"))
+        os.makedirs(os.path.join(specs, "documentation", "guide", "dev-workflows"))
+        got = gate(specs)
+        check(got["lines"][1:] == [
+            "If %s is a specs tree under another name, misrooted runs left: %s/dev-workflows-feedback/, which belongs at "
+            "the same path at the specs repository's top level; %s/documentation/guide/dev-workflows/, which belongs at "
+            "the same path at the specs repository's top level, which the first run after SPECS_PATH is fixed commits "
+            "there in the wrong place unless it is moved first.%s" % (specs, specs, specs, close)],
+              "g_two_readings: the left-behind line, under the first reading (%r)" % got)
+
+        # g_correct_root
+        r = new_repo(tmp, "correct")
+        carrier(os.path.join(r.path, "specifications", "PRD-A-1-x", "prd.md"), "A-1")
+        carrier(os.path.join(r.path, "templates", "prd.md"), "A-1")
+        carrier(os.path.join(r.path, "README.md"), "A-1")
+        os.symlink(os.path.join("specifications", "PRD-A-1-x"), os.path.join(r.path, "PRD-A-1-x"))
+        os.symlink(os.path.join("specifications", "PRD-A-1-x"), os.path.join(r.path, "current"))
+        got = gate(r.path)
+        check(got["state"] == "pass" and got["lines"] == [] and got["misrooted"] is False and specs_root_check(r.path)
+              == {"signal": None, "form": None, "value": None, "subdirs": [], "lines": []},
+              "g_correct_root: templates/, README.md and a link into the tree are no signal (%r)" % got)
+        got = gate(r.path, notices=False)
+        check(sorted(got) == ["git_dir", "state", "top"] and got["state"] == "pass",
+              "g_correct_root: notices off returns state, top and git_dir alone (%r)" % got)
+        r = new_repo(os.path.join(tmp, "clone"), "specifications")
+        carrier(os.path.join(r.path, "specifications", "PRD-A-1-x", "prd.md"), "A-1")
+        got = gate(r.path)
+        check(got["state"] == "pass" and got["lines"] == [] and specs_root_check(r.path)["signal"] is None,
+              "g_correct_root: a repository cloned into a directory named specifications is a root (%r)" % got)
+        loose = os.path.join(tmp, "mount-d", "loose")
+        os.makedirs(os.path.join(loose, "PRD-A-3-z"))
+        with open(os.path.join(loose, "PRD-A-3-z", "notes.md"), "w", encoding="utf-8") as fh:
+            fh.write("# Notes\n\n---\nkind: prd\nkey: A-3\n---\n")
+        with open(os.path.join(loose, "PRD-A-3-z", "open.md"), "w", encoding="utf-8") as fh:
+            fh.write("---\nkind: prd\nkey: A-3\n")
+        check(specs_root_check(loose)["signal"] is None,
+              "g_correct_root: frontmatter is only what opens a file and closes, never a rule further down (%r)"
+              % specs_root_check(loose))
+
+        # g_reserved
+        para = addressing[addressing.index("**Reserved subdirectory names are not folder kinds.**"):]
+        para = para[para.index("never resolved by one —"):para.index("None matches")]
+        names = [n.replace("<YYYYMMDD>", "20261109") for n in re.findall(r"`([^`/][^`]*)/`", para)]
+        check(len(names) == 10 and all(RESERVED.match(n) for n in names),
+              "g_reserved: RESERVED matches every name of addressing §2's list (%r)" % names)
+        check(not any(RESERVED.match(n) for n in ("brd2", "xbrd", "bundle-2026", "bundle-202611090", "PRD-A-1-x",
+                                                  "Doc screenshots/", "design ")),
+              "g_reserved: RESERVED matches whole names only")
+        mine = re.search(r"\(\?:(.+)\)", RESERVED.pattern).group(1).split("|")
+        theirs = re.search(r"\(\.\+/\)\?\((.+)\)/$", sb.EXCLUDED).group(1).split("|")
+        check(sorted(theirs) == sorted(n for n in mine if n != "dev-workflows") and "dev-workflows" in mine,
+              "g_reserved: session-branch.py's EXCLUDED holds the same names but dev-workflows (%r, %r)" % (mine, theirs))
+
+        # g_read_only (skipped as root, for whom no mode bit refuses a write)
+        if not (hasattr(os, "geteuid") and os.geteuid() == 0):
+            r = new_repo(tmp, "read-only")
+            git_dir = os.path.join(r.path, ".git")
+            os.chmod(git_dir, 0o555)
+            try:
+                got = gate(r.path)
+                check(got["state"] == "read-only" and got["lines"] == [] and got["misrooted"] is False,
+                      "g_read_only: a git directory with no write bit (%r)" % got)
+            finally:
+                os.chmod(git_dir, 0o755)
+
+        # g_cli
+        for value in (m, t, "", spec_dir):
+            got = cli("--specs", value, "specs-root-check")
+            raw = {k: v for k, v in got.items() if not k.startswith("_")}
+            check(got["_rc"] == 0 and raw == specs_root_check(value), "g_cli: %r prints the function's object (%r)" % (value, got))
+        got = cli("--specs", f, "specs-root-check")
+        check(got["_rc"] == 0 and got.get("signal") is None, "g_cli: a file is passed through unchecked (%r)" % got)
+        got = cli("specs-root-check")
+        check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
+              "g_cli: no --specs at all is a usage error (%r)" % got)
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
@@ -1218,6 +1807,7 @@ def selftest():
             scenarios_mode(tmp)
             scenarios_state(tmp)
             scenarios_lines(tmp)
+            scenarios_gate(tmp)
 
     try:
         scenarios()
