@@ -20,7 +20,8 @@ it"; created is "no record before, HEAD does not hold it, a record after"; chang
 fingerprint differs". A path with no record on either side is not listed.
 
 Path bytes are decoded with surrogateescape and printed as UTF-8, a lone surrogate as a \\udcXX escape.
-Exit codes: 0 done; 2 cannot run (not a git work tree, bad arguments, an unreadable snapshot file).
+Exit codes: 0 done; 2 cannot run (not a git work tree, bad arguments, an unreadable or malformed
+snapshot file, any other failure).
 Standard library only; every git call is `git --no-optional-locks -C <dir>` with :(literal) pathspecs.
 """
 
@@ -28,6 +29,7 @@ import argparse
 import json
 import os
 import posixpath
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -57,11 +59,15 @@ def emit(obj):
 
 def fingerprint(directory, path):
     full = os.path.join(directory, path)
-    if os.path.islink(full):
-        r = git(directory, "hash-object", "--stdin", data=os.fsencode(os.readlink(full)))
-    elif os.path.isfile(full):
-        r = git(directory, "hash-object", "--no-filters", "--", path)
-    else:
+    try:
+        if os.path.islink(full):
+            r = git(directory, "hash-object", "--stdin", data=os.fsencode(os.readlink(full)))
+        elif os.path.isfile(full):
+            r = git(directory, "hash-object", "--no-filters", "--", path)
+        else:
+            return "-"
+    except OSError:
+        # The path vanished or changed kind between the test and the read.
         return "-"
     return text(r.stdout).strip() if r.returncode == 0 and r.stdout.strip() else "-"
 
@@ -96,7 +102,8 @@ def snapshot(directory, path=None):
     base = prefix.rstrip("/") or "."
     records = parse_status(st.stdout)
     for rec in records:
-        rec["paths"] = [posixpath.relpath(p, base) for p in rec["paths"]]
+        # Both sides absolute, so relpath never reads the process's working directory.
+        rec["paths"] = [posixpath.relpath("/" + p, "/" + base) for p in rec["paths"]]
     fps, in_head = {}, {}
     for rec in records:
         for p in rec["paths"]:
@@ -138,10 +145,15 @@ def load(path):
     try:
         with open(path, encoding="utf-8") as fh:
             snap = json.load(fh)
-        snap["records"], snap["fingerprints"], snap["in_head"]
-        return snap
-    except (OSError, ValueError, KeyError, TypeError) as e:
+    except (OSError, ValueError) as e:
         raise CannotRun("unreadable snapshot %s: %s" % (path, e))
+    ok = (isinstance(snap, dict) and isinstance(snap.get("records"), list)
+          and isinstance(snap.get("fingerprints"), dict) and isinstance(snap.get("in_head"), dict)
+          and all(isinstance(r, dict) and isinstance(r.get("xy"), str) and isinstance(r.get("paths"), list)
+                  and all(isinstance(p, str) for p in r["paths"]) for r in snap["records"]))
+    if not ok:
+        raise CannotRun("malformed snapshot %s: not the shape snapshot prints" % path)
+    return snap
 
 
 # ---------------------------------------------------------------- selftest
@@ -204,13 +216,7 @@ def selftest():
         check("in_head", s["in_head"]["tracked.txt"] is True and s["in_head"]["newdir/deep/n.txt"] is False)
         check("prefix empty", s["prefix"] == "")
         sh(repo, "checkout", "-q", "--", "tracked.txt", "gone.txt")
-        shutil_rm = os.path.join(repo, "newdir")
-        for root, dirs, files in os.walk(shutil_rm, topdown=False):
-            for fn in files:
-                os.remove(os.path.join(root, fn))
-            for dn in dirs:
-                os.rmdir(os.path.join(root, dn))
-        os.rmdir(shutil_rm)
+        shutil.rmtree(os.path.join(repo, "newdir"))
 
         # Paths survive byte for byte, through the CLI and compare.
         names = ["with space.txt", 'quo"te.txt', "café.txt", "new\nline.txt", "bad\udcffbyte.txt"]
@@ -273,6 +279,40 @@ def selftest():
 
         # A vanished path.
         check("vanished path fp", fingerprint(repo, "never-was.txt") == "-")
+        # A symlink that vanishes between the islink test and the readlink.
+        real_readlink = os.readlink
+
+        def gone(*a, **k):
+            raise FileNotFoundError("vanished")
+        os.readlink = gone
+        try:
+            got_fp = fingerprint(repo, "link")
+        except OSError as e:
+            got_fp = e
+        finally:
+            os.readlink = real_readlink
+        check("symlink vanished before readlink fp", got_fp == "-", got_fp)
+
+        # A snapshot run from a deleted working directory.
+        gone_cwd = os.path.join(tmp, "gone-cwd")
+        os.makedirs(gone_cwd)
+        put(repo, "sub/in.txt", b"edited from a deleted cwd\n")
+        r = subprocess.run(["sh", "-c", 'cd "$1" && rmdir "$1" && exec "$2" "$3" snapshot --dir "$4"', "sh",
+                            gone_cwd, sys.executable, os.path.abspath(__file__), os.path.join(repo, "sub")],
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        check("deleted cwd rc", r.returncode == 0, (r.returncode, r.stderr[-300:]))
+        try:
+            got_recs = byfile(json.loads(r.stdout.decode("utf-8")))
+        except ValueError as e:
+            got_recs = e
+        check("deleted cwd paths stripped", got_recs == {"in.txt": " M"}, got_recs)
+        # Any other failure exits 2, never 1: a relative --dir cannot be resolved from a deleted cwd.
+        os.makedirs(gone_cwd)
+        r = subprocess.run(["sh", "-c", 'cd "$1" && rmdir "$1" && exec "$2" "$3" snapshot --dir sub', "sh",
+                            gone_cwd, sys.executable, os.path.abspath(__file__)],
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        check("any other failure exits 2", r.returncode == 2 and r.stdout == b"", (r.returncode, r.stderr[-300:]))
+        sh(repo, "reset", "-q", "--hard")
 
         # Not a work tree and bad input.
         plain = os.path.join(tmp, "plain")
@@ -283,6 +323,16 @@ def selftest():
         check("unreadable snapshot exits 2", rc == 2, rc)
         rc, _ = cli("frobnicate")
         check("bad arguments exit 2", rc == 2, rc)
+        for label, bad in (("record not an object", {"records": ["x"], "fingerprints": {}, "in_head": {}}),
+                           ("paths not a list", {"records": [{"xy": " M", "paths": "ab"}], "fingerprints": {}, "in_head": {}}),
+                           ("xy not a string", {"records": [{"xy": 1, "paths": ["a"]}], "fingerprints": {}, "in_head": {}}),
+                           ("fingerprints not an object", {"records": [], "fingerprints": [], "in_head": {}}),
+                           ("in_head not an object", {"records": [], "fingerprints": {}, "in_head": None})):
+            bad_file = os.path.join(tmp, "bad.json")
+            with open(bad_file, "w", encoding="utf-8") as fh:
+                json.dump(bad, fh)
+            rc, out = cli("compare", bad_file, before_file)
+            check("malformed snapshot exits 2: " + label, rc == 2 and out == "", (rc, out[:200]))
 
         # compare classifies.
         put(repo, "dirty.txt", b"dirty before\n")
@@ -332,6 +382,10 @@ def main(argv):
             emit(compare(load(args.before), load(args.after)))
     except CannotRun as e:
         print("tree-snapshot: " + str(e), file=sys.stderr)
+        return 2
+    except Exception as e:
+        # Every failure is "cannot run": a caller reads exit 2 as "read nothing", never exit 1.
+        print("tree-snapshot: %s: %s" % (type(e).__name__, e), file=sys.stderr)
         return 2
     return 0
 

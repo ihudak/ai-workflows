@@ -11,17 +11,17 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Added
 
-- **`tree-snapshot.py` (LC34, K7).** `/implement`, `/upgrade`, `/vuln`, `/ready` and `/conformance` compare two reads of the tree through it, instead of each command's own `git status` recipe: an agent's edit to a path with a space, a quote or a non-ASCII character is named exactly, and a file a check run created is never handed off as an agent's edit (on `/implement` it keeps its *Delete* option). The script is this plugin's own copy.
+- **`tree-snapshot.py` (LC34, K7).** `/implement`, `/upgrade`, `/vuln`, `/ready` and `/conformance` read the tree through it, instead of each command's own `git status` recipe, so a path with a space, a quote or a non-ASCII character is named exactly. `/implement` compares a read before and after each check run, and a file a check run created keeps its *Delete* option; a read that fails twice before the run's first edit stops with nothing committed, naming each file a check run touched and the answer it got. `/ready` and `/conformance` compare a read before and after their maintenance agents, and a file an agent created is reported, never handed off as its edit. The script is this plugin's own copy.
 - **`/design` asks the refresh question (LC33)** through `workflows-core:scan-refresh`, and `design-reviewer` and `interface-designer` read at the commit the scan read.
 
 ### Fixed
 
-- **`/design` names a rollback target per workload (LC30).** `design-format` asks for the target of each workload, not one for the design.
+- **`/design` names a rollback target per workload (LC30).** The rollout question's recommended answer names a target for each workload a moved tag reaches, not one for the design.
 - **`/design` plays back what its write adds, and rests a what-changed claim on an unfiltered diff (LC37).** What the writing added to a confirmed section goes to the whole-artifact gate, and a claim that something changed is checked against the whole diff.
-- **`/implement` recommends *Revise the plan* where only the plan's own text conflicts (R1).** A `DEFERRED — plan-conflict` finding that contradicts neither `design.md` nor the specification gets the recommendation; one that also contradicts either asks with no option recommended and says why.
+- **`/implement` recommends *Revise the plan* where only the plan's own text conflicts (R1).** A `DEFERRED — plan-conflict` finding that contradicts none of `design.md`, the specification and the applicable ARD gets the recommendation; one that also contradicts any of them asks with no option recommended and says why: either answer applies the fix, so the code departs from that document, and the answers differ only in whether the plan is revised to carry the departure.
 - **`run-state.py append` refuses an array value (K1).** It exits `2`, writes nothing and names `set` and one value per pair.
 - **"The folder read" is no longer named as an agent's model route (K4)** in `/implement`'s run state and the other commands that said so.
-- **`readiness-reviewer` has a read scope (K5):** the artifacts the brief and `derived_phase` name and the `dev-workflows/` bookkeeping, nothing in a code repository; a fact only a code repository would show is reported as unverified.
+- **`readiness-reviewer` has a read scope (K5):** the artifacts the brief and `derived_phase` name and the `dev-workflows/` bookkeeping, never the PRD's `_conformance.md`, for which the `Delivery:` note stands, and no file of a code repository outside the specs repository; a fact only a code repository, or a specs file outside the scope, would show is reported as unverified.
 - **Pages.** The `/design`, `/implement`, `/ready`, `/conformance` and Agents pages describe each change.
 
 ## [4.60.0] — 2026-11-08

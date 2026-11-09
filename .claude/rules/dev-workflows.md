@@ -11,7 +11,7 @@ The `/implement`-specific invariants are in `.claude/rules/dev-workflows-impleme
 
 ## Scope
 
-Three extractions took content out of `dev-workflows` and none is coming back: the guideline-review commands `/api-guideline-reviewer` and `/guideline-reviewer` to `plugins/guideline-reviewers/`, the documentation commands to `plugins/docs-workflows/`, and the product-definition commands — the idea→PRD→ARD→specification ladder, `/epics`, and the six-command BRD-to-PRD route — to `plugins/product-workflows/`. Its one `prose-style` user, `/epics`, moved out with the rest.
+Three extractions took content out of `dev-workflows` and none is coming back: the guideline-review commands `/api-guideline-reviewer` and `/guideline-reviewer` to `plugins/guideline-reviewers/`, the documentation commands to `plugins/docs-workflows/`, and the product-definition commands — the idea→PRD→ARD→specification ladder, `/epics`, and the six-command BRD-to-PRD route — to `plugins/product-workflows/`. `dev-workflows`' one `prose-style` user, `/epics`, moved out with the rest.
 
 ## Docs tree
 

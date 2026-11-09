@@ -362,7 +362,7 @@ model_routing:
   current_model: <the model this orchestrator is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   defect_model: <§2.1 Sonnet chain — only under --skip-feedback; under §10, run_flags.enforced_model>
-  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # code-scanner, prose-style-checker, doc-fixer, the maintenance agents of Phases 7.4 and 8, epic-writer (MODERATE)
+  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # code-scanner, docs-grounder, prose-style-checker, doc-fixer, the maintenance agents of Phases 7.4 and 8, epic-writer (MODERATE)
   review_model:    <§2 Opus chain>     # epic-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   implementation_model: <= detection_model>   # the epic-writer subagent (Phase 6); planning_model if SIGNIFICANT/HIGH-RISK
   opus_available: <true if a §2 Opus model resolved, else false>
@@ -765,7 +765,7 @@ Those headings are contract strings — pre-lint, `epic-reviewer` and every late
 Act on the return:
 
 - **`status: OK`** — zero violations. Proceed to Phase 7.
-- **`status: VIOLATIONS_FOUND`** — invoke `doc-fixer` with the violations treated as per their severity, save any on user-resolved text, which the user settles instead and no fixer receives (*User-resolved text*, below). Write the violations it is handed — the checker's full output, less the findings the slot below leaves out — to a temp file (`command mktemp -t dw-epics-style-XXXXXX`, never a repo or the specs tree), add it to `temp_files`, and pass its path. After `doc-fixer` completes, re-run `prose-style-checker` once:
+- **`status: VIOLATIONS_FOUND`** — **a result with nothing the fixer would take dispatches no `doc-fixer`.** Where the result holds no `MAJOR` once the findings on a `fixed_headings` heading and on user-resolved text are left out, no `doc-fixer` is dispatched, no temp file is written and nothing is re-run: every finding the user did not settle (*User-resolved text*, below) goes to the Phase 9 report as remaining or declined, as before. It is the principle of `workflows-core:finding-triage` § *When triage empties the survivor set*, which this sentence does not copy. Otherwise, invoke `doc-fixer` with the violations treated as per their severity, save any on user-resolved text, which the user settles instead and no fixer receives (*User-resolved text*, below). Write the violations it is handed — the checker's full output, less the findings the slot below leaves out — to a temp file (`command mktemp -t dw-epics-style-XXXXXX`, never a repo or the specs tree), add it to `temp_files`, and pass its path. After `doc-fixer` completes, re-run `prose-style-checker` once:
 
   → Agent (subagent_type: "workflows-core:doc-fixer", model: `<detection_model — §9 / §2.1 Sonnet chain>`):
     > "Fix the style violations for this brief:
@@ -774,8 +774,6 @@ Act on the return:
     > Reviewer or style-checker output: in the file at [absolute path of the temp file above — the full prose-style-checker output, less any finding on a heading `fixed_headings` names and any the user settled under *User-resolved text*]; Read it whole before you parse a finding
     > Project root: [resolved project_root]
     > Severities to fix: MAJOR only"
-
-  **A result with nothing the fixer would take dispatches no `doc-fixer`.** Where the `VIOLATIONS_FOUND` result holds no `MAJOR` once the findings on a `fixed_headings` heading and on user-resolved text are left out, no `doc-fixer` is dispatched and nothing is re-run: every finding goes to the Phase 9 report as remaining or declined, as before. It is the principle of `workflows-core:finding-triage` § *When triage empties the survivor set*, which this sentence does not copy.
 
   If violations remain after the re-run, proceed to Phase 7 — the remaining findings (mostly MINOR/NIT for epics) are informational and will appear in the Phase 9 report.
 

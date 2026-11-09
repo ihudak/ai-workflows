@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Added
 
-- **`tree-snapshot.py` (LC34, K7).** `/document`'s before-and-after read of the docs tree goes through this plugin's own copy of the script, so an edit to a path with a space, a quote or a non-ASCII character is named exactly and a file a check run created is never reported as the writer's.
+- **`tree-snapshot.py` (LC34, K7).** `/document`'s before-and-after read of the docs tree goes through this plugin's own copy of the script, so a path with a space, a quote or a non-ASCII character is named exactly, and a path that changed while the agents ran is reported as having changed then, never as an agent's edit.
 - **`/docs-audit` asks the refresh question (LC33)** through `workflows-core:scan-refresh`.
 
 ### Changed

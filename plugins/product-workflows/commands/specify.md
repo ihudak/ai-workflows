@@ -472,7 +472,7 @@ model_routing:
   current_model: <the model this orchestrator/grill is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   defect_model: <§2.1 Sonnet chain — only under --skip-feedback; under §10, run_flags.enforced_model>
-  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # code-scanner, impl-maintenance
+  detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # code-scanner, docs-grounder, impl-maintenance
   review_model:    <§2 Opus chain>     # spec-reviewer and overlap-reader (frontmatter-pinned; recorded, no override unless §10 enforces a model); architecture-grounder (dispatched on it, no frontmatter pin)
   authoring_model: <= current_model>   # the interactive grill + specification.md authoring (session model, not a delegated subagent)
   opus_available: <true if a §2 Opus model resolved, else false>
@@ -1077,7 +1077,7 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
      Manual fix notes are drafted or asked for as the
      `Manual fix notes — the run drafts them` rule in `workflows-core:escalation-rules` says, and read
      against what they overlap before the handoff, as the fix cycle was, since no review follows
-     them. "Defer" means appending a `## Refinement notes` section to
+     them, and then read once more by `overlap-reader`, as the `The read after the last review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")` says. "Defer" means appending a `## Refinement notes` section to
      `specification.md` with one plain `- ` bullet per deferred finding (mirrors `/epics`'
      Epic-refinement note), in addition to the final report — never a `- [ ]` item, which `pre-lint`
      would count against the header's `Open questions` and the format would not. A deferred finding
@@ -1104,7 +1104,7 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
      save one whose decision the user left open.
    - **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7, once that offer and those questions are settled.
 
-Cap: one fix cycle + one re-review maximum. A finding applied at that offer after the first review, and a decision settled at its question then, are inline edits answering a verdict that was not `BLOCK`: each is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered after those questions, before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Once the cap is spent, `overlap-reader` reads the edits after its last review as the `The read after the last review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")` says, with the brief that rule gives rather than Phase 5's.
+Cap: one fix cycle + one re-review maximum. A finding applied at that offer after the first review, and a decision settled at its question then, are inline edits answering a verdict that was not `BLOCK`: each is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered after those questions, before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Once the cap is spent, `overlap-reader` reads the edits answering its last review and the decisions settled at its questions as the `The read after the last review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")` says, with the brief that rule gives rather than Phase 5's.
 
 **A finding left open that needs a decision is recorded in the spec.** Once the last review has returned — the offers to apply findings, the decision questions and the re-review offer above settled — and immediately before the handoff, every finding the run leaves open whose fix needs a product decision it did not take is written into `specification.md` as a `- [ ]` open question that names it, and the requirement it puts in doubt where it puts one in doubt, under the `Open questions` sub-heading of the stage it concerns, with the header count updated — per the `A finding left open that needs a decision is recorded in the artifact` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Those are a decision the user chose to leave open at its question, a deferred BLOCKER's, and one no question was put for — a finding still open when the re-review returned `BLOCK`. A finding the user overrode, or whose fix is only an edit, gets no open question.
 
@@ -1284,7 +1284,7 @@ Read by ref: <one line per repository Phase 4 read by ref — see below — or `
 PRD gate: <the PRD gate's return value>; authored prd.md read from prd_dir: <yes|no>
 architecture grounding: <as the architecture-grounder returned, or the OFF reason>
 team decisions: <as returned, or the OFF reason>
-Spec review: <the spec-reviewer verdict>
+Spec review: <the spec-reviewer verdict, with its version line — escalation-rules version-line>
 Model routing: <the resolved routing (+ any Opus degradation), or `bypassed — enforced <id> (flag|env)` wherever run_flags.enforced_model is set>
 Run flags: <the line Phase 0 printed — only where it printed one>
 Phase handoff: <the outcome line from handoff-to-main — one per handoff the run offered>

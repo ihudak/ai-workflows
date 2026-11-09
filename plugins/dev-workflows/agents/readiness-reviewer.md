@@ -44,13 +44,13 @@ Refuse to review without the derived phase and at least the requirement inventor
 
 ## Read scope
 
-Read these, and nothing else:
+Read these, and nothing else — and never the PRD folder's `_conformance.md`, wherever the brief or `derived_phase` names it, since `delivery` stands for it: the caller read it from the default branch, never the working tree:
 
 - every artifact path the brief names, and the rubric it names;
-- every artifact `derived_phase` names, each in-scope `implementation.md` included — save the PRD folder's `_conformance.md`, for which `delivery` stands: the caller read it from the default branch, never the working tree;
+- every artifact `derived_phase` names, each in-scope `implementation.md` included;
 - the `dev-workflows/` bookkeeping of the unit folder — the folder `/ready` resolved, the PRD folder on a PRD-level run and the Epic's folder on an Epic-level one — and of the PRD folder.
 
-Read nothing in a code repository — no clone, and no path a `design.md`, an `implementation.md` or the repo-availability result names in one. A fact you cannot see in what this scope lets you read, one only a code repository would show — that a file, an interface, a branch or a commit exists there — is reported as unverified, with what would settle it, never as present or absent.
+Read no file of a code repository outside the specs repository the brief's artifact paths lie in — no other clone, and no path a `design.md`, an `implementation.md` or the repo-availability result names in one. A fact you cannot see in what this scope lets you read — one only a code repository would show, that a file, an interface, a branch or a commit exists there, or one only a specs file outside this scope would, such as a sibling Epic's specification or design that two Epics' contract coverage turns on — is reported as unverified, with what would settle it, never as present or absent.
 
 ## Review method
 
@@ -135,7 +135,7 @@ Return this exact shape (no preamble, no chatter):
 ## Hard rules
 
 - NEVER modify files. This reviewer reads; it never writes.
-- NEVER read outside the read scope above — nothing in a code repository; a fact only a code repository would show is reported as unverified.
+- NEVER read outside the read scope above — never the PRD folder's `_conformance.md`, and no file of a code repository outside the specs repository; a fact only a code repository, or a specs file outside the scope, would show is reported as unverified.
 - NEVER write a status, comment, or transition anywhere. This review reports and never sets.
 - NEVER return a `SUPPORTED` verdict if a BLOCKER finding exists.
 - NEVER skip a dimension silently — either report findings or say "N/A — reason".

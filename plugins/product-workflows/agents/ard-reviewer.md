@@ -36,6 +36,8 @@ Check a cited path where the scan that grounded it read it, matching each `groun
 - **`checkout`** — in the working tree with Read, Glob and Grep, which is what the scan read; where a cited path is not there, test it at the commit too before calling it fabricated, since the checkout may have moved since the scan.
 - **No line** — in the working tree.
 
+**A claim the ARD cites at a commit of its own is checked at that commit**, whatever the repository's line says — on the BRD route, a grounding finding's evidence cited at the commit that finding is pinned to: test the file with `git -C "<path>" cat-file -e <that commit>:<file>` and read it with `show` there, since a file deleted since that commit is not fabricated.
+
 Those three git reads are your only use of Bash: never another command, never one that writes a file, the index, a ref or `HEAD`, and never `fetch`, `pull`, `switch`, `checkout` or `stash`.
 
 ## Dimensions

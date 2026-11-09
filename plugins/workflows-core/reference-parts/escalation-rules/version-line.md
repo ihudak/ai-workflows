@@ -213,6 +213,6 @@ cap trades one unreviewed version for a later one and has no fixed point, since 
 find something the previous fix introduced. What actually costs the reader is not the unreviewed
 edit — a run has to stop somewhere — but believing the verdict covers it. Saying which version it
 covers costs nothing, cannot itself introduce a defect, and leaves the decision about the residue
-where it belongs — with the user. Where that read ran, the version line names it and the number of conflicts it returned, zero included, and still says the verdict predates the edits. **Where no edit followed the verdict,
+where it belongs — with the user. Where that read ran, the version line names it and the number of conflicts it returned, zero included, names each edit answering one of those conflicts as read by nothing further, and still says the verdict predates the edits. **Where no edit followed the verdict,
 say that too**, so a clean run reads as checked rather than as unreported. A run whose verdict was
 not `BLOCK` has not spent the cap. Two offers can follow such a review, each under a rule of its own that part `review` holds and that names the commands making it: *Findings a review leaves open — the offer to apply them*, which puts the residue to the user, and *Edits after a verdict that is not BLOCK — the unspent re-review*, which offers the re-review the cap still holds.

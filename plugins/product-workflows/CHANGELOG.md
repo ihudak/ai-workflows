@@ -17,9 +17,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Fixed
 
 - **`/specify`'s Final report prints its `### Run details` block (LC31, the third case).** The lines the run must print come out as one block, stated once.
-- **`/specify` records no `epic.md` at PRD level (LC32).** A PRD-level specification has no Epic, so its record no longer names one.
+- **`/specify` records no `epic.md` at PRD level (LC32).** `document-lineage` §4's chain puts `epic.md` below a PRD-level specification, and a record names no input below its own output, so a PRD-level run's record no longer names one.
 - **`/epics` ranks the findings its marker cap keeps (K2) and dispatches no `doc-fixer` on a style result with nothing at `MAJOR` (K3).**
 - **"The folder read" is no longer named as an agent's model route (K4)** in `/create-ard`, `/epics` and `/specify`.
+- **`ard-reviewer` checks a claim the ARD cites at a commit of its own at that commit**, so on the BRD route a grounding finding's evidence, cited at its pinned commit, is not taken for fabricated where its file was deleted since.
 - **Pages.** The `/specify`, `/create-ard`, `/update-spec`, `/epics` and Agents pages describe each change.
 
 ## [3.78.10] — 2026-11-08

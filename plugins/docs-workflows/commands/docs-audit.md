@@ -131,7 +131,7 @@ model_routing:
      ```
      choices: ["Skip this repo", "Cancel"]
      ```
-     The question's own text names the repository and the branch its checkout is on, says that its default branch could not be resolved — no `origin/HEAD`, `origin/main` or `origin/master` — and that scanning the checkout as it stands is not offered, for that reason; no option is marked, since whether the audit is worth running without that repository is the operator's to judge. *Skip this repo* goes on without it, and the report names it skipped; *Cancel* takes the stop route.
+     The question's own text names the repository and the branch its checkout is on, says that its default branch could not be resolved — no `origin/HEAD`, `origin/main` or `origin/master` — that scanning the checkout as it stands is not offered, for that reason, and that no option is recommended, since whether the audit is worth running without that repository is the operator's to judge. *Skip this repo* goes on without it, and the report names it skipped; *Cancel* takes the stop route.
 
    A read by ref whose fetch failed — `prep.read_only: false`, `prep.refreshed: false`, and `prep.refresh_note` naming the failed fetch — is not a failure, and nothing is asked: per `workflows-core:scan-refresh` §6, Phase 6's `### Sources` line for that repository says that the scan read a stale default ref, and names the failure. `sources[]` records the commit it read, as for every scan.
 
