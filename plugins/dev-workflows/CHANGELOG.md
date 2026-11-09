@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.61.0] — 2026-11-08
+
+`/ready` derives the PRD ladder's *Release Preparation* stage from two drafts on the specs repo's default branch. Update with `docs-workflows` 1.37.0, whose `/release-notes` writes the stage line `/ready` reads, and `workflows-core` 1.80.1, whose routing graph names the widened PE offer.
+
+### Added
+
+- **`/ready` reads the PRD's release-preparation signals** (Phase 1 step 2c), from `<default-ref>` by `git`, never the working tree, with no `require-on-main` call and no question: the PRD folder's `pr-draft.md`, which a keyed `/docs-workflows:document` run writes once it commits its pages on a documentation-repository branch and does not cancel at its push prompt, and a draft in its `release-notes.md` whose scope comment carries `stage: dev`. A draft with no `stage:` line — every one written before `docs-workflows` 1.37.0 — counts for no stage. Neither signal counts where it is dated before the latest `implementation.md` block in the PRD's tree — the blocks and the date-only rule of the *Delivery verified* test's sixth condition, a same-day block not counted — `pr-draft.md` dated by its last commit on `<default-ref>`, the release note by its newest dev-stage draft's scope-comment date; the reason names that block and the command to re-run, so drafts that landed for one delivery no longer place a PRD at *Release Preparation* after more work is implemented. A `Release preparation:` line in the report and in `_readiness.md` reads `shown — …` or `not shown — <reason>`; it is a note, never a finding, and a new invariant keeps it from counting against the run.
+
+### Changed
+
+- **`workflow-states`' *Release Preparation* row expects those two drafts** — documentation and a release note drafted, not published — in place of "docs + release notes", and *An optional rung* says the optional *Delivery verified* rung lifts only a PRD the mandatory rungs leave at *Implementation*.
+- **`/ready` Phase 3(0) derives *Release Preparation*** by the furthest-rung and straddle rules, so a PRD that passes *Delivery verified* over still reaches it when both drafts are there; nothing it reads shows *Post GA*, so no PRD is derived past it. Phase 3(b)'s checklist marks the two drafts ✅ at that rung, and carries the `Release preparation:` line as a note beneath *Implementation* or *Delivery verified*.
+- **The PE's `/dev-workflows:conformance <PRD>` offer** in `/ready`'s `### Next step` fires wherever the PRD is at *Implementation* or later and delivery is not verified, so a PRD at *Release Preparation* with an unsettled record is still offered it.
+- **`readiness-reviewer` never flags a PRD for lacking *Release Preparation*'s drafts**, which it cannot read on the default branch.
+- **Pages:** the `/ready` page, the references page, the workflow overview — an edge from the documentation commands into `/ready` — the index and *Roles and phases* say what *Release Preparation* is read from, and the `/ready` page and the workflow overview where the PE's run is offered.
+
 ## [4.60.0] — 2026-11-08
 
 `/ready` places a PRD at the optional *Delivery verified* stage once the PE's PRD conformance record is settled on the default branch and no work was implemented after it, and the record says what it left untraced. Update with `workflows-core` 1.79.0 and `docs-workflows` 1.36.0.

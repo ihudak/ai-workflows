@@ -31,17 +31,33 @@ draft. A run whose version the operator declined files under `# Unreleased`. The
 `# Release notes — <PRD> <slug>`, is its first line, names the PRD folder's key and slug — on a run
 addressed to an Epic as on one addressed to the PRD — and names no version.
 
-**Each draft records its scope and what its run read, in one HTML comment directly above it:**
+**Each draft records its scope, its stage and what its run read, in one HTML comment directly above it:**
 
 ```
 <!-- release-note scope: ACME-77-01 2026-09-20
+stage: dev
 read: orders-service 3f9a1c2b4e5d 7be0d41c9a2f
 read: billing-api 1c2d3e4f5a6b
 -->
 ```
 
 The first line names `<KEY>` — the PRD folder's key on a run addressed to the PRD and the Epic's on
-one addressed to an Epic — and the date the run appended the draft. Each `read:` line names a
+one addressed to an Epic — and the date the run appended the draft. **The second line, `stage: pm`
+or `stage: dev`, names the stage the run drafted at** — its `run_phase`, which `/release-notes`
+Phase 0 infers from whether a specification or a design exists for the PRD — written alone on its
+line, one space after the colon. Its closing `-->` aside, it is the comment's only line that is
+neither its first nor a `read:` line, and it bounds nothing: the boundary rules below read a note's scope off the first line
+and its read set off the `read:` lines alone, so they pass over it. **A draft appended before
+`docs-workflows` 1.37.0 carries no `stage:` line**, nor does a comment of the one-line form described
+below; it states no stage, and a reader takes it as neither `pm` nor `dev` —
+never guessing one from its date or its place in the file. `/dev-workflows:ready` reads this line,
+and the first line's date: a draft counts toward the PRD's *Release Preparation* only where its
+comment carries `stage: dev`, the file holding it is on the specs repository's default branch, and
+the newest such draft is dated no earlier than the latest `implementation.md` block in the PRD's
+tree — so a draft without the line counts toward no stage, and a `/release-notes` run at the dev
+stage, after the latest work, appends one that does. `dev-workflows` cannot load this reference,
+so `/dev-workflows:ready` states the form it reads itself, and a change to either line is a change
+to that command too. Each `read:` line names a
 repository, by the `repo:` name the implementation records use or, for one only the scan reached, the
 slug the run resolved it by, and then **every commit the run read there**: each block's `commit:`
 whose diff it read, each commit its scan kept whose diff it read, and each commit a key-commit
