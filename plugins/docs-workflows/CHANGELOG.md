@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 
-- **`/release-notes` Phase 8 step 1a names `/dev-workflows:ready` beside `/docs-audit`** as a reader that misses a declined draft, and the line it prints above the consent choice says so: `/ready` counts a dev-stage draft toward the PRD's *Release Preparation* stage only once it is on the default branch. The page, which said the line left `/ready` out, now says the line names both.
+- **`/release-notes` Phase 8 step 1a names `/dev-workflows:ready` beside `/docs-audit`** as a reader that misses a declined draft, and the line it prints above the consent choice says so: where the draft is a dev-stage one, `/ready` counts it toward the PRD's *Release Preparation* stage only once it is on the default branch; a pm-stage draft it never counts. The page, which said the line left `/ready` out, now says the line names both.
 
 ## [1.37.0] — 2026-11-08
 

@@ -11,7 +11,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 
-- **`phase-handoff` §4.0's `release-notes.md` row names both readers that do not read the working copy.** `/docs-workflows:docs-audit` reads the drafts at the specs repository's `HEAD`; `/dev-workflows:ready`, since `dev-workflows` 4.61.0, reads a PRD folder's file from the default branch alone and counts a dev-stage draft toward *Release Preparation* only once it is there. The row called `/docs-audit` the one such reader. The advisory class's list of cases says the same.
+- **`phase-handoff` §4.0's `release-notes.md` row names both readers that do not read the working copy.** `/docs-workflows:docs-audit` reads the drafts at the specs repository's `HEAD`; `/dev-workflows:ready`, since `dev-workflows` 4.61.0, reads a PRD folder's file from the default branch alone and counts a dev-stage draft toward *Release Preparation* only once it is there. The row called `/docs-audit` the one such reader. The advisory class's list of cases now names both as well.
+- **`specs-repo-git` §2.1 says `pr-draft.md` is also read by key**, by `/dev-workflows:ready` from the default branch, where it grouped the file only among the operator's drafts.
 
 ## [1.80.2] — 2026-11-08
 

@@ -693,13 +693,13 @@ Outside that one case there is no question to ask and no option that replaces th
    `Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")` and run its §4.3
    push-target probe, then present its §4.3 consent choice verbatim — the **advisory** array,
    `release-notes.md` being read by a later run of this
-   command and by others and gated by none, as the handoff's register of classes records — `/docs-workflows:docs-audit` and `/dev-workflows:ready` excepted: `/docs-audit` reads the drafts at the specs repository's `HEAD` and so misses one left uncommitted, and `/ready` counts a dev-stage draft toward the PRD's *Release Preparation* stage only once it is on the default branch. **Say what a
+   command and by others and gated by none, as the handoff's register of classes records — the array's "what reads it reads your working copy" holding for every reader but `/docs-workflows:docs-audit` and `/dev-workflows:ready`: `/docs-audit` reads the drafts at the specs repository's `HEAD` and so misses one left uncommitted, and `/ready` counts a dev-stage draft toward the PRD's *Release Preparation* stage only once it is on the default branch, and a pm-stage one never. **Say what a
    declined handoff costs, before the choice**, since neither the array nor §4.1's *Declined by the
    user* line says it: print this one line above the array — immediately above it, or above §4.3's
    flag or no-remote line where that section prints one, the no-remote line where the probe set
    `remote: none` — then present the array itself unchanged:
    ```
-   If you decline, this draft stays uncommitted: every later run of any command reports it as a dirty path that is not its own and skips its leftover flush, catch-up and branch settling until you commit or remove it; a later /release-notes run reads it only while the checkout stays where it was written; /docs-workflows:docs-audit, which reads the drafts at HEAD, does not see it at all; and /dev-workflows:ready counts a dev-stage draft toward the PRD's Release Preparation stage only once it is on the default branch — whatever the second option says about your working copy.
+   If you decline, this draft stays uncommitted: every later run of any command reports it as a dirty path that is not its own and skips its leftover flush, catch-up and branch settling until you commit or remove it; a later /release-notes run reads it only while the checkout stays where it was written; /docs-workflows:docs-audit, which reads the drafts at HEAD, does not see it at all; and, where this draft is a dev-stage one, /dev-workflows:ready counts it toward the PRD's Release Preparation stage only once it is on the default branch — whatever the second option says about your working copy.
    ```
    ```
    choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
