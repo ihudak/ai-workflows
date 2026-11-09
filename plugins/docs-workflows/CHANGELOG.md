@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.37.1] — 2026-11-09
+
+`/release-notes` tells you what `/ready` misses on a declined draft: batch B38. Update with `workflows-core` 1.80.3.
+
+### Fixed
+
+- **`/release-notes` Phase 8 step 1a names `/dev-workflows:ready` beside `/docs-audit`** as a reader that misses a declined draft, and the line it prints above the consent choice says so: `/ready` counts a dev-stage draft toward the PRD's *Release Preparation* stage only once it is on the default branch. The page, which said the line left `/ready` out, now says the line names both.
+
 ## [1.37.0] — 2026-11-08
 
 `/release-notes` writes the stage it drafted at into each draft's scope comment, which `/dev-workflows:ready` reads to derive *Release Preparation*. Update with `dev-workflows` 4.61.0.
