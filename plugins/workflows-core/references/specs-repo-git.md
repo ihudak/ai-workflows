@@ -140,7 +140,7 @@ first two are read by *key* rather than by session — `implementation.md` is re
 `grep -l 'implementation\.md' plugins/*/commands/*.md` returns but `/implement`, which writes it — and
 a record only one machine holds is a record the next run cannot use; `follow-ups.md` is `followup-emission.md` §2's "alongside the artifacts the
 follow-ups are about", which §3 makes explicit is about where a *reader* looking at the folder finds
-them. The third, `_security.md`, is the note `/security-workflows:scan` appends to the folder of the unit a run is addressed by, where a reader looking at that folder finds it (`security-register-format.md` §1). The last two are drafts for the operator, written where the operator looks for them: `/docs-workflows:document` (keyed mode) writes `pr-draft.md` for the pull request it
+them. The third, `_security.md`, is the note `/security-workflows:scan` appends to the folder of the unit a run is addressed by, where a reader looking at that folder finds it (`security-register-format.md` §1). The last two are drafts for the operator, written where the operator looks for them — `pr-draft.md` also read by key, as the first two are, by `/dev-workflows:ready` from `<default-ref>` (its Phase 1 step 2c): `/docs-workflows:document` (keyed mode) writes `pr-draft.md` for the pull request it
 never opens itself, and it and `/docs-workflows:release-notes` write `<KEY>-implementation-gaps.md`,
 the bug-report draft `source-truth.md` §7.5 fixes — its name carries the key, so it is matched as
 `*-implementation-gaps.md`. But that same folder holds the phase deliverables (`prd.md`, `ard.md`, `specification.md`,

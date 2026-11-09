@@ -24,6 +24,15 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`readiness-reviewer` has a read scope (K5):** the artifacts the brief and `derived_phase` name and the `dev-workflows/` bookkeeping, never the PRD's `_conformance.md`, for which the `Delivery:` note stands, nor 4.61.0's *Release Preparation* drafts, `pr-draft.md` and `release-notes.md`, for which the status-expectation checklist stands, and no file of a code repository outside the specs repository; a fact only a code repository, or a specs file outside the scope, would show is reported as unverified.
 - **Pages.** The `/design`, `/implement`, `/ready`, `/conformance` and Agents pages describe each change.
 
+## [4.61.1] — 2026-11-08
+
+The conformance record's handoff tells you what `/ready` sees: batch B37. Update with `workflows-core` 1.80.2.
+
+### Fixed
+
+- **`/conformance` Phase 6 names every reader of the record**, `/docs-workflows:document`, `/docs-workflows:release-notes` and `/ready` among them, where it named only its own later runs and `/implement`.
+- **Every PRD run's consent choice says that `/ready` reads the record only on the default branch**, so after a decline its delivery check reads whatever record the default branch holds — none, or the one the run replaces — until the new one merges. The advisory array's "what reads it reads your working copy" was false for `/ready`. The command page says the same.
+
 ## [4.61.0] — 2026-11-08
 
 `/ready` derives the PRD ladder's *Release Preparation* stage from two drafts on the specs repo's default branch. Update with `docs-workflows` 1.37.0, whose `/release-notes` writes the stage line `/ready` reads, and `workflows-core` 1.80.1, whose routing graph names the widened PE offer.

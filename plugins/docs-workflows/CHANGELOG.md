@@ -18,9 +18,13 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 - **Pages.** The `/document` and `/docs-audit` pages describe the read and the question.
 
+## [1.37.1] — 2026-11-09
+
+`/release-notes` tells you what `/ready` misses on a declined draft: batch B38. Update with `workflows-core` 1.80.3.
+
 ### Fixed
 
-- **`/release-notes` names both readers that miss a declined draft.** Its consent step, and the line it prints above the choice, name `/dev-workflows:ready`, which counts a draft toward the PRD's *Release Preparation* stage only from the default branch, beside `/docs-workflows:docs-audit`, which reads the drafts at `HEAD`: neither sees a draft left uncommitted. Both had named `/docs-audit` alone, and the `/release-notes` page had said the line left `/ready` out; it now names both.
+- **`/release-notes` Phase 8 step 1a names `/dev-workflows:ready` beside `/docs-audit`** as a reader that misses a declined draft, and the line it prints above the consent choice says so: where the draft is a dev-stage one, `/ready` counts it toward the PRD's *Release Preparation* stage only once it is on the default branch; a pm-stage draft it never counts. The page, which said the line left `/ready` out, now says the line names both.
 
 ## [1.37.0] — 2026-11-08
 

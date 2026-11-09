@@ -21,8 +21,25 @@ A shared refresh question for every command that scans a repository, a read afte
 - **`session-hygiene`: a merge-conditioned item keeps its waiting marker (LC35).** An item that waits on a pull request's merge carries the marker too, and its waiting datetime is the one it was first carried with, whatever else it waits on.
 - **`model-routing/classification` no longer routes "the folder read" as an agent (K4).** The folder read is the orchestrator's own inline read, so no model tier is assigned to it; the scanning rules name `code-scanner` alone.
 - **`escalation-rules`: the marker cap ranks its findings (K2).** Within an Epic's cap of three, counting the markers it already carries, the open slots go to the open findings that need a decision, highest severity first, then in the order the review listed them.
-- **`phase-handoff` §4.0: the drafts' readers.** Its `release-notes.md` row names `/dev-workflows:ready`, which reads a dev-stage draft from the default branch alone for the PRD's *Release Preparation* stage, beside `/docs-workflows:docs-audit`, which reads the drafts at `HEAD`, as the two readers that never see a draft left uncommitted; it had named `/docs-audit` as the only one.
 - **Docs.** The References and Agents pages and the README describe the new reference and the new `caller` value.
+
+## [1.80.3] — 2026-11-09
+
+`/ready` named as a second reader of the release-notes draft outside the working copy: batch B38. Update with `docs-workflows` 1.37.1.
+
+### Fixed
+
+- **`phase-handoff` §4.0's `release-notes.md` row names both readers that do not read the working copy.** `/docs-workflows:docs-audit` reads the drafts at the specs repository's `HEAD`; `/dev-workflows:ready`, since `dev-workflows` 4.61.0, reads a PRD folder's file from the default branch alone and counts a dev-stage draft toward *Release Preparation* only once it is there. The row called `/docs-audit` the one such reader. The advisory class's list of cases now names both as well.
+- **`specs-repo-git` §2.1 says `pr-draft.md` is also read by key**, by `/dev-workflows:ready` from the default branch, where it grouped the file only among the operator's drafts.
+
+## [1.80.2] — 2026-11-08
+
+The conformance record's readers, and a reader of the default branch alone at the handoff: batch B37. Update with `dev-workflows` 4.61.1.
+
+### Fixed
+
+- **`phase-handoff` §4.0 names every reader of `_conformance.md`.** `/dev-workflows:ready` reads a PRD folder's record from the default branch alone, for the optional *Delivery verified* stage `dev-workflows` 4.60.0 added; `/docs-workflows:document` and `/docs-workflows:release-notes` read every record in scope from the working tree. The row named only `/conformance`'s own later runs and `/implement`'s follow-up read-back.
+- **The advisory class allows for a reader of the default branch alone.** The advisory array promises that what reads the artifact reads your working copy, which is false for `/ready` and the PRD record: declined, its delivery check reads whatever record the default branch holds — none, or the earlier one — until the new one merges. §4.0 now says the producer names any reader that does not read the working copy (the default branch alone, or `HEAD`, as `/docs-audit` reads `release-notes.md`) in a line above the array and above §4.3's own line, and §4.1's advisory clause defers to that line.
 
 ## [1.80.1] — 2026-11-08
 
