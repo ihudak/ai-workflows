@@ -21,6 +21,7 @@ A shared refresh question for every command that scans a repository, a read afte
 - **`session-hygiene`: a merge-conditioned item keeps its waiting marker (LC35).** An item that waits on a pull request's merge carries the marker too, and its waiting datetime is the one it was first carried with, whatever else it waits on.
 - **`model-routing/classification` no longer routes "the folder read" as an agent (K4).** The folder read is the orchestrator's own inline read, so no model tier is assigned to it; the scanning rules name `code-scanner` alone.
 - **`escalation-rules`: the marker cap ranks its findings (K2).** Within an Epic's cap of three, counting the markers it already carries, the open slots go to the open findings that need a decision, highest severity first, then in the order the review listed them.
+- **`phase-handoff` §4.0: the drafts' readers.** Its `release-notes.md` row names `/dev-workflows:ready`, which reads a dev-stage draft from the default branch alone for the PRD's *Release Preparation* stage, beside `/docs-workflows:docs-audit`, which reads the drafts at `HEAD`, as the two readers that never see a draft left uncommitted; it had named `/docs-audit` as the only one.
 - **Docs.** The References and Agents pages and the README describe the new reference and the new `caller` value.
 
 ## [1.80.1] — 2026-11-08
