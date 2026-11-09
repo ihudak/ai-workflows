@@ -1650,6 +1650,16 @@ def selftest():
         check(got["signal"] == "a-prefix" and got["value"] == real(r.path)
               and got["lines"][0].endswith("Set SPECS_PATH to %s where it is set, and re-run." % real(r.path)),
               "g_inside_tree: the walk starts from the physical path, so a link to a folder names <repo> (%r)" % got)
+        os.makedirs(os.path.join(spec_dir, "specifications", "PRD-A-2-y"))
+        os.makedirs(os.path.join(spec_dir, "dev-workflows-cost"))
+        got = gate(spec_dir)
+        check(got["misrooted"] is True and got["lines"] == [stop, (
+            "Misrooted runs left: %s/specifications/ (PRD-A-2-y), which belongs in %s/specifications/, and which the first "
+            "run after SPECS_PATH is fixed searches for keys and commits bookkeeping from, in the wrong place, unless it is "
+            "moved first; %s/dev-workflows-cost/, which belongs at %s/dev-workflows-cost/.%s"
+            % (spec_dir, real(r.path), spec_dir, real(r.path), close))],
+              "g_inside_tree: what an earlier run left in <repo>/specifications belongs under the value the walk found (%r)"
+              % got)
 
         # g_below_top
         r = new_repo(tmp, "below")
@@ -1763,13 +1773,16 @@ def selftest():
         # g_reserved
         para = addressing[addressing.index("**Reserved subdirectory names are not folder kinds.**"):]
         para = para[para.index("never resolved by one —"):para.index("None matches")]
-        names = [n.replace("<YYYYMMDD>", "20261109") for n in re.findall(r"`([^`/][^`]*)/`", para)]
+        raw = re.findall(r"`([^`/][^`]*)/`", para)
+        names = [n.replace("<YYYYMMDD>", "20261109") for n in raw]
         check(len(names) == 10 and all(RESERVED.match(n) for n in names),
               "g_reserved: RESERVED matches every name of addressing §2's list (%r)" % names)
         check(not any(RESERVED.match(n) for n in ("brd2", "xbrd", "bundle-2026", "bundle-202611090", "PRD-A-1-x",
                                                   "Doc screenshots/", "design ")),
               "g_reserved: RESERVED matches whole names only")
         mine = re.search(r"\(\?:(.+)\)", RESERVED.pattern).group(1).split("|")
+        check(sorted(mine) == sorted(n.replace("<YYYYMMDD>", "[0-9]{8}") for n in raw),
+              "g_reserved: RESERVED holds addressing §2's names and no other (%r, %r)" % (mine, raw))
         theirs = re.search(r"\(\.\+/\)\?\((.+)\)/$", sb.EXCLUDED).group(1).split("|")
         check(sorted(theirs) == sorted(n for n in mine if n != "dev-workflows") and "dev-workflows" in mine,
               "g_reserved: session-branch.py's EXCLUDED holds the same names but dev-workflows (%r, %r)" % (mine, theirs))
