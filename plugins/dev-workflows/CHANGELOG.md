@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.61.1] — 2026-11-08
+
+The conformance record's handoff tells you what `/ready` sees: batch B37. Update with `workflows-core` 1.80.2.
+
+### Fixed
+
+- **`/conformance` Phase 6 names every reader of the record**, `/docs-workflows:document`, `/docs-workflows:release-notes` and `/ready` among them, where it named only its own later runs and `/implement`.
+- **Every PRD run's consent choice says that `/ready` reads the record only on the default branch**, so after a decline its delivery check reads whatever record the default branch holds — none, or the one the run replaces — until the new one merges. The advisory array's "what reads it reads your working copy" was false for `/ready`. The command page says the same.
+
 ## [4.61.0] — 2026-11-08
 
 `/ready` derives the PRD ladder's *Release Preparation* stage from two drafts on the specs repo's default branch. Update with `docs-workflows` 1.37.0, whose `/release-notes` writes the stage line `/ready` reads, and `workflows-core` 1.80.1, whose routing graph names the widened PE offer.

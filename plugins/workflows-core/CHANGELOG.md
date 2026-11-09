@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.80.2] — 2026-11-08
+
+The conformance record's readers, and a reader of the default branch alone at the handoff: batch B37. Update with `dev-workflows` 4.61.1.
+
+### Fixed
+
+- **`phase-handoff` §4.0 names every reader of `_conformance.md`.** `/dev-workflows:ready` reads a PRD folder's record from the default branch alone, for the optional *Delivery verified* stage `dev-workflows` 4.60.0 added; `/docs-workflows:document` and `/docs-workflows:release-notes` read every record in scope from the working tree. The row named only `/conformance`'s own later runs and `/implement`'s follow-up read-back.
+- **The advisory class allows for a reader of the default branch alone.** The advisory array promises that what reads the artifact reads your working copy, which is false for `/ready` and the PRD record: declined, its delivery check reads whatever record the default branch holds — none, or the earlier one — until the new one merges. §4.0 now says the producer names any reader that does not read the working copy (the default branch alone, or `HEAD`, as `/docs-audit` reads `release-notes.md`) in a line above the array and above §4.3's own line, and §4.1's advisory clause defers to that line.
+
 ## [1.80.1] — 2026-11-08
 
 Wording and pages only. The routing graph's `/ready` offer, and the family map, follow `dev-workflows` 4.61.0, which derives *Release Preparation*. Update with `dev-workflows` 4.61.0.
