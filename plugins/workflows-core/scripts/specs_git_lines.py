@@ -130,12 +130,17 @@ T = {
     "app.why.moved-on": "origin's <branch> moved on again during each of its <attempts> attempts",
     "app.why.failed": "the push FAILED (<the status line's bracketed summary and its reason, or no status line>)",
     "app.why.stopped": "session-branch.py stopped (<the first line of its stderr>)",
+    # Where a later attempt refused with checkout-moved, an earlier one having moved the branch: replaces
+    # "so <branch> was not moved;" in reason.checkout-moved inside app.why.later-refused.
+    "app.why.checkout-moved": "so <branch> was not moved again;",
     # Session-branch mode (§8), in §6's order.
     "app.session.created": "; this run created local session/<identity> at <base short sha>",
     "app.session.conflict-default": "; merging <default> into session/<identity> left <path>[, …] unsettled — settle them in its pull request",
     "app.session.conflict-origin": "; origin's copy of session/<identity>, pushed from another clone, was not merged in: on <path>[, …] one clone changed what the other clone's copy still holds unchanged (an entry edited or removed, the header edited, the file deleted) — make the two copies agree, by making the same change on the clone that still holds it (standing on <default> there; a pending cost file the other relocated is relocated there too, never deleted by hand) or by undoing it on the other; the next run on the clone you changed commits it, and once that is pushed, a later run here merges and pushes",
     "app.session.sync-error": "; the merge of <default> into session/<identity> could not run (<sync.error>), and the next run tries again",
-    "app.session.unsettled": "; <path>[, …] and session/<identity>'s version of it each hold a change the other lacks, so it was left out of this commit and is as it was in your working tree — git -C \"<SPECS_PATH>\" show session/<identity>:<path> shows the branch's version; once your copy is that version with your own entries added after it, in the line endings your checkout gives the file, the next run commits it, and an edit or removal of an entry the branch your specs checkout stands on holds can then be made again; until then lift will not discard it, so each move of the specs checkout is skipped",
+    # Once for each path unsettled names, then app.session.unsettled.close once after them.
+    "app.session.unsettled": "; <path> and session/<identity>'s version of it each hold a change the other lacks, so it was left out of this commit and is as it was in your working tree — git -C \"<SPECS_PATH>\" show session/<identity>:<path> shows the branch's version",
+    "app.session.unsettled.close": "; once a copy left out is the branch's version with your own entries added after it, in the line endings your checkout gives the file, the next run commits it, and an edit or removal of an entry the branch your specs checkout stands on holds can then be made again; until then lift will not discard it, so each move of the specs checkout is skipped",
     "app.session.stranded": "; your local <default> still holds <K> commit(s) origin refused, whose files are on session/<identity> now — to drop them, standing on <default>, run python3 \"<the script's path>\" --specs \"<SPECS_PATH>\" lift --branch session/<identity> && git -C \"<SPECS_PATH>\" reset --keep origin/<default> && python3 \"<the script's path>\" --specs \"<SPECS_PATH>\" put-back --branch session/<identity> --default-ref origin/<default>",
     "app.session.unsupported": "; session-branch mode is on for this clone, but this git's merge-tree cannot merge without a checkout (it needs --write-tree and -X), so these files stay on <branch> until git is upgraded",
     # Replaces the push-refused and refused-before remedies from "to land the commits" on, for the session branch.
@@ -150,6 +155,8 @@ T = {
     # §6's reason clauses, by refused.reason, and §4 step 6's own three.
     "reason.conflict": "both sides changed <path>, or the folder holding it, and the run cannot settle it",
     "reason.register-rebuild": "both sides changed the security register <path>, which only a rebuild settles, and this command hands the run no register.py to rebuild it",
+    # Where the call carried --register-rebuild: replaces reason.register-rebuild from ", which only" on.
+    "reason.register-rebuild.failed": ", which only a rebuild settles, and that rebuild failed",
     "reason.would-overwrite": "moving the checkout would write over <path>[ and <M> more], which you changed, left untracked or ignore — once that is clear, the next run that commits session files on <branch> settles the push itself",
     "reason.cannot-replay": "this git cannot replay without a checkout (its merge-tree needs --write-tree and --merge-base, git 2.40 or later)",
     "reason.in-progress": "a rebase, merge, cherry-pick or revert, or an unresolved conflict, is in progress in the checkout (<path>)",
@@ -202,6 +209,8 @@ T = {
     # The reason a push or pull the 60 s cap ended gives in place of git's.
     "text.push-capped": "the push did not finish within 60 s",
     "text.pull-capped": "the pull did not finish within 60 s",
+    # §3.2's offline note: carried as start's offline_clause, never printed by the script.
+    "text.offline": "offline — ancestry checked against the last-fetched ref",
 
     # addressing §3 specs-root-check's stop, each form the text inside its label.
     "root.one-line": "SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which <is itself a specifications/ directory | is inside the specifications/ directory | is itself a specs folder, asserting key <key> | holds the specs folder <subdirectory> directly> — every folder lives under $SPECS_PATH/specifications/, so this run would look for and create folders in the wrong place; it wrote nothing under that path, and its cost and feedback are reported here instead. Set SPECS_PATH to <the value the walk found | the directory that holds specifications/> where it is set, and re-run.[ <the value the walk found> is not the top level of its repository (<that repository's top level>), and a specs tree inside a larger repository is unsupported: this plugin switches branches and commits in that repository.]",
@@ -209,10 +218,10 @@ T = {
     "root.two-readings": "SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which holds the specs folder <subdirectory> directly, and nothing on disk says whether <value> is a specs tree under another name or a specs root. If it is a specs tree under another name, its folders belong in a directory named specifications/, and SPECS_PATH names that directory's parent: <move them into <the parent of <value>>/specifications/ yourself, commit the move, and set SPECS_PATH to <the parent of <value>> | set SPECS_PATH to the parent of the specifications/ directory <value> is a mount of, and mount that parent whole rather than the tree alone>, where it is set. If it is a specs root, move <subdirectory> and every other specs folder beside it into <value>/specifications/ yourself and commit the move<, and make <value> the top level of a git repository, which it is not | ; <value> is not the top level of its repository (<that repository's top level>), and a specs tree inside a larger repository is unsupported: this plugin switches branches and commits in that repository>. Then re-run — the plugin moves nothing. This run wrote nothing under that path, and its cost and feedback are reported here instead.",
     # The left-behind line, whole: never filled whole (its clauses repeat); left_behind() renders it from the
     # opening this text holds before root.left-behind.nested, then its pieces.
-    "root.left-behind": "<in the two-readings form only: If <value> is a specs tree under another name, m|M>isrooted runs left: <value>/specifications/ (<folder>, …), which belongs in <the value the walk found>/specifications/ | the specs repository's specifications/, and which the first run after SPECS_PATH is fixed searches for keys and commits bookkeeping from, in the wrong place, unless it is moved first; <value>/<bookkeeping directory>/, which belongs at <the value the walk found>/<bookkeeping directory>/ | the same path at the specs repository's top level[, which the first run after SPECS_PATH is fixed commits there in the wrong place unless it is moved first]; … Move them yourself, commit the move, then re-run — the plugin moves nothing.",
+    "root.left-behind": "<in the two-readings form only: If <value> is a specs tree under another name, m|M>isrooted runs left: <value>/specifications/ (<folder>, …), which belongs in <the value the walk found>/specifications/ | the specs repository's specifications/, and which the first run after SPECS_PATH is fixed searches for keys and commits bookkeeping from, in the wrong place, unless it is moved first; <value>/<bookkeeping directory>/, which belongs at <the value the walk found>/<bookkeeping directory>/ | the same path at the specs repository's top level[, which the first run after SPECS_PATH is fixed commits there in the wrong place unless it is moved first]; …. Move them yourself, commit the move, then re-run — the plugin moves nothing.",
     "root.left-behind.nested": "<value>/specifications/ (<folder>, …), which belongs in <the value the walk found>/specifications/ | the specs repository's specifications/, and which the first run after SPECS_PATH is fixed searches for keys and commits bookkeeping from, in the wrong place, unless it is moved first",
     "root.left-behind.dir": "<value>/<bookkeeping directory>/, which belongs at <the value the walk found>/<bookkeeping directory>/ | the same path at the specs repository's top level[, which the first run after SPECS_PATH is fixed commits there in the wrong place unless it is moved first]",
-    "root.left-behind.close": "Move them yourself, commit the move, then re-run — the plugin moves nothing.",
+    "root.left-behind.close": ". Move them yourself, commit the move, then re-run — the plugin moves nothing.",
 
     # session-hygiene §7's notice, which end's environment comparison prints (D4).
     "env.changed": "Environment changed: started in <the values the line recorded>, now <the values printed now> — nothing more is committed, handed off or recorded here, and what this run already wrote stays where it is. Re-run in the container the run started in.",
@@ -315,17 +324,45 @@ def _placeholders(text):
     return found
 
 
-def _value(span, values, used, joined):
+def _spans(text):
+    """Every placeholder of <text> at its own level, optional segments included, in order."""
+    found, i = [], 0
+    while i < len(text):
+        if text[i] == "<":
+            j = _close(text, i, "<", ">")
+            found.append(text[i:j + 1])
+            i = j + 1
+        else:
+            i += 1
+    return found
+
+
+def placeholder(tid, start):
+    """The placeholder of T[tid] that is <start>, or the one placeholder it begins — the key fill() takes for it,
+    an alternation's whole text included. ValueError where none, or more than one, matches."""
+    spans = _spans(T[tid])
+    if start in spans:
+        return start
+    found = sorted({s for s in spans if s.startswith(start)})
+    if len(found) != 1:
+        raise ValueError("placeholder: %s has %d placeholders beginning %r" % (tid, len(found), start))
+    return found[0]
+
+
+def _value(span, values, used, joined, root):
     value = values.get(span)
     if value is None:
         raise ValueError("fill: no value for %s" % span)
     alternatives = _alternatives(span[1:-1])
     if len(alternatives) > 1:
         if isinstance(value, bool) or not isinstance(value, int):
-            return str(value)  # the alternation's value given whole
+            raise ValueError("fill: %s is an alternation, whose value is the int of an alternative, not %r" % (span, value))
         if not 0 <= value < len(alternatives):
             raise ValueError("fill: %s has no alternative %d" % (span, value))
-        return _render(alternatives[value], values, used)
+        named = "<%s>" % alternatives[value]
+        if named in root:  # an alternative that names a placeholder of the same template is that placeholder
+            return _value(named, values, used, False, root)
+        return _render(alternatives[value], values, used, root)
     if isinstance(value, (list, tuple)):
         if joined:
             return ", ".join(str(v) for v in value)
@@ -337,7 +374,7 @@ def _value(span, values, used, joined):
     return str(value)
 
 
-def _render(t, values, used):
+def _render(t, values, used, root):
     out, i = [], 0
     while i < len(t):
         ch = t[i]
@@ -351,13 +388,13 @@ def _render(t, values, used):
                     i += len(marker)
                     joined = True
                     break
-            out.append(_value(span, values, used, joined))
+            out.append(_value(span, values, used, joined, root))
         elif ch == "[" and not t.startswith("[SEC#", i):
             j = _close(t, i, "[", "]")
             inner = t[i + 1:j]
             i = j + 1
             if all(values.get(p) is not None for p in _placeholders(inner)):
-                out.append(_render(inner, values, used))
+                out.append(_render(inner, values, used, root))
         else:
             out.append(ch)
             i += 1
@@ -371,9 +408,11 @@ def fill(template_or_id, values):
     not opening "[SEC#", kept without its brackets where every placeholder in it has a value that is not None and
     dropped whole otherwise; then every placeholder replaced by its value — a list value, with no list marker after
     it, one item per occurrence in order; an alternation (one holding " | " at its own level) by the alternative an
-    int picks, itself filled from the same values, or by a value given whole. A placeholder left with no value
-    raises ValueError naming it, so none reaches a user. A template holding a repeated clause ("; …") is never
-    filled whole: left_behind() renders addressing §3's."""
+    int picks, itself filled from the same values — an alternative that names a placeholder of the same template
+    (root.one-line's "the value the walk found") taking that placeholder's value. A placeholder left with no value,
+    and an alternation given anything but an int naming one of its alternatives, raises ValueError naming it, so no
+    placeholder reaches a user. A template holding a repeated clause ("; …") is never filled whole: left_behind()
+    renders addressing §3's."""
     t = T.get(template_or_id, template_or_id)
     if "; …" in t:
         raise ValueError("fill: %s repeats a clause; render its pieces" % (template_or_id if template_or_id in T else "the template"))
@@ -381,7 +420,7 @@ def fill(template_or_id, values):
         if values.get("<N>") is None:
             raise ValueError("fill: no value for <N>")
         t = t.replace("(<N> files)", count_files(values["<N>"]))
-    return _render(t, values, {})
+    return _render(t, values, {}, t)
 
 
 # addressing §3's left-behind line names where each item belongs by an alternation its source leaves unbracketed:
@@ -393,11 +432,12 @@ def left_behind(values, folders, dirs, two_readings):
     """addressing §3's left-behind line: the opening (in the two-readings form, under its first reading), the
     nested specifications/ clause where <folders> is not None (the folders it holds), one bookkeeping-directory
     clause per entry of <dirs> (each a path under <value>, no trailing slash), joined by "; ", and the closing
-    sentence, the source's "; …" standing for the further clauses and the sentence's end. <values> holds <value>
+    sentence, which the source writes after its "; …". <values> holds <value>
     and <the value the walk found> (None where the walk found none, which names where each item belongs instead).
     The clause that a directory is committed in the wrong place is kept for one under documentation/ alone: addressing
     §3 says specs-repo-git §2.1's classifier never stages dev-workflows-feedback/ or dev-workflows-cost/ where a
-    misrooted run left them. None where nothing is left."""
+    misrooted run left them. An empty <folders> is no nested clause, as None is. None where nothing is left."""
+    folders = list(folders) if folders else None
     if folders is None and not dirs:
         return None
     whole = T["root.left-behind"]
@@ -413,13 +453,13 @@ def left_behind(values, folders, dirs, two_readings):
 
     clauses = []
     if folders is not None:
-        clauses.append(fill(belongs(T["root.left-behind.nested"]), dict(vals, **{"<folder>": list(folders)})))
+        clauses.append(fill(belongs(T["root.left-behind.nested"]), dict(vals, **{"<folder>": folders})))
     for d in dirs or []:
         piece = belongs(T["root.left-behind.dir"])
         if not d.startswith("documentation/"):
             piece = piece[:piece.index("[")] + piece[_close(piece, piece.index("["), "[", "]") + 1:]
         clauses.append(fill(piece, dict(vals, **{"<bookkeeping directory>": d})))
-    return fill(opening, vals) + "; ".join(clauses) + ". " + T["root.left-behind.close"]
+    return fill(opening, vals) + "; ".join(clauses) + T["root.left-behind.close"]
 
 
 def _collapse(text):

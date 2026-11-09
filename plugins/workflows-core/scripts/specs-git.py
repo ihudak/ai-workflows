@@ -970,9 +970,7 @@ def selftest():
         with open(SESSION_HYGIENE, encoding="utf-8") as fh:
             hygiene = fh.read()
 
-        def span(tid, start):
-            """The placeholder of T[tid] that begins with <start>: an alternation's whole text is its key."""
-            return next(p for p in lines._placeholders(T[tid]) if p.startswith(start))
+        span = lines.placeholder
 
         def raises_naming(name, fn, *args):
             try:
@@ -1009,10 +1007,11 @@ def selftest():
         ids += ["app." + a for a in (
             "hook-line", "record-key", "record-unset", "unrecorded", "register-clause", "register-move", "upstream-error",
             "why.later-refused", "why.moved-on", "why.failed", "why.stopped", "session.created", "session.conflict-default",
-            "session.conflict-origin", "session.sync-error", "session.unsettled", "session.stranded", "session.unsupported",
+            "session.conflict-origin", "session.sync-error", "session.unsettled", "session.unsettled.close",
+            "session.stranded", "session.unsupported", "why.checkout-moved",
             "session.refused-remedy", "mode-on", "mode-on.no-identity", "declined")]
         ids += ["reason." + r for r in (
-            "conflict", "register-rebuild", "would-overwrite", "cannot-replay", "in-progress", "locked", "push-scope",
+            "conflict", "register-rebuild", "register-rebuild.failed", "would-overwrite", "cannot-replay", "in-progress", "locked", "push-scope",
             "checked-out", "fetch-failed", "branch-moved", "cannot-move", "checkout-moved", "not-run", "timed-out",
             "session-mode")]
         ids += ["remedy.rejected", "remedy.not-standing", "remedy.checked-out", "remedy.session-wrap"]
@@ -1020,7 +1019,7 @@ def selftest():
             "nonrepo", "below-top", "pull-failed", "merged-flush", "refused", "refused.unrecorded", "created.empty",
             "created.committed", "deleted", "delete-failed", "advisory-D", "advisory-D.rm", "pushed-left", "b2-config",
             "b2-squash", "b4", "b4.count", "stay", "rerun-failed", "session-not-run", "stopped")]
-        ids += ["end.stopped", "text.push-capped", "text.pull-capped", "root.one-line", "root.stray", "root.two-readings",
+        ids += ["end.stopped", "text.push-capped", "text.pull-capped", "text.offline", "root.one-line", "root.stray", "root.two-readings",
                 "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
         missing = [i for i in ids if i not in T]
         check(not missing, "l_ids: every id the interface names is a template (missing %r)" % missing)
@@ -1072,12 +1071,11 @@ def selftest():
         check(got.startswith("moving the checkout would write over a.md and 2 more, which you changed"),
               "l_fill_optional: would-overwrite with <M> 2 (%r)" % got)
         one = {"<value>": "/r/specifications", span("root.one-line", "<is itself"): 0, "<the value the walk found>": "/r",
-               span("root.one-line", "<the value the walk found |"): "/r", "<that repository's top level>": None}
+               span("root.one-line", "<the value the walk found |"): 0, "<that repository's top level>": None}
         got = lines.fill("root.one-line", one)
         check(got.endswith("Set SPECS_PATH to /r where it is set, and re-run.") and "which is itself a specifications/ directory —" in got,
               "l_fill_optional: the one-line form without its unsupported-layout segment (%r)" % got)
         got = lines.fill("root.one-line", dict(one, **{"<the value the walk found>": "/r/specs",
-                                                       span("root.one-line", "<the value the walk found |"): "/r/specs",
                                                        "<that repository's top level>": "/r"}))
         check(got.endswith("and re-run. /r/specs is not the top level of its repository (/r), and a specs tree inside a larger "
                            "repository is unsupported: this plugin switches branches and commits in that repository."),
@@ -1098,9 +1096,18 @@ def selftest():
               "l_fill_optional: the stray form keeps its inner segment where its values are given (%r)" % got)
 
         # l_fill_list_marker
-        got = lines.fill("app.session.unsettled", {"<path>": ["a.md", "b c.md"], "<identity>": "ab", "<SPECS_PATH>": "/s"})
-        check(got.startswith("; a.md, b c.md and session/ab's version of it") and "…" not in got and "[" not in got,
+        got = lines.fill("app.session.conflict-default", {"<path>": ["a.md", "b c.md"], "<identity>": "ab", "<default>": "main"})
+        check(got == "; merging main into session/ab left a.md, b c.md unsettled — settle them in its pull request",
               "l_fill_list_marker: <path>[, …] takes the whole list (%r)" % got)
+        got = lines.fill("app.hook-line", {"<path>": ["a.md"], "<sha7>": "abc1234"})
+        check(got == "Specs repo: a.md is now committed in abc1234, put there by a pre-commit hook, and not pushed",
+              "l_fill_list_marker: a one-item list (%r)" % got)
+        got = "".join(lines.fill("app.session.unsettled", {"<path>": p, "<identity>": "ab", "<SPECS_PATH>": "/s"})
+                      for p in ("a.md", "b c.md")) + lines.fill("app.session.unsettled.close", {})
+        check(got.count("so it was left out of this commit") == 2 and "show session/ab:a.md shows" in got
+              and "show session/ab:b c.md shows" in got and got.endswith("each move of the specs checkout is skipped")
+              and got.count("once a copy left out is the branch's version") == 1,
+              "l_fill_list_marker: unsettled once per path, each with its own show, the close once (%r)" % got)
 
         # l_fill_root_lists
         two = ["PRD-S-9-x", "EPIC-S-9-01-y"]
@@ -1125,8 +1132,13 @@ def selftest():
                 "the same path at the specs repository's top level; /m/dev-workflows-cost/, which belongs at the same path at "
                 "the specs repository's top level. Move them yourself, commit the move, then re-run — the plugin moves nothing.")
         check(got == want, "l_fill_root_lists: the two-readings opening, with no value the walk found (%r)" % got)
-        check(lines.left_behind({"<value>": "/m", "<the value the walk found>": None}, None, [], False) is None,
-              "l_fill_root_lists: nothing left, no line")
+        check(lines.left_behind({"<value>": "/m", "<the value the walk found>": None}, None, [], False) is None
+              and lines.left_behind({"<value>": "/m", "<the value the walk found>": None}, [], [], False) is None,
+              "l_fill_root_lists: nothing left, no line, an empty folder list included")
+        got = lines.left_behind({"<value>": "/m", "<the value the walk found>": None}, [], ["dev-workflows-cost"], False)
+        check(got == "Misrooted runs left: /m/dev-workflows-cost/, which belongs at the same path at the specs repository's "
+              "top level. Move them yourself, commit the move, then re-run — the plugin moves nothing.",
+              "l_fill_root_lists: an empty folder list is no nested clause, never () (%r)" % got)
 
         # l_fill_alternation
         got = lines.fill("pre.stay", {"<branch>": "prd/A-1-x", "<default>": "main", span("pre.stay", "<switched"): 1})
@@ -1140,6 +1152,20 @@ def selftest():
               "l_fill_alternation: the signal alternation's third alternative fills <key> (%r)" % got)
         check(raises_naming("no alternative 4", lines.fill, "root.one-line", dict(one, **{span("root.one-line", "<is itself"): 4})),
               "l_fill_alternation: an alternative that does not exist raises")
+        got = lines.fill("root.one-line", dict(one, **{"<the value the walk found>": "/walk/value"}))
+        check("Set SPECS_PATH to /walk/value where it is set" in got and "the value the walk found" not in got,
+              "l_fill_alternation: int 0 on the value-to-set alternation renders the walk's value (%r)" % got)
+        check(raises_naming("<the value the walk found>", lines.fill, "root.one-line",
+                            dict(one, **{"<the value the walk found>": None})),
+              "l_fill_alternation: an alternative naming a placeholder with no value raises naming it")
+        walk_alt = span("root.one-line", "<the value the walk found |")
+        check(raises_naming("is an alternation", lines.fill, "root.one-line", dict(one, **{walk_alt: "/r"})),
+              "l_fill_alternation: a string for an alternation raises")
+        check(raises_naming("is an alternation", lines.fill, "pre.stay",
+                            {"<branch>": "b", "<default>": "main", span("pre.stay", "<switched"): True}),
+              "l_fill_alternation: a bool for an alternation raises")
+        check(raises_naming("beginning", span, "root.one-line", "<the value the walk found"),
+              "l_fill_alternation: placeholder() refuses a prefix two placeholders share")
 
         # l_fill_count
         got1 = lines.fill("row.pushed-plugin", {"<sha7>": "abc1234", "<N>": 1, "<branch>": "prd/A-1-x"})
