@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.80.3] — 2026-11-09
+
+`/ready` named as a second reader of the release-notes draft outside the working copy: batch B38. Update with `docs-workflows` 1.37.1.
+
+### Fixed
+
+- **`phase-handoff` §4.0's `release-notes.md` row names both readers that do not read the working copy.** `/docs-workflows:docs-audit` reads the drafts at the specs repository's `HEAD`; `/dev-workflows:ready`, since `dev-workflows` 4.61.0, reads a PRD folder's file from the default branch alone and counts a dev-stage draft toward *Release Preparation* only once it is there. The row called `/docs-audit` the one such reader. The advisory class's list of cases now names both as well.
+- **`specs-repo-git` §2.1 says `pr-draft.md` is also read by key**, by `/dev-workflows:ready` from the default branch, where it grouped the file only among the operator's drafts.
+
 ## [1.80.2] — 2026-11-08
 
 The conformance record's readers, and a reader of the default branch alone at the handoff: batch B37. Update with `dev-workflows` 4.61.1.
