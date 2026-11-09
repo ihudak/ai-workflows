@@ -1,0 +1,181 @@
+"""specs_git_state.py — the run's state record, one file per (session, command), for specs-git.py.
+
+The record lives outside every repository, under ~/.claude/dev-workflows/specs-git/<session>/<command>.json,
+keyed by the CLAUDE_CODE_SESSION_ID environment variable (Claude Code sets it in Bash tool subprocesses) and
+the command, so a command typed in the middle of another run never touches the outer run's record. Python
+standard library only; loaded by specs-git.py only for the subcommands that need it.
+"""
+
+import calendar
+import copy
+import json
+import os
+import re
+import tempfile
+import time
+
+VERSION = 1
+SESSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+COMMAND_RE = re.compile(r"^/[a-z][a-z0-9-]*$")
+STAMP = "%Y-%m-%dT%H:%M:%SZ"
+
+# The record's keys and their defaults; a key outside this table is refused on new() and save().
+FIELDS = {
+    "version": VERSION,
+    "session": "",
+    "command": "",
+    "started": "",
+    "updated": "",
+    "args": {},  # the start call's arguments: specs, keys, commit_key, register_rebuild
+    "started_by_script": True,
+    "specs": "",
+    "env_line": None,
+    "gate": None,
+    "top": None,
+    "keys": [],
+    "commit_key": None,
+    "register_rebuild": None,
+    "specs_git": None,
+    "misrooted_notice": None,  # a list of lines
+    "guard": None,
+    "guard_block": None,
+    "guard_paths": [],
+    "default": None,
+    "default_ref": None,
+    "remote": None,
+    "offline": False,
+    "mode": None,
+    "session_branch": None,
+    "session_branch_created": None,
+    "b2_left": None,
+    "b4_left": None,
+    "branch": None,
+    "advised_D": [],
+    "declined": [],
+    "stage": "new",
+    "pending": [],
+    "settle_todo": [],
+    "end_commit": None,
+}
+
+
+class NoSession(Exception):
+    """No usable session id: the record cannot be keyed, so the caller reports `not run`."""
+
+
+def session_id():
+    value = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+    if not SESSION_RE.match(value):
+        raise NoSession("CLAUDE_CODE_SESSION_ID is unset or not a session id")
+    return value
+
+
+def root():
+    return os.path.join(os.path.expanduser("~"), ".claude", "dev-workflows", "specs-git")
+
+
+def path(session, command):
+    if not COMMAND_RE.match(command):
+        raise ValueError("a command is /<name>, got %r" % command)
+    if not SESSION_RE.match(session):
+        raise ValueError("not a session id: %r" % session)
+    return os.path.join(root(), session, command.lstrip("/") + ".json")
+
+
+def _now():
+    return time.strftime(STAMP, time.gmtime())
+
+
+def _check_keys(rec):
+    unknown = sorted(set(rec) - set(FIELDS))
+    if unknown:
+        raise ValueError("unknown record key: %s" % ", ".join(unknown))
+
+
+def new(command, **values):
+    rec = copy.deepcopy(FIELDS)
+    _check_keys(values)
+    rec.update(copy.deepcopy(values))
+    rec["session"] = rec["session"] or session_id()
+    rec["command"] = command
+    rec["started"] = _now()
+    return rec
+
+
+def load(session, command):
+    try:
+        with open(path(session, command), encoding="utf-8") as fh:
+            rec = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(rec, dict) or rec.get("version") != VERSION:
+        return None
+    return rec
+
+
+def save(session, command, rec):
+    _check_keys(rec)
+    target = path(session, command)
+    rec["updated"] = _now()
+    directory = os.path.dirname(target)
+    os.makedirs(directory, mode=0o700, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=directory, prefix=".tmp-", suffix=".json")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(rec, fh, indent=2, ensure_ascii=False)
+            fh.write("\n")
+        os.replace(tmp, target)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def resumable(rec, args, minutes=15):
+    if rec.get("stage") == "done" or rec.get("args") != args:
+        return False
+    try:
+        updated = calendar.timegm(time.strptime(rec.get("updated", ""), STAMP))
+    except ValueError:
+        return False
+    return 0 <= time.time() - updated <= minutes * 60
+
+
+def _rmdir_if_empty(directory):
+    try:
+        os.rmdir(directory)
+    except OSError:
+        pass
+
+
+def remove(session, command):
+    target = path(session, command)
+    try:
+        os.unlink(target)
+    except FileNotFoundError:
+        return False
+    _rmdir_if_empty(os.path.dirname(target))
+    return True
+
+
+def prune(keep_session, days=7):
+    removed = []
+    base = root()
+    cutoff = time.time() - days * 86400
+    try:
+        sessions = sorted(os.listdir(base))
+    except OSError:
+        return removed
+    for name in sessions:
+        directory = os.path.join(base, name)
+        if name == keep_session or not os.path.isdir(directory):
+            continue
+        for entry in sorted(os.listdir(directory)):
+            full = os.path.join(directory, entry)
+            if entry.endswith(".json") and os.path.isfile(full) and os.path.getmtime(full) < cutoff:
+                os.unlink(full)
+                removed.append(full)
+        _rmdir_if_empty(directory)
+    return removed

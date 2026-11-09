@@ -12,7 +12,12 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py --specs <root> push-scope --branch <name> [--session-default-ref <ref>]
   specs-git.py --specs <root> mode --default <name>
   specs-git.py owner-repo --repo <path> [--no-alias]
+  specs-git.py declined --command /<name> --path <p> [--path <p>]...
   specs-git.py --selftest
+
+declined appends paths to the run's state record (specs_git_state.py, one file per session and command, outside
+every repository), creating the record where the command's start never ran. The state module loads only for the
+subcommands that need it, so a copy of this script without it still runs the primitives above.
 
 <root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
 where specs-repo-git §3.5 classifies under specs_git: misrooted). Nothing here writes the working tree, the index or a
@@ -49,6 +54,26 @@ except Exception as e:  # a missing or broken session-branch.py is "not run" on 
     print("specs-git: not run (session-branch.py could not be loaded: %s)" % " ".join(str(e).split()), file=sys.stderr)
     sys.exit(2)
 NotRun = sb.NotRun
+_LOADED = {}
+
+
+def _load_module(name):
+    """A sibling module by file name, loaded the first time a subcommand needs it; a failure is NotRun."""
+    if name not in _LOADED:
+        try:
+            spec = importlib.util.spec_from_file_location(name, os.path.join(HERE, name + ".py"))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        except Exception as e:
+            raise NotRun("%s could not be loaded: %s" % (name, " ".join(str(e).split())))
+        _LOADED[name] = module
+    return _LOADED[name]
+
+
+def _flow():
+    """The modules the start/end flow subcommands share: (state, lines). Part 1's primitives never call it.
+    The lines module joins this tuple when it ships."""
+    return _load_module("specs_git_state"), None
 
 
 def status(root):
@@ -181,6 +206,26 @@ def push_scope(root, branch, session_default_ref=None):
     return {"base": base, "commits": commits, "in_scope": failed is None, "failed": failed}
 
 
+def declined(command, paths):
+    """The paths the run's user declined to stage, appended (unique, in order) to the record of this session
+    and <command>; a record the command's start never made is created, marked as not started by the script."""
+    state, _ = _flow()
+    if not state.COMMAND_RE.match(command):
+        raise NotRun("usage: --command is /<name>, got %s" % command)
+    session = state.session_id()
+    rec = state.load(session, command)
+    found = rec is not None
+    if rec is None:
+        rec = state.new(command, session=session, started_by_script=False)
+    added = []
+    for p in paths:
+        if p not in added:
+            added.append(p)
+    rec["declined"] = rec["declined"] + [p for p in added if p not in rec["declined"]]
+    state.save(session, command, rec)
+    return {"recorded": added, "record": "found" if found else "created"}
+
+
 _SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*://")
 _USER = re.compile(r"^[^/@]+@")
 
@@ -231,7 +276,7 @@ class Parser(argparse.ArgumentParser):
     """A usage error is one "not run" line, as every exit 2 is."""
 
     def error(self, message):
-        print("specs-git: not run (%s)" % message, file=sys.stderr)
+        print("specs-git: not run (usage: %s)" % message, file=sys.stderr)
         sys.exit(2)
 
 
@@ -255,6 +300,9 @@ def main():
     p.add_argument("--no-alias", action="store_true")
     p = sub.add_parser("mode")
     p.add_argument("--default", required=True)
+    p = sub.add_parser("declined")
+    p.add_argument("--command", required=True)
+    p.add_argument("--path", action="append", default=[])
     a = ap.parse_args()
     try:  # a path comes back as git's -z record gave it, a byte that is no UTF-8 included
         sys.stdout.reconfigure(encoding="utf-8", errors="surrogateescape")
@@ -269,6 +317,9 @@ def main():
         if a.cmd == "owner-repo":
             print(json.dumps(owner_repo_of(a.repo, not a.no_alias), indent=2, ensure_ascii=False))
             return 0
+        if a.cmd == "declined":
+            print(json.dumps(declined(a.command, a.path), indent=2, ensure_ascii=False))
+            return 0
         if not a.specs:
             raise NotRun("--specs is required")
         top = sb.text(sb.git(a.specs, "rev-parse", "--show-toplevel"))
@@ -281,6 +332,10 @@ def main():
         print("specs-git: not run (%s)" % " ".join(str(e).split()), file=sys.stderr)
         return 2
     except Exception as e:  # anything unexpected is "not run" on one line, never a traceback
+        st = _LOADED.get("specs_git_state")
+        if st is not None and isinstance(e, st.NoSession):
+            print("specs-git: not run (%s)" % " ".join(str(e).split()), file=sys.stderr)
+            return 2
         print("specs-git: not run (%s: %s)" % (type(e).__name__, " ".join(str(e).split())), file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2, ensure_ascii=False))
@@ -309,6 +364,7 @@ def selftest():
     os.environ["GIT_CONFIG_GLOBAL"] = os.devnull
     os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
     os.environ.pop("GIT_USER_INITIALS", None)
+    os.environ.pop("CLAUDE_CODE_SESSION_ID", None)
 
     def check(ok, what):
         count[0] += 1
@@ -349,9 +405,9 @@ def selftest():
         r.commit_all("init")
         return r
 
-    def cli(*args, env=None):
-        r = subprocess.run([sys.executable, me, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                           env=dict(os.environ, **(env or {})))
+    def cli(*args, env=None, stdin=None, cwd=None, script=None):
+        r = subprocess.run([sys.executable, script or me, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           input=stdin, cwd=cwd, env=dict(os.environ, **(env or {})))
         out = r.stdout.decode("utf-8", "replace")
         try:
             got = json.loads(out) if out.strip() else {}
@@ -705,6 +761,183 @@ def selftest():
         check(got["_rc"] == 0 and got.get("mode") in ("on", "unsupported") and got.get("source") == "config"
               and got.get("branch") == "session/ab", "mode: the opt-in key turns it on (%r)" % got)
 
+    def scenarios_state(tmp):
+        state = _load_module("specs_git_state")
+        home = os.path.join(tmp, "home")
+        os.makedirs(home)
+        keep = {k: os.environ.get(k) for k in ("HOME", "CLAUDE_CODE_SESSION_ID")}
+
+        def env(session="s1"):
+            os.environ["HOME"] = home
+            if session is None:
+                os.environ.pop("CLAUDE_CODE_SESSION_ID", None)
+            else:
+                os.environ["CLAUDE_CODE_SESSION_ID"] = session
+            return {"HOME": home, "CLAUDE_CODE_SESSION_ID": session} if session else {"HOME": home}
+
+        def raises(exc, fn, *args, **kw):
+            try:
+                fn(*args, **kw)
+            except exc:
+                return True
+            except Exception:
+                return False
+            return False
+
+        def tree(base):
+            return sorted(os.path.relpath(os.path.join(d, f), base) for d, _, fs in os.walk(base) for f in fs)
+
+        def clean_env(session):
+            e = dict(os.environ)
+            e["HOME"] = home
+            e.pop("CLAUDE_CODE_SESSION_ID", None)
+            if session:
+                e["CLAUDE_CODE_SESSION_ID"] = session
+            return e
+
+        try:
+            # s_session_id
+            os.environ.pop("CLAUDE_CODE_SESSION_ID", None)
+            check(raises(state.NoSession, state.session_id), "s_session_id: unset raises NoSession")
+            for bad in ("", "../x", "-x", "a b"):
+                os.environ["CLAUDE_CODE_SESSION_ID"] = bad
+                check(raises(state.NoSession, state.session_id), "s_session_id: %r raises NoSession" % bad)
+            os.environ["CLAUDE_CODE_SESSION_ID"] = "ab-12_x.y"
+            check(state.session_id() == "ab-12_x.y", "s_session_id: a good id is returned")
+
+            # s_path
+            env()
+            want = os.path.join(home, ".claude", "dev-workflows", "specs-git", "s1", "create-ard.json")
+            check(state.path("s1", "/create-ard") == want, "s_path: the record's home (%r)" % state.path("s1", "/create-ard"))
+            check(raises(ValueError, state.path, "s1", "create-ard"), "s_path: a command without its slash is a ValueError")
+            check(raises(ValueError, state.path, "s1", "/Create"), "s_path: an upper-case command is a ValueError")
+
+            # s_roundtrip
+            env()
+            rec = state.new("/create-ard", started_by_script=False, specs="/x/specs")
+            rec["declined"] = ["specifications/PRD-A-1 x/prd.md", "specifikationen/zahlungsauslösung.md"]
+            state.save("s1", "/create-ard", rec)
+            got = state.load("s1", "/create-ard")
+            check(got == rec and got["updated"] and got["started"], "s_roundtrip: save then load returns the record (%r)" % got)
+            check(state.FIELDS["declined"] == [] and got["version"] == 1, "s_roundtrip: FIELDS is not mutated by new()")
+            check(os.listdir(os.path.join(home, ".claude", "dev-workflows", "specs-git", "s1")) == ["create-ard.json"],
+                  "s_roundtrip: no file but create-ard.json is left")
+            before = open(state.path("s1", "/create-ard"), encoding="utf-8").read()
+            bad = dict(rec, bogus=1)
+            check(raises(ValueError, state.save, "s1", "/create-ard", bad)
+                  and open(state.path("s1", "/create-ard"), encoding="utf-8").read() == before,
+                  "s_roundtrip: an unknown key raises before the file changes")
+            check(raises(ValueError, state.new, "/create-ard", bogus=1), "s_roundtrip: new() refuses an unknown key")
+            check(oct(os.stat(os.path.dirname(state.path("s1", "/create-ard"))).st_mode & 0o777) == "0o700",
+                  "s_roundtrip: the session directory is private")
+
+            # s_unparsable
+            with open(state.path("s1", "/create-ard"), "w", encoding="utf-8") as fh:
+                fh.write("{")
+            check(state.load("s1", "/create-ard") is None, "s_unparsable: a file holding { loads as None")
+            with open(state.path("s1", "/create-ard"), "w", encoding="utf-8") as fh:
+                json.dump(dict(rec, version=2), fh)
+            check(state.load("s1", "/create-ard") is None, "s_unparsable: another version loads as None")
+
+            # s_keys
+            for sess, cmd in (("s1", "/specify"), ("s1", "/feedback"), ("s2", "/specify")):
+                state.save(sess, cmd, state.new(cmd, session=sess, specs="%s%s" % (sess, cmd)))
+            check(all(state.load(sess, cmd)["specs"] == "%s%s" % (sess, cmd)
+                      for sess, cmd in (("s1", "/specify"), ("s1", "/feedback"), ("s2", "/specify"))),
+                  "s_keys: each (session, command) loads back its own")
+
+            # s_remove
+            check(state.remove("s2", "/specify") is True and state.remove("s2", "/specify") is False,
+                  "s_remove: True, then False")
+            check(state.load("s2", "/specify") is None and not os.path.exists(os.path.dirname(state.path("s2", "/specify"))),
+                  "s_remove: load then None, and s2/ is gone with its last record")
+            check(os.path.isdir(os.path.dirname(state.path("s1", "/specify"))), "s_remove: s1/ stays while it holds records")
+
+            # s_prune
+            def touch(sess, cmd, days):
+                state.save(sess, cmd, state.new(cmd, session=sess))
+                t = __import__("time").time() - days * 86400
+                os.utime(state.path(sess, cmd), (t, t))
+
+            touch("old", "/specify", 8)
+            touch("young", "/specify", 6)
+            touch("cur", "/specify", 8)
+            gone = state.prune("cur")
+            check(gone == [state.path("old", "/specify")] and not os.path.exists(os.path.dirname(gone[0])),
+                  "s_prune: an 8-day-old record in another session goes with its directory (%r)" % gone)
+            check(os.path.exists(state.path("young", "/specify")) and os.path.exists(state.path("cur", "/specify")),
+                  "s_prune: a 6-day-old record and the current session's own stay")
+
+            # s_resumable
+            rec = state.new("/specify", stage="settle", args={"keys": ["A-1"]})
+            rec["updated"] = state._now()
+            check(state.resumable(rec, {"keys": ["A-1"]}) is True, "s_resumable: a fresh record at settle with the same args")
+            check(state.resumable(dict(rec, stage="done"), {"keys": ["A-1"]}) is False, "s_resumable: stage done")
+            check(state.resumable(rec, {"keys": ["A-2"]}) is False, "s_resumable: other args")
+            old = __import__("time").strftime(state.STAMP, __import__("time").gmtime(__import__("time").time() - 20 * 60))
+            check(state.resumable(dict(rec, updated=old), {"keys": ["A-1"]}) is False, "s_resumable: twenty minutes old")
+            check(state.resumable(dict(rec, updated=""), {"keys": ["A-1"]}) is False, "s_resumable: no timestamp")
+
+            # s_declined_cli
+            shutil.rmtree(os.path.join(home, ".claude"))
+            first = "specifications/PRD-A-1 x/prd.md"
+            got = cli("declined", "--command", "/create-ard", "--path", first, "--path", "a.md", env=clean_env("s1"))
+            rec = state.load("s1", "/create-ard")
+            check(got["_rc"] == 0 and got.get("record") == "created" and got.get("recorded") == [first, "a.md"]
+                  and rec and rec["declined"] == [first, "a.md"] and rec["started_by_script"] is False,
+                  "s_declined_cli: no record yet creates one (%r)" % got)
+            got = cli("declined", "--command", "/create-ard", "--path", "a.md", "--path", "b.md", env=clean_env("s1"))
+            rec = state.load("s1", "/create-ard")
+            check(got.get("record") == "found" and got.get("recorded") == ["a.md", "b.md"]
+                  and rec["declined"] == [first, "a.md", "b.md"],
+                  "s_declined_cli: a second call adds b.md only (%r)" % got)
+            snapshot = open(state.path("s1", "/create-ard"), encoding="utf-8").read()
+            got = cli("declined", "--command", "/idea", "--path", "z.md", env=clean_env("s1"))
+            check(got["_rc"] == 0 and open(state.path("s1", "/create-ard"), encoding="utf-8").read() == snapshot
+                  and state.load("s1", "/idea")["declined"] == ["z.md"],
+                  "s_declined_cli: another command's call leaves /create-ard's record unchanged (%r)" % got)
+
+            # s_declined_no_session
+            shutil.rmtree(os.path.join(home, ".claude"))
+            env(None)
+            got = cli("declined", "--command", "/idea", "--path", "a.md", env={"HOME": home})
+            env()
+            check(one_not_run_line(got) and not os.path.exists(os.path.join(home, ".claude")),
+                  "s_declined_no_session: exit 2, one line, nothing written (%r)" % got)
+
+            # s_usage_prefix
+            got = cli("declined", "--path", "a.md", env=clean_env("s1"))
+            check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
+                  "s_usage_prefix: a usage error says usage (%r)" % got)
+            got = cli("declined", "--command", "idea", "--path", "a.md", env=clean_env("s1"))
+            check(one_not_run_line(got), "s_usage_prefix: a command without its slash exits 2 with one line (%r)" % got)
+
+            # s_outside_repo
+            r = new_repo(tmp, "state-outside")
+            r.write("dirty.md", "x\n")
+            before = r.git("status", "--porcelain")
+            got = cli("declined", "--command", "/idea", "--path", "a.md", env=clean_env("s1"), cwd=r.path)
+            check(got["_rc"] == 0 and r.git("status", "--porcelain") == before,
+                  "s_outside_repo: declined from inside a repository leaves its status unchanged (%r)" % got)
+
+            # s_lazy_import
+            lone = os.path.join(tmp, "lazy")
+            os.makedirs(lone)
+            shutil.copy(me, os.path.join(lone, "specs-git.py"))
+            shutil.copy(os.path.join(HERE, "session-branch.py"), os.path.join(lone, "session-branch.py"))
+            got = cli("--specs", r.path, "status", script=os.path.join(lone, "specs-git.py"), env=clean_env("s1"))
+            check(got["_rc"] == 0 and "artifact" in got, "s_lazy_import: status runs without the new modules (%r)" % got)
+            got = cli("declined", "--command", "/idea", "--path", "a.md", script=os.path.join(lone, "specs-git.py"),
+                      env=clean_env("s1"))
+            check(one_not_run_line(got) and "specs_git_state" in got["_err"],
+                  "s_lazy_import: declined without its module exits 2 with one line (%r)" % got)
+        finally:
+            for k, v in keep.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
@@ -713,6 +946,7 @@ def selftest():
             scenarios_push_scope(tmp)
             scenarios_owner_repo(tmp)
             scenarios_mode(tmp)
+            scenarios_state(tmp)
 
     try:
         scenarios()
