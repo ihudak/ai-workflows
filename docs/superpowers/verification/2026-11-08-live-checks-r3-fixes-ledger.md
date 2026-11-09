@@ -164,3 +164,11 @@ Ruling: one last tiny pass for these wording items, including the optional code-
 Final fix pass 3: DONE 428baf55 (wording; gates pass)
 Final fix pass 3: re-review — 4 ADDRESSED, no new breakage (sonnet)
 Final review: clean after the fix wave and two further passes (commits 971550c2..428baf55)
+Rulings + ledger committed (docs/superpowers/verification/2026-11-08-live-checks-r3-fixes-*.md)
+Ruling: main moved again (PR #179 D49: core 1.80.1, dev 4.61.0, product 3.78.11, docs 1.37.0 — colliding with this batch's 1.80.0/4.61.0/1.37.0). Second merge step (opus + review); re-version to core 1.81.0, dev 4.62.0, product 3.79.0, docs 1.38.0, security 0.11.0 — why: the batch's versions are taken; CHANGELOG/coupling must sit on main's — cost if wrong: another re-bump if main moves again before merge.
+Merge step 2: DONE bdc4e718 (parents 22525a5c, 763fe131), re-versioned in the merge: core 1.81.0, dev 4.62.0, product 3.79.0, docs 1.38.0, security 0.11.0 (dated 2026-11-09); chain EXIT=0. New ruling 11 (merger): PRD folder's pr-draft.md and release-notes.md excluded from readiness-reviewer's read scope (D49 names them in derived_phase; /ready reads them only from the default branch). Flag: main's own coupling bullet says /ready reads release-notes.md off the working copy — looks false.
+Merge step 2: review Needs fixes (opus): merge, re-version and ruling 11 hold. Minor: main's coupling bullet (plugin-updates-coupling.md:39) inverts the claim; behind it, stale exclusivity D49 left: phase-handoff.md:429 ("the one reader for which … does not hold" — /ready also reads release-notes.md from <default-ref> only) and release-notes.md:696/:703 ("/docs-workflows:docs-audit excepted").
+Ruling: fix main's bullet sentence and the two stale statements in this release (workflows-core 1.81.0, docs-workflows 1.38.0 ship now) — why: fix-all rule; executed text tells the user a false thing before a decline choice — cost if wrong: a few lines.
+Merge step 2 fix: c3931f68 (main's coupling sentence; /ready second default-branch reader in phase-handoff §4.0 and /release-notes; chain EXIT=0)
+Merge step 2 fix: re-review — both ADDRESSED, no new breakage (sonnet)
+Final: branch complete at c3931f68 + ledger refresh; ready to push
