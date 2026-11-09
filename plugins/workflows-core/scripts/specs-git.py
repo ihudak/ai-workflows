@@ -40,6 +40,8 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPECS_REPO_GIT = os.path.join(HERE, "..", "references", "specs-repo-git.md")
+ADDRESSING = os.path.join(HERE, "..", "references", "addressing.md")
+SESSION_HYGIENE = os.path.join(HERE, "..", "references", "session-hygiene.md")
 
 
 def _load_session_branch():
@@ -72,9 +74,9 @@ def _load_module(name):
 
 
 def _flow():
-    """The modules the start/end flow subcommands share: (state, lines). Part 1's primitives never call it.
-    The lines module joins this tuple when it ships."""
-    return _load_module("specs_git_state"), None
+    """The modules the start/end flow subcommands share: (state, lines) — the run's record and every line it
+    prints. Part 1's primitives never call it."""
+    return _load_module("specs_git_state"), _load_module("specs_git_lines")
 
 
 def status(root):
@@ -944,12 +946,237 @@ def selftest():
                       env=clean_env("s1"))
             check(one_not_run_line(got) and "specs_git_state" in got["_err"],
                   "s_lazy_import: declined without its module exits 2 with one line (%r)" % got)
+            shutil.copy(os.path.join(HERE, "specs_git_state.py"), os.path.join(lone, "specs_git_state.py"))
+            got = cli("--specs", r.path, "status", script=os.path.join(lone, "specs-git.py"), env=clean_env("s1"))
+            check(got["_rc"] == 0 and "artifact" in got, "s_lazy_import: status runs without the lines module (%r)" % got)
+            got = cli("declined", "--command", "/idea", "--path", "a.md", script=os.path.join(lone, "specs-git.py"),
+                      env=clean_env("s1"))
+            check(one_not_run_line(got) and "specs_git_lines" in got["_err"],
+                  "s_lazy_import: declined without the lines module exits 2 with one line naming it (%r)" % got)
         finally:
             for k, v in keep.items():
                 if v is None:
                     os.environ.pop(k, None)
                 else:
                     os.environ[k] = v
+
+    def scenarios_lines(tmp):
+        _, lines = _flow()
+        T = lines.T
+        with open(SPECS_REPO_GIT, encoding="utf-8") as fh:
+            srg = fh.read()
+        with open(ADDRESSING, encoding="utf-8") as fh:
+            addressing = fh.read()
+        with open(SESSION_HYGIENE, encoding="utf-8") as fh:
+            hygiene = fh.read()
+
+        def span(tid, start):
+            """The placeholder of T[tid] that begins with <start>: an alternation's whole text is its key."""
+            return next(p for p in lines._placeholders(T[tid]) if p.startswith(start))
+
+        def raises_naming(name, fn, *args):
+            try:
+                fn(*args)
+            except ValueError as e:
+                return name in str(e)
+            return False
+
+        # l_pins
+        got = lines.pins(srg, addressing, hygiene)
+        check(got == [], "l_pins: every template is found in its source (%r)" % got)
+
+        # l_pins_bite
+        row = "Specs repo: no session artifacts to commit"
+        got = lines.pins(srg.replace(row, "Specs repo: no session artefacts to commit"), addressing, hygiene)
+        check(srg.count(row) == 1 and len(got) == 1 and got[0].startswith("row.nothing:"),
+              "l_pins_bite: one word of the Nothing to commit row changed fails row.nothing alone (%r)" % got)
+        got = lines.pins(srg.replace("could not delete merged", "could not remove merged"), addressing, hygiene)
+        check(len(got) == 1 and got[0].startswith("pre.delete-failed:"),
+              "l_pins_bite: a word of a wording Task 3 wrote fails its template (%r)" % got)
+        blocks = lines.section5_blocks(srg)
+        got = lines.pins(srg.replace(blocks[1], blocks[1].replace("          artifact area:", "         artifact area:")),
+                         addressing, hygiene)
+        check(len(got) == 1 and got[0].startswith("g1:"), "l_pins_bite: a §5 block is compared line for line (%r)" % got)
+        got = lines.pins(srg, addressing.replace("the plugin moves nothing.]`", "the plugin moves nothing at all.]`"), hygiene)
+        check(got and all(f.startswith(("root.left-behind:", "root.left-behind.close:")) for f in got),
+              "l_pins_bite: an addressing §3 template is pinned to addressing.md (%r)" % got)
+
+        # l_ids
+        ids = ["g0", "g1", "g2"]
+        ids += ["g2.%s.%s" % (v, part) for v in ("session", "self", "implement") for part in ("not_done", "fix", "if_ignored")]
+        ids += ["row.remote-deleted.default-tail", "row.scope.merge", "row.scope.no-file", "row.scope.hook",
+                "row.moved.refused", "row.session-rejected", "row.session-rejected.conflict-ending"]
+        ids += ["app." + a for a in (
+            "hook-line", "record-key", "record-unset", "unrecorded", "register-clause", "register-move", "upstream-error",
+            "why.later-refused", "why.moved-on", "why.failed", "why.stopped", "session.created", "session.conflict-default",
+            "session.conflict-origin", "session.sync-error", "session.unsettled", "session.stranded", "session.unsupported",
+            "session.refused-remedy", "mode-on", "mode-on.no-identity", "declined")]
+        ids += ["reason." + r for r in (
+            "conflict", "register-rebuild", "would-overwrite", "cannot-replay", "in-progress", "locked", "push-scope",
+            "checked-out", "fetch-failed", "branch-moved", "cannot-move", "checkout-moved", "not-run", "timed-out",
+            "session-mode")]
+        ids += ["remedy.rejected", "remedy.not-standing", "remedy.checked-out", "remedy.session-wrap"]
+        ids += ["pre." + p for p in (
+            "nonrepo", "below-top", "pull-failed", "merged-flush", "refused", "refused.unrecorded", "created.empty",
+            "created.committed", "deleted", "delete-failed", "advisory-D", "advisory-D.rm", "pushed-left", "b2-config",
+            "b2-squash", "b4", "b4.count", "stay", "rerun-failed", "session-not-run", "stopped")]
+        ids += ["end.stopped", "text.push-capped", "text.pull-capped", "root.one-line", "root.stray", "root.two-readings",
+                "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
+        missing = [i for i in ids if i not in T]
+        check(not missing, "l_ids: every id the interface names is a template (missing %r)" % missing)
+        check(len(lines.ROWS) == 24 and lines.ROWS[0] == "pushed-plugin" and lines.ROWS[-1] == "silent"
+              and all(("row." + r in T) == (r != "silent") for r in lines.ROWS),
+              "l_ids: 24 rows, each a row.<id> template but silent (%r)" % (lines.ROWS,))
+        check(all("\n" not in t for k, t in T.items() if k not in lines.BLOCKS),
+              "l_ids: every template but the three blocks is one line")
+
+        # l_fill_basic
+        check(lines.fill("row.nothing", {}) == "Specs repo: no session artifacts to commit", "l_fill_basic: row.nothing")
+        check(raises_naming("<reason>", lines.fill, "row.failed", {"<sha7>": "abc1234", "<N>": 2, "<branch>": "main"}),
+              "l_fill_basic: a missing value raises ValueError naming its placeholder")
+        check(raises_naming("<N>", lines.fill, "row.pushed-plugin", {"<sha7>": "abc1234", "<branch>": "main"}),
+              "l_fill_basic: a missing file count raises ValueError naming <N>")
+        check(raises_naming("<branch>", lines.fill, "row.failed", {"<sha7>": "a", "<N>": 2, "<branch>": None, "<reason>": "r"}),
+              "l_fill_basic: a None value outside an optional segment raises")
+        check(raises_naming("repeats a clause", lines.fill, "root.left-behind", {}),
+              "l_fill_basic: the left-behind line is never filled whole")
+
+        # l_fill_list
+        got = lines.fill("row.scope", {"<sha7>": ["1111111", "2222222"], "<N>": 1, "<branch>": "main",
+                                       "<subject>": "Add notes", "<path>": "notes.md"})
+        check(got.startswith("Specs repo: committed 1111111 (1 file) on main — ")
+              and "the oldest 2222222 Add notes, which carries notes.md;" in got,
+              "l_fill_list: the push-scope row's two <sha7>s, in order (%r)" % got)
+
+        # l_fill_optional
+        base = {"<sha7>": "abc1234", "<N>": 3, "<branch>": "main", "<K>": 2}
+        got = lines.fill("row.replayed", dict(base, **{"<D>": None}))
+        check(got.endswith("replayed its 2 commit(s) onto it"), "l_fill_optional: replayed with no <D> (%r)" % got)
+        got = lines.fill("row.replayed", dict(base, **{"<D>": "1"}))
+        check(got.endswith("onto it, 1 of them already there and dropped"), "l_fill_optional: replayed with <D> (%r)" % got)
+        got = lines.fill("row.moved", dict(base, **{"<why>": "the push FAILED (x)"}))
+        check("onto it and moved main there, but the push FAILED (x); the commits are on local main" in got and "[" not in got,
+              "l_fill_optional: moved with neither optional clause (%r)" % got)
+        got = lines.fill("row.moved", dict(base, **{"<why>": "w", "<D>": "1", "<the register clause>": "RC"}))
+        check("onto it, 1 of them already there and dropped; RC and moved main there, but w;" in got,
+              "l_fill_optional: moved with both optional clauses (%r)" % got)
+        got = lines.fill("row.scope.hook", dict(base, **{"<path>": "a.md", "<M-1>": None}))
+        check("a pre-commit hook added a.md to this commit" in got, "l_fill_optional: the hook row with one path (%r)" % got)
+        got = lines.fill("row.scope.hook", dict(base, **{"<path>": "a.md", "<M-1>": "2"}))
+        check("a pre-commit hook added a.md, and 2 more to this commit" in got,
+              "l_fill_optional: the hook row with three paths (%r)" % got)
+        got = lines.fill("reason.would-overwrite", {"<path>": "a.md", "<M>": None, "<branch>": "main"})
+        check(got.startswith("moving the checkout would write over a.md, which you changed"),
+              "l_fill_optional: would-overwrite with <M> None (%r)" % got)
+        got = lines.fill("reason.would-overwrite", {"<path>": "a.md", "<M>": "2", "<branch>": "main"})
+        check(got.startswith("moving the checkout would write over a.md and 2 more, which you changed"),
+              "l_fill_optional: would-overwrite with <M> 2 (%r)" % got)
+        one = {"<value>": "/r/specifications", span("root.one-line", "<is itself"): 0, "<the value the walk found>": "/r",
+               span("root.one-line", "<the value the walk found |"): "/r", "<that repository's top level>": None}
+        got = lines.fill("root.one-line", one)
+        check(got.endswith("Set SPECS_PATH to /r where it is set, and re-run.") and "which is itself a specifications/ directory —" in got,
+              "l_fill_optional: the one-line form without its unsupported-layout segment (%r)" % got)
+        got = lines.fill("root.one-line", dict(one, **{"<the value the walk found>": "/r/specs",
+                                                       span("root.one-line", "<the value the walk found |"): "/r/specs",
+                                                       "<that repository's top level>": "/r"}))
+        check(got.endswith("and re-run. /r/specs is not the top level of its repository (/r), and a specs tree inside a larger "
+                           "repository is unsupported: this plugin switches branches and commits in that repository."),
+              "l_fill_optional: the one-line form with its unsupported-layout segment (%r)" % got)
+        got = lines.fill("root.one-line", dict(one, **{span("root.one-line", "<the value the walk found |"): 1}))
+        check("Set SPECS_PATH to the directory that holds specifications/ where it is set" in got,
+              "l_fill_optional: the one-line form naming no value (%r)" % got)
+        stray = {"<value>": "/r", span("root.stray", "<the top level"): 0, "<subdirectory>": ["PRD-S-9-x"],
+                 "<that repository's top level>": None}
+        got = lines.fill("root.stray", stray)
+        check(got.endswith("reported here instead.") and "not the top level" not in got,
+              "l_fill_optional: the stray form drops its inner segment with no top level (%r)" % got)
+        got = lines.fill("root.stray", dict(stray, **{"<value>": "/r/specs", span("root.stray", "<the top level"): 1,
+                                                      "<that repository's top level>": "/r"}))
+        check(got.endswith("instead. /r/specs is not the top level of its repository (/r), and a specs tree inside a larger "
+                           "repository is unsupported: this plugin switches branches and commits in that repository.")
+              and "SPECS_PATH is /r/specs, which holds /r/specs/specifications/, and holds" in got,
+              "l_fill_optional: the stray form keeps its inner segment where its values are given (%r)" % got)
+
+        # l_fill_list_marker
+        got = lines.fill("app.session.unsettled", {"<path>": ["a.md", "b c.md"], "<identity>": "ab", "<SPECS_PATH>": "/s"})
+        check(got.startswith("; a.md, b c.md and session/ab's version of it") and "…" not in got and "[" not in got,
+              "l_fill_list_marker: <path>[, …] takes the whole list (%r)" % got)
+
+        # l_fill_root_lists
+        two = ["PRD-S-9-x", "EPIC-S-9-01-y"]
+        got = lines.fill("root.stray", dict(stray, **{"<subdirectory>": two}))
+        check(got.count("PRD-S-9-x, EPIC-S-9-01-y") == 2 and "…" not in got and "[" not in got,
+              "l_fill_root_lists: the stray form names both subdirectories in each of its two places (%r)" % got)
+        got = lines.fill("root.stray", stray)
+        check(got.count("PRD-S-9-x") == 2 and ", EPIC" not in got and "folder(s) PRD-S-9-x outside" in got,
+              "l_fill_root_lists: with one name, it alone (%r)" % got)
+        got = lines.left_behind({"<value>": "/s/specs", "<the value the walk found>": "/s"}, ["PRD-A-2-y", "PRD-A-3-z"],
+                                ["dev-workflows-cost", "documentation/guide/dev-workflows"], False)
+        want = ("Misrooted runs left: /s/specs/specifications/ (PRD-A-2-y, PRD-A-3-z), which belongs in /s/specifications/, "
+                "and which the first run after SPECS_PATH is fixed searches for keys and commits bookkeeping from, in the wrong "
+                "place, unless it is moved first; /s/specs/dev-workflows-cost/, which belongs at /s/dev-workflows-cost/; "
+                "/s/specs/documentation/guide/dev-workflows/, which belongs at /s/documentation/guide/dev-workflows/, which the "
+                "first run after SPECS_PATH is fixed commits there in the wrong place unless it is moved first. Move them "
+                "yourself, commit the move, then re-run — the plugin moves nothing.")
+        check(got == want, "l_fill_root_lists: the left-behind line, two folders and two directories (%r)" % got)
+        got = lines.left_behind({"<value>": "/m", "<the value the walk found>": None}, None,
+                                ["dev-workflows-feedback", "dev-workflows-cost"], True)
+        want = ("If /m is a specs tree under another name, misrooted runs left: /m/dev-workflows-feedback/, which belongs at "
+                "the same path at the specs repository's top level; /m/dev-workflows-cost/, which belongs at the same path at "
+                "the specs repository's top level. Move them yourself, commit the move, then re-run — the plugin moves nothing.")
+        check(got == want, "l_fill_root_lists: the two-readings opening, with no value the walk found (%r)" % got)
+        check(lines.left_behind({"<value>": "/m", "<the value the walk found>": None}, None, [], False) is None,
+              "l_fill_root_lists: nothing left, no line")
+
+        # l_fill_alternation
+        got = lines.fill("pre.stay", {"<branch>": "prd/A-1-x", "<default>": "main", span("pre.stay", "<switched"): 1})
+        check(got.endswith("(it would have switched to main, as no key of this run names it)"),
+              "l_fill_alternation: the stay line's second alternative, <default> filled (%r)" % got)
+        got = lines.fill("pre.stay", {"<branch>": "prd/A-1-x", "<default>": "main", span("pre.stay", "<switched"): 0})
+        check(got.endswith("(it would have switched to main and deleted it, as it is merged)"),
+              "l_fill_alternation: the stay line's first alternative (%r)" % got)
+        got = lines.fill("root.one-line", dict(one, **{span("root.one-line", "<is itself"): 2, "<key>": "A-1"}))
+        check("which is itself a specs folder, asserting key A-1 — every folder" in got,
+              "l_fill_alternation: the signal alternation's third alternative fills <key> (%r)" % got)
+        check(raises_naming("no alternative 4", lines.fill, "root.one-line", dict(one, **{span("root.one-line", "<is itself"): 4})),
+              "l_fill_alternation: an alternative that does not exist raises")
+
+        # l_fill_count
+        got1 = lines.fill("row.pushed-plugin", {"<sha7>": "abc1234", "<N>": 1, "<branch>": "prd/A-1-x"})
+        got2 = lines.fill("row.pushed-plugin", {"<sha7>": "abc1234", "<N>": 2, "<branch>": "prd/A-1-x"})
+        check(got1 == "Specs repo: committed abc1234 (1 file) on prd/A-1-x — pushed"
+              and got2 == "Specs repo: committed abc1234 (2 files) on prd/A-1-x — pushed",
+              "l_fill_count: singular at one (%r, %r)" % (got1, got2))
+
+        # l_literal_bracket
+        got = lines.fill("app.register-move", {"<from>": "7", "<to>": "9", "<origin>": "a", "<whose number>": "the local number"})
+        check(got == "[SEC#7] → [SEC#9] (a, the local number)", "l_literal_bracket: [SEC# stays literal (%r)" % got)
+
+        # l_preflight_form
+        failed = lines.fill("row.failed", {"<sha7>": "abc1234", "<N>": 2, "<branch>": "main", "<reason>": T["text.push-capped"]})
+        got = lines.preflight_form(failed)
+        check(got == "Specs preflight: main — push FAILED (the push did not finish within 60 s); the commit is local and a later "
+              "run retries it", "l_preflight_form: the push FAILED row (%r)" % got)
+        got = lines.preflight_form(lines.fill("row.locked", {}))
+        check(got.startswith("Specs preflight: skipped — another session holds the repo"), "l_preflight_form: Locked (%r)" % got)
+        got = lines.preflight_form(lines.fill("row.commit-failed", {"<the first line of git's error or the hook's output>": "e"}))
+        check(got.startswith("Specs preflight: NOT COMMITTED — the commit failed (e)"), "l_preflight_form: Commit failed (%r)" % got)
+        got = lines.preflight_form(lines.fill("row.pushed-plugin", {"<sha7>": "abc1234", "<N>": 1, "<branch>": "prd/A-1-x"}))
+        check(got == "Specs preflight: prd/A-1-x — pushed", "l_preflight_form: a singular count (%r)" % got)
+
+        # l_artifacts
+        base_dir = "specifications/PRD-A-1-x/"
+        check(lines.artifacts([base_dir + "prd.md"]) == base_dir + "prd.md", "l_artifacts: one path")
+        check(lines.artifacts([base_dir + "prd.md", base_dir + "a b.md"]) == base_dir + "prd.md, " + base_dir + "a b.md",
+              "l_artifacts: two paths, a space kept")
+        three = [base_dir + "prd.md", base_dir + "ard.md", base_dir + "x.md"]
+        check(lines.artifacts(three) == ", ".join(three), "l_artifacts: three paths")
+        four = three + [base_dir + "revisions/prd-1.md"]
+        check(lines.artifacts(four) == "4 files under specifications/PRD-A-1-x", "l_artifacts: four in one folder (%r)"
+              % lines.artifacts(four))
+        spread = three + ["specifications/PRD-A-2-y/defects.md"]
+        check(lines.artifacts(spread) == "4 files under specifications", "l_artifacts: four spanning specifications/ (%r)"
+              % lines.artifacts(spread))
 
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
@@ -960,6 +1187,7 @@ def selftest():
             scenarios_owner_repo(tmp)
             scenarios_mode(tmp)
             scenarios_state(tmp)
+            scenarios_lines(tmp)
 
     try:
         scenarios()
