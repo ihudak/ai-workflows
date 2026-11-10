@@ -21,10 +21,10 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
 declined appends paths to the run's state record (specs_git_state.py, one file per session and command, outside
 every repository), creating the record where the command's start never ran. specs-root-check runs addressing §3's
 entry point on SPECS_PATH as set, "" meaning unset. end is specs-repo-git §4's commit-artifacts for the run of this
-session and command: it reads and removes that record, catches the default branch up, commits the session files and
-pushes them, and prints the §6 outcome line with what follows it, or names the replay a rejected push needs as next.
-The state and lines modules load only for the subcommands that need them, so a copy of this script without them
-still runs the primitives above.
+session and command: it reads that record, catches the default branch up, commits the session files and pushes them,
+and prints the §6 outcome line with what follows it, removing the record; or it names the replay a rejected push
+needs as next, or stops on an error, and keeps the record for what follows. The state and lines modules load only
+for the subcommands that need them, so a copy of this script without them still runs the primitives above.
 
 <root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
 where specs-repo-git §3.5 classifies under specs_git: misrooted); the <value> specs-root-check and end take is never
@@ -33,11 +33,10 @@ index or a ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it
 run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
 and the run continues. end exits 2 only before its first write to the repository; after it, a failure is exit 0
-with error set and the end.stopped line.
+with error set and the end.stopped line, and the record stays for end --resume.
 """
 
 import argparse
-import calendar
 import contextlib
 import importlib.util
 import json
@@ -554,7 +553,6 @@ TRANSIENT = ("failed to update ref", "failed to lock", "cannot lock ref", "unpac
 PUSHED_FLAGS = (" ", "+", "*", "=")
 CAP = 60  # seconds: the cap on a fetch, a pull and a push (sb.git_bounded, workflows-core:bounded-run's mechanism)
 LS_REMOTE_CAP = 30
-RESUME_MINUTES = 15
 REPLAY_TIMEOUT_MS = 420000  # specs-repo-git §4 step 6: the replay's own Bash call
 
 
@@ -643,7 +641,7 @@ def commit_session_files(root, message, on_write=None):
     changed what the commit carries, leaving a change somebody else had staged as they staged it. locked where
     index.lock exists, tested before staging; failed where git or a hook refuses (error: the first line of git's error
     or the hook's output). paths: what the commit carries; hook_paths: those of them its pathspecs did not name.
-    <on_write> is called just before `git add`, the call's first write."""
+    <on_write> is called with the paths about to be staged, just before `git add`, the call's first write."""
     out = {"status": "nothing", "sha": None, "paths": [], "hook_paths": [], "error": None}
     lock = os.path.join(root, sb.text(sb.git(root, "rev-parse", "--git-path", "index.lock")))
     if os.path.lexists(lock):
@@ -652,7 +650,7 @@ def commit_session_files(root, message, on_write=None):
     if not paths:
         return out
     if on_write:
-        on_write()
+        on_write(paths)
     r = sb.git(root, "add", "-A", "--", *_literal(paths), check=False)
     if r.returncode != 0:
         return dict(out, status="locked") if os.path.lexists(lock) else dict(out, status="failed", error=_first_line(r))
@@ -671,14 +669,6 @@ def commit_session_files(root, message, on_write=None):
     if restore:
         sb.git(root, "restore", "--staged", "--", *_literal(restore))
     return dict(out, status="committed", sha=sha, paths=carried, hook_paths=[p for p in carried if p not in set(listed)])
-
-
-def _refusal_file(root, branch):
-    """specs-repo-git §1 rule 8's <record>: <git-common-dir>/workflows/push-refused/<branch>, the directory joined to
-    <root> where git prints it relative, as sb.refusal_record reads it."""
-    common = sb.text(sb.git(root, "rev-parse", "--git-common-dir"))
-    return os.path.join(common if os.path.isabs(common) else os.path.join(root, common), "workflows", "push-refused",
-                        branch)
 
 
 def push_check(root, branch, default, session_branch=None):
@@ -708,8 +698,9 @@ def push_check(root, branch, default, session_branch=None):
             return dict(out, row="remote-deleted")
     date = sb.refusal_record(root, branch)
     if date is not None:
-        path = _refusal_file(root, branch)
-        kind, record = ("file", path) if os.path.isfile(path) else ("config", "branch.%s.workflowsPushRefused" % branch)
+        path = sb.refusal_path(root, branch)
+        kind, record = (("file", path) if path and os.path.isfile(path)
+                        else ("config", "branch.%s.workflowsPushRefused" % branch))
         return dict(out, row="refused-before", record=record, record_kind=kind, date=date or "an earlier run")
     if plugin and upstream != own and not tracking:
         return dict(out, row="origin-lacks")
@@ -723,9 +714,11 @@ def push_check(root, branch, default, session_branch=None):
 def _record_refusal(root, branch):
     """specs-repo-git §4 step 6: the push-refusal record, the file holding the date `date +%Y-%m-%d` prints (the local
     date), else the configuration key; where neither can be written, record_error is the configuration write's."""
-    path = _refusal_file(root, branch)
+    path = sb.refusal_path(root, branch)
     today = time.strftime("%Y-%m-%d")
     try:
+        if path is None:
+            raise OSError("git names no common directory")
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(today + "\n")
@@ -825,15 +818,6 @@ def _g0_block(lines, specs, default):
     return lines.fill("g0", {"<SPECS_PATH>": specs, "<sha7>": sha[:7], "<YYYY-MM-DD>": _today(), "<branch>": rejoin})
 
 
-def _saved_within(state, rec, minutes):
-    """Whether <rec> was saved within the last <minutes>, by its updated stamp; False where that cannot be read."""
-    try:
-        updated = calendar.timegm(time.strptime(rec.get("updated") or "", state.STAMP))
-    except (ValueError, TypeError):
-        return False
-    return 0 <= time.time() - updated <= minutes * 60
-
-
 def _unique(paths):
     out = []
     for p in paths:
@@ -849,6 +833,23 @@ def _view(rec, declined=()):
     return {"declined": _unique(list(rec.get("declined") or []) + list(declined)),
             "guard_block": None if rec.get("specs_git") == "blocked" else rec.get("guard_block"),
             "guard_paths": list(rec.get("guard_paths") or [])}
+
+
+def _landed(root, pending):
+    """The commit a pending end_commit -- saved just before `git add` -- is about, where it landed: the tip of its
+    branch, whose one parent is the base saved then and whose message is the run's; its facts as end_commit holds them,
+    hook_paths the paths it carries that were not being staged. None where that commit was not made."""
+    tip = sb.rev(root, "refs/heads/" + pending.get("branch", ""))
+    if tip is None or tip == pending.get("base"):
+        return None
+    if sb.text(sb.git(root, "rev-list", "--parents", "-n", "1", tip)).split()[1:] != [pending.get("base")]:
+        return None
+    if sb.text(sb.git(root, "log", "-1", "--format=%B", tip)) != pending.get("message"):
+        return None
+    carried = _commit_paths(root, tip)
+    staging = set(pending.get("staging") or [])
+    return {"sha7": tip[:7], "files": len(carried), "branch": pending["branch"], "paths": carried,
+            "hook_paths": [p for p in carried if p not in staging]}
 
 
 def _end_result(**kw):
@@ -938,7 +939,9 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
     (SPECS_PATH as set, "" meaning unset). <misrooted_notice>: the lines of a notice that set misrooted outside the
     script (--misrooted-stdin), [] for none. <declined>: paths a declined call could not record. A failure before the
     run's first repository write -- the catch-up's pull, else `git add` -- raises, so the caller exits 2 with nothing
-    done; after it, an exception returns error set and the end.stopped line, the record removed."""
+    done; after it, an exception (a signal sb.git_bounded turns into NotRun among them) returns error set and the
+    end.stopped line, and the record stays for --resume: a later start replaces it, --no-preflight ignores it, and
+    prune removes it after 7 days."""
     state, lines = _flow()
     if not state.COMMAND_RE.fullmatch(command):
         raise NotRun("usage: --command is /<name>, got %s" % command)
@@ -958,10 +961,6 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
         said = " ".join(str(e).split())
         error = said if isinstance(e, NotRun) else type(e).__name__ + (": " + said if said else "")
         line = lines.fill("end.stopped", {"<the error>": error})
-        try:
-            state.remove(session, command)
-        except Exception:  # the stopped line is what the run needs; a record left behind is pruned in 7 days
-            pass
         commit = run["commit"] or {}
         return _end_result(print=list(run["pre"]) + [line], line=line, sha7=commit.get("sha7"),
                            files=commit.get("files"), branch=commit.get("branch"), record=run["record"], error=error)
@@ -970,11 +969,16 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
 def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, session_branch_created, declined, resume):
     state, lines, specs, session, command = (run[k] for k in ("state", "lines", "specs", "session", "command"))
     rec = state.load(session, command)
-    if resume and rec is not None and rec.get("end_commit") and _saved_within(state, rec, RESUME_MINUTES):
-        run["wrote"] = True  # the run's commit is made: what follows is past its first write
-        run["record"] = "found"
-        default = rec.get("default") or resolve_default(specs, False)["default"]
-        return _push_step(run, rec, rec["end_commit"], default, _view(rec, declined))
+    if resume and rec is not None and rec.get("end_commit") and state.saved_within(rec):
+        commit = rec["end_commit"] if rec["end_commit"].get("sha7") else _landed(specs, rec["end_commit"])
+        if commit is not None:  # the run's commit is made: what follows is past its first write
+            run["wrote"] = True
+            run["record"] = "found"
+            if commit is not rec["end_commit"]:
+                rec["end_commit"] = commit
+                state.save(session, command, rec)
+            default = rec.get("default") or resolve_default(specs, False)["default"]
+            return _push_step(run, rec, commit, default, _view(rec, declined))
 
     # Step 1: the record. Each kind but found takes the no-preflight path; an ignored record is replaced or removed.
     if rec is None:
@@ -1035,28 +1039,38 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     mode = (rec.get("mode") if found and rec.get("mode") else
             sb.mode(specs, d["default"])["mode"] if d["default"] else "off")
 
-    # Steps 2-4: the catch-up, then the commit; the first repository write either makes is R2's boundary.
-    def wrote():
+    # Steps 2-4: the catch-up, then the commit. R2's boundary is the first repository write either makes, and just
+    # before it the record is saved at stage end -- the one kept, else a new one in place of whatever stood -- with what
+    # this call was given; and again just before `git add`, with the commit about to be made (its branch, base and
+    # message), so --resume finds that commit where a kill comes between it and the save that names it.
+    key = commit_key or (keep or {}).get("commit_key") or "NOISSUE"
+    message = "%s Add dev-workflows session artifacts (%s)" % (key, command)
+    saved = keep if keep is not None else state.new(command, session=session, started_by_script=False, specs=specs)
+    saved.update(stage="end", end_commit=None, declined=view["declined"], mode=mode, default=d["default"],
+                 default_ref=d["default_ref"], remote=d["remote"])
+    for field, value in (("commit_key", commit_key), ("register_rebuild", register_rebuild),
+                         ("session_branch_created", session_branch_created)):
+        if value:
+            saved[field] = value
+
+    def boundary(staging=None):
+        if staging is not None:
+            saved["end_commit"] = {"branch": branch, "base": sb.rev(specs, "HEAD"), "message": message,
+                                   "staging": list(staging)}
+        state.save(session, command, saved)
         run["wrote"] = True
 
-    pulled = catch_up(specs, d["default"], d["default_ref"], on_write=wrote)
+    pulled = catch_up(specs, d["default"], d["default_ref"], on_write=boundary)
     if pulled:
         run["pre"].append(pulled)
-    key = commit_key or (keep or {}).get("commit_key") or "NOISSUE"
-    c = commit_session_files(specs, "%s Add dev-workflows session artifacts (%s)" % (key, command), on_write=wrote)
+    c = commit_session_files(specs, message, on_write=boundary)
     if c["status"] != "committed":
         row = {"nothing": "nothing", "locked": "locked", "failed": "commit-failed"}[c["status"]]
         return finish_end(run, row, _row_line(lines, row, {"error": c["error"]}), view, branch=branch)
     commit = {"sha7": c["sha"][:7], "files": len(c["paths"]), "branch": branch, "paths": c["paths"],
               "hook_paths": c["hook_paths"]}
     run["commit"] = commit
-    saved = keep if keep is not None else state.new(command, session=session, started_by_script=False, specs=specs)
-    saved.update(end_commit=commit, stage="end", declined=view["declined"], mode=mode, default=d["default"],
-                 default_ref=d["default_ref"], remote=d["remote"])
-    for field, value in (("commit_key", commit_key), ("register_rebuild", register_rebuild),
-                         ("session_branch_created", session_branch_created)):
-        if value:
-            saved[field] = value
+    saved["end_commit"] = commit
     state.save(session, command, saved)
     return _push_step(run, saved, commit, d["default"], view)
 
@@ -1694,6 +1708,10 @@ def selftest():
             check(state.resumable(dict(rec, updated=old), {"keys": ["A-1"]}) is False, "s_resumable: twenty minutes old")
             check(state.resumable(dict(rec, updated=""), {"keys": ["A-1"]}) is False, "s_resumable: no timestamp")
             check(state.resumable(dict(rec, updated=None), {"keys": ["A-1"]}) is False, "s_resumable: a null timestamp")
+            check(state.saved_within(rec) is True and state.saved_within(dict(rec, updated=old)) is False
+                  and state.saved_within(dict(rec, updated=old), minutes=30) is True
+                  and state.saved_within(dict(rec, updated=None)) is False and state.saved_within({}) is False,
+                  "s_resumable: saved_within is the 15-minute window resumable applies")
 
             # s_declined_cli
             shutil.rmtree(os.path.join(home, ".claude"))
@@ -3127,6 +3145,106 @@ def selftest():
               and got.get("sha7") == head(r)[:7] and set(got) == FIELDS
               and r.git("log", "-1", "--format=%s") == "NOISSUE Add dev-workflows session artifacts (/create-ard)",
               "e_error_after_write: exit-0 result, error set, the commit made, the stopped line (%r)" % got)
+        check(((record(env, "/create-ard") or {}).get("end_commit") or {}).get("sha7") == head(r)[:7],
+              "e_error_after_write: the record stays, its end_commit for --resume (%r)" % record(env, "/create-ard"))
+
+        # e_kill_in_push: a signal during the push, which sb.git_bounded turns into NotRun, keeps the record
+        r, env = world(tmp, "e-kill-in-push")
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        real_bounded = sb.git_bounded
+
+        def signalled_push(root, seconds, *args):
+            if args and args[0] == "push":
+                raise NotRun("git push ended by signal 15")
+            return real_bounded(root, seconds, *args)
+
+        sb.git_bounded = signalled_push
+        try:
+            with in_env(env):
+                got = end(r.path, "/create-ard")
+        finally:
+            sb.git_bounded = real_bounded
+        h = head(r)
+        count = r.git("rev-list", "--count", "HEAD")
+        check(got.get("error") == "git push ended by signal 15" and got.get("sha7") == h[:7] and on_origin(r) != h
+              and ((record(env, "/create-ard") or {}).get("end_commit") or {}).get("sha7") == h[:7],
+              "e_kill_in_push: end.stopped, the commit made and unpushed, the record kept (%r)" % got)
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "pushed-default" and got.get("sha7") == h[:7] and got.get("print") == [pushed_default(h[:7], r.path)]
+              and r.git("rev-list", "--count", "HEAD") == count and on_origin(r) == h and record(env, "/create-ard") is None,
+              "e_kill_in_push: --resume pushes the first call's commit, nothing committed twice (%r)" % got)
+
+        # e_kill_after_commit: no record, a kill between the commit and the save that names it
+        r, env = world(tmp, "e-kill-after-commit")
+        ard = "specifications/PRD-ACME-1-x/ard.md"
+        r.write(ard, "ard\n")
+        r.write(RESUME, "r\n")
+        base = head(r)
+        real_commit = g["commit_session_files"]
+
+        def commit_then_killed(*args, **kw):
+            real_commit(*args, **kw)
+            raise KeyboardInterrupt
+
+        stopped = False
+        g["commit_session_files"] = commit_then_killed
+        try:
+            with in_env(env):
+                end(r.path, "/create-ard", commit_key="ACME-1", register_rebuild="/x/register.py",
+                    session_branch_created="abc1234", declined=[ard])
+        except KeyboardInterrupt:
+            stopped = True
+        finally:
+            g["commit_session_files"] = real_commit
+        h = head(r)
+        rec = record(env, "/create-ard") or {}
+        pending = rec.get("end_commit") or {}
+        check(stopped and h != base and rec.get("stage") == "end" and rec.get("started_by_script") is False
+              and rec.get("declined") == [ard] and rec.get("commit_key") == "ACME-1"
+              and rec.get("register_rebuild") == "/x/register.py" and rec.get("session_branch_created") == "abc1234"
+              and "sha7" not in pending and pending.get("base") == base and pending.get("branch") == "main"
+              and pending.get("message") == "ACME-1 Add dev-workflows session artifacts (/create-ard)",
+              "e_kill_after_commit: the record saved at the boundary, the commit about to be made in it (%r)" % rec)
+        count = r.git("rev-list", "--count", "HEAD")
+        got = run_end(env, "/create-ard", "--commit-key", "ACME-1", "--declined", ard, "--resume")
+        check(got.get("row") == "pushed-default" and got.get("sha7") == h[:7]
+              and got.get("line") == pushed_default(h[:7], r.path) + appended(ard)
+              and r.git("rev-list", "--count", "HEAD") == count and on_origin(r) == h and record(env, "/create-ard") is None,
+              "e_kill_after_commit: --resume finds the commit where it landed and pushes it (%r)" % got)
+        r.write(RESUME, "r2\n")
+        base = head(r)
+        seed(env, "/create-ard", stage="end", end_commit={
+            "branch": "main", "base": base, "staging": [RESUME],
+            "message": "NOISSUE Add dev-workflows session artifacts (/create-ard)"})
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "pushed-default" and r.git("rev-parse", "HEAD~1") == base and on_origin(r) == head(r),
+              "e_kill_after_commit: a pending commit that was never made runs from step 1 (%r)" % got)
+
+        # e_d3_signal
+        r, env = world(tmp, "e-d3-signal")
+        r.write(RESUME, "r\n")
+        h = head(r)
+        spec_dir = os.path.join(r.path, "specifications")
+        got = run_end(env, "/create-ard", "--no-preflight", specs=spec_dir)
+        stop = ("SPECS_PATH_INSIDE_TREE: SPECS_PATH is %s, which is itself a specifications/ directory — every folder "
+                "lives under $SPECS_PATH/specifications/, so this run would look for and create folders in the wrong "
+                "place; it wrote nothing under that path, and its cost and feedback are reported here instead. Set "
+                "SPECS_PATH to %s where it is set, and re-run." % (spec_dir, os.path.realpath(r.path)))
+        check(got.get("record") == "missing" and got.get("row") == "misrooted" and got.get("print") == [MIS, stop]
+              and head(r) == h, "e_d3_signal: specs-root-check's one-line stop, nothing committed (%r)" % got)
+
+        # e_g0_found: a record with no flag, HEAD detached since its start
+        r, env = world(tmp, "e-g0-found")
+        seed(env, "/specify")
+        h = head(r)
+        r.git("switch", "-q", "--detach")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/specify")
+        g0 = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": today, "<branch>": "main"})
+        check(got.get("record") == "found" and got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0]
+              and head(r) == h and record(env, "/specify") is None,
+              "e_g0_found: a found record on a detached HEAD prints G0's block, nothing committed (%r)" % got)
 
         # e_resolve_default
         r, env = world(tmp, "e-resolve")

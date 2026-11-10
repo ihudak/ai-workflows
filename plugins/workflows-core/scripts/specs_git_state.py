@@ -133,14 +133,19 @@ def save(session, command, rec):
         raise
 
 
-def resumable(rec, args, minutes=15):
-    if rec.get("stage") == "done" or rec.get("args") != args:
-        return False
+def saved_within(rec, minutes=15):
+    """Whether <rec> was saved within the last <minutes>, by its updated stamp; False where that cannot be read."""
     try:
-        updated = calendar.timegm(time.strptime(rec.get("updated", ""), STAMP))
+        updated = calendar.timegm(time.strptime(rec.get("updated") or "", STAMP))
     except (ValueError, TypeError):
         return False
     return 0 <= time.time() - updated <= minutes * 60
+
+
+def resumable(rec, args, minutes=15):
+    if rec.get("stage") == "done" or rec.get("args") != args:
+        return False
+    return saved_within(rec, minutes)
 
 
 def _rmdir_if_empty(directory):
