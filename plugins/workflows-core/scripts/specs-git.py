@@ -635,13 +635,14 @@ def _literal(paths):
     return [":(literal)" + p for p in paths]
 
 
-def commit_session_files(root, message, on_write=None):
+def commit_session_files(root, message, on_write=None, on_staged=None):
     """specs-repo-git §2.1 steps 1-3 and §4 step 4: stage the ARTIFACT paths status() lists, then commit, by pathspec,
     those git still lists as staged, and bring the index back in step with the new HEAD where a pre-commit hook
     changed what the commit carries, leaving a change somebody else had staged as they staged it. locked where
     index.lock exists, tested before staging; failed where git or a hook refuses (error: the first line of git's error
     or the hook's output). paths: what the commit carries; hook_paths: those of them its pathspecs did not name.
-    <on_write> is called with the paths about to be staged, just before `git add`, the call's first write."""
+    <on_write> is called just before `git add`, the call's first write; <on_staged>, just before `git commit`, with
+    {path: the blob the index holds for it, or None for a staged removal} over the paths the commit is about to name."""
     out = {"status": "nothing", "sha": None, "paths": [], "hook_paths": [], "error": None}
     lock = os.path.join(root, sb.text(sb.git(root, "rev-parse", "--git-path", "index.lock")))
     if os.path.lexists(lock):
@@ -650,7 +651,7 @@ def commit_session_files(root, message, on_write=None):
     if not paths:
         return out
     if on_write:
-        on_write(paths)
+        on_write()
     r = sb.git(root, "add", "-A", "--", *_literal(paths), check=False)
     if r.returncode != 0:
         return dict(out, status="locked") if os.path.lexists(lock) else dict(out, status="failed", error=_first_line(r))
@@ -658,6 +659,12 @@ def commit_session_files(root, message, on_write=None):
     if not listed:
         return out
     before = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames"))
+    if on_staged:
+        index = {}
+        for entry in sb.nul_list(sb.git(root, "ls-files", "-s", "-z", "--", *_literal(listed))):
+            meta, _, path = entry.partition("\t")
+            index[path] = meta.split()[1]
+        on_staged({p: index.get(p) for p in listed})
     r = sb.git(root, "commit", "-q", "-m", message, "--", *_literal(listed), check=False)
     if r.returncode != 0:
         return dict(out, status="failed", error=_first_line(r))
@@ -836,21 +843,22 @@ def _view(rec, declined=()):
 
 
 def _landed(root, pending):
-    """The commit a pending end_commit -- saved just before `git add` -- is about, where it landed: the tip of its
-    branch, whose one parent is the base saved then and whose change carries at least one of the paths being staged
-    then. Never its message, which a prepare-commit-msg or commit-msg hook may rewrite. Its facts as end_commit holds
-    them, hook_paths the paths it carries that were not being staged; None where that commit was not made."""
+    """The commit a pending end_commit -- saved just before `git commit` -- is about, where it landed: the tip of its
+    branch, whose one parent is the base saved then and which holds, for every path the commit was about to name,
+    exactly the blob the index held for it then (a staged removal: no blob at all). Never its message, which a
+    prepare-commit-msg or commit-msg hook may rewrite. Its facts as end_commit holds them, hook_paths the paths it
+    carries that it was not about to name; None where that commit was not made."""
     tip = sb.rev(root, "refs/heads/" + pending.get("branch", ""))
-    if tip is None or tip == pending.get("base"):
+    staged = pending.get("staged") or {}
+    if tip is None or tip == pending.get("base") or not staged:
         return None
     if sb.text(sb.git(root, "rev-list", "--parents", "-n", "1", tip)).split()[1:] != [pending.get("base")]:
         return None
-    carried = _commit_paths(root, tip)
-    staging = set(pending.get("staging") or [])
-    if not staging & set(carried):
+    if any(sb.blob(root, tip, path) != blob for path, blob in staged.items()):
         return None
+    carried = _commit_paths(root, tip)
     return {"sha7": tip[:7], "files": len(carried), "branch": pending["branch"], "paths": carried,
-            "hook_paths": [p for p in carried if p not in staging]}
+            "hook_paths": [p for p in carried if p not in staged]}
 
 
 def _end_result(**kw):
@@ -1042,8 +1050,8 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
 
     # Steps 2-4: the catch-up, then the commit. R2's boundary is the first repository write either makes, and just
     # before it the record is saved at stage end -- the one kept, else a new one in place of whatever stood -- with what
-    # this call was given; and again just before `git add`, with the commit about to be made (its branch, its base and
-    # the paths being staged), so --resume finds that commit where a kill comes between it and the save that names it.
+    # this call was given; and again just before `git commit`, with the commit about to be made (its branch, its base
+    # and each path's staged blob), so --resume finds that commit where a kill comes between it and the save naming it.
     key = commit_key or (keep or {}).get("commit_key") or "NOISSUE"
     message = "%s Add dev-workflows session artifacts (%s)" % (key, command)
     saved = keep if keep is not None else state.new(command, session=session, started_by_script=False, specs=specs)
@@ -1054,16 +1062,18 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
         if value:
             saved[field] = value
 
-    def boundary(staging=None):
-        if staging is not None:
-            saved["end_commit"] = {"branch": branch, "base": sb.rev(specs, "HEAD"), "staging": list(staging)}
+    def boundary():
         state.save(session, command, saved)
         run["wrote"] = True
+
+    def about_to_commit(staged):
+        saved["end_commit"] = {"branch": branch, "base": sb.rev(specs, "HEAD"), "staged": staged}
+        state.save(session, command, saved)
 
     pulled = catch_up(specs, d["default"], d["default_ref"], on_write=boundary)
     if pulled:
         run["pre"].append(pulled)
-    c = commit_session_files(specs, message, on_write=boundary)
+    c = commit_session_files(specs, message, on_write=boundary, on_staged=about_to_commit)
     if c["status"] != "committed":
         row = {"nothing": "nothing", "locked": "locked", "failed": "commit-failed"}[c["status"]]
         return finish_end(run, row, _row_line(lines, row, {"error": c["error"]}), view, branch=branch)
@@ -3204,7 +3214,7 @@ def selftest():
               and rec.get("declined") == [ard] and rec.get("commit_key") == "ACME-1"
               and rec.get("register_rebuild") == "/x/register.py" and rec.get("session_branch_created") == "abc1234"
               and "sha7" not in pending and pending.get("base") == base and pending.get("branch") == "main"
-              and pending.get("staging") == [RESUME],
+              and pending.get("staged") == {RESUME: r.git("rev-parse", "HEAD:" + RESUME)},
               "e_kill_after_commit: the record saved at the boundary, the commit about to be made in it (%r)" % rec)
         count = r.git("rev-list", "--count", "HEAD")
         got = run_end(env, "/create-ard", "--commit-key", "ACME-1", "--declined", ard, "--resume")
@@ -3214,18 +3224,75 @@ def selftest():
               "e_kill_after_commit: --resume finds the commit where it landed and pushes it (%r)" % got)
         r.write(RESUME, "r2\n")
         base = head(r)
-        seed(env, "/create-ard", stage="end", end_commit={"branch": "main", "base": base, "staging": [RESUME]})
+        seed(env, "/create-ard", stage="end",
+             end_commit={"branch": "main", "base": base, "staged": {RESUME: r.git("hash-object", RESUME)}})
         got = run_end(env, "/create-ard", "--resume")
         check(got.get("row") == "pushed-default" and r.git("rev-parse", "HEAD~1") == base and on_origin(r) == head(r),
               "e_kill_after_commit: a pending commit that was never made runs from step 1 (%r)" % got)
         base = head(r)
-        seed(env, "/create-ard", stage="end", end_commit={"branch": "main", "base": base, "staging": [RESUME]})
-        r.write("notes.md", "n\n")
-        user = r.commit_all("Add notes")
         r.write(RESUME, "r3\n")
+        seed(env, "/create-ard", stage="end",
+             end_commit={"branch": "main", "base": base, "staged": {RESUME: r.git("hash-object", RESUME)}})
+        r.write("notes.md", "n\n")
+        r.git("add", "notes.md")
+        r.git("commit", "-q", "-m", "Add notes")
+        user = head(r)
         got = run_end(env, "/create-ard", "--resume")
         check(got.get("row") == "scope" and r.git("rev-parse", "HEAD~1") == user and got.get("sha7") == head(r)[:7],
               "e_kill_after_commit: a tip on the base that carries none of the staged paths is not the run's (%r)" % got)
+        r, env = world(tmp, "e-kill-after-commit-same-path")
+        r.write(RESUME, "mine\n")
+        base = head(r)
+        seed(env, "/create-ard", stage="end",
+             end_commit={"branch": "main", "base": base, "staged": {RESUME: r.git("hash-object", RESUME)}})
+        r.write(RESUME, "theirs\n")
+        r.git("add", RESUME)
+        r.git("commit", "-q", "-m", "a commit of the user's on the same path")
+        user = head(r)
+        r.write(RESUME, "mine\n")
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "pushed-default" and r.git("rev-parse", "HEAD~1") == user and got.get("sha7") == head(r)[:7]
+              and got.get("sha7") != user[:7] and on_origin(r) == head(r),
+              "e_kill_after_commit: a tip on the base touching a staged path with other content is not the run's (%r)" % got)
+        r, env = world(tmp, "e-kill-after-commit-removal")
+        old = "specifications/PRD-ACME-1-x/dev-workflows/feedback/old.md"
+        r.write(old, "old\n")
+        r.commit_all("NOISSUE an earlier run's feedback")
+        r.git("push", "-q", "origin", "main")
+        os.remove(os.path.join(r.path, old))
+        r.write(RESUME, "r\n")
+        stopped = False
+        g["commit_session_files"] = commit_then_killed
+        try:
+            with in_env(env):
+                end(r.path, "/create-ard")
+        except KeyboardInterrupt:
+            stopped = True
+        finally:
+            g["commit_session_files"] = real_commit
+        h = head(r)
+        count = r.git("rev-list", "--count", "HEAD")
+        pending = (record(env, "/create-ard") or {}).get("end_commit") or {}
+        check(stopped and pending.get("staged") == {old: None, RESUME: r.git("rev-parse", "HEAD:" + RESUME)},
+              "e_kill_after_commit: a staged removal is saved as no blob (%r)" % pending)
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "pushed-default" and got.get("sha7") == h[:7] and got.get("files") == 2
+              and r.git("rev-list", "--count", "HEAD") == count and on_origin(r) == h,
+              "e_kill_after_commit: a removal matches the path's absence at the tip (%r)" % got)
+        r.write(old, "old again\n")
+        r.commit_all("NOISSUE the feedback again")
+        r.git("push", "-q", "origin", "main")
+        base = head(r)
+        r.write(RESUME, "y\n")
+        seed(env, "/create-ard", stage="end", end_commit={"branch": "main", "base": base,
+                                                          "staged": {old: None, RESUME: r.git("hash-object", RESUME)}})
+        r.git("add", RESUME)
+        r.git("commit", "-q", "-m", "a commit of the user's with the same blob, the removed path kept")
+        user = head(r)
+        os.remove(os.path.join(r.path, old))
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "pushed-default" and r.git("rev-parse", "HEAD~1") == user and got.get("sha7") == head(r)[:7]
+              and got.get("sha7") != user[:7], "e_kill_after_commit: a tip still holding a removed path is not the run's (%r)" % got)
         r, env = world(tmp, "e-kill-after-commit-msg")
         hook(os.path.join(r.path, ".git", "hooks", "commit-msg"), "printf '\\nChange-Id: I0123456789\\n' >> \"$1\"\n")
         r.write(RESUME, "r\n")
