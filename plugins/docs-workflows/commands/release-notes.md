@@ -57,7 +57,7 @@ This command makes **no external API calls but two**: key discovery's optional, 
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
-   §4 does, whatever file that is, and testing no file's presence: the resolved `key` and, where
+   `workflows-core:addressing` §4 does, whatever file that is, and testing no file's presence: the resolved `key` and, where
    `workflows-core:addressing` §4.1 places the resolved folder at Epic level — an `EPIC-` prefix, or
    with no prefix a resolved `kind: epic` — also the key its parent's carrier asserts (§4), the
    would-be `<PRD>`. Then run the specs-repo preflight below, and only then place the folder and
@@ -100,11 +100,11 @@ This command makes **no external API calls but two**: key discovery's optional, 
      any address — **and runs the specs-repo preflight again with it before step 1's placement stops are
      tested.** The preflight is prompt-free and idempotent, and the container's key set is the wrong
      one for the slice: it can have kept the run on a plugin branch named for the container, which
-     the slice's key set switches away from (`workflows-core:specs-repo-git` §3.5 B4), exactly as a
-     direct run on the slice would. A branch the first preflight's B4 left, which `branch-key`
-     now resolves to the slice's key, is switched back to first, as §3.5's *A re-run in the same
-     run switches back first* rule fixes — so the slice is read on the branch a direct run's B3
-     would have kept. An answer equal
+     the slice's key set switches away from wherever `workflows-core:specs-repo-git` §3.5 B4 makes
+     that switch. A branch the first preflight's B4 left, which `branch-key`
+     now resolves to the slice's key, is switched back to first wherever §3.5's *A re-run in the same
+     run switches back first* rule makes that switch, so the slice is read on the branch a direct run's B3
+     would have kept; where that rule leaves the switch undone, the run goes on from the branch it stands on. An answer equal
      to none — a keyless slice's path among them — re-presents this stop, saying the answer named
      none of the enterable slices. "Cancel" ends the run. **Where the test finds no slice, there is
      nothing to enter, so no `choices:` array is shown** and the stop is a plain one: its message

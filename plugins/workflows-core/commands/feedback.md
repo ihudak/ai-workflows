@@ -27,10 +27,8 @@ Usage: `/feedback [<note>] [--skip-costs]`
 
 **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
-Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
-`specs-preflight` entry point (§3) inline: flush any leftover session
-artifacts from an earlier run, retry an artifact commit that failed to push,
-and settle the branch. This runs against `$SPECS_PATH` only — `git -C
+Invoke `Skill(skill: "workflows-core:specs-git", args: "start")`, which runs the `specs-preflight` entry point of `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` (§3) by script, and follow it: flush any leftover session artifacts from an earlier run, retry an artifact commit that failed to push, and settle the branch.
+This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so whatever repository you are standing in is
 untouched (§1 rule 1). Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag — the terminal
@@ -95,9 +93,8 @@ notice). This runs BEFORE the commit step below, per the emitter tail in
 cost -> `resume.md` -> `commit-artifacts`; this command has no follow-ups or
 `resume.md` step, so it goes feedback -> cost -> commit).
 
-**Then commit session artifacts (terminal).** Cite
-`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
-`commit-artifacts` entry point (§4) inline. It stages ONLY the §2.1 bounded
+**Then commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:specs-git", args: "end")`, which runs the `commit-artifacts` entry point of `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` (§4) by script, and follow it.
+It stages ONLY the §2.1 bounded
 artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session
 artifacts (/feedback)` — or `NOISSUE …` when no `key` resolved — and pushes per §4 step 5. It NEVER touches a code/docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the

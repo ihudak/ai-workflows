@@ -134,9 +134,9 @@ Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=
    best available and record it in `notes` and the Final report.
 
 **Specs-repo preflight** — run at the end of step 1's resolution, on `status: found`, with the run key
-set step 1 fixes, before step 1's carrier and kind tests read the folder. Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
-`specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
-retry an artifact commit that failed to push, and settle the branch. Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+set step 1 fixes, before step 1's carrier and kind tests read the folder.
+Invoke `Skill(skill: "workflows-core:specs-git", args: "start")`, which runs the `specs-preflight` entry point of `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` (§3) by script, and follow it: flush any leftover session artifacts from an earlier run, retry an artifact commit that failed to push, and settle the branch.
+Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
@@ -448,9 +448,8 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
    asserting `brd`, so its frame set is `brd-to-prd`; an Epic folder under it asserts `epic`, and
    is `prd-creation`. On every path that reached Phase 1 the key is present and the kind is one of those three — Phase 0's stops (`FRAMES_NEEDS_ADDRESS`, `FRAMES_EXTRA_ARGUMENT`, `FRAMES_NO_FOLDER`, `FRAMES_NO_CARRIER`, `FRAMES_NOT_A_SPEC_FOLDER`, an ambiguous key, an unset `SPECS_PATH`, a `SPECS_PATH` set inside the specs tree (`SPECS_PATH_INSIDE_TREE`)) all stop Phase 0 before it has a spec folder whose kind and key it can index — `FRAMES_NO_CARRIER` among them, taken on a folder asserting neither — so a run that reached Phase 1 files its entry on the keyed tier and never on the pending ladder (§9). Every one of those stops reaches this step and step 4 (*Ending early*), passing as `key` the one the resolution record carries, or `null` where the run resolved none or the folder asserts no key — an `@<path>` to such a folder, or an address stop — whose entry lands on the pending ladder, or is reported only where `$SPECS_PATH` is unset or misplaced; §7's inference attributes a refused run whose key names no folder of those three kinds by a branch of its own; a stop `branch-check` makes passes the resolved folder's key. Every such call **advances the chained checkpoint** (§3); surface the persisted
    path (or the report-only notice).
-4. **Commit session artifacts (terminal).** Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md`
-   and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages
-   ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session
+4. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:specs-git", args: "end")`, which runs the `commit-artifacts` entry point of `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` (§4) by script, and follow it — the LAST action of the run.
+   It stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session
    artifacts (/frames)` — `<KEY>` the resolved folder's own key, an Epic folder's and never its
    parent's, or `NOISSUE` where the run resolved none — and pushes per §4 step 5. It NEVER touches a code/docs repo or the current working
    directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries

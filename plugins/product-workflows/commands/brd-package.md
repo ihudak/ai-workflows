@@ -299,7 +299,14 @@ cannot review, and they will not tell you that — they will review it anyway, b
      off with its own record and not the earlier ones. Either way `handoff-to-main` stages only the
      paths *that* run declared, and the round records already
      on disk are not among them. What is needed is the register already written, landed:
-     `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register is written at <path> but is on no branch — its handoff was declined. Commit and merge decisions.md and the interview/ round records to the specs repo's default branch, then re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk.`
+     `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register is written at <path> but is on no branch — its handoff was declined. Commit and merge decisions.md and the interview/ round records to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk.`
+     ```
+     git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+     git -C "<SPECS_PATH>" add -f -- "<path>" "<round-file>" …
+     git -C "<SPECS_PATH>" commit -m "<BRD-KEY> decision register" -- "<path>" "<round-file>" …
+     git -C "<SPECS_PATH>" push -u origin <new-branch>
+     ```
+     `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<path>` is decisions.md's path and `<round-file>` is each `interview/round-<N>.md` in the folder, one quoted path each in place of the `…`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
 6b. **Gate the question set and the code-defect log on main, each where it is in the folder.**
     Both ship in the bundle whole (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1),
     and neither is implied by step 6's gate. For each of `interview/customer-questions.md` and
@@ -308,7 +315,14 @@ cannot review, and they will not tell you that — they will review it anyway, b
     §3.7 return by `stopped` first: any stopping row → stop, naming the file and the branch/PR state
     it reports; `pass` / `pass_amending` / `unmanaged` → proceed as step 6 does; `absent` (row F — in
     the folder and on no ref) → collect it, and stop once after both naming every file collected:
-    `BRD_PACKAGE_SHIPPED_NOT_HANDED_OFF: <BRD-KEY>'s <files> are written in the folder but on no branch, while its decisions.md is on the default branch — the run that wrote them had its handoff declined, or a later run landed the register without them. This package would ship what no branch holds. Commit and merge <files> to the specs repo's default branch, then re-run; do not re-run /product-workflows:brd-interview for this, which stages only the files it writes itself. Nothing was written.`
+    `BRD_PACKAGE_SHIPPED_NOT_HANDED_OFF: <BRD-KEY>'s <files> are written in the folder but on no branch, while its decisions.md is on the default branch — the run that wrote them had its handoff declined, or a later run landed the register without them. This package would ship what no branch holds. Commit and merge <files> to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-interview for this, which stages only the files it writes itself. Nothing was written.`
+    ```
+    git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+    git -C "<SPECS_PATH>" add -f -- "<file>" …
+    git -C "<SPECS_PATH>" commit -m "<BRD-KEY> question set and defect log" -- "<file>" …
+    git -C "<SPECS_PATH>" push -u origin <new-branch>
+    ```
+    `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<file>` is each of `<files>` as `<BRD-dir>/<file>` (step 6b names them folder-relative), one quoted path each in place of the `…`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
     **A file absent from the folder is not gated**: a slice whose rounds held no `[C]` has no
     question set and one whose decisions turned on no code defect has no log, and neither absence
     is a decline.
@@ -350,7 +364,14 @@ cannot review, and they will not tell you that — they will review it anyway, b
    whether `interview/round-<N>.md` exists in the folder at all.
    - **Present in the worktree, on no ref** — the record was written and its handoff declined, or
      the run stopped after writing it; landing it is the fix:
-     `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s decisions.md and held [C] questions name rounds <list>, but <these> have no interview/round-<N>.md on any ref — the records those decisions and questions came from never merged. Land them on the specs repo's default branch and re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk.`
+     `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s decisions.md and held [C] questions name rounds <list>, but <these> have no interview/round-<N>.md on any ref — the records those decisions and questions came from never merged. Land them on the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk.`
+     ```
+     git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+     git -C "<SPECS_PATH>" add -f -- "<round-file>" …
+     git -C "<SPECS_PATH>" commit -m "<BRD-KEY> round records" -- "<round-file>" …
+     git -C "<SPECS_PATH>" push -u origin <new-branch>
+     ```
+     `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<round-file>` is each `interview/round-<N>.md` named in `<these>`, one quoted path each in place of the `…`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
    - **Absent from the worktree too** — after step 5c, the one state that reaches here is a
      re-decision a `/brd-interview` run left standing at a round whose record it never wrote: a
      record carrying a `Reopened` paragraph, which
@@ -442,7 +463,14 @@ cannot review, and they will not tell you that — they will review it anyway, b
    and no `[C]` entry, so step 7 never reaches it — with the same `require-on-main` mapped the same way before its answer counts — any stopping row
    stops, naming that round, and every one on no ref is collected and stops once, with this message —
    the record is in the folder, since step 7a read the answer there:
-   `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s round(s) <list> answered code-defect flags, but their interview/round-<N>.md is on no ref — the records never merged. Land them on the specs repo's default branch and re-run.`
+   `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s round(s) <list> answered code-defect flags, but their interview/round-<N>.md is on no ref — the records never merged. Land them on the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run.`
+   ```
+   git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+   git -C "<SPECS_PATH>" add -f -- "<round-file>" …
+   git -C "<SPECS_PATH>" commit -m "<BRD-KEY> round records" -- "<round-file>" …
+   git -C "<SPECS_PATH>" push -u origin <new-branch>
+   ```
+   `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<round-file>` is each `interview/round-<N>.md` named in `<list>`, one quoted path each in place of the `…`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
    Step 7 stops before this step reaches its own, so an operator missing rounds of both kinds
    learns of these on the next run. An answer whose record never merged leaves the default branch
    showing the flag unanswered, and another clone's `/brd-interview` would open that round again.
@@ -1120,10 +1148,12 @@ rather than a reference to follow — `workflows-core:grounding-format` §4 is t
 citable in the customer's copy, which is exactly why they are inlined:
 
 ```
-git -C "<repo>" rev-parse HEAD                      # must print <the commit this package cites>
-git -C "<repo>" diff --ignore-cr-at-eol --stat      # must be empty
-git -C "<repo>" status --porcelain                  # any entry needs a line-count comparison
+git -C "<repo>" rev-parse HEAD
+git -C "<repo>" diff --ignore-cr-at-eol --stat
+git -C "<repo>" status --porcelain
 ```
+
+Write the block into the customer's copy with the commands alone and no trailing `#` comment: a customer pastes it into a shell, and zsh, macOS's default, treats `#` as an ordinary word unless its `interactivecomments` option is on, so a comment there reaches the command as arguments and an apostrophe in it leaves a quote open. What each command is for goes in prose beside the block, keyed to the command: `rev-parse HEAD` must print <the commit this package cites>, substituted; `diff --ignore-cr-at-eol --stat` must print nothing; and any entry `status --porcelain` prints needs a line-count comparison.
 
 State what each is for and what a mismatch means, and ask for the result in the review's section 1.
 At the Partial and Documents-only tiers the block is still printed, marked as unrunnable at this

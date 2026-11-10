@@ -375,16 +375,25 @@ def identity(root):
     return None, None
 
 
+def refusal_path(root, branch):
+    """specs-repo-git §1 rule 8's <record>: <git-common-dir>/workflows/push-refused/<branch>, the
+    directory joined to <root> where git prints it relative, a / in the branch name a directory
+    level; None where git names no common directory. Resolved as placed_file resolves its own, so
+    no git newer than the rest of this script needs is assumed."""
+    r = git(root, "rev-parse", "--git-common-dir", check=False)
+    if r.returncode != 0 or not text(r):
+        return None
+    common = text(r) if os.path.isabs(text(r)) else os.path.join(root, text(r))
+    return os.path.join(common, "workflows", "push-refused", branch)
+
+
 def refusal_record(root, branch):
     """specs-repo-git §1 rule 8: the date §4 step 6 recorded when origin refused a push to this
-    branch -- a file in the common git directory, which a hardened container's read-only
-    .git/config does not stop, standing wherever it exists -- else the config key an older run, or
-    a run that could not write the file, recorded; else None. The directory is resolved as
-    placed_file resolves its own, so no git newer than the rest of this script needs is assumed."""
-    r = git(root, "rev-parse", "--git-common-dir", check=False)
-    if r.returncode == 0 and text(r):
-        common = text(r) if os.path.isabs(text(r)) else os.path.join(root, text(r))
-        path = os.path.join(common, "workflows", "push-refused", branch)
+    branch -- a file in the common git directory (refusal_path), which a hardened container's
+    read-only .git/config does not stop, standing wherever it exists -- else the config key an
+    older run, or a run that could not write the file, recorded; else None."""
+    path = refusal_path(root, branch)
+    if path is not None:
         if os.path.isfile(path):
             try:
                 with open(path, encoding="utf-8") as fh:

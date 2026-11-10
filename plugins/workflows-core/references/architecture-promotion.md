@@ -38,7 +38,7 @@ The run stops, writing nothing, at the first of these that holds. Each stop name
    `<arch-ref>` is `origin/<branch>` where that ref exists, else `<branch>`.
 4. **The specs repository.**
    - `$SPECS_PATH` unset → stop: `PROMOTE_NEEDS_SPECS_PATH: set SPECS_PATH to your specs repository.`
-   - Then `specs-preflight` (`workflows-core:specs-repo-git` §3), as a keyless run. Keep its `<default-ref>`. `specs_git: misrooted` → stop with its notice, as `/product-workflows:harvest-decisions` does: the scripts read the repository's top level.
+   - Then `specs-preflight` — `Skill(skill: "workflows-core:specs-git", args: "start")`, which runs `workflows-core:specs-repo-git` §3 by script — as a keyless run. Keep its `<default-ref>`. `specs_git: misrooted` → stop with its notice, as `/product-workflows:harvest-decisions` does: the scripts read the repository's top level.
    - `git -C "$SPECS_PATH" cat-file -e <default-ref>:architecture/index.yaml` fails → stop: `PROMOTE_NEEDS_KNOWLEDGE_BASE: there are no team decision records on <default-ref> yet — run /product-workflows:harvest-decisions first.`
    - The checkout must be on `<default-ref>`'s branch, as `/product-workflows:harvest-decisions` Phase 0 step 4 requires.
    - `git -C "$SPECS_PATH" status --porcelain -- architecture/` prints anything → stop: `PROMOTE_KB_UNCOMMITTED: <paths> under architecture/ are uncommitted — an earlier run's marks, a harvest or a hand edit. Commit and hand them off, or discard them, and run again: this run reads the default branch, so it would propose those records again.`

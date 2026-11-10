@@ -81,12 +81,20 @@ claude plugin install security-workflows@shipwright
 The workflow plugins resolve their inputs and outputs through five environment variables: `SPECS_PATH`, which most commands stop without; `REPOS_PATH`, which defaults to `/workspace`; and three optional ones — `DOCS_PATH`, read-only as a documentation-grounding root and a write target for the docs commands that write a docs repository, `ARCHITECTURE_REPO_PATH` for architecture grounding, and `GIT_USER_INITIALS`, a branch prefix. Export them in your shell profile (or rely on the AI-Container defaults):
 
 ```bash
-export SPECS_PATH="/workspace/specs"   # shared store: specifications, designs, ARDs
-export REPOS_PATH="/workspace"         # where your code clones live (default: /workspace)
-export DOCS_PATH="/workspace/docs"     # optional: your product docs clone; read-only for grounding (default: /workspace/docs)
-export ARCHITECTURE_REPO_PATH="/workspace/architecture"   # optional: your architecture repo, read-only for grounding (no default)
-export GIT_USER_INITIALS="iv-gu"       # optional: branch prefix for every command that creates a branch in a code, docs or architecture repo
+export SPECS_PATH="/workspace/specs"
+export REPOS_PATH="/workspace"
+export DOCS_PATH="/workspace/docs"
+export ARCHITECTURE_REPO_PATH="/workspace/architecture"
+export GIT_USER_INITIALS="iv-gu"
 ```
+
+- `SPECS_PATH` is the shared store: specifications, designs, ARDs.
+- `REPOS_PATH` is where your code clones live (default: `/workspace`).
+- `DOCS_PATH` is optional: your product docs clone, read-only for grounding (default: `/workspace/docs`).
+- `ARCHITECTURE_REPO_PATH` is optional: your architecture repo, read-only for grounding (no default).
+- `GIT_USER_INITIALS` is optional: your branch identifier, used as described below.
+
+The lines hold no `#` comment, so they paste into zsh as well as a profile.
 
 - **`SPECS_PATH`** — the shared, team-visible store for a ticket's `specification.md` / `design.md` / ARD under `specifications/<KIND>-<KEY>-<slug>/…` (kind `BRD`/`PRD`/`EPIC`). It names the root of a dedicated specs repository, the directory that holds `specifications/`, never `specifications/` itself, which a run resolving an address stops on. Required by the commands that stop without it: every `product-workflows` command, `/design`, `/ready`, `/conformance`, `/frames` and `/security-workflows:scan` stop on every run; `/implement`, `/document` in keyed mode and `/release-notes` stop on a `<KEY>` address, and `/vuln` on an `@<path>` one. An `@<path>` address to `/implement`, `/document` or `/release-notes`, and the direct modes, do not need it; `/docs-audit`, among others, reads the specs tree where it is set without carrying that stop.
 - **`REPOS_PATH`** — where code clones live; a single directory or a colon-separated list. Defaults to `/workspace`. The match is by `git remote get-url origin` slug where a command was handed the slug; where a command lists candidates to offer you instead (`/create-ard`, bare `/idea --ground-code`, `/docs-init`, `/docs-brand` where neither its `--from` nor the docs profile's recorded source repositories settle the repository, and `/docs-audit` where those recorded repositories do not settle the set), your answer is resolved against that listing, so a rename changes the name a clone is offered under, never whether it is offered.
@@ -96,7 +104,7 @@ export GIT_USER_INITIALS="iv-gu"       # optional: branch prefix for every comma
 
 ### 4. Raise Claude Code's skill-listing budget
 
-**Set this once, in `~/.claude/settings.json`, whichever plugins you install.** Claude Code shows the model one list of every installed plugin's skills and model-invocable commands, and gives that list 1% of the context window — 8,000 characters in a 200K-token session, and in every subagent on a 200K model. Past that it shortens every description in the list, and the model can no longer tell which skill fits a task. This marketplace's commands are nearly all typed-only and take no room in the list — the few another command runs for you, such as `/prd-ground`, do — and its skills do too, and so does every other plugin, Claude Code's own skills and your personal ones: every plugin of the `shipwright` marketplace, installed together, takes about 5,800 characters. Add this top-level key to the settings file:
+**Set this once, in `~/.claude/settings.json`, whichever plugins you install.** Claude Code shows the model one list of every installed plugin's skills and model-invocable commands, and gives that list 1% of the context window — 8,000 characters in a 200K-token session, and in every subagent on a 200K model. Past that it shortens every description in the list, and the model can no longer tell which skill fits a task. This marketplace's commands are nearly all typed-only and take no room in the list — the few another command runs for you, such as `/prd-ground`, do — and its skills do too, and so does every other plugin, Claude Code's own skills and your personal ones: every plugin of the `shipwright` marketplace, installed together, takes about 3,400 characters. <!-- The figure and the recipe that measures it: docs/maintainers/rationale.md, section skill-listing-figure. --> Add this top-level key to the settings file:
 
 ```json
 "skillListingBudgetFraction": 0.025

@@ -35,7 +35,7 @@ Usage: `/document <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-mode
 **The mode test is the presence of an address**, which is what replaces the retired shared front-end's own mode return, and that is all the replacement changed in Mode B. What runs ahead of the mode test — the run-flag strip and the question-rules load above — runs in both modes.
 
 **The run key set the specs-repo preflight below is handed** (`workflows-core:specs-repo-git` §3.2)
-is fixed first, before either mode runs, reading only carrier frontmatter (`key:`, `kind:`) as §4
+is fixed first, before either mode runs, reading only carrier frontmatter (`key:`, `kind:`) as `workflows-core:addressing` §4
 does, whatever file that is, and testing no file's presence. In Mode A it is the resolved `key`,
 and, where `workflows-core:addressing` §4.1 places the resolved folder at Epic level — an `EPIC-` prefix, or with
 no prefix a resolved `kind: epic` — also the key its parent's carrier asserts (§4), which is the
@@ -102,11 +102,11 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
      any address — **and runs the specs-repo preflight again with it before step 1's placement stops are
      tested.** The preflight is prompt-free and idempotent, and the container's key set is the wrong
      one for the slice: it can have kept the run on a plugin branch named for the container, which
-     the slice's key set switches away from (`workflows-core:specs-repo-git` §3.5 B4), exactly as a
-     direct run on the slice would. A branch the first preflight's B4 left, which `branch-key`
-     now resolves to the slice's key, is switched back to first, as §3.5's *A re-run in the same
-     run switches back first* rule fixes — so the slice is read on the branch a direct run's B3
-     would have kept. An answer equal
+     the slice's key set switches away from wherever `workflows-core:specs-repo-git` §3.5 B4 makes
+     that switch. A branch the first preflight's B4 left, which `branch-key`
+     now resolves to the slice's key, is switched back to first wherever §3.5's *A re-run in the same
+     run switches back first* rule makes that switch, so the slice is read on the branch a direct run's B3
+     would have kept; where that rule leaves the switch undone, the run goes on from the branch it stands on. An answer equal
      to none — a keyless slice's path among them — re-presents this stop, saying the answer named
      none of the enterable slices. "Cancel" ends the run. **Where the test finds no slice, there is
      nothing to enter, so no `choices:` array is shown** and the stop is a plain one: its message

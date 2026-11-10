@@ -46,9 +46,9 @@ The workflow map is in the `## Workflow map` sections of `.claude/rules/*.md`, o
 
 **Internal reference convention:**
 - Agents are invoked by `subagent_type` (`<plugin>:<agent>`, e.g. `dev-workflows:risk-planner`, `workflows-core:impl-maintenance`) — never by reading the agent file. Claude Code loads the agent body as its system prompt and honours its `model:` frontmatter. **An agent crosses a plugin boundary for free**; a reference file does not.
-- **A shared reference is cited `workflows-core:<name>` and loaded through the loader skill** — `Skill(skill: "workflows-core:reference", args: "<name>")`, with an optional second whitespace-separated token naming an entry point within the reference to execute inline (`args: "specs-repo-git specs-preflight"`) or, on a reference that loads by part (the loader skill names them), the part to read (`args: "session-hygiene resume-pointer"`), its file generated under `plugins/workflows-core/reference-parts/` and never edited (`.claude/rules/gates-reference-parts.md`); three entry points of a reference that does not load by part, `phase-handoff require-on-main`, `phase-handoff branch-check` and `phase-handoff handoff-to-main`, read their own generated files there too, and a citation of a section one of those files holds is served from the text of that file or of the whole reference wherever the run has read either, else by reading that file in a `##` section requesting it; anywhere else the run reads the whole reference (the loader's entry-point rules, `skills/reference/entry-files.md`, which a request on `phase-handoff` reads with or before its other reads). Never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to the *reading* plugin, which does not carry the corpus. Every command, agent and reference outside `workflows-core` that cites one carries a preamble saying so, and `check-docs.sh` check 16 gates the contract in both directions; one citing a reference that loads by part also carries, after it, the load-by-part paragraph, whose presence `scripts/reference-parts.py check-citations` gates.
+- **A shared reference is cited `workflows-core:<name>` and loaded through the loader skill** — `Skill(skill: "workflows-core:reference", args: "<name>")`, with an optional second whitespace-separated token naming an entry point within the reference to execute inline (`args: "addressing resolve-address"`), save `specs-repo-git`'s `specs-preflight` and `commit-artifacts`, which the loader routes to its `specs-git` skill, or, on a reference that loads by part (the loader skill names them), the part to read (`args: "session-hygiene resume-pointer"`), its file generated under `plugins/workflows-core/reference-parts/` and never edited (`.claude/rules/gates-reference-parts.md`); three entry points of a reference that does not load by part, `phase-handoff require-on-main`, `phase-handoff branch-check` and `phase-handoff handoff-to-main`, read their own generated files there too, and a citation of a section one of those files holds is served from the text of that file or of the whole reference wherever the run has read either, else by reading that file in a `##` section requesting it; anywhere else the run reads the whole reference (the loader's entry-point rules, `skills/reference/entry-files.md`, which a request on `phase-handoff` reads with or before its other reads). Never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to the *reading* plugin, which does not carry the corpus. Every command, agent and reference outside `workflows-core` that cites one carries a preamble saying so, and `check-docs.sh` check 16 gates the contract in both directions; one citing a reference that loads by part also carries, after it, the load-by-part paragraph, whose presence `scripts/reference-parts.py check-citations` gates.
 - Inside **agent** and **skill** bodies (and `hooks.json` / MCP / monitor configs), reference the reading plugin's **own** bundled files via `${CLAUDE_PLUGIN_ROOT}/...`. **This variable DOES expand in slash-command bodies**: `${CLAUDE_PLUGIN_ROOT}` arrives as the plugin's real location — the working tree under a directory-source marketplace, not the cache — while `${DOCS_PATH:-/workspace/docs}` and `${REPOS_PATH:-/workspace}` arrived **literal** in the same live run. `$ARGUMENTS` is the harness's argument substitution. ([why](docs/maintainers/rationale.md#plugin-root-expansion))
-- Slash **commands** that need their own plugin's bundled content invoke a skill that resolves `${CLAUDE_PLUGIN_ROOT}` on their behalf; `workflows-core`'s `reference` skill is the general form of that, and its `model-routing` skill the named one.
+- Slash **commands** that need their own plugin's bundled content invoke a skill that resolves `${CLAUDE_PLUGIN_ROOT}` on their behalf; `workflows-core`'s `reference` skill is the general form of that, and its `model-routing` and `specs-git` skills named ones.
 Do NOT hardcode `~/.claude/plugins/data/...@.../` paths — that directory holds only empty per-plugin state; installed content lives under `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`.
 
 **When editing any of these plugins:** update the files under `plugins/<name>/` directly.
@@ -103,13 +103,15 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |
 | `workflows-core-bounded-run.md` | `*/scripts/bounded.py`, `*/scripts/tree-snapshot.py`, `*/commands/*.md`, `*/agents/*.md`, `*/references/**`; `.github/workflows/validate-catalog.yml` (repo root) | the bounded-run authority and the copied-scripts rule (`bounded.py`, `tree-snapshot.py`) |
 | `workflows-core-triage.md` | as `workflows-core.md` | the finding-triage authority |
-| `workflows-core-git.md` | `workflows-core/scripts/`: `session-branch.py`, `specs-git.py`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
+| `workflows-core-git.md` | `workflows-core/scripts/`: `session-branch.py`, `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py`; `workflows-core/skills/specs-git/**`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
 | `workflows-core-read-only.md` | as `workflows-core-git.md` | the read-only-repos authority |
+| `workflows-core-handoff.md` | as `workflows-core-git.md` | the `phase-handoff` authority |
 | `claim-sweep.md` | `**` (any file) | the claim-expiry sweep's refinements |
 | `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |
+| `plugin-authoring.md` | `**` (any file) | the command, agent and skill taxonomy; the Karpathy notes |
 | `plugin-updates-coupling.md` | `*/.claude-plugin/plugin.json`, `*/CHANGELOG.md`; `.claude-plugin/marketplace.json` (repo root) | which plugins to update together, one bullet per release pair |
 | `plugin-updates-coupling-history.md` | as `plugin-updates-coupling.md` | its older bullets, up to `workflows-core` 1.58.0 |
-| `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.69.1 |
+| `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.73.0 |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
@@ -165,7 +167,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`
-- `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, `branch-check`, the branch-prefix authority, the handoff consent choice → `workflows-core-git.md`
+- `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, `branch-check`, the branch-prefix authority, the handoff consent choice → `workflows-core-handoff.md`
 - `workflows-core:document-lineage` — the lineage record, the moved rule, the kind table, `record` and `upstream-check` → `workflows-core.md`
 - `workflows-core:read-only-repos` — read-only mount detection, write-free ref reading, the `prep` output contract → `workflows-core-read-only.md`
 - `workflows-core:docs-grounding` — `$DOCS_PATH` grounding: the resolution gate, `resolve-docs-grounding`, grill-rank / writer-attach → `docs-grounding.md`
@@ -176,20 +178,6 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `docs-workflows:repo-verification-gates` — a docs repo's own pre-PR checklist as `repo_verification_gates` → `docs-workflows-gates.md`
 - `docs-workflows:toolchain-preflight` — the pre-write environment check, the `toolchain` block, each tool's test → `docs-workflows-gates.md`
 - `workflows-core:instruction-file-maintenance` — changes to agent-instruction files → § Editing discipline above
-
-## Command, agent, and skill taxonomy
-
-- **Commands** (`commands/`) are the user-facing slash commands: they own the end-to-end workflow, gather context, decide whether to branch, test, or review, and may dispatch helper agents via the `task` tool. Each is **typed-only** (`disable-model-invocation`) unless a file runs it as `skill: "<plugin>:<name>"` or a skill shares its name; `scripts/validate-catalog.py` checks ([why](docs/maintainers/rationale.md#typed-only-commands)).
-- **Agents** (`agents/`) are Claude Code sub-agent system prompts, not user entry points: each does one bounded job — planning, research, review, fixing, test writing, grounding, or maintenance — and returns its result to the invoking command.
-- **Skills** (`skills/`, optional) package durable instructions or domain knowledge that multiple commands or agents may consult; a skill is neither a command nor an agent. If a plugin has no `skills/`, keep shared runtime docs under `references/`.
-- **Working rule:** keep the three roles separate so workflows stay predictable.
-
-## Behavioral guardrails (Karpathy) — marketplace-specific notes
-
-These notes add to the user-scope Claude guidance only the marketplace-specific behaviors that are easy to forget during workflow edits.
-
-- **Goal-Driven Execution** maps directly onto the existing `test-baseliner` → implementation → `test-writer` → re-run flow enforced by `dev-workflows`. Frame each command invocation as a verifiable goal up front so the test gates have a concrete target to check.
-- **Surgical Changes** applies in both directions when you edit command docs, agent prompts, hook declarations, or `workflows-core:model-routing/classification`: if you remove a `model_routing` field, phase, or workflow edge, remove every cross-reference to it in the same change. Stale references between commands and agents silently break the workflow.
 
 ## Git
 

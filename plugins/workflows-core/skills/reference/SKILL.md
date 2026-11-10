@@ -2,7 +2,7 @@
 name: reference
 description: Read a shared workflows-core reference by name, or one part of a reference that loads by part, and optionally execute one of its entry points.
 user-invocable: false
-allowed-tools: Read, Bash
+allowed-tools: Read, Bash, Skill
 ---
 
 The invocation arguments name one reference file and, optionally, a second
@@ -15,7 +15,7 @@ Work from the reference's own words, never from memory or a summary. On a
 reference that does not load by part, the text a request needs is the whole
 file, whichever entry point the request names; with no second argument, it
 is the whole file on any reference — save, either way, a request the
-entry-point rules answer from an entry point's own file.
+entry-point rules answer from an entry point's own file, or one the paragraph on `specs-repo-git` below routes or serves.
 A read short of every line — a section, a range, a search — covers no
 request that needs the whole file; consecutive
 ranges from its first line to its last are one read of every line. Where the text
@@ -63,11 +63,13 @@ reads the entry-point rules,
 other reads, unless their text is in this conversation word for word, and
 follows them.
 
+**Two entry points of `specs-repo-git` run in a script.** A request `args: "specs-repo-git specs-preflight"` or `args: "specs-repo-git commit-artifacts"` reads no reference: invoke `Skill(skill: "workflows-core:specs-git", args: "start")` for the first and `args: "end"` for the second, and follow that skill. A request `args: "specs-repo-git"` made for a citation of it — by name or by its file's path — reads nothing more in two cases: a citation in a command's own start or end step (the paragraph that makes either request or calls that skill, and the command's commit step), which that skill's text and its script's output serve; and, anywhere in a command's own text, a citation of its §3.2 run key set, its §5 notices or its §6 outcome lines. For the run key set read `${CLAUDE_PLUGIN_ROOT}/skills/specs-git/run-key-set.md`, unless its text is in this conversation word for word; §5's notices and §6's lines are what the script prints. Every other request on `specs-repo-git` — a citation anywhere else in a command, one a step of another reference makes, a command's own session-branch call, a commit into a documentation repository in its §4 step 4's form, and that skill's fallback — reads the whole reference, as a request on any other reference does.
+
 To read the whole reference — with no second argument, where the index of a
 reference that loads by part names no part for the rule your step applies,
 or with any second argument on a reference that does not load by part, in
 each case save a request the entry-point rules answer from an entry point's
-own file — read
+own file, or one the paragraph on `specs-repo-git` above routes or serves — read
 `${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`. Reading the
 whole reference means reading every line of it: where one read cannot hold
 the file, read it in consecutive ranges from its first line to its last.
@@ -86,5 +88,5 @@ where it says the request fails, it fails, whatever was read.
 
 Whether the text was read now or is already in this conversation, treat it as
 the single source of truth for the current step. When a second argument names
-an entry point, execute that entry point of it inline. Never paraphrase or
+an entry point, execute that entry point of it inline, save the two the paragraph on `specs-repo-git` routes to its skill. Never paraphrase or
 summarise its contents.

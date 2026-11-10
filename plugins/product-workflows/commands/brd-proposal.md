@@ -442,8 +442,17 @@ that came back row F — the proposal is on no ref the plugin's branch prefixes 
 
 ```
 BRD_PROPOSAL_SLICE_NOT_HANDED_OFF: these included slices have a proposal.md on disk that is on no ref — <keys> — so the umbrella would roll up numbers no later reader can reproduce.
-  Land each one, or re-run this command and exclude it.
+  Land each one with the commands below, printed once for each slice with that slice's own values, or re-run this command and exclude it.
+
+git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+git -C "<SPECS_PATH>" add -f -- "<proposal-path>"
+git -C "<SPECS_PATH>" commit -m "<slice KEY> proposal" -- "<proposal-path>"
+git -C "<SPECS_PATH>" push -u origin <new-branch>
+
+  Then open a pull request from <new-branch> into <default>, merge it, and re-run this command.
 ```
+
+Print one block for each slice in `<keys>`, with that slice's own values: `<new-branch>` is `prd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<proposal-path>` is that slice's `proposal.md`, and `<slice KEY>` its key. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
 
 **A slice with no `proposal.md` at all never reaches this gate**: Phase 3 already decided whether to
 stop for it or exclude it, so row F here means *written and not handed off* and nothing else. That

@@ -28,10 +28,8 @@ Usage: `/prompt-grill-me <corrective request> [--skip-costs]`
 
 **Then fix the run key set** (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §3.2), before the preflight below reads it. Where recent context holds the one run whose output this request corrects — a command of this family that resolved an address in this session — the set is that run's own: the key it resolved and, where that was an Epic folder, the key its parent's carrier asserts, both as that run carried them, never read off a branch name or out of the request. **Resolve each against the tree before it enters the set**, since one recalled from context is still text: `resolve-key` (`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §3) must return `found` for the key, and the parent's key is the one that parent folder's carrier asserts (§4); where either fails, the set is empty and the run keyless, as below. Otherwise — no such run in context, or more than one it could be — the set is empty and the run keyless. **The set decides which copy the correction edits.** A producer whose handoff committed its deliverable leaves the checkout on that unmerged branch. On a keyless run the preflight's §3.5 B4 switches to the default branch, so the fix the Phase 3 grill confirms would meet the default branch's copy of the file, or none at all; §3.5 B3 keeps the checkout on a branch that a key in the set names. Where the set holds a key, Phase 1's target is that run's command, and Phase 2's `key` the key it resolved — an Epic folder's own, never its parent's.
 
-Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
-`specs-preflight` entry point (§3) inline: flush any leftover session
-artifacts from an earlier run, retry an artifact commit that failed to push,
-and settle the branch. This runs against `$SPECS_PATH` only — `git -C
+Invoke `Skill(skill: "workflows-core:specs-git", args: "start")`, which runs the `specs-preflight` entry point of `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` (§3) by script, and follow it: flush any leftover session artifacts from an earlier run, retry an artifact commit that failed to push, and settle the branch.
+This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so whatever repository you are standing in is
 untouched (§1 rule 1). Prompt-free; it prints its `Environment:` line, and is otherwise silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag — the terminal
@@ -92,10 +90,8 @@ The file is local, transient and **never committed** — the same status as the 
 checkpoint beside it. Writing it is silent; **it computes no cost and prints no
 figure here**, because the spend this record stands for has not happened yet.
 
-**Then commit session artifacts (terminal).** Cite
-`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
-`commit-artifacts` entry point (§4) inline — before the Phase 3 grill, which is
-interactive and may run long. It stages ONLY the §2.1 bounded artifact paths
+**Then commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:specs-git", args: "end")`, which runs the `commit-artifacts` entry point of `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` (§4) by script, and follow it — before the Phase 3 grill, which is interactive and may run long.
+It stages ONLY the §2.1 bounded artifact paths
 inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session artifacts
 (/prompt-grill-me)` — or `NOISSUE …` when no `key` resolved — and pushes per §4 step 5. It NEVER touches a code/docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when

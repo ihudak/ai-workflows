@@ -334,7 +334,15 @@ behaviour, not the behaviour.
      already on disk, and **name no `/brd-intake` run**: that command refuses a slice
      (`BRD_INTAKE_SLICE`) and any folder that is not a container (`BRD_INTAKE_NOT_A_BRD`), and
      every container was refused as a root at step 5a:
-     `PRD_GROUND_INVENTORY_NOT_HANDED_OFF: <BRD-KEY>'s brd/brd-inventory.md is written at <path> but is on no branch — its handoff was declined. Commit and merge it to the specs repo's default branch and re-run. This names no /product-workflows:brd-intake run: that command refuses a slice and any folder that is not a container.` What the single-commit fact still buys is the *rest* of the set: it was
+     `PRD_GROUND_INVENTORY_NOT_HANDED_OFF: <BRD-KEY>'s brd/brd-inventory.md is written at <path> but is on no branch — its handoff was declined. Commit and merge it to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run. This names no /product-workflows:brd-intake run: that command refuses a slice and any folder that is not a container.`
+     ```
+     git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+     git -C "<SPECS_PATH>" add -f -- "<path>"
+     git -C "<SPECS_PATH>" commit -m "<BRD-KEY> brd inventory" -- "<path>"
+     git -C "<SPECS_PATH>" push -u origin <new-branch>
+     ```
+     `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<path>` is the inventory's path. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+     What the single-commit fact still buys is the *rest* of the set: it was
    `/brd-split` running on the parent, and there is no *requirement* defect log to land — a slice
    reads the parent's `brd/brd-defect-log.md` (`brd-format.md` §2.1), and the slice-owned
    `code-defect-log.md` is a different register this phase's set never held.
@@ -419,7 +427,14 @@ behaviour, not the behaviour.
      handoff was declined. The files exist; what is missing is a commit. **Say so, and name landing
      them as the action.** **It speaks for the ledger only**: the inventory has its own gate above,
      with its own two stops, and this message must not report a merge state it did not test:
-   `PRD_GROUND_NOT_HANDED_OFF: <BRD-KEY>'s coverage-ledger.md is written at <BRD-dir> but is on no branch — their handoff was declined, so nothing is missing but the commit. Commit brd/brd-inventory.md and coverage-ledger.md to the specs repo's default branch, then re-run '/product-workflows:prd-ground <BRD-KEY>'. <the clause below>`
+   `PRD_GROUND_NOT_HANDED_OFF: <BRD-KEY>'s coverage-ledger.md is written at <BRD-dir> but is on no branch — their handoff was declined, so nothing is missing but the commit. Commit brd/brd-inventory.md and coverage-ledger.md to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:prd-ground <BRD-KEY>'. <the clause below>`
+   ```
+   git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+   git -C "<SPECS_PATH>" add -f -- "<BRD-dir>/brd/brd-inventory.md" "<BRD-dir>/coverage-ledger.md"
+   git -C "<SPECS_PATH>" commit -m "<BRD-KEY> coverage ledger" -- "<BRD-dir>/brd/brd-inventory.md" "<BRD-dir>/coverage-ledger.md"
+   git -C "<SPECS_PATH>" push -u origin <new-branch>
+   ```
+   `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<BRD-dir>` is the folder this message names. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
 
    **`/brd-split` is not a way out here, so do not name it.** Re-running it **bare** on a parent whose ledger is fully
      allocated, whose children are non-empty and none of them out of step with it, is a no-op by its own Phase 0
@@ -541,7 +556,14 @@ behaviour, not the behaviour.
       what is missing is a commit. Land what is already on disk, and **do not name
       `/product-workflows:create-prd`** — re-running it would author a second PRD over the one
       already written rather than land it:
-      `PRD_GROUND_PRD_NOT_HANDED_OFF: <KEY>'s prd.md is written at <path> but is on no branch — its handoff was declined, so nothing is missing but the commit. Commit and merge it to the specs repo's default branch, then re-run '/product-workflows:prd-ground <KEY>'. Do not re-run /product-workflows:create-prd, which would rewrite the PRD rather than land the one on disk.`
+      `PRD_GROUND_PRD_NOT_HANDED_OFF: <KEY>'s prd.md is written at <path> but is on no branch — its handoff was declined, so nothing is missing but the commit. Commit and merge it to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:prd-ground <KEY>'. Do not re-run /product-workflows:create-prd, which would rewrite the PRD rather than land the one on disk.`
+      ```
+      git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+      git -C "<SPECS_PATH>" add -f -- "<path>"
+      git -C "<SPECS_PATH>" commit -m "<KEY> prd" -- "<path>"
+      git -C "<SPECS_PATH>" push -u origin <new-branch>
+      ```
+      `<new-branch>` is `prd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<path>` is the prd.md this message names. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
 7. **Require `$REPOS_PATH`.** Resolve `--repos-path`'s value where step 2 read one, else
    `${REPOS_PATH:-/workspace}` (`docs/reference/environment.md`), as one directory or a
    colon-separated list, resolving each entry with `realpath`; a `--repos-path` value is carried as `$REPOS_PATH` for the rest of the run,

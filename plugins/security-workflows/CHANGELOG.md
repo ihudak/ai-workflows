@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.11.1] — 2026-11-10
+
+Docs only: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; the two pages describe `workflows-core` 1.82.0.
+
+### Fixed
+
+- **The workflow page names the run's state record among what a scan writes under `~/.claude/`**: the file under `~/.claude/dev-workflows/specs-git/` that `workflows-core` 1.82.0's preflight writes and its terminal commit step removes once it has finished, or, where it did not, a start in a later session removes after seven days. The page listed what a run writes there and ended "Nowhere else.", which the record made false.
+- **The environment page** says that a run also compares its environment at its terminal commit — `$SPECS_PATH`'s real path and its `origin` — where the record its start made stands, as `workflows-core` 1.82.0 does.
+
 ## [0.11.0] — 2026-11-09
 
 Needs nothing from the other plugins' releases.

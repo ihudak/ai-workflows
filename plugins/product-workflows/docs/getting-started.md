@@ -53,7 +53,7 @@ Your shipped product documentation's clone — **read-only** in its role as a gr
 
 ### Claude Code's skill-listing budget
 
-**Set this once, in `~/.claude/settings.json`, whichever plugins you install.** Claude Code shows the model one list of every installed plugin's skills and model-invocable commands, and gives that list 1% of the context window — 8,000 characters in a 200K-token session, and in every subagent on a 200K model. Past that it shortens every description in the list, and the model can no longer tell which skill fits a task. This marketplace's commands are nearly all typed-only and take no room in the list — the few another command runs for you, such as `/prd-ground`, do — and its skills do too, and so does every other plugin, Claude Code's own skills and your personal ones: every plugin of the `shipwright` marketplace, installed together, takes about 5,800 characters. Add this top-level key to the settings file:
+**Set this once, in `~/.claude/settings.json`, whichever plugins you install.** Claude Code shows the model one list of every installed plugin's skills and model-invocable commands, and gives that list 1% of the context window — 8,000 characters in a 200K-token session, and in every subagent on a 200K model. Past that it shortens every description in the list, and the model can no longer tell which skill fits a task. This marketplace's commands are nearly all typed-only and take no room in the list — the few another command runs for you, such as `/prd-ground`, do — and its skills do too, and so does every other plugin, Claude Code's own skills and your personal ones: every plugin of the `shipwright` marketplace, installed together, takes about 3,400 characters. Add this top-level key to the settings file:
 
 ```json
 "skillListingBudgetFraction": 0.025
@@ -88,12 +88,16 @@ Two commands start from text that often comes from outside your team. `/brd-inta
 - **It has an `origin` remote, for the pull requests.** Without one, a handoff still commits on a plugin branch, but pushes nothing and opens no pull request, and it reports that the phase is not handed off; the run says so before it asks. You then merge that branch into your default branch yourself.
 
 ```bash
-export SPECS_PATH="$HOME/specs"             # the repository root that holds specifications/
-git -C "$SPECS_PATH" rev-parse --git-dir     # succeeds only in a git repository
-git -C "$SPECS_PATH" remote get-url origin   # prints where pull requests go; an error means no origin
+export SPECS_PATH="$HOME/specs"
+git -C "$SPECS_PATH" rev-parse --git-dir
+git -C "$SPECS_PATH" remote get-url origin
 ```
 
-Put the `export` line in your shell profile, so every Claude Code session starts with it.
+- The `export` line sets `SPECS_PATH` to the repository root that holds `specifications/`.
+- `rev-parse --git-dir` succeeds only in a git repository.
+- `remote get-url origin` prints where pull requests go; an error means there is no origin.
+
+Put the `export` line in your shell profile, so every Claude Code session starts with it. The block holds commands only, so it pastes into zsh, where a `#` comment would be passed to the command as arguments.
 
 ## Your first run
 

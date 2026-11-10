@@ -1,6 +1,6 @@
 # Workflow
 
-`workflows-core` runs no pipeline of its own. It is the shared foundation the workflow plugin family draws on — the reference corpus, the `model-routing` skill, and eleven agents — plus seven commands that sit beside a pipeline rather than inside one.
+`workflows-core` runs no pipeline of its own. It is the shared foundation the workflow plugin family draws on — the reference corpus, the `model-routing` and `specs-git` skills, and eleven agents — plus seven commands that sit beside a pipeline rather than inside one.
 
 ```mermaid
 flowchart TD
@@ -9,6 +9,7 @@ flowchart TD
         parts["reference-parts/ — the generated parts of the references that load by part, and the files require-on-main, branch-check and handoff-to-main read"]:::core
         loader["skills/reference — the loader a sibling reads the corpus through"]:::core
         skill["skills/model-routing"]:::core
+        specsgit["skills/specs-git — runs a run's specs-repository start and end"]:::core
         agents["agents/ — adr-drafter · architecture-grounder · code-scanner · defect-reporter · doc-fixer · docs-grounder · frame-describer · impl-maintenance · overlap-reader · promotion-scout · session-analyst"]:::core
     end
     subgraph CROSS["Cross-cutting commands"]
@@ -23,7 +24,9 @@ flowchart TD
     refs -->|generated| parts
     parts --> loader
     loader --> pipeline
+    loader -->|"a specs-repo-git start or end request"| specsgit
     skill --> pipeline
+    specsgit --> pipeline
     agents --> pipeline
     pipeline -->|a bad result you corrected| improve
     pipeline -.->|its transcripts| diagnose
@@ -35,9 +38,9 @@ flowchart TD
     classDef other fill:#f3f4f6,stroke:#6b7280,color:#1f2937
 ```
 
-The three solid edges into `a sibling plugin's pipeline command`, from the loader, the routing skill and the agents, are the whole point of this plugin: a command in `dev-workflows`, `product-workflows`, `docs-workflows` or `security-workflows` reads a reference here, loads the routing skill here, and dispatches an agent here, so the same rules bind every plugin in the family rather than being copied into each.
+The four solid edges into `a sibling plugin's pipeline command`, from the loader, the routing skill, the `specs-git` skill and the agents, are the whole point of this plugin: a command in `dev-workflows`, `product-workflows`, `docs-workflows` or `security-workflows` reads a reference here, loads the routing skill here, runs its specs-repository start and end here, and dispatches an agent here, so the same rules bind every plugin in the family rather than being copied into each.
 
-**`skills/reference` is why the corpus edge goes through a node instead of straight across**, and it is the mechanism the whole shared corpus turns on. `${CLAUDE_PLUGIN_ROOT}` resolves to the *reading* plugin, so a sibling cannot open a file in `references/` by path — its own plugin root names itself. It calls `Skill(skill: "workflows-core:reference", args: "<name>")` instead, and the skill resolves the path on the caller's behalf. `skills/model-routing` is the same trick applied to one specific reference, kept separate because the classification rules are loaded at one fixed point in every pipeline command and a named skill says so where an argument string does not. Both are listed in [References and skills](reference/references.md#skills).
+**`skills/reference` is why the corpus edge goes through a node instead of straight across**, and it is the mechanism the whole shared corpus turns on. `${CLAUDE_PLUGIN_ROOT}` resolves to the *reading* plugin, so a sibling cannot open a file in `references/` by path — its own plugin root names itself. It calls `Skill(skill: "workflows-core:reference", args: "<name>")` instead, and the skill resolves the path on the caller's behalf. `skills/model-routing` is the same trick applied to one specific reference, kept separate because the classification rules are loaded at one fixed point in every pipeline command and a named skill says so where an argument string does not. `skills/specs-git` is the same trick applied to a script: a command's request for the specs repository's start or end goes to the loader, which hands it to this skill rather than reading the reference, and the skill runs `scripts/specs-git.py`, which does the git work and asks nothing. All three are listed in [References and skills](reference/references.md#skills).
 
 ## Cross-cutting commands
 
