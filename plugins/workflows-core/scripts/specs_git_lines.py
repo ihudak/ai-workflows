@@ -62,6 +62,10 @@ T = {
     "g0": G0,
     "g1": G1,
     "g2": G2,
+    # §5's G1 on a merged plugin branch (§4 step 1's merged-branch stay): each replaces the text after its label
+    # ("Not done: ", "If ignored: ") in G1, rendered on its one line, unwrapped.
+    "g1.merged.not_done": "the preflight did not commit, switch branches, or push. Those files are yours, and switching branches would carry them along. <branch> is merged into <default>, so this run's own artifacts will NOT be committed at the end of the run either, unless the run moves off <branch> first: a commit there would keep them off <default>.",
+    "g1.merged.if_ignored": "nothing is lost — your files and this run's artifacts stay uncommitted. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped, and the artifacts uncommitted, until these paths are committed or removed; the first run after that leaves <branch> for <default> before its flush, where git lets it, and commits them there. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     # §5's G2 variants: each replaces the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G2,
     # rendered on its one line, unwrapped.
     "g2.session.not_done": "the preflight did not switch away from it — the plugin manages only branches it created. This run's artifacts WILL be committed on session/<identity>, the session branch this specs repository uses because its default branch takes no push, and not on <branch>.",
@@ -116,6 +120,8 @@ T = {
     "row.blocked": "Specs repo: NOT COMMITTED — see the notice below",
     # Followed by the notice that set the flag.
     "row.misrooted": "Specs repo: NOT COMMITTED — SPECS_PATH is misplaced, or the run's environment no longer matches the one it recorded; see the notice below",
+    # §4 step 1's merged-branch stay; the alternation by the stay's reason, in STAY_REASONS' order (specs-git.py).
+    "row.merged-stay": "Specs repo: NOT COMMITTED — <branch> is merged into <default>, and this run's preflight stayed on it because <of the uncommitted files the notice below lists | the uncommitted paths could not be listed | git refused its switch to <default> | it stopped early before its switch>; a commit there would keep the session files off <default>, so they stay uncommitted, and the first later run whose preflight nothing keeps on <branch> leaves it for <default> before its flush and commits them there",
     # §6's push-rejected row for the session branch (§8.4); the conflict ending replaces "; a later run takes them
     # in and pushes".
     "row.session-rejected": "Specs repo: committed <sha7> (<N> files) on session/<identity> — push REJECTED: origin's session/<identity> has commits this clone lacks, pushed from another clone under the same identity; a later run takes them in and pushes",
@@ -259,7 +265,7 @@ ROWS = (
     "pushed-plugin", "pushed-default", "pushed-session", "no-identity", "session-not-run", "not-ours", "no-remote",
     "elsewhere", "remote-deleted", "origin-lacks", "refused-before", "push-refused", "scope", "replayed",
     "already-there", "moved", "rejected", "failed", "nothing", "locked", "commit-failed", "blocked", "misrooted",
-    "silent",
+    "merged-stay", "silent",
 )
 
 BLOCKS = ("g0", "g1", "g2")

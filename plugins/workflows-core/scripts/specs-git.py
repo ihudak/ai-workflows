@@ -630,6 +630,10 @@ def resolve_default(root, fetch):
 
 
 SB_SCRIPT = os.path.join(HERE, "session-branch.py")  # <the script's path> in specs-repo-git §6's session-branch remedies
+# Why the preflight stayed on a merged plugin branch (specs-repo-git §4 step 1's merged-branch stay), in the order of
+# the alternation in §6's merged plugin branch row: §3.3 G1, a status that could not run (§2.1), a switch git refused
+# (§3.4's merged-branch leave or §3.5's B2), an early stop before the switch (§1 rule 5).
+STAY_REASONS = ("g1", "unlisted", "refused", "stopped")
 
 
 def _identity(session_branch):
@@ -1345,6 +1349,20 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
             session_branch_created or (keep or {}).get("session_branch_created"))})
         return finish_end(run, "nothing", line, view)
 
+    # Step 1's merged-branch stay: where the record the run's start made holds one, outside session-branch mode, and
+    # HEAD still stands on its branch, G1's block takes its merged-branch form (§5) and, with something to stage,
+    # nothing is committed -- the merged plugin branch row, the declined append its one append (§6). Where HEAD has
+    # moved off it, the step goes on as before, the plain block repeated, since the commit runs.
+    stay = rec.get("merged_stay") if found else None
+    if stay and mode != "on" and branch == stay.get("branch"):
+        if rec.get("guard") == "G1" and view["guard_block"]:
+            view = run["view"] = dict(view, guard_block=_g1_merged(lines, view["guard_block"], branch, d["default"]))
+        if status(specs)["artifact"]:
+            why = lines.placeholder("row.merged-stay", "<of the uncommitted")
+            line = lines.fill("row.merged-stay", {"<branch>": branch, "<default>": d["default"],
+                                                  why: STAY_REASONS.index(stay.get("reason"))})
+            return finish_end(run, "merged-stay", line, view, branch=branch)
+
     # Steps 2-4: the catch-up, then the commit. R2's boundary is the first repository write either makes, and just
     # before it the record is saved at stage end -- the one kept, else a new one in place of whatever stood -- with what
     # this call was given; and again just before the commit, with what it is about to make -- outside the mode, before
@@ -1794,6 +1812,43 @@ def _g1_block(lines, specs, paths):
                              "<path list>": [", ".join(paths), " ".join(shlex.quote(p) for p in paths)]})
 
 
+def _g1_merged(lines, block, branch, default):
+    """specs-repo-git §5's G1 block on a merged plugin branch the preflight stays on (§4 step 1's merged-branch stay):
+    <block>, G1's block as rendered, its Not done and If ignored parts the g1.merged.* prose SRG gives in their place,
+    each unwrapped on its one line; its Found and Fix lines its own."""
+    v = {"<branch>": branch, "<default>": default}
+    for label, part in (("Not done:", "not_done"), ("If ignored:", "if_ignored")):
+        block = _block_part(block, label, lines.fill("g1.merged." + part, v))
+    return block
+
+
+def _held(rec, branch):
+    """Whether the record <rec> holds a merged-branch stay on <branch> (specs-repo-git §4 step 1)."""
+    return branch is not None and (rec.get("merged_stay") or {}).get("branch") == branch
+
+
+def _stay(run, branch, reason):
+    """Keep <branch> as the run's merged-branch stay, with <reason> (STAY_REASONS), save in session-branch mode, where
+    the session files never commit on HEAD (§8.2), and under misrooted, where commit-artifacts commits nothing
+    anyway."""
+    rec = run["rec"]
+    if rec.get("mode") != "on" and rec.get("specs_git") != "misrooted":
+        rec["merged_stay"] = {"branch": branch, "reason": reason}
+
+
+def _ask_stay(run, head, reason):
+    """specs-repo-git §3.3's G1, and a preflight that stops early (§1 rule 5): where HEAD stands on a plugin branch
+    <head> that is not the default branch, outside session-branch mode and never under misrooted, ask branch-merged
+    HEAD -- a read that moves nothing, which _merged reports once where it cannot answer -- and keep the stay with
+    <reason> where it answers merged. A carried stay is never cleared here: only a start that leaves the branch does."""
+    rec = run["rec"]
+    if (head is None or head == rec.get("default") or not branch_key(head, [])["plugin_branch"]
+            or rec.get("mode") == "on" or rec.get("specs_git") == "misrooted"):
+        return
+    if _merged(run, "HEAD", head)["merged"]:
+        _stay(run, head, reason)
+
+
 def _block_part(block, label, text):
     """<block> with the part <label> opens -- its line from the label on, and the indented lines that continue it --
     replaced by the label, the padding its line gives it, and <text>, unwrapped on one line."""
@@ -2049,7 +2104,7 @@ def _to_default(run, branch, field):
     B2's and B4's switch and pull are wrapped in lift and put-back (§8.3, _Session.wrap), the caller's budget checked
     before it; a second unpreserved skips the move, which returns text.lift-unpreserved in place of git's first error
     line, so the step reports it as it would a refused switch (§8.3). With no identity the move runs unwrapped
-    (§8.1)."""
+    (§8.1). A switch that leaves the branch a merged-branch stay names clears that stay (§4 step 1)."""
     rec, specs = run["rec"], run["specs"]
 
     def move():
@@ -2057,6 +2112,8 @@ def _to_default(run, branch, field):
         if r.returncode != 0:
             return _first_line(r, error=True)
         rec[field] = branch
+        if _held(rec, branch):
+            rec["merged_stay"] = None
         _save(run)
         if _pulls(rec):
             pulled = _pull_line(specs, rec["default"])
@@ -2071,7 +2128,8 @@ def _to_default(run, branch, field):
 def _leave(run, branch, test, merged_flush=False):
     """B2's action (specs-repo-git §3.5), which §3.4 also runs to leave a merged branch before its flush
     (<merged_flush>, outside session-branch mode only): _to_default, then `branch -d`. Where git refuses the switch,
-    §3.4's leave prints pre.leave-failed and returns False, its flush going on from the branch. In §3.5 a refused
+    the branch, which both read merged, is kept as the run's merged-branch stay (§4 step 1), and §3.4's leave prints
+    pre.leave-failed and returns False, its flush going on from the branch. In §3.5 a refused
     switch stops the call (rule 5's pre.stopped), SRG wording no line for it. Where §3.5 reaches this, the session files
     are still dirty only where the flush's commit was Locked or failed, and git can then refuse to carry them -- an
     index.lock refuses every switch -- or, in session-branch mode, where the overlay holds them, which _to_default's
@@ -2081,6 +2139,7 @@ def _leave(run, branch, test, merged_flush=False):
     default = rec["default"]
     why = _to_default(run, branch, "b2_left")
     if why is not None:
+        _stay(run, branch, "refused")
         if not merged_flush:
             raise NotRun("git switch %s: %s" % (default, why))
         _emit(run, lines.fill("pre.leave-failed", {"<branch>": branch, "<default>": default,
@@ -2132,8 +2191,13 @@ def _fetch(run):
             return _head_branch(specs) or sb.text(sb.git(specs, "rev-parse", "--short", "HEAD"))
 
         def switch_back():
+            here = _head_branch(specs)
             r = sb.git(specs, "switch", left, check=False)
-            return None if r.returncode == 0 else _first_line(r, error=True)
+            if r.returncode != 0:
+                return _first_line(r, error=True)
+            if _held(rec, here):  # it leaves a merged-branch stay's branch (§4 step 1)
+                rec["merged_stay"] = None
+            return None
 
         if "pre.status-failed" in rec["reported"]:
             _emit(run, run["lines"].fill("pre.rerun-stay", {"<current>": current(), "<branch>": left}))
@@ -2150,11 +2214,13 @@ def _fetch(run):
 
 def _guards(run):
     """Stage guards, specs-repo-git §3.3: the first of G0, G1 and G2 that holds prints its §5 block, saved for end to
-    repeat, and ends the preflight; G0 sets specs_git: blocked. In session-branch mode with a session branch, G2 takes
-    §5's session-branch lines, or, on the session branch itself, its own variant; with no identity, its no-identity
-    variant."""
+    repeat, and ends the preflight; G0 sets specs_git: blocked. G1 on a plugin branch asks branch-merged HEAD first
+    (_ask_stay): on a merged one, outside session-branch mode, the stay is kept and G1 prints its merged-branch form
+    (§5), the plain block saved, which end turns into that form while HEAD still stands there. In session-branch mode
+    with a session branch, G2 takes §5's session-branch lines, or, on the session branch itself, its own variant; with
+    no identity, its no-identity variant."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
-    head, found = _head_branch(specs), None
+    head, found, shown = _head_branch(specs), None, None
     if head is None:
         rec["specs_git"] = "blocked"
         found = ("G0", _g0_block(lines, specs, rec["default"]), [])
@@ -2163,6 +2229,9 @@ def _guards(run):
         other = listed["other"] if listed else []
         if other:
             found = ("G1", _g1_block(lines, specs, other), other)
+            _ask_stay(run, head, "g1")
+            if _held(rec, head):
+                shown = _g1_merged(lines, found[1], head, rec["default"])
         elif head != rec["default"] and not branch_key(head, [])["plugin_branch"]:
             values = None
             if rec["mode"] == "on" and rec["session_branch"]:
@@ -2177,7 +2246,7 @@ def _guards(run):
         return _advance(run, "flush")
     if not (rec["specs_git"] == "blocked" and found[0] != "G0"):  # a run --rerun carries blocked keeps G0's block,
         rec.update(guard=found[0], guard_block=found[1], guard_paths=found[2])  # which end repeats with its row
-    _emit(run, found[1])
+    _emit(run, shown or found[1])
     _advance(run, "done")
 
 
@@ -2315,7 +2384,8 @@ def _disposition(run):
     """Stage disposition, specs-repo-git §3.5: the first row that applies to the branch HEAD stands on. B1, B3 and a
     branch no row names stay where they are; B2 and B4 switch to the default branch -- under misrooted, they stay and
     print pre.stay instead, and where status could not run in this run (pre.status-failed in reported, which --rerun
-    carries), the dirty set unknown, they stay and print pre.stay.unlisted."""
+    carries), the dirty set unknown, they stay and print pre.stay.unlisted -- B2's branch then kept as the run's
+    merged-branch stay (§4 step 1). B2's refused switch keeps it too (_leave)."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     head, default = _head_branch(specs), rec["default"]
     if head is not None and head != default and branch_key(head, [])["plugin_branch"]:
@@ -2326,6 +2396,8 @@ def _disposition(run):
             if stay:
                 _emit(run, lines.fill(stay, {"<branch>": head, "<default>": default,
                                              lines.placeholder(stay, "<switched"): 0 if merged["merged"] else 1}))
+                if merged["merged"]:
+                    _stay(run, head, "unlisted")
             else:
                 if _pulls(rec):
                     run["budget"].check(PULL_COST)
@@ -2370,7 +2442,8 @@ def _carry(rec, old):
     <rec> -- specs_git where this one sets none, with what set it (the misrooted notice; G0's block, which _guards then
     keeps beside a block the re-run prints), the -D advisories given and the once-a-run reports printed, the branch B2
     or the merged-branch leave reported (which §3.4's loop skips for the whole run), the branch B4 left, the declined
-    paths, and the session branch's creation by a call other than the flush, which the run carries to its end (§8.2)."""
+    paths, the session branch's creation by a call other than the flush, which the run carries to its end (§8.2), and
+    the merged-branch stay (§4 step 1), which only a start that leaves its branch clears."""
     if rec["specs_git"] is None and old.get("specs_git"):
         rec["specs_git"] = old["specs_git"]
         if old["specs_git"] == "misrooted":
@@ -2380,7 +2453,7 @@ def _carry(rec, old):
                        guard_paths=list(old.get("guard_paths") or []))
     rec.update(advised_D=list(old.get("advised_D") or []), reported=list(old.get("reported") or []),
                b2_left=old.get("b2_left"), b4_left=old.get("b4_left"), declined=list(old.get("declined") or []),
-               session_branch_created=old.get("session_branch_created"))
+               session_branch_created=old.get("session_branch_created"), merged_stay=old.get("merged_stay"))
 
 
 def _queued_next(run, rec):
@@ -2401,6 +2474,17 @@ def _start_result(run, nxt, replaced, error):
             "replaced": replaced, "error": error}
 
 
+def _stop_stay(run):
+    """specs-repo-git §1 rule 5's early stop, before the switch §3.4's leave or §3.5's B2 would make: where the gate
+    passed, the default ref is known and HEAD stands on a plugin branch no stay names yet, ask branch-merged HEAD
+    (_ask_stay), so a merged one is kept as the run's merged-branch stay (§4 step 1). A stay already kept for HEAD --
+    B2's refused switch, which stops the call -- stands as it is."""
+    rec = run["rec"]
+    head = _head_branch(run["specs"]) if rec.get("gate") == "pass" and rec.get("default_ref") else None
+    if head is not None and not _held(rec, head):
+        _ask_stay(run, head, "stopped")
+
+
 def _close(run):
     """The record saved as the call returns, branch naming where HEAD then stands."""
     rec = run["rec"]
@@ -2414,9 +2498,10 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     "" meaning unset), with the run key set <keys>. A call that is not a resume prints the Environment: line and §3.1's
     notices (reads only), then saves a fresh record at stage fetch -- its first write -- and prunes; a failure before
     that save raises, so the caller exits 2 with nothing done, and after it every outcome is returned, an exception as
-    error and the pre.stopped line. The stages (START_STAGES) then run from the record's own, each saved on entering
-    it and resumable from its start. <resume> goes on with the saved stage only where state.resumable holds for this
-    call's arguments; otherwise the call runs fresh. <rerun> opens on this command's record, keeping what _carry
+    error and the pre.stopped line, after _stop_stay's ask on a plugin branch (§4 step 1's merged-branch stay). The
+    stages (START_STAGES) then run from the record's own, each saved on entering it and resumable from its start.
+    <resume> goes on with the saved stage only where state.resumable holds for this call's arguments; otherwise the
+    call runs fresh. <rerun> opens on this command's record, keeping what _carry
     keeps, and saves this call's arguments, its key set among them. A stage that hands a replay over, and a unit of
     capped calls <budget> would not hold, return next: the replay, or start --resume with the record's args. In
     session-branch mode the budget is checked before a wrapped move's lift, never between it and its put-back, so every
@@ -2472,6 +2557,10 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
         nxt = None
         try:
             _closing_put_back(run)
+        except Exception:
+            pass
+        try:
+            _stop_stay(run)
         except Exception:
             pass
         _emit(run, lines.fill("pre.stopped", {"<the error>": error}))
@@ -3163,6 +3252,32 @@ def selftest():
         tip = ref(r, S) or ""
         check(got.get("print") == [pushed_session(tip[:7], 1, 2) + "; this run created local session/ab at " + main[:7]],
               "m_created_by_lift: end's line appends it (%r)" % got)
+
+        # m_d5: in the mode the session files never commit on HEAD (§8.2), so D5 does not apply: G1 on a merged plugin
+        # branch prints the plain block, records no stay, and end commits on session/ab and pushes, as the mode does
+        r, env = mode_world("m-d5")
+        M = "prd/M-1-x"
+        r.git("switch", "-q", "-c", M)
+        r.write("specifications/PRD-M-1-x/prd.md", "m\n")
+        r.commit_all("M-1 work")
+        r.git("push", "-q", "-u", "origin", M)
+        other = clone(r, "m-d5-other")
+        other.git("merge", "-q", "--ff-only", "origin/" + M)
+        other.git("push", "-q", "origin", "main")
+        r.write("notes.md", "n\n")
+        r.write(FEED + "d.md", "d\n")
+        h = head(r)
+        plain = lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": 1, "<path list>": "notes.md"})
+        got = run_start(env)
+        check(got.get("print") == [env_line(r.path), plain] and got.get("branch") == M
+              and (record(env, "/feedback") or {}).get("merged_stay") is None,
+              "m_d5: the mode's G1 is the plain block, and no stay is recorded (%r)" % got)
+        got = end_of(env)
+        tip = ref(r, S) or ""
+        check(got.get("row") == "pushed-session" and got.get("print") == [
+                  pushed_session(tip[:7], 1, 1) + "; this run created local session/ab at " + h[:7], plain]
+              and on_origin(r, S) == tip and head(r) == h and r.git("symbolic-ref", "--short", "HEAD") == M,
+              "m_d5: end commits on session/ab and pushes, HEAD unmoved (%r)" % got)
 
         # m_end_pushed
         r, env = mode_world("m-end-pushed")
@@ -4118,7 +4233,7 @@ def selftest():
               "l_pins_bite: an addressing §3 template is pinned to addressing.md (%r)" % got)
 
         # l_ids
-        ids = ["g0", "g1", "g2"]
+        ids = ["g0", "g1", "g2", "g1.merged.not_done", "g1.merged.if_ignored", "row.merged-stay"]
         ids += ["g2.%s.%s" % (v, part) for v in ("session", "self", "no-identity", "implement")
                 for part in ("not_done", "fix", "if_ignored")]
         ids += ["row.remote-deleted.default-tail", "row.scope.merge", "row.scope.no-file", "row.scope.hook", "row.scope.branch-path",
@@ -4146,9 +4261,10 @@ def selftest():
                 "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
         missing = [i for i in ids if i not in T]
         check(not missing, "l_ids: every id the interface names is a template (missing %r)" % missing)
-        check(len(lines.ROWS) == 24 and lines.ROWS[0] == "pushed-plugin" and lines.ROWS[-1] == "silent"
+        check(len(lines.ROWS) == 25 and lines.ROWS[0] == "pushed-plugin" and lines.ROWS[-1] == "silent"
+              and lines.ROWS[-3:-1] == ("misrooted", "merged-stay")
               and all(("row." + r in T) == (r != "silent") for r in lines.ROWS),
-              "l_ids: 24 rows, each a row.<id> template but silent (%r)" % (lines.ROWS,))
+              "l_ids: 25 rows in §6's order, each a row.<id> template but silent (%r)" % (lines.ROWS,))
         check(all("\n" not in t for k, t in T.items() if k not in lines.BLOCKS),
               "l_ids: every template but the three blocks is one line")
 
@@ -4270,6 +4386,17 @@ def selftest():
         got = lines.fill("pre.stay", {"<branch>": "prd/A-1-x", "<default>": "main", span("pre.stay", "<switched"): 0})
         check(got.endswith("(it would have switched to main and deleted it, as it is merged)"),
               "l_fill_alternation: the stay line's first alternative (%r)" % got)
+        why = span("row.merged-stay", "<of the uncommitted")
+        got = [lines.fill("row.merged-stay", {"<branch>": "prd/A-1-x", "<default>": "main", why: k}) for k in range(4)]
+        check(got[0].startswith("Specs repo: NOT COMMITTED — prd/A-1-x is merged into main, and this run's preflight "
+                                "stayed on it because of the uncommitted files the notice below lists;")
+              and "stayed on it because the uncommitted paths could not be listed;" in got[1]
+              and "stayed on it because git refused its switch to main;" in got[2]
+              and "stayed on it because it stopped early before its switch;" in got[3]
+              and all(x.endswith("leaves it for main before its flush and commits them there") for x in got)
+              and raises_naming("no alternative 4", lines.fill, "row.merged-stay",
+                                {"<branch>": "b", "<default>": "main", why: 4}),
+              "l_fill_alternation: the merged-branch stay row's four reasons, <default> filled inside one (%r)" % got)
         got = lines.fill("root.one-line", dict(one, **{span("root.one-line", "<is itself"): 2, "<key>": "A-1"}))
         check("which is itself a specs folder, asserting key A-1 — every folder" in got,
               "l_fill_alternation: the signal alternation's third alternative fills <key> (%r)" % got)
@@ -6510,6 +6637,29 @@ def selftest():
                     "own instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true"
                     % (sha7, specs))
 
+        # D5's pieces (specs-repo-git §4 step 1's merged-branch stay): the row, G1's plain block and its merged-branch
+        # form (§5), and the stay the record holds.
+        STAYED = lines.placeholder("row.merged-stay", "<of the uncommitted")
+
+        def stay_row(branch, why):
+            return lines.fill("row.merged-stay", {"<branch>": branch, "<default>": "main", STAYED: why})
+
+        def g1_plain(r, paths):
+            return lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": len(paths),
+                                     "<path list>": [", ".join(paths), " ".join(shlex.quote(p) for p in paths)]})
+
+        def g1_on_merged(r, paths, branch):
+            block = g1_plain(r, paths)
+            for label, part in (("Not done:", "not_done"), ("If ignored:", "if_ignored")):
+                block = _block_part(block, label, lines.fill("g1.merged." + part, {"<branch>": branch, "<default>": "main"}))
+            return block
+
+        def stay_of(env, command="/feedback"):
+            return (record(env, command) or {}).get("merged_stay")
+
+        def untracked(r, path):
+            return "?? " + path in r.git("status", "--porcelain", "--untracked-files=all")
+
         # t_clean
         r, env = world(tmp, "t-clean")
         got = run_start(env, "/feedback")
@@ -6583,7 +6733,8 @@ def selftest():
         rec = record(env, "/feedback") or {}
         check(rec.get("guard_block") == block and rec.get("stage") == "done", "t_g0: the block saved for end (%r)" % rec)
 
-        # t_g1
+        # t_g1: a plugin branch cut at main's tip holds nothing of its own, so branch-merged reads it merged and G1 takes
+        # its merged-branch form (§5); t_d5_b3_g1 below has the plain block on an unmerged branch
         r, env = world(tmp, "t-g1")
         r.git("switch", "-q", "-c", "prd/ACME-9-q")
         r.write("notes.md", "n\n")
@@ -6594,13 +6745,16 @@ def selftest():
         block = lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": 2,
                                   "<path list>": ["my notes.md, notes.md", "'my notes.md' notes.md"]})
         shown = (got.get("print") or ["", ""])[-1]
-        check(got.get("print") == [env_line(r.path), block] and got.get("guard") == "G1" and got.get("specs_git") is None
-              and got.get("branch") == "prd/ACME-9-q" and head(r) == h
+        check(got.get("print") == [env_line(r.path), g1_on_merged(r, ["my notes.md", "notes.md"], "prd/ACME-9-q")]
+              and block == g1_plain(r, ["my notes.md", "notes.md"]) and got.get("guard") == "G1"
+              and got.get("specs_git") is None and got.get("branch") == "prd/ACME-9-q" and head(r) == h
               and "?? " + RESUME in r.git("status", "--porcelain", "--untracked-files=all")
               and "artifact area: my notes.md, notes.md\n" in shown and "add 'my notes.md' notes.md &&" in shown,
               "t_g1: the block lists the paths, comma-separated, then shell-quoted; no flush, no switch (%r)" % got)
-        check((record(env, "/feedback") or {}).get("guard_paths") == ["my notes.md", "notes.md"],
-              "t_g1: the paths saved as guard_paths")
+        rec = record(env, "/feedback") or {}
+        check(rec.get("guard_paths") == ["my notes.md", "notes.md"] and rec.get("guard_block") == block
+              and rec.get("merged_stay") == {"branch": "prd/ACME-9-q", "reason": "g1"},
+              "t_g1: the paths saved as guard_paths, the plain block saved, the stay recorded (%r)" % rec)
 
         # t_g2, t_g2_implement
         r, env = world(tmp, "t-g2")
@@ -7515,6 +7669,210 @@ def selftest():
               and subject(r) == SUBJECT % ("NOISSUE", "/feedback") and on_origin(r) == head(r)
               and (record(env, "/feedback") or {}).get("stage") == "settle",
               "t_error_after_write: exit-0 result, error set, the commit pushed, the record saved (%r)" % got)
+
+        # D5: no terminal commit on a merged plugin branch the preflight stayed on (specs-repo-git §4 step 1's
+        # merged-branch stay). A is fast-forward-merged into origin's main; notes.md is not the plugin's, so G1 fires.
+        def merged_world(name):
+            r, env = world(tmp, name)
+            ff_merged(r, name + "-other", A, "specifications/PRD-A-1-x/prd.md")
+            r.write("notes.md", "n\n")
+            r.write(RES_A, "r\n")
+            return r, env
+
+        def refused_world(name):
+            """A merged into origin's main by fast-forward and deleted there, r's main behind it; RES_A differs between
+            r's main and A and is dirty, so git refuses the merged-branch leave's switch (t_merged_leave)."""
+            r, env = world(tmp, name)
+            r.write(RES_A, "main's\n")
+            r.commit_all("NOISSUE a resume pointer on main")
+            r.git("push", "-q", "origin", "main")
+            r.git("switch", "-q", "-c", A)
+            r.write(RES_A, "the branch's\n")
+            r.commit_all("A-1 work")
+            r.git("push", "-q", "-u", "origin", A)
+            o = clone(r, name + "-other")
+            o.git("merge", "-q", "--ff-only", "origin/" + A)
+            o.git("push", "-q", "origin", "main")
+            o.git("push", "-q", "origin", "--delete", A)
+            r.write(RES_A, "dirty\n")
+            return r, env
+
+        FEED_A = "specifications/PRD-A-1-x/dev-workflows/feedback/f.md"
+
+        # t_d5_g1: start prints G1's merged-branch form and records the stay; end prints the row, then that form, and
+        # commits nothing -- HEAD and the branch unmoved, the branch still merged
+        r, env = merged_world("t-d5-g1")
+        h = head(r)
+        variant = g1_on_merged(r, ["notes.md"], A)
+        got = run_start(env, "/feedback")
+        rec = record(env, "/feedback") or {}
+        check(got.get("print") == [env_line(r.path), variant] and got.get("guard") == "G1" and got.get("branch") == A
+              and rec.get("merged_stay") == {"branch": A, "reason": "g1"} and rec.get("guard_block") == g1_plain(r, ["notes.md"])
+              and "will NOT be committed" in variant and "WILL still be committed" not in variant,
+              "t_d5_g1: G1's merged-branch form printed, the stay recorded, the plain block saved (%r)" % got)
+        got = run_end(env, "/feedback")
+        check(got["_rc"] == 0 and got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 0), variant]
+              and got.get("line") == stay_row(A, 0) and got.get("sha7") is None and got.get("pushed") is False
+              and got.get("branch") == A and head(r) == h and rev(r, A) == h and r.git("symbolic-ref", "--short", "HEAD") == A
+              and untracked(r, RES_A) and branch_merged(r.path, "HEAD", "origin/main")["merged"]
+              and record(env, "/feedback") is None,
+              "t_d5_g1: end prints the row, then G1's merged-branch form, and commits nothing (%r)" % got)
+
+        # t_d5_next_run: notes.md cleaned, the next run's preflight leaves the merged branch before its flush (§3.4)
+        # and lands the files on main, pushed
+        os.remove(os.path.join(r.path, "notes.md"))
+        got = run_start(env, "/feedback")
+        check(got.get("print") == [env_line(r.path), "Specs preflight: deleted merged prd/A-1-x"] and got.get("branch") == "main"
+              and rev(r, A) is None and subject(r) == SUBJECT % ("NOISSUE", "/feedback") and on_origin(r) == head(r)
+              and r.git("show", "--name-only", "--format=", "HEAD") == RES_A and stay_of(env) is None,
+              "t_d5_next_run: the next run leaves the branch and commits the files on main (%r)" % got)
+
+        # t_d5_status_failed (in process): status cannot run at start, so B2 stays (pre.stay.unlisted) and the stay is
+        # recorded; end, whose status runs, skips with no block, since no guard fired
+        r, env = merged_world("t-d5-status")
+        h = head(r)
+        g["status"] = broken_status
+        try:
+            with in_env(env):
+                got = start(r.path, "/feedback")
+        finally:
+            g["status"] = real_status
+        check(got.get("branch") == A and got.get("guard") is None and got.get("error") is None
+              and stay_of(env) == {"branch": A, "reason": "unlisted"},
+              "t_d5_status_failed: B2 stays, the stay recorded (%r)" % got)
+        got = run_end(env, "/feedback")
+        check(got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 1)] and head(r) == h
+              and untracked(r, RES_A), "t_d5_status_failed: end skips (%r)" % got)
+
+        # t_d5_leave_refused: git refuses the merged-branch leave's switch, so the flush commits on the branch with the
+        # cherry-pick line; a --rerun that stays carries the stay; a session file written after it is not committed
+        r, env = refused_world("t-d5-refused")
+        got = run_start(env, "/feedback", "--key", "A-1")
+        shown = got.get("print") or []
+        flushed = head(r)
+        check(len(shown) == 3 and shown[1].startswith("Specs preflight: could not switch from merged prd/A-1-x to main (")
+              and shown[2] == lines.fill("pre.merged-flush", {"<branch>": A, "<sha7>": flushed[:7], "<default>": "main",
+                                                              "<SPECS_PATH>": r.path})
+              and got.get("branch") == A and stay_of(env) == {"branch": A, "reason": "refused"},
+              "t_d5_leave_refused: the flush on the branch, the cherry-pick line, the stay recorded (%r)" % got)
+        got = run_start(env, "/feedback", "--rerun", "--key", "A-1")
+        check(got.get("branch") == A and stay_of(env) == {"branch": A, "reason": "refused"},
+              "t_d5_leave_refused: a --rerun that stays on the branch carries the stay (%r)" % got)
+        r.write(FEED_A, "f\n")
+        got = run_end(env, "/feedback")
+        check(got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 2)] and head(r) == flushed
+              and untracked(r, FEED_A),
+              "t_d5_leave_refused: a session file written after the start is not committed (%r)" % got)
+        # with no key naming it, B4 leaves the branch the flush made unmerged, and that clears the stay
+        r, env = refused_world("t-d5-refused-b4")
+        got = run_start(env, "/feedback")
+        check(got.get("branch") == "main" and got.get("b4_left") == A and stay_of(env) is None,
+              "t_d5_leave_refused: a start that leaves the branch clears the stay (%r)" % got)
+
+        # t_d5_resume: --budget 0 splits that start across calls; the stay one call records stands through the next
+        r, env = world(tmp, "t-d5-resume")
+        B = "spec/B-1-y"
+        r.git("switch", "-q", "-c", B)
+        r.git("push", "-q", "-u", "origin", B)
+        session_commit(r, B, "PRD-B-1-y")
+        r.git("switch", "-q", "main")
+        r.write(RES_A, "main's\n")
+        r.commit_all("NOISSUE a resume pointer on main")
+        r.git("push", "-q", "origin", "main")
+        r.git("switch", "-q", "-c", A)
+        r.write(RES_A, "the branch's\n")
+        r.commit_all("A-1 work")
+        r.git("push", "-q", "-u", "origin", A)
+        o = clone(r, "t-d5-resume-other")
+        o.git("merge", "-q", "--ff-only", "origin/" + A)
+        o.git("push", "-q", "origin", "main")
+        o.git("push", "-q", "origin", "--delete", A)
+        r.write(RES_A, "dirty\n")
+        calls = follow(run_start(env, "/feedback", "--key", "A-1", "--budget", "0"), env)
+        shown = [line for c in calls for line in (c.get("print") or [])]
+        check(len(calls) == 3 and calls[-1].get("next") is None and calls[-1].get("branch") == A
+              and "Specs preflight: pushed 1 session-file commit(s) left on spec/B-1-y" in shown
+              and stay_of(env) == {"branch": A, "reason": "refused"},
+              "t_d5_resume: the stay recorded in one call stands through the resume after it (%r)" % shown)
+
+        # t_d5_rerun_clears: a --rerun whose preflight leaves the merged branch clears the stay its earlier start recorded
+        r, env = merged_world("t-d5-rerun")
+        run_start(env, "/feedback")
+        os.remove(os.path.join(r.path, "notes.md"))
+        got = run_start(env, "/feedback", "--rerun")
+        check(got.get("branch") == "main" and got.get("b2_left") == A and stay_of(env) is None,
+              "t_d5_rerun_clears: the re-run leaves the branch and clears the stay (%r)" % got)
+        got = run_end(env, "/feedback")
+        check(got.get("row") == "nothing", "t_d5_rerun_clears: end goes on as before (%r)" % got)
+
+        # t_d5_b3_g1: an unmerged branch a key of the run names (B3), with G1: the plain block, no stay, and end commits
+        # on it as before
+        r, env = world(tmp, "t-d5-b3")
+        r.git("switch", "-q", "-c", PLUGIN)
+        r.write("specifications/PRD-ACME-1-x/ard.md", "a\n")
+        r.commit_all("ACME-1 Add the ARD")
+        r.write("notes.md", "n\n")
+        r.write(RESUME, "r\n")
+        plain = g1_plain(r, ["notes.md"])
+        got = run_start(env, "/feedback", "--key", "ACME-1")
+        check(got.get("print") == [env_line(r.path), plain] and got.get("branch") == PLUGIN and stay_of(env) is None,
+              "t_d5_b3_g1: G1's plain block, no stay (%r)" % got)
+        got = run_end(env, "/feedback", "--commit-key", "ACME-1")
+        check(got.get("row") not in (None, "merged-stay") and (got.get("print") or [""])[-1] == plain
+              and got.get("branch") == PLUGIN and got.get("sha7") == head(r)[:7]
+              and subject(r) == SUBJECT % ("ACME-1", "/feedback") and r.git("show", "--name-only", "--format=", "HEAD") == RESUME,
+              "t_d5_b3_g1: end commits on the branch as before (%r)" % got)
+
+        # t_d5_moved: HEAD moved off the merged branch before end (a new plugin branch, as a handoff cuts one): end
+        # commits there as before, and repeats G1's plain block, since the commit runs
+        r, env = merged_world("t-d5-moved")
+        run_start(env, "/feedback")
+        r.git("switch", "-q", "-c", "prd/A-1-y")
+        got = run_end(env, "/feedback")
+        check(got.get("row") not in (None, "merged-stay") and got.get("branch") == "prd/A-1-y"
+              and (got.get("print") or [""])[-1] == g1_plain(r, ["notes.md"]) and got.get("sha7") == head(r)[:7]
+              and r.git("show", "--name-only", "--format=", "HEAD") == RES_A and not untracked(r, RES_A),
+              "t_d5_moved: end commits where HEAD now stands, with G1's plain block (%r)" % got)
+
+        # t_d5_stopped (in process): the preflight stops early on the merged branch before its switch; it asks
+        # branch-merged then, and the stay is recorded
+        r, env = world(tmp, "t-d5-stopped")
+        ff_merged(r, "t-d5-stopped-other", A, "specifications/PRD-A-1-x/prd.md")
+        g["_settle"] = boom
+        try:
+            with in_env(env):
+                got = start(r.path, "/feedback")
+        finally:
+            g["_settle"] = real_settle
+        check(got.get("error") == "RuntimeError: boom" and got.get("branch") == A
+              and stay_of(env) == {"branch": A, "reason": "stopped"},
+              "t_d5_stopped: the stop on the merged branch records the stay (%r)" % got)
+        r.write(RES_A, "r\n")
+        got = run_end(env, "/feedback")
+        check(got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 3)] and untracked(r, RES_A),
+              "t_d5_stopped: end skips (%r)" % got)
+
+        # t_d5_nothing: the stay recorded and nothing dirty at end: step 3's nothing to commit line stands
+        r, env = merged_world("t-d5-nothing")
+        run_start(env, "/feedback")
+        os.remove(os.path.join(r.path, RES_A))
+        got = run_end(env, "/feedback")
+        check(got.get("row") == "nothing" and got.get("print") == ["Specs repo: no session artifacts to commit",
+                                                                  g1_on_merged(r, ["notes.md"], A)],
+              "t_d5_nothing: nothing to stage, nothing to commit (%r)" % got)
+
+        # t_d5_declined: a recorded declined path is named on the row, before G1's block
+        r, env = merged_world("t-d5-declined")
+        run_start(env, "/feedback")
+        ARD_A = "specifications/PRD-A-1-x/ard.md"
+        r.write(ARD_A, "a\n")
+        got = cli("declined", "--command", "/feedback", "--path", ARD_A, env=env)
+        check(got["_rc"] == 0, "t_d5_declined: the declined call ran (%r)" % got)
+        got = run_end(env, "/feedback")
+        check(got.get("row") == "merged-stay"
+              and got.get("print") == [stay_row(A, 0) + "; the deliverable at %s remains uncommitted, as you asked" % ARD_A,
+                                       g1_on_merged(r, ["notes.md"], A)] and untracked(r, ARD_A) and untracked(r, RES_A),
+              "t_d5_declined: the row takes the declined append (%r)" % got)
 
     def scenarios_skill(tmp):
         """The specs-git skill's text, held to the CLI it drives, to the loader that routes to it and to the run-key-set

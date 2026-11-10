@@ -688,6 +688,90 @@ The run key set is every key the run is scoped to — the identity each of this 
 - [ ] **Step 9: Gate.** The chain. Expected: `EXIT=0` (check 4 finds the row, check 9 reads "three bundled skills", check 6, check 25, the mermaid gate parses the new node, `validate-catalog.py` finds the new `paths:` globs live).
 - [ ] **Step 10: Commit** — `docs: the specs-git skill in the docs tree and the rules; the claim-expiry sweep`
 
+### Task 10b: D5 — no terminal commit on a merged plugin branch the preflight stayed on (added 2026-11-10)
+
+Added to the plan after Task 10, by the maintainer's decision D5 (2026-11-10). Append this task, as written here, to the plan file `docs/superpowers/plans/2026-11-09-git-g1-part2a-start-end.md` under a heading `### Task 10b: D5 — no terminal commit on a merged plugin branch the preflight stayed on (added 2026-11-10)`, after Task 10, in the same commit as the work.
+
+#### The defect
+
+The preflight sometimes has to stay on a plugin branch it would otherwise leave:
+
+- §3.3 G1 fires, because dirty OTHER paths end the preflight before §3.4 and §3.5;
+- `status` could not run (§2.1), so §3.5 switches nothing that run;
+- git refuses the switch of §3.4's merged-branch leave or of §3.5's B2;
+- the preflight stops early before reaching that switch (§1 rule 5).
+
+Where that branch is **merged** into the default branch (`branch-merged` reads it merged), the run's terminal commit (`end`, SRG §4) lands the run's session files on it. That commit makes every later `branch-merged` test read the branch unmerged (§3.5), so B2 never fires again. The commit also sits on a branch whose remote the merge deleted, which §4 step 5 never pushes, so the files are stranded. SRG §3.4's merged-branch leave exists to stop exactly this at the flush, and the terminal commit has no such guard.
+
+#### The decision (D5, scoped by the maintainer)
+
+Where the run's state record shows that the preflight stayed on a plugin branch that `branch-merged` read merged, and HEAD at `end` is still that branch, `end` commits nothing:
+
+- it prints one new outcome line;
+- the session files stay dirty;
+- the next run's preflight, once nothing stops it, leaves the merged branch before its flush (§3.4's existing merged-branch leave) and commits them on the default branch.
+
+The **other-key case is out of scope.** That is a stay on an unmerged plugin branch that no key of the run names. It goes to `docs/superpowers/to-fix.md` for the batch right after 2a; see the last section. Do not change the flush's own rule that leftovers are committed "onto the current branch (they belong to the run that wrote them)".
+
+#### What to build
+
+1. **Record the stay at `start`.**
+   - Wherever the preflight ends, by any path, with HEAD on a plugin branch (§2.2's alternation) that it did not leave, and `branch-merged HEAD` reads merged, save in the record which branch it stayed on and why.
+   - The reasons are: G1; an unknown dirty set; a refused switch (§3.4's leave or B2's); a stop before the switch.
+   - In the G1 case the preflight ends at stage `guards`. Ask `branch-merged HEAD` read-only before it returns. Where that ask exits 2, record no stay, and print §3.5's `pre.merged-unknown` line once (the `reported` list).
+   - Choose the record field's name and shape, add it to `specs_git_state.FIELDS`, and carry it across `--resume` and `--rerun`.
+   - A later `start` in the run that does leave the branch clears it.
+2. **Skip at `end`.**
+   - In SRG §4 step 1's order, after the flags and before staging: where the record holds such a stay and HEAD is still that branch, print the new row and commit nothing.
+   - Where HEAD has moved (the run's own handoff cut or switched to another branch), commit as before. The commit lands where §4.1 says.
+   - The new row is a §6 row. Write its wording into SRG §6 first, as one unwrapped line, then pin it as a template in `specs_git_lines.py` and add its id to `ROWS` in §6's order. It must name:
+     - the branch;
+     - that it is merged into `<default>`;
+     - why the preflight stayed (one alternation over the four reasons);
+     - that the session files stay uncommitted;
+     - that the next run's preflight leaves the branch and commits them on `<default>`.
+   - It takes the appends §6 attaches to "whichever row it is", where they apply. The declined append applies, since the deliverable is uncommitted too. Say so in SRG.
+   - The guard block it repeats (G1's) follows it, as §6 says for any row.
+   - The record is removed as for any row's line.
+3. **Make SRG say what the code does.**
+   - §4 step 1 (or the step you place the test in): the skip.
+   - §4.1's lists of where the commit lands: the merged-branch stay now lands nowhere.
+   - §3.4's merged-branch leave paragraph: one sentence saying the terminal commit skips where the preflight stayed on a merged branch, so the next run's leave finds the files still dirty.
+   - The banners and §7's state-record paragraph, if they list the record's contents.
+   - Sweep the subject (refinements 6 and 8) for every statement of where the terminal commit lands, or that it commits on the branch the preflight stayed on. The places to check are `plugins/workflows-core/references/`, `phase-handoff.md`'s declined row and branch-check text, `plugins/*/docs/` (the `environment.md` pages, the `security-workflows` workflow page), `.claude/rules/workflows-core-git.md` and `docs/maintainers/rationale.md`. Give the before/after counts.
+4. **Session-branch mode.** In the mode the session files never commit on HEAD (§8.2), so this rule does not apply there. Say so in the same SRG sentence, and test that the mode is unaffected.
+
+#### Tests (selftest, each one failing first)
+
+- **G1 on a merged plugin branch** (a fast-forward-merged `prd/A-1-x`, a dirty `notes.md`, and a dirty session file): `start` prints G1's block and records the stay. `end` prints the new row, then G1's block, and commits nothing. HEAD and the branch are unmoved, and `branch-merged` still reads it merged.
+- **The same with `status` failing at start** (injected in process, as `t_status_failed_stay` does): the stay is recorded and `end` skips.
+- **The merged-branch leave's switch refused** (`resume.md` differs between the branches): `start` flushes on the branch as SRG says (the existing cherry-pick line). A new session file written after that is then not committed by `end`, which prints the new row.
+- **An unmerged keyed branch (B3) with G1:** `end` commits on it as before. D5 does not fire.
+- **HEAD moved before `end`** (switch to a new plugin branch after `start`): `end` commits there as before.
+- **The next run:** after the skip, with `notes.md` cleaned, a new `start` leaves the merged branch (the existing leave), flushes on `main` and pushes. The files land on `main`.
+- **The declined append:** a recorded declined path is named on the new row.
+- **Session-branch mode:** the same G1-on-merged-branch world in the mode gives the mode's usual outcome. No D5 row.
+- **Mutants:** dropping the HEAD-still-there test, or the merged test, fails a check.
+
+#### To-fix entry (in this task's commit)
+
+Add to `docs/superpowers/to-fix.md`, under a "Design-level" heading or a new "From GIT-G1 Part 2a" heading, an item for the other-key case. Give it an ID such as STAY-2, its owner (`workflows-core`, SRG §3.4 and §4) and these points:
+
+- **The case.** The preflight had to stay on an unmerged plugin branch that no key of the run names. The causes are G1, a refused switch, an unknown dirty set, or a stop before the switch. The run's terminal commit then lands its session files on that branch, and §4 step 5 pushes them into that branch's pull request.
+- **Why it isn't simple.** `end` could skip, but the next run's flush (§3.4) commits leftovers "onto the current branch (they belong to the run that wrote them)". That rule is right for an earlier run that worked on that branch, and wrong for a run that only stayed on it. Fixing it means attributing leftovers to the run, or the key, that wrote them.
+- **Priority.** The maintainer, 2026-11-10: "make sure we fix that shortly after". It goes into the batch right after 2a.
+- **Evidence.** The 2a review of Task 7 (fix round 3), and the D5 decision.
+
+#### Constraints
+
+- **Global Constraints:** the plan's Global Constraints apply, as do the instruction files under this workspace.
+- **Wording:** every printed line is a pinned template, worded in SRG first.
+- **Exit 2:** exit 2 happens only before the first write.
+- **Session variable:** no `$` before the session variable under plugin `commands/`, `agents/`, `references/`, `hooks/` and `skills/`.
+- **Budgets:** rules files stay under 20,000 characters and `CLAUDE.md` under 36,000.
+- **Plugins:** only `workflows-core` changes, plus a `docs/` page of another plugin where the sweep finds a falsified claim. Any such plugin already ships a docs patch in Task 11; name it in your report.
+- **Before committing:** run `specs-git.py --selftest`, `session-branch.py --selftest`, `reference-parts.py generate && check-parts && check-citations && check-branch-check`, then the full gate chain (`EXIT=0`).
+
 ### Task 11: Release
 
 **Files:** Modify `plugins/workflows-core/.claude-plugin/plugin.json` and `CHANGELOG.md`; the same pair for each plugin Task 10 changed a page of (`security-workflows`, `dev-workflows`, `docs-workflows`, `guideline-reviewers`, `product-workflows`); `.claude-plugin/marketplace.json` (each released plugin's entry; descriptions unchanged); `.claude/rules/plugin-updates-coupling.md`; `docs/superpowers/to-fix.md` (PR10); `docs/superpowers/to-test-on-real-project.md`.

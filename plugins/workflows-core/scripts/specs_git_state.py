@@ -12,7 +12,11 @@ branches whose push origin rejected as non-fast-forward, each {branch, set_upstr
 the run stood on then; budget is the last start call's --budget where it was not the default, which the start --resume
 a budget stop or a replay names repeats, and which resumable's argument test never reads; reported holds each
 once-a-run report start printed (pre.merged-unknown and pre.scope-failed with their branch, pre.status-failed), so a
-resume or a --rerun never prints one again.
+resume or a --rerun never prints one again; merged_stay is null, or {branch, reason}: the plugin branch the preflight
+ended on without leaving it, which branch-merged read merged there, and why it stayed -- g1, unlisted (status could not
+run), refused (git refused the merged-branch leave's switch or B2's) or stopped (an early stop before the switch) --
+which end reads to commit nothing while HEAD still stands on it, a --rerun carries, and a start that leaves the branch
+clears (specs-repo-git §4 step 1's merged-branch stay).
 """
 
 import calendar
@@ -58,6 +62,7 @@ FIELDS = {
     "session_branch_created": None,
     "b2_left": None,
     "b4_left": None,
+    "merged_stay": None,  # {branch, reason}: the merged plugin branch the preflight stayed on, and why
     "branch": None,  # the branch HEAD stands on when a start call returns
     "advised_D": [],
     "reported": [],  # start's once-a-run reports printed: "<template id>[ <branch>]"
