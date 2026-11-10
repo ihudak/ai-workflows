@@ -463,7 +463,7 @@ stays where it is. The stop line is:
 
 A conversation resumed in another container — `claude --resume`, a continuation — goes on against whatever `$SPECS_PATH` and `$REPOS_PATH` name there, and only the two commands §6 serves keep a record to compare it with. So every run prints its environment once, at its start, and `env-check` compares the environment it stands in with that line before the run writes into the specs repository. Prompt-free, as `workflows-core:specs-repo-git`'s two entry points are (its §1 rule 7): a question at the first write would come after the work, and the operator re-runs where the run started instead.
 
-**The line.** `specs-preflight` (`workflows-core:specs-repo-git` §3) prints, on every run and before its first act, what this one Bash call prints:
+**The line.** `specs-preflight` (`workflows-core:specs-repo-git` §3) prints, on every run and before its first act, what this one Bash call prints, which `scripts/specs-git.py` runs as written — its selftest holds the two equal:
 
 ```bash
 printf 'Environment: SPECS_PATH=%s (origin %s), REPOS_PATH=%s\n' \

@@ -148,12 +148,6 @@ Found by the live runs that verified dev-workflows 4.32.0 (`docs/superpowers/ver
 
 Found by the third round of live checks on the e2e copies, `docs/superpowers/verification/2026-11-04-live-checks.md`; each item names the run that found it. Line numbers are at `4e8705c6`.
 
-- **LC31 — lines the run must print from a rule it read earlier are dropped (R1, R2, S5a, S5b; LC28's class).**
-  - LC28's line, `Specs preflight: created local session/<identity> at <base short sha>…` (`plugins/workflows-core/references/specs-repo-git.md:442`), was printed in R2c but not in R1, although R1's script returned `created: true`.
-  - G1's four-part notice (`specs-repo-git` §5) is due both at the point of detection and in the run's last printed output. In R2, S5a and S5b it was not printed at detection: each run put it into its thinking there. Each printed it in full only at the end, after its `Specs repo:` line.
-
-  None of these lines comes out of what the run executes; each rests on the run remembering a rule. **Fix direction:** the script or step that decides a line prints it, and the run copies that output into its text verbatim. Population: every command that writes into `$SPECS_PATH`, for the preflight's lines. **Taken up by GIT-G1** (2026-11-08): `docs/superpowers/specs/2026-11-08-git-g1-shared-specs-git-design.md` §5.1 has the start call print the session branch's creation line and each guard's notice as script output. (`/specify`'s Final report, the third case, is fixed by its `### Run details` template, product-workflows.)
-
 ## From the 2026-10-26 feature-gaps review — any machine
 
 Decisions on gaps `docs/superpowers/reviews/2026-10-26-feature-gaps-review.md` found, from the decisions list at the end of `docs/superpowers/reviews/2026-10-26-fix-batches.md`, recorded by batches B29 and B30. The decisions that were "run it live" — VU-G2, DOC-D-G4, BRD-G2 and BRD-G3 — are in `docs/superpowers/to-test-on-real-project.md`, since they are checks to run and not defects.

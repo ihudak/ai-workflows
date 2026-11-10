@@ -7516,6 +7516,115 @@ def selftest():
               and (record(env, "/feedback") or {}).get("stage") == "settle",
               "t_error_after_write: exit-0 result, error set, the commit pushed, the record saved (%r)" % got)
 
+    def scenarios_skill(tmp):
+        """The specs-git skill's text, held to the CLI it drives, to the loader that routes to it and to the run-key-set
+        file both name; and the session variable, never written with a $ where checks 5 and 9 would read it as one."""
+        def read(*parts):
+            try:
+                with open(os.path.join(HERE, "..", *parts), encoding="utf-8") as fh:
+                    return fh.read()
+            except OSError:  # a missing file fails the checks that read it, never the whole selftest
+                return ""
+
+        skill = read("skills", "specs-git", "SKILL.md")
+        loader = read("skills", "reference", "SKILL.md")
+        option = re.compile(r"(?<![\w-])--[a-z][a-z0-9-]*")
+
+        def accepted(*sub):
+            """The options `specs-git.py [<sub>] --help` lists, as a user meets the parser."""
+            got = cli(*(sub + ("--help",)))
+            return got["_rc"], got.get("_stdout", ""), set(option.findall(got.get("_stdout", "")))
+
+        rc, top_help, top = accepted()
+        listed = re.search(r"\{([a-z,-]+)\}", top_help)
+        subcommands = set(listed.group(1).split(",")) if listed else set()
+        subs = {s: accepted(s)[2] for s in ("start", "end", "declined")}
+
+        # The one option the skill names that is no option of this script: /docs-brand's, where it says that run calls
+        # none of this.
+        other = "started `--inline`"
+
+        def skill_problems(text):
+            problems = []
+            if text.count(other) != 1:
+                problems.append("the skill names /docs-brand's --inline %d time(s), not once" % text.count(other))
+            union = top | subs["start"] | subs["end"] | subs["declined"]
+            for o in sorted(set(option.findall(text.replace(other, ""))) - union):
+                problems.append("%s is no option of specs-git.py, or of its start, end or declined" % o)
+            for o, where in re.findall(r"^- `(--[a-z][a-z0-9-]*)[^`]*` \((start and end|start|end)\)", text, re.M):
+                for s in where.split(" and "):
+                    if o not in subs[s]:
+                        problems.append("%s, named for %s, is no option of %s" % (o, s, s))
+            for call in re.findall(r'specs-git\.py" declined ([^`]*)`', text):
+                for o in sorted(set(option.findall(call)) - subs["declined"]):
+                    problems.append("%s, in the declined call, is no option of declined" % o)
+            return problems
+
+        # k_skill_options
+        got = skill_problems(skill)
+        check(rc == 0 and {"start", "end", "declined"} <= subcommands and "--specs" in top
+              and all("--command" in subs[s] for s in subs) and all("--resume" in subs[s] for s in ("start", "end"))
+              and got == [], "k_skill_options: every option the skill names is the CLI's, where it names it (%r, %r)"
+              % (sorted(subcommands), got))
+        bites = ((skill + "\n`--no-such-option`\n", "--no-such-option is no option"),
+                 (skill.replace("- `--no-preflight` (end)", "- `--no-preflight` (start)"), "--no-preflight, named for start"),
+                 (skill.replace(other, "started `--inline-x`"), "--inline"),
+                 (skill.replace("declined --command /<name> --path", "declined --command /<name> --paths"),
+                  "--paths, in the declined call"))
+        for text, want in bites:
+            got = skill_problems(text)
+            check(any(want in p for p in got), "k_skill_options: a skill naming the wrong option fails (%s: %r)" % (want, got))
+
+        # k_loader_routes
+        para = next((p for p in loader.split("\n\n") if "workflows-core:specs-git" in p), "")
+        front = loader.split("---", 2)[1] if loader.startswith("---") else ""
+        tools = re.search(r"^allowed-tools:(.*)$", front, re.M)
+        check(all(s in para for s in ('Skill(skill: "workflows-core:specs-git", args: "start")', 'args: "end"',
+                                      'args: "specs-repo-git specs-preflight"', 'args: "specs-repo-git commit-artifacts"'))
+              and tools is not None and "Skill" in [t.strip() for t in tools.group(1).split(",")],
+              "k_loader_routes: the loader routes both requests to the skill and may call it (%r)"
+              % (tools.group(0) if tools else None))
+
+        # k_key_set_file
+        rel = "skills/specs-git/run-key-set.md"
+        named = "${CLAUDE_PLUGIN_ROOT}/" + rel
+        check(os.path.isfile(os.path.join(HERE, "..", rel)) and named in skill and named in loader,
+              "k_key_set_file: %s exists, and the skill and the loader both name it" % rel)
+
+        # k_no_dollar_session: the directories check-docs.sh's checks 5 and 9 read a $NAME in, of every plugin
+        session_var = "CLAUDE_CODE_SESSION_ID"
+        written = ("$" + session_var, "${" + session_var)
+
+        def dollar_session(plugins):
+            found, scanned = [], set()
+            for plugin in sorted(os.listdir(plugins)):
+                for d in ("commands", "agents", "references", "hooks", "skills"):
+                    for dirpath, _, files in os.walk(os.path.join(plugins, plugin, d)):
+                        for name in sorted(files):
+                            full = os.path.join(dirpath, name)
+                            try:
+                                with open(full, encoding="utf-8") as fh:
+                                    text = fh.read()
+                            except (OSError, UnicodeDecodeError):
+                                continue
+                            scanned.add(os.path.realpath(full))
+                            if any(w in text for w in written):
+                                found.append(os.path.relpath(full, plugins))
+            return found, scanned
+
+        found, scanned = dollar_session(os.path.join(HERE, "..", ".."))
+        check(found == [] and os.path.realpath(SPECS_REPO_GIT) in scanned,
+              "k_no_dollar_session: no plugin file checks 5 and 9 read names the session variable after a $ (%r)" % found)
+        fake = os.path.join(tmp, "k-dollar", "plugins")
+        for rel, body in (("x/hooks/a.sh", "echo " + written[0] + "\n"), ("x/skills/s/SKILL.md", written[1] + "}\n"),
+                          ("x/references/plain.md", session_var + "\n"), ("x/scripts/b.py", written[0] + "\n")):
+            os.makedirs(os.path.dirname(os.path.join(fake, rel)), exist_ok=True)
+            with open(os.path.join(fake, rel), "w", encoding="utf-8") as fh:
+                fh.write(body)
+        found, _ = dollar_session(fake)
+        check(sorted(found) == ["x/hooks/a.sh", "x/skills/s/SKILL.md"],
+              "k_no_dollar_session: both written forms found, the plain name and a scripts/ file not (%r)" % found)
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
@@ -7530,6 +7639,7 @@ def selftest():
             scenarios_end(tmp)
             scenarios_replay(tmp)
             scenarios_start(tmp)
+            scenarios_skill(tmp)
 
     try:
         scenarios()

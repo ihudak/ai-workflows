@@ -2,7 +2,7 @@
 
 Single source of truth for the two git entry points the plugin runs against the
 **specs repo** (`$SPECS_PATH`). Every command that writes a bookkeeping artifact
-there cites this file and executes its steps inline. The orchestrator owns any
+there runs them through the `workflows-core:specs-git` skill, which runs `scripts/specs-git.py`; this file is the contract that script follows and is tested against, and the procedure a run follows by hand only where the skill says the script cannot start. The orchestrator owns any
 printed output; this reference owns the gates, the bounded write authority, the
 branch policy, and the failure discipline — the same shape as
 `feedback-emission.md`, `cost-emission.md`, and `followup-emission.md`.
@@ -91,6 +91,7 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    repository's own `info/attributes` (`git rev-parse --git-path info/attributes`),
    and the per-worktree record `session-branch.py` keeps of the session files
    §8.3's overlay placed (`git rev-parse --git-path session-branch-placed.json`).
+   And the run's state record, outside every repository (§7), which `scripts/specs-git.py` writes and removes.
    Nothing else is written here; what git itself writes for the commands this
    reference runs is unchanged by it — the upstream a `push -u` sets, the same
    upstream §4 step 6's replay sets with `git branch --set-upstream-to` where
@@ -273,6 +274,8 @@ A **detached HEAD** is not a branch. It is handled separately and far more
 strictly (§3.3 G0, §3.7): nothing is committed at all.
 
 ## 3. `specs-preflight` — run start
+
+**Run by `scripts/specs-git.py`.** A run reaches this entry point through `Skill(skill: "workflows-core:specs-git", args: "start")` — the loader routes `args: "specs-repo-git specs-preflight"` there — which runs `specs-git.py start` and prints what it returns. What follows in §3 is the rule that script follows and is tested against, and the fallback the skill names where the script cannot start; it is never a procedure to run by hand beside the script. Parts of it — `phase-handoff.md`'s applications above all — are applied by other steps too, and those steps read this text as before: `phase-handoff.md`'s three entry points apply §3.1 to §3.6, and `session-hygiene.md`, the emission references and others cite it besides (`` grep -lE 'specs-repo-git(\.md)?`? §' plugins/*/references/*.md `` lists them).
 
 Runs at run start, once the run key set (§3.2) is known — Phase 0 in most commands. A command
 that takes an address and reads its key set from resolution resolves it first, since the set is
@@ -638,6 +641,8 @@ them to a branch.
 G1 does not — see the note in its row.
 
 ## 4. `commit-artifacts` — terminal step
+
+**Run by `scripts/specs-git.py`.** A run reaches this entry point through `Skill(skill: "workflows-core:specs-git", args: "end")` — the loader routes `args: "specs-repo-git commit-artifacts"` there — which runs `specs-git.py end` and prints what it returns. What follows in §4 is the rule that script follows and is tested against, and the fallback the skill names where the script cannot start; it is never a procedure to run by hand beside the script. Step 6's replay is the script's too: `end` returns it as its `next`, `specs-git.py replay`, which the skill runs in a Bash call of its own; the `session-branch.py replay` call step 6 names is what a step applying step 6 by its own text runs — `phase-handoff.md`'s, and that fallback. Parts of it — `phase-handoff.md`'s applications above all — are applied by other steps too, and those steps read this text as before: `phase-handoff.md`'s three entry points apply step 4's commit-and-restore form, step 5's push target and `push-scope`, §4.1 and the refusal tail below, and name step 6's replay as the exception their own pushes do not take; the documentation commands run step 4's form against their own repositories; and the references the grep above lists cite it besides.
 
 Runs as the **last action of the run**, after `resume.md` is written (where the
 command writes one) and before or as the run's last printed output (§6).
@@ -1137,6 +1142,8 @@ is resolved, and `/docs-workflows:document` for a direct-mode stop before its wr
 
 ## 5. Notice contract — the guards must be impossible to overlook
 
+Where `scripts/specs-git.py` runs the two entry points, it renders every block below, and the run prints what it returns.
+
 A guard fires precisely when the plugin has decided **not** to do something the
 user is relying on. A single dim line in a long run is how that becomes a silent
 loss, so every guard emits a structured block rather than a sentence, at both
@@ -1240,6 +1247,8 @@ them before its branch and again before its commit, and puts them back after it.
 
 ## 6. The outcome line
 
+Where `scripts/specs-git.py` runs `commit-artifacts`, it renders every line below, and the run prints what it returns.
+
 `commit-artifacts` step 7 emits exactly one of these, prefixed `Specs repo:`.
 Where `specs-git.py` stopped early (§1 rule 5), its `Specs repo: NOT FINISHED — …` line is the outcome line, in place of a row, and none of the clauses this section appends to a row follows it.
 The caller places it per its own contract (§7) — inside its final report where
@@ -1316,7 +1325,7 @@ When the deliverable is still uncommitted because the user declined git at hando
 A command that writes anything into `$SPECS_PATH` must do all four of these.
 Omitting any one of them is a defect, not a style choice.
 
-1. **Cite and execute `specs-preflight` (§3)** at run start, once the run key
+1. **Run `specs-preflight` (§3) through the `workflows-core:specs-git` skill's `start`** at run start, once the run key
    set is known, in whichever of §3's cases the command falls; a run that
    stops on its address after resolution runs none, nor does one that stops
    before the preflight on a check of its own inputs needing no specs-repo state (§3). Phase 0 in most
@@ -1324,7 +1333,7 @@ Omitting any one of them is a defect, not a style choice.
    flag for the whole run, and `specs_git: misrooted` from `workflows-core:addressing`
    §3 `specs-root-check` where its stop ended the run before any preflight, and
    from `workflows-core:session-hygiene` §7's `env-check` or its §6's *Stop* for the rest of the run.
-2. **Cite and execute `commit-artifacts` (§4)** as the last action of the run,
+2. **Run `commit-artifacts` (§4) through the skill's `end`** as the last action of the run,
    after `resume.md` (where one is written) and after the cost phase — or, where
    a later phase cedes control to another skill or to an open-ended interactive
    stretch, immediately before that hand-off (§4's exception). **A run that
@@ -1343,7 +1352,7 @@ Omitting any one of them is a defect, not a style choice.
 and to `commit-artifacts` alike: the script that rebuilds a security register
 (`security-register-format.md` §1), which is `security-workflows`' own
 `register.py` — a `workflows-core` reference cannot name another plugin's
-root, so the caller hands the path over. Either entry point passes it to
+root, so the caller hands the path over, and the `workflows-core:specs-git` skill passes it to `specs-git.py start` and `end` as `--register-rebuild <path>`. Either entry point passes it to
 §4 step 6's replay, wherever it reaches one (§3.4's flush and retry, or the
 terminal push), as `--register-rebuild <path>`, and the replay runs it only
 to rebuild a register both sides changed, as
@@ -1353,9 +1362,13 @@ at both calls. A caller that passes nothing — every other command — gets the
 replay all the same, save that a register both sides changed refuses it
 (§6's `register-rebuild` reason clause).
 
+**The run's state record.** What the two entry points share, and what a run once carried only in its conversation, `scripts/specs-git.py` keeps in one file per Claude Code session and command, `~/.claude/dev-workflows/specs-git/<session id>/<command>.json`. The session id is `CLAUDE_CODE_SESSION_ID`, which Claude Code sets in every Bash tool subprocess, equal to a hook's `session_id` and updated on `/clear` (its environment-variables page, https://code.claude.com/docs/en/env-vars) — the `session_id` `cost-emission.md` §1 reads off the transcript's name. The record holds the `start` call's arguments, its key set among them, the flags and the notice that set `specs_git: misrooted`, the guard block §4 step 7 repeats and the paths it lists, `<default>`, `<default-ref>`, `remote` and the offline clause, `session_branch`, `mode` and `session_branch_created`, the branches §3.5's B2 and B4 left, the branches §3.4's `-D` advisory has named, the once-a-run reports `start` has printed, the deliverable paths a declined handoff recorded (§6), the run's `Environment:` line, and where an interrupted `start` or `end` stands. `start` opens a fresh one for its command, setting aside whatever stood there — save on a re-run (§3.5) and on its own continuation — and removes every other session's record more than seven days old; the skill's `declined` adds to it; `end` reads it, and compares the `SPECS_PATH` half of the run's `Environment:` line with the one the record holds (§4 step 1). `end`, and `replay --for end` where `end` handed the run a replay, remove it once they have rendered an outcome line. Where an error stops either past its first write, the record stays for `end --resume`, and the `end_commit` it holds, saved before the commit is made, lets that call find a commit a kill cut off. A `start --resume` continues a record only where it stands at one of `start`'s own stages, its arguments are the call's, and it was saved within the last 15 minutes; an `end --resume`, only where it holds an `end_commit` and was saved within the last 15 minutes. **Why it is safe.** It lives outside every repository, so no staging sees it, and `/dev-workflows:implement`'s `run-state.py remove`, which removes files in the code repository's git directory, cannot reach it. One file per session and command keeps two sessions on one specs repository apart, and a command typed in the middle of another's run off the outer run's record. The session id survives a compaction, which the conversation's text does not. A nested run is another command, and starts only after its parent's `end` (§4's exception: `/product-workflows:brd-split`'s *Ground now*). A subagent carries its parent's session id, and no agent runs either entry point. A run started `--inline` by another command calls neither. A run whose id changes before its end — a `/clear`, or a resume that hands it a new one — finds no record there, and its `end` runs as a run with no preflight does (§4 step 1), on the flags the run passes. It is not kept in the specs repository's git directory because §3.1's gate fails exactly where that directory is missing or unwritable, while a not-a-repository `$SPECS_PATH` with a `specs-root-check` signal still sets the flag whose notice `end` repeats. Where `CLAUDE_CODE_SESSION_ID` is unset, the script runs neither entry point (exit 2, nothing done), and the run follows this reference's prose instead.
+
 ## 8. Session-branch mode — a default branch that takes no push
 
 Where the specs repository's default branch takes no direct push — branch protection, a ruleset, a policy or a hook — this reference keeps the run's session files on a per-user **session branch**, and the user lands them through its pull request. Everything above stands; this section says only what changes in the mode. `${CLAUDE_PLUGIN_ROOT}/scripts/session-branch.py` does the git plumbing, every call `--specs "$SPECS_PATH"`, and a change to either is a change to both: the script holds this section's plumbing and §4 step 6's replay, which runs only outside the mode and whose output that step reads — save §8.1's `mode` and §8.4's `push-scope`, which this reference reaches through `${CLAUDE_PLUGIN_ROOT}/scripts/specs-git.py`, the second of them that script's own code. Each call this section makes prints one JSON object; exit 2 means it could not run, which is reported with the first line of its stderr while the run goes on (§1 rule 5), inside the preflight as `Specs preflight: session-branch.py could not run (<the first line of its stderr>)`, and inside `commit-artifacts` (§4) — the `lift` and `put-back` around step 2's catch-up, the §8.2 `commit` that `lift` runs on `unpreserved` (§8.3), and step 4's `commit` where that `lift`'s commit had already made this run's commit — as `Specs repo: session-branch.py could not run (<the first line of its stderr>)`, printed before §6's line.
+
+Inside `start` and `end`, `scripts/specs-git.py` makes this section's calls itself. A command that moves the checkout or commits session files by its own text — `/dev-workflows:implement` on a direct run from inside the specs repository — and `phase-handoff.md` around its own moves still make them as this section says.
 
 ### 8.1 When the mode is on
 
