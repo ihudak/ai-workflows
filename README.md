@@ -92,7 +92,7 @@ export GIT_USER_INITIALS="iv-gu"
 - `REPOS_PATH` is where your code clones live (default: `/workspace`).
 - `DOCS_PATH` is optional: your product docs clone, read-only for grounding (default: `/workspace/docs`).
 - `ARCHITECTURE_REPO_PATH` is optional: your architecture repo, read-only for grounding (no default).
-- `GIT_USER_INITIALS` is optional: the branch prefix for every command that creates a branch in a code, docs or architecture repo.
+- `GIT_USER_INITIALS` is optional: your branch identifier, used as described below.
 
 The lines hold no `#` comment, so they paste into zsh as well as a profile.
 

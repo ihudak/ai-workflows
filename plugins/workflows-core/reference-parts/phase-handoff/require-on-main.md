@@ -2,7 +2,7 @@
 
 # Phase handoff — Shared Reference — entry point require-on-main
 
-This file holds entry point `require-on-main` of `phase-handoff`: §1, §2.2, §2.6.1, §3 and §4.4, and in part §4.0 ("never infer") and §5 ("rule 2" and "rule 3"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 234 lines long.
+This file holds entry point `require-on-main` of `phase-handoff`: §1, §2.2, §2.6.1, §3 and §4.4, and in part §4.0 ("never infer") and §5 ("rule 2" and "rule 3"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 245 lines long.
 
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
@@ -225,6 +225,17 @@ For rows D and E, after §3.2's ref scan finds a carrying branch:
 ### 4.4 Stop contract
 
 Every `require-on-main` stop carries the same four parts as `specs-repo-git.md` §5, in this order: what was found (the concrete state — the path, the branch, the pull-request number); what the plugin did **not** do, stated as the consequence; the exact commands to resolve it with `$SPECS_PATH` already substituted; and one clause on what happens if it is ignored.
+
+**The exact commands, per stopping row.** Part three is not left to the stop's author: this list is what §4.4 prescribes, row by row, each true to what §3.3 says the row means, with `$SPECS_PATH` already substituted. **A command goes on a line of its own, never behind a `#` comment**, because a person pastes it and zsh, macOS's default shell, passes a `#` and the words after it to the command as arguments; what a command is for goes in prose beside it. A path is absolute or relative to `$SPECS_PATH`, and every path slot is quoted. Opening and merging a pull request belongs to the forge, so it is prose, never a command here. None of these is run by the plugin (§1 rule 4): they are the operator's to run, and `restore` and `stash` appear only in the operator's hands.
+
+- **I — detached HEAD.** Switch onto a branch: `git -C "$SPECS_PATH" switch <default>`. Commits made on the detached HEAD are on no branch, so name them first, `git -C "$SPECS_PATH" switch -c <new-branch>`, and switch to `<default>` after. On a read-only mount no command can run: name the mount, and say to do it where the repository is writable.
+- **G — `<default-ref>` does not exist.** Where `origin` exists, `git -C "$SPECS_PATH" fetch origin` brings it in. A repository whose default branch holds no commit yet needs its first one on that branch, which is the operator's to make.
+- **B′ — the default branch changed the path after this branch was cut.** The commands are *Row B′'s remedy* (§3.3), in the form the run's state selects.
+- **C′ and C″ — files the switch or the pull would not carry.** Commit them, or set them aside, or discard them, by choosing one of the three. Commit: `git -C "$SPECS_PATH" add -f -- "<file>"` then `git -C "$SPECS_PATH" commit -m "<message>" -- "<file>"`, with `add -f` only where an ignore rule hides the file. Set aside: `git -C "$SPECS_PATH" stash push -- "<file>"`, with `-u` before `--` for an untracked file. Discard, a tracked file only: `git -C "$SPECS_PATH" restore -- "<file>"`. On C″ where the divergence is a commit the default branch holds and `origin` does not, `git -C "$SPECS_PATH" push origin <default>` is the command, or, where the default branch is protected, `git -C "$SPECS_PATH" switch -c <new-branch>` then `git -C "$SPECS_PATH" push -u origin <new-branch>` and a pull request.
+- **C — on a misrooted run or a read-only mount**, where the repair offer is not made. A misplaced `SPECS_PATH` is set as the run's §3.1 notice says. A read-only mount is switched where it is writable, `git -C "<writable path>" switch <default>` then `git -C "<writable path>" pull --ff-only`.
+- **D — on a branch with a pull request open.** No command: merge pull request `#<n>` in the forge, then re-run.
+- **E — on a branch and never handed off.** Where only the local ref carries the branch, push it first: `git -C "$SPECS_PATH" push -u origin <branch>`. Where `origin` already holds it, no push is needed. Then open a pull request from `<branch>` into `<default>` and merge it, in the forge, then re-run.
+- **F — a caller's own stop on a file in the folder and on no ref**, where the caller stops on row F (§3.4) because the file was written and its handoff declined. The file goes on a new branch and is pushed: `git -C "$SPECS_PATH" switch --no-track -c <new-branch> <default-ref>`, then `git -C "$SPECS_PATH" add -f -- "<path>"`, then `git -C "$SPECS_PATH" commit -m "<KEY> <summary>" -- "<path>"`, then `git -C "$SPECS_PATH" push -u origin <new-branch>`; one `add` and `commit` path per file, each a file and never a directory, which `add -f` would force-add ignored files out of (§2.3). `<new-branch>` is §2.2's name, the first free one under its rules 1, 2 and 4, found before the stop is printed; then the pull request is opened from it into `<default>` and merged in the forge, and the run is re-run.
 
 ## 5. Caller contract
 
