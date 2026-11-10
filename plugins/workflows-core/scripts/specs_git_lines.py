@@ -190,6 +190,8 @@ T = {
     # <git's first error line> reads text.pull-capped where the cap ended the pull.
     "pre.pull-failed": "Specs preflight: could not fast-forward <default> (<git's first error line>); the run goes on from it as it stands",
     "pre.leave-failed": "Specs preflight: could not switch from merged <branch> to <default> (<git's first error line>)",
+    # <the first line of its stderr> is the line branch-merged's CLI prints on stderr: specs-git: not run (<why>).
+    "pre.merged-unknown": "Specs preflight: could not tell whether <branch> is merged (<the first line of its stderr>), so it reads unmerged",
     "pre.merged-flush": "Specs preflight: <branch> is merged, and this flush committed <sha7> on it, which no run pushes; to land it, standing on <default>, run git -C \"<SPECS_PATH>\" cherry-pick <sha7>",
     "pre.refused": "Specs preflight: <branch> not pushed — origin refused it (<the reason in parentheses>), and this is recorded so no later run pushes it; <the remedy §6's push-refused line gives>",
     # Replaces pre.refused from ", and this is recorded" on.

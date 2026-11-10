@@ -9,7 +9,8 @@ Of the fields start keeps: branch is the branch HEAD stands on when a start call
 or where the gate did not pass); stage is the stage of specs-preflight start goes on from; settle_todo is null until
 the settle loop computes, on entering it, the branches it has still to settle; pending holds the settle loop's
 branches whose push origin rejected as non-fast-forward, each {branch, set_upstream, standing}, standing the branch
-the run stood on then.
+the run stood on then; budget is the last start call's --budget where it was not the default, which the start --resume
+a budget stop or a replay names repeats, and which resumable's argument test never reads.
 """
 
 import calendar
@@ -61,6 +62,7 @@ FIELDS = {
     "stage": "new",
     "pending": [],
     "settle_todo": [],
+    "budget": None,  # a start call's --budget where it was not the default; never part of args
     "end_commit": None,
 }
 
