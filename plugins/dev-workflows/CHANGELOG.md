@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.62.1] — 2026-11-10
 
-Docs only: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; the environment page describes `workflows-core` 1.82.0.
+Docs only: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; the environment page and the skill-listing figure describe `workflows-core` 1.82.0.
 
 ### Fixed
 

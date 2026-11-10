@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.38.1] — 2026-11-10
 
-`/document` and `/release-notes` say when a BRD slice's second preflight leaves a switch undone, and three pages follow `workflows-core` 1.82.0: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; with `workflows-core` 1.82.0, the reworded sentences also cover its new stay after a failed `status` read.
+`/document` and `/release-notes` say when a BRD slice's second preflight leaves a switch undone: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; the environment page and the skill-listing figure describe `workflows-core` 1.82.0, and with it the reworded sentences also cover its new stay after a failed `status` read.
 
 ### Fixed
 
