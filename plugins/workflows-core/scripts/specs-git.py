@@ -837,17 +837,18 @@ def _view(rec, declined=()):
 
 def _landed(root, pending):
     """The commit a pending end_commit -- saved just before `git add` -- is about, where it landed: the tip of its
-    branch, whose one parent is the base saved then and whose message is the run's; its facts as end_commit holds them,
-    hook_paths the paths it carries that were not being staged. None where that commit was not made."""
+    branch, whose one parent is the base saved then and whose change carries at least one of the paths being staged
+    then. Never its message, which a prepare-commit-msg or commit-msg hook may rewrite. Its facts as end_commit holds
+    them, hook_paths the paths it carries that were not being staged; None where that commit was not made."""
     tip = sb.rev(root, "refs/heads/" + pending.get("branch", ""))
     if tip is None or tip == pending.get("base"):
         return None
     if sb.text(sb.git(root, "rev-list", "--parents", "-n", "1", tip)).split()[1:] != [pending.get("base")]:
         return None
-    if sb.text(sb.git(root, "log", "-1", "--format=%B", tip)) != pending.get("message"):
-        return None
     carried = _commit_paths(root, tip)
     staging = set(pending.get("staging") or [])
+    if not staging & set(carried):
+        return None
     return {"sha7": tip[:7], "files": len(carried), "branch": pending["branch"], "paths": carried,
             "hook_paths": [p for p in carried if p not in staging]}
 
@@ -1041,8 +1042,8 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
 
     # Steps 2-4: the catch-up, then the commit. R2's boundary is the first repository write either makes, and just
     # before it the record is saved at stage end -- the one kept, else a new one in place of whatever stood -- with what
-    # this call was given; and again just before `git add`, with the commit about to be made (its branch, base and
-    # message), so --resume finds that commit where a kill comes between it and the save that names it.
+    # this call was given; and again just before `git add`, with the commit about to be made (its branch, its base and
+    # the paths being staged), so --resume finds that commit where a kill comes between it and the save that names it.
     key = commit_key or (keep or {}).get("commit_key") or "NOISSUE"
     message = "%s Add dev-workflows session artifacts (%s)" % (key, command)
     saved = keep if keep is not None else state.new(command, session=session, started_by_script=False, specs=specs)
@@ -1055,8 +1056,7 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
 
     def boundary(staging=None):
         if staging is not None:
-            saved["end_commit"] = {"branch": branch, "base": sb.rev(specs, "HEAD"), "message": message,
-                                   "staging": list(staging)}
+            saved["end_commit"] = {"branch": branch, "base": sb.rev(specs, "HEAD"), "staging": list(staging)}
         state.save(session, command, saved)
         run["wrote"] = True
 
@@ -3204,7 +3204,7 @@ def selftest():
               and rec.get("declined") == [ard] and rec.get("commit_key") == "ACME-1"
               and rec.get("register_rebuild") == "/x/register.py" and rec.get("session_branch_created") == "abc1234"
               and "sha7" not in pending and pending.get("base") == base and pending.get("branch") == "main"
-              and pending.get("message") == "ACME-1 Add dev-workflows session artifacts (/create-ard)",
+              and pending.get("staging") == [RESUME],
               "e_kill_after_commit: the record saved at the boundary, the commit about to be made in it (%r)" % rec)
         count = r.git("rev-list", "--count", "HEAD")
         got = run_end(env, "/create-ard", "--commit-key", "ACME-1", "--declined", ard, "--resume")
@@ -3214,12 +3214,38 @@ def selftest():
               "e_kill_after_commit: --resume finds the commit where it landed and pushes it (%r)" % got)
         r.write(RESUME, "r2\n")
         base = head(r)
-        seed(env, "/create-ard", stage="end", end_commit={
-            "branch": "main", "base": base, "staging": [RESUME],
-            "message": "NOISSUE Add dev-workflows session artifacts (/create-ard)"})
+        seed(env, "/create-ard", stage="end", end_commit={"branch": "main", "base": base, "staging": [RESUME]})
         got = run_end(env, "/create-ard", "--resume")
         check(got.get("row") == "pushed-default" and r.git("rev-parse", "HEAD~1") == base and on_origin(r) == head(r),
               "e_kill_after_commit: a pending commit that was never made runs from step 1 (%r)" % got)
+        base = head(r)
+        seed(env, "/create-ard", stage="end", end_commit={"branch": "main", "base": base, "staging": [RESUME]})
+        r.write("notes.md", "n\n")
+        user = r.commit_all("Add notes")
+        r.write(RESUME, "r3\n")
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "scope" and r.git("rev-parse", "HEAD~1") == user and got.get("sha7") == head(r)[:7],
+              "e_kill_after_commit: a tip on the base that carries none of the staged paths is not the run's (%r)" % got)
+        r, env = world(tmp, "e-kill-after-commit-msg")
+        hook(os.path.join(r.path, ".git", "hooks", "commit-msg"), "printf '\\nChange-Id: I0123456789\\n' >> \"$1\"\n")
+        r.write(RESUME, "r\n")
+        stopped = False
+        g["commit_session_files"] = commit_then_killed
+        try:
+            with in_env(env):
+                end(r.path, "/create-ard")
+        except KeyboardInterrupt:
+            stopped = True
+        finally:
+            g["commit_session_files"] = real_commit
+        h = head(r)
+        count = r.git("rev-list", "--count", "HEAD")
+        check(stopped and r.git("log", "-1", "--format=%B").endswith("Change-Id: I0123456789") and on_origin(r) != h,
+              "e_kill_after_commit: a commit-msg hook rewrote the message of the commit the kill followed")
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "pushed-default" and got.get("sha7") == h[:7] and got.get("print") == [pushed_default(h[:7], r.path)]
+              and r.git("rev-list", "--count", "HEAD") == count and on_origin(r) == h and record(env, "/create-ard") is None,
+              "e_kill_after_commit: a rewritten message still resumes that commit, nothing committed twice (%r)" % got)
 
         # e_d3_signal
         r, env = world(tmp, "e-d3-signal")
