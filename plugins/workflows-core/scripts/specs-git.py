@@ -1377,10 +1377,12 @@ def _replay_end(run, rec, branch, set_upstream, timed_out):
 
 def _replay_start(run, rec, branch, set_upstream, timed_out):
     """replay --for start: §3.4's replay of the current branch (stage flush, <branch> the one HEAD stands on, which
-    the flush pushed), or of a branch the settle loop queued (stage settle-done, <branch> in pending, whose standing
-    names the branch the run stands on)."""
+    the flush pushed -- tested save under <timed_out>, which moves no branch and renders the 420 s row from the record
+    alone, so a checkout another session switched during the replay the harness ended still lets start go on), or of
+    a branch the settle loop queued (stage settle-done, <branch> in pending, whose standing names the branch the run
+    stands on)."""
     state, stage, pending = run["state"], rec.get("stage"), list(rec.get("pending") or [])
-    if stage == "flush" and branch == _head_branch(run["specs"]):
+    if stage == "flush" and (timed_out or branch == _head_branch(run["specs"])):
         standing = branch
     elif stage == "settle-done" and any(p.get("branch") == branch for p in pending):
         standing = next(p for p in pending if p.get("branch") == branch).get("standing")
@@ -4014,6 +4016,17 @@ def selftest():
                         plain(r.path, "main"))
         check(got.get("print") == [want] and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify"),
               "r_start_current: rejected on the branch the run stands on, the remedy names no switch (%r)" % got)
+        r, env = world(tmp, "r-start-current-timed-out-moved")
+        seed(env, "/specify", stage="flush")
+        r.git("switch", "-q", "-c", "elsewhere")
+        got = replay_cli(env, "start", "/specify", "main", "--timed-out")
+        want = rejected("Specs preflight: main", "main", TIMED % ("main", r.path, "main", "main", "main"),
+                        plain(r.path, "main"))
+        check(got["_rc"] == 0 and got.get("error") is None and got.get("print") == [want]
+              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify")
+              and (record(env, "/specify") or {}).get("stage") == "settle",
+              "r_start_current: --timed-out after another session switched the checkout off the branch still prints the "
+              "420 s row and goes on to settle (%r)" % got)
 
         # r_start_queued: two replays the settle loop queued, each naming the next
         r, env = world(tmp, "r-start-queued")
