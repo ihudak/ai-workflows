@@ -16,6 +16,7 @@ Every stop that asks you to land a file now gives the commands, and every comman
 - **`/brd-package`'s customer commands paste into zsh.** The three baseline-integrity commands written into the customer's package carried trailing `#` comments, which zsh, macOS's default shell, passes to the command as arguments. The block now holds the commands alone, and what each must print is said in prose beside it.
 - **Getting started.** The skill-listing figure is "about 3,400": 3,184 at `bfa147fd`, stale since `obsidian-llm-wiki` left the catalog, plus 182 for `workflows-core`'s new `specs-git` skill, re-derived by the recipe in the repository's `docs/maintainers/rationale.md`, section `skill-listing-figure`. The `SPECS_PATH` setup block holds commands only, so it pastes into zsh, with what each line checks listed below it.
 - **The environment page** says that a run also compares its environment at its terminal commit — `$SPECS_PATH`'s real path and its `origin` — where the record its start made stands, as `workflows-core` 1.82.0 does.
+- **`/create-ard` and `/epics` name `workflows-core:addressing` where they fix the run key set from carrier frontmatter.** They read the carrier "as §4 does" right after a `workflows-core:specs-repo-git` citation, so the bare §4 read as that reference's terminal commit. Each now cites `workflows-core:addressing` §4. Wording only: no run does anything different.
 
 ## [3.79.0] — 2026-11-09
 

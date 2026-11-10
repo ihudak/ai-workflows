@@ -35,7 +35,7 @@ Usage: `/document <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-mode
 **The mode test is the presence of an address**, which is what replaces the retired shared front-end's own mode return, and that is all the replacement changed in Mode B. What runs ahead of the mode test — the run-flag strip and the question-rules load above — runs in both modes.
 
 **The run key set the specs-repo preflight below is handed** (`workflows-core:specs-repo-git` §3.2)
-is fixed first, before either mode runs, reading only carrier frontmatter (`key:`, `kind:`) as §4
+is fixed first, before either mode runs, reading only carrier frontmatter (`key:`, `kind:`) as `workflows-core:addressing` §4
 does, whatever file that is, and testing no file's presence. In Mode A it is the resolved `key`,
 and, where `workflows-core:addressing` §4.1 places the resolved folder at Epic level — an `EPIC-` prefix, or with
 no prefix a resolved `kind: epic` — also the key its parent's carrier asserts (§4), which is the

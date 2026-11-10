@@ -56,7 +56,7 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    PRD, its parent when the address named an Epic (step 1b).
 
    **Then settle the specs checkout, before step 1a or 1b reads anything.** Fix the run key set
-   (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as §4
+   (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as `workflows-core:addressing` §4
    does, whatever file that is, and testing no file's presence: the resolved `key` — a BRD
    container's own on that route — and, where `workflows-core:addressing` §4.1 places the resolved
    folder at Epic level — an `EPIC-` prefix, or with no prefix a resolved `kind: epic` — also the key

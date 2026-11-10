@@ -57,7 +57,7 @@ This command makes **no external API calls but two**: key discovery's optional, 
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
-   §4 does, whatever file that is, and testing no file's presence: the resolved `key` and, where
+   `workflows-core:addressing` §4 does, whatever file that is, and testing no file's presence: the resolved `key` and, where
    `workflows-core:addressing` §4.1 places the resolved folder at Epic level — an `EPIC-` prefix, or
    with no prefix a resolved `kind: epic` — also the key its parent's carrier asserts (§4), the
    would-be `<PRD>`. Then run the specs-repo preflight below, and only then place the folder and

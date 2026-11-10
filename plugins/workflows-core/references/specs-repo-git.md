@@ -732,7 +732,7 @@ is resolved, and `/docs-workflows:document` for a direct-mode stop before its wr
    signal, as on a `specifications/` directory bind-mounted on its own, and
    that entry point's stop sets it on a path no `rev-parse` reaches. Such a
    run takes the misrooted outcome, never the silent one. `specs_git: blocked`
-   is set only behind a passing gate (§3.3 G0), so it never meets one at the start; at the end neither the gate nor the run's environment is tested again on that flag, so its row reads the checkout only where §6 says. **A run
+   is set only behind a passing gate (§3.3 G0), so it never meets one at the start; at the end that flag's outcome is taken without testing either again, and its row reads the checkout only where §6's own comparison allows. **A run
    that ran no preflight and carries neither flag tests G0's state here**, since
    nothing else did: a refusal taken before the preflight still reaches this
    step (the tail above).
@@ -1132,7 +1132,7 @@ is resolved, and `/docs-workflows:document` for a direct-mode stop before its wr
   **only** the bookkeeping paths — none, on a merged plugin branch the preflight stayed on (this list's second bullet); the uncommitted deliverable is untouched,
   because it is an OTHER path.
   This is deliberate: either decline is about the deliverable — option 2's "I'll handle git" refers to it, and option 3 states nothing more — and the bookkeeping still has to reach the maintainer.
-  The outcome line states plainly that the deliverable remains uncommitted, save on the lines §6 excepts: §1 rule 5's NOT FINISHED line, the *Misrooted* row, and a *Blocked (G0)* row that cannot tell it stands in the repository the run's start checked.
+  The outcome line states plainly that the deliverable remains uncommitted, save on §1 rule 5's NOT FINISHED line and the rows §6's declined paragraph excepts: the *Misrooted* row, and the *Blocked (G0)* row of a run whose start set `specs_git: blocked`, where that paragraph says it takes none.
 - **Every other command** — on the default branch, unless §3.3 G2 left the run
   on a branch the plugin does not manage, §3.5 B3 kept it on a plugin branch
   keyed to this run, or the preflight stayed on the branch it stood on because §3.3 G1 fired, because `status` could not run (§2.1) so §3.5 switched nothing, or because git refused §3.5's B2 or B4 switch or the preflight stopped before reaching that switch (§1 rule 5, or a start that never finished its preflight, §4 step 1) — save a merged plugin branch it stayed on, where nothing is committed (this list's second bullet). The commit follows the branch the preflight settled on; it

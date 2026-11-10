@@ -1172,8 +1172,8 @@ def _declined_checked(run, rec, view):
     """_declined on the Blocked (G0) row of a run whose start set specs_git: blocked, where the end tests neither the
     gate nor the run's environment (§4 step 1: the flag is tested first): only where the SPECS_PATH half of the
     Environment: line printed now is the one the record <rec> holds, so git status runs in the repository the start
-    checked; '' elsewhere, and where that line or git status cannot run (§6). So the row prints as it did before the
-    append existed, exit 0, whatever --specs names."""
+    checked; '' elsewhere, and where that line or git status cannot run (§6). Wherever it returns '', the row prints as
+    it did before the append existed; exit 0 whatever --specs names."""
     try:
         if not rec.get("env_line") or _specs_half(env_line(run["specs"])) != _specs_half(rec["env_line"]):
             return ""

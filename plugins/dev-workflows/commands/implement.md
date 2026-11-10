@@ -80,7 +80,7 @@ stop on a direct run and the design-doc guard are done (a run that stops on any 
 and before the Epic-unit resolution below reads anything, with the run key set fixed from carrier frontmatter alone
 (`key:`, `kind:`, read as `workflows-core:addressing` §4 does, whatever file that is, and testing no
 file's presence; `workflows-core:specs-repo-git` §3.2): on a keyed run the resolved `key` and, where
-§4.1 places the resolved folder at Epic level — an `EPIC-` prefix, or with no prefix a resolved
+`workflows-core:addressing` §4.1 places the resolved folder at Epic level — an `EPIC-` prefix, or with no prefix a resolved
 `kind: epic` — also the key its parent's carrier asserts (§4); on a direct run none, a keyless run.
 A stale plugin branch the preflight switches away from would otherwise hide a slice's `brd-link.md`
 from `IMPLEMENT_BRD_NOT_SLICED`'s listing, or an Epic folder, `specification.md` or
