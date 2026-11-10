@@ -4,6 +4,12 @@ The record lives outside every repository, under ~/.claude/dev-workflows/specs-g
 keyed by the CLAUDE_CODE_SESSION_ID environment variable (Claude Code sets it in Bash tool subprocesses) and
 the command, so a command typed in the middle of another run never touches the outer run's record. Python
 standard library only; loaded by specs-git.py only for the subcommands that need it.
+
+Of the fields start keeps: branch is the branch HEAD stands on when a start call returns (null on a detached HEAD,
+or where the gate did not pass); stage is the stage of specs-preflight start goes on from; settle_todo is null until
+the settle loop computes, on entering it, the branches it has still to settle; pending holds the settle loop's
+branches whose push origin rejected as non-fast-forward, each {branch, set_upstream, standing}, standing the branch
+the run stood on then.
 """
 
 import calendar
@@ -49,7 +55,7 @@ FIELDS = {
     "session_branch_created": None,
     "b2_left": None,
     "b4_left": None,
-    "branch": None,
+    "branch": None,  # the branch HEAD stands on when a start call returns
     "advised_D": [],
     "declined": [],
     "stage": "new",

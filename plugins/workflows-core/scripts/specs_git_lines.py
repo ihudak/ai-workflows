@@ -189,6 +189,7 @@ T = {
     "pre.below-top": "Specs preflight: SPECS_PATH is <value>, below the top level of its repository (<top>) — a specs tree inside a larger repository is unsupported, because this plugin switches branches and commits in the repository SPECS_PATH belongs to, so this run switches and commits nothing there; set SPECS_PATH to a dedicated specs repository's top level.",
     # <git's first error line> reads text.pull-capped where the cap ended the pull.
     "pre.pull-failed": "Specs preflight: could not fast-forward <default> (<git's first error line>); the run goes on from it as it stands",
+    "pre.leave-failed": "Specs preflight: could not switch from merged <branch> to <default> (<git's first error line>)",
     "pre.merged-flush": "Specs preflight: <branch> is merged, and this flush committed <sha7> on it, which no run pushes; to land it, standing on <default>, run git -C \"<SPECS_PATH>\" cherry-pick <sha7>",
     "pre.refused": "Specs preflight: <branch> not pushed — origin refused it (<the reason in parentheses>), and this is recorded so no later run pushes it; <the remedy §6's push-refused line gives>",
     # Replaces pre.refused from ", and this is recorded" on.
