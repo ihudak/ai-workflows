@@ -47,7 +47,7 @@ Where a handoff's consent choice is answered with its second or third option, ru
 
 ## Where the script cannot start
 
-Exit 2 means it did nothing: one `specs-git: not run (…)` line on stderr. Where that line begins `specs-git: not run (usage:`, your call was wrong: correct it and make it again. Otherwise print the line and run this entry point by hand from the reference — `Skill(skill: "workflows-core:reference", args: "specs-repo-git")`, then its §3 for start or its §4 for end — and run your run's other entry point by hand too. JSON with `error` set did part of its work and says so in `print`: print it and go on; never run that entry point again by hand.
+Exit 2 means it did nothing: one `specs-git: not run (…)` line on stderr. Where that line begins `specs-git: not run (usage:`, your call was wrong: correct it and make it again. Otherwise print the line and run this entry point by hand from the reference — `Skill(skill: "workflows-core:reference", args: "specs-repo-git")`, then its §3 for start or its §4 for end — and, where this is your start, run your end by hand too. JSON with `error` set did part of its work and says so in `print`: print it and go on; never run that entry point again by hand.
 
 ## Citations
 

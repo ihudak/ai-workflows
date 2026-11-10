@@ -146,7 +146,7 @@ Found by the live runs that verified dev-workflows 4.32.0 (`docs/superpowers/ver
 
 ## From the live checks of 2026-11-04 — any machine
 
-Found by the third round of live checks on the e2e copies, `docs/superpowers/verification/2026-11-04-live-checks.md`; each item names the run that found it. Line numbers are at `4e8705c6`.
+Found by the third round of live checks on the e2e copies, `docs/superpowers/verification/2026-11-04-live-checks.md`. All its items are closed: LC29, LC30 and LC32–LC37 by the r3 fix batch (PR #181), and LC31 by GIT-G1 Part 2 batch 2a (`workflows-core` 1.82.0), whose start and end print the lines a run used to drop.
 
 ## From the 2026-10-26 feature-gaps review — any machine
 

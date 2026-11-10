@@ -7575,6 +7575,42 @@ def selftest():
             got = skill_problems(text)
             check(any(want in p for p in got), "k_skill_options: a skill naming the wrong option fails (%s: %r)" % (want, got))
 
+        # k_skill_fields: every JSON field the skill names is one the script returns
+        _, flow_lines = _flow()
+        start_keys = set(_start_result({"print": [], "rec": {}, "lines": flow_lines}, None, None, None))
+        end_keys = set(_end_result())
+        next_keys = set(_replay_next("/s", "/feedback", "main", False)) & set(_resume_next("/feedback", {}))
+
+        def field_problems(text):
+            problems = []
+            sections = {s.split("\n", 1)[0]: s for s in text.split("\n## ")}
+            listed = re.search(r"results from the last `start` JSON(.*?)wherever your command's text reads them",
+                               sections.get("Start", ""), re.S)
+            if listed is None:
+                problems.append("the Start section lists no field it reads")
+            named = set(re.findall(r"`([a-z_][a-z0-9_]*)`", re.sub(r"\([^)]*\)", "", listed.group(1) if listed else "")))
+            named |= set(re.findall(r"A `([a-z_][a-z0-9_]*)` field", sections.get("Start", "")))
+            for f in sorted(named - start_keys):
+                problems.append("Start reads %s, which start's JSON does not hold" % f)
+            shared = set(re.findall(r"JSON's `([a-z_][a-z0-9_]*)`|JSON (?:names|with) `([a-z_][a-z0-9_]*)`", text))
+            for f in sorted({f for pair in shared for f in pair if f} - (start_keys & end_keys)):
+                problems.append("the skill reads %s, which start's and end's JSON do not both hold" % f)
+            for f in sorted(set(re.findall(r"`next\.([a-z_][a-z0-9_]*)`", text)) - next_keys):
+                problems.append("next.%s is no key of the next a replay or a resume returns" % f)
+            return problems
+
+        got = field_problems(skill)
+        check(got == [] and {"print", "error", "next", "specs_git", "b2_left", "replaced"} <= start_keys
+              and {"run", "timeout_ms", "on_timeout"} == next_keys,
+              "k_skill_fields: every JSON field the skill names is the script's (%r)" % got)
+        for old, new, want in (("`b2_left`", "`b2_lefts`", "Start reads b2_lefts"),
+                               ("A `replaced` field", "A `replacement` field", "Start reads replacement"),
+                               ("`next.timeout_ms`", "`next.timeout`", "next.timeout is no key"),
+                               ("JSON with `error` set", "JSON with `failure` set", "reads failure")):
+            got = field_problems(skill.replace(old, new))
+            check(skill.count(old) >= 1 and any(want in p for p in got),
+                  "k_skill_fields: a renamed field fails (%s: %r)" % (want, got))
+
         # k_loader_routes
         para = next((p for p in loader.split("\n\n") if "workflows-core:specs-git" in p), "")
         front = loader.split("---", 2)[1] if loader.startswith("---") else ""
