@@ -2219,9 +2219,10 @@ def _fetch(run):
 
 def _guards(run):
     """Stage guards, specs-repo-git §3.3: the first of G0, G1 and G2 that holds prints its §5 block, saved for end to
-    repeat, and ends the preflight; G0 sets specs_git: blocked. G1 on a plugin branch asks branch-merged HEAD first
-    (_ask_stay): on a merged one, outside session-branch mode, the stay is kept and G1 prints its merged-branch form
-    (§5), the plain block saved, which end turns into that form while HEAD still stands there. In session-branch mode
+    repeat, and ends the preflight; G0 sets specs_git: blocked. G1 on a plugin branch then asks branch-merged HEAD
+    (_ask_stay), once its block is in the record, so the stay's save holds both: on a merged one, outside
+    session-branch mode, the stay is kept and G1 prints its merged-branch form (§5), the plain block saved, which end
+    turns into that form while HEAD still stands there. In session-branch mode
     with a session branch, G2 takes §5's session-branch lines, or, on the session branch itself, its own variant; with
     no identity, its no-identity variant."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
@@ -2234,9 +2235,6 @@ def _guards(run):
         other = listed["other"] if listed else []
         if other:
             found = ("G1", _g1_block(lines, specs, other), other)
-            _ask_stay(run, head, "g1")
-            if _held(rec, head):
-                shown = _g1_merged(lines, found[1], head, rec["default"], specs, other)
         elif head != rec["default"] and not branch_key(head, [])["plugin_branch"]:
             values = None
             if rec["mode"] == "on" and rec["session_branch"]:
@@ -2251,6 +2249,10 @@ def _guards(run):
         return _advance(run, "flush")
     if not (rec["specs_git"] == "blocked" and found[0] != "G0"):  # a run --rerun carries blocked keeps G0's block,
         rec.update(guard=found[0], guard_block=found[1], guard_paths=found[2])  # which end repeats with its row
+    if found[0] == "G1":  # after the block is in the record, so the stay's save holds both
+        _ask_stay(run, head, "g1")
+        if _held(rec, head):
+            shown = _g1_merged(lines, found[1], head, rec["default"], specs, found[2])
     _emit(run, shown or found[1])
     _advance(run, "done")
 
@@ -2468,7 +2470,8 @@ def _queued_next(run, rec):
 
 
 def _start_result(run, nxt, replaced, error):
-    """start's JSON: what this call printed and hands over next, then the run's facts as the record now holds them."""
+    """start's JSON: what this call printed and hands over next, then the run's facts as the record now holds them --
+    merged_stay among them, which an end run by hand reads (specs-repo-git §3.3)."""
     rec = run["rec"]
     offline = bool(rec.get("offline"))
     return {"print": run["print"], "next": nxt, "specs_git": rec.get("specs_git"), "gate": rec.get("gate"),
@@ -2476,7 +2479,7 @@ def _start_result(run, nxt, replaced, error):
             "offline": offline, "offline_clause": run["lines"].T["text.offline"] if offline else None,
             "session_branch": rec.get("session_branch"), "mode": rec.get("mode"), "guard": rec.get("guard"),
             "branch": rec.get("branch"), "b2_left": rec.get("b2_left"), "b4_left": rec.get("b4_left"),
-            "replaced": replaced, "error": error}
+            "merged_stay": rec.get("merged_stay"), "replaced": replaced, "error": error}
 
 
 def _stop_stay(run):
@@ -4398,10 +4401,9 @@ def selftest():
               and "stayed on it because the uncommitted paths could not be listed;" in got[1]
               and "stayed on it because git refused its switch to main;" in got[2]
               and "stayed on it because it stopped early before its switch;" in got[3]
-              and all(x.endswith("and the next run whose preflight gets past its guards commits them on main, leaving "
-                                 "prd/A-1-x first where HEAD still stands there — save where prd/A-1-x reads unmerged by "
-                                 "then, as any commit on it makes it, or git refuses that switch, when it commits them on "
-                                 "prd/A-1-x") for x in got)
+              and all(x.endswith("and a later run commits them on main, leaving prd/A-1-x first where HEAD still stands "
+                                 "there — save where prd/A-1-x reads unmerged by then, as a commit of its own on it can "
+                                 "make it, or git refuses that switch, when it commits them on prd/A-1-x") for x in got)
               and raises_naming("no alternative 4", lines.fill, "row.merged-stay",
                                 {"<branch>": "b", "<default>": "main", why: 4}),
               "l_fill_alternation: the merged-branch stay row's four reasons, <default> filled inside one (%r)" % got)
@@ -4465,6 +4467,44 @@ def selftest():
         spread = three + ["specifications/PRD-A-2-y/defects.md"]
         check(lines.artifacts(spread) == "4 files under specifications", "l_artifacts: four spanning specifications/ (%r)"
               % lines.artifacts(spread))
+
+        # l_fix_lines: every §5 Fix part, rendered with its values, runs whole as pasted -- bash -c, against a git that
+        # only logs its arguments -- and makes exactly the git calls it shows: no quote left open, prose behind a #
+        shim = os.path.join(tmp, "l-fix-shim")
+        os.makedirs(shim)
+        log = os.path.join(tmp, "l-fix-calls")
+        with open(os.path.join(shim, "git"), "w", encoding="utf-8") as fh:
+            fh.write("#!/bin/sh\nfor a in \"$@\"; do printf '%s|' \"$a\"; done >> \"$GIT_CALLS\"\necho >> \"$GIT_CALLS\"\n")
+        os.chmod(os.path.join(shim, "git"), 0o755)
+        S, paths = os.path.join(tmp, "a specs repo"), ["my notes.md", "n.md"]
+        plain = lines.fill("g1", {"<SPECS_PATH>": S, "<N>": 2,
+                                  "<path list>": [", ".join(paths), " ".join(shlex.quote(p) for p in paths)]})
+        blocks = [("g0", lines.fill("g0", {"<SPECS_PATH>": S, "<sha7>": "abc1234", "<YYYY-MM-DD>": "2026-11-10",
+                                           "<branch>": "main"}), ["switch|-c|rescue/2026-11-10|", "switch|main|"]),
+                  ("g1", plain, ["status|", "add|my notes.md|n.md|", "commit|"]),
+                  ("g1.merged", _g1_merged(lines, plain, "prd/A-1-x", "main", S, paths),
+                   ["switch|main|", "add|my notes.md|n.md|", "commit|"]),
+                  ("g2", _g2_block(lines, S, "feature/x", "main"), ["switch|main|"]),
+                  ("g2.implement", _g2_block(lines, S, "feature/x", "main", "implement"), []),
+                  ("g2.session", _g2_block(lines, S, "feature/x", "main", "session", {"<identity>": "ab"}), []),
+                  ("g2.self", _g2_block(lines, S, "session/ab", "main", "self", {"<identity>": "ab"}), ["switch|main|"]),
+                  ("g2.no-identity", _g2_block(lines, S, "feature/x", "main", "no-identity"), [])]
+        for name, block, want in blocks:
+            rows = block.split("\n")
+            i = next((k for k, row in enumerate(rows) if row.startswith("Fix:")), None)
+            part = []
+            for row in rows[i:] if i is not None else []:
+                if part and not row.startswith(" "):
+                    break
+                part.append(row[len("Fix:"):].strip() if not part else row.strip())
+            if os.path.exists(log):
+                os.remove(log)
+            ran = subprocess.run(["bash", "-c", "\n".join(part)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 env=dict(os.environ, PATH=shim + os.pathsep + os.environ.get("PATH", ""), GIT_CALLS=log))
+            calls = open(log, encoding="utf-8").read().splitlines() if os.path.exists(log) else []
+            check(i is not None and ran.returncode == 0 and calls == ["-C|%s|%s" % (S, w) for w in want],
+                  "l_fix_lines: %s's Fix part runs as pasted, making its git calls (rc %s, %r, %r)"
+                  % (name, ran.returncode, calls, ran.stderr.decode("utf-8", "replace")[:200]))
 
     def scenarios_gate(tmp):
         with open(SESSION_HYGIENE, encoding="utf-8") as fh:
@@ -6569,7 +6609,7 @@ def selftest():
         SPEC = "spec/ACME-1-01-x"
         SUBJECT = "%s Add dev-workflows session artifacts (%s)"
         FIELDS = {"print", "next", "specs_git", "gate", "default", "default_ref", "remote", "offline", "offline_clause",
-                  "session_branch", "mode", "guard", "branch", "b2_left", "b4_left", "replaced", "error"}
+                  "session_branch", "mode", "guard", "branch", "b2_left", "b4_left", "merged_stay", "replaced", "error"}
         STAY = lines.placeholder("pre.stay", "<switched")
 
         def run_start(env, command, *args, specs=None, cwd=None):
@@ -6668,15 +6708,16 @@ def selftest():
             "committed at the end of the run either, unless the run moves off %(branch)s first: a commit there would "
             "keep them off main.\n"
             "Fix:      git -C \"%(specs)s\" switch main && git -C \"%(specs)s\" add %(quoted)s && git -C \"%(specs)s\" "
-            "commit — on main, not on %(branch)s, since a commit on %(branch)s makes it read unmerged and the next run "
-            "then commits this run's artifacts on %(branch)s too; where git refuses the switch, the chain commits "
-            "nothing, and git names the files in its way\n"
+            "commit # on main, not on %(branch)s, since a commit of its own on %(branch)s can make it read unmerged, and a "
+            "later run then commits this run's artifacts on %(branch)s too; where git refuses the switch, the chain "
+            "commits nothing, and git names the files in its way\n"
             "If ignored: nothing is lost — your files and this run's artifacts stay uncommitted. But the preflight ends "
             "here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped, and the "
             "artifacts uncommitted, until these paths are committed or removed. Committed on main as Fix says, or "
-            "removed, they let the next run commit the artifacts on main, leaving %(branch)s first where HEAD still "
+            "removed, they let a later run commit the artifacts on main, leaving %(branch)s first where HEAD still "
             "stands there — save where git refuses that switch, when it commits them on %(branch)s; committed on "
-            "%(branch)s, they make it read unmerged, and the next run commits the artifacts on %(branch)s too. A "
+            "%(branch)s, they can make it read unmerged, and where they do, a later run commits the artifacts on "
+            "%(branch)s too. A "
             "deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a "
             "supported state — this is what it costs.")
 
@@ -7737,6 +7778,7 @@ def selftest():
         got = run_start(env, "/feedback")
         rec = record(env, "/feedback") or {}
         check(got.get("print") == [env_line(r.path), variant] and got.get("guard") == "G1" and got.get("branch") == A
+              and fields(got) and got.get("merged_stay") == {"branch": A, "reason": "g1"}
               and rec.get("merged_stay") == {"branch": A, "reason": "g1"} and rec.get("guard_block") == g1_plain(r, ["notes.md"])
               and "will NOT be committed" in variant and "WILL still be committed" not in variant,
               "t_d5_g1: G1's merged-branch form printed, the stay recorded, the plain block saved (%r)" % got)
@@ -7757,17 +7799,21 @@ def selftest():
               and r.git("show", "--name-only", "--format=", "HEAD") == RES_A and stay_of(env) is None,
               "t_d5_next_run: the next run leaves the branch and commits the files on main (%r)" % got)
 
-        # t_d5_fix_line: the review's sequence -- G1's merged-branch Fix line run as printed (its commit given -m): the
-        # user's files committed on main, off the merged branch; the next run commits the held session files on main
-        # and deletes the branch
+        # t_d5_fix_line: the review's sequence -- G1's merged-branch Fix line run whole, as printed, through bash -c (its
+        # commit's message typed in the editor): the user's files committed on main, off the merged branch; the next run
+        # commits the held session files on main and deletes the branch
         r, env = merged_world("t-d5-fix")
         shown = (run_start(env, "/feedback").get("print") or [""])[-1]
         got = run_end(env, "/feedback")
         check(got.get("row") == "merged-stay" and shown == g1_on_merged(r, ["notes.md"], A),
               "t_d5_fix_line: the merged-branch form, then end skips (%r)" % got)
         fix = next((x for x in shown.split("\n") if x.startswith("Fix:")), "Fix:")
-        ran = subprocess.run(["bash", "-c", fix[len("Fix:"):].strip().split(" — ")[0] + " -q -m 'my notes'"],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        editor = os.path.join(tmp, "t-d5-fix-editor.sh")  # the commit's message, as a user types it in the editor
+        with open(editor, "w", encoding="utf-8") as fh:
+            fh.write("#!/bin/sh\necho 'my notes' > \"$1\"\n")
+        os.chmod(editor, 0o755)
+        ran = subprocess.run(["bash", "-c", fix[len("Fix:"):].strip()], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             env=dict(os.environ, GIT_EDITOR=editor))
         got = run_start(env, "/feedback")
         check(ran.returncode == 0 and got.get("print") == [env_line(r.path), "Specs preflight: deleted merged prd/A-1-x"]
               and got.get("branch") == "main" and rev(r, A) is None and subject(r) == SUBJECT % ("NOISSUE", "/feedback")
@@ -7987,6 +8033,32 @@ def selftest():
         check(got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 2)] and untracked(r, FEED_A),
               "t_d5_refused_kill: end skips on the saved stay (%r)" % got)
 
+        # t_d5_g1_kill (in process): a kill right after G1's stay is saved finds G1's block saved beside it, so end's row,
+        # which names "the notice below", has that notice below it
+        r, env = merged_world("t-d5-g1-kill")
+        real_stay = g["_stay"]
+
+        def stay_then_kill(*args, **kw):
+            real_stay(*args, **kw)
+            raise KeyboardInterrupt
+
+        g["_stay"] = stay_then_kill
+        killed = False
+        try:
+            with in_env(env):
+                start(r.path, "/feedback")
+        except KeyboardInterrupt:
+            killed = True
+        finally:
+            g["_stay"] = real_stay
+        rec = record(env, "/feedback") or {}
+        check(killed and rec.get("merged_stay") == {"branch": A, "reason": "g1"} and rec.get("guard") == "G1"
+              and rec.get("guard_block") == g1_plain(r, ["notes.md"]) and rec.get("guard_paths") == ["notes.md"],
+              "t_d5_g1_kill: the stay saved with G1's block (%r)" % rec)
+        got = run_end(env, "/feedback")
+        check(got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 0), g1_on_merged(r, ["notes.md"], A)],
+              "t_d5_g1_kill: end's row, then the notice it names (%r)" % got)
+
     def scenarios_skill(tmp):
         """The specs-git skill's text, held to the CLI it drives, to the loader that routes to it and to the run-key-set
         file both name; and the session variable, never written with a $ where checks 5 and 9 would read it as one."""
@@ -8071,6 +8143,10 @@ def selftest():
             return problems
 
         got = field_problems(skill)
+        listed = re.search(r"results from the last `start` JSON(.*?)wherever your command's text reads them", skill, re.S)
+        check(listed is not None and "`merged_stay`" in listed.group(1) and "merged_stay" in start_keys
+              and "`merged_stay` field" in skill.split("## Where the script cannot start", 1)[-1],
+              "k_skill_fields: Start names merged_stay, which an end run by hand reads (§3.3)")
         check(got == [] and {"print", "error", "next", "specs_git", "b2_left", "replaced"} <= start_keys
               and {"run", "timeout_ms", "on_timeout"} == next_keys,
               "k_skill_fields: every JSON field the skill names is the script's (%r)" % got)
