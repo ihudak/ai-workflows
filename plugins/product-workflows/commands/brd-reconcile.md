@@ -374,7 +374,14 @@ write would re-ask a question already answered.
      dated bundle, so re-running it today stops outright and re-running it on another date builds a
      *different* package from the one the customer was actually sent. What is needed is the package
      already on disk, landed:
-     `BRD_RECONCILE_PACKAGE_NOT_HANDED_OFF: <BRD-KEY>'s package is written at <path> but is on no branch — its handoff was declined. Commit and merge the package's files to the specs repo's default branch, then re-run; do not re-run /product-workflows:brd-package, which will not rewrite a dated bundle.`
+     `BRD_RECONCILE_PACKAGE_NOT_HANDED_OFF: <BRD-KEY>'s package is written at <path> but is on no branch — its handoff was declined. Commit and merge the package's files to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-package, which will not rewrite a dated bundle.`
+     ```
+     git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+     git -C "<SPECS_PATH>" add -f -- <path>
+     git -C "<SPECS_PATH>" commit -m "<BRD-KEY> customer package" -- <path>
+     git -C "<SPECS_PATH>" push -u origin <new-branch>
+     ```
+     `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, `<default-ref>` is the ref the preflight resolved for `<default>`, and `<path>` is the package's path, a directory added whole. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
      This is the state `--sent` is **not** for: the package exists and is the right one, so landing it is the fix. Admitting a copy of it under `--sent` would put the same document in the folder twice under two names.
 
    **Why the gate is the prompt and not the register.** The committed package is what makes a

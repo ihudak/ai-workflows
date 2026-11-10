@@ -237,8 +237,17 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
    ```
    PRD_PROPOSAL_PRD_NOT_HANDED_OFF: <path>/prd.md exists but is on no ref — it was written and its handoff was declined.
-     Land the file that is already on disk; re-running /product-workflows:create-prd would author a second PRD rather than land this one.
+     Land the file that is already on disk with these commands, <new-branch> being prd/ and this folder's <KEY>-<slug> and <default-ref> the ref the preflight resolved for <default>; re-running /product-workflows:create-prd would author a second PRD rather than land this one.
+
+   git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+   git -C "<SPECS_PATH>" add -f -- <path>/prd.md
+   git -C "<SPECS_PATH>" commit -m "<KEY> prd" -- <path>/prd.md
+   git -C "<SPECS_PATH>" push -u origin <new-branch>
+
+     Then open a pull request from <new-branch> into <default>, merge it, and re-run this command.
    ```
+
+   Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; a path is absolute or relative to `<SPECS_PATH>`, as `git -C` takes either.
 
 **Nothing gates on `ard.md` or `specification.md`.** That is what grading replaces, and it is the
 whole answer to the question of when a requirement set becomes estimable: Phase 3 grades what the

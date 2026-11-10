@@ -772,6 +772,55 @@ Add to `docs/superpowers/to-fix.md`, under a "Design-level" heading or a new "Fr
 - **Plugins:** only `workflows-core` changes, plus a `docs/` page of another plugin where the sweep finds a falsified claim. Any such plugin already ships a docs patch in Task 11; name it in your report.
 - **Before committing:** run `specs-git.py --selftest`, `session-branch.py --selftest`, `reference-parts.py generate && check-parts && check-citations && check-branch-check`, then the full gate chain (`EXIT=0`).
 
+### Task 10c: command blocks that paste in zsh (added 2026-11-10)
+
+Added after Task 10b. A known pre-existing bug found in passing, fixed under the maintainer's fix-all rule.
+
+#### The defect
+
+zsh is macOS's default shell. In an interactive zsh, the `interactivecomments` option is off unless a framework sets it, so `#` is not a comment:
+
+- `cmd   # prose` passes `#` and the prose to `cmd` as arguments;
+- an apostrophe in the prose leaves a quote open;
+- `(…)` in the prose is a syntax error.
+
+Batch 2a fixed the guard notices' *Fix* lines in `specs-repo-git` §5 (Task 10b). Three other places print command blocks for a person to paste, with trailing `#` prose:
+
+1. `plugins/product-workflows/commands/brd-package.md` (~1122–1126). These are the three `baseline-integrity` commands written into the customer's package for the customer to run.
+2. `plugins/product-workflows/docs/getting-started.md` (~90–94). The `export` line, plus two `git -C` checks a reader pastes to test their setup.
+3. The root `README.md` (~84–88). The five `export` lines. The text says to put them in a shell profile, where `#` works, but readers paste them to try them, and there `#` fails.
+
+#### What to build
+
+- In each block, keep the commands only: no `#`, no prose in the block. Put what each command is for in prose or a short list right before or after the block.
+  - (1) The command is a written instruction the run fills in and hands to the customer. The surrounding text already says "State what each is for and what a mismatch means", so the expected results ("must print <the commit this package cites>", "must be empty", "any entry needs a line-count comparison") move into that statement, keyed to each command.
+  - (2) and (3) Each comment becomes a short list item or sentence keyed to its variable or command. Keep every fact the comments carried; the defaults matter.
+- Sweep the whole family for any other pasteable command block with trailing `#` prose, by subject (refinement 6). Cover `plugins/*/commands`, `references`, `agents` and `docs`, the root `README.md`, and `docs/maintainers/`. Fix every one you find the same way.
+  - A `bash` block that is plainly a script and not pasted line by line (a hook script, a fixture) is out of scope.
+  - A block inside a reference that an agent executes through its Bash tool, which is bash, is out of scope too. Name each one you leave and why.
+- Docs pages: no `§` or decision id, and no table cell over 200 characters (check-docs).
+- Keep identity quarantine and vendor neutrality (checks 10, 13, 14).
+
+#### Release note for Task 11
+
+`product-workflows` and the root `README.md` change here. `product-workflows` already ships a patch in Task 11. Name in your report every plugin whose file you changed, so the release covers it.
+
+#### Tests
+
+- **The static check.** Write a small check that every changed block's lines contain no `#` and no unbalanced quote, run it, and put the result in your report. It need not be a gate. If you think it should be, say so in your report; do not build one.
+- **The gates.** Run the full gate chain and check that it prints `EXIT=0`.
+
+#### Constraints
+
+The plan's Global Constraints apply. Commit after `git branch --show-current` prints `feat/git-g1-part2a`, with the identity and trailer the instructions give.
+
+#### Added before dispatch: the register stops' commands
+
+`phase-handoff.md` §4.4 promises that a stop names "the exact commands to resolve it". The `*_REGISTER_NOT_HANDED_OFF` stops in `plugins/product-workflows/commands/create-prd.md` (~397), `create-ard.md` (~318) and `specify.md` (~357) give only "git -C "<SPECS_PATH>" add, commit and push it, then open and merge its pull request". Before editing, read §4.4 and the stops around each one with the Read tool.
+
+- **Fix:** give each stop its exact commands, worded as §4.4 and the neighbouring stops in the same command word theirs. Keep them pasteable as this task requires: commands in a line or block of their own, with the prose outside it.
+- **Sweep:** find, by subject, any other stop in the family that cites §4.4 or promises exact commands but gives a vague instruction. Fix every one you find, and list them in your report.
+
 ### Task 11: Release
 
 **Files:** Modify `plugins/workflows-core/.claude-plugin/plugin.json` and `CHANGELOG.md`; the same pair for each plugin Task 10 changed a page of (`security-workflows`, `dev-workflows`, `docs-workflows`, `guideline-reviewers`, `product-workflows`); `.claude-plugin/marketplace.json` (each released plugin's entry; descriptions unchanged); `.claude/rules/plugin-updates-coupling.md`; `docs/superpowers/to-fix.md` (PR10); `docs/superpowers/to-test-on-real-project.md`.
