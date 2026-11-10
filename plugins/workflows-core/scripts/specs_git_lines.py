@@ -22,10 +22,10 @@ Not done: this run's feedback, cost, follow-ups, and resume pointer will NOT be
           would be reachable from no branch and eligible for deletion by git's
           garbage collector, so the plugin refuses to make one.
 Fix:      git -C "<SPECS_PATH>" switch -c rescue/<YYYY-MM-DD>
-          # or, to rejoin an existing branch:
-          git -C "<SPECS_PATH>" switch <branch>
 If ignored: the artifacts stay in your working tree, uncommitted and intact; the
-          next run's preflight picks them up once HEAD is on a branch."""
+          next run's preflight picks them up once HEAD is on a branch — the one
+          Fix creates, or an existing one you rejoin instead with
+          git -C "<SPECS_PATH>" switch <branch>"""
 
 G1 = """⚠ SPECS REPO — UNCOMMITTED FILES THAT ARE NOT THE PLUGIN'S
 
@@ -53,10 +53,10 @@ Found:    <SPECS_PATH> is on branch `<branch>`, which is neither the default
 Not done: the preflight did not switch away from it — the plugin manages only
           branches it created. This run's artifacts WILL be committed on
           `<branch>`, and not pushed.
-Fix:      # only if that is the wrong place for them:
-          git -C "<SPECS_PATH>" switch <default>
+Fix:      git -C "<SPECS_PATH>" switch <default>
 If ignored: the artifacts land on `<branch>` and reach the maintainer when you
-          push or merge that branch."""
+          push or merge that branch; run Fix only if that is the wrong place
+          for them."""
 
 T = {
     "g0": G0,
@@ -66,23 +66,23 @@ T = {
     # ("Not done: ", "Fix:      ", "If ignored: ") in G1, rendered on its one line, unwrapped; <path list> on the Fix
     # line is the plain block's second, shell-quoted one.
     "g1.merged.not_done": "the preflight did not commit, switch branches, or push. Those files are yours, and switching branches would carry them along. <branch> is merged into <default>, so this run's own artifacts will NOT be committed at the end of the run either, unless the run moves off <branch> first: a commit there would keep them off <default>.",
-    "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" add <path list> && git -C \"<SPECS_PATH>\" commit # on <default>, not on <branch>, since a commit of its own on <branch> can make it read unmerged, and a later run then commits this run's artifacts on <branch> too; where git refuses the switch, the chain commits nothing, and git names the files in its way",
-    "g1.merged.if_ignored": "nothing is lost — your files and this run's artifacts stay uncommitted. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped, and the artifacts uncommitted, until these paths are committed or removed. Committed on <default> as Fix says, or removed, they let a later run commit the artifacts on <default>, leaving <branch> first where HEAD still stands there — save where git refuses that switch, when it commits them on <branch>; committed on <branch>, they can make it read unmerged, and where they do, a later run commits the artifacts on <branch> too. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
+    "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" add <path list> && git -C \"<SPECS_PATH>\" commit",
+    "g1.merged.if_ignored": "nothing is lost — your files and this run's artifacts stay uncommitted. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped, and the artifacts uncommitted, until these paths are committed or removed. Fix commits them on <default>, not on <branch>, and where git refuses its switch it commits nothing, git naming the files in its way. Committed on <default>, or removed, they let a later run commit the artifacts on <default>, leaving <branch> first where HEAD still stands there — save where git refuses that switch, when it commits them on <branch>; committed on <branch>, they can make it read unmerged, and where they do, a later run commits the artifacts on <branch> too. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     # §5's G2 variants: each replaces the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G2,
-    # rendered on its one line, unwrapped.
+    # rendered on its one line, unwrapped; an empty Fix leaves the label alone (§5: nothing to run).
     "g2.session.not_done": "the preflight did not switch away from it — the plugin manages only branches it created. This run's artifacts WILL be committed on session/<identity>, the session branch this specs repository uses because its default branch takes no push, and not on <branch>.",
-    "g2.session.fix": "# nothing to do for the artifacts",
-    "g2.session.if_ignored": "nothing changes for the artifacts: they reach <default> through session/<identity>'s pull request.",
+    "g2.session.fix": "",
+    "g2.session.if_ignored": "nothing changes for the artifacts, and nothing is to be run for them: they reach <default> through session/<identity>'s pull request.",
     "g2.self.not_done": "the preflight did not switch away from it. It is this specs repository's session branch, which the plugin commits to only while nothing stands on it, so this run's artifacts will NOT be committed.",
     "g2.self.fix": "git -C \"<SPECS_PATH>\" switch <default>",
     "g2.self.if_ignored": "the artifacts stay in your working tree, and the first run after you switch back commits them.",
     # §5: in session-branch mode where §8.1 resolves no identity, nothing is committed in the mode until one is set.
     "g2.no-identity.not_done": "the preflight did not switch away from it — the plugin manages only branches it created. Session-branch mode is on and no identity names its branch, so this run's artifacts will NOT be committed until one is set.",
-    "g2.no-identity.fix": "# set GIT_USER_INITIALS, or git -C \"<SPECS_PATH>\" config user.initials to your initials",
-    "g2.no-identity.if_ignored": "the artifacts stay in your working tree, and the first run after one is set commits them.",
+    "g2.no-identity.fix": "",
+    "g2.no-identity.if_ignored": "the artifacts stay in your working tree, and the first run after you set GIT_USER_INITIALS, or git -C \"<SPECS_PATH>\" config user.initials, to your initials commits them.",
     "g2.implement.not_done": "the preflight did not switch away from it — the plugin manages only branches it created. This run changes code here, so its artifacts WILL be committed on the branch it cuts for that, or, if it stops first, on the branch it then stands on — <branch>, or <default> after a fresh start — and not pushed unless that branch is <default> or its name carries one of this plugin's prefixes.",
-    "g2.implement.fix": "# nothing to do here: they reach the maintainer when that branch is pushed or merged",
-    "g2.implement.if_ignored": "the artifacts stay on that branch until it is pushed or merged.",
+    "g2.implement.fix": "",
+    "g2.implement.if_ignored": "nothing is to be run here: the artifacts stay on that branch until it is pushed or merged, and reach the maintainer then.",
 
     # §6's rows, in its order (ROWS below); "silent" prints nothing and has none.
     "row.pushed-plugin": "Specs repo: committed <sha7> (<N> files) on <branch> — pushed",

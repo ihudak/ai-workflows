@@ -15,8 +15,8 @@ once-a-run report start printed (pre.merged-unknown and pre.scope-failed with th
 resume or a --rerun never prints one again; merged_stay is null, or {branch, reason}: the plugin branch the preflight
 ended on without leaving it, which branch-merged read merged there, and why it stayed -- g1, unlisted (status could not
 run), refused (git refused the merged-branch leave's switch or B2's) or stopped (an early stop before the switch) --
-which end reads to commit nothing while HEAD still stands on it, a --rerun carries, and a start that leaves the branch
-clears (specs-repo-git §4 step 1's merged-branch stay).
+which end reads to commit nothing while HEAD still stands on it; each preflight derives its own, so a --rerun starts
+with none, and a start that leaves the branch clears it (specs-repo-git §4 step 1's merged-branch stay).
 """
 
 import calendar

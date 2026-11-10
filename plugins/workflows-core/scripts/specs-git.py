@@ -1845,7 +1845,7 @@ def _ask_stay(run, head, reason):
     """specs-repo-git §3.3's G1, and a preflight that stops early (§1 rule 5): where HEAD stands on a plugin branch
     <head> that is not the default branch, outside session-branch mode and never under misrooted, ask branch-merged
     HEAD -- a read that moves nothing, which _merged reports once where it cannot answer -- and keep the stay with
-    <reason> where it answers merged. A carried stay is never cleared here: only a start that leaves the branch does."""
+    <reason> where it answers merged."""
     rec = run["rec"]
     if (head is None or head == rec.get("default") or not branch_key(head, [])["plugin_branch"]
             or rec.get("mode") == "on" or rec.get("specs_git") == "misrooted"):
@@ -1856,14 +1856,15 @@ def _ask_stay(run, head, reason):
 
 def _block_part(block, label, text):
     """<block> with the part <label> opens -- its line from the label on, and the indented lines that continue it --
-    replaced by the label, the padding its line gives it, and <text>, unwrapped on one line."""
+    replaced by the label, the padding its line gives it, and <text>, unwrapped on one line; an empty <text> (a Fix
+    part with nothing to run, specs-repo-git §5) leaves the label alone, with no padding after it."""
     rows = block.split("\n")
     i = next(k for k, row in enumerate(rows) if row.startswith(label))
     j = i + 1
     while j < len(rows) and rows[j].startswith(" "):
         j += 1
     pad = re.match(re.escape(label) + " *", rows[i]).group(0)
-    return "\n".join(rows[:i] + [pad + text] + rows[j:])
+    return "\n".join(rows[:i] + [(pad + text).rstrip()] + rows[j:])
 
 
 def _g2_block(lines, specs, branch, default, variant=None, values=None):
@@ -2449,8 +2450,10 @@ def _carry(rec, old):
     <rec> -- specs_git where this one sets none, with what set it (the misrooted notice; G0's block, which _guards then
     keeps beside a block the re-run prints), the -D advisories given and the once-a-run reports printed, the branch B2
     or the merged-branch leave reported (which §3.4's loop skips for the whole run), the branch B4 left, the declined
-    paths, the session branch's creation by a call other than the flush, which the run carries to its end (§8.2), and
-    the merged-branch stay (§4 step 1), which only a start that leaves its branch clears."""
+    paths, and the session branch's creation by a call other than the flush, which the run carries to its end (§8.2).
+    Never the merged-branch stay: each preflight derives its own (§4 step 1), so a stay's reason is always one this
+    preflight met -- an early stop asks branch-merged afresh (_stop_stay) -- and none survives where this one no longer
+    reads the branch merged or has left it."""
     if rec["specs_git"] is None and old.get("specs_git"):
         rec["specs_git"] = old["specs_git"]
         if old["specs_git"] == "misrooted":
@@ -2460,7 +2463,7 @@ def _carry(rec, old):
                        guard_paths=list(old.get("guard_paths") or []))
     rec.update(advised_D=list(old.get("advised_D") or []), reported=list(old.get("reported") or []),
                b2_left=old.get("b2_left"), b4_left=old.get("b4_left"), declined=list(old.get("declined") or []),
-               session_branch_created=old.get("session_branch_created"), merged_stay=old.get("merged_stay"))
+               session_branch_created=old.get("session_branch_created"))
 
 
 def _queued_next(run, rec):
@@ -2485,8 +2488,9 @@ def _start_result(run, nxt, replaced, error):
 def _stop_stay(run):
     """specs-repo-git §1 rule 5's early stop, before the switch §3.4's leave or §3.5's B2 would make: where the gate
     passed, the default ref is known and HEAD stands on a plugin branch no stay names yet, ask branch-merged HEAD
-    (_ask_stay), so a merged one is kept as the run's merged-branch stay (§4 step 1). A stay already kept for HEAD --
-    B2's refused switch, which stops the call -- stands as it is."""
+    (_ask_stay), so a merged one is kept as the run's merged-branch stay (§4 step 1). A stay this preflight already kept
+    for HEAD -- B2's refused switch, which stops the call -- stands as it is; a re-run's preflight starts with none
+    (_carry), so its own stop asks afresh."""
     rec = run["rec"]
     head = _head_branch(run["specs"]) if rec.get("gate") == "pass" and rec.get("default_ref") else None
     if head is not None and not _held(rec, head):
@@ -3376,8 +3380,9 @@ def selftest():
                     + "Not done: the preflight did not switch away from it — the plugin manages only branches it created. "
                       "This run's artifacts WILL be committed on session/ab, the session branch this specs repository uses "
                       "because its default branch takes no push, and not on %s.\n"
-                      "Fix:      # nothing to do for the artifacts\n"
-                      "If ignored: nothing changes for the artifacts: they reach main through session/ab's pull request."
+                      "Fix:\n"
+                      "If ignored: nothing changes for the artifacts, and nothing is to be run for them: they reach main "
+                      "through session/ab's pull request."
                     % branch)
 
         def g2_no_identity(path, branch):
@@ -3385,9 +3390,9 @@ def selftest():
                     + "Not done: the preflight did not switch away from it — the plugin manages only branches it created. "
                       "Session-branch mode is on and no identity names its branch, so this run's artifacts will NOT be "
                       "committed until one is set.\n"
-                      "Fix:      # set GIT_USER_INITIALS, or git -C \"%s\" config user.initials to your initials\n"
-                      "If ignored: the artifacts stay in your working tree, and the first run after one is set commits "
-                      "them." % path)
+                      "Fix:\n"
+                      "If ignored: the artifacts stay in your working tree, and the first run after you set "
+                      "GIT_USER_INITIALS, or git -C \"%s\" config user.initials, to your initials commits them." % path)
 
         r, env = mode_world("m-g2")
         r.git("switch", "-q", "-c", "feature/x")
@@ -4468,8 +4473,9 @@ def selftest():
         check(lines.artifacts(spread) == "4 files under specifications", "l_artifacts: four spanning specifications/ (%r)"
               % lines.artifacts(spread))
 
-        # l_fix_lines: every §5 Fix part, rendered with its values, runs whole as pasted -- bash -c, against a git that
-        # only logs its arguments -- and makes exactly the git calls it shows: no quote left open, prose behind a #
+        # l_fix_lines: every §5 Fix part, rendered with its values, is commands only -- no #, no quote left open -- and
+        # runs whole as pasted, in bash and, where it is on PATH, in zsh with interactive comments off, against a git
+        # that only logs its arguments, making exactly the git calls it shows
         shim = os.path.join(tmp, "l-fix-shim")
         os.makedirs(shim)
         log = os.path.join(tmp, "l-fix-calls")
@@ -4480,7 +4486,7 @@ def selftest():
         plain = lines.fill("g1", {"<SPECS_PATH>": S, "<N>": 2,
                                   "<path list>": [", ".join(paths), " ".join(shlex.quote(p) for p in paths)]})
         blocks = [("g0", lines.fill("g0", {"<SPECS_PATH>": S, "<sha7>": "abc1234", "<YYYY-MM-DD>": "2026-11-10",
-                                           "<branch>": "main"}), ["switch|-c|rescue/2026-11-10|", "switch|main|"]),
+                                           "<branch>": "main"}), ["switch|-c|rescue/2026-11-10|"]),
                   ("g1", plain, ["status|", "add|my notes.md|n.md|", "commit|"]),
                   ("g1.merged", _g1_merged(lines, plain, "prd/A-1-x", "main", S, paths),
                    ["switch|main|", "add|my notes.md|n.md|", "commit|"]),
@@ -4497,14 +4503,28 @@ def selftest():
                 if part and not row.startswith(" "):
                     break
                 part.append(row[len("Fix:"):].strip() if not part else row.strip())
-            if os.path.exists(log):
-                os.remove(log)
-            ran = subprocess.run(["bash", "-c", "\n".join(part)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                 env=dict(os.environ, PATH=shim + os.pathsep + os.environ.get("PATH", ""), GIT_CALLS=log))
-            calls = open(log, encoding="utf-8").read().splitlines() if os.path.exists(log) else []
-            check(i is not None and ran.returncode == 0 and calls == ["-C|%s|%s" % (S, w) for w in want],
-                  "l_fix_lines: %s's Fix part runs as pasted, making its git calls (rc %s, %r, %r)"
-                  % (name, ran.returncode, calls, ran.stderr.decode("utf-8", "replace")[:200]))
+            balanced = True
+            for row in part:
+                try:
+                    shlex.split(row)
+                except ValueError:
+                    balanced = False
+            check(i is not None and not any("#" in row for row in part) and balanced,
+                  "l_fix_lines: %s's Fix part is commands only -- no #, which zsh's interactive shell does not read as a "
+                  "comment, and no quote left open (%r)" % (name, part))
+            for shell in [["bash", "-c"]] + ([["zsh", "-c"]] if shutil.which("zsh") else []):
+                if os.path.exists(log):
+                    os.remove(log)
+                script = "\n".join(part)
+                if shell[0] == "zsh":  # as an interactive zsh reads a paste, with comments off
+                    script = "setopt no_interactive_comments\n" + script
+                ran = subprocess.run(shell + [script], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                     env=dict(os.environ, PATH=shim + os.pathsep + os.environ.get("PATH", ""),
+                                              GIT_CALLS=log))
+                calls = open(log, encoding="utf-8").read().splitlines() if os.path.exists(log) else []
+                check(i is not None and ran.returncode == 0 and calls == ["-C|%s|%s" % (S, w) for w in want],
+                      "l_fix_lines: %s's Fix part runs as pasted in %s, making its git calls (rc %s, %r, %r)"
+                      % (name, shell[0], ran.returncode, calls, ran.stderr.decode("utf-8", "replace")[:200]))
 
     def scenarios_gate(tmp):
         with open(SESSION_HYGIENE, encoding="utf-8") as fh:
@@ -6708,13 +6728,12 @@ def selftest():
             "committed at the end of the run either, unless the run moves off %(branch)s first: a commit there would "
             "keep them off main.\n"
             "Fix:      git -C \"%(specs)s\" switch main && git -C \"%(specs)s\" add %(quoted)s && git -C \"%(specs)s\" "
-            "commit # on main, not on %(branch)s, since a commit of its own on %(branch)s can make it read unmerged, and a "
-            "later run then commits this run's artifacts on %(branch)s too; where git refuses the switch, the chain "
-            "commits nothing, and git names the files in its way\n"
+            "commit\n"
             "If ignored: nothing is lost — your files and this run's artifacts stay uncommitted. But the preflight ends "
             "here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped, and the "
-            "artifacts uncommitted, until these paths are committed or removed. Committed on main as Fix says, or "
-            "removed, they let a later run commit the artifacts on main, leaving %(branch)s first where HEAD still "
+            "artifacts uncommitted, until these paths are committed or removed. Fix commits them on main, not on "
+            "%(branch)s, and where git refuses its switch it commits nothing, git naming the files in its way. "
+            "Committed on main, or removed, they let a later run commit the artifacts on main, leaving %(branch)s first where HEAD still "
             "stands there — save where git refuses that switch, when it commits them on %(branch)s; committed on "
             "%(branch)s, they can make it read unmerged, and where they do, a later run commits the artifacts on "
             "%(branch)s too. A "
@@ -6843,8 +6862,9 @@ def selftest():
             "changes code here, so its artifacts WILL be committed on the branch it cuts for that, or, if it stops first, on "
             "the branch it then stands on — feature/x, or main after a fresh start — and not pushed unless that branch is "
             "main or its name carries one of this plugin's prefixes.\n"
-            "Fix:      # nothing to do here: they reach the maintainer when that branch is pushed or merged\n"
-            "If ignored: the artifacts stay on that branch until it is pushed or merged." % r.path)
+            "Fix:\n"
+            "If ignored: nothing is to be run here: the artifacts stay on that branch until it is pushed or merged, and "
+            "reach the maintainer then." % r.path)
         got = run_start(env, "/implement", cwd=os.path.join(r.path, "specifications"))
         check(got.get("print") == [env_line(r.path), implement] and got.get("guard") == "G2",
               "t_g2_implement: /implement from inside the specs work tree gets the direct-run lines (%r)" % got)
@@ -7853,7 +7873,7 @@ def selftest():
               and untracked(r, RES_A), "t_d5_status_failed: end skips (%r)" % got)
 
         # t_d5_leave_refused: git refuses the merged-branch leave's switch, so the flush commits on the branch with the
-        # cherry-pick line; a --rerun that stays carries the stay; a session file written after it is not committed
+        # cherry-pick line; a session file written after it is not committed
         r, env = refused_world("t-d5-refused")
         got = run_start(env, "/feedback", "--key", "A-1")
         shown = got.get("print") or []
@@ -7863,9 +7883,6 @@ def selftest():
                                                               "<SPECS_PATH>": r.path})
               and got.get("branch") == A and stay_of(env) == {"branch": A, "reason": "refused"},
               "t_d5_leave_refused: the flush on the branch, the cherry-pick line, the stay recorded (%r)" % got)
-        got = run_start(env, "/feedback", "--rerun", "--key", "A-1")
-        check(got.get("branch") == A and stay_of(env) == {"branch": A, "reason": "refused"},
-              "t_d5_leave_refused: a --rerun that stays on the branch carries the stay (%r)" % got)
         r.write(FEED_A, "f\n")
         got = run_end(env, "/feedback")
         check(got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 2)] and head(r) == flushed
@@ -7903,7 +7920,7 @@ def selftest():
               and stay_of(env) == {"branch": A, "reason": "refused"},
               "t_d5_resume: the stay recorded in one call stands through the resume after it (%r)" % shown)
 
-        # t_d5_rerun_clears: a --rerun whose preflight leaves the merged branch clears the stay its earlier start recorded
+        # t_d5_rerun_clears: a --rerun's preflight derives its own stay; leaving the merged branch, it keeps none
         r, env = merged_world("t-d5-rerun")
         run_start(env, "/feedback")
         os.remove(os.path.join(r.path, "notes.md"))
@@ -7912,6 +7929,39 @@ def selftest():
               "t_d5_rerun_clears: the re-run leaves the branch and clears the stay (%r)" % got)
         got = run_end(env, "/feedback")
         check(got.get("row") == "nothing", "t_d5_rerun_clears: end goes on as before (%r)" % got)
+
+        # t_d5_rerun_stopped (in process for the re-run): a re-run's preflight derives its own stay -- G1 gone, it stops
+        # early on the merged branch, so the stay is its own, stopped, and end's row names no notice it does not print
+        r, env = merged_world("t-d5-rerun-stopped")
+        run_start(env, "/feedback")
+        os.remove(os.path.join(r.path, "notes.md"))
+        real_flush = g["_flush"]
+        g["_flush"] = boom
+        try:
+            with in_env(env):
+                got = start(r.path, "/feedback", rerun=True)
+        finally:
+            g["_flush"] = real_flush
+        check(got.get("error") == "RuntimeError: boom" and got.get("merged_stay") == {"branch": A, "reason": "stopped"}
+              and stay_of(env) == {"branch": A, "reason": "stopped"} and (record(env, "/feedback") or {}).get("guard") is None,
+              "t_d5_rerun_stopped: the re-run's own reason (%r)" % got)
+        got = run_end(env, "/feedback")
+        check(got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 3)],
+              "t_d5_rerun_stopped: the row names the early stop, and no notice (%r)" % got)
+
+        # t_d5_rerun_b3: the user commits on the branch in the middle of the run, so it reads unmerged, and a re-run
+        # keyed to it stays by B3: no stay, and end commits on the branch, as the row's save clause says
+        r, env = merged_world("t-d5-rerun-b3")
+        run_start(env, "/feedback", "--key", "A-1")
+        r.git("add", "notes.md")
+        r.git("commit", "-q", "-m", "my notes")
+        got = run_start(env, "/feedback", "--rerun", "--key", "A-1")
+        check(got.get("branch") == A and got.get("merged_stay") is None and stay_of(env) is None,
+              "t_d5_rerun_b3: the re-run on B3 keeps no stay (%r)" % got)
+        r.write(FEED_A, "f\n")
+        got = run_end(env, "/feedback")
+        check(got.get("row") not in (None, "merged-stay") and got.get("branch") == A and not untracked(r, FEED_A),
+              "t_d5_rerun_b3: end commits on the branch (%r)" % got)
 
         # t_d5_b3_g1: an unmerged branch a key of the run names (B3), with G1: the plain block, no stay, and end commits
         # on it as before
