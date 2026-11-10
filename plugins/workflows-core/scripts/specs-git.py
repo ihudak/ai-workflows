@@ -645,11 +645,13 @@ class _Session:
     script's exit 2 would be: (None, the one line its CLI prints on stderr). <report> takes that line where a lift or a
     put-back could not run, which the step reports while the run goes on (§8's opening); <created> takes <base short
     sha> where a commit made here created the session branch -- a creation by any call but §3.4's flush, which reports
-    its own (§8.2). <message> is §4 step 4's. commits: every sb.commit result this object made, in order."""
+    its own (§8.2). <message> is §4 step 4's. commits: every sb.commit result this object made, in order.
+    before_commit: called, where set, just before each sb.commit -- end's, which saves the pending end_commit."""
 
     def __init__(self, lines, specs, branch, default, default_ref, message, report, created):
         self.lines, self.specs, self.branch, self.default, self.default_ref = lines, specs, branch, default, default_ref
         self.message, self.report, self.created, self.commits = message, report, created, []
+        self.before_commit = None
 
     def call(self, fn, *args):
         try:
@@ -668,6 +670,8 @@ class _Session:
         its base set where it created the session branch -- read at once -- and passed to <created> where <carry>;
         (None, the stderr line) where it could not run."""
         include = _head_branch(self.specs) == self.default
+        if self.before_commit:
+            self.before_commit()
         got, err = self.call(sb.commit, self.specs, self.branch, self.default_ref, self.message, include)
         if got is None:
             return None, err
@@ -912,7 +916,8 @@ def _row_line(lines, row, f):
     step 6 could not record), record_error and date; reason; error (Commit failed, and session-not-run's stderr line);
     scope (push_check's), subject (its failed commit's) and hook (the paths a pre-commit hook added to this run's own
     commit, naming the hook variant). In session-branch mode (§8): session_branch, where <branch> is the session
-    branch, which the refused rows' remedy names in its own form; F, pushed-session's count; and sync, whose
+    branch, which the refused rows' remedy names in its own form; scope's branch-path failure, in §6's session-branch
+    form, naming the merge commit where failed.sha holds one; F, pushed-session's count; and sync, whose
     conflicts give rejected -- here only the session branch's push-rejected row (§8.4; a replay's rows are
     _replay_line's) -- its conflict ending. mode_on and identity: a push refused on the default branch outside the
     mode, whose remedy says the mode turns on, under <identity>'s session branch or, with none, the no-identity
@@ -955,7 +960,11 @@ def _row_line(lines, row, f):
                 t = _swap(t, 'rm "<record>"', T["app.record-unset"]).replace("<record>", T["app.record-key"])
     elif row == "scope":
         failed = f["scope"]["failed"]
-        if f.get("hook"):
+        if failed["reason"] == "branch-path":  # §8.4: the session branch's whole change names <path>
+            t = T["row.scope.branch-path"]
+            v.update({"<path>": failed["path"], "<merge sha7>": (failed["sha"] or "")[:7] or None,
+                      "<subject>": f.get("subject")})
+        elif f.get("hook"):
             t = T["row.scope.hook"]
             v.update({"<path>": f["hook"][0], "<M-1>": str(len(f["hook"]) - 1) if len(f["hook"]) > 1 else None})
         else:
@@ -963,20 +972,18 @@ def _row_line(lines, row, f):
                 t = _swap(t, "which carries <path>", T["row.scope.merge"])
             elif failed["path"] is None:
                 t = _swap(t, "which carries <path>", T["row.scope.no-file"])
-            if failed["sha"] is None:  # §8.4's branch-path on a branch holding no merge commit: §6 words no line
-                raise NotRun("push-scope found %s in the change of %s but names no commit, which specs-repo-git §6 gives "
-                             "no line for" % (failed["path"], f.get("branch")))
             v.update({"<sha7>": [f.get("sha7"), failed["sha"][:7]], "<subject>": f.get("subject"), "<path>": failed["path"]})
     return lines.fill(t, v) + tail
 
 
 def _appends(lines, f):
-    """specs-repo-git §6's session-branch appends to the outcome line, whichever it is, in §6's order: the created clause
+    """specs-repo-git §6's session-branch appends to the outcome line, in §6's order: the created clause
     (f's created, where f names a session branch), sync.conflict by source -- <default-ref>'s paths, then
     origin/<session branch>'s, each in sync.conflicts' order -- sync.error, each unsettled path then the closing clause
-    once, stranded, and unsupported where f's mode is. f: specs, default, default_ref, session_branch, branch (where the
-    files stay, for unsupported), mode, and the last sb.commit's sync, unsettled and stranded. The declined append, which
-    §6 puts after these, is finish_end's."""
+    once, stranded, and unsupported where f's mode is. f: specs, default, default_ref, session_branch, branch (where
+    the files stay, for unsupported), mode, and the last sb.commit's sync, unsettled and stranded. The declined append,
+    which §6 puts after these, is finish_end's. The blocked rows and a line on a detached HEAD pass the created clause's
+    facts alone, since §6 gives them no other; the misrooted row takes none."""
     T, out = lines.T, ""
     branch = f.get("session_branch")
     v = {"<identity>": _identity(branch), "<default>": f.get("default"), "<SPECS_PATH>": f.get("specs"),
@@ -985,11 +992,8 @@ def _appends(lines, f):
         out += lines.fill("app.session.created", dict(v, **{"<base short sha>": f["created"]}))
     sync = f.get("sync") or {}
     if branch:
-        for tid, source in (("app.session.conflict-default", f.get("default_ref")),
-                            ("app.session.conflict-origin", "origin/" + branch)):
-            paths = _unique([c["path"] for c in sync.get("conflicts") or [] if c.get("source") == source])
-            if paths:
-                out += lines.fill(tid, dict(v, **{"<path>": paths}))
+        out += _conflict_clause(lines, "app.session.conflict-default", f.get("default_ref"), sync, v)
+        out += _conflict_clause(lines, "app.session.conflict-origin", "origin/" + branch, sync, v)
         if sync.get("error"):
             out += lines.fill("app.session.sync-error", dict(v, **{"<sync.error>": " ".join(str(sync["error"]).split())}))
         for path in f.get("unsettled") or []:
@@ -1001,6 +1005,12 @@ def _appends(lines, f):
     if f.get("mode") == "unsupported":
         out += lines.fill("app.session.unsupported", {"<branch>": f.get("branch")})
     return out
+
+
+def _conflict_clause(lines, tid, source, sync, v):
+    """§6's sync.conflict clause <tid> for the paths <sync>'s conflicts give <source>, in their order; '' where none."""
+    paths = _unique([c["path"] for c in (sync or {}).get("conflicts") or [] if c.get("source") == source])
+    return lines.fill(tid, dict(v, **{"<path>": paths})) if paths else ""
 
 
 def _append_facts(specs, rec, branch, session=None):
@@ -1076,6 +1086,28 @@ def _landed(root, pending):
     carried = _commit_paths(root, tip)
     return {"sha7": tip[:7], "files": len(carried), "branch": pending["branch"], "paths": carried,
             "hook_paths": [p for p in carried if p not in staged]}
+
+
+def _landed_session(root, rec):
+    """In session-branch mode, the run's commits a pending end_commit is about -- {branch, base, session}, saved just
+    before the run's first §8.2 commit, base the session branch's tip then, or None where it did not exist -- where any
+    landed: the non-merge commits on the branch that neither <base>, the record's <default-ref> nor origin's copy of the
+    branch holds (§8.2 step 3's merges bring theirs in). Their facts as end_commit holds them: sha7 the newest, files
+    every path they change, the session facts empty (the commit's own output is lost), and, where <base> was None,
+    created -- the commit the branch was created at, the oldest's parent. None where none landed."""
+    pending = rec["end_commit"]
+    branch = pending.get("branch") or ""
+    tip = sb.rev(root, "refs/heads/" + branch)
+    if tip is None or tip == pending.get("base"):
+        return None
+    nots = [x for x in (pending.get("base"), rec.get("default_ref"), "refs/remotes/origin/" + branch) if x and sb.rev(root, x)]
+    commits = sb.text(sb.git(root, "rev-list", "--no-merges", tip, "--not", *nots)).split()
+    if not commits:
+        return None
+    paths = _unique([p for c in reversed(commits) for p in _commit_paths(root, c)])
+    created = None if pending.get("base") else (sb.rev(root, commits[-1] + "^") or "")[:7] or None
+    return {"sha7": commits[0][:7], "files": len(paths), "branch": branch, "paths": paths, "hook_paths": [],
+            "session": {}, "created": created}
 
 
 def _end_result(**kw):
@@ -1226,11 +1258,16 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     state, lines, specs, session, command = (run[k] for k in ("state", "lines", "specs", "session", "command"))
     rec = state.load(session, command)
     if resume and rec is not None and rec.get("end_commit") and state.saved_within(rec):
-        commit = rec["end_commit"] if rec["end_commit"].get("sha7") else _landed(specs, rec["end_commit"])
+        pending = rec["end_commit"]
+        commit = (pending if pending.get("sha7") else _landed_session(specs, rec) if "session" in pending
+                  else _landed(specs, pending))
         if commit is not None:  # the run's commit is made: what follows is past its first write
             run["wrote"] = True
             run["record"] = "found"
             if commit is not rec["end_commit"]:
+                created = commit.pop("created", None)
+                if created and not rec.get("session_branch_created"):
+                    rec["session_branch_created"] = created
                 rec["end_commit"] = commit
                 state.save(session, command, rec)
             default = rec.get("default") or resolve_default(specs, False)["default"]
@@ -1271,8 +1308,10 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     if flag == "misrooted":
         line = lines.fill("row.misrooted", {})
         return _stop(run, "misrooted", [line] + notice, line)
-    if flag == "blocked":
-        line = lines.fill("row.blocked", {})
+    if flag == "blocked":  # §6: the created clause, which names no branch the files stay on, is the one append here
+        sbranch = rec.get("session_branch") if rec.get("mode") == "on" else None
+        line = lines.fill("row.blocked", {}) + _appends(lines, {"session_branch": sbranch, "created": (
+            session_branch_created or rec.get("session_branch_created"))})
         return _stop(run, "blocked", [line] + ([rec["guard_block"]] if rec.get("guard_block") else []), line)
 
     # Step 1's gate, then G0's state where no flag stands: a commit on a detached HEAD is reachable from no branch.
@@ -1285,11 +1324,6 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
         d = {k: rec.get(k) for k in ("default", "default_ref", "remote")}
     else:
         d = resolve_default(specs, False)
-    if branch is None:
-        if status(specs)["artifact"]:
-            line = lines.fill("row.blocked", {})
-            return _stop(run, "blocked", [line, _g0_block(lines, specs, d["default"])], line)
-        return finish_end(run, "nothing", lines.fill("row.nothing", {}), view)
     # §8.1's mode and session branch: the record's, which start resolved, else resolved here (step 1, on a run that ran
     # no preflight); the session branch is carried only where the mode is on, and is null there with no identity.
     if found and rec.get("mode"):
@@ -1299,11 +1333,21 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
         mode, session_branch = m["mode"], m["branch"] if m["mode"] == "on" else None
     else:
         mode, session_branch = "off", None
+    if branch is None:
+        if status(specs)["artifact"]:
+            line = lines.fill("row.blocked", {}) + _appends(lines, {"session_branch": session_branch, "created": (
+                session_branch_created or (keep or {}).get("session_branch_created"))})
+            return _stop(run, "blocked", [line, _g0_block(lines, specs, d["default"])], line)
+        line = lines.fill("row.nothing", {}) + _appends(lines, {"session_branch": session_branch, "created": (
+            session_branch_created or (keep or {}).get("session_branch_created"))})
+        return finish_end(run, "nothing", line, view)
 
     # Steps 2-4: the catch-up, then the commit. R2's boundary is the first repository write either makes, and just
     # before it the record is saved at stage end -- the one kept, else a new one in place of whatever stood -- with what
-    # this call was given; and again just before `git commit`, with the commit about to be made (its branch, its base
-    # and each path's staged blob), so --resume finds that commit where a kill comes between it and the save naming it.
+    # this call was given; and again just before the commit, with what it is about to make -- outside the mode, before
+    # `git commit`, its branch, its base and each path's staged blob (_landed); in the mode, before the run's first
+    # §8.2 commit, the session branch and its tip then (_landed_session) -- so --resume finds the run's commit where a
+    # kill comes between it and the save naming it.
     message = session_subject(commit_key or (keep or {}).get("commit_key"), command)
     saved = keep if keep is not None else state.new(command, session=session, started_by_script=False, specs=specs)
     saved.update(stage="end", end_commit=None, declined=view["declined"], mode=mode, session_branch=session_branch,
@@ -1343,13 +1387,14 @@ def _end_session(run, saved, d, head, message, view, boundary):
     """specs-repo-git §4 steps 2-7 in session-branch mode (§8), on the checkout standing on <head>. With no identity
     (§8.1) the run commits nothing in the mode: the catch-up runs unwrapped, and the row is no-identity where session
     files are dirty (else nothing to commit). Otherwise step 2's catch-up runs inside lift and put-back (§8.3), a lift
-    or put-back that could not run printed as pre.session-not-run before the outcome line, as a failed catch-up's
-    pre.pull-failed is; step 4 is §8.2's commit, the session-not-run row where it could not run and nothing else of the
-    run's committed. The run's commit is the last that committed among its commits -- a lift's unpreserved commit with
-    step 4's message before the catch-up, and step 4's -- its file count every path they changed; none committed is
-    nothing to commit, and a step 4 that could not run after a lift's commit did is reported as pre.session-not-run,
-    that commit pushed. A creation by any of them is the run's session_branch_created; the last commit's sync,
-    unsettled and stranded fill the appends."""
+    or put-back that could not run printed as end.session-not-run before the outcome line (§8's opening); step 4 is
+    §8.2's commit, the session-not-run row where it could not run and nothing else of the run's committed. The run's
+    commit is the last that committed among its commits -- a lift's unpreserved commit with step 4's message before the
+    catch-up, and step 4's -- its file count every path they changed; none committed is nothing to commit, and a step 4
+    that could not run after a lift's commit did is reported as end.session-not-run, that commit pushed. Just before the
+    first of them the pending end_commit is saved (_landed_session reads it on --resume). A creation by any of them is
+    the run's session_branch_created, saved at once; the last commit's sync, unsettled and stranded fill the
+    appends."""
     state, lines, specs = run["state"], run["lines"], run["specs"]
     session_branch = saved["session_branch"]
 
@@ -1364,12 +1409,20 @@ def _end_session(run, saved, d, head, message, view, boundary):
         return ending(row, lines.fill("row." + row, {}))
 
     def report(err):
-        run["pre"].append(lines.fill("pre.session-not-run", {"<the first line of its stderr>": err}))
+        run["pre"].append(lines.fill("end.session-not-run", {"<the first line of its stderr>": err}))
 
     def created(base):
         saved["session_branch_created"] = base
+        state.save(run["session"], run["command"], saved)
+
+    def pending():
+        if not saved.get("end_commit"):
+            saved["end_commit"] = {"branch": session_branch, "base": sb.rev(specs, "refs/heads/" + session_branch),
+                                   "session": {}}
+            state.save(run["session"], run["command"], saved)
 
     sess = _Session(lines, specs, session_branch, d["default"], d["default_ref"], message, report, created)
+    sess.before_commit = pending
     pulled = catch_up(specs, d["default"], d["default_ref"], on_write=boundary, wrap=sess.wrap)
     if pulled:
         run["pre"].append(pulled)
@@ -1900,14 +1953,24 @@ def _refused_line(lines, specs, branch, default, p, extra=None):
     return lines.fill("pre.refused", v)
 
 
+def _session_rejected_preflight(lines, branch, default, sync):
+    """specs-repo-git §3.4: the session branch <branch>'s push-rejected row in its Specs preflight: form, and, where
+    <sync> (the flush's commit's) gives a conflict the source origin/<branch> -- where the row takes its conflict
+    ending -- §6's clause for those paths after it, the clause that ending points at."""
+    row = _row_line(lines, "rejected", {"sha7": "-", "files": 0, "branch": branch, "session_branch": branch, "sync": sync})
+    v = {"<identity>": _identity(branch), "<default>": default}
+    return lines.preflight_form(row) + _conflict_clause(lines, "app.session.conflict-origin", "origin/" + branch, sync, v)
+
+
 def _push(run, branch, sync=None):
     """specs-repo-git §4 steps 5-6 for <branch> inside §3.4: push_check, its conditions in step 5's order and
     push-scope last, measured by _scope, which reports where it cannot run; then the push. A condition that fails,
     and a push that lands, print nothing here; a refusal and a failure print their Specs preflight: forms. The outcome
     (held where a condition failed or push-scope could not run) and set_upstream, which a rejected push's replay
     repeats. In session-branch mode nothing is replayed (§4 step 6): a rejection of the session branch prints its
-    push-rejected row in its Specs preflight: form -- the conflict ending where <sync>, the flush's commit's, names
-    origin's copy -- and one of a plugin branch prints push rejected with reason.session-mode and its remedy wrapped
+    push-rejected row in its Specs preflight: form -- with the conflict ending, followed by §6's clause for origin's
+    copy, where <sync>, the flush's commit's, names that source (§3.4) -- and one of a plugin branch prints push
+    rejected with reason.session-mode and its remedy wrapped
     in the session branch's lift and put-back; either is outcome unreplayed, which queues and names no replay."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     in_mode = rec.get("mode") == "on"
@@ -1928,7 +1991,7 @@ def _push(run, branch, sync=None):
         f = {"sha7": "-", "files": 0, "branch": branch, "specs": specs, "default": rec["default"],
              "standing": _head_branch(specs), "register_rebuild": False, "error": None, "preflight": True}
         if session:
-            _emit(run, lines.preflight_form(_row_line(lines, "rejected", dict(f, session_branch=branch, sync=sync))))
+            _emit(run, _session_rejected_preflight(lines, branch, rec["default"], sync))
         else:
             _emit(run, _replay_line(lines, {"row": "rejected", "why": None, "reason": "session-mode"}, None,
                                     dict(f, session_branch=sbranch)))
@@ -1979,8 +2042,9 @@ def _to_default(run, branch, field):
     origin <default>` where _pulls holds, its pre.pull-failed line printed where it fails. git's first error line where
     it refused the switch, nothing moved; else None. In session-branch mode with a session branch this is the one place
     B2's and B4's switch and pull are wrapped in lift and put-back (§8.3, _Session.wrap), the caller's budget checked
-    before it; a second unpreserved skips the move, which raises NotRun naming why, as §3.5's refused switch stops the
-    call (rule 5). With no identity the move runs unwrapped (§8.1)."""
+    before it; a second unpreserved skips the move, which returns text.lift-unpreserved in place of git's first error
+    line, so the step reports it as it would a refused switch (§8.3). With no identity the move runs unwrapped
+    (§8.1)."""
     rec, specs = run["rec"], run["specs"]
 
     def move():
@@ -1996,12 +2060,7 @@ def _to_default(run, branch, field):
         return None
 
     sess = _session(run)
-    if sess is None:
-        return move()
-    done, why = sess.wrap(move)
-    if not done:
-        raise NotRun(why)
-    return why
+    return move() if sess is None else sess.wrap(move)[1]
 
 
 def _leave(run, branch, test, merged_flush=False):
@@ -2087,7 +2146,8 @@ def _fetch(run):
 def _guards(run):
     """Stage guards, specs-repo-git §3.3: the first of G0, G1 and G2 that holds prints its §5 block, saved for end to
     repeat, and ends the preflight; G0 sets specs_git: blocked. In session-branch mode with a session branch, G2 takes
-    §5's session-branch lines, or, on the session branch itself, its own variant; with no identity, G2's own."""
+    §5's session-branch lines, or, on the session branch itself, its own variant; with no identity, its no-identity
+    variant."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     head, found = _head_branch(specs), None
     if head is None:
@@ -2103,6 +2163,8 @@ def _guards(run):
             if rec["mode"] == "on" and rec["session_branch"]:
                 variant = "self" if head == rec["session_branch"] else "session"
                 values = {"<identity>": _identity(rec["session_branch"])}
+            elif rec["mode"] == "on":  # no identity: nothing is committed in the mode until one is set (§8.1)
+                variant = "no-identity"
             else:
                 variant = "implement" if run["command"] == "/implement" and _inside(rec["top"]) else None
             found = ("G2", _g2_block(lines, specs, head, rec["default"], variant, values), [])
@@ -2175,7 +2237,8 @@ def _flush_session(run, sess, unit):
     true, is reported here as pre.created.*; then the session branch pushed where it holds commits a push would publish
     and §4 step 5's conditions hold as §8.4 states them (_push: a rejection names no replay). A commit that could not
     run prints pre.session-not-run, and the push of what an earlier run left still goes ahead. With no identity (<sess>
-    None) nothing is committed or pushed (§8.1). Nothing else is printed, save step 6's failure lines."""
+    None) nothing is committed or pushed (§8.1). Nothing else is printed, save step 6's failure lines -- the session
+    branch's rejection among them, followed by the conflict clause its ending points at (_session_rejected_preflight)."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     if sess is None:
         return _advance(run, "settle")
@@ -3201,6 +3264,18 @@ def selftest():
                   "them." % r.path)
         check(got.get("print") == [env_line(r.path), want, not_run(checked_out(r))] and got.get("guard") == "G2",
               "m_g2: on session/ab itself its own variant, then the closing put-back's refusal (%r)" % got)
+        r, env = mode_world("m-g2-no-identity", initials=None)
+        r.git("switch", "-q", "-c", "feature/x")
+        got = run_start(env)
+        want = (found % (r.path, "feature/x")
+                + "Not done: the preflight did not switch away from it — the plugin manages only branches it created. "
+                  "Session-branch mode is on and no identity names its branch, so this run's artifacts will NOT be "
+                  "committed until one is set.\n"
+                  "Fix:      # set GIT_USER_INITIALS, or git -C \"%s\" config user.initials to your initials\n"
+                  "If ignored: the artifacts stay in your working tree, and the first run after one is set commits "
+                  "them." % r.path)
+        check(got.get("print") == [env_line(r.path), want] and got.get("guard") == "G2" and got.get("session_branch") is None,
+              "m_g2: with no identity, its no-identity variant (%r)" % got)
 
         # m_unsupported
         r, env = mode_world("m-unsupported")
@@ -3227,6 +3302,16 @@ def selftest():
                 "needs --write-tree and -X), so these files stay on main until git is upgraded" % (head(r)[:7], r.path))
         check(got.get("row") == "pushed-default" and got.get("print") == [want],
               "m_unsupported: end's line ends with the unsupported clause (%r)" % got)
+        r.git("checkout", "-q", "--detach")
+        r.write(FEED + "u3.md", "u3\n")
+        got = end_of(env)
+        check(got.get("row") == "blocked" and (got.get("print") or [""])[0] == "Specs repo: NOT COMMITTED — see the notice below",
+              "m_unsupported: no unsupported clause on a detached HEAD, which names no branch (%r)" % got)
+        run_start(env)
+        got = end_of(env)
+        check(got.get("row") == "blocked" and (record(env, "/feedback") is None)
+              and (got.get("print") or [""])[0] == "Specs repo: NOT COMMITTED — see the notice below",
+              "m_unsupported: nor on the blocked flag start recorded in that mode (%r)" % got)
 
         # m_wrapped_b4
         r, env, w = wrapped_world("m-wrapped-b4")
@@ -3322,11 +3407,86 @@ def selftest():
         finally:
             sb.commit = real_commit
         carried = r.git("log", "-1", "--format=%H", S, "--", FEED + "e.md")
-        check(got.get("print") == ["Specs preflight: session-branch.py could not run (session-branch: not run (boom))",
+        check(got.get("print") == ["Specs repo: session-branch.py could not run (session-branch: not run (boom))",
                                    pushed_session(carried[:7], 1, 1) + "; this run created local session/ab at " + main[:7]]
               and got.get("row") == "pushed-session"
               and on_origin(r, S) == ref(r, S) and len(made) == 2,
               "m_end_commit_not_run: reported, and the lift's commit is the run's, pushed (%r)" % got)
+
+        # m_branch_path: another clone pushed a deliverable on session/ab; its merge makes the session branch's whole
+        # change name a path that is no session file, so §8.4's push-scope fails with branch-path (§6's session form)
+        r, env = mode_world("m-branch-path")
+        o = clone(r, "m-branch-path-other")
+        o.git("switch", "-q", "-c", S)
+        o.write("specifications/PRD-ACME-3-z/prd.md", "z\n")
+        o.commit_all("ACME-3 Add the PRD, on the session branch")
+        o.git("push", "-q", "origin", S)
+        main = head(r)
+        r.write(FEED + "b1.md", "b1\n")
+        got = run_start(env)
+        b1 = r.git("log", "-1", "--format=%H", S, "--", FEED + "b1.md")
+        merge = r.git("rev-list", "--merges", "-n", "1", S)
+        check(got.get("print") == [env_line(r.path), "Specs preflight: created local session/ab at %s, and committed %s on it"
+                                   % (main[:7], b1[:7])] and on_origin(r, S) == ref(o, S) and merge,
+              "m_branch_path: the flush merges origin's copy and pushes nothing (%r)" % got)
+        r.write(FEED + "b2.md", "b2\n")
+        got = end_of(env)
+        tip = ref(r, S) or ""
+        want = ("Specs repo: committed %s (1 file) on session/ab — not pushed: its pull request would also change "
+                "specifications/PRD-ACME-3-z/prd.md, which is not one of this plugin's session files, and the branch's newest "
+                "merge commit is %s NOISSUE Merge origin/session/ab into session/ab; push session/ab once that change is "
+                "ready to go, and the artifacts go with it" % (tip[:7], merge[:7]))
+        check(got.get("row") == "scope" and got.get("print") == [want] and got.get("error") is None
+              and on_origin(r, S) == ref(o, S) and record(env, "/feedback") is None,
+              "m_branch_path: end's push-scope row in its session-branch form, the record removed (%r)" % got)
+
+        # m_end_resume (in process): a kill while §8.2's commit runs; end --resume finds what landed and pushes it
+        real_commit = sb.commit
+
+        def killed(*args):
+            real_commit(*args)
+            raise KeyboardInterrupt
+
+        for name, existing in (("m-end-resume", False), ("m-end-resume-existing", True)):
+            r, env = mode_world(name)
+            if existing:
+                r.git("branch", S, "main")
+            main = head(r)
+            r.write(FEED + "k.md", "k\n")
+            sb.commit = killed
+            try:
+                with in_env(env):
+                    try:
+                        end(r.path, "/feedback")
+                    except KeyboardInterrupt:
+                        pass
+            finally:
+                sb.commit = real_commit
+            pending = (record(env, "/feedback") or {}).get("end_commit") or {}
+            check(pending == {"branch": S, "base": main if existing else None, "session": {}},
+                  "m_end_resume: the pending end_commit saved before the commit (%s: %r)" % (name, pending))
+            got = end_of(env, "--resume")
+            carried = r.git("log", "-1", "--format=%H", S, "--", FEED + "k.md")
+            want = pushed_session(carried[:7], 1, 1) + ("" if existing else "; this run created local session/ab at "
+                                                        + main[:7])
+            check(got.get("print") == [want] and got.get("record") == "found" and on_origin(r, S) == ref(r, S)
+                  and record(env, "/feedback") is None,
+                  "m_end_resume: --resume pushes the commit the kill left unnamed (%s: %r)" % (name, got))
+
+        # m_blocked: both blocked rows carry the created clause, the one session-branch append §6 gives them
+        blocked = "Specs repo: NOT COMMITTED — see the notice below; this run created local session/ab at abc1234"
+        r, env = mode_world("m-blocked")
+        r.git("checkout", "-q", "--detach")
+        r.write(RESUME, "r\n")
+        got = end_of(env, "--session-branch-created", "abc1234")
+        check(got.get("row") == "blocked" and len(got.get("print") or []) == 2 and got["print"][0] == blocked
+              and got["print"][1].startswith("⚠ SPECS REPO — THIS RUN'S ARTIFACTS WILL NOT BE COMMITTED"),
+              "m_blocked: G0's state at end, the created clause appended (%r)" % got)
+        got = run_start(env)
+        block = (got.get("print") or ["", ""])[1]
+        got = end_of(env, "--session-branch-created", "abc1234")
+        check(got.get("row") == "blocked" and got.get("print") == [blocked, block],
+              "m_blocked: the blocked flag start recorded, the created clause appended (%r)" % got)
 
         # m_misrooted: §8.1 is never resolved under misrooted, so nothing of the mode runs
         r, env = mode_world("m-misrooted")
@@ -3534,9 +3694,10 @@ def selftest():
                 got = start(r.path, "/feedback")
         finally:
             sb.lift, sb.put_back = real_lift, real_put_back
-        stop = ("Specs preflight: stopped early (%s) — what it did is above, and the next run's preflight goes on from "
-                "where this one stands" % why)
-        check(got.get("print") == [env_line(r.path), stop] and got.get("error") == why and got.get("branch") == B
+        stop = ("Specs preflight: stopped early (git switch main: %s) — what it did is above, and the next run's preflight "
+                "goes on from where this one stands" % why)
+        check(got.get("print") == [env_line(r.path), stop] and got.get("error") == "git switch main: " + why
+              and got.get("branch") == B
               and puts == [S], "m_skipped: B4's skipped switch stops the call, the closing put-back run (%r, %r)" % (got, puts))
 
         # m_canned: the renderer over canned sb.commit results and facts
@@ -3544,17 +3705,18 @@ def selftest():
         sync = {"conflict": ["a.md", "b.md", "c.md"],
                 "conflicts": [{"path": "a.md", "source": "origin/main"}, {"path": "c.md", "source": "origin/session/ab"},
                               {"path": "b.md", "source": "origin/main"}]}
+        origin_clause = ("; origin's copy of session/ab, pushed from another clone, was not merged in: on c.md one clone "
+                         "changed what the other clone's copy still holds unchanged (an entry edited or removed, the header "
+                         "edited, the file deleted) — make the two copies agree, by making the same change on the clone that "
+                         "still holds it (standing on main there; a pending cost file the other relocated is relocated there "
+                         "too, never deleted by hand) or by undoing it on the other; the next run on the clone you changed "
+                         "commits it, and once that is pushed, a later run here merges and pushes")
         unsettled = ("; %s and session/ab's version of it each hold a change the other lacks, so it was left out of this "
                      "commit and is as it was in your working tree — git -C \"/s\" show session/ab:%s shows the branch's "
                      "version")
         want = ("; this run created local session/ab at 1234567"
                 "; merging main into session/ab left a.md, b.md unsettled — settle them in its pull request"
-                "; origin's copy of session/ab, pushed from another clone, was not merged in: on c.md one clone changed "
-                "what the other clone's copy still holds unchanged (an entry edited or removed, the header edited, the file "
-                "deleted) — make the two copies agree, by making the same change on the clone that still holds it "
-                "(standing on main there; a pending cost file the other relocated is relocated there too, never deleted "
-                "by hand) or by undoing it on the other; the next run on the clone you changed commits it, and once that "
-                "is pushed, a later run here merges and pushes"
+                + origin_clause
                 + unsettled % ("x.md", "x.md") + unsettled % ("y.md", "y.md")
                 + "; once a copy left out is the branch's version with your own entries added after it, in the line "
                   "endings your checkout gives the file, the next run commits it, and an edit or removal of an entry the "
@@ -3634,6 +3796,20 @@ def selftest():
               "m_canned: the replay's refused form on the default branch says the mode turns on (%r)" % got)
         got = _row_line(lines, "pushed-session", dict(row, files=1, F=3))
         check(got == pushed_session("abc1234", 1, 3), "m_canned: pushed-session (%r)" % got)
+        bp = ("Specs repo: committed abc1234 (2 files) on session/ab — not pushed: its pull request would also change "
+              "specifications/PRD-A-1-x/prd.md, which is not one of this plugin's session files%s; push session/ab once that "
+              "change is ready to go, and the artifacts go with it")
+        failed = {"sha": "c" * 40, "reason": "branch-path", "path": "specifications/PRD-A-1-x/prd.md"}
+        got = [_row_line(lines, "scope", dict(row, scope={"failed": failed}, subject="NOISSUE Merge main into session/ab")),
+               _row_line(lines, "scope", dict(row, scope={"failed": dict(failed, sha=None)}, subject=None))]
+        check(got == [bp % ", and the branch's newest merge commit is ccccccc NOISSUE Merge main into session/ab", bp % ""],
+              "m_canned: push-scope's branch-path form, with a merge commit and with none (%r)" % got)
+        got = [_session_rejected_preflight(lines, S, "main", s) for s in (None, {"conflicts": sync["conflicts"][:1]}, sync)]
+        plain = ("Specs preflight: session/ab — push REJECTED: origin's session/ab has commits this clone lacks, pushed from "
+                 "another clone under the same identity")
+        check(got == [plain + "; a later run takes them in and pushes"] * 2
+              + [plain + ", which a later run takes in only once the two clones' copies agree, as this line says" + origin_clause],
+              "m_canned: the flush's session rejection, its conflict ending followed by the clause it points at (%r)" % got)
 
     def scenarios_state(tmp):
         state = _load_module("specs_git_state")
@@ -3872,8 +4048,9 @@ def selftest():
 
         # l_ids
         ids = ["g0", "g1", "g2"]
-        ids += ["g2.%s.%s" % (v, part) for v in ("session", "self", "implement") for part in ("not_done", "fix", "if_ignored")]
-        ids += ["row.remote-deleted.default-tail", "row.scope.merge", "row.scope.no-file", "row.scope.hook",
+        ids += ["g2.%s.%s" % (v, part) for v in ("session", "self", "no-identity", "implement")
+                for part in ("not_done", "fix", "if_ignored")]
+        ids += ["row.remote-deleted.default-tail", "row.scope.merge", "row.scope.no-file", "row.scope.hook", "row.scope.branch-path",
                 "row.moved.refused", "row.session-rejected", "row.session-rejected.conflict-ending"]
         ids += ["app." + a for a in (
             "hook-line", "record-key", "record-unset", "unrecorded", "register-clause", "register-move", "upstream-error",
@@ -3893,7 +4070,7 @@ def selftest():
             "created.committed", "deleted", "delete-failed", "advisory-D", "advisory-D.rm", "pushed-left", "b2-config",
             "b2-squash", "b4", "b4.count", "stay", "stay.unlisted", "rerun-failed", "rerun-stay", "session-not-run",
             "stopped")]
-        ids += ["end.stopped", "text.push-capped", "text.pull-capped", "text.lift-unpreserved", "text.offline", "root.one-line",
+        ids += ["end.stopped", "end.session-not-run", "text.push-capped", "text.pull-capped", "text.lift-unpreserved", "text.offline", "root.one-line",
                 "root.stray", "root.two-readings",
                 "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
         missing = [i for i in ids if i not in T]

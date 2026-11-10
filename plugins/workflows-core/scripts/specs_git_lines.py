@@ -70,6 +70,10 @@ T = {
     "g2.self.not_done": "the preflight did not switch away from it. It is this specs repository's session branch, which the plugin commits to only while nothing stands on it, so this run's artifacts will NOT be committed.",
     "g2.self.fix": "git -C \"<SPECS_PATH>\" switch <default>",
     "g2.self.if_ignored": "the artifacts stay in your working tree, and the first run after you switch back commits them.",
+    # §5: in session-branch mode where §8.1 resolves no identity, nothing is committed in the mode until one is set.
+    "g2.no-identity.not_done": "the preflight did not switch away from it — the plugin manages only branches it created. Session-branch mode is on and no identity names its branch, so this run's artifacts will NOT be committed until one is set.",
+    "g2.no-identity.fix": "# set GIT_USER_INITIALS, or git -C \"<SPECS_PATH>\" config user.initials to your initials",
+    "g2.no-identity.if_ignored": "the artifacts stay in your working tree, and the first run after one is set commits them.",
     "g2.implement.not_done": "the preflight did not switch away from it — the plugin manages only branches it created. This run changes code here, so its artifacts WILL be committed on the branch it cuts for that, or, if it stops first, on the branch it then stands on — <branch>, or <default> after a fresh start — and not pushed unless that branch is <default> or its name carries one of this plugin's prefixes.",
     "g2.implement.fix": "# nothing to do here: they reach the maintainer when that branch is pushed or merged",
     "g2.implement.if_ignored": "the artifacts stay on that branch until it is pushed or merged.",
@@ -94,6 +98,9 @@ T = {
     # Each replaces "which carries <path>" in row.scope.
     "row.scope.merge": "which is a merge commit",
     "row.scope.no-file": "which changes no file",
+    # The push-scope row for the session branch where §8.4's test fails with reason branch-path; its bracketed clause
+    # only where failed.sha names a merge commit.
+    "row.scope.branch-path": "Specs repo: committed <sha7> (<N> files) on session/<identity> — not pushed: its pull request would also change <path>, which is not one of this plugin's session files[, and the branch's newest merge commit is <merge sha7> <subject>]; push session/<identity> once that change is ready to go, and the artifacts go with it",
     "row.scope.hook": "Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: a pre-commit hook added <path>[, and <M-1> more] to this commit, so it carries more than this plugin's session files; check what the hook added before you push <branch>",
     "row.replayed": "Specs repo: committed <sha7> (<N> files) on <branch> — pushed after a replay: origin's <branch> had moved on, so the run replayed its <K> commit(s) onto it[, <D> of them already there and dropped][; <the register clause>]",
     "row.already-there": "Specs repo: committed <sha7> (<N> files) on <branch> — not pushed, and nothing is left to push: origin's <branch> had moved on and already holds every change <branch> carries, so <branch> now stands on it[; <the register clause>]",
@@ -220,6 +227,9 @@ T = {
     "pre.rerun-stay": "Specs preflight: staying on <current> — the uncommitted paths could not be listed, so no branch is switched (it would have switched back to <branch>, as a key of this run names it)",
     "pre.session-not-run": "Specs preflight: session-branch.py could not run (<the first line of its stderr>)",
     "pre.stopped": "Specs preflight: stopped early (<the error>) — what it did is above, and the next run's preflight goes on from where this one stands",
+    # §8: commit-artifacts' report of a lift or put-back around step 2, or a step 4 commit after a lift's commit made the
+    # run's, that could not run; printed before the outcome line.
+    "end.session-not-run": "Specs repo: session-branch.py could not run (<the first line of its stderr>)",
     "end.stopped": "Specs repo: NOT FINISHED — the terminal step stopped early (<the error>); what it committed or pushed is as it left it, and the next run's preflight flushes the rest",
     # The reason a push or pull the 60 s cap ended gives in place of git's.
     "text.push-capped": "the push did not finish within 60 s",
