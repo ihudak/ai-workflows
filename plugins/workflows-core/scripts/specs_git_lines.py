@@ -69,7 +69,8 @@ T = {
     "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" add <path list> && git -C \"<SPECS_PATH>\" commit",
     "g1.merged.if_ignored": "nothing is lost — your files and this run's artifacts stay uncommitted. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped, and the artifacts uncommitted, until these paths are committed or removed. Fix commits them on <default>, not on <branch>, and where git refuses its switch it commits nothing, git naming the files in its way. Committed on <default>, or removed, they let a later run commit the artifacts on <default>, leaving <branch> first where HEAD still stands there — save where git refuses that switch, when it commits them on <branch>; committed on <branch>, they can make it read unmerged, and where they do, a later run commits the artifacts on <branch> too. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     # §5's G2 variants: each replaces the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G2,
-    # rendered on its one line, unwrapped; an empty Fix leaves the label alone (§5: nothing to run).
+    # rendered on its one line, unwrapped; an empty Fix leaves the label alone (§5: nothing to run, or nothing it can
+    # give ready to paste).
     "g2.session.not_done": "the preflight did not switch away from it — the plugin manages only branches it created. This run's artifacts WILL be committed on session/<identity>, the session branch this specs repository uses because its default branch takes no push, and not on <branch>.",
     "g2.session.fix": "",
     "g2.session.if_ignored": "nothing changes for the artifacts, and nothing is to be run for them: they reach <default> through session/<identity>'s pull request.",

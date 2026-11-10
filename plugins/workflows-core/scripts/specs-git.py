@@ -1857,7 +1857,8 @@ def _ask_stay(run, head, reason):
 def _block_part(block, label, text):
     """<block> with the part <label> opens -- its line from the label on, and the indented lines that continue it --
     replaced by the label, the padding its line gives it, and <text>, unwrapped on one line; an empty <text> (a Fix
-    part with nothing to run, specs-repo-git §5) leaves the label alone, with no padding after it."""
+    part with nothing to run, or nothing it can give ready to paste, specs-repo-git §5) leaves the label alone, with no
+    padding after it."""
     rows = block.split("\n")
     i = next(k for k, row in enumerate(rows) if row.startswith(label))
     j = i + 1
@@ -2197,12 +2198,9 @@ def _fetch(run):
             return _head_branch(specs) or sb.text(sb.git(specs, "rev-parse", "--short", "HEAD"))
 
         def switch_back():
-            here = _head_branch(specs)
             r = sb.git(specs, "switch", left, check=False)
             if r.returncode != 0:
                 return _first_line(r, error=True)
-            if _held(rec, here):  # it leaves a merged-branch stay's branch (§4 step 1)
-                rec["merged_stay"] = None
             return None
 
         if "pre.status-failed" in rec["reported"]:
@@ -4473,9 +4471,12 @@ def selftest():
         check(lines.artifacts(spread) == "4 files under specifications", "l_artifacts: four spanning specifications/ (%r)"
               % lines.artifacts(spread))
 
-        # l_fix_lines: every §5 Fix part, rendered with its values, is commands only -- no #, no quote left open -- and
-        # runs whole as pasted, in bash and, where it is on PATH, in zsh with interactive comments off, against a git
-        # that only logs its arguments, making exactly the git calls it shows
+        # l_fix_lines: every §5 Fix part, rendered with its values, is commands only -- no #, no quote left open: this
+        # static check is what guards a paste into an interactive zsh, which does not read # as a comment unless
+        # interactivecomments is set -- and runs whole in bash and, where it is on PATH, in zsh, against a git that
+        # only logs its arguments, making exactly the git calls it shows. zsh -c is not interactive, so it reads # as a
+        # comment whatever INTERACTIVE_COMMENTS says: that run checks the part's syntax and quoting in zsh, never how a
+        # # reads there
         shim = os.path.join(tmp, "l-fix-shim")
         os.makedirs(shim)
         log = os.path.join(tmp, "l-fix-calls")
@@ -4515,15 +4516,12 @@ def selftest():
             for shell in [["bash", "-c"]] + ([["zsh", "-c"]] if shutil.which("zsh") else []):
                 if os.path.exists(log):
                     os.remove(log)
-                script = "\n".join(part)
-                if shell[0] == "zsh":  # as an interactive zsh reads a paste, with comments off
-                    script = "setopt no_interactive_comments\n" + script
-                ran = subprocess.run(shell + [script], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                ran = subprocess.run(shell + ["\n".join(part)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                      env=dict(os.environ, PATH=shim + os.pathsep + os.environ.get("PATH", ""),
                                               GIT_CALLS=log))
                 calls = open(log, encoding="utf-8").read().splitlines() if os.path.exists(log) else []
                 check(i is not None and ran.returncode == 0 and calls == ["-C|%s|%s" % (S, w) for w in want],
-                      "l_fix_lines: %s's Fix part runs as pasted in %s, making its git calls (rc %s, %r, %r)"
+                      "l_fix_lines: %s's Fix part runs whole through %s -c, making its git calls (rc %s, %r, %r)"
                       % (name, shell[0], ran.returncode, calls, ran.stderr.decode("utf-8", "replace")[:200]))
 
     def scenarios_gate(tmp):
