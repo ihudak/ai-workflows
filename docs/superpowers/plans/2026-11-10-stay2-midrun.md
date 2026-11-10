@@ -119,6 +119,15 @@ Answered under the controller's rulings on it (N1, m6, F2, F3, F4, F5, F6, F7, g
 - **F18** — `app.landed`'s alternative 2 reworded with F4's.
 - **Green at Task 3** — Task 3 updates the hand-written `G1_MERGED`'s *If ignored* line, which Task 4 replaces; the stuck row's template is `row.held-stuck`, its `ROWS` id `held-stuck`, and `l_ids` keeps 2a's `row.<id>` clause, its tail clause rewritten for the five new rows.
 
+### After the third revision's check (2026-11-10, controller)
+
+The check of `f2cd5759` (Sonnet) found one Minor and four Nits; the controller fixed them here.
+- **N1 (Minor)** — `e_midrun_open_ended` ended the open run with its own `end`, which commits every dirty session file, `/feedback`'s included, so `/feedback`'s here form found nothing. The test now ends the open run's standing without its `end` (Task 7's test line).
+- **N2** — the spec's §3.3 and the to-test line for the default branch said the open run's end pushes the here-form commit; both now say the next push of that branch carries it, as `row.here` does.
+- **N3** — a derived-path record `<name>.<stamp>.json` (P35) shares the parked files' name shape. `state.unpark` and the parked-keep test take only a record whose `parked` field is set (written by `state.park`); a derived-path record carries none, so it is never taken for a parked one. Task 7 adds `t_derived_not_parked`: a `declined --started` with no start, left without its `end`, then a nested run's `unpark` → the derived record untouched.
+- **N4** — a here-form journal is finished where HEAD's branch is at the journalled tip **or has it as an ancestor** (`merge-base --is-ancestor <tip> <branch>`): the open run's end may have committed on top. Restored as at the tip; dropped only where the tip is not in the branch's history. Task 7's and Task 2's journal tests gain the ancestor case.
+- **N5** — Task 9's docs sentence on a run typed mid-run and the to-test item *A command typed mid-run that stops before its start* each add: an `end` with no start of the same command as an open run is kept by that run's record too (P5).
+
 ## Global Constraints
 
 Carried from 2a, re-derived for this batch:
@@ -373,6 +382,8 @@ The mechanism every later task builds on, proven first (ruling C1).
 - [ ] **Step 4: Run** the selftest, then `session-branch.py --selftest`. Expected: both PASS. Apply each mutant; see it fail.
 - [ ] **Step 5: Commit** — `feat(workflows-core): specs-git land — a run's own session-file change committed on the default branch without moving the checkout; held commits`
 
+- [ ] **Added after the plan's final check (N4).** A here-form journal entry is finished where HEAD's branch is at the journalled tip **or has it as an ancestor** (`git merge-base --is-ancestor <tip> <branch>`), since the open run's end may have committed on top; dropped only where the tip is not in the branch's history. `l_retry_held_here_ancestor`: the branch advanced by one commit past the journalled tip → the index restore runs, the entry is finished. Mutant: test equality only → fails.
+
 ### Task 3: SRG's wording and its pins
 
 The contract, written against the mechanism Tasks 1 and 2 proved. The wording and the pins are one task because `l_pins` fails the moment SRG's wording changes. The code keeps D5's hold until Task 5, so two retired templates stay in `T` under `RETIRING`, and the selftest stays green at every commit.
@@ -565,7 +576,7 @@ MIDRUN-B4, the record collision (D-park), N1, N2, N3, P20 and P34–P36.
   - `e_no_preflight_open` (N3, P5): `/specify` started, then `end --command /specify --no-preflight` → `row: "midrun-kept"`, nothing committed, the first record untouched (no park needed).
   - `t_midrun_not_open`: each condition of `_open_run` broken in turn — `end_commit` set; stage `end`; `started_by_script: false`; `specs_git: misrooted` (P34); another `top`; `protects: false`; `started` 8 days ago; `branch` another with no key naming HEAD's — and the typed run switches as before (B4). One mutant per condition. And 2a's `e_stale_no_preflight` passes unchanged (P34: its seeded record carries `specs_git: misrooted`).
   - `t_midrun_keyset` (the open record's `branch` is `main`, its keys naming HEAD's branch → open).
-  - `e_midrun_open_ended` (P36, F4): `/feedback` typed mid-run on `main` while `/specify` waits; `/specify`'s `end` runs first; then `/feedback`'s `end` → the here-form commit holds only `/feedback`'s change and is pushed, `row: "pushed-default"` with no mid-run wording. Mutant: skip the re-test → `row: "here"`, unpushed → fails.
+  - `e_midrun_open_ended` (P36, F4): `/feedback` typed mid-run on `main` while `/specify` waits; then the open run stops standing without committing `/feedback`'s file — HEAD leaves `main` and returns, or `/specify`'s record is removed as an abandoned run's would be (P13's ends), never by `/specify`'s `end`, which would commit every dirty session file `/feedback`'s included; then `/feedback`'s `end` → the here-form commit holds only `/feedback`'s change and is pushed, `row: "pushed-default"` with no mid-run wording. Mutant: skip the re-test → `row: "here"`, unpushed → fails.
   - `t_started_not_found` (P35, F7): `/specify` twice (the first parked, then restored with `protects: false` by the second's end), then a third `/specify` start, which replaces the restored record; the first run's `declined --started <first> --path x.md` and `end --started <first>` → both read and write `specify.<first stamp>.json`; `specify.json`, the third's, byte for byte as before; the first `end` takes kind `declined-only`, sees the third run open (P5) and commits nothing. Mutant: fall back to `<command>.json` → the third's record changed → fails.
   - `t_midrun_same_command` (D-park): `/specify` started (G1's block saved, a declined path recorded, `--commit-key ACME-1`), then `/specify` again → `replaced.parked: true`, no `pre.stay.midrun` (P4); its `end --started <its stamp>` → the first record restored with `protects: false`; the first run's `end --started <its stamp>` → `record: "found"`, its G1 block, its declined append, its subject opening `ACME-1`. Mutant: replace instead of park → `record: "missing"` → fails.
   - `t_park_out_of_order` (N1): `/specify` twice, the second abandoned with a G1 block and a declined path of its own; the first run's `declined --started <first> --path x.md`, then `end --started <first>` → ends on its own parked record (its block, its declined path `x.md`), which is removed; `<command>.json`, the second's, is byte for byte as before. `t_park_out_of_order_landing`: the same, the first run's start having stayed on `prd/B-2-y` (G1, unkeyed), so its `end` lands through `on_move` — `<command>.json` still byte for byte as before, the landing done. Mutant: any one save at `<command>.json` → the second's record changed → fails.
@@ -578,6 +589,8 @@ MIDRUN-B4, the record collision (D-park), N1, N2, N3, P20 and P34–P36.
 - [ ] **Step 3: Implement.** `state`'s docstring: a different command typed mid-run is kept off the open run's record by its own file, the same command twice by parking and `--started`.
 - [ ] **Step 4: Run** the selftest. Expected: PASS. Apply each mutant; see it fail.
 - [ ] **Step 5: Commit** — `fix(workflows-core): specs-git — a run typed mid-run switches nothing and commits only its own change (MIDRUN-B4); the same command typed twice parks the open record, and --started names each run's own`
+
+- [ ] **Added after the plan's final check.** (N1) `e_midrun_open_ended` ends the open run's standing without its `end` — HEAD leaves `main` and returns, or `/specify`'s record removed as an abandoned run's — as its test line now says. (N3) `state.park` writes a `parked: true` field (add it to `FIELDS`); `state.unpark` and the parked-keep test take only a record carrying it, so a derived-path record (P35) is never taken for a parked one; `t_derived_not_parked`: a `declined --started` with no start, left without its `end`, then a nested run's unpark → the derived record untouched. Mutant: unpark by name shape alone → fails. (N4) the here-form journal's ancestor case, as Task 2: `t_midrun_here_journal_ancestor`.
 
 ### Task 8: The skill
 
@@ -617,6 +630,8 @@ MIDRUN-B4, the record collision (D-park), N1, N2, N3, P20 and P34–P36.
 - [ ] **Step 6: Measure and gate.** Every rules file under 20,000; `CLAUDE.md` under 36,000; the chain. Expected: `EXIT=0`.
 - [ ] **Step 7: Commit** — `docs: the landing and the run typed mid-run in the rules, the rationale and the docs tree; the claim-expiry sweep`
 
+- [ ] **Added after the plan's final check (N5).** The docs sentence on a run typed mid-run adds that an `end` with no start, of the same command as a run still open, is kept by that run's record too (P5).
+
 ### Task 10: `to-fix`, `to-test`, and the release
 
 **Files:** `docs/superpowers/to-fix.md`; `docs/superpowers/to-test-on-real-project.md`; `plugins/workflows-core/CHANGELOG.md`, `.claude-plugin/plugin.json`; `.claude-plugin/marketplace.json`; `.claude/rules/plugin-updates-coupling.md`; each plugin Task 9 changed a page of.
@@ -633,7 +648,7 @@ MIDRUN-B4, the record collision (D-park), N1, N2, N3, P20 and P34–P36.
   - **A keyed command typed mid-run on a branch behind its root** (M6): the branch check's stop names no switch, and says to finish or end the open run first.
   - **G1 under a run typed mid-run** — the open run's deliverable dirty: G1's *Fix* line empty, and its *If ignored* naming the open run.
   - **The same command typed twice** — `/specify` again while its first run waits: the first run's end still repeats its own G1 notice and its declined append; a `/feedback` typed after the second run ended switches as usual.
-  - **On the default branch** — `/feedback` typed while a run on `<default>` waits with a session file in progress: one local commit holding `/feedback`'s files alone, its line `…— not pushed: /<command>'s run in this session is still open on <default>, …`; the open run's end pushes both.
+  - **On the default branch** — `/feedback` typed while a run on `<default>` waits with a session file in progress: one local commit holding `/feedback`'s files alone, its line `…— not pushed: /<command>'s run in this session is still open on <default>, …`; the next push of `<default>` carries it.
   - **An abandoned run** — a run stopped with Esc, then other commands: each stays and names it; `/clear` ends it.
 
   The 1.82.0 section's D5 item is replaced by one line pointing at the new section's *merged branch* item (1.83.0 replaces the hold it checks), and its zsh item's `G1's merged-branch *Fix* line from the D5 item's output` reads `from the new section's merged-branch item's output`, with the stuck clause's two quoted commands added to its paste list.
@@ -642,6 +657,8 @@ MIDRUN-B4, the record collision (D-park), N1, N2, N3, P20 and P34–P36.
 - [ ] **Step 5: Coupling bullet**, after the 1.82.0 one, under 600 characters: ``- **Update `workflows-core` to 1.83.0 alone**: no dependent changes. 1.83.0's `specs-git.py` lands a stayed run's session files on the default branch and keeps a run typed mid-run from switching the checkout; every command reaches both through the `specs-git` skill, which ships in `workflows-core`, so no dependent plugin's text changes; beside any dependent version the behaviour is 1.83.0's.`` Name a patch only where Task 9 made one. Measure the file: under 20,000.
 - [ ] **Step 6: Gate** — the chain (check 18 is unarmed off `main`; the section is dated anyway). Expected: `EXIT=0`.
 - [ ] **Step 7: Commit** — `release: workflows-core 1.83.0 — STAY-2 and MIDRUN-B4`
+
+- [ ] **Added after the plan's final check (N5).** The to-test item *A command typed mid-run that stops before its start* adds the same-command case: `/specify` typed again during `/specify`, its address unresolved → its end prints the *mid-run* row and commits nothing.
 
 ### Task 11: The verification record — written last
 
