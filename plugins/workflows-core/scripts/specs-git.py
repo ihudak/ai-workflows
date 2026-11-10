@@ -986,8 +986,9 @@ def _appends(lines, f):
     origin/<session branch>'s, each in sync.conflicts' order -- sync.error, each unsettled path then the closing clause
     once, stranded, and unsupported where f's mode is. f: specs, default, default_ref, session_branch, branch (where
     the files stay, for unsupported), mode, and the last sb.commit's sync, unsettled and stranded. The declined append,
-    which §6 puts after these, is finish_end's. The blocked rows and a line on a detached HEAD pass the created clause's
-    facts alone, since §6 gives them no other; the misrooted row takes none."""
+    which §6 puts after these, is _declined's, which finish_end and the blocked rows add. The blocked rows and a line on
+    a detached HEAD pass the created clause's facts alone, since §6 gives them no other session append; the misrooted
+    row takes none, the declined append included."""
     T, out = lines.T, ""
     branch = f.get("session_branch")
     v = {"<identity>": _identity(branch), "<default>": f.get("default"), "<SPECS_PATH>": f.get("specs"),
@@ -1149,24 +1150,31 @@ def _resume_next(command, args, budget=None):
 
 
 def _stop(run, row, printed, line):
-    """An outcome of §4 step 1 -- misrooted, blocked or silent: what it prints, the record removed."""
+    """An outcome of §4 step 1 -- misrooted, blocked or silent: what it prints, the record removed. A blocked row's
+    <line> already carries §6's declined append (_declined); the misrooted row takes none, so no git status runs in a
+    path the run has found wrong (§6), and the silent no-op prints nothing."""
     run["state"].remove(run["session"], run["command"])
     return _end_result(print=printed, line=line, row=row, record=run["record"])
 
 
+def _declined(run, view):
+    """specs-repo-git §6's declined append, the last of a line's appends: the paths of <view>'s declined list that
+    status() still lists, in phase-handoff §4.1's <artifacts> form; '' where none was declined or none is listed."""
+    if not view["declined"]:
+        return ""
+    listed = status(run["specs"])
+    still = set(listed["artifact"]) | set(listed["other"])
+    named = [p for p in view["declined"] if p in still]
+    return run["lines"].fill("app.declined", {"<path>": run["lines"].artifacts(named)}) if named else ""
+
+
 def finish_end(run, row, line, view, commit=None, branch=None, pushed=False, hook=()):
-    """specs-repo-git §4 step 7 from a row's <line>: the appends in §6's order -- the declined one last, naming the
-    paths of <view>'s declined list that status() still lists, in phase-handoff §4.1's <artifacts> form -- then the §5
-    block a guard's record repeats, then, where the push-scope row's hook variant names <hook>, the hook line for those
-    of them the block or the declined paths name; the record removed. <run> holds state, lines, specs, session,
-    command, record, and pre (lines printed before the outcome line)."""
+    """specs-repo-git §4 step 7 from a row's <line>: the appends in §6's order -- the declined one last (_declined) --
+    then the §5 block a guard's record repeats, then, where the push-scope row's hook variant names <hook>, the hook
+    line for those of them the block or the declined paths name; the record removed. <run> holds state, lines, specs,
+    session, command, record, and pre (lines printed before the outcome line)."""
     lines = run["lines"]
-    if view["declined"]:
-        listed = status(run["specs"])
-        still = set(listed["artifact"]) | set(listed["other"])
-        named = [p for p in view["declined"] if p in still]
-        if named:
-            line += lines.fill("app.declined", {"<path>": lines.artifacts(named)})
+    line += _declined(run, view)
     printed = list(run.get("pre") or []) + [line]
     if view["guard_block"]:
         printed.append(view["guard_block"])
@@ -1315,10 +1323,10 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     if flag == "misrooted":
         line = lines.fill("row.misrooted", {})
         return _stop(run, "misrooted", [line] + notice, line)
-    if flag == "blocked":  # §6: the created clause, which names no branch the files stay on, is the one append here
+    if flag == "blocked":  # §6: the created clause, which names no branch the files stay on, then the declined append
         sbranch = rec.get("session_branch") if rec.get("mode") == "on" else None
         line = lines.fill("row.blocked", {}) + _appends(lines, {"session_branch": sbranch, "created": (
-            session_branch_created or rec.get("session_branch_created"))})
+            session_branch_created or rec.get("session_branch_created"))}) + _declined(run, view)
         return _stop(run, "blocked", [line] + ([rec["guard_block"]] if rec.get("guard_block") else []), line)
 
     # Step 1's gate, then G0's state where no flag stands: a commit on a detached HEAD is reachable from no branch.
@@ -1343,7 +1351,7 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     if branch is None:
         if status(specs)["artifact"]:
             line = lines.fill("row.blocked", {}) + _appends(lines, {"session_branch": session_branch, "created": (
-                session_branch_created or (keep or {}).get("session_branch_created"))})
+                session_branch_created or (keep or {}).get("session_branch_created"))}) + _declined(run, view)
             return _stop(run, "blocked", [line, _g0_block(lines, specs, d["default"])], line)
         line = lines.fill("row.nothing", {}) + _appends(lines, {"session_branch": session_branch, "created": (
             session_branch_created or (keep or {}).get("session_branch_created"))})
@@ -1352,8 +1360,11 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     # Step 1's merged-branch stay: where the record the run's start made holds one, outside session-branch mode, and
     # HEAD still stands on its branch, G1's block takes its merged-branch form (§5) and, with something to stage,
     # nothing is committed -- the merged plugin branch row, the declined append its one append (§6). Where HEAD has
-    # moved off it, the step goes on as before, the plain block repeated, since the commit runs.
+    # moved off it, the step goes on as before, the plain block repeated, since the commit runs. A start that never
+    # finished its preflight may hold none for the branch it left HEAD on, so end asks for one there (_unfinished_stay).
     stay = rec.get("merged_stay") if found else None
+    if found and not _held(rec, branch):
+        stay = _unfinished_stay(specs, rec, branch, d, mode) or stay
     if stay and mode != "on" and branch == stay.get("branch"):
         if rec.get("guard") == "G1" and view["guard_block"]:
             view = run["view"] = dict(view, guard_block=_g1_merged(lines, view["guard_block"], branch, d["default"],
@@ -1403,6 +1414,23 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     saved["end_commit"] = commit
     state.save(session, command, saved)
     return _push_step(run, saved, commit, d["default"], view)
+
+
+def _unfinished_stay(specs, rec, branch, d, mode):
+    """specs-repo-git §4 step 1's merged-branch stay for a start that never finished its preflight -- its record at one
+    of start's own stages (START_STAGES): its last call stopped early, was cut off, or returned a next the run never
+    made, at its budget or for a replay, so it ended before B2's test and may have ended before G1's. Where HEAD stands
+    on <branch>, the plugin branch that call returned on (the record's branch), off the default branch and outside
+    session-branch mode, ask branch-merged HEAD, as an early stop does (_stop_stay), and return the stay with the early
+    stop's reason where it reads merged; None otherwise, and where it cannot answer, the branch then reading unmerged."""
+    if (rec.get("stage") not in START_STAGES or mode == "on" or branch is None or branch != rec.get("branch")
+            or branch == d["default"] or not d["default_ref"] or not branch_key(branch, [])["plugin_branch"]):
+        return None
+    try:
+        merged = branch_merged(specs, "HEAD", d["default_ref"])["merged"]
+    except NotRun:
+        return None
+    return {"branch": branch, "reason": "stopped"} if merged else None
 
 
 def _end_session(run, saved, d, head, message, view, boundary):
@@ -5291,6 +5319,35 @@ def selftest():
         got = run_end(env, "/specify", "--no-preflight")
         check(got.get("row") == "nothing" and got.get("print") == [NOTHING], "e_blocked: nothing to stage is nothing (%r)" % got)
 
+        # e_declined_blocked: §6's declined append on both blocked rows, before G0's block
+        r, env = world(tmp, "e-declined-blocked")
+        h = head(r)
+        r.git("switch", "-q", "--detach")
+        ard = "specifications/PRD-ACME-1-x/ard.md"
+        r.write(ard, "ard\n")
+        r.write(RESUME, "r\n")
+        g0 = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": today, "<branch>": "main"})
+        seed(env, "/specify", specs_git="blocked", guard="G0", guard_block=g0, branch=None, declined=[ard])
+        got = run_end(env, "/specify")
+        check(got.get("row") == "blocked" and got.get("print") == [BLOCKED + appended(ard), g0] and head(r) == h
+              and record(env, "/specify") is None,
+              "e_declined_blocked: a record carrying blocked names the declined path, then G0's block (%r)" % got)
+        got = run_end(env, "/specify", "--no-preflight", "--declined", ard)
+        check(got.get("record") == "missing" and got.get("row") == "blocked"
+              and got.get("print") == [BLOCKED + appended(ard), g0] and head(r) == h,
+              "e_declined_blocked: on a detached HEAD with no preflight, the --declined path, then G0's block (%r)" % got)
+
+        # e_declined_misrooted: the misrooted row takes no declined append, and runs no git status in the wrong path
+        r, env = world(tmp, "e-declined-misrooted")
+        wrong = os.path.join(tmp, "e-declined-misrooted-wrong")
+        os.makedirs(wrong)
+        notice = ["SPECS_PATH_INSIDE_TREE: the notice the run's start printed"]
+        seed(env, "/specify", specs_git="misrooted", misrooted_notice=notice, declined=[PRD], specs=wrong)
+        got = run_end(env, "/specify", specs=wrong)
+        check(got["_rc"] == 0 and got.get("row") == "misrooted" and got.get("print") == [MIS] + notice
+              and record(env, "/specify") is None,
+              "e_declined_misrooted: the row and its notice alone, though git status cannot run there (%r)" % got)
+
         # e_misrooted
         r, env = world(tmp, "e-misrooted")
         notice = ["SPECS_PATH_INSIDE_TREE: the notice the run's start printed", "Misrooted runs left: what it left"]
@@ -8008,6 +8065,49 @@ def selftest():
         check(got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 3)] and untracked(r, RES_A),
               "t_d5_stopped: end skips (%r)" % got)
 
+        # t_d5_budget: a start that returned at its budget on the merged branch, whose next the run never made, reached
+        # neither G1's nor B2's test; end asks branch-merged HEAD itself (§4 step 1) and skips, naming the early stop
+        r, env = world(tmp, "t-d5-budget")
+        ff_merged(r, "t-d5-budget-other", A, "specifications/PRD-A-1-x/prd.md")
+        h = head(r)
+        got = run_start(env, "/feedback", "--budget", "0")
+        rec = record(env, "/feedback") or {}
+        check((got.get("next") or {}).get("run") and rec.get("stage") in START_STAGES and rec.get("branch") == A
+              and stay_of(env) is None, "t_d5_budget: the start stopped at its budget on the branch, no stay (%r)" % rec)
+        r.write(RES_A, "r\n")
+        got = run_end(env, "/feedback")
+        check(got.get("row") == "merged-stay" and got.get("print") == [stay_row(A, 3)] and untracked(r, RES_A)
+              and head(r) == h and r.git("symbolic-ref", "--short", "HEAD") == A and record(env, "/feedback") is None,
+              "t_d5_budget: end skips on the branch the start did not leave (%r)" % got)
+
+        # t_d5_budget_moved: the same stop, then HEAD on a branch the start never stood on (as a handoff cuts one, at
+        # the merged tip): no stay is asked for, and end commits where HEAD stands, as before
+        r, env = world(tmp, "t-d5-budget-moved")
+        ff_merged(r, "t-d5-budget-moved-other", A, "specifications/PRD-A-1-x/prd.md")
+        run_start(env, "/feedback", "--budget", "0")
+        r.git("switch", "-q", "-c", "prd/A-1-y")
+        r.write(RES_A, "r\n")
+        got = run_end(env, "/feedback")
+        check(got.get("row") not in (None, "merged-stay") and got.get("branch") == "prd/A-1-y"
+              and got.get("sha7") == head(r)[:7] and not untracked(r, RES_A),
+              "t_d5_budget_moved: end commits on the branch HEAD moved to (%r)" % got)
+
+        # t_d5_budget_done: a record whose start finished holds no stay on a branch it did not leave, so end asks nothing
+        # and commits there, as before -- the ask is for an unfinished start alone
+        r, env = world(tmp, "t-d5-budget-done")
+        ff_merged(r, "t-d5-budget-done-other", A, "specifications/PRD-A-1-x/prd.md")
+        r.git("fetch", "-q", "origin")
+        seed(env, "/feedback", branch=A)
+        r.write(RES_A, "r\n")
+        got = run_end(env, "/feedback")
+        check(got.get("row") not in (None, "merged-stay") and got.get("branch") == A and got.get("sha7") == head(r)[:7]
+              and not untracked(r, RES_A), "t_d5_budget_done: a finished start's record, end commits (%r)" % got)
+        seed(env, "/feedback", branch=A, stage="settle")
+        r.write(RES_A, "r2\n")
+        got = run_end(env, "/feedback")
+        check(got.get("row") not in (None, "merged-stay") and got.get("branch") == A and got.get("sha7") == head(r)[:7],
+              "t_d5_budget_done: an unfinished start on a branch now unmerged, end commits (%r)" % got)
+
         # t_d5_nothing: the stay recorded and nothing dirty at end: step 3's nothing to commit line stands
         r, env = merged_world("t-d5-nothing")
         run_start(env, "/feedback")
@@ -8221,6 +8321,50 @@ def selftest():
         named = "${CLAUDE_PLUGIN_ROOT}/" + rel
         check(os.path.isfile(os.path.join(HERE, "..", rel)) and named in skill and named in loader,
               "k_key_set_file: %s exists, and the skill and the loader both name it" % rel)
+
+        # k_key_set_quotes: run-key-set.md quotes specs-repo-git word for word -- each of its quotations found,
+        # whitespace-collapsed, in §3 up to §3.3, and each paragraph of §3.2 from *Run key set* to its end equal to one of
+        # them -- so a word changed on either side fails, and so does a sentence or a paragraph §3.2 gains there
+        key_set = read("skills", "specs-git", "run-key-set.md")
+        srg = read("references", "specs-repo-git.md")
+
+        def key_set_problems(text, ref):
+            try:
+                s3 = ref[ref.index("\n## 3. "):ref.index("\n### 3.3")]
+                s32 = ref[ref.index("\n### 3.2"):ref.index("\n### 3.3")]
+            except ValueError:
+                return ["specs-repo-git has no §3, §3.2 or §3.3 heading"]
+            quotes = [" ".join(re.sub(r"(?m)^> ?", "", p).split()) for p in text.split("\n\n") if p.startswith(">")]
+            paras = s32.split("\n\n")
+            first = next((k for k, p in enumerate(paras) if p.lstrip().startswith("**Run key set:**")), None)
+            problems = [] if quotes else ["run-key-set.md quotes nothing"]
+            if first is None:
+                problems.append("§3.2 has no *Run key set* paragraph")
+            whole = " ".join(s3.split())
+            problems += ["run-key-set.md's quotation %d is not in specs-repo-git §3 (%s…)" % (k + 1, q[:60])
+                         for k, q in enumerate(quotes) if q not in whole]
+            for p in paras[first:] if first is not None else []:
+                c = " ".join(p.split())
+                if c and c not in quotes:
+                    problems.append("specs-repo-git §3.2's paragraph %s… is not quoted whole in run-key-set.md" % c[:60])
+            return problems
+
+        got = key_set_problems(key_set, srg)
+        check(got == [] and key_set.count("\n> ") >= 6,
+              "k_key_set_quotes: run-key-set.md quotes §3.2 from *Run key set* on, and §3's sentence, word for word (%r)" % got)
+        word, said = "contributes **both**", "contributes **each**"
+        tail = "`NOISSUE`.\n\n### 3.3"
+        for label, text, ref, want in (
+                ("a word of the file", key_set.replace(word, said), srg, "quotation 1 is not in"),
+                ("the same word of §3.2", key_set, srg.replace(word, said), "quotation 1 is not in"),
+                ("a word of §3's sentence", key_set, srg.replace("and resolves afterwards", "and resolves later"),
+                 "quotation 6 is not in"),
+                ("a sentence §3.2 gains", key_set, srg.replace(tail, "`NOISSUE`. One sentence more.\n\n### 3.3"),
+                 "is not quoted whole")):
+            got = key_set_problems(text, ref)
+            check(key_set.count(word) == 1 and srg.count(word) == 1 and srg.count(tail) == 1
+                  and srg.count("and resolves afterwards") == 1 and any(want in p for p in got),
+                  "k_key_set_quotes: %s changed fails (%r)" % (label, got))
 
         # k_no_dollar_session: the directories check-docs.sh's checks 5 and 9 read a $NAME in, of every plugin
         session_var = "CLAUDE_CODE_SESSION_ID"
