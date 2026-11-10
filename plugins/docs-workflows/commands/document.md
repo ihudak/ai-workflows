@@ -102,8 +102,8 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
      any address — **and runs the specs-repo preflight again with it before step 1's placement stops are
      tested.** The preflight is prompt-free and idempotent, and the container's key set is the wrong
      one for the slice: it can have kept the run on a plugin branch named for the container, which
-     the slice's key set switches away from (`workflows-core:specs-repo-git` §3.5 B4), exactly as a
-     direct run on the slice would. A branch the first preflight's B4 left, which `branch-key`
+     the slice's key set switches away from wherever `workflows-core:specs-repo-git` §3.5 B4 makes
+     that switch. A branch the first preflight's B4 left, which `branch-key`
      now resolves to the slice's key, is switched back to first wherever §3.5's *A re-run in the same
      run switches back first* rule makes that switch, so the slice is read on the branch a direct run's B3
      would have kept; where that rule leaves the switch undone, the run goes on from the branch it stands on. An answer equal

@@ -300,8 +300,13 @@ jobs:
 
       - name: Self-test the specs-repo git primitives
         # specs-repo-git and phase-handoff call specs-git.py for the status classifier,
-        # branch-merged, branch-key, push-scope, owner-repo and mode. Its failure mode is
-        # silent: a session file classified OTHER stays dirty forever, a merged branch read
-        # unmerged keeps a run on it, a key read out of a branch name sends a run to the
-        # wrong branch. Fixtures are built at run time, with a bare remote.
+        # branch-merged, branch-key, push-scope, owner-repo and mode, and addressing for
+        # specs-root-check; the specs-git skill runs a run's whole start and end through
+        # it (start, end, replay, declined), keeping their shared state in a record under
+        # ~/.claude. Its failure mode is silent: a session file classified OTHER stays dirty
+        # forever, a merged branch read unmerged keeps a run on it, a key read out of a
+        # branch name sends a run to the wrong branch, a commit is made under a flag that
+        # should have stopped it, and a notice the run must repeat at its end is lost to a
+        # compaction. Fixtures are built at run time, with a bare remote and a HOME and
+        # session id of their own.
         run: python3 plugins/workflows-core/scripts/specs-git.py --selftest
