@@ -10,7 +10,9 @@ or where the gate did not pass); stage is the stage of specs-preflight start goe
 the settle loop computes, on entering it, the branches it has still to settle; pending holds the settle loop's
 branches whose push origin rejected as non-fast-forward, each {branch, set_upstream, standing}, standing the branch
 the run stood on then; budget is the last start call's --budget where it was not the default, which the start --resume
-a budget stop or a replay names repeats, and which resumable's argument test never reads.
+a budget stop or a replay names repeats, and which resumable's argument test never reads; reported holds each
+once-a-run report start printed (pre.merged-unknown and pre.scope-failed with their branch, pre.status-failed), so a
+resume or a --rerun never prints one again.
 """
 
 import calendar
@@ -58,6 +60,7 @@ FIELDS = {
     "b4_left": None,
     "branch": None,  # the branch HEAD stands on when a start call returns
     "advised_D": [],
+    "reported": [],  # start's once-a-run reports printed: "<template id>[ <branch>]"
     "declined": [],
     "stage": "new",
     "pending": [],

@@ -1510,20 +1510,56 @@ def _inside(top):
     return bool(here and top) and os.path.realpath(here) == os.path.realpath(top)
 
 
+def _once(run, key, tid, values):
+    """A report specs-repo-git prints once in a run however many asks give it: template <tid> filled with <values>,
+    printed unless the record's reported list holds <key>, which it then does -- so neither a resume after a budget
+    stop nor a --rerun, which carries the list, prints it again."""
+    rec = run["rec"]
+    if key not in rec["reported"]:
+        rec["reported"].append(key)
+        _emit(run, run["lines"].fill(tid, values))
+
+
+def _stderr(e):
+    """The one line an entry point's CLI prints on stderr for <e>, which specs-repo-git's reports quote."""
+    return "specs-git: not run (%s)" % " ".join(str(e).split())
+
+
 def _merged(run, ref, branch):
     """branch_merged of <ref>, the branch <branch> or HEAD standing on it, against the record's default ref. Where it
     cannot answer -- a default ref that does not resolve among the causes, as on an origin that holds no default
-    branch yet -- specs-repo-git §3.5's report: pre.merged-unknown, naming the first line its CLI would print on
-    stderr; the branch is then read unmerged, the answer that never deletes it."""
+    branch yet -- specs-repo-git §3.5's report, pre.merged-unknown, once for <branch> in a run; the branch is then
+    read unmerged, the answer that never deletes it."""
     rec = run["rec"]
     try:
         if not rec["default_ref"]:
             raise NotRun("the default branch has no ref to test against")
         return branch_merged(run["specs"], ref, rec["default_ref"])
     except NotRun as e:
-        _emit(run, run["lines"].fill("pre.merged-unknown", {
-            "<branch>": branch, "<the first line of its stderr>": "specs-git: not run (%s)" % " ".join(str(e).split())}))
+        _once(run, "pre.merged-unknown " + branch, "pre.merged-unknown",
+              {"<branch>": branch, "<the first line of its stderr>": _stderr(e)})
         return {"merged": False, "test": None}
+
+
+def _status(run):
+    """status() of the checkout; where it cannot run, specs-repo-git §2.1's report, pre.status-failed, once in a run,
+    and None: G1 then has no path to find and the flush stages nothing, and the preflight goes on."""
+    try:
+        return status(run["specs"])
+    except NotRun as e:
+        _once(run, "pre.status-failed", "pre.status-failed", {"<the first line of its stderr>": _stderr(e)})
+        return None
+
+
+def _scope(run, branch):
+    """push_scope() of <branch>; where it cannot run, §4 step 5's report, pre.scope-failed, once for <branch> in a run,
+    and None: nothing is pushed, B4 names no count, and the preflight goes on."""
+    try:
+        return push_scope(run["specs"], branch)
+    except NotRun as e:
+        _once(run, "pre.scope-failed " + branch, "pre.scope-failed",
+              {"<branch>": branch, "<the first line of its stderr>": _stderr(e)})
+        return None
 
 
 def _d_sees(root, branch):
@@ -1598,10 +1634,13 @@ def _refused_line(lines, specs, branch, default, p):
 
 
 def _push(run, branch):
-    """specs-repo-git §4 steps 5-6 for <branch> inside §3.4: push_check, then the push. A condition that fails, and a
-    push that lands, print nothing here; a refusal and a failure print their Specs preflight: forms. The outcome
-    (held where a condition failed) and set_upstream, which a rejected push's replay repeats."""
+    """specs-repo-git §4 steps 5-6 for <branch> inside §3.4: push-scope measured first (_scope, which reports where it
+    cannot run), then push_check and the push. A condition that fails, and a push that lands, print nothing here; a
+    refusal and a failure print their Specs preflight: forms. The outcome (held where a condition failed or push-scope
+    could not run) and set_upstream, which a rejected push's replay repeats."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
+    if _scope(run, branch) is None:
+        return {"outcome": "held", "set_upstream": False}
     check = push_check(specs, branch, rec["default"])
     if check["row"] is not None:
         return {"outcome": "held", "set_upstream": False}
@@ -1624,7 +1663,8 @@ def _to_default(run, branch, field):
     """B2's and B4's move (specs-repo-git §3.5), which §3.4's leave of a merged branch also makes: switch to the
     default branch, <field> (b2_left or b4_left) saved as <branch>, then `pull --ff-only --no-rebase origin <default>`
     where _pulls holds, its pre.pull-failed line printed where it fails. git's result where it refused the switch,
-    nothing moved; else None. The one place session-branch mode wraps this switch and pull in lift and put-back."""
+    nothing moved; else None. The one place session-branch mode is to wrap this switch and pull in lift and
+    put-back."""
     rec, specs = run["rec"], run["specs"]
     r = sb.git(specs, "switch", rec["default"], check=False)
     if r.returncode != 0:
@@ -1642,9 +1682,9 @@ def _leave(run, branch, test, merged_flush=False):
     """B2's action (specs-repo-git §3.5), which §3.4 also runs to leave a merged branch before its flush
     (<merged_flush>): _to_default, then `branch -d`. Where git refuses the switch, §3.4's leave prints
     pre.leave-failed and returns False, its flush going on from the branch. In §3.5 a refused switch stops the call
-    (rule 5's pre.stopped), SRG wording no line for it: the tree there is clean only where the flush committed, and a
-    flush whose commit was Locked or failed leaves the session files dirty, which git can refuse to carry -- an
-    index.lock refuses every switch."""
+    (rule 5's pre.stopped), SRG wording no line for it: the tree there is dirty only where the flush's commit was
+    Locked or failed, which leaves the session files dirty for git to refuse to carry -- and an index.lock refuses
+    every switch."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     default = rec["default"]
     r = _to_default(run, branch, "b2_left")
@@ -1667,7 +1707,8 @@ def _b4(run, branch):
     r = _to_default(run, branch, "b4_left")
     if r is not None:
         raise NotRun("git switch %s: %s" % (default, _first_line(r, error=True)))
-    n = len(push_scope(specs, branch)["commits"])
+    scope = _scope(run, branch)
+    n = len(scope["commits"]) if scope else 0
     _emit(run, lines.fill("pre.b4", {"<branch>": branch, "<default>": default})
           + (lines.fill("pre.b4.count", {"<N>": n}) if n else ""))
 
@@ -1705,7 +1746,8 @@ def _guards(run):
         rec["specs_git"] = "blocked"
         found = ("G0", _g0_block(lines, specs, rec["default"]), [])
     else:
-        other = status(specs)["other"]
+        listed = _status(run)
+        other = listed["other"] if listed else []
         if other:
             found = ("G1", _g1_block(lines, specs, other), other)
         elif head != rec["default"] and not branch_key(head, [])["plugin_branch"]:
@@ -1740,7 +1782,8 @@ def _flush(run):
     if pulled:
         _emit(run, pulled)
     head = _head_branch(specs)
-    dirty = status(specs)["artifact"]
+    listed = _status(run)
+    dirty = listed["artifact"] if listed else []
     refused = False
     if dirty and head != default and branch_key(head, [])["plugin_branch"]:
         merged = _merged(run, "HEAD", head)
@@ -1759,7 +1802,7 @@ def _flush(run):
         if refused:
             _emit(run, lines.fill("pre.merged-flush", {"<branch>": head, "<sha7>": c["sha"][:7], "<default>": default,
                                                        "<SPECS_PATH>": specs}))
-    elif not push_scope(specs, head)["commits"]:
+    elif not (_scope(run, head) or {}).get("commits"):
         return _advance(run, "settle")
     unit()
     done = _push(run, head)
@@ -1807,7 +1850,7 @@ def _settle_branch(run, branch):
             _rm_line(run, branch)
             rec["advised_D"].append(branch)
         return
-    commits = push_scope(specs, branch)["commits"]
+    commits = (_scope(run, branch) or {}).get("commits")
     if not commits:
         return
     run["budget"].check(PUSH_COST)
@@ -1872,8 +1915,9 @@ def _start_stages(run):
 def _carry(rec, old):
     """--rerun: what the run's earlier start, the record <old>, set that a second preflight in the same run keeps in
     <rec> -- specs_git where this one sets none, with what set it (the misrooted notice; G0's block, which _guards then
-    keeps beside a block the re-run prints), the -D advisories given, the branch B2 or the merged-branch leave reported
-    (which §3.4's loop skips for the whole run), the branch B4 left and the declined paths."""
+    keeps beside a block the re-run prints), the -D advisories given and the once-a-run reports printed, the branch B2
+    or the merged-branch leave reported (which §3.4's loop skips for the whole run), the branch B4 left and the
+    declined paths."""
     if rec["specs_git"] is None and old.get("specs_git"):
         rec["specs_git"] = old["specs_git"]
         if old["specs_git"] == "misrooted":
@@ -1881,8 +1925,8 @@ def _carry(rec, old):
         else:
             rec.update(guard=old.get("guard"), guard_block=old.get("guard_block"),
                        guard_paths=list(old.get("guard_paths") or []))
-    rec.update(advised_D=list(old.get("advised_D") or []), b2_left=old.get("b2_left"), b4_left=old.get("b4_left"),
-               declined=list(old.get("declined") or []))
+    rec.update(advised_D=list(old.get("advised_D") or []), reported=list(old.get("reported") or []),
+               b2_left=old.get("b2_left"), b4_left=old.get("b4_left"), declined=list(old.get("declined") or []))
 
 
 def _queued_next(run, rec):
@@ -2770,7 +2814,8 @@ def selftest():
             "session-mode")]
         ids += ["remedy.rejected", "remedy.not-standing", "remedy.checked-out", "remedy.session-wrap"]
         ids += ["pre." + p for p in (
-            "nonrepo", "below-top", "pull-failed", "leave-failed", "merged-unknown", "merged-flush", "refused", "refused.unrecorded", "created.empty",
+            "nonrepo", "below-top", "pull-failed", "leave-failed", "merged-unknown", "status-failed", "scope-failed",
+            "merged-flush", "refused", "refused.unrecorded", "created.empty",
             "created.committed", "deleted", "delete-failed", "advisory-D", "advisory-D.rm", "pushed-left", "b2-config",
             "b2-squash", "b4", "b4.count", "stay", "rerun-failed", "session-not-run", "stopped")]
         ids += ["end.stopped", "text.push-capped", "text.pull-capped", "text.offline", "root.one-line", "root.stray", "root.two-readings",
@@ -5490,16 +5535,82 @@ def selftest():
             return ("Specs preflight: could not tell whether %s is merged (specs-git: not run (origin/main does not "
                     "resolve to a commit)), so it reads unmerged" % branch)
 
-        # SRG asks branch-merged HEAD at the merged-branch leave and again at B2's row, and each failed ask is reported.
+        # The leave asks HEAD, the settle loop its branch, B2's row HEAD again: one report for a branch in a run.
         got = run_start(env, "/feedback", "--key", "ACME-1")
-        check(got["_rc"] == 0 and got.get("print") == [env_line(r.path), unknown(PLUGIN), unknown("prd/ACME-2-y"),
-                                                       unknown(PLUGIN)]
+        check(got["_rc"] == 0 and got.get("print") == [env_line(r.path), unknown(PLUGIN), unknown("prd/ACME-2-y")]
               and got.get("branch") == PLUGIN and rev(r, "prd/ACME-2-y") is not None and got.get("error") is None
-              and subject(r) == SUBJECT % ("NOISSUE", "/feedback"),
-              "t_merged_unknown: the leave's, the settle loop's and B2's asks each report, read unmerged (%r)" % got)
+              and subject(r) == SUBJECT % ("NOISSUE", "/feedback")
+              and (record(env, "/feedback") or {}).get("reported") == ["pre.merged-unknown " + PLUGIN,
+                                                                       "pre.merged-unknown prd/ACME-2-y"],
+              "t_merged_unknown: the leave's and the settle loop's asks report, B2's repeats none, all read unmerged "
+              "(%r)" % got)
         got = run_start(env, "/feedback", "--key", "ACME-1")
         check(got.get("print") == [env_line(r.path), unknown("prd/ACME-2-y"), unknown(PLUGIN)]
               and got.get("branch") == PLUGIN, "t_merged_unknown: on a clean tree, the settle loop's and B2's (%r)" % got)
+        # --budget 0: an ask made just before a stop is not reported again by the resume that asks it again
+        calls = [run_start(env, "/feedback", "--key", "ACME-1", "--budget", "0")]
+        while (calls[-1].get("next") or {}).get("run") and len(calls) < 8:
+            calls.append(shell(calls[-1]["next"]["run"], env))
+        stitched = [p for c in calls for p in c.get("print") or []]
+        check(len(calls) == 3 and stitched == [env_line(r.path), unknown("prd/ACME-2-y"), unknown(PLUGIN)]
+              and calls[-1].get("next") is None and (record(env, "/feedback") or {}).get("stage") == "done",
+              "t_merged_unknown: at --budget 0 each report once across the calls (%r)" % stitched)
+        got = run_start(env, "/feedback", "--rerun", "--key", "ACME-1")
+        check(got.get("print") == [env_line(r.path)], "t_merged_unknown: a --rerun carries the reports, so prints none (%r)" % got)
+
+        # t_status_failed (in process): status cannot run -- one report, G1 finds nothing, the flush stages nothing
+        r, env = world(tmp, "t-status-failed")
+        r.write(RESUME, "r\n")
+        r.write("notes.md", "n\n")
+        h = head(r)
+        real_status = g["status"]
+
+        def broken_status(root):
+            raise NotRun("git status: fatal: index file corrupt")
+
+        g["status"] = broken_status
+        try:
+            with in_env(env):
+                got = start(r.path, "/feedback")
+        finally:
+            g["status"] = real_status
+        check(got.get("print") == [env_line(r.path), "Specs preflight: could not list the uncommitted paths (specs-git: not "
+                                   "run (git status: fatal: index file corrupt)), so nothing is staged"]
+              and got.get("error") is None and got.get("guard") is None and head(r) == h
+              and (record(env, "/feedback") or {}).get("stage") == "done",
+              "t_status_failed: reported once, nothing staged, the preflight going on to the end (%r)" % got)
+
+        # t_scope_failed (in process): push-scope cannot run for two branches -- each reported once, neither pushed,
+        # B4 naming no count
+        r, env = world(tmp, "t-scope-failed")
+        Q, P2 = "prd/ACME-9-q", "prd/ACME-3-p"
+        r.git("switch", "-q", "-c", P2, "main")
+        r.git("push", "-q", "-u", "origin", P2)
+        session_commit(r, P2, "PRD-ACME-3-p")
+        r.git("switch", "-q", "-c", Q, "main")
+        r.write("specifications/PRD-ACME-9-q/prd.md", "q\n")
+        r.commit_all("ACME-9 Add the PRD")
+        real_scope = g["push_scope"]
+
+        def broken_scope(root, branch, session_default_ref=None):
+            if branch in (Q, P2):
+                raise NotRun("git rev-list: fatal: bad object")
+            return real_scope(root, branch, session_default_ref)
+
+        def scope_failed(branch):
+            return ("Specs preflight: could not measure what a push of %s would publish (specs-git: not run (git rev-list: "
+                    "fatal: bad object)), so %s is not pushed" % (branch, branch))
+
+        g["push_scope"] = broken_scope
+        try:
+            with in_env(env):
+                got = start(r.path, "/feedback")
+        finally:
+            g["push_scope"] = real_scope
+        check(got.get("print") == [env_line(r.path), scope_failed(Q), scope_failed(P2),
+                                   lines.fill("pre.b4", {"<branch>": Q, "<default>": "main"})]
+              and got.get("error") is None and on_origin(r, P2) != rev(r, P2) and got.get("branch") == "main",
+              "t_scope_failed: the retry's and the loop's reports, nothing pushed, B4 with no count (%r)" % got)
 
         # t_settle
         r, env = world(tmp, "t-settle")
