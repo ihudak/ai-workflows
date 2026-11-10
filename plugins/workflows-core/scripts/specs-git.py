@@ -38,7 +38,8 @@ run (usage, not a repository's top level, a ref that does not resolve, an unexpe
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
 and the run continues. end exits 2 only before its first write to the repository; after it, a failure is exit 0
 with error set and the end.stopped line, and the record stays for end --resume. replay exits 2 only before it finds
-its record; after it, a failure is exit 0 with error set and the stopped line, and the record stays as it stood.
+its record; after it, a failure is exit 0 with error set and the stopped line, and the record stays as it stood; a
+replay a signal ended prints nothing and ends by that signal, the record as it stood for the --timed-out call.
 """
 
 import argparse
@@ -49,6 +50,7 @@ import os
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -1253,16 +1255,56 @@ def _sb_stderr(e):
     return "session-branch: not run (%s: %s)" % (type(e).__name__, said)
 
 
+# The words session-branch.py raises a replay a signal ended with, matched whole: git_bounded's, for the fetch or push
+# it ended, and replay's own, for a signal it acted on between calls (whose _Signalled is also the cause).
+_ENDED_BY = re.compile(r"(?:git \S+ )?ended by signal ([0-9]+)")
+
+
+class _Ended(BaseException):
+    """A signal ended the replay this call ran: no outcome. A BaseException, so no handler of an outcome takes it."""
+
+    def __init__(self, signum):
+        BaseException.__init__(self, signum)
+        self.signum = signum
+
+
+def _signal_of(e):
+    """The signal that ended sb.replay's call, where one did, else None: a _Signalled on <e> or as its cause (replay
+    raises it as NotRun, or as Partial once the branch moved, from it); else either of _ENDED_BY's two forms, whole, on
+    <e> or on the cause a Partial carries -- git_bounded gives the number in its words alone."""
+    for x in (e, e.__cause__):
+        if isinstance(x, sb._Signalled):
+            return x.args[0]
+        m = _ENDED_BY.fullmatch(str(x)) if isinstance(x, NotRun) else None
+        if m:
+            return int(m.group(1))
+    return None
+
+
+def _exit_by(signum):
+    """End this process by <signum>, as that signal's default action would have, printing nothing."""
+    sys.stdout.flush()
+    signal.signal(signum, signal.SIG_DFL)
+    os.kill(os.getpid(), signum)
+    sys.exit(128 + signum)  # where the signal did not end it at once
+
+
 def _run_replay(specs, branch, register_rebuild, set_upstream, timed_out):
     """sb.replay in process, unless the harness ended the call that ran it: (result, error, partial) as classify_replay
-    takes them -- a Partial its result and its line, any other exception no result and its line."""
+    takes them -- a Partial its result and its line, any other exception no result and its line. A replay a signal
+    ended is no outcome: the harness that sent it, at its timeout, has already set aside what this call would print,
+    and runs the --timed-out call, which needs the record as it stands; so _Ended is raised, and nothing is rendered or
+    recorded."""
     if timed_out:
         return None, None, False
     try:
         return sb.replay(specs, branch, register_rebuild, set_upstream), None, False
-    except sb.Partial as e:
-        return e.result, _sb_stderr(e), True
     except Exception as e:  # session-branch.py's main() prints any exception as its one not-run line
+        signum = _signal_of(e)
+        if signum is not None:
+            raise _Ended(signum)
+        if isinstance(e, sb.Partial):
+            return e.result, _sb_stderr(e), True
         return None, _sb_stderr(e), False
 
 
@@ -1288,7 +1330,9 @@ def replay(specs, for_, command, branch, set_upstream=False, timed_out=False):
     from flush (the current branch's replay) to settle, next naming start --resume; at settle-done, <branch> dropped
     from pending, next naming the next queued replay, or, none left, start --resume with the record at disposition.
     Exit 2 only before the record is found; after it, an exception is exit-0 JSON with error set and the stopped
-    line, the record kept as it stood -- which is how a record with nothing for this call to replay is refused."""
+    line, the record kept as it stood -- which is how a record with nothing for this call to replay is refused. A
+    replay a signal ended prints nothing and leaves the record as it stood for the --timed-out call: the process ends
+    by that signal (_exit_by)."""
     state, lines = _flow()
     if not state.COMMAND_RE.fullmatch(command):
         raise NotRun("usage: --command is /<name>, got %s" % command)
@@ -1302,6 +1346,8 @@ def replay(specs, for_, command, branch, set_upstream=False, timed_out=False):
         if for_ == "end":
             return _replay_end(run, rec, branch, set_upstream, timed_out)
         return _replay_start(run, rec, branch, set_upstream, timed_out)
+    except _Ended as e:
+        _exit_by(e.signum)
     except Exception as e:
         said = " ".join(str(e).split())
         error = said if isinstance(e, NotRun) else type(e).__name__ + (": " + said if said else "")
@@ -1330,10 +1376,11 @@ def _replay_end(run, rec, branch, set_upstream, timed_out):
 
 
 def _replay_start(run, rec, branch, set_upstream, timed_out):
-    """replay --for start: §3.4's replay of the current branch (stage flush), or of a branch the settle loop queued
-    (stage settle-done, <branch> in pending, whose standing names the branch the run stands on)."""
+    """replay --for start: §3.4's replay of the current branch (stage flush, <branch> the one HEAD stands on, which
+    the flush pushed), or of a branch the settle loop queued (stage settle-done, <branch> in pending, whose standing
+    names the branch the run stands on)."""
     state, stage, pending = run["state"], rec.get("stage"), list(rec.get("pending") or [])
-    if stage == "flush":
+    if stage == "flush" and branch == _head_branch(run["specs"]):
         standing = branch
     elif stage == "settle-done" and any(p.get("branch") == branch for p in pending):
         standing = next(p for p in pending if p.get("branch") == branch).get("standing")
@@ -4029,6 +4076,31 @@ def selftest():
         check((got.get("next") or {}).get("run") == replay_line(r.path, "/specify", Z, "--set-upstream"),
               "r_start_queued: the next replay carries --set-upstream where its queue entry does (%r)" % got)
 
+        # r_start_refused: a queued branch's replay moved it, and origin refused the push
+        r, env = world(tmp, "r-start-refused")
+        V, V_FEED = "prd/ACME-5-v", "specifications/PRD-ACME-5-v/dev-workflows/feedback/"
+        r.git("switch", "-q", "-c", V)
+        r.git("push", "-q", "-u", "origin", V)
+        o = other_pushes(r, "r-start-refused-other", V_FEED + "o.md", branch=V)
+        r.write(V_FEED + "v.md", "v\n")
+        r.commit_all("NOISSUE v")
+        r.git("switch", "-q", "main")
+        hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n")
+        seed(env, "/specify", stage="settle-done", pending=[{"branch": V, "set_upstream": False, "standing": "main"}])
+        got = replay_cli(env, "start", "/specify", V)
+        rec_file = os.path.join(r.path, ".git", "workflows", "push-refused", V)
+        want = ("Specs preflight: %s — origin's %s had moved on, so the run replayed its 1 commit(s) onto it and moved %s "
+                "there, but push REFUSED by origin (pre-receive hook declined): a rule there takes no push of %s, so this "
+                "is recorded and no later run pushes it; %s" % (V, V, V, V, refused_tail(V, r.path, rec_file)))
+        check(got["_rc"] == 0 and got.get("print") == [want] and got.get("error") is None
+              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify")
+              and r.git("rev-parse", V + "~1") == head(o) and on_origin(r, V) == head(o)
+              and r.git("symbolic-ref", "--short", "HEAD") == "main",
+              "r_start_refused: moved, not pushed, its refused form in Specs preflight: form (%r)" % got)
+        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_today + "\n"
+              and (record(env, "/specify") or {}).get("stage") == "disposition",
+              "r_start_refused: the push-refusal record written, the record on to §3.5")
+
         # r_exit2: nothing found, nothing done
         r, env = world(tmp, "r-exit2")
         got = replay_cli(env, "end", "/create-ard", "main")
@@ -4081,6 +4153,11 @@ def selftest():
         check(got["_rc"] == 0 and got.get("error") and (record(env, "/specify") or {}).get("pending") == [
             {"branch": Z, "set_upstream": False, "standing": "main"}],
               "r_found: a branch the record did not queue is refused plainly (%r)" % got)
+        seed(env, "/specify", stage="flush")
+        got = replay_cli(env, "start", "/specify", Y)
+        check(got["_rc"] == 0 and "holds no replay of %s" % Y in (got.get("error") or "") and got.get("next") is None
+              and (record(env, "/specify") or {}).get("stage") == "flush" and head(r) == mine,
+              "r_found: at flush, a branch HEAD does not stand on is refused plainly, the record kept (%r)" % got)
 
         # r_canned: classify_replay and the renderer over results no repository here produces
         tip = "b" * 40
@@ -4130,8 +4207,9 @@ def selftest():
                 (dict(moved, porcelain=failure), None, False,
                  "the push FAILED ([remote failure] (remote failed to report status))", "failed with a status line"),
                 (moved, None, False, "the push FAILED (no status line)", "failed with none"),
-                (dict(moved, porcelain=rej), "session-branch: not run (ended by signal 15)", True,
-                 "session-branch.py stopped (session-branch: not run (ended by signal 15))", "stopped")):
+                (dict(moved, porcelain=rej), "session-branch: not run (OSError: [Errno 28] No space left on device)", True,
+                 "session-branch.py stopped (session-branch: not run (OSError: [Errno 28] No space left on device))",
+                 "stopped")):
             got = render(result, error, partial)
             check(got == opening + why + closing, "r_canned: moved, not pushed — %s (%r)" % (what, got))
         pf = dict(branch="prd/A-1-x", standing="prd/A-1-x", reason="pre-receive hook declined")
@@ -4148,6 +4226,19 @@ def selftest():
                       "but push REFUSED by origin (pre-receive hook declined): a rule there takes no push of main, but this "
                       "could not be recorded (e, the configuration write's), so a later run pushes main again"
                       % committed("bbbbbbb", "main", 2)), "r_canned: the refused form, unrecorded (%r)" % got)
+        got = render(dict(moved, porcelain=declined.replace("main", "prd/A-1-x")), preflight=True, sha7=None, files=None,
+                     record="/r", record_kind="file", record_error=None, **pf)
+        check(got == ("Specs preflight: prd/A-1-x — origin's prd/A-1-x had moved on, so the run replayed its 1 commit(s) "
+                      "onto it and moved prd/A-1-x there, but push REFUSED by origin (pre-receive hook declined): a rule "
+                      "there takes no push of prd/A-1-x, so this is recorded and no later run pushes it; %s"
+                      % refused_tail("prd/A-1-x", "/s", "/r")),
+              "r_canned: the refused form in its Specs preflight: form, recorded (%r)" % got)
+        got = render(dict(moved, porcelain=declined), preflight=True, sha7=None, files=None, record=None, record_kind=None,
+                     record_error="e", reason="pre-receive hook declined")
+        check(got == ("Specs preflight: main — origin's main had moved on, so the run replayed its 1 commit(s) onto it and "
+                      "moved main there, but push REFUSED by origin (pre-receive hook declined): a rule there takes no push "
+                      "of main, but this could not be recorded (e, the configuration write's), so a later run pushes main "
+                      "again"), "r_canned: the refused form in its Specs preflight: form, unrecorded (%r)" % got)
         moves = [{"slug": "api", "origin": "f-9", "side": "run", "from": 2, "to": 5},
                  {"slug": "web", "origin": "f-1", "side": "remote", "from": 3, "to": 4},
                  {"slug": "web", "origin": "f-2", "side": "run", "from": 4, "to": 3}]
@@ -4166,7 +4257,7 @@ def selftest():
         got = render(dict(moved, pushed=True, replayed=["a" * 40], dropped=["c" * 40, "d" * 40]))
         check(got == replayed(committed("bbbbbbb", "main", 2), "main", 3, ", 2 of them already there and dropped"),
               "r_canned: <K> counts replayed and dropped, <D> the dropped (%r)" % got)
-        got = render(dict(moved, pushed=True), "session-branch: not run (ended by signal 15)", True)
+        got = render(dict(moved, pushed=True), "session-branch: not run (OSError: [Errno 28] No space left on device)", True)
         check(got == replayed(committed("bbbbbbb", "main", 2), "main", 1),
               "r_canned: a Partial whose pushed is true is replayed and pushed (%r)" % got)
         nothing = dict(moved, moved=False, replayed=[], tip=None)
@@ -4230,10 +4321,16 @@ def selftest():
             return replay
 
         try:
-            sb.replay = raising(sb.Partial("ended by signal 15", dict(moved, pushed=True)))
+            sb.replay = raising(sb.Partial("OSError: [Errno 28] No space left on device", dict(moved, pushed=True)))
             got = _run_replay("/x", "main", None, False, False)
-            check(got == (dict(moved, pushed=True), "session-branch: not run (ended by signal 15)", True),
-                  "r_in_process: a Partial is its result, its stderr line and partial (%r)" % (got,))
+            check(got == (dict(moved, pushed=True), "session-branch: not run (OSError: [Errno 28] No space left on device)",
+                          True), "r_in_process: a Partial is its result, its stderr line and partial (%r)" % (got,))
+            sb.replay = raising(sb.Partial("git push ended by signal 15", dict(moved, pushed=True)))
+            try:
+                got = _run_replay("/x", "main", None, False, False)
+            except _Ended as e:
+                got = ("ended", e.signum)
+            check(got == ("ended", 15), "r_in_process: a Partial a signal ended is no outcome: _Ended (%r)" % (got,))
             sb.replay = raising(NotRun("no such branch:\n  main"))
             got = _run_replay("/x", "main", None, False, False)
             check(got == (None, "session-branch: not run (no such branch: main)", False),
@@ -4247,6 +4344,120 @@ def selftest():
                   "r_in_process: --timed-out runs no replay")
         finally:
             sb.replay = real_replay
+
+        # r_signalled: a replay a signal ended -- the harness's, at its 420 s -- is no outcome: nothing is printed or
+        # recorded, the process ends by that signal, and the --timed-out call that follows finds the record intact
+        def caused(e, cause):
+            e.__cause__ = cause
+            return e
+
+        def record_bytes(env, command):
+            with in_env(env):
+                try:
+                    with open(state.path(env["CLAUDE_CODE_SESSION_ID"], command), "rb") as fh:
+                        return fh.read()
+                except OSError:
+                    return None
+
+        class Exited(BaseException):
+            pass
+
+        def exits(signum):
+            raise Exited(signum)
+
+        endings = (("git_bounded's NotRun", NotRun("git fetch ended by signal 15"), 15),
+                   ("replay's NotRun from _Signalled", caused(NotRun("ended by signal 15"), sb._Signalled(15)), 15),
+                   ("a Partial from git_bounded's NotRun", caused(sb.Partial("git push ended by signal 15",
+                                                                             dict(moved, pushed=False)),
+                                                                  NotRun("git push ended by signal 15")), 15),
+                   ("a Partial from _Signalled", caused(sb.Partial("ended by signal 1", dict(moved, pushed=True)),
+                                                        sb._Signalled(1)), 1))
+        g = globals()
+        real_exit = g["_exit_by"]
+        g["_exit_by"] = exits
+        try:
+            for k, (what, ending, signum) in enumerate(endings):
+                for for_, command, fields in (
+                        ("end", "/create-ard", {"stage": "end-replay"}),
+                        ("start", "/specify", {"stage": "flush", "args": {"specs": None, "keys": ["ACME-1"],
+                                                                          "commit_key": None, "register_rebuild": None}})):
+                    r, env = world(tmp, "r-signalled-%d-%s" % (k, for_))
+                    fields = dict(fields, end_commit={"sha7": head(r)[:7], "files": 1, "branch": "main", "paths": [],
+                                                      "hook_paths": []})
+                    if for_ == "start":
+                        fields["args"] = dict(fields["args"], specs=r.path)
+                    seed(env, command, **fields)
+                    before, h = record_bytes(env, command), head(r)
+                    sb.replay = raising(ending)
+                    got = None
+                    try:
+                        with in_env(env):
+                            replay(r.path, for_, command, "main")
+                    except Exited as e:
+                        got = e.args[0]
+                    finally:
+                        sb.replay = real_replay
+                    check(got == signum and record_bytes(env, command) == before and head(r) == h,
+                          "r_signalled: %s, --for %s — ends by signal %d, the record as it stood (%r)"
+                          % (what, for_, signum, got))
+                    if k:
+                        continue
+                    got = replay_cli(env, for_, command, "main", "--timed-out")
+                    timed = TIMED % ("main", r.path, "main", "main", "main")
+                    if for_ == "end":
+                        check(got.get("row") == "rejected" and got.get("print") == [rejected(committed(h[:7], "main"),
+                              "main", timed, plain(r.path, "main"))] and record_bytes(env, command) is None,
+                              "r_signalled: then --timed-out prints the 420 s row and removes the record (%r)" % got)
+                    else:
+                        check(got.get("print") == [rejected("Specs preflight: main", "main", timed, plain(r.path, "main"))]
+                              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify", "--key", "ACME-1")
+                              and (record(env, command) or {}).get("stage") == "settle",
+                              "r_signalled: then --timed-out prints the 420 s row, the record on to settle (%r)" % got)
+        finally:
+            g["_exit_by"] = real_exit
+            sb.replay = real_replay
+        r, env = world(tmp, "r-signalled-pin")
+        sb._pending.append(signal.SIGTERM)
+        try:
+            sb.git_bounded(r.path, 5, "status")
+            pinned = None
+        except NotRun as e:
+            pinned = _signal_of(e)
+        finally:
+            del sb._pending[:]
+        check(pinned == signal.SIGTERM, "r_signalled: _signal_of reads git_bounded's own words for the signal (%r)" % pinned)
+        check(_signal_of(caused(NotRun("stopped"), sb._Signalled(2))) == 2
+              and _signal_of(caused(sb.Partial("stopped", {}), sb._Signalled(1))) == 1,
+              "r_signalled: a _Signalled cause is read by its type, whatever the words")
+        check(_signal_of(NotRun("git fetch --no-tags: error: ended by signal 15")) is None
+              and _signal_of(RuntimeError("ended by signal 15")) is None and _signal_of(NotRun("no such branch: x")) is None,
+              "r_signalled: an error that only mentions the words is an outcome")
+
+        # r_signalled_child: a real SIGTERM inside the replay's fetch, in a child process
+        r, env = world(tmp, "r-signalled-child")
+        marker = os.path.join(tmp, "r-signalled-child.fetching")
+        r.git("config", "protocol.ext.allow", "always")
+        r.git("remote", "set-url", "origin", "ext::sh -c touch%% %s;sleep%% 60" % marker)
+        seed(env, "/create-ard", stage="end-replay", end_commit={"sha7": head(r)[:7], "files": 1, "branch": "main",
+                                                                 "paths": [], "hook_paths": []})
+        before = record_bytes(env, "/create-ard")
+        p = subprocess.Popen([sys.executable, me, "--specs", r.path, "replay", "--for", "end", "--command", "/create-ard",
+                              "--branch", "main"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             env=dict(os.environ, **env))
+        deadline = time.monotonic() + 30
+        while not os.path.exists(marker) and p.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.05)
+        reached = os.path.exists(marker)
+        p.send_signal(signal.SIGTERM)
+        try:
+            out, err = p.communicate(timeout=30)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            out, err = p.communicate()
+        check(reached and p.returncode == -signal.SIGTERM and out == b"" and err == b""
+              and record_bytes(env, "/create-ard") == before,
+              "r_signalled_child: SIGTERM during the fetch ends the call by it, nothing printed, the record intact "
+              "(reached %r, rc %r, out %r, err %r)" % (reached, p.returncode, out[:200], err[:300]))
 
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
