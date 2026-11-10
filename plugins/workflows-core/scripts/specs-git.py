@@ -16,6 +16,7 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py --specs "<value>" specs-root-check
   specs-git.py --specs "<value>" end --command /<name> [--commit-key <K>] [--register-rebuild <path>] [--no-preflight]
                [--misrooted-stdin] [--session-branch-created <sha7>] [--declined <p>]... [--resume]
+  specs-git.py --specs <root> replay --for start|end --command /<name> --branch <name> [--set-upstream] [--timed-out]
   specs-git.py --selftest
 
 declined appends paths to the run's state record (specs_git_state.py, one file per session and command, outside
@@ -23,17 +24,21 @@ every repository), creating the record where the command's start never ran. spec
 entry point on SPECS_PATH as set, "" meaning unset. end is specs-repo-git §4's commit-artifacts for the run of this
 session and command: it reads that record, catches the default branch up, commits the session files and pushes them,
 and prints the §6 outcome line with what follows it, removing the record; or it names the replay a rejected push
-needs as next, or stops on an error, and keeps the record for what follows. The state and lines modules load only
-for the subcommands that need them, so a copy of this script without them still runs the primitives above.
+needs as next, or stops on an error, and keeps the record for what follows. replay is §4 step 6's replay of a push
+rejected as non-fast-forward, in a call of its own: it runs session-branch.py's replay in process and prints the §6
+row it gives -- for end, end's object, the record removed; for start, the row in its Specs preflight: form and the
+next call. The state and lines modules load only for the subcommands that need them, so a copy of this script
+without them still runs the primitives above.
 
 <root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
 where specs-repo-git §3.5 classifies under specs_git: misrooted); the <value> specs-root-check and end take is never
-checked first, so empty, a file or a subdirectory each reaches it. Nothing here but end writes the working tree, the
-index or a ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it found. Exit 2: it could not
+checked first, so empty, a file or a subdirectory each reaches it. Nothing here but end and replay writes the working
+tree, the index or a ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it found. Exit 2: it could not
 run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
 and the run continues. end exits 2 only before its first write to the repository; after it, a failure is exit 0
-with error set and the end.stopped line, and the record stays for end --resume.
+with error set and the end.stopped line, and the record stays for end --resume. replay exits 2 only before it finds
+its record; after it, a failure is exit 0 with error set and the stopped line, and the record stays as it stood.
 """
 
 import argparse
@@ -554,6 +559,7 @@ PUSHED_FLAGS = (" ", "+", "*", "=")
 CAP = 60  # seconds: the cap on a fetch, a pull and a push (sb.git_bounded, workflows-core:bounded-run's mechanism)
 LS_REMOTE_CAP = 30
 REPLAY_TIMEOUT_MS = 420000  # specs-repo-git §4 step 6: the replay's own Bash call
+START_TIMEOUT_MS = 600000  # the Bash call the skill runs start and end in
 
 
 def _first_line(r, error=False):
@@ -754,17 +760,31 @@ def push(root, branch, set_upstream):
     found = sb._porcelain_line(p.stdout, "refs/heads/" + branch)
     if found is None:
         return dict(out, reason=_first_line(p, error=True))
-    flag, summary = found.split("\t")[0], found.split("\t", 2)[2]
+    flag, summary = found.split("\t")[0], _summary(found)
     if flag in PUSHED_FLAGS:
         return dict(out, outcome="pushed")
     if summary.startswith("[rejected]"):
         return dict(out, outcome="rejected", reason=summary)
-    if summary.startswith("[remote rejected]"):
-        why = summary[len("[remote rejected]"):].strip()
-        why = why[1:-1] if why.startswith("(") and why.endswith(")") else why
-        if not why.startswith(TRANSIENT):
-            return dict(out, outcome="refused", reason=why, **_record_refusal(root, branch))
+    refused = _remote_refusal(summary)
+    if refused is not None:
+        return dict(out, outcome="refused", reason=refused, **_record_refusal(root, branch))
     return dict(out, reason=summary)
+
+
+def _summary(porcelain):
+    """A --porcelain status line's bracketed summary and its reason, its third field; None for no line."""
+    fields = (porcelain or "").split("\t", 2)
+    return fields[2] if len(fields) == 3 else None
+
+
+def _remote_refusal(summary):
+    """specs-repo-git §4 step 6's first bullet over a status line's <summary>: the reason in parentheses where it is a
+    refusal -- [remote rejected] with a reason that does not begin with one of TRANSIENT -- else None."""
+    if not (summary or "").startswith("[remote rejected]"):
+        return None
+    why = summary[len("[remote rejected]"):].strip()
+    why = why[1:-1] if why.startswith("(") and why.endswith(")") else why
+    return None if why.startswith(TRANSIENT) else why
 
 
 def _row_line(lines, row, f):
@@ -868,13 +888,27 @@ def _end_result(**kw):
     return out
 
 
-def _replay_next(specs, command, branch, set_upstream):
+def _replay_next(specs, command, branch, set_upstream, for_="end"):
     """The call a rejected push hands the run (specs-repo-git §4 step 6): the replay, in a Bash call of its own, and
-    the same with --timed-out where the harness ends that call at its timeout."""
-    run = "python3 %s --specs %s replay --for end --command %s --branch %s%s" % (
-        shlex.quote(os.path.abspath(__file__)), shlex.quote(specs), shlex.quote(command), shlex.quote(branch),
+    the same with --timed-out where the harness ends that call at its timeout. <for_>: end, or start for §3.4's."""
+    run = "python3 %s --specs %s replay --for %s --command %s --branch %s%s" % (
+        shlex.quote(os.path.abspath(__file__)), shlex.quote(specs), for_, shlex.quote(command), shlex.quote(branch),
         " --set-upstream" if set_upstream else "")
     return {"run": run, "timeout_ms": REPLAY_TIMEOUT_MS, "on_timeout": run + " --timed-out"}
+
+
+def _resume_next(command, args):
+    """The call that goes on with a start the replay or a budget stop interrupted: start --resume, repeating the start
+    call's --specs, every --key in order, --commit-key and --register-rebuild as the record's <args> hold them, so the
+    resume passes resumable's argument test; in a Bash call of its own, start's 600 s, nothing to run on a timeout."""
+    parts = ["--specs", args.get("specs") or "", "start", "--command", command]
+    for key in args.get("keys") or []:
+        parts += ["--key", key]
+    for flag, field in (("--commit-key", "commit_key"), ("--register-rebuild", "register_rebuild")):
+        if args.get(field):
+            parts += [flag, args[field]]
+    run = " ".join(["python3", shlex.quote(os.path.abspath(__file__))] + [shlex.quote(p) for p in parts + ["--resume"]])
+    return {"run": run, "timeout_ms": START_TIMEOUT_MS, "on_timeout": None}
 
 
 def _stop(run, row, printed, line):
@@ -1085,6 +1119,243 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     return _push_step(run, saved, commit, d["default"], view)
 
 
+def classify_replay(result, error, partial, timed_out):
+    """specs-repo-git §4 step 6's reading of a replay: the §6 row (replayed, already-there, moved or rejected), the
+    <why> of a moved one, and reason, the id of the reason clause the row names -- refused.reason, not-run or
+    timed-out -- else None. <result>: session-branch.py's JSON, None where it printed none; <error>: the first line
+    of its stderr; <partial>: it exited 2 having printed its JSON first; <timed_out>: the harness ended the Bash call
+    at its timeout. In step 6's order: a timeout, then an exit 2 with nothing printed, are push rejected, nothing
+    said or nothing done; then the four cases -- pushed; not moved and refused; nothing replayed; else moved, its why
+    the first that holds: stopped (<partial>, ahead of every other), later-refused (refused set), moved-on
+    ([rejected] in porcelain), refused (a refusal in porcelain, as the first bullet of step 6 reads one: the caller
+    writes the push-refusal record and renders the row's refused form), failed (any other porcelain, or none)."""
+    if timed_out:
+        return {"row": "rejected", "why": None, "reason": "timed-out"}
+    if result is None:
+        return {"row": "rejected", "why": None, "reason": "not-run"}
+    refused = result.get("refused")
+    if result.get("pushed"):
+        return {"row": "replayed", "why": None, "reason": None}
+    if not result.get("moved") and refused:
+        return {"row": "rejected", "why": None, "reason": refused["reason"]}
+    if not result.get("replayed"):
+        return {"row": "already-there", "why": None, "reason": None}
+    if partial:
+        return {"row": "moved", "why": "stopped", "reason": None}
+    if refused:
+        return {"row": "moved", "why": "later-refused", "reason": refused["reason"]}
+    summary = _summary(result.get("porcelain")) or ""
+    if summary.startswith("[rejected]"):
+        return {"row": "moved", "why": "moved-on", "reason": None}
+    return {"row": "moved", "why": "refused" if _remote_refusal(summary) is not None else "failed", "reason": None}
+
+
+def _reason_clause(lines, reason, refused, f, later=False):
+    """specs-repo-git §6's reason clause for <reason>, <path> being <refused>'s path. <later>: inside app.why.later-refused,
+    where checkout-moved reads `… so <branch> was not moved again; …`, an earlier attempt having moved it."""
+    T, refused = lines.T, refused or {}
+    t = T["reason." + reason]
+    v = {"<branch>": f["branch"], "<SPECS_PATH>": f["specs"], "<path>": refused.get("path"),
+         "<the first line of its stderr>": f.get("error")}
+    if reason == "register-rebuild" and f.get("register_rebuild"):
+        t = t[:t.index(", which only")] + T["reason.register-rebuild.failed"]
+    elif reason == "would-overwrite":
+        paths = refused.get("paths") or [refused.get("path")]
+        v["<M>"] = len(paths) - 1 if len(paths) > 1 else None
+    elif reason == "push-scope":
+        v[lines.placeholder("reason.push-scope", "<path's")] = (refused.get("path") or "")[:7] or None
+    elif reason == "checkout-moved" and later:
+        t = _swap(t, "so <branch> was not moved;", T["app.why.checkout-moved"])
+    return lines.fill(t, v)
+
+
+def _register_clause(lines, moves):
+    """specs-repo-git §6's register clause, once for each security/<slug>/ <moves> names, in their order, joined as the
+    row's segment joins them; None where there is no move."""
+    clauses = []
+    for slug in _unique([m["slug"] for m in moves or []]):
+        named = [lines.fill("app.register-move", {"<from>": m["from"], "<to>": m["to"], "<origin>": m["origin"],
+                                                  "<whose number>": lines.T["app.register-move." + m["side"]]})
+                 for m in moves if m["slug"] == slug]
+        clauses.append(lines.fill("app.register-clause", {"<slug>": slug, "<move>": named}))
+    return "; ".join(clauses) or None
+
+
+def _why(lines, cls, result, f):
+    """row.moved's <why>, as classify_replay named it (all but the refused form, which replaces the row's end)."""
+    why = cls["why"]
+    if why == "stopped":
+        return lines.fill("app.why.stopped", {"<the first line of its stderr>": f.get("error")})
+    if why == "later-refused":
+        return lines.fill("app.why.later-refused", {
+            "<reason clause>": _reason_clause(lines, cls["reason"], result.get("refused"), f, later=True)})
+    if why == "moved-on":
+        return lines.fill("app.why.moved-on", {"<branch>": f["branch"], "<attempts>": result.get("attempts")})
+    return lines.fill("app.why.failed", {lines.placeholder("app.why.failed", "<the status line"):
+                                         _summary(result.get("porcelain")) or lines.T["app.why.failed.none"]})
+
+
+def _replay_sha7(cls, result, sha7):
+    """<sha7> in a replay's row: the replay's tip in the three rows of a replay that moved the branch or found nothing
+    left to push (specs-repo-git §6), else <sha7>, the run's own commit."""
+    tip = (result or {}).get("tip")
+    return tip[:7] if tip and cls["row"] != "rejected" else sha7
+
+
+def _replay_line(lines, cls, result, f):
+    """specs-repo-git §6's row for a replay classify_replay read as <cls>, from <result> (None where it printed none) and
+    the facts <f>: sha7 and files (the run's commit), branch, specs (<SPECS_PATH> as the run holds it), default,
+    standing (the branch the run stands on, whose remedy switches to <branch> first where they differ), register_rebuild
+    (whether the call handed the replay one), error (session-branch.py's stderr line), preflight (§3.4's Specs
+    preflight: form, by lines.preflight_form, which drops the opening's <sha7> and <N>), and, for the refused form,
+    reason, record, record_kind and record_error as _record_refusal wrote the record."""
+    T, result, row = lines.T, result or {}, cls["row"]
+    t = T["row." + row]
+    sha7, files = _replay_sha7(cls, result, f.get("sha7")), f.get("files")
+    if f.get("preflight"):  # the opening the Specs preflight: form drops: neither value is printed
+        sha7, files = sha7 or "-", 0 if files is None else files
+    v = {"<sha7>": sha7, "<N>": files, "<branch>": f["branch"], "<SPECS_PATH>": f["specs"]}
+    tail = ""
+    if row != "rejected":
+        replayed, dropped = result.get("replayed") or [], result.get("dropped") or []
+        v.update({"<K>": len(replayed) + len(dropped), "<D>": len(dropped) or None,
+                  "<the register clause>": _register_clause(lines, result.get("moves"))})
+    if row == "replayed" and result.get("upstream_error"):
+        tail = lines.fill("app.upstream-error", {"<upstream_error>": result["upstream_error"]})
+    elif row == "moved" and cls["why"] == "refused":  # from "but" on: row.moved.refused, then push-refused's own end
+        t = t[:t.index("but <why>")] + T["row.moved.refused"]
+        v["<the reason in parentheses>"] = f["reason"]
+        refused_row = _row_line(lines, "push-refused", dict(f, sha7=sha7, files=files))
+        tail = refused_row[refused_row.index("a rule there"):]
+    elif row == "moved":
+        v["<why>"] = _why(lines, cls, result, f)
+    elif row == "rejected":
+        refused, remedy = result.get("refused"), T["remedy.rejected"]
+        v["<reason clause>"] = _reason_clause(lines, cls["reason"], refused, f)
+        if cls["reason"] == "checkout-moved":  # the line ends at its reason clause
+            t = t[:t.index("; " + remedy)]
+        elif cls["reason"] == "checked-out":  # run in that worktree, no switch
+            t = _swap(t, remedy, T["remedy.checked-out"])
+            v["<path>"] = refused["path"]
+        elif f.get("standing") != f["branch"]:
+            t = _swap(t, remedy, T["remedy.not-standing"])
+            v["<the branch the run stands on>"] = f.get("standing")
+    line = lines.fill(t, v) + tail
+    return lines.preflight_form(line) if f.get("preflight") else line
+
+
+def _sb_stderr(e):
+    """The one line session-branch.py's main() prints on stderr for <e>, which specs-repo-git §4 step 6 quotes: the
+    replay runs here in process, and its exits are read as that script's would be."""
+    said = " ".join(str(e).split())
+    if isinstance(e, (NotRun, OSError)):
+        return "session-branch: not run (%s)" % said
+    return "session-branch: not run (%s: %s)" % (type(e).__name__, said)
+
+
+def _run_replay(specs, branch, register_rebuild, set_upstream, timed_out):
+    """sb.replay in process, unless the harness ended the call that ran it: (result, error, partial) as classify_replay
+    takes them -- a Partial its result and its line, any other exception no result and its line."""
+    if timed_out:
+        return None, None, False
+    try:
+        return sb.replay(specs, branch, register_rebuild, set_upstream), None, False
+    except sb.Partial as e:
+        return e.result, _sb_stderr(e), True
+    except Exception as e:  # session-branch.py's main() prints any exception as its one not-run line
+        return None, _sb_stderr(e), False
+
+
+def _replay_facts(run, rec, cls, result, error, branch, standing, preflight):
+    """The facts _replay_line renders from; where classify_replay found a refusal in porcelain, the push-refusal record
+    written first, as specs-repo-git §4 step 6's first bullet writes it."""
+    commit = run.get("commit") or {}
+    f = {"sha7": commit.get("sha7"), "files": commit.get("files"), "branch": branch, "specs": run["specs"],
+         "default": rec.get("default"), "standing": standing, "register_rebuild": bool(rec.get("register_rebuild")),
+         "error": error, "preflight": preflight}
+    if cls["why"] == "refused":
+        written = _record_refusal(run["specs"], branch)
+        f.update(reason=_remote_refusal(_summary(result.get("porcelain"))), record=written["record"],
+                 record_kind=written["recorded"], record_error=written["record_error"])
+    return f
+
+
+def replay(specs, for_, command, branch, set_upstream=False, timed_out=False):
+    """specs-repo-git §4 step 6's replay for the run of this session and <command>, in a call of its own: sb.replay of
+    <branch> in process (unless <timed_out>), with the register_rebuild the record holds, read by classify_replay and
+    rendered as its §6 row. <for_> end: end's object for the end_commit the record holds, every append end gives, the
+    record removed. <for_> start: {print: [the row in its Specs preflight: form], next, error}, the record advanced --
+    from flush (the current branch's replay) to settle, next naming start --resume; at settle-done, <branch> dropped
+    from pending, next naming the next queued replay, or, none left, start --resume with the record at disposition.
+    Exit 2 only before the record is found; after it, an exception is exit-0 JSON with error set and the stopped
+    line, the record kept as it stood -- which is how a record with nothing for this call to replay is refused."""
+    state, lines = _flow()
+    if not state.COMMAND_RE.fullmatch(command):
+        raise NotRun("usage: --command is /<name>, got %s" % command)
+    session = state.session_id()
+    rec = state.load(session, command)
+    if rec is None:
+        raise NotRun("no record of %s in this session holds a replay" % command)
+    run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "record": "found",
+           "pre": [], "commit": None}
+    try:
+        if for_ == "end":
+            return _replay_end(run, rec, branch, set_upstream, timed_out)
+        return _replay_start(run, rec, branch, set_upstream, timed_out)
+    except Exception as e:
+        said = " ".join(str(e).split())
+        error = said if isinstance(e, NotRun) else type(e).__name__ + (": " + said if said else "")
+        if for_ == "start":
+            return {"print": [lines.fill("pre.stopped", {"<the error>": error})], "next": None, "error": error}
+        line = lines.fill("end.stopped", {"<the error>": error})
+        commit = run["commit"] or {}
+        return _end_result(print=[line], line=line, sha7=commit.get("sha7"), files=commit.get("files"),
+                           branch=commit.get("branch"), record="found", error=error)
+
+
+def _replay_end(run, rec, branch, set_upstream, timed_out):
+    """replay --for end: the replay of the commit end made and saved as end_commit at stage end-replay. A pending
+    end_commit (no sha7: end stopped between staging and its commit) is end --resume's, and is refused."""
+    commit = rec.get("end_commit") or {}
+    if rec.get("stage") != "end-replay" or not commit.get("sha7") or commit.get("branch") != branch:
+        raise NotRun("the record holds no commit of %s that end handed to a replay; end --resume finishes this run"
+                     % branch)
+    run["commit"] = commit
+    result, error, partial = _run_replay(run["specs"], branch, rec.get("register_rebuild"), set_upstream, timed_out)
+    cls = classify_replay(result, error, partial, timed_out)
+    f = _replay_facts(run, rec, cls, result, error, branch, branch, False)
+    shown = dict(commit, sha7=_replay_sha7(cls, result, commit["sha7"]))
+    return finish_end(run, cls["row"], _replay_line(run["lines"], cls, result, f), _view(rec), commit=shown,
+                      branch=branch, pushed=cls["row"] == "replayed")
+
+
+def _replay_start(run, rec, branch, set_upstream, timed_out):
+    """replay --for start: §3.4's replay of the current branch (stage flush), or of a branch the settle loop queued
+    (stage settle-done, <branch> in pending, whose standing names the branch the run stands on)."""
+    state, stage, pending = run["state"], rec.get("stage"), list(rec.get("pending") or [])
+    if stage == "flush":
+        standing = branch
+    elif stage == "settle-done" and any(p.get("branch") == branch for p in pending):
+        standing = next(p for p in pending if p.get("branch") == branch).get("standing")
+    else:
+        raise NotRun("the record (stage %s) holds no replay of %s" % (stage, branch))
+    result, error, partial = _run_replay(run["specs"], branch, rec.get("register_rebuild"), set_upstream, timed_out)
+    cls = classify_replay(result, error, partial, timed_out)
+    line = _replay_line(run["lines"], cls, result, _replay_facts(run, rec, cls, result, error, branch, standing, True))
+    if stage == "flush":
+        rec["stage"] = "settle"
+    else:
+        rec["pending"] = [p for p in pending if p.get("branch") != branch]
+        rec["stage"] = "settle-done" if rec["pending"] else "disposition"
+    state.save(run["session"], run["command"], rec)
+    if stage == "settle-done" and rec["pending"]:
+        queued = rec["pending"][0]
+        nxt = _replay_next(run["specs"], run["command"], queued["branch"], bool(queued.get("set_upstream")), "start")
+    else:
+        nxt = _resume_next(run["command"], rec.get("args") or {})
+    return {"print": [line], "next": nxt, "error": None}
+
+
 class Parser(argparse.ArgumentParser):
     """A usage error is one "not run" line, as every exit 2 is."""
 
@@ -1126,6 +1397,12 @@ def main():
     p.add_argument("--session-branch-created")
     p.add_argument("--declined", action="append", default=[])
     p.add_argument("--resume", action="store_true")
+    p = sub.add_parser("replay")
+    p.add_argument("--for", dest="for_", required=True, choices=("start", "end"))
+    p.add_argument("--command", required=True)
+    p.add_argument("--branch", required=True)
+    p.add_argument("--set-upstream", action="store_true")
+    p.add_argument("--timed-out", action="store_true")
     a = ap.parse_args()
     try:  # a path comes back as git's -z record gave it, a byte that is no UTF-8 included
         sys.stdout.reconfigure(encoding="utf-8", errors="surrogateescape")
@@ -1190,6 +1467,8 @@ def dispatch(a):
         return push_scope(a.specs, a.branch, a.session_default_ref)
     if a.cmd == "mode":
         return sb.mode(a.specs, a.default)
+    if a.cmd == "replay":
+        return replay(a.specs, a.for_, a.command, a.branch, a.set_upstream, a.timed_out)
     raise NotRun("unknown subcommand %s" % a.cmd)
 
 
@@ -1243,8 +1522,15 @@ def selftest():
         return r
 
     def cli(*args, env=None, stdin=None, cwd=None, script=None):
-        r = subprocess.run([sys.executable, script or me, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                           input=stdin, cwd=cwd, env=dict(os.environ, **(env or {})))
+        return parsed(subprocess.run([sys.executable, script or me, *args], stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, input=stdin, cwd=cwd, env=dict(os.environ, **(env or {}))))
+
+    def shell(line, env):
+        """A next.run (or on_timeout) line as the skill runs it: verbatim, in a Bash call of its own."""
+        return parsed(subprocess.run(["bash", "-c", line], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                     env=dict(os.environ, **env)))
+
+    def parsed(r):
         out = r.stdout.decode("utf-8", "replace")
         try:
             got = json.loads(out) if out.strip() else {}
@@ -1840,6 +2126,7 @@ def selftest():
                 "row.moved.refused", "row.session-rejected", "row.session-rejected.conflict-ending"]
         ids += ["app." + a for a in (
             "hook-line", "record-key", "record-unset", "unrecorded", "register-clause", "register-move", "upstream-error",
+            "register-move.run", "register-move.remote", "why.failed.none",
             "why.later-refused", "why.moved-on", "why.failed", "why.stopped", "session.created", "session.conflict-default",
             "session.conflict-origin", "session.sync-error", "session.unsettled", "session.unsettled.close",
             "session.stranded", "session.unsupported", "why.checkout-moved",
@@ -2384,12 +2671,85 @@ def selftest():
         check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
               "g_cli: no --specs at all is a usage error (%r)" % got)
 
+    # The run worlds scenarios_end and scenarios_replay share.
+    PRD = "specifications/PRD-ACME-1-x/prd.md"
+    RESUME = "specifications/PRD-ACME-1-x/dev-workflows/resume.md"
+    PLUGIN = "prd/ACME-1-x"
+
+    @contextlib.contextmanager
+    def in_env(env):
+        keep = {k: os.environ.get(k) for k in env}
+        os.environ.update(env)
+        try:
+            yield
+        finally:
+            for k, v in keep.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+    def world(tmp, name):
+        """A bare origin; a clone with the PRD committed and pushed on main; the environment of a run of session
+        <name>: HOME under tmp, the session variable, SPECS_PATH naming the clone."""
+        bare = os.path.join(tmp, name + ".git")
+        subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)
+        r = new_repo(tmp, name)
+        r.write(PRD, "---\nkind: prd\nkey: ACME-1\n---\n\n# PRD\n")
+        r.commit_all("ACME-1 Add the PRD")
+        r.git("remote", "add", "origin", bare)
+        r.git("push", "-q", "-u", "origin", "main")
+        r.bare = bare
+        home = os.path.join(tmp, "home-" + name)
+        os.makedirs(home)
+        return r, {"HOME": home, "CLAUDE_CODE_SESSION_ID": name, "SPECS_PATH": r.path}
+
+    def seed(env, command, **fields):
+        """A record as start saves one, its env_line from env_line(<the clone>)."""
+        state = _flow()[0]
+        specs = fields.pop("specs", env["SPECS_PATH"])
+        rec = dict(specs=specs, env_line=env_line(specs), gate="pass", top=os.path.realpath(specs), default="main",
+                   default_ref="origin/main", remote="origin", mode="off", branch="main", stage="done",
+                   args={"specs": specs, "keys": [], "commit_key": None, "register_rebuild": None})
+        rec.update(fields)
+        with in_env(env):
+            session = env["CLAUDE_CODE_SESSION_ID"]
+            state.save(session, command, state.new(command, session=session, **rec))
+
+    def record(env, command):
+        with in_env(env):
+            return _flow()[0].load(env["CLAUDE_CODE_SESSION_ID"], command)
+
+    def run_end(env, command, *args, specs=None, stdin=b""):
+        return cli("--specs", env["SPECS_PATH"] if specs is None else specs, "end", "--command", command, *args,
+                   env=env, stdin=stdin)
+
+    def on_origin(r, branch="main"):
+        p = subprocess.run(["git", "-C", r.bare, "rev-parse", "--verify", "-q", "refs/heads/" + branch],
+                           stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        return p.stdout.decode().strip() or None
+
+    def clone(r, name):
+        """Another clone of <r>'s origin, beside <r>."""
+        path = os.path.join(os.path.dirname(r.path), name)
+        subprocess.run(["git", "clone", "-q", r.bare, path], check=True, stderr=subprocess.DEVNULL)
+        o = Repo(path)
+        o.git("config", "user.email", "o@example.invalid")
+        o.git("config", "user.name", "o")
+        o.git("config", "commit.gpgsign", "false")
+        return o
+
+    def hook(path, body):
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("#!/bin/sh\n" + body)
+        os.chmod(path, 0o755)
+
+    def head(r):
+        return r.git("rev-parse", "HEAD")
+
     def scenarios_end(tmp):
         state, lines = _flow()
         T = lines.T
-        PRD = "specifications/PRD-ACME-1-x/prd.md"
-        RESUME = "specifications/PRD-ACME-1-x/dev-workflows/resume.md"
-        PLUGIN = "prd/ACME-1-x"
         today = time.strftime("%Y-%m-%d", time.gmtime())
         local_today = time.strftime("%Y-%m-%d")
         g = globals()
@@ -2398,75 +2758,6 @@ def selftest():
         BLOCKED = "Specs repo: NOT COMMITTED — see the notice below"
         NOTHING = "Specs repo: no session artifacts to commit"
         FIELDS = {"print", "line", "row", "sha7", "files", "branch", "pushed", "next", "record", "error"}
-
-        @contextlib.contextmanager
-        def in_env(env):
-            keep = {k: os.environ.get(k) for k in env}
-            os.environ.update(env)
-            try:
-                yield
-            finally:
-                for k, v in keep.items():
-                    if v is None:
-                        os.environ.pop(k, None)
-                    else:
-                        os.environ[k] = v
-
-        def world(tmp, name):
-            """A bare origin; a clone with the PRD committed and pushed on main; the environment of a run of session
-            <name>: HOME under tmp, the session variable, SPECS_PATH naming the clone."""
-            bare = os.path.join(tmp, name + ".git")
-            subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)
-            r = new_repo(tmp, name)
-            r.write(PRD, "---\nkind: prd\nkey: ACME-1\n---\n\n# PRD\n")
-            r.commit_all("ACME-1 Add the PRD")
-            r.git("remote", "add", "origin", bare)
-            r.git("push", "-q", "-u", "origin", "main")
-            r.bare = bare
-            home = os.path.join(tmp, "home-" + name)
-            os.makedirs(home)
-            return r, {"HOME": home, "CLAUDE_CODE_SESSION_ID": name, "SPECS_PATH": r.path}
-
-        def seed(env, command, **fields):
-            """A record as start saves one, its env_line from env_line(<the clone>)."""
-            specs = fields.pop("specs", env["SPECS_PATH"])
-            rec = dict(specs=specs, env_line=env_line(specs), gate="pass", top=os.path.realpath(specs), default="main",
-                       default_ref="origin/main", remote="origin", mode="off", branch="main", stage="done",
-                       args={"specs": specs, "keys": [], "commit_key": None, "register_rebuild": None})
-            rec.update(fields)
-            with in_env(env):
-                session = env["CLAUDE_CODE_SESSION_ID"]
-                state.save(session, command, state.new(command, session=session, **rec))
-
-        def record(env, command):
-            with in_env(env):
-                return state.load(env["CLAUDE_CODE_SESSION_ID"], command)
-
-        def run_end(env, command, *args, specs=None, stdin=b""):
-            return cli("--specs", env["SPECS_PATH"] if specs is None else specs, "end", "--command", command, *args,
-                       env=env, stdin=stdin)
-
-        def on_origin(r, branch="main"):
-            p = subprocess.run(["git", "-C", r.bare, "rev-parse", "--verify", "-q", "refs/heads/" + branch],
-                               stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-            return p.stdout.decode().strip() or None
-
-        def clone(r, name):
-            path = os.path.join(tmp, name)
-            subprocess.run(["git", "clone", "-q", r.bare, path], check=True, stderr=subprocess.DEVNULL)
-            o = Repo(path)
-            o.git("config", "user.email", "o@example.invalid")
-            o.git("config", "user.name", "o")
-            o.git("config", "commit.gpgsign", "false")
-            return o
-
-        def hook(path, body):
-            with open(path, "w", encoding="utf-8") as fh:
-                fh.write("#!/bin/sh\n" + body)
-            os.chmod(path, 0o755)
-
-        def head(r):
-            return r.git("rev-parse", "HEAD")
 
         def files(n):
             return "1 file" if n == 1 else "%d files" % n
@@ -3428,6 +3719,535 @@ def selftest():
                                                                                      "reason": "paths", "path": "a.md"}}))
         check("a pre-commit hook added a.md to this commit" in got, "e_canned: the hook variant with one path (%r)" % got)
 
+    def scenarios_replay(tmp):
+        state, lines = _flow()
+        today = time.strftime("%Y-%m-%d", time.gmtime())
+        local_today = time.strftime("%Y-%m-%d")
+        FEED = "specifications/PRD-ACME-1-x/dev-workflows/feedback/"
+        REG = "security/web/register.json"
+        END_FIELDS = {"print", "line", "row", "sha7", "files", "branch", "pushed", "next", "record", "error"}
+        TIMED = ("session-branch.py did not finish within 420 s, so %s may already stand on the replay (git -C \"%s\" log "
+                 "-1 %s shows it); the next run whose preflight gets past its guards retries the push where it stands on "
+                 "%s or %s is a plugin branch")
+
+        def plain(specs, branch):
+            return 'run git -C "%s" pull --rebase --no-autostash origin %s, then git -C "%s" push origin %s' % (
+                specs, branch, specs, branch)
+
+        def rejected(opening, branch, clause, remedy):
+            return ("%s — push REJECTED: origin's %s has commits this one lacks, and the run could not take them in: %s%s"
+                    % (opening, branch, clause, "; " + remedy if remedy else ""))
+
+        def committed(sha7, branch, n=1):
+            return "Specs repo: committed %s (%s) on %s" % (sha7, "1 file" if n == 1 else "%d files" % n, branch)
+
+        def replayed(opening, branch, k, tail=""):
+            return ("%s — pushed after a replay: origin's %s had moved on, so the run replayed its %d commit(s) onto it%s"
+                    % (opening, branch, k, tail))
+
+        def refused_tail(branch, specs, record_path):
+            return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
+                    "git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
+                    "standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes to %s again, rm \"%s\""
+                    % (branch, specs, today, branch, specs, today, branch, specs, branch, branch, record_path))
+
+        def other_pushes(r, name, path, body="o\n", branch="main"):
+            o = clone(r, name)
+            if branch != "main":
+                o.git("switch", "-q", branch)
+            o.write(path, body)
+            o.commit_all("NOISSUE another clone's session file")
+            o.git("push", "-q", "origin", branch)
+            return o
+
+        def ended(r, env, command="/create-ard"):
+            """end on a push origin rejects as non-fast-forward: the next it hands the run."""
+            got = run_end(env, command)
+            nxt = got.get("next") or {}
+            check(got["_rc"] == 0 and " replay --for end --command %s --branch " % command in nxt.get("run", ""),
+                  "%s: end hands the rejected push to the replay (%r)" % (os.path.basename(r.path), got))
+            return nxt if nxt.get("run") else {"run": "false", "on_timeout": "false"}
+
+        def origin_files(r, branch, prefix):
+            p = subprocess.run(["git", "-C", r.bare, "ls-tree", "-r", "--name-only", branch, "--", prefix],
+                               stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            return set(p.stdout.decode().split())
+
+        def replay_cli(env, for_, command, branch, *more, specs=None):
+            return cli("--specs", specs or env["SPECS_PATH"], "replay", "--for", for_, "--command", command,
+                       "--branch", branch, *more, env=env)
+
+        def resume_line(specs, command, *args):
+            return " ".join(["python3", shlex.quote(me), "--specs", shlex.quote(specs), "start", "--command", command]
+                            + list(args) + ["--resume"])
+
+        def replay_line(specs, command, branch, *more):
+            return " ".join(["python3", shlex.quote(me), "--specs", shlex.quote(specs), "replay", "--for", "start",
+                             "--command", command, "--branch", branch] + list(more))
+
+        # r_replayed
+        r, env = world(tmp, "r-replayed")
+        seed(env, "/create-ard")
+        o = other_pushes(r, "r-replayed-other", FEED + "y.md")
+        r.write(FEED + "x.md", "x\n")
+        nxt = ended(r, env)
+        mine = head(r)
+        got = shell(nxt["run"], env)
+        h = head(r)
+        want = replayed(committed(h[:7], "main"), "main", 1)
+        check(got["_rc"] == 0 and got.get("row") == "replayed" and got.get("print") == [want] and got.get("line") == want
+              and got.get("sha7") == h[:7] and got.get("files") == 1 and got.get("branch") == "main"
+              and got.get("pushed") is True and got.get("record") == "found" and got.get("next") is None
+              and got.get("error") is None and {k for k in got if not k.startswith("_")} == END_FIELDS,
+              "r_replayed: next.run prints end's object, the replayed and pushed row (%r)" % got)
+        check(h != mine and r.git("rev-parse", "HEAD~1") == head(o) and on_origin(r) == h
+              and origin_files(r, "main", FEED) == {FEED + "x.md", FEED + "y.md"} and record(env, "/create-ard") is None,
+              "r_replayed: origin/main holds both files, the record removed")
+
+        # r_appends: the declined append and the repeated guard block, as end renders them
+        r, env = world(tmp, "r-appends")
+        seed(env, "/create-ard", declined=["notes.md"], guard_block="BLOCK")
+        r.write("notes.md", "n\n")
+        other_pushes(r, "r-appends-other", FEED + "y.md")
+        r.write(FEED + "x.md", "x\n")
+        got = shell(ended(r, env)["run"], env)
+        want = (replayed(committed(head(r)[:7], "main"), "main", 1)
+                + "; the deliverable at notes.md remains uncommitted, as you asked")
+        check(got.get("row") == "replayed" and got.get("print") == [want, "BLOCK"] and got.get("line") == want
+              and record(env, "/create-ard") is None, "r_appends: every append end gives (%r)" % got)
+
+        # r_dropped
+        r, env = world(tmp, "r-dropped")
+        seed(env, "/create-ard")
+        o = other_pushes(r, "r-dropped-other", FEED + "x.md", "x\n")
+        r.write(FEED + "x.md", "x\n")
+        got = shell(ended(r, env)["run"], env)
+        theirs = head(o)
+        want = ("%s — not pushed, and nothing is left to push: origin's main had moved on and already holds every change "
+                "main carries, so main now stands on it" % committed(theirs[:7], "main"))
+        check(got.get("row") == "already-there" and got.get("print") == [want] and got.get("sha7") == theirs[:7]
+              and got.get("pushed") is False and head(r) == theirs and record(env, "/create-ard") is None,
+              "r_dropped: the same change on origin is already there, main moved onto it (%r)" % got)
+        r, env = world(tmp, "r-dropped-one")
+        seed(env, "/create-ard")
+        r.write(FEED + "z.md", "z\n")
+        r.commit_all("NOISSUE an earlier run's feedback")
+        o = other_pushes(r, "r-dropped-one-other", FEED + "x.md", "x\n")
+        r.write(FEED + "x.md", "x\n")
+        got = shell(ended(r, env)["run"], env)
+        h = head(r)
+        want = replayed(committed(h[:7], "main"), "main", 2, ", 1 of them already there and dropped")
+        check(got.get("row") == "replayed" and got.get("print") == [want] and on_origin(r) == h
+              and r.git("rev-parse", "HEAD~1") == head(o), "r_dropped: one of two commits already there, the <D> clause (%r)" % got)
+
+        # r_register_rebuild
+        for name, rebuild, clause in (
+                ("r-register", None, "both sides changed the security register security/web/, which only a rebuild "
+                                     "settles, and this command hands the run no register.py to rebuild it"),
+                ("r-register-failed", "fails", "both sides changed the security register security/web/, which only a "
+                                               "rebuild settles, and that rebuild failed")):
+            r, env = world(tmp, name)
+            r.write(REG, '{"findings": []}\n')
+            r.commit_all("NOISSUE the register")
+            r.git("push", "-q", "origin", "main")
+            if rebuild:
+                rebuild = os.path.join(tmp, name + "-rebuild.py")
+                with open(rebuild, "w", encoding="utf-8") as fh:
+                    fh.write("import sys\nsys.exit(1)\n")
+            seed(env, "/scan", register_rebuild=rebuild)
+            other_pushes(r, name + "-other", REG, '{"findings": ["o"]}\n')
+            r.write(REG, '{"findings": ["r"]}\n')
+            nxt = ended(r, env, "/scan")
+            mine = head(r)
+            got = shell(nxt["run"], env)
+            want = rejected(committed(mine[:7], "main"), "main", clause, plain(r.path, "main"))
+            check(got.get("row") == "rejected" and got.get("print") == [want] and got.get("sha7") == mine[:7]
+                  and got.get("pushed") is False and head(r) == mine and on_origin(r) != mine and record(env, "/scan") is None,
+                  "r_register_rebuild: %s — push rejected, nothing moved (%r)" % (name, got))
+
+        # r_checked_out: the branch checked out in a second worktree
+        r, env = world(tmp, "r-checked-out")
+        seed(env, "/create-ard")
+        other_pushes(r, "r-checked-out-other", FEED + "y.md")
+        r.write(FEED + "x.md", "x\n")
+        nxt = ended(r, env)
+        mine = head(r)
+        r.git("worktree", "add", "-q", "-f", os.path.join(tmp, "r-checked-out-wt"), "main")
+        wt = [w for w in sb.checked_out_at(r.path, "main") if os.path.realpath(w) != os.path.realpath(r.path)]
+        got = shell(nxt["run"], env)
+        want = rejected(committed(mine[:7], "main"), "main", "another worktree, %s, has main checked out" % wt[0],
+                        plain(wt[0], "main"))
+        check(len(wt) == 1 and got.get("row") == "rejected" and got.get("print") == [want]
+              and "switch" not in got.get("line", "switch") and head(r) == mine,
+              "r_checked_out: the remedy runs in that worktree, no switch (%r)" % got)
+        r, env = world(tmp, "r-checked-out-queued")
+        W, W_FEED = "prd/ACME-4-w", "specifications/PRD-ACME-4-w/dev-workflows/feedback/"
+        r.git("switch", "-q", "-c", W)
+        r.git("push", "-q", "-u", "origin", W)
+        other_pushes(r, "r-checked-out-queued-other", W_FEED + "o.md", branch=W)
+        r.write(W_FEED + "w.md", "w\n")
+        r.commit_all("NOISSUE w")
+        r.git("switch", "-q", "main")
+        r.git("worktree", "add", "-q", os.path.join(tmp, "r-checked-out-queued-wt"), W)
+        wt = sb.checked_out_at(r.path, W)
+        seed(env, "/specify", stage="settle-done", pending=[{"branch": W, "set_upstream": False, "standing": "main"}])
+        got = replay_cli(env, "start", "/specify", W)
+        want = rejected("Specs preflight: " + W, W, "another worktree, %s, has %s checked out" % (wt[0], W), plain(wt[0], W))
+        check(len(wt) == 1 and got["_rc"] == 0 and got.get("print") == [want] and "switch" not in got["print"][0],
+              "r_checked_out: on a branch the run is not standing on, still the worktree's remedy (%r)" % got)
+
+        # r_timed_out
+        r, env = world(tmp, "r-timed-out")
+        seed(env, "/create-ard")
+        other_pushes(r, "r-timed-out-other", FEED + "y.md")
+        r.write(FEED + "x.md", "x\n")
+        nxt = ended(r, env)
+        mine = head(r)
+        got = shell(nxt["on_timeout"], env)
+        want = rejected(committed(mine[:7], "main"), "main", TIMED % ("main", r.path, "main", "main", "main"),
+                        plain(r.path, "main"))
+        check(got["_rc"] == 0 and got.get("row") == "rejected" and got.get("print") == [want] and head(r) == mine
+              and on_origin(r) != mine and record(env, "/create-ard") is None,
+              "r_timed_out: the 420 s clause, nothing replayed, the record removed (%r)" % got)
+
+        # r_not_run: session-branch.py's replay exits 2 with nothing printed
+        r, env = world(tmp, "r-not-run")
+        GONE = "prd/ACME-9-gone"
+        seed(env, "/create-ard", stage="end-replay", end_commit={"sha7": "abc1234", "files": 2, "branch": GONE,
+                                                                 "paths": [], "hook_paths": []})
+        got = replay_cli(env, "end", "/create-ard", GONE)
+        want = rejected(committed("abc1234", GONE, 2), GONE,
+                        "session-branch.py could not run (session-branch: not run (no such branch: %s))" % GONE,
+                        plain(r.path, GONE))
+        check(got["_rc"] == 0 and got.get("row") == "rejected" and got.get("print") == [want]
+              and record(env, "/create-ard") is None, "r_not_run: the could-not-run clause (%r)" % got)
+
+        # r_refused_form: the replay moved the branch and origin refused its push
+        r, env = world(tmp, "r-refused")
+        r.git("switch", "-q", "-c", PLUGIN)
+        r.git("push", "-q", "-u", "origin", PLUGIN)
+        seed(env, "/create-prd", branch=PLUGIN)
+        other_pushes(r, "r-refused-other", FEED + "y.md", branch=PLUGIN)
+        hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n")
+        r.write(FEED + "x.md", "x\n")
+        nxt = ended(r, env, "/create-prd")
+        got = shell(nxt["run"], env)
+        h = head(r)
+        rec_file = os.path.join(r.path, ".git", "workflows", "push-refused", PLUGIN)
+        want = ("%s — origin's %s had moved on, so the run replayed its 1 commit(s) onto it and moved %s there, but push "
+                "REFUSED by origin (pre-receive hook declined): a rule there takes no push of %s, so this is recorded and "
+                "no later run pushes it; %s" % (committed(h[:7], PLUGIN), PLUGIN, PLUGIN, PLUGIN,
+                                                 refused_tail(PLUGIN, r.path, rec_file)))
+        check(got.get("row") == "moved" and got.get("print") == [want] and got.get("pushed") is False
+              and on_origin(r, PLUGIN) != h and record(env, "/create-prd") is None,
+              "r_refused_form: moved, not pushed, in its refused form (%r)" % got)
+        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_today + "\n",
+              "r_refused_form: the push-refusal record written as step 6 writes it")
+
+        # r_start_current: the current branch's replay in §3.4's flush
+        r, env = world(tmp, "r-start-current")
+        other_pushes(r, "r-start-current-other", FEED + "y.md")
+        r.write(FEED + "x.md", "x\n")
+        r.commit_all("NOISSUE Add dev-workflows session artifacts (/specify)")
+        args = {"specs": r.path, "keys": ["ACME-1", "ACME-1-01"], "commit_key": "ACME-1", "register_rebuild": None}
+        seed(env, "/specify", stage="flush", args=args)
+        got = replay_cli(env, "start", "/specify", "main")
+        h = head(r)
+        resume = resume_line(r.path, "/specify", "--key", "ACME-1", "--key", "ACME-1-01", "--commit-key", "ACME-1")
+        check(got["_rc"] == 0 and {k for k in got if not k.startswith("_")} == {"print", "next", "error"}
+              and got.get("print") == [replayed("Specs preflight: main", "main", 1)] and got.get("error") is None
+              and got.get("next") == {"run": resume, "timeout_ms": 600000, "on_timeout": None} and on_origin(r) == h,
+              "r_start_current: the Specs preflight: form, next names start --resume with the start call's args (%r)" % got)
+        check((record(env, "/specify") or {}).get("stage") == "settle",
+              "r_start_current: the replay advances the record to the settle loop (%r)" % record(env, "/specify"))
+        r, env = world(tmp, "r-start-current-timed-out")
+        seed(env, "/specify", stage="flush")
+        got = replay_cli(env, "start", "/specify", "main", "--timed-out")
+        want = rejected("Specs preflight: main", "main", TIMED % ("main", r.path, "main", "main", "main"),
+                        plain(r.path, "main"))
+        check(got.get("print") == [want] and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify"),
+              "r_start_current: rejected on the branch the run stands on, the remedy names no switch (%r)" % got)
+
+        # r_start_queued: two replays the settle loop queued, each naming the next
+        r, env = world(tmp, "r-start-queued")
+        Y, Z = "prd/ACME-2-y", "prd/ACME-3-z"
+        RES_Y, Z_FEED = "specifications/PRD-ACME-2-y/dev-workflows/resume.md", "specifications/PRD-ACME-3-z/dev-workflows/feedback/"
+        r.git("switch", "-q", "-c", Y)
+        r.write(RES_Y, "r\n")
+        r.commit_all("NOISSUE resume")
+        r.git("push", "-q", "-u", "origin", Y)
+        r.git("switch", "-q", "-c", Z, "main")
+        r.git("push", "-q", "-u", "origin", Z)
+        o = clone(r, "r-start-queued-other")
+        o.git("switch", "-q", Y)
+        o.git("rm", "-q", RES_Y)
+        o.git("commit", "-q", "-m", "NOISSUE drop the resume pointer")
+        o.git("push", "-q", "origin", Y)
+        o.git("switch", "-q", Z)
+        o.write(Z_FEED + "o.md", "o\n")
+        o.commit_all("NOISSUE o")
+        o.git("push", "-q", "origin", Z)
+        r.git("switch", "-q", Y)
+        r.write(RES_Y, "r2\n")
+        r.commit_all("NOISSUE resume again")
+        mine_y = head(r)
+        r.git("switch", "-q", Z)
+        r.write(Z_FEED + "z.md", "z\n")
+        r.commit_all("NOISSUE z")
+        r.git("switch", "-q", "main")
+        pending = [{"branch": Y, "set_upstream": False, "standing": "main"},
+                   {"branch": Z, "set_upstream": False, "standing": "main"}]
+        seed(env, "/specify", stage="settle-done", pending=pending)
+        got = replay_cli(env, "start", "/specify", Y)
+        p = r.path
+        want = rejected("Specs preflight: " + Y, Y,
+                        "both sides changed %s, or the folder holding it, and the run cannot settle it" % RES_Y,
+                        'run git -C "%s" switch %s, git -C "%s" pull --rebase --no-autostash origin %s and git -C "%s" push '
+                        'origin %s, then switch back to main' % (p, Y, p, Y, p, Y))
+        nz = replay_line(p, "/specify", Z)
+        check(got["_rc"] == 0 and got.get("print") == [want] and got.get("error") is None
+              and got.get("next") == {"run": nz, "timeout_ms": 420000, "on_timeout": nz + " --timed-out"}
+              and r.git("rev-parse", Y) == mine_y and r.git("symbolic-ref", "--short", "HEAD") == "main",
+              "r_start_queued: the first replay switches first and back to main after, next names the second (%r)" % got)
+        rec = record(env, "/specify") or {}
+        check(rec.get("stage") == "settle-done" and rec.get("pending") == pending[1:],
+              "r_start_queued: the first branch dropped from pending (%r)" % rec)
+        got = shell(nz, env)
+        z = r.git("rev-parse", Z)
+        check(got["_rc"] == 0 and got.get("print") == [replayed("Specs preflight: " + Z, Z, 1)]
+              and got.get("next") == {"run": resume_line(p, "/specify"), "timeout_ms": 600000, "on_timeout": None}
+              and on_origin(r, Z) == z and r.git("rev-parse", Z + "~1") == head(o)
+              and r.git("symbolic-ref", "--short", "HEAD") == "main",
+              "r_start_queued: the last replay names start --resume, HEAD still on main (%r)" % got)
+        rec = record(env, "/specify") or {}
+        check(rec.get("stage") == "disposition" and rec.get("pending") == [],
+              "r_start_queued: nothing left pending, the record on to §3.5 (%r)" % rec)
+        r, env = world(tmp, "r-start-queued-upstream")
+        seed(env, "/specify", stage="settle-done", pending=[{"branch": Y, "set_upstream": False, "standing": "main"},
+                                                           {"branch": Z, "set_upstream": True, "standing": "main"}])
+        got = replay_cli(env, "start", "/specify", Y, "--timed-out")
+        check((got.get("next") or {}).get("run") == replay_line(r.path, "/specify", Z, "--set-upstream"),
+              "r_start_queued: the next replay carries --set-upstream where its queue entry does (%r)" % got)
+
+        # r_exit2: nothing found, nothing done
+        r, env = world(tmp, "r-exit2")
+        got = replay_cli(env, "end", "/create-ard", "main")
+        check(one_not_run_line(got) and "_stdout" not in got, "r_exit2: no record is exit 2, one line (%r)" % got)
+        seed(env, "/create-ard", stage="end-replay", end_commit={"sha7": head(r)[:7], "files": 1, "branch": "main",
+                                                                 "paths": [], "hook_paths": []})
+        got = cli("--specs", r.path, "replay", "--for", "end", "--command", "/create-ard", "--branch", "main",
+                  env={k: v for k, v in env.items() if k != "CLAUDE_CODE_SESSION_ID"})
+        check(one_not_run_line(got), "r_exit2: no session variable is exit 2 (%r)" % got)
+        got = replay_cli(env, "end", "/create-ard", "main", specs=os.path.join(r.path, "specifications"))
+        check(one_not_run_line(got), "r_exit2: --specs below the top level is exit 2 (%r)" % got)
+        for more, what in ((("--for", "middle"), "an unknown --for"), (("--command", "create-ard"), "a command without its slash")):
+            args = {"--for": "end", "--command": "/create-ard"}
+            args.update(dict(zip(more[::2], more[1::2])))
+            got = cli("--specs", r.path, "replay", "--for", args["--for"], "--command", args["--command"], "--branch",
+                      "main", env=env)
+            check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
+                  "r_exit2: %s is a usage exit 2 (%r)" % (what, got))
+        check(((record(env, "/create-ard") or {}).get("end_commit") or {}).get("sha7") == head(r)[:7],
+              "r_exit2: the record untouched by every exit 2")
+
+        # r_found: once the record is found, never an exit 2
+        r, env = world(tmp, "r-found")
+        o = other_pushes(r, "r-found-other", FEED + "y.md")
+        base = head(r)
+        r.write(FEED + "x.md", "x\n")
+        r.commit_all("NOISSUE Add dev-workflows session artifacts (/create-ard)")
+        mine = head(r)
+        for stage, pending_commit in (("end", {"branch": "main", "base": base, "staged": {FEED + "x.md": "0" * 40}}),
+                                      ("end-replay", {"branch": "main", "base": base, "staged": {FEED + "x.md": "0" * 40}}),
+                                      ("end", {"sha7": mine[:7], "files": 1, "branch": "main", "paths": [], "hook_paths": []})):
+            seed(env, "/create-ard", stage=stage, end_commit=pending_commit)
+            got = replay_cli(env, "end", "/create-ard", "main")
+            line = got.get("line") or ""
+            check(got["_rc"] == 0 and got.get("row") is None and got.get("sha7") is None and "end --resume" in (got.get("error") or "")
+                  and got.get("print") == [line] and got.get("record") == "found"
+                  and line.startswith("Specs repo: NOT FINISHED — the terminal step stopped early (")
+                  and head(r) == mine and on_origin(r) == head(o)
+                  and (record(env, "/create-ard") or {}).get("end_commit") == pending_commit,
+                  "r_found: end_commit %r at stage %s is no replay's: refused plainly, nothing replayed, no row, the record "
+                  "kept for end --resume (%r)" % (pending_commit, stage, got))
+        seed(env, "/specify", stage="done")
+        got = replay_cli(env, "start", "/specify", "main")
+        check(got["_rc"] == 0 and got.get("error") and got.get("next") is None
+              and (got.get("print") or [""])[0].startswith("Specs preflight: stopped early (")
+              and (record(env, "/specify") or {}).get("stage") == "done",
+              "r_found: a start record with no replay pending is refused plainly, the record kept (%r)" % got)
+        seed(env, "/specify", stage="settle-done", pending=[{"branch": Z, "set_upstream": False, "standing": "main"}])
+        got = replay_cli(env, "start", "/specify", Y)
+        check(got["_rc"] == 0 and got.get("error") and (record(env, "/specify") or {}).get("pending") == [
+            {"branch": Z, "set_upstream": False, "standing": "main"}],
+              "r_found: a branch the record did not queue is refused plainly (%r)" % got)
+
+        # r_canned: classify_replay and the renderer over results no repository here produces
+        tip = "b" * 40
+        moved = {"moved": True, "pushed": False, "attempts": 1, "replayed": ["a" * 40], "dropped": [], "tip": tip,
+                 "porcelain": None, "moves": [], "upstream_error": None, "refused": None}
+        rej = "!\trefs/heads/main:refs/heads/main\t[rejected] (fetch first)"
+        declined = "!\t%s:refs/heads/main\t[remote rejected] (pre-receive hook declined)" % tip
+        locked = "!\t%s:refs/heads/main\t[remote rejected] (failed to lock refs/heads/main)" % tip
+        failure = "!\t%s:refs/heads/main\t[remote failure] (remote failed to report status)" % tip
+        cm = {"reason": "checkout-moved", "path": None}
+        for args, want in (
+                ((None, None, False, True), ("rejected", None, "timed-out")),
+                ((None, "e", False, False), ("rejected", None, "not-run")),
+                ((dict(moved, pushed=True), None, False, False), ("replayed", None, None)),
+                ((dict(moved, pushed=True), "e", True, False), ("replayed", None, None)),
+                ((dict(moved, moved=False, replayed=[], tip=None, refused={"reason": "conflict", "path": "a"}), None, False,
+                  False), ("rejected", None, "conflict")),
+                ((dict(moved, replayed=[], dropped=["c" * 40]), None, False, False), ("already-there", None, None)),
+                ((dict(moved, moved=False, replayed=[]), None, False, False), ("already-there", None, None)),
+                ((dict(moved, porcelain=rej, refused=cm), "e", True, False), ("moved", "stopped", None)),
+                ((dict(moved, porcelain=rej, refused=cm), None, False, False), ("moved", "later-refused", "checkout-moved")),
+                ((dict(moved, attempts=3, porcelain=rej), None, False, False), ("moved", "moved-on", None)),
+                ((dict(moved, porcelain=declined), None, False, False), ("moved", "refused", None)),
+                ((dict(moved, porcelain=locked), None, False, False), ("moved", "failed", None)),
+                ((dict(moved, porcelain=failure), None, False, False), ("moved", "failed", None)),
+                ((moved, None, False, False), ("moved", "failed", None))):
+            got = classify_replay(*args)
+            check(got == dict(zip(("row", "why", "reason"), want)),
+                  "r_canned: classify_replay(%r) is %r (%r)" % (args, want, got))
+
+        f = {"sha7": "abc1234", "files": 2, "branch": "main", "specs": "/s", "default": "main", "standing": "main",
+             "register_rebuild": False, "error": None, "preflight": False}
+
+        def render(result, error=None, partial=False, timed_out=False, **facts):
+            return _replay_line(lines, classify_replay(result, error, partial, timed_out), result,
+                                dict(f, error=error, **facts))
+
+        opening = committed("bbbbbbb", "main", 2) + " — origin's main had moved on, so the run replayed its 1 commit(s) onto it and moved main there, but "
+        closing = "; the commits are on local main, and a later run retries the push"
+        for result, error, partial, why, what in (
+                (dict(moved, porcelain=rej, refused=cm), None, False,
+                 "a later attempt could not take origin's newer commits in: the checkout switched to or from main while "
+                 "the run was moving it — another session's preflight or handoff, say — so main was not moved again; the "
+                 "next run that commits session files on main settles the push itself", "later refused, checkout-moved"),
+                (dict(moved, attempts=3, porcelain=rej), None, False, "origin's main moved on again during each of its 3 "
+                                                                       "attempts", "moved on"),
+                (dict(moved, porcelain=failure), None, False,
+                 "the push FAILED ([remote failure] (remote failed to report status))", "failed with a status line"),
+                (moved, None, False, "the push FAILED (no status line)", "failed with none"),
+                (dict(moved, porcelain=rej), "session-branch: not run (ended by signal 15)", True,
+                 "session-branch.py stopped (session-branch: not run (ended by signal 15))", "stopped")):
+            got = render(result, error, partial)
+            check(got == opening + why + closing, "r_canned: moved, not pushed — %s (%r)" % (what, got))
+        pf = dict(branch="prd/A-1-x", standing="prd/A-1-x", reason="pre-receive hook declined")
+        got = render(dict(moved, porcelain=declined.replace("main", "prd/A-1-x")), record="/r", record_kind="file",
+                     record_error=None, **pf)
+        check(got == ("%s — origin's prd/A-1-x had moved on, so the run replayed its 1 commit(s) onto it and moved "
+                      "prd/A-1-x there, but push REFUSED by origin (pre-receive hook declined): a rule there takes no push "
+                      "of prd/A-1-x, so this is recorded and no later run pushes it; %s"
+                      % (committed("bbbbbbb", "prd/A-1-x", 2), refused_tail("prd/A-1-x", "/s", "/r"))),
+              "r_canned: the refused form, recorded (%r)" % got)
+        got = render(dict(moved, porcelain=declined), record=None, record_kind=None, record_error="e",
+                     reason="pre-receive hook declined")
+        check(got == ("%s — origin's main had moved on, so the run replayed its 1 commit(s) onto it and moved main there, "
+                      "but push REFUSED by origin (pre-receive hook declined): a rule there takes no push of main, but this "
+                      "could not be recorded (e, the configuration write's), so a later run pushes main again"
+                      % committed("bbbbbbb", "main", 2)), "r_canned: the refused form, unrecorded (%r)" % got)
+        moves = [{"slug": "api", "origin": "f-9", "side": "run", "from": 2, "to": 5},
+                 {"slug": "web", "origin": "f-1", "side": "remote", "from": 3, "to": 4},
+                 {"slug": "web", "origin": "f-2", "side": "run", "from": 4, "to": 3}]
+        got = render(dict(moved, pushed=True, moves=moves, upstream_error="error: could not lock config file"))
+        check(got == replayed(committed("bbbbbbb", "main", 2), "main", 1,
+                              "; the rebuild of security/api/ renumbered [SEC#2] → [SEC#5] (f-9, the local number), and "
+                              "the next run that records in that register lists the lines that cite an old number; the "
+                              "rebuild of security/web/ renumbered [SEC#3] → [SEC#4] (f-1, origin's number), [SEC#4] → "
+                              "[SEC#3] (f-2, the local number), and the next run that records in that register lists the "
+                              "lines that cite an old number; its upstream could not be set (error: could not lock config "
+                              "file)"), "r_canned: the register clause per slug, run and remote moves, upstream_error (%r)" % got)
+        got = render(dict(moved, replayed=[], dropped=["c" * 40], moves=moves[:1]))
+        check(got.endswith("so main now stands on it; the rebuild of security/api/ renumbered [SEC#2] → [SEC#5] (f-9, "
+                           "the local number), and the next run that records in that register lists the lines that cite "
+                           "an old number"), "r_canned: already there with its register clause (%r)" % got)
+        got = render(dict(moved, pushed=True, replayed=["a" * 40], dropped=["c" * 40, "d" * 40]))
+        check(got == replayed(committed("bbbbbbb", "main", 2), "main", 3, ", 2 of them already there and dropped"),
+              "r_canned: <K> counts replayed and dropped, <D> the dropped (%r)" % got)
+        got = render(dict(moved, pushed=True), "session-branch: not run (ended by signal 15)", True)
+        check(got == replayed(committed("bbbbbbb", "main", 2), "main", 1),
+              "r_canned: a Partial whose pushed is true is replayed and pushed (%r)" % got)
+        nothing = dict(moved, moved=False, replayed=[], tip=None)
+        for refused, clause, what in (
+                ({"reason": "would-overwrite", "path": "a.md", "paths": ["a.md"]},
+                 "moving the checkout would write over a.md, which you changed, left untracked or ignore — once that is "
+                 "clear, the next run that commits session files on main settles the push itself", "would-overwrite, one path"),
+                ({"reason": "would-overwrite", "path": "a.md", "paths": ["a.md", "b.md", "c.md"]},
+                 "moving the checkout would write over a.md and 2 more, which you changed, left untracked or ignore — once "
+                 "that is clear, the next run that commits session files on main settles the push itself",
+                 "would-overwrite, three paths"),
+                ({"reason": "push-scope", "path": "abcdef1234567890"},
+                 "the push would now also publish abcdef1, which is not one of this plugin's session-file commits", "push-scope"),
+                ({"reason": "in-progress", "path": ".git/MERGE_HEAD"},
+                 "a rebase, merge, cherry-pick or revert, or an unresolved conflict, is in progress in the checkout "
+                 "(.git/MERGE_HEAD)", "in-progress"),
+                ({"reason": "locked", "path": ".git/index.lock"}, ".git/index.lock is held by another git process, or was "
+                 "left by one that died, and this plugin never deletes a lock", "locked"),
+                ({"reason": "cannot-replay", "path": None}, "this git cannot replay without a checkout (its merge-tree "
+                 "needs --write-tree and --merge-base, git 2.40 or later)", "cannot-replay"),
+                ({"reason": "fetch-failed", "path": None}, "fetching origin's main failed", "fetch-failed"),
+                ({"reason": "branch-moved", "path": None}, "main moved while the run was replaying it", "branch-moved"),
+                ({"reason": "cannot-move", "path": None}, "git could not move the checkout onto the replay (a folder it "
+                 "cannot write, say), and nothing moved", "cannot-move")):
+            got = render(dict(nothing, refused=refused))
+            check(got == rejected(committed("abc1234", "main", 2), "main", clause, plain("/s", "main")),
+                  "r_canned: push rejected — %s (%r)" % (what, got))
+        got = render(dict(nothing, refused={"reason": "register-rebuild", "path": "security/web/"}), register_rebuild=True)
+        check("the security register security/web/, which only a rebuild settles, and that rebuild failed; run git" in got,
+              "r_canned: register-rebuild where the call carried a rebuild (%r)" % got)
+        got = render(None, "session-branch: not run (no such branch: main)")
+        check(got == rejected(committed("abc1234", "main", 2), "main", "session-branch.py could not run (session-branch: "
+                              "not run (no such branch: main))", plain("/s", "main")),
+              "r_canned: an exit 2 with nothing on stdout (%r)" % got)
+        cm_clause = ("the checkout switched to or from main while the run was moving it — another session's preflight or "
+                     "handoff, say — so main was not moved; the next run that commits session files on main settles the "
+                     "push itself")
+        got = render(dict(nothing, refused=cm))
+        check(got == rejected(committed("abc1234", "main", 2), "main", cm_clause, None),
+              "r_canned: checkout-moved ends at its reason clause, no remedy (%r)" % got)
+        got = render(dict(nothing, refused=cm), preflight=True, standing="prd/A-1-x", sha7=None, files=None)
+        check(got == rejected("Specs preflight: main", "main", cm_clause, None),
+              "r_canned: checkout-moved names no remedy on a branch the run is not standing on either (%r)" % got)
+        got = render(dict(nothing, refused={"reason": "fetch-failed", "path": None}), preflight=True, branch="prd/A-1-x",
+                     standing="main", sha7=None, files=None)
+        check(got == rejected("Specs preflight: prd/A-1-x", "prd/A-1-x", "fetching origin's prd/A-1-x failed",
+                              'run git -C "/s" switch prd/A-1-x, git -C "/s" pull --rebase --no-autostash origin prd/A-1-x '
+                              'and git -C "/s" push origin prd/A-1-x, then switch back to main'),
+              "r_canned: a branch the run is not standing on, switched to first and back after (%r)" % got)
+        got = render(dict(moved, attempts=2, porcelain=rej), preflight=True, sha7=None, files=None)
+        check(got == "Specs preflight: main — origin's main had moved on, so the run replayed its 1 commit(s) onto it and "
+                     "moved main there, but origin's main moved on again during each of its 2 attempts" + closing,
+              "r_canned: moved, not pushed, in its Specs preflight: form (%r)" % got)
+
+        # r_in_process: session-branch.py's replay in process, its exits read as its main() prints them
+        real_replay = sb.replay
+
+        def raising(e):
+            def replay(*args, **kw):
+                raise e
+            return replay
+
+        try:
+            sb.replay = raising(sb.Partial("ended by signal 15", dict(moved, pushed=True)))
+            got = _run_replay("/x", "main", None, False, False)
+            check(got == (dict(moved, pushed=True), "session-branch: not run (ended by signal 15)", True),
+                  "r_in_process: a Partial is its result, its stderr line and partial (%r)" % (got,))
+            sb.replay = raising(NotRun("no such branch:\n  main"))
+            got = _run_replay("/x", "main", None, False, False)
+            check(got == (None, "session-branch: not run (no such branch: main)", False),
+                  "r_in_process: a NotRun is nothing printed and its one stderr line (%r)" % (got,))
+            sb.replay = raising(RuntimeError("boom"))
+            got = _run_replay("/x", "main", None, False, False)
+            check(got == (None, "session-branch: not run (RuntimeError: boom)", False),
+                  "r_in_process: any other exception as main() prints it (%r)" % (got,))
+            sb.replay = raising(AssertionError("called"))
+            check(_run_replay("/x", "main", None, False, True) == (None, None, False),
+                  "r_in_process: --timed-out runs no replay")
+        finally:
+            sb.replay = real_replay
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
@@ -3440,6 +4260,7 @@ def selftest():
             scenarios_lines(tmp)
             scenarios_gate(tmp)
             scenarios_end(tmp)
+            scenarios_replay(tmp)
 
     try:
         scenarios()

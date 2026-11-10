@@ -124,11 +124,16 @@ T = {
     # Once per security/<slug>/ the replay's moves name; each <move> is app.register-move.
     "app.register-clause": "the rebuild of security/<slug>/ renumbered <move>[, <move>…], and the next run that records in that register lists the lines that cite an old number",
     "app.register-move": "[SEC#<from>] → [SEC#<to>] (<origin>, <whose number>)",
+    # <whose number> in app.register-move, by the move's side.
+    "app.register-move.run": "the local number",
+    "app.register-move.remote": "origin's number",
     "app.upstream-error": "; its upstream could not be set (<upstream_error>)",
     # row.moved's <why>, by the first that holds.
     "app.why.later-refused": "a later attempt could not take origin's newer commits in: <reason clause>",
     "app.why.moved-on": "origin's <branch> moved on again during each of its <attempts> attempts",
     "app.why.failed": "the push FAILED (<the status line's bracketed summary and its reason, or no status line>)",
+    # The parenthesis of app.why.failed where the last attempt's push printed no status line.
+    "app.why.failed.none": "no status line",
     "app.why.stopped": "session-branch.py stopped (<the first line of its stderr>)",
     # Where a later attempt refused with checkout-moved, an earlier one having moved the branch: replaces
     # "so <branch> was not moved;" in reason.checkout-moved inside app.why.later-refused.
