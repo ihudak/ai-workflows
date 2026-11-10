@@ -1151,8 +1151,8 @@ def _resume_next(command, args, budget=None):
 
 def _stop(run, row, printed, line):
     """An outcome of §4 step 1 -- misrooted, blocked or silent: what it prints, the record removed. A blocked row's
-    <line> already carries §6's declined append (_declined); the misrooted row takes none, so no git status runs in a
-    path the run has found wrong (§6), and the silent no-op prints nothing."""
+    <line> already carries §6's declined append where it takes one (_declined, _declined_checked); the misrooted row
+    takes none, so no git status runs in a path the run has found wrong (§6), and the silent no-op prints nothing."""
     run["state"].remove(run["session"], run["command"])
     return _end_result(print=printed, line=line, row=row, record=run["record"])
 
@@ -1166,6 +1166,20 @@ def _declined(run, view):
     still = set(listed["artifact"]) | set(listed["other"])
     named = [p for p in view["declined"] if p in still]
     return run["lines"].fill("app.declined", {"<path>": run["lines"].artifacts(named)}) if named else ""
+
+
+def _declined_checked(run, rec, view):
+    """_declined on the Blocked (G0) row of a run whose start set specs_git: blocked, where the end tests neither the
+    gate nor the run's environment (§4 step 1: the flag is tested first): only where the SPECS_PATH half of the
+    Environment: line printed now is the one the record <rec> holds, so git status runs in the repository the start
+    checked; '' elsewhere, and where that line or git status cannot run (§6). So the row prints as it did before the
+    append existed, exit 0, whatever --specs names."""
+    try:
+        if not rec.get("env_line") or _specs_half(env_line(run["specs"])) != _specs_half(rec["env_line"]):
+            return ""
+        return _declined(run, view)
+    except NotRun:
+        return ""
 
 
 def finish_end(run, row, line, view, commit=None, branch=None, pushed=False, hook=()):
@@ -1326,7 +1340,7 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     if flag == "blocked":  # §6: the created clause, which names no branch the files stay on, then the declined append
         sbranch = rec.get("session_branch") if rec.get("mode") == "on" else None
         line = lines.fill("row.blocked", {}) + _appends(lines, {"session_branch": sbranch, "created": (
-            session_branch_created or rec.get("session_branch_created"))}) + _declined(run, view)
+            session_branch_created or rec.get("session_branch_created"))}) + _declined_checked(run, rec, view)
         return _stop(run, "blocked", [line] + ([rec["guard_block"]] if rec.get("guard_block") else []), line)
 
     # Step 1's gate, then G0's state where no flag stands: a commit on a detached HEAD is reachable from no branch.
@@ -1419,10 +1433,11 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
 def _unfinished_stay(specs, rec, branch, d, mode):
     """specs-repo-git §4 step 1's merged-branch stay for a start that never finished its preflight -- its record at one
     of start's own stages (START_STAGES): its last call stopped early, was cut off, or returned a next the run never
-    made, at its budget or for a replay, so it ended before B2's test and may have ended before G1's. Where HEAD stands
-    on <branch>, the plugin branch that call returned on (the record's branch), off the default branch and outside
-    session-branch mode, ask branch-merged HEAD, as an early stop does (_stop_stay), and return the stay with the early
-    stop's reason where it reads merged; None otherwise, and where it cannot answer, the branch then reading unmerged."""
+    made, at its budget or for a replay, so it ended before B2's switch and may have ended before G1's test. Where HEAD
+    stands on <branch>, the plugin branch that call returned on (the record's branch), off the default branch and
+    outside session-branch mode, ask branch-merged HEAD, as an early stop does (_stop_stay), and return the stay with
+    the early stop's reason where it reads merged; None otherwise, and where it cannot answer, the branch then reading
+    unmerged, with no report (§3.5)."""
     if (rec.get("stage") not in START_STAGES or mode == "on" or branch is None or branch != rec.get("branch")
             or branch == d["default"] or not d["default_ref"] or not branch_key(branch, [])["plugin_branch"]):
         return None
@@ -5336,6 +5351,21 @@ def selftest():
         check(got.get("record") == "missing" and got.get("row") == "blocked"
               and got.get("print") == [BLOCKED + appended(ard), g0] and head(r) == h,
               "e_declined_blocked: on a detached HEAD with no preflight, the --declined path, then G0's block (%r)" % got)
+        # ... and only where --specs still names the repository the start checked (§6): the review's two reproductions,
+        # --specs "" from a cwd that is no repository and from another repository holding the path dirty, and --specs
+        # naming that other repository -- each the blocked line and G0's block, exit 0, no append
+        nowhere = os.path.join(tmp, "e-declined-blocked-nowhere")
+        os.makedirs(nowhere)
+        other = new_repo(tmp, "e-declined-blocked-other")
+        other.write(ard, "theirs\n")
+        for label, specs, cwd in (("--specs \"\" from no repository", "", nowhere),
+                                  ("--specs \"\" from another repository", "", other.path),
+                                  ("--specs naming another repository", other.path, None)):
+            seed(env, "/specify", specs_git="blocked", guard="G0", guard_block=g0, branch=None, declined=[ard])
+            got = cli("--specs", specs, "end", "--command", "/specify", env=env, cwd=cwd)
+            check(got["_rc"] == 0 and got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0]
+                  and record(env, "/specify") is None,
+                  "e_declined_blocked: %s, the blocked line and G0's block alone (%r)" % (label, got))
 
         # e_declined_misrooted: the misrooted row takes no declined append, and runs no git status in the wrong path
         r, env = world(tmp, "e-declined-misrooted")
