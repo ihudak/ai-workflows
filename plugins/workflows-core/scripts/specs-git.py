@@ -1264,6 +1264,7 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
         commit = (pending if pending.get("sha7") else _landed_session(specs, rec) if "session" in pending
                   else _landed(specs, pending))
         if commit is not None:  # the run's commit is made: what follows is past its first write
+            run["view"] = _view(rec, declined)  # first, so a stop from here on repeats the record's block (§6)
             run["wrote"] = True
             run["record"] = "found"
             if commit is not rec["end_commit"]:
@@ -1273,7 +1274,6 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
                 rec["end_commit"] = commit
                 state.save(session, command, rec)
             default = rec.get("default") or resolve_default(specs, False)["default"]
-            run["view"] = _view(rec, declined)
             return _push_step(run, rec, commit, default, run["view"])
 
     # Step 1: the record. Each kind but found takes the no-preflight path; an ignored record is replaced or removed.
@@ -3539,6 +3539,19 @@ def selftest():
               and block == g2_session(r.path, "feature/x"),
               "m_not_finished: no created clause, and the G2 block start saved after the line (%r)" % got)
         check(got2.get("print") == [stop], "m_not_finished: no unsupported clause either (%r)" % got2)
+        # a resumed record holding a G1 block, stopped before its push step: the line, then the block
+        r, env = mode_world("m-not-finished-resume", on=False)
+        seed(env, "/feedback", default=None, guard="G1", guard_block="the G1 block",
+             end_commit={"sha7": "abc1234", "files": 1, "branch": "main", "paths": [RESUME], "hook_paths": []})
+        real_default = g["resolve_default"]
+        g["resolve_default"] = broken
+        try:
+            with in_env(env):
+                got = end(r.path, "/feedback", resume=True)
+        finally:
+            g["resolve_default"] = real_default
+        check(got.get("print") == [stop, "the G1 block"] and got.get("record") == "found",
+              "m_not_finished: end --resume's stop before its push step still repeats the block (%r)" % got)
         r, env = mode_world("m-not-finished-replay")
         seed(env, "/feedback", guard="G2", guard_block="the G2 block")
         got = cli("--specs", r.path, "replay", "--for", "end", "--command", "/feedback", "--branch", "main", env=env)
