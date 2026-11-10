@@ -1250,8 +1250,10 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
         error = said if isinstance(e, NotRun) else type(e).__name__ + (": " + said if said else "")
         line = lines.fill("end.stopped", {"<the error>": error})
         commit = run["commit"] or {}
-        return _end_result(print=list(run["pre"]) + [line], line=line, sha7=commit.get("sha7"),
-                           files=commit.get("files"), branch=commit.get("branch"), record=run["record"], error=error)
+        block = (run.get("view") or {}).get("guard_block")  # §6: a G1 or G2 block follows the outcome line, this one too
+        return _end_result(print=list(run["pre"]) + [line] + ([block] if block else []), line=line,
+                           sha7=commit.get("sha7"), files=commit.get("files"), branch=commit.get("branch"),
+                           record=run["record"], error=error)
 
 
 def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, session_branch_created, declined, resume):
@@ -1271,7 +1273,8 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
                 rec["end_commit"] = commit
                 state.save(session, command, rec)
             default = rec.get("default") or resolve_default(specs, False)["default"]
-            return _push_step(run, rec, commit, default, _view(rec, declined))
+            run["view"] = _view(rec, declined)
+            return _push_step(run, rec, commit, default, run["view"])
 
     # Step 1: the record. Each kind but found takes the no-preflight path; an ignored record is replaced or removed.
     if rec is None:
@@ -1285,7 +1288,7 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     run["record"] = kind
     found = kind == "found"
     keep = rec if kind in ("found", "declined-only") else None
-    view = _view(keep, declined)
+    view = run["view"] = _view(keep, declined)
 
     # Step 1: the flags, in order, the first that holds deciding; a flag's outcome comes before the gate's.
     flag, notice = None, []
@@ -1693,8 +1696,9 @@ def replay(specs, for_, command, branch, set_upstream=False, timed_out=False):
             return {"print": [lines.fill("pre.stopped", {"<the error>": error})], "next": None, "error": error}
         line = lines.fill("end.stopped", {"<the error>": error})
         commit = run["commit"] or {}
-        return _end_result(print=[line], line=line, sha7=commit.get("sha7"), files=commit.get("files"),
-                           branch=commit.get("branch"), record="found", error=error)
+        block = _view(rec)["guard_block"]  # §6: a G1 or G2 block follows the outcome line, this one too
+        return _end_result(print=[line] + ([block] if block else []), line=line, sha7=commit.get("sha7"),
+                           files=commit.get("files"), branch=commit.get("branch"), record="found", error=error)
 
 
 def _replay_end(run, rec, branch, set_upstream, timed_out):
@@ -1805,8 +1809,9 @@ def _block_part(block, label, text):
 def _g2_block(lines, specs, branch, default, variant=None, values=None):
     """specs-repo-git §5's G2 block for <branch>; with <variant> (implement: a direct /implement run from inside the
     specs repository; session and self: session-branch mode, on another branch or on the session branch itself, their
-    <identity> in <values>), its Not done, Fix and If ignored parts are the g2.<variant>.* prose SRG gives in their
-    place, each unwrapped on its one line."""
+    <identity> in <values>; no-identity: session-branch mode where §8.1 resolves no identity), its Not done, Fix and If
+    ignored parts are the g2.<variant>.* prose SRG gives in their place, each unwrapped on its one line. The mode's
+    variants take precedence over implement (§5)."""
     block = lines.T["g2"]
     if variant:
         for label, part in (("Not done:", "not_done"), ("Fix:", "fix"), ("If ignored:", "if_ignored")):
@@ -3022,6 +3027,7 @@ def selftest():
         # Session-branch mode in start and end (specs-repo-git §8). Each world turns the mode on with
         # workflows.sessionBranch and names its identity with GIT_USER_INITIALS=ab, unless a case says otherwise.
         _, lines = _flow()
+        g = globals()
         S = "session/ab"
         SB = os.path.join(HERE, "session-branch.py")
         FEED = "specifications/PRD-ACME-1-x/dev-workflows/feedback/"
@@ -3242,15 +3248,28 @@ def selftest():
                  "Found:    %s is on branch `%s`, which is neither the default\n"
                  "          branch (`main`) nor a plugin branch (idea/ prd/ ard/ spec/\n"
                  "          epics/ design/ ready/ brd/ frames/ kb/ conformance/).\n")
+        def g2_session(path, branch):
+            return (found % (path, branch)
+                    + "Not done: the preflight did not switch away from it — the plugin manages only branches it created. "
+                      "This run's artifacts WILL be committed on session/ab, the session branch this specs repository uses "
+                      "because its default branch takes no push, and not on %s.\n"
+                      "Fix:      # nothing to do for the artifacts\n"
+                      "If ignored: nothing changes for the artifacts: they reach main through session/ab's pull request."
+                    % branch)
+
+        def g2_no_identity(path, branch):
+            return (found % (path, branch)
+                    + "Not done: the preflight did not switch away from it — the plugin manages only branches it created. "
+                      "Session-branch mode is on and no identity names its branch, so this run's artifacts will NOT be "
+                      "committed until one is set.\n"
+                      "Fix:      # set GIT_USER_INITIALS, or git -C \"%s\" config user.initials to your initials\n"
+                      "If ignored: the artifacts stay in your working tree, and the first run after one is set commits "
+                      "them." % path)
+
         r, env = mode_world("m-g2")
         r.git("switch", "-q", "-c", "feature/x")
         got = run_start(env)
-        want = (found % (r.path, "feature/x")
-                + "Not done: the preflight did not switch away from it — the plugin manages only branches it created. "
-                  "This run's artifacts WILL be committed on session/ab, the session branch this specs repository uses "
-                  "because its default branch takes no push, and not on feature/x.\n"
-                  "Fix:      # nothing to do for the artifacts\n"
-                  "If ignored: nothing changes for the artifacts: they reach main through session/ab's pull request.")
+        want = g2_session(r.path, "feature/x")
         check(got.get("print") == [env_line(r.path), want] and got.get("guard") == "G2",
               "m_g2: on another branch, G2's session-branch lines (%r)" % got)
         r.git("switch", "-q", "-c", S, "main")
@@ -3267,15 +3286,15 @@ def selftest():
         r, env = mode_world("m-g2-no-identity", initials=None)
         r.git("switch", "-q", "-c", "feature/x")
         got = run_start(env)
-        want = (found % (r.path, "feature/x")
-                + "Not done: the preflight did not switch away from it — the plugin manages only branches it created. "
-                  "Session-branch mode is on and no identity names its branch, so this run's artifacts will NOT be "
-                  "committed until one is set.\n"
-                  "Fix:      # set GIT_USER_INITIALS, or git -C \"%s\" config user.initials to your initials\n"
-                  "If ignored: the artifacts stay in your working tree, and the first run after one is set commits "
-                  "them." % r.path)
-        check(got.get("print") == [env_line(r.path), want] and got.get("guard") == "G2" and got.get("session_branch") is None,
-              "m_g2: with no identity, its no-identity variant (%r)" % got)
+        check(got.get("print") == [env_line(r.path), g2_no_identity(r.path, "feature/x")] and got.get("guard") == "G2"
+              and got.get("session_branch") is None, "m_g2: with no identity, its no-identity variant (%r)" % got)
+        # §5's precedence: a direct /implement run from inside the specs repository takes the mode's variants
+        for initials, block in (("ab", g2_session), (None, g2_no_identity)):
+            r, env = mode_world("m-g2-implement-%s" % (initials or "none"), initials=initials)
+            r.git("switch", "-q", "-c", "feature/x")
+            got = cli("--specs", r.path, "start", "--command", "/implement", env=env, cwd=r.path)
+            check(got.get("print") == [env_line(r.path), block(r.path, "feature/x")] and got.get("guard") == "G2",
+                  "m_g2: a direct /implement run in the mode takes the mode's variant, identity %r (%r)" % (initials, got))
 
         # m_unsupported
         r, env = mode_world("m-unsupported")
@@ -3487,6 +3506,45 @@ def selftest():
         got = end_of(env, "--session-branch-created", "abc1234")
         check(got.get("row") == "blocked" and got.get("print") == [blocked, block],
               "m_blocked: the blocked flag start recorded, the created clause appended (%r)" % got)
+        os.remove(os.path.join(r.path, RESUME))
+        got = end_of(env, "--session-branch-created", "abc1234")
+        check(got.get("row") == "nothing" and got.get("print") == [
+            "Specs repo: no session artifacts to commit; this run created local session/ab at abc1234"],
+              "m_blocked: the detached HEAD's nothing row takes the created clause too (%r)" % got)
+
+        # m_not_finished (in process): §1 rule 5's line takes none of a row's appends, and a G2 block still follows it
+        real_check = g["push_check"]
+
+        def broken(*args, **kwargs):
+            raise RuntimeError("boom")
+
+        stop = ("Specs repo: NOT FINISHED — the terminal step stopped early (RuntimeError: boom); what it committed or "
+                "pushed is as it left it, and the next run's preflight flushes the rest")
+        r, env = mode_world("m-not-finished")
+        r.git("switch", "-q", "-c", "feature/x")
+        block = (run_start(env).get("print") or ["", ""])[1]
+        r.write(FEED + "n.md", "n\n")
+        r2, env2 = mode_world("m-not-finished-unsupported", on=False)
+        seed(env2, "/feedback", mode="unsupported", session_branch_created="abc1234")
+        r2.write(RESUME, "r\n")
+        g["push_check"] = broken
+        try:
+            with in_env(env):
+                got = end(r.path, "/feedback", session_branch_created="abc1234")
+            with in_env(env2):
+                got2 = end(r2.path, "/feedback")
+        finally:
+            g["push_check"] = real_check
+        check(got.get("print") == [stop, block] and got.get("error") == "RuntimeError: boom"
+              and block == g2_session(r.path, "feature/x"),
+              "m_not_finished: no created clause, and the G2 block start saved after the line (%r)" % got)
+        check(got2.get("print") == [stop], "m_not_finished: no unsupported clause either (%r)" % got2)
+        r, env = mode_world("m-not-finished-replay")
+        seed(env, "/feedback", guard="G2", guard_block="the G2 block")
+        got = cli("--specs", r.path, "replay", "--for", "end", "--command", "/feedback", "--branch", "main", env=env)
+        check(got.get("_rc") == 0 and got.get("error") and len(got.get("print") or []) == 2
+              and got["print"][0].startswith("Specs repo: NOT FINISHED — ") and got["print"][1] == "the G2 block",
+              "m_not_finished: replay --for end's stop is followed by the block too (%r)" % got)
 
         # m_misrooted: §8.1 is never resolved under misrooted, so nothing of the mode runs
         r, env = mode_world("m-misrooted")
