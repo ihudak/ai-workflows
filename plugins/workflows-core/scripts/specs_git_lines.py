@@ -216,6 +216,8 @@ T = {
     # pre.stay's form for a run whose status could not run (specs-repo-git §3.5).
     "pre.stay.unlisted": "Specs preflight: staying on <branch> — the uncommitted paths could not be listed, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)",
     "pre.rerun-failed": "Specs preflight: could not switch back to <branch> (<git's first error line>); this run goes on from <current>",
+    # The re-run's switch back left undone where status could not run earlier in the run (specs-repo-git §3.5).
+    "pre.rerun-stay": "Specs preflight: staying on <current> — the uncommitted paths could not be listed, so no branch is switched (it would have switched back to <branch>, as a key of this run names it)",
     "pre.session-not-run": "Specs preflight: session-branch.py could not run (<the first line of its stderr>)",
     "pre.stopped": "Specs preflight: stopped early (<the error>) — what it did is above, and the next run's preflight goes on from where this one stands",
     "end.stopped": "Specs repo: NOT FINISHED — the terminal step stopped early (<the error>); what it committed or pushed is as it left it, and the next run's preflight flushes the rest",

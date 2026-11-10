@@ -72,7 +72,7 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    prints its `Environment:` line (§3) and is otherwise silent unless it acts, a
    guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`; `commit-artifacts`
    emits one outcome line (§6).
-   `specs-preflight`'s acts include its report of each attempt that failed, as rule 5 has every failure reported — a pull, a push, a deletion, a test that could not run — and of the switch §3.5 then leaves undone for it.
+   `specs-preflight`'s acts include each report it prints of an attempt that failed (rule 5) — a pull, a push, a deletion, a test that could not run — and of the switch §3.5 then leaves undone for it.
 8. **State of its own.** The **push-refusal record** of a branch, which §4
    step 6 writes when `origin` refuses a push to that branch and step 5 reads:
    a file whose path, `<record>` below, is
@@ -291,7 +291,7 @@ notice only where §3.1 reports a misconfigured `$SPECS_PATH`. That notice is on
 line naming anything a misrooted run left behind. On a run carrying `specs_git: misrooted`, or one whose `status` could not run (§2.1), §3.5 adds
 one line where it stays on a branch it would otherwise have left.
 
-The preflight's report of an attempt that failed (§1 rule 5) is one of its acts: a pull, a push, a deletion, a test that could not run, and the switch §3.5 then leaves undone for it.
+Each report the preflight prints of an attempt that failed (§1 rule 5) is one of its acts: a pull, a push, a deletion, a test that could not run, and the switch §3.5 then leaves undone for it.
 
 ### 3.1 Gate
 
@@ -587,6 +587,7 @@ and a second preflight standing on the default branch cannot reach it by B1–B4
 fails prints `Specs preflight: could not switch back to <branch> (<git's first error line>); this run goes on from <current>`, and the run continues from the branch it stands on. No
 other re-run switches anything outside the table above. Under `specs_git: misrooted` there is nothing
 to switch back to: no earlier B4 switched away, so the re-run classifies again and stays.
+Where `status` could not run earlier in the run (§2.1), the re-run switches nothing back either, as the table then moves nothing: it prints `Specs preflight: staying on <current> — the uncommitted paths could not be listed, so no branch is switched (it would have switched back to <branch>, as a key of this run names it)` and runs stages 1–3 from the branch it stands on.
 
 **No auto-merge, deliberately.** No row above creates a merge commit or merges a
 branch into the default branch, and none should be added. The routing here
@@ -1113,15 +1114,15 @@ is resolved, and `/docs-workflows:document` for a direct-mode stop before its wr
   checkout stands on, and a deliverable branch carries no session file. The
   bullets below hold outside the mode.
 - **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/epics`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, `/harvest-decisions`, `/promote-decisions`, `/conformance`, `/docs-workflows:release-notes`, and every `/brd-*` command — every command that offers `phase-handoff.md`'s `handoff-to-main`, `/promote-decisions` through `architecture-promotion.md` §11.2) — on that `idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the handoff committed nothing (`phase-handoff.md` §4.1's *Commit failed* or *Nothing to commit*), when the artifacts' commit alone lands on that branch — or, where a handoff with nothing to commit switched back off the branch it cut (`phase-handoff.md` §2.3), on the branch the run returned to, the cut branch removed or left empty; where git refused that switch back, on the cut branch, as after *Commit failed* — and, where `origin` does not have the branch, stays there unpushed until a later handoff of it pushes the branch or the operator does (§4 step 5). Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd`, `/prd-proposal` and `/docs-workflows:release-notes`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
-- **The same command when the user declined git at handoff** — `phase-handoff.md` §4.3's option 2 (*just write the files*) or option 3 (*Cancel*) — the repo stays on the branch the preflight settled on (the default branch, or the one §3.5 B3 or §3.3 G2 kept), and the
+- **The same command when the user declined git at handoff** — `phase-handoff.md` §4.3's option 2 (*just write the files*) or option 3 (*Cancel*) — the repo stays on the branch the preflight settled on (the default branch; the one §3.5 B3 or §3.3 G2 kept; or the one it stayed on because §3.3 G1 fired, or because `status` could not run (§2.1), so §3.5 switched nothing), and the
   deliverable is uncommitted there. `commit-artifacts` still runs and commits
   **only** the bookkeeping paths; the uncommitted deliverable is untouched,
   because it is an OTHER path.
   This is deliberate: either decline is about the deliverable — option 2's "I'll handle git" refers to it, and option 3 states nothing more — and the bookkeeping still has to reach the maintainer.
   The outcome line states plainly that the deliverable remains uncommitted.
 - **Every other command** — on the default branch, unless §3.3 G2 left the run
-  on a branch the plugin does not manage, or §3.5 B3 kept it on a plugin branch
-  keyed to this run. The commit follows the branch the preflight settled on; it
+  on a branch the plugin does not manage, §3.5 B3 kept it on a plugin branch
+  keyed to this run, or the preflight stayed on the branch it stood on because §3.3 G1 fired, or because `status` could not run (§2.1), so §3.5 switched nothing. The commit follows the branch the preflight settled on; it
   never switches.
 - **`/dev-workflows:implement` on a direct run from inside the specs repository** (its Phase 0),
   where the specs repository is the repository the run changes — on the code

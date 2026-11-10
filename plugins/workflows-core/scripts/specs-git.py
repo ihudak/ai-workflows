@@ -1664,7 +1664,7 @@ def _pulls(rec):
 
 
 def _to_default(run, branch, field):
-    """B2's and B4's move (specs-repo-git §3.5), which §3.4's leave of a merged branch also makes: switch to the
+    """B2's and B4's move (specs-repo-git §3.5), which §3.4's merged-branch leave also makes: switch to the
     default branch, <field> (b2_left or b4_left) saved as <branch>, then `pull --ff-only --no-rebase origin <default>`
     where _pulls holds, its pre.pull-failed line printed where it fails. git's result where it refused the switch,
     nothing moved; else None. The one place session-branch mode is to wrap this switch and pull in lift and
@@ -1686,10 +1686,10 @@ def _leave(run, branch, test, merged_flush=False):
     """B2's action (specs-repo-git §3.5), which §3.4 also runs to leave a merged branch before its flush
     (<merged_flush>): _to_default, then `branch -d`. Where git refuses the switch, §3.4's leave prints
     pre.leave-failed and returns False, its flush going on from the branch. In §3.5 a refused switch stops the call
-    (rule 5's pre.stopped), SRG wording no line for it. The session files are still dirty at §3.5 in two cases only:
-    where the flush's commit was Locked or failed, and git can then refuse to carry them -- an index.lock refuses
-    every switch; and where status could not run, the dirty set unknown, where §3.5 switches nothing (_disposition),
-    so this is never reached."""
+    (rule 5's pre.stopped), SRG wording no line for it. Where §3.5 reaches this, the session files are still dirty
+    only where the flush's commit was Locked or failed, and git can then refuse to carry them -- an index.lock refuses
+    every switch. §3.5 can also meet them dirty where status could not run, the dirty set unknown, and under
+    misrooted, where §3.4 does not run; §3.5 switches nothing in either (_disposition), so neither reaches this."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     default = rec["default"]
     r = _to_default(run, branch, "b2_left")
@@ -1721,7 +1721,9 @@ def _b4(run, branch):
 def _fetch(run):
     """Stage fetch, specs-repo-git §3.2: the default branch's name and ref, and the fetch that freshens it; the mode
     (§8.1, never under misrooted); and, on a --rerun, §3.5's switch back to the branch the earlier start's B4 left,
-    where a key of the new set names it. A gate that did not pass leaves nothing more to do."""
+    where a key of the new set names it -- left undone, pre.rerun-stay printed, where status could not run earlier in
+    the run (pre.status-failed in reported, which --rerun carries), the dirty set unknown, as _disposition stays then.
+    A gate that did not pass leaves nothing more to do."""
     rec, specs = run["rec"], run["specs"]
     if rec["gate"] != "pass":
         return _advance(run, "done")
@@ -1732,13 +1734,18 @@ def _fetch(run):
         rec["mode"] = sb.mode(specs, rec["default"])["mode"]
     left = rec["b4_left"]
     if left and not misrooted and branch_key(left, rec["keys"])["key"]:
-        r = sb.git(specs, "switch", left, check=False)
-        if r.returncode == 0:
-            rec["b4_left"] = None
+        def current():
+            return _head_branch(specs) or sb.text(sb.git(specs, "rev-parse", "--short", "HEAD"))
+
+        if "pre.status-failed" in rec["reported"]:
+            _emit(run, run["lines"].fill("pre.rerun-stay", {"<current>": current(), "<branch>": left}))
         else:
-            current = _head_branch(specs) or sb.text(sb.git(specs, "rev-parse", "--short", "HEAD"))
-            _emit(run, run["lines"].fill("pre.rerun-failed", {
-                "<branch>": left, "<git's first error line>": _first_line(r, error=True), "<current>": current}))
+            r = sb.git(specs, "switch", left, check=False)
+            if r.returncode == 0:
+                rec["b4_left"] = None
+            else:
+                _emit(run, run["lines"].fill("pre.rerun-failed", {
+                    "<branch>": left, "<git's first error line>": _first_line(r, error=True), "<current>": current()}))
     _advance(run, "disposition" if misrooted else "guards")
 
 
@@ -2825,7 +2832,8 @@ def selftest():
             "nonrepo", "below-top", "pull-failed", "leave-failed", "merged-unknown", "status-failed", "scope-failed",
             "merged-flush", "refused", "refused.unrecorded", "created.empty",
             "created.committed", "deleted", "delete-failed", "advisory-D", "advisory-D.rm", "pushed-left", "b2-config",
-            "b2-squash", "b4", "b4.count", "stay", "stay.unlisted", "rerun-failed", "session-not-run", "stopped")]
+            "b2-squash", "b4", "b4.count", "stay", "stay.unlisted", "rerun-failed", "rerun-stay", "session-not-run",
+            "stopped")]
         ids += ["end.stopped", "text.push-capped", "text.pull-capped", "text.offline", "root.one-line", "root.stray", "root.two-readings",
                 "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
         missing = [i for i in ids if i not in T]
@@ -5606,6 +5614,54 @@ def selftest():
               and lines.fill("pre.stay.unlisted", {"<branch>": A, "<default>": "main", stay: 0}) == got["print"][2]
               and got.get("branch") == A and rev(r, A) is not None and got.get("b2_left") is None
               and got.get("error") is None, "t_status_failed_stay: B2 stays and reports, nothing switched (%r)" % got)
+
+        # t_status_failed_stay_b4 (in process): with the dirty set unknown, B4 on an unmerged plugin branch no key names
+        # stays and says so
+        r, env = world(tmp, "t-status-failed-stay-b4")
+        r.git("switch", "-q", "-c", SPEC)
+        r.write("specifications/PRD-ACME-1-x/EPIC-ACME-1-01-x/specification.md", "s\n")
+        r.commit_all("ACME-1-01 Add the specification")
+        g["status"] = broken_status
+        try:
+            with in_env(env):
+                got = start(r.path, "/document", ("ACME-2",))
+        finally:
+            g["status"] = real_status
+        check(got.get("print") == [env_line(r.path), "Specs preflight: could not list the uncommitted paths (specs-git: not "
+                                   "run (git status: fatal: index file corrupt)), so nothing is staged",
+                                   "Specs preflight: staying on spec/ACME-1-01-x — the uncommitted paths could not be listed, "
+                                   "so no branch is switched (it would have switched to main, as no key of this run names it)"]
+              and lines.fill("pre.stay.unlisted", {"<branch>": SPEC, "<default>": "main", stay: 1}) == got["print"][2]
+              and got.get("branch") == SPEC and got.get("b4_left") is None and got.get("error") is None,
+              "t_status_failed_stay_b4: B4 stays and reports, nothing switched (%r)" % got)
+
+        # t_rerun_unlisted (in process for the failing call): a start whose B4 leaves a branch, a --rerun whose status
+        # fails, then a --rerun whose keys name the branch -- the switch back is left undone, as B2 and B4 are
+        r, env = world(tmp, "t-rerun-unlisted")
+        r.git("switch", "-q", "-c", SPEC)
+        r.write("specifications/PRD-ACME-1-x/EPIC-ACME-1-01-x/specification.md", "s\n")
+        r.commit_all("ACME-1-01 Add the specification")
+        got = run_start(env, "/document", "--key", "ACME-2")
+        check(got.get("branch") == "main" and got.get("b4_left") == SPEC, "t_rerun_unlisted: B4 leaves the branch (%r)" % got)
+        g["status"] = broken_status
+        try:
+            with in_env(env):
+                got = start(r.path, "/document", ("ACME-2",), rerun=True)
+        finally:
+            g["status"] = real_status
+        check(got.get("print") == [env_line(r.path), "Specs preflight: could not list the uncommitted paths (specs-git: not "
+                                   "run (git status: fatal: index file corrupt)), so nothing is staged"]
+              and got.get("branch") == "main" and got.get("b4_left") == SPEC
+              and "pre.status-failed" in ((record(env, "/document") or {}).get("reported") or []),
+              "t_rerun_unlisted: the re-run's status fails, its report recorded (%r)" % got)
+        got = run_start(env, "/document", "--rerun", "--key", "ACME-2", "--key", "ACME-1-01")
+        check(got.get("print") == [env_line(r.path), "Specs preflight: staying on main — the uncommitted paths could not be "
+                                   "listed, so no branch is switched (it would have switched back to spec/ACME-1-01-x, as a "
+                                   "key of this run names it)"]
+              and lines.fill("pre.rerun-stay", {"<current>": "main", "<branch>": SPEC}) == got["print"][1]
+              and got.get("branch") == "main" and r.git("symbolic-ref", "--short", "HEAD") == "main"
+              and got.get("b4_left") == SPEC and got.get("error") is None,
+              "t_rerun_unlisted: no switch back after the run's status failure (%r)" % got)
 
         # t_flush_order (in process): the dirty flush tests step 5's conditions in order, push-scope last, so a branch
         # origin lacks stops silently before push-scope is measured
