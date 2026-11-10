@@ -224,6 +224,8 @@ T = {
     # The reason a push or pull the 60 s cap ended gives in place of git's.
     "text.push-capped": "the push did not finish within 60 s",
     "text.pull-capped": "the pull did not finish within 60 s",
+    # §8.3: in place of git's first error line where a second unpreserved skipped a wrapped move.
+    "text.lift-unpreserved": "lift found <path>[, …] not yet on session/<identity>",
     # §3.2's offline note: carried as start's offline_clause, never printed by the script.
     "text.offline": "offline — ancestry checked against the last-fetched ref",
 
