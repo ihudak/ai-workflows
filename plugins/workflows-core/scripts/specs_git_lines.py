@@ -213,6 +213,8 @@ T = {
     # Appended to pre.b4 where the branch holds commits a push would publish.
     "pre.b4.count": "; <N> commit(s) on it are not on origin, and a later run's preflight pushes them where §4 step 5 lets it",
     "pre.stay": "Specs preflight: staying on <branch> — specs_git: misrooted, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)",
+    # pre.stay's form for a run whose status could not run (specs-repo-git §3.5).
+    "pre.stay.unlisted": "Specs preflight: staying on <branch> — the uncommitted paths could not be listed, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)",
     "pre.rerun-failed": "Specs preflight: could not switch back to <branch> (<git's first error line>); this run goes on from <current>",
     "pre.session-not-run": "Specs preflight: session-branch.py could not run (<the first line of its stderr>)",
     "pre.stopped": "Specs preflight: stopped early (<the error>) — what it did is above, and the next run's preflight goes on from where this one stands",

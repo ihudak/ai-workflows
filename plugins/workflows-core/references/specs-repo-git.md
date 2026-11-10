@@ -72,6 +72,7 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    prints its `Environment:` line (§3) and is otherwise silent unless it acts, a
    guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`; `commit-artifacts`
    emits one outcome line (§6).
+   `specs-preflight`'s acts include its report of each attempt that failed, as rule 5 has every failure reported — a pull, a push, a deletion, a test that could not run — and of the switch §3.5 then leaves undone for it.
 8. **State of its own.** The **push-refusal record** of a branch, which §4
    step 6 writes when `origin` refuses a push to that branch and step 5 reads:
    a file whose path, `<record>` below, is
@@ -196,7 +197,7 @@ pull-request draft) and `security-register-format.md` §1 (the security register
 and a unit's `_security.md`).
 
 **Staging is by enumeration, not by glob.** Pathspec glob magic (`:(glob)`) is
-fragile to express and to review. Steps 1 and 2 are one call, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/specs-git.py" --specs "$SPECS_PATH" status`, which prints `{"artifact": [...], "other": [...]}`, each list sorted: the ARTIFACT and OTHER paths below, as step 2 classifies them. Where it exits 2, report the first line of its stderr and stage nothing (§1 rule 5). Inside `specs-preflight` that report is `Specs preflight: could not list the uncommitted paths (<the first line of its stderr>), so nothing is staged`, printed once in a run, and the preflight goes on: §3.3's G1 has no path to find, and §3.4's flush stages nothing. The script performs these two steps, which stay the rule it follows:
+fragile to express and to review. Steps 1 and 2 are one call, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/specs-git.py" --specs "$SPECS_PATH" status`, which prints `{"artifact": [...], "other": [...]}`, each list sorted: the ARTIFACT and OTHER paths below, as step 2 classifies them. Where it exits 2, report the first line of its stderr and stage nothing (§1 rule 5). Inside `specs-preflight` that report is `Specs preflight: could not list the uncommitted paths (<the first line of its stderr>), so nothing is staged`, printed once in a run, and the preflight goes on: §3.3's G1 has no path to find, §3.4's flush stages nothing, and §3.5 switches nothing that run, B2 and B4 staying with the line §3.5 gives. The script performs these two steps, which stay the rule it follows:
 
 1. `git -C "$SPECS_PATH" status --porcelain -z --untracked-files=all`
    `--untracked-files=all` is **required** — the default collapses an untracked
@@ -284,11 +285,13 @@ either order, a run that stops before the preflight on a check of its own inputs
 state — a run flag, the directory it runs from, a path it reads where it sits rather than as an
 artifact of the specs tree — runs none either. Prompt-free.
 **Its first act is a line, printed on every run that reaches it, whatever its gate finds**: the `Environment:` line `workflows-core:session-hygiene` §7 defines, `Skill(skill: "workflows-core:reference", args: "session-hygiene env-check")` — `$SPECS_PATH`'s real path and `origin`, and `$REPOS_PATH` — which that section's `env-check` compares before the run writes, so a conversation resumed in another container writes nothing into the specs repository there. Past that line it is
-silent when the repository is already clean and on the default branch, no other plugin branch holds a session-file commit §3.4 tries to push or is one §3.4 finds merged, and §3.1 finds
+silent when the repository is already clean and on the default branch, no other plugin branch holds a session-file commit §3.4 tries to push or is one §3.4 finds merged, nothing it attempts fails, and §3.1 finds
 `$SPECS_PATH` well placed; it emits a block only when it acts or when a guard fires, and a
 notice only where §3.1 reports a misconfigured `$SPECS_PATH`. That notice is one line, plus one more
-line naming anything a misrooted run left behind. On a run carrying `specs_git: misrooted`, §3.5 adds
+line naming anything a misrooted run left behind. On a run carrying `specs_git: misrooted`, or one whose `status` could not run (§2.1), §3.5 adds
 one line where it stays on a branch it would otherwise have left.
+
+The preflight's report of an attempt that failed (§1 rule 5) is one of its acts: a pull, a push, a deletion, a test that could not run, and the switch §3.5 then leaves undone for it.
 
 ### 3.1 Gate
 
@@ -451,7 +454,7 @@ Always runs when stage 1 matched nothing **and the run does not carry `specs_git
 **Then, either way, settle every other local plugin branch.** List them with
 `git -C "$SPECS_PATH" for-each-ref --format='%(refname:lstrip=2)' refs/heads/`
 and keep those §2.2's pattern matches, less the current branch and any branch
-the merged-branch step above already reported this run. Ask each
+the merged-branch leave above already reported this run. Ask each
 `branch-merged` (§3.5) first. **Where it answers merged by its first test,
 ancestry, and `branch -d` can see that** — the branch's upstream
 (`git -C "$SPECS_PATH" for-each-ref --format='%(upstream)' refs/heads/<branch>`,
@@ -496,8 +499,7 @@ below switches away from a plugin branch keyed to no key of the run right after
 the flush above committed on it, so a flush whose push failed leaves its commit
 there, and every later run starts somewhere else.
 
-Either way, continue to stage 3 with a clean tree — in session-branch mode,
-with the overlay in place, which §8.3 lifts around each move.
+Either way, continue to stage 3 — in session-branch mode with the overlay in place, which §8.3 lifts around each move — with a clean tree, save in two cases: where the flush's commit was Locked or failed (§4 step 6), the session files stay dirty, and git may refuse §3.5's switch over them, a failure rule 5 reports (§1); and where `status` could not run (§2.1), the dirty set is unknown, so §3.5 switches nothing.
 
 ### 3.5 Stage 3 — branch disposition
 
@@ -512,7 +514,7 @@ First matching row applies.
 
 **In session-branch mode** (§8), B2's and B4's switch and pull, and the re-run's switch back below, are each wrapped in `lift` and `put-back` (§8.3), and the preflight ends with `put-back`. HEAD on the session branch is not a row's subject: G2 has already kept the run there.
 
-**Merged — `branch-merged <ref>`.** Whether the work on a branch is on the default branch, asked against `<default-ref>` (§3.2). B2 asks it of `HEAD`, as §3.4's merged-branch leave does before the flush; §3.4's settle loop of each branch it lists; `phase-handoff.md` §2.2 rule 3 of the ref it resolves; `session-hygiene.md` §1 of each specs-repository branch an item of the resume pointer it overwrites names; `/dev-workflows:conformance` of each other `conformance/` branch holding a record; `/product-workflows:brd-split` of the handoff branch and the commit its merge test waits on; and `/product-workflows:update-spec` of each branch that changed the specification since it forked. Ask it with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/specs-git.py" --specs "$SPECS_PATH" branch-merged --ref <ref> --default-ref <default-ref>`, which prints `{"merged": true|false, "test": 1|2|3|4|null}` — `test` the first of the four tests below that held, `null` where none did. Where it exits 2 — a ref that does not resolve among its causes — report the first line of its stderr and read the branch **unmerged**, the answer that never deletes a branch. Inside this preflight — B2, §3.4's merged-branch leave and §3.4's settle loop — that report is `Specs preflight: could not tell whether <branch> is merged (<the first line of its stderr>), so it reads unmerged`, printed once for a branch in a run, however many of those asks fail. The script runs these four tests in order; the first that holds answers **merged**, and none holding answers **unmerged**:
+**Merged — `branch-merged <ref>`.** Whether the work on a branch is on the default branch, asked against `<default-ref>` (§3.2). B2 asks it of `HEAD`, as §3.4's merged-branch leave does before the flush; §3.4's settle loop of each branch it lists; `phase-handoff.md` §2.2 rule 3 of the ref it resolves; `session-hygiene.md` §1 of each specs-repository branch an item of the resume pointer it overwrites names; `/dev-workflows:conformance` of each other `conformance/` branch, local or under `origin/`, whose copy of a record never reached the default branch and which changed that record after it forked; `/product-workflows:brd-split` of the handoff branch and of the commit Phase 6's handoff pushed, recorded at Phase 7; and `/product-workflows:update-spec` of each `spec/`, `design/` or `conformance/` branch, local or under `origin/`, that changed the specification since it forked. Ask it with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/specs-git.py" --specs "$SPECS_PATH" branch-merged --ref <ref> --default-ref <default-ref>`, which prints `{"merged": true|false, "test": 1|2|3|4|null}` — `test` the first of the four tests below that held, `null` where none did. Where it exits 2 — a ref that does not resolve among its causes — report the first line of its stderr and read the branch **unmerged**, the answer that never deletes a branch. Inside this preflight — B2, §3.4's merged-branch leave and §3.4's settle loop — that report is `Specs preflight: could not tell whether <branch> is merged (<the first line of its stderr>), so it reads unmerged`, printed once for a branch in a run, however many of those asks fail. The script runs these four tests in order; the first that holds answers **merged**, and none holding answers **unmerged**:
 
 1. **A merge or a fast-forward:** `git -C "$SPECS_PATH" merge-base --is-ancestor <ref> <default-ref> 2>/dev/null` exits 0.
 2. **A rebase merge:** `git -C "$SPECS_PATH" cherry <default-ref> <ref>` prints at least one line, every line it prints begins `-`, which marks a commit whose change the default branch already holds under another commit, and `git -C "$SPECS_PATH" rev-list --merges <default-ref>..<ref>` prints nothing. `cherry` passes over merge commits, so a branch whose only change of its own sat in a merge commit would otherwise read merged, and B2 would name `branch -D` on it.
@@ -524,6 +526,8 @@ First matching row applies.
 Ancestry alone was the test, and a pull request merged by squash or by rebase never passes it: the branch read unmerged forever, so B3 kept a resumed run on a branch whose pull request had closed, and the handoff reused it and called `gh pr create` on it. All four tests read the branch at its tip, so a commit made on it after its pull request merged makes it read unmerged again; §4 step 5's deleted-branch state then reports that commit's push rather than letting it recreate the branch.
 
 **Under `specs_git: misrooted` (§3.1) the table classifies and moves nothing.** Take the first matching row exactly as above: §3.2's fetch has already refreshed `<default-ref>` for B2's merge test, and `branch-key` below resolves B3 and B4 unchanged. Then act on that row without writing. B1 and B3 stay where they are, as they always do. B2 and B4 stay too, with no `switch`, no `pull --ff-only` and no `branch -d`. Each prints one line in place of its action: `Specs preflight: staying on <branch> — specs_git: misrooted, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)`. A B3 here keeps the checkout on the caller's own branch exactly as it does on a correct `$SPECS_PATH`, so `workflows-core:phase-handoff` §3.3 row B still passes a resumed run whose branch changed the artifact while the default branch has not, and row B′ still stops one where the default branch changed it since the fork. Where HEAD is on no plugin branch, no row applies here, as always.
+
+**Where `status` could not run in this run (§2.1)**, the dirty set is unknown, so G1 (§3.3) could not keep a switch from carrying files that are not the plugin's: the table classifies and moves nothing, as under `specs_git: misrooted`, and B2 and B4 each print `Specs preflight: staying on <branch> — the uncommitted paths could not be listed, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)` in place of their action.
 
 **Branch key resolution — `branch-key <branch>`.** The branch's key is resolved
 *against the run key set*, by testing the keys the run already holds. It is never

@@ -708,14 +708,17 @@ def commit_session_files(root, message, on_write=None, on_staged=None):
     return dict(out, status="committed", sha=sha, paths=carried, hook_paths=[p for p in carried if p not in set(listed)])
 
 
-def push_check(root, branch, default, session_branch=None):
+def push_check(root, branch, default, session_branch=None, measure=None):
     """specs-repo-git §4 step 5's three conditions, in its order, before a push of <branch>: row None where all hold,
     else the §6 row of the first that fails -- not-ours (neither the default branch, nor a plugin branch, nor the
     session branch); no-remote; the four states that leave nowhere to push, elsewhere (remote: where the user's
     configuration pushes it), remote-deleted (ls-remote, 30 s, exits 2 for a branch read as pushed), refused-before
     (record and record_kind: the push-refusal file, else the configuration key; date) and origin-lacks (a plugin
     branch read as never pushed); then scope (push_scope's result, whose failed commit the row names). set_upstream:
-    -u where the branch has no upstream, or one under another branch's name on a remote."""
+    -u where the branch has no upstream, or one under another branch's name on a remote. <measure>, where given,
+    measures push-scope in push_scope's place, last as step 5 orders it, and returns None where it could not run --
+    start's, which reports that itself; the row is then unmeasured, which no §6 line renders, and nothing is
+    pushed."""
     out = {"row": None, "remote": None, "record": None, "record_kind": None, "date": None, "scope": None,
            "set_upstream": False}
     plugin = branch_key(branch, [])["plugin_branch"] and branch not in (default, session_branch)
@@ -741,7 +744,9 @@ def push_check(root, branch, default, session_branch=None):
         return dict(out, row="refused-before", record=record, record_kind=kind, date=date or "an earlier run")
     if plugin and upstream != own and not tracking:
         return dict(out, row="origin-lacks")
-    scope = push_scope(root, branch)
+    scope = (measure or push_scope)(root, branch)
+    if scope is None:
+        return dict(out, row="unmeasured")
     if not scope["in_scope"]:
         return dict(out, row="scope", scope=scope)
     merge, remote = sb.config(root, "branch.%s.merge" % branch), sb.config(root, "branch.%s.remote" % branch)
@@ -1634,14 +1639,13 @@ def _refused_line(lines, specs, branch, default, p):
 
 
 def _push(run, branch):
-    """specs-repo-git §4 steps 5-6 for <branch> inside §3.4: push-scope measured first (_scope, which reports where it
-    cannot run), then push_check and the push. A condition that fails, and a push that lands, print nothing here; a
-    refusal and a failure print their Specs preflight: forms. The outcome (held where a condition failed or push-scope
-    could not run) and set_upstream, which a rejected push's replay repeats."""
+    """specs-repo-git §4 steps 5-6 for <branch> inside §3.4: push_check, its conditions in step 5's order and
+    push-scope last, measured by _scope, which reports where it cannot run; then the push. A condition that fails,
+    and a push that lands, print nothing here; a refusal and a failure print their Specs preflight: forms. The outcome
+    (held where a condition failed or push-scope could not run) and set_upstream, which a rejected push's replay
+    repeats."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
-    if _scope(run, branch) is None:
-        return {"outcome": "held", "set_upstream": False}
-    check = push_check(specs, branch, rec["default"])
+    check = push_check(specs, branch, rec["default"], measure=lambda root, b: _scope(run, b))
     if check["row"] is not None:
         return {"outcome": "held", "set_upstream": False}
     p = push(specs, branch, check["set_upstream"])
@@ -1682,9 +1686,10 @@ def _leave(run, branch, test, merged_flush=False):
     """B2's action (specs-repo-git §3.5), which §3.4 also runs to leave a merged branch before its flush
     (<merged_flush>): _to_default, then `branch -d`. Where git refuses the switch, §3.4's leave prints
     pre.leave-failed and returns False, its flush going on from the branch. In §3.5 a refused switch stops the call
-    (rule 5's pre.stopped), SRG wording no line for it: the tree there is dirty only where the flush's commit was
-    Locked or failed, which leaves the session files dirty for git to refuse to carry -- and an index.lock refuses
-    every switch."""
+    (rule 5's pre.stopped), SRG wording no line for it. The session files are still dirty at §3.5 in two cases only:
+    where the flush's commit was Locked or failed, and git can then refuse to carry them -- an index.lock refuses
+    every switch; and where status could not run, the dirty set unknown, where §3.5 switches nothing (_disposition),
+    so this is never reached."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     default = rec["default"]
     r = _to_default(run, branch, "b2_left")
@@ -1864,15 +1869,18 @@ def _settle_branch(run, branch):
 def _disposition(run):
     """Stage disposition, specs-repo-git §3.5: the first row that applies to the branch HEAD stands on. B1, B3 and a
     branch no row names stay where they are; B2 and B4 switch to the default branch -- under misrooted, they stay and
-    print pre.stay instead."""
+    print pre.stay instead, and where status could not run in this run (pre.status-failed in reported, which --rerun
+    carries), the dirty set unknown, they stay and print pre.stay.unlisted."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     head, default = _head_branch(specs), rec["default"]
     if head is not None and head != default and branch_key(head, [])["plugin_branch"]:
         merged = _merged(run, "HEAD", head)
         if merged["merged"] or not branch_key(head, rec["keys"])["key"]:
-            if rec["specs_git"] == "misrooted":
-                _emit(run, lines.fill("pre.stay", {"<branch>": head, "<default>": default,
-                                                   lines.placeholder("pre.stay", "<switched"): 0 if merged["merged"] else 1}))
+            stay = ("pre.stay" if rec["specs_git"] == "misrooted"
+                    else "pre.stay.unlisted" if "pre.status-failed" in rec["reported"] else None)
+            if stay:
+                _emit(run, lines.fill(stay, {"<branch>": head, "<default>": default,
+                                             lines.placeholder(stay, "<switched"): 0 if merged["merged"] else 1}))
             else:
                 if _pulls(rec):
                     run["budget"].check(PULL_COST)
@@ -2817,7 +2825,7 @@ def selftest():
             "nonrepo", "below-top", "pull-failed", "leave-failed", "merged-unknown", "status-failed", "scope-failed",
             "merged-flush", "refused", "refused.unrecorded", "created.empty",
             "created.committed", "deleted", "delete-failed", "advisory-D", "advisory-D.rm", "pushed-left", "b2-config",
-            "b2-squash", "b4", "b4.count", "stay", "rerun-failed", "session-not-run", "stopped")]
+            "b2-squash", "b4", "b4.count", "stay", "stay.unlisted", "rerun-failed", "session-not-run", "stopped")]
         ids += ["end.stopped", "text.push-capped", "text.pull-capped", "text.offline", "root.one-line", "root.stray", "root.two-readings",
                 "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
         missing = [i for i in ids if i not in T]
@@ -5579,6 +5587,49 @@ def selftest():
               and got.get("error") is None and got.get("guard") is None and head(r) == h
               and (record(env, "/feedback") or {}).get("stage") == "done",
               "t_status_failed: reported once, nothing staged, the preflight going on to the end (%r)" % got)
+
+        # t_status_failed_stay (in process): with the dirty set unknown, B2 on a merged plugin branch stays and says so
+        r, env = world(tmp, "t-status-failed-stay")
+        ff_merged(r, "t-status-failed-stay-other", A, "specifications/PRD-A-1-x/prd.md")
+        r.write(RES_A, "r\n")
+        g["status"] = broken_status
+        try:
+            with in_env(env):
+                got = start(r.path, "/feedback")
+        finally:
+            g["status"] = real_status
+        stay = lines.placeholder("pre.stay.unlisted", "<switched")
+        check(got.get("print") == [env_line(r.path), "Specs preflight: could not list the uncommitted paths (specs-git: not "
+                                   "run (git status: fatal: index file corrupt)), so nothing is staged",
+                                   "Specs preflight: staying on prd/A-1-x — the uncommitted paths could not be listed, so no "
+                                   "branch is switched (it would have switched to main and deleted it, as it is merged)"]
+              and lines.fill("pre.stay.unlisted", {"<branch>": A, "<default>": "main", stay: 0}) == got["print"][2]
+              and got.get("branch") == A and rev(r, A) is not None and got.get("b2_left") is None
+              and got.get("error") is None, "t_status_failed_stay: B2 stays and reports, nothing switched (%r)" % got)
+
+        # t_flush_order (in process): the dirty flush tests step 5's conditions in order, push-scope last, so a branch
+        # origin lacks stops silently before push-scope is measured
+        r, env = world(tmp, "t-flush-order")
+        r.git("switch", "-q", "-c", PLUGIN)
+        r.write("specifications/PRD-ACME-1-x/ard.md", "a\n")
+        r.commit_all("ACME-1 Add the ARD")
+        r.write(RESUME, "r\n")
+        real_scope = g["push_scope"]
+        measured = []
+
+        def watched_scope(root, branch, session_default_ref=None):
+            measured.append(branch)
+            raise NotRun("git rev-list: fatal: bad object")
+
+        g["push_scope"] = watched_scope
+        try:
+            with in_env(env):
+                got = start(r.path, "/feedback", ("ACME-1",))
+        finally:
+            g["push_scope"] = real_scope
+        check(got.get("print") == [env_line(r.path)] and measured == [] and subject(r) == SUBJECT % ("NOISSUE", "/feedback")
+              and on_origin(r, PLUGIN) is None and got.get("error") is None,
+              "t_flush_order: origin-lacks stops the push before push-scope is measured, silently (%r, %r)" % (got, measured))
 
         # t_scope_failed (in process): push-scope cannot run for two branches -- each reported once, neither pushed,
         # B4 naming no count
