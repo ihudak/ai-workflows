@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.38.1] — 2026-11-10
+
+`/document` and `/release-notes` say when a BRD slice's second preflight leaves a switch undone, and three pages follow `workflows-core` 1.82.0: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; with `workflows-core` 1.82.0, the reworded sentences also cover its new stay after a failed `status` read.
+
+### Fixed
+
+- **`/document` and `/release-notes`: a slice entered at the BRD-container stop is read where the second preflight leaves the run.** Phase 0 said that preflight switches away from the container's branch "exactly as a direct run on the slice would", and switches back to a branch its first preflight left whenever the slice's key names it. Neither switch happens where `workflows-core:specs-repo-git` §3.5 leaves it undone — a misplaced `SPECS_PATH`, a switch git refuses, and from `workflows-core` 1.82.0 a `status` read that failed earlier in the run — so each sentence now names the switch where §3.5's rule makes it, and says the run goes on from the branch it stands on where that rule leaves it undone. The two command pages say the same.
+- **Getting started.** The skill-listing figure is "about 3,400": 3,184 at `bfa147fd`, stale since `obsidian-llm-wiki` left the catalog, plus 182 for `workflows-core`'s new `specs-git` skill, re-derived by the recipe in the repository's `docs/maintainers/rationale.md`, section `skill-listing-figure`.
+- **The environment page** says that a run also compares its environment at its terminal commit — `$SPECS_PATH`'s real path and its `origin` — where the record its start made stands, as `workflows-core` 1.82.0 does.
+
 ## [1.38.0] — 2026-11-09
 
 `/docs-audit` asks the shared refresh question, and `/document` reads its before and after through one script. Update with `workflows-core` 1.81.0.

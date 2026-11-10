@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.62.1] — 2026-11-10
+
+Docs only: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; the environment page describes `workflows-core` 1.82.0.
+
+### Fixed
+
+- **Getting started.** The skill-listing figure is "about 3,400": 3,184 at `bfa147fd`, stale since `obsidian-llm-wiki` left the catalog, plus 182 for `workflows-core`'s new `specs-git` skill, re-derived by the recipe in the repository's `docs/maintainers/rationale.md`, section `skill-listing-figure`.
+- **The environment page** says that a run also compares its environment at its terminal commit — `$SPECS_PATH`'s real path and its `origin` — where the record its start made stands, as `workflows-core` 1.82.0 does.
+
 ## [4.62.0] — 2026-11-09
 
 `/design` names a rollback target per workload and plays back what its write adds; `/implement` recommends revising the plan where only the plan's own text conflicts; every many-path before-and-after read goes through one script. Update with `workflows-core` 1.81.0.

@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.2.9] — 2026-11-10
+
+Docs only: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **Getting started.** The skill-listing figure is "about 3,400": 3,184 at `bfa147fd`, stale since `obsidian-llm-wiki` left the catalog, plus 182 for `workflows-core`'s new `specs-git` skill, re-derived by the recipe in the repository's `docs/maintainers/rationale.md`, section `skill-listing-figure`.
+
 ## [1.2.8] — 2026-11-07
 
 User pages only: batch B31, the links a reader navigates by. Needs nothing from the other plugins' releases.
