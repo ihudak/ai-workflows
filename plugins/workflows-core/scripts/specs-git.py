@@ -14,27 +14,36 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py owner-repo --repo <path> [--no-alias]
   specs-git.py declined --command /<name> --path <p> [--path <p>]...
   specs-git.py --specs "<value>" specs-root-check
+  specs-git.py --specs "<value>" end --command /<name> [--commit-key <K>] [--register-rebuild <path>] [--no-preflight]
+               [--misrooted-stdin] [--session-branch-created <sha7>] [--declined <p>]... [--resume]
   specs-git.py --selftest
 
 declined appends paths to the run's state record (specs_git_state.py, one file per session and command, outside
 every repository), creating the record where the command's start never ran. specs-root-check runs addressing §3's
-entry point on SPECS_PATH as set, "" meaning unset. The state and lines modules load only for the subcommands that
-need them, so a copy of this script without them still runs the primitives above.
+entry point on SPECS_PATH as set, "" meaning unset. end is specs-repo-git §4's commit-artifacts for the run of this
+session and command: it reads and removes that record, catches the default branch up, commits the session files and
+pushes them, and prints the §6 outcome line with what follows it, or names the replay a rejected push needs as next.
+The state and lines modules load only for the subcommands that need them, so a copy of this script without them
+still runs the primitives above.
 
 <root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
-where specs-repo-git §3.5 classifies under specs_git: misrooted); specs-root-check's <value> is never checked
-first, so empty, a file or a subdirectory each reaches it. Nothing here writes the working tree, the index or a
-ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it found. Exit 2: it could not
+where specs-repo-git §3.5 classifies under specs_git: misrooted); the <value> specs-root-check and end take is never
+checked first, so empty, a file or a subdirectory each reaches it. Nothing here but end writes the working tree, the
+index or a ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it found. Exit 2: it could not
 run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
-and the run continues.
+and the run continues. end exits 2 only before its first write to the repository; after it, a failure is exit 0
+with error set and the end.stopped line.
 """
 
 import argparse
+import calendar
+import contextlib
 import importlib.util
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -533,6 +542,525 @@ def gate(specs, notices=True):
     return dict(out, misrooted=misrooted, lines=found)
 
 
+# workflows-core:addressing §1's key grammar, ^[A-Z][A-Z0-9_]*(-\d+)+$, its \d spelt [0-9] (Python's \d takes any
+# Unicode digit) and matched whole with fullmatch, so a trailing newline never passes; the selftest pins it to §1.
+KEY_RE = re.compile(r"[A-Z][A-Z0-9_]*(-[0-9]+)+")
+SHA_RE = re.compile(r"[0-9a-f]{4,40}")
+# specs-repo-git §4 step 6: a reason after [remote rejected] that begins with one of these is a push a concurrent
+# update or a server fault broke, which failed and is retried; every other reason is a refusal.
+TRANSIENT = ("failed to update ref", "failed to lock", "cannot lock ref", "unpacker error", "missing necessary objects")
+# The --porcelain flags of a ref origin now holds the commit on: fast-forward, forced, new, and [up to date] -- the
+# last where an earlier call's push landed before the harness cut that call short.
+PUSHED_FLAGS = (" ", "+", "*", "=")
+CAP = 60  # seconds: the cap on a fetch, a pull and a push (sb.git_bounded, workflows-core:bounded-run's mechanism)
+LS_REMOTE_CAP = 30
+RESUME_MINUTES = 15
+REPLAY_TIMEOUT_MS = 420000  # specs-repo-git §4 step 6: the replay's own Bash call
+
+
+def _first_line(r, error=False):
+    """The first non-empty line of a git call's stderr, else of its stdout; else how it exited. With <error>, the first
+    that opens fatal: or error: where one does, so a pull's or a push's progress lines never stand for its error."""
+    found = [line.strip() for stream in (r.stderr, r.stdout)
+             for line in (stream or b"").decode("utf-8", "replace").splitlines() if line.strip()]
+    if error:
+        found = [line for line in found if line.startswith(("fatal:", "error:"))] or found
+    return found[0] if found else "git exited %d" % r.returncode
+
+
+def _head_branch(root):
+    """The branch HEAD stands on, or None on a detached HEAD."""
+    r = sb.git(root, "symbolic-ref", "--short", "-q", "HEAD", check=False)
+    return (sb.text(r) or None) if r.returncode == 0 else None
+
+
+def _today():
+    """<YYYY-MM-DD> in a remedy: today's UTC date."""
+    return time.strftime("%Y-%m-%d", time.gmtime())
+
+
+def _swap(text, old, new):
+    """<text> with its one <old> replaced by <new>: how a renderer puts a template's variant in (specs_git_lines'
+    comments name each); ValueError where <old> is not there, so a reworded template never renders unchanged."""
+    if text.count(old) != 1:
+        raise ValueError("render: %r is not once in %r" % (old, text[:80]))
+    return text.replace(old, new)
+
+
+def resolve_default(root, fetch):
+    """specs-repo-git §3.2: the default branch's name, the ref that represents it, and whether a fetch freshened it.
+    The name is the one origin/HEAD names, where origin/<name> resolves; else main, then master, where either is a
+    local or an origin branch; else the branch HEAD stands on (None on a detached HEAD). <default-ref> is
+    origin/<default> where `remote get-url origin` prints a URL, else refs/heads/<default>. With <fetch>, where that
+    remote exists, origin's <default> is fetched, capped at 60 s; offline where the fetch fails."""
+    name = None
+    r = sb.git(root, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD", check=False)
+    named = sb.text(r) if r.returncode == 0 else ""
+    if named.startswith("refs/remotes/origin/") and sb.rev(root, "origin/" + named[len("refs/remotes/origin/"):]):
+        name = named[len("refs/remotes/origin/"):]
+    for candidate in ("main", "master"):
+        if name is None and (sb.rev(root, "refs/heads/" + candidate) or sb.rev(root, "refs/remotes/origin/" + candidate)):
+            name = candidate
+    if name is None:
+        name = _head_branch(root)
+    url = sb.git(root, "remote", "get-url", "origin", check=False)
+    remote = "origin" if url.returncode == 0 and sb.text(url) else "none"
+    ref = None if name is None else ("origin/" + name if remote == "origin" else "refs/heads/" + name)
+    offline = False
+    if fetch and remote == "origin" and name is not None:
+        offline = sb.git_bounded(root, CAP, "fetch", "origin", name).returncode != 0
+    return {"default": name, "default_ref": ref, "remote": remote, "offline": offline}
+
+
+def catch_up(root, default, default_ref, on_write=None):
+    """specs-repo-git §3.4's catch-up, which §4 step 2 runs again: where HEAD is on <default>, <default_ref> is
+    origin/<default> and HEAD is strictly behind it, `pull --ff-only --no-rebase origin <default>`, capped at 60 s.
+    None where it had nothing to do or succeeded; otherwise its pre.pull-failed line, git's first error line in its
+    parenthesis, or the capped pull's words. <on_write> is called just before the pull, the call's first write."""
+    if default is None or default_ref != "origin/" + default or _head_branch(root) != default:
+        return None
+    if sb.git(root, "merge-base", "--is-ancestor", "HEAD", default_ref, check=False).returncode != 0:
+        return None
+    if sb.rev(root, "HEAD") == sb.rev(root, default_ref):
+        return None
+    if on_write:
+        on_write()
+    p = sb.git_bounded(root, CAP, "pull", "--ff-only", "--no-rebase", "origin", default)
+    if p.returncode == 0:
+        return None
+    lines = _load_module("specs_git_lines")
+    why = lines.T["text.pull-capped"] if p.returncode == 124 else _first_line(p, error=True)
+    return lines.fill("pre.pull-failed", {"<default>": default, "<git's first error line>": why})
+
+
+def _literal(paths):
+    return [":(literal)" + p for p in paths]
+
+
+def commit_session_files(root, message, on_write=None):
+    """specs-repo-git §2.1 steps 1-3 and §4 step 4: stage the ARTIFACT paths status() lists, then commit, by pathspec,
+    those git still lists as staged, and bring the index back in step with the new HEAD where a pre-commit hook
+    changed what the commit carries, leaving a change somebody else had staged as they staged it. locked where
+    index.lock exists, tested before staging; failed where git or a hook refuses (error: the first line of git's error
+    or the hook's output). paths: what the commit carries; hook_paths: those of them its pathspecs did not name.
+    <on_write> is called just before `git add`, the call's first write."""
+    out = {"status": "nothing", "sha": None, "paths": [], "hook_paths": [], "error": None}
+    lock = os.path.join(root, sb.text(sb.git(root, "rev-parse", "--git-path", "index.lock")))
+    if os.path.lexists(lock):
+        return dict(out, status="locked")
+    paths = status(root)["artifact"]
+    if not paths:
+        return out
+    if on_write:
+        on_write()
+    r = sb.git(root, "add", "-A", "--", *_literal(paths), check=False)
+    if r.returncode != 0:
+        return dict(out, status="locked") if os.path.lexists(lock) else dict(out, status="failed", error=_first_line(r))
+    listed = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames", "--", *_literal(paths)))
+    if not listed:
+        return out
+    before = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames"))
+    r = sb.git(root, "commit", "-q", "-m", message, "--", *_literal(listed), check=False)
+    if r.returncode != 0:
+        return dict(out, status="failed", error=_first_line(r))
+    sha = sb.text(sb.git(root, "rev-parse", "HEAD"))
+    carried = _commit_paths(root, "HEAD")
+    differ = set(sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames")))
+    theirs = set(before) - set(listed)
+    restore = [p for p in carried if p in differ and p not in theirs]
+    if restore:
+        sb.git(root, "restore", "--staged", "--", *_literal(restore))
+    return dict(out, status="committed", sha=sha, paths=carried, hook_paths=[p for p in carried if p not in set(listed)])
+
+
+def _refusal_file(root, branch):
+    """specs-repo-git §1 rule 8's <record>: <git-common-dir>/workflows/push-refused/<branch>, the directory joined to
+    <root> where git prints it relative, as sb.refusal_record reads it."""
+    common = sb.text(sb.git(root, "rev-parse", "--git-common-dir"))
+    return os.path.join(common if os.path.isabs(common) else os.path.join(root, common), "workflows", "push-refused",
+                        branch)
+
+
+def push_check(root, branch, default, session_branch=None):
+    """specs-repo-git §4 step 5's three conditions, in its order, before a push of <branch>: row None where all hold,
+    else the §6 row of the first that fails -- not-ours (neither the default branch, nor a plugin branch, nor the
+    session branch); no-remote; the four states that leave nowhere to push, elsewhere (remote: where the user's
+    configuration pushes it), remote-deleted (ls-remote, 30 s, exits 2 for a branch read as pushed), refused-before
+    (record and record_kind: the push-refusal file, else the configuration key; date) and origin-lacks (a plugin
+    branch read as never pushed); then scope (push_scope's result, whose failed commit the row names). set_upstream:
+    -u where the branch has no upstream, or one under another branch's name on a remote."""
+    out = {"row": None, "remote": None, "record": None, "record_kind": None, "date": None, "scope": None,
+           "set_upstream": False}
+    plugin = branch_key(branch, [])["plugin_branch"] and branch not in (default, session_branch)
+    if branch not in (default, session_branch) and not plugin:
+        return dict(out, row="not-ours")
+    if sb.git(root, "remote", "get-url", "origin", check=False).returncode != 0:
+        return dict(out, row="no-remote")
+    elsewhere = sb.config(root, "branch.%s.pushRemote" % branch) or sb.config(root, "remote.pushDefault")
+    if elsewhere and elsewhere != "origin":
+        return dict(out, row="elsewhere", remote=elsewhere)
+    own = "refs/remotes/origin/" + branch
+    upstream = sb.text(sb.git(root, "for-each-ref", "--format=%(upstream)", "refs/heads/" + branch))
+    tracking = sb.git(root, "show-ref", "--verify", "-q", own, check=False).returncode == 0
+    if upstream == own or (not upstream and tracking):
+        gone = sb.git_bounded(root, LS_REMOTE_CAP, "ls-remote", "--exit-code", "--heads", "origin", "refs/heads/" + branch)
+        if gone.returncode == 2:
+            return dict(out, row="remote-deleted")
+    date = sb.refusal_record(root, branch)
+    if date is not None:
+        path = _refusal_file(root, branch)
+        kind, record = ("file", path) if os.path.isfile(path) else ("config", "branch.%s.workflowsPushRefused" % branch)
+        return dict(out, row="refused-before", record=record, record_kind=kind, date=date or "an earlier run")
+    if plugin and upstream != own and not tracking:
+        return dict(out, row="origin-lacks")
+    scope = push_scope(root, branch)
+    if not scope["in_scope"]:
+        return dict(out, row="scope", scope=scope)
+    merge, remote = sb.config(root, "branch.%s.merge" % branch), sb.config(root, "branch.%s.remote" % branch)
+    return dict(out, set_upstream=not (merge and (remote == "." or merge == "refs/heads/" + branch)))
+
+
+def _record_refusal(root, branch):
+    """specs-repo-git §4 step 6: the push-refusal record, the file holding the date `date +%Y-%m-%d` prints (the local
+    date), else the configuration key; where neither can be written, record_error is the configuration write's."""
+    path = _refusal_file(root, branch)
+    today = time.strftime("%Y-%m-%d")
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(today + "\n")
+        return {"recorded": "file", "record": path, "record_error": None}
+    except OSError:
+        pass
+    key = "branch.%s.workflowsPushRefused" % branch
+    r = sb.git(root, "config", key, today, check=False)
+    if r.returncode == 0:
+        return {"recorded": "config", "record": key, "record_error": None}
+    return {"recorded": None, "record": None, "record_error": _first_line(r, error=True)}
+
+
+def push(root, branch, set_upstream):
+    """specs-repo-git §4 steps 5-6: `push --porcelain [-u] origin <branch>`, capped at 60 s, its outcome read from the
+    --porcelain status line for refs/heads/<branch> alone, never from the exit status or the server's text: pushed for
+    a flag in PUSHED_FLAGS; rejected for [rejected], which the replay settles; refused for [remote rejected] with a
+    reason that is not TRANSIENT, which writes the push-refusal record (recorded: file, config or None; record; and
+    record_error where neither could be written); failed otherwise -- a transient reason, another status, none, or
+    the cap -- reason the status line's summary, git's first error line, or the capped push's words."""
+    lines = _load_module("specs_git_lines")
+    out = {"outcome": "failed", "reason": None, "recorded": None, "record": None, "record_error": None}
+    p = sb.git_bounded(root, CAP, "push", "--porcelain", *(["-u"] if set_upstream else []), "origin", branch)
+    if p.returncode == 124:
+        return dict(out, reason=lines.T["text.push-capped"])
+    found = sb._porcelain_line(p.stdout, "refs/heads/" + branch)
+    if found is None:
+        return dict(out, reason=_first_line(p, error=True))
+    flag, summary = found.split("\t")[0], found.split("\t", 2)[2]
+    if flag in PUSHED_FLAGS:
+        return dict(out, outcome="pushed")
+    if summary.startswith("[rejected]"):
+        return dict(out, outcome="rejected", reason=summary)
+    if summary.startswith("[remote rejected]"):
+        why = summary[len("[remote rejected]"):].strip()
+        why = why[1:-1] if why.startswith("(") and why.endswith(")") else why
+        if not why.startswith(TRANSIENT):
+            return dict(out, outcome="refused", reason=why, **_record_refusal(root, branch))
+    return dict(out, reason=summary)
+
+
+def _row_line(lines, row, f):
+    """specs-repo-git §6's line for <row>, from the facts <f>: sha7, files, branch, default and specs (<SPECS_PATH> as
+    the run holds it), and as the row needs them -- remote; record, record_kind (file, config, or None for a refusal
+    step 6 could not record), record_error and date; reason; error (Commit failed); scope (push_check's), subject (its
+    failed commit's) and hook (the paths a pre-commit hook added to this run's own commit, naming the hook variant)."""
+    T = lines.T
+    v = {"<sha7>": f.get("sha7"), "<N>": f.get("files"), "<branch>": f.get("branch"), "<default>": f.get("default"),
+         "<SPECS_PATH>": f.get("specs"), "<YYYY-MM-DD>": _today()}
+    t, tail = T["row." + row], ""
+    if row == "remote-deleted" and f.get("branch") == f.get("default"):
+        tail = lines.fill("row.remote-deleted.default-tail", v)
+    elif row == "elsewhere":
+        v["<remote>"] = f.get("remote")
+    elif row == "failed":
+        v["<reason>"] = f.get("reason")
+    elif row == "commit-failed":
+        v["<the first line of git's error or the hook's output>"] = f.get("error")
+    elif row in ("refused-before", "push-refused"):
+        v.update({"<record>": f.get("record"), "<date>": f.get("date"), "<the reason in parentheses>": f.get("reason")})
+        if row == "push-refused" and f.get("record_kind") is None:
+            t = _swap(t, "so this is recorded and no later run pushes it", T["app.unrecorded"])
+            t = t[:t.index("; to land the commits")]
+            v["<error>"] = f.get("record_error")
+        elif f.get("record_kind") == "config":
+            t = _swap(t, 'rm "<record>"', T["app.record-unset"]).replace("<record>", T["app.record-key"])
+    elif row == "scope":
+        failed = f["scope"]["failed"]
+        if f.get("hook"):
+            t = T["row.scope.hook"]
+            v.update({"<path>": f["hook"][0], "<M-1>": str(len(f["hook"]) - 1) if len(f["hook"]) > 1 else None})
+        else:
+            if failed["reason"] == "merge":
+                t = _swap(t, "which carries <path>", T["row.scope.merge"])
+            elif failed["path"] is None:
+                t = _swap(t, "which carries <path>", T["row.scope.no-file"])
+            v.update({"<sha7>": [f.get("sha7"), failed["sha"][:7]], "<subject>": f.get("subject"), "<path>": failed["path"]})
+    return lines.fill(t, v) + tail
+
+
+def _specs_half(line):
+    """The SPECS_PATH half of session-hygiene §7's Environment: line: SPECS_PATH's real path and its origin."""
+    return line.partition("), REPOS_PATH=")[0]
+
+
+def _values(line):
+    """An Environment: line's values, as env.changed names them: the line without its label."""
+    return line[len("Environment: "):] if line.startswith("Environment: ") else line
+
+
+def _g0_block(lines, specs, default):
+    """specs-repo-git §5's G0 block for the checkout at <specs>: its detached HEAD's sha7, today's date for the rescue
+    branch, and the default branch to rejoin -- where there is none, the first local branch, else main."""
+    sha = sb.text(sb.git(specs, "rev-parse", "HEAD"))
+    rejoin = default or (sb.text(sb.git(specs, "for-each-ref", "--count=1", "--format=%(refname:short)", "refs/heads"))
+                         or "main")
+    return lines.fill("g0", {"<SPECS_PATH>": specs, "<sha7>": sha[:7], "<YYYY-MM-DD>": _today(), "<branch>": rejoin})
+
+
+def _saved_within(state, rec, minutes):
+    """Whether <rec> was saved within the last <minutes>, by its updated stamp; False where that cannot be read."""
+    try:
+        updated = calendar.timegm(time.strptime(rec.get("updated") or "", state.STAMP))
+    except (ValueError, TypeError):
+        return False
+    return 0 <= time.time() - updated <= minutes * 60
+
+
+def _unique(paths):
+    out = []
+    for p in paths:
+        if p not in out:
+            out.append(p)
+    return out
+
+
+def _view(rec, declined=()):
+    """What step 7 renders from a record besides the row: the declined paths (the record's, then the call's), and the
+    §5 block of a guard its start fired (G0's prints with the blocked row instead) with the paths that block lists."""
+    rec = rec or {}
+    return {"declined": _unique(list(rec.get("declined") or []) + list(declined)),
+            "guard_block": None if rec.get("specs_git") == "blocked" else rec.get("guard_block"),
+            "guard_paths": list(rec.get("guard_paths") or [])}
+
+
+def _end_result(**kw):
+    out = {"print": [], "line": None, "row": None, "sha7": None, "files": None, "branch": None, "pushed": False,
+           "next": None, "record": None, "error": None}
+    out.update(kw)
+    return out
+
+
+def _replay_next(specs, command, branch, set_upstream):
+    """The call a rejected push hands the run (specs-repo-git §4 step 6): the replay, in a Bash call of its own, and
+    the same with --timed-out where the harness ends that call at its timeout."""
+    run = "python3 %s --specs %s replay --for end --command %s --branch %s%s" % (
+        shlex.quote(os.path.abspath(__file__)), shlex.quote(specs), shlex.quote(command), shlex.quote(branch),
+        " --set-upstream" if set_upstream else "")
+    return {"run": run, "timeout_ms": REPLAY_TIMEOUT_MS, "on_timeout": run + " --timed-out"}
+
+
+def _stop(run, row, printed, line):
+    """An outcome of §4 step 1 -- misrooted, blocked or silent: what it prints, the record removed."""
+    run["state"].remove(run["session"], run["command"])
+    return _end_result(print=printed, line=line, row=row, record=run["record"])
+
+
+def finish_end(run, row, line, view, commit=None, branch=None, pushed=False, hook=()):
+    """specs-repo-git §4 step 7 from a row's <line>: the appends in §6's order -- the declined one last, naming the
+    paths of <view>'s declined list that status() still lists, in phase-handoff §4.1's <artifacts> form -- then the §5
+    block a guard's record repeats, then, where the push-scope row's hook variant names <hook>, the hook line for those
+    of them the block or the declined paths name; the record removed. <run> holds state, lines, specs, session,
+    command, record, and pre (lines printed before the outcome line)."""
+    lines = run["lines"]
+    if view["declined"]:
+        listed = status(run["specs"])
+        still = set(listed["artifact"]) | set(listed["other"])
+        named = [p for p in view["declined"] if p in still]
+        if named:
+            line += lines.fill("app.declined", {"<path>": lines.artifacts(named)})
+    printed = list(run.get("pre") or []) + [line]
+    if view["guard_block"]:
+        printed.append(view["guard_block"])
+    swept = [p for p in hook if p in set(view["guard_paths"]) | set(view["declined"])]
+    if swept:
+        printed.append(lines.fill("app.hook-line", {"<path>": swept, "<sha7>": commit["sha7"]}))
+    run["state"].remove(run["session"], run["command"])
+    commit = commit or {}
+    return _end_result(print=printed, line=line, row=row, sha7=commit.get("sha7"), files=commit.get("files"),
+                       branch=branch, pushed=pushed, record=run["record"])
+
+
+def _push_step(run, rec, commit, default, view):
+    """specs-repo-git §4 steps 5-7 for <commit>, saved in <rec> as end_commit: push_check, then push. A rejected push
+    keeps the record at stage end-replay and returns next naming the replay; every other outcome renders its row."""
+    lines, specs, branch = run["lines"], run["specs"], commit["branch"]
+    run["commit"] = commit
+    check = push_check(specs, branch, default)
+    facts = {"sha7": commit["sha7"], "files": commit["files"], "branch": branch, "default": default, "specs": specs}
+    hook, pushed = (), False
+    if check["row"] is None:
+        p = push(specs, branch, check["set_upstream"])
+        if p["outcome"] == "rejected":
+            rec["stage"] = "end-replay"
+            run["state"].save(run["session"], run["command"], rec)
+            return _end_result(print=list(run.get("pre") or []), sha7=commit["sha7"], files=commit["files"], branch=branch,
+                               next=_replay_next(specs, run["command"], branch, check["set_upstream"]),
+                               record=run["record"])
+        row = {"pushed": "pushed-default" if branch == default else "pushed-plugin", "refused": "push-refused",
+               "failed": "failed"}[p["outcome"]]
+        pushed = p["outcome"] == "pushed"
+        facts.update(reason=p["reason"], record=p["record"], record_kind=p["recorded"], record_error=p["record_error"])
+    else:
+        row = check["row"]
+        facts.update(remote=check["remote"], record=check["record"], record_kind=check["record_kind"], date=check["date"])
+        if row == "scope":
+            failed = check["scope"]["failed"]
+            facts["scope"] = check["scope"]
+            facts["subject"] = sb.text(sb.git(specs, "log", "-1", "--format=%s", failed["sha"])) if failed["sha"] else None
+            if failed["sha"] and failed["sha"][:7] == commit["sha7"]:  # this run's own commit: a hook added the rest
+                hook = [path for path in commit["hook_paths"] if not sb.classify(path)]
+                facts["hook"] = hook
+    return finish_end(run, row, _row_line(lines, row, facts), view, commit=commit, branch=branch, pushed=pushed,
+                      hook=hook)
+
+
+def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=False, misrooted_notice=None,
+        session_branch_created=None, declined=(), resume=False):
+    """specs-repo-git §4's commit-artifacts for the run of this session and <command>, steps 1-7, on <specs>
+    (SPECS_PATH as set, "" meaning unset). <misrooted_notice>: the lines of a notice that set misrooted outside the
+    script (--misrooted-stdin), [] for none. <declined>: paths a declined call could not record. A failure before the
+    run's first repository write -- the catch-up's pull, else `git add` -- raises, so the caller exits 2 with nothing
+    done; after it, an exception returns error set and the end.stopped line, the record removed."""
+    state, lines = _flow()
+    if not state.COMMAND_RE.fullmatch(command):
+        raise NotRun("usage: --command is /<name>, got %s" % command)
+    if commit_key is not None and not KEY_RE.fullmatch(commit_key):
+        raise NotRun("usage: --commit-key %s does not match addressing §1's key grammar" % commit_key)
+    if session_branch_created is not None and not SHA_RE.fullmatch(session_branch_created):
+        raise NotRun("usage: --session-branch-created takes a commit's short sha, got %s" % session_branch_created)
+    session = state.session_id()
+    run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "record": None,
+           "wrote": False, "pre": [], "commit": None}
+    try:
+        return _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, session_branch_created,
+                    list(declined), resume)
+    except Exception as e:
+        if not run["wrote"]:
+            raise
+        said = " ".join(str(e).split())
+        error = said if isinstance(e, NotRun) else type(e).__name__ + (": " + said if said else "")
+        line = lines.fill("end.stopped", {"<the error>": error})
+        try:
+            state.remove(session, command)
+        except Exception:  # the stopped line is what the run needs; a record left behind is pruned in 7 days
+            pass
+        commit = run["commit"] or {}
+        return _end_result(print=list(run["pre"]) + [line], line=line, sha7=commit.get("sha7"),
+                           files=commit.get("files"), branch=commit.get("branch"), record=run["record"], error=error)
+
+
+def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, session_branch_created, declined, resume):
+    state, lines, specs, session, command = (run[k] for k in ("state", "lines", "specs", "session", "command"))
+    rec = state.load(session, command)
+    if resume and rec is not None and rec.get("end_commit") and _saved_within(state, rec, RESUME_MINUTES):
+        run["wrote"] = True  # the run's commit is made: what follows is past its first write
+        run["record"] = "found"
+        default = rec.get("default") or resolve_default(specs, False)["default"]
+        return _push_step(run, rec, rec["end_commit"], default, _view(rec, declined))
+
+    # Step 1: the record. Each kind but found takes the no-preflight path; an ignored record is replaced or removed.
+    if rec is None:
+        kind = "missing"
+    elif no_preflight:
+        kind = "ignored"
+    elif rec.get("started_by_script") is False:
+        kind = "declined-only"
+    else:
+        kind = "found"
+    run["record"] = kind
+    found = kind == "found"
+    keep = rec if kind in ("found", "declined-only") else None
+    view = _view(keep, declined)
+
+    # Step 1: the flags, in order, the first that holds deciding; a flag's outcome comes before the gate's.
+    flag, notice = None, []
+    if found and rec.get("specs_git") == "blocked":
+        flag = "blocked"
+    elif found and rec.get("specs_git") == "misrooted":
+        flag, notice = "misrooted", list(rec.get("misrooted_notice") or [])
+    if flag is None and misrooted_notice is not None:
+        flag, notice = "misrooted", list(misrooted_notice)
+    if flag is None and found and rec.get("env_line"):  # D4: the SPECS_PATH half of the line the run's start printed
+        now = env_line(specs)
+        if _specs_half(now) != _specs_half(rec["env_line"]):
+            flag, notice = "misrooted", [lines.fill("env.changed", {
+                "<the values the line recorded>": _values(rec["env_line"]), "<the values printed now>": _values(now)})]
+    g = None
+    if flag is None and not found:  # D3: no preflight recorded its placement tests, so they run here
+        g = gate(specs)
+        if g["misrooted"]:
+            flag, notice = "misrooted", list(g["lines"])
+    if flag == "misrooted":
+        line = lines.fill("row.misrooted", {})
+        return _stop(run, "misrooted", [line] + notice, line)
+    if flag == "blocked":
+        line = lines.fill("row.blocked", {})
+        return _stop(run, "blocked", [line] + ([rec["guard_block"]] if rec.get("guard_block") else []), line)
+
+    # Step 1's gate, then G0's state where no flag stands: a commit on a detached HEAD is reachable from no branch.
+    if g is None:
+        g = gate(specs, notices=False)
+    if g["state"] != "pass":
+        return _stop(run, "silent", [], None)
+    branch = _head_branch(specs)
+    if found and rec.get("default"):
+        d = {k: rec.get(k) for k in ("default", "default_ref", "remote")}
+    else:
+        d = resolve_default(specs, False)
+    if branch is None:
+        if status(specs)["artifact"]:
+            line = lines.fill("row.blocked", {})
+            return _stop(run, "blocked", [line, _g0_block(lines, specs, d["default"])], line)
+        return finish_end(run, "nothing", lines.fill("row.nothing", {}), view)
+    # §8.1's mode, which the record carries on to the replay; session-branch mode is not handled here yet, so every
+    # mode commits as off does.
+    mode = (rec.get("mode") if found and rec.get("mode") else
+            sb.mode(specs, d["default"])["mode"] if d["default"] else "off")
+
+    # Steps 2-4: the catch-up, then the commit; the first repository write either makes is R2's boundary.
+    def wrote():
+        run["wrote"] = True
+
+    pulled = catch_up(specs, d["default"], d["default_ref"], on_write=wrote)
+    if pulled:
+        run["pre"].append(pulled)
+    key = commit_key or (keep or {}).get("commit_key") or "NOISSUE"
+    c = commit_session_files(specs, "%s Add dev-workflows session artifacts (%s)" % (key, command), on_write=wrote)
+    if c["status"] != "committed":
+        row = {"nothing": "nothing", "locked": "locked", "failed": "commit-failed"}[c["status"]]
+        return finish_end(run, row, _row_line(lines, row, {"error": c["error"]}), view, branch=branch)
+    commit = {"sha7": c["sha"][:7], "files": len(c["paths"]), "branch": branch, "paths": c["paths"],
+              "hook_paths": c["hook_paths"]}
+    run["commit"] = commit
+    saved = keep if keep is not None else state.new(command, session=session, started_by_script=False, specs=specs)
+    saved.update(end_commit=commit, stage="end", declined=view["declined"], mode=mode, default=d["default"],
+                 default_ref=d["default_ref"], remote=d["remote"])
+    for field, value in (("commit_key", commit_key), ("register_rebuild", register_rebuild),
+                         ("session_branch_created", session_branch_created)):
+        if value:
+            saved[field] = value
+    state.save(session, command, saved)
+    return _push_step(run, saved, commit, d["default"], view)
+
+
 class Parser(argparse.ArgumentParser):
     """A usage error is one "not run" line, as every exit 2 is."""
 
@@ -565,6 +1093,15 @@ def main():
     p.add_argument("--command", required=True)
     p.add_argument("--path", action="append", default=[])
     sub.add_parser("specs-root-check")
+    p = sub.add_parser("end")
+    p.add_argument("--command", required=True)
+    p.add_argument("--commit-key")
+    p.add_argument("--register-rebuild")
+    p.add_argument("--no-preflight", action="store_true")
+    p.add_argument("--misrooted-stdin", action="store_true")
+    p.add_argument("--session-branch-created")
+    p.add_argument("--declined", action="append", default=[])
+    p.add_argument("--resume", action="store_true")
     a = ap.parse_args()
     try:  # a path comes back as git's -z record gave it, a byte that is no UTF-8 included
         sys.stdout.reconfigure(encoding="utf-8", errors="surrogateescape")
@@ -586,6 +1123,15 @@ def main():
             if a.specs is None:
                 raise NotRun("usage: specs-root-check needs --specs, empty where SPECS_PATH is unset")
             print(json.dumps(specs_root_check(a.specs), indent=2, ensure_ascii=False))
+            return 0
+        if a.cmd == "end":  # the --specs exception, as specs-root-check's
+            if a.specs is None:
+                raise NotRun("usage: end needs --specs, empty where SPECS_PATH is unset")
+            notice = None
+            if a.misrooted_stdin:
+                notice = [line for line in sys.stdin.buffer.read().decode("utf-8", "replace").splitlines() if line.strip()]
+            print(json.dumps(end(a.specs, a.command, a.commit_key, a.register_rebuild, a.no_preflight, notice,
+                                 a.session_branch_created, a.declined, a.resume), indent=2, ensure_ascii=False))
             return 0
         if not a.specs:
             raise NotRun("--specs is required")
@@ -1810,6 +2356,867 @@ def selftest():
         check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
               "g_cli: no --specs at all is a usage error (%r)" % got)
 
+    def scenarios_end(tmp):
+        state, lines = _flow()
+        T = lines.T
+        PRD = "specifications/PRD-ACME-1-x/prd.md"
+        RESUME = "specifications/PRD-ACME-1-x/dev-workflows/resume.md"
+        PLUGIN = "prd/ACME-1-x"
+        today = time.strftime("%Y-%m-%d", time.gmtime())
+        local_today = time.strftime("%Y-%m-%d")
+        g = globals()
+        MIS = ("Specs repo: NOT COMMITTED — SPECS_PATH is misplaced, or the run's environment no longer matches the one "
+               "it recorded; see the notice below")
+        BLOCKED = "Specs repo: NOT COMMITTED — see the notice below"
+        NOTHING = "Specs repo: no session artifacts to commit"
+        FIELDS = {"print", "line", "row", "sha7", "files", "branch", "pushed", "next", "record", "error"}
+
+        @contextlib.contextmanager
+        def in_env(env):
+            keep = {k: os.environ.get(k) for k in env}
+            os.environ.update(env)
+            try:
+                yield
+            finally:
+                for k, v in keep.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+
+        def world(tmp, name):
+            """A bare origin; a clone with the PRD committed and pushed on main; the environment of a run of session
+            <name>: HOME under tmp, the session variable, SPECS_PATH naming the clone."""
+            bare = os.path.join(tmp, name + ".git")
+            subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)
+            r = new_repo(tmp, name)
+            r.write(PRD, "---\nkind: prd\nkey: ACME-1\n---\n\n# PRD\n")
+            r.commit_all("ACME-1 Add the PRD")
+            r.git("remote", "add", "origin", bare)
+            r.git("push", "-q", "-u", "origin", "main")
+            r.bare = bare
+            home = os.path.join(tmp, "home-" + name)
+            os.makedirs(home)
+            return r, {"HOME": home, "CLAUDE_CODE_SESSION_ID": name, "SPECS_PATH": r.path}
+
+        def seed(env, command, **fields):
+            """A record as start saves one, its env_line from env_line(<the clone>)."""
+            specs = fields.pop("specs", env["SPECS_PATH"])
+            rec = dict(specs=specs, env_line=env_line(specs), gate="pass", top=os.path.realpath(specs), default="main",
+                       default_ref="origin/main", remote="origin", mode="off", branch="main", stage="done",
+                       args={"specs": specs, "keys": [], "commit_key": None, "register_rebuild": None})
+            rec.update(fields)
+            with in_env(env):
+                session = env["CLAUDE_CODE_SESSION_ID"]
+                state.save(session, command, state.new(command, session=session, **rec))
+
+        def record(env, command):
+            with in_env(env):
+                return state.load(env["CLAUDE_CODE_SESSION_ID"], command)
+
+        def run_end(env, command, *args, specs=None, stdin=b""):
+            return cli("--specs", env["SPECS_PATH"] if specs is None else specs, "end", "--command", command, *args,
+                       env=env, stdin=stdin)
+
+        def on_origin(r, branch="main"):
+            p = subprocess.run(["git", "-C", r.bare, "rev-parse", "--verify", "-q", "refs/heads/" + branch],
+                               stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            return p.stdout.decode().strip() or None
+
+        def clone(r, name):
+            path = os.path.join(tmp, name)
+            subprocess.run(["git", "clone", "-q", r.bare, path], check=True, stderr=subprocess.DEVNULL)
+            o = Repo(path)
+            o.git("config", "user.email", "o@example.invalid")
+            o.git("config", "user.name", "o")
+            o.git("config", "commit.gpgsign", "false")
+            return o
+
+        def hook(path, body):
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write("#!/bin/sh\n" + body)
+            os.chmod(path, 0o755)
+
+        def head(r):
+            return r.git("rev-parse", "HEAD")
+
+        def files(n):
+            return "1 file" if n == 1 else "%d files" % n
+
+        def pushed_default(sha7, specs, n=1):
+            return ("Specs repo: committed %s (%s) on main — pushed straight to main, and no pull request was opened: this "
+                    "plugin lands its session files there without review; to land them through a pull request of your own "
+                    "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true"
+                    % (sha7, files(n), specs))
+
+        def refused_tail(branch, specs, record_text, clear):
+            return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
+                    "git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
+                    "standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes to %s again, %s"
+                    % (branch, specs, today, branch, specs, today, branch, specs, branch, branch, clear))
+
+        def appended(paths_text):
+            return "; the deliverable at %s remains uncommitted, as you asked" % paths_text
+
+        def plugin_world(name, pushed=True):
+            r, env = world(tmp, name)
+            r.git("switch", "-q", "-c", PLUGIN)
+            if pushed:
+                r.git("push", "-q", "-u", "origin", PLUGIN)
+            return r, env
+
+        # e_nothing
+        r, env = world(tmp, "e-nothing")
+        seed(env, "/create-ard")
+        got = run_end(env, "/create-ard")
+        check(got["_rc"] == 0 and got.get("row") == "nothing" and got.get("print") == [NOTHING] and got.get("line") == NOTHING
+              and got.get("record") == "found" and got.get("pushed") is False and got.get("sha7") is None
+              and got.get("next") is None and got.get("error") is None and record(env, "/create-ard") is None,
+              "e_nothing: a clean tree is nothing to commit, the record removed (%r)" % got)
+        check({k for k in got if not k.startswith("_")} == FIELDS, "e_nothing: the full field set (%r)" % sorted(got))
+
+        # e_pushed_default
+        r, env = world(tmp, "e-pushed-default")
+        seed(env, "/create-ard")
+        r.write(RESUME, "resume\n")
+        got = run_end(env, "/create-ard", "--commit-key", "ACME-1")
+        h = head(r)
+        want = pushed_default(h[:7], r.path)
+        check(got["_rc"] == 0 and got.get("row") == "pushed-default" and got.get("print") == [want] and got.get("line") == want
+              and got.get("sha7") == h[:7] and got.get("files") == 1 and got.get("branch") == "main"
+              and got.get("pushed") is True and record(env, "/create-ard") is None,
+              "e_pushed_default: committed, pushed straight to main, (1 file) (%r)" % got)
+        check(r.git("log", "-1", "--format=%s") == "ACME-1 Add dev-workflows session artifacts (/create-ard)"
+              and "Co-Authored-By" not in r.git("log", "-1", "--format=%B"),
+              "e_pushed_default: the subject carries the key and no trailer (%r)" % r.git("log", "-1", "--format=%B"))
+        check(on_origin(r) == h and r.git("status", "--porcelain") == "", "e_pushed_default: origin/main holds it, the tree clean")
+        r.write(RESUME, "resume 2\n")
+        seed(env, "/create-ard")
+        got = run_end(env, "/create-ard")
+        check(got.get("row") == "pushed-default"
+              and r.git("log", "-1", "--format=%s") == "NOISSUE Add dev-workflows session artifacts (/create-ard)",
+              "e_pushed_default: no --commit-key opens the subject NOISSUE (%r)" % got)
+
+        # e_pushed_plugin
+        r, env = plugin_world("e-pushed-plugin")
+        seed(env, "/create-prd", branch=PLUGIN)
+        r.write(RESUME, "resume\n")
+        got = run_end(env, "/create-prd", "--commit-key", "ACME-1")
+        h = head(r)
+        check(got.get("row") == "pushed-plugin" and got.get("print") == ["Specs repo: committed %s (1 file) on %s — pushed"
+                                                                          % (h[:7], PLUGIN)]
+              and on_origin(r, PLUGIN) == h and got.get("branch") == PLUGIN, "e_pushed_plugin (%r)" % got)
+        r, env = plugin_world("e-pushed-plugin-no-upstream", pushed=False)
+        r.git("push", "-q", "origin", PLUGIN)
+        r.write(RESUME, "resume\n")
+        got = run_end(env, "/create-prd")
+        check(got.get("row") == "pushed-plugin" and on_origin(r, PLUGIN) == head(r)
+              and r.git("config", "--get", "branch.%s.merge" % PLUGIN, check=False) == "refs/heads/" + PLUGIN,
+              "e_pushed_plugin: a branch pushed with no upstream is pushed with -u (%r)" % got)
+
+        # e_not_ours
+        r, env = world(tmp, "e-not-ours")
+        r.git("switch", "-q", "-c", "feature/x")
+        block = lines.fill("g2", {"<SPECS_PATH>": r.path, "<branch>": "feature/x", "<default>": "main"})
+        seed(env, "/specify", guard="G2", guard_block=block, branch="feature/x")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/specify")
+        h = head(r)
+        want = ("Specs repo: committed %s (1 file) on feature/x — not pushed: this plugin pushes only the default branch and "
+                "the branches it creates, so feature/x is yours to push; the artifacts reach the maintainer when you push or "
+                "merge it" % h[:7])
+        check(got.get("row") == "not-ours" and got.get("print") == [want, block] and on_origin(r, "feature/x") is None,
+              "e_not_ours: the row, then G2's block verbatim (%r)" % got)
+
+        # e_no_remote
+        r, env = world(tmp, "e-no-remote")
+        r.git("remote", "remove", "origin")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/feedback")
+        check(got.get("record") == "missing" and got.get("row") == "no-remote" and got.get("print") == [
+            "Specs repo: committed %s (1 file) on main — not pushed: this specs repo has no origin remote" % head(r)[:7]],
+              "e_no_remote (%r)" % got)
+
+        # e_elsewhere
+        r, env = world(tmp, "e-elsewhere")
+        r.git("config", "branch.main.pushRemote", "fork")
+        for remote in ("fork", "upstream"):
+            if remote == "upstream":
+                r.git("config", "--unset", "branch.main.pushRemote")
+                r.git("config", "remote.pushDefault", "upstream")
+            seed(env, "/feedback")
+            r.write(RESUME, "r %s\n" % remote)
+            got = run_end(env, "/feedback")
+            want = ("Specs repo: committed %s (1 file) on main — not pushed: your git configuration pushes main to %s, not "
+                    "to origin, which is the remote this plugin reads; push it where it belongs yourself" % (head(r)[:7], remote))
+            check(got.get("row") == "elsewhere" and got.get("print") == [want] and on_origin(r) != head(r),
+                  "e_elsewhere: %s (%r)" % (remote, got))
+
+        # e_remote_deleted
+        r, env = plugin_world("e-remote-deleted")
+        subprocess.run(["git", "-C", r.bare, "update-ref", "-d", "refs/heads/" + PLUGIN], check=True)
+        seed(env, "/create-prd", branch=PLUGIN)
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-prd")
+        want = ("Specs repo: committed %s (1 file) on %s — not pushed: origin has no %s any more, so it was renamed or "
+                "deleted there, and this step does not recreate it; the commit stays on local %s"
+                % (head(r)[:7], PLUGIN, PLUGIN, PLUGIN))
+        check(got.get("row") == "remote-deleted" and got.get("print") == [want] and on_origin(r, PLUGIN) is None,
+              "e_remote_deleted: a plugin branch origin deleted (%r)" % got)
+        r, env = world(tmp, "e-remote-deleted-default")
+        subprocess.run(["git", "-C", r.bare, "update-ref", "-d", "refs/heads/main"], check=True)
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-ard")
+        want = ("Specs repo: committed %s (1 file) on main — not pushed: origin has no main any more, so it was renamed or "
+                "deleted there, and this step does not recreate it; the commit stays on local main; if origin renamed it, "
+                "git -C \"%s\" remote set-head origin --auto names the new one" % (head(r)[:7], r.path))
+        check(got.get("row") == "remote-deleted" and got.get("print") == [want] and on_origin(r) is None,
+              "e_remote_deleted: the default branch's form, with its set-head tail (%r)" % got)
+
+        # e_origin_lacks
+        r, env = plugin_world("e-origin-lacks", pushed=False)
+        seed(env, "/create-prd", branch=PLUGIN)
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-prd")
+        want = ("Specs repo: committed %s (1 file) on %s — not pushed: origin has no %s, and this plugin puts a branch of "
+                "its own there only by handing off its deliverable; the commit stays on local %s until a later handoff of "
+                "%s pushes the branch, or you run git -C \"%s\" push -u origin %s"
+                % (head(r)[:7], PLUGIN, PLUGIN, PLUGIN, PLUGIN, r.path, PLUGIN))
+        check(got.get("row") == "origin-lacks" and got.get("print") == [want] and on_origin(r, PLUGIN) is None,
+              "e_origin_lacks (%r)" % got)
+
+        # e_refused_before
+        r, env = plugin_world("e-refused-before")
+        pushed_tip = head(r)
+        rec_file = os.path.join(r.path, ".git", "workflows", "push-refused", "prd", "ACME-1-x")
+        os.makedirs(os.path.dirname(rec_file))
+
+        def refused_before(sha7, date, record_text, clear):
+            return ("Specs repo: committed %s (1 file) on %s — not pushed: origin refused pushes to %s on %s (%s), and every "
+                    "commit since stays on local %s; " % (sha7, PLUGIN, PLUGIN, date, record_text, PLUGIN)
+                    + refused_tail(PLUGIN, r.path, record_text, clear))
+
+        for body, date in (("2026-11-01\n", "2026-11-01"), ("", "an earlier run")):
+            with open(rec_file, "w", encoding="utf-8") as fh:
+                fh.write(body)
+            seed(env, "/create-prd", branch=PLUGIN)
+            r.write(RESUME, "r %s\n" % date)
+            got = run_end(env, "/create-prd")
+            check(got.get("row") == "refused-before"
+                  and got.get("print") == [refused_before(head(r)[:7], date, rec_file, "rm \"%s\"" % rec_file)]
+                  and on_origin(r, PLUGIN) == pushed_tip,
+                  "e_refused_before: the record file holding %r names %s and its path (%r)" % (body, date, got))
+        os.remove(rec_file)
+        key = "branch.%s.workflowsPushRefused" % PLUGIN
+        r.git("config", key, "2026-11-02")
+        seed(env, "/create-prd", branch=PLUGIN)
+        r.write(RESUME, "r config\n")
+        got = run_end(env, "/create-prd")
+        check(got.get("row") == "refused-before" and got.get("print") == [refused_before(
+            head(r)[:7], "2026-11-02", key, "git -C \"%s\" config --unset %s" % (r.path, key))] and "rm \"" not in got["line"],
+              "e_refused_before: the configuration-key form names the key and its config --unset (%r)" % got)
+
+        # e_push_refused
+        r, env = plugin_world("e-push-refused")
+        hook(os.path.join(r.bare, "hooks", "pre-receive"), "echo refused by policy >&2\nexit 1\n")
+        rec_file = os.path.join(r.path, ".git", "workflows", "push-refused", "prd", "ACME-1-x")
+        opening = ("Specs repo: committed %s (1 file) on %s — push REFUSED by origin (pre-receive hook declined): a rule "
+                   "there takes no push of %s, ")
+        seed(env, "/create-prd", branch=PLUGIN)
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-prd")
+        want = (opening % (head(r)[:7], PLUGIN, PLUGIN) + "so this is recorded and no later run pushes it; "
+                + refused_tail(PLUGIN, r.path, rec_file, "rm \"%s\"" % rec_file))
+        check(got.get("row") == "push-refused" and got.get("print") == [want] and got.get("pushed") is False
+              and os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_today + "\n",
+              "e_push_refused: refused, the record file written under the common git directory with today's date (%r)" % got)
+        shutil.rmtree(os.path.join(r.path, ".git", "workflows"))
+        with open(os.path.join(r.path, ".git", "workflows"), "w", encoding="utf-8") as fh:
+            fh.write("a file where the record's directory would go\n")
+        seed(env, "/create-prd", branch=PLUGIN)
+        r.write(RESUME, "r2\n")
+        got = run_end(env, "/create-prd")
+        want = (opening % (head(r)[:7], PLUGIN, PLUGIN) + "so this is recorded and no later run pushes it; "
+                + refused_tail(PLUGIN, r.path, key, "git -C \"%s\" config --unset %s" % (r.path, key)))
+        check(got.get("row") == "push-refused" and got.get("print") == [want] and r.git("config", "--get", key) == local_today,
+              "e_push_refused: the file cannot be written, so the configuration key is (%r)" % got)
+        r.git("config", "--unset", key)
+        lock = os.path.join(r.path, ".git", "config.lock")
+        open(lock, "w").close()
+        seed(env, "/create-prd", branch=PLUGIN)
+        r.write(RESUME, "r3\n")
+        got = run_end(env, "/create-prd")
+        os.remove(lock)
+        line = got.get("line") or ""
+        check(got.get("row") == "push-refused" and line.startswith(opening % (head(r)[:7], PLUGIN, PLUGIN)
+                                                                     + "but this could not be recorded (")
+              and line.endswith(", the configuration write's), so a later run pushes %s again" % PLUGIN)
+              and "to land the commits" not in line and "rm \"" not in line
+              and r.git("config", "--get", key, check=False) == "",
+              "e_push_refused: neither can be written, so the row says so and names no remedy (%r)" % got)
+
+        # e_scope
+        r, env = world(tmp, "e-scope")
+        r.write("notes.md", "n\n")
+        user = r.commit_all("Add notes")
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-ard")
+        want = ("Specs repo: committed %s (1 file) on main — not pushed: the push would also publish commits that are not "
+                "this plugin's session-file commits, the oldest %s Add notes, which carries notes.md; push main once they "
+                "are ready to go, and the artifacts go with them" % (head(r)[:7], user[:7]))
+        check(got.get("row") == "scope" and got.get("print") == [want] and on_origin(r) != head(r),
+              "e_scope: the user's unpushed commit, its sha7, subject and path (%r)" % got)
+        r, env = world(tmp, "e-scope-merge")
+        r.git("switch", "-q", "-c", "side")
+        r.write("specifications/PRD-ACME-1-x/dev-workflows/feedback/x.md", "f\n")
+        r.commit_all("side feedback")
+        r.git("switch", "-q", "main")
+        r.git("merge", "-q", "--no-ff", "-m", "Merge side", "side")
+        merge = head(r)
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-ard")
+        check(got.get("row") == "scope" and got.get("line") == (
+            "Specs repo: committed %s (1 file) on main — not pushed: the push would also publish commits that are not this "
+            "plugin's session-file commits, the oldest %s Merge side, which is a merge commit; push main once they are "
+            "ready to go, and the artifacts go with them" % (head(r)[:7], merge[:7])),
+              "e_scope: a merge commit (%r)" % got)
+        generating = ("echo gen > generated.txt\necho g2 > gen2.txt\ngit add generated.txt gen2.txt\n")
+
+        def hook_row(sha7):
+            # git lists a commit's paths in byte order, gen2.txt before generated.txt, and the first is the one named
+            return ("Specs repo: committed %s (3 files) on main — not pushed: a pre-commit hook added gen2.txt, and 1 more "
+                    "to this commit, so it carries more than this plugin's session files; check what the hook added before "
+                    "you push main" % sha7)
+
+        def hook_line(sha7):
+            return "Specs repo: generated.txt is now committed in %s, put there by a pre-commit hook, and not pushed" % sha7
+
+        r, env = world(tmp, "e-scope-hook")
+        hook(os.path.join(r.path, ".git", "hooks", "pre-commit"), generating)
+        r.write("generated.txt", "mine\n")
+        block = lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": 1, "<path list>": "generated.txt"})
+        seed(env, "/specify", guard="G1", guard_block=block, guard_paths=["generated.txt"])
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/specify")
+        h = head(r)
+        check(got.get("row") == "scope" and got.get("print") == [hook_row(h[:7]), block, hook_line(h[:7])]
+              and on_origin(r) != h, "e_scope: the hook variant, the block, then the hook line (%r)" % got)
+        check(r.git("status", "--porcelain") == "",
+              "e_scope: the index is brought back in step with HEAD after the hook (%r)" % r.git("status", "--porcelain"))
+        r, env = world(tmp, "e-scope-hook-declined")
+        hook(os.path.join(r.path, ".git", "hooks", "pre-commit"), generating)
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/specify", "--declined", "generated.txt")
+        h = head(r)
+        check(got.get("row") == "scope" and got.get("print") == [hook_row(h[:7]), hook_line(h[:7])],
+              "e_scope: a hook path the declined paths name gets the hook line, and no append now it is committed (%r)" % got)
+        r, env = world(tmp, "e-scope-hook-plain")
+        hook(os.path.join(r.path, ".git", "hooks", "pre-commit"), generating)
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/specify")
+        check(got.get("row") == "scope" and got.get("print") == [hook_row(head(r)[:7])],
+              "e_scope: no hook line where neither the block nor the declined paths name a hook path (%r)" % got)
+
+        # e_push_failed
+        r, env = world(tmp, "e-push-failed")
+        missing = os.path.join(tmp, "e-push-failed-missing.git")
+        r.git("remote", "set-url", "origin", missing)
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-ard")
+        want = ("Specs repo: committed %s (1 file) on main — push FAILED (fatal: '%s' does not appear to be a git "
+                "repository); the commit is local and a later run retries it" % (head(r)[:7], missing))
+        check(got.get("row") == "failed" and got.get("print") == [want] and got.get("pushed") is False,
+              "e_push_failed: git's reason (%r)" % got)
+
+        # e_locked
+        r, env = world(tmp, "e-locked")
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        h = head(r)
+        lock = os.path.join(r.path, ".git", "index.lock")
+        open(lock, "w").close()
+        got = run_end(env, "/create-ard")
+        staged = r.git("diff", "--cached", "--name-only")
+        os.remove(lock)
+        check(got.get("row") == "locked" and got.get("print") == [
+            "Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up"]
+              and staged == "" and head(r) == h, "e_locked: nothing staged, nothing committed (%r)" % got)
+
+        # e_commit_failed
+        r, env = world(tmp, "e-commit-failed")
+        hook(os.path.join(r.path, ".git", "hooks", "pre-commit"), "echo hook says no >&2\nexit 1\n")
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        h = head(r)
+        got = run_end(env, "/create-ard")
+        check(got.get("row") == "commit-failed" and got.get("print") == [
+            "Specs repo: NOT COMMITTED — the commit failed (hook says no); the artifacts stay staged, and a later run commits "
+            "them once git accepts the commit (a merge concluded, a hook satisfied)"]
+              and head(r) == h and r.git("diff", "--cached", "--name-only") == RESUME,
+              "e_commit_failed: the hook's output, the session file still staged (%r)" % got)
+
+        # e_blocked
+        r, env = world(tmp, "e-blocked")
+        h = head(r)
+        r.git("switch", "-q", "--detach")
+        g0 = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": today, "<branch>": "main"})
+        seed(env, "/specify", specs_git="blocked", guard="G0", guard_block=g0, branch=None)
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/specify")
+        check(got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0] and head(r) == h
+              and record(env, "/specify") is None, "e_blocked: a record carrying blocked repeats G0's block (%r)" % got)
+        got = run_end(env, "/specify", "--no-preflight")
+        check(got.get("record") == "missing" and got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0]
+              and head(r) == h and "?? " + RESUME in r.git("status", "--porcelain", "--untracked-files=all"),
+              "e_blocked: no record, a detached HEAD and something to stage prints G0's block the first time (%r)" % got)
+        os.remove(os.path.join(r.path, RESUME))
+        got = run_end(env, "/specify", "--no-preflight")
+        check(got.get("row") == "nothing" and got.get("print") == [NOTHING], "e_blocked: nothing to stage is nothing (%r)" % got)
+
+        # e_misrooted
+        r, env = world(tmp, "e-misrooted")
+        notice = ["SPECS_PATH_INSIDE_TREE: the notice the run's start printed", "Misrooted runs left: what it left"]
+        seed(env, "/specify", specs_git="misrooted", misrooted_notice=notice)
+        r.write(RESUME, "r\n")
+        h = head(r)
+        got = run_end(env, "/specify")
+        check(got.get("row") == "misrooted" and got.get("print") == [MIS] + notice and head(r) == h
+              and record(env, "/specify") is None, "e_misrooted: the record's notice, verbatim (%r)" % got)
+        changed = ("Environment changed: started in SPECS_PATH=/a (origin none), REPOS_PATH=unset, now SPECS_PATH=/b "
+                   "(origin none), REPOS_PATH=unset — nothing more is committed, handed off or recorded here, and what this "
+                   "run already wrote stays where it is. Re-run in the container the run started in.")
+        got = run_end(env, "/specify", "--no-preflight", "--misrooted-stdin", stdin=(changed + "\n").encode("utf-8"))
+        check(got.get("record") == "missing" and got.get("row") == "misrooted" and got.get("print") == [MIS, changed]
+              and head(r) == h, "e_misrooted: --misrooted-stdin's notice, verbatim (%r)" % got)
+        got = run_end(env, "/specify", "--no-preflight", "--misrooted-stdin", stdin=b"")
+        check(got.get("row") == "misrooted" and got.get("print") == [MIS] and head(r) == h,
+              "e_misrooted: empty stdin is the row and nothing after it (%r)" % got)
+
+        # e_env_changed
+        r, env = world(tmp, "e-env-changed")
+        recorded = env_line(r.path)
+        r.write(RESUME, "r\n")
+        h = head(r)
+
+        def env_changed(now):
+            return ("Environment changed: started in %s, now %s — nothing more is committed, handed off or recorded here, "
+                    "and what this run already wrote stays where it is. Re-run in the container the run started in."
+                    % (recorded[len("Environment: "):], now[len("Environment: "):]))
+
+        seed(env, "/create-ard")
+        got = run_end(env, "/create-ard", specs="")
+        check(got.get("record") == "found" and got.get("row") == "misrooted"
+              and got.get("print") == [MIS, env_changed(env_line(""))] and head(r) == h,
+              "e_env_changed: --specs \"\" against a recorded path (%r)" % got)
+        other = new_repo(tmp, "e-env-other")
+        seed(env, "/create-ard")
+        got = run_end(env, "/create-ard", specs=other.path)
+        check(got.get("row") == "misrooted" and got.get("print") == [MIS, env_changed(env_line(other.path))]
+              and head(r) == h and other.git("log", "--format=%s") == "init",
+              "e_env_changed: another repository (%r)" % got)
+        seed(env, "/create-ard", env_line=recorded.partition("), REPOS_PATH=")[0] + "), REPOS_PATH=/repos/elsewhere")
+        got = run_end(env, "/create-ard")
+        check(got.get("record") == "found" and got.get("row") == "pushed-default" and on_origin(r) == head(r) != h,
+              "e_env_changed: a line differing only in its REPOS_PATH half commits (%r)" % got)
+
+        # e_d3_below_top
+        r, env = world(tmp, "e-d3")
+        r.write("specs/specifications/PRD-ACME-1-x/prd.md", "---\nkind: prd\nkey: ACME-1\n---\n")
+        r.commit_all("a nested specs tree")
+        r.write("specs/specifications/PRD-ACME-1-x/dev-workflows/resume.md", "r\n")
+        h = head(r)
+        specs = os.path.join(r.path, "specs")
+        got = run_end(env, "/create-ard", "--no-preflight", specs=specs)
+        want = ("Specs preflight: SPECS_PATH is %s, below the top level of its repository (%s) — a specs tree inside a "
+                "larger repository is unsupported, because this plugin switches branches and commits in the repository "
+                "SPECS_PATH belongs to, so this run switches and commits nothing there; set SPECS_PATH to a dedicated "
+                "specs repository's top level." % (specs, r.git("rev-parse", "--show-toplevel")))
+        check(got.get("record") == "missing" and got.get("row") == "misrooted" and got.get("print") == [MIS, want]
+              and head(r) == h, "e_d3_below_top: the below-top-level notice, nothing committed (%r)" % got)
+
+        # e_declined_only
+        r, env = world(tmp, "e-declined-only")
+        ard = "specifications/PRD-ACME-1-x/ard.md"
+        got = cli("declined", "--command", "/create-ard", "--path", ard, env=env)
+        r.write(ard, "ard\n")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-ard")
+        check(got.get("record") == "declined-only" and got.get("row") == "pushed-default"
+              and got.get("line") == pushed_default(head(r)[:7], r.path) + appended(ard)
+              and on_origin(r) == head(r) and record(env, "/create-ard") is None,
+              "e_declined_only: the no-preflight path, the commit made, the declined append (%r)" % got)
+
+        # e_silent
+        plain = os.path.join(tmp, "e-silent-plain")
+        os.makedirs(plain)
+        env = {"HOME": os.path.join(tmp, "home-e-silent"), "CLAUDE_CODE_SESSION_ID": "e-silent", "SPECS_PATH": plain}
+        os.makedirs(env["HOME"])
+        got = run_end(env, "/feedback")
+        check(got["_rc"] == 0 and got.get("row") == "silent" and got.get("print") == [] and got.get("line") is None
+              and got.get("record") == "missing", "e_silent: no repository and no flag prints nothing (%r)" % got)
+
+        # e_declined
+        r, env = world(tmp, "e-declined")
+        r.git("rm", "-q", PRD)
+        r.git("commit", "-q", "-m", "drop the PRD")
+        r.git("push", "-q", "origin", "main")
+        ab = "specifications/PRD-ACME-1-x/a b.md"
+        r.write(PRD, "prd\n")
+        r.write(ab, "ab\n")
+        seed(env, "/create-prd", declined=[PRD, ab])
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-prd")
+        check((got.get("line") or "").endswith(appended("%s, %s" % (PRD, ab))),
+              "e_declined: both declined paths, in the record's order (%r)" % got)
+        r.git("add", PRD)
+        r.git("commit", "-q", "-m", "ACME-1 the PRD, committed by hand")
+        seed(env, "/create-prd", declined=[PRD, ab])
+        r.write(RESUME, "r2\n")
+        got = run_end(env, "/create-prd")
+        check((got.get("line") or "").endswith(appended(ab)), "e_declined: only what is still uncommitted (%r)" % got)
+        four = [ab, "specifications/PRD-ACME-1-x/c.md", "specifications/PRD-ACME-1-x/zahlungsauslösung.md",
+                "specifications/PRD-ACME-1-x/d e.md"]
+        for p in four[1:]:
+            r.write(p, "x\n")
+        seed(env, "/create-prd", declined=four)
+        r.write(RESUME, "r3\n")
+        got = run_end(env, "/create-prd")
+        check((got.get("line") or "").endswith(appended("4 files under specifications/PRD-ACME-1-x")),
+              "e_declined: four paths in one folder (%r)" % got)
+        r, env = world(tmp, "e-declined-flag")
+        r.git("rm", "-q", PRD)
+        r.git("commit", "-q", "-m", "drop the PRD")
+        r.git("push", "-q", "origin", "main")
+        r.write(PRD, "prd\n")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-prd", "--declined", PRD)
+        check(got.get("record") == "missing" and got.get("line") == pushed_default(head(r)[:7], r.path) + appended(PRD),
+              "e_declined: no record and --declined (%r)" % got)
+
+        # e_two_sessions
+        r, env = world(tmp, "e-two")
+        e1, e2 = dict(env, CLAUDE_CODE_SESSION_ID="s1"), dict(env, CLAUDE_CODE_SESSION_ID="s2")
+        seed(e1, "/specify", specs_git="misrooted", misrooted_notice=["s1's notice"])
+        r.write("notes.md", "n\n")
+        block = lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": 1, "<path list>": "notes.md"})
+        seed(e2, "/specify", guard="G1", guard_block=block, guard_paths=["notes.md"])
+        with in_env(e1):
+            s1_file = state.path("s1", "/specify")
+        before = open(s1_file, encoding="utf-8").read()
+        r.write(RESUME, "r\n")
+        got = run_end(e2, "/specify")
+        check(got.get("row") == "pushed-default" and got.get("print") == [pushed_default(head(r)[:7], r.path), block]
+              and open(s1_file, encoding="utf-8").read() == before and record(e2, "/specify") is None,
+              "e_two_sessions: s2 commits with its own block; s1's record untouched (%r)" % got)
+
+        # e_stale_no_preflight
+        r, env = world(tmp, "e-stale")
+        seed(env, "/create-ard", specs_git="misrooted", misrooted_notice=["a stale run's notice"])
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-ard", "--no-preflight")
+        check(got.get("record") == "ignored" and got.get("row") == "pushed-default" and on_origin(r) == head(r)
+              and record(env, "/create-ard") is None and "a stale run's notice" not in got.get("print", []),
+              "e_stale_no_preflight: the stale record ignored and removed, the commit made (%r)" % got)
+
+        # e_missing_record
+        r, env = world(tmp, "e-missing")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/feedback")
+        check(got.get("record") == "missing" and got.get("row") == "pushed-default" and on_origin(r) == head(r)
+              and record(env, "/feedback") is None, "e_missing_record: run as the no-preflight path (%r)" % got)
+
+        # e_catch_up
+        r, env = world(tmp, "e-catch-up")
+        o = clone(r, "e-catch-up-other")
+        o.write("other.md", "o\n")
+        theirs = o.commit_all("NOISSUE another clone's change")
+        o.git("push", "-q", "origin", "main")
+        r.git("fetch", "-q", "origin")
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-ard")
+        check(got.get("row") == "pushed-default" and r.git("rev-parse", "HEAD~1") == theirs and on_origin(r) == head(r)
+              and got.get("print") == [pushed_default(head(r)[:7], r.path)],
+              "e_catch_up: main fast-forwarded before the commit, the push lands (%r)" % got)
+        o.git("pull", "-q", "--ff-only", "origin", "main")
+        o.write("other2.md", "o\n")
+        o.commit_all("NOISSUE another")
+        o.git("push", "-q", "origin", "main")
+        r.git("fetch", "-q", "origin")
+        missing = os.path.join(tmp, "e-catch-up-missing.git")
+        r.git("remote", "set-url", "origin", missing)
+        seed(env, "/create-ard")
+        r.write(RESUME, "r2\n")
+        got = run_end(env, "/create-ard")
+        check(got.get("row") == "failed" and len(got.get("print", [])) == 2 and got["print"][0] == (
+            "Specs preflight: could not fast-forward main (fatal: '%s' does not appear to be a git repository); the run "
+            "goes on from it as it stands" % missing) and got["print"][1] == got.get("line"),
+              "e_catch_up: a failed catch-up prints its line before the outcome line (%r)" % got)
+
+        # e_nonff
+        r, env = world(tmp, "e-nonff")
+        seed(env, "/create-ard")
+        o = clone(r, "e-nonff-other")
+        o.write("other.md", "o\n")
+        o.commit_all("NOISSUE another clone's change")
+        o.git("push", "-q", "origin", "main")
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-ard")
+        h = head(r)
+        nxt = got.get("next") or {}
+        rec = record(env, "/create-ard") or {}
+        check(got["_rc"] == 0 and got.get("row") is None and got.get("print") == [] and got.get("line") is None
+              and nxt.get("run", "").startswith("python3 ")
+              and " --specs %s replay --for end --command /create-ard --branch main" % r.path in nxt.get("run", "")
+              and "--set-upstream" not in nxt.get("run", "") and nxt.get("timeout_ms") == 420000
+              and nxt.get("on_timeout") == nxt.get("run", "") + " --timed-out" and got.get("sha7") == h[:7],
+              "e_nonff: next names the replay, in a call of its own (%r)" % got)
+        check(rec.get("stage") == "end-replay" and (rec.get("end_commit") or {}).get("sha7") == h[:7]
+              and rec["end_commit"].get("branch") == "main" and rec["end_commit"].get("files") == 1
+              and rec["end_commit"].get("paths") == [RESUME] and rec["end_commit"].get("hook_paths") == [],
+              "e_nonff: the record holds end_commit at stage end-replay (%r)" % rec)
+        r, env = plugin_world("e-nonff-upstream", pushed=False)
+        r.git("push", "-q", "origin", PLUGIN)
+        o = clone(r, "e-nonff-upstream-other")
+        o.git("switch", "-q", PLUGIN)
+        o.write("specifications/PRD-ACME-1-x/dev-workflows/feedback/o.md", "o\n")
+        o.commit_all("NOISSUE another clone's feedback")
+        o.git("push", "-q", "origin", PLUGIN)
+        r.write(RESUME, "r\n")
+        got = run_end(env, "/create-prd")
+        check((got.get("next") or {}).get("run", "").endswith(" --branch %s --set-upstream" % PLUGIN),
+              "e_nonff: --set-upstream where the push carried -u (%r)" % got)
+
+        # e_resume
+        r, env = world(tmp, "e-resume")
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        real_check = g["push_check"]
+
+        def killed(*args, **kw):
+            raise KeyboardInterrupt
+
+        stopped = False
+        g["push_check"] = killed
+        try:
+            with in_env(env):
+                end(r.path, "/create-ard")
+        except KeyboardInterrupt:
+            stopped = True
+        finally:
+            g["push_check"] = real_check
+        h = head(r)
+        count = r.git("rev-list", "--count", "HEAD")
+        rec = record(env, "/create-ard") or {}
+        check(stopped and (rec.get("end_commit") or {}).get("sha7") == h[:7] and on_origin(r) != h,
+              "e_resume: stopped right after its commit, which the record holds (%r)" % rec)
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "pushed-default" and got.get("sha7") == h[:7] and got.get("print") == [pushed_default(h[:7], r.path)]
+              and r.git("rev-list", "--count", "HEAD") == count and on_origin(r) == h and record(env, "/create-ard") is None,
+              "e_resume: the commit is not made again, the push lands (%r)" % got)
+        r, env = world(tmp, "e-resume-after-push")
+        subprocess.run(["git", "-C", r.bare, "config", "core.logAllRefUpdates", "true"], check=True)
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+        real_push = g["push"]
+
+        def push_then_killed(*args, **kw):
+            real_push(*args, **kw)
+            raise KeyboardInterrupt
+
+        def updates():
+            p = subprocess.run(["git", "-C", r.bare, "reflog", "show", "refs/heads/main"], stdout=subprocess.PIPE)
+            return len(p.stdout.decode().splitlines())
+
+        stopped = False
+        g["push"] = push_then_killed
+        try:
+            with in_env(env):
+                end(r.path, "/create-ard")
+        except KeyboardInterrupt:
+            stopped = True
+        finally:
+            g["push"] = real_push
+        h = head(r)
+        landed = updates()
+        check(stopped and on_origin(r) == h and landed == 1, "e_resume_after_push: stopped right after its push landed")
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "pushed-default" and got.get("sha7") == h[:7] and got.get("pushed") is True
+              and updates() == landed and on_origin(r) == h and record(env, "/create-ard") is None,
+              "e_resume_after_push: [up to date] reads as pushed, nothing pushed twice (%r)" % got)
+        r.write(RESUME, "r stale\n")
+        seed(env, "/create-ard", end_commit={"sha7": "0000000", "files": 1, "branch": "main", "paths": [RESUME],
+                                             "hook_paths": []}, stage="end")
+        with in_env(env):
+            rec = state.load(env["CLAUDE_CODE_SESSION_ID"], "/create-ard")
+            rec["updated"] = time.strftime(state.STAMP, time.gmtime(time.time() - 20 * 60))
+            with open(state.path(env["CLAUDE_CODE_SESSION_ID"], "/create-ard"), "w", encoding="utf-8") as fh:
+                json.dump(rec, fh)
+        got = run_end(env, "/create-ard", "--resume")
+        check(got.get("row") == "pushed-default" and got.get("sha7") == head(r)[:7] != "0000000"
+              and on_origin(r) == head(r), "e_resume: an end_commit saved 20 minutes ago runs from step 1 (%r)" % got)
+
+        # e_exit2
+        r, env = world(tmp, "e-exit2")
+        r.write(RESUME, "r\n")
+
+        def snapshot():
+            return (r.git("status", "--porcelain"), head(r), r.git("for-each-ref"),
+                    subprocess.run(["git", "-C", r.bare, "for-each-ref"], stdout=subprocess.PIPE).stdout)
+
+        before = snapshot()
+        got = cli("--specs", r.path, "end", "--command", "/create-ard",
+                  env={k: v for k, v in env.items() if k != "CLAUDE_CODE_SESSION_ID"}, stdin=b"")
+        check(one_not_run_line(got) and snapshot() == before and not os.path.exists(os.path.join(env["HOME"], ".claude")),
+              "e_exit2: no session variable, exit 2, one line, nothing changed (%r)" % got)
+        for args, what in (((r.path, "/create-ard", "--commit-key", "acme-1"), "a lower-case key"),
+                           ((r.path, "/create-ard", "--commit-key", "ACME-1\n"), "a key with a newline"),
+                           ((r.path, "create-ard"), "a command without its slash"),
+                           ((r.path, "/create-ard", "--session-branch-created", "xyz"), "a creation that is no sha")):
+            got = cli("--specs", args[0], "end", "--command", *args[1:], env=env, stdin=b"")
+            check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: ") and snapshot() == before,
+                  "e_exit2: %s is a usage exit 2 (%r)" % (what, got))
+        got = cli("end", "--command", "/create-ard", env=env, stdin=b"")
+        check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
+              "e_exit2: no --specs at all is a usage error (%r)" % got)
+        lone = os.path.join(tmp, "e-exit2-lone")
+        os.makedirs(lone)
+        shutil.copy(me, os.path.join(lone, "specs-git.py"))
+        shutil.copy(os.path.join(HERE, "session-branch.py"), os.path.join(lone, "session-branch.py"))
+        got = cli("--specs", r.path, "end", "--command", "/create-ard", env=env, stdin=b"",
+                  script=os.path.join(lone, "specs-git.py"))
+        check(one_not_run_line(got) and "specs_git_state" in got["_err"] and snapshot() == before,
+              "e_exit2: end without its modules exits 2 with one line naming the missing one (%r)" % got)
+        real_catch_up = g["catch_up"]
+
+        def unreadable(*args, **kw):
+            raise NotRun("a read failed")
+
+        raised = False
+        g["catch_up"] = unreadable
+        try:
+            with in_env(env):
+                end(r.path, "/create-ard")
+        except NotRun:
+            raised = True
+        finally:
+            g["catch_up"] = real_catch_up
+        check(raised and snapshot() == before, "e_exit2: a failure before the first repository write raises, so exit 2")
+
+        # e_error_after_write
+        r, env = world(tmp, "e-error")
+        seed(env, "/create-ard")
+        r.write(RESUME, "r\n")
+
+        def boom(*args, **kw):
+            raise RuntimeError("boom")
+
+        g["push_check"] = boom
+        try:
+            with in_env(env):
+                got = end(r.path, "/create-ard")
+        finally:
+            g["push_check"] = real_check
+        want = ("Specs repo: NOT FINISHED — the terminal step stopped early (RuntimeError: boom); what it committed or pushed "
+                "is as it left it, and the next run's preflight flushes the rest")
+        check(got.get("error") == "RuntimeError: boom" and got.get("line") == want and got.get("print") == [want]
+              and got.get("sha7") == head(r)[:7] and set(got) == FIELDS
+              and r.git("log", "-1", "--format=%s") == "NOISSUE Add dev-workflows session artifacts (/create-ard)",
+              "e_error_after_write: exit-0 result, error set, the commit made, the stopped line (%r)" % got)
+
+        # e_resolve_default
+        r, env = world(tmp, "e-resolve")
+        check(resolve_default(r.path, False) == {"default": "main", "default_ref": "origin/main", "remote": "origin",
+                                                 "offline": False}, "e_resolve_default: no origin/HEAD falls back to main")
+        r.git("branch", "trunk")
+        r.git("push", "-q", "origin", "trunk")
+        r.git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/trunk")
+        check(resolve_default(r.path, True) == {"default": "trunk", "default_ref": "origin/trunk", "remote": "origin",
+                                                "offline": False}, "e_resolve_default: origin/HEAD names it, fetched")
+        r.git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/renamed")
+        check(resolve_default(r.path, False)["default"] == "main",
+              "e_resolve_default: origin/HEAD naming a ref that does not exist falls back")
+        r.git("remote", "set-url", "origin", os.path.join(tmp, "e-resolve-missing.git"))
+        check(resolve_default(r.path, True)["offline"] is True, "e_resolve_default: a failed fetch is offline")
+        loc = new_repo(tmp, "e-resolve-local")
+        check(resolve_default(loc.path, True) == {"default": "main", "default_ref": "refs/heads/main", "remote": "none",
+                                                  "offline": False}, "e_resolve_default: no remote, the local ref, no fetch")
+        loc.git("branch", "-m", "main", "master")
+        check(resolve_default(loc.path, False)["default"] == "master", "e_resolve_default: then master")
+        loc.git("branch", "-m", "master", "work")
+        check(resolve_default(loc.path, False)["default"] == "work", "e_resolve_default: then the current branch")
+
+        # e_key_grammar
+        with open(ADDRESSING, encoding="utf-8") as fh:
+            addressing = fh.read()
+        section1 = addressing[addressing.index("## 1. Key grammar"):]
+        fence = section1[section1.index("```\n") + 4:section1.index("\n```", section1.index("```\n") + 4)]
+        check(fence == r"^[A-Z][A-Z0-9_]*(-\d+)+$" and "^" + KEY_RE.pattern.replace("[0-9]", r"\d") + "$" == fence,
+              "e_key_grammar: KEY_RE is addressing §1's grammar, \\d spelt [0-9] (%r)" % fence)
+        check(all(KEY_RE.fullmatch(k) for k in ("ACME-1", "ACME-90-01", "A_B2-7-1"))
+              and not any(KEY_RE.fullmatch(k) for k in ("acme-1", "ACME", "ACME-1\n", "ACME-١", "ACME-1-")),
+              "e_key_grammar: whole keys only, ASCII digits only")
+
+        # e_push_status: push() over canned --porcelain output, for the statuses no local origin gives
+        r, env = world(tmp, "e-push-status")
+        rec_file = os.path.join(r.path, ".git", "workflows", "push-refused", "main")
+        real_bounded = sb.git_bounded
+
+        def canned(status_line, rc=1):
+            out = ("To origin\n%s\nDone\n" % status_line) if status_line else ""
+            return lambda root, seconds, *args: subprocess.CompletedProcess(["git"] + list(args), rc, out.encode(), b"")
+
+        try:
+            for reason in TRANSIENT:
+                sb.git_bounded = canned("!\trefs/heads/main:refs/heads/main\t[remote rejected] (%s x)" % reason)
+                got = push(r.path, "main", False)
+                check(got["outcome"] == "failed" and got["reason"] == "[remote rejected] (%s x)" % reason
+                      and got["recorded"] is None and not os.path.exists(rec_file),
+                      "e_push_status: %r is a failed push, never a refusal (%r)" % (reason, got))
+            sb.git_bounded = canned(None, 124)
+            got = push(r.path, "main", False)
+            check(got["outcome"] == "failed" and got["reason"] == T["text.push-capped"], "e_push_status: capped (%r)" % got)
+            sb.git_bounded = canned("+\trefs/heads/main:refs/heads/main\taaaaaaa...bbbbbbb (forced update)", 0)
+            check(push(r.path, "main", False)["outcome"] == "pushed", "e_push_status: + is pushed")
+            sb.git_bounded = canned("!\trefs/heads/main:refs/heads/main\t[remote failure] (remote failed to report status)")
+            got = push(r.path, "main", False)
+            check(got["outcome"] == "failed" and got["reason"] == "[remote failure] (remote failed to report status)",
+                  "e_push_status: another status is a failed push (%r)" % got)
+            sb.git_bounded = canned("!\trefs/heads/main:refs/heads/main\t[remote rejected] (push declined due to "
+                                    "repository rule violations)")
+            got = push(r.path, "main", False)
+            check(got == {"outcome": "refused", "reason": "push declined due to repository rule violations",
+                          "recorded": "file", "record": rec_file, "record_error": None}
+                  and open(rec_file, encoding="utf-8").read() == local_today + "\n",
+                  "e_push_status: a host's refusal is recorded (%r)" % got)
+        finally:
+            sb.git_bounded = real_bounded
+
+        # e_canned: the rows whose facts no repository here produces
+        base = {"sha7": "abc1234", "files": 2, "branch": "main", "default": "main", "specs": "/s"}
+        got = _row_line(lines, "push-refused", dict(base, reason="r", record_kind="config",
+                                                    record="branch.main.workflowsPushRefused"))
+        check(got.endswith("once origin takes pushes to main again, git -C \"/s\" config --unset branch.main."
+                           "workflowsPushRefused") and "so this is recorded" in got,
+              "e_canned: push refused, recorded in the configuration key (%r)" % got)
+        got = _row_line(lines, "push-refused", dict(base, reason="r", record_kind=None, record_error="e"))
+        check(got == "Specs repo: committed abc1234 (2 files) on main — push REFUSED by origin (r): a rule there takes no "
+              "push of main, but this could not be recorded (e, the configuration write's), so a later run pushes main again",
+              "e_canned: push refused and unrecorded (%r)" % got)
+        got = _row_line(lines, "failed", dict(base, reason=T["text.push-capped"]))
+        check(got == "Specs repo: committed abc1234 (2 files) on main — push FAILED (the push did not finish within 60 s); "
+              "the commit is local and a later run retries it", "e_canned: a capped push (%r)" % got)
+        got = _row_line(lines, "scope", dict(base, subject="s", scope={"failed": {"sha": "f" * 40, "reason": "paths",
+                                                                                   "path": None}}))
+        check("the oldest fffffff s, which changes no file;" in got, "e_canned: a commit that changes no file (%r)" % got)
+        got = _row_line(lines, "scope", dict(base, hook=["a.md"], scope={"failed": {"sha": "abc1234" + "0" * 33,
+                                                                                     "reason": "paths", "path": "a.md"}}))
+        check("a pre-commit hook added a.md to this commit" in got, "e_canned: the hook variant with one path (%r)" % got)
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_status(tmp)
@@ -1821,6 +3228,7 @@ def selftest():
             scenarios_state(tmp)
             scenarios_lines(tmp)
             scenarios_gate(tmp)
+            scenarios_end(tmp)
 
     try:
         scenarios()
