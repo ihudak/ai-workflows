@@ -102,9 +102,9 @@ This command makes **no external API calls but two**: key discovery's optional, 
      one for the slice: it can have kept the run on a plugin branch named for the container, which
      the slice's key set switches away from (`workflows-core:specs-repo-git` §3.5 B4), exactly as a
      direct run on the slice would. A branch the first preflight's B4 left, which `branch-key`
-     now resolves to the slice's key, is switched back to first, as §3.5's *A re-run in the same
-     run switches back first* rule fixes — so the slice is read on the branch a direct run's B3
-     would have kept. An answer equal
+     now resolves to the slice's key, is switched back to first wherever §3.5's *A re-run in the same
+     run switches back first* rule makes that switch, so the slice is read on the branch a direct run's B3
+     would have kept; where that rule leaves the switch undone, the run goes on from the branch it stands on. An answer equal
      to none — a keyless slice's path among them — re-presents this stop, saying the answer named
      none of the enterable slices. "Cancel" ends the run. **Where the test finds no slice, there is
      nothing to enter, so no `choices:` array is shown** and the stop is a plain one: its message

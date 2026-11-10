@@ -622,7 +622,7 @@ Four obligations: rule 1 binds a producer, rule 2 and rule 3 a consumer, and rul
 
 ### 6.1 Behind
 
-**Applies only where HEAD is a plugin branch** (§1 rule 3) — the state `specs-repo-git.md` §3.5's B3 leaves, or one its B2 or B4 left standing under `specs_git: misrooted`. HEAD on the default branch passes, and so do a branch the plugin does not manage (`specs-repo-git.md` §3.3 G2) and the session branch. **A run on the default branch is not thereby level with `<default-ref>`**: a local default branch left behind, where the preflight's catch-up was skipped by a guard or its pull failed, and an operator's own branch are outside this check, whose subject is the plugin branch B3 keeps a run on; §2.3's *Nothing to commit* line and §3.3's row C″ handle what those states reach.
+**Applies only where HEAD is a plugin branch** (§1 rule 3) — the state `specs-repo-git.md` §3.5's B3 leaves, or one the preflight left HEAD on without the switch B2 or B4 makes, as under `specs_git: misrooted`, where `status` could not run, where git refused that switch, or where `specs-repo-git.md` §3.3's G1 ended the preflight first. HEAD on the default branch passes, and so do a branch the plugin does not manage (`specs-repo-git.md` §3.3 G2) and the session branch. **A run on the default branch is not thereby level with `<default-ref>`**: a local default branch left behind, where the preflight's catch-up was skipped by a guard or its pull failed, and an operator's own branch are outside this check, whose subject is the plugin branch a run stands on; §2.3's *Nothing to commit* line and §3.3's row C″ handle what those states reach.
 
 With `<base>` from `git -C "$SPECS_PATH" merge-base HEAD "<default-ref>"`, take the paths
 
