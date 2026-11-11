@@ -73,6 +73,7 @@ verified. snapshot exits 2 only before it prints.
 """
 
 import argparse
+import calendar
 import contextlib
 import importlib.util
 import json
@@ -258,27 +259,31 @@ def push_scope(root, branch, session_default_ref=None):
     return {"base": base, "commits": commits, "in_scope": failed is None, "failed": failed}
 
 
-def declined(command, paths):
+def declined(command, paths, started=None):
     """The paths the run's user declined to stage, appended (unique, in order) to the record of this session
-    and <command>; a record the command's start never made is created, marked as not started by the script.
-    A record load() returns None for (another version, or unparsable) is overwritten and reported created: it
-    serves no later call."""
+    and <command> -- the one <started> names (state.find; specs-repo-git §7's declined --started), else
+    <command>.json; a record the command's start never made is created there, marked as not started by the script,
+    its started <started> where given (a derived path, P35). A record load() returns None for (another version, or
+    unparsable) is overwritten and reported created: it serves no later call."""
     state, _ = _flow()
     if not paths:
         raise NotRun("usage: declined needs at least one --path")
     if not state.COMMAND_RE.fullmatch(command):
         raise NotRun("usage: --command is /<name>, got %s" % command)
     session = state.session_id()
-    rec = state.load(session, command)
+    at = _record_at(state, session, command, started)
+    rec = state.load(session, command, at=at)
     found = rec is not None
     if rec is None:
         rec = state.new(command, session=session, started_by_script=False)
+        if started is not None:
+            rec["started"] = started
     added = []
     for p in paths:
         if p not in added:
             added.append(p)
     rec["declined"] = rec["declined"] + [p for p in added if p not in rec["declined"]]
-    state.save(session, command, rec)
+    state.save(session, command, rec, at=at)
     return {"recorded": added, "record": "found" if found else "created"}
 
 
@@ -1254,12 +1259,13 @@ def _end_result(**kw):
     return out
 
 
-def _replay_next(specs, command, branch, set_upstream, for_="end"):
+def _replay_next(specs, command, branch, set_upstream, for_="end", started=None):
     """The call a rejected push hands the run (specs-repo-git §4 step 6): the replay, in a Bash call of its own, and
-    the same with --timed-out where the harness ends that call at its timeout. <for_>: end, or start for §3.4's."""
-    run = "python3 %s --specs %s replay --for %s --command %s --branch %s%s" % (
+    the same with --timed-out where the harness ends that call at its timeout. <for_>: end, or start for §3.4's.
+    <started>: the end's --started, repeated, so the replay reads and writes the record that end did (P19)."""
+    run = "python3 %s --specs %s replay --for %s --command %s --branch %s%s%s" % (
         shlex.quote(os.path.abspath(__file__)), shlex.quote(specs), for_, shlex.quote(command), shlex.quote(branch),
-        " --set-upstream" if set_upstream else "")
+        " --set-upstream" if set_upstream else "", " --started " + shlex.quote(started) if started else "")
     return {"run": run, "timeout_ms": REPLAY_TIMEOUT_MS, "on_timeout": run + " --timed-out"}
 
 
@@ -1285,8 +1291,25 @@ def _stop(run, row, printed, line):
     """An outcome of §4 step 1 -- misrooted, blocked or silent: what it prints, the record removed. A blocked row's
     <line> already carries §6's declined append where it takes one (_declined, _declined_checked); the misrooted row
     takes none, so no git status runs in a path the run has found wrong (§6), and the silent no-op prints nothing."""
-    run["state"].remove(run["session"], run["command"])
+    _remove(run)
     return _end_result(print=printed, line=line, row=row, record=run["record"])
+
+
+def _put(run, rec):
+    """<rec> saved as the run's record: at run["record_path"], the file --started named (state.find), else at
+    <command>.json (P19). Every save end, its replay and declined make goes through here."""
+    run["state"].save(run["session"], run["command"], rec, at=run.get("record_path"))
+
+
+def _remove(run):
+    """The run's record removed, at run["record_path"] (else <command>.json); then, where that was <command>.json,
+    the newest record of the same command parked for this run (state.unpark) restored, marked protects: false, or
+    dropped where §3.5's open-run test no longer finds that run on HEAD's branch (_parked_keep)."""
+    state, session, command = run["state"], run["session"], run["command"]
+    at = run.get("record_path")
+    state.remove(session, command, at=at)
+    if at is None or at == state.path(session, command):
+        state.unpark(session, command, keep=_parked_keep)
 
 
 def _declined(run, view):
@@ -1327,7 +1350,7 @@ def finish_end(run, row, line, view, commit=None, branch=None, pushed=False, hoo
     swept = [p for p in hook if p in set(view["guard_paths"]) | set(view["declined"])]
     if swept:
         printed.append(lines.fill("app.hook-line", {"<path>": swept, "<sha7>": commit["sha7"]}))
-    run["state"].remove(run["session"], run["command"])
+    _remove(run)
     commit = commit or {}
     return _end_result(print=printed, line=line, row=row, sha7=commit.get("sha7"), files=commit.get("files"),
                        branch=branch, pushed=pushed, record=run["record"])
@@ -1337,8 +1360,10 @@ def _end_view(lines, rec, view, default, specs, stay, committed):
     """<view> with the G1 block the run's end repeats in the form specs-repo-git §5 gives the end (_g1_landing): the
     landing form where <stay>, the stay the end's landing ran on, stands; the plain block where none does; under a run
     typed mid-run, the mid-run form; its Not done by <committed>, whether the end committed the run's whole change. A
-    G2 block, and none, as they are."""
+    G2 block in its mid-run form under a run typed mid-run (_g2_midrun), else as it is; none, as it is."""
     rec = rec or {}
+    if view.get("guard_block") and rec.get("guard") == "G2" and rec.get("midrun"):
+        return dict(view, guard_block=_g2_midrun(lines, view["guard_block"], rec["midrun"]))
     if not view.get("guard_block") or rec.get("guard") != "G1":
         return view
     return dict(view, guard_block=_g1_landing(lines, view["guard_block"], (stay or {}).get("branch"), default,
@@ -1408,9 +1433,10 @@ def _push_step(run, rec, commit, default, view):
         if p["outcome"] == "rejected" and session is None:
             rec["stage"] = "end-replay"
             _mark_held_shown(run, rec)
-            run["state"].save(run["session"], run["command"], rec)
+            _put(run, rec)
             return _end_result(print=list(run.get("pre") or []), sha7=commit["sha7"], files=commit["files"], branch=branch,
-                               next=_replay_next(specs, run["command"], branch, check["set_upstream"]),
+                               next=_replay_next(specs, run["command"], branch, check["set_upstream"],
+                                                 started=run.get("started")),
                                record=run["record"])
         row = {"pushed": "pushed-session" if session is not None else "pushed-default" if branch == default
                else "pushed-plugin", "refused": "push-refused", "failed": "failed", "rejected": "rejected"}[p["outcome"]]
@@ -1436,11 +1462,23 @@ def _push_step(run, rec, commit, default, view):
     return finish_end(run, row, line, view, commit=commit, branch=branch, pushed=pushed, hook=hook)
 
 
+def _record_at(state, session, command, started):
+    """The record file --started names (state.find, P19, P35), or None for <command>.json where none is given; NotRun
+    where <started> is not a started stamp."""
+    if started is None:
+        return None
+    if not state.STARTED_RE.fullmatch(started):
+        raise NotRun("usage: --started takes the started stamp start returned, got %s" % started)
+    return state.find(session, command, started)[0]
+
+
 def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=False, misrooted_notice=None,
-        session_branch_created=None, declined=(), resume=False):
+        session_branch_created=None, declined=(), resume=False, started=None):
     """specs-repo-git §4's commit-artifacts for the run of this session and <command>, steps 1-7, on <specs>
     (SPECS_PATH as set, "" meaning unset). <misrooted_notice>: the lines of a notice that set misrooted outside the
-    script (--misrooted-stdin), [] for none. <declined>: paths a declined call could not record. A failure before the
+    script (--misrooted-stdin), [] for none. <declined>: paths a declined call could not record. <started>: the run's
+    start's started (--started), which names its record (state.find): every save and the removal go there (P19), and a
+    stamp that names no record names the run's own derived path (P35); without it, <command>.json. A failure before the
     run's first write -- the catch-up's pull, else `git add`, or, before §4 step 1's landing, the record's save --
     raises, so the caller exits 2 with nothing done; after it, an exception (a signal sb.git_bounded turns into NotRun
     among them) returns error set and the end.stopped line, and the record stays for --resume: a later start replaces
@@ -1454,7 +1492,8 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
         raise NotRun("usage: --session-branch-created takes a commit's short sha, got %s" % session_branch_created)
     session = state.session_id()
     run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "record": None,
-           "wrote": False, "pre": [], "commit": None}
+           "wrote": False, "pre": [], "commit": None, "started": started,
+           "record_path": _record_at(state, session, command, started)}
     try:
         return _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, session_branch_created,
                     list(declined), resume)
@@ -1466,9 +1505,9 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
         line = lines.fill("end.stopped", {"<the error>": error})
         commit = run["commit"] or {}
         try:  # this output carries any pre.held.changed line, and the record stays for --resume -- save where a signal
-            rec = state.load(session, command) if _signal_of(e) is None else None  # ended the call: no outcome, its
-            if rec is not None and _mark_held_shown(run, rec):  # output set aside by the harness that sent it
-                state.save(session, command, rec)
+            rec = state.load(session, command, at=run["record_path"]) if _signal_of(e) is None else None  # ended the
+            if rec is not None and _mark_held_shown(run, rec):  # call: no outcome, its output set aside by the harness
+                _put(run, rec)  # that sent it
         except Exception:
             pass
         block = (run.get("view") or {}).get("guard_block")  # §6: a G1 or G2 block follows the outcome line, this one too
@@ -1479,11 +1518,21 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
 
 def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, session_branch_created, declined, resume):
     state, lines, specs, session, command = (run[k] for k in ("state", "lines", "specs", "session", "command"))
-    rec = state.load(session, command)
+    rec = state.load(session, command, at=run["record_path"])
     if resume and rec is not None and rec.get("end_commit") and state.saved_within(rec):
         pending = rec["end_commit"]
         landing = pending.get("landing")
-        if isinstance(landing, dict) and not pending.get("sha7"):  # §4 step 1's landing, cut off before it was saved
+        here = pending.get("here")
+        if isinstance(here, dict) and not pending.get("sha7"):  # §4 step 1's here form, cut off before its row
+            view = _view(rec, declined)
+            run["view"] = _end_view(lines, rec, view, rec.get("default"), specs, None, False)  # first, as below
+            run["wrote"] = True
+            run["record"] = "found"
+            got = _resume_here(run, rec, view, commit_key, here)
+            if got is not None:
+                return got
+            # the journal dropped: step 1 goes on, from HEAD's branch (§4 step 1's here form)
+        elif isinstance(landing, dict) and not pending.get("sha7"):  # §4 step 1's landing, cut off before it was saved
             view = _view(rec, declined)
             # first, so a stop from here on repeats the record's block (§6), in the form for an early stop (§5)
             run["view"] = _end_view(lines, rec, view, rec.get("default"), specs, rec.get("stay"), False)
@@ -1507,10 +1556,10 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
                     created = commit.pop("created", None)
                     if created and not rec.get("session_branch_created"):
                         rec["session_branch_created"] = created
-                    if changed:  # kept until the record is removed, so a resume cut off below finds them again
-                        commit[HELD_CHANGED] = changed
+                    if changed:  # kept for as long as the record holds that commit, so a resume cut off below finds
+                        commit[HELD_CHANGED] = changed  # them again
                     rec["end_commit"] = commit
-                    state.save(session, command, rec)
+                    _put(run, rec)
                 default = rec.get("default") or resolve_default(specs, False)["default"]
                 if changed:  # §4 step 2: the held files the commit took as they stood, saved before it was made
                     held = _held_committed(lines, specs, changed, commit.get("paths") or [], default)
@@ -1589,6 +1638,16 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
             session_branch_created or (keep or {}).get("session_branch_created"))})
         return finish_end(run, "nothing", line, _end_view(lines, keep, view, d["default"], specs, None, False))
 
+    # §3.5's end with no start (P5): with no snapshot to tell this run's files from an open run's, where any record of
+    # the session but the one --started names is an open run on HEAD's branch, nothing is written and nothing removed
+    created = session_branch_created or (keep or {}).get("session_branch_created")
+    if not found:
+        opened = _open_beside(run, branch, g["top"])
+        if opened is not None:
+            return _midrun_kept(run, opened.get("command"), branch, lines.T["reason.land.no-preflight"], view, {
+                "specs": specs, "default": d["default"], "default_ref": d["default_ref"], "mode": mode,
+                "session_branch": session_branch, "created": created}, remove=False)
+
     # Step 1's stay (§4 step 1): outside session-branch mode, the record's stay on the branch HEAD stands on, or, where
     # a start that never finished its preflight holds none for it, the one end asks for (_unfinished_stay). A stay whose
     # merged flag is not set is tested once more against the end's commit key (with the run key set beside it): where
@@ -1600,6 +1659,19 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
         if stay is not None and not stay.get("merged") and branch_key(branch, _run_keys(rec, (commit_key,)))["key"]:
             stay = None
 
+    # A run typed mid-run (§3.5): the open run tested again (P36), on the branch HEAD is on. While it still stands
+    # nothing moves under it -- no catch-up -- and, outside session-branch mode, a start that took no snapshot commits
+    # nothing, by the landing or the here form alike, since nothing tells this run's files from that run's (§4 step 1
+    # (1)); where it no longer stands, the change is taken against HEAD.
+    midrun = rec.get("midrun") if found else None
+    standing = bool(midrun) and _midrun_stands(run, midrun, branch, g["top"])
+    here = midrun is not None and stay is None and mode != "on" and branch == midrun.get("branch")
+    if standing and mode != "on" and (stay is not None or here) and rec.get("start_dirty") is None:
+        return _midrun_kept(run, midrun.get("command"), branch, lines.T["reason.land.no-snapshot"],
+                            _end_view(lines, keep, view, d["default"], specs, stay, False),
+                            _append_facts(specs, dict(keep, mode=mode, session_branch=session_branch,
+                                                      session_branch_created=created, **d), branch))
+
     # Steps 2-4: the catch-up, then the commit. R2's boundary is the first repository write either makes, and just
     # before it the record is saved at stage end -- the one kept, else a new one in place of whatever stood -- with what
     # this call was given; and again just before the commit, with what it is about to make -- outside the mode, before
@@ -1608,6 +1680,8 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     # kill comes between it and the save naming it.
     message = session_subject(commit_key or (keep or {}).get("commit_key"), command)
     saved = keep if keep is not None else state.new(command, session=session, started_by_script=False, specs=specs)
+    if keep is None and run.get("started"):  # a record at the path --started names is that run's (P35)
+        saved["started"] = run["started"]
     saved.update(stage="end", end_commit=None, declined=view["declined"], mode=mode, session_branch=session_branch,
                  default=d["default"], default_ref=d["default_ref"], remote=d["remote"], stay=stay)
     for field, value in (("commit_key", commit_key), ("register_rebuild", register_rebuild),
@@ -1616,13 +1690,13 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
             saved[field] = value
 
     def boundary():
-        state.save(session, command, saved)
+        _put(run, saved)
         run["wrote"] = True
 
     def about_to_commit(staged):
         saved["end_commit"] = dict({"branch": branch, "base": sb.rev(specs, "HEAD"), "staged": staged},
                                    **({HELD_CHANGED: changed} if changed else {}))
-        state.save(session, command, saved)
+        _put(run, saved)
 
     # §5's G1 block as the end repeats it: until the outcome is known -- and for an early stop, and a line that
     # commits none of the run's files -- in the form that leaves to the outcome line what came of them
@@ -1632,7 +1706,7 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
 
         def on_move(pending):  # the landing's journal, saved just before <default> moves or is pushed (§4 step 1)
             saved["end_commit"] = {"branch": d["default"], "landing": pending}
-            state.save(session, command, saved)
+            _put(run, saved)
 
         got = land(specs, branch, d["default"], d["default_ref"], message, saved.get("start_dirty"),
                    saved.get("register_rebuild"), facts=_land_facts(stay, command), on_move=on_move,
@@ -1640,10 +1714,15 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
         return _landing_end(run, saved, d, stay, got, view)
     shown = _end_view(lines, keep, view, d["default"], specs, None, True)
     if mode == "on":
-        return _end_session(run, saved, d, branch, message, shown, boundary)
-    pulled = catch_up(specs, d["default"], d["default_ref"], on_write=boundary)
-    if pulled:
-        run["pre"].append(pulled)
+        return _end_session(run, saved, d, branch, message, shown, boundary, catch=not standing)
+    if here:  # §4 step 1's here form, in place of steps 2-4; None where its refusal sends the run on to them
+        got = _here_end(run, saved, d, branch, message, view, boundary, standing, midrun)
+        if got is not None:
+            return got
+    if not standing:  # §4 step 2's catch-up, never while the open run stands on HEAD's branch (§3.5)
+        pulled = catch_up(specs, d["default"], d["default_ref"], on_write=boundary)
+        if pulled:
+            run["pre"].append(pulled)
     exclude, changed = _end_held(specs, branch, d["default"], boundary)
     c = commit_session_files(specs, message, on_write=boundary, on_staged=about_to_commit, exclude=exclude)
     if c["status"] != "committed":
@@ -1653,13 +1732,152 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     commit = {"sha7": c["sha"][:7], "files": len(c["paths"]), "branch": branch, "paths": c["paths"],
               "hook_paths": c["hook_paths"]}
     run["commit"] = commit
-    saved["end_commit"] = dict(commit, **({HELD_CHANGED: changed} if changed else {}))  # kept until removed
-    state.save(session, command, saved)
+    saved["end_commit"] = dict(commit, **({HELD_CHANGED: changed} if changed else {}))  # for as long as it is held
+    _put(run, saved)
     if changed:
         held = _held_committed(lines, specs, changed, c["paths"], d["default"])
         run["pre"].extend(held)
         run["held_shown"] = bool(held)
     return _push_step(run, saved, commit, d["default"], shown)
+
+
+def _midrun_kept(run, command, branch, clause, view, facts, remove=True):
+    """specs-repo-git §6's mid-run row, <command> the open run's and <branch> HEAD's, with the reason clause <clause>:
+    the session appends of <facts> less the unsupported clause, which the row never takes (P17), then the declined
+    append, then the guard's block <view> holds. The record removed, save with <remove> false: an end with no start
+    that found a run open writes and removes nothing (P5)."""
+    lines = run["lines"]
+    line = lines.fill("row.midrun-kept", {"<command>": command, "<branch>": branch, "<reason clause>": clause})
+    line += _appends(lines, dict(facts, mode=None))
+    if remove:
+        return finish_end(run, "midrun-kept", line, view, branch=branch)
+    line += _declined(run, view)
+    printed = list(run["pre"]) + [line] + ([view["guard_block"]] if view.get("guard_block") else [])
+    return _end_result(print=printed, line=line, row="midrun-kept", branch=branch, record=run["record"])
+
+
+def _open_beside(run, head, top):
+    """P5's test for an end with no start: the oldest record of the session but the one --started names -- every other
+    command's (state.others) and this command's own <name>.json and parked ones (state.mine) -- that the open-run test
+    passes on HEAD's branch <head>, at <top>; None where none does."""
+    state, session, command = run["state"], run["session"], run["command"]
+    named = run["record_path"] if run.get("started") else None
+    found = list(state.others(session, command)) + [rec for full, rec in state.mine(session, command) if full != named]
+    found.sort(key=lambda rec: str(rec.get("started") or ""))
+    now = time.time()
+    return next((rec for rec in found if _open_run(rec, head, top, now)), None)
+
+
+def _midrun_stands(run, midrun, head, top):
+    """P36: whether the open run <midrun> ({command, started, branch}), which this run was typed under, still stands
+    on HEAD's branch <head>: its record, found by its started (state.find, never another run's), passes the open-run
+    test (_open_run) at <top>. False where it no longer does -- its end ran, HEAD left the branch, its record was
+    replaced or restored no longer protecting it, or it is older than OPEN_DAYS."""
+    if head is None or not isinstance(midrun, dict):
+        return False
+    state = run["state"]
+    try:
+        if not state.STARTED_RE.fullmatch(midrun.get("started") or ""):
+            return False
+        _path, rec = state.find(run["session"], midrun.get("command"), midrun["started"])
+    except ValueError:
+        return False
+    return rec is not None and _open_run(rec, head, top, time.time())
+
+
+def _here_end(run, saved, d, branch, message, view, boundary, standing, midrun):
+    """specs-repo-git §4 step 1's here form at the end of a run typed mid-run that holds no stay, HEAD still on the
+    branch it started on (<branch>), outside session-branch mode: the record saved (boundary), then land's here form,
+    its journal saved as end_commit.here just before HEAD's branch moves (on_move); the outcome by _here_outcome."""
+    boundary()
+
+    def on_move(pending):
+        saved["end_commit"] = {"branch": branch, "here": pending}
+        _put(run, saved)
+
+    got = land(run["specs"], branch, d["default"], d["default_ref"], message, saved.get("start_dirty"),
+               saved.get("register_rebuild"), here=True,
+               facts={"kind": None, "merged": None, "command": run["command"], "stayed": branch}, on_move=on_move)
+    return _here_outcome(run, saved, d, branch, got, view, standing, midrun)
+
+
+def _here_outcome(run, saved, d, branch, got, view, standing, midrun):
+    """The here form's outcome, from land's <got>, on HEAD's <branch>. landed: where the open run still stands
+    (<standing>), the here row -- its first alternative on the default branch or a plugin branch, its second on a
+    branch this plugin does not push -- nothing pushed; where it no longer stands, the commit saved as end_commit and
+    steps 5-7 for HEAD's branch (_push_step), its row the one that push gives, with no mid-run wording (P36). there and
+    nothing: step 3's nothing-to-commit row; locked: the Locked row; kept: where the open run stands, the mid-run row
+    with the refused path's clause, <default> and <onto> both HEAD's branch (§6), and where it no longer stands, None:
+    the step goes on to steps 2-4 (§4 step 1's here form). Each row carries §6's appends -- the mid-run row without the
+    unsupported clause -- and G1's or G2's block from the plain <view>, in its mid-run form (_end_view), its Not done
+    the not-committed one after a row that committed none of the run's files. Any other status raises."""
+    lines, specs = run["lines"], run["specs"]
+    default, status = d["default"], got["status"]
+    if status == "landed":
+        commit = {"sha7": got["sha"][:7], "files": got["files"], "branch": branch, "paths": got["paths"],
+                  "hook_paths": []}
+        run["commit"] = commit
+        shown = _end_view(lines, saved, view, default, specs, None, True)
+        if not standing:
+            saved["end_commit"] = commit
+            _put(run, saved)
+            return _push_step(run, saved, commit, default, shown)
+        alt = 0 if branch == default or branch_key(branch, [])["plugin_branch"] else 1
+        line = lines.fill("row.here", {"<sha7>": commit["sha7"], "<N>": commit["files"], "<branch>": branch,
+                                       "<command>": midrun.get("command"),
+                                       lines.placeholder("row.here", "<the next push"): alt})
+        line += _appends(lines, _append_facts(specs, saved, branch))
+        return finish_end(run, "here", line, shown, commit=commit, branch=branch)
+    shown = _end_view(lines, saved, view, default, specs, None, False)
+    if status == "kept":
+        if not standing:
+            return None
+        clause = _land_clause(lines, got["refused"], branch, onto=branch)
+        return _midrun_kept(run, midrun.get("command"), branch, clause, shown, _append_facts(specs, saved, branch))
+    if status in ("there", "nothing", "locked"):
+        row = "locked" if status == "locked" else "nothing"
+        line = lines.fill("row." + row, {}) + _appends(lines, _append_facts(specs, saved, branch))
+        return finish_end(run, row, line, shown, branch=branch)
+    raise NotRun("the here form returned %s, for which §4 step 1 gives it no row" % status)
+
+
+def _resume_here(run, rec, view, commit_key, journal):
+    """end --resume of §4 step 1's here form cut off before its row: <journal>, the here journal's pending, which
+    on_move saved as end_commit.here just before HEAD's branch moved. With an index.lock standing, nothing is done:
+    the journal is left for a later call, the Locked row. With HEAD off the journal's branch, the journal entry is
+    dropped -- so no later preflight commits the same change again there -- and None is returned: the end goes on from
+    step 1. Otherwise the open run is tested again (P36) and the journal finished as P2 says (land's resume): the
+    branch at its tip, or holding it, the restore step; still at its old tip, the here form again -- each outcome as
+    the end gives it (_here_outcome); moved elsewhere, the entry dropped, and, where the open run still stands, the
+    mid-run row with the unfinished clause, else None: the end goes on from step 1."""
+    lines, specs = run["lines"], run["specs"]
+    d = {k: rec.get(k) for k in ("default", "default_ref", "remote")}
+    head, midrun = _head_branch(specs), rec.get("midrun") or {}
+    if os.path.lexists(sb.git_paths(specs, "index.lock")[0][1]):
+        line = lines.fill("row.locked", {}) + _appends(lines, _append_facts(specs, rec, head))
+        return finish_end(run, "locked", line, run["view"], branch=head)
+    if head is None or head != journal.get("onto"):
+        _held_remove(specs, [journal["c2"]])
+        rec["end_commit"] = None
+        return None
+    standing = _midrun_stands(run, midrun, head, gate(specs, notices=False)["top"])
+
+    def on_move(pending):
+        rec["end_commit"] = {"branch": head, "here": pending}
+        _put(run, rec)
+
+    got = land(specs, head, d["default"], d["default_ref"],
+               session_subject(commit_key or rec.get("commit_key"), run["command"]), rec.get("start_dirty"),
+               rec.get("register_rebuild"), facts={"kind": None, "merged": None, "command": run["command"],
+                                                   "stayed": head}, on_move=on_move, resume=journal)
+    if got["status"] == "kept" and (got["refused"] or {}).get("reason") == "unfinished":
+        if standing:
+            return _midrun_kept(run, midrun.get("command"), head, _land_clause(lines, got["refused"], head, onto=head),
+                                _end_view(lines, rec, view, d["default"], specs, None, False),
+                                _append_facts(specs, rec, head))
+        rec["end_commit"] = None
+        return None
+    return _here_outcome(run, rec, d, head, got, view, standing, midrun)
 
 
 def _end_held(specs, branch, default, boundary):
@@ -1683,8 +1901,9 @@ def _end_held(specs, branch, default, boundary):
 
 def _mark_held_shown(run, rec):
     """Where this call's output carries §4 step 2's pre.held.changed lines (run["held_shown"]) and <rec> stays -- a
-    rejected push's next naming the replay, or an error -- end_commit marks them shown (HELD_SHOWN), so a later end
-    --resume rebuilds without printing them again. True where it marked; the caller saves <rec>."""
+    rejected push's next naming the replay, or an error no signal caused (a signal's stop is no outcome: the caller
+    does not ask) -- end_commit marks them shown (HELD_SHOWN), so a later end --resume rebuilds without printing them
+    again. True where it marked; the caller saves <rec>."""
     pending = rec.get("end_commit")
     if run.get("held_shown") and isinstance(pending, dict) and pending.get(HELD_CHANGED):
         pending[HELD_SHOWN] = True
@@ -1736,7 +1955,7 @@ def _landing_end(run, saved, d, stay, got, view):
     carries §6's appends -- the held, held-stuck and there rows, which commit none of the run's files, without the
     unsupported clause -- and is followed by G1's block, from the plain <view>, in the landing form, its Not done the
     not-landed one unless the run's whole change landed (_end_view)."""
-    lines, specs, state = run["lines"], run["specs"], run["state"]
+    lines, specs = run["lines"], run["specs"]
     default, branch = d["default"], stay["branch"]
     for h in got["held_landed"]:
         run["pre"].append(lines.fill("pre.held.landed", {"<sha7>": h["sha"][:7], "<N>": h["files"],
@@ -1747,7 +1966,7 @@ def _landing_end(run, saved, d, stay, got, view):
                   "hook_paths": [], "landing": dict(got["pending"] or {}, moves=got["moves"], stuck=got["stuck"])}
         run["commit"] = commit
         saved["end_commit"] = commit
-        state.save(run["session"], run["command"], saved)
+        _put(run, saved)
         if not got["pushed"]:
             return _push_step(run, saved, commit, default, view)
         facts = {"sha7": commit["sha7"], "files": commit["files"], "branch": default, "default": default, "specs": specs}
@@ -1789,7 +2008,7 @@ def _resume_landing(run, rec, view, commit_key, landing):
     unverified (P6); with HEAD off it -- on <default> or another branch -- the journal entry is dropped, nothing having
     moved and the files still in the working tree, and None is returned: the end goes on from step 1 as one whose HEAD
     moved off the branch it stayed on. A landing's journal is never finished by the here form."""
-    lines, specs, state = run["lines"], run["specs"], run["state"]
+    lines, specs = run["lines"], run["specs"]
     d = {k: rec.get(k) for k in ("default", "default_ref", "remote")}
     stay, head = rec.get("stay"), _head_branch(specs)
     if os.path.lexists(sb.git_paths(specs, "index.lock")[0][1]):
@@ -1815,7 +2034,7 @@ def _resume_landing(run, rec, view, commit_key, landing):
     else:
         def on_move(pending):
             rec["end_commit"] = {"branch": d["default"], "landing": pending}
-            state.save(run["session"], run["command"], rec)
+            _put(run, rec)
 
         got = land(specs, head, d["default"], d["default_ref"],
                    session_subject(commit_key or rec.get("commit_key"), run["command"]), rec.get("start_dirty"),
@@ -1824,7 +2043,7 @@ def _resume_landing(run, rec, view, commit_key, landing):
     return _landing_end(run, rec, d, stay, got, view)
 
 
-def _end_session(run, saved, d, head, message, view, boundary):
+def _end_session(run, saved, d, head, message, view, boundary, catch=True):
     """specs-repo-git §4 steps 2-7 in session-branch mode (§8), on the checkout standing on <head>. With no identity
     (§8.1) the run commits nothing in the mode: the catch-up runs unwrapped, and the row is no-identity where session
     files are dirty (else nothing to commit). Otherwise step 2's catch-up runs inside lift and put-back (§8.3), a lift
@@ -1835,8 +2054,9 @@ def _end_session(run, saved, d, head, message, view, boundary):
     that could not run after a lift's commit did is reported as end.session-not-run, that commit pushed. Just before the
     first of them the pending end_commit is saved (_landed_session reads it on --resume). A creation by any of them is
     the run's session_branch_created, saved at once; the last commit's sync, unsettled and stranded fill the
-    appends."""
-    state, lines, specs = run["state"], run["lines"], run["specs"]
+    appends. Without <catch> -- a run typed mid-run whose open run still stands on HEAD's branch (§3.5) -- there is no
+    catch-up, which would move HEAD's branch under that run; the mode's commit is as always."""
+    lines, specs = run["lines"], run["specs"]
     session_branch = saved["session_branch"]
 
     def ending(row, line, facts=None):  # a row that commits nothing: the block in the form run["view"] holds for it
@@ -1844,7 +2064,7 @@ def _end_session(run, saved, d, head, message, view, boundary):
                           branch=head)
 
     if session_branch is None:
-        pulled = catch_up(specs, d["default"], d["default_ref"], on_write=boundary)
+        pulled = catch_up(specs, d["default"], d["default_ref"], on_write=boundary) if catch else None
         if pulled:
             run["pre"].append(pulled)
         row = "no-identity" if status(specs)["artifact"] else "nothing"
@@ -1855,17 +2075,17 @@ def _end_session(run, saved, d, head, message, view, boundary):
 
     def created(base):
         saved["session_branch_created"] = base
-        state.save(run["session"], run["command"], saved)
+        _put(run, saved)
 
     def pending():
         if not saved.get("end_commit"):
             saved["end_commit"] = {"branch": session_branch, "base": sb.rev(specs, "refs/heads/" + session_branch),
                                    "session": {}}
-            state.save(run["session"], run["command"], saved)
+            _put(run, saved)
 
     sess = _Session(lines, specs, session_branch, d["default"], d["default_ref"], message, report, created)
     sess.before_commit = pending
-    pulled = catch_up(specs, d["default"], d["default_ref"], on_write=boundary, wrap=sess.wrap)
+    pulled = catch_up(specs, d["default"], d["default_ref"], on_write=boundary, wrap=sess.wrap) if catch else None
     if pulled:
         run["pre"].append(pulled)
     if not run["wrote"]:
@@ -1885,7 +2105,7 @@ def _end_session(run, saved, d, head, message, view, boundary):
               "hook_paths": [], "session": facts}
     run["commit"] = commit
     saved["end_commit"] = commit
-    state.save(run["session"], run["command"], saved)
+    _put(run, saved)
     return _push_step(run, saved, commit, d["default"], view)
 
 
@@ -2102,7 +2322,7 @@ def _replay_facts(run, rec, cls, result, error, branch, standing, preflight):
     return f
 
 
-def replay(specs, for_, command, branch, set_upstream=False, timed_out=False):
+def replay(specs, for_, command, branch, set_upstream=False, timed_out=False, started=None):
     """specs-repo-git §4 step 6's replay for the run of this session and <command>, in a call of its own: sb.replay of
     <branch> in process (unless <timed_out>), with the register_rebuild the record holds, read by classify_replay and
     rendered as its §6 row. <for_> end: end's object for the end_commit the record holds, every append end gives, the
@@ -2112,16 +2332,17 @@ def replay(specs, for_, command, branch, set_upstream=False, timed_out=False):
     Exit 2 only before the record is found; after it, an exception is exit-0 JSON with error set and the stopped
     line, the record kept as it stood -- which is how a record with nothing for this call to replay is refused. A
     replay a signal ended prints nothing and leaves the record as it stood for the --timed-out call: the process ends
-    by that signal (_exit_by)."""
+    by that signal (_exit_by). <started>, the end's --started that next repeats, names the record (P19)."""
     state, lines = _flow()
     if not state.COMMAND_RE.fullmatch(command):
         raise NotRun("usage: --command is /<name>, got %s" % command)
     session = state.session_id()
-    rec = state.load(session, command)
+    at = _record_at(state, session, command, started)
+    rec = state.load(session, command, at=at)
     if rec is None:
         raise NotRun("no record of %s in this session holds a replay" % command)
     run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "record": "found",
-           "pre": [], "commit": None}
+           "pre": [], "commit": None, "started": started, "record_path": at}
     try:
         if for_ == "end":
             return _replay_end(run, rec, branch, set_upstream, timed_out)
@@ -2173,7 +2394,7 @@ def _replay_start(run, rec, branch, set_upstream, timed_out):
     <default>, which §3.2's held stage pushed with HEAD elsewhere (stage held: the replay moves it by update-ref alone,
     and the record goes on at guards), or of a branch the settle loop queued (stage settle-done, <branch> in pending,
     whose standing names the branch the run stands on)."""
-    state, stage, pending = run["state"], rec.get("stage"), list(rec.get("pending") or [])
+    stage, pending = rec.get("stage"), list(rec.get("pending") or [])
     if stage == "flush" and (timed_out or branch == _head_branch(run["specs"])):
         standing = branch
     elif stage == "held" and branch == rec.get("default"):
@@ -2192,7 +2413,7 @@ def _replay_start(run, rec, branch, set_upstream, timed_out):
     else:
         rec["pending"] = [p for p in pending if p.get("branch") != branch]
         rec["stage"] = "settle-done" if rec["pending"] else "disposition"
-    state.save(run["session"], run["command"], rec)
+    _put(run, rec)
     if stage == "settle-done" and rec["pending"]:
         nxt = _queued_next(run, rec)
     else:
@@ -2355,6 +2576,92 @@ def _ask_stay(run, head, reason):
         _keep_stay(run, head, _merged(run, "HEAD", head)["merged"], reason)
 
 
+# specs-repo-git §3.5's open-run test: how long a record is read as open, and the read of HEAD's reflog for a leave --
+# its newest REFLOG_COUNT entries, the call capped at REFLOG_CAP seconds (sb.git_bounded).
+OPEN_DAYS = 7
+REFLOG_COUNT = 1000
+REFLOG_CAP = 30
+_REFLOG_ENTRY = re.compile(r"HEAD@\{([0-9]+)\} (.*)")
+_CHECKOUT_MOVE = re.compile(r"checkout: moving from (\S+) to (\S+)")
+
+
+def _started_at(rec):
+    """<rec>'s started, in seconds since the epoch; None where it is not a STAMP."""
+    try:
+        return calendar.timegm(time.strptime(rec.get("started") or "", "%Y-%m-%dT%H:%M:%SZ"))
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+def _left_since(root, branch, since):
+    """Whether HEAD's reflog at <root> shows HEAD leaving <branch> at or after <since> (seconds since the epoch): a
+    `checkout: moving from <branch> to <another branch>` entry among the REFLOG_COUNT newest that `reflog show
+    --date=unix --format='%gd %gs' HEAD` prints, read newest first and no further back than <since>. A move from a
+    branch to itself never counts, nor does a move onto <branch> from another -- an open run's own handoff onto its
+    branch. False where the reflog cannot be read -- absent, disabled, or the call fails -- so the protection holds for
+    as long as HEAD stands on the branch (specs-repo-git §3.5); a signal that ended the capped call is raised."""
+    try:
+        r = sb.git_bounded(root, REFLOG_CAP, "reflog", "show", "-n", str(REFLOG_COUNT), "--date=unix",
+                           "--format=%gd %gs", "HEAD")
+    except (NotRun, OSError) as e:
+        if isinstance(e, NotRun) and _signal_of(e) is not None:
+            raise
+        return False
+    if r.returncode != 0:
+        return False
+    for line in sb.text(r).split("\n"):
+        entry = _REFLOG_ENTRY.fullmatch(line)
+        if entry is None:
+            continue
+        if int(entry.group(1)) < since:
+            break
+        move = _CHECKOUT_MOVE.fullmatch(entry.group(2))
+        if move is not None and move.group(1) == branch and move.group(2) != branch:
+            return True
+    return False
+
+
+def _on_branch(rec, head):
+    """§3.5's branch test: HEAD's branch <head> is the branch the record <rec> recorded, or one branch-key resolves to
+    a key of its key set -- an open run that handed off onto its own branch (P13)."""
+    return head is not None and (rec.get("branch") == head
+                                 or bool(branch_key(head, [k for k in rec.get("keys") or [] if k])["key"]))
+
+
+def _open_run(rec, head, top, now):
+    """specs-repo-git §3.5's open-run test of the record <rec>, against HEAD's branch <head> in the repository whose top
+    level is <top>, at <now> (seconds since the epoch): a start of this script made it (started_by_script), and that
+    start set no specs_git flag (P34); it stands at done or at one of start's own stages (START_STAGES) and holds no
+    end_commit; it is not marked protects: false; its top is <top>; it started within OPEN_DAYS; <head> passes the
+    branch test (_on_branch); and HEAD's reflog shows no leave of <head> since its started (_left_since), read last."""
+    if not isinstance(rec, dict) or not rec.get("started_by_script") or rec.get("specs_git"):
+        return False
+    if not (rec.get("stage") == "done" or rec.get("stage") in START_STAGES) or rec.get("end_commit"):
+        return False
+    if rec.get("protects") is False or not top or not rec.get("top"):
+        return False
+    if os.path.realpath(rec["top"]) != os.path.realpath(top):
+        return False
+    since = _started_at(rec)
+    if since is None or now - since > OPEN_DAYS * 86400 or not _on_branch(rec, head):
+        return False
+    return not _left_since(top, head, since)
+
+
+def _parked_keep(rec):
+    """state.unpark's keep for a parked record <rec> (specs-repo-git §3.5): only one marked parked: true (N3), and only
+    where the open-run test, applied to it, still finds that run on HEAD's branch -- HEAD, read in the parked record's
+    own repository (its top), on the branch it recorded or one a key of it names (_on_branch), and HEAD's reflog
+    showing no leave of that branch since its started (_left_since)."""
+    top = rec.get("top") if isinstance(rec, dict) else None
+    if not rec.get("parked") or not top or not os.path.isdir(top):
+        return False
+    head, since = _head_branch(top), _started_at(rec)
+    if since is None or not _on_branch(rec, head):
+        return False
+    return not _left_since(top, head, since)
+
+
 def _block_part(block, label, text):
     """<block> with the part <label> opens -- its line from the label on, and the indented lines that continue it --
     replaced by the label, the padding its line gives it, and <text>, unwrapped on one line; an empty <text> (a Fix
@@ -2371,17 +2678,29 @@ def _block_part(block, label, text):
     return "\n".join(rows[:i] + [(pad + text).rstrip()] + rows[j:])
 
 
-def _g2_block(lines, specs, branch, default, variant=None, values=None):
+def _g2_block(lines, specs, branch, default, variant=None, values=None, midrun=None):
     """specs-repo-git §5's G2 block for <branch>; with <variant> (implement: a direct /implement run from inside the
     specs repository; session and self: session-branch mode, on another branch or on the session branch itself, their
     <identity> in <values>; no-identity: session-branch mode where §8.1 resolves no identity), its Not done, Fix and If
     ignored parts are the g2.<variant>.* prose SRG gives in their place, each unwrapped on its one line. The mode's
-    variants take precedence over implement (§5)."""
+    variants take precedence over implement (§5). Under a run typed mid-run (<midrun>, the record's: the open run), the
+    mid-run form of whichever variant it is (_g2_midrun)."""
     block = lines.T["g2"]
     if variant:
         for label, part in (("Not done:", "not_done"), ("Fix:", "fix"), ("If ignored:", "if_ignored")):
             block = _block_part(block, label, lines.T["g2.%s.%s" % (variant, part)])
-    return lines.fill(block, dict({"<SPECS_PATH>": specs, "<branch>": branch, "<default>": default}, **(values or {})))
+    block = lines.fill(block, dict({"<SPECS_PATH>": specs, "<branch>": branch, "<default>": default}, **(values or {})))
+    return _g2_midrun(lines, block, midrun) if midrun else block
+
+
+def _g2_midrun(lines, block, midrun):
+    """specs-repo-git §5's mid-run form of a rendered G2 <block>, any variant (P25): its Fix emptied, since no switch is
+    to be run while the open run <midrun> ({command, started, branch}) stands on the branch, and its If ignored
+    g2.midrun.if_ignored, naming that run's command and branch. How the start prints it, and how end repeats the plain
+    block the record keeps."""
+    block = _block_part(block, "Fix:", "")
+    return _block_part(block, "If ignored:", lines.fill("g2.midrun.if_ignored", {
+        "<command>": midrun.get("command"), "<branch>": midrun.get("branch")}))
 
 
 def _inside(top):
@@ -2822,7 +3141,8 @@ def _guards(run):
     kept, reason g1, and G1 prints its landing form (§5, _g1_landing), the plain block saved for end; under a run typed
     mid-run, its mid-run form, stay or none. In session-branch mode
     with a session branch, G2 takes §5's session-branch lines, or, on the session branch itself, its own variant; with
-    no identity, its no-identity variant."""
+    no identity, its no-identity variant. Under a run typed mid-run, G2 prints its variant's mid-run form (_g2_midrun),
+    the variant's block saved for end."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     head, found, shown = _head_branch(specs), None, None
     if head is None:
@@ -2851,6 +3171,8 @@ def _guards(run):
         _ask_stay(run, head, "g1")
         shown = _g1_landing(lines, found[1], head, rec["default"], specs, found[2],
                             rec["stay"] if _stayed_on(rec, head) else None, rec.get("midrun"))
+    elif found[0] == "G2" and rec.get("midrun"):
+        shown = _g2_midrun(lines, found[1], rec["midrun"])
     _emit(run, shown or found[1])
     _advance(run, "done")
 
@@ -2865,7 +3187,10 @@ def _flush(run):
     loop then starts on start --resume. Outside the mode, the held files whose working copy is still the version their
     entry holds are left out (_held_unchanged, read before the merged-branch leave and kept past it): only the rest
     count as dirty, and the commit takes only them; pre.held.changed follows the commit for each file the held stage
-    took out of its entry as changed (held_changed) that the commit carries."""
+    took out of its entry as changed (held_changed) that the commit carries. Under a run typed mid-run (the record's
+    midrun), nothing moves under the open run (P20): no catch-up, and, outside session-branch mode, no merged-branch
+    leave, no commit on HEAD and no retry of HEAD's push -- the dirty files may be that run's work in progress; in the
+    mode, whose commit never lands on HEAD, the mode's commit and push as always."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     rec["settle_todo"] = None  # computed on entering the settle loop, after this branch's replay, if any
     checked = []
@@ -2877,11 +3202,15 @@ def _flush(run):
 
     default = rec["default"]
     sess = _session(run)
-    pulled = catch_up(specs, default, rec["default_ref"], on_write=unit, wrap=sess.wrap if sess else None)
-    if pulled:
-        _emit(run, pulled)
+    midrun = rec.get("midrun")
+    if not midrun:
+        pulled = catch_up(specs, default, rec["default_ref"], on_write=unit, wrap=sess.wrap if sess else None)
+        if pulled:
+            _emit(run, pulled)
     if rec["mode"] == "on":
         return _flush_session(run, sess, unit)
+    if midrun:
+        return _advance(run, "settle")
     head = _head_branch(specs)
     listed = _status(run)
     exclude = _held_unchanged(specs, head, default) if listed else []
@@ -2998,7 +3327,10 @@ def _disposition(run):
     branch no row names stay where they are; B2 and B4 switch to the default branch -- under misrooted, they stay and
     print pre.stay instead, and where status could not run in this run (pre.status-failed in reported, which --rerun
     carries), the dirty set unknown, they stay and print pre.stay.unlisted -- the branch then kept as the run's stay
-    (§4 step 1, _keep_stay), reason unlisted, B2's and B4's alike. B2's and B4's refused switch keeps it too (_leave,
+    (§4 step 1, _keep_stay), reason unlisted, B2's and B4's alike -- and under a run typed mid-run (the record's
+    midrun), they stay and print pre.stay.midrun, naming the open run's command -- the branch kept as a mid-run stay,
+    reason mid-run, outside session-branch mode (_stay_kind). One line where more than one holds (P14): the misrooted
+    one, else the unlisted one, else the mid-run one. B2's and B4's refused switch keeps the branch too (_leave,
     _b4). B3 and B4 resolve the branch against the run key set with the start's commit key beside it (_run_keys), the
     keys a stay's kind is read by, so a branch B4 leaves or would have left is always one an unkeyed stay names."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
@@ -3006,13 +3338,18 @@ def _disposition(run):
     if head is not None and head != default and branch_key(head, [])["plugin_branch"]:
         merged = _merged(run, "HEAD", head)
         if merged["merged"] or not branch_key(head, _run_keys(rec))["key"]:
+            midrun = rec.get("midrun")
             stay = ("pre.stay" if rec["specs_git"] == "misrooted"
-                    else "pre.stay.unlisted" if "pre.status-failed" in rec["reported"] else None)
+                    else "pre.stay.unlisted" if "pre.status-failed" in rec["reported"]
+                    else "pre.stay.midrun" if midrun else None)
             if stay:
                 _emit(run, lines.fill(stay, {"<branch>": head, "<default>": default,
+                                             "<command>": (midrun or {}).get("command"),
                                              lines.placeholder(stay, "<switched"): 0 if merged["merged"] else 1}))
                 if stay == "pre.stay.unlisted":
                     _keep_stay(run, head, merged["merged"], "unlisted")
+                elif stay == "pre.stay.midrun":
+                    _keep_stay(run, head, merged["merged"], "mid-run")
             else:
                 if _pulls(rec):
                     run["budget"].check(PULL_COST)
@@ -3163,8 +3500,9 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     """specs-repo-git §3's specs-preflight for the run of this session and <command>, on <specs> (SPECS_PATH as set,
     "" meaning unset), with the run key set <keys>. A call that is not a resume prints the Environment: line and §3.1's
     notices (reads only), then saves a fresh record at stage fetch -- its first write -- takes the run's snapshot
-    (_take_snapshot), save on a --rerun, and prunes; a failure before that save raises, so the caller exits 2 with
-    nothing done, and after it every outcome is returned, an exception as error and the pre.stopped line, after
+    (_take_snapshot), save on a --rerun, and prunes -- having read, before that save, the open run this one is typed
+    under, if any (rec["midrun"]), and parked this command's own record where it is an open run (replaced's parked:
+    true), save on a --rerun; a failure before that save raises, so the caller exits 2 with nothing done, and after it every outcome is returned, an exception as error and the pre.stopped line, after
     _stop_stay's ask on a plugin branch (§4 step 1's stay). The
     stages (START_STAGES) then run from the record's own, each saved on entering it and resumable from its start.
     <resume> goes on with the saved stage only where state.resumable holds for this call's arguments; otherwise the
@@ -3187,7 +3525,7 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     old = state.load(session, command)
     run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "print": [],
            "budget": _Budget(budget), "rec": old}
-    replaced = None
+    replaced, park = None, False
     fresh = not (resume and old is not None and old.get("stage") in START_STAGES and state.resumable(old, args))
     if fresh:
         env = env_line(specs)
@@ -3200,12 +3538,24 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
         if rerun and old is not None:
             _carry(rec, old)
         elif old is not None:
-            replaced = {"command": command, "started": old.get("started")}
+            replaced = {"command": command, "started": old.get("started"), "parked": False}
+        # §3.5, read before the first save: the open run this one is typed under -- the oldest record of another
+        # command (parked ones included) that the open-run test passes on HEAD's branch -- and, save on a --rerun, this
+        # command's own record where it is one, parked rather than replaced (the same command typed twice, P4)
+        head = _head_branch(specs) if g["state"] == "pass" else None
+        if head is not None:
+            now = time.time()
+            opened = next((o for o in state.others(session, command) if _open_run(o, head, g["top"], now)), None)
+            if opened is not None:
+                rec["midrun"] = {"command": opened.get("command"), "started": opened.get("started"), "branch": head}
+            park = not rerun and old is not None and _open_run(old, head, g["top"], now)
         run["rec"], run["print"] = rec, [env] + list(g["lines"])
     # This call's budget where it is not the default, outside args: how the preflight is split across calls, which the
     # start --resume a budget stop or a replay names repeats, and resumable's argument test never reads.
     run["rec"]["budget"] = None if budget == DEFAULT_BUDGET else budget
     if fresh:
+        if park and state.park(session, command):  # immediately before the first save
+            replaced["parked"] = True
         state.save(session, command, run["rec"])  # the first write: exit 2 is possible only before it
     nxt = error = None
     try:
@@ -4371,6 +4721,7 @@ def main():
     p = sub.add_parser("declined")
     p.add_argument("--command", required=True)
     p.add_argument("--path", action="append", default=[])
+    p.add_argument("--started")
     sub.add_parser("specs-root-check")
     p = sub.add_parser("end")
     p.add_argument("--command", required=True)
@@ -4381,6 +4732,7 @@ def main():
     p.add_argument("--session-branch-created")
     p.add_argument("--declined", action="append", default=[])
     p.add_argument("--resume", action="store_true")
+    p.add_argument("--started")
     p = sub.add_parser("start")
     p.add_argument("--command", required=True)
     p.add_argument("--key", action="append", default=[])
@@ -4395,6 +4747,7 @@ def main():
     p.add_argument("--branch", required=True)
     p.add_argument("--set-upstream", action="store_true")
     p.add_argument("--timed-out", action="store_true")
+    p.add_argument("--started")
     p = sub.add_parser("land")
     p.add_argument("--branch")
     p.add_argument("--default-ref", required=True)
@@ -4421,7 +4774,7 @@ def main():
             print(json.dumps(owner_repo_of(a.repo, not a.no_alias), indent=2, ensure_ascii=False))
             return 0
         if a.cmd == "declined":
-            print(json.dumps(declined(a.command, a.path), indent=2, ensure_ascii=False))
+            print(json.dumps(declined(a.command, a.path, a.started), indent=2, ensure_ascii=False))
             return 0
         if a.cmd == "specs-root-check":  # the --specs exception: SPECS_PATH as set, never checked first
             if a.specs is None:
@@ -4441,7 +4794,8 @@ def main():
             if a.misrooted_stdin:
                 notice = [line for line in sys.stdin.buffer.read().decode("utf-8", "replace").splitlines() if line.strip()]
             print(json.dumps(end(a.specs, a.command, a.commit_key, a.register_rebuild, a.no_preflight, notice,
-                                 a.session_branch_created, a.declined, a.resume), indent=2, ensure_ascii=False))
+                                 a.session_branch_created, a.declined, a.resume, a.started), indent=2,
+                             ensure_ascii=False))
             return 0
         if not a.specs:
             raise NotRun("--specs is required")
@@ -4477,7 +4831,7 @@ def dispatch(a):
     if a.cmd == "mode":
         return sb.mode(a.specs, a.default)
     if a.cmd == "replay":
-        return replay(a.specs, a.for_, a.command, a.branch, a.set_upstream, a.timed_out)
+        return replay(a.specs, a.for_, a.command, a.branch, a.set_upstream, a.timed_out, a.started)
     if a.cmd == "land":
         return land_cli(a)
     if a.cmd == "snapshot":
@@ -6026,6 +6380,137 @@ def selftest():
             got = cli("declined", "--command", "/idea", "--path", "a.md", env=clean_env("s1"), cwd=r.path)
             check(got["_rc"] == 0 and r.git("status", "--porcelain") == before,
                   "s_outside_repo: declined from inside a repository leaves its status unchanged (%r)" % got)
+
+            def case(name, fn):  # one case that crashes must not hide the others
+                try:
+                    fn()
+                except Exception as e:
+                    check(False, "%s crashed: %s: %s" % (name, type(e).__name__, str(e).strip()[:300]))
+
+            def opened(started, session="s7"):
+                rec = state.new("/specify", session=session)
+                rec["started"] = started
+                state.save(session, "/specify", rec)
+                return rec
+
+            # s_save_at: save, load and remove each take a record file of their own (at), <name>.json untouched
+            def s_save_at():
+                env()
+                main_rec = state.new("/specify", session="s5")
+                state.save("s5", "/specify", main_rec)
+                main_path = state.path("s5", "/specify")
+                before = open(main_path, "rb").read()
+                at = os.path.join(os.path.dirname(main_path), "specify.20261110T100000Z.json")
+                parked = state.new("/specify", session="s5", parked=True)
+                parked["started"] = "2026-11-10T10:00:00Z"
+                state.save("s5", "/specify", parked, at=at)
+                check(state.load("s5", "/specify", at=at) == parked and open(main_path, "rb").read() == before
+                      and state.load("s5", "/specify") == main_rec,
+                      "s_save_at: save(at=) writes that file and load(at=) reads it, <name>.json untouched")
+                check(state.remove("s5", "/specify", at=at) is True and not os.path.exists(at)
+                      and open(main_path, "rb").read() == before and state.remove("s5", "/specify", at=at) is False,
+                      "s_save_at: remove(at=) removes that file alone, then False")
+
+            case("s_save_at", s_save_at)
+
+            # s_others: every record of the session's directory not of this command, by its file's name -- parked
+            # ones of other commands included -- oldest started first; a temporary file, another name, one that cannot
+            # be read and one another version wrote are left out; mine() lists the command's own
+            def s_others():
+                env()
+                sdir = os.path.dirname(state.path("s6", "/specify"))
+
+                def put(command, started, name=None, **f):
+                    rec = state.new(command, session="s6", **f)
+                    rec["started"] = started
+                    state.save("s6", command, rec, at=None if name is None else os.path.join(sdir, name))
+                    return rec
+
+                put("/specify", "2026-11-10T10:00:02Z")
+                put("/specify", "2026-11-10T10:00:01Z", "specify.20261110T100001Z.json", parked=True)
+                put("/feedback", "2026-11-10T10:00:03Z")
+                put("/create-ard", "2026-11-10T10:00:00Z", "create-ard.20261110T100000Z.json", parked=True)
+                for name, body in ((".tmp-x.json", "{}"), ("notes.txt", "x"), ("bad.json", "{"),
+                                   ("old.json", json.dumps({"version": 0, "command": "/old", "started": "2026-11-10T09:00:00Z"}))):
+                    with open(os.path.join(sdir, name), "w", encoding="utf-8") as fh:
+                        fh.write(body)
+                got = [(rec["command"], rec["started"]) for rec in state.others("s6", "/specify")]
+                check(got == [("/create-ard", "2026-11-10T10:00:00Z"), ("/feedback", "2026-11-10T10:00:03Z")],
+                      "s_others: the other commands' records, a parked one among them, oldest first (%r)" % got)
+                got = [os.path.basename(f) for f, _rec in state.mine("s6", "/specify")]
+                check(got == ["specify.20261110T100001Z.json", "specify.json"],
+                      "s_others: mine() lists the command's own, parked and not, oldest first (%r)" % got)
+
+            case("s_others", s_others)
+
+            # s_park_unpark: park moves <name>.json aside under its started stamp, marked parked, its updated kept --
+            # -2 where the name is taken; unpark restores the newest parked one with protects false where keep holds,
+            # drops it otherwise, and never takes a record not marked parked (N3)
+            def s_park_unpark():
+                env()
+                sdir = os.path.dirname(state.path("s7", "/specify"))
+
+                a = opened("2026-11-10T10:00:01Z")
+                pa = state.park("s7", "/specify")
+                got = state.load("s7", "/specify", at=pa) or {}
+                check(pa == os.path.join(sdir, "specify.20261110T100001Z.json") and not os.path.exists(state.path("s7", "/specify"))
+                      and got.get("parked") is True and got.get("updated") == a["updated"] and got.get("started") == a["started"],
+                      "s_park_unpark: parked under its stamp, marked parked, updated kept (%r, %r)" % (pa, got))
+                opened("2026-11-10T10:00:02Z")
+                state.park("s7", "/specify")
+                opened("2026-11-10T10:00:03Z")
+                state.park("s7", "/specify")
+                check(state.park("s7", "/specify") is None, "s_park_unpark: nothing at <name>.json parks nothing")
+                derived = state.new("/specify", session="s7", started_by_script=False)
+                derived["started"] = "2026-11-10T10:00:09Z"
+                dpath = os.path.join(sdir, "specify.20261110T100009Z.json")
+                state.save("s7", "/specify", derived, at=dpath)
+                dbytes = open(dpath, "rb").read()
+                seen = []
+                got1 = state.unpark("s7", "/specify", lambda rec: seen.append(rec["started"]) or True)
+                restored = state.load("s7", "/specify") or {}
+                check(got1 == "restored" and seen == ["2026-11-10T10:00:03Z"] and restored.get("started") == "2026-11-10T10:00:03Z"
+                      and restored.get("protects") is False and restored.get("parked") is False
+                      and not os.path.exists(os.path.join(sdir, "specify.20261110T100003Z.json")),
+                      "s_park_unpark: the newest parked one restored, protects false (%r, %r)" % (got1, restored))
+                state.remove("s7", "/specify")
+                got2 = state.unpark("s7", "/specify", lambda rec: False)
+                check(got2 == "dropped" and state.load("s7", "/specify") is None
+                      and not os.path.exists(os.path.join(sdir, "specify.20261110T100002Z.json")),
+                      "s_park_unpark: where keep fails, the newest is dropped, nothing restored (%r)" % got2)
+                got3 = state.unpark("s7", "/specify", lambda rec: True)
+                got4 = state.unpark("s7", "/specify", lambda rec: True)
+                check(got3 == "restored" and (state.load("s7", "/specify") or {}).get("started") == "2026-11-10T10:00:01Z"
+                      and got4 is None and open(dpath, "rb").read() == dbytes,
+                      "s_park_unpark: three parks unpark newest first, and a record not marked parked is never taken "
+                      "(%r, %r)" % (got3, got4))
+                opened("2026-11-10T10:00:05Z", "s7b")
+                first = state.park("s7b", "/specify")
+                opened("2026-11-10T10:00:05Z", "s7b")
+                second = state.park("s7b", "/specify")
+                check(first.endswith("specify.20261110T100005Z.json") and second.endswith("specify.20261110T100005Z-2.json"),
+                      "s_park_unpark: a taken name takes -2 before .json (%r, %r)" % (first, second))
+
+            case("s_park_unpark", s_park_unpark)
+
+            # s_find: <name>.json where its started is the stamp; else <name>.<stamp>.json by name; else that derived
+            # path with None -- never <name>.json for another run
+            def s_find():
+                env()
+                sdir = os.path.dirname(state.path("s8", "/specify"))
+                main_rec = opened("2026-11-10T11:00:00Z", "s8")
+                p2 = os.path.join(sdir, "specify.20261110T100000Z.json")
+                other = state.new("/specify", session="s8", parked=True)
+                other["started"] = "2026-11-10T10:00:00Z"
+                state.save("s8", "/specify", other, at=p2)
+                got = [state.find("s8", "/specify", "2026-11-10T11:00:00Z"), state.find("s8", "/specify", "2026-11-10T10:00:00Z"),
+                       state.find("s8", "/specify", "2026-11-10T09:00:00Z")]
+                check(got == [(state.path("s8", "/specify"), main_rec), (p2, other),
+                              (os.path.join(sdir, "specify.20261110T090000Z.json"), None)],
+                      "s_find: the main record by its started, a parked one by name, else the derived path (%r)" % (got,))
+                check(raises(ValueError, state.find, "s8", "/specify", "yesterday"), "s_find: a bad stamp is a ValueError")
+
+            case("s_find", s_find)
 
             # s_lazy_import
             lone = os.path.join(tmp, "lazy")
@@ -12581,19 +13066,6 @@ def selftest():
                                lines.fill("g1.merged.if_ignored", v))
             return g1_form(r, paths, lines.fill("g1.landing.not_done", v), None, T["g1.landing.if_ignored"])
 
-        def g1_uncommitted(block):
-            """G1's plain <block> as end repeats it after a line that committed none of the run's files (§5): the
-            not-committed form, its Not done g1.not_done.uncommitted and If ignored g1.if_ignored.uncommitted, each on
-            one line, its Fix as it is."""
-            rows = block.split("\n")
-            i = next(k for k, row in enumerate(rows) if row.startswith("Not done:"))
-            j = i + 1
-            while j < len(rows) and rows[j].startswith(" "):
-                j += 1
-            k = next(x for x, row in enumerate(rows) if row.startswith("If ignored:"))
-            return "\n".join(rows[:i] + ["Not done: " + T["g1.not_done.uncommitted"]] + rows[j:k]
-                             + ["If ignored: " + T["g1.if_ignored.uncommitted"]])
-
         def g1_unlanded(r, paths, branch, kind):
             """G1's landing form as end repeats it after a landing that did not land the run's whole change (§5): its
             Not done g1.landing.not_done.unlanded, its Fix and If ignored the landing form's."""
@@ -12734,6 +13206,7 @@ def selftest():
         got = run_start(env, "/feedback")
         check(got.get("print") == [env_line(r.path), plain] and got.get("guard") == "G2" and got.get("branch") == "feature/x",
               "t_g2: G2's block naming main (%r)" % got)
+        run_end(env, "/feedback")  # its run ended, so /implement's below is not typed mid-run (§3.5)
         implement = (
             "⚠ SPECS REPO — ON A BRANCH THIS PLUGIN DID NOT CREATE\n\n"
             "Found:    %s is on branch `feature/x`, which is neither the default\n"
@@ -13544,36 +14017,53 @@ def selftest():
         old = record(env, "/create-ard") or {}
         got = run_start(env, "/create-ard")
         rec = record(env, "/create-ard") or {}
-        check(got.get("replaced") == {"command": "/create-ard", "started": old.get("started")}
+        check(got.get("replaced") == {"command": "/create-ard", "started": old.get("started"), "parked": False}
               and got.get("specs_git") is None and got.get("print") == [env_line(r.path)],
-              "t_replaced: the stale record reported as replaced (%r)" % got)
+              "t_replaced: the stale record reported as replaced, not parked (%r)" % got)
         check(all(rec.get(k) == state.FIELDS[k] for k in ("specs_git", "misrooted_notice", "guard", "guard_block",
                                                           "guard_paths", "declined", "advised_D", "b4_left")),
               "t_replaced: the new record holds no flag of the old one (%r)" % rec)
 
-        # t_two_commands
+        # t_two_commands: /feedback is typed mid-run on main while /specify's run stands open there (§3.5), so a
+        # session file written before /feedback's start would be the open run's: /feedback writes its own after its
+        # start, and its end commits that alone by the here form, unpushed, its G1 block in the mid-run form;
+        # /specify's end then repeats its own block and pushes both
         r, env = world(tmp, "t-two-commands")
         r.write("notes.md", "n\n")
         got = run_start(env, "/specify")
         block_s = lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": 1, "<path list>": ["notes.md", "notes.md"]})
         check(got.get("print") == [env_line(r.path), block_s], "t_two_commands: /specify's block (%r)" % got)
         spec_rec = record(env, "/specify")
+        up = on_origin(r)
+        r.write(RESUME, "specify's\n")  # /specify's file in progress, dirty before /feedback's start
         r.write("notes2.md", "n2\n")
-        r.write(FEED + "f.md", "f\n")
         got = run_start(env, "/feedback")
         block_f = lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": 2,
                                     "<path list>": ["notes.md, notes2.md", "notes.md notes2.md"]})
-        check(got.get("print") == [env_line(r.path), block_f], "t_two_commands: /feedback's block (%r)" % got)
+        rows = block_f.split("\n")
+        at = {x: next(k for k, row in enumerate(rows) if row.startswith(x)) for x in ("Fix:", "If ignored:")}
+        midrun_f = "\n".join(rows[:at["Fix:"]] + ["Fix:", "If ignored: " + lines.fill("g1.midrun.if_ignored",
+                                                                                   {"<command>": "/specify"})])
+        check(got.get("print") == [env_line(r.path), midrun_f]
+              and (got.get("midrun") or {}).get("command") == "/specify",
+              "t_two_commands: /feedback, typed mid-run, prints its block in the mid-run form (%r)" % got)
+        r.write(FEED + "f.md", "f\n")
         got = run_end(env, "/feedback")
-        check(got.get("print") == [pushed_default(head(r)[:7], r.path), block_f] and on_origin(r) == head(r)
+        here = lines.fill("row.here", {"<sha7>": head(r)[:7], "<N>": 1, "<branch>": "main", "<command>": "/specify",
+                                       lines.placeholder("row.here", "<the next push"): 0})
+        mine = head(r)
+        check(got.get("row") == "here" and got.get("print") == [here, midrun_f] and on_origin(r) == up
               and r.git("show", "--name-only", "--format=", "HEAD") == FEED + "f.md"
-              and record(env, "/feedback") is None and record(env, "/specify") == spec_rec,
-              "t_two_commands: /feedback's end repeats its own block, /specify's record untouched (%r)" % got)
+              and record(env, "/feedback") is None and record(env, "/specify") == spec_rec
+              and "?? " + RESUME in r.git("status", "--porcelain", "--untracked-files=all"),
+              "t_two_commands: /feedback's end commits its own file by the here form, unpushed, and repeats its "
+              "block in the mid-run form; /specify's file and record untouched (%r)" % got)
         got = run_end(env, "/specify")
-        check(got.get("print") == ["Specs repo: no session artifacts to commit", g1_uncommitted(block_s)]
+        check(got.get("print") == [pushed_default(head(r)[:7], r.path), block_s] and on_origin(r) == head(r)
+              and r.git("rev-parse", "HEAD^") == mine and r.git("show", "--name-only", "--format=", "HEAD") == RESUME
               and record(env, "/specify") is None,
-              "t_two_commands: /specify's end repeats the block its own start saved, in the form for an end that "
-              "committed nothing (%r)" % got)
+              "t_two_commands: /specify's end commits its own file and pushes both, repeating the block its own start "
+              "saved (%r)" % got)
 
         # t_prune
         r, env = world(tmp, "t-prune")
@@ -14396,6 +14886,1188 @@ def selftest():
               and (got.get("print") or [""])[-1] == lines.fill("pre.stopped", {"<the error>": got.get("error")}),
               "t_snap_bug: the TypeError surfaces as the start's error (%r)" % got)
 
+    def scenarios_midrun(tmp):
+        """specs-repo-git §3.5's run typed mid-run (MIDRUN-B4), §4 step 1's here form, and the record's identity
+        (D-park, P19, P35, P36). Each case builds its own world -- a bare origin, a clone with the PRD on main and
+        pushed, HEAD's reflog aged so no move of the setup falls after a start -- and runs one session's commands on it.
+        Every expected line is rendered from the pins, never by the code under test."""
+        state, lines = _flow()
+        T = lines.T
+        g = globals()
+        SPEC = "spec/ACME-1-01-x"
+        LB = "prd/B-2-y"
+        FUP = "specifications/PRD-ACME-1-x/follow-ups.md"
+        FB = "specifications/PRD-ACME-1-x/dev-workflows/feedback/f.md"
+        DELIV = "specifications/PRD-B-2-y/specification.md"
+        SUBJECT = "%s Add dev-workflows session artifacts (%s)"
+        HERE_ALT = lines.placeholder("row.here", "<the next push")
+        LANDED = lines.placeholder("app.landed", "<which no key")
+        STAY_ALT = lines.placeholder("pre.stay.midrun", "<switched")
+        KINDS = lines.placeholder("g1.landing.not_done", "<which no key")
+        MID = STAY_KINDS.index("mid-run")
+        STAMP_FMT = "%Y-%m-%dT%H:%M:%SZ"
+
+        def case(name, fn):
+            try:
+                fn()
+            except Exception as e:  # one case that crashes must not hide the others
+                check(False, "%s crashed: %s: %s" % (name, type(e).__name__, str(e).strip()[:400]))
+
+        def age(r, seconds=3600):
+            """Every entry of HEAD's reflog moved <seconds> back: none of the moves made so far falls after a start
+            made from here on."""
+            path = os.path.join(r.path, ".git", "logs", "HEAD")
+            if not os.path.exists(path):
+                return
+            out = []
+            with open(path, encoding="utf-8", errors="surrogateescape") as fh:
+                for line in fh.read().splitlines():
+                    meta, tab, msg = line.partition("\t")
+                    f = meta.split(" ")
+                    f[-2] = str(int(f[-2]) - seconds)
+                    out.append(" ".join(f) + tab + msg)
+            with open(path, "w", encoding="utf-8", errors="surrogateescape") as fh:
+                fh.write("\n".join(out) + "\n")
+
+        def mworld(name, follow=None, branch=None):
+            """world; <follow> committed on main as follow-ups.md and pushed, where given; then, where <branch> is
+            given, that branch cut from main with one commit of its own, pushed with -u, HEAD left on it; the reflog
+            aged."""
+            r, env = world(tmp, name)
+            if follow is not None:
+                r.write(FUP, follow)
+                r.commit_all("ACME-1 Add the follow-ups")
+                r.git("push", "-q", "origin", "main")
+            if branch is not None:
+                r.git("switch", "-q", "-c", branch)
+                r.write("specifications/%s.md" % branch.replace("/", "-"), "work\n")
+                r.commit_all("Work on " + branch)
+                r.git("push", "-q", "-u", "origin", branch)
+            age(r)
+            return r, env
+
+        def start_(env, command, *args, specs=None):
+            return cli("--specs", env["SPECS_PATH"] if specs is None else specs, "start", "--command", command, *args,
+                       env=env)
+
+        def declined_(env, command, *args):
+            return cli("declined", "--command", command, *args, env=env)
+
+        def rev(r, ref):
+            return r.git("rev-parse", "--verify", "-q", ref, check=False) or None
+
+        def on(r):
+            return r.git("symbolic-ref", "--short", "-q", "HEAD", check=False)
+
+        def read(r, path):
+            full = os.path.join(r.path, path)
+            if not os.path.isfile(full):
+                return None
+            with open(full, encoding="utf-8", newline="") as fh:
+                return fh.read()
+
+        def append(r, path, text):
+            r.write(path, (read(r, path) or "") + text)
+
+        def gone(r, path):
+            return not os.path.lexists(os.path.join(r.path, path))
+
+        def changed(r, ref):
+            return sorted(x for x in r.git("diff-tree", "--no-commit-id", "--name-only", "-r", ref).split("\n") if x)
+
+        def show(r, ref, path):
+            return r.git("show", "%s:%s" % (ref, path), check=False)
+
+        def cached(r):
+            return r.git("diff", "--cached", "--name-only")
+
+        def added(r, path):
+            """The lines `git diff HEAD -- <path>` adds."""
+            return [x[1:] for x in r.git("diff", "HEAD", "--", path).split("\n") if x.startswith("+") and not x.startswith("+++")]
+
+        def file_of(env, command, name=None):
+            with in_env(env):
+                main = state.path(env["CLAUDE_CODE_SESSION_ID"], command)
+            return main if name is None else os.path.join(os.path.dirname(main), name)
+
+        def raw(env, command, name=None):
+            path = file_of(env, command, name)
+            return open(path, "rb").read() if os.path.exists(path) else None
+
+        def stamp_of(started):
+            return started.replace("-", "").replace(":", "")
+
+        def backdate(env, command, seconds=120):
+            """The record of <command>'s run started <seconds> earlier, as a start that ran then would have saved it:
+            two runs of one command then hold two started stamps. Its new started."""
+            with in_env(env):
+                session = env["CLAUDE_CODE_SESSION_ID"]
+                rec = state.load(session, command)
+                rec["started"] = time.strftime(STAMP_FMT, time.gmtime(time.time() - seconds))
+                state.save(session, command, rec)
+            return rec["started"]
+
+        def drop(env, command):
+            """The record of <command>'s run removed, as prune or a /clear would leave an abandoned run's."""
+            with in_env(env):
+                state.remove(env["CLAUDE_CODE_SESSION_ID"], command)
+
+        def pushed_default(sha7, specs, n=1):
+            return lines.fill("row.pushed-default", {"<sha7>": sha7, "<N>": n, "<default>": "main", "<SPECS_PATH>": specs})
+
+        def here_row(sha7, n, branch, command="/specify", alt=0):
+            return lines.fill("row.here", {"<sha7>": sha7, "<N>": n, "<branch>": branch, "<command>": command,
+                                           HERE_ALT: alt})
+
+        def landed_app(branch, command="/specify"):
+            return lines.fill("app.landed", {"<branch>": branch, "<default>": "main", "<command>": command, LANDED: MID})
+
+        def kept_row(branch, clause, command="/specify"):
+            return lines.fill("row.midrun-kept", {"<command>": command, "<branch>": branch, "<reason clause>": clause})
+
+        def stay_line(branch, command="/specify", merged=False):
+            return lines.fill("pre.stay.midrun", {"<branch>": branch, "<default>": "main", "<command>": command,
+                                                  STAY_ALT: 0 if merged else 1})
+
+        def parts(block, **texts):
+            """<block> with each part a keyword names -- not_done, fix, if_ignored -- replaced by its text on one line
+            after its label's padding, the part's continuation lines dropped; an empty text leaves the label alone."""
+            labels = {"not_done": "Not done:", "fix": "Fix:", "if_ignored": "If ignored:"}
+            rows = block.split("\n")
+            for key, text in texts.items():
+                label = labels[key]
+                i = next(k for k, row in enumerate(rows) if row.startswith(label))
+                j = i + 1
+                while j < len(rows) and rows[j].startswith(" "):
+                    j += 1
+                pad = label + " " * (len(re.match(re.escape(label) + " *", rows[i]).group(0)) - len(label))
+                rows = rows[:i] + [(pad + text).rstrip()] + rows[j:]
+            return "\n".join(rows)
+
+        def g1_of(r, paths):
+            return lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": len(paths),
+                                     "<path list>": [", ".join(paths), " ".join(shlex.quote(p) for p in paths)]})
+
+        def g1_midrun(r, paths, not_done=None, command="/specify"):
+            """G1's mid-run form (§5): <not_done> in place of the plain Not done where given, an empty Fix, and
+            g1.midrun.if_ignored."""
+            texts = {"fix": "", "if_ignored": lines.fill("g1.midrun.if_ignored", {"<command>": command})}
+            if not_done is not None:
+                texts["not_done"] = not_done
+            return parts(g1_of(r, paths), **texts)
+
+        def landing_nd(branch, unlanded=False, command="/specify"):
+            tid = "g1.landing.not_done.unlanded" if unlanded else "g1.landing.not_done"
+            return lines.fill(tid, {"<default>": "main", "<branch>": branch, "<command>": command, KINDS: MID})
+
+        def g2_midrun(r, branch, command="/specify"):
+            plain = lines.fill("g2", {"<SPECS_PATH>": r.path, "<branch>": branch, "<default>": "main"})
+            return parts(plain, fix="", if_ignored=lines.fill("g2.midrun.if_ignored",
+                                                              {"<command>": command, "<branch>": branch}))
+
+        def no_git(block):
+            return "git -C" not in block and "switch" not in block.split("Fix:")[1]
+
+        def held(r):
+            return held_entries(r.path)
+
+        def opened_on(env, branch, command="/specify", **fields):
+            """A record of <command>'s run open on <branch>, as its start saves one (seed)."""
+            seed(env, command, branch=branch, **fields)
+            return record(env, command)
+
+        # t_midrun_keyless, t_midrun_keyed_other (MIDRUN-B4, Review Focus 1)
+        def t_midrun_keyless(name, cmd, args):
+            r, env = mworld(name, branch=SPEC)
+            s = start_(env, "/specify", "--key", "ACME-1-01", "--key", "ACME-1")
+            r.write(FUP, "- [ ] specify's\n")  # in progress, new on the branch, absent from main
+            spec_tip, main_old = rev(r, SPEC), rev(r, "main")
+            f = start_(env, cmd, *args)
+            check(s.get("branch") == SPEC and s.get("midrun") is None
+                  and f.get("print") == [env_line(r.path), stay_line(SPEC)] and on(r) == SPEC and rev(r, SPEC) == spec_tip
+                  and f.get("midrun") == {"command": "/specify", "started": s.get("started"), "branch": SPEC}
+                  and f.get("stay") == {"branch": SPEC, "kind": "mid-run", "reason": "mid-run", "merged": False,
+                                        "command": "/specify"},
+                  "%s: no commit on the branch, HEAD unmoved, pre.stay.midrun naming /specify, a mid-run stay (%r)"
+                  % (name, f))
+            r.write(FB, "## 2026-11-10 — %s — note\n\nmine\n" % cmd)
+            append(r, FUP, "- [ ] mine\n")
+            e = run_end(env, cmd)
+            m = rev(r, "main")
+            check(e.get("row") == "pushed-default" and e.get("print") == [pushed_default(m[:7], r.path, 2) + landed_app(SPEC)]
+                  and r.git("rev-parse", m + "^") == main_old and changed(r, m) == sorted([FB, FUP])
+                  and show(r, m, FUP) == "- [ ] mine" and read(r, FUP) == "- [ ] specify's\n" and gone(r, FB)
+                  and rev(r, SPEC) == spec_tip and on(r) == SPEC and on_origin(r) == m,
+                  "%s: main holds the run's file and its line alone, app.landed's mid-run alternative; the working copy "
+                  "is /specify's again (%r)" % (name, e))
+            e = run_end(env, "/specify")
+            h = rev(r, SPEC)
+            check(e.get("row") == "pushed-plugin" and r.git("rev-parse", h + "^") == spec_tip and changed(r, h) == [FUP]
+                  and show(r, h, FUP) == "- [ ] specify's" and on_origin(r, SPEC) == h,
+                  "%s: /specify's end commits its line on the branch, pushed (%r)" % (name, e))
+
+        case("t_midrun_keyless", lambda: t_midrun_keyless("t-midrun-keyless", "/feedback", []))
+        case("t_midrun_keyed_other", lambda: t_midrun_keyless("t-midrun-keyed-other", "/create-ard", ["--key", "ACME-2"]))
+
+        # t_midrun_default (P2, P20): the here form on main, unpushed; then the open run's end pushes both
+        def t_midrun_default():
+            r, env = mworld("t-midrun-default", follow="- [ ] a\n")
+            up = on_origin(r)
+            start_(env, "/specify", "--key", "ACME-1")
+            append(r, FUP, "- [ ] specify's\n")
+            f = start_(env, "/feedback")
+            old = head(r)
+            check(f.get("print") == [env_line(r.path)] and (f.get("midrun") or {}).get("branch") == "main"
+                  and f.get("stay") is None and head(r) == old,
+                  "t_midrun_default: typed mid-run on main, nothing printed, nothing kept (%r)" % f)
+            append(r, FUP, "- [ ] feedback's\n")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            h = head(r)
+            check(e.get("row") == "here" and e.get("print") == [here_row(h[:7], 2, "main")] and e.get("pushed") is False
+                  and on_origin(r) == up and r.git("rev-parse", "HEAD^") == old and changed(r, h) == sorted([FB, FUP])
+                  and show(r, h, FUP) == "- [ ] a\n- [ ] feedback's" and cached(r) == ""
+                  and added(r, FUP) == ["- [ ] specify's"] and record(env, "/feedback") is None,
+                  "t_midrun_default: one commit on main holding /feedback's line and file alone, unpushed, the index "
+                  "in step, /specify's line still dirty (%r)" % e)
+            e = run_end(env, "/specify")
+            check(e.get("row") == "pushed-default" and on_origin(r) == head(r) and r.git("rev-parse", "HEAD^") == h
+                  and read(r, FUP) == show(r, "HEAD", FUP) + "\n" and r.git("status", "--porcelain") == "",
+                  "t_midrun_default: /specify's end commits its line and pushes both (%r)" % e)
+
+        case("t_midrun_default", t_midrun_default)
+
+        # t_midrun_b3: the here form on a branch a key of the typed run names (B3): unpushed, the open run's file
+        # intact; the open run's end pushes both
+        def t_midrun_b3():
+            r, env = mworld("t-midrun-b3", branch=SPEC)
+            start_(env, "/specify", "--key", "ACME-1-01")
+            r.write(FUP, "- [ ] specify's\n")
+            up, old = on_origin(r, SPEC), head(r)
+            f = start_(env, "/feedback", "--key", "ACME-1")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            h = head(r)
+            check(f.get("print") == [env_line(r.path)] and f.get("stay") is None and e.get("row") == "here"
+                  and e.get("print") == [here_row(h[:7], 1, SPEC)] and on_origin(r, SPEC) == up
+                  and r.git("rev-parse", "HEAD^") == old and changed(r, h) == [FB] and read(r, FUP) == "- [ ] specify's\n"
+                  and cached(r) == "",
+                  "t_midrun_b3: the here form on the keyed branch, its first alternative, unpushed, /specify's file "
+                  "intact (%r)" % e)
+            e = run_end(env, "/specify")
+            check(e.get("row") == "pushed-plugin" and on_origin(r, SPEC) == head(r) and r.git("rev-parse", "HEAD^") == h,
+                  "t_midrun_b3: /specify's end pushes both (%r)" % e)
+
+        case("t_midrun_b3", t_midrun_b3)
+
+        # t_midrun_g2 (F5): on feature/x, G2's block in its mid-run form at the start and as end repeats it; the here
+        # form's row in its second alternative
+        def t_midrun_g2():
+            r, env = mworld("t-midrun-g2")
+            r.git("switch", "-q", "-c", "feature/x")
+            age(r)
+            start_(env, "/specify")
+            f = start_(env, "/feedback")
+            block = g2_midrun(r, "feature/x")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            h = head(r)
+            check(f.get("print") == [env_line(r.path), block] and no_git(block) and f.get("guard") == "G2"
+                  and e.get("row") == "here" and e.get("print") == [here_row(h[:7], 1, "feature/x", alt=1), block],
+                  "t_midrun_g2: G2's mid-run form, its Fix empty, at the start and at the end; the here row's second "
+                  "alternative (%r, %r)" % (f, e))
+
+        case("t_midrun_g2", t_midrun_g2)
+
+        # t_midrun_catch_up (P20): an open run on main behind origin/main -- the typed run's start makes no pull and
+        # no retry of HEAD's push, its end no pull; the here form commits on the commit the open run stood on
+        def t_midrun_catch_up():
+            r, env = mworld("t-midrun-catch-up")
+            start_(env, "/specify")
+            old = head(r)
+            o = clone(r, "t-midrun-catch-up-other")
+            o.write("specifications/PRD-ACME-1-x/notes-other.md", "o\n")
+            o.commit_all("ACME-1 Other work")
+            o.git("push", "-q", "origin", "main")
+            f = start_(env, "/feedback")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            check(f.get("print") == [env_line(r.path)] and e.get("row") == "here"
+                  and r.git("rev-parse", "HEAD^") == old and gone(r, "specifications/PRD-ACME-1-x/notes-other.md"),
+                  "t_midrun_catch_up: no pull at the start or the end (%r, %r)" % (f, e))
+            r, env = mworld("t-midrun-push-retry")
+            start_(env, "/specify")
+            r.write(FB, "left\n")
+            r.commit_all(SUBJECT % ("NOISSUE", "/feedback"))  # a session-file commit left unpushed on main
+            up = on_origin(r)
+            f = start_(env, "/feedback")
+            check(on_origin(r) == up and f.get("print") == [env_line(r.path)],
+                  "t_midrun_catch_up: no retry of HEAD's push under the open run (%r)" % f)
+
+        case("t_midrun_catch_up", t_midrun_catch_up)
+
+        # t_midrun_g1 (N2): the open run's deliverable dirty on prd/B-2-y, which no key of the typed run names -- G1's
+        # mid-run form with the landing Not done, its Fix empty, nothing to run; the end lands. On main, no stay: the
+        # plain Not done
+        def t_midrun_g1():
+            r, env = mworld("t-midrun-g1", branch=LB)
+            start_(env, "/specify", "--key", "B-2")
+            r.write(DELIV, "draft\n")
+            f = start_(env, "/feedback")
+            block = g1_midrun(r, [DELIV], landing_nd(LB))
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            m = rev(r, "main")
+            check(f.get("print") == [env_line(r.path), block] and no_git(block)
+                  and (f.get("stay") or {}).get("kind") == "mid-run" and e.get("row") == "pushed-default"
+                  and e.get("print") == [pushed_default(m[:7], r.path) + landed_app(LB), block] and changed(r, m) == [FB],
+                  "t_midrun_g1: G1's mid-run landing form at the start and the end, the end landed (%r, %r)" % (f, e))
+            r, env = mworld("t-midrun-g1-main")
+            start_(env, "/specify")
+            r.write(DELIV, "draft\n")
+            f = start_(env, "/feedback")
+            block = g1_midrun(r, [DELIV])
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            check(f.get("print") == [env_line(r.path), block] and no_git(block) and f.get("stay") is None
+                  and e.get("print") == [here_row(head(r)[:7], 1, "main"), block],
+                  "t_midrun_g1: on main, the plain Not done, the empty Fix, the mid-run If ignored (%r, %r)" % (f, e))
+
+        case("t_midrun_g1", t_midrun_g1)
+
+        # t_stay_merged_midrun (N2): an open run on a merged branch -- a mid-run stay with its merged flag set, G1's
+        # Fix empty and its If ignored the mid-run one, no switch
+        def t_stay_merged_midrun():
+            r, env = mworld("t-stay-merged-midrun")
+            r.git("switch", "-q", "-c", "prd/C-3-z")
+            r.write("specifications/PRD-C-3-z/prd.md", "c\n")
+            r.commit_all("C-3 Add the PRD")
+            r.git("push", "-q", "-u", "origin", "prd/C-3-z")
+            o = clone(r, "t-stay-merged-midrun-other")
+            o.git("merge", "-q", "--ff-only", "origin/prd/C-3-z")
+            o.git("push", "-q", "origin", "main")
+            age(r)
+            r.write("notes.md", "n\n")
+            start_(env, "/specify")
+            f = start_(env, "/feedback")
+            block = g1_midrun(r, ["notes.md"], landing_nd("prd/C-3-z"))
+            check(f.get("stay") == {"branch": "prd/C-3-z", "kind": "mid-run", "reason": "g1", "merged": True,
+                                    "command": "/specify"}
+                  and f.get("print") == [env_line(r.path), block] and no_git(block) and on(r) == "prd/C-3-z",
+                  "t_stay_merged_midrun: kind mid-run, merged, the mid-run form whatever the flag (%r)" % f)
+
+        case("t_stay_merged_midrun", t_stay_merged_midrun)
+
+        # The here form cut off (M1): its journals -- the held record's entry and the state record's end_commit.here --
+        # are written before HEAD's branch moves, so end --resume, or the next preflight's held stage, finishes it.
+        class Killed(BaseException):
+            """A kill: no handler of an outcome takes it, so the call ends where it stands, as a SIGKILL would."""
+
+        def midrun_main(name):
+            """/specify open on main with a follow-ups line in progress; /feedback typed mid-run, which writes its own
+            file and line."""
+            r, env = mworld(name, follow="- [ ] a\n")
+            start_(env, "/specify", "--key", "ACME-1")
+            append(r, FUP, "- [ ] specify's\n")
+            start_(env, "/feedback")
+            append(r, FUP, "- [ ] feedback's\n")
+            r.write(FB, "fb\n")
+            return r, env
+
+        def end_in_process(env, *args, **kw):
+            with in_env(env):
+                return end(env["SPECS_PATH"], "/feedback", *args, **kw)
+
+        def git_hook(after=None, before=None):
+            """sb.git wrapped: <before>(args) runs before, and <after>(args) after, each call whose args open
+            update-ref -m "specs-git: landed ..." -- the here form's move of HEAD's branch."""
+            real = sb.git
+
+            def wrapped(root, *args, **kw):
+                move = args[:2] == ("update-ref", "-m") and str(args[2]).startswith("specs-git: landed")
+                if move and before:
+                    before(args)
+                got = real(root, *args, **kw)
+                if move and after:
+                    after(args)
+                return got
+            return real, wrapped
+
+        def e_midrun_here_kill():
+            r, env = midrun_main("e-midrun-here-kill")
+            old = head(r)
+            real = g["_restore_index"]
+
+            def killed(root, entry):
+                raise RuntimeError("killed in the restore step")
+
+            g["_restore_index"] = killed
+            try:
+                got = end_in_process(env)
+            finally:
+                g["_restore_index"] = real
+            rec = record(env, "/feedback") or {}
+            journal = (rec.get("end_commit") or {}).get("here") or {}
+            check("killed in the restore step" in (got.get("error") or "") and head(r) != old
+                  and journal.get("tip") == head(r) and journal.get("old") == old
+                  and sorted(cached(r).split()) == sorted([FB, FUP])
+                  and [e.get("here") and e.get("tip") for e in held(r)] == [head(r)],
+                  "e_midrun_here_kill: error set, the index showing the reversal, end_commit.here and the held record "
+                  "holding the journal (%r, %r)" % (got, rec.get("end_commit")))
+            e = run_end(env, "/feedback", "--resume")
+            check(e.get("row") == "here" and e.get("print") == [here_row(head(r)[:7], 2, "main")] and cached(r) == ""
+                  and held(r) == [] and record(env, "/feedback") is None and r.git("rev-parse", "HEAD^") == old,
+                  "e_midrun_here_kill: end --resume restores the index, the here row, the journal gone (%r)" % e)
+
+        def e_midrun_here_kill_moved():
+            """A kill just after the move: the journals were written before it, so the resume finds them."""
+            r, env = midrun_main("e-midrun-here-kill-moved")
+            old = head(r)
+
+            def kill(args):
+                raise Killed()
+
+            real, wrapped = git_hook(after=kill)
+            sb.git = wrapped
+            try:
+                try:
+                    end_in_process(env)
+                except Killed:
+                    pass
+            finally:
+                sb.git = real
+            moved = head(r)
+            e = run_end(env, "/feedback", "--resume")
+            check(moved != old and e.get("row") == "here" and e.get("print") == [here_row(moved[:7], 2, "main")]
+                  and cached(r) == "" and held(r) == [] and head(r) == moved,
+                  "e_midrun_here_kill_moved: a kill right after the move is finished by end --resume (%r)" % e)
+
+        def e_midrun_here_lock():
+            r, env = midrun_main("e-midrun-here-lock")
+            lock = os.path.join(r.path, ".git", "index.lock")
+
+            def appear(args):
+                open(lock, "w").close()
+
+            real, wrapped = git_hook(after=appear)
+            sb.git = wrapped
+            try:
+                got = end_in_process(env)
+            finally:
+                sb.git = real
+            journal = ((record(env, "/feedback") or {}).get("end_commit") or {}).get("here") or {}
+            check(got.get("error") and journal.get("tip") == head(r) and sorted(cached(r).split()) == sorted([FB, FUP]),
+                  "e_midrun_here_lock: an index.lock between the two steps stops it, the journals kept (%r)" % got)
+            os.remove(lock)
+            e = run_end(env, "/feedback", "--resume")
+            check(e.get("row") == "here" and cached(r) == "" and held(r) == [],
+                  "e_midrun_here_lock: finished by end --resume once the lock is gone (%r)" % e)
+
+        def e_midrun_here_no_resume():
+            r, env = midrun_main("e-midrun-here-no-resume")
+            real = g["_restore_index"]
+            g["_restore_index"] = lambda root, entry: (_ for _ in ()).throw(RuntimeError("killed"))
+            try:
+                end_in_process(env)
+            finally:
+                g["_restore_index"] = real
+            tip = head(r)
+            env2 = dict(env, CLAUDE_CODE_SESSION_ID="e-midrun-here-no-resume-2")
+            got = start_(env2, "/create-ard")
+            want = lines.fill("pre.here.finished", {"<branch>": "main", "<sha7>": tip[:7], "<N>": 2})
+            check(want in (got.get("print") or []) and cached(r) == "" and held(r) == []
+                  and tip in r.git("rev-list", "HEAD").split(),
+                  "e_midrun_here_no_resume: a new session's start finishes the restore (%r)" % got)
+
+        case("e_midrun_here_kill", e_midrun_here_kill)
+        case("e_midrun_here_kill_moved", e_midrun_here_kill_moved)
+        case("e_midrun_here_lock", e_midrun_here_lock)
+        case("e_midrun_here_no_resume", e_midrun_here_no_resume)
+
+        def journal_cut(name):
+            """midrun_main, then /feedback's end cut off after its journals and before the move."""
+            r, env = midrun_main(name)
+
+            def kill(args):
+                raise Killed()
+
+            real, wrapped = git_hook(before=kill)
+            sb.git = wrapped
+            try:
+                try:
+                    end_in_process(env)
+                except Killed:
+                    pass
+            finally:
+                sb.git = real
+            return r, env
+
+        def e_midrun_here_resume_elsewhere():
+            """end --resume with HEAD on another branch than the journal's drops the journal entry itself, then goes on
+            from step 1: HEAD back on the journal's branch, a start commits nothing again there."""
+            r, env = journal_cut("e-midrun-resume-elsewhere")
+            old = head(r)
+            check(len(held(r)) == 1 and held(r)[0].get("here"), "e_midrun_here_resume_elsewhere: the journal stands")
+            r.git("switch", "-q", "-c", "other")
+            e = run_end(env, "/feedback", "--resume")
+            r.git("switch", "-q", "main")
+            env2 = dict(env, CLAUDE_CODE_SESSION_ID="e-midrun-resume-elsewhere-2")
+            s = start_(env2, "/create-ard")
+            check(e.get("branch") == "other" and held(r) == [] and head(r) == old
+                  and not any("finished the commit" in x for x in s.get("print") or []),
+                  "e_midrun_here_resume_elsewhere: the journal dropped, no second commit on main (%r, %r)" % (e, s))
+
+        def e_midrun_here_unfinished():
+            """end --resume with HEAD on the journal's branch, which moved on without the commit: the open run still
+            standing, the mid-run row with the unfinished clause; where it no longer stands, from step 1."""
+            other = "specifications/PRD-ACME-1-x/dev-workflows/feedback/other.md"
+            r, env = journal_cut("e-midrun-unfinished")
+            r.write(other, "o\n")  # main moves on: another session's commit of its own file
+            r.git("add", other)
+            r.git("commit", "-q", "-m", SUBJECT % ("NOISSUE", "/other"))
+            moved = head(r)
+            e = run_end(env, "/feedback", "--resume")
+            check(e.get("row") == "midrun-kept" and e.get("print") == [kept_row("main", lines.fill(
+                      "reason.land.unfinished", {"<branch>": "main"}))] and head(r) == moved and held(r) == []
+                  and record(env, "/feedback") is None,
+                  "e_midrun_here_unfinished: the mid-run row with reason.land.unfinished, nothing committed (%r)" % e)
+            r, env = journal_cut("e-midrun-unfinished-ended")
+            r.write(other, "o\n")
+            r.git("add", other)
+            r.git("commit", "-q", "-m", SUBJECT % ("NOISSUE", "/other"))
+            moved = head(r)
+            drop(env, "/specify")
+            e = run_end(env, "/feedback", "--resume")
+            check(e.get("row") == "pushed-default" and r.git("rev-parse", "HEAD^") == moved and on_origin(r) == head(r)
+                  and changed(r, "HEAD") == sorted([FB, FUP]) and "still open" not in (e.get("line") or ""),
+                  "e_midrun_here_unfinished: the open run ended, the end goes on from step 1 (%r)" % e)
+
+        def t_midrun_here_journal_ancestor():
+            """N4: the restore cut off; the open run's end then commits on top; end --resume finds the journalled tip
+            an ancestor of HEAD's branch, restores what is still the old tip's, and commits nothing again."""
+            r, env = midrun_main("t-midrun-here-ancestor")
+            real = g["_restore_index"]
+            g["_restore_index"] = lambda root, entry: (_ for _ in ()).throw(RuntimeError("killed"))
+            try:
+                end_in_process(env)
+            finally:
+                g["_restore_index"] = real
+            tip = head(r)
+            run_end(env, "/specify")
+            above = head(r)
+            e = run_end(env, "/feedback", "--resume")
+            check(above != tip and tip in r.git("rev-list", above).split()
+                  and head(r) == above and held(r) == [] and cached(r) == "" and record(env, "/feedback") is None
+                  and e.get("error") is None,
+                  "t_midrun_here_journal_ancestor: the journal finished on an ancestor, nothing committed again (%r)" % e)
+
+        case("e_midrun_here_resume_elsewhere", e_midrun_here_resume_elsewhere)
+        case("e_midrun_here_unfinished", e_midrun_here_unfinished)
+        case("t_midrun_here_journal_ancestor", t_midrun_here_journal_ancestor)
+
+        # e_no_start_midrun (N3, Review Focus 4): an end with no start of its own while /specify is open on its branch
+        # writes nothing -- kinds missing, ignored and declined-only
+        def e_no_start_midrun():
+            r, env = mworld("e-no-start-midrun", branch=SPEC)
+            start_(env, "/specify", "--key", "ACME-1-01")
+            r.write(FUP, "- [ ] specify's\n")
+            spec_raw, spec_tip, main_tip = raw(env, "/specify"), rev(r, SPEC), rev(r, "main")
+            want = kept_row(SPEC, T["reason.land.no-preflight"])
+            got = run_end(env, "/feedback", "--no-preflight")
+            check(got.get("record") == "missing" and got.get("row") == "midrun-kept" and got.get("print") == [want]
+                  and rev(r, SPEC) == spec_tip and rev(r, "main") == main_tip and raw(env, "/specify") == spec_raw
+                  and raw(env, "/feedback") is None and read(r, FUP) == "- [ ] specify's\n",
+                  "e_no_start_midrun: kind missing -- the mid-run row with no-preflight, nothing written (%r)" % got)
+            declined_(env, "/feedback", "--path", "x.md")
+            fb_raw = raw(env, "/feedback")
+            got = run_end(env, "/feedback", "--no-preflight")
+            got2 = run_end(env, "/feedback")
+            check(got.get("record") == "ignored" and got.get("print") == [want] and got2.get("record") == "declined-only"
+                  and got2.get("print") == [want] and raw(env, "/feedback") == fb_raw and rev(r, SPEC) == spec_tip
+                  and raw(env, "/specify") == spec_raw,
+                  "e_no_start_midrun: kinds ignored and declined-only alike, nothing removed (%r, %r)" % (got, got2))
+
+        def e_no_preflight_open():
+            """P5: /specify's own end with --no-preflight while its start's record is open: nothing committed, the
+            record untouched."""
+            r, env = mworld("e-no-preflight-open")
+            start_(env, "/specify")
+            r.write(FB, "fb\n")
+            spec_raw, old = raw(env, "/specify"), head(r)
+            got = run_end(env, "/specify", "--no-preflight")
+            check(got.get("row") == "midrun-kept" and got.get("print") == [kept_row("main", T["reason.land.no-preflight"])]
+                  and head(r) == old and raw(env, "/specify") == spec_raw,
+                  "e_no_preflight_open: the mid-run row, nothing committed, the record untouched (%r)" % got)
+
+        case("e_no_start_midrun", e_no_start_midrun)
+        case("e_no_preflight_open", e_no_preflight_open)
+
+        # t_midrun_not_open: each condition of the open-run test broken in turn, and the typed run switches as before
+        # (B4); then a record each condition passes, the run typed mid-run
+        def t_midrun_not_open():
+            r, env = mworld("t-midrun-not-open", branch=LB)
+            eight = time.strftime(STAMP_FMT, time.gmtime(time.time() - 8 * 86400))
+            for label, fields in (("open", {}), ("end_commit", {"end_commit": {"branch": LB}}), ("stage end", {"stage": "end"}),
+                                  ("declined only", {"started_by_script": False}), ("misrooted", {"specs_git": "misrooted"}),
+                                  ("another top", {"top": "/elsewhere"}), ("protects false", {"protects": False}),
+                                  ("8 days", {"started": eight}),
+                                  ("another branch", {"branch": "prd/C-3-z", "keys": ["C-3"]})):
+                r.git("switch", "-q", LB)
+                started = fields.pop("started", None)
+                age(r, 9 * 86400 if started else 3600)  # no move of the earlier cases inside an 8-day-old run's window
+                drop(env, "/feedback")
+                seed(env, "/specify", **dict({"branch": LB, "keys": ["B-2"]}, **fields))
+                if started:
+                    with in_env(env):
+                        rec = state.load(env["CLAUDE_CODE_SESSION_ID"], "/specify")
+                        rec["started"] = started
+                        state.save(env["CLAUDE_CODE_SESSION_ID"], "/specify", rec)
+                got = start_(env, "/feedback")
+                if label == "open":
+                    check(got.get("midrun") and on(r) == LB and stay_line(LB) in (got.get("print") or []),
+                          "t_midrun_not_open: the open record holds the run on its branch (%r)" % got)
+                else:
+                    check(got.get("midrun") is None and on(r) == "main" and got.get("b4_left") == LB,
+                          "t_midrun_not_open: %s -- not open, B4 switches as before (%r)" % (label, got))
+
+        def t_midrun_keyset():
+            """The open record's branch is main, its keys naming HEAD's: open."""
+            r, env = mworld("t-midrun-keyset", branch=LB)
+            seed(env, "/specify", branch="main", keys=["B-2"])
+            got = start_(env, "/feedback")
+            check(got.get("midrun") and on(r) == LB and stay_line(LB) in (got.get("print") or []),
+                  "t_midrun_keyset: a key of the open run names HEAD's branch (%r)" % got)
+
+        case("t_midrun_not_open", t_midrun_not_open)
+        case("t_midrun_keyset", t_midrun_keyset)
+
+        # HEAD's reflog (§3.5): a leave of HEAD's branch since the open run's start ends it, even where HEAD returned;
+        # one before it, a move to HEAD's branch itself, and the open run's own handoff onto its branch do not; with
+        # no reflog, the protection holds while HEAD stands on the branch
+        def reflog_case(name, between, before=None, keys=("B-2",), on_branch=LB, open_branch=None):
+            r, env = mworld(name, branch=LB)
+            if before:
+                before(r)
+                age(r)
+            seed(env, "/specify", branch=open_branch or on_branch, keys=list(keys))
+            between(r)
+            return r, start_(env, "/feedback")
+
+        def away_and_back(r):
+            r.git("switch", "-q", "main")
+            r.git("switch", "-q", LB)
+
+        def t_midrun_reflog():
+            r, got = reflog_case("t-midrun-left-returned", away_and_back)
+            check(got.get("midrun") is None and on(r) == "main",
+                  "t_midrun_left_returned: away and back since the start -- not mid-run (%r)" % got)
+            r, got = reflog_case("t-midrun-left-before", lambda r: None, before=away_and_back)
+            check(got.get("midrun") and on(r) == LB,
+                  "t_midrun_left_before: away and back before the start -- still mid-run (%r)" % got)
+            r, got = reflog_case("t-midrun-noop-move", lambda r: r.git("switch", "-q", LB))
+            check(got.get("midrun") and on(r) == LB, "t_midrun_noop_move: a move to the branch itself (%r)" % got)
+
+            def gone_reflog(r):
+                away_and_back(r)
+                os.remove(os.path.join(r.path, ".git", "logs", "HEAD"))
+
+            r, got = reflog_case("t-midrun-reflog-none", gone_reflog)
+            check(got.get("midrun") and on(r) == LB,
+                  "t_midrun_reflog_none: no reflog -- mid-run while HEAD stands on the branch (%r)" % got)
+            def handoff(r):  # the open run's own handoff onto its branch, which then carries a commit of its own
+                r.git("switch", "-q", "-c", "prd/B-2-z")
+                r.write("specifications/PRD-B-2-y/prd-z.md", "z\n")
+                r.commit_all("B-2 the handoff's deliverable")
+
+            r, got = reflog_case("t-midrun-handoff-open", handoff, before=lambda r: r.git("switch", "-q", "main"),
+                                 on_branch="main")
+            check(got.get("midrun") and on(r) == "prd/B-2-z" and stay_line("prd/B-2-z") in (got.get("print") or []),
+                  "t_midrun_handoff_open: the open run's handoff onto its own branch -- still mid-run (%r)" % got)
+
+        case("t_midrun_reflog", t_midrun_reflog)
+
+        # e_midrun_open_ended (P36, F4): the open run stops standing without committing the typed run's file -- HEAD
+        # leaves main and returns, or its record removed as an abandoned run's -- and the typed run's end commits its
+        # own change by the here form and pushes it, with no mid-run wording
+        def e_midrun_open_ended():
+            for name, ends in (("e-midrun-ended-left", lambda r, env: (r.git("switch", "-q", "-c", "tmp"),
+                                                                       r.git("switch", "-q", "main"))),
+                               ("e-midrun-ended-dropped", lambda r, env: drop(env, "/specify"))):
+                r, env = midrun_main(name)
+                old = head(r)
+                ends(r, env)
+                e = run_end(env, "/feedback")
+                h = head(r)
+                check(e.get("row") == "pushed-default" and e.get("print") == [pushed_default(h[:7], r.path, 2)]
+                      and on_origin(r) == h and r.git("rev-parse", "HEAD^") == old and changed(r, h) == sorted([FB, FUP])
+                      and show(r, h, FUP) == "- [ ] a\n- [ ] feedback's" and added(r, FUP) == ["- [ ] specify's"],
+                      "%s: only /feedback's change, pushed, no mid-run wording (%r)" % (name, e))
+
+        case("e_midrun_open_ended", e_midrun_open_ended)
+
+        # t_midrun_ends_*: the protection's ends (S3) -- HEAD on another branch, /clear's new session id, the open
+        # run's own end; its age is t_midrun_not_open's
+        def t_midrun_ends():
+            r, env = mworld("t-midrun-ends-head-left", branch=LB)
+            start_(env, "/specify", "--key", "B-2")
+            r.git("switch", "-q", "main")
+            got = start_(env, "/feedback")
+            check(got.get("midrun") is None, "t_midrun_ends_head_left: HEAD on another branch (%r)" % got)
+            r, env = mworld("t-midrun-ends-clear", branch=LB)
+            start_(env, "/specify", "--key", "B-2")
+            got = start_(dict(env, CLAUDE_CODE_SESSION_ID="t-midrun-ends-clear-2"), "/feedback")
+            check(got.get("midrun") is None and on(r) == "main", "t_midrun_ends_clear: a new session id (%r)" % got)
+            r, env = mworld("t-midrun-ends-end", branch=LB)
+            start_(env, "/specify", "--key", "B-2")
+            run_end(env, "/specify")
+            got = start_(env, "/feedback")
+            check(got.get("midrun") is None and on(r) == "main", "t_midrun_ends_end: the open run's end (%r)" % got)
+
+        case("t_midrun_ends", t_midrun_ends)
+
+        # N17, conditional (§4 step 1 (1)): a run typed mid-run whose start took no snapshot -- status could not run,
+        # or the start was cut off before taking one -- commits nothing while the open run stands, by the landing or
+        # the here form alike; once it no longer stands, the change is taken against HEAD
+        def no_snapshot(name, cause, where):
+            """/specify open -- on LB (a mid-run stay for the typed run) or on main (the here form) -- with a follow-ups
+            line in progress; /feedback typed mid-run with no snapshot, for <cause>; it writes its own file."""
+            if where == "lb":
+                r, env = mworld(name, branch=LB)
+                start_(env, "/specify", "--key", "B-2")
+            else:
+                r, env = mworld(name, follow="- [ ] a\n")
+                start_(env, "/specify", "--key", "ACME-1")
+            append(r, FUP, "- [ ] specify's\n")
+            with in_env(env):
+                if cause == "status":
+                    real = g["status"]
+
+                    def broken(root):
+                        raise NotRun("git status: fatal: index file corrupt")
+
+                    g["status"] = broken
+                    try:
+                        first = start(r.path, "/feedback")
+                    finally:
+                        g["status"] = real
+                else:
+                    real = g["_take_snapshot"]
+
+                    def cut(run):
+                        raise Killed()
+
+                    g["_take_snapshot"] = cut
+                    try:
+                        try:
+                            start(r.path, "/feedback")
+                        except Killed:
+                            pass
+                    finally:
+                        g["_take_snapshot"] = real
+                    first = state.load(env["CLAUDE_CODE_SESSION_ID"], "/feedback") or {}
+            r.write(FB, "fb\n")
+            return r, env, first
+
+        def e_midrun_no_snapshot():
+            for cause, where in (("status", "lb"), ("cut", "main"), ("status", "main"), ("cut", "lb")):
+                name = "e-midrun-no-snapshot-%s-%s" % (cause, where)
+                r, env, first = no_snapshot(name, cause, where)
+                branch = LB if where == "lb" else "main"
+                old_main, old_head = rev(r, "main"), head(r)
+                e = run_end(env, "/feedback")
+                check(first.get("start_dirty") is None and (first.get("midrun") or {}).get("command") == "/specify"
+                      and e.get("row") == "midrun-kept"
+                      and e.get("print") == [kept_row(branch, T["reason.land.no-snapshot"])]
+                      and rev(r, "main") == old_main and head(r) == old_head and "- [ ] specify's" in read(r, FUP)
+                      and not gone(r, FB) and r.git("status", "--porcelain", "--", FUP) != "",
+                      "%s: nothing committed while the open run stands, the open run's file still dirty (%r)" % (name, e))
+            for cause, where, ends in (("status", "lb", "dropped"), ("cut", "main", "left")):
+                name = "e-midrun-no-snapshot-ended-%s-%s" % (cause, where)
+                r, env, first = no_snapshot(name, cause, where)
+                if ends == "dropped":
+                    drop(env, "/specify")
+                else:
+                    r.git("switch", "-q", "-c", "tmp")
+                    r.git("switch", "-q", "main")
+                e = run_end(env, "/feedback")
+                m = rev(r, "main")
+                check(e.get("row") == "pushed-default" and on_origin(r) == m and changed(r, m) == sorted([FB, FUP])
+                      and "still open" not in (e.get("line") or ""),
+                      "%s: the open run no longer stands -- the change taken against HEAD, every session file with it "
+                      "(%r)" % (name, e))
+
+        case("e_midrun_no_snapshot", e_midrun_no_snapshot)
+
+        # The here form refused (P2): while the open run stands, nothing committed or held, the mid-run row naming the
+        # refused path, G1's block in its not-committed mid-run form; once it no longer stands, steps 2-4
+        def kept_world(name):
+            """/specify open on main with its follow-ups line in progress and notes.md (not the plugin's) dirty; /feedback
+            typed mid-run ticks /specify's line -- a line of its snapshot HEAD lacks, gone from its copy: dropped."""
+            r, env = mworld(name, follow="- [ ] a\n")
+            start_(env, "/specify", "--key", "ACME-1")
+            append(r, FUP, "- [ ] s\n")
+            r.write("notes.md", "n\n")
+            start_(env, "/feedback")
+            r.write(FUP, "- [ ] a\n- [x] s\n- [ ] f\n")
+            r.write(FB, "fb\n")
+            return r, env
+
+        def e_midrun_kept():
+            r, env = kept_world("e-midrun-kept")
+            old = head(r)
+            e = run_end(env, "/feedback")
+            clause = lines.fill("reason.land.dropped", {"<path>": FUP, "<onto>": "main"})
+            block = g1_midrun(r, ["notes.md"], T["g1.not_done.uncommitted"])
+            check(e.get("row") == "midrun-kept" and e.get("print") == [kept_row("main", clause), block]
+                  and head(r) == old and held(r) == [] and "WILL" not in block.split("Fix:")[0],
+                  "e_midrun_kept: the mid-run row with the refused path's clause, nothing committed or held, the "
+                  "not-committed mid-run form (%r)" % e)
+            r, env = kept_world("e-midrun-kept-ended")
+            old = head(r)
+            drop(env, "/specify")
+            e = run_end(env, "/feedback")
+            check(e.get("row") == "pushed-default" and r.git("rev-parse", "HEAD^") == old and on_origin(r) == head(r)
+                  and changed(r, "HEAD") == sorted([FB, FUP]),
+                  "e_midrun_kept: once the open run no longer stands, steps 2-4 commit on HEAD's branch (%r)" % e)
+
+        case("e_midrun_kept", e_midrun_kept)
+
+        # A mid-run stay whose landing did not land the run's whole change: G1's mid-run form with the not-landed Not
+        # done -- nothing, held (an index.lock), held stuck, there, and landed with a path held alone
+        def e_midrun_unlanded():
+            def setup(name, extra=None):
+                r, env = mworld(name, branch=LB)
+                if extra:
+                    extra(r)
+                    age(r)
+                start_(env, "/specify", "--key", "B-2")
+                r.write(DELIV, "draft\n")
+                start_(env, "/feedback")
+                return r, env
+
+            def lb_follow(r):  # LB's follow-ups.md holds a line main lacks
+                r.write(FUP, "- [ ] b\n")
+                r.commit_all("B-2 a follow-up")
+                r.git("push", "-q", "origin", LB)
+
+            for name, act, row in (("nothing", lambda r: None, "nothing"),
+                                   ("held", lambda r: (r.write(FB, "fb\n"),
+                                                       open(os.path.join(r.path, ".git", "index.lock"), "w").close()),
+                                    "held"),
+                                   ("stuck", lambda r: r.write(FUP, "- [x] b\n"), "held-stuck"),
+                                   ("partial", lambda r: (r.write(FUP, "- [x] b\n"), r.write(FB, "fb\n")),
+                                    "pushed-default")):
+                r, env = setup("e-midrun-unlanded-" + name, lb_follow if name in ("stuck", "partial") else None)
+                act(r)
+                e = run_end(env, "/feedback")
+                lock = os.path.join(r.path, ".git", "index.lock")
+                if os.path.exists(lock):
+                    os.remove(lock)
+                block = g1_midrun(r, [DELIV], landing_nd(LB, True))
+                check(e.get("row") == row and (e.get("print") or [None])[-1] == block,
+                      "e_midrun_unlanded: after %s, the mid-run form with the not-landed Not done (%r)" % (name, e))
+            r, env = setup("e-midrun-unlanded-there")
+            o = clone(r, "e-midrun-unlanded-there-other")
+            o.write(FB, "fb\n")
+            o.commit_all("ACME-1 the same file")
+            o.git("push", "-q", "origin", "main")
+            r.git("fetch", "-q", "origin")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            check(e.get("row") == "there" and (e.get("print") or [None])[-1] == g1_midrun(r, [DELIV], landing_nd(LB, True)),
+                  "e_midrun_unlanded: after there, the mid-run form with the not-landed Not done (%r)" % e)
+
+        case("e_midrun_unlanded", e_midrun_unlanded)
+
+        # The same command typed twice (D-park, P4, P19, P35, N1, N3): parked, never typed mid-run; each run's end
+        # reads and writes its own record by --started, in either order
+        def t_midrun_same_command():
+            r, env = mworld("t-midrun-same-command")
+            r.write("notes.md", "n\n")
+            start_(env, "/specify", "--commit-key", "ACME-1")
+            declined_(env, "/specify", "--path", "notes.md")
+            first = backdate(env, "/specify")
+            b = start_(env, "/specify")
+            check((b.get("replaced") or {}).get("parked") is True and b.get("midrun") is None
+                  and not any("is still open on it" in x for x in b.get("print") or [])
+                  and os.path.exists(file_of(env, "/specify", "specify.%s.json" % stamp_of(first))),
+                  "t_midrun_same_command: the second start parks the first, and is not typed mid-run (%r)" % b)
+            e = run_end(env, "/specify", "--started", b.get("started"))
+            restored = record(env, "/specify") or {}
+            check(e.get("error") is None and restored.get("started") == first and restored.get("protects") is False
+                  and restored.get("parked") is False,
+                  "t_midrun_same_command: the second's end restores the first, protects false (%r)" % restored)
+            f = start_(env, "/feedback")
+            check(f.get("midrun") is None,
+                  "t_midrun_ends_command_again: once its command's start ran again, the first run protects nothing "
+                  "(%r)" % f)
+            run_end(env, "/feedback")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/specify", "--started", first)
+            block = g1_of(r, ["notes.md"])
+            check(e.get("record") == "found" and e.get("row") == "pushed-default"
+                  and e.get("print") == [pushed_default(head(r)[:7], r.path)
+                                         + lines.fill("app.declined", {"<path>": "notes.md"}), block]
+                  and r.git("log", "-1", "--format=%s") == SUBJECT % ("ACME-1", "/specify")
+                  and record(env, "/specify") is None,
+                  "t_midrun_same_command: the first run's end finds its own record: its block, its declined append, "
+                  "its commit key (%r)" % e)
+
+        def t_started_not_found():
+            """P35, F7: a third start replaced the restored record; the first run's declined --started and end --started
+            take the first run's derived path, never <command>.json, and its end sees the third run open (P5)."""
+            r, env = mworld("t-started-not-found")
+            start_(env, "/specify")
+            first = backdate(env, "/specify", 240)
+            b = start_(env, "/specify")
+            run_end(env, "/specify", "--started", b.get("started"))
+            third = start_(env, "/specify")
+            check((third.get("replaced") or {}).get("parked") is False,
+                  "t_started_not_found: the restored record is replaced, not parked (%r)" % third.get("replaced"))
+            third_raw = raw(env, "/specify")
+            r.write(FB, "fb\n")
+            old = head(r)
+            got = declined_(env, "/specify", "--started", first, "--path", "x.md")
+            derived = file_of(env, "/specify", "specify.%s.json" % stamp_of(first))
+            drec = json.load(open(derived, encoding="utf-8")) if os.path.exists(derived) else {}
+            e = run_end(env, "/specify", "--started", first)
+            check(got.get("record") == "created" and drec.get("declined") == ["x.md"] and drec.get("started") == first
+                  and drec.get("parked") is False and e.get("record") == "declined-only" and e.get("row") == "midrun-kept"
+                  and e.get("print") == [kept_row("main", T["reason.land.no-preflight"])] and head(r) == old
+                  and raw(env, "/specify") == third_raw and os.path.exists(derived),
+                  "t_started_not_found: both calls on the derived path, the third's record byte for byte, nothing "
+                  "committed (%r, %r)" % (got, e))
+
+        def t_park_out_of_order(landing):
+            """N1: the second run abandoned with a G1 block and a declined path of its own; the first run's declined
+            --started and end --started end on its own parked record, which is removed; <command>.json, the second's,
+            byte for byte. <landing>: the first run's start stayed on prd/B-2-y (G1, unkeyed), so its end lands through
+            on_move."""
+            name = "t-park-out-of-order" + ("-landing" if landing else "")
+            r, env = mworld(name, branch=LB if landing else None)
+            if landing:
+                r.write("notes.md", "n\n")
+            s1 = start_(env, "/specify")
+            first = backdate(env, "/specify")
+            r.write("notes.md", "n\n")
+            start_(env, "/specify")
+            declined_(env, "/specify", "--path", "notes.md")
+            second_raw = raw(env, "/specify")
+            r.write("x.md", "x\n")
+            declined_(env, "/specify", "--started", first, "--path", "x.md")
+            r.write(FB, "fb\n")
+            parked_file = file_of(env, "/specify", "specify.%s.json" % stamp_of(first))
+            e = run_end(env, "/specify", "--started", first)
+            m = rev(r, "main")
+            line = (e.get("line") or "")
+            ok = (e.get("record") == "found" and e.get("error") is None and raw(env, "/specify") == second_raw
+                  and not os.path.exists(parked_file) and line.endswith(lines.fill("app.declined", {"<path>": "x.md"}))
+                  and changed(r, m) == [FB] and on_origin(r) == m)
+            if landing:
+                ok = ok and (s1.get("stay") or {}).get("kind") == "unkeyed" and on(r) == LB and gone(r, FB)
+            check(ok, "%s: the first run ends on its own parked record, the second's byte for byte (%r)" % (name, e))
+
+        def t_park_stack():
+            """Three runs of one command: each end restores the newest parked, newest first."""
+            r, env = mworld("t-park-stack")
+            start_(env, "/specify")
+            a = backdate(env, "/specify", 240)
+            start_(env, "/specify")
+            b = backdate(env, "/specify", 120)
+            c = start_(env, "/specify").get("started")
+            run_end(env, "/specify", "--started", c)
+            got_b = (record(env, "/specify") or {}).get("started")
+            run_end(env, "/specify", "--started", b)
+            got_a = (record(env, "/specify") or {}).get("started")
+            e = run_end(env, "/specify", "--started", a)
+            check(got_b == b and got_a == a and e.get("record") == "found" and record(env, "/specify") is None,
+                  "t_park_stack: restored newest first (%r, %r)" % (got_b, got_a))
+
+        def t_park_dropped():
+            """HEAD left the parked record's branch and returned since its start: the nested end drops it."""
+            r, env = mworld("t-park-dropped", branch=LB)
+            start_(env, "/specify", "--key", "B-2")
+            first = backdate(env, "/specify")
+            b = start_(env, "/specify", "--key", "B-2")
+            r.git("switch", "-q", "main")
+            r.git("switch", "-q", LB)
+            run_end(env, "/specify", "--started", b.get("started"))
+            check(record(env, "/specify") is None
+                  and not os.path.exists(file_of(env, "/specify", "specify.%s.json" % stamp_of(first))),
+                  "t_park_dropped: a leave of its branch since its start drops the parked record")
+
+        def t_park_misrooted_stop():
+            """The second run's end on a misrooted path, before any gate: the parked record restored, read in its own
+            repository (its top)."""
+            r, env = mworld("t-park-misrooted-stop")
+            start_(env, "/specify")
+            first = backdate(env, "/specify")
+            b = start_(env, "/specify")
+            elsewhere = os.path.join(tmp, "t-park-misrooted-elsewhere")
+            os.makedirs(elsewhere)
+            e = run_end(env, "/specify", "--started", b.get("started"), specs=elsewhere)
+            restored = record(env, "/specify") or {}
+            check(e.get("row") == "misrooted" and restored.get("started") == first and restored.get("protects") is False,
+                  "t_park_misrooted_stop: the misrooted end restores the parked record (%r, %r)" % (e.get("row"), restored))
+
+        def t_derived_not_parked():
+            """N3: a declined --started with no start makes a record at a derived path, never marked parked: a nested
+            run's unpark leaves it as it was, though its stamp is newer than the parked record's."""
+            r, env = mworld("t-derived-not-parked")
+            start_(env, "/specify")
+            first = backdate(env, "/specify", 240)
+            later = time.strftime(STAMP_FMT, time.gmtime(time.time() - 120))
+            declined_(env, "/specify", "--started", later, "--path", "y.md")
+            derived_raw = raw(env, "/specify", "specify.%s.json" % stamp_of(later))
+            b = start_(env, "/specify")
+            run_end(env, "/specify", "--started", b.get("started"))
+            check(derived_raw is not None and raw(env, "/specify", "specify.%s.json" % stamp_of(later)) == derived_raw
+                  and (record(env, "/specify") or {}).get("started") == first,
+                  "t_derived_not_parked: the derived record untouched, the parked one restored")
+
+        case("t_midrun_same_command", t_midrun_same_command)
+        case("t_started_not_found", t_started_not_found)
+        case("t_park_out_of_order", lambda: t_park_out_of_order(False))
+        case("t_park_out_of_order_landing", lambda: t_park_out_of_order(True))
+        case("t_park_stack", t_park_stack)
+        case("t_park_dropped", t_park_dropped)
+        case("t_park_misrooted_stop", t_park_misrooted_stop)
+        case("t_derived_not_parked", t_derived_not_parked)
+
+        # t_midrun_abandoned (Review Focus 5): /specify open on prd/B-2-y, never ended; three commands after it each
+        # stay, name it, and land their own file
+        def t_midrun_abandoned():
+            r, env = mworld("t-midrun-abandoned", branch=LB)
+            start_(env, "/specify", "--key", "B-2")
+            r.write(FUP, "- [ ] specify's\n")
+            for k, cmd in enumerate(("/feedback", "/create-ard", "/idea")):
+                got = start_(env, cmd)
+                path = "specifications/PRD-ACME-1-x/dev-workflows/feedback/f%d.md" % k
+                r.write(path, "f\n")
+                e = run_end(env, cmd)
+                m = rev(r, "main")
+                check(stay_line(LB) in (got.get("print") or []) and on(r) == LB
+                      and e.get("print") == [pushed_default(m[:7], r.path) + landed_app(LB)] and changed(r, m) == [path]
+                      and read(r, FUP) == "- [ ] specify's\n",
+                      "t_midrun_abandoned: %s stays naming /specify and lands its own file (%r)" % (cmd, e))
+
+        case("t_midrun_abandoned", t_midrun_abandoned)
+
+        # t_midrun_misrooted (P14): misrooted and an open run -- the misrooted line alone
+        def t_midrun_misrooted():
+            r, env = mworld("t-midrun-misrooted", branch=LB)
+            seed(env, "/specify", branch=LB, keys=["B-2"])
+            sub = os.path.join(r.path, "sub")
+            os.makedirs(sub)
+            got = start_(env, "/feedback", specs=sub)
+            stay = lines.fill("pre.stay", {"<branch>": LB, "<default>": "main",
+                                           lines.placeholder("pre.stay", "<switched"): 1})
+            check(got.get("specs_git") == "misrooted" and got.get("midrun") and stay in (got.get("print") or [])
+                  and not any("is still open on it" in x for x in got.get("print") or []) and on(r) == LB,
+                  "t_midrun_misrooted: one stay line, the misrooted one (%r)" % got)
+
+        case("t_midrun_misrooted", t_midrun_misrooted)
+
+        # t_midrun_mode: B4 under a run typed mid-run in session-branch mode -- the mid-run stay line, no switch; the
+        # mode's commit carrying the open run's in-progress file, as the spec's non-goal says
+        def t_midrun_mode():
+            r, env = mworld("t-midrun-mode", branch=LB)
+            r.git("config", "workflows.sessionBranch", "true")
+            env = dict(env, GIT_USER_INITIALS="ab")
+            start_(env, "/specify", "--key", "B-2")
+            r.write(FUP, "- [ ] specify's\n")
+            got = start_(env, "/feedback")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            check(stay_line(LB) in (got.get("print") or []) and on(r) == LB and got.get("stay") is None
+                  and e.get("row") == "pushed-session"
+                  and FUP in r.git("diff", "--name-only", "main", "refs/heads/session/ab").split(),
+                  "t_midrun_mode: no switch, the mode's commit carrying the open run's file (%r, %r)" % (got, e))
+
+        case("t_midrun_mode", t_midrun_mode)
+
+        def t_midrun_mode_catch_up():
+            """In session-branch mode, the typed run's end makes no catch-up while the open run stands on main."""
+            r, env = mworld("t-midrun-mode-catch-up")
+            r.git("config", "workflows.sessionBranch", "true")
+            env = dict(env, GIT_USER_INITIALS="ab")
+            start_(env, "/specify")
+            old = head(r)
+            o = clone(r, "t-midrun-mode-catch-up-other")
+            o.write("specifications/PRD-ACME-1-x/notes-other.md", "o\n")
+            o.commit_all("ACME-1 Other work")
+            o.git("push", "-q", "origin", "main")
+            f = start_(env, "/feedback")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            check(f.get("midrun") and head(r) == old and e.get("row") == "pushed-session",
+                  "t_midrun_mode_catch_up: no pull at the start or the end in the mode (%r)" % e)
+
+        case("t_midrun_mode_catch_up", t_midrun_mode_catch_up)
+
+        def t_park_replay():
+            """P19: the first run's end, on its parked record, hands a rejected push to the replay, whose next repeats
+            --started: the replay ends on that record, <command>.json untouched."""
+            r, env = mworld("t-park-replay")
+            start_(env, "/specify")
+            first = backdate(env, "/specify")
+            start_(env, "/specify")
+            second_raw = raw(env, "/specify")
+            o = clone(r, "t-park-replay-other")
+            o.write("specifications/PRD-ACME-1-x/dev-workflows/feedback/o.md", "o\n")
+            o.commit_all(SUBJECT % ("NOISSUE", "/other"))
+            o.git("push", "-q", "origin", "main")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/specify", "--started", first)
+            nxt = (e.get("next") or {}).get("run") or ""
+            rp = shell(nxt, env) if nxt else {}
+            parked_file = file_of(env, "/specify", "specify.%s.json" % stamp_of(first))
+            check(("--started " + first) in nxt and rp.get("row") == "replayed" and not os.path.exists(parked_file)
+                  and raw(env, "/specify") == second_raw and on_origin(r) == head(r),
+                  "t_park_replay: the replay names --started and ends on the parked record (%r, %r)" % (e, rp))
+
+        case("t_park_replay", t_park_replay)
+
+        def t_started_missing_end():
+            """P35: an end --started whose stamp names no record (kind missing) saves at the run's derived path, its
+            started the stamp -- here kept at stage end-replay by a rejected push -- and the replay its next names ends
+            there."""
+            r, env = mworld("t-started-missing-end")
+            o = clone(r, "t-started-missing-end-other")
+            o.write("specifications/PRD-ACME-1-x/dev-workflows/feedback/o.md", "o\n")
+            o.commit_all(SUBJECT % ("NOISSUE", "/other"))
+            o.git("push", "-q", "origin", "main")
+            r.write(FB, "fb\n")
+            stamp = "2026-11-10T10:00:00Z"
+            e = run_end(env, "/feedback", "--started", stamp)
+            derived = file_of(env, "/feedback", "specify.json").replace("specify.json", "feedback.%s.json" % stamp_of(stamp))
+            drec = json.load(open(derived, encoding="utf-8")) if os.path.exists(derived) else {}
+            rp = shell((e.get("next") or {}).get("run") or "true", env)
+            check(e.get("record") == "missing" and drec.get("started") == stamp and drec.get("stage") == "end-replay"
+                  and raw(env, "/feedback") is None and rp.get("row") == "replayed" and not os.path.exists(derived),
+                  "t_started_missing_end: saved and removed at the derived path, its started the stamp (%r, %r)"
+                  % (e, drec))
+
+        case("t_started_missing_end", t_started_missing_end)
+
+        # k_started: --started on end, declined and replay -- a stamp is required to be one; a rejected push's next
+        # repeats it
+        def k_started():
+            kenv = {"HOME": os.path.join(tmp, "home-k-started"), "CLAUDE_CODE_SESSION_ID": "k-started"}
+            got = cli("--specs", tmp, "end", "--command", "/feedback", "--started", "yesterday", env=kenv)
+            got2 = cli("declined", "--command", "/feedback", "--started", "x", "--path", "a.md", env=kenv)
+            got3 = cli("--specs", new_repo(tmp, "k-started").path, "replay", "--for", "end", "--command", "/feedback",
+                       "--branch", "main", "--started", "x", env=kenv)
+            nxt = _replay_next("/s", "/feedback", "main", False, started="2026-11-10T10:00:00Z")
+            check(one_not_run_line(got) and "--started" in got["_err"] and one_not_run_line(got2)
+                  and one_not_run_line(got3) and "--started" in got3["_err"]
+                  and nxt["run"].endswith("--branch main --started 2026-11-10T10:00:00Z")
+                  and nxt["on_timeout"].endswith("--started 2026-11-10T10:00:00Z --timed-out"),
+                  "k_started: a bad stamp is a usage error on all three; the replay's next repeats --started (%r, %r)"
+                  % (got, nxt))
+
+        case("k_started", k_started)
+
     def scenarios_skill(tmp):
         """The specs-git skill's text, held to the CLI it drives, to the loader that routes to it and to the run-key-set
         file both name; and the session variable, never written with a $ where checks 5 and 9 would read it as one."""
@@ -14647,6 +16319,7 @@ def selftest():
             scenarios_land(tmp)
             scenarios_replay(tmp)
             scenarios_start(tmp)
+            scenarios_midrun(tmp)
             scenarios_skill(tmp)
 
     try:
