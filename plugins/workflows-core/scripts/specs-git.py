@@ -16400,42 +16400,88 @@ def selftest():
         rc, top_help, top = accepted()
         listed = re.search(r"\{([a-z,-]+)\}", top_help)
         subcommands = set(listed.group(1).split(",")) if listed else set()
-        subs = {s: accepted(s)[2] for s in ("start", "end", "declined")}
+        subs = {s: accepted(s)[2] for s in ("start", "end", "declined", "land", "snapshot")}
 
         # The one option the skill names that is no option of this script: /docs-brand's, where it says that run calls
         # none of this.
         other = "started `--inline`"
+        # Where a bullet of *The call* names its option: start, end or both; or end, and a start that carries one of two
+        # options -- --started's place, since start refuses it on a call carrying neither --rerun nor --resume
+        place = re.compile(r"(start and end|start|end)|end, and start with `(--[a-z][a-z0-9-]*)` or `(--[a-z][a-z0-9-]*)`")
+        land_call = re.compile(r'specs-git\.py" --specs "\$\{SPECS_PATH-\}" land ([^`]*)`')
+        stamp = "2026-11-10T10:00:00Z"
+
+        def start_usage(*args):
+            """Whether start refuses <args> as a usage error -- read before the session id, so nothing is written."""
+            got = cli("--specs", "", "start", "--command", "/k-skill", *args, env={"HOME": os.path.join(tmp, "home-k-skill")})
+            return got["_rc"] == 2 and got["_err"].startswith("specs-git: not run (usage:")
+
+        started_alone = start_usage("--started", stamp)
+        started_with = {q for q in ("--rerun", "--resume") if not start_usage(q, "--started", stamp)}
 
         def skill_problems(text):
             problems = []
             if text.count(other) != 1:
                 problems.append("the skill names /docs-brand's --inline %d time(s), not once" % text.count(other))
-            union = top | subs["start"] | subs["end"] | subs["declined"]
+            union = top.union(*subs.values())
             for o in sorted(set(option.findall(text.replace(other, ""))) - union):
-                problems.append("%s is no option of specs-git.py, or of its start, end or declined" % o)
-            for o, where in re.findall(r"^- `(--[a-z][a-z0-9-]*)[^`]*` \((start and end|start|end)\)", text, re.M):
-                for s in where.split(" and "):
+                problems.append("%s is no option of specs-git.py, or of its start, end, declined, land or snapshot" % o)
+            bullets = re.findall(r"^- `(--[a-z][a-z0-9-]*)[^`]*` \(([^)]*)\)", text, re.M)
+            for o, where in bullets:
+                m = place.fullmatch(where)
+                if m is None:
+                    problems.append("%s is named for %r, no place this check reads" % (o, where))
+                    continue
+                for s in m.group(1).split(" and ") if m.group(1) else ("end", "start"):
                     if o not in subs[s]:
                         problems.append("%s, named for %s, is no option of %s" % (o, s, s))
-            for call in re.findall(r'specs-git\.py" declined ([^`]*)`', text):
+                if o == "--started" and m.group(1) and "start" in m.group(1).split(" and ") and started_alone:
+                    problems.append("--started is named for a start carrying neither --rerun nor --resume, a usage error")
+                for q in (m.group(2), m.group(3)):
+                    if q and q not in (started_with if o == "--started" else subs["start"]):
+                        problems.append("%s, named for a start with %s, which start does not take with it" % (o, q))
+            if not any(o == "--started" and "end" in where for o, where in bullets):
+                problems.append("The call names --started for no end call")
+            declined_calls = re.findall(r'specs-git\.py" declined ([^`]*)`', text)
+            for call in declined_calls:
                 for o in sorted(set(option.findall(call)) - subs["declined"]):
                     problems.append("%s, in the declined call, is no option of declined" % o)
+            if not any("--started" in option.findall(call) for call in declined_calls):
+                problems.append("the declined call names no --started")
+            land_calls = land_call.findall(text)
+            if len(land_calls) != 1:
+                problems.append("the skill names the land call %d time(s), not once" % len(land_calls))
+            for call in land_calls:
+                for o in sorted(set(option.findall(call)) - subs["land"] - top):
+                    problems.append("%s, in the land call, is no option of land" % o)
             return problems
 
         # k_skill_options
         got = skill_problems(skill)
-        check(rc == 0 and {"start", "end", "declined"} <= subcommands and "--specs" in top
-              and all("--command" in subs[s] for s in subs) and all("--resume" in subs[s] for s in ("start", "end"))
+        check(rc == 0 and {"start", "end", "declined", "land", "snapshot"} <= subcommands and "--specs" in top
+              and all("--command" in subs[s] for s in ("start", "end", "declined", "land"))
+              and all("--resume" in subs[s] for s in ("start", "end")) and "--started" in subs["declined"]
+              and started_alone and started_with == {"--rerun", "--resume"}
               and got == [], "k_skill_options: every option the skill names is the CLI's, where it names it (%r, %r)"
               % (sorted(subcommands), got))
         bites = ((skill + "\n`--no-such-option`\n", "--no-such-option is no option"),
                  (skill.replace("- `--no-preflight` (end)", "- `--no-preflight` (start)"), "--no-preflight, named for start"),
                  (skill.replace(other, "started `--inline-x`"), "--inline"),
-                 (skill.replace("declined --command /<name> --path", "declined --command /<name> --paths"),
-                  "--paths, in the declined call"))
+                 (skill.replace(" --path '<path>'`", " --paths '<path>'`"), "--paths, in the declined call"),
+                 (skill.replace("- `--started <stamp>` (end, and start with", "- `--started <stamp>` (start and end, and start with"),
+                  "--started is named for 'start and end, and start"),
+                 (skill.replace("- `--started <stamp>` (end, and start with `--rerun` or `--resume`)",
+                                "- `--started <stamp>` (start and end)"), "--started is named for a start carrying neither"),
+                 (skill.replace("(end, and start with `--rerun` or `--resume`)", "(end, and start with `--rerun` or `--budget`)"),
+                  "--started, named for a start with --budget"),
+                 (skill.replace("declined --command /<name> --started <stamp> --path", "declined --command /<name> --path"),
+                  "the declined call names no --started"),
+                 (skill.replace(" land --branch <branch> --default-ref", " land --key <branch> --default-ref"),
+                  "--key, in the land call, is no option of land"))
         for text, want in bites:
             got = skill_problems(text)
-            check(any(want in p for p in got), "k_skill_options: a skill naming the wrong option fails (%s: %r)" % (want, got))
+            check(text != skill and any(want in p for p in got),
+                  "k_skill_options: a skill naming the wrong option fails (%s: %r)" % (want, got))
 
         # k_skill_fields: every JSON field the skill names is one the script returns
         _, flow_lines = _flow()
@@ -16478,6 +16524,73 @@ def selftest():
             check(skill.count(old) >= 1 and any(want in p for p in got),
                   "k_skill_fields: a renamed field fails (%s: %r)" % (want, got))
 
+        # k_skill_fallback: where the end cannot start and the script ran the start, the stay, the snapshot and the open
+        # run come from the last start JSON, and the landing or the here form is the land call specs-repo-git §4 step 1's
+        # *By hand* paragraph names -- its options, and --snapshot - only where start_dirty holds a snapshot, as land
+        # refuses a null one -- that paragraph alone saying what its status leads to, so the skill restates no status
+        srg = read("references", "specs-repo-git.md")
+        statuses = ("landed", "there", "nothing", "held", "kept", "locked")
+        null_snap = cli("--specs", new_repo(tmp, "k-skill-land").path, "land", "--branch", "main", "--default-ref",
+                        "refs/heads/main", "--command", "/specify", "--snapshot", "-", stdin=b"null")
+
+        def by_hand(ref):
+            """specs-repo-git §4 step 1's *By hand* paragraph, the one that names land; "" where none stands."""
+            try:
+                step1 = ref[ref.index("\n## 4. "):ref.index("\n### 4.1")].split("\n2. **Enumerate and stage**", 1)[0]
+            except ValueError:
+                return ""
+            return next((p for p in step1.split("\n\n") if p.lstrip().startswith("**By hand**, the landing is one call")), "")
+
+        def fallback_problems(text, ref):
+            sections = {s.split("\n", 1)[0]: s for s in text.split("\n## ")}
+            fallback = sections.get("Where the script cannot start", "")
+            listed = re.search(r"results from the last `start` JSON(.*?)wherever your command's text reads them",
+                               sections.get("Start", ""), re.S)
+            problems = ["the skill names merged_stay"] if "merged_stay" in text else []
+            problems += ["the fallback names no `%s`" % f for f in ("stay", "start_dirty", "midrun")
+                         if "`%s`" % f not in fallback]
+            problems += ["Start lists no `%s`" % f for f in ("stay", "start_dirty", "midrun", "started")
+                         if "`%s`" % f not in (listed.group(1) if listed else "")]
+            read_fields = {f for pair in re.findall(r"`([a-z_][a-z0-9_]*)` field|call's `([a-z_][a-z0-9_]*)`", fallback)
+                           for f in pair if f}
+            problems += ["the fallback reads %s, which start's JSON does not hold" % f for f in sorted(read_fields - start_keys)]
+            if len(land_call.findall(fallback)) != 1:
+                problems.append("the fallback names the land call %d time(s), not once" % len(land_call.findall(fallback)))
+            if "`--snapshot -` where `start_dirty` is not null" not in fallback:
+                problems.append("the fallback passes --snapshot - without testing start_dirty for null")
+            para = by_hand(ref)
+            if not para:
+                problems.append("specs-repo-git §4 step 1 has no *By hand* paragraph naming land")
+            want, named = set(option.findall(para.split("It prints", 1)[0])), set(option.findall(fallback))
+            problems += ["the fallback names %s, which §4 step 1's *By hand* call does not" % o for o in sorted(named - want)]
+            problems += ["the fallback names no %s, which §4 step 1's *By hand* call does" % o for o in sorted(want - named)]
+            if "§4 step 1's *By hand* paragraph" not in fallback:
+                problems.append("the fallback does not send the land call's status to §4 step 1's *By hand* paragraph")
+            problems += ["the fallback restates the status %s, the *By hand* paragraph's" % s for s in statuses
+                         if "`%s`" % s in fallback]
+            return problems
+
+        got = fallback_problems(skill, srg)
+        check(got == [] and all("`%s`" % s in by_hand(srg) for s in statuses)
+              and one_not_run_line(null_snap) and "usage:" not in null_snap["_err"],
+              "k_skill_fallback: the fallback reads the stay, the snapshot and the open run from start's JSON and names "
+              "land as §4 step 1's *By hand* paragraph does; land refuses a null snapshot (%r, %r)" % (got, null_snap))
+        for old, new, want, ref in (
+                ("call's `midrun` field", "call's `mid_run` field", "the fallback names no `midrun`", srg),
+                (", `midrun` and `started` — ", " and `midrun` — ", "Start lists no `started`", srg),
+                ("the stay §4 step 1 reads is your last `start` call's `stay` field",
+                 "the stay §4 step 1 reads is your last `start` call's `merged_stay` field", "names merged_stay", srg),
+                ("`--snapshot -` where `start_dirty` is not null", "`--snapshot -`", "without testing start_dirty", srg),
+                (", and `--here` for the here form", "", "names no --here", srg),
+                ("§4 step 1's *By hand* paragraph", "§4 step 5", "does not send the land call's status", srg),
+                ("says its `status` leads to", "says its `status` leads to, `landed` the commit's row",
+                 "restates the status landed", srg),
+                (None, None, "names --here, which §4 step 1's *By hand* call does not",
+                 srg.replace(", and `--here` for the here form below", ""))):
+            got = fallback_problems(skill.replace(old, new) if old else skill, ref)
+            check((old is None or skill.count(old) >= 1) and any(want in p for p in got),
+                  "k_skill_fallback: a fallback off its rule fails (%s: %r)" % (want, got))
+
         # k_loader_routes
         para = next((p for p in loader.split("\n\n") if "workflows-core:specs-git" in p), "")
         front = loader.split("---", 2)[1] if loader.startswith("---") else ""
@@ -16498,7 +16611,6 @@ def selftest():
         # whitespace-collapsed, in §3 up to §3.3, and each paragraph of §3.2 from *Run key set* to its end equal to one of
         # them -- so a word changed on either side fails, and so does a sentence or a paragraph §3.2 gains there
         key_set = read("skills", "specs-git", "run-key-set.md")
-        srg = read("references", "specs-repo-git.md")
 
         def key_set_problems(text, ref):
             try:
