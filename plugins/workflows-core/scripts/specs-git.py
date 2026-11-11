@@ -5776,6 +5776,13 @@ def selftest():
                   and not any("WILL" in x or "the line above says" in x for x in got),
                   "l_fill_landing: g1.landing.not_done.unlanded by kind, promising nothing, naming the Specs repo: "
                   "line (%r)" % got)
+            # G2's mid-run If ignored names the run's Specs repo: line by what it is -- true at the start, where no
+            # outcome line is printed yet, and at the end, where it stands above the block -- never "the line above"
+            got = lines.fill("g2.midrun.if_ignored", {"<command>": "/specify", "<branch>": "prd/B-2-y"})
+            check(got == "nothing is to be run here while /specify's run in this session is open on prd/B-2-y: let it "
+                         "finish, or end it, first; this run's Specs repo: line, at its end, says what came of its "
+                         "artifacts." and "line above" not in got,
+                  "l_fill_landing: g2.midrun.if_ignored names the run's Specs repo: line (%r)" % got)
             neutral = [T[k] for k in ("g1.landing.if_ignored", "g1.merged.if_ignored", "g1.midrun.if_ignored")]
             check(all("nothing of this run's is committed with them" in x.lower() for x in neutral)
                   and not any("reach <default>" in x or "committed without them" in x for x in neutral),

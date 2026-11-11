@@ -97,8 +97,10 @@ T = {
     "g2.implement.not_done": "the preflight did not switch away from it — the plugin manages only branches it created. This run changes code here, so its artifacts WILL be committed on the branch it cuts for that, or, if it stops first, on the branch it then stands on — <branch>, or <default> after a fresh start — and not pushed unless that branch is <default> or its name carries one of this plugin's prefixes.",
     "g2.implement.fix": "",
     "g2.implement.if_ignored": "nothing is to be run here: the artifacts stay on that branch until it is pushed or merged, and reach the maintainer then.",
-    # §5, under a run typed mid-run: replaces every G2 variant's If ignored, its Fix left empty.
-    "g2.midrun.if_ignored": "nothing is to be run here while <command>'s run in this session is open on <branch>: let it finish, or end it, first; this run's artifacts go where the line above says.",
+    # §5, under a run typed mid-run: replaces every G2 variant's If ignored, its Fix left empty. It names the run's
+    # Specs repo: outcome line, which §6 prints at the end above the repeated block, never "the line above", which in
+    # the block is its empty Fix line, and at the start is no outcome line at all.
+    "g2.midrun.if_ignored": "nothing is to be run here while <command>'s run in this session is open on <branch>: let it finish, or end it, first; this run's Specs repo: line, at its end, says what came of its artifacts.",
 
     # §6's rows, in its order (ROWS below); "silent" prints nothing and has none.
     "row.pushed-plugin": "Specs repo: committed <sha7> (<N> files) on <branch> — pushed",
