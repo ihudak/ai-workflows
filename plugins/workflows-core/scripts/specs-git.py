@@ -3516,13 +3516,16 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     <resume> goes on with the saved stage only where state.resumable holds for this call's arguments; otherwise the
     call runs fresh. <rerun> opens on this command's record, keeping what _carry
     keeps -- the open run its first start was typed under among them, tested again as end tests it (_midrun_stands),
-    and dropped where it no longer stands; a re-run reads no other record for one -- and saves this call's arguments,
+    and dropped where it no longer stands; a re-run reads no other record for one, save where it finds no record of its
+    own (dropped, or a session id changed since), when it reads them as a first start does, taking no snapshot as no
+    re-run does: its first start's reading is lost, and the reading now only protects more -- and saves this call's
+    arguments,
     its key set among them. <started>, with <rerun> or <resume> alone (--started, the run's last start JSON's): the
     record is the one state.find names; where that is not <command>.json -- a parked run's -- a fresh call saves its
     record under a stamp of its own (state.stamped), parked and protects as that record was, and removes the file it
     replaced, <command>.json untouched; a resume goes on with it in place; and every next carries --started. A plain
-    start, and a resume that runs fresh, parks this command's own open record only where it is not a resume of that
-    record's run. A stage that hands a replay over, and a unit of
+    start parks this command's own open record; a resume never does, even one that runs fresh, the record being its
+    own run's. A stage that hands a replay over, and a unit of
     capped calls <budget> would not hold, return next: the replay, or start --resume with the record's args. In
     session-branch mode the budget is checked before a wrapped move's lift, never between it and its put-back, so every
     call returns with the overlay in place; the closing put-back runs where the stages reach done or the call stops on
@@ -3561,8 +3564,9 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
         # §3.5, read before the first save: on a run's first start, the open run this one is typed under -- the oldest
         # record of another command that the open-run test passes on HEAD's branch, which a parked one, marked
         # protects: false, never does; on a re-run, the one its first start found (_carry), tested again as end tests
-        # it, never one that started since -- and, on a plain start, this command's own record where it is an open
-        # run, parked rather than replaced (the same command typed twice, P4)
+        # it, never one that started since -- save a re-run that finds no record of its own, which reads them as a first
+        # start does -- and, on a plain start, this command's own record where it is an open run, parked rather than
+        # replaced (the same command typed twice, P4)
         head = _head_branch(specs) if g["state"] == "pass" else None
         if head is not None:
             now = time.time()
@@ -16088,6 +16092,87 @@ def selftest():
                   "t_park_rerun: its end ends on its own record, the second run's untouched (%r)" % e)
 
         case("t_park_rerun", t_park_rerun)
+
+        # N2: every start-side next repeats --started -- the flush's replay and the resume after it, the held stage's
+        # replay of <default>, and the settle loop's queued replay -- so a parked run's re-run never touches the second
+        # run's <command>.json and ends at done on its own record
+        def t_park_rerun_replays():
+            def chain(name, setup, keys=("--key", "ACME-1")):
+                r, env = mworld(name, branch=LB if name.endswith("held") else None)
+                start_(env, "/document", *keys)
+                a = backdate(env, "/document", 240)
+                start_(env, "/document", *keys)
+                backdate(env, "/document", 120)
+                b_raw = raw(env, "/document")
+                setup(r, name)
+                calls = follow(start_(env, "/document", *keys, "--rerun", "--started", a), env)
+                new = calls[0].get("started") or a
+                nexts = [c["next"]["run"] for c in calls if (c.get("next") or {}).get("run")]
+                path = file_of(env, "/document", "document.%s.json" % stamp_of(new))
+                rec = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
+                return r, nexts, new, rec, raw(env, "/document") == b_raw, calls
+
+            def local_commit(r, branch, path):  # an unpushed session-file commit on <branch>, HEAD left where it was
+                here = on(r)
+                if branch != here:
+                    r.git("switch", "-q", branch)
+                r.write(path, "local\n")
+                r.commit_all(SUBJECT % ("NOISSUE", "/feedback"))
+                if branch != here:
+                    r.git("switch", "-q", here)
+
+            def flush(r, name):  # main diverged from origin's: the flush's push is rejected
+                local_commit(r, "main", "specifications/PRD-ACME-1-x/dev-workflows/feedback/local.md")
+                ahead(r, name + "-other")
+
+            def held(r, name):  # HEAD on prd/B-2-y, main diverged from origin's: the held stage's push of main
+                local_commit(r, "main", "specifications/PRD-ACME-1-x/dev-workflows/feedback/local.md")
+                ahead(r, name + "-other")
+
+            def settle(r, name):  # another plugin branch diverged from its origin copy: the settle loop queues it
+                r.git("branch", "prd/C-3-z", "main")
+                r.git("push", "-q", "-u", "origin", "prd/C-3-z")
+                o = clone(r, name + "-other")
+                o.git("switch", "-q", "prd/C-3-z")
+                o.write("specifications/PRD-C-3-z/o.md", "o\n")
+                o.commit_all(SUBJECT % ("NOISSUE", "/other"))
+                o.git("push", "-q", "origin", "prd/C-3-z")
+                local_commit(r, "prd/C-3-z", "specifications/PRD-C-3-z/dev-workflows/feedback/l.md")
+
+            for name, setup, keys, want in (
+                    ("t-park-rerun-flush", flush, ("--key", "ACME-1"), "replay --for start --command /document --branch main"),
+                    ("t-park-rerun-held", held, ("--key", "B-2"), "replay --for start --command /document --branch main"),
+                    ("t-park-rerun-settle", settle, ("--key", "ACME-1"),
+                     "replay --for start --command /document --branch prd/C-3-z")):
+                r, nexts, new, rec, b_same, calls = chain(name, setup, keys)
+                check(len(nexts) >= 2 and any(want in x for x in nexts) and any("--resume" in x for x in nexts)
+                      and all(("--started " + new) in x for x in nexts) and b_same and rec.get("stage") == "done"
+                      and calls[-1].get("error") is None,
+                      "t_park_rerun_replays: %s -- each next repeats --started, the chain ends at done on the re-run's "
+                      "own record, the second's untouched (%r)" % (name, nexts))
+
+        case("t_park_rerun_replays", t_park_rerun_replays)
+
+        # N1: a re-run that finds no record of its own -- its parked record dropped at the second run's end -- reads
+        # the open runs as a first start does, and takes no snapshot, as no re-run does
+        def t_midrun_rerun_no_record():
+            r, env = mworld("t-midrun-rerun-no-record")
+            start_(env, "/document", "--key", "ACME-1")
+            a = backdate(env, "/document", 240)
+            start_(env, "/document", "--key", "ACME-9")
+            b = backdate(env, "/document", 120)
+            r.git("switch", "-q", "-c", "prd/ACME-9-x")  # the second run's own handoff
+            run_end(env, "/document", "--started", b)
+            age(r)  # the handoff before the third run's start, as a run typed a moment later finds it
+            dropped = not os.path.exists(file_of(env, "/document", "document.%s.json" % stamp_of(a)))
+            c = start_(env, "/specify", "--key", "ACME-9")
+            again = start_(env, "/document", "--key", "ACME-1", "--key", "B-2", "--rerun", "--started", a)
+            check(dropped and (again.get("midrun") or {}).get("started") == c.get("started")
+                  and again.get("start_dirty") is None,
+                  "t_midrun_rerun_no_record: no record of its own, so the open runs read as a first start reads them, "
+                  "no snapshot taken (%r)" % again)
+
+        case("t_midrun_rerun_no_record", t_midrun_rerun_no_record)
 
         # A start --resume that runs fresh -- its record past resumable's 15 minutes -- replaces its own record and
         # never parks it: the record is the same run's
