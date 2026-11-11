@@ -30,9 +30,10 @@ kept as a blob (null for a path with no file), taken by a fresh start that is no
 misrooted flag stands and session-branch mode is not on, and null where it could not be taken; every start call whose
 gate passed narrows it as it returns to the paths still dirty, each keeping its blob, and a --rerun carries its first
 start's. midrun is null, or {command, started, branch}: the open run this one was typed under (specs-repo-git §3.5).
-protects is true, save on a record a later run of the same command restored, which no longer protects its branch
-(§3.5). parked is true on a record park moved aside, and only there: unpark takes no other, so a record a declined
-call made at a derived path (find) is never taken for a parked one. A record an earlier version wrote lacks these five
+protects is true, save on a record a later run of the same command parked or restored, which no longer protects its
+branch -- while the later run stands, its own record protects it (§3.5). parked is true on a record park moved aside,
+and only there: unpark takes no other, so a record a declined call made at a derived path (find) is never taken for a
+parked one. A record an earlier version wrote lacks these five
 fields: load gives each its default. held_changed holds
 the paths the held stage took out of their held entries as changed since they were held (specs-repo-git §3.2), which
 the flush reports for each it commits (§3.4); a record that lacks it reads as holding none. held_attempted holds the
@@ -91,7 +92,7 @@ FIELDS = {
     "stay": None,  # {branch, kind, reason, merged, command}: the branch the preflight stayed on and would have left
     "start_dirty": None,  # {path: blob | None}: the session files dirty when the start took its snapshot
     "midrun": None,  # {command, started, branch}: the open run this one was typed under
-    "protects": True,  # false on a record a later run of the same command restored
+    "protects": True,  # false on a record a later run of the same command parked or restored
     "parked": False,  # true on a record park moved aside for a later run of the same command
     "branch": None,  # the branch HEAD stands on when a start call returns
     "advised_D": [],
@@ -296,14 +297,16 @@ def _parked_path(session, command, started, taken=True):
 
 def park(session, command):
     """<command>.json moved aside to <name>.<stamp>.json, the stamp its started with "-" and ":" removed (-2, -3
-    before .json where taken), marked parked: true, its updated stamp kept: the record of an open run of the same
-    command typed twice (specs-repo-git §3.5), for that run's own end. Its new path, or None where no record stood."""
+    before .json where taken), marked parked: true and protects: false, its updated stamp kept: the record of an open
+    run of the same command typed twice (specs-repo-git §3.5), for that run's own end, which protects nothing from
+    then on -- the later run's own record protects the branch while it stands. Its new path, or None where no record
+    stood."""
     src = path(session, command)
     rec = _read(src)
     if rec is None:
         return None
     target = _parked_path(session, command, rec.get("started") or _now())
-    rec["parked"] = True
+    rec.update(parked=True, protects=False)
     _write(target, rec)
     os.unlink(src)
     return target
@@ -311,7 +314,7 @@ def park(session, command):
 
 def unpark(session, command, keep):
     """The newest parked file of <command> -- one marked parked: true, never a record at a derived path -- back to
-    <command>.json, marked protects: false and parked no longer, where keep(record) holds: "restored"; removed
+    <command>.json, parked no longer and protects: false still, where keep(record) holds: "restored"; removed
     otherwise: "dropped". None where none is parked."""
     parked = [(full, rec) for full, rec in mine(session, command)
               if full != path(session, command) and rec.get("parked") is True]

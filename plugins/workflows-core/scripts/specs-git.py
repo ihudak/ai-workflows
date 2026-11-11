@@ -1758,8 +1758,9 @@ def _midrun_kept(run, command, branch, clause, view, facts, remove=True):
 
 def _open_beside(run, head, top):
     """P5's test for an end with no start: the oldest record of the session but the one --started names -- every other
-    command's (state.others) and this command's own <name>.json and parked ones (state.mine) -- that the open-run test
-    passes on HEAD's branch <head>, at <top>; None where none does."""
+    command's (state.others) and this command's own <name>.json and parked ones (state.mine), though a parked one,
+    marked protects: false, never passes -- that the open-run test passes on HEAD's branch <head>, at <top>; None
+    where none does."""
     state, session, command = run["state"], run["session"], run["command"]
     named = run["record_path"] if run.get("started") else None
     found = list(state.others(session, command)) + [rec for full, rec in state.mine(session, command) if full != named]
@@ -1772,7 +1773,8 @@ def _midrun_stands(run, midrun, head, top):
     """P36: whether the open run <midrun> ({command, started, branch}), which this run was typed under, still stands
     on HEAD's branch <head>: its record, found by its started (state.find, never another run's), passes the open-run
     test (_open_run) at <top>. False where it no longer does -- its end ran, HEAD left the branch, its record was
-    replaced or restored no longer protecting it, or it is older than OPEN_DAYS."""
+    replaced, or parked or restored by a later run of its command and so marked protects: false, or it is older than
+    OPEN_DAYS."""
     if head is None or not isinstance(midrun, dict):
         return False
     state = run["state"]
@@ -3003,7 +3005,9 @@ def _fetch(run):
     the keys B3 and B4 read) -- in session-branch mode inside lift
     and put-back (_Session.wrap), a skipped one reported as a refused one -- left undone, pre.rerun-stay printed, where
     status could not run earlier in the run (pre.status-failed in reported, which --rerun carries), the dirty set
-    unknown, as _disposition stays then. A gate that did not pass leaves nothing more to do; otherwise §3.2's held
+    unknown, as _disposition stays then; and left undone under a run typed mid-run (the record's midrun), since the
+    switch would move the checkout under the open run, pre.rerun-stay.midrun printed and b4_left kept, so a later
+    re-run that is not typed mid-run still switches back (specs-repo-git §3.5). A gate that did not pass leaves nothing more to do; otherwise §3.2's held
     stage comes next -- under misrooted, which it never runs under, the disposition. The budget's one unit here covers
     both fetches: this stage is a call's first, whose first unit always goes ahead."""
     rec, specs = run["rec"], run["specs"]
@@ -3031,6 +3035,9 @@ def _fetch(run):
 
         if "pre.status-failed" in rec["reported"]:
             _emit(run, run["lines"].fill("pre.rerun-stay", {"<current>": current(), "<branch>": left}))
+        elif rec.get("midrun"):
+            _emit(run, run["lines"].fill("pre.rerun-stay.midrun", {"<current>": current(), "<branch>": left,
+                                                                    "<command>": rec["midrun"].get("command")}))
         else:
             sess = _session(run)
             why = switch_back() if sess is None else sess.wrap(switch_back)[1]
@@ -3540,8 +3547,9 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
         elif old is not None:
             replaced = {"command": command, "started": old.get("started"), "parked": False}
         # §3.5, read before the first save: the open run this one is typed under -- the oldest record of another
-        # command (parked ones included) that the open-run test passes on HEAD's branch -- and, save on a --rerun, this
-        # command's own record where it is one, parked rather than replaced (the same command typed twice, P4)
+        # command that the open-run test passes on HEAD's branch, which a parked one, marked protects: false, never
+        # does -- and, save on a --rerun, this command's own record where it is one, parked rather than replaced (the
+        # same command typed twice, P4)
         head = _head_branch(specs) if g["state"] == "pass" else None
         if head is not None:
             now = time.time()
@@ -6454,8 +6462,10 @@ def selftest():
                 pa = state.park("s7", "/specify")
                 got = state.load("s7", "/specify", at=pa) or {}
                 check(pa == os.path.join(sdir, "specify.20261110T100001Z.json") and not os.path.exists(state.path("s7", "/specify"))
-                      and got.get("parked") is True and got.get("updated") == a["updated"] and got.get("started") == a["started"],
-                      "s_park_unpark: parked under its stamp, marked parked, updated kept (%r, %r)" % (pa, got))
+                      and got.get("parked") is True and got.get("protects") is False and got.get("updated") == a["updated"]
+                      and got.get("started") == a["started"],
+                      "s_park_unpark: parked under its stamp, marked parked and protects false, updated kept (%r, %r)"
+                      % (pa, got))
                 opened("2026-11-10T10:00:02Z")
                 state.park("s7", "/specify")
                 opened("2026-11-10T10:00:03Z")
@@ -6595,7 +6605,7 @@ def selftest():
                   "pre.stay.midrun", "pre.held.landed", "pre.held.failed", "pre.held.stuck", "pre.held.changed",
                   "app.landed", "app.landed.unlisted", "app.held.stuck", "row.held", "row.held-stuck", "row.there",
                   "row.here", "row.midrun-kept", "pre.here.finished", "g1.landing.not_done.unlanded",
-                  "g1.not_done.uncommitted"]
+                  "g1.not_done.uncommitted", "pre.rerun-stay.midrun"]
         pinned += ["reason.land." + r for r in ("dropped", "edited", "forms", "deleted", "folder-gone", "register",
                                                 "moved", "checked-out", "no-preflight", "no-snapshot", "unfinished")]
         ids += pinned
@@ -15933,6 +15943,43 @@ def selftest():
         case("t_park_dropped", t_park_dropped)
         case("t_park_misrooted_stop", t_park_misrooted_stop)
         case("t_derived_not_parked", t_derived_not_parked)
+
+        def t_park_abandoned_middle():
+            """M3: three runs of one command, the middle one abandoned; the third's end restores the middle one. The
+            oldest stays parked, marked protects: false since the second start parked it, so it makes no later run of
+            another command a run typed mid-run."""
+            r, env = mworld("t-park-abandoned-middle")
+            start_(env, "/specify")
+            a = backdate(env, "/specify", 240)
+            start_(env, "/specify")
+            backdate(env, "/specify", 120)
+            c = start_(env, "/specify").get("started")
+            run_end(env, "/specify", "--started", c)
+            oldest = json.load(open(file_of(env, "/specify", "specify.%s.json" % stamp_of(a)), encoding="utf-8"))
+            f = start_(env, "/feedback")
+            check(oldest.get("parked") is True and oldest.get("protects") is False and f.get("midrun") is None,
+                  "t_park_abandoned_middle: the oldest parked record protects nothing (%r, %r)" % (oldest.get("protects"), f))
+
+        case("t_park_abandoned_middle", t_park_abandoned_middle)
+
+        def t_midrun_rerun_no_switch_back():
+            """§3.5: a --rerun typed mid-run does not switch back to the branch its first start's B4 left -- it prints
+            pre.rerun-stay.midrun and keeps b4_left -- and a later --rerun that is not typed mid-run switches back."""
+            r, env = mworld("t-midrun-rerun-no-switch-back", branch=LB)
+            first = start_(env, "/document", "--key", "ACME-1")
+            start_(env, "/specify")
+            again = start_(env, "/document", "--key", "ACME-1", "--key", "B-2", "--rerun")
+            want = lines.fill("pre.rerun-stay.midrun", {"<current>": "main", "<branch>": LB, "<command>": "/specify"})
+            rec = record(env, "/document") or {}
+            check(first.get("b4_left") == LB and again.get("print") == [env_line(r.path), want] and on(r) == "main"
+                  and rec.get("b4_left") == LB and (rec.get("midrun") or {}).get("command") == "/specify",
+                  "t_midrun_rerun_no_switch_back: no switch back under the open run, b4_left kept (%r)" % again)
+            run_end(env, "/specify")
+            later = start_(env, "/document", "--key", "ACME-1", "--key", "B-2", "--rerun")
+            check(later.get("midrun") is None and on(r) == LB and later.get("b4_left") is None,
+                  "t_midrun_rerun_no_switch_back: a later re-run not typed mid-run switches back (%r)" % later)
+
+        case("t_midrun_rerun_no_switch_back", t_midrun_rerun_no_switch_back)
 
         # t_midrun_abandoned (Review Focus 5): /specify open on prd/B-2-y, never ended; three commands after it each
         # stay, name it, and land their own file
