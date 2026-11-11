@@ -3078,6 +3078,23 @@ def _still_held(root, entries):
     return keep
 
 
+def _apply_p8(root, also=()):
+    """P8, the step land's retries and retry_held share before their oldest-first walk: over the held entries of the
+    record (refused set), each path changed since it was held -- edited, committed, removed or restored, as
+    _still_held reads it, with <also> (the run's own change, in land; in no record, or in it under its own c2, and never
+    rebuilt here) as the newest link a held entry's path may chain to -- leaves its entry, rebuilt without it
+    (held_rebuild); an entry left with no file is dropped. Returns how many were dropped."""
+    skip = {x["c2"] for x in also}
+    held = [e for e in held_entries(root) if e["refused"] is not None and not e.get("here") and e["c2"] not in skip]
+    keep = _still_held(root, held + list(also))
+    dropped = 0
+    for e in held:
+        gone = set(e["paths"]) - keep[e["c2"]]
+        if gone and held_rebuild(root, e, gone) is None:
+            dropped += 1
+    return dropped
+
+
 def _land_change(root, entry, default, default_ref, register_rebuild, in_record, remote=True, check=None,
                  on_move=None, own=False):
     """The landing's apply and move for one change -- a held entry retried, or the run's own (<entry>, c1 to c2): applied
@@ -3293,20 +3310,20 @@ def land(root, branch, default, default_ref, message, snap, register_rebuild=Non
     """specs-repo-git §4 step 1's landing for the checkout standing on <branch> (NotRun otherwise): the run's own
     session-file change -- c1, HEAD with the start's snapshot <snap>, to c2, the working copies now -- committed on
     <default> without moving the checkout, then lifted out of the working tree. In order: index.lock standing, locked,
-    nothing written; c1 and c2 (_own_commits), nothing where they are one; the transient held entries it waits for
-    retried first (P7; locally only where <retry_remote> is false, <check>(cost) before their capped calls), one that
-    stays held holding this change, and any held entry behind it, with its refused, which the record takes too; then
-    _land_change; then _finish: each landing's lift override carried to the entries still held that started from it, the
-    lift over every landing, the journal entries removed. The run's own landing takes its place in the chain before any
-    landing that started from it (_place): a resumed change is the oldest of the chain it starts. <here>, forced where
-    <branch> is <default>: the here form instead (_here_move). <facts> {kind, merged, command, stayed} go into a held
-    entry; <on_move>(pending) is called just before the move or the refspec push, once the journal entry is written.
-    <resume>, an earlier call's pending, is landed again from its c1 and c2 -- lifted only where its move is verified
-    (P6) -- and its own journal entry is never retried as a held one. LandStopped's pending is the run's own change's
-    journal alone. Returns {status: landed, there, nothing, held, kept or locked; sha: the landed commit, or the held
-    one's c2; files; paths; lifted; onto: <default>, or <branch> in the here form; pushed: true only on the refspec
-    push; refused; stuck: the paths held alone beside a landing; held_landed: [{sha, files, paths, branch}]; moves
-    (sb._moves); pending}."""
+    nothing written; c1 and c2 (_own_commits), nothing where they are one; P8 over the held entries, as retry_held
+    applies it (_apply_p8, the run's own change their newest link); the transient held entries it waits for retried
+    first (P7; locally only where <retry_remote> is false, <check>(cost) before their capped calls), one that stays held
+    holding this change, and any held entry behind it, with its refused, which the record takes too; then _land_change;
+    then _finish: each landing's lift override carried to the entries still held that started from it, the lift over
+    every landing, the journal entries removed. The run's own landing takes its place in the chain before any landing
+    that started from it (_place): a resumed change is the oldest of the chain it starts. <here>, forced where <branch>
+    is <default>: the here form instead (_here_move). <facts> {kind, merged, command, stayed} go into a held entry;
+    <on_move>(pending) is called just before the move or the refspec push, once the journal entry is written. <resume>,
+    an earlier call's pending, is landed again from its c1 and c2 -- lifted only where its move is verified (P6) -- and
+    its own journal entry is never retried as a held one. LandStopped's pending is the run's own change's journal alone.
+    Returns {status: landed, there, nothing, held, kept or locked; sha: the landed commit, or the held one's c2; files;
+    paths; lifted; onto: <default>, or <branch> in the here form; pushed: true only on the refspec push; refused; stuck:
+    the paths held alone beside a landing; held_landed: [{sha, files, paths, branch}]; moves (sb._moves); pending}."""
     if _head_branch(root) != branch:
         raise NotRun("HEAD is not on %s" % branch)
     _commit(root, default_ref)
@@ -3345,6 +3362,8 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
         else:
             got = _here_move(root, own, in_record, register_rebuild, on_move)
         return dict(out, **{k: got[k] for k in ("status", "sha", "files", "paths", "refused", "pending") if k in got})
+    _apply_p8(root, also=[own])  # as retry_held: one answer for one record
+    record = held_entries(root)
     chain, done = [], []
     try:
         waiting = [e for e in record if e["refused"] is not None and not e["refused"].get("permanent")
@@ -3412,16 +3431,17 @@ def retry_held(root, default, default_ref, register_rebuild=None, check=None, re
     refs removed (_held_orphans: none younger than an hour). Each here journal finished where its move is verified
     (_finish_here) -- never dropped for HEAD's place. With HEAD on <default>, or in session-branch mode (sb.mode, read
     here, so the primitive drops them whether or not its caller tested the mode first), every other entry dropped with
-    its ref, its files left to the flush, end's commit or §8.2's. Otherwise: P8 first (_still_held, held_rebuild); then,
-    oldest first, each landing journal lifted where its move is verified (_verified), else landed again as a held entry;
-    each permanent entry reported stuck; each transient one landed by _land_change (C2's test and the refspec push
-    included; locally only where <retry_remote> is false; <check>(cost) before its capped calls, whose _Stop is raised
-    after the landings so far are lifted), unless an earlier one that stays held shares a path with it -- then it is
-    reported failed, and recorded, with that entry's refusal. Then _finish: each landing's lift override carried to the
-    entries still held that started from it, the lift over every landing, their entries removed. Returns {landed: [{sha,
-    files, paths, branch, lifted}], finished: [{sha, here, lifted}], failed and stuck: [{refused, branch, kind, command,
-    sha}], dropped: count}; lifted: [{path, blob}], the blob written back (None where removed), for P11's snapshot. An
-    error after its first ref write is LandStopped carrying that object as far as it got (_retry_report)."""
+    its ref, its files left to the flush, end's commit or §8.2's. Otherwise: P8 first (_apply_p8, which land's retries
+    share); then, oldest first, each landing journal lifted where its move is verified (_verified), else landed again as
+    a held entry; each permanent entry reported stuck; each transient one landed by _land_change (C2's test and the
+    refspec push included; locally only where <retry_remote> is false; <check>(cost) before its capped calls, whose
+    _Stop is raised after the landings so far are lifted), unless an earlier one that stays held shares a path with it
+    -- then it is reported failed, and recorded, with that entry's refusal. Then _finish: each landing's lift override
+    carried to the entries still held that started from it, the lift over every landing, their entries removed. Returns
+    {landed: [{sha, files, paths, branch, lifted}], finished: [{sha, here, lifted}], failed and stuck: [{refused,
+    branch, kind, command, sha}], dropped: count}; lifted: [{path, blob}], the blob written back (None where removed),
+    for P11's snapshot. An error after its first ref write is LandStopped carrying that object as far as it got
+    (_retry_report)."""
     _commit(root, default_ref)
     return _write_bounded(_retry_held, root, default, default_ref, register_rebuild, check, retry_remote)
 
@@ -3469,12 +3489,7 @@ def _retry_body(root, default, default_ref, register_rebuild, check, retry_remot
         _held_remove(root, [e["c2"] for e in rest])
         out["dropped"] += len(rest)
         return out
-    held = [e for e in rest if e["refused"] is not None]
-    keep = _still_held(root, held)
-    for e in held:
-        gone = set(e["paths"]) - keep[e["c2"]]
-        if gone and held_rebuild(root, e, gone) is None:
-            out["dropped"] += 1
+    out["dropped"] += _apply_p8(root)
     chain, done, blocked = [], [], {}
     try:
         for e in held_entries(root):
@@ -7699,24 +7714,29 @@ def selftest():
             if held_own:
                 with patched("move_branch", locked_move()):
                     do_land(r, snap=snap)
-                return r, snap, retry_held(r.path, "main", "origin/main")
+                after = held(r)  # land's P8 has dropped the committed entry: the own change is held alone
+                return r, (snap, after), retry_held(r.path, "main", "origin/main")
             return r, snap, do_land(r, snap=snap)
 
         def l_chain_committed_land():
             r, snap, got = chain_committed("l-chain-committed-land", False)
-            check(snap == {} and got["status"] == "landed" and read(r, FUP) == "- [ ] a\n- [ ] l1\n"
-                  and r.git("diff", "HEAD", "--", FUP) == "" and porcelain(r) == "" and held(r) == []
-                  and "- [ ] l2" in show(r, main_of(r), FUP),
-                  "l_chain_committed_land: the working copy back to HEAD's version, never below it (%r, %r)"
-                  % (got, read(r, FUP)))
+            check(snap == {} and got["status"] == "landed" and got["held_landed"] == []
+                  and read(r, FUP) == "- [ ] a\n- [ ] l1\n" and r.git("diff", "HEAD", "--", FUP) == ""
+                  and porcelain(r) == "" and held(r) == [] and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] l2",
+                  "l_chain_committed_land: P8 drops the committed entry in land's step 3 as retry_held does: main "
+                  "holds the later change alone, the working copy HEAD's (%r, %r, %r)"
+                  % (got, read(r, FUP), show(r, main_of(r), FUP)))
 
         def l_chain_committed_retry():
-            r, snap, got = chain_committed("l-chain-committed-retry", True)
-            check(snap == {} and len(got["landed"]) == 1 and got["dropped"] == 1 and read(r, FUP) == "- [ ] a\n- [ ] l1\n"
+            r, (snap, after), got = chain_committed("l-chain-committed-retry", True)
+            check(snap == {} and len(after) == 1 and list(after[0]["paths"]) == [FUP]
+                  and r.git("rev-parse", after[0]["c1"] + "^") == r.git("rev-parse", "HEAD")
+                  and len(got["landed"]) == 1 and got["dropped"] == 0 and read(r, FUP) == "- [ ] a\n- [ ] l1\n"
                   and r.git("diff", "HEAD", "--", FUP) == "" and porcelain(r) == "" and held(r) == []
                   and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] l2",
-                  "l_chain_committed_retry: P8 drops the committed entry, the later change lands alone, the working copy "
-                  "HEAD's (%r, %r, %r)" % (got, read(r, FUP), show(r, main_of(r), FUP)))
+                  "l_chain_committed_retry: land's P8 drops the committed entry, the later change is held alone and "
+                  "retry_held lands it alone, the working copy HEAD's (%r, %r, %r, %r)"
+                  % (after, got, read(r, FUP), show(r, main_of(r), FUP)))
 
         def l_land_pending_own():
             # review exp3: a held entry lands in step 3, then the run's own change fails before its journal
