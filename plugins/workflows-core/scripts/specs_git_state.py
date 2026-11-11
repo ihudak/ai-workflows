@@ -12,11 +12,21 @@ branches whose push origin rejected as non-fast-forward, each {branch, set_upstr
 the run stood on then; budget is the last start call's --budget where it was not the default, which the start --resume
 a budget stop or a replay names repeats, and which resumable's argument test never reads; reported holds each
 once-a-run report start printed (pre.merged-unknown and pre.scope-failed with their branch, pre.status-failed), so a
-resume or a --rerun never prints one again; merged_stay is null, or {branch, reason}: the plugin branch the preflight
-ended on without leaving it, which branch-merged read merged there, and why it stayed -- g1, unlisted (status could not
-run), refused (git refused the merged-branch leave's switch or B2's) or stopped (an early stop before the switch) --
-which end reads to commit nothing while HEAD still stands on it; each preflight derives its own, so a --rerun starts
-with none, and a start that leaves the branch clears it (specs-repo-git §4 step 1's merged-branch stay).
+resume or a --rerun never prints one again; stay is null, or {branch, kind, reason, merged, command}: the plugin branch
+the preflight ended on without leaving it, though it would have left it (specs-repo-git §4 step 1), which end reads --
+its kind one of specs-git.py's STAY_KINDS (mid-run, one kept while another run of the session was open there; else
+merged, one branch-merged read merged; else unkeyed, one no key of the run names), merged the branch's merged answer
+whatever the kind, reason why it stayed, one of STAY_REASONS (g1; unlisted, status could not run; refused, git refused
+the merged-branch leave's switch, B2's or B4's; stopped, an early stop before the switch; mid-run), and command the open
+run's command where the run was typed mid-run, else null; each preflight derives its own, so a --rerun starts with none,
+and a start that leaves the branch clears it. A record an earlier version of this plugin wrote holds merged_stay,
+{branch, reason}, in its place, which load maps to a stay of kind merged with its merged flag set. start_dirty is null,
+or {path: blob or null}: the snapshot of the session files dirty when the run's start took it, each path's working copy
+kept as a blob (null for a path with no file), taken by a fresh start that is not a --rerun, where the gate passed, no
+misrooted flag stands and session-branch mode is not on, and null where it could not be taken; every start call narrows it
+as it returns to the paths still dirty, each keeping its blob, and a --rerun carries its first start's. midrun is null,
+or {command, started, branch}: the open run this one was typed under (specs-repo-git §3.5). protects is true, save on a
+record a later run of the same command restored, which no longer protects its branch (§3.5).
 """
 
 import calendar
@@ -62,7 +72,10 @@ FIELDS = {
     "session_branch_created": None,
     "b2_left": None,
     "b4_left": None,
-    "merged_stay": None,  # {branch, reason}: the merged plugin branch the preflight stayed on, and why
+    "stay": None,  # {branch, kind, reason, merged, command}: the branch the preflight stayed on and would have left
+    "start_dirty": None,  # {path: blob | None}: the session files dirty when the start took its snapshot
+    "midrun": None,  # {command, started, branch}: the open run this one was typed under
+    "protects": True,  # false on a record a later run of the same command restored
     "branch": None,  # the branch HEAD stands on when a start call returns
     "advised_D": [],
     "reported": [],  # start's once-a-run reports printed: "<template id>[ <branch>]"
@@ -126,6 +139,11 @@ def load(session, command):
         return None
     if not isinstance(rec, dict) or rec.get("version") != VERSION:
         return None
+    if "merged_stay" in rec:  # an earlier version's record: its stay was always a merged one
+        old = rec.pop("merged_stay")
+        if isinstance(old, dict) and old.get("branch") and rec.get("stay") is None:
+            rec["stay"] = {"branch": old["branch"], "kind": "merged", "reason": old.get("reason"), "merged": True,
+                           "command": None}
     return rec
 
 
