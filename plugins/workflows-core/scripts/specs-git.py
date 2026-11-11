@@ -650,10 +650,29 @@ def resolve_default(root, fetch):
 
 
 SB_SCRIPT = os.path.join(HERE, "session-branch.py")  # <the script's path> in specs-repo-git §6's session-branch remedies
-# Why the preflight stayed on a merged plugin branch (specs-repo-git §4 step 1's merged-branch stay), in the order of
-# the alternation in §6's merged plugin branch row: §3.3 G1, a status that could not run (§2.1), a switch git refused
-# (§3.4's merged-branch leave or §3.5's B2), an early stop before the switch (§1 rule 5).
-STAY_REASONS = ("g1", "unlisted", "refused", "stopped")
+SG_SCRIPT = os.path.abspath(__file__)  # <specs-git.py's path> in the held lines' --drop-held command (§3.2, §6)
+# A stay's kind (specs-repo-git §4 step 1's landing), in the order of the <which no key of this run names | which is
+# merged into <default> | where <command>'s run ...> alternation of g1.landing.not_done, app.landed, row.held and
+# row.held-stuck: a branch no key of the run names (B4's), one branch-merged reads merged (B2's), one the preflight
+# stayed on because another run of the session was open there (§3.5).
+STAY_KINDS = ("unkeyed", "merged", "mid-run")
+# Why the preflight stayed on a branch it would have left (§4 step 1): §3.3 G1, a status that could not run (§2.1),
+# a switch git refused (§3.4's merged-branch leave, §3.5's B2 or B4), an early stop before the switch (§1 rule 5),
+# another run of the session open on the branch (§3.5). The first four are, in this order, the alternation of D5's
+# retiring row.merged-stay.
+STAY_REASONS = ("g1", "unlisted", "refused", "stopped", "mid-run")
+# The landing's refusal codes -- own_change's and land's own -- each mapped to its reason clause (specs-repo-git §6,
+# the landing's reason clause); locked reuses the replay's reason.locked, which names no replay (P15). land's own
+# locked status, an index.lock, takes the Locked row instead.
+LAND_REASONS = {
+    "dropped": "reason.land.dropped", "edited": "reason.land.edited", "forms": "reason.land.forms",
+    "deleted": "reason.land.deleted", "folder-gone": "reason.land.folder-gone",
+    "register-rebuild": "reason.land.register", "moved": "reason.land.moved",
+    "checked-out": "reason.land.checked-out", "locked": "reason.locked",
+}
+# The codes whose cause will not pass (P22): own_change's. checked-out is permanent only by its detail, where the
+# refspec push has nowhere to go (PERMANENT_ROWS); every other code passes.
+LAND_PERMANENT = frozenset({"dropped", "edited", "forms", "deleted", "folder-gone", "register-rebuild"})
 
 
 def _identity(session_branch):
@@ -5303,10 +5322,31 @@ def selftest():
         check(got and all(f.startswith(("root.left-behind:", "root.left-behind.close:")) for f in got),
               "l_pins_bite: an addressing §3 template is pinned to addressing.md (%r)" % got)
 
+        # l_retiring: D5's two templates, gone from SRG, stay in T until Task 5 retires the hold that prints them
+        retiring = getattr(lines, "RETIRING", None)
+        got = lines.pins(srg, addressing, hygiene)
+        check(retiring == {"row.merged-stay", "g1.merged.not_done"} and all(r in T for r in retiring)
+              and not any(f.split(":", 1)[0] in retiring for f in got),
+              "l_retiring: RETIRING is D5's two templates, each in T, pins() reporting neither (%r, %r)"
+              % (retiring, got))
+        there = T.get("row.there", "")
+        moved = srg.replace(there, there.replace("nothing to commit", "nothing to land"))
+        got = lines.pins(moved, addressing, hygiene) if there else []
+        check(there and srg.count(there) == 1 and [f.split(":", 1)[0] for f in got] == ["row.there"],
+              "l_retiring: an id outside RETIRING missing from SRG is still reported (%r)" % got)
+
         # l_ids
         ids = ["g0", "g1", "g2", "g1.merged.not_done", "g1.merged.fix", "g1.merged.if_ignored", "row.merged-stay"]
         ids += ["g2.%s.%s" % (v, part) for v in ("session", "self", "no-identity", "implement")
                 for part in ("not_done", "fix", "if_ignored")]
+        # the pins table's ids (the landing, held commits and the run typed mid-run)
+        pinned = ["g1.landing.not_done", "g1.landing.if_ignored", "g1.midrun.if_ignored", "g2.midrun.if_ignored",
+                  "pre.stay.midrun", "pre.held.landed", "pre.held.failed", "pre.held.stuck", "pre.held.changed",
+                  "app.landed", "app.landed.unlisted", "app.held.stuck", "row.held", "row.held-stuck", "row.there",
+                  "row.here", "row.midrun-kept"]
+        pinned += ["reason.land." + r for r in ("dropped", "edited", "forms", "deleted", "folder-gone", "register",
+                                                "moved", "checked-out", "no-preflight")]
+        ids += pinned
         ids += ["row.remote-deleted.default-tail", "row.scope.merge", "row.scope.no-file", "row.scope.hook", "row.scope.branch-path",
                 "row.moved.refused", "row.session-rejected", "row.session-rejected.conflict-ending"]
         ids += ["app." + a for a in (
@@ -5332,12 +5372,71 @@ def selftest():
                 "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
         missing = [i for i in ids if i not in T]
         check(not missing, "l_ids: every id the interface names is a template (missing %r)" % missing)
-        check(len(lines.ROWS) == 25 and lines.ROWS[0] == "pushed-plugin" and lines.ROWS[-1] == "silent"
-              and lines.ROWS[-3:-1] == ("misrooted", "merged-stay")
+        check(len(lines.ROWS) == 30 and lines.ROWS[0] == "pushed-plugin"
+              and lines.ROWS[-8:] == ("misrooted", "merged-stay", "held", "held-stuck", "midrun-kept", "there", "here",
+                                      "silent")
               and all(("row." + r in T) == (r != "silent") for r in lines.ROWS),
-              "l_ids: 25 rows in §6's order, each a row.<id> template but silent (%r)" % (lines.ROWS,))
+              "l_ids: 30 rows in §6's order, each a row.<id> template but silent (%r)" % (lines.ROWS,))
         check(all("\n" not in t for k, t in T.items() if k not in lines.BLOCKS),
               "l_ids: every template but the three blocks is one line")
+        # The landing's refusal codes, read through globals() so that a missing constant fails its check rather than
+        # crashing the selftest: each maps to its reason.land.* clause -- locked to reason.locked, which P15 reuses as
+        # it stands -- and every code own_change and the landing write is mapped.
+        land_reasons, permanent = globals().get("LAND_REASONS"), globals().get("LAND_PERMANENT")
+        mapped = land_reasons if isinstance(land_reasons, dict) else {}
+        check(mapped and all(v in T and (v.startswith("reason.land.") or (k, v) == ("locked", "reason.locked"))
+                             for k, v in mapped.items()),
+              "l_ids: every code of LAND_REASONS maps to a reason.land.* template, locked to reason.locked (%r)"
+              % (land_reasons,))
+        def defined(path, name):
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+            start = text.find("\ndef %s(" % name)
+            end = text.find("\ndef ", start + 1)
+            return "" if start < 0 else text[start:end if end > 0 else len(text)]
+
+        sb_source = defined(SB_SCRIPT, "own_change")
+        own_codes = set(re.findall(r'refused\[p\] = \("([a-z-]+)"', sb_source))
+        land_source = "".join(defined(os.path.abspath(__file__), f) for f in ("_land_change", "_here_move", "_land"))
+        land_codes = set(re.findall(r'(?:refused\s*=\s*(?:entry\["refused"\] or )?|refused=|"refused": )'
+                                    r'\{"reason": "([a-z-]+)"', land_source))
+        check(own_codes == {"deleted", "folder-gone", "edited", "forms", "dropped", "register-rebuild"}
+              and land_codes == {"checked-out", "moved", "locked"}
+              and own_codes | land_codes <= set(mapped) and permanent == own_codes,
+              "l_ids: LAND_REASONS maps every refusal code own_change and the landing write, and LAND_PERMANENT is "
+              "own_change's (%r, %r, %r)" % (sorted(own_codes), sorted(land_codes), permanent))
+
+        # l_constants: the stay's kinds in the order of the alternation that names them, its reasons, and the path
+        # <specs-git.py's path> takes
+        kinds, reasons, script = (globals().get(n) for n in ("STAY_KINDS", "STAY_REASONS", "SG_SCRIPT"))
+        alternations = []
+        for tid in ("g1.landing.not_done", "app.landed", "row.held", "row.held-stuck"):
+            try:
+                alternations.append(lines._alternatives(lines.placeholder(tid, "<which no key")[1:-1]))
+            except (KeyError, ValueError):
+                alternations.append(None)
+        check(kinds == ("unkeyed", "merged", "mid-run")
+              and all(a is not None and len(a) == len(kinds) and "no key" in a[kinds.index("unkeyed")]
+                      and "is merged" in a[kinds.index("merged")] and "was open" in a[kinds.index("mid-run")]
+                      for a in alternations),
+              "l_constants: STAY_KINDS is the order of the <which no key ...> alternation in each template (%r, %r)"
+              % (kinds, alternations))
+        check(reasons == ("g1", "unlisted", "refused", "stopped", "mid-run")
+              and isinstance(script, str) and os.path.isabs(script) and os.path.basename(script) == "specs-git.py"
+              and os.path.isfile(script) and os.path.samefile(script, os.path.abspath(__file__)),
+              "l_constants: STAY_REASONS gains mid-run last, and SG_SCRIPT is this script's path (%r, %r)"
+              % (reasons, script))
+
+        # l_g1_not_done: the plain G1 block's Not done part opens P30's sentence
+        rows = T["g1"].split("\n")
+        i = next(k for k, row in enumerate(rows) if row.startswith("Not done:"))
+        j = i + 1
+        while j < len(rows) and rows[j].startswith(" "):
+            j += 1
+        part = " ".join(" ".join([rows[i][len("Not done:"):]] + rows[i + 1:j]).split())
+        check(part.startswith("the preflight did not switch branches, and committed and pushed nothing on the branch "
+                              "you stand on."),
+              "l_g1_not_done: the plain G1 block's Not done opens P30's sentence (%r)" % part[:120])
 
         # l_fill_basic
         check(lines.fill("row.nothing", {}) == "Specs repo: no session artifacts to commit", "l_fill_basic: row.nothing")
@@ -5500,6 +5599,63 @@ def selftest():
         check(got1 == "Specs repo: committed abc1234 (1 file) on prd/A-1-x — pushed"
               and got2 == "Specs repo: committed abc1234 (2 files) on prd/A-1-x — pushed",
               "l_fill_count: singular at one (%r, %r)" % (got1, got2))
+
+        # l_fill_landing: the landing's lines, filled -- the stay's alternation by kind, a held row's reason clause, the
+        # stuck lines' two commands quoted whole, and the two new file counts singular at one
+        def fill_landing():
+            kind = span("app.landed", "<which no key")
+            got = [lines.fill("app.landed", {"<branch>": "prd/B-2-y", "<default>": "main", "<command>": "/specify",
+                                             kind: k}) for k in range(3)]
+            tail = (", so its files were committed on main without leaving prd/B-2-y, and taken out of your working "
+                    "tree there")
+            check(got == ["; this run's preflight stayed on prd/B-2-y, which no key of this run names" + tail,
+                          "; this run's preflight stayed on prd/B-2-y, which is merged into main" + tail,
+                          "; this run's preflight stayed on prd/B-2-y, where /specify's run in this session was open "
+                          "when this run started" + tail],
+                  "l_fill_landing: app.landed by the stay's kind, <default> and <command> filled inside it (%r)" % got)
+            clause = lines.fill("reason.land.checked-out", {"<path>": "/w2", "<default>": "main",
+                                                            span("reason.land.checked-out", "<the push of"): 0,
+                                                            "<reason>": "…"})
+            got = lines.fill("row.held", {"<branch>": "prd/B-2-y", "<default>": "main", "<reason clause>": clause,
+                                          span("row.held", "<which no key"): 0})
+            check(got.endswith(" without leaving it: another worktree, /w2, has main checked out, and the push of the "
+                               "commit by refspec failed (…); they stay in your working tree, held for main, and the "
+                               "next run tries again")
+                  and got.startswith("Specs repo: NOT COMMITTED — this run's preflight stayed on prd/B-2-y, which "
+                                     "no key"),
+                  "l_fill_landing: row.held with reason.land.checked-out's failed push (%r)" % got)
+            dropped = lines.fill("reason.land.dropped", {"<path>": "specifications/PRD-A-1-x/follow-ups.md",
+                                                         "<onto>": "main"})
+            S, tool = "/s p", "/plugins/workflows-core/scripts/specs-git.py"
+            stuck = {"<branch>": "prd/B-2-y", "<default>": "main", "<reason clause>": dropped, "<SPECS_PATH>": S,
+                     "<sha7>": "abc1234", "<specs-git.py's path>": tool, "<default-ref>": "origin/main",
+                     "<path>": ["specifications/PRD-A-1-x/follow-ups.md"]}
+            want = ["git -C \"%s\" show abc1234" % S,
+                    "python3 \"%s\" --specs \"%s\" land --default-ref origin/main --drop-held abc1234" % (tool, S)]
+            for tid, values in (("row.held-stuck", dict(stuck, **{span("row.held-stuck", "<which no key"): 1})),
+                                ("app.held.stuck", stuck), ("pre.held.stuck", stuck)):
+                got = lines.fill(tid, values)
+                check(all(("'%s'" % w) in got and shlex.split(w) for w in want)
+                      and got.endswith("'%s'" % want[1]) and dropped in got and "<" not in got,
+                      "l_fill_landing: %s names both commands, each quoted whole (%r)" % (tid, got))
+            got = lines.fill("row.here", {"<sha7>": "abc1234", "<N>": 1, "<branch>": "main", "<command>": "/specify",
+                                          span("row.here", "<the next push"): 0})
+            check(got.startswith("Specs repo: committed abc1234 (1 file) on main — not pushed yet: /specify's run")
+                  and got.endswith("; the next push of main this plugin makes, by that run or a later one, carries it, "
+                                   "and that run's files are as they were in your working tree"),
+                  "l_fill_landing: row.here singular at one, its first alternative (%r)" % got)
+            got = lines.fill("pre.held.landed", {"<sha7>": "abc1234", "<N>": 1, "<default>": "main",
+                                                 "<branch>": "prd/B-2-y"})
+            check(got.startswith("Specs preflight: committed abc1234 (1 file) on main: the session files an "
+                                 "earlier run"),
+                  "l_fill_landing: pre.held.landed singular at one (%r)" % got)
+
+        try:
+            if not all(t in T for t in pinned):
+                raise ValueError("the pins table's templates are not all in T")
+            fill_landing()
+        except ValueError as e:  # a template that lost a placeholder the check names fails here, not the run
+            check(False, "l_fill_landing: %s" % e)
 
         # l_literal_bracket
         got = lines.fill("app.register-move", {"<from>": "7", "<to>": "9", "<origin>": "a", "<whose number>": "the local number"})
@@ -9011,16 +9167,13 @@ def selftest():
             "keep them off main.\n"
             "Fix:      git -C \"%(specs)s\" switch main && git -C \"%(specs)s\" add %(quoted)s && git -C \"%(specs)s\" "
             "commit\n"
-            "If ignored: nothing is lost — your files and this run's artifacts stay uncommitted. But the preflight ends "
-            "here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped, and the "
-            "artifacts uncommitted, until these paths are committed or removed. Fix commits them on main, not on "
-            "%(branch)s, and where git refuses its switch it commits nothing, git naming the files in its way. "
-            "Committed on main, or removed, they let a later run commit the artifacts on main, leaving %(branch)s first where HEAD still "
-            "stands there — save where git refuses that switch, when it commits them on %(branch)s; committed on "
-            "%(branch)s, they can make it read unmerged, and where they do, a later run commits the artifacts on "
-            "%(branch)s too. A "
-            "deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a "
-            "supported state — this is what it costs.")
+            "If ignored: nothing is lost — your files stay uncommitted, and this run's artifacts reach main without "
+            "them. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle "
+            "(stages 2-3) stay skipped until these paths are committed or removed. Fix commits them on main, not on "
+            "%(branch)s, and where git refuses its switch it commits nothing, git naming the files in its way; "
+            "committed on %(branch)s, they make it read unmerged, and no later run removes it. A deliverable whose "
+            "handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this "
+            "is what it costs.")
 
         def g1_on_merged(r, paths, branch):
             return G1_MERGED % {"specs": r.path, "n": len(paths), "listed": ", ".join(paths),
@@ -10631,6 +10784,35 @@ def selftest():
             check(key_set.count(word) == 1 and srg.count(word) == 1 and srg.count(tail) == 1
                   and srg.count("and resolves afterwards") == 1 and any(want in p for p in got),
                   "k_key_set_quotes: %s changed fails (%r)" % (label, got))
+
+        # k_branch_check_midrun (P23): branch-check's mid-run stop (M6), prose a run follows and no template of the
+        # script's, held verbatim in phase-handoff §6.1 and in the part file generated from it, naming no switch
+        # command: check-branch-check reads which commands request branch-check, never the stop's wording
+        handoff = read("references", "phase-handoff.md")
+        part_file = read("reference-parts", "phase-handoff", "branch-check.md")
+        midrun_stop = ("<finding> — <command>'s run in this session is still open on <branch>, so no switch is named "
+                       "here: finish or end that run first, then re-run.")
+
+        def midrun_problems(ref, part):
+            try:
+                s61 = ref[ref.index("\n### 6.1 "):ref.index("\n### 6.2 ")]
+            except ValueError:
+                return ["phase-handoff has no §6.1 or §6.2 heading"]
+            problems = []
+            if midrun_stop not in s61:
+                problems.append("phase-handoff §6.1 does not hold the mid-run stop verbatim")
+            if midrun_stop not in part:
+                problems.append("reference-parts/phase-handoff/branch-check.md does not hold the mid-run stop verbatim")
+            if "git" in midrun_stop or re.search(r"\bswitch\s+(?:<|-|to\b)", midrun_stop):
+                problems.append("the mid-run stop names a switch command")
+            return problems
+
+        got = midrun_problems(handoff, part_file)
+        check(got == [], "k_branch_check_midrun: the mid-run stop is in §6.1 and its part file, naming no switch (%r)"
+              % got)
+        got = midrun_problems(handoff.replace(midrun_stop, ""), part_file)
+        check(handoff.count(midrun_stop) == 1 and got == ["phase-handoff §6.1 does not hold the mid-run stop verbatim"],
+              "k_branch_check_midrun: the stop dropped from §6.1 fails (%r)" % got)
 
         # k_no_dollar_session: the directories check-docs.sh's checks 5 and 9 read a $NAME in, of every plugin
         session_var = "CLAUDE_CODE_SESSION_ID"

@@ -31,10 +31,11 @@ G1 = """⚠ SPECS REPO — UNCOMMITTED FILES THAT ARE NOT THE PLUGIN'S
 
 Found:    <SPECS_PATH> has <N> uncommitted change(s) outside the plugin's
           artifact area: <path list>
-Not done: the preflight did not commit, switch branches, or push. Those files
-          are yours, and switching branches would carry them along. This run's
-          own artifacts WILL still be committed at the end of the run —
-          commit-artifacts stages only the §2.1 artifact paths.
+Not done: the preflight did not switch branches, and committed and pushed
+          nothing on the branch you stand on. Those files are yours, and
+          switching branches would carry them along. This run's own artifacts
+          WILL still be committed at the end of the run — commit-artifacts
+          stages only the §2.1 artifact paths.
 Fix:      git -C "<SPECS_PATH>" status
           git -C "<SPECS_PATH>" add <path list> && git -C "<SPECS_PATH>" commit
 If ignored: nothing is lost — your files stay uncommitted, and this run's
@@ -62,12 +63,19 @@ T = {
     "g0": G0,
     "g1": G1,
     "g2": G2,
-    # §5's G1 on a merged plugin branch (§4 step 1's merged-branch stay): each replaces the text after its label
-    # ("Not done: ", "Fix:      ", "If ignored: ") in G1, rendered on its one line, unwrapped; <path list> on the Fix
-    # line is the plain block's second, shell-quoted one.
+    # §5's G1 on a branch the run would have left (§4 step 1's landing), and under a run typed mid-run: each replaces
+    # the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G1, rendered on its one line, unwrapped;
+    # <path list> on the Fix line is the plain block's second, shell-quoted one. The landing form's Not done by the
+    # stay's kind (STAY_KINDS, specs-git.py); g1.merged.fix and g1.merged.if_ignored where the stay's merged flag is
+    # set, else the plain Fix and g1.landing.if_ignored. Under a run typed mid-run, whatever the kind: the landing
+    # form's Not done, its third alternative, where the run stayed, else the plain one; an empty Fix;
+    # g1.midrun.if_ignored. g1.merged.not_done is D5's, retiring (RETIRING).
+    "g1.landing.not_done": "the preflight did not switch branches, and committed and pushed nothing on <branch>. Those files are yours, and switching branches would carry them along. This run's own artifacts WILL be committed at the end of the run on <default>, not on <branch>, <which no key of this run names | which is merged into <default> | where <command>'s run in this session was open when this run started>, and your checkout is not moved.",
+    "g1.landing.if_ignored": "nothing is lost — your files stay uncommitted, and this run's artifacts reach <default> without them. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
+    "g1.midrun.if_ignored": "nothing is lost — these may be <command>'s files in progress, and nothing is to be run here while that run is open: let it finish, or end it, first. This run's own artifacts are committed without them. Until these paths are committed or removed, the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped.",
     "g1.merged.not_done": "the preflight did not commit, switch branches, or push. Those files are yours, and switching branches would carry them along. <branch> is merged into <default>, so this run's own artifacts will NOT be committed at the end of the run either, unless the run moves off <branch> first: a commit there would keep them off <default>.",
     "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" add <path list> && git -C \"<SPECS_PATH>\" commit",
-    "g1.merged.if_ignored": "nothing is lost — your files and this run's artifacts stay uncommitted. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped, and the artifacts uncommitted, until these paths are committed or removed. Fix commits them on <default>, not on <branch>, and where git refuses its switch it commits nothing, git naming the files in its way. Committed on <default>, or removed, they let a later run commit the artifacts on <default>, leaving <branch> first where HEAD still stands there — save where git refuses that switch, when it commits them on <branch>; committed on <branch>, they can make it read unmerged, and where they do, a later run commits the artifacts on <branch> too. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
+    "g1.merged.if_ignored": "nothing is lost — your files stay uncommitted, and this run's artifacts reach <default> without them. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed. Fix commits them on <default>, not on <branch>, and where git refuses its switch it commits nothing, git naming the files in its way; committed on <branch>, they make it read unmerged, and no later run removes it. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     # §5's G2 variants: each replaces the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G2,
     # rendered on its one line, unwrapped; an empty Fix leaves the label alone (§5: nothing to run, or nothing it can
     # give ready to paste).
@@ -84,6 +92,8 @@ T = {
     "g2.implement.not_done": "the preflight did not switch away from it — the plugin manages only branches it created. This run changes code here, so its artifacts WILL be committed on the branch it cuts for that, or, if it stops first, on the branch it then stands on — <branch>, or <default> after a fresh start — and not pushed unless that branch is <default> or its name carries one of this plugin's prefixes.",
     "g2.implement.fix": "",
     "g2.implement.if_ignored": "nothing is to be run here: the artifacts stay on that branch until it is pushed or merged, and reach the maintainer then.",
+    # §5, under a run typed mid-run: replaces every G2 variant's If ignored, its Fix left empty.
+    "g2.midrun.if_ignored": "nothing is to be run here while <command>'s run in this session is open on <branch>: let it finish, or end it, first; this run's artifacts go where the line above says.",
 
     # §6's rows, in its order (ROWS below); "silent" prints nothing and has none.
     "row.pushed-plugin": "Specs repo: committed <sha7> (<N> files) on <branch> — pushed",
@@ -123,8 +133,18 @@ T = {
     "row.blocked": "Specs repo: NOT COMMITTED — see the notice below",
     # Followed by the notice that set the flag.
     "row.misrooted": "Specs repo: NOT COMMITTED — SPECS_PATH is misplaced, or the run's environment no longer matches the one it recorded; see the notice below",
-    # §4 step 1's merged-branch stay; the alternation by the stay's reason, in STAY_REASONS' order (specs-git.py).
+    # D5's hold (retiring, RETIRING); the alternation by the stay's reason, in STAY_REASONS' order (specs-git.py).
     "row.merged-stay": "Specs repo: NOT COMMITTED — <branch> is merged into <default>, and this run's preflight stayed on it because <of the uncommitted files the notice below lists | the uncommitted paths could not be listed | git refused its switch to <default> | it stopped early before its switch>; a commit there would keep the session files off <default>, so they stay uncommitted, and a later run commits them on <default>, leaving <branch> first where HEAD still stands there — save where <branch> reads unmerged by then, as a commit of its own on it can make it, or git refuses that switch, when it commits them on <branch>",
+    # §4 step 1's landing refused: held for a cause that passes, or for one that will not; the <which no key ...>
+    # alternation by the stay's kind (STAY_KINDS, specs-git.py).
+    "row.held": "Specs repo: NOT COMMITTED — this run's preflight stayed on <branch>, <which no key of this run names | which is merged into <default> | where <command>'s run in this session was open when this run started>, and its files could not be committed on <default> without leaving it: <reason clause>; they stay in your working tree, held for <default>, and the next run tries again",
+    "row.held-stuck": "Specs repo: NOT COMMITTED — this run's preflight stayed on <branch>, <which no key of this run names | which is merged into <default> | where <command>'s run in this session was open when this run started>, and its files cannot be committed on <default> without leaving it: <reason clause>; they stay in your working tree, and no run will commit them: see their change with 'git -C \"<SPECS_PATH>\" show <sha7>', put it on <default> yourself if you want it there, then run 'python3 \"<specs-git.py's path>\" --specs \"<SPECS_PATH>\" land --default-ref <default-ref> --drop-held <sha7>'",
+    # §6's mid-run row (§3.5): a here form whose apply refused, or an end with no start that found a run open.
+    "row.midrun-kept": "Specs repo: NOT COMMITTED — <command>'s run in this session is still open on <branch>, and this run's own changes could not be committed apart from that run's: <reason clause>; they stay in your working tree, and that run's terminal commit takes them with its own",
+    "row.there": "Specs repo: nothing to commit on <default>, which already holds this run's session-file changes; they were taken out of your working tree on <branch>",
+    # §4 step 1's here form: its first alternative on the default branch or a plugin branch, the second on a branch
+    # this plugin does not push.
+    "row.here": "Specs repo: committed <sha7> (<N> files) on <branch> — not pushed yet: <command>'s run in this session is still open on <branch>, so this run committed only its own changes and moved nothing under that run; <the next push of <branch> this plugin makes, by that run or a later one, carries it | <branch> is yours to push, as the notice above said>, and that run's files are as they were in your working tree",
     # §6's push-rejected row for the session branch (§8.4); the conflict ending replaces "; a later run takes them
     # in and pushes".
     "row.session-rejected": "Specs repo: committed <sha7> (<N> files) on session/<identity> — push REJECTED: origin's session/<identity> has commits this clone lacks, pushed from another clone under the same identity; a later run takes them in and pushes",
@@ -172,6 +192,12 @@ T = {
     "app.mode-on.no-identity": "a session branch of your own, once GIT_USER_INITIALS names it",
     # D2: on either decline; <path> is artifacts() of the declared paths git status still lists.
     "app.declined": "; the deliverable at <path> remains uncommitted, as you asked",
+    # §6, after a landing: in this order after the row its commit on <default> takes -- app.landed, app.landed.unlisted
+    # where the run's start could not list the uncommitted paths, the register clause, app.held.stuck where a path was
+    # held alone -- then app.declined.
+    "app.landed": "; this run's preflight stayed on <branch>, <which no key of this run names | which is merged into <default> | where <command>'s run in this session was open when this run started>, so its files were committed on <default> without leaving <branch>, and taken out of your working tree there",
+    "app.landed.unlisted": "; its preflight could not list the uncommitted paths, so every session file uncommitted on <branch> went with them",
+    "app.held.stuck": "; <path>[, …] could not go with them: <reason clause>; they stay in your working tree, and no run will commit them: see their change with 'git -C \"<SPECS_PATH>\" show <sha7>', put it on <default> yourself if you want it there, then run 'python3 \"<specs-git.py's path>\" --specs \"<SPECS_PATH>\" land --default-ref <default-ref> --drop-held <sha7>'",
 
     # §6's reason clauses, by refused.reason, and §4 step 6's own three.
     "reason.conflict": "both sides changed <path>, or the folder holding it, and the run cannot settle it",
@@ -191,6 +217,21 @@ T = {
     "reason.not-run": "session-branch.py could not run (<the first line of its stderr>)",
     "reason.timed-out": "session-branch.py did not finish within 420 s, so <branch> may already stand on the replay (git -C \"<SPECS_PATH>\" log -1 <branch> shows it); the next run whose preflight gets past its guards retries the push where it stands on <branch> or <branch> is a plugin branch",
     "reason.session-mode": "session-branch mode is on, which replays nothing",
+
+    # §6's landing reason clauses, by the landing's refused reason (LAND_REASONS, specs-git.py; locked reuses
+    # reason.locked). <onto> is <default>, or HEAD's branch in the here form, which <default> names there too.
+    "reason.land.dropped": "this run's copy of <path> drops a line that <onto> does not hold, which only you can settle",
+    "reason.land.edited": "this run's copy of <path> changes or removes an entry, or the file's header, that was there when the run started, which only you can settle",
+    "reason.land.forms": "<path> has other line endings on <default> than in your working tree",
+    "reason.land.deleted": "this run deleted <path>, which <default> holds in another version",
+    "reason.land.folder-gone": "<default> does not hold the folder <path> is in",
+    # The first where the call carried no --register-rebuild, the second where it did.
+    "reason.land.register": "<path> needs its register rebuilt, <and this command hands the run no register.py to rebuild it | and that rebuild failed>",
+    "reason.land.moved": "<default> moved twice while the run was committing on it",
+    # The alternative by the printed detail: a refspec push that failed or was rejected; no-remote; elsewhere;
+    # remote-deleted; a push origin refused, or refused-before.
+    "reason.land.checked-out": "another worktree, <path>, has <default> checked out, and <the push of the commit by refspec failed (<reason>) | there is no origin to push the commit to | your git configuration pushes <default> to <remote>, not to origin | origin has no <default> any more | origin refuses pushes to <default> (<the refusal>), so from the next run session-branch mode takes these files>",
+    "reason.land.no-preflight": "this run stopped before its preflight, so nothing tells its files from that run's",
 
     # The push-rejected remedies, each replacing remedy.rejected in row.rejected (and its Specs preflight: form):
     # not-standing on a branch the run is not standing on, checked-out for that reason, session-wrap around
@@ -231,6 +272,14 @@ T = {
     "pre.stay": "Specs preflight: staying on <branch> — specs_git: misrooted, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)",
     # pre.stay's form for a run whose status could not run (specs-repo-git §3.5).
     "pre.stay.unlisted": "Specs preflight: staying on <branch> — the uncommitted paths could not be listed, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)",
+    # pre.stay's form under a run typed mid-run (specs-repo-git §3.5), <command> the open run's.
+    "pre.stay.midrun": "Specs preflight: staying on <branch> — <command>'s run in this session is still open on it, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)",
+    # §3.2's held stage, each held entry by what came of it; <branch> HEAD's.
+    "pre.held.landed": "Specs preflight: committed <sha7> (<N> files) on <default>: the session files an earlier run held for it, now committed without leaving <branch> and taken out of your working tree there",
+    "pre.held.failed": "Specs preflight: could not commit the session files an earlier run held for <default> (<reason clause>); they stay in your working tree, and the next run tries again",
+    "pre.held.stuck": "Specs preflight: the session files an earlier run held for <default> cannot be committed there: <reason clause>; they stay in your working tree, and no run will commit them: see their change with 'git -C \"<SPECS_PATH>\" show <sha7>', put it on <default> yourself if you want it there, then run 'python3 \"<specs-git.py's path>\" --specs \"<SPECS_PATH>\" land --default-ref <default-ref> --drop-held <sha7>'",
+    # §3.4's flush, of a held file changed since it was held.
+    "pre.held.changed": "Specs preflight: <path> changed after an earlier run held it for <default>, so it is committed here as it stands, and left out of the held commit",
     "pre.rerun-failed": "Specs preflight: could not switch back to <branch> (<git's first error line>); this run goes on from <current>",
     # The re-run's switch back left undone where status could not run earlier in the run (specs-repo-git §3.5).
     "pre.rerun-stay": "Specs preflight: staying on <current> — the uncommitted paths could not be listed, so no branch is switched (it would have switched back to <branch>, as a key of this run names it)",
@@ -268,8 +317,12 @@ ROWS = (
     "pushed-plugin", "pushed-default", "pushed-session", "no-identity", "session-not-run", "not-ours", "no-remote",
     "elsewhere", "remote-deleted", "origin-lacks", "refused-before", "push-refused", "scope", "replayed",
     "already-there", "moved", "rejected", "failed", "nothing", "locked", "commit-failed", "blocked", "misrooted",
-    "merged-stay", "silent",
+    "merged-stay", "held", "held-stuck", "midrun-kept", "there", "here", "silent",
 )
+
+# Templates gone from specs-repo-git that the code still prints until the hold that prints them is retired (Task 5
+# deletes them, and this): pins() skips them.
+RETIRING = frozenset({"row.merged-stay", "g1.merged.not_done"})
 
 BLOCKS = ("g0", "g1", "g2")
 SOURCE_NAMES = {"srg": "specs-repo-git.md", "addressing": "addressing.md", "hygiene": "session-hygiene.md"}
@@ -528,7 +581,8 @@ def section5_blocks(srg):
 
 def pins(srg, addressing, hygiene):
     """One failure per template its source does not hold: each compared whitespace-collapsed on both sides, save
-    §5's three blocks, compared line for line with specs-repo-git §5's fenced blocks."""
+    §5's three blocks, compared line for line with specs-repo-git §5's fenced blocks, and RETIRING's, which no
+    source holds any more."""
     failures = []
     try:
         blocks = section5_blocks(srg)
@@ -539,7 +593,7 @@ def pins(srg, addressing, hygiene):
             failures.append("%s: not specs-repo-git.md §5's fenced block %d, line for line" % (tid, k + 1))
     sources = {"srg": _collapse(srg), "addressing": _collapse(addressing), "hygiene": _collapse(hygiene)}
     for tid, text in T.items():
-        if tid in BLOCKS:
+        if tid in BLOCKS or tid in RETIRING:
             continue
         src = source_of(tid)
         if _collapse(text) not in sources[src]:
