@@ -1407,6 +1407,7 @@ def _push_step(run, rec, commit, default, view):
         p = push(specs, branch, check["set_upstream"])
         if p["outcome"] == "rejected" and session is None:
             rec["stage"] = "end-replay"
+            _mark_held_shown(run, rec)
             run["state"].save(run["session"], run["command"], rec)
             return _end_result(print=list(run.get("pre") or []), sha7=commit["sha7"], files=commit["files"], branch=branch,
                                next=_replay_next(specs, run["command"], branch, check["set_upstream"]),
@@ -1464,6 +1465,12 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
         error = said if isinstance(e, NotRun) else type(e).__name__ + (": " + said if said else "")
         line = lines.fill("end.stopped", {"<the error>": error})
         commit = run["commit"] or {}
+        try:  # this output carries any pre.held.changed line, and the record stays for --resume
+            rec = state.load(session, command)
+            if rec is not None and _mark_held_shown(run, rec):
+                state.save(session, command, rec)
+        except Exception:
+            pass
         block = (run.get("view") or {}).get("guard_block")  # §6: a G1 or G2 block follows the outcome line, this one too
         return _end_result(print=list(run["pre"]) + [line] + ([block] if block else []), line=line,
                            sha7=commit.get("sha7"), files=commit.get("files"), branch=commit.get("branch"),
@@ -1495,19 +1502,21 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
                 run["view"] = _end_view(lines, rec, view, rec.get("default"), specs, stay, False)  # first, as above
                 run["wrote"] = True
                 run["record"] = "found"
+                changed = list(pending.get(HELD_CHANGED) or [])
                 if commit is not rec["end_commit"]:
                     created = commit.pop("created", None)
                     if created and not rec.get("session_branch_created"):
                         rec["session_branch_created"] = created
+                    if changed:  # kept until the record is removed, so a resume cut off below finds them again
+                        commit[HELD_CHANGED] = changed
                     rec["end_commit"] = commit
                     state.save(session, command, rec)
                 default = rec.get("default") or resolve_default(specs, False)["default"]
-                changed = list(pending.get(HELD_CHANGED) or [])
                 if changed:  # §4 step 2: the held files the commit took as they stood, saved before it was made
-                    run["pre"].extend(_held_committed(lines, specs, changed, commit.get("paths") or [], default))
-                    commit = {k: v for k, v in commit.items() if k != HELD_CHANGED}  # printed once
-                    rec["end_commit"] = commit
-                    state.save(session, command, rec)
+                    held = _held_committed(lines, specs, changed, commit.get("paths") or [], default)
+                    if not pending.get(HELD_SHOWN):  # no output that printed them has been returned yet
+                        run["pre"].extend(held)
+                        run["held_shown"] = bool(held)
                 return _push_step(run, rec, commit, default,
                                   _end_view(lines, rec, view, default, specs, stay, not (landing or {}).get("stuck")))
 
@@ -1644,12 +1653,12 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     commit = {"sha7": c["sha"][:7], "files": len(c["paths"]), "branch": branch, "paths": c["paths"],
               "hook_paths": c["hook_paths"]}
     run["commit"] = commit
-    saved["end_commit"] = dict(commit, **({HELD_CHANGED: changed} if changed else {}))
+    saved["end_commit"] = dict(commit, **({HELD_CHANGED: changed} if changed else {}))  # kept until removed
     state.save(session, command, saved)
-    if changed:  # the line, and the rebuild, then the record without the paths: a resume repeats neither
-        run["pre"].extend(_held_committed(lines, specs, changed, c["paths"], d["default"]))
-        saved["end_commit"] = commit
-        state.save(session, command, saved)
+    if changed:
+        held = _held_committed(lines, specs, changed, c["paths"], d["default"])
+        run["pre"].extend(held)
+        run["held_shown"] = bool(held)
     return _push_step(run, saved, commit, d["default"], shown)
 
 
@@ -1670,6 +1679,17 @@ def _end_held(specs, branch, default, boundary):
     exclude = _held_unchanged(specs, branch, default)
     gone = _p8_gone(specs)[1]
     return exclude, sorted(set().union(*gone.values()) - set(exclude))
+
+
+def _mark_held_shown(run, rec):
+    """Where this call's output carries §4 step 2's pre.held.changed lines (run["held_shown"]) and <rec> stays -- a
+    rejected push's next naming the replay, or an error -- end_commit marks them shown (HELD_SHOWN), so a later end
+    --resume rebuilds without printing them again. True where it marked; the caller saves <rec>."""
+    pending = rec.get("end_commit")
+    if run.get("held_shown") and isinstance(pending, dict) and pending.get(HELD_CHANGED):
+        pending[HELD_SHOWN] = True
+        return True
+    return False
 
 
 def _held_committed(lines, specs, changed, carried, default):
@@ -2704,21 +2724,23 @@ def _fetch(run):
 
 
 def _held_stage(run):
-    """Stage held, specs-repo-git §3.2's held stage, after the fetch and before the guards (never under misrooted,
-    which _fetch skips past; nothing on a detached HEAD, P9): where this worktree's held record or a held ref stands,
+    """Stage held, specs-repo-git §3.2's held stage, after the fetch and before the guards (never under misrooted, which
+    _fetch skips past; nothing on a detached HEAD, P9): where this worktree's held record or a held ref stands,
     retry_held with start's budget as its check (P28) -- first, off <default> and outside session-branch mode, the
     held files P8 takes out of their entries kept in held_changed for the flush's line (§3.4) -- then its lines
-    (_held_lines) and the run's snapshot updated for each path it lifted (P11). A budget stop inside it prints what it
-    did before the stop and propagates, the stage left at held for start --resume, which runs it again from its start,
-    passing retry_held the entries already tried and reported (held_attempted), which it keeps and reports nowhere
-    again; so does an error after its first write, which start reports. held_attempted is cleared as the stage ends. Then, outside session-branch mode with HEAD off
-    <default>, <default>'s push: where local <default> holds commits a push would publish (_scope, origin being the
-    remote; not measured where origin/<default> already holds local <default>, which leaves none), the budget
-    checked, then _push, pre.pushed-left where it went; a rejection saves the record at held and returns next naming
-    replay --for start --branch <default>, which _replay_start advances to guards (P21)."""
+    (_held_lines) and the run's snapshot updated for each path it lifted (P11). A budget stop inside it prints what
+    it did before the stop and propagates, the stage left at held for start --resume, which runs it again from its
+    start, passing retry_held the entries already tried and reported (held_attempted), which it keeps and reports
+    nowhere again; so does an error after its first write, which start reports. held_attempted is cleared as the
+    stage ends. Then, outside session-branch mode with HEAD off <default>, <default>'s push: where local <default>
+    holds commits a push would publish (_scope, origin being the remote; not measured where origin/<default> already
+    holds local <default>, which leaves none), the budget checked, then _push, pre.pushed-left where it went; a
+    rejection saves the record at held and returns next naming replay --for start --branch <default>, which
+    _replay_start advances to guards (P21)."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     default, head = rec["default"], _head_branch(specs)
     if head is None or not default:
+        rec["held_attempted"] = []  # every exit of the stage clears it
         return _advance(run, "guards")
     outside = head != default and rec.get("mode") != "on"
     if held_entries(specs) or sb.text(sb.git(specs, "for-each-ref", "--count=1", "--format=%(refname)", HELD_REF)):
@@ -3229,9 +3251,13 @@ PENDING_FIELDS = ("c1", "c2", "old", "tip", "onto", "paths", "remote_only", "her
 # entry, a here journal, or one an earlier version wrote -- reads as no move.
 JOURNAL_MOVES = "moves"
 # end_commit's field for §4 step 2's held files changed since they were held, which its commit takes as they stand:
-# saved before the commit is made (about_to_commit) and with it, so end --resume prints pre.held.changed for them, once,
-# and rebuilds their entries (_held_committed); a record without it reads as none.
+# saved before the commit is made (about_to_commit) and kept with it until the record is removed, as a landing's moves
+# are, so every end --resume that finds the commit made rebuilds their entries (_held_committed, idempotent) and prints
+# pre.held.changed for them -- save where HELD_SHOWN is set: a call that printed the line returned its output and the
+# record stayed (a replay's next, an error), so a later resume does not print it again. A record without either reads
+# as none and not shown.
 HELD_CHANGED = "held_changed"
+HELD_SHOWN = "held_changed_shown"
 SNAPSHOT_MESSAGE = "specs-git: the session files as the run found them\n"
 # push_check's rows that leave the refspec push nowhere to go for good (P22); its refused-before, and a refspec push
 # that failed, was rejected or was refused, are transient.
@@ -4079,29 +4105,30 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
 def retry_held(root, default, default_ref, register_rebuild=None, check=None, retry_remote=True, settled=()):
     """The held stage's primitive (P6, P7, P9, P28, P31). On a detached HEAD nothing at all (P9). Else orphaned held
     refs removed (_held_orphans: none younger than an hour). Each here journal finished where its move is verified
-    (_finish_here) -- never dropped for HEAD's place. With HEAD on <default>, or in session-branch mode (sb.mode, read
-    here, so the primitive drops them whether or not its caller tested the mode first), every other entry dropped with
-    its ref, its files left to the flush, end's commit or §8.2's, an index.lock or none, a drop touching no index.
-    Otherwise, where an index.lock stands, nothing more: every other entry kept as it is -- none rebuilt, landed or
-    lifted, since the process holding the lock may be committing on the branch HEAD stands on, which a lift would race
-    -- each permanent one reported stuck, a landing journal verified from the local refs alone (_verified, no fetch)
-    reported nowhere, its lift waiting as a here journal's does, every other reported failed with a locked refusal
-    naming the lock (the record keeps its own). <settled>: the c2 of each entry this start has already tried and
-    reported failed or stuck (the held stage's held_attempted), kept and reported nowhere again -- a failed one still
-    holding back, with its own refusal, the later entries that share a path with it -- so a resumed stage spends no
-    budget on it. Where none stands: P8 first (_apply_p8, which land's retries share); then, oldest first, each landing journal lifted where its move is verified (_verified), else landed again as
-    a held entry; each permanent entry reported stuck; each transient one landed by _land_change (C2's test and the
-    refspec push included; locally only where <retry_remote> is false; <check>(cost) before its capped calls, whose
-    _Stop is raised after the landings so far are lifted), unless an earlier one that stays held shares a path with it
-    -- then it is reported failed, and recorded, with that entry's refusal. Then _finish: each landing's lift override
-    carried to the entries still held that started from it, the lift over every landing, their entries removed. Returns
-    {landed: [{sha, files, paths, branch, lifted}], finished: [{sha, here, files, branch, lifted}], failed and stuck:
-    [{refused, branch, kind, command, sha}], dropped: count}; lifted: [{path, blob}], the blob written back (None where
-    removed), for P11's snapshot; a finished entry's sha is the commit it finished -- a here journal's on its branch, a
-    verified landing journal's tip -- or None where it committed nothing (there), files that commit's count, and branch
-    the entry's: HEAD's for a here journal, which pre.here.finished names. An error after its first ref write is
-    LandStopped carrying that object as far as it got (_retry_report); a _Stop from <check> carries it too, as partial,
-    once the landings before it are lifted."""
+    (_finish_here) -- never dropped for HEAD's place. With HEAD on <default>, or in session-branch mode (sb.mode,
+    read here, so the primitive drops them whether or not its caller tested the mode first), every other entry
+    dropped with its ref, its files left to the flush, end's commit or §8.2's, an index.lock or none, a drop touching
+    no index. Otherwise, where an index.lock stands, nothing more: every other entry kept as it is -- none rebuilt,
+    landed or lifted, since the process holding the lock may be committing on the branch HEAD stands on, which a lift
+    would race -- each permanent one reported stuck, a landing journal verified from the local refs alone (_verified,
+    no fetch) reported nowhere, its lift waiting as a here journal's does, every other reported failed with a locked
+    refusal naming the lock (the record keeps its own). <settled>: the c2 of each entry this start has already tried
+    and reported failed or stuck (the held stage's held_attempted), kept and reported nowhere again -- a failed one
+    still holding back, with its own refusal, the later entries that share a path with it -- so a resumed stage
+    spends no budget on it. Where none stands: P8 first (_apply_p8, which land's retries share); then, oldest first,
+    each landing journal lifted where its move is verified (_verified), else landed again as a held entry; each
+    permanent entry reported stuck; each transient one landed by _land_change (C2's test and the refspec push
+    included; locally only where <retry_remote> is false; <check>(cost) before its capped calls, whose _Stop is
+    raised after the landings so far are lifted), unless an earlier one that stays held shares a path with it -- then
+    it is reported failed, and recorded, with that entry's refusal. Then _finish: each landing's lift override
+    carried to the entries still held that started from it, the lift over every landing, their entries removed.
+    Returns {landed: [{sha, files, paths, branch, lifted}], finished: [{sha, here, files, branch, lifted}], failed
+    and stuck: [{refused, branch, kind, command, sha}], dropped: count}; lifted: [{path, blob}], the blob written
+    back (None where removed), for P11's snapshot; a finished entry's sha is the commit it finished -- a here
+    journal's on its branch, a verified landing journal's tip -- or None where it committed nothing (there), files
+    that commit's count, and branch the entry's: HEAD's for a here journal, which pre.here.finished names. An error
+    after its first ref write is LandStopped carrying that object as far as it got (_retry_report); a _Stop from
+    <check> carries it too, as partial, once the landings before it are lifted."""
     _default_base(root, default, default_ref)
     return _write_bounded(_retry_held, root, default, default_ref, register_rebuild, check, retry_remote, settled)
 
@@ -4172,9 +4199,9 @@ def _retry_body(root, default, default_ref, register_rebuild, check, retry_remot
         for e in held_entries(root):
             if e.get("here"):
                 continue
-            if e["c2"] in settled:  # tried by this start already: kept, reported once, and still holding back
-                if e["refused"] is not None:  # the later entries that share a path with it
-                    for p in e["paths"]:
+            if e["c2"] in settled:  # tried by this start already: kept and reported once; one held again still holds
+                if e["refused"] is not None and not e["refused"].get("permanent"):  # back, with its cause, the later
+                    for p in e["paths"]:  # entries that share a path with it, as on the first pass; a stuck one, none
                         blocked.setdefault(p, e["refused"])
                 continue
             if e["refused"] is None and _verified(root, e, default, check):
@@ -9978,6 +10005,134 @@ def selftest():
                   "e_end_changed_resume: the resume prints the line once and rebuilds the entry (%r, %r, %r)"
                   % (pending, got, entries))
 
+        COST2 = ("# Cost\n\n## 2026-11-09T10:00:00Z — /specify — draft\n\nfirst\n\n"
+                 "## 2026-11-10T10:00:00Z — /specify — draft\n\nbody\n")
+        MORE = "\n## 2026-11-11T10:00:00Z — /specify — draft\n\nmore\n"
+
+        def t_held_resume_stuck():
+            """N1: a stuck entry S (an edited cost entry main holds), then a later run's append T to that file, started
+            from S's version and held for a cause that passes (w2 on main, origin unreachable); origin back, --budget 0.
+            The first call prints S's stuck line and stops before T's push; the resumed stage keeps S, which holds
+            nothing back, and lands T by refspec -- never reporting it stuck or held behind S -- then G1's block."""
+            r, env = lworld("t-held-resume-stuck", extra=[(COST, COST2)])
+            worktree_on_main(r, "t-held-resume-stuck-w2")
+            start_of(env)
+            r.write(COST, COST2.replace("first", "edited"))
+            run_end(env, "/feedback")
+            start_of(env)
+            r.write(COST, COST2.replace("first", "edited") + MORE)
+            offline(r)
+            run_end(env, "/feedback")
+            online(r)
+            entries = held(r)
+            calls = [start_of(env, "--budget", "0")]
+            while (calls[-1].get("next") or {}).get("run") and len(calls) < 8:
+                calls.append(shell(calls[-1]["next"]["run"], env))
+            tip = on_origin(r)
+            s_c2 = entries[0]["c2"] if len(entries) == 2 else "?"
+            check(len(entries) == 2 and entries[0]["refused"]["permanent"] is True
+                  and entries[1]["refused"]["permanent"] is False
+                  and [c.get("print") for c in calls] == [[env_line(r.path), stuck_line(r, s_c2[:7])],
+                                                          [held_landed(tip), g1_land(r)]]
+                  and calls[-1].get("next") is None and [e["c2"] for e in held(r)] == [s_c2]
+                  and r.git("--git-dir", r.bare, "show", "main:" + COST).endswith("more")
+                  and read(r, COST) == COST2.replace("first", "edited"),
+                  "t_held_resume_stuck: T lands on the resume, S kept and holding nothing back (%r, %r)"
+                  % ([c.get("print") for c in calls], held(r)))
+
+        def changed_world(name):
+            """held_transient with FB and LEFT (origin left unreachable), a start keyed B-2 on prd/B-2-y whose G1 ends the
+            preflight before any flush, then FB edited: the end's commit takes FB as it stands (§4 step 2)."""
+            r, env, _w2 = held_transient(name, files=[(FB, ENTRY % "mine"), (LEFT, ENTRY % "left")])
+            start_with(env, "B-2")
+            r.write(FB, ENTRY % "edited")
+            return r, env
+
+        def killed_at(env, name, call):
+            """<call>() in process, g[<name>] raising KeyboardInterrupt on entry; True where it was killed."""
+            real = g[name]
+
+            def kill(*_a, **_kw):
+                raise KeyboardInterrupt
+
+            g[name] = kill
+            try:
+                with in_env(env):
+                    call()
+            except KeyboardInterrupt:
+                return True
+            finally:
+                g[name] = real
+            return False
+
+        def rebuilt_to_left(r):
+            entries = held(r)
+            return (len(entries) == 1 and list(entries[0]["paths"]) == [LEFT]
+                    and show(r, entries[0]["c2"], FB) == "" and read(r, LEFT) == ENTRY % "left")
+
+        def e_end_changed_resume_push():
+            """N2 (a): the end killed during its push step -- after its commit, its pre.held.changed line and its
+            rebuild -- then end --resume: the line printed once (the killed call's output was never returned), the entry
+            rebuilt without FB."""
+            r, env = changed_world("e-end-changed-push")
+            killed = killed_at(env, "_push_step", lambda: end(r.path, "/feedback"))
+            pending = (record(env, "/feedback") or {}).get("end_commit") or {}
+            got = run_end(env, "/feedback", "--resume")
+            line = lines.fill("pre.held.changed", {"<path>": FB, "<default>": "main"})
+            check(killed and pending.get("held_changed") == [FB] and pending.get("sha7")
+                  and (got.get("print") or []).count(line) == 1 and got.get("sha7") == pending.get("sha7")
+                  and rebuilt_to_left(r),
+                  "e_end_changed_resume_push: the resume prints the line once, the entry rebuilt (%r, %r)" % (pending, got))
+
+        def e_end_changed_resume_twice():
+            """N2 (b): the end killed after its commit, then the first end --resume killed as it enters _held_committed
+            (before its rebuild): the second resume prints the line once and rebuilds the entry."""
+            r, env = changed_world("e-end-changed-twice")
+            real = g["commit_session_files"]
+
+            def commit_then_killed(*args, **kw):
+                real(*args, **kw)
+                raise KeyboardInterrupt
+
+            g["commit_session_files"] = commit_then_killed
+            first = False
+            try:
+                with in_env(env):
+                    end(r.path, "/feedback")
+            except KeyboardInterrupt:
+                first = True
+            finally:
+                g["commit_session_files"] = real
+            second = killed_at(env, "_held_committed", lambda: end(r.path, "/feedback", resume=True))
+            mid = [list(e["paths"]) for e in held(r)]
+            pending = (record(env, "/feedback") or {}).get("end_commit") or {}
+            got = run_end(env, "/feedback", "--resume")
+            line = lines.fill("pre.held.changed", {"<path>": FB, "<default>": "main"})
+            check(first and second and sorted(mid[0]) == [FB, LEFT] and pending.get("held_changed") == [FB]
+                  and (got.get("print") or []).count(line) == 1 and rebuilt_to_left(r),
+                  "e_end_changed_resume_twice: the second resume prints the line once and rebuilds (%r, %r, %r)"
+                  % (mid, pending, got))
+
+        def e_end_changed_shown():
+            """N2's guard: the end's push rejected (origin's prd/B-2-y moved on), so its output -- carrying
+            pre.held.changed -- names the replay and the record stays; end_commit marks the line shown, and an end
+            --resume then rebuilds without printing it again."""
+            r, env = changed_world("e-end-changed-shown")
+            online(r)
+            o = clone(r, "e-end-changed-shown-o")
+            o.git("switch", "-q", LB)
+            o.write("specifications/PRD-B-2-y/notes-o.md", "o\n")
+            o.commit_all("B-2 Other work")
+            o.git("push", "-q", "origin", LB)
+            first = run_end(env, "/feedback")
+            line = lines.fill("pre.held.changed", {"<path>": FB, "<default>": "main"})
+            pending = (record(env, "/feedback") or {}).get("end_commit") or {}
+            got = run_end(env, "/feedback", "--resume")
+            check(" replay --for end " in ((first.get("next") or {}).get("run") or "")
+                  and (first.get("print") or []).count(line) == 1 and pending.get("held_changed_shown") is True
+                  and line not in (got.get("print") or []) and rebuilt_to_left(r),
+                  "e_end_changed_shown: shown once, a later resume does not repeat it (%r, %r, %r)" % (first, pending, got))
+
         def t_held_here_finished():
             """A here journal cut off before its update-ref (P2), HEAD on main: the next start's held stage runs the here
             form again and prints pre.here.finished -- its <branch> and <N> from retry_held's finished entry -- before
@@ -10042,7 +10197,10 @@ def selftest():
                          ("t_held_locked_default", t_held_locked_default), ("t_held_locked_mode", t_held_locked_mode),
                          ("t_held_resume_failed", t_held_resume_failed), ("t_held_locked_journal", t_held_locked_journal),
                          ("t_held_locked_changed", t_held_locked_changed),
-                         ("e_end_changed_resume", e_end_changed_resume)):
+                         ("e_end_changed_resume", e_end_changed_resume), ("t_held_resume_stuck", t_held_resume_stuck),
+                         ("e_end_changed_resume_push", e_end_changed_resume_push),
+                         ("e_end_changed_resume_twice", e_end_changed_resume_twice),
+                         ("e_end_changed_shown", e_end_changed_shown)):
             case(name, fn)
 
     def scenarios_land(tmp):
