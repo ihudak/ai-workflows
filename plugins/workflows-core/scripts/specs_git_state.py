@@ -29,7 +29,10 @@ start's. midrun is null, or {command, started, branch}: the open run this one wa
 protects is true, save on a record a later run of the same command restored, which no longer protects its branch
 (§3.5). A record an earlier version wrote lacks these four fields: load gives each its default. held_changed holds
 the paths the held stage took out of their held entries as changed since they were held (specs-repo-git §3.2), which
-the flush reports for each it commits (§3.4); a record that lacks it reads as holding none.
+the flush reports for each it commits (§3.4); a record that lacks it reads as holding none. held_attempted holds the
+held entries (each held commit's id) the held stage has tried in this start and reported held again or stuck, which a
+resumed stage keeps and does not report again (§3.2), cleared as the stage ends; a record that lacks it reads as
+holding none.
 """
 
 import calendar
@@ -87,6 +90,7 @@ FIELDS = {
     "pending": [],
     "settle_todo": [],
     "held_changed": [],  # the held stage's changed held files, which the flush reports where it commits them
+    "held_attempted": [],  # the held entries this start's held stage has tried and reported, kept on a resume
     "budget": None,  # a start call's --budget where it was not the default; never part of args
     "end_commit": None,
 }
