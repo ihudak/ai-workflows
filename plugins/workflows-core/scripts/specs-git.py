@@ -1502,6 +1502,12 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
                     rec["end_commit"] = commit
                     state.save(session, command, rec)
                 default = rec.get("default") or resolve_default(specs, False)["default"]
+                changed = list(pending.get(HELD_CHANGED) or [])
+                if changed:  # §4 step 2: the held files the commit took as they stood, saved before it was made
+                    run["pre"].extend(_held_committed(lines, specs, changed, commit.get("paths") or [], default))
+                    commit = {k: v for k, v in commit.items() if k != HELD_CHANGED}  # printed once
+                    rec["end_commit"] = commit
+                    state.save(session, command, rec)
                 return _push_step(run, rec, commit, default,
                                   _end_view(lines, rec, view, default, specs, stay, not (landing or {}).get("stuck")))
 
@@ -1605,7 +1611,8 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
         run["wrote"] = True
 
     def about_to_commit(staged):
-        saved["end_commit"] = {"branch": branch, "base": sb.rev(specs, "HEAD"), "staged": staged}
+        saved["end_commit"] = dict({"branch": branch, "base": sb.rev(specs, "HEAD"), "staged": staged},
+                                   **({HELD_CHANGED: changed} if changed else {}))
         state.save(session, command, saved)
 
     # §5's G1 block as the end repeats it: until the outcome is known -- and for an early stop, and a line that
@@ -1637,9 +1644,12 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     commit = {"sha7": c["sha"][:7], "files": len(c["paths"]), "branch": branch, "paths": c["paths"],
               "hook_paths": c["hook_paths"]}
     run["commit"] = commit
-    saved["end_commit"] = commit
+    saved["end_commit"] = dict(commit, **({HELD_CHANGED: changed} if changed else {}))
     state.save(session, command, saved)
-    run["pre"].extend(_held_committed(lines, specs, changed, c["paths"], d["default"]))
+    if changed:  # the line, and the rebuild, then the record without the paths: a resume repeats neither
+        run["pre"].extend(_held_committed(lines, specs, changed, c["paths"], d["default"]))
+        saved["end_commit"] = commit
+        state.save(session, command, saved)
     return _push_step(run, saved, commit, d["default"], shown)
 
 
@@ -3218,6 +3228,10 @@ PENDING_FIELDS = ("c1", "c2", "old", "tip", "onto", "paths", "remote_only", "her
 # a resumed landing prints the register clause the end would have (specs-repo-git §6). An entry with none -- a held
 # entry, a here journal, or one an earlier version wrote -- reads as no move.
 JOURNAL_MOVES = "moves"
+# end_commit's field for §4 step 2's held files changed since they were held, which its commit takes as they stand:
+# saved before the commit is made (about_to_commit) and with it, so end --resume prints pre.held.changed for them, once,
+# and rebuilds their entries (_held_committed); a record without it reads as none.
+HELD_CHANGED = "held_changed"
 SNAPSHOT_MESSAGE = "specs-git: the session files as the run found them\n"
 # push_check's rows that leave the refspec push nowhere to go for good (P22); its refused-before, and a refspec push
 # that failed, was rejected or was refused, are transient.
@@ -9926,6 +9940,44 @@ def selftest():
                   and show(r, c2, FB) == "" and read(r, LEFT) == ENTRY % "left",
                   "t_held_locked_changed: FB committed, the entry rebuilt after the commit (%r, %r)" % (got, entries))
 
+        def e_end_changed_resume():
+            """The end killed just after its commit, which took a held file changed since it was held (§4 step 2):
+            end_commit saved the path before the commit, so end --resume prints pre.held.changed for it, once, and
+            rebuilds the entry without it. An entry holding FB and LEFT, failing at the start (w2 on main, origin
+            unreachable); the start's G1 ends the preflight on prd/B-2-y, named by the run's key B-2, so no flush runs;
+            FB is edited after the start."""
+            r, env, _w2 = held_transient("e-end-changed-resume", files=[(FB, ENTRY % "mine"), (LEFT, ENTRY % "left")])
+            before = held(r)
+            start_with(env, "B-2")
+            r.write(FB, ENTRY % "edited")
+            real = g["commit_session_files"]
+
+            def commit_then_killed(*args, **kw):
+                real(*args, **kw)
+                raise KeyboardInterrupt
+
+            g["commit_session_files"] = commit_then_killed
+            killed = False
+            try:
+                with in_env(env):
+                    end(r.path, "/feedback")
+            except KeyboardInterrupt:
+                killed = True
+            finally:
+                g["commit_session_files"] = real
+            h = head(r)
+            pending = (record(env, "/feedback") or {}).get("end_commit") or {}
+            got = run_end(env, "/feedback", "--resume")
+            line = lines.fill("pre.held.changed", {"<path>": FB, "<default>": "main"})
+            entries = held(r)
+            c2 = entries[0]["c2"] if len(entries) == 1 else None
+            check(killed and len(before) == 1 and sorted(before[0]["paths"]) == [FB, LEFT] and changed(r, h) == [FB]
+                  and on_lb(r) and pending.get("held_changed") == [FB] and (got.get("print") or []).count(line) == 1
+                  and got.get("sha7") == h[:7] and c2 and list(entries[0]["paths"]) == [LEFT] and show(r, c2, FB) == ""
+                  and read(r, LEFT) == ENTRY % "left",
+                  "e_end_changed_resume: the resume prints the line once and rebuilds the entry (%r, %r, %r)"
+                  % (pending, got, entries))
+
         def t_held_here_finished():
             """A here journal cut off before its update-ref (P2), HEAD on main: the next start's held stage runs the here
             form again and prints pre.here.finished -- its <branch> and <N> from retry_held's finished entry -- before
@@ -9989,7 +10041,8 @@ def selftest():
                          ("t_held_locked", t_held_locked), ("t_held_locked_stuck", t_held_locked_stuck),
                          ("t_held_locked_default", t_held_locked_default), ("t_held_locked_mode", t_held_locked_mode),
                          ("t_held_resume_failed", t_held_resume_failed), ("t_held_locked_journal", t_held_locked_journal),
-                         ("t_held_locked_changed", t_held_locked_changed)):
+                         ("t_held_locked_changed", t_held_locked_changed),
+                         ("e_end_changed_resume", e_end_changed_resume)):
             case(name, fn)
 
     def scenarios_land(tmp):
