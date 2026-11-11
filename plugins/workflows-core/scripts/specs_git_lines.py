@@ -69,16 +69,20 @@ T = {
     # stay's kind (STAY_KINDS, specs-git.py); g1.merged.fix and g1.merged.if_ignored where the stay's merged flag is
     # set, else the plain Fix and g1.landing.if_ignored. Under a run typed mid-run, whatever the kind: the landing
     # form's Not done, its third alternative, where the run stayed, else the plain one; an empty Fix;
-    # g1.midrun.if_ignored. g1.merged.not_done is D5's, retiring (RETIRING).
+    # g1.midrun.if_ignored.
     "g1.landing.not_done": "the preflight did not switch branches, and did not commit or push these files. Those files are yours, and switching branches would carry them along. This run's own artifacts WILL be committed at the end of the run on <default>, not on <branch>, <which no key of this run names | which is merged into <default> | where <command>'s run in this session was open when this run started>, and your checkout is not moved.",
     "g1.landing.if_ignored": "nothing is lost — your files stay uncommitted, and nothing of this run's is committed with them. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
-    # At the run's end, after a landing that did not land the run's whole change (held, held-stuck, locked, there,
-    # nothing, or landed with a path held alone: stuck set): the landing form's Not done in its place, by the same
-    # kind; its Fix and If ignored stand (specs-repo-git §5). The Specs repo: line it names is the run's outcome line,
-    # which §6 prints above the repeated block.
+    # At the run's end, after a landing that did not land the run's whole change (held -- an index.lock at the
+    # landing's start among the causes --, held-stuck, there, nothing, landed with a path held alone: stuck set, or
+    # end.stopped): the landing form's Not done in its place, by the same kind; its Fix and If ignored stand
+    # (specs-repo-git §5). The Specs repo: line it names is the run's outcome line, which §6 prints above the
+    # repeated block.
     "g1.landing.not_done.unlanded": "the preflight did not switch branches, and did not commit or push these files. Those files are yours, and switching branches would carry them along. This run's own artifacts were to be committed at the end of the run on <default>, not on <branch>, <which no key of this run names | which is merged into <default> | where <command>'s run in this session was open when this run started>, and your checkout is not moved; the Specs repo: line above this notice says what came of them.",
+    # At the run's end where no stay stands, after a line that committed none of the run's files (nothing, locked,
+    # commit-failed, midrun-kept, no-identity, session-not-run, or end.stopped): the plain block's Not done in its place,
+    # and the mid-run form's where no stay stands; Fix and If ignored stand (specs-repo-git §5).
+    "g1.not_done.uncommitted": "the preflight did not switch branches, and did not commit or push these files. Those files are yours, and switching branches would carry them along. This run's own artifacts were to be committed at the end of the run — commit-artifacts stages only the §2.1 artifact paths; the Specs repo: line above this notice says what came of them.",
     "g1.midrun.if_ignored": "nothing is lost — these may be <command>'s files in progress, and nothing is to be run here while that run is open: let it finish, or end it, first. Nothing of this run's is committed with them. Until these paths are committed or removed, the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped.",
-    "g1.merged.not_done": "the preflight did not commit, switch branches, or push. Those files are yours, and switching branches would carry them along. <branch> is merged into <default>, so this run's own artifacts will NOT be committed at the end of the run either, unless the run moves off <branch> first: a commit there would keep them off <default>.",
     "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" add <path list> && git -C \"<SPECS_PATH>\" commit",
     "g1.merged.if_ignored": "nothing is lost — your files stay uncommitted, and nothing of this run's is committed with them. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed. Fix commits them on <default>, not on <branch>, and where git refuses its switch it commits nothing, git naming the files in its way; committed on <branch>, they make it read unmerged, and no later run removes it. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     # §5's G2 variants: each replaces the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G2,
@@ -140,8 +144,6 @@ T = {
     "row.blocked": "Specs repo: NOT COMMITTED — see the notice below",
     # Followed by the notice that set the flag.
     "row.misrooted": "Specs repo: NOT COMMITTED — SPECS_PATH is misplaced, or the run's environment no longer matches the one it recorded; see the notice below",
-    # D5's hold (retiring, RETIRING); the alternation by the stay's reason, in STAY_REASONS' order (specs-git.py).
-    "row.merged-stay": "Specs repo: NOT COMMITTED — <branch> is merged into <default>, and this run's preflight stayed on it because <of the uncommitted files the notice below lists | the uncommitted paths could not be listed | git refused its switch to <default> | it stopped early before its switch>; a commit there would keep the session files off <default>, so they stay uncommitted, and a later run commits them on <default>, leaving <branch> first where HEAD still stands there — save where <branch> reads unmerged by then, as a commit of its own on it can make it, or git refuses that switch, when it commits them on <branch>",
     # §4 step 1's landing refused: held for a cause that passes, or for one that will not; the <which no key ...>
     # alternation by the stay's kind (STAY_KINDS, specs-git.py). row.held's tail, like pre.held.failed's, is its second
     # alternative where session-branch mode takes the files from the next run (specs-git.py's mode_takes).
@@ -335,12 +337,8 @@ ROWS = (
     "pushed-plugin", "pushed-default", "pushed-session", "no-identity", "session-not-run", "not-ours", "no-remote",
     "elsewhere", "remote-deleted", "origin-lacks", "refused-before", "push-refused", "scope", "replayed",
     "already-there", "moved", "rejected", "failed", "nothing", "locked", "commit-failed", "blocked", "misrooted",
-    "merged-stay", "held", "held-stuck", "midrun-kept", "there", "here", "silent",
+    "held", "held-stuck", "midrun-kept", "there", "here", "silent",
 )
-
-# Templates gone from specs-repo-git that the code still prints until the hold that prints them is retired (Task 5
-# deletes them, and this): pins() skips them.
-RETIRING = frozenset({"row.merged-stay", "g1.merged.not_done"})
 
 BLOCKS = ("g0", "g1", "g2")
 SOURCE_NAMES = {"srg": "specs-repo-git.md", "addressing": "addressing.md", "hygiene": "session-hygiene.md"}
@@ -599,8 +597,7 @@ def section5_blocks(srg):
 
 def pins(srg, addressing, hygiene):
     """One failure per template its source does not hold: each compared whitespace-collapsed on both sides, save
-    §5's three blocks, compared line for line with specs-repo-git §5's fenced blocks, and RETIRING's, which no
-    source holds any more."""
+    §5's three blocks, compared line for line with specs-repo-git §5's fenced blocks."""
     failures = []
     try:
         blocks = section5_blocks(srg)
@@ -611,7 +608,7 @@ def pins(srg, addressing, hygiene):
             failures.append("%s: not specs-repo-git.md §5's fenced block %d, line for line" % (tid, k + 1))
     sources = {"srg": _collapse(srg), "addressing": _collapse(addressing), "hygiene": _collapse(hygiene)}
     for tid, text in T.items():
-        if tid in BLOCKS or tid in RETIRING:
+        if tid in BLOCKS:
             continue
         src = source_of(tid)
         if _collapse(text) not in sources[src]:
