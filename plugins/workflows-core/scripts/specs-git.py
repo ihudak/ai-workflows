@@ -19,6 +19,11 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py --specs "<value>" end --command /<name> [--commit-key <K>] [--register-rebuild <path>] [--no-preflight]
                [--misrooted-stdin] [--session-branch-created <sha7>] [--declined <p>]... [--resume]
   specs-git.py --specs <root> replay --for start|end --command /<name> --branch <name> [--set-upstream] [--timed-out]
+  specs-git.py --specs <root> land --branch <name> --default-ref <ref> --command /<name> [--commit-key <K>]
+               [--snapshot <file> | --snapshot -] [--register-rebuild <path>] [--here]
+  specs-git.py --specs <root> land --default-ref <ref> --retry-held [--register-rebuild <path>]
+  specs-git.py --specs <root> land --default-ref <ref> --drop-held <sha7>
+  specs-git.py --specs <root> snapshot
   specs-git.py --selftest
 
 declined appends paths to the run's state record (specs_git_state.py, one file per session and command, outside
@@ -38,18 +43,31 @@ in process: start wraps each move of the checkout in lift and put-back and ends 
 commits on the session branch and pushes it, and neither hands out a replay. The state and lines modules load only for
 the subcommands that need them, so a copy of this script without them still runs the primitives above.
 
+land is specs-repo-git §4 step 1's landing, and loads both modules: the run's own session-file change -- from the
+snapshot its start took (snapshot prints one, the map --snapshot takes) to the working copies now -- committed on the
+default branch without moving the checkout, by session-branch.py's move_branch, or by a refspec push where another
+worktree has the default branch checked out, then lifted out of the working tree; where --branch is the default
+branch, or with --here, committed on HEAD's branch instead, its index restored and no file written. A landing refused
+is kept as a held commit under refs/workflows/held/, listed in this worktree's held record (rev-parse --git-path
+workflows/held.json), which also journals every landing until its lift; --retry-held lands the held commits again, and
+--drop-held <sha7> drops one, its files left as they stand.
+
 <root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
 where specs-repo-git §3.5 classifies under specs_git: misrooted); the <value> specs-root-check, start and end take is
-never checked first, so empty, a file or a subdirectory each reaches it. Nothing here but start, end and replay writes
-the working tree, the index or a ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it found. Exit 2:
-it could not run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
+never checked first, so empty, a file or a subdirectory each reaches it. Nothing here but start, end, replay and land
+writes the working tree, the index or a ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it found.
+Exit 2: it could not run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
 and the run continues. start exits 2 only before it saves its record, its first write; after it, a failure is exit 0
 with error set and the pre.stopped line, the record saved at the stage it reached. end exits 2 only before its first
 write to the repository; after it, a failure is exit 0
 with error set and the end.stopped line, and the record stays for end --resume. replay exits 2 only before it finds
 its record; after it, a failure is exit 0 with error set and the stopped line, and the record stays as it stood; a
-replay a signal ended prints nothing and ends by that signal, the record as it stood for the --timed-out call.
+replay a signal ended prints nothing and ends by that signal, the record as it stood for the --timed-out call. land
+exits 2 only before its first ref write -- the move or push of the default branch, the update-ref of HEAD's branch,
+or a held ref's write or removal, the journal entry's first among them; objects written before it do not count.
+After it, a failure is exit 0 with error set, the held record keeping the journal entry for end --resume or the next
+preflight's held stage, which finish it only where its move is verified. snapshot exits 2 only before it prints.
 """
 
 import argparse
@@ -872,16 +890,19 @@ def _record_refusal(root, branch):
     return {"recorded": None, "record": None, "record_error": _first_line(r, error=True)}
 
 
-def push(root, branch, set_upstream):
+def push(root, branch, set_upstream, src=None):
     """specs-repo-git §4 steps 5-6: `push --porcelain [-u] origin <branch>`, capped at 60 s, its outcome read from the
     --porcelain status line for refs/heads/<branch> alone, never from the exit status or the server's text: pushed for
     a flag in PUSHED_FLAGS; rejected for [rejected], which the replay settles; refused for [remote rejected] with a
     reason that is not TRANSIENT, which writes the push-refusal record (recorded: file, config or None; record; and
     record_error where neither could be written); failed otherwise -- a transient reason, another status, none, or
-    the cap -- reason the status line's summary, git's first error line, or the capped push's words."""
+    the cap -- reason the status line's summary, git's first error line, or the capped push's words. With <src>, a
+    commit, the landing's refspec push (§4 step 1, ruling C2): `push --porcelain origin <src>:refs/heads/<branch>`,
+    which moves no local branch, its outcome read the same way."""
     lines = _load_module("specs_git_lines")
     out = {"outcome": "failed", "reason": None, "recorded": None, "record": None, "record_error": None}
-    p = sb.git_bounded(root, CAP, "push", "--porcelain", *(["-u"] if set_upstream else []), "origin", branch)
+    target = branch if src is None else "%s:refs/heads/%s" % (src, branch)
+    p = sb.git_bounded(root, CAP, "push", "--porcelain", *(["-u"] if set_upstream else []), "origin", target)
     if p.returncode == 124:
         return dict(out, reason=lines.T["text.push-capped"])
     found = sb._porcelain_line(p.stdout, "refs/heads/" + branch)
@@ -2624,6 +2645,803 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     return _start_result(run, nxt, replaced, error)
 
 
+# ---- the landing (specs-repo-git §4 step 1): a run's own session-file change on <default>, the checkout unmoved ------
+
+HELD_REF = "refs/workflows/held/"
+# A held entry's fields. One whose refused is None is a journal entry (P6): a landing written before its move.
+HELD_FIELDS = ("c1", "c2", "old", "tip", "onto", "branch", "remote_only", "kind", "merged", "command", "refused", "date",
+               "paths", "here", "index_before")
+PENDING_FIELDS = ("c1", "c2", "old", "tip", "onto", "paths", "remote_only", "here", "index_before")
+SNAPSHOT_MESSAGE = "specs-git: the session files as the run found them\n"
+# push_check's rows that leave the refspec push nowhere to go for good (P22); its refused-before, and a refspec push
+# that failed, was rejected or was refused, are transient.
+PERMANENT_ROWS = ("no-remote", "elsewhere", "remote-deleted")
+_OBJECT_ID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
+_WRITES = [0]  # the ref writes the landing has made: land and retry_held exit 2 only before their first
+_PENDING = [None]  # the journal's pending of the move under way, which LandStopped carries
+
+
+class LandStopped(Exception):
+    """land or retry_held stopped by an exception after its first ref write -- the move or push of <default>, the
+    update-ref of HEAD's branch, or a held ref's write or removal: the CLI prints its JSON, exit 0, error set. <pending>
+    is the journal's where a move was under way; the held record keeps that journal entry for land's resume (end
+    --resume) or the next preflight's held stage (retry_held), which finish it only where the move is verified."""
+
+    def __init__(self, message, pending=None):
+        Exception.__init__(self, message)
+        self.pending = pending
+
+
+def _wrote():
+    _WRITES[0] += 1
+
+
+def _write_bounded(fn, *args):
+    """<fn>(*args) inside the landing's exit-2 boundary: an exception after its first ref write is LandStopped,
+    carrying the journal's pending; _Stop, a LandStopped, and an exception before that write go on as they are."""
+    before = _WRITES[0]
+    _PENDING[0] = None
+    try:
+        return fn(*args)
+    except (_Stop, LandStopped):
+        raise
+    except Exception as e:
+        if _WRITES[0] == before:
+            raise
+        raise LandStopped(str(e) if isinstance(e, NotRun) else "%s: %s" % (type(e).__name__, e), _PENDING[0]) from e
+
+
+def held_path(root):
+    """This worktree's held record, `rev-parse --git-path workflows/held.json`: per worktree, as session-branch.py's
+    placed record is, since the working copies a held entry was taken from are this worktree's alone."""
+    path = sb.text(sb.git(root, "rev-parse", "--git-path", "workflows/held.json"))
+    return path if os.path.isabs(path) else os.path.join(root, path)
+
+
+def _entry_ok(e):
+    return (isinstance(e, dict) and all(k in e for k in HELD_FIELDS)
+            and all(isinstance(e[k], str) and _OBJECT_ID.fullmatch(e[k]) for k in ("c1", "c2"))
+            and isinstance(e["paths"], dict) and (e["refused"] is None or isinstance(e["refused"], dict)))
+
+
+def _read_held(path):
+    """The entries of the held record at <path>, oldest first: [] where none stands, None where one stands that cannot
+    be read. An entry missing a field is left out."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except FileNotFoundError:
+        return []
+    except (OSError, ValueError):
+        return None
+    entries = data.get("entries") if isinstance(data, dict) else None
+    return [e for e in entries if _entry_ok(e)] if isinstance(entries, list) else None
+
+
+def held_entries(root):
+    """This worktree's held entries, oldest first; [] where its record is absent or unreadable."""
+    return _read_held(held_path(root)) or []
+
+
+def _held_write(root, entries):
+    path = held_path(root)
+    if not entries:
+        if os.path.lexists(path):
+            os.remove(path)
+        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path + ".tmp", "w", encoding="utf-8") as fh:
+        json.dump({"entries": entries}, fh, indent=1, sort_keys=True)
+    os.replace(path + ".tmp", path)
+
+
+def _held_put(root, entry, replace=None):
+    """<entry> into the held record, in the place of the entry whose c2 is <replace> (else of its own c2), else last.
+    Its ref, refs/workflows/held/<c2>, is written first, so no entry names a commit no ref keeps; a replaced entry's
+    ref is removed after."""
+    _wrote()
+    sb.git(root, "update-ref", HELD_REF + entry["c2"], entry["c2"])
+    entries = held_entries(root)
+    key = replace or entry["c2"]
+    at = next((i for i, e in enumerate(entries) if e["c2"] == key), None)
+    if at is None:
+        entries.append(entry)
+    else:
+        entries[at] = entry
+    _held_write(root, entries)
+    if replace and replace != entry["c2"]:
+        sb.git(root, "update-ref", "-d", HELD_REF + replace, check=False)
+
+
+def _held_remove(root, c2s):
+    """Each entry whose c2 is in <c2s> out of the held record, then its ref."""
+    c2s = set(c2s)
+    if not c2s:
+        return
+    _wrote()
+    _held_write(root, [e for e in held_entries(root) if e["c2"] not in c2s])
+    for c in sorted(c2s):
+        sb.git(root, "update-ref", "-d", HELD_REF + c, check=False)
+
+
+def held_drop(root, sha7):
+    """`land --drop-held <sha7>` (P22): the held entry whose c2 begins <sha7>, and its ref, removed; its files are left
+    as they stand, ordinary uncommitted files from then on. False where no entry matches; NotRun where several do."""
+    found = [e for e in held_entries(root) if e["c2"].startswith(sha7)]
+    if len(found) > 1:
+        raise NotRun("%s names more than one held entry" % sha7)
+    if not found:
+        return False
+    _held_remove(root, [found[0]["c2"]])
+    return True
+
+
+def _tree(root, commit):
+    return sb.text(sb.git(root, "rev-parse", commit + "^{tree}"))
+
+
+def _at(root, commit, paths):
+    """An index-info line for each of <paths> as <commit> holds it, mode 0 (removed) where it lacks it."""
+    held = sb._tree_entries(root, commit, paths)
+    return ["%s %s\t%s" % (held[p][0], held[p][1], p) if p in held else "0 %s\t%s" % (sb.ZERO, p) for p in paths]
+
+
+def _message(root, commit):
+    """<commit>'s message, byte for byte."""
+    return sb._commit_parts(root, commit)[1]
+
+
+def held_rebuild(root, entry, drop):
+    """P8: <entry> rebuilt without the paths of <drop> -- its held commit made again on its c1 with those paths at c1's
+    versions, the record and the ref following -- or, where no path is left, removed with its ref: None."""
+    drop = set(drop) & set(entry["paths"])
+    if not drop:
+        return entry
+    keep = {p: b for p, b in entry["paths"].items() if p not in drop}
+    if not keep:
+        _held_remove(root, [entry["c2"]])
+        return None
+    tree = sb.tree_with(root, _tree(root, entry["c2"]), _at(root, entry["c1"], sorted(drop)))
+    new = dict(entry, c2=sb.commit_tree(root, tree, [entry["c1"]], _message(root, entry["c2"])), paths=keep)
+    _held_put(root, new, replace=entry["c2"])
+    return new
+
+
+def _held_orphans(root):
+    """P31: each refs/workflows/held/ ref that no live worktree's held record lists (worktree list --porcelain -z, each
+    worktree's rev-parse --git-path workflows/held.json); none where a worktree's record cannot be read, so no ref is
+    ever taken for an orphan on a guess."""
+    listed = set()
+    for field in sb.nul_list(sb.git(root, "worktree", "list", "--porcelain", "-z")):
+        if not field.startswith("worktree "):
+            continue
+        where = field[len("worktree "):]
+        r = sb.git(where, "rev-parse", "--git-path", "workflows/held.json", check=False)
+        path = sb.text(r)
+        got = _read_held(path if os.path.isabs(path) else os.path.join(where, path)) if r.returncode == 0 else None
+        if got is None:
+            return []
+        listed.update(e["c2"] for e in got)
+    refs = sb.text(sb.git(root, "for-each-ref", "--format=%(refname)", HELD_REF)).split("\n")
+    return [x for x in refs if x and x[len(HELD_REF):] not in listed]
+
+
+def _held_info(e):
+    return {"refused": e["refused"], "branch": e["branch"], "kind": e["kind"], "command": e["command"], "sha": e["c2"]}
+
+
+def snapshot(root):
+    """P11, P24: the snapshot a run's start takes -- every ARTIFACT path status() lists, mapped to its working copy's
+    blob (written, so a later land reads it), None for a path absent from the working tree. NotRun where status cannot
+    run."""
+    return {p: sb.worktree_blob(root, p, write=True) for p in status(root)["artifact"]}
+
+
+def _changed(root, a, b):
+    return sorted(sb.nul_list(sb.git(root, "diff-tree", "-r", "-z", "--no-renames", "--name-only", a, b)))
+
+
+def _own_commits(root, snap, message):
+    """The run's own change, as the landing (specs-repo-git §4 step 1) takes it: c1, HEAD's tree with each <snap> path at
+    its blob (None: removed), committed on HEAD; c2, c1's tree with each ARTIFACT path status() lists now at its working
+    copy (written; its mode from the file; removed where no file stands), committed on c1 with <message>. c2 is None
+    where the two trees are one: nothing of the run's."""
+    head = _commit(root, "HEAD")
+    base = _tree(root, head)
+    snap = snap or {}
+    modes = {p: m for p, (m, _sha) in sb._tree_entries(root, head, sorted(snap)).items()} if snap else {}
+    t1 = sb.tree_with(root, base, ["%s %s\t%s" % (modes.get(p, "100644"), b, p) if b else "0 %s\t%s" % (sb.ZERO, p)
+                                   for p, b in sorted(snap.items())]) if snap else base
+    c1 = sb.commit_tree(root, t1, [head], SNAPSHOT_MESSAGE)
+    entries = []
+    for p in status(root)["artifact"]:
+        full = os.path.join(root, p)
+        if os.path.isfile(full) and not os.path.islink(full):
+            mode = "100755" if os.stat(full).st_mode & 0o100 else "100644"
+            entries.append("%s %s\t%s" % (mode, sb.worktree_blob(root, p, write=True), p))
+        else:
+            entries.append("0 %s\t%s" % (sb.ZERO, p))
+    t2 = sb.tree_with(root, t1, entries) if entries else t1
+    if t2 == t1:
+        return c1, None
+    return c1, sb.commit_tree(root, t2, [c1], message if message.endswith("\n") else message + "\n")
+
+
+def _entry(root, c1, c2, default, branch, facts, here):
+    """A held entry for the change <c1> to <c2>, not yet journalled: refused None, no tip. Its branch is the stayed
+    branch (facts' stayed, else <branch>), or HEAD's for a here entry, whose onto is HEAD's branch too."""
+    facts = facts or {}
+    stayed = facts.get("stayed")
+    return {"c1": c1, "c2": c2, "old": None, "tip": None, "onto": branch if here else default,
+            "branch": branch if here or not isinstance(stayed, str) or not stayed else stayed, "remote_only": False,
+            "kind": facts.get("kind"), "merged": facts.get("merged"), "command": facts.get("command"), "refused": None,
+            "date": _today(), "paths": {p: sb.blob(root, c2, p) for p in _changed(root, c1, c2)}, "here": here,
+            "index_before": None}
+
+
+def _pending(entry):
+    return {k: entry[k] for k in PENDING_FIELDS}
+
+
+def _split(root, entry, refused):
+    """P29: <entry>'s change split at the paths own_change refused -- (the stuck entry, a commit on c1 holding only those
+    paths at c2's versions, refused with the first refusal and permanent; <entry> narrowed to the rest, its c2 made
+    again on c1 with the refused paths at c1's versions, or None where nothing is left)."""
+    paths = sorted({x["path"] for x in refused})
+    msg, first = _message(root, entry["c2"]), refused[0]
+    tree = sb.tree_with(root, _tree(root, entry["c1"]), _at(root, entry["c2"], paths))
+    stuck = dict(entry, c2=sb.commit_tree(root, tree, [entry["c1"]], msg), old=None, tip=None, remote_only=False,
+                 paths={p: entry["paths"].get(p) for p in paths},
+                 refused={"reason": first["reason"], "path": first["path"], "detail": first["detail"], "permanent": True})
+    rest = {p: b for p, b in entry["paths"].items() if p not in paths}
+    if not rest:
+        return stuck, None
+    tree = sb.tree_with(root, _tree(root, entry["c2"]), _at(root, entry["c1"], paths))
+    return stuck, dict(entry, c2=sb.commit_tree(root, tree, [entry["c1"]], msg), paths=rest)
+
+
+def _verified(root, entry, default, check=None):
+    """P6: a landing journal's move is verified where <default> holds its tip -- or, for a remote_only one,
+    origin/<default>, fetched (capped; <check>(cost) first) where it does not already."""
+    tip = entry.get("tip")
+    if not tip:
+        return False
+    ref = ("refs/remotes/origin/" if entry.get("remote_only") else "refs/heads/") + default
+
+    def holds():
+        at = sb.rev(root, ref)
+        return at is not None and (at == tip or sb.is_ancestor(root, tip, at))
+    if holds():
+        return True
+    if not entry.get("remote_only") or sb.git(root, "remote", "get-url", "origin", check=False).returncode != 0:
+        return False
+    if check:
+        check(FETCH_COST)
+    sb.git_bounded(root, CAP, "fetch", "--no-tags", "origin", "+refs/heads/%s:%s" % (default, ref))
+    return holds()
+
+
+def _lift(root, chain):
+    """The landing's lift (P7): for each path of the landed changes <chain> (oldest first, each {c1, paths: {path: c2's
+    blob}}) whose working copy is still the newest landing's c2 blob, write back the oldest c1 version along the chain
+    -- each earlier landing whose c2 blob is the version a later one started from -- so the stayed branch's checkout
+    shows none of what landed. A path whose working copy changed since is left as it stands. Returns [(the landing's
+    index in <chain>, {path, blob})], blob the version written back, None where the path was removed."""
+    out, seen = [], set()
+    for i in range(len(chain) - 1, -1, -1):
+        for p in sorted(chain[i]["paths"]):
+            if p in seen:
+                continue
+            seen.add(p)
+            if sb.worktree_blob(root, p) != chain[i]["paths"][p]:
+                continue
+            c1 = chain[i]["c1"]
+            want = sb.blob(root, c1, p)
+            for j in range(i - 1, -1, -1):
+                if p in chain[j]["paths"] and chain[j]["paths"][p] == want:
+                    c1 = chain[j]["c1"]
+                    want = sb.blob(root, c1, p)
+            sb.write_from(root, c1, p)
+            out.append((i, {"path": p, "blob": want}))
+    return out
+
+
+def _still_held(root, entries):
+    """P8 over held <entries> (oldest first): c2 -> the set of its paths still held -- each whose working copy is still
+    its c2 blob, or the c2 blob of a later entry that started from this one's version, and is no longer HEAD's. A path
+    edited, committed, removed or restored since leaves the entry."""
+    keep = {e["c2"]: set() for e in entries}
+    for p in sorted({p for e in entries for p in e["paths"]}):
+        wc, head = sb.worktree_blob(root, p), sb.blob(root, "HEAD", p)
+        ok, later_c1 = False, None
+        for e in reversed([e for e in entries if p in e["paths"]]):
+            mine = e["paths"][p]
+            ok = (wc == mine and wc != head) or (ok and later_c1 == mine)
+            if ok:
+                keep[e["c2"]].add(p)
+            later_c1 = sb.blob(root, e["c1"], p)
+    return keep
+
+
+def _land_change(root, entry, default, default_ref, register_rebuild, in_record, remote=True, check=None,
+                 on_move=None):
+    """The landing's apply and move for one change -- a held entry retried, or the run's own (<entry>, c1 to c2): applied
+    onto <default> by sb.own_change, the paths it refuses split off as one permanent held entry (P29), the rest
+    committed on the result, journalled, then moved. C2's test first: where another worktree has <default> checked out,
+    the result is built on <default-ref> and pushed by refspec where push_check leaves no row but scope (the push names
+    one commit on <default-ref>, so push-scope does not apply), the local branch never moved (ruling C2); <remote> False
+    keeps the change off that path (P28), as it stands, and <check>(cost) comes before its capped calls. Otherwise onto
+    is <default-ref>'s commit where local <default> is absent or strictly behind it, else local <default>, which
+    sb.move_branch(here=False) moves -- created where it is absent -- and a branch-moved or checkout-moved refusal is
+    tried once more on the new tip. <in_record>: the entry stands in the held record, where each change to it replaces
+    it. Lifts nothing. Returns status landed (its journal entry standing for the caller's lift), there (onto already
+    holds the change), stuck-only (onto already holds every path accepted, and some path was refused), or held (the
+    entry in the record, refused set); entry, the change as narrowed (None where nothing is left); stuck, the entry
+    split off."""
+    out = {"status": None, "sha": None, "files": 0, "paths": [], "pushed": False, "refused": None, "stuck": None,
+           "numbers": None, "entry": entry, "in_record": in_record, "pending": None}
+    moved = 0
+    for _attempt in range(4):
+        elsewhere = sb.checked_out_at(root, default)
+        if elsewhere and not remote:
+            refused = entry["refused"] or {"reason": "checked-out", "path": elsewhere[0], "detail": None,
+                                           "permanent": False}
+            return dict(out, status="held", refused=refused)
+        if elsewhere and check:
+            check(PUSH_COST)
+        local, upstream = sb.rev(root, "refs/heads/" + default), _commit(root, default_ref)
+        behind = local is None or (local != upstream and sb.is_ancestor(root, local, upstream))
+        onto = upstream if elsewhere or behind else local
+        got = sb.own_change(root, onto, entry["c1"], entry["c2"], register_rebuild)
+        if got["refused"]:
+            stuck, rest = _split(root, entry, got["refused"])
+            _held_put(root, stuck)
+            if in_record and rest is None:
+                _held_remove(root, [entry["c2"]])
+            elif in_record:
+                _held_put(root, rest, replace=entry["c2"])
+            out["stuck"] = out["stuck"] or stuck
+            if rest is None:
+                return dict(out, status="stuck-only", entry=None, in_record=False)
+            entry = rest
+        out.update(entry=entry, in_record=in_record)
+        if got["tree"] == _tree(root, onto):
+            return dict(out, status="stuck-only" if out["stuck"] else "there")
+        tip = sb.commit_tree(root, got["tree"], [onto], _message(root, entry["c2"]))
+        entry = dict(entry, refused=None, old=onto if elsewhere else local, tip=tip, remote_only=bool(elsewhere),
+                     onto=default)
+        _held_put(root, entry, replace=entry["c2"] if in_record else None)
+        in_record = True
+        out.update(entry=entry, in_record=True, pending=_pending(entry))
+        _PENDING[0] = out["pending"]
+        if on_move:
+            on_move(_pending(entry))
+        paths = _commit_paths(root, tip)
+        landed = dict(out, status="landed", sha=tip, paths=paths, files=len(paths), numbers=got["numbers"])
+        message = "specs-git: landed " + tip[:7]
+        if elsewhere:
+            row = push_check(root, default, default)["row"]
+            if row in (None, "scope"):  # one commit on <default-ref>: push-scope does not apply to it
+                _wrote()
+                pushed = push(root, default, False, src=tip)
+                if pushed["outcome"] == "pushed":
+                    return dict(landed, pushed=True)
+                detail, permanent = pushed["outcome"], False
+            else:
+                detail, permanent = row, row in PERMANENT_ROWS
+            refused = {"reason": "checked-out", "path": elsewhere[0], "detail": detail, "permanent": permanent}
+            break
+        _wrote()
+        if local is None:
+            made = sb.git(root, "update-ref", "-m", message, "refs/heads/" + default, tip, sb.ZERO, check=False)
+            why = None if made.returncode == 0 else {"reason": "branch-moved", "path": None}
+        else:
+            why = sb.move_branch(root, default, local, tip, here=False, message=message)
+        if why is None:
+            return landed
+        if why["reason"] in ("branch-moved", "checkout-moved"):
+            moved += 1
+            if moved < 2:
+                continue
+            refused = {"reason": "moved", "path": None, "detail": why["reason"], "permanent": False}
+        elif why["reason"] == "checked-out":
+            continue  # a worktree came between: C2's test, again, takes the refspec push
+        else:
+            refused = {"reason": why["reason"], "path": why.get("path"), "detail": None, "permanent": False}
+        break
+    else:
+        refused = {"reason": "moved", "path": None, "detail": None, "permanent": False}
+    entry = dict(entry, refused=refused, old=None, tip=None, remote_only=False)
+    _held_put(root, entry, replace=entry["c2"] if in_record else None)
+    return dict(out, status="held", refused=refused, entry=entry, in_record=True)
+
+
+def _waited_on(entries, paths):
+    """Of transient held <entries> (oldest first), those a change on <paths> waits for (P7): each sharing a path with
+    it, or with a later one that does."""
+    want, out = set(paths), []
+    for e in reversed(entries):
+        if want & set(e["paths"]):
+            out.append(e)
+            want |= set(e["paths"])
+    return out[::-1]
+
+
+def _on(root, branch):
+    """HEAD names refs/heads/<branch> (symbolic-ref -q HEAD)."""
+    head = sb.git(root, "symbolic-ref", "-q", "HEAD", check=False).stdout.strip()
+    return head == ("refs/heads/" + branch).encode("utf-8", "surrogateescape")
+
+
+def _index_blobs(root, paths):
+    """path -> the blob the index holds for it at stage 0, None where it holds none."""
+    out = dict.fromkeys(paths)
+    if paths:
+        for rec in sb.nul_list(sb.git(root, "ls-files", "-s", "-z", "--", *_literal(paths))):
+            meta, _, p = rec.partition("\t")
+            fields = meta.split()
+            if len(fields) == 3 and fields[2] == "0" and p in out:
+                out[p] = fields[1]
+    return out
+
+
+def _restore_index(root, entry):
+    """The here form's last step: `restore --staged` over each path the move's tip carries whose index entry before
+    the move was the old tip's (both absent counting as equal) and still is -- one staged since is the user's, and
+    stays -- so the index follows HEAD there. The paths restored."""
+    before = entry.get("index_before") or {}
+    now = _index_blobs(root, sorted(before))
+    paths = [p for p in sorted(before) if before[p] == sb.blob(root, entry["old"], p) and now[p] == before[p]]
+    if paths:
+        sb.git(root, "restore", "--staged", "--", *_literal(paths))
+    return paths
+
+
+def _here_move(root, e, in_record, register_rebuild, on_move):
+    """The here form (P2) for the change <e> on HEAD's branch e["branch"]: own_change onto HEAD; any refusal: kept,
+    nothing committed and nothing held; nothing to add: there; else the commit on HEAD, the journal entry (here, with
+    index_before), <on_move>, HEAD and index.lock rechecked, `update-ref refs/heads/<branch> <tip> <old>`, both
+    rechecked again, the index restored (_restore_index), the entry removed. No file is written and nothing lifted. A
+    failed recheck before the move removes the entry (locked, or LandStopped, nothing moved); after it, LandStopped
+    carrying pending, the entry kept for the resume or the held stage."""
+    branch = e["branch"]
+    ref = "refs/heads/" + branch
+    head = _commit(root, "HEAD")
+    got = sb.own_change(root, head, e["c1"], e["c2"], register_rebuild)
+    if got["refused"] or got["tree"] == _tree(root, head):
+        if in_record:
+            _held_remove(root, [e["c2"]])
+        if got["refused"]:
+            return {"status": "kept", "refused": dict(got["refused"][0], permanent=True)}
+        return {"status": "there"}
+    tip = sb.commit_tree(root, got["tree"], [head], _message(root, e["c2"]))
+    paths = _commit_paths(root, tip)
+    journal = dict(e, old=head, tip=tip, refused=None, here=True, onto=branch, remote_only=False,
+                   index_before=_index_blobs(root, paths))
+    _held_put(root, journal, replace=e["c2"] if in_record else None)
+    pending = _PENDING[0] = _pending(journal)
+    if on_move:
+        on_move(dict(pending))
+    shown, lock = sb.git_paths(root, "index.lock")[0]
+    if not _on(root, branch) or os.path.lexists(lock):
+        _held_remove(root, [journal["c2"]])
+        if os.path.lexists(lock):
+            return {"status": "locked", "refused": {"reason": "locked", "path": shown, "detail": None,
+                                                    "permanent": False}}
+        raise LandStopped("HEAD left %s before the here form moved it; nothing moved" % branch)
+    _wrote()
+    moved = sb.git(root, "update-ref", "-m", "specs-git: landed " + tip[:7], ref, tip, head, check=False)
+    if moved.returncode != 0:
+        _held_remove(root, [journal["c2"]])
+        raise LandStopped("%s did not move to %s (%s); nothing moved" % (branch, tip[:7], _first_line(moved, error=True)))
+    if not _on(root, branch) or os.path.lexists(lock):
+        raise LandStopped("%s moved to %s, but %s before its index was restored; end --resume or the next preflight "
+                          "restores it" % (branch, tip[:7], "%s stands" % shown if os.path.lexists(lock)
+                                           else "HEAD left it"), pending)
+    _restore_index(root, journal)
+    _held_remove(root, [journal["c2"]])
+    return {"status": "landed", "sha": tip, "files": len(paths), "paths": paths, "pending": pending}
+
+
+def _finish_here(root, e, register_rebuild, on_move=None):
+    """P2's here journal finished, only where its move is verified: where HEAD names e's branch and it stands at the
+    journalled tip, or has it as an ancestor (the open run's end may have committed on top), the index restored;
+    where it stands at the journalled old, the here form again; otherwise the entry removed and the files left as they
+    stand. (how, result): finished with _here_move's result, dropped, or locked where index.lock stands, the entry
+    left for a later call."""
+    branch = e["branch"]
+    if os.path.lexists(sb.git_paths(root, "index.lock")[0][1]):
+        return "locked", None
+    at, on = sb.rev(root, "refs/heads/" + branch), _on(root, branch)
+    if on and at is not None and e.get("tip") and (at == e["tip"] or sb.is_ancestor(root, e["tip"], at)):
+        _restore_index(root, e)
+        _held_remove(root, [e["c2"]])
+        paths = _commit_paths(root, e["tip"])
+        return "finished", {"status": "landed", "sha": e["tip"], "files": len(paths), "paths": paths}
+    if on and at is not None and at == e.get("old"):
+        return "finished", _here_move(root, e, True, register_rebuild, on_move)
+    _held_remove(root, [e["c2"]])
+    return "dropped", None
+
+
+def land(root, branch, default, default_ref, message, snap, register_rebuild=None, here=False, facts=None,
+         on_move=None, resume=None, retry_remote=True, check=None):
+    """specs-repo-git §4 step 1's landing for the checkout standing on <branch> (NotRun otherwise): the run's own
+    session-file change -- c1, HEAD with the start's snapshot <snap>, to c2, the working copies now -- committed on
+    <default> without moving the checkout, then lifted out of the working tree. In order: index.lock standing, locked,
+    nothing written; c1 and c2 (_own_commits), nothing where they are one; the transient held entries it waits for
+    retried first (P7; locally only where <retry_remote> is false, <check>(cost) before their capped calls), one that
+    stays held holding this change behind it, with its refused; then _land_change; then the lift over every landing
+    (_lift) and the journal entries removed. <here>, forced where <branch> is <default>: the here form instead
+    (_here_move). <facts> {kind, merged, command, stayed} go into a held entry; <on_move>(pending) is called just
+    before the move or the refspec push, once the journal entry is written. <resume>, an earlier call's pending, is
+    landed again from its c1 and c2 -- lifted only where its move is verified (P6) -- and its own journal entry is
+    never retried as a held one. Returns {status: landed, there, nothing, held, kept or locked; sha: the landed
+    commit, or the held one's c2; files; paths; lifted; onto: <default>, or <branch> in the here form; pushed: true
+    only on the refspec push; refused; stuck: the paths held alone beside a landing; held_landed: [{sha, files, paths,
+    branch}]; moves (sb._moves); pending}."""
+    if _head_branch(root) != branch:
+        raise NotRun("HEAD is not on %s" % branch)
+    _commit(root, default_ref)
+    here = bool(here or branch == default or (resume or {}).get("here"))
+    return _write_bounded(_land, root, branch, default, default_ref, message, snap, register_rebuild, here, facts,
+                          on_move, resume, retry_remote, check)
+
+
+def _land(root, branch, default, default_ref, message, snap, register_rebuild, here, facts, on_move, resume,
+          retry_remote, check):
+    out = {"status": None, "sha": None, "files": 0, "paths": [], "lifted": [], "onto": branch if here else default,
+           "pushed": False, "refused": None, "stuck": None, "held_landed": [], "moves": [], "pending": None}
+    shown, lock = sb.git_paths(root, "index.lock")[0]
+    if os.path.lexists(lock):
+        return dict(out, status="locked", refused={"reason": "locked", "path": shown, "detail": None, "permanent": False})
+    record = held_entries(root)
+    if resume:
+        own = next((e for e in record if e["c2"] == resume["c2"]), None)
+        in_record = own is not None
+        if own is None:
+            own = dict(_entry(root, resume["c1"], resume["c2"], default, branch, facts, here),
+                       **{k: resume[k] for k in ("old", "tip", "remote_only", "index_before") if k in resume})
+    else:
+        c1, c2 = _own_commits(root, snap, message)
+        if c2 is None:
+            return dict(out, status="nothing")
+        own, in_record = _entry(root, c1, c2, default, branch, facts, here), False
+    if here:
+        if resume and own.get("tip"):
+            how, got = _finish_here(root, own, register_rebuild, on_move)
+            if how == "locked":
+                return dict(out, status="locked", refused={"reason": "locked", "path": shown, "detail": None,
+                                                           "permanent": False})
+            got = got or {"status": "kept", "refused": {"reason": "moved", "path": None, "detail": None,
+                                                        "permanent": True}}
+        else:
+            got = _here_move(root, own, in_record, register_rebuild, on_move)
+        return dict(out, **{k: got[k] for k in ("status", "sha", "files", "paths", "refused", "pending") if k in got})
+    chain, done = [], []
+    try:
+        waiting = [e for e in record if e["refused"] is not None and not e["refused"].get("permanent")
+                   and not e.get("here") and e["c2"] != own["c2"]]
+        blocked = {}
+        for e in _waited_on(waiting, own["paths"]):
+            waits = next((blocked[p] for p in sorted(e["paths"]) if p in blocked), None)
+            if waits is None:
+                got = _land_change(root, e, default, default_ref, register_rebuild, True, remote=retry_remote,
+                                   check=check)
+                if got["status"] != "held":
+                    if got["entry"] is not None:
+                        chain.append(got["entry"])
+                        done.append(got["entry"]["c2"])
+                    if got["status"] == "landed":
+                        out["held_landed"].append({"sha": got["sha"], "files": got["files"], "paths": got["paths"],
+                                                   "branch": e["branch"]})
+                    continue
+                waits = got["refused"]
+            for p in e["paths"]:
+                blocked.setdefault(p, waits)
+        hold = next((blocked[p] for p in sorted(own["paths"]) if p in blocked), None)
+        if hold is not None:  # held behind the entry it waits for (P7), with its refused
+            held = dict(own, refused=hold, old=None, tip=None, remote_only=False)
+            _held_put(root, held, replace=own["c2"] if in_record else None)
+            out.update(status="held", sha=held["c2"], files=len(held["paths"]), paths=sorted(held["paths"]), refused=hold)
+        elif resume and own["refused"] is None and _verified(root, own, default):
+            chain.append(own)
+            done.append(own["c2"])
+            paths = _commit_paths(root, own["tip"])
+            out.update(status="landed", sha=own["tip"], files=len(paths), paths=paths, pushed=bool(own["remote_only"]))
+        else:
+            got = _land_change(root, own, default, default_ref, register_rebuild, in_record, on_move=on_move)
+            out["pending"] = got["pending"]
+            stuck = got["stuck"]
+            if stuck is not None:
+                out["stuck"] = {"sha": stuck["c2"], "paths": sorted(stuck["paths"]), "refused": stuck["refused"]}
+            if got["status"] == "held":
+                out.update(status="held", sha=got["entry"]["c2"], files=len(got["entry"]["paths"]),
+                           paths=sorted(got["entry"]["paths"]), refused=got["refused"])
+            else:
+                if got["entry"] is not None:
+                    chain.append(got["entry"])
+                    if got["in_record"]:
+                        done.append(got["entry"]["c2"])
+                if got["status"] == "landed":
+                    out.update(status="landed", sha=got["sha"], files=got["files"], paths=got["paths"],
+                               pushed=got["pushed"], moves=sb._moves([got["numbers"]]) if got["numbers"] else [])
+                elif got["status"] == "there":
+                    out["status"] = "there"
+                else:  # stuck-only: only refused paths would have changed onto
+                    out.update(status="held", sha=stuck["c2"], files=len(stuck["paths"]), paths=sorted(stuck["paths"]),
+                               refused=stuck["refused"])
+    except _Stop:
+        _lift(root, chain)
+        _held_remove(root, done)
+        raise
+    out["lifted"] = sorted({x["path"] for _i, x in _lift(root, chain)})
+    _held_remove(root, done)
+    return out
+
+
+def retry_held(root, default, default_ref, register_rebuild=None, check=None, retry_remote=True):
+    """The held stage's primitive (P6, P7, P9, P28, P31): orphaned held refs removed; on a detached HEAD nothing more.
+    Each here journal finished where its move is verified (_finish_here) -- never dropped for HEAD's place. With HEAD
+    on <default>, or in session-branch mode, every other entry dropped with its ref, its files left to the flush, end's
+    commit or §8.2's. Otherwise: P8 first (_still_held, held_rebuild); then, oldest first, each landing journal lifted
+    where its move is verified (_verified), else landed again as a held entry; each permanent entry reported stuck; each
+    transient one landed by _land_change (C2's test and the refspec push included; locally only where <retry_remote> is
+    false; <check>(cost) before its capped calls, whose _Stop is raised after the landings so far are lifted), unless an
+    earlier one that stays held shares a path with it. Then the lift over every landing (_lift) and their entries
+    removed. Returns {landed: [{sha, files, paths, branch, lifted}], finished: [{sha, here, lifted}], failed and
+    stuck: [{refused, branch, kind, command, sha}], dropped: count}; lifted: [{path, blob}], the blob written back
+    (None where removed), for P11's snapshot."""
+    _commit(root, default_ref)
+    return _write_bounded(_retry_held, root, default, default_ref, register_rebuild, check, retry_remote)
+
+
+def _retry_held(root, default, default_ref, register_rebuild, check, retry_remote):
+    out = {"landed": [], "finished": [], "failed": [], "stuck": [], "dropped": 0}
+    for orphan in _held_orphans(root):
+        _wrote()
+        sb.git(root, "update-ref", "-d", orphan)
+    head = _head_branch(root)
+    if head is None:
+        return out
+    for e in [e for e in held_entries(root) if e.get("here")]:
+        how, got = _finish_here(root, e, register_rebuild)
+        if how == "finished" and got["status"] in ("landed", "there"):
+            out["finished"].append({"sha": got.get("sha"), "here": True, "lifted": []})
+        elif how != "locked":
+            out["dropped"] += 1
+    rest = [e for e in held_entries(root) if not e.get("here")]
+    if head == default or sb.mode(root, default)["mode"] == "on":
+        _held_remove(root, [e["c2"] for e in rest])
+        out["dropped"] += len(rest)
+        return out
+    held = [e for e in rest if e["refused"] is not None]
+    keep = _still_held(root, held)
+    for e in held:
+        gone = set(e["paths"]) - keep[e["c2"]]
+        if gone and held_rebuild(root, e, gone) is None:
+            out["dropped"] += 1
+    chain, done, info, blocked = [], [], [], {}
+    try:
+        for e in held_entries(root):
+            if e.get("here"):
+                continue
+            if e["refused"] is None and _verified(root, e, default, check):
+                chain.append(e)
+                done.append(e["c2"])
+                info.append(("finished", e, None))
+                continue
+            if e["refused"] is not None and e["refused"].get("permanent"):
+                out["stuck"].append(_held_info(e))
+                continue
+            waits = next((blocked[p] for p in sorted(e["paths"]) if p in blocked), None)
+            if waits is None:
+                got = _land_change(root, e, default, default_ref, register_rebuild, True, remote=retry_remote,
+                                   check=check)
+                if got["stuck"] is not None:
+                    out["stuck"].append(_held_info(got["stuck"]))
+                if got["status"] != "held":
+                    if got["entry"] is not None:
+                        chain.append(got["entry"])
+                        done.append(got["entry"]["c2"])
+                        info.append(("landed" if got["status"] == "landed" else "finished", got["entry"], got))
+                    continue
+                if got["refused"].get("permanent"):
+                    out["stuck"].append(_held_info(got["entry"]))
+                    continue
+                e, waits = got["entry"], got["refused"]
+            out["failed"].append(_held_info(e))
+            for p in e["paths"]:
+                blocked.setdefault(p, waits)
+    except _Stop:
+        _lift(root, chain)
+        _held_remove(root, done)
+        raise
+    per = {}
+    for i, x in _lift(root, chain):
+        per.setdefault(i, []).append(x)
+    _held_remove(root, done)
+    for i, (kind, e, got) in enumerate(info):
+        if kind == "landed":
+            out["landed"].append({"sha": got["sha"], "files": got["files"], "paths": got["paths"], "branch": e["branch"],
+                                  "lifted": per.get(i, [])})
+        else:
+            out["finished"].append({"sha": e["tip"] if got is None else None, "here": False, "lifted": per.get(i, [])})
+    return out
+
+
+def _default_of(ref):
+    """<default>: --default-ref less origin/ (or refs/remotes/origin/) or refs/heads/."""
+    for prefix in ("refs/remotes/origin/", "origin/", "refs/heads/"):
+        if ref.startswith(prefix) and len(ref) > len(prefix):
+            return ref[len(prefix):]
+    raise NotRun("usage: --default-ref is origin/<default> or refs/heads/<default>, got %s" % ref)
+
+
+def _snapshot_arg(root, value):
+    """--snapshot's map, from the file it names or, for -, stdin: {path: blob id or null}, each blob one this repository
+    holds; NotRun otherwise."""
+    try:
+        if value == "-":
+            data = sys.stdin.buffer.read().decode("utf-8", "surrogateescape")
+        else:
+            with open(value, encoding="utf-8", errors="surrogateescape") as fh:
+                data = fh.read()
+        snap = json.loads(data)
+    except (OSError, ValueError) as e:
+        raise NotRun("--snapshot could not be read: %s" % " ".join(str(e).split()))
+    if not isinstance(snap, dict) or not all(isinstance(p, str) and p and (b is None or (isinstance(b, str) and
+                                                                                       _OBJECT_ID.fullmatch(b)))
+                                             for p, b in snap.items()):
+        raise NotRun("--snapshot is not a map of paths to blob ids or null")
+    blobs = sorted({b for b in snap.values() if b})
+    if blobs:
+        asked = "".join(b + "\n" for b in blobs).encode()
+        kinds = sb.text(sb.git(root, "cat-file", "--batch-check=%(objecttype)", data=asked))
+        if any(k != "blob" for k in kinds.split("\n")):
+            raise NotRun("--snapshot names a blob this repository does not hold")
+    return snap
+
+
+def land_cli(a):
+    """The land subcommand (P10): a landing, --retry-held or --drop-held, each printing its JSON object."""
+    default = _default_of(a.default_ref)
+    _commit(a.specs, a.default_ref)
+    if a.retry_held or a.drop_held:
+        if (a.retry_held and a.drop_held) or a.branch or a.command or a.commit_key or a.snapshot or a.here \
+                or (a.drop_held and a.register_rebuild):
+            raise NotRun("usage: --retry-held takes --default-ref and --register-rebuild alone, --drop-held "
+                         "--default-ref alone")
+        if a.drop_held:
+            if not re.fullmatch(r"[0-9a-f]{4,64}", a.drop_held):
+                raise NotRun("usage: --drop-held takes a held commit's short sha, got %s" % a.drop_held)
+            return {"dropped": held_drop(a.specs, a.drop_held), "sha7": a.drop_held, "error": None}
+        try:
+            return dict(retry_held(a.specs, default, a.default_ref, a.register_rebuild), error=None)
+        except LandStopped as e:
+            return {"landed": [], "finished": [], "failed": [], "stuck": [], "dropped": 0, "error": str(e)}
+    if not a.branch or not a.command:
+        raise NotRun("usage: land needs --branch and --command, or --retry-held, or --drop-held")
+    if not _load_module("specs_git_state").COMMAND_RE.fullmatch(a.command):
+        raise NotRun("usage: --command is /<name>, got %s" % a.command)
+    if a.commit_key is not None and not KEY_RE.fullmatch(a.commit_key):
+        raise NotRun("usage: --commit-key is a key of addressing §1's grammar, got %s" % a.commit_key)
+    snap = None if a.snapshot is None else _snapshot_arg(a.specs, a.snapshot)
+    out = {"status": None, "sha7": None, "files": 0, "paths": [], "lifted": [], "default": default, "pushed": False,
+           "reason": None, "path": None, "permanent": None, "stuck": None, "error": None}
+    try:
+        got = land(a.specs, a.branch, default, a.default_ref, session_subject(a.commit_key, a.command), snap,
+                   a.register_rebuild, a.here, {"kind": None, "merged": None, "command": a.command, "stayed": a.branch})
+    except LandStopped as e:
+        return dict(out, error=str(e))
+    refused, stuck = got["refused"] or {}, got["stuck"]
+    return dict(out, status=got["status"], sha7=got["sha"][:7] if got["sha"] else None, files=got["files"],
+                paths=got["paths"], lifted=got["lifted"], pushed=got["pushed"], reason=refused.get("reason"),
+                path=refused.get("path"), permanent=refused.get("permanent"),
+                stuck=None if stuck is None else {"sha7": stuck["sha"][:7], "paths": stuck["paths"],
+                                                  "reason": stuck["refused"]["reason"], "path": stuck["refused"]["path"]})
+
+
 class Parser(argparse.ArgumentParser):
     """A usage error is one "not run" line, as every exit 2 is."""
 
@@ -2679,6 +3497,17 @@ def main():
     p.add_argument("--branch", required=True)
     p.add_argument("--set-upstream", action="store_true")
     p.add_argument("--timed-out", action="store_true")
+    p = sub.add_parser("land")
+    p.add_argument("--branch")
+    p.add_argument("--default-ref", required=True)
+    p.add_argument("--command")
+    p.add_argument("--commit-key")
+    p.add_argument("--snapshot")
+    p.add_argument("--register-rebuild")
+    p.add_argument("--here", action="store_true")
+    p.add_argument("--retry-held", action="store_true")
+    p.add_argument("--drop-held")
+    sub.add_parser("snapshot")
     a = ap.parse_args()
     try:  # a path comes back as git's -z record gave it, a byte that is no UTF-8 included
         sys.stdout.reconfigure(encoding="utf-8", errors="surrogateescape")
@@ -2751,6 +3580,10 @@ def dispatch(a):
         return sb.mode(a.specs, a.default)
     if a.cmd == "replay":
         return replay(a.specs, a.for_, a.command, a.branch, a.set_upstream, a.timed_out)
+    if a.cmd == "land":
+        return land_cli(a)
+    if a.cmd == "snapshot":
+        return snapshot(a.specs)
     raise NotRun("unknown subcommand %s" % a.cmd)
 
 
@@ -2768,6 +3601,15 @@ def selftest():
         count[0] += 1
         if not ok:
             failures.append(what)
+
+    def utc_day():
+        """The UTC date _today() gives now: every expected <YYYY-MM-DD> is read when the line it checks is rendered,
+        never fixed at the selftest's start, so a run across 00:00 UTC compares each date with its own render's."""
+        return _today()
+
+    def local_day():
+        """The local date `date +%Y-%m-%d` gives now, as _record_refusal writes it: read when the record is checked."""
+        return time.strftime("%Y-%m-%d")
 
     class Repo:
         def __init__(self, path):
@@ -4988,8 +5830,6 @@ def selftest():
     def scenarios_end(tmp):
         state, lines = _flow()
         T = lines.T
-        today = time.strftime("%Y-%m-%d", time.gmtime())
-        local_today = time.strftime("%Y-%m-%d")
         g = globals()
         MIS = ("Specs repo: NOT COMMITTED — SPECS_PATH is misplaced, or the run's environment no longer matches the one "
                "it recorded; see the notice below")
@@ -5010,7 +5850,7 @@ def selftest():
             return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
                     "git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
                     "standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes to %s again, %s"
-                    % (branch, specs, today, branch, specs, today, branch, specs, branch, branch, clear))
+                    % (branch, specs, utc_day(), branch, specs, utc_day(), branch, specs, branch, branch, clear))
 
         def appended(paths_text):
             return "; the deliverable at %s remains uncommitted, as you asked" % paths_text
@@ -5186,7 +6026,7 @@ def selftest():
         want = (opening % (head(r)[:7], PLUGIN, PLUGIN) + "so this is recorded and no later run pushes it; "
                 + refused_tail(PLUGIN, r.path, rec_file, "rm \"%s\"" % rec_file))
         check(got.get("row") == "push-refused" and got.get("print") == [want] and got.get("pushed") is False
-              and os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_today + "\n",
+              and os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_day() + "\n",
               "e_push_refused: refused, the record file written under the common git directory with today's date (%r)" % got)
         shutil.rmtree(os.path.join(r.path, ".git", "workflows"))
         with open(os.path.join(r.path, ".git", "workflows"), "w", encoding="utf-8") as fh:
@@ -5196,7 +6036,7 @@ def selftest():
         got = run_end(env, "/create-prd")
         want = (opening % (head(r)[:7], PLUGIN, PLUGIN) + "so this is recorded and no later run pushes it; "
                 + refused_tail(PLUGIN, r.path, key, "git -C \"%s\" config --unset %s" % (r.path, key)))
-        check(got.get("row") == "push-refused" and got.get("print") == [want] and r.git("config", "--get", key) == local_today,
+        check(got.get("row") == "push-refused" and got.get("print") == [want] and r.git("config", "--get", key) == local_day(),
               "e_push_refused: the file cannot be written, so the configuration key is (%r)" % got)
         r.git("config", "--unset", key)
         lock = os.path.join(r.path, ".git", "config.lock")
@@ -5320,14 +6160,18 @@ def selftest():
         r, env = world(tmp, "e-blocked")
         h = head(r)
         r.git("switch", "-q", "--detach")
-        g0 = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": today, "<branch>": "main"})
+
+        def g0_now(r, h):
+            """G0's block as end renders it now, its date read at the check (utc_day)."""
+            return lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": utc_day(), "<branch>": "main"})
+        g0 = g0_now(r, h)
         seed(env, "/specify", specs_git="blocked", guard="G0", guard_block=g0, branch=None)
         r.write(RESUME, "r\n")
         got = run_end(env, "/specify")
         check(got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0] and head(r) == h
               and record(env, "/specify") is None, "e_blocked: a record carrying blocked repeats G0's block (%r)" % got)
         got = run_end(env, "/specify", "--no-preflight")
-        check(got.get("record") == "missing" and got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0]
+        check(got.get("record") == "missing" and got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0_now(r, h)]
               and head(r) == h and "?? " + RESUME in r.git("status", "--porcelain", "--untracked-files=all"),
               "e_blocked: no record, a detached HEAD and something to stage prints G0's block the first time (%r)" % got)
         os.remove(os.path.join(r.path, RESUME))
@@ -5341,7 +6185,7 @@ def selftest():
         ard = "specifications/PRD-ACME-1-x/ard.md"
         r.write(ard, "ard\n")
         r.write(RESUME, "r\n")
-        g0 = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": today, "<branch>": "main"})
+        g0 = g0_now(r, h)
         seed(env, "/specify", specs_git="blocked", guard="G0", guard_block=g0, branch=None, declined=[ard])
         got = run_end(env, "/specify")
         check(got.get("row") == "blocked" and got.get("print") == [BLOCKED + appended(ard), g0] and head(r) == h
@@ -5349,7 +6193,7 @@ def selftest():
               "e_declined_blocked: a record carrying blocked names the declined path, then G0's block (%r)" % got)
         got = run_end(env, "/specify", "--no-preflight", "--declined", ard)
         check(got.get("record") == "missing" and got.get("row") == "blocked"
-              and got.get("print") == [BLOCKED + appended(ard), g0] and head(r) == h,
+              and got.get("print") == [BLOCKED + appended(ard), g0_now(r, h)] and head(r) == h,
               "e_declined_blocked: on a detached HEAD with no preflight, the --declined path, then G0's block (%r)" % got)
         # ... and only where --specs still names the repository the start checked (§6): the review's two reproductions,
         # --specs "" from a cwd that is no repository and from another repository holding the path dirty, and --specs
@@ -5907,8 +6751,7 @@ def selftest():
         r.git("switch", "-q", "--detach")
         r.write(RESUME, "r\n")
         got = run_end(env, "/specify")
-        g0 = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": today, "<branch>": "main"})
-        check(got.get("record") == "found" and got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0]
+        check(got.get("record") == "found" and got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0_now(r, h)]
               and head(r) == h and record(env, "/specify") is None,
               "e_g0_found: a found record on a detached HEAD prints G0's block, nothing committed (%r)" % got)
 
@@ -5975,7 +6818,7 @@ def selftest():
             got = push(r.path, "main", False)
             check(got == {"outcome": "refused", "reason": "push declined due to repository rule violations",
                           "recorded": "file", "record": rec_file, "record_error": None}
-                  and open(rec_file, encoding="utf-8").read() == local_today + "\n",
+                  and open(rec_file, encoding="utf-8").read() == local_day() + "\n",
                   "e_push_status: a host's refusal is recorded (%r)" % got)
         finally:
             sb.git_bounded = real_bounded
@@ -6001,10 +6844,859 @@ def selftest():
                                                                                      "reason": "paths", "path": "a.md"}}))
         check("a pre-commit hook added a.md to this commit" in got, "e_canned: the hook variant with one path (%r)" % got)
 
+    def scenarios_land(tmp):
+        """specs-repo-git §4 step 1's landing: land, the held record, retry_held, and the land and snapshot subcommands.
+        In process where a fault is injected, else as the CLI runs."""
+        LB = "prd/B-2-y"
+        FUP = "specifications/PRD-ACME-1-x/follow-ups.md"
+        FB = "specifications/PRD-ACME-1-x/dev-workflows/feedback/f.md"
+        FB2 = "specifications/PRD-ACME-1-x/dev-workflows/feedback/g.md"
+        COST = "specifications/PRD-ACME-1-x/dev-workflows/cost/abcd1234.md"
+        COST_BODY = "# Cost\n\n## 2026-11-10T10:00:00Z — /specify — draft\n\nbody\n"
+        EDITED = COST_BODY.replace("body", "edited")
+        ENTRY = "## 2026-11-10 — /feedback — note\n\n%s\n"
+        HELD = "refs/workflows/held/"
+        MSG = session_subject(None, "/feedback")
+        PENDING = {"c1", "c2", "old", "tip", "onto", "paths", "remote_only", "here", "index_before"}
+        CLI_FIELDS = {"status", "sha7", "files", "paths", "lifted", "default", "pushed", "reason", "path", "permanent",
+                      "stuck", "error"}
+
+        def case(name, fn):
+            try:
+                fn()
+            except Exception as e:  # one case that crashes must not hide the others
+                check(False, "%s crashed: %s: %s" % (name, type(e).__name__, str(e).strip()[:400]))
+
+        def other_key(r, name=LB):
+            """A plugin branch no key of the run names, with one commit of its own, pushed with -u, HEAD left on it."""
+            r.git("switch", "-q", "-c", name)
+            r.write("specifications/PRD-B-2-y/prd.md", "---\nkind: prd\nkey: B-2\n---\n")
+            r.commit_all("B-2 Add the PRD")
+            r.git("push", "-q", "-u", "origin", name)
+
+        def no_origin(r):
+            r.git("remote", "remove", "origin")
+
+        def lworld(name, follow="- [ ] a\n", extra=(), stay=True):
+            """world, with follow-ups.md and <extra> ((path, body) pairs) committed on main and pushed; then, where
+            <stay>, other_key."""
+            r, r.env = world(tmp, name)
+            r.write(FUP, follow)
+            for p, body in extra:
+                r.write(p, body)
+            r.commit_all("ACME-1 Add the follow-ups")
+            r.git("push", "-q", "origin", "main")
+            if stay:
+                other_key(r)
+            return r
+
+        def ref(r, name):
+            return r.git("rev-parse", "--verify", "-q", name, check=False) or None
+
+        def main_of(r):
+            return ref(r, "refs/heads/main")
+
+        def held(r):
+            return held_entries(r.path)
+
+        def held_refs(r):
+            return r.git("for-each-ref", "--format=%(refname)", HELD).split()
+
+        def show(r, rev, path):
+            return r.git("show", "%s:%s" % (rev, path), check=False)
+
+        def changed(r, rev):
+            return sorted(x for x in r.git("diff-tree", "--no-commit-id", "--name-only", "-r", rev).split("\n") if x)
+
+        def porcelain(r):
+            return r.git("status", "--porcelain", "--untracked-files=all")
+
+        def read(r, path):
+            full = os.path.join(r.path, path)
+            if not os.path.isfile(full):
+                return None
+            with open(full, encoding="utf-8", newline="") as fh:
+                return fh.read()
+
+        def do_land(r, branch=LB, snap=None, default_ref="origin/main", **kw):
+            return land(r.path, branch, "main", default_ref, MSG, snap, **kw)
+
+        def worktree(r, name, branch="main"):
+            path = os.path.join(tmp, name)
+            r.git("worktree", "add", "-q", path, branch)
+            return Repo(path)
+
+        def same_path(a, b):
+            return a is not None and b is not None and os.path.realpath(a) == os.path.realpath(b)
+
+        @contextlib.contextmanager
+        def patched(name, fake):
+            real = getattr(sb, name)
+            setattr(sb, name, fake)
+            try:
+                yield real
+            finally:
+                setattr(sb, name, real)
+
+        def locked_move(calls=None):
+            """move_branch answering locked, as a lock left by a git that died would make it: a transient cause."""
+            def fake(*_args, **_kw):
+                if calls is not None:
+                    calls.append(1)
+                return {"reason": "locked", "path": ".git/refs/heads/main.lock"}
+            return fake
+
+        def kill(_pending):
+            raise OSError("killed")
+
+        def stopped(fn):
+            try:
+                fn()
+            except LandStopped as e:
+                return e
+            return None
+
+        def l_land_unkeyed():
+            r = lworld("l-unkeyed")
+            old, br, hd = main_of(r), ref(r, "refs/heads/" + LB), ref(r, "HEAD")
+            r.write(FB, ENTRY % "mine")
+            r.write(FUP, "- [ ] a\n- [ ] b\n")
+            got = do_land(r)
+            tip = main_of(r)
+            check(got["status"] == "landed" and got["sha"] == tip and got["files"] == 2 and got["paths"] == [FB, FUP]
+                  and got["pushed"] is False and got["onto"] == "main" and got["refused"] is None and got["stuck"] is None
+                  and got["held_landed"] == [] and got["moves"] == [],
+                  "l_land_unkeyed: landed on main (%r)" % got)
+            check(tip != old and r.git("rev-parse", tip + "^") == old and changed(r, tip) == [FB, FUP]
+                  and show(r, tip, FUP) == "- [ ] a\n- [ ] b"
+                  and r.git("reflog", "-1", "--format=%gs", "refs/heads/main") == "specs-git: landed " + tip[:7],
+                  "l_land_unkeyed: one commit on the old main naming exactly the two paths, its reflog the landing's")
+            check(ref(r, "refs/heads/" + LB) == br and ref(r, "HEAD") == hd and r.git("symbolic-ref", "--short", "HEAD") == LB,
+                  "l_land_unkeyed: the stayed branch and HEAD unmoved")
+            check(porcelain(r) == "" and sorted(got["lifted"]) == [FB, FUP],
+                  "l_land_unkeyed: both paths lifted, the checkout clean (%r, %r)" % (porcelain(r), got["lifted"]))
+            check(held(r) == [] and held_refs(r) == [], "l_land_unkeyed: no journal entry left")
+
+        def l_land_snapshot():
+            r = lworld("l-snapshot")
+            r.write(FUP, "- [ ] a\n- [ ] s\n")  # S: another run's line, dirty when this run started
+            snap = snapshot(r.path)
+            check(snap == {FUP: r.git("hash-object", FUP)}, "l_land_snapshot: the snapshot names S's blob (%r)" % snap)
+            r.write(FUP, "- [ ] a\n- [ ] s\n- [ ] mine\n")
+            got = do_land(r, snap=snap)
+            check(got["status"] == "landed" and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] mine"
+                  and read(r, FUP) == "- [ ] a\n- [ ] s\n" and got["lifted"] == [FUP],
+                  "l_land_snapshot: main's commit adds only the run's line, the working copy S after the lift (%r, %r)"
+                  % (got, show(r, main_of(r), FUP)))
+
+        def l_land_snapshot_deleted():
+            r = lworld("l-snapshot-deleted", extra=[(RESUME, "r\n")])
+            os.remove(os.path.join(r.path, RESUME))
+            snap = snapshot(r.path)
+            r.write(FB, ENTRY % "mine")
+            got = do_land(r, snap=snap)
+            tip = main_of(r)
+            check(snap == {RESUME: None} and got["status"] == "landed" and changed(r, tip) == [FB]
+                  and show(r, tip, RESUME) == "r" and read(r, RESUME) is None and read(r, FB) is None,
+                  "l_land_snapshot_deleted: a deletion standing at the start is not the run's: it neither lands nor is "
+                  "put back (%r, %r)" % (snap, got))
+
+        def l_land_no_snapshot():
+            r = lworld("l-no-snapshot")
+            r.write(FUP, "- [ ] a\n- [ ] s\n")
+            r.write(FB, ENTRY % "mine")
+            got = do_land(r)
+            tip = main_of(r)
+            check(got["status"] == "landed" and changed(r, tip) == [FB, FUP] and show(r, tip, FUP) == "- [ ] a\n- [ ] s"
+                  and porcelain(r) == "",
+                  "l_land_no_snapshot: with no snapshot every dirty session file lands, the leftover included (%r)" % got)
+
+        def l_land_behind():
+            r = lworld("l-behind")
+            o = clone(r, "l-behind-other")
+            o.write("specifications/PRD-ACME-1-x/notes.md", "n\n")
+            o.commit_all("ACME-1 Add notes")
+            o.git("push", "-q", "origin", "main")
+            r.git("fetch", "-q", "origin")
+            local, up = main_of(r), ref(r, "refs/remotes/origin/main")
+            r.write(FB, ENTRY % "mine")
+            got = do_land(r)
+            tip = main_of(r)
+            check(local != up and got["status"] == "landed" and got["sha"] == tip and r.git("rev-parse", tip + "^") == up
+                  and got["pushed"] is False,
+                  "l_land_behind: built on origin/main, local main fast-forwarded to it (%r)" % got)
+
+        def l_land_absent():
+            r = lworld("l-absent")
+            r.git("branch", "-q", "-D", "main")
+            up = ref(r, "refs/remotes/origin/main")
+            r.write(FB, ENTRY % "mine")
+            got = do_land(r)
+            check(got["status"] == "landed" and main_of(r) == got["sha"] and r.git("rev-parse", got["sha"] + "^") == up,
+                  "l_land_absent: no local main: created at the landed commit, on origin/main (%r)" % got)
+
+        def l_land_behind_checked_out():
+            r = lworld("l-behind-co")
+            o = clone(r, "l-behind-co-other")
+            o.write("specifications/PRD-ACME-1-x/notes.md", "n\n")
+            o.commit_all("ACME-1 Add notes")
+            o.git("push", "-q", "origin", "main")
+            r.git("fetch", "-q", "origin")
+            w2 = worktree(r, "l-behind-co-w2")
+            local, up = main_of(r), ref(r, "refs/remotes/origin/main")
+            check(w2.git("status", "--porcelain") == "" and w2.git("diff", "--cached") == "",
+                  "l_land_behind_checked_out: w2 clean before")
+            r.write(FB, ENTRY % "mine")
+            got = do_land(r)
+            check(got["status"] == "landed" and got["pushed"] is True and on_origin(r) == got["sha"]
+                  and r.git("rev-parse", got["sha"] + "^") == up and main_of(r) == local and local != up,
+                  "l_land_behind_checked_out: pushed by refspec on origin/main, local main unmoved (%r)" % got)
+            check(w2.git("status", "--porcelain") == "" and w2.git("diff", "--cached") == "" and porcelain(r) == ""
+                  and held(r) == [] and held_refs(r) == [],
+                  "l_land_behind_checked_out: w2 as it was, no staged reversal (%r, %r)"
+                  % (w2.git("status", "--porcelain"), w2.git("diff", "--cached")))
+
+        def l_land_checked_out_no_push():
+            def refused_before(r):
+                path = os.path.join(r.path, ".git", "workflows", "push-refused", "main")
+                os.makedirs(os.path.dirname(path))
+                with open(path, "w", encoding="utf-8") as fh:
+                    fh.write("2026-11-01\n")
+            for name, setup, ref_name, detail, permanent in (
+                    ("l-co-no-remote", no_origin, "refs/heads/main", "no-remote", True),
+                    ("l-co-offline", lambda r: r.git("remote", "set-url", "origin", os.path.join(tmp, "nowhere.git")),
+                     "origin/main", "failed", False),
+                    ("l-co-refused", refused_before, "origin/main", "refused-before", False)):
+                r = lworld(name)
+                w2 = worktree(r, name + "-w2")
+                setup(r)
+                local, up = main_of(r), on_origin(r)
+                r.write(FB, ENTRY % "mine")
+                got = do_land(r, default_ref=ref_name)
+                entries = held(r)
+                refused = got.get("refused") or {}
+                check(got["status"] == "held" and refused.get("reason") == "checked-out" and refused.get("detail") == detail
+                      and refused.get("permanent") is permanent and same_path(refused.get("path"), w2.path)
+                      and got["pushed"] is False and main_of(r) == local and on_origin(r) == up
+                      and "?? " + FB in porcelain(r) and len(entries) == 1 and entries[0]["refused"] == refused
+                      and entries[0]["tip"] is None and held_refs(r) == [HELD + entries[0]["c2"]] and got["sha"] == entries[0]["c2"],
+                      "l_land_checked_out_no_push: %s held, %s, local main unmoved, the file dirty (%r, %r)"
+                      % (name, detail, got, entries))
+
+        def l_land_diverged():
+            r = lworld("l-diverged")
+            r.git("switch", "-q", "main")
+            r.write("notes.md", "the user's\n")
+            user = r.commit_all("the user's own commit")
+            r.git("switch", "-q", LB)
+            r.write(FB, ENTRY % "mine")
+            got = do_land(r)
+            check(got["status"] == "landed" and r.git("rev-parse", got["sha"] + "^") == user and main_of(r) == got["sha"],
+                  "l_land_diverged: landed on top of the user's unpushed commit (%r)" % got)
+
+        def l_land_nothing():
+            r = lworld("l-nothing")
+            old = main_of(r)
+            got = do_land(r)
+            check(got["status"] == "nothing" and got["sha"] is None and main_of(r) == old and held(r) == [],
+                  "l_land_nothing: nothing dirty, nothing landed (%r)" % got)
+
+        def main_gains(r, body):
+            r.git("switch", "-q", "main")
+            r.write(FUP, body)
+            r.commit_all("ACME-1 follow-ups on main")
+            r.git("push", "-q", "origin", "main")
+            r.git("switch", "-q", LB)
+
+        def l_land_there():
+            r = lworld("l-there")
+            main_gains(r, "- [ ] a\n- [ ] b\n")
+            old = main_of(r)
+            r.write(FUP, "- [ ] a\n- [ ] b\n")
+            got = do_land(r)
+            check(got["status"] == "there" and got["sha"] is None and main_of(r) == old and got["lifted"] == [FUP]
+                  and porcelain(r) == "" and held(r) == [],
+                  "l_land_there: the run's line already on main: no commit, the file lifted (%r)" % got)
+
+        def l_land_there_refused():
+            r = lworld("l-there-refused", extra=[(COST, COST_BODY)])
+            main_gains(r, "- [ ] a\n- [ ] b\n")
+            old = main_of(r)
+            r.write(FUP, "- [ ] a\n- [ ] b\n")
+            r.write(COST, EDITED)
+            got = do_land(r)
+            entries = held(r)
+            stuck = got.get("stuck") or {}
+            check(got["status"] == "held" and main_of(r) == old and got["lifted"] == [FUP] and read(r, FUP) == "- [ ] a\n"
+                  and read(r, COST) == EDITED and stuck.get("paths") == [COST] and got["refused"] == stuck.get("refused")
+                  and (got["refused"] or {}).get("reason") == "edited" and (got["refused"] or {}).get("permanent") is True
+                  and len(entries) == 1 and list(entries[0]["paths"]) == [COST],
+                  "l_land_there_refused: no commit, the path already there lifted, the other held, permanent (%r, %r)"
+                  % (got, entries))
+
+        def l_land_hook():
+            r = lworld("l-hook")
+            hook(os.path.join(r.path, ".git", "hooks", "pre-commit"), "exit 1\n")
+            r.write(FB, ENTRY % "mine")
+            got = do_land(r)
+            check(got["status"] == "landed" and main_of(r) == got["sha"], "l_land_hook: no pre-commit hook runs (%r)" % got)
+
+        def l_land_on_move():
+            r = lworld("l-on-move")
+            old = main_of(r)
+            r.write(FB, ENTRY % "mine")
+            seen = []
+
+            def on_move(pending):
+                seen.append((dict(pending), main_of(r), [dict(e) for e in held(r)]))
+            got = do_land(r, on_move=on_move)
+            p, at, entries = seen[0] if seen else ({}, None, [])
+            check(len(seen) == 1 and set(p) == PENDING and at == old and p.get("old") == old and p.get("tip") == got["sha"]
+                  and p.get("here") is False and p.get("remote_only") is False and p.get("onto") == "main"
+                  and len(entries) == 1 and entries[0]["refused"] is None and entries[0]["tip"] == got["sha"]
+                  and entries[0]["c2"] == p.get("c2") and held(r) == [] and held_refs(r) == [],
+                  "l_land_on_move: called before the move, the journal entry written; none left after (%r)" % (seen,))
+
+        def l_land_partial():
+            r = lworld("l-partial", extra=[(COST, COST_BODY)])
+            r.write(COST, EDITED)
+            r.write(FB, ENTRY % "mine")
+            got = do_land(r)
+            entries = held(r)
+            stuck = got.get("stuck") or {}
+            check(got["status"] == "landed" and changed(r, main_of(r)) == [FB] and stuck.get("paths") == [COST]
+                  and (stuck.get("refused") or {}).get("reason") == "edited"
+                  and (stuck.get("refused") or {}).get("permanent") is True
+                  and len(entries) == 1 and list(entries[0]["paths"]) == [COST] and entries[0]["c2"] == stuck.get("sha")
+                  and entries[0]["refused"] == stuck.get("refused")
+                  and changed(r, entries[0]["c2"]) == [COST] and r.git("rev-parse", entries[0]["c2"] + "^") == entries[0]["c1"]
+                  and read(r, COST) == EDITED and read(r, FB) is None and got["lifted"] == [FB],
+                  "l_land_partial: the feedback file lands, the cost file held alone, permanent, unlifted (%r, %r)"
+                  % (got, entries))
+            r = lworld("l-partial-alone", extra=[(COST, COST_BODY)])
+            old = main_of(r)
+            r.write(COST, EDITED)
+            got = do_land(r)
+            check(got["status"] == "held" and (got["refused"] or {}).get("permanent") is True and main_of(r) == old
+                  and len(held(r)) == 1 and read(r, COST) == EDITED,
+                  "l_land_partial: the cost file alone is held, permanent (%r)" % got)
+
+        def l_land_locked():
+            r = lworld("l-locked")
+            r.write(FB, ENTRY % "mine")
+            lock = os.path.join(r.path, ".git", "index.lock")
+            open(lock, "w").close()
+            refs = r.git("for-each-ref")
+            try:
+                got = do_land(r)
+            finally:
+                os.remove(lock)
+            check(got["status"] == "locked" and (got["refused"] or {}).get("reason") == "locked"
+                  and r.git("for-each-ref") == refs and held(r) == [] and read(r, FB) == ENTRY % "mine",
+                  "l_land_locked: index.lock → locked, no ref moved, nothing held (%r)" % got)
+
+        def l_land_old_git():
+            fake = os.path.join(tmp, "l-old-git-bin")
+            os.makedirs(fake)
+            with open(os.path.join(fake, "git"), "w") as fh:
+                fh.write('#!/bin/sh\nfor x in "$@"; do\n  if [ "$x" = merge-tree ]; then\n    cat <<\'EOF\'\n'
+                         "usage: git merge-tree [--write-tree] [<options>] <branch1> <branch2>\n\n"
+                         "    --write-tree          do a real merge instead of a trivial merge\n"
+                         "    -X, --strategy-option <option=value>\nEOF\n    exit 129\n  fi\ndone\n"
+                         "exec %s \"$@\"\n" % shlex.quote(shutil.which("git")))
+            os.chmod(os.path.join(fake, "git"), 0o755)
+            plain = lworld("l-old-git-plain")
+            plain.write(FB, ENTRY % "mine")
+            plain.write(FUP, "- [ ] a\n- [ ] b\n")
+            want = do_land(plain)
+            r = lworld("l-old-git")
+            r.write(FB, ENTRY % "mine")
+            r.write(FUP, "- [ ] a\n- [ ] b\n")
+            with in_env({"PATH": fake + os.pathsep + os.environ.get("PATH", "")}):
+                shim = sb.replay_ok(r.path)
+                got = do_land(r)
+            check(shim is False and got["status"] == want["status"] == "landed" and got["paths"] == want["paths"]
+                  and r.git("rev-parse", got["sha"] + "^{tree}") == plain.git("rev-parse", want["sha"] + "^{tree}")
+                  and porcelain(r) == "",
+                  "l_land_old_git: under a git without merge-tree --merge-base, the same landing (%r, %r, %r)"
+                  % (shim, got, want))
+
+        def l_land_moved():
+            for n, status in ((2, "held"), (1, "landed")):
+                r = lworld("l-moved-%d" % n)
+                old = main_of(r)
+                r.write(FB, ENTRY % "mine")
+                calls = []
+                real = sb.move_branch
+
+                def fake(*args, **kw):
+                    calls.append(1)
+                    return {"reason": "branch-moved", "path": None} if len(calls) <= n else real(*args, **kw)
+                with patched("move_branch", fake):
+                    got = do_land(r)
+                if n == 2:
+                    entries = held(r)
+                    check(got["status"] == "held" and got["refused"] == {"reason": "moved", "path": None,
+                                                                         "detail": "branch-moved", "permanent": False}
+                          and len(calls) == 2 and main_of(r) == old and len(entries) == 1
+                          and entries[0]["refused"] == got["refused"] and read(r, FB) == ENTRY % "mine",
+                          "l_land_moved: refused twice, held, moved, transient (%r)" % got)
+                else:
+                    check(got["status"] == "landed" and len(calls) == 2 and main_of(r) == got["sha"] and held(r) == [],
+                          "l_land_moved: refused once, landed on the second try (%r)" % got)
+
+        def l_held_chain():
+            r = lworld("l-held-chain")
+            w2 = worktree(r, "l-held-chain-w2")
+            r.git("remote", "set-url", "origin", os.path.join(tmp, "nowhere.git"))
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            first = do_land(r)
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            second = do_land(r, snap=snap)
+            entries = held(r)
+            check(first["status"] == "held" and (first["refused"] or {}).get("detail") == "failed"
+                  and second["status"] == "held" and len(entries) == 2 and second["refused"] == entries[0]["refused"]
+                  and snap == {FUP: entries[0]["paths"][FUP]} and entries[1]["c2"] == second["sha"],
+                  "l_held_chain: the second landing held behind the first (%r, %r, %r)" % (first, second, entries))
+            r.git("worktree", "remove", "--force", w2.path)
+            r.git("remote", "set-url", "origin", r.bare)
+            got = retry_held(r.path, "main", "origin/main")
+            check(show(r, main_of(r), FUP) == "- [ ] a\n- [ ] l1\n- [ ] l2" and len(got["landed"]) == 2
+                  and [x["branch"] for x in got["landed"]] == [LB, LB] and read(r, FUP) == "- [ ] a\n"
+                  and porcelain(r) == "" and held(r) == [] and held_refs(r) == [],
+                  "l_held_chain: both landed in order, each line once, the working copy HEAD's (%r, %r)"
+                  % (got, show(r, main_of(r), FUP)))
+
+        def l_held_unrelated():
+            r = lworld("l-held-unrelated", extra=[(COST, COST_BODY)])
+            r.write(COST, EDITED)
+            got = do_land(r)
+            check(got["status"] == "held" and got["refused"]["permanent"] is True, "l_held_unrelated: a permanent entry")
+            snap = snapshot(r.path)
+            r.write(FB, ENTRY % "b")
+            got = do_land(r, snap=snap)
+            check(got["status"] == "landed" and changed(r, main_of(r)) == [FB] and len(held(r)) == 1,
+                  "l_held_unrelated: a permanent entry on A holds back no landing on B (%r)" % got)
+            r = lworld("l-held-unrelated-2")
+            r.write(FUP, "- [ ] a\n- [ ] x\n")
+            with patched("move_branch", locked_move()):
+                got = do_land(r)
+            check(got["status"] == "held" and got["refused"] == {"reason": "locked", "path": ".git/refs/heads/main.lock",
+                                                                 "detail": None, "permanent": False},
+                  "l_held_unrelated: a transient entry (%r)" % got)
+            snap = snapshot(r.path)
+            r.write(FB, ENTRY % "b")
+            got = do_land(r, snap=snap)
+            check(got["status"] == "landed" and changed(r, main_of(r)) == [FB] and len(held(r)) == 1
+                  and got["held_landed"] == [],
+                  "l_held_unrelated: a transient entry on A holds back no landing on B (%r)" % got)
+            old = main_of(r)
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] x\n- [ ] y\n")
+            calls = []
+            with patched("move_branch", locked_move(calls)):
+                got = do_land(r, snap=snap)
+            entries = held(r)
+            check(got["status"] == "held" and got["refused"] == entries[0]["refused"] and len(calls) == 1
+                  and main_of(r) == old and len(entries) == 2 and entries[1]["c2"] == got["sha"],
+                  "l_held_unrelated: a transient entry on A holds a landing on A behind it, unattempted (%r, %r)"
+                  % (got, calls))
+
+        def l_held_then_own():
+            r = lworld("l-held-then-own")
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            entry = held(r)[0]
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            got = do_land(r, snap=snap)
+            check(snap == {FUP: entry["paths"][FUP]} and got["status"] == "landed" and len(got["held_landed"]) == 1
+                  and got["held_landed"][0]["branch"] == LB and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] l1\n- [ ] l2"
+                  and read(r, FUP) == "- [ ] a\n" and porcelain(r) == "" and held(r) == [] and held_refs(r) == [],
+                  "l_held_then_own: the held entry lands first, then the run's own, the file lifted to the entry's c1 "
+                  "(%r, %r)" % (got, read(r, FUP)))
+
+        def l_retry_local_only():
+            r = lworld("l-retry-local")
+            worktree(r, "l-retry-local-w2")
+            r.git("remote", "set-url", "origin", os.path.join(tmp, "nowhere.git"))
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            do_land(r)
+            r.git("remote", "set-url", "origin", r.bare)
+            up = on_origin(r)
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            got = do_land(r, snap=snap, retry_remote=False)
+            check(got["status"] == "held" and on_origin(r) == up and len(held(r)) == 2 and got["held_landed"] == [],
+                  "l_retry_local_only: retry_remote=False leaves the entry, the own change held behind it (%r)" % got)
+            got = do_land(r, snap=snap)
+            o = subprocess.run(["git", "-C", r.bare, "show", "main:" + FUP], stdout=subprocess.PIPE).stdout.decode()
+            # the run's own change is the second entry's: it lands as that entry, the own change then there, or -- both
+            # commits made in one second, so one c2 -- as the own change itself
+            check(got["held_landed"] and got["held_landed"][0]["branch"] == LB and o == "- [ ] a\n- [ ] l1\n- [ ] l2\n"
+                  and got["status"] in ("there", "landed") and held(r) == [] and held_refs(r) == []
+                  and read(r, FUP) == "- [ ] a\n",
+                  "l_retry_local_only: with the default the entries are pushed by refspec (%r, %r)" % (got, o))
+
+        def l_retry_budget():
+            r = lworld("l-retry-budget")
+            worktree(r, "l-retry-budget-w2")
+            r.git("remote", "set-url", "origin", os.path.join(tmp, "nowhere.git"))
+            r.write(FB, ENTRY % "one")
+            do_land(r)
+            snap = snapshot(r.path)
+            r.write(FB2, ENTRY % "two")
+            do_land(r, snap=snap)
+            r.git("remote", "set-url", "origin", r.bare)
+            calls = []
+
+            def budget(cost):
+                calls.append(cost)
+                if len(calls) == 2:
+                    raise _Stop()
+            raised = False
+            try:
+                retry_held(r.path, "main", "origin/main", check=budget)
+            except _Stop:
+                raised = True
+            entries = held(r)
+            tip = on_origin(r)
+            check(raised and calls == [PUSH_COST, PUSH_COST] and len(entries) == 1 and list(entries[0]["paths"]) == [FB2]
+                  and show(r, tip, FB) != "" and show(r, tip, FB2) == "" and read(r, FB) is None
+                  and read(r, FB2) == ENTRY % "two",
+                  "l_retry_budget: the first landed, the second kept, _Stop propagated (%r, %r, %r)" % (raised, calls, entries))
+
+        def l_retry_held_edited():
+            r = lworld("l-retry-edited")
+            worktree(r, "l-retry-edited-w2")
+            r.git("remote", "set-url", "origin", os.path.join(tmp, "nowhere.git"))
+            r.write(FUP, "- [ ] a\n- [ ] x\n")
+            r.write(FB, ENTRY % "mine")
+            do_land(r)
+            first = held(r)[0]
+            r.write(FB, ENTRY % "edited")
+            got = retry_held(r.path, "main", "origin/main", retry_remote=False)
+            entries = held(r)
+            check(sorted(first["paths"]) == [FB, FUP] and len(entries) == 1 and list(entries[0]["paths"]) == [FUP]
+                  and entries[0]["c2"] != first["c2"] and held_refs(r) == [HELD + entries[0]["c2"]]
+                  and changed(r, entries[0]["c2"]) == [FUP] and read(r, FB) == ENTRY % "edited"
+                  and got["dropped"] == 0 and len(got["failed"]) == 1,
+                  "l_retry_held_edited: a held file edited since leaves the entry, rebuilt without it (%r, %r)"
+                  % (got, entries))
+            r.write(FUP, "- [ ] a\n- [ ] x\n- [ ] edited\n")
+            got = retry_held(r.path, "main", "origin/main", retry_remote=False)
+            check(got["dropped"] == 1 and held(r) == [] and held_refs(r) == [] and read(r, FB) == ENTRY % "edited"
+                  and read(r, FUP) == "- [ ] a\n- [ ] x\n- [ ] edited\n",
+                  "l_retry_held_edited: an entry left with no file is dropped, the files untouched (%r)" % got)
+
+        def l_retry_held_on_default():
+            r = lworld("l-retry-default")
+            r.write(FB, ENTRY % "mine")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            old = main_of(r)
+            r.git("switch", "-q", "main")
+            got = retry_held(r.path, "main", "origin/main")
+            check(got["dropped"] == 1 and got["landed"] == [] and held(r) == [] and held_refs(r) == []
+                  and read(r, FB) == ENTRY % "mine" and main_of(r) == old,
+                  "l_retry_held_on_default: HEAD on main drops the entry, its file left (%r)" % got)
+
+        def l_retry_held_journal():
+            r = lworld("l-retry-journal")
+            r.write(FB, ENTRY % "mine")
+
+            def no_lift(*_args):
+                raise OSError("killed before the lift")
+            with patched("write_from", no_lift):
+                e = stopped(lambda: do_land(r))
+            tip = main_of(r)
+            entries = held(r)
+            check(e is not None and (e.pending or {}).get("tip") == tip and len(entries) == 1
+                  and entries[0]["refused"] is None and entries[0]["tip"] == tip and read(r, FB) == ENTRY % "mine",
+                  "l_retry_held_journal: a kill after the move leaves the journal entry (%r)" % entries)
+            got = retry_held(r.path, "main", "origin/main")
+            check(got["finished"] == [{"sha": tip, "here": False, "lifted": [{"path": FB, "blob": None}]}]
+                  and main_of(r) == tip and read(r, FB) is None and held(r) == [] and held_refs(r) == [],
+                  "l_retry_held_journal: main holds the tip: lifted only (%r)" % got)
+
+        def l_retry_held_journal_before_move():
+            r = lworld("l-retry-before-move")
+            old = main_of(r)
+            r.write(FUP, "- [ ] a\n- [ ] b\n")
+            e = stopped(lambda: do_land(r, on_move=kill))
+            entries = held(r)
+            check(e is not None and main_of(r) == old and len(entries) == 1 and entries[0]["refused"] is None
+                  and entries[0]["tip"] == (e.pending or {}).get("tip") and read(r, FUP) == "- [ ] a\n- [ ] b\n",
+                  "l_retry_held_journal_before_move: a kill before the move leaves main at old (%r)" % entries)
+            got = retry_held(r.path, "main", "origin/main")
+            check(r.git("rev-list", "--count", old + "..main") == "1" and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] b"
+                  and read(r, FUP) == "- [ ] a\n" and len(got["landed"]) == 1 and held(r) == [],
+                  "l_retry_held_journal_before_move: landed again, main moved once, lifted after (%r)" % got)
+
+        def l_held_rebuild():
+            r = lworld("l-held-rebuild")
+            r.write(FUP, "- [ ] a\n- [ ] x\n")
+            r.write(FB, ENTRY % "mine")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            entry = held(r)[0]
+            new = held_rebuild(r.path, entry, [FB])
+            check(new is not None and list(new["paths"]) == [FUP] and new["c2"] != entry["c2"] and held(r) == [new]
+                  and held_refs(r) == [HELD + new["c2"]] and changed(r, new["c2"]) == [FUP]
+                  and r.git("rev-parse", new["c2"] + "^") == entry["c1"] and read(r, FB) == ENTRY % "mine",
+                  "l_held_rebuild: rebuilt without the path (%r)" % new)
+            gone = held_rebuild(r.path, new, [FUP])
+            check(gone is None and held(r) == [] and held_refs(r) == [] and read(r, FUP) == "- [ ] a\n- [ ] x\n",
+                  "l_held_rebuild: an entry left with no file is dropped")
+
+        def l_held_drop():
+            r = lworld("l-held-drop")
+            r.write(FB, ENTRY % "mine")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            sha7 = held(r)[0]["c2"][:7]
+            got = cli("--specs", r.path, "land", "--default-ref", "origin/main", "--drop-held", sha7, env=r.env)
+            check(got["_rc"] == 0 and {k for k in got if not k.startswith("_")} == {"dropped", "sha7", "error"}
+                  and got.get("dropped") is True and got.get("sha7") == sha7 and held(r) == [] and held_refs(r) == []
+                  and read(r, FB) == ENTRY % "mine",
+                  "l_held_drop: --drop-held removes the entry and its ref, the file untouched (%r)" % got)
+            got = cli("--specs", r.path, "land", "--default-ref", "origin/main", "--drop-held", sha7, env=r.env)
+            check(got["_rc"] == 0 and got.get("dropped") is False, "l_held_drop: a second drop finds none (%r)" % got)
+
+        def l_held_orphan_refs():
+            r = lworld("l-orphans")
+            w2 = worktree(r, "l-orphans-w2")
+            base, orphan = r.git("rev-parse", "main"), r.git("rev-parse", "main~1")
+            entry = {"c1": base, "c2": base, "old": None, "tip": None, "onto": "main", "branch": "main",
+                     "remote_only": False, "kind": None, "merged": None, "command": "/feedback",
+                     "refused": {"reason": "locked", "path": None, "detail": None, "permanent": False},
+                     "date": "2026-11-10", "paths": {}, "here": False, "index_before": None}
+            g["_held_put"](w2.path, entry)
+            r.git("update-ref", HELD + orphan, orphan)
+            check(sorted(held_refs(r)) == sorted([HELD + base, HELD + orphan]) and held(w2) == [entry] and held(r) == [],
+                  "l_held_orphan_refs: two refs, one listed by w2's record")
+            retry_held(r.path, "main", "origin/main")
+            check(held_refs(r) == [HELD + base], "l_held_orphan_refs: the unlisted ref removed, w2's kept (%r)" % held_refs(r))
+
+        def here_world(name, extra=()):
+            r = lworld(name, extra=extra, stay=False)
+            r.write(FUP, "- [ ] a\n- [ ] mine\n")
+            r.write(FB, ENTRY % "mine")
+            return r
+
+        def lock_after_move(r):
+            real = sb.git
+
+            def fake(root, *args, **kw):
+                out = real(root, *args, **kw)
+                if args and args[0] == "update-ref" and "refs/heads/main" in args:
+                    open(os.path.join(r.path, ".git", "index.lock"), "w").close()
+                return out
+            return fake
+
+        def here_land(r, snap=None, **kw):
+            return land(r.path, "main", "main", "origin/main", MSG, snap, **kw)
+
+        def l_land_here():
+            r = lworld("l-here", stay=False)
+            r.write(FUP, "- [ ] a\n- [ ] s\n")
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] s\n- [ ] mine\n")
+            r.write(FB, ENTRY % "mine")
+            old = main_of(r)
+            mtimes = [os.stat(os.path.join(r.path, p)).st_mtime_ns for p in (FUP, FB)]
+            got = here_land(r, snap)
+            tip = main_of(r)
+            diff = [x for x in r.git("diff", "HEAD", "--", FUP).splitlines()
+                    if x.startswith(("+", "-")) and not x.startswith(("+++", "---"))]
+            check(got["status"] == "landed" and got["sha"] == tip and r.git("rev-parse", tip + "^") == old
+                  and changed(r, tip) == [FB, FUP] and show(r, tip, FUP) == "- [ ] a\n- [ ] mine" and got["onto"] == "main"
+                  and got["lifted"] == [] and got["pushed"] is False,
+                  "l_land_here: main advanced by one commit holding only the run's own (%r)" % got)
+            check(r.git("diff", "--cached") == "" and diff == ["+- [ ] s"]
+                  and [os.stat(os.path.join(r.path, p)).st_mtime_ns for p in (FUP, FB)] == mtimes
+                  and held(r) == [] and held_refs(r) == [],
+                  "l_land_here: the index restored, S's line alone left, no file written, no journal (%r, %r)"
+                  % (r.git("diff", "--cached"), diff))
+
+        def l_land_here_refused():
+            r = lworld("l-here-refused", extra=[(COST, COST_BODY)], stay=False)
+            old = main_of(r)
+            r.write(COST, EDITED)
+            r.write(FB, ENTRY % "mine")
+            got = here_land(r)
+            check(got["status"] == "kept" and (got["refused"] or {}).get("reason") == "edited" and main_of(r) == old
+                  and held(r) == [] and held_refs(r) == [] and read(r, COST) == EDITED,
+                  "l_land_here_refused: a refusal keeps the whole change, nothing moved, no journal (%r)" % got)
+
+        def l_land_here_recheck_and_retry():
+            r = here_world("l-here-recheck")
+            old = main_of(r)
+            index_fup = r.git("rev-parse", ":" + FUP)
+            with patched("git", lock_after_move(r)):
+                e = stopped(lambda: here_land(r))
+            tip = main_of(r)
+            entries = held(r)
+            check(e is not None and (e.pending or {}).get("here") is True and (e.pending or {}).get("tip") == tip
+                  and str(e).startswith("main moved to %s, but .git/index.lock stands" % tip[:7])
+                  and tip != old and len(entries) == 1 and entries[0]["here"] is True and entries[0]["refused"] is None
+                  and entries[0]["index_before"] == {FB: None, FUP: index_fup},
+                  "l_land_here_recheck: a lock after the move raises with pending.here, the journal kept (%r)" % entries)
+            os.remove(os.path.join(r.path, ".git", "index.lock"))
+            check(r.git("diff", "--cached") != "", "l_retry_held_here: the index still on the old tip before")
+            got = retry_held(r.path, "main", "origin/main")
+            check(got["finished"] == [{"sha": tip, "here": True, "lifted": []}] and r.git("diff", "--cached") == ""
+                  and main_of(r) == tip and held(r) == [] and held_refs(r) == [],
+                  "l_retry_held_here: the index restored from index_before, a new file included (%r)" % got)
+
+        def l_retry_held_here_old():
+            r = here_world("l-here-old")
+            old = main_of(r)
+            e = stopped(lambda: here_land(r, on_move=kill))
+            check(e is not None and main_of(r) == old and held(r)[0]["here"] is True,
+                  "l_retry_held_here_old: a kill before the move")
+            got = retry_held(r.path, "main", "origin/main")
+            check(r.git("rev-list", "--count", old + "..main") == "1" and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] mine"
+                  and r.git("diff", "--cached") == "" and len(got["finished"]) == 1 and held(r) == [],
+                  "l_retry_held_here_old: the here form again, one commit (%r)" % got)
+
+        def l_retry_held_here_elsewhere():
+            r = here_world("l-here-elsewhere")
+            stopped(lambda: here_land(r, on_move=kill))
+            r.git("commit", "-q", "--allow-empty", "-m", "elsewhere")
+            got = retry_held(r.path, "main", "origin/main")
+            check(got["dropped"] == 1 and got["finished"] == [] and held(r) == [] and held_refs(r) == []
+                  and read(r, FUP) == "- [ ] a\n- [ ] mine\n" and read(r, FB) == ENTRY % "mine",
+                  "l_retry_held_here_elsewhere: main at neither: dropped, the files untouched (%r)" % got)
+
+        def l_retry_held_here_ancestor():
+            r = here_world("l-here-ancestor")
+            with patched("git", lock_after_move(r)):
+                stopped(lambda: here_land(r))
+            tip = main_of(r)
+            os.remove(os.path.join(r.path, ".git", "index.lock"))
+            r.write("notes.md", "n\n")
+            r.git("add", "notes.md")
+            r.git("commit", "-q", "-m", "on top", "--", "notes.md")
+            check(main_of(r) != tip and r.git("rev-parse", "main^") == tip
+                  and r.git("diff", "--cached") != "", "l_retry_held_here_ancestor: main one commit past the tip")
+            got = retry_held(r.path, "main", "origin/main")
+            check(len(got["finished"]) == 1 and got["dropped"] == 0 and r.git("diff", "--cached") == "" and held(r) == [],
+                  "l_retry_held_here_ancestor: the tip an ancestor: the index restored, finished (%r)" % got)
+
+        def l_land_resume():
+            r = lworld("l-resume")
+            old = main_of(r)
+            r.write(FB, ENTRY % "mine")
+            e = stopped(lambda: do_land(r, on_move=kill))
+            r.write(FB2, ENTRY % "after")  # written after the kill: no part of the pending change
+            got = do_land(r, resume=e.pending if e else None)
+            check(e is not None and got["status"] == "landed" and got["held_landed"] == [] and held(r) == []
+                  and held_refs(r) == [] and r.git("rev-list", "--count", old + "..main") == "1"
+                  and changed(r, main_of(r)) == [FB] and read(r, FB) is None and read(r, FB2) == ENTRY % "after",
+                  "l_land_resume: the pending landed again, alone, its journal entry never a held one (%r)" % got)
+
+        def l_land_register():
+            r = lworld("l-register")
+            r.write(FB, ENTRY % "mine")
+            canned = {"before_remote": {"web": {"o1": 1}}, "before_run": {"web": {"o2": 3}},
+                      "after": {"web": {"o1": 2, "o2": 1}}}
+            real = sb.own_change
+
+            def fake(*args, **kw):
+                return dict(real(*args, **kw), numbers=canned)
+            with patched("own_change", fake):
+                got = do_land(r)
+            check(got["status"] == "landed" and got["moves"] and got["moves"] == sb._moves([canned]),
+                  "l_land_register: moves as sb._moves gives them (%r)" % got)
+
+        def l_cli_land():
+            r = lworld("l-cli")
+            r.write(FB, ENTRY % "mine")
+            base = ("--specs", r.path, "land", "--branch", LB, "--default-ref", "origin/main", "--command", "/feedback")
+            got = cli(*base, env=r.env)
+            check(got["_rc"] == 0 and {k for k in got if not k.startswith("_")} == CLI_FIELDS
+                  and got.get("status") == "landed" and got.get("sha7") == main_of(r)[:7] and got.get("files") == 1
+                  and got.get("paths") == [FB] and got.get("lifted") == [FB] and got.get("default") == "main"
+                  and got.get("pushed") is False and got.get("error") is None and got.get("reason") is None
+                  and r.git("log", "-1", "--format=%s", "main") == "NOISSUE Add dev-workflows session artifacts (/feedback)",
+                  "l_cli_land: landed, the session subject (%r)" % got)
+            r.write(FB2, ENTRY % "two")
+            got = cli(*base, "--commit-key", "ACME-1", env=r.env)
+            check(got.get("status") == "landed"
+                  and r.git("log", "-1", "--format=%s", "main") == "ACME-1 Add dev-workflows session artifacts (/feedback)",
+                  "l_cli_land: --commit-key opens the subject (%r)" % got)
+            r.write(FUP, "- [ ] a\n- [ ] s\n")
+            snap = {k: v for k, v in cli("--specs", r.path, "snapshot", env=r.env).items() if not k.startswith("_")}
+            check(snap == {FUP: r.git("hash-object", FUP)}, "l_cli_land: snapshot prints the map --snapshot takes (%r)" % snap)
+            path = os.path.join(tmp, "l-cli-snapshot.json")
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(snap, fh)
+            r.write(FUP, "- [ ] a\n- [ ] s\n- [ ] one\n")
+            got = cli(*base, "--snapshot", path, env=r.env)
+            check(got.get("status") == "landed" and show(r, "main", FUP) == "- [ ] a\n- [ ] one"
+                  and read(r, FUP) == "- [ ] a\n- [ ] s\n", "l_cli_land: --snapshot <file> honoured (%r)" % got)
+            r.write(FUP, "- [ ] a\n- [ ] s\n- [ ] two\n")
+            got = cli(*base, "--snapshot", "-", stdin=json.dumps(snap).encode(), env=r.env)
+            check(got.get("status") == "landed" and show(r, "main", FUP) == "- [ ] a\n- [ ] one\n- [ ] two"
+                  and read(r, FUP) == "- [ ] a\n- [ ] s\n", "l_cli_land: --snapshot - honoured (%r)" % got)
+            h = here_world("l-cli-here")
+            old = main_of(h)
+            got = cli("--specs", h.path, "land", "--branch", "main", "--default-ref", "origin/main", "--command",
+                      "/feedback", "--here", env=h.env)
+            check(got.get("status") == "landed" and got.get("sha7") == main_of(h)[:7]
+                  and h.git("rev-parse", "main^") == old and h.git("diff", "--cached") == "" and got.get("lifted") == [],
+                  "l_cli_land: --here on main (%r)" % got)
+            got = cli("--specs", r.path, "land", "--default-ref", "origin/main", "--retry-held", env=r.env)
+            check(got["_rc"] == 0 and {k for k in got if not k.startswith("_")} == {"landed", "finished", "failed", "stuck",
+                                                                                     "dropped", "error"},
+                  "l_cli_land: --retry-held prints its object (%r)" % got)
+
+        def l_cli_exit2():
+            r = lworld("l-cli-exit2")
+            r.write(FB, ENTRY % "mine")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            r.write(FB2, ENTRY % "two")
+            nowhere = os.path.join(tmp, "l-cli-exit2-nowhere")
+            os.makedirs(nowhere)
+
+            def state_of():
+                with open(held_path(r.path), encoding="utf-8") as fh:
+                    return r.git("for-each-ref"), porcelain(r), fh.read()
+            before = state_of()
+            tail = ("--command", "/feedback")
+            for what, args in (
+                    ("--branch naming a branch HEAD is not on",
+                     ("--specs", r.path, "land", "--branch", "main", "--default-ref", "origin/main") + tail),
+                    ("a --default-ref that does not resolve",
+                     ("--specs", r.path, "land", "--branch", LB, "--default-ref", "origin/nowhere") + tail),
+                    ("--commit-key acme-1",
+                     ("--specs", r.path, "land", "--branch", LB, "--default-ref", "origin/main", "--commit-key", "acme-1")
+                     + tail),
+                    ("no repository", ("--specs", nowhere, "land", "--branch", LB, "--default-ref", "origin/main") + tail),
+                    ("--specs below the top level",
+                     ("--specs", os.path.join(r.path, "specifications"), "land", "--branch", LB, "--default-ref",
+                      "origin/main") + tail)):
+                got = cli(*args, env=r.env)
+                check(one_not_run_line(got) and "_stdout" not in got and not got["_raw"].strip() and state_of() == before,
+                      "l_cli_exit2: %s exits 2 with one line, nothing changed (%r)" % (what, got))
+
+        def l_sb_reused():
+            with open(me, encoding="utf-8") as fh:
+                src = fh.read()
+            found = re.findall(r"^def (own_change|tree_with|commit_tree|move_branch|replay_commits)\b", src, re.M)
+            check(found == [], "l_sb_reused: specs-git.py imports session-branch.py's functions, defining none (%r)" % found)
+
+        g = globals()
+        for name, fn in sorted(locals().items()):
+            if name.startswith("l_") and callable(fn):
+                case(name, fn)
+
     def scenarios_replay(tmp):
         state, lines = _flow()
-        today = time.strftime("%Y-%m-%d", time.gmtime())
-        local_today = time.strftime("%Y-%m-%d")
         FEED = "specifications/PRD-ACME-1-x/dev-workflows/feedback/"
         REG = "security/web/register.json"
         END_FIELDS = {"print", "line", "row", "sha7", "files", "branch", "pushed", "next", "record", "error"}
@@ -6031,7 +7723,7 @@ def selftest():
             return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
                     "git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
                     "standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes to %s again, rm \"%s\""
-                    % (branch, specs, today, branch, specs, today, branch, specs, branch, branch, record_path))
+                    % (branch, specs, utc_day(), branch, specs, utc_day(), branch, specs, branch, branch, record_path))
 
         def other_pushes(r, name, path, body="o\n", branch="main"):
             o = clone(r, name)
@@ -6223,7 +7915,7 @@ def selftest():
         check(got.get("row") == "moved" and got.get("print") == [want] and got.get("pushed") is False
               and on_origin(r, PLUGIN) != h and record(env, "/create-prd") is None,
               "r_refused_form: moved, not pushed, in its refused form (%r)" % got)
-        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_today + "\n",
+        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_day() + "\n",
               "r_refused_form: the push-refusal record written as step 6 writes it")
 
         # r_start_current: the current branch's replay in §3.4's flush
@@ -6343,7 +8035,7 @@ def selftest():
               and r.git("rev-parse", V + "~1") == head(o) and on_origin(r, V) == head(o)
               and r.git("symbolic-ref", "--short", "HEAD") == "main",
               "r_start_refused: moved, not pushed, its refused form in Specs preflight: form (%r)" % got)
-        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_today + "\n"
+        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_day() + "\n"
               and (record(env, "/specify") or {}).get("stage") == "disposition",
               "r_start_refused: the push-refusal record written, the record on to §3.5")
 
@@ -6709,7 +8401,6 @@ def selftest():
         state, lines = _flow()
         T = lines.T
         g = globals()
-        today = time.strftime("%Y-%m-%d", time.gmtime())
         FEED = "specifications/PRD-ACME-1-x/dev-workflows/feedback/"
         SPEC = "spec/ACME-1-01-x"
         SUBJECT = "%s Add dev-workflows session artifacts (%s)"
@@ -6901,7 +8592,7 @@ def selftest():
         r.write(RESUME, "r\n")
         h = head(r)
         got = run_start(env, "/feedback")
-        block = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": today, "<branch>": "main"})
+        block = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": utc_day(), "<branch>": "main"})
         check(got.get("print") == [env_line(r.path), block] and got.get("specs_git") == "blocked" and got.get("guard") == "G0"
               and got.get("branch") is None and head(r) == h,
               "t_g0: a detached HEAD prints G0's block and sets blocked (%r)" % got)
@@ -7060,7 +8751,8 @@ def selftest():
                 "later run pushes it; to land the commits on local %s, put them on a branch of their own and open a pull "
                 "request from it — git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin "
                 "session-files-%s — then, standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes "
-                "to %s again, rm \"%s\"" % (PLUGIN, PLUGIN, p, today, PLUGIN, p, today, PLUGIN, p, PLUGIN, PLUGIN, rec_file))
+                "to %s again, rm \"%s\"" % (PLUGIN, PLUGIN, p, utc_day(), PLUGIN, p, utc_day(), PLUGIN, p, PLUGIN, PLUGIN,
+                                                rec_file))
         check(got.get("print") == [env_line(p), want] and os.path.isfile(rec_file) and on_origin(r, PLUGIN) != head(r)
               and got.get("branch") == PLUGIN, "t_flush_refused: the refusal in its Specs preflight: form, recorded (%r)" % got)
 
@@ -7504,25 +9196,41 @@ def selftest():
               and got.get("default_ref") == "refs/heads/main" and got.get("remote") == "none" and got.get("branch") == "main",
               "t_b4_no_remote: no pull and no pull-failed line where there is no origin (%r)" % got)
 
-        # t_rerun_blocked: a run --rerun carries blocked into prints the re-run's own block and keeps G0's for end
-        r, env = world(tmp, "t-rerun-blocked")
-        r.git("switch", "-q", "--detach", "HEAD")
-        h = head(r)
-        g0 = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": today, "<branch>": "main"})
-        got = run_start(env, "/specify")
-        check(got.get("print") == [env_line(r.path), g0] and got.get("specs_git") == "blocked",
-              "t_rerun_blocked: G0 first (%r)" % got)
-        r.git("switch", "-q", "-c", "feature/x")
-        got = run_start(env, "/specify", "--rerun")
-        g2 = lines.fill("g2", {"<SPECS_PATH>": r.path, "<branch>": "feature/x", "<default>": "main"})
-        rec = record(env, "/specify") or {}
-        check(got.get("print") == [env_line(r.path), g2] and got.get("specs_git") == "blocked" and got.get("guard") == "G0"
-              and rec.get("guard_block") == g0 and rec.get("guard_paths") == [],
-              "t_rerun_blocked: the re-run's G2 printed, G0's fields kept (%r, %r)" % (got, rec))
-        r.write(RESUME, "r\n")
-        got = run_end(env, "/specify")
-        check(got.get("row") == "blocked" and got.get("print") == ["Specs repo: NOT COMMITTED — see the notice below", g0]
-              and head(r) == h, "t_rerun_blocked: end prints G0's block with the blocked row (%r)" % got)
+        # t_rerun_blocked: a run --rerun carries blocked into prints the re-run's own block and keeps G0's for end. G0's
+        # date is the one the block was rendered with, read then (utc_day), never at this scenario's start, so a run
+        # across 00:00 UTC passes: t_rerun_blocked_midnight runs the case with the clock start reads crossing midnight
+        # between this scenario's start and the render (injected, in process; no sleeping)
+        def rerun_blocked(label, name, first):
+            r, env = world(tmp, name)
+            r.git("switch", "-q", "--detach", "HEAD")
+            h = head(r)
+            got = first(env, "/specify")
+            g0 = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": utc_day(), "<branch>": "main"})
+            check(got.get("print") == [env_line(r.path), g0] and got.get("specs_git") == "blocked",
+                  "%s: G0 first (%r)" % (label, got))
+            r.git("switch", "-q", "-c", "feature/x")
+            got = run_start(env, "/specify", "--rerun")
+            g2 = lines.fill("g2", {"<SPECS_PATH>": r.path, "<branch>": "feature/x", "<default>": "main"})
+            rec = record(env, "/specify") or {}
+            check(got.get("print") == [env_line(r.path), g2] and got.get("specs_git") == "blocked"
+                  and got.get("guard") == "G0" and rec.get("guard_block") == g0 and rec.get("guard_paths") == [],
+                  "%s: the re-run's G2 printed, G0's fields kept (%r, %r)" % (label, got, rec))
+            r.write(RESUME, "r\n")
+            got = run_end(env, "/specify")
+            check(got.get("row") == "blocked" and got.get("print") == ["Specs repo: NOT COMMITTED — see the notice below", g0]
+                  and head(r) == h, "%s: end prints G0's block with the blocked row (%r)" % (label, got))
+        rerun_blocked("t_rerun_blocked", "t-rerun-blocked", run_start)
+
+        def start_past_midnight(env, command):
+            with in_env(env):
+                return start(env["SPECS_PATH"], command)
+        real_today = g["_today"]
+        tomorrow = time.strftime("%Y-%m-%d", time.gmtime(time.time() + 86400))
+        g["_today"] = lambda: tomorrow  # the clock _today reads has crossed 00:00 UTC since this scenario started
+        try:
+            rerun_blocked("t_rerun_blocked_midnight", "t-rerun-blocked-midnight", start_past_midnight)
+        finally:
+            g["_today"] = real_today
 
         # t_rerun_no_record
         r, env = world(tmp, "t-rerun-no-record")
@@ -8442,6 +10150,7 @@ def selftest():
             scenarios_lines(tmp)
             scenarios_gate(tmp)
             scenarios_end(tmp)
+            scenarios_land(tmp)
             scenarios_replay(tmp)
             scenarios_start(tmp)
             scenarios_skill(tmp)
