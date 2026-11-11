@@ -2041,8 +2041,8 @@ def _may_stay(rec, head):
 
 
 def _run_keys(rec, extra_keys=()):
-    """The keys a branch is resolved against for §3.5's B3 and B4, and for a stay's kind: the run key set, the start's
-    commit key and <extra_keys> (the end's commit key), none of them None."""
+    """The keys a branch is resolved against for §3.5's B3 and B4, a re-run's switch back, and a stay's kind: the run
+    key set, the start's commit key and <extra_keys> (the end's commit key), none of them None."""
     return [k for k in list(rec.get("keys") or []) + [rec.get("commit_key"), *extra_keys] if k]
 
 
@@ -2417,7 +2417,8 @@ def _fetch(run):
     """Stage fetch, specs-repo-git §3.2: the default branch's name and ref, and the fetch that freshens it; the mode
     (§8.1, never under misrooted), with the session branch where it is on -- null with no identity -- and the second
     fetch, of the session branch alone, best-effort and silent where it fails; and, on a --rerun, §3.5's switch back to
-    the branch the earlier start's B4 left, where a key of the new set names it -- in session-branch mode inside lift
+    the branch the earlier start's B4 left, where a key of the new set names it, the commit key among them (_run_keys,
+    the keys B3 and B4 read) -- in session-branch mode inside lift
     and put-back (_Session.wrap), a skipped one reported as a refused one -- left undone, pre.rerun-stay printed, where
     status could not run earlier in the run (pre.status-failed in reported, which --rerun carries), the dirty set
     unknown, as _disposition stays then. A gate that did not pass leaves nothing more to do. The budget's one unit here
@@ -2435,7 +2436,7 @@ def _fetch(run):
             sb.git_bounded(specs, CAP, "fetch", "origin", "+refs/heads/%s:refs/remotes/origin/%s"
                            % (rec["session_branch"], rec["session_branch"]))
     left = rec["b4_left"]
-    if left and not misrooted and branch_key(left, rec["keys"])["key"]:
+    if left and not misrooted and branch_key(left, _run_keys(rec))["key"]:
         def current():
             return _head_branch(specs) or sb.text(sb.git(specs, "rev-parse", "--short", "HEAD"))
 
@@ -11487,6 +11488,18 @@ def selftest():
               and r.git("symbolic-ref", "--short", "HEAD") == B and "stay" in got and got["stay"] is None
               and stay_of(env) is None and got.get("print") == [env_line(r.path)],
               "t_stay_b4_commit_key: the commit key names the branch, so B4 does not leave it (%r)" % got)
+
+        # t_rerun_commit_key: a start whose B4 leaves the branch, then a --rerun whose commit key alone names it -- the
+        # run's own, as B3 reads it: the re-run switches back, and B3 keeps it there
+        r, env = world(tmp, "t-rerun-commit-key")
+        other_key(r)
+        first = run_start(env, "/feedback", "--key", "ACME-1")
+        got = run_start(env, "/feedback", "--rerun", "--key", "ACME-1", "--commit-key", "B-2")
+        check(first.get("branch") == "main" and first.get("b4_left") == B
+              and got.get("branch") == B and got.get("b4_left") is None
+              and r.git("symbolic-ref", "--short", "HEAD") == B and got.get("print") == [env_line(r.path)]
+              and stay_of(env) is None,
+              "t_rerun_commit_key: the re-run switches back to the branch its commit key names (%r)" % got)
 
         # t_snap_bug (in process): a coding error inside the snapshot -- an injected TypeError -- reaches the start's
         # error and pre.stopped, never hidden as a snapshot that could not be taken
