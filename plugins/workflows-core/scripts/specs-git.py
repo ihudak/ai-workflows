@@ -2040,6 +2040,12 @@ def _may_stay(rec, head):
             and rec.get("mode") != "on" and rec.get("specs_git") != "misrooted")
 
 
+def _run_keys(rec, extra_keys=()):
+    """The keys a branch is resolved against for §3.5's B3 and B4, and for a stay's kind: the run key set, the start's
+    commit key and <extra_keys> (the end's commit key), none of them None."""
+    return [k for k in list(rec.get("keys") or []) + [rec.get("commit_key"), *extra_keys] if k]
+
+
 def _stay_kind(rec, head, merged, extra_keys=()):
     """The kind (STAY_KINDS) of the stay the record <rec> keeps on HEAD's branch <head>, which branch-merged read
     <merged>, where the preflight stays there though it would have left it (specs-repo-git §4 step 1); None where no
@@ -2051,8 +2057,7 @@ def _stay_kind(rec, head, merged, extra_keys=()):
         return None
     if merged:
         return "mid-run" if rec.get("midrun") else "merged"
-    keys = [k for k in list(rec.get("keys") or []) + [rec.get("commit_key"), *extra_keys] if k]
-    if branch_key(head, keys)["key"]:
+    if branch_key(head, _run_keys(rec, extra_keys))["key"]:
         return None
     return "mid-run" if rec.get("midrun") else "unkeyed"
 
@@ -2630,12 +2635,13 @@ def _disposition(run):
     print pre.stay instead, and where status could not run in this run (pre.status-failed in reported, which --rerun
     carries), the dirty set unknown, they stay and print pre.stay.unlisted -- the branch then kept as the run's stay
     (§4 step 1, _keep_stay), reason unlisted, B2's and B4's alike. B2's and B4's refused switch keeps it too (_leave,
-    _b4)."""
+    _b4). B3 and B4 resolve the branch against the run key set with the start's commit key beside it (_run_keys), the
+    keys a stay's kind is read by, so a branch B4 leaves or would have left is always one an unkeyed stay names."""
     rec, specs, lines = run["rec"], run["specs"], run["lines"]
     head, default = _head_branch(specs), rec["default"]
     if head is not None and head != default and branch_key(head, [])["plugin_branch"]:
         merged = _merged(run, "HEAD", head)
-        if merged["merged"] or not branch_key(head, rec["keys"])["key"]:
+        if merged["merged"] or not branch_key(head, _run_keys(rec))["key"]:
             stay = ("pre.stay" if rec["specs_git"] == "misrooted"
                     else "pre.stay.unlisted" if "pre.status-failed" in rec["reported"] else None)
             if stay:
@@ -2741,12 +2747,14 @@ def _stop_stay(run):
 
 
 def _close(run):
-    """The record saved as the call returns, branch naming where HEAD then stands, and the run's snapshot narrowed to
-    the paths status() still lists, each keeping its blob (§7) -- left as it stands where status cannot run."""
+    """The record saved as the call returns, branch naming where HEAD then stands, and, where the gate passed, the
+    run's snapshot narrowed to the paths status() still lists, each keeping its blob (§7) -- left as it stands where
+    status cannot run, and where the gate did not pass, since a status there would read another directory."""
     rec = run["rec"]
-    rec["branch"] = _head_branch(run["specs"]) if rec.get("gate") == "pass" else None
+    passed = rec.get("gate") == "pass"
+    rec["branch"] = _head_branch(run["specs"]) if passed else None
     snap = rec.get("start_dirty")
-    if snap:
+    if snap and passed:
         try:
             dirty = set(status(run["specs"])["artifact"])
         except NotRun:
@@ -2762,8 +2770,8 @@ def _take_snapshot(run):
     the mode read; outside session-branch mode -- whose commit takes every session file the overlay holds, keeping no
     snapshot apart (§3.5) -- snapshot() of the session files dirty now, each path's blob written, saved at once so a
     kill in the fetch that follows keeps it. Where status cannot run, _status reports it, once in the run (§2.1), and
-    no snapshot is taken; where the default branch, the mode or snapshot() cannot be read, none either: start_dirty
-    stays null."""
+    no snapshot is taken; where git cannot read the default branch, the mode or a blob, none either: start_dirty stays
+    null. Any other exception is a fault, and reaches start's error, as one in a stage does."""
     rec, specs = run["rec"], run["specs"]
     if rec.get("gate") != "pass" or rec.get("specs_git") == "misrooted":
         return
@@ -2771,12 +2779,12 @@ def _take_snapshot(run):
         default = resolve_default(specs, False)["default"]
         if default and sb.mode(specs, default)["mode"] == "on":
             return
-    except Exception:
+    except (NotRun, OSError):
         return
     if _status(run) is not None:
         try:
             rec["start_dirty"] = snapshot(specs)
-        except Exception:
+        except (NotRun, OSError):
             rec["start_dirty"] = None
     _save(run)
 
@@ -5401,19 +5409,27 @@ def selftest():
                   % sorted(state.FIELDS))
 
             # s_legacy_merged_stay: a record an earlier version wrote, holding merged_stay, loads with it as a stay of
-            # kind and flag merged, and saves
-            legacy = {k: v for k, v in state.new("/specify", specs="/x/specs").items()
-                      if k not in ("stay", "start_dirty", "midrun", "protects")}
-            legacy["merged_stay"] = {"branch": "prd/A-1-x", "reason": "g1"}
-            with open(state.path("s1", "/specify"), "w", encoding="utf-8") as fh:
-                json.dump(legacy, fh)
-            got = state.load("s1", "/specify") or {}
+            # kind and flag merged, every new field defaulted, and saves; one whose merged_stay is null, and one holding
+            # none of those fields, load with each new field at its default, stay null and present
+            NEW = ("stay", "start_dirty", "midrun", "protects")
             want = {"branch": "prd/A-1-x", "kind": "merged", "reason": "g1", "merged": True, "command": None}
-            check(got.get("stay") == want and "merged_stay" not in got and got.get("specs") == "/x/specs",
-                  "s_legacy_merged_stay: merged_stay loads as a stay of kind and flag merged (%r)" % got)
-            check(not raises(Exception, state.save, "s1", "/specify", got)
-                  and (state.load("s1", "/specify") or {}).get("stay") == want,
-                  "s_legacy_merged_stay: the loaded record saves (%r)" % state.load("s1", "/specify"))
+            for case, extra, stay in (("merged_stay set", {"merged_stay": {"branch": "prd/A-1-x", "reason": "g1"}},
+                                       want),
+                                      ("merged_stay null", {"merged_stay": None}, None),
+                                      ("no new field", {}, None)):
+                legacy = {k: v for k, v in state.new("/specify", specs="/x/specs").items() if k not in NEW}
+                legacy.update(extra)
+                with open(state.path("s1", "/specify"), "w", encoding="utf-8") as fh:
+                    json.dump(legacy, fh)
+                got = state.load("s1", "/specify") or {}
+                check(all(k in got for k in NEW) and got.get("stay") == stay and got.get("start_dirty") is None
+                      and got.get("midrun") is None and got.get("protects") is True and "merged_stay" not in got
+                      and got.get("specs") == "/x/specs",
+                      "s_legacy_merged_stay: %s loads with stay %r and every new field at its default (%r)"
+                      % (case, stay, got))
+                check(not raises(Exception, state.save, "s1", "/specify", got)
+                      and (state.load("s1", "/specify") or {}).get("stay") == stay,
+                      "s_legacy_merged_stay: %s, the loaded record saves (%r)" % (case, state.load("s1", "/specify")))
             state.remove("s1", "/specify")
 
             # s_keys
@@ -9771,6 +9787,23 @@ def selftest():
         def untracked(r, path):
             return "?? " + path in r.git("status", "--porcelain", "--untracked-files=all")
 
+        # t_stay_keys_none (in process, first, since the key list it pins is B3's and B4's too, which every start
+        # below reads): with no commit key, and an extra key that is None, nothing None reaches branch_key; a key
+        # given beside them still resolves the branch
+        B = "prd/B-2-y"
+        rec = state.new("/feedback", session="t-stay-keys-none", default="main", mode="off", keys=["ACME-1"])
+        try:
+            kind_of = g["_stay_kind"]
+            got = [kind_of(rec, B, False), kind_of(rec, B, False, extra_keys=(None,)),
+                   kind_of(rec, B, False, extra_keys=("B-2",)), kind_of(dict(rec, commit_key="B-2"), B, False),
+                   kind_of(rec, B, True), kind_of(rec, "main", True), kind_of(rec, "feature/x", False),
+                   kind_of(dict(rec, mode="on"), B, True), kind_of(dict(rec, specs_git="misrooted"), B, True),
+                   kind_of(rec, None, True)]
+        except Exception as e:
+            got = "%s: %s" % (type(e).__name__, e)
+        check(got == ["unkeyed", "unkeyed", None, None, "merged", None, None, None, None, None],
+              "t_stay_keys_none: _stay_kind's kinds, and no None reaching branch_key (%r)" % (got,))
+
         # t_clean
         r, env = world(tmp, "t-clean")
         got = run_start(env, "/feedback")
@@ -11333,21 +11366,6 @@ def selftest():
         check(got.get("print") == [env_line(r.path), g1_plain(r, ["notes.md"])] and "stay" in got and got["stay"] is None
               and stay_of(env) is None, "t_stay_g1_commit_key: no stay (%r)" % got)
 
-        # t_stay_keys_none (in process): with no commit key, and an extra key that is None, nothing None reaches
-        # branch_key; a key given beside them still resolves the branch
-        rec = state.new("/feedback", session="t-stay-keys-none", default="main", mode="off", keys=["ACME-1"])
-        try:
-            kind_of = g["_stay_kind"]
-            got = [kind_of(rec, B, False), kind_of(rec, B, False, extra_keys=(None,)),
-                   kind_of(rec, B, False, extra_keys=("B-2",)), kind_of(dict(rec, commit_key="B-2"), B, False),
-                   kind_of(rec, B, True), kind_of(rec, "main", True), kind_of(rec, "feature/x", False),
-                   kind_of(dict(rec, mode="on"), B, True), kind_of(dict(rec, specs_git="misrooted"), B, True),
-                   kind_of(rec, None, True)]
-        except Exception as e:
-            got = "%s: %s" % (type(e).__name__, e)
-        check(got == ["unkeyed", "unkeyed", None, None, "merged", None, None, None, None, None],
-              "t_stay_keys_none: _stay_kind's kinds, and no None reaching branch_key (%r)" % (got,))
-
         # t_stay_g1_merged: G1 on a fast-forward-merged branch a key of the run names -- merged wins: the landing form,
         # merged's alternative, its Fix and If ignored; kind and flag merged
         r, env = world(tmp, "t-stay-g1-merged")
@@ -11444,6 +11462,50 @@ def selftest():
               and all(c.get("started") == started for c in chain) and started
               and calls[-1].get("started") == (record(env, "/feedback") or {}).get("started"),
               "t_start_json: stay, start_dirty, midrun and started on every call (%r)" % [sorted(c) for c in calls])
+
+        # t_snap_rerun_unset: a --rerun with SPECS_PATH unset, run from inside another repository, whose status would
+        # list none of the run's paths: the gate did not pass, so the carried snapshot is left as it was
+        r, env = world(tmp, "t-snap-rerun-unset")
+        LEFT = FEED + "left.md"
+        r.write("notes.md", "n\n")
+        r.write(LEFT, "t-snap-rerun-unset leftover\n")
+        first = run_start(env, "/feedback")
+        elsewhere = new_repo(tmp, "t-snap-rerun-unset-elsewhere")
+        got = run_start(env, "/feedback", "--rerun", specs="", cwd=elsewhere.path)
+        want = {LEFT: blob(r, LEFT)}
+        check(first.get("start_dirty") == want and got.get("gate") == "unset" and got.get("start_dirty") == want
+              and (record(env, "/feedback") or {}).get("start_dirty") == want,
+              "t_snap_rerun_unset: the carried snapshot is not narrowed against another repository (%r)" % got)
+
+        # t_stay_b4_commit_key: only the start's commit key names the branch -- B3, as the run key set's own: no B4
+        # switch, and no stay
+        r, env = world(tmp, "t-stay-b4-commit-key")
+        other_key(r)
+        h = head(r)
+        got = run_start(env, "/feedback", "--commit-key", "B-2")
+        check(got.get("branch") == B and got.get("b4_left") is None and head(r) == h
+              and r.git("symbolic-ref", "--short", "HEAD") == B and "stay" in got and got["stay"] is None
+              and stay_of(env) is None and got.get("print") == [env_line(r.path)],
+              "t_stay_b4_commit_key: the commit key names the branch, so B4 does not leave it (%r)" % got)
+
+        # t_snap_bug (in process): a coding error inside the snapshot -- an injected TypeError -- reaches the start's
+        # error and pre.stopped, never hidden as a snapshot that could not be taken
+        r, env = world(tmp, "t-snap-bug")
+        r.write(S_FILE, "t-snap-bug\n")
+        real_snapshot = g["snapshot"]
+
+        def snapshot_bug(root):
+            raise TypeError("a bug in the snapshot")
+
+        g["snapshot"] = snapshot_bug
+        try:
+            with in_env(env):
+                got = start(r.path, "/feedback")
+        finally:
+            g["snapshot"] = real_snapshot
+        check(got.get("error") == "TypeError: a bug in the snapshot"
+              and (got.get("print") or [""])[-1] == lines.fill("pre.stopped", {"<the error>": got.get("error")}),
+              "t_snap_bug: the TypeError surfaces as the start's error (%r)" % got)
 
     def scenarios_skill(tmp):
         """The specs-git skill's text, held to the CLI it drives, to the loader that routes to it and to the run-key-set

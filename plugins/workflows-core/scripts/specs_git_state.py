@@ -23,10 +23,11 @@ and a start that leaves the branch clears it. A record an earlier version of thi
 {branch, reason}, in its place, which load maps to a stay of kind merged with its merged flag set. start_dirty is null,
 or {path: blob or null}: the snapshot of the session files dirty when the run's start took it, each path's working copy
 kept as a blob (null for a path with no file), taken by a fresh start that is not a --rerun, where the gate passed, no
-misrooted flag stands and session-branch mode is not on, and null where it could not be taken; every start call narrows it
-as it returns to the paths still dirty, each keeping its blob, and a --rerun carries its first start's. midrun is null,
-or {command, started, branch}: the open run this one was typed under (specs-repo-git §3.5). protects is true, save on a
-record a later run of the same command restored, which no longer protects its branch (§3.5).
+misrooted flag stands and session-branch mode is not on, and null where it could not be taken; every start call whose
+gate passed narrows it as it returns to the paths still dirty, each keeping its blob, and a --rerun carries its first
+start's. midrun is null, or {command, started, branch}: the open run this one was typed under (specs-repo-git §3.5).
+protects is true, save on a record a later run of the same command restored, which no longer protects its branch
+(§3.5). A record an earlier version wrote lacks these four fields: load gives each its default.
 """
 
 import calendar
@@ -144,6 +145,8 @@ def load(session, command):
         if isinstance(old, dict) and old.get("branch") and rec.get("stay") is None:
             rec["stay"] = {"branch": old["branch"], "kind": "merged", "reason": old.get("reason"), "merged": True,
                            "command": None}
+    for key in ("stay", "start_dirty", "midrun", "protects"):  # the fields an earlier version's record lacks
+        rec.setdefault(key, copy.deepcopy(FIELDS[key]))
     return rec
 
 
