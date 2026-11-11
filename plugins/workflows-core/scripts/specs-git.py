@@ -1465,9 +1465,9 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
         error = said if isinstance(e, NotRun) else type(e).__name__ + (": " + said if said else "")
         line = lines.fill("end.stopped", {"<the error>": error})
         commit = run["commit"] or {}
-        try:  # this output carries any pre.held.changed line, and the record stays for --resume
-            rec = state.load(session, command)
-            if rec is not None and _mark_held_shown(run, rec):
+        try:  # this output carries any pre.held.changed line, and the record stays for --resume -- save where a signal
+            rec = state.load(session, command) if _signal_of(e) is None else None  # ended the call: no outcome, its
+            if rec is not None and _mark_held_shown(run, rec):  # output set aside by the harness that sent it
                 state.save(session, command, rec)
         except Exception:
             pass
@@ -3252,11 +3252,13 @@ PENDING_FIELDS = ("c1", "c2", "old", "tip", "onto", "paths", "remote_only", "her
 # entry, a here journal, or one an earlier version wrote -- reads as no move.
 JOURNAL_MOVES = "moves"
 # end_commit's field for §4 step 2's held files changed since they were held, which its commit takes as they stand:
-# saved before the commit is made (about_to_commit) and kept with it until the record is removed, as a landing's moves
-# are, so every end --resume that finds the commit made rebuilds their entries (_held_committed, idempotent) and prints
-# pre.held.changed for them -- save where HELD_SHOWN is set: a call that printed the line returned its output and the
-# record stayed (a replay's next, an error), so a later resume does not print it again. A record without either reads
-# as none and not shown.
+# saved before the commit is made (about_to_commit) and kept with it for as long as the record holds that commit, as a
+# landing's moves are, so every end --resume that finds the commit made rebuilds their entries (_held_committed,
+# idempotent) and prints pre.held.changed for them -- save where HELD_SHOWN is set: a call that printed the line
+# returned its output and the record stayed (a replay's next, an error no signal caused), so a later resume does not
+# print it again. An end that runs from step 1 on the record (a plain end, or --resume past 15 minutes) replaces that
+# commit with end_commit None and prints no such line; its own commit, or the next held stage, settles the entry. A
+# record without either field reads as none and not shown.
 HELD_CHANGED = "held_changed"
 HELD_SHOWN = "held_changed_shown"
 SNAPSHOT_MESSAGE = "specs-git: the session files as the run found them\n"
@@ -4169,6 +4171,9 @@ def _retry_report(out, info, per):
 
 
 def _retry_body(root, default, default_ref, register_rebuild, check, retry_remote, out, info, settled=()):
+    tried, settled = list(settled), set(settled)
+    if tried:  # returned on every return where one was given, as P8 below may leave it
+        out["settled"] = tried
     head = _head_branch(root)
     if head is None:  # P9: nothing is done on a detached HEAD, the orphan sweep included
         return out
@@ -4187,7 +4192,6 @@ def _retry_body(root, default, default_ref, register_rebuild, check, retry_remot
         _held_remove(root, [e["c2"] for e in rest])
         out["dropped"] += len(rest)
         return out
-    tried, settled = list(settled), set(settled)
     shown, lock = sb.git_paths(root, "index.lock")[0]
     if rest and os.path.lexists(lock):  # specs-repo-git §3.2: under the lock every entry is kept as it is
         locked = {"reason": "locked", "path": shown, "detail": None, "permanent": False}
@@ -10177,6 +10181,31 @@ def selftest():
                   "t_held_resume_rebuilt: the rebuilt entry not retried, its line not printed again (%r, %r)"
                   % ([c.get("print") for c in calls], after))
 
+        def e_end_changed_signal():
+            """M1 (the re-review's rv_sig): a SIGTERM inside the end's capped push -- git_bounded raising NotRun("git push
+            ended by signal 15") -- takes end's error return, an output the harness that sent the signal has set aside:
+            the record does not mark pre.held.changed shown, and the end --resume the skill then makes prints it once."""
+            r, env = changed_world("e-end-changed-signal")
+            real = g["push"]
+
+            def ended(*_a, **_kw):
+                raise NotRun("git push ended by signal 15")
+
+            g["push"] = ended
+            try:
+                with in_env(env):
+                    first = end(r.path, "/feedback")
+            finally:
+                g["push"] = real
+            pending = (record(env, "/feedback") or {}).get("end_commit") or {}
+            got = run_end(env, "/feedback", "--resume")
+            line = lines.fill("pre.held.changed", {"<path>": FB, "<default>": "main"})
+            check(first.get("error") == "git push ended by signal 15" and pending.get("held_changed") == [FB]
+                  and not pending.get("held_changed_shown") and (got.get("print") or []).count(line) == 1
+                  and rebuilt_to_left(r),
+                  "e_end_changed_signal: a signal's stop marks nothing shown; the resume prints the line once (%r, %r, %r)"
+                  % (first, pending, got))
+
         def t_held_here_finished():
             """A here journal cut off before its update-ref (P2), HEAD on main: the next start's held stage runs the here
             form again and prints pre.here.finished -- its <branch> and <N> from retry_held's finished entry -- before
@@ -10244,7 +10273,8 @@ def selftest():
                          ("e_end_changed_resume", e_end_changed_resume), ("t_held_resume_stuck", t_held_resume_stuck),
                          ("e_end_changed_resume_push", e_end_changed_resume_push),
                          ("e_end_changed_resume_twice", e_end_changed_resume_twice),
-                         ("e_end_changed_shown", e_end_changed_shown), ("t_held_resume_rebuilt", t_held_resume_rebuilt)):
+                         ("e_end_changed_shown", e_end_changed_shown), ("t_held_resume_rebuilt", t_held_resume_rebuilt),
+                         ("e_end_changed_signal", e_end_changed_signal)):
             case(name, fn)
 
     def scenarios_land(tmp):
