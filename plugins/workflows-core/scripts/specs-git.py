@@ -663,12 +663,13 @@ STAY_KINDS = ("unkeyed", "merged", "mid-run")
 STAY_REASONS = ("g1", "unlisted", "refused", "stopped", "mid-run")
 # The landing's refusal codes -- own_change's and land's own -- each mapped to its reason clause (specs-repo-git §6,
 # the landing's reason clause); locked reuses the replay's reason.locked, which names no replay (P15). land's own
-# locked status, an index.lock, takes the Locked row instead.
+# locked status, an index.lock, takes the Locked row instead. unfinished is an end --resume's here-form journal that
+# could not be finished (§4 step 1's here form), on the mid-run row.
 LAND_REASONS = {
     "dropped": "reason.land.dropped", "edited": "reason.land.edited", "forms": "reason.land.forms",
     "deleted": "reason.land.deleted", "folder-gone": "reason.land.folder-gone",
     "register-rebuild": "reason.land.register", "moved": "reason.land.moved",
-    "checked-out": "reason.land.checked-out", "locked": "reason.locked",
+    "checked-out": "reason.land.checked-out", "locked": "reason.locked", "unfinished": "reason.land.unfinished",
 }
 # The codes whose cause will not pass (P22): own_change's. checked-out is permanent only by its detail, where the
 # refspec push has nowhere to go (PERMANENT_ROWS); every other code passes.
@@ -722,6 +723,18 @@ def _row_detail(checked):
         return _checked_out_detail(row, record=checked.get("record"), date=checked.get("date"))
     return _checked_out_detail(row)
 
+
+
+def mode_takes(refused):
+    """Whether session-branch mode takes a held change's files from the next run on (specs-repo-git §6, the held row,
+    and §3.2's could-not-commit line): its refusal is checked-out with checked_out_values' fifth or sixth alternative --
+    a refusal origin made and §4 step 6 recorded, or one already recorded -- so the next run's held stage drops the hold
+    (P9) and §8.2's commit takes the files, and the line's tail says so in place of the next run's retry."""
+    if not isinstance(refused, dict) or refused.get("reason") != "checked-out":
+        return False
+    detail = refused.get("detail")
+    return (isinstance(detail, dict) and detail.get("outcome") in ("refused", "refused-before")
+            and bool(detail.get("record")))
 
 def checked_out_values(lines, detail):
     """reason.land.checked-out's values for a refusal's CHECKED_OUT_DETAIL <detail>, to fill beside <path> (the
@@ -3447,7 +3460,7 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
             if how == "locked":
                 return dict(out, status="locked", refused={"reason": "locked", "path": shown, "detail": None,
                                                            "permanent": False})
-            got = got or {"status": "kept", "refused": {"reason": "moved", "path": None, "detail": None,
+            got = got or {"status": "kept", "refused": {"reason": "unfinished", "path": None, "detail": None,
                                                         "permanent": True}}
         else:
             got = _here_move(root, own, in_record, register_rebuild, on_move)
@@ -3690,7 +3703,8 @@ def land_cli(a):
            "reason": None, "detail": None, "path": None, "permanent": None, "stuck": None, "error": None}
     try:
         got = land(a.specs, a.branch, default, a.default_ref, session_subject(a.commit_key, a.command), snap,
-                   a.register_rebuild, a.here, {"kind": None, "merged": None, "command": a.command, "stayed": a.branch})
+                   a.register_rebuild, a.here, {"kind": None, "merged": None, "command": a.command, "stayed": a.branch},
+                   retry_remote=False)  # as end's: earlier held entries land locally only (§4 step 1)
     except LandStopped as e:
         return dict(out, error=str(e))
     refused, stuck = got["refused"] or {}, got["stuck"]
@@ -5416,9 +5430,9 @@ def selftest():
         pinned = ["g1.landing.not_done", "g1.landing.if_ignored", "g1.midrun.if_ignored", "g2.midrun.if_ignored",
                   "pre.stay.midrun", "pre.held.landed", "pre.held.failed", "pre.held.stuck", "pre.held.changed",
                   "app.landed", "app.landed.unlisted", "app.held.stuck", "row.held", "row.held-stuck", "row.there",
-                  "row.here", "row.midrun-kept"]
+                  "row.here", "row.midrun-kept", "pre.here.finished"]
         pinned += ["reason.land." + r for r in ("dropped", "edited", "forms", "deleted", "folder-gone", "register",
-                                                "moved", "checked-out", "no-preflight")]
+                                                "moved", "checked-out", "no-preflight", "unfinished")]
         ids += pinned
         ids += ["row.remote-deleted.default-tail", "row.scope.merge", "row.scope.no-file", "row.scope.hook", "row.scope.branch-path",
                 "row.moved.refused", "row.session-rejected", "row.session-rejected.conflict-ending"]
@@ -5454,7 +5468,10 @@ def selftest():
               "l_ids: every template but the three blocks is one line")
         # The landing's refusal codes, read through globals() so that a missing constant fails its check rather than
         # crashing the selftest: each maps to its reason.land.* clause -- locked to reason.locked, which P15 reuses as
-        # it stands -- and every code own_change and the landing write is mapped.
+        # it stands -- and every code own_change and the landing write is mapped. The coverage half is approximate, a
+        # tripwire: it finds the codes by regex over the three functions' source, so a refactor that builds the
+        # refusal another way fails it spuriously, and it cannot see _land_change's dynamic why["reason"] (move_branch
+        # and _ref_refusal's, all mapped or retried: checked-out, checkout-moved, branch-moved, locked).
         land_reasons, permanent = globals().get("LAND_REASONS"), globals().get("LAND_PERMANENT")
         mapped = land_reasons if isinstance(land_reasons, dict) else {}
         check(mapped and all(v in T and (v.startswith("reason.land.") or (k, v) == ("locked", "reason.locked"))
@@ -5474,7 +5491,7 @@ def selftest():
         land_codes = set(re.findall(r'(?:refused\s*=\s*(?:entry\["refused"\] or )?|refused=|"refused": )'
                                     r'\{"reason": "([a-z-]+)"', land_source))
         check(own_codes == {"deleted", "folder-gone", "edited", "forms", "dropped", "register-rebuild"}
-              and land_codes == {"checked-out", "moved", "locked"}
+              and land_codes == {"checked-out", "moved", "locked", "unfinished"}
               and own_codes | land_codes <= set(mapped) and permanent == own_codes,
               "l_ids: LAND_REASONS maps every refusal code own_change and the landing write, and LAND_PERMANENT is "
               "own_change's (%r, %r, %r)" % (sorted(own_codes), sorted(land_codes), permanent))
@@ -5507,9 +5524,9 @@ def selftest():
         while j < len(rows) and rows[j].startswith(" "):
             j += 1
         part = " ".join(" ".join([rows[i][len("Not done:"):]] + rows[i + 1:j]).split())
-        check(part.startswith("the preflight did not switch branches, and committed and pushed nothing on the branch "
-                              "you stand on."),
-              "l_g1_not_done: the plain G1 block's Not done opens P30's sentence (%r)" % part[:120])
+        check(part.startswith("the preflight did not switch branches, and did not commit or push these files."),
+              "l_g1_not_done: the plain G1 block's Not done opens with the files the block lists, true beside the held "
+              "stage's commits (%r)" % part[:120])
 
         # l_fill_basic
         check(lines.fill("row.nothing", {}) == "Specs repo: no session artifacts to commit", "l_fill_basic: row.nothing")
@@ -5690,7 +5707,7 @@ def selftest():
                                                             span("reason.land.checked-out", "<the push of"): 0,
                                                             "<reason>": "…"})
             got = lines.fill("row.held", {"<branch>": "prd/B-2-y", "<default>": "main", "<reason clause>": clause,
-                                          span("row.held", "<which no key"): 0})
+                                          span("row.held", "<which no key"): 0, span("row.held", "<held for"): 0})
             check(got.endswith(" without leaving it: another worktree, /w2, has main checked out, and the push of the "
                                "commit by refspec failed (…); they stay in your working tree, held for main, and the "
                                "next run tries again")
@@ -5722,6 +5739,36 @@ def selftest():
             check(got.startswith("Specs preflight: committed abc1234 (1 file) on main: the session files an "
                                  "earlier run"),
                   "l_fill_landing: pre.held.landed singular at one (%r)" % got)
+            # the held lines' tail: the next run's retry, or, where session-branch mode takes the files, what it does
+            refused = lines.fill("reason.land.checked-out", {"<path>": "/w2", "<default>": "main", "<the refusal>": "x",
+                                                             span("reason.land.checked-out", "<the push of"): 4})
+            mode_tail = ("and the next run, in session-branch mode, drops this hold and commits them as that mode "
+                         "commits session files")
+            got = lines.fill("row.held", {"<branch>": "prd/B-2-y", "<default>": "main", "<reason clause>": refused,
+                                          span("row.held", "<which no key"): 0, span("row.held", "<held for"): 1})
+            check(got.endswith(", so from the next run session-branch mode takes these files; they stay in your "
+                               "working tree, " + mode_tail) and "tries again" not in got,
+                  "l_fill_landing: row.held's mode tail where session-branch mode takes the files (%r)" % got)
+            got = [lines.fill("pre.held.failed", {"<default>": "main", "<reason clause>": refused,
+                                                  span("pre.held.failed", "<and the next run tries"): k})
+                   for k in (0, 1)]
+            check(got[0].endswith("); they stay in your working tree, and the next run tries again")
+                  and got[1].endswith("); they stay in your working tree, " + mode_tail),
+                  "l_fill_landing: pre.held.failed's two tails (%r)" % got)
+            got = [lines.fill("pre.here.finished", {"<branch>": "main", "<sha7>": "abc1234", "<N>": n}) for n in (1, 2)]
+            check(got == ["Specs preflight: finished the commit an earlier run was making on main when it was cut off: "
+                          "abc1234 (%s), that run's own session files, committed apart from another run's" % c
+                          for c in ("1 file", "2 files")],
+                  "l_fill_landing: pre.here.finished, singular at one (%r)" % got)
+            got = lines.fill("row.midrun-kept", {"<command>": "/specify", "<branch>": "main",
+                                                 "<reason clause>": lines.fill("reason.land.unfinished",
+                                                                               {"<branch>": "main"})})
+            check(got == "Specs repo: NOT COMMITTED — /specify's run in this session is still open on main, and this "
+                         "run's own changes could not be committed apart from that run's: main moved on without the "
+                         "commit this run was making on it when it was cut off, or HEAD left main, so that commit was "
+                         "not finished; they stay in your working tree, and that run's terminal commit takes them with "
+                         "its own",
+                  "l_fill_landing: the mid-run row with reason.land.unfinished (%r)" % got)
 
         try:
             if not all(t in T for t in pinned):
@@ -7966,7 +8013,7 @@ def selftest():
                  lambda r, d: "and origin refuses pushes to main (pre-receive hook declined), so from the next run "
                               "session-branch mode takes these files"),
             )
-            rendered = []
+            rendered, takes = [], {}
             for name, setup, default_ref, holds, want in cases:
                 r = lworld(name)
                 w2 = worktree(r, name + "-w2")
@@ -7993,6 +8040,7 @@ def selftest():
                       "l_checked_out_detail: %s's detail kept in the held record, and its clause worded whole (%r, %r)"
                       % (name, d, line))
                 check(same_path(refused.get("path"), w2.path), "l_checked_out_detail: %s names the worktree" % name)
+                takes[name] = mode_takes(refused)
             check(not any("failed (failed)" in x or "()" in x for x in rendered),
                   "l_checked_out_detail: no clause reads failed (failed) or an empty () (%r)" % rendered)
             def clause(refused):
@@ -8023,6 +8071,7 @@ def selftest():
                   "l_checked_out_detail: refused-before, its record written mid-run, worded whole from the record's "
                   "date and path; the mode it names is on (%r, %r)" % (d, line))
             rendered.append(line)
+            takes["l-cod-refused-before"] = mode_takes(refused)
 
             # refused, its record writable neither way: the unrecorded form, naming the configuration write's error
             r = lworld("l-cod-unrecorded")
@@ -8053,6 +8102,13 @@ def selftest():
                   "l_checked_out_detail: refused with its record unwritable, worded in the unrecorded form, naming the "
                   "configuration write's error; no record, the mode off (%r, %r)" % (d, line))
             rendered.append(line)
+            takes["l-cod-unrecorded"] = mode_takes(refused)
+            check(takes == {"l-cod-failed": False, "l-cod-rejected": False, "l-cod-no-remote": False,
+                            "l-cod-elsewhere": False, "l-cod-remote-deleted": False, "l-cod-refused": True,
+                            "l-cod-refused-before": True, "l-cod-unrecorded": False}
+                  and mode_takes(None) is False and mode_takes({"reason": "moved", "detail": "branch-moved"}) is False,
+                  "l_checked_out_detail: mode_takes is true exactly where a record turns session-branch mode on, so the "
+                  "held lines take their mode tail (%r)" % takes)
             check(not any("failed (failed)" in x or "()" in x or "None" in x for x in rendered[-2:]),
                   "l_checked_out_detail: neither new form reads an empty () or None (%r)" % rendered[-2:])
 
@@ -8094,6 +8150,46 @@ def selftest():
                   and checked_out_values(lines, "failed") is None,
                   "l_checked_out_detail: a failed push with no reason reads no status line; no detail object, no values "
                   "(%r)" % got)
+
+        def l_cli_local_retries():
+            """Minor 5: the CLI's landing retries earlier held entries locally only, as end's does (§4 step 1): one that
+            would need the refspec push stays held, and holds back the run's change on its path."""
+            r = lworld("l-cli-local")
+            worktree(r, "l-cli-local-w2")
+            r.git("remote", "set-url", "origin", os.path.join(tmp, "nowhere.git"))
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            first = do_land(r)
+            r.git("remote", "set-url", "origin", r.bare)  # the refspec push would go through now
+            snap_file = os.path.join(tmp, "l-cli-local.snap.json")
+            with open(snap_file, "w", encoding="utf-8") as fh:
+                json.dump(snapshot(r.path), fh)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            up, local = on_origin(r), main_of(r)
+            got = cli("--specs", r.path, "land", "--branch", LB, "--default-ref", "origin/main", "--command", "/feedback",
+                      "--snapshot", snap_file, env=r.env)
+            detail = got.get("detail") or {}
+            check(first["status"] == "held" and got["_rc"] == 0 and got.get("status") == "held"
+                  and got.get("reason") == "checked-out" and detail.get("outcome") == "failed"
+                  and got.get("pushed") is False and on_origin(r) == up and main_of(r) == local and len(held(r)) == 2,
+                  "l_cli_local_retries: the earlier entry stays held, not pushed by refspec, and holds the run's change "
+                  "back (%r)" % got)
+
+        def l_here_resume_unfinished():
+            """Minor 6: an end --resume whose here-form journal is at neither its tip nor its old commit keeps the change
+            with a reason of its own, unfinished, never moved."""
+            r = here_world("l-here-unfinished")
+            e = stopped(lambda: here_land(r, on_move=kill))
+            r.git("commit", "-q", "--allow-empty", "-m", "elsewhere")
+            got = here_land(r, resume=e.pending if e else None) if e else {}
+            refused = got.get("refused") or {}
+            _, lines = _flow()
+            clause = lines.fill(LAND_REASONS.get(refused.get("reason"), "reason.land.moved"), {"<branch>": "main",
+                                                                                              "<default>": "main"})
+            check(got.get("status") == "kept" and refused.get("reason") == "unfinished" and held(r) == []
+                  and held_refs(r) == [] and read(r, FUP) == "- [ ] a\n- [ ] mine\n" and read(r, FB) == ENTRY % "mine"
+                  and clause.endswith("or HEAD left main, so that commit was not finished"),
+                  "l_here_resume_unfinished: kept as unfinished, nothing held, the files as they stand (%r, %r)"
+                  % (got, clause))
 
         def l_split_collision():
             # review exp2: P8 rebuilds a transient entry, then every path left is refused, in one retry_held call; the
@@ -11044,34 +11140,47 @@ def selftest():
                   and srg.count("and resolves afterwards") == 1 and any(want in p for p in got),
                   "k_key_set_quotes: %s changed fails (%r)" % (label, got))
 
-        # k_branch_check_midrun (P23): branch-check's mid-run stop (M6), prose a run follows and no template of the
-        # script's, held verbatim in phase-handoff §6.1 and in the part file generated from it, naming no switch
-        # command: check-branch-check reads which commands request branch-check, never the stop's wording
+        # k_branch_check_midrun (P23, M6): branch-check's two mid-run stops -- It does not's (no switch) and It does's
+        # (no merge) -- prose a run follows and no template of the script's, each held verbatim in phase-handoff §6.1's
+        # bullet and in the part file generated from it, naming no git command: check-branch-check reads which commands
+        # request branch-check, never the stop's wording
         handoff = read("references", "phase-handoff.md")
         part_file = read("reference-parts", "phase-handoff", "branch-check.md")
-        midrun_stop = ("<finding> — <command>'s run in this session is still open on <branch>, so no switch is named "
-                       "here: finish or end that run first, then re-run.")
+        midrun_stops = {
+            "It does not": ("<finding> — <command>'s run in this session is still open on <branch>, so no switch is "
+                            "named here: finish or end that run first, then re-run."),
+            "It does": ("<finding> — <command>'s run in this session is still open on <branch>, so no merge is named "
+                        "here: finish or end that run first, then re-run."),
+        }
 
         def midrun_problems(ref, part):
             try:
                 s61 = ref[ref.index("\n### 6.1 "):ref.index("\n### 6.2 ")]
             except ValueError:
                 return ["phase-handoff has no §6.1 or §6.2 heading"]
+            bullets = {}
+            for line in s61.split("\n"):
+                m = re.match(r"- \*\*(It does not|It does)\*\*", line)
+                if m:
+                    bullets[m.group(1)] = line
             problems = []
-            if midrun_stop not in s61:
-                problems.append("phase-handoff §6.1 does not hold the mid-run stop verbatim")
-            if midrun_stop not in part:
-                problems.append("reference-parts/phase-handoff/branch-check.md does not hold the mid-run stop verbatim")
-            if "git" in midrun_stop or re.search(r"\bswitch\s+(?:<|-|to\b)", midrun_stop):
-                problems.append("the mid-run stop names a switch command")
+            for label, stop in sorted(midrun_stops.items()):
+                if stop not in bullets.get(label, ""):
+                    problems.append("phase-handoff §6.1's *%s* bullet does not hold its mid-run stop verbatim" % label)
+                if stop not in part:
+                    problems.append("branch-check.md does not hold the *%s* mid-run stop verbatim" % label)
+                if "git" in stop or re.search(r"\b(?:switch|merge)\s+(?:<|-|to\b|into\b)", stop):
+                    problems.append("the *%s* mid-run stop names a git command" % label)
             return problems
 
         got = midrun_problems(handoff, part_file)
-        check(got == [], "k_branch_check_midrun: the mid-run stop is in §6.1 and its part file, naming no switch (%r)"
-              % got)
-        got = midrun_problems(handoff.replace(midrun_stop, ""), part_file)
-        check(handoff.count(midrun_stop) == 1 and got == ["phase-handoff §6.1 does not hold the mid-run stop verbatim"],
-              "k_branch_check_midrun: the stop dropped from §6.1 fails (%r)" % got)
+        check(got == [], "k_branch_check_midrun: both mid-run stops are in their §6.1 bullets and the part file, "
+                         "naming no git command (%r)" % got)
+        for label, stop in sorted(midrun_stops.items()):
+            got = midrun_problems(handoff.replace(stop, ""), part_file)
+            check(handoff.count(stop) == 1
+                  and got == ["phase-handoff §6.1's *%s* bullet does not hold its mid-run stop verbatim" % label],
+                  "k_branch_check_midrun: the *%s* stop dropped from §6.1 fails (%r)" % (label, got))
 
         # k_no_dollar_session: the directories check-docs.sh's checks 5 and 9 read a $NAME in, of every plugin
         session_var = "CLAUDE_CODE_SESSION_ID"
