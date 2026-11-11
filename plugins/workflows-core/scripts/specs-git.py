@@ -651,10 +651,11 @@ def resolve_default(root, fetch):
 
 SB_SCRIPT = os.path.join(HERE, "session-branch.py")  # <the script's path> in specs-repo-git §6's session-branch remedies
 SG_SCRIPT = os.path.abspath(__file__)  # <specs-git.py's path> in the held lines' --drop-held command (§3.2, §6)
-# A stay's kind (specs-repo-git §4 step 1's landing), in the order of the <which no key of this run names | which is
-# merged into <default> | where <command>'s run ...> alternation of g1.landing.not_done, app.landed, row.held and
-# row.held-stuck: a branch no key of the run names (B4's), one branch-merged reads merged (B2's), one the preflight
-# stayed on because another run of the session was open there (§3.5).
+# A stay's kind (specs-repo-git §4 step 1's landing), the first that holds: mid-run, one kept while another run of the
+# session was open there (§3.5), whatever else stayed it; else merged, one branch-merged reads merged (B2's); else
+# unkeyed, a branch no key of the run names (B4's). The tuple is in the order of the <which no key of this run names |
+# which is merged into <default> | where <command>'s run ...> alternation of g1.landing.not_done, app.landed,
+# row.held and row.held-stuck, which is not that precedence.
 STAY_KINDS = ("unkeyed", "merged", "mid-run")
 # Why the preflight stayed on a branch it would have left (§4 step 1): §3.3 G1, a status that could not run (§2.1),
 # a switch git refused (§3.4's merged-branch leave, §3.5's B2 or B4), an early stop before the switch (§1 rule 5),
@@ -5765,9 +5766,8 @@ def selftest():
                                                                                {"<branch>": "main"})})
             check(got == "Specs repo: NOT COMMITTED — /specify's run in this session is still open on main, and this "
                          "run's own changes could not be committed apart from that run's: main moved on without the "
-                         "commit this run was making on it when it was cut off, or HEAD left main, so that commit was "
-                         "not finished; they stay in your working tree, and that run's terminal commit takes them with "
-                         "its own",
+                         "commit this run was making on it when it was cut off, so that commit was dropped unfinished; "
+                         "they stay in your working tree, and that run's terminal commit takes them with its own",
                   "l_fill_landing: the mid-run row with reason.land.unfinished (%r)" % got)
 
         try:
@@ -8187,7 +8187,9 @@ def selftest():
                                                                                               "<default>": "main"})
             check(got.get("status") == "kept" and refused.get("reason") == "unfinished" and held(r) == []
                   and held_refs(r) == [] and read(r, FUP) == "- [ ] a\n- [ ] mine\n" and read(r, FB) == ENTRY % "mine"
-                  and clause.endswith("or HEAD left main, so that commit was not finished"),
+                  and clause == ("main moved on without the commit this run was making on it when it was cut off, "
+                                 "so that commit was dropped unfinished")
+                  and refused.get("permanent") is True,
                   "l_here_resume_unfinished: kept as unfinished, nothing held, the files as they stand (%r, %r)"
                   % (got, clause))
 
