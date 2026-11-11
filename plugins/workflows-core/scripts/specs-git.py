@@ -675,6 +675,58 @@ LAND_REASONS = {
 LAND_PERMANENT = frozenset({"dropped", "edited", "forms", "deleted", "folder-gone", "register-rebuild"})
 
 
+# The detail of a refusal on the landing's remote path (ruling C2's refspec push), a JSON object the held record keeps:
+# outcome, the refspec push's (failed, rejected, refused) or push_check's row (no-remote, elsewhere, remote-deleted,
+# refused-before); text, the push's reason for failed and rejected, origin's refusal for refused; remote, the remote
+# the user's configuration pushes <default> to, for elsewhere; record and date, the push-refusal record -- the one push
+# wrote for refused (None where it could write none), and for refused-before the one that stood, with the date it holds
+# (specs-repo-git §1 rule 8: the record holds a date, never the refusal's text). Every key is there, None where unused.
+CHECKED_OUT_DETAIL = ("outcome", "text", "remote", "record", "date")
+# reason.land.checked-out's alternative by the detail's outcome. rejected -- origin's <default> moved on between the
+# build on <default-ref> and the push -- is a refspec push that failed, its reason git's [rejected] summary: nothing
+# was pushed, and the next run builds on the newer <default-ref> and pushes again.
+CHECKED_OUT_ALTERNATIVE = {"failed": 0, "rejected": 0, "no-remote": 1, "elsewhere": 2, "remote-deleted": 3,
+                           "refused": 4, "refused-before": 4}
+
+
+def _checked_out_detail(outcome, **values):
+    return dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome=outcome, **values)
+
+
+def _push_detail(pushed):
+    """CHECKED_OUT_DETAIL for a refspec push (push(..., src=)) that did not push: failed or rejected with push's reason
+    -- the status line's summary, git's first error line, or the capped push's words -- and, where it gave none, the
+    words app.why.failed.none gives a status line with none (specs-repo-git §6); refused with origin's refusal and the
+    record push wrote. An empty reason is None, so no clause prints an empty ()."""
+    outcome, text = pushed["outcome"], pushed.get("reason") or None
+    if outcome in ("failed", "rejected") and text is None:
+        text = _load_module("specs_git_lines").T["app.why.failed.none"]
+    return _checked_out_detail(outcome, text=text, record=pushed.get("record") if outcome == "refused" else None)
+
+
+def _row_detail(checked):
+    """CHECKED_OUT_DETAIL for push_check's row <checked> that left the refspec push nowhere to go, or no push to make:
+    elsewhere with the remote it names, refused-before with the record that stood and its date."""
+    row = checked["row"]
+    if row == "elsewhere":
+        return _checked_out_detail(row, remote=checked.get("remote"))
+    if row == "refused-before":
+        return _checked_out_detail(row, record=checked.get("record"), date=checked.get("date"))
+    return _checked_out_detail(row)
+
+
+def checked_out_values(lines, detail):
+    """reason.land.checked-out's values for a refusal's CHECKED_OUT_DETAIL <detail>, to fill beside <path> (the
+    refusal's path, the worktree that has <default> checked out) and <default>: the alternation's index by its outcome
+    (CHECKED_OUT_ALTERNATIVE), <reason> and <the refusal> from its text, <remote> from its remote. For refused-before
+    <the refusal> is None -- its record holds a date and no refusal text -- so lines.fill refuses that clause rather than
+    print an empty (). None where <detail> is not such an object (no push was tried, or an entry held before it was)."""
+    if not isinstance(detail, dict) or detail.get("outcome") not in CHECKED_OUT_ALTERNATIVE:
+        return None
+    return {lines.placeholder("reason.land.checked-out", "<the push of"): CHECKED_OUT_ALTERNATIVE[detail["outcome"]],
+            "<reason>": detail.get("text"), "<remote>": detail.get("remote"), "<the refusal>": detail.get("text")}
+
+
 def _identity(session_branch):
     """<identity> in session/<identity>: the session branch's name past its session/ prefix."""
     if session_branch and session_branch.startswith("session/"):
@@ -3130,7 +3182,10 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
     it. Lifts nothing. Returns status landed (its journal entry standing for the caller's lift), there (onto already
     holds the change), stuck-only (onto already holds every path accepted, and some path was refused), or held (the
     entry in the record, refused set); entry, the change as narrowed (None where nothing is left); stuck, the entry
-    split off."""
+    split off. A refusal on the remote path is {reason: checked-out, path: that worktree, detail, permanent}, its detail
+    the CHECKED_OUT_DETAIL object (_push_detail, _row_detail) -- JSON, so the held record keeps it whole -- which
+    checked_out_values turns into reason.land.checked-out's values; held with <remote> False, its detail is the entry's
+    own refusal's, or None where it had none (no push was tried)."""
     out = {"status": None, "sha": None, "files": 0, "paths": [], "pushed": False, "refused": None, "stuck": None,
            "numbers": None, "entry": entry, "in_record": in_record, "pending": None}
     moved = 0
@@ -3177,15 +3232,16 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
         landed = dict(out, status="landed", sha=tip, paths=paths, files=len(paths), numbers=got["numbers"])
         message = "specs-git: landed " + tip[:7]
         if elsewhere:
-            row = push_check(root, default, default)["row"]
+            checked = push_check(root, default, default)
+            row = checked["row"]
             if row in (None, "scope"):  # one commit on <default-ref>: push-scope does not apply to it
                 _wrote()
                 pushed = push(root, default, False, src=tip)
                 if pushed["outcome"] == "pushed":
                     return dict(landed, pushed=True)
-                detail, permanent = pushed["outcome"], False
+                detail, permanent = _push_detail(pushed), False
             else:
-                detail, permanent = row, row in PERMANENT_ROWS
+                detail, permanent = _row_detail(checked), row in PERMANENT_ROWS
             refused = {"reason": "checked-out", "path": elsewhere[0], "detail": detail, "permanent": permanent}
             break
         _wrote()
@@ -3589,7 +3645,11 @@ def _snapshot_arg(root, value):
 
 
 def land_cli(a):
-    """The land subcommand (P10): a landing, --retry-held or --drop-held, each printing its JSON object."""
+    """The land subcommand (P10): a landing, --retry-held or --drop-held, each printing its JSON object. A landing's
+    object carries the refusal it ends on as reason, detail, path and permanent: detail is the refusal's own --
+    for checked-out the CHECKED_OUT_DETAIL object {outcome, text, remote, record, date}, from which
+    reason.land.checked-out is worded (checked_out_values); for moved, the move's last refusal (branch-moved or
+    checkout-moved) or null; for register-rebuild, none or failed; else null."""
     default = _default_of(a.default_ref)
     _commit(a.specs, a.default_ref)
     if a.retry_held or a.drop_held:
@@ -7411,7 +7471,8 @@ def selftest():
                 got = do_land(r, default_ref=ref_name)
                 entries = held(r)
                 refused = got.get("refused") or {}
-                check(got["status"] == "held" and refused.get("reason") == "checked-out" and refused.get("detail") == detail
+                check(got["status"] == "held" and refused.get("reason") == "checked-out"
+                      and (refused.get("detail") or {}).get("outcome") == detail
                       and refused.get("permanent") is permanent and same_path(refused.get("path"), w2.path)
                       and got["pushed"] is False and main_of(r) == local and on_origin(r) == up
                       and "?? " + FB in porcelain(r) and len(entries) == 1 and entries[0]["refused"] == refused
@@ -7591,7 +7652,7 @@ def selftest():
             r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
             second = do_land(r, snap=snap)
             entries = held(r)
-            check(first["status"] == "held" and (first["refused"] or {}).get("detail") == "failed"
+            check(first["status"] == "held" and ((first["refused"] or {}).get("detail") or {}).get("outcome") == "failed"
                   and second["status"] == "held" and len(entries) == 2 and second["refused"] == entries[0]["refused"]
                   and snap == {FUP: entries[0]["paths"][FUP]} and entries[1]["c2"] == second["sha"],
                   "l_held_chain: the second landing held behind the first (%r, %r, %r)" % (first, second, entries))
@@ -7832,9 +7893,121 @@ def selftest():
             r.write(FB, ENTRY % "mine")
             got = cli("--specs", r.path, "land", "--branch", LB, "--default-ref", "origin/main", "--command", "/feedback",
                       env=r.env)
+            detail = got.get("detail") or {}
             check(got["_rc"] == 0 and got.get("status") == "held" and got.get("reason") == "checked-out"
-                  and got.get("detail") == "failed" and got.get("permanent") is False,
-                  "l_cli_detail: a checked-out hold prints the refspec push's outcome as detail (%r)" % got)
+                  and isinstance(detail, dict) and set(detail) == set(CHECKED_OUT_DETAIL)
+                  and detail["outcome"] == "failed" and "nowhere.git" in (detail["text"] or "")
+                  and got.get("permanent") is False,
+                  "l_cli_detail: a checked-out hold prints its detail whole: the refspec push's outcome and reason (%r)"
+                  % got)
+
+        def l_checked_out_detail():
+            """Each alternative of reason.land.checked-out, worded from a real refusal of the landing's remote path:
+            the detail the held record keeps, mapped by checked_out_values, filled whole."""
+            _, lines = _flow()
+            nowhere = os.path.join(tmp, "nowhere.git")
+
+            def moved_on(r):  # another clone pushes to origin's main; this clone does not fetch it
+                other = r.path + "-other"
+                subprocess.run(["git", "clone", "-q", r.bare, other], check=True)
+                o = Repo(other)
+                o.git("config", "user.email", "t@example.invalid")
+                o.git("config", "user.name", "t")
+                o.git("config", "commit.gpgsign", "false")
+                o.git("switch", "-q", "main")
+                o.write("notes.md", "a teammate's\n")
+                o.commit_all("a teammate's commit")
+                o.git("push", "-q", "origin", "main")
+
+            def refused_before(r):
+                path = os.path.join(r.path, ".git", "workflows", "push-refused", "main")
+                os.makedirs(os.path.dirname(path))
+                with open(path, "w", encoding="utf-8") as fh:
+                    fh.write("2026-11-01\n")
+
+            def record_of(r):
+                return os.path.join(r.path, ".git", "workflows", "push-refused", "main")
+
+            cases = (
+                ("l-cod-failed", lambda r: r.git("remote", "set-url", "origin", nowhere), "origin/main",
+                 lambda r, d: d["outcome"] == "failed" and d["text"].startswith("fatal:") and "nowhere.git" in d["text"]
+                 and d["remote"] is None and d["record"] is None and d["date"] is None,
+                 lambda r, d: "and the push of the commit by refspec failed (%s)" % d["text"]),
+                ("l-cod-rejected", moved_on, "origin/main",
+                 lambda r, d: d["outcome"] == "rejected" and d["text"].startswith("[rejected]"),
+                 lambda r, d: "and the push of the commit by refspec failed (%s)" % d["text"]),
+                ("l-cod-no-remote", no_origin, "refs/heads/main",
+                 lambda r, d: d == dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome="no-remote"),
+                 lambda r, d: "and there is no origin to push the commit to"),
+                ("l-cod-elsewhere", lambda r: r.git("config", "remote.pushDefault", "fork"), "origin/main",
+                 lambda r, d: d == dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome="elsewhere", remote="fork"),
+                 lambda r, d: "and your git configuration pushes main to fork, not to origin"),
+                ("l-cod-remote-deleted",
+                 lambda r: subprocess.run(["git", "-C", r.bare, "update-ref", "-d", "refs/heads/main"], check=True),
+                 "origin/main",
+                 lambda r, d: d == dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome="remote-deleted"),
+                 lambda r, d: "and origin has no main any more"),
+                ("l-cod-refused", lambda r: hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n"), "origin/main",
+                 lambda r, d: d["outcome"] == "refused" and d["text"] == "pre-receive hook declined"
+                 and same_path(d["record"], record_of(r)) and d["date"] is None,
+                 lambda r, d: "and origin refuses pushes to main (pre-receive hook declined), so from the next run "
+                              "session-branch mode takes these files"),
+            )
+            rendered = []
+            for name, setup, default_ref, holds, want in cases:
+                r = lworld(name)
+                w2 = worktree(r, name + "-w2")
+                setup(r)
+                r.write(FB, ENTRY % "mine")
+                got = do_land(r, default_ref=default_ref)
+                refused = got.get("refused") or {}
+                d = refused.get("detail") or {}
+                entries = held(r)
+                try:
+                    ok = isinstance(d, dict) and set(d) == set(CHECKED_OUT_DETAIL) and holds(r, d)
+                except (KeyError, TypeError, AttributeError):
+                    ok = False
+                values = checked_out_values(lines, d)
+                try:
+                    line = lines.fill("reason.land.checked-out", dict(values or {}, **{"<path>": refused.get("path"),
+                                                                                     "<default>": "main"}))
+                except ValueError as e:
+                    line = "fill: %s" % e
+                rendered.append(line)
+                check(got["status"] == "held" and refused.get("reason") == "checked-out" and ok
+                      and len(entries) == 1 and entries[0]["refused"] == refused
+                      and line == "another worktree, %s, has main checked out, %s" % (refused.get("path"), want(r, d)),
+                      "l_checked_out_detail: %s's detail kept in the held record, and its clause worded whole (%r, %r)"
+                      % (name, d, line))
+                check(same_path(refused.get("path"), w2.path), "l_checked_out_detail: %s names the worktree" % name)
+            check(not any("failed (failed)" in x or "()" in x for x in rendered),
+                  "l_checked_out_detail: no clause reads failed (failed) or an empty () (%r)" % rendered)
+            # refused-before: the record holds a date and no refusal text, so the clause is refused, never printed with ()
+            r = lworld("l-cod-refused-before")
+            worktree(r, "l-cod-refused-before-w2")
+            refused_before(r)
+            r.write(FB, ENTRY % "mine")
+            got = do_land(r)
+            refused = got.get("refused") or {}
+            d = refused.get("detail") or {}
+            values = checked_out_values(lines, d) or {}
+            try:
+                line = lines.fill("reason.land.checked-out", dict(values, **{"<path>": refused.get("path"),
+                                                                            "<default>": "main"}))
+            except ValueError as e:
+                line = "fill: %s" % e
+            check(d == dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome="refused-before", date="2026-11-01",
+                            record=record_of(r)) and held(r)[0]["refused"] == refused
+                  and values.get(lines.placeholder("reason.land.checked-out", "<the push of")) == 4
+                  and values.get("<the refusal>") is None and line == "fill: fill: no value for <the refusal>",
+                  "l_checked_out_detail: refused-before keeps the record and its date, and its clause is not worded "
+                  "without a refusal text (%r, %r)" % (d, line))
+            # a push that gave no reason takes the words a status line with none gives (specs-repo-git §6)
+            got = _push_detail({"outcome": "failed", "reason": None, "record": None})
+            check(got["text"] == lines.T["app.why.failed.none"] and checked_out_values(lines, None) is None
+                  and checked_out_values(lines, "failed") is None,
+                  "l_checked_out_detail: a failed push with no reason reads no status line; no detail object, no values "
+                  "(%r)" % got)
 
         def l_split_collision():
             # review exp2: P8 rebuilds a transient entry, then every path left is refused, in one retry_held call; the
