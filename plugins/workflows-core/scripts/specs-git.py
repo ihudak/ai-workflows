@@ -9394,10 +9394,10 @@ def selftest():
                   % (first, got))
 
         def e_end_excludes_held():
-            """§4 step 2: HEAD on prd/B-2-y, which the run's key B-2 names (B3), a held entry standing: end's commit takes
-            the run's own file and leaves the held one out."""
+            """§4 step 2: HEAD on prd/B-2-y, which the run's key B-2 names (B3), a held entry standing, and notes.md still
+            dirty, so G1 ends the preflight before any flush: end's commit takes the run's own file and leaves the held one
+            out."""
             r, env = held_permanent("e-end-excludes")
-            os.remove(os.path.join(r.path, "notes.md"))
             start_with(env, "B-2")
             r.write(FB, ENTRY % "mine")
             got = run_end(env, "/feedback")
