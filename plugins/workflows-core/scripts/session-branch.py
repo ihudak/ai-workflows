@@ -3,11 +3,12 @@
 where its default branch takes no direct push.
 
 Run by workflows-core:specs-repo-git §8 (session-branch mode), and around each move of the
-specs checkout by that reference and by workflows-core:phase-handoff; and, as replay, by its
-§4 step 6 where origin rejected a push of the run's session-file commits. Its own_change is
-run by that reference's §4 step 1 landing, through specs-git.py, which imports it: a run's own
-change to its session files, applied per path onto another commit. The rules are that
-reference's; this script is their plumbing, and a change to either is a change to both.
+specs checkout by that reference and by workflows-core:phase-handoff; and, as replay, by
+workflows-core:specs-repo-git §4 step 6 where origin rejected a push of the run's session-file
+commits. Its own_change is run by workflows-core:specs-repo-git §4 step 1's landing, through
+specs-git.py, which imports it: a run's own change to its session files, applied per path onto
+another commit. The rules are that reference's; this script is their plumbing, and a change to
+either is a change to both.
 Python standard library only.
 
   session-branch.py --specs <root> mode --default <name>
@@ -1068,11 +1069,13 @@ def _fill(root, tree, prefix, dest):
 _SPEC_DIR_RE = re.compile(r"^(specs|specifications|vis)/")
 
 
-def _directories_gone(root, p, onto, added):
-    """Of <added> (paths a commit on <p> adds), sorted, each with an ancestor specification folder
-    (_SPEC_DIR_RE, outside any dev-workflows/) that <p> holds and <onto> does not: a folder the other
-    side removed, or renamed away. One cat-file --batch-check per commit answers every folder at once."""
-    dirs = sorted({d for d in (x.rsplit("/", i)[0] for x in added for i in range(1, x.count("/") + 1))
+def _directories_gone(root, p, onto, paths):
+    """Of <paths> -- the paths a commit on <p> adds, for replay_commits; every path a run's change writes,
+    added or changed, for own_change -- sorted, each with an ancestor specification folder (_SPEC_DIR_RE,
+    outside any dev-workflows/) that <p> holds and <onto> does not: a folder the other side removed, or
+    renamed away, or one <onto> never had. One cat-file --batch-check per commit answers every folder at
+    once."""
+    dirs = sorted({d for d in (x.rsplit("/", i)[0] for x in paths for i in range(1, x.count("/") + 1))
                    if _SPEC_DIR_RE.match(d) and "dev-workflows" not in d.split("/")})
     if not dirs:
         return []
@@ -1082,7 +1085,7 @@ def _directories_gone(root, p, onto, added):
                 data="".join("%s:%s\n" % (commit, d) for d in dirs).encode("utf-8", "surrogateescape"))
         return {d for d, kind in zip(dirs, r.stdout.decode("utf-8", "surrogateescape").split("\n")) if kind == "tree"}
     gone = trees(p) - trees(onto)
-    return sorted(x for x in added if any(x.startswith(d + "/") for d in gone))
+    return sorted(x for x in paths if any(x.startswith(d + "/") for d in gone))
 
 
 def _rebuild(root, tree, slug, register_rebuild):
@@ -1270,10 +1273,13 @@ def own_change(root, onto, c1, c2, register_rebuild=None):
     diff-tree -r --no-renames lists for c1..c2, from onto's version:
       - a deletion (c2 lacks the path): removed where onto holds c1's blob; nothing where onto lacks it;
         refused "deleted" where onto holds another;
-      - a path c2 adds under a specification folder that c1 holds and onto holds nothing under
-        (_directories_gone): refused "folder-gone";
+      - a path c2 adds or changes under a specification folder that c1 holds and onto holds nothing
+        under (_directories_gone) -- a folder a teammate removed or renamed away, or one only the
+        stayed branch has: refused "folder-gone", since writing it would bring that folder back on onto;
       - "block": refused "edited" where any entry of c1 (entry_key) is missing from c2, whoever holds it --
-        an edit, a removal, or an addition to its last entry; refused "forms" where onto's version and
+        an edit, a removal, or an addition to its last entry -- and where c1 holds the file and c2
+        changed its header (by entry_key), which onto's version would not carry and the landing's lift
+        would then discard; refused "forms" where onto's version and
         c2's are not in one line-ending form (_forms_differ); otherwise onto's version (where onto lacks
         the file, c2's header: the bytes before its first entry, written even where no entry follows),
         followed by each entry of c2 that neither c1 nor onto holds, as _append_entries appends one;
@@ -1299,9 +1305,8 @@ def own_change(root, onto, c1, c2, register_rebuild=None):
         raise NotRun("no such commit: %s" % onto)
     base = text(git(root, "rev-parse", tip + "^{tree}"))
     changed = sorted(nul_list(git(root, "diff-tree", "-r", "-z", "--no-renames", "--name-only", c1, c2)))
-    gone = set(_directories_gone(root, c1, tip, nul_list(git(root, "diff-tree", "-r", "-z", "--no-renames",
-                                                              "--name-only", "--diff-filter=A", c1, c2))))
     at_o, at_1, at_2 = (_tree_entries(root, t, changed) for t in (tip, c1, c2))
+    gone = set(_directories_gone(root, c1, tip, [p for p in changed if p in at_2]))
     slugs = sorted({_SLUG_RE.match(p).group(1) for p in changed if merge_class(p) == "register"})
     entries, refused = {}, {}
 
@@ -1327,16 +1332,18 @@ def own_change(root, onto, c1, c2, register_rebuild=None):
             continue
         mode, mine, ons = at_2[p][0], read(at_2, p), read(at_o, p)
         if cls == "block":
-            first = {entry_key(e) for e in split_entries(read(at_1, p) or b"")[1]}
+            head1, ents1 = split_entries(read(at_1, p) or b"")
+            first = {entry_key(e) for e in ents1}
             head, ents = split_entries(mine)
-            if first - {entry_key(e) for e in ents}:
+            if first - {entry_key(e) for e in ents} or (p in at_1 and entry_key(head1) != entry_key(head)):
                 refused[p] = ("edited", None)
                 continue
             if _forms_differ(ons, mine):
                 refused[p] = ("forms", None)
                 continue
             have = {entry_key(e) for e in split_entries(ons or b"")[1]}
-            new = [e for e in ents if entry_key(e) not in first | have]
+            known = first | have
+            new = [e for e in ents if entry_key(e) not in known]
             if ons is not None and not new:
                 continue  # nothing of the run's own to add: onto's version stands as it is
             out = head if ons is None else ons
@@ -1345,7 +1352,8 @@ def own_change(root, onto, c1, c2, register_rebuild=None):
             data = _append_entries(out, new, have)
         elif cls == "lines":
             first, held, lines = set(_task_lines(read(at_1, p))), set(_task_lines(ons)), _task_lines(mine)
-            if any(x not in held and x not in set(lines) for x in first):
+            kept = set(lines)
+            if any(x not in held and x not in kept for x in first):
                 refused[p] = ("dropped", None)
                 continue
             if _forms_differ(ons, mine):
@@ -4301,6 +4309,42 @@ def selftest():
                           "[own_change: oc_block_forms] CRLF on onto, LF in c2: refused forms (%r)" % got)
                 guarded("oc_block_forms", oc_block_forms)
 
+                # a header the run changed in a file c1 holds: onto's version would not carry it and the lift would
+                # discard it, so refused; a header only onto changed is onto's, and the run's entry still lands
+                def oc_block_header():
+                    other = COST_HEAD.replace("prd: ACME-77", "prd: ACME-78")
+                    r, o, got = oc(tmp, "oc_block_header", {OC_COST: COST_HEAD + OC_E0}, {}, {},
+                                   {OC_COST: other + OC_E0 + "\n" + OC_R})
+                    check(got.get("refused") == oc_refused("edited", OC_COST) and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_block_header] a header the run changed is refused edited (%r)" % got)
+                    r, o, got = oc(tmp, "oc_block_header-onto", {OC_COST: COST_HEAD + OC_E0}, {OC_COST: other + OC_E0}, {},
+                                   {OC_COST: COST_HEAD + OC_E0 + "\n" + OC_R})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), OC_COST) == other + OC_E0 + "\n" + OC_R,
+                          "[own_change: oc_block_header] a header only onto changed stays onto's, the run's entry after it "
+                          "(%r, %r)" % (got, at(r, got.get("tree"), OC_COST)))
+                guarded("oc_block_header", oc_block_header)
+
+                def oc_lines_forms():
+                    r, o, got = oc(tmp, "oc_lines_forms", {R_FU: "- [ ] a\n"}, {R_FU: "- [ ] a\r\n"}, {},
+                                   {R_FU: "- [ ] a\n- [ ] n\n"})
+                    check(got.get("refused") == oc_refused("forms", R_FU) and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_lines_forms] follow-ups.md CRLF on onto, LF in c2: refused forms (%r)" % got)
+                guarded("oc_lines_forms", oc_lines_forms)
+
+                # onto's version lacking a final line ending is given one before the run's entry or line
+                def oc_final_line_ending():
+                    r, o, got = oc(tmp, "oc_final_line_ending", {OC_COST: COST_HEAD + OC_E0},
+                                   {OC_COST: (COST_HEAD + OC_E0).rstrip("\n")}, {}, {OC_COST: COST_HEAD + OC_E0 + "\n" + OC_R})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), OC_COST) == COST_HEAD + OC_E0 + "\n" + OC_R,
+                          "[own_change: oc_final_line_ending] a block file: onto's last line completed, an empty line, the "
+                          "run's entry (%r, %r)" % (got, at(r, got.get("tree"), OC_COST)))
+                    r, o, got = oc(tmp, "oc_final_line_ending-lines", {R_FU: "- [ ] a\n"}, {R_FU: "- [ ] a"}, {},
+                                   {R_FU: "- [ ] a\n- [ ] n\n"})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), R_FU) == "- [ ] a\n- [ ] n\n",
+                          "[own_change: oc_final_line_ending-lines] follow-ups.md: onto's last line completed, then the "
+                          "run's line (%r, %r)" % (got, at(r, got.get("tree"), R_FU)))
+                guarded("oc_final_line_ending", oc_final_line_ending)
+
                 def oc_untracked_leftover():
                     left = entry("2026-10-28", "/document", "a leftover of an earlier run")
                     mine = entry("2026-10-28", "/document", "the run's own")
@@ -4386,13 +4430,23 @@ def selftest():
                               "the feedback file still is (%r)" % (label, OC_SLUG, detail, got))
                 guarded("oc_register", oc_register)
 
+                # a folder c1 holds and onto lacks entirely: every path the run adds or changes under it is
+                # refused, since writing one would bring the folder back on onto; a deletion there writes nothing
                 def oc_dirs_gone():
-                    gone = "specifications/PRD-X-1-x/dev-workflows/X-1-feedback.md"
-                    r, o, got = oc(tmp, "oc_dirs_gone", {"specifications/PRD-X-1-x/prd.md": "# PRD X\n"},
-                                   {"specifications/PRD-X-1-x/prd.md": None}, {}, {gone: SEED})
-                    check(got.get("refused") == oc_refused("folder-gone", gone) and got.get("tree") == oc_onto_tree(r, o),
-                          "[own_change: oc_dirs_gone] a file added under a specification folder onto lacks is refused "
-                          "folder-gone (%r)" % got)
+                    x = "specifications/PRD-X-1-x/"
+                    added, cost_, fu, rs, old = (x + "dev-workflows/X-1-feedback.md", x + "dev-workflows/cost/5e55a0d1.md",
+                                                 x + "follow-ups.md", x + "dev-workflows/resume.md",
+                                                 x + "dev-workflows/cost/0ddba11.md")
+                    head = {x + "prd.md": "# PRD X\n", cost_: COST_HEAD + OC_E0, fu: "- [ ] a\n", rs: "pos: 0\n",
+                            old: COST_HEAD + OC_B}
+                    c2 = {added: SEED, cost_: COST_HEAD + OC_E0 + "\n" + OC_R, fu: "- [ ] a\n- [ ] n\n", rs: "pos: 1\n",
+                          old: None}
+                    r, o, got = oc(tmp, "oc_dirs_gone", head, {p: None for p in head}, {}, c2)
+                    check(got.get("refused") == oc_refused("folder-gone", added, cost_, fu, rs) and got.get("paths") == [old]
+                          and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_dirs_gone] a file added, a block file, follow-ups.md and resume.md changed under "
+                          "a specification folder onto lacks are each refused folder-gone; a deletion there is accepted "
+                          "(%r)" % got)
                 guarded("oc_dirs_gone", oc_dirs_gone)
 
                 def oc_nothing():
