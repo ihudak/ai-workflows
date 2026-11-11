@@ -4057,8 +4057,12 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
 def retry_held(root, default, default_ref, register_rebuild=None, check=None, retry_remote=True):
     """The held stage's primitive (P6, P7, P9, P28, P31). On a detached HEAD nothing at all (P9). Else orphaned held
     refs removed (_held_orphans: none younger than an hour). Each here journal finished where its move is verified
-    (_finish_here) -- never dropped for HEAD's place. With HEAD on <default>, or in session-branch mode (sb.mode, read
-    here, so the primitive drops them whether or not its caller tested the mode first), every other entry dropped with
+    (_finish_here) -- never dropped for HEAD's place. Where an index.lock stands, nothing more: every other entry kept
+    as it is -- none dropped, rebuilt, landed or lifted, since the process holding the lock may be committing on the
+    branch HEAD stands on, which a lift would race -- each permanent one reported stuck, every other reported failed
+    with a locked refusal naming the lock (the record keeps its own). Otherwise, with HEAD on <default>, or in
+    session-branch mode (sb.mode, read here, so the primitive drops them whether or not its caller tested the mode
+    first), every other entry dropped with
     its ref, its files left to the flush, end's commit or §8.2's. Otherwise: P8 first (_apply_p8, which land's retries
     share); then, oldest first, each landing journal lifted where its move is verified (_verified), else landed again as
     a held entry; each permanent entry reported stuck; each transient one landed by _land_change (C2's test and the
@@ -4119,6 +4123,15 @@ def _retry_body(root, default, default_ref, register_rebuild, check, retry_remot
         elif how != "locked":
             out["dropped"] += 1
     rest = [e for e in held_entries(root) if not e.get("here")]
+    shown, lock = sb.git_paths(root, "index.lock")[0]
+    if rest and os.path.lexists(lock):  # specs-repo-git §3.2: under the lock every entry is kept as it is
+        locked = {"reason": "locked", "path": shown, "detail": None, "permanent": False}
+        for e in rest:
+            if e["refused"] is not None and e["refused"].get("permanent"):
+                out["stuck"].append(_held_info(e))
+            else:
+                out["failed"].append(dict(_held_info(e), refused=locked))
+        return out
     if head == default or sb.mode(root, default)["mode"] == "on":
         _held_remove(root, [e["c2"] for e in rest])
         out["dropped"] += len(rest)
@@ -9045,21 +9058,37 @@ def selftest():
                   and list(entries[0]["paths"]) == [FB] and main_of(r) == old and read(r, FB) == ENTRY % "mine",
                   "e_land_locked_held: held for the lock, one transient entry, nothing committed (%r, %r)"
                   % (got, entries))
-            # the flush half (Task 6): the lock gone, but the retry failing -- w2 has main checked out and origin cannot
-            # be reached -- the next start's flush, on prd/B-2-y now named by its key B-2 and notes.md clean, commits the
-            # run's other file and leaves the held one out; once the cause is gone, the held stage lands it on main
-            w2 = worktree_on_main(r, "e-land-locked-held-w2")
-            offline(r)
+            # the flush half (Task 6): the lock stands again when the next start's held stage runs, so its retry fails
+            # on the lock itself -- pre.held.failed with reason.locked, the entry kept, nothing lifted -- and the process
+            # holding it finishes just after that stage; the flush, on prd/B-2-y now named by its key B-2 and notes.md
+            # clean, then commits the run's other file and leaves the held one out. Once the lock is gone, the next
+            # start's held stage lands it on main.
             os.remove(os.path.join(r.path, "notes.md"))
             r.write(LEFT, ENTRY % "left")
-            start_with(env, "B-2")
+            open(lock, "w").close()
+            real = g["_held_stage"]
+
+            def held_then_unlocked(run):
+                try:
+                    return real(run)
+                finally:
+                    os.remove(lock)
+
+            g["_held_stage"] = held_then_unlocked
+            try:
+                with in_env(env):
+                    got = start(r.path, "/feedback", ("B-2",))
+            finally:
+                g["_held_stage"] = real
+                if os.path.lexists(lock):
+                    os.remove(lock)
             h = head(r)
-            check(changed(r, h) == [LEFT] and r.git("symbolic-ref", "--short", "HEAD") == LB
+            failed = lines.fill("pre.held.failed", {"<default>": "main", FAILED_TAIL: 0, "<reason clause>": lines.fill(
+                "reason.locked", {"<path>": ".git/index.lock"})})
+            check(failed in (got.get("print") or []) and changed(r, h) == [LEFT] and on_lb(r) and main_of(r) == old
                   and read(r, FB) == ENTRY % "mine" and [list(e["paths"]) for e in held(r)] == [[FB]],
-                  "e_land_locked_held: the next flush commits the run's other file and leaves the held one out (%r)"
-                  % r.git("status", "--porcelain", "--untracked-files=all"))
-            r.git("worktree", "remove", "--force", w2.path)
-            online(r)
+                  "e_land_locked_held: the retry fails on the lock, and the flush commits the run's other file and leaves "
+                  "the held one out (%r, %r)" % (got, r.git("status", "--porcelain", "--untracked-files=all")))
             got = start_with(env, "B-2")
             check(changed(r, main_of(r)) == [FB] and gone(r, FB) and held(r) == [] and main_of(r) != old
                   and lines.fill("pre.held.landed", {"<sha7>": main_of(r)[:7], "<N>": 1, "<default>": "main",
@@ -9695,6 +9724,49 @@ def selftest():
                   and gone(r, FB) and gone(r, LEFT) and held(r) == [] and held_refs(r) == [],
                   "t_held_resume: one entry per call, G1's block once (%r)" % [c.get("print") for c in calls])
 
+        def t_held_locked():
+            """The held stage under an index.lock (specs-repo-git §3.2): a transient entry, its cause gone (w2 removed,
+            origin reachable), and a lock standing at the next start: it lands nothing and lifts nothing -- pre.held.failed
+            with reason.locked naming the lock, before G1's block; main unmoved, the file as it was, the record and the
+            ref kept. Once the lock is gone, the next start lands the entry."""
+            r, env, w2 = held_transient("t-held-locked")
+            entries, refs = held(r), held_refs(r)
+            r.git("worktree", "remove", "--force", w2.path)
+            online(r)
+            old = main_of(r)
+            lock = os.path.join(r.path, ".git", "index.lock")
+            open(lock, "w").close()
+            try:
+                got = start_of(env)
+            finally:
+                os.remove(lock)
+            failed = lines.fill("pre.held.failed", {"<default>": "main", FAILED_TAIL: 0, "<reason clause>": lines.fill(
+                "reason.locked", {"<path>": ".git/index.lock"})})
+            check(len(entries) == 1 and got.get("print") == [env_line(r.path), failed, g1_land(r)] and main_of(r) == old
+                  and on_origin(r) == old and read(r, FB) == ENTRY % "mine" and held(r) == entries
+                  and held_refs(r) == refs,
+                  "t_held_locked: nothing landed or lifted under the lock, the entry kept (%r)" % got)
+            got = start_of(env)
+            tip = main_of(r)
+            check(got.get("print") == [env_line(r.path), held_landed(tip), pushed_left(), g1_land(r)]
+                  and changed(r, tip) == [FB] and gone(r, FB) and held(r) == [] and held_refs(r) == [],
+                  "t_held_locked: once the lock is gone, the next start lands it (%r)" % got)
+
+        def t_held_locked_stuck():
+            """Under an index.lock, retry_held reports a permanent entry stuck, as ever, and keeps it: a stuck entry's
+            line promises no landing, so the lock changes nothing it says."""
+            r, env = held_permanent("t-held-locked-stuck")
+            entries = held(r)
+            lock = os.path.join(r.path, ".git", "index.lock")
+            open(lock, "w").close()
+            try:
+                got = retry_held(r.path, "main", "origin/main")
+            finally:
+                os.remove(lock)
+            check(len(entries) == 1 and [x["sha"] for x in got["stuck"]] == [entries[0]["c2"]] and got["failed"] == []
+                  and got["stuck"][0]["refused"]["reason"] == "edited" and held(r) == entries,
+                  "t_held_locked_stuck: the permanent entry reported stuck and kept (%r)" % got)
+
         def t_held_here_finished():
             """A here journal cut off before its update-ref (P2), HEAD on main: the next start's held stage runs the here
             form again and prints pre.here.finished -- its <branch> and <N> from retry_held's finished entry -- before
@@ -9754,7 +9826,8 @@ def selftest():
                          ("e_land_held_landed_at_end", e_land_held_landed_at_end), ("t_held_mode", t_held_mode),
                          ("t_held_misrooted", t_held_misrooted), ("t_default_push_g1", t_default_push_g1),
                          ("t_default_push_nonff", t_default_push_nonff), ("e_land_unpushed_retry", e_land_unpushed_retry),
-                         ("t_held_resume", t_held_resume), ("t_held_here_finished", t_held_here_finished)):
+                         ("t_held_resume", t_held_resume), ("t_held_here_finished", t_held_here_finished),
+                         ("t_held_locked", t_held_locked), ("t_held_locked_stuck", t_held_locked_stuck)):
             case(name, fn)
 
     def scenarios_land(tmp):
