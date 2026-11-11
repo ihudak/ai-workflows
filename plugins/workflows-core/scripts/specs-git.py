@@ -64,8 +64,9 @@ write to the repository; after it, a failure is exit 0
 with error set and the end.stopped line, and the record stays for end --resume. replay exits 2 only before it finds
 its record; after it, a failure is exit 0 with error set and the stopped line, and the record stays as it stood; a
 replay a signal ended prints nothing and ends by that signal, the record as it stood for the --timed-out call. land
-exits 2 only before its first ref write -- the move or push of the default branch, the update-ref of HEAD's branch,
-or a held ref's write or removal, the journal entry's first among them; objects written before it do not count.
+exits 2 only before its first ref write: a held ref's write or removal -- a P29 stuck entry's, or the journal
+entry's, both written before any move, or, for --retry-held, an orphaned held ref's removal -- the move or push of
+the default branch, or the update-ref of HEAD's branch; objects written before it do not count.
 After it, a failure is exit 0 with error set, the held record keeping the journal entry for end --resume or the next
 preflight's held stage, which finish it only where its move is verified. snapshot exits 2 only before it prints.
 """
@@ -2664,12 +2665,14 @@ _PENDING = [None]  # the journal's pending of the move under way, which LandStop
 class LandStopped(Exception):
     """land or retry_held stopped by an exception after its first ref write -- the move or push of <default>, the
     update-ref of HEAD's branch, or a held ref's write or removal: the CLI prints its JSON, exit 0, error set. <pending>
-    is the journal's where a move was under way; the held record keeps that journal entry for land's resume (end
-    --resume) or the next preflight's held stage (retry_held), which finish it only where the move is verified."""
+    is the run's own change's journal, where its move was under way, and never a held entry's, whose journal stays in
+    its record; the held record keeps that journal entry for land's resume (end --resume) or the next preflight's held
+    stage (retry_held), which finish it only where the move is verified. <partial> is retry_held's report of what it
+    landed, finished, failed and found stuck before the error, where retry_held raised it."""
 
-    def __init__(self, message, pending=None):
+    def __init__(self, message, pending=None, partial=None):
         Exception.__init__(self, message)
-        self.pending = pending
+        self.pending, self.partial = pending, partial
 
 
 def _wrote():
@@ -2688,7 +2691,8 @@ def _write_bounded(fn, *args):
     except Exception as e:
         if _WRITES[0] == before:
             raise
-        raise LandStopped(str(e) if isinstance(e, NotRun) else "%s: %s" % (type(e).__name__, e), _PENDING[0]) from e
+        raise LandStopped(str(e) if isinstance(e, NotRun) else "%s: %s" % (type(e).__name__, e), _PENDING[0],
+                          getattr(e, "partial", None)) from e
 
 
 def held_path(root):
@@ -2818,10 +2822,23 @@ def _with_lift(entry):
     return out
 
 
+ORPHAN_AGE = 3600  # seconds: a held ref whose commit is younger may be one another worktree has not yet listed
+
+
 def _held_orphans(root):
     """P31: each refs/workflows/held/ ref that no live worktree's held record lists (worktree list --porcelain -z, each
-    worktree's rev-parse --git-path workflows/held.json); none where a worktree's record cannot be read, so no ref is
-    ever taken for an orphan on a guess."""
+    worktree's rev-parse --git-path workflows/held.json). The refs are listed first and the records read after, so a
+    ref another worktree writes meanwhile is not among those judged; and a ref is taken only where its commit's
+    committer date is over ORPHAN_AGE old, since a worktree writes an entry's ref before its record, and a held commit
+    is made just before its ref. None where a worktree's record cannot be read, so no ref is ever taken for an orphan
+    on a guess."""
+    refs = []
+    for line in sb.text(sb.git(root, "for-each-ref", "--format=%(refname) %(committerdate:raw)", HELD_REF)).split("\n"):
+        fields = line.split()
+        if len(fields) >= 2 and fields[1].isdigit():  # a ref naming no commit has no date, and is never taken
+            refs.append((fields[0], int(fields[1])))
+    if not refs:
+        return []
     listed = set()
     for field in sb.nul_list(sb.git(root, "worktree", "list", "--porcelain", "-z")):
         if not field.startswith("worktree "):
@@ -2833,8 +2850,8 @@ def _held_orphans(root):
         if got is None:
             return []
         listed.update(e["c2"] for e in got)
-    refs = sb.text(sb.git(root, "for-each-ref", "--format=%(refname)", HELD_REF)).split("\n")
-    return [x for x in refs if x and x[len(HELD_REF):] not in listed]
+    now = time.time()
+    return [ref for ref, when in refs if ref[len(HELD_REF):] not in listed and now - when > ORPHAN_AGE]
 
 
 def _held_info(e):
@@ -2933,6 +2950,31 @@ def _verified(root, entry, default, check=None):
     return holds()
 
 
+_NO_LINK = object()  # _still_held's "no later entry started from this one here"
+
+
+def _from_snapshot(root, e, p):
+    """Whether <e>'s c1 took <p> from its run's snapshot: c1's blob there differs from c1's parent's, HEAD's when that
+    run started. Only such a path can have started from another landing's version (P7's chain, step 6's "snapshot
+    blob"); one at HEAD's version is the stayed branch's own, committed there, whatever blob it shares with a held
+    entry's c2."""
+    return sb.blob(root, e["c1"] + "^", p) != sb.blob(root, e["c1"], p)
+
+
+def _started_from(root, later, earlier):
+    """Whether the change <later> started from <earlier>'s version on a path: one it changes, took from its snapshot,
+    and holds in c1 at earlier's c2 blob."""
+    return any(p in later["paths"] and _from_snapshot(root, later, p) and sb.blob(root, later["c1"], p) == b
+               for p, b in earlier["paths"].items())
+
+
+def _place(root, chain, landing):
+    """<landing> placed in <chain>: before the first landing there that started from it, so a resumed change is the
+    oldest of the chain it starts; else last."""
+    k = next((k for k, c in enumerate(chain) if _started_from(root, c, landing)), len(chain))
+    return chain[:k] + [landing] + chain[k:]
+
+
 def _lift_source(root, e, p):
     """Where a lift of the landing <e> on <p> takes its version from: (None, its lift override) where it has one (P7
     across calls), else (its c1, c1's blob)."""
@@ -2958,9 +3000,10 @@ def _write_version(root, e, p, source, want):
 def _lift(root, chain):
     """The landing's lift (P7): for each path of the landed changes <chain> (oldest first, each {c1, paths: {path: c2's
     blob}, lift}) whose working copy is still the newest landing's c2 blob, write back the version where the chain
-    began: that landing's lift override for the path, else its c1's, walked back through each earlier landing whose c2
-    blob is the version a later one started from, its override honoured the same way. So the stayed branch's checkout
-    shows none of what landed. A path whose working copy changed since is left as it stands. Returns [(the landing's
+    began: that landing's lift override for the path -- where the chain began, which ends the walk -- else its c1's,
+    walked back, only where that c1 took the path from its snapshot (_from_snapshot), through each earlier landing whose
+    c2 blob is that version, each step taken the same way. So the stayed branch's checkout shows none of what landed,
+    and never less than HEAD. A path whose working copy changed since is left as it stands. Returns [(the landing's
     index in <chain>, {path, blob})], blob the version written back, None where the path was removed."""
     out, seen = [], set()
     for i in range(len(chain) - 1, -1, -1):
@@ -2973,7 +3016,8 @@ def _lift(root, chain):
             at = i
             source, want = _lift_source(root, chain[i], p)
             for j in range(i - 1, -1, -1):
-                if p in chain[j]["paths"] and chain[j]["paths"][p] == want:
+                if source and p in chain[j]["paths"] and chain[j]["paths"][p] == want \
+                        and _from_snapshot(root, chain[at], p):
                     at = j
                     source, want = _lift_source(root, chain[j], p)
             out.append((i, {"path": p, "blob": _write_version(root, chain[at], p, source, want)}))
@@ -2981,19 +3025,19 @@ def _lift(root, chain):
 
 
 def _carry_lift(root, landed):
-    """P7 across calls: after <landed> landed, each entry of the record that started from it on a path -- its c1 blob
-    there is landed's c2 blob: one still held, or one this call landed after it, whose own carry passes the override on
-    -- takes, as its lift override there, the version landed's own lift goes back to (its override, else its c1's), so
-    that entry's later lift returns the path to where the chain began, not to <landed>'s version. Its c1 stays as it is,
-    so own_change's input never changes: a deletion chained behind an edit is still applied where onto holds the edit.
-    """
+    """P7 across calls: after <landed> landed, each entry of the record that started from it on a path -- its c1 took
+    the path from its snapshot (_from_snapshot), at landed's c2 blob: one still held, or one this call landed after it,
+    whose own carry passes the override on -- takes, as its lift override there, the version landed's own lift goes back
+    to (its override, else its c1's), so that entry's later lift returns the path to where the chain began, not to
+    <landed>'s version. Its c1 stays as it is, so own_change's input never changes: a deletion chained behind an edit is
+    still applied where onto holds the edit."""
     own = landed.get("lift") or {}
     for e in held_entries(root):
         if e.get("here") or e["c2"] == landed["c2"]:
             continue
         lift = dict(e.get("lift") or {})
         for p, b2 in landed["paths"].items():
-            if p in e["paths"] and sb.blob(root, e["c1"], p) == b2:
+            if p in e["paths"] and sb.blob(root, e["c1"], p) == b2 and _from_snapshot(root, e, p):
                 lift[p] = own[p] if p in own else sb.blob(root, landed["c1"], p)
         if lift != (e.get("lift") or {}):
             _held_put(root, dict(e, lift=lift))
@@ -3017,8 +3061,10 @@ def _finish(root, chain, done):
 
 def _still_held(root, entries):
     """P8 over held <entries> (oldest first): c2 -> the set of its paths still held -- each whose working copy is still
-    its c2 blob, or the c2 blob of a later entry that started from this one's version, and is no longer HEAD's. A path
-    edited, committed, removed or restored since leaves the entry."""
+    its c2 blob, or the c2 blob of a later entry that started from this one's version (its c1 took the path from its
+    snapshot at this one's c2 blob), and is no longer HEAD's. A path edited, committed, removed or restored since leaves
+    the entry: a later change that starts from a version committed on the stayed branch starts from HEAD's, and keeps no
+    earlier entry's path."""
     keep = {e["c2"]: set() for e in entries}
     for p in sorted({p for e in entries for p in e["paths"]}):
         wc, head = sb.worktree_blob(root, p), sb.blob(root, "HEAD", p)
@@ -3028,12 +3074,12 @@ def _still_held(root, entries):
             ok = (wc == mine and wc != head) or (ok and later_c1 == mine)
             if ok:
                 keep[e["c2"]].add(p)
-            later_c1 = sb.blob(root, e["c1"], p)
+            later_c1 = sb.blob(root, e["c1"], p) if _from_snapshot(root, e, p) else _NO_LINK
     return keep
 
 
 def _land_change(root, entry, default, default_ref, register_rebuild, in_record, remote=True, check=None,
-                 on_move=None):
+                 on_move=None, own=False):
     """The landing's apply and move for one change -- a held entry retried, or the run's own (<entry>, c1 to c2): applied
     onto <default> by sb.own_change, the paths it refuses split off as one permanent held entry (P29), the rest
     committed on the result, journalled, then moved. C2's test first: where another worktree has <default> checked out,
@@ -3064,11 +3110,14 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
         got = sb.own_change(root, onto, entry["c1"], entry["c2"], register_rebuild)
         if got["refused"]:
             stuck, rest = _split(root, entry, got["refused"])
-            _held_put(root, stuck)
             if in_record and rest is None:
-                _held_remove(root, [entry["c2"]])
-            elif in_record:
-                _held_put(root, rest, replace=entry["c2"])
+                # the entry becomes its stuck half, in its place: their commits share tree, parent and message, so
+                # one made in the same second is the same commit, and removing the entry would remove the stuck one
+                _held_put(root, stuck, replace=entry["c2"])
+            else:
+                _held_put(root, stuck)
+                if in_record:
+                    _held_put(root, rest, replace=entry["c2"])
             out["stuck"] = out["stuck"] or stuck
             if rest is None:
                 return dict(out, status="stuck-only", entry=None, in_record=False)
@@ -3082,7 +3131,8 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
         _held_put(root, entry, replace=entry["c2"] if in_record else None)
         in_record = True
         out.update(entry=entry, in_record=True, pending=_pending(entry))
-        _PENDING[0] = out["pending"]
+        if own:  # LandStopped's pending is the run's own change's; a held entry's journal stays in its record
+            _PENDING[0] = out["pending"]
         if on_move:
             on_move(_pending(entry))
         paths = _commit_paths(root, tip)
@@ -3166,7 +3216,7 @@ def _restore_index(root, entry):
     return paths
 
 
-def _here_move(root, e, in_record, register_rebuild, on_move):
+def _here_move(root, e, in_record, register_rebuild, on_move, own=True):
     """The here form (P2) for the change <e> on HEAD's branch e["branch"]: own_change onto HEAD, given
     <register_rebuild> as the landing on <default> is, so a register the run changed is rebuilt rather than refusing the
     whole change; any refusal: kept, nothing committed and nothing held; nothing to add: there; else the commit on HEAD,
@@ -3191,7 +3241,9 @@ def _here_move(root, e, in_record, register_rebuild, on_move):
     journal = dict(e, old=head, tip=tip, refused=None, here=True, onto=branch, remote_only=False,
                    index_before=_index_blobs(root, paths))
     _held_put(root, journal, replace=e["c2"] if in_record else None)
-    pending = _PENDING[0] = _pending(journal)
+    pending = _pending(journal)
+    if own:  # LandStopped's pending is the run's own change's alone
+        _PENDING[0] = pending
     if on_move:
         on_move(dict(pending))
     shown, lock = sb.git_paths(root, "index.lock")[0]
@@ -3209,13 +3261,13 @@ def _here_move(root, e, in_record, register_rebuild, on_move):
     if not _on(root, branch) or os.path.lexists(lock):
         raise LandStopped("%s moved to %s, but %s before its index was restored; end --resume or the next preflight "
                           "restores it" % (branch, tip[:7], "%s stands" % shown if os.path.lexists(lock)
-                                           else "HEAD left it"), pending)
+                                           else "HEAD left it"), pending if own else None)
     _restore_index(root, journal)
     _held_remove(root, [journal["c2"]])
     return {"status": "landed", "sha": tip, "files": len(paths), "paths": paths, "pending": pending}
 
 
-def _finish_here(root, e, register_rebuild, on_move=None):
+def _finish_here(root, e, register_rebuild, on_move=None, own=False):
     """P2's here journal finished, only where its move is verified: where HEAD names e's branch and it stands at the
     journalled tip, or has it as an ancestor (the open run's end may have committed on top), the index restored;
     where it stands at the journalled old, the here form again; otherwise the entry removed and the files left as they
@@ -3231,7 +3283,7 @@ def _finish_here(root, e, register_rebuild, on_move=None):
         paths = _commit_paths(root, e["tip"])
         return "finished", {"status": "landed", "sha": e["tip"], "files": len(paths), "paths": paths}
     if on and at is not None and at == e.get("old"):
-        return "finished", _here_move(root, e, True, register_rebuild, on_move)
+        return "finished", _here_move(root, e, True, register_rebuild, on_move, own)
     _held_remove(root, [e["c2"]])
     return "dropped", None
 
@@ -3243,15 +3295,18 @@ def land(root, branch, default, default_ref, message, snap, register_rebuild=Non
     <default> without moving the checkout, then lifted out of the working tree. In order: index.lock standing, locked,
     nothing written; c1 and c2 (_own_commits), nothing where they are one; the transient held entries it waits for
     retried first (P7; locally only where <retry_remote> is false, <check>(cost) before their capped calls), one that
-    stays held holding this change behind it, with its refused; then _land_change; then _finish: each landing's lift
-    override carried to the entries still held that started from it, the lift over every landing, the journal entries
-    removed. <here>, forced where <branch> is <default>: the here form instead (_here_move). <facts> {kind, merged,
-    command, stayed} go into a held entry; <on_move>(pending) is called just before the move or the refspec push, once
-    the journal entry is written. <resume>, an earlier call's pending, is landed again from its c1 and c2 -- lifted only
-    where its move is verified (P6) -- and its own journal entry is never retried as a held one. Returns {status:
-    landed, there, nothing, held, kept or locked; sha: the landed commit, or the held one's c2; files; paths; lifted;
-    onto: <default>, or <branch> in the here form; pushed: true only on the refspec push; refused; stuck: the paths held
-    alone beside a landing; held_landed: [{sha, files, paths, branch}]; moves (sb._moves); pending}."""
+    stays held holding this change, and any held entry behind it, with its refused, which the record takes too; then
+    _land_change; then _finish: each landing's lift override carried to the entries still held that started from it, the
+    lift over every landing, the journal entries removed. The run's own landing takes its place in the chain before any
+    landing that started from it (_place): a resumed change is the oldest of the chain it starts. <here>, forced where
+    <branch> is <default>: the here form instead (_here_move). <facts> {kind, merged, command, stayed} go into a held
+    entry; <on_move>(pending) is called just before the move or the refspec push, once the journal entry is written.
+    <resume>, an earlier call's pending, is landed again from its c1 and c2 -- lifted only where its move is verified
+    (P6) -- and its own journal entry is never retried as a held one. LandStopped's pending is the run's own change's
+    journal alone. Returns {status: landed, there, nothing, held, kept or locked; sha: the landed commit, or the held
+    one's c2; files; paths; lifted; onto: <default>, or <branch> in the here form; pushed: true only on the refspec
+    push; refused; stuck: the paths held alone beside a landing; held_landed: [{sha, files, paths, branch}]; moves
+    (sb._moves); pending}."""
     if _head_branch(root) != branch:
         raise NotRun("HEAD is not on %s" % branch)
     _commit(root, default_ref)
@@ -3281,7 +3336,7 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
         own, in_record = _entry(root, c1, c2, default, branch, facts, here), False
     if here:
         if resume and own.get("tip"):
-            how, got = _finish_here(root, own, register_rebuild, on_move)
+            how, got = _finish_here(root, own, register_rebuild, on_move, own=True)
             if how == "locked":
                 return dict(out, status="locked", refused={"reason": "locked", "path": shown, "detail": None,
                                                            "permanent": False})
@@ -3309,6 +3364,8 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
                                                    "branch": e["branch"]})
                     continue
                 waits = got["refused"]
+            elif e["refused"] != waits:  # held behind the entry it waits for, with that entry's refusal
+                _held_put(root, dict(e, refused=waits, old=None, tip=None, remote_only=False))
             for p in e["paths"]:
                 blocked.setdefault(p, waits)
         hold = next((blocked[p] for p in sorted(own["paths"]) if p in blocked), None)
@@ -3317,12 +3374,12 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
             _held_put(root, held, replace=own["c2"] if in_record else None)
             out.update(status="held", sha=held["c2"], files=len(held["paths"]), paths=sorted(held["paths"]), refused=hold)
         elif resume and own["refused"] is None and _verified(root, own, default):
-            chain.append(own)
+            chain = _place(root, chain, own)
             done.append(own["c2"])
             paths = _commit_paths(root, own["tip"])
             out.update(status="landed", sha=own["tip"], files=len(paths), paths=paths, pushed=bool(own["remote_only"]))
         else:
-            got = _land_change(root, own, default, default_ref, register_rebuild, in_record, on_move=on_move)
+            got = _land_change(root, own, default, default_ref, register_rebuild, in_record, on_move=on_move, own=True)
             out["pending"] = got["pending"]
             stuck = got["stuck"]
             if stuck is not None:
@@ -3332,7 +3389,7 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
                            paths=sorted(got["entry"]["paths"]), refused=got["refused"])
             else:
                 if got["entry"] is not None:
-                    chain.append(got["entry"])
+                    chain = _place(root, chain, got["entry"])
                     if got["in_record"]:
                         done.append(got["entry"]["c2"])
                 if got["status"] == "landed":
@@ -3351,30 +3408,56 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
 
 
 def retry_held(root, default, default_ref, register_rebuild=None, check=None, retry_remote=True):
-    """The held stage's primitive (P6, P7, P9, P28, P31): orphaned held refs removed; on a detached HEAD nothing more.
-    Each here journal finished where its move is verified (_finish_here) -- never dropped for HEAD's place. With HEAD on
-    <default>, or in session-branch mode (sb.mode, read here, so the primitive drops them whether or not its caller
-    tested the mode first), every other entry dropped with its ref, its files left to the flush, end's commit or §8.2's.
-    Otherwise: P8 first (_still_held, held_rebuild); then, oldest first, each landing journal lifted where its move is
-    verified (_verified), else landed again as a held entry; each permanent entry reported stuck; each transient one
-    landed by _land_change (C2's test and the refspec push included; locally only where <retry_remote> is false;
-    <check>(cost) before its capped calls, whose _Stop is raised after the landings so far are lifted), unless an
-    earlier one that stays held shares a path with it. Then _finish: each landing's lift override carried to the entries
-    still held that started from it, the lift over every landing, their entries removed. Returns {landed: [{sha, files,
-    paths, branch, lifted}], finished: [{sha, here, lifted}], failed and stuck: [{refused, branch, kind, command, sha}],
-    dropped: count}; lifted: [{path, blob}], the blob written back (None where removed), for P11's snapshot."""
+    """The held stage's primitive (P6, P7, P9, P28, P31). On a detached HEAD nothing at all (P9). Else orphaned held
+    refs removed (_held_orphans: none younger than an hour). Each here journal finished where its move is verified
+    (_finish_here) -- never dropped for HEAD's place. With HEAD on <default>, or in session-branch mode (sb.mode, read
+    here, so the primitive drops them whether or not its caller tested the mode first), every other entry dropped with
+    its ref, its files left to the flush, end's commit or §8.2's. Otherwise: P8 first (_still_held, held_rebuild); then,
+    oldest first, each landing journal lifted where its move is verified (_verified), else landed again as a held entry;
+    each permanent entry reported stuck; each transient one landed by _land_change (C2's test and the refspec push
+    included; locally only where <retry_remote> is false; <check>(cost) before its capped calls, whose _Stop is raised
+    after the landings so far are lifted), unless an earlier one that stays held shares a path with it -- then it is
+    reported failed, and recorded, with that entry's refusal. Then _finish: each landing's lift override carried to the
+    entries still held that started from it, the lift over every landing, their entries removed. Returns {landed: [{sha,
+    files, paths, branch, lifted}], finished: [{sha, here, lifted}], failed and stuck: [{refused, branch, kind, command,
+    sha}], dropped: count}; lifted: [{path, blob}], the blob written back (None where removed), for P11's snapshot. An
+    error after its first ref write is LandStopped carrying that object as far as it got (_retry_report)."""
     _commit(root, default_ref)
     return _write_bounded(_retry_held, root, default, default_ref, register_rebuild, check, retry_remote)
 
 
 def _retry_held(root, default, default_ref, register_rebuild, check, retry_remote):
     out = {"landed": [], "finished": [], "failed": [], "stuck": [], "dropped": 0}
+    info = []
+    try:
+        return _retry_body(root, default, default_ref, register_rebuild, check, retry_remote, out, info)
+    except _Stop:
+        raise
+    except Exception as e:  # what was done before the error goes with it: land --retry-held reports it
+        e.partial = _retry_report(out, info, {})
+        raise
+
+
+def _retry_report(out, info, per):
+    """retry_held's object: <out>, with each landing of <info> after the entries reported already -- landed ones with
+    their sha, files, paths and branch, finished journals with their tip -- each with its lifted paths from <per>."""
+    rep = dict(out, landed=list(out["landed"]), finished=list(out["finished"]))
+    for i, (kind, e, got) in enumerate(info):
+        if kind == "landed":
+            rep["landed"].append({"sha": got["sha"], "files": got["files"], "paths": got["paths"], "branch": e["branch"],
+                                  "lifted": per.get(i, [])})
+        else:
+            rep["finished"].append({"sha": e["tip"] if got is None else None, "here": False, "lifted": per.get(i, [])})
+    return rep
+
+
+def _retry_body(root, default, default_ref, register_rebuild, check, retry_remote, out, info):
+    head = _head_branch(root)
+    if head is None:  # P9: nothing is done on a detached HEAD, the orphan sweep included
+        return out
     for orphan in _held_orphans(root):
         _wrote()
         sb.git(root, "update-ref", "-d", orphan)
-    head = _head_branch(root)
-    if head is None:
-        return out
     for e in [e for e in held_entries(root) if e.get("here")]:
         how, got = _finish_here(root, e, register_rebuild)
         if how == "finished" and got["status"] in ("landed", "there"):
@@ -3392,7 +3475,7 @@ def _retry_held(root, default, default_ref, register_rebuild, check, retry_remot
         gone = set(e["paths"]) - keep[e["c2"]]
         if gone and held_rebuild(root, e, gone) is None:
             out["dropped"] += 1
-    chain, done, info, blocked = [], [], [], {}
+    chain, done, blocked = [], [], {}
     try:
         for e in held_entries(root):
             if e.get("here"):
@@ -3421,6 +3504,9 @@ def _retry_held(root, default, default_ref, register_rebuild, check, retry_remot
                     out["stuck"].append(_held_info(got["entry"]))
                     continue
                 e, waits = got["entry"], got["refused"]
+            elif e["refused"] != waits:  # held behind the entry it waits for, with that entry's refusal
+                e = dict(e, refused=waits, old=None, tip=None, remote_only=False)
+                _held_put(root, e)
             out["failed"].append(_held_info(e))
             for p in e["paths"]:
                 blocked.setdefault(p, waits)
@@ -3430,13 +3516,7 @@ def _retry_held(root, default, default_ref, register_rebuild, check, retry_remot
     per = {}
     for i, x in _finish(root, chain, done):
         per.setdefault(i, []).append(x)
-    for i, (kind, e, got) in enumerate(info):
-        if kind == "landed":
-            out["landed"].append({"sha": got["sha"], "files": got["files"], "paths": got["paths"], "branch": e["branch"],
-                                  "lifted": per.get(i, [])})
-        else:
-            out["finished"].append({"sha": e["tip"] if got is None else None, "here": False, "lifted": per.get(i, [])})
-    return out
+    return _retry_report(out, info, per)
 
 
 def _default_of(ref):
@@ -3487,8 +3567,9 @@ def land_cli(a):
             return {"dropped": held_drop(a.specs, a.drop_held), "sha7": a.drop_held, "error": None}
         try:
             return dict(retry_held(a.specs, default, a.default_ref, a.register_rebuild), error=None)
-        except LandStopped as e:
-            return {"landed": [], "finished": [], "failed": [], "stuck": [], "dropped": 0, "error": str(e)}
+        except LandStopped as e:  # what retry_held did before the error is reported with it
+            return dict(e.partial or {"landed": [], "finished": [], "failed": [], "stuck": [], "dropped": 0},
+                        error=str(e))
     if not a.branch or not a.command:
         raise NotRun("usage: land needs --branch and --command, or --retry-held, or --drop-held")
     if not _load_module("specs_git_state").COMMAND_RE.fullmatch(a.command):
@@ -7582,6 +7663,152 @@ def selftest():
                   and got.get("detail") == "failed" and got.get("permanent") is False,
                   "l_cli_detail: a checked-out hold prints the refspec push's outcome as detail (%r)" % got)
 
+        def l_split_collision():
+            # review exp2: P8 rebuilds a transient entry, then every path left is refused, in one retry_held call; the
+            # split's stuck commit is the rebuilt entry's own commit (same tree, parent, message and, pinned, dates)
+            r = lworld("l-split-collision", extra=[(RESUME, "v0\n")])
+            os.remove(os.path.join(r.path, RESUME))
+            r.write(FB, ENTRY % "mine")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            r.write(FB, ENTRY % "edited")  # P8: the feedback file leaves the entry
+            w = worktree(r, "l-split-collision-w2")
+            w.write(RESUME, "v9\n")
+            w.git("commit", "-q", "-am", "ACME-1 resume.md changed on main")  # the deletion is now refused, deleted
+            r.git("worktree", "remove", "--force", w.path)
+            with in_env({"GIT_COMMITTER_DATE": "1793700000 +0000", "GIT_AUTHOR_DATE": "1793700000 +0000"}):
+                got = retry_held(r.path, "main", "origin/main")
+            entries, sha = held(r), ((got["stuck"] or [{}])[0]).get("sha")
+            check(len(got["stuck"]) == 1 and got["stuck"][0]["refused"]["reason"] == "deleted" and len(entries) == 1
+                  and entries[0]["c2"] == sha and list(entries[0]["paths"]) == [RESUME]
+                  and entries[0]["refused"]["permanent"] is True and held_refs(r) == [HELD + sha]
+                  and read(r, RESUME) is None and read(r, FB) == ENTRY % "edited",
+                  "l_split_collision: the stuck entry reported stands in the record with its ref (%r, %r)"
+                  % (got, entries))
+
+        def chain_committed(name, held_own):
+            # review exp4: a held entry's version the user then commits on the stayed branch; a later run starts from
+            # HEAD's version, with no snapshot of the path, so it does not start from the held entry
+            r = lworld(name)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            r.git("commit", "-q", "-am", "B-2 the user commits follow-ups.md as it stands")
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            if held_own:
+                with patched("move_branch", locked_move()):
+                    do_land(r, snap=snap)
+                return r, snap, retry_held(r.path, "main", "origin/main")
+            return r, snap, do_land(r, snap=snap)
+
+        def l_chain_committed_land():
+            r, snap, got = chain_committed("l-chain-committed-land", False)
+            check(snap == {} and got["status"] == "landed" and read(r, FUP) == "- [ ] a\n- [ ] l1\n"
+                  and r.git("diff", "HEAD", "--", FUP) == "" and porcelain(r) == "" and held(r) == []
+                  and "- [ ] l2" in show(r, main_of(r), FUP),
+                  "l_chain_committed_land: the working copy back to HEAD's version, never below it (%r, %r)"
+                  % (got, read(r, FUP)))
+
+        def l_chain_committed_retry():
+            r, snap, got = chain_committed("l-chain-committed-retry", True)
+            check(snap == {} and len(got["landed"]) == 1 and got["dropped"] == 1 and read(r, FUP) == "- [ ] a\n- [ ] l1\n"
+                  and r.git("diff", "HEAD", "--", FUP) == "" and porcelain(r) == "" and held(r) == []
+                  and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] l2",
+                  "l_chain_committed_retry: P8 drops the committed entry, the later change lands alone, the working copy "
+                  "HEAD's (%r, %r, %r)" % (got, read(r, FUP), show(r, main_of(r), FUP)))
+
+        def l_land_pending_own():
+            # review exp3: a held entry lands in step 3, then the run's own change fails before its journal
+            r = lworld("l-pending-own")
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            first = held(r)[0]
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            real, calls = sb.own_change, []
+
+            def fail_second(*args, **kw):
+                calls.append(1)
+                if len(calls) == 2:
+                    raise OSError("git failed in the run's own change")
+                return real(*args, **kw)
+            with patched("own_change", fail_second):
+                e = stopped(lambda: do_land(r, snap=snap))
+            entries = held(r)
+            check(e is not None and e.pending is None and len(entries) == 1 and entries[0]["c2"] == first["c2"]
+                  and entries[0]["refused"] is None and entries[0]["tip"] == main_of(r),
+                  "l_land_pending_own: LandStopped carries no held entry's pending; that journal stays in its record "
+                  "(%r, %r)" % (e and e.pending, entries))
+
+        def l_land_resume_chain():
+            # review exp6: the run is killed after its move, before its lift; another run's change, started from its
+            # version, is held; end --resume lands that entry in step 3 and lifts the chain from the resumed change
+            r = lworld("l-resume-chain")
+            r.write(FUP, "- [ ] a\n- [ ] own\n")
+
+            def no_lift(*_args):
+                raise OSError("killed before the lift")
+            with patched("write_from", no_lift):
+                e = stopped(lambda: do_land(r))
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] own\n- [ ] other\n")
+            with patched("move_branch", locked_move()):
+                do_land(r, snap=snap)
+            got = do_land(r, resume=e.pending if e else None)
+            check(e is not None and got["status"] == "landed" and len(got["held_landed"]) == 1 and got["lifted"] == [FUP]
+                  and read(r, FUP) == "- [ ] a\n" and porcelain(r) == "" and held(r) == []
+                  and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] own\n- [ ] other",
+                  "l_land_resume_chain: the resumed change is the oldest of the chain it starts, the file lifted to "
+                  "HEAD's (%r, %r)" % (got, read(r, FUP)))
+
+        def l_retry_held_blocked():
+            # a blocked entry's failed row, and its record, carry the refusal of the entry it waits for
+            r = lworld("l-retry-blocked")
+            worktree(r, "l-retry-blocked-w2")
+            r.git("remote", "set-url", "origin", os.path.join(tmp, "nowhere.git"))
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            do_land(r)
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            do_land(r, snap=snap)
+            stale = {"reason": "locked", "path": ".git/refs/heads/main.lock", "detail": None, "permanent": False}
+            g["_held_put"](r.path, dict(held(r)[1], refused=stale))
+            got = retry_held(r.path, "main", "origin/main")
+            first, second = held(r)
+            check([x["refused"] for x in got["failed"]] == [first["refused"], first["refused"]]
+                  and first["refused"]["reason"] == "checked-out" and second["refused"] == first["refused"],
+                  "l_retry_held_blocked: the blocked entry reports, and records, the refusal it waits on (%r, %r)"
+                  % (got["failed"], held(r)))
+
+        def l_cli_retry_partial():
+            # land --retry-held stopped by an error after a landing reports that landing before the error
+            r = lworld("l-retry-partial")
+            r.write(FB, ENTRY % "one")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            snap = snapshot(r.path)
+            r.write(FB2, ENTRY % "two")
+            with patched("move_branch", locked_move()):
+                do_land(r, snap=snap)
+            real, calls = sb.own_change, []
+
+            def fail_second(*args, **kw):
+                calls.append(1)
+                if len(calls) == 2:
+                    raise OSError("git failed in the second entry")
+                return real(*args, **kw)
+            args = argparse.Namespace(specs=r.path, default_ref="origin/main", retry_held=True, drop_held=None,
+                                      branch=None, command=None, commit_key=None, snapshot=None, here=False,
+                                      register_rebuild=None)
+            with patched("own_change", fail_second):
+                got = land_cli(args)
+            check("git failed in the second entry" in (got.get("error") or "") and len(got["landed"]) == 1
+                  and got["landed"][0]["paths"] == [FB] and got["landed"][0]["sha"] == main_of(r)
+                  and got["landed"][0]["lifted"] == [] and got["failed"] == [] and got["stuck"] == [],
+                  "l_cli_retry_partial: the landing made before the error is reported with it (%r)" % got)
+
         def l_retry_held_edited():
             r = lworld("l-retry-edited")
             worktree(r, "l-retry-edited-w2")
@@ -7684,17 +7911,43 @@ def selftest():
         def l_held_orphan_refs():
             r = lworld("l-orphans")
             w2 = worktree(r, "l-orphans-w2")
-            base, orphan = r.git("rev-parse", "main"), r.git("rev-parse", "main~1")
-            entry = {"c1": base, "c2": base, "old": None, "tip": None, "onto": "main", "branch": "main",
+            base, tree = r.git("rev-parse", "main"), r.git("rev-parse", "main^{tree}")
+
+            def commit_at(seconds_ago, message):
+                stamp = "%d +0000" % (time.time() - seconds_ago)
+                return r.git("commit-tree", tree, "-p", base, "-m", message,
+                             env={"GIT_COMMITTER_DATE": stamp, "GIT_AUTHOR_DATE": stamp})
+            listed, old, young, late = (commit_at(7200, "listed"), commit_at(7200, "old"), commit_at(60, "young"),
+                                        commit_at(7200, "late"))
+            entry = {"c1": base, "c2": listed, "old": None, "tip": None, "onto": "main", "branch": "main",
                      "remote_only": False, "kind": None, "merged": None, "command": "/feedback",
                      "refused": {"reason": "locked", "path": None, "detail": None, "permanent": False},
                      "date": "2026-11-10", "paths": {}, "here": False, "index_before": None}
             g["_held_put"](w2.path, entry)
-            r.git("update-ref", HELD + orphan, orphan)
-            check(sorted(held_refs(r)) == sorted([HELD + base, HELD + orphan]) and held(w2) == [entry] and held(r) == [],
-                  "l_held_orphan_refs: two refs, one listed by w2's record")
+            for c in (old, young):
+                r.git("update-ref", HELD + c, c)
+            check(sorted(held_refs(r)) == sorted(HELD + c for c in (listed, old, young)) and held(w2) == [entry]
+                  and held(r) == [], "l_held_orphan_refs: three refs, one listed by w2's record")
+            r.git("switch", "-q", "--detach")
             retry_held(r.path, "main", "origin/main")
-            check(held_refs(r) == [HELD + base], "l_held_orphan_refs: the unlisted ref removed, w2's kept (%r)" % held_refs(r))
+            check(sorted(held_refs(r)) == sorted(HELD + c for c in (listed, old, young)),
+                  "l_held_orphan_refs: on a detached HEAD nothing is done, the orphan sweep included (P9) (%r)"
+                  % held_refs(r))
+            r.git("switch", "-q", LB)
+            real, made = g["_read_held"], []
+
+            def racing(path):
+                if not made:  # another worktree writes a held ref while this sweep reads the records
+                    made.append(r.git("update-ref", HELD + late, late))
+                return real(path)
+            g["_read_held"] = racing
+            try:
+                retry_held(r.path, "main", "origin/main")
+            finally:
+                g["_read_held"] = real
+            check(sorted(held_refs(r)) == sorted(HELD + c for c in (listed, young, late)),
+                  "l_held_orphan_refs: the unlisted ref over an hour old removed; w2's, one younger than an hour, and one "
+                  "written while the records were read, all kept (%r)" % held_refs(r))
 
         def here_world(name, extra=()):
             r = lworld(name, extra=extra, stay=False)
@@ -7766,6 +8019,20 @@ def selftest():
             check(got["finished"] == [{"sha": tip, "here": True, "lifted": []}] and r.git("diff", "--cached") == ""
                   and main_of(r) == tip and held(r) == [] and held_refs(r) == [],
                   "l_retry_held_here: the index restored from index_before, a new file included (%r)" % got)
+            # the user stages follow-ups.md after the kill: that path's index entry is theirs and stays (exp5)
+            r = here_world("l-here-recheck-staged")
+            with patched("git", lock_after_move(r)):
+                stopped(lambda: here_land(r))
+            os.remove(os.path.join(r.path, ".git", "index.lock"))
+            r.write(FUP, "- [ ] a\n- [ ] mine\n- [ ] staged by the user\n")
+            r.git("add", FUP)
+            staged = r.git("rev-parse", ":" + FUP)
+            got = retry_held(r.path, "main", "origin/main")
+            check(len(got["finished"]) == 1 and r.git("rev-parse", ":" + FUP) == staged
+                  and r.git("diff", "--cached", "--name-only") == FUP and held(r) == [],
+                  "l_retry_held_here_staged: a path the user staged after the kill stays as they staged it, the rest "
+                  "restored "
+                  "(%r, %r)" % (got, r.git("diff", "--cached", "--name-only")))
 
         def l_retry_held_here_old():
             r = here_world("l-here-old")
