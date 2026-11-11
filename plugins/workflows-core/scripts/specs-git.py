@@ -665,15 +665,18 @@ STAY_REASONS = ("g1", "unlisted", "refused", "stopped", "mid-run")
 # The landing's refusal codes -- own_change's and land's own -- each mapped to its reason clause (specs-repo-git §6,
 # the landing's reason clause); locked reuses the replay's reason.locked, which names no replay (P15). land's own
 # locked status, an index.lock, takes the Locked row instead. unfinished is an end --resume's here-form journal that
-# could not be finished (§4 step 1's here form), on the mid-run row.
+# could not be finished (§4 step 1's here form): on the mid-run row only where HEAD still stands on the journal's
+# branch and the open run still stands there; elsewhere the end goes on from step 1 on HEAD's branch.
 LAND_REASONS = {
     "dropped": "reason.land.dropped", "edited": "reason.land.edited", "forms": "reason.land.forms",
     "deleted": "reason.land.deleted", "folder-gone": "reason.land.folder-gone",
     "register-rebuild": "reason.land.register", "moved": "reason.land.moved",
     "checked-out": "reason.land.checked-out", "locked": "reason.locked", "unfinished": "reason.land.unfinished",
 }
-# The codes whose cause will not pass (P22): own_change's. checked-out is permanent only by its detail, where the
-# refspec push has nowhere to go (PERMANENT_ROWS); every other code passes.
+# The codes of a held change whose cause will not pass (P22): own_change's. checked-out is permanent only by its
+# detail, where the refspec push has nowhere to go (PERMANENT_ROWS); moved and locked pass. unfinished is no held
+# change's: its journal entry is dropped and no run retries it, so, like every refusal of the here form, it is marked
+# permanent (specs-repo-git §6), outside this set.
 LAND_PERMANENT = frozenset({"dropped", "edited", "forms", "deleted", "folder-gone", "register-rebuild"})
 
 
@@ -5431,7 +5434,7 @@ def selftest():
         pinned = ["g1.landing.not_done", "g1.landing.if_ignored", "g1.midrun.if_ignored", "g2.midrun.if_ignored",
                   "pre.stay.midrun", "pre.held.landed", "pre.held.failed", "pre.held.stuck", "pre.held.changed",
                   "app.landed", "app.landed.unlisted", "app.held.stuck", "row.held", "row.held-stuck", "row.there",
-                  "row.here", "row.midrun-kept", "pre.here.finished"]
+                  "row.here", "row.midrun-kept", "pre.here.finished", "g1.landing.not_done.unlanded"]
         pinned += ["reason.land." + r for r in ("dropped", "edited", "forms", "deleted", "folder-gone", "register",
                                                 "moved", "checked-out", "no-preflight", "unfinished")]
         ids += pinned
@@ -5501,7 +5504,7 @@ def selftest():
         # <specs-git.py's path> takes
         kinds, reasons, script = (globals().get(n) for n in ("STAY_KINDS", "STAY_REASONS", "SG_SCRIPT"))
         alternations = []
-        for tid in ("g1.landing.not_done", "app.landed", "row.held", "row.held-stuck"):
+        for tid in ("g1.landing.not_done", "g1.landing.not_done.unlanded", "app.landed", "row.held", "row.held-stuck"):
             try:
                 alternations.append(lines._alternatives(lines.placeholder(tid, "<which no key")[1:-1]))
             except (KeyError, ValueError):
@@ -5756,6 +5759,24 @@ def selftest():
             check(got[0].endswith("); they stay in your working tree, and the next run tries again")
                   and got[1].endswith("); they stay in your working tree, " + mode_tail),
                   "l_fill_landing: pre.held.failed's two tails (%r)" % got)
+            # G1's end forms after a landing that did not land: the not-landed Not done promises nothing, by kind; the
+            # landing, merged and mid-run If ignored lines claim nothing about where this run's artifacts went
+            unl = span("g1.landing.not_done.unlanded", "<which no key")
+            got = [lines.fill("g1.landing.not_done.unlanded", {"<branch>": "prd/B-2-y", "<default>": "main",
+                                                               "<command>": "/specify", unl: k}) for k in range(3)]
+            head_ = ("the preflight did not switch branches, and did not commit or push these files. Those files are "
+                     "yours, and switching branches would carry them along. This run's own artifacts were to be "
+                     "committed at the end of the run on main, not on prd/B-2-y, ")
+            tail_ = ", and your checkout is not moved; the line above says what came of that."
+            check(got == [head_ + w + tail_ for w in ("which no key of this run names", "which is merged into main",
+                                                      "where /specify's run in this session was open when this run "
+                                                      "started")]
+                  and not any("WILL" in x for x in got),
+                  "l_fill_landing: g1.landing.not_done.unlanded by kind, promising nothing (%r)" % got)
+            neutral = [T[k] for k in ("g1.landing.if_ignored", "g1.merged.if_ignored", "g1.midrun.if_ignored")]
+            check(all("nothing of this run's is committed with them" in x.lower() for x in neutral)
+                  and not any("reach <default>" in x or "committed without them" in x for x in neutral),
+                  "l_fill_landing: the landing, merged and mid-run If ignored lines are true whatever the outcome")
             got = [lines.fill("pre.here.finished", {"<branch>": "main", "<sha7>": "abc1234", "<N>": n}) for n in (1, 2)]
             check(got == ["Specs preflight: finished the commit an earlier run was making on main when it was cut off: "
                           "abc1234 (%s), that run's own session files, committed apart from another run's" % c
@@ -9524,7 +9545,7 @@ def selftest():
             "keep them off main.\n"
             "Fix:      git -C \"%(specs)s\" switch main && git -C \"%(specs)s\" add %(quoted)s && git -C \"%(specs)s\" "
             "commit\n"
-            "If ignored: nothing is lost — your files stay uncommitted, and this run's artifacts reach main without "
+            "If ignored: nothing is lost — your files stay uncommitted, and nothing of this run's is committed with "
             "them. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle "
             "(stages 2-3) stay skipped until these paths are committed or removed. Fix commits them on main, not on "
             "%(branch)s, and where git refuses its switch it commits nothing, git naming the files in its way; "
