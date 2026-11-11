@@ -1704,7 +1704,8 @@ def _resume_landing(run, rec, view, commit_key, landing):
     applied or lifted: the journal is left for the next preflight's held stage, and the row is Locked. Where the move
     is verified (_verified: <default> holds the journalled commit, or, for a refspec push, origin/<default> does, after
     a fetch), the files are lifted and the journal entry and its ref removed (_finish) -- the paths split off it and
-    held alone found again by its c1 -- then the landing's outcome as at the end (_landing_end): steps 5-7, or the
+    held alone found again by its c1, the register moves its rebuild made read from the journal (JOURNAL_MOVES) --
+    then the landing's outcome as at the end (_landing_end): steps 5-7, or the
     refspec push's row at once. Otherwise the change is landed again from its journal (land's resume), never lifted
     unverified (P6)."""
     lines, specs, state = run["lines"], run["specs"], run["state"]
@@ -1722,7 +1723,8 @@ def _resume_landing(run, rec, view, commit_key, landing):
                       and (e["refused"] or {}).get("permanent")), None)
         paths = _commit_paths(specs, landing["tip"])
         got = {"status": "landed", "sha": landing["tip"], "files": len(paths), "paths": paths, "refused": None,
-               "pushed": bool(landing.get("remote_only")), "held_landed": [], "moves": [], "pending": landing,
+               "pushed": bool(landing.get("remote_only")), "held_landed": [],
+               "moves": list(landing.get(JOURNAL_MOVES) or []), "pending": landing,
                "stuck": None if stuck is None else {"sha": stuck["c2"], "paths": sorted(stuck["paths"]),
                                                     "refused": stuck["refused"]}}
     else:
@@ -3046,6 +3048,10 @@ HELD_REF = "refs/workflows/held/"
 HELD_FIELDS = ("c1", "c2", "old", "tip", "onto", "branch", "remote_only", "kind", "merged", "command", "refused", "date",
                "paths", "here", "index_before")
 PENDING_FIELDS = ("c1", "c2", "old", "tip", "onto", "paths", "remote_only", "here", "index_before")
+# A landing journal's own extra field: moves, the renumbering its rebuild of a security register made (sb._moves), so
+# a resumed landing prints the register clause the end would have (specs-repo-git §6). An entry with none -- a held
+# entry, a here journal, or one an earlier version wrote -- reads as no move.
+JOURNAL_MOVES = "moves"
 SNAPSHOT_MESSAGE = "specs-git: the session files as the run found them\n"
 # push_check's rows that leave the refspec push nowhere to go for good (P22); its refused-before, and a refspec push
 # that failed, was rejected or was refused, are transient.
@@ -3099,7 +3105,7 @@ def _entry_ok(e):
     return (isinstance(e, dict) and all(k in e for k in HELD_FIELDS)
             and all(isinstance(e[k], str) and _OBJECT_ID.fullmatch(e[k]) for k in ("c1", "c2"))
             and isinstance(e["paths"], dict) and (e["refused"] is None or isinstance(e["refused"], dict))
-            and isinstance(e.get("lift", {}), dict))
+            and isinstance(e.get("lift", {}), dict) and isinstance(e.get(JOURNAL_MOVES) or [], list))
 
 
 def _read_held(path):
@@ -3136,7 +3142,9 @@ def _held_write(root, entries):
 def _held_put(root, entry, replace=None):
     """<entry> into the held record, in the place of the entry whose c2 is <replace> (else of its own c2), else last.
     Its ref, refs/workflows/held/<c2>, is written first, so no entry names a commit no ref keeps; a replaced entry's
-    ref is removed after."""
+    ref is removed after. A held entry -- refused set -- keeps no journal moves (JOURNAL_MOVES): it is no journal."""
+    if entry.get("refused") is not None and JOURNAL_MOVES in entry:
+        entry = {k: v for k, v in entry.items() if k != JOURNAL_MOVES}
     _wrote()
     sb.git(root, "update-ref", HELD_REF + entry["c2"], entry["c2"])
     entries = held_entries(root)
@@ -3301,7 +3309,8 @@ def _entry(root, c1, c2, default, branch, facts, here):
 
 
 def _pending(entry):
-    return {k: entry[k] for k in PENDING_FIELDS}
+    """The journal's pending of <entry>: its PENDING_FIELDS, and the moves a landing journal carries ([] for none)."""
+    return dict({k: entry[k] for k in PENDING_FIELDS}, **{JOURNAL_MOVES: list(entry.get(JOURNAL_MOVES) or [])})
 
 
 def _split(root, entry, refused):
@@ -3541,7 +3550,7 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
             return dict(out, status="stuck-only" if out["stuck"] else "there")
         tip = sb.commit_tree(root, got["tree"], [onto], _message(root, entry["c2"]))
         entry = dict(entry, refused=None, old=onto if elsewhere else local, tip=tip, remote_only=bool(elsewhere),
-                     onto=default)
+                     onto=default, **{JOURNAL_MOVES: sb._moves([got["numbers"]]) if got["numbers"] else []})
         _held_put(root, entry, replace=entry["c2"] if in_record else None)
         in_record = True
         out.update(entry=entry, in_record=True, pending=_pending(entry))
@@ -3719,7 +3728,8 @@ def land(root, branch, default, default_ref, message, snap, register_rebuild=Non
     every landing, the journal entries removed. The run's own landing takes its place in the chain before any landing
     that started from it (_place): a resumed change is the oldest of the chain it starts. <here>, forced where <branch>
     is <default>: the here form instead (_here_move). <facts> {kind, merged, command, stayed} go into a held entry;
-    <on_move>(pending) is called just before the move or the refspec push, once the journal entry is written. <resume>,
+    <on_move>(pending) is called just before the move or the refspec push, once the journal entry is written; a landing's
+    pending carries the moves its register rebuild made (JOURNAL_MOVES), which a resumed landing reports. <resume>,
     an earlier call's pending, is landed again from its c1 and c2 -- lifted only where its move is verified (P6) -- and
     its own journal entry is never retried as a held one. LandStopped's pending is the run's own change's journal alone.
     Returns {status: landed, there, nothing, held, kept or locked (the here form, or a resumed journal, under an
@@ -3748,7 +3758,8 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
         in_record = own is not None
         if own is None:
             own = dict(_entry(root, resume["c1"], resume["c2"], default, branch, facts, here),
-                       **{k: resume[k] for k in ("old", "tip", "remote_only", "index_before") if k in resume})
+                       **{k: resume[k] for k in ("old", "tip", "remote_only", "index_before", JOURNAL_MOVES)
+                          if k in resume})
     else:
         c1, c2 = _own_commits(root, snap, message)
         if c2 is None:
@@ -3804,7 +3815,8 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
             chain = _place(root, chain, own)
             done.append(own["c2"])
             paths = _commit_paths(root, own["tip"])
-            out.update(status="landed", sha=own["tip"], files=len(paths), paths=paths, pushed=bool(own["remote_only"]))
+            out.update(status="landed", sha=own["tip"], files=len(paths), paths=paths, pushed=bool(own["remote_only"]),
+                       moves=list(own.get(JOURNAL_MOVES) or []))
         else:
             got = _land_change(root, own, default, default_ref, register_rebuild, in_record, on_move=on_move, own=True)
             out["pending"] = got["pending"]
@@ -8310,6 +8322,53 @@ def selftest():
                   and main_of(r) == local and gone(r, FB) and held(r) == [] and w2.git("status", "--porcelain") == "",
                   "e_land_kill_refspec: resumed, the refspec push verified on origin's main, its row at once (%r)" % got)
 
+        def e_land_kill_register():
+            """A landing whose register rebuild renumbered a record, cut off during the lift after its move: end --resume
+            reads the moves from the journal, and its line carries the register clause the uninterrupted end prints."""
+            canned = {"before_remote": {"web": {"o1": 1}}, "before_run": {"web": {"o2": 3}},
+                      "after": {"web": {"o1": 2, "o2": 1}}}
+            moves = sb._moves([canned])
+            clause = "; ".join(
+                lines.fill("app.register-clause", {"<slug>": slug, "<move>": [
+                    lines.fill("app.register-move", {"<from>": m["from"], "<to>": m["to"], "<origin>": m["origin"],
+                                                     "<whose number>": T["app.register-move." + m["side"]]})
+                    for m in moves if m["slug"] == slug]})
+                for slug in sorted({m["slug"] for m in moves}, key=[m["slug"] for m in moves].index))
+            real_own, real_lift = sb.own_change, g["_lift"]
+
+            def own_renumbering(*args, **kw):
+                return dict(real_own(*args, **kw), numbers=canned)
+
+            def lift_killed(*args, **kw):
+                raise KeyboardInterrupt
+
+            shown = {}
+            for name, kill in (("e-land-register-whole", False), ("e-land-kill-register", True)):
+                r, env = lworld(name)
+                start_of(env)
+                r.write(FB, ENTRY % "mine")
+                sb.own_change = own_renumbering
+                if kill:
+                    g["_lift"] = lift_killed
+                try:
+                    with in_env(env):
+                        got = end(r.path, "/feedback")
+                except KeyboardInterrupt:
+                    got = None
+                finally:
+                    sb.own_change, g["_lift"] = real_own, real_lift
+                if kill:
+                    rec = record(env, "/feedback") or {}
+                    journal = ((rec.get("end_commit") or {}).get("landing") or {}).get("moves")
+                    got = run_end(env, "/feedback", "--resume")
+                    check(journal == moves and moves,
+                          "e_land_kill_register: the journal saved through on_move carries the moves (%r)" % journal)
+                shown[name] = (got or {}).get("print"), landed(r, 1) + "; " + clause, g1_land(r)
+            whole, killed = shown["e-land-register-whole"], shown["e-land-kill-register"]
+            check(whole[0] == [whole[1], whole[2]] and killed[0] == [killed[1], killed[2]],
+                  "e_land_kill_register: the resumed line carries the register clause the uninterrupted end prints "
+                  "(%r)" % (shown,))
+
         def e_land_kill_before_move():
             """A kill in on_move -- the journal written, nothing moved: end --resume lands the change once, then lifts
             it, the held record emptied."""
@@ -8652,6 +8711,7 @@ def selftest():
                          ("e_land_stuck", e_land_stuck), ("e_land_partial", e_land_partial),
                          ("e_land_there", e_land_there), ("e_land_kill", e_land_kill),
                          ("e_land_kill_resumed", e_land_kill_resumed),
+                         ("e_land_kill_register", e_land_kill_register),
                          ("e_land_kill_before_move", e_land_kill_before_move), ("e_land_push_rows", e_land_push_rows),
                          ("e_land_nonff", e_land_nonff), ("e_land_declined", e_land_declined),
                          ("e_land_locked", e_land_locked), ("e_land_locked_held", e_land_locked_held),
@@ -8673,7 +8733,7 @@ def selftest():
         ENTRY = "## 2026-11-10 — /feedback — note\n\n%s\n"
         HELD = "refs/workflows/held/"
         MSG = session_subject(None, "/feedback")
-        PENDING = {"c1", "c2", "old", "tip", "onto", "paths", "remote_only", "here", "index_before"}
+        PENDING = {"c1", "c2", "old", "tip", "onto", "paths", "remote_only", "here", "index_before", "moves"}
         CLI_FIELDS = {"status", "sha7", "files", "paths", "lifted", "default", "pushed", "reason", "detail", "path", "permanent",
                       "stuck", "error"}
 
@@ -8963,7 +9023,7 @@ def selftest():
             p, at, entries = seen[0] if seen else ({}, None, [])
             check(len(seen) == 1 and set(p) == PENDING and at == old and p.get("old") == old and p.get("tip") == got["sha"]
                   and p.get("here") is False and p.get("remote_only") is False and p.get("onto") == "main"
-                  and len(entries) == 1 and entries[0]["refused"] is None and entries[0]["tip"] == got["sha"]
+                  and p.get("moves") == [] and len(entries) == 1 and entries[0]["refused"] is None and entries[0]["tip"] == got["sha"]
                   and entries[0]["c2"] == p.get("c2") and held(r) == [] and held_refs(r) == [],
                   "l_land_on_move: called before the move, the journal entry written; none left after (%r)" % (seen,))
 
