@@ -64,11 +64,12 @@ write to the repository; after it, a failure is exit 0
 with error set and the end.stopped line, and the record stays for end --resume. replay exits 2 only before it finds
 its record; after it, a failure is exit 0 with error set and the stopped line, and the record stays as it stood; a
 replay a signal ended prints nothing and ends by that signal, the record as it stood for the --timed-out call. land
-exits 2 only before its first ref write: a held ref's write or removal -- a P29 stuck entry's, or the journal
-entry's, both written before any move, or, for --retry-held, an orphaned held ref's removal -- the move or push of
-the default branch, or the update-ref of HEAD's branch; objects written before it do not count.
-After it, a failure is exit 0 with error set, the held record keeping the journal entry for end --resume or the next
-preflight's held stage, which finish it only where its move is verified. snapshot exits 2 only before it prints.
+exits 2 only before its first write to a ref of its own: any held ref's write or removal, whatever makes it, the move
+or push of the default branch, or the update-ref of HEAD's branch. The remote-tracking ref a capped fetch refreshes,
+to verify a refspec landing's journal, is not one, and objects written before it do not count. After it, a failure is
+exit 0 with error set, --retry-held printing beside it what it had done; where a move was under way, the held record
+keeps its journal entry for end --resume or the next preflight's held stage, which finish it only where its move is
+verified. snapshot exits 2 only before it prints.
 """
 
 import argparse
@@ -2954,10 +2955,11 @@ _NO_LINK = object()  # _still_held's "no later entry started from this one here"
 
 
 def _from_snapshot(root, e, p):
-    """Whether <e>'s c1 took <p> from its run's snapshot: c1's blob there differs from c1's parent's, HEAD's when that
-    run started. Only such a path can have started from another landing's version (P7's chain, step 6's "snapshot
-    blob"); one at HEAD's version is the stayed branch's own, committed there, whatever blob it shares with a held
-    entry's c2."""
+    """Whether <e>'s c1 took <p> from its run's snapshot: c1's blob there differs from c1's parent's. That parent is
+    HEAD as land read it when it made c1, at the landing -- not when the run started -- so a version the user commits on
+    the stayed branch mid-run, after the run took its snapshot, reads as HEAD's too and makes no chain link. Only a path
+    taken from the snapshot can have started from another landing's version (P7's chain, step 6's "snapshot blob"); one
+    at HEAD's version is the stayed branch's own, committed there, whatever blob it shares with a held entry's c2."""
     return sb.blob(root, e["c1"] + "^", p) != sb.blob(root, e["c1"], p)
 
 
