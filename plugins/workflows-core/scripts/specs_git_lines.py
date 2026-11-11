@@ -228,9 +228,10 @@ T = {
     # The first where the call carried no --register-rebuild, the second where it did.
     "reason.land.register": "<path> needs its register rebuilt, <and this command hands the run no register.py to rebuild it | and that rebuild failed>",
     "reason.land.moved": "<default> moved twice while the run was committing on it",
-    # The alternative by the printed detail: a refspec push that failed or was rejected; no-remote; elsewhere;
-    # remote-deleted; a push origin refused, or refused-before.
-    "reason.land.checked-out": "another worktree, <path>, has <default> checked out, and <the push of the commit by refspec failed (<reason>) | there is no origin to push the commit to | your git configuration pushes <default> to <remote>, not to origin | origin has no <default> any more | origin refuses pushes to <default> (<the refusal>), so from the next run session-branch mode takes these files>",
+    # The alternative by the printed detail (specs-git.py's checked_out_values): a refspec push that failed or was
+    # rejected; no-remote; elsewhere; remote-deleted; a push origin refused, recorded; refused-before, worded as
+    # row.refused-before words it; a push origin refused that could be recorded neither way, as app.unrecorded.
+    "reason.land.checked-out": "another worktree, <path>, has <default> checked out, and <the push of the commit by refspec failed (<reason>) | there is no origin to push the commit to | your git configuration pushes <default> to <remote>, not to origin | origin has no <default> any more | origin refuses pushes to <default> (<the refusal>), so from the next run session-branch mode takes these files | origin refused pushes to <default> on <date> (<record>), so from the next run session-branch mode takes these files | origin refuses pushes to <default> (<the refusal>), but this could not be recorded (<error>, the configuration write's), so a later run pushes <default> again>",
     "reason.land.no-preflight": "this run stopped before its preflight, so nothing tells its files from that run's",
 
     # The push-rejected remedies, each replacing remedy.rejected in row.rejected (and its Specs preflight: form):

@@ -680,13 +680,17 @@ LAND_PERMANENT = frozenset({"dropped", "edited", "forms", "deleted", "folder-gon
 # refused-before); text, the push's reason for failed and rejected, origin's refusal for refused; remote, the remote
 # the user's configuration pushes <default> to, for elsewhere; record and date, the push-refusal record -- the one push
 # wrote for refused (None where it could write none), and for refused-before the one that stood, with the date it holds
-# (specs-repo-git §1 rule 8: the record holds a date, never the refusal's text). Every key is there, None where unused.
-CHECKED_OUT_DETAIL = ("outcome", "text", "remote", "record", "date")
+# (specs-repo-git §1 rule 8: the record holds a date, never the refusal's text); record_error, for refused where push
+# could write the record neither way, the configuration write's error. Every key is there, None where unused.
+CHECKED_OUT_DETAIL = ("outcome", "text", "remote", "record", "date", "record_error")
 # reason.land.checked-out's alternative by the detail's outcome. rejected -- origin's <default> moved on between the
 # build on <default-ref> and the push -- is a refspec push that failed, its reason git's [rejected] summary: nothing
-# was pushed, and the next run builds on the newer <default-ref> and pushes again.
+# was pushed, and the next run builds on the newer <default-ref> and pushes again. refused-before is worded as §6's
+# refused-before row words it, from the record's date and path; a refused push with no record takes the unrecorded
+# form, CHECKED_OUT_UNRECORDED, as §6's push-refused row does, since nothing turns session-branch mode on.
 CHECKED_OUT_ALTERNATIVE = {"failed": 0, "rejected": 0, "no-remote": 1, "elsewhere": 2, "remote-deleted": 3,
-                           "refused": 4, "refused-before": 4}
+                           "refused": 4, "refused-before": 5}
+CHECKED_OUT_UNRECORDED = 6
 
 
 def _checked_out_detail(outcome, **values):
@@ -696,12 +700,16 @@ def _checked_out_detail(outcome, **values):
 def _push_detail(pushed):
     """CHECKED_OUT_DETAIL for a refspec push (push(..., src=)) that did not push: failed or rejected with push's reason
     -- the status line's summary, git's first error line, or the capped push's words -- and, where it gave none, the
-    words app.why.failed.none gives a status line with none (specs-repo-git §6); refused with origin's refusal and the
-    record push wrote. An empty reason is None, so no clause prints an empty ()."""
+    words app.why.failed.none gives a status line with none (specs-repo-git §6); refused with origin's refusal, or git's
+    own [remote rejected] where it gave none, and the record push wrote, or, where it could write none, the
+    configuration write's error. No text is ever empty, so no clause prints an empty ()."""
     outcome, text = pushed["outcome"], pushed.get("reason") or None
     if outcome in ("failed", "rejected") and text is None:
         text = _load_module("specs_git_lines").T["app.why.failed.none"]
-    return _checked_out_detail(outcome, text=text, record=pushed.get("record") if outcome == "refused" else None)
+    if outcome != "refused":
+        return _checked_out_detail(outcome, text=text)
+    return _checked_out_detail(outcome, text=text or "[remote rejected]", record=pushed.get("record") or None,
+                               record_error=None if pushed.get("record") else pushed.get("record_error"))
 
 
 def _row_detail(checked):
@@ -718,13 +726,18 @@ def _row_detail(checked):
 def checked_out_values(lines, detail):
     """reason.land.checked-out's values for a refusal's CHECKED_OUT_DETAIL <detail>, to fill beside <path> (the
     refusal's path, the worktree that has <default> checked out) and <default>: the alternation's index by its outcome
-    (CHECKED_OUT_ALTERNATIVE), <reason> and <the refusal> from its text, <remote> from its remote. For refused-before
-    <the refusal> is None -- its record holds a date and no refusal text -- so lines.fill refuses that clause rather than
-    print an empty (). None where <detail> is not such an object (no push was tried, or an entry held before it was)."""
+    (CHECKED_OUT_ALTERNATIVE) -- a refused one with no record taking CHECKED_OUT_UNRECORDED -- with <reason> and <the
+    refusal> from its text, <remote> from its remote, <date> and <record> from the record's, <error> from its
+    record_error. Never raises: None where <detail> is not such an object (no push was tried, or an entry held before
+    it was)."""
     if not isinstance(detail, dict) or detail.get("outcome") not in CHECKED_OUT_ALTERNATIVE:
         return None
-    return {lines.placeholder("reason.land.checked-out", "<the push of"): CHECKED_OUT_ALTERNATIVE[detail["outcome"]],
-            "<reason>": detail.get("text"), "<remote>": detail.get("remote"), "<the refusal>": detail.get("text")}
+    k = CHECKED_OUT_ALTERNATIVE[detail["outcome"]]
+    if detail["outcome"] == "refused" and not detail.get("record"):
+        k = CHECKED_OUT_UNRECORDED
+    return {lines.placeholder("reason.land.checked-out", "<the push of"): k,
+            "<reason>": detail.get("text"), "<remote>": detail.get("remote"), "<the refusal>": detail.get("text"),
+            "<date>": detail.get("date"), "<record>": detail.get("record"), "<error>": detail.get("record_error")}
 
 
 def _identity(session_branch):
@@ -3647,7 +3660,7 @@ def _snapshot_arg(root, value):
 def land_cli(a):
     """The land subcommand (P10): a landing, --retry-held or --drop-held, each printing its JSON object. A landing's
     object carries the refusal it ends on as reason, detail, path and permanent: detail is the refusal's own --
-    for checked-out the CHECKED_OUT_DETAIL object {outcome, text, remote, record, date}, from which
+    for checked-out the CHECKED_OUT_DETAIL object {outcome, text, remote, record, date, record_error}, from which
     reason.land.checked-out is worded (checked_out_values); for moved, the move's last refusal (branch-moved or
     checkout-moved) or null; for register-rebuild, none or failed; else null."""
     default = _default_of(a.default_ref)
@@ -7949,7 +7962,7 @@ def selftest():
                  lambda r, d: "and origin has no main any more"),
                 ("l-cod-refused", lambda r: hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n"), "origin/main",
                  lambda r, d: d["outcome"] == "refused" and d["text"] == "pre-receive hook declined"
-                 and same_path(d["record"], record_of(r)) and d["date"] is None,
+                 and same_path(d["record"], record_of(r)) and d["date"] is None and d["record_error"] is None,
                  lambda r, d: "and origin refuses pushes to main (pre-receive hook declined), so from the next run "
                               "session-branch mode takes these files"),
             )
@@ -7982,26 +7995,99 @@ def selftest():
                 check(same_path(refused.get("path"), w2.path), "l_checked_out_detail: %s names the worktree" % name)
             check(not any("failed (failed)" in x or "()" in x for x in rendered),
                   "l_checked_out_detail: no clause reads failed (failed) or an empty () (%r)" % rendered)
-            # refused-before: the record holds a date and no refusal text, so the clause is refused, never printed with ()
+            def clause(refused):
+                values = checked_out_values(lines, refused.get("detail"))
+                try:
+                    return lines.fill("reason.land.checked-out", dict(values or {}, **{"<path>": refused.get("path"),
+                                                                                     "<default>": "main"}))
+                except ValueError as e:
+                    return "fill: %s" % e
+
+            # refused-before, a record another session wrote mid-run: worded as row.refused-before words it
             r = lworld("l-cod-refused-before")
-            worktree(r, "l-cod-refused-before-w2")
-            refused_before(r)
+            w2 = worktree(r, "l-cod-refused-before-w2")
             r.write(FB, ENTRY % "mine")
-            got = do_land(r)
+            snap = snapshot(r.path)  # the run's start
+            refused_before(r)        # mid-run
+            r.write(FB2, ENTRY % "mine too")
+            got = do_land(r, snap=snap)
             refused = got.get("refused") or {}
             d = refused.get("detail") or {}
-            values = checked_out_values(lines, d) or {}
-            try:
-                line = lines.fill("reason.land.checked-out", dict(values, **{"<path>": refused.get("path"),
-                                                                            "<default>": "main"}))
-            except ValueError as e:
-                line = "fill: %s" % e
+            line = clause(refused)
             check(d == dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome="refused-before", date="2026-11-01",
-                            record=record_of(r)) and held(r)[0]["refused"] == refused
-                  and values.get(lines.placeholder("reason.land.checked-out", "<the push of")) == 4
-                  and values.get("<the refusal>") is None and line == "fill: fill: no value for <the refusal>",
-                  "l_checked_out_detail: refused-before keeps the record and its date, and its clause is not worded "
-                  "without a refusal text (%r, %r)" % (d, line))
+                            record=record_of(r)) and held(r)[0]["refused"] == refused and refused.get("permanent") is False
+                  and line == "another worktree, %s, has main checked out, and origin refused pushes to main on "
+                              "2026-11-01 (%s), so from the next run session-branch mode takes these files"
+                              % (refused.get("path"), record_of(r))
+                  and same_path(refused.get("path"), w2.path) and sb.mode(r.path, "main")["mode"] == "on",
+                  "l_checked_out_detail: refused-before, its record written mid-run, worded whole from the record's "
+                  "date and path; the mode it names is on (%r, %r)" % (d, line))
+            rendered.append(line)
+
+            # refused, its record writable neither way: the unrecorded form, naming the configuration write's error
+            r = lworld("l-cod-unrecorded")
+            w2 = worktree(r, "l-cod-unrecorded-w2")
+            hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n")
+            os.makedirs(os.path.join(r.path, ".git", "workflows"), exist_ok=True)
+            with open(os.path.join(r.path, ".git", "workflows", "push-refused"), "w", encoding="utf-8") as fh:
+                fh.write("a file where the record's directory would go\n")
+            lock = os.path.join(r.path, ".git", "config.lock")
+            with open(lock, "w", encoding="utf-8") as fh:
+                fh.write("")
+            r.write(FB, ENTRY % "mine")
+            try:
+                got = do_land(r)
+            finally:
+                os.remove(lock)
+            refused = got.get("refused") or {}
+            d = refused.get("detail") or {}
+            line = clause(refused)
+            error = d.get("record_error") or ""
+            check(set(d) == set(CHECKED_OUT_DETAIL) and d["outcome"] == "refused"
+                  and d["text"] == "pre-receive hook declined" and d["record"] is None and "config" in error
+                  and held(r)[0]["refused"] == refused
+                  and line == "another worktree, %s, has main checked out, and origin refuses pushes to main "
+                              "(pre-receive hook declined), but this could not be recorded (%s, the configuration "
+                              "write's), so a later run pushes main again" % (refused.get("path"), error)
+                  and sb.refusal_record(r.path, "main") is None and sb.mode(r.path, "main")["mode"] == "off",
+                  "l_checked_out_detail: refused with its record unwritable, worded in the unrecorded form, naming the "
+                  "configuration write's error; no record, the mode off (%r, %r)" % (d, line))
+            rendered.append(line)
+            check(not any("failed (failed)" in x or "()" in x or "None" in x for x in rendered[-2:]),
+                  "l_checked_out_detail: neither new form reads an empty () or None (%r)" % rendered[-2:])
+
+            # every detail _land_change can produce: from each push outcome _push_detail meets and each row
+            # _row_detail meets, and None (held with no push tried); checked_out_values and the fill never raise
+            pushes = [{"outcome": o, "reason": why, "record": rec, "record_error": err}
+                      for o, why in (("failed", "fatal: x"), ("failed", None), ("rejected", "[rejected] (fetch first)"),
+                                     ("rejected", None))
+                      for rec, err in ((None, None),)]
+            pushes += [{"outcome": "refused", "reason": why, "record": rec, "record_error": err}
+                       for why in ("hook declined", "", None)
+                       for rec, err in (("/s/.git/workflows/push-refused/main", None),
+                                        ("branch.main.workflowsPushRefused", None), (None, "error: could not lock"))]
+            rows = [{"row": "no-remote"}, {"row": "elsewhere", "remote": "fork"}, {"row": "remote-deleted"}]
+            rows += [{"row": "refused-before", "record": rec, "date": date}
+                     for rec, date in (("/s/.git/workflows/push-refused/main", "2026-11-01"),
+                                       ("/s/.git/workflows/push-refused/main", "an earlier run"),
+                                       ("branch.main.workflowsPushRefused", "2026-11-01"))]
+            details = [_push_detail(x) for x in pushes] + [_row_detail(x) for x in rows] + [None]
+            problems = []
+            for detail in details:
+                try:
+                    values = checked_out_values(lines, detail)
+                    if values is None:
+                        if detail is not None:
+                            problems.append("no values for %r" % (detail,))
+                        continue
+                    line = lines.fill("reason.land.checked-out", dict(values, **{"<path>": "/w2", "<default>": "main"}))
+                    if "()" in line or "None" in line:
+                        problems.append(line)
+                except Exception as e:  # any raise is the failure this check is for
+                    problems.append("%r raised %s: %s" % (detail, type(e).__name__, e))
+            check(problems == [] and len(details) == 20,
+                  "l_checked_out_detail: every detail _land_change can produce maps and fills without raising (%r)"
+                  % problems)
             # a push that gave no reason takes the words a status line with none gives (specs-repo-git §6)
             got = _push_detail({"outcome": "failed", "reason": None, "record": None})
             check(got["text"] == lines.T["app.why.failed.none"] and checked_out_values(lines, None) is None
