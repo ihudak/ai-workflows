@@ -676,9 +676,10 @@ LAND_REASONS = {
     "checked-out": "reason.land.checked-out", "locked": "reason.locked", "unfinished": "reason.land.unfinished",
 }
 # The codes of a held change whose cause will not pass (P22): own_change's. checked-out is permanent only by its
-# detail, where the refspec push has nowhere to go (PERMANENT_ROWS); moved and locked pass. unfinished is no held
-# change's: its journal entry is dropped and no run retries it, so, like every refusal of the here form, it is marked
-# permanent (specs-repo-git §6), outside this set.
+# detail, where the refspec push has nowhere to go (PERMANENT_ROWS) or nothing to build on (origin-lacks: <default-ref>
+# names no commit, specs-repo-git §4 step 1 (3)); moved and locked pass. unfinished is no held change's: its journal
+# entry is dropped and no run retries it, so, like every refusal of the here form, it is marked permanent
+# (specs-repo-git §6), outside this set.
 LAND_PERMANENT = frozenset({"dropped", "edited", "forms", "deleted", "folder-gone", "register-rebuild"})
 
 
@@ -3529,10 +3530,11 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
     committed on the result, journalled, then moved. C2's test first: where another worktree has <default> checked out,
     the result is built on <default-ref> and pushed by refspec where push_check leaves no row but scope (the push names
     one commit on <default-ref>, so push-scope does not apply), the local branch never moved (ruling C2); <remote> False
-    keeps the change off that path (P28), as it stands, and <check>(cost) comes before its capped calls; that path
-    never builds on local <default>, whose own commits the push would publish unmeasured, so where <default-ref> names
-    no commit -- an origin with no <default>, never or no longer -- the change is held, checked-out with the detail
-    origin-lacks, permanent (P22). Otherwise onto is <default-ref>'s commit where local <default> is absent or strictly
+    keeps the change off that path (P28), as it stands, and <check>(cost) comes before its capped calls; where an
+    origin exists, that path never builds on local <default>, whose own commits the push would publish unmeasured, so
+    where <default-ref> names no commit -- an origin with no <default>, never or no longer -- the change is held,
+    checked-out with the detail origin-lacks, permanent (P22). With no origin, <default-ref> is local <default> itself
+    (specs-repo-git §3.2): the result is built there and then held as no-remote, permanent, nothing being pushable. Otherwise onto is <default-ref>'s commit where local <default> is absent or strictly
     behind it, else local <default> -- <default-ref> naming no commit counting as neither -- which
     sb.move_branch(here=False) moves -- created where it is absent -- and a branch-moved or checkout-moved refusal is
     tried once more on the new tip. <in_record>: the entry stands in the held record, where each change to it replaces
@@ -8614,21 +8616,27 @@ def selftest():
             r.write(FB, ENTRY % "mine")
             got = run_end(env, "/feedback")
             entries = held(r)
-            refused = entries[0]["refused"] if len(entries) == 1 else {}
-            sha7 = entries[0]["c2"][:7] if len(entries) == 1 else "?"
-            clause = lines.fill("reason.land.checked-out", {"<path>": refused.get("path"), "<default>": "main",
-                                                            CHECKED: 3})
-            want = lines.fill("row.held-stuck", {"<branch>": LB, "<default>": "main", STUCK_KIND: 0,
-                                                 "<reason clause>": clause, "<SPECS_PATH>": r.path, "<sha7>": sha7,
-                                                 "<specs-git.py's path>": me, "<default-ref>": "origin/main"})
-            check(first.get("stay") == UNKEYED and first.get("default_ref") == "origin/main"
-                  and got.get("row") == "held-stuck" and got.get("print") == [want, g1_land(r, unlanded=True)]
-                  and clause.endswith("and origin has no main") and refused.get("permanent") is True
-                  and (refused.get("detail") or {}).get("outcome") == "origin-lacks"
-                  and os.path.samefile(refused.get("path"), w2.path) and main_of(r) == local
-                  and subprocess.run(["git", "--git-dir", bare, "for-each-ref"], stdout=subprocess.PIPE).stdout == bare_refs
-                  and read(r, FB) == ENTRY % "mine" and w2.git("status", "--porcelain") == "",
-                  "e_land_origin_lacks_checked_out: held stuck, nothing pushed, origin unchanged (%r)" % got)
+            origin_unchanged = subprocess.run(["git", "--git-dir", bare, "for-each-ref"],
+                                              stdout=subprocess.PIPE).stdout == bare_refs
+            check(got.get("row") == "held-stuck" and origin_unchanged and len(entries) == 1 and main_of(r) == local,
+                  "e_land_origin_lacks_checked_out: held stuck, nothing pushed -- origin's refs unchanged, local main "
+                  "unmoved -- and one held entry (row %r, origin unchanged %r, %d held, %r)"
+                  % (got.get("row"), origin_unchanged, len(entries), got.get("print")))
+            if len(entries) == 1:  # the line and the entry, worded from the one entry that stands
+                refused, sha7 = entries[0]["refused"], entries[0]["c2"][:7]
+                clause = lines.fill("reason.land.checked-out", {"<path>": refused.get("path"), "<default>": "main",
+                                                                CHECKED: 3})
+                want = lines.fill("row.held-stuck", {"<branch>": LB, "<default>": "main", STUCK_KIND: 0,
+                                                     "<reason clause>": clause, "<SPECS_PATH>": r.path, "<sha7>": sha7,
+                                                     "<specs-git.py's path>": me, "<default-ref>": "origin/main"})
+                check(first.get("stay") == UNKEYED and first.get("default_ref") == "origin/main"
+                      and got.get("print") == [want, g1_land(r, unlanded=True)]
+                      and clause.endswith("and origin has no main") and refused.get("permanent") is True
+                      and (refused.get("detail") or {}).get("outcome") == "origin-lacks"
+                      and os.path.samefile(refused.get("path"), w2.path)
+                      and read(r, FB) == ENTRY % "mine" and w2.git("status", "--porcelain") == "",
+                      "e_land_origin_lacks_checked_out: the held-stuck line, origin has no main, the entry permanent, "
+                      "the file kept (%r)" % got)
 
         def e_land_held_mode_takes():
             """row.held's session-branch tail (checked-out's alternatives 4 and 5, mode_takes): w2 has main checked out,
@@ -9773,7 +9781,11 @@ def selftest():
                  lambda r, d: d == dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome="remote-deleted"),
                  lambda r, d: "and origin has no main"),
                 # (3): no <default-ref> to build on -- never built on local main -- held as origin has no main
-                ("l-cod-origin-lacks", lambda r: r.git("update-ref", "-d", "refs/remotes/origin/main"), "origin/main",
+                # origin no longer has main, and the clone's tracking ref is pruned (fetch --prune)
+                ("l-cod-origin-lacks",
+                 lambda r: (subprocess.run(["git", "-C", r.bare, "update-ref", "-d", "refs/heads/main"], check=True),
+                            r.git("fetch", "-q", "--prune", "origin")),
+                 "origin/main",
                  lambda r, d: d == dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome="origin-lacks"),
                  lambda r, d: "and origin has no main"),
                 ("l-cod-refused", lambda r: hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n"), "origin/main",
@@ -9882,8 +9894,9 @@ def selftest():
             check(not any("failed (failed)" in x or "()" in x or "None" in x for x in rendered[-2:]),
                   "l_checked_out_detail: neither new form reads an empty () or None (%r)" % rendered[-2:])
 
-            # every detail _land_change can produce: from each push outcome _push_detail meets and each row
-            # _row_detail meets, and None (held with no push tried); checked_out_values and the fill never raise
+            # every detail _land_change can produce: from each push outcome _push_detail meets, each row _row_detail
+            # meets, origin-lacks (no <default-ref> to build on, specs-repo-git §4 step 1 (3)), and None (held with no
+            # push tried); checked_out_values and the fill never raise
             pushes = [{"outcome": o, "reason": why, "record": rec, "record_error": err}
                       for o, why in (("failed", "fatal: x"), ("failed", None), ("rejected", "[rejected] (fetch first)"),
                                      ("rejected", None))
@@ -9897,7 +9910,8 @@ def selftest():
                      for rec, date in (("/s/.git/workflows/push-refused/main", "2026-11-01"),
                                        ("/s/.git/workflows/push-refused/main", "an earlier run"),
                                        ("branch.main.workflowsPushRefused", "2026-11-01"))]
-            details = [_push_detail(x) for x in pushes] + [_row_detail(x) for x in rows] + [None]
+            details = ([_push_detail(x) for x in pushes] + [_row_detail(x) for x in rows]
+                       + [_checked_out_detail("origin-lacks"), None])
             problems = []
             for detail in details:
                 try:
@@ -9911,7 +9925,7 @@ def selftest():
                         problems.append(line)
                 except Exception as e:  # any raise is the failure this check is for
                     problems.append("%r raised %s: %s" % (detail, type(e).__name__, e))
-            check(problems == [] and len(details) == 20,
+            check(problems == [] and len(details) == 21,
                   "l_checked_out_detail: every detail _land_change can produce maps and fills without raising (%r)"
                   % problems)
             # a push that gave no reason takes the words a status line with none gives (specs-repo-git §6)
