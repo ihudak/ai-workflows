@@ -2701,7 +2701,8 @@ def held_path(root):
 def _entry_ok(e):
     return (isinstance(e, dict) and all(k in e for k in HELD_FIELDS)
             and all(isinstance(e[k], str) and _OBJECT_ID.fullmatch(e[k]) for k in ("c1", "c2"))
-            and isinstance(e["paths"], dict) and (e["refused"] is None or isinstance(e["refused"], dict)))
+            and isinstance(e["paths"], dict) and (e["refused"] is None or isinstance(e["refused"], dict))
+            and isinstance(e.get("lift", {}), dict))
 
 
 def _read_held(path):
@@ -2802,9 +2803,19 @@ def held_rebuild(root, entry, drop):
         _held_remove(root, [entry["c2"]])
         return None
     tree = sb.tree_with(root, _tree(root, entry["c2"]), _at(root, entry["c1"], sorted(drop)))
-    new = dict(entry, c2=sb.commit_tree(root, tree, [entry["c1"]], _message(root, entry["c2"])), paths=keep)
+    new = _with_lift(dict(entry, c2=sb.commit_tree(root, tree, [entry["c1"]], _message(root, entry["c2"])), paths=keep))
     _held_put(root, new, replace=entry["c2"])
     return new
+
+
+def _with_lift(entry):
+    """<entry> with its lift overrides (P7 across calls) narrowed to the paths it holds, the field gone where none is
+    left."""
+    lift = {p: b for p, b in (entry.get("lift") or {}).items() if p in entry["paths"]}
+    out = {k: v for k, v in entry.items() if k != "lift"}
+    if lift:
+        out["lift"] = lift
+    return out
 
 
 def _held_orphans(root):
@@ -2890,14 +2901,15 @@ def _split(root, entry, refused):
     paths = sorted({x["path"] for x in refused})
     msg, first = _message(root, entry["c2"]), refused[0]
     tree = sb.tree_with(root, _tree(root, entry["c1"]), _at(root, entry["c2"], paths))
-    stuck = dict(entry, c2=sb.commit_tree(root, tree, [entry["c1"]], msg), old=None, tip=None, remote_only=False,
-                 paths={p: entry["paths"].get(p) for p in paths},
-                 refused={"reason": first["reason"], "path": first["path"], "detail": first["detail"], "permanent": True})
+    stuck = _with_lift(dict(entry, c2=sb.commit_tree(root, tree, [entry["c1"]], msg), old=None, tip=None,
+                            remote_only=False, paths={p: entry["paths"].get(p) for p in paths},
+                            refused={"reason": first["reason"], "path": first["path"], "detail": first["detail"],
+                                     "permanent": True}))
     rest = {p: b for p, b in entry["paths"].items() if p not in paths}
     if not rest:
         return stuck, None
     tree = sb.tree_with(root, _tree(root, entry["c2"]), _at(root, entry["c1"], paths))
-    return stuck, dict(entry, c2=sb.commit_tree(root, tree, [entry["c1"]], msg), paths=rest)
+    return stuck, _with_lift(dict(entry, c2=sb.commit_tree(root, tree, [entry["c1"]], msg), paths=rest))
 
 
 def _verified(root, entry, default, check=None):
@@ -2921,10 +2933,33 @@ def _verified(root, entry, default, check=None):
     return holds()
 
 
+def _lift_source(root, e, p):
+    """Where a lift of the landing <e> on <p> takes its version from: (None, its lift override) where it has one (P7
+    across calls), else (its c1, c1's blob)."""
+    lift = e.get("lift") or {}
+    if p in lift:
+        return None, lift[p]
+    return e["c1"], sb.blob(root, e["c1"], p)
+
+
+def _write_version(root, e, p, source, want):
+    """<p> written back as <want>: from <source>, a commit, by sb.write_from; from <e>'s lift override (<source> None)
+    through a tree holding <want> at <p>, or none (removed). An override whose blob git no longer holds -- an entry held
+    past gc's pruning -- falls back to <e>'s c1. Returns the blob written, None where the path was removed."""
+    if source is None and want is not None and sb.git(root, "cat-file", "-e", want, check=False).returncode != 0:
+        source, want = e["c1"], sb.blob(root, e["c1"], p)
+    if source is None:
+        line = "100644 %s\t%s" % (want, p) if want else "0 %s\t%s" % (sb.ZERO, p)
+        source = sb.tree_with(root, _tree(root, e["c1"]), [line])
+    sb.write_from(root, source, p)
+    return want
+
+
 def _lift(root, chain):
     """The landing's lift (P7): for each path of the landed changes <chain> (oldest first, each {c1, paths: {path: c2's
-    blob}}) whose working copy is still the newest landing's c2 blob, write back the oldest c1 version along the chain
-    -- each earlier landing whose c2 blob is the version a later one started from -- so the stayed branch's checkout
+    blob}, lift}) whose working copy is still the newest landing's c2 blob, write back the version where the chain
+    began: that landing's lift override for the path, else its c1's, walked back through each earlier landing whose c2
+    blob is the version a later one started from, its override honoured the same way. So the stayed branch's checkout
     shows none of what landed. A path whose working copy changed since is left as it stands. Returns [(the landing's
     index in <chain>, {path, blob})], blob the version written back, None where the path was removed."""
     out, seen = [], set()
@@ -2935,15 +2970,49 @@ def _lift(root, chain):
             seen.add(p)
             if sb.worktree_blob(root, p) != chain[i]["paths"][p]:
                 continue
-            c1 = chain[i]["c1"]
-            want = sb.blob(root, c1, p)
+            at = i
+            source, want = _lift_source(root, chain[i], p)
             for j in range(i - 1, -1, -1):
                 if p in chain[j]["paths"] and chain[j]["paths"][p] == want:
-                    c1 = chain[j]["c1"]
-                    want = sb.blob(root, c1, p)
-            sb.write_from(root, c1, p)
-            out.append((i, {"path": p, "blob": want}))
+                    at = j
+                    source, want = _lift_source(root, chain[j], p)
+            out.append((i, {"path": p, "blob": _write_version(root, chain[at], p, source, want)}))
     return out
+
+
+def _carry_lift(root, landed):
+    """P7 across calls: after <landed> landed, each entry of the record that started from it on a path -- its c1 blob
+    there is landed's c2 blob: one still held, or one this call landed after it, whose own carry passes the override on
+    -- takes, as its lift override there, the version landed's own lift goes back to (its override, else its c1's), so
+    that entry's later lift returns the path to where the chain began, not to <landed>'s version. Its c1 stays as it is,
+    so own_change's input never changes: a deletion chained behind an edit is still applied where onto holds the edit.
+    """
+    own = landed.get("lift") or {}
+    for e in held_entries(root):
+        if e.get("here") or e["c2"] == landed["c2"]:
+            continue
+        lift = dict(e.get("lift") or {})
+        for p, b2 in landed["paths"].items():
+            if p in e["paths"] and sb.blob(root, e["c1"], p) == b2:
+                lift[p] = own[p] if p in own else sb.blob(root, landed["c1"], p)
+        if lift != (e.get("lift") or {}):
+            _held_put(root, dict(e, lift=lift))
+
+
+def _finish(root, chain, done):
+    """The end of a call that landed <chain> (oldest first): each landing's lift override carried, in order, to the
+    entries still held that started from it (_carry_lift, each landing read again from the record, where an earlier
+    one's carry may have set its own); then the lift over the chain as the record now holds it (_lift); then <done>'s
+    entries and refs removed. Run before a _Stop propagates too, so the overrides are written for every landing made.
+    Returns _lift's list."""
+    fresh = []
+    for c in chain:
+        c = next((e for e in held_entries(root) if e["c2"] == c["c2"]), c)
+        _carry_lift(root, c)
+        fresh.append(c)
+    lifted = _lift(root, fresh)
+    _held_remove(root, done)
+    return lifted
 
 
 def _still_held(root, entries):
@@ -3098,12 +3167,15 @@ def _restore_index(root, entry):
 
 
 def _here_move(root, e, in_record, register_rebuild, on_move):
-    """The here form (P2) for the change <e> on HEAD's branch e["branch"]: own_change onto HEAD; any refusal: kept,
-    nothing committed and nothing held; nothing to add: there; else the commit on HEAD, the journal entry (here, with
-    index_before), <on_move>, HEAD and index.lock rechecked, `update-ref refs/heads/<branch> <tip> <old>`, both
-    rechecked again, the index restored (_restore_index), the entry removed. No file is written and nothing lifted. A
-    failed recheck before the move removes the entry (locked, or LandStopped, nothing moved); after it, LandStopped
-    carrying pending, the entry kept for the resume or the held stage."""
+    """The here form (P2) for the change <e> on HEAD's branch e["branch"]: own_change onto HEAD, given
+    <register_rebuild> as the landing on <default> is, so a register the run changed is rebuilt rather than refusing the
+    whole change; any refusal: kept, nothing committed and nothing held; nothing to add: there; else the commit on HEAD,
+    the journal entry (here, with index_before), <on_move>, HEAD and index.lock rechecked, `update-ref
+    refs/heads/<branch> <tip> <old>`, both rechecked again, the index restored (_restore_index), the entry removed. No
+    file is written and nothing lifted. A failed recheck before the move removes the entry, nothing moved: with
+    index.lock standing, status locked; with HEAD off the branch, LandStopped carrying no pending, there being no move
+    to finish. A failed recheck after it: LandStopped carrying pending, the entry kept for the resume or the held stage.
+    """
     branch = e["branch"]
     ref = "refs/heads/" + branch
     head = _commit(root, "HEAD")
@@ -3171,15 +3243,15 @@ def land(root, branch, default, default_ref, message, snap, register_rebuild=Non
     <default> without moving the checkout, then lifted out of the working tree. In order: index.lock standing, locked,
     nothing written; c1 and c2 (_own_commits), nothing where they are one; the transient held entries it waits for
     retried first (P7; locally only where <retry_remote> is false, <check>(cost) before their capped calls), one that
-    stays held holding this change behind it, with its refused; then _land_change; then the lift over every landing
-    (_lift) and the journal entries removed. <here>, forced where <branch> is <default>: the here form instead
-    (_here_move). <facts> {kind, merged, command, stayed} go into a held entry; <on_move>(pending) is called just
-    before the move or the refspec push, once the journal entry is written. <resume>, an earlier call's pending, is
-    landed again from its c1 and c2 -- lifted only where its move is verified (P6) -- and its own journal entry is
-    never retried as a held one. Returns {status: landed, there, nothing, held, kept or locked; sha: the landed
-    commit, or the held one's c2; files; paths; lifted; onto: <default>, or <branch> in the here form; pushed: true
-    only on the refspec push; refused; stuck: the paths held alone beside a landing; held_landed: [{sha, files, paths,
-    branch}]; moves (sb._moves); pending}."""
+    stays held holding this change behind it, with its refused; then _land_change; then _finish: each landing's lift
+    override carried to the entries still held that started from it, the lift over every landing, the journal entries
+    removed. <here>, forced where <branch> is <default>: the here form instead (_here_move). <facts> {kind, merged,
+    command, stayed} go into a held entry; <on_move>(pending) is called just before the move or the refspec push, once
+    the journal entry is written. <resume>, an earlier call's pending, is landed again from its c1 and c2 -- lifted only
+    where its move is verified (P6) -- and its own journal entry is never retried as a held one. Returns {status:
+    landed, there, nothing, held, kept or locked; sha: the landed commit, or the held one's c2; files; paths; lifted;
+    onto: <default>, or <branch> in the here form; pushed: true only on the refspec push; refused; stuck: the paths held
+    alone beside a landing; held_landed: [{sha, files, paths, branch}]; moves (sb._moves); pending}."""
     if _head_branch(root) != branch:
         raise NotRun("HEAD is not on %s" % branch)
     _commit(root, default_ref)
@@ -3272,26 +3344,25 @@ def _land(root, branch, default, default_ref, message, snap, register_rebuild, h
                     out.update(status="held", sha=stuck["c2"], files=len(stuck["paths"]), paths=sorted(stuck["paths"]),
                                refused=stuck["refused"])
     except _Stop:
-        _lift(root, chain)
-        _held_remove(root, done)
+        _finish(root, chain, done)
         raise
-    out["lifted"] = sorted({x["path"] for _i, x in _lift(root, chain)})
-    _held_remove(root, done)
+    out["lifted"] = sorted({x["path"] for _i, x in _finish(root, chain, done)})
     return out
 
 
 def retry_held(root, default, default_ref, register_rebuild=None, check=None, retry_remote=True):
     """The held stage's primitive (P6, P7, P9, P28, P31): orphaned held refs removed; on a detached HEAD nothing more.
-    Each here journal finished where its move is verified (_finish_here) -- never dropped for HEAD's place. With HEAD
-    on <default>, or in session-branch mode, every other entry dropped with its ref, its files left to the flush, end's
-    commit or §8.2's. Otherwise: P8 first (_still_held, held_rebuild); then, oldest first, each landing journal lifted
-    where its move is verified (_verified), else landed again as a held entry; each permanent entry reported stuck; each
-    transient one landed by _land_change (C2's test and the refspec push included; locally only where <retry_remote> is
-    false; <check>(cost) before its capped calls, whose _Stop is raised after the landings so far are lifted), unless an
-    earlier one that stays held shares a path with it. Then the lift over every landing (_lift) and their entries
-    removed. Returns {landed: [{sha, files, paths, branch, lifted}], finished: [{sha, here, lifted}], failed and
-    stuck: [{refused, branch, kind, command, sha}], dropped: count}; lifted: [{path, blob}], the blob written back
-    (None where removed), for P11's snapshot."""
+    Each here journal finished where its move is verified (_finish_here) -- never dropped for HEAD's place. With HEAD on
+    <default>, or in session-branch mode (sb.mode, read here, so the primitive drops them whether or not its caller
+    tested the mode first), every other entry dropped with its ref, its files left to the flush, end's commit or §8.2's.
+    Otherwise: P8 first (_still_held, held_rebuild); then, oldest first, each landing journal lifted where its move is
+    verified (_verified), else landed again as a held entry; each permanent entry reported stuck; each transient one
+    landed by _land_change (C2's test and the refspec push included; locally only where <retry_remote> is false;
+    <check>(cost) before its capped calls, whose _Stop is raised after the landings so far are lifted), unless an
+    earlier one that stays held shares a path with it. Then _finish: each landing's lift override carried to the entries
+    still held that started from it, the lift over every landing, their entries removed. Returns {landed: [{sha, files,
+    paths, branch, lifted}], finished: [{sha, here, lifted}], failed and stuck: [{refused, branch, kind, command, sha}],
+    dropped: count}; lifted: [{path, blob}], the blob written back (None where removed), for P11's snapshot."""
     _commit(root, default_ref)
     return _write_bounded(_retry_held, root, default, default_ref, register_rebuild, check, retry_remote)
 
@@ -3354,13 +3425,11 @@ def _retry_held(root, default, default_ref, register_rebuild, check, retry_remot
             for p in e["paths"]:
                 blocked.setdefault(p, waits)
     except _Stop:
-        _lift(root, chain)
-        _held_remove(root, done)
+        _finish(root, chain, done)
         raise
     per = {}
-    for i, x in _lift(root, chain):
+    for i, x in _finish(root, chain, done):
         per.setdefault(i, []).append(x)
-    _held_remove(root, done)
     for i, (kind, e, got) in enumerate(info):
         if kind == "landed":
             out["landed"].append({"sha": got["sha"], "files": got["files"], "paths": got["paths"], "branch": e["branch"],
@@ -3428,7 +3497,7 @@ def land_cli(a):
         raise NotRun("usage: --commit-key is a key of addressing §1's grammar, got %s" % a.commit_key)
     snap = None if a.snapshot is None else _snapshot_arg(a.specs, a.snapshot)
     out = {"status": None, "sha7": None, "files": 0, "paths": [], "lifted": [], "default": default, "pushed": False,
-           "reason": None, "path": None, "permanent": None, "stuck": None, "error": None}
+           "reason": None, "detail": None, "path": None, "permanent": None, "stuck": None, "error": None}
     try:
         got = land(a.specs, a.branch, default, a.default_ref, session_subject(a.commit_key, a.command), snap,
                    a.register_rebuild, a.here, {"kind": None, "merged": None, "command": a.command, "stayed": a.branch})
@@ -3437,7 +3506,7 @@ def land_cli(a):
     refused, stuck = got["refused"] or {}, got["stuck"]
     return dict(out, status=got["status"], sha7=got["sha"][:7] if got["sha"] else None, files=got["files"],
                 paths=got["paths"], lifted=got["lifted"], pushed=got["pushed"], reason=refused.get("reason"),
-                path=refused.get("path"), permanent=refused.get("permanent"),
+                detail=refused.get("detail"), path=refused.get("path"), permanent=refused.get("permanent"),
                 stuck=None if stuck is None else {"sha7": stuck["sha"][:7], "paths": stuck["paths"],
                                                   "reason": stuck["refused"]["reason"], "path": stuck["refused"]["path"]})
 
@@ -3610,6 +3679,14 @@ def selftest():
     def local_day():
         """The local date `date +%Y-%m-%d` gives now, as _record_refusal writes it: read when the record is checked."""
         return time.strftime("%Y-%m-%d")
+
+    def dated(call):
+        """<call>()'s result, with the dates a line or record it wrote can carry: the UTC dates (utc_day) and the local
+        dates (local_day) read just before the call and just after it -- one each, or two where the call crossed
+        midnight. A check accepts either, so no crossing, before the call or during it, fails one."""
+        utc, local = utc_day(), local_day()
+        got = call()
+        return got, sorted({utc, utc_day()}), sorted({local, local_day()})
 
     class Repo:
         def __init__(self, path):
@@ -5846,11 +5923,11 @@ def selftest():
                     "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true"
                     % (sha7, files(n), specs))
 
-        def refused_tail(branch, specs, record_text, clear):
+        def refused_tail(branch, specs, record_text, clear, day):
             return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
                     "git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
                     "standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes to %s again, %s"
-                    % (branch, specs, utc_day(), branch, specs, utc_day(), branch, specs, branch, branch, clear))
+                    % (branch, specs, day, branch, specs, day, branch, specs, branch, branch, clear))
 
         def appended(paths_text):
             return "; the deliverable at %s remains uncommitted, as you asked" % paths_text
@@ -5989,19 +6066,20 @@ def selftest():
         rec_file = os.path.join(r.path, ".git", "workflows", "push-refused", "prd", "ACME-1-x")
         os.makedirs(os.path.dirname(rec_file))
 
-        def refused_before(sha7, date, record_text, clear):
+        def refused_before(sha7, date, record_text, clear, day):
             return ("Specs repo: committed %s (1 file) on %s — not pushed: origin refused pushes to %s on %s (%s), and every "
                     "commit since stays on local %s; " % (sha7, PLUGIN, PLUGIN, date, record_text, PLUGIN)
-                    + refused_tail(PLUGIN, r.path, record_text, clear))
+                    + refused_tail(PLUGIN, r.path, record_text, clear, day))
 
         for body, date in (("2026-11-01\n", "2026-11-01"), ("", "an earlier run")):
             with open(rec_file, "w", encoding="utf-8") as fh:
                 fh.write(body)
             seed(env, "/create-prd", branch=PLUGIN)
             r.write(RESUME, "r %s\n" % date)
-            got = run_end(env, "/create-prd")
+            got, days, _ = dated(lambda: run_end(env, "/create-prd"))
             check(got.get("row") == "refused-before"
-                  and got.get("print") == [refused_before(head(r)[:7], date, rec_file, "rm \"%s\"" % rec_file)]
+                  and any(got.get("print") == [refused_before(head(r)[:7], date, rec_file, "rm \"%s\"" % rec_file, d)]
+                          for d in days)
                   and on_origin(r, PLUGIN) == pushed_tip,
                   "e_refused_before: the record file holding %r names %s and its path (%r)" % (body, date, got))
         os.remove(rec_file)
@@ -6009,9 +6087,10 @@ def selftest():
         r.git("config", key, "2026-11-02")
         seed(env, "/create-prd", branch=PLUGIN)
         r.write(RESUME, "r config\n")
-        got = run_end(env, "/create-prd")
-        check(got.get("row") == "refused-before" and got.get("print") == [refused_before(
-            head(r)[:7], "2026-11-02", key, "git -C \"%s\" config --unset %s" % (r.path, key))] and "rm \"" not in got["line"],
+        got, days, _ = dated(lambda: run_end(env, "/create-prd"))
+        check(got.get("row") == "refused-before" and any(got.get("print") == [refused_before(
+            head(r)[:7], "2026-11-02", key, "git -C \"%s\" config --unset %s" % (r.path, key), d)] for d in days)
+              and "rm \"" not in got["line"],
               "e_refused_before: the configuration-key form names the key and its config --unset (%r)" % got)
 
         # e_push_refused
@@ -6022,21 +6101,21 @@ def selftest():
                    "there takes no push of %s, ")
         seed(env, "/create-prd", branch=PLUGIN)
         r.write(RESUME, "r\n")
-        got = run_end(env, "/create-prd")
-        want = (opening % (head(r)[:7], PLUGIN, PLUGIN) + "so this is recorded and no later run pushes it; "
-                + refused_tail(PLUGIN, r.path, rec_file, "rm \"%s\"" % rec_file))
-        check(got.get("row") == "push-refused" and got.get("print") == [want] and got.get("pushed") is False
-              and os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_day() + "\n",
+        got, days, ldays = dated(lambda: run_end(env, "/create-prd"))
+        want = [[opening % (head(r)[:7], PLUGIN, PLUGIN) + "so this is recorded and no later run pushes it; "
+                 + refused_tail(PLUGIN, r.path, rec_file, "rm \"%s\"" % rec_file, d)] for d in days]
+        check(got.get("row") == "push-refused" and got.get("print") in want and got.get("pushed") is False
+              and os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() in [d + "\n" for d in ldays],
               "e_push_refused: refused, the record file written under the common git directory with today's date (%r)" % got)
         shutil.rmtree(os.path.join(r.path, ".git", "workflows"))
         with open(os.path.join(r.path, ".git", "workflows"), "w", encoding="utf-8") as fh:
             fh.write("a file where the record's directory would go\n")
         seed(env, "/create-prd", branch=PLUGIN)
         r.write(RESUME, "r2\n")
-        got = run_end(env, "/create-prd")
-        want = (opening % (head(r)[:7], PLUGIN, PLUGIN) + "so this is recorded and no later run pushes it; "
-                + refused_tail(PLUGIN, r.path, key, "git -C \"%s\" config --unset %s" % (r.path, key)))
-        check(got.get("row") == "push-refused" and got.get("print") == [want] and r.git("config", "--get", key) == local_day(),
+        got, days, ldays = dated(lambda: run_end(env, "/create-prd"))
+        want = [[opening % (head(r)[:7], PLUGIN, PLUGIN) + "so this is recorded and no later run pushes it; "
+                 + refused_tail(PLUGIN, r.path, key, "git -C \"%s\" config --unset %s" % (r.path, key), d)] for d in days]
+        check(got.get("row") == "push-refused" and got.get("print") in want and r.git("config", "--get", key) in ldays,
               "e_push_refused: the file cannot be written, so the configuration key is (%r)" % got)
         r.git("config", "--unset", key)
         lock = os.path.join(r.path, ".git", "config.lock")
@@ -6161,17 +6240,19 @@ def selftest():
         h = head(r)
         r.git("switch", "-q", "--detach")
 
-        def g0_now(r, h):
-            """G0's block as end renders it now, its date read at the check (utc_day)."""
-            return lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": utc_day(), "<branch>": "main"})
-        g0 = g0_now(r, h)
+        def g0_on(r, h, days):
+            """G0's block as end renders it, one per day of <days> (dated)."""
+            return [lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": d, "<branch>": "main"})
+                    for d in days]
+        g0 = g0_on(r, h, [utc_day()])[0]  # seeded: end prints the block the record holds, never one it renders
         seed(env, "/specify", specs_git="blocked", guard="G0", guard_block=g0, branch=None)
         r.write(RESUME, "r\n")
         got = run_end(env, "/specify")
         check(got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0] and head(r) == h
               and record(env, "/specify") is None, "e_blocked: a record carrying blocked repeats G0's block (%r)" % got)
-        got = run_end(env, "/specify", "--no-preflight")
-        check(got.get("record") == "missing" and got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0_now(r, h)]
+        got, days, _ = dated(lambda: run_end(env, "/specify", "--no-preflight"))
+        check(got.get("record") == "missing" and got.get("row") == "blocked"
+              and got.get("print") in [[BLOCKED, b] for b in g0_on(r, h, days)]
               and head(r) == h and "?? " + RESUME in r.git("status", "--porcelain", "--untracked-files=all"),
               "e_blocked: no record, a detached HEAD and something to stage prints G0's block the first time (%r)" % got)
         os.remove(os.path.join(r.path, RESUME))
@@ -6185,15 +6266,15 @@ def selftest():
         ard = "specifications/PRD-ACME-1-x/ard.md"
         r.write(ard, "ard\n")
         r.write(RESUME, "r\n")
-        g0 = g0_now(r, h)
+        g0 = g0_on(r, h, [utc_day()])[0]
         seed(env, "/specify", specs_git="blocked", guard="G0", guard_block=g0, branch=None, declined=[ard])
         got = run_end(env, "/specify")
         check(got.get("row") == "blocked" and got.get("print") == [BLOCKED + appended(ard), g0] and head(r) == h
               and record(env, "/specify") is None,
               "e_declined_blocked: a record carrying blocked names the declined path, then G0's block (%r)" % got)
-        got = run_end(env, "/specify", "--no-preflight", "--declined", ard)
+        got, days, _ = dated(lambda: run_end(env, "/specify", "--no-preflight", "--declined", ard))
         check(got.get("record") == "missing" and got.get("row") == "blocked"
-              and got.get("print") == [BLOCKED + appended(ard), g0_now(r, h)] and head(r) == h,
+              and got.get("print") in [[BLOCKED + appended(ard), b] for b in g0_on(r, h, days)] and head(r) == h,
               "e_declined_blocked: on a detached HEAD with no preflight, the --declined path, then G0's block (%r)" % got)
         # ... and only where --specs still names the repository the start checked (§6): the review's two reproductions,
         # --specs "" from a cwd that is no repository and from another repository holding the path dirty, and --specs
@@ -6750,8 +6831,9 @@ def selftest():
         h = head(r)
         r.git("switch", "-q", "--detach")
         r.write(RESUME, "r\n")
-        got = run_end(env, "/specify")
-        check(got.get("record") == "found" and got.get("row") == "blocked" and got.get("print") == [BLOCKED, g0_now(r, h)]
+        got, days, _ = dated(lambda: run_end(env, "/specify"))
+        check(got.get("record") == "found" and got.get("row") == "blocked"
+              and got.get("print") in [[BLOCKED, b] for b in g0_on(r, h, days)]
               and head(r) == h and record(env, "/specify") is None,
               "e_g0_found: a found record on a detached HEAD prints G0's block, nothing committed (%r)" % got)
 
@@ -6815,10 +6897,10 @@ def selftest():
                   "e_push_status: another status is a failed push (%r)" % got)
             sb.git_bounded = canned("!\trefs/heads/main:refs/heads/main\t[remote rejected] (push declined due to "
                                     "repository rule violations)")
-            got = push(r.path, "main", False)
+            got, _, ldays = dated(lambda: push(r.path, "main", False))
             check(got == {"outcome": "refused", "reason": "push declined due to repository rule violations",
                           "recorded": "file", "record": rec_file, "record_error": None}
-                  and open(rec_file, encoding="utf-8").read() == local_day() + "\n",
+                  and open(rec_file, encoding="utf-8").read() in [d + "\n" for d in ldays],
                   "e_push_status: a host's refusal is recorded (%r)" % got)
         finally:
             sb.git_bounded = real_bounded
@@ -6858,7 +6940,7 @@ def selftest():
         HELD = "refs/workflows/held/"
         MSG = session_subject(None, "/feedback")
         PENDING = {"c1", "c2", "old", "tip", "onto", "paths", "remote_only", "here", "index_before"}
-        CLI_FIELDS = {"status", "sha7", "files", "paths", "lifted", "default", "pushed", "reason", "path", "permanent",
+        CLI_FIELDS = {"status", "sha7", "files", "paths", "lifted", "default", "pushed", "reason", "detail", "path", "permanent",
                       "stuck", "error"}
 
         def case(name, fn):
@@ -7318,6 +7400,26 @@ def selftest():
                   "l_held_then_own: the held entry lands first, then the run's own, the file lifted to the entry's c1 "
                   "(%r, %r)" % (got, read(r, FUP)))
 
+        def l_held_then_own_there():
+            # as l_held_then_own, but main already holds the run's own line: the own change is there, never journalled,
+            # so no carry reaches it, and only the walk-back through the held entry lifts the file to HEAD's version
+            r = lworld("l-held-then-own-there")
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            snap = snapshot(r.path)
+            o = clone(r, "l-held-then-own-there-other")
+            o.write(FUP, "- [ ] a\n- [ ] l2\n")
+            o.commit_all("ACME-1 l2")
+            o.git("push", "-q", "origin", "main")
+            r.git("fetch", "-q", "origin")
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            got = do_land(r, snap=snap)
+            check(got["status"] == "there" and len(got["held_landed"]) == 1 and read(r, FUP) == "- [ ] a\n"
+                  and porcelain(r) == "" and held(r) == [],
+                  "l_held_then_own_there: the entry lands, the own change is there, the file lifted to HEAD's (%r, %r)"
+                  % (got, read(r, FUP)))
+
         def l_retry_local_only():
             r = lworld("l-retry-local")
             worktree(r, "l-retry-local-w2")
@@ -7367,6 +7469,118 @@ def selftest():
                   and show(r, tip, FB) != "" and show(r, tip, FB2) == "" and read(r, FB) is None
                   and read(r, FB2) == ENTRY % "two",
                   "l_retry_budget: the first landed, the second kept, _Stop propagated (%r, %r, %r)" % (raised, calls, entries))
+
+        def first_move_only(calls):
+            """move_branch real for its first call, locked after it: the held entry lands, the run's own stays held."""
+            real = sb.move_branch
+
+            def fake(*args, **kw):
+                calls.append(1)
+                return real(*args, **kw) if len(calls) == 1 else locked_move()(*args, **kw)
+            return fake
+
+        def stopped_chain(name):
+            """E1 and E2 held, chained on follow-ups.md (E2 started from E1's version); a _Stop lands E1 alone."""
+            r = lworld(name)
+            worktree(r, name + "-w2")
+            r.git("remote", "set-url", "origin", os.path.join(tmp, "nowhere.git"))
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            do_land(r)
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            do_land(r, snap=snap)
+            second = held(r)[1]
+            r.git("remote", "set-url", "origin", r.bare)
+            calls = []
+
+            def budget(cost):
+                calls.append(cost)
+                if len(calls) == 2:
+                    raise _Stop()
+            try:
+                retry_held(r.path, "main", "origin/main", check=budget)
+            except _Stop:
+                pass
+            return r, second
+
+        def l_chain_partly_stopped():
+            r, second = stopped_chain("l-chain-stopped")
+            left = held(r)
+            check(len(left) == 1 and left[0]["c2"] == second["c2"]
+                  and left[0].get("lift") == {FUP: r.git("rev-parse", "HEAD:" + FUP)}
+                  and read(r, FUP) == "- [ ] a\n- [ ] l1\n- [ ] l2\n",
+                  "l_chain_partly_stopped: E1 landed, E2 kept with its lift where the chain began (%r)" % left)
+            got = retry_held(r.path, "main", "origin/main")
+            o = subprocess.run(["git", "-C", r.bare, "show", "main:" + FUP], stdout=subprocess.PIPE).stdout.decode()
+            check(len(got["landed"]) == 1 and o == "- [ ] a\n- [ ] l1\n- [ ] l2\n" and read(r, FUP) == "- [ ] a\n"
+                  and porcelain(r) == "" and held(r) == [],
+                  "l_chain_partly_stopped: E2 lands later, the working copy back where the chain began, no E1 line "
+                  "(%r, %r)" % (got, read(r, FUP)))
+
+        def l_chain_lift_pruned():
+            # an override whose blob git no longer holds (an entry held past gc's pruning): the lift falls back to c1
+            r, second = stopped_chain("l-chain-pruned")
+            missing = "0" * 39 + "1"
+            g["_held_put"](r.path, dict(held(r)[0], lift={FUP: missing}))
+            got = retry_held(r.path, "main", "origin/main")
+            check(len(got["landed"]) == 1 and read(r, FUP) == "- [ ] a\n- [ ] l1\n" and held(r) == []
+                  and got["landed"][0]["lifted"] == [{"path": FUP, "blob": r.git("rev-parse", second["c1"] + ":" + FUP)}],
+                  "l_chain_lift_pruned: a missing override blob falls back to the entry's c1 (%r)" % got)
+
+        def l_chain_partly_own():
+            # E1 lands in land's step 3; the run's own change, started from E1's version, then stays held
+            r = lworld("l-chain-own")
+            r.write(FUP, "- [ ] a\n- [ ] l1\n")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            snap = snapshot(r.path)
+            r.write(FUP, "- [ ] a\n- [ ] l1\n- [ ] l2\n")
+            calls = []
+            with patched("move_branch", first_move_only(calls)):
+                got = do_land(r, snap=snap)
+            left = held(r)
+            check(len(got["held_landed"]) == 1 and got["status"] == "held" and len(calls) == 2 and len(left) == 1
+                  and left[0]["c2"] == got["sha"] and left[0].get("lift") == {FUP: r.git("rev-parse", "HEAD:" + FUP)}
+                  and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] l1",
+                  "l_chain_partly_own: E1 landed, the own change held with its lift where the chain began (%r, %r)"
+                  % (got, left))
+            got = retry_held(r.path, "main", "origin/main")
+            check(len(got["landed"]) == 1 and show(r, main_of(r), FUP) == "- [ ] a\n- [ ] l1\n- [ ] l2"
+                  and read(r, FUP) == "- [ ] a\n" and porcelain(r) == "" and held(r) == [],
+                  "l_chain_partly_own: it lands later, the working copy back where the chain began, no E1 line (%r, %r)"
+                  % (got, read(r, FUP)))
+
+        def l_chain_delete_behind_whole():
+            # a deletion chained behind a whole-file edit: E1 resume.md v0 -> v1 lands, E2 v1 -> absent stays held
+            r = lworld("l-chain-delete", extra=[(RESUME, "v0\n")])
+            r.write(RESUME, "v1\n")
+            with patched("move_branch", locked_move()):
+                do_land(r)
+            snap = snapshot(r.path)
+            os.remove(os.path.join(r.path, RESUME))
+            calls = []
+            with patched("move_branch", first_move_only(calls)):
+                got = do_land(r, snap=snap)
+            left = held(r)
+            check(got["status"] == "held" and len(left) == 1 and show(r, main_of(r), RESUME) == "v1"
+                  and left[0].get("lift") == {RESUME: r.git("rev-parse", "HEAD:" + RESUME)},
+                  "l_chain_delete_behind_whole: E1 landed, the deletion held with its lift at v0 (%r, %r)" % (got, left))
+            got = retry_held(r.path, "main", "origin/main")
+            check(len(got["landed"]) == 1 and got["stuck"] == [] and show(r, main_of(r), RESUME) == ""
+                  and read(r, RESUME) == "v0\n" and porcelain(r) == "" and held(r) == [],
+                  "l_chain_delete_behind_whole: the deletion lands, the working copy back at v0 (%r, %r)"
+                  % (got, read(r, RESUME)))
+
+        def l_cli_detail():
+            r = lworld("l-cli-detail")
+            worktree(r, "l-cli-detail-w2")
+            r.git("remote", "set-url", "origin", os.path.join(tmp, "nowhere.git"))
+            r.write(FB, ENTRY % "mine")
+            got = cli("--specs", r.path, "land", "--branch", LB, "--default-ref", "origin/main", "--command", "/feedback",
+                      env=r.env)
+            check(got["_rc"] == 0 and got.get("status") == "held" and got.get("reason") == "checked-out"
+                  and got.get("detail") == "failed" and got.get("permanent") is False,
+                  "l_cli_detail: a checked-out hold prints the refspec push's outcome as detail (%r)" % got)
 
         def l_retry_held_edited():
             r = lworld("l-retry-edited")
@@ -7441,12 +7655,14 @@ def selftest():
             r.write(FB, ENTRY % "mine")
             with patched("move_branch", locked_move()):
                 do_land(r)
-            entry = held(r)[0]
+            entry = dict(held(r)[0], lift={FUP: r.git("rev-parse", "HEAD:" + FUP), FB: None})
+            g["_held_put"](r.path, entry)  # a lift override on each path, as a partly landed chain leaves one
             new = held_rebuild(r.path, entry, [FB])
             check(new is not None and list(new["paths"]) == [FUP] and new["c2"] != entry["c2"] and held(r) == [new]
                   and held_refs(r) == [HELD + new["c2"]] and changed(r, new["c2"]) == [FUP]
-                  and r.git("rev-parse", new["c2"] + "^") == entry["c1"] and read(r, FB) == ENTRY % "mine",
-                  "l_held_rebuild: rebuilt without the path (%r)" % new)
+                  and r.git("rev-parse", new["c2"] + "^") == entry["c1"] and read(r, FB) == ENTRY % "mine"
+                  and new.get("lift") == {FUP: entry["lift"][FUP]},
+                  "l_held_rebuild: rebuilt without the path, its lift override with it (%r)" % new)
             gone = held_rebuild(r.path, new, [FUP])
             check(gone is None and held(r) == [] and held_refs(r) == [] and read(r, FUP) == "- [ ] a\n- [ ] x\n",
                   "l_held_rebuild: an entry left with no file is dropped")
@@ -7719,11 +7935,11 @@ def selftest():
             return ("%s — pushed after a replay: origin's %s had moved on, so the run replayed its %d commit(s) onto it%s"
                     % (opening, branch, k, tail))
 
-        def refused_tail(branch, specs, record_path):
+        def refused_tail(branch, specs, record_path, day):
             return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
                     "git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
                     "standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes to %s again, rm \"%s\""
-                    % (branch, specs, utc_day(), branch, specs, utc_day(), branch, specs, branch, branch, record_path))
+                    % (branch, specs, day, branch, specs, day, branch, specs, branch, branch, record_path))
 
         def other_pushes(r, name, path, body="o\n", branch="main"):
             o = clone(r, name)
@@ -7905,17 +8121,17 @@ def selftest():
         hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n")
         r.write(FEED + "x.md", "x\n")
         nxt = ended(r, env, "/create-prd")
-        got = shell(nxt["run"], env)
+        got, days, ldays = dated(lambda: shell(nxt["run"], env))
         h = head(r)
         rec_file = os.path.join(r.path, ".git", "workflows", "push-refused", PLUGIN)
-        want = ("%s — origin's %s had moved on, so the run replayed its 1 commit(s) onto it and moved %s there, but push "
-                "REFUSED by origin (pre-receive hook declined): a rule there takes no push of %s, so this is recorded and "
-                "no later run pushes it; %s" % (committed(h[:7], PLUGIN), PLUGIN, PLUGIN, PLUGIN,
-                                                 refused_tail(PLUGIN, r.path, rec_file)))
-        check(got.get("row") == "moved" and got.get("print") == [want] and got.get("pushed") is False
+        want = [["%s — origin's %s had moved on, so the run replayed its 1 commit(s) onto it and moved %s there, but push "
+                 "REFUSED by origin (pre-receive hook declined): a rule there takes no push of %s, so this is recorded and "
+                 "no later run pushes it; %s" % (committed(h[:7], PLUGIN), PLUGIN, PLUGIN, PLUGIN,
+                                                  refused_tail(PLUGIN, r.path, rec_file, d))] for d in days]
+        check(got.get("row") == "moved" and got.get("print") in want and got.get("pushed") is False
               and on_origin(r, PLUGIN) != h and record(env, "/create-prd") is None,
               "r_refused_form: moved, not pushed, in its refused form (%r)" % got)
-        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_day() + "\n",
+        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() in [d + "\n" for d in ldays],
               "r_refused_form: the push-refusal record written as step 6 writes it")
 
         # r_start_current: the current branch's replay in §3.4's flush
@@ -8025,17 +8241,18 @@ def selftest():
         r.git("switch", "-q", "main")
         hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n")
         seed(env, "/specify", stage="settle-done", pending=[{"branch": V, "set_upstream": False, "standing": "main"}])
-        got = replay_cli(env, "start", "/specify", V)
+        got, days, ldays = dated(lambda: replay_cli(env, "start", "/specify", V))
         rec_file = os.path.join(r.path, ".git", "workflows", "push-refused", V)
-        want = ("Specs preflight: %s — origin's %s had moved on, so the run replayed its 1 commit(s) onto it and moved %s "
-                "there, but push REFUSED by origin (pre-receive hook declined): a rule there takes no push of %s, so this "
-                "is recorded and no later run pushes it; %s" % (V, V, V, V, refused_tail(V, r.path, rec_file)))
-        check(got["_rc"] == 0 and got.get("print") == [want] and got.get("error") is None
+        want = [["Specs preflight: %s — origin's %s had moved on, so the run replayed its 1 commit(s) onto it and moved %s "
+                 "there, but push REFUSED by origin (pre-receive hook declined): a rule there takes no push of %s, so this "
+                 "is recorded and no later run pushes it; %s" % (V, V, V, V, refused_tail(V, r.path, rec_file, d))]
+                for d in days]
+        check(got["_rc"] == 0 and got.get("print") in want and got.get("error") is None
               and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify")
               and r.git("rev-parse", V + "~1") == head(o) and on_origin(r, V) == head(o)
               and r.git("symbolic-ref", "--short", "HEAD") == "main",
               "r_start_refused: moved, not pushed, its refused form in Specs preflight: form (%r)" % got)
-        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() == local_day() + "\n"
+        check(os.path.isfile(rec_file) and open(rec_file, encoding="utf-8").read() in [d + "\n" for d in ldays]
               and (record(env, "/specify") or {}).get("stage") == "disposition",
               "r_start_refused: the push-refusal record written, the record on to §3.5")
 
@@ -8151,12 +8368,12 @@ def selftest():
             got = render(result, error, partial)
             check(got == opening + why + closing, "r_canned: moved, not pushed — %s (%r)" % (what, got))
         pf = dict(branch="prd/A-1-x", standing="prd/A-1-x", reason="pre-receive hook declined")
-        got = render(dict(moved, porcelain=declined.replace("main", "prd/A-1-x")), record="/r", record_kind="file",
-                     record_error=None, **pf)
-        check(got == ("%s — origin's prd/A-1-x had moved on, so the run replayed its 1 commit(s) onto it and moved "
-                      "prd/A-1-x there, but push REFUSED by origin (pre-receive hook declined): a rule there takes no push "
-                      "of prd/A-1-x, so this is recorded and no later run pushes it; %s"
-                      % (committed("bbbbbbb", "prd/A-1-x", 2), refused_tail("prd/A-1-x", "/s", "/r"))),
+        got, days, _ = dated(lambda: render(dict(moved, porcelain=declined.replace("main", "prd/A-1-x")), record="/r",
+                                            record_kind="file", record_error=None, **pf))
+        check(got in [("%s — origin's prd/A-1-x had moved on, so the run replayed its 1 commit(s) onto it and moved "
+                       "prd/A-1-x there, but push REFUSED by origin (pre-receive hook declined): a rule there takes no push "
+                       "of prd/A-1-x, so this is recorded and no later run pushes it; %s"
+                       % (committed("bbbbbbb", "prd/A-1-x", 2), refused_tail("prd/A-1-x", "/s", "/r", d))) for d in days],
               "r_canned: the refused form, recorded (%r)" % got)
         got = render(dict(moved, porcelain=declined), record=None, record_kind=None, record_error="e",
                      reason="pre-receive hook declined")
@@ -8164,12 +8381,12 @@ def selftest():
                       "but push REFUSED by origin (pre-receive hook declined): a rule there takes no push of main, but this "
                       "could not be recorded (e, the configuration write's), so a later run pushes main again"
                       % committed("bbbbbbb", "main", 2)), "r_canned: the refused form, unrecorded (%r)" % got)
-        got = render(dict(moved, porcelain=declined.replace("main", "prd/A-1-x")), preflight=True, sha7=None, files=None,
-                     record="/r", record_kind="file", record_error=None, **pf)
-        check(got == ("Specs preflight: prd/A-1-x — origin's prd/A-1-x had moved on, so the run replayed its 1 commit(s) "
-                      "onto it and moved prd/A-1-x there, but push REFUSED by origin (pre-receive hook declined): a rule "
-                      "there takes no push of prd/A-1-x, so this is recorded and no later run pushes it; %s"
-                      % refused_tail("prd/A-1-x", "/s", "/r")),
+        got, days, _ = dated(lambda: render(dict(moved, porcelain=declined.replace("main", "prd/A-1-x")), preflight=True,
+                                            sha7=None, files=None, record="/r", record_kind="file", record_error=None, **pf))
+        check(got in [("Specs preflight: prd/A-1-x — origin's prd/A-1-x had moved on, so the run replayed its 1 commit(s) "
+                       "onto it and moved prd/A-1-x there, but push REFUSED by origin (pre-receive hook declined): a rule "
+                       "there takes no push of prd/A-1-x, so this is recorded and no later run pushes it; %s"
+                       % refused_tail("prd/A-1-x", "/s", "/r", d)) for d in days],
               "r_canned: the refused form in its Specs preflight: form, recorded (%r)" % got)
         got = render(dict(moved, porcelain=declined), preflight=True, sha7=None, files=None, record=None, record_kind=None,
                      record_error="e", reason="pre-receive hook declined")
@@ -8591,8 +8808,10 @@ def selftest():
         r.git("switch", "-q", "--detach", "HEAD")
         r.write(RESUME, "r\n")
         h = head(r)
-        got = run_start(env, "/feedback")
-        block = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": utc_day(), "<branch>": "main"})
+        got, days, _ = dated(lambda: run_start(env, "/feedback"))
+        blocks = [lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": d, "<branch>": "main"})
+                  for d in days]
+        block = next((b for b in blocks if got.get("print") == [env_line(r.path), b]), blocks[-1])
         check(got.get("print") == [env_line(r.path), block] and got.get("specs_git") == "blocked" and got.get("guard") == "G0"
               and got.get("branch") is None and head(r) == h,
               "t_g0: a detached HEAD prints G0's block and sets blocked (%r)" % got)
@@ -8745,15 +8964,15 @@ def selftest():
         r.git("push", "-q", "-u", "origin", PLUGIN)
         hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n")
         r.write(RESUME, "r\n")
-        got = run_start(env, "/feedback", "--key", "ACME-1")
+        got, days, _ = dated(lambda: run_start(env, "/feedback", "--key", "ACME-1"))
         p, rec_file = r.path, os.path.join(r.path, ".git", "workflows", "push-refused", PLUGIN)
-        want = ("Specs preflight: %s not pushed — origin refused it (pre-receive hook declined), and this is recorded so no "
-                "later run pushes it; to land the commits on local %s, put them on a branch of their own and open a pull "
-                "request from it — git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin "
-                "session-files-%s — then, standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes "
-                "to %s again, rm \"%s\"" % (PLUGIN, PLUGIN, p, utc_day(), PLUGIN, p, utc_day(), PLUGIN, p, PLUGIN, PLUGIN,
-                                                rec_file))
-        check(got.get("print") == [env_line(p), want] and os.path.isfile(rec_file) and on_origin(r, PLUGIN) != head(r)
+        want = [[env_line(p), "Specs preflight: %s not pushed — origin refused it (pre-receive hook declined), and this is "
+                 "recorded so no later run pushes it; to land the commits on local %s, put them on a branch of their own and "
+                 "open a pull request from it — git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin "
+                 "session-files-%s — then, standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes "
+                 "to %s again, rm \"%s\"" % (PLUGIN, PLUGIN, p, d, PLUGIN, p, d, PLUGIN, p, PLUGIN, PLUGIN, rec_file)]
+                for d in days]
+        check(got.get("print") in want and os.path.isfile(rec_file) and on_origin(r, PLUGIN) != head(r)
               and got.get("branch") == PLUGIN, "t_flush_refused: the refusal in its Specs preflight: form, recorded (%r)" % got)
 
         # t_flush_failed: origin unreachable once the fetch has run, so the flush's push fails
@@ -9197,15 +9416,19 @@ def selftest():
               "t_b4_no_remote: no pull and no pull-failed line where there is no origin (%r)" % got)
 
         # t_rerun_blocked: a run --rerun carries blocked into prints the re-run's own block and keeps G0's for end. G0's
-        # date is the one the block was rendered with, read then (utc_day), never at this scenario's start, so a run
-        # across 00:00 UTC passes: t_rerun_blocked_midnight runs the case with the clock start reads crossing midnight
-        # between this scenario's start and the render (injected, in process; no sleeping)
+        # date is one of the days dated() reads just before and just after the call that rendered it, never one fixed at
+        # this scenario's start, so a run across 00:00 UTC passes: t_rerun_blocked_midnight runs the case with the clock
+        # start reads crossing midnight between this scenario's start and the render, and
+        # t_rerun_blocked_midnight_during with it crossing during the call, after the render (injected, in process; no
+        # sleeping)
         def rerun_blocked(label, name, first):
             r, env = world(tmp, name)
             r.git("switch", "-q", "--detach", "HEAD")
             h = head(r)
-            got = first(env, "/specify")
-            g0 = lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": utc_day(), "<branch>": "main"})
+            got, days, _ = dated(lambda: first(env, "/specify"))
+            blocks = [lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": d, "<branch>": "main"})
+                      for d in days]
+            g0 = next((b for b in blocks if got.get("print") == [env_line(r.path), b]), blocks[-1])
             check(got.get("print") == [env_line(r.path), g0] and got.get("specs_git") == "blocked",
                   "%s: G0 first (%r)" % (label, got))
             r.git("switch", "-q", "-c", "feature/x")
@@ -9219,6 +9442,7 @@ def selftest():
             got = run_end(env, "/specify")
             check(got.get("row") == "blocked" and got.get("print") == ["Specs repo: NOT COMMITTED — see the notice below", g0]
                   and head(r) == h, "%s: end prints G0's block with the blocked row (%r)" % (label, got))
+            return g0
         rerun_blocked("t_rerun_blocked", "t-rerun-blocked", run_start)
 
         def start_past_midnight(env, command):
@@ -9231,6 +9455,21 @@ def selftest():
             rerun_blocked("t_rerun_blocked_midnight", "t-rerun-blocked-midnight", start_past_midnight)
         finally:
             g["_today"] = real_today
+        # ... and with the clock crossing midnight during the call, after the render: G0 carries the day before
+        before = time.strftime("%Y-%m-%d", time.gmtime(time.time() - 86400))  # a day distinct from tomorrow's
+        day = [before]
+
+        def start_then_midnight(env, command):
+            got = start_past_midnight(env, command)
+            day[0] = tomorrow  # 00:00 UTC passes as start returns, after it rendered G0
+            return got
+        g["_today"] = lambda: day[0]
+        try:
+            g0 = rerun_blocked("t_rerun_blocked_midnight_during", "t-rerun-blocked-midnight-during", start_then_midnight)
+        finally:
+            g["_today"] = real_today
+        check(day[0] == tomorrow and before in g0 and tomorrow not in g0,
+              "t_rerun_blocked_midnight_during: G0 rendered on the day before the crossing, and checked as such (%r)" % g0)
 
         # t_rerun_no_record
         r, env = world(tmp, "t-rerun-no-record")
