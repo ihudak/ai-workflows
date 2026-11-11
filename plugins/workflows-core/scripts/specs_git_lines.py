@@ -241,6 +241,10 @@ T = {
     # row.refused-before words it; a push origin refused that could be recorded neither way, as app.unrecorded.
     "reason.land.checked-out": "another worktree, <path>, has <default> checked out, and <the push of the commit by refspec failed (<reason>) | there is no origin to push the commit to | your git configuration pushes <default> to <remote>, not to origin | origin has no <default> any more | origin refuses pushes to <default> (<the refusal>), so from the next run session-branch mode takes these files | origin refused pushes to <default> on <date> (<record>), so from the next run session-branch mode takes these files | origin refuses pushes to <default> (<the refusal>), but this could not be recorded (<error>, the configuration write's), so a later run pushes <default> again>",
     "reason.land.no-preflight": "this run stopped before its preflight, so nothing tells its files from that run's",
+    # A run typed mid-run whose start took no snapshot (status could not run, or the start was cut off before taking
+    # one), the open run still standing at its end: it commits nothing, by the landing or the here form (specs-repo-git
+    # §4 step 1 (1)); on the mid-run row alone.
+    "reason.land.no-snapshot": "this run's start took no snapshot of the session files then uncommitted, so nothing tells its files from that run's",
     # An end --resume whose here-form journal could not be finished while the open run still stands; <branch> the
     # journal's, which is HEAD's.
     "reason.land.unfinished": "<branch> moved on without the commit this run was making on it when it was cut off, so that commit was dropped unfinished",

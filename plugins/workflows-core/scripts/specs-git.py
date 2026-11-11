@@ -664,7 +664,9 @@ STAY_KINDS = ("unkeyed", "merged", "mid-run")
 STAY_REASONS = ("g1", "unlisted", "refused", "stopped", "mid-run")
 # The landing's refusal codes -- own_change's and land's own -- each mapped to its reason clause (specs-repo-git §6,
 # the landing's reason clause); locked reuses the replay's reason.locked, which names no replay (P15). land's own
-# locked status, an index.lock, takes the Locked row instead. unfinished is an end --resume's here-form journal that
+# locked status, an index.lock, takes the Locked row in the here form only: a landing that finds one at its start holds
+# the change for reason locked, a cause that passes (specs-repo-git §4 step 1 (2)) -- the rule _land's index.lock test,
+# which still returns locked for both, is to follow. unfinished is an end --resume's here-form journal that
 # could not be finished (§4 step 1's here form): on the mid-run row only where HEAD still stands on the journal's
 # branch and the open run still stands there; elsewhere the end goes on from step 1 on HEAD's branch.
 LAND_REASONS = {
@@ -5436,7 +5438,7 @@ def selftest():
                   "app.landed", "app.landed.unlisted", "app.held.stuck", "row.held", "row.held-stuck", "row.there",
                   "row.here", "row.midrun-kept", "pre.here.finished", "g1.landing.not_done.unlanded"]
         pinned += ["reason.land." + r for r in ("dropped", "edited", "forms", "deleted", "folder-gone", "register",
-                                                "moved", "checked-out", "no-preflight", "unfinished")]
+                                                "moved", "checked-out", "no-preflight", "no-snapshot", "unfinished")]
         ids += pinned
         ids += ["row.remote-deleted.default-tail", "row.scope.merge", "row.scope.no-file", "row.scope.hook", "row.scope.branch-path",
                 "row.moved.refused", "row.session-rejected", "row.session-rejected.conflict-ending"]
@@ -5800,6 +5802,27 @@ def selftest():
                          "commit this run was making on it when it was cut off, so that commit was dropped unfinished; "
                          "they stay in your working tree, and that run's terminal commit takes them with its own",
                   "l_fill_landing: the mid-run row with reason.land.unfinished (%r)" % got)
+            # a run typed mid-run whose start took no snapshot -- status could not run, or the start was cut off before
+            # taking one -- commits nothing while the open run stands: its clause holds for both causes, so it names
+            # neither a preflight that never ran nor a status that failed
+            got = lines.fill("row.midrun-kept", {"<command>": "/specify", "<branch>": "prd/B-2-y",
+                                                 "<reason clause>": lines.fill("reason.land.no-snapshot", {})})
+            check(got == "Specs repo: NOT COMMITTED — /specify's run in this session is still open on prd/B-2-y, and "
+                         "this run's own changes could not be committed apart from that run's: this run's start took no "
+                         "snapshot of the session files then uncommitted, so nothing tells its files from that run's; "
+                         "they stay in your working tree, and that run's terminal commit takes them with its own"
+                  and "preflight" not in T["reason.land.no-snapshot"],
+                  "l_fill_landing: the mid-run row with reason.land.no-snapshot, true for both causes (%r)" % got)
+            # a landing that found an index.lock at its start holds the change for reason locked, a cause that passes:
+            # the held row with reason.locked, its retry tail
+            got = lines.fill("row.held", {"<branch>": "prd/B-2-y", "<default>": "main",
+                                          "<reason clause>": lines.fill("reason.locked", {"<path>": ".git/index.lock"}),
+                                          span("row.held", "<which no key"): 0, span("row.held", "<held for"): 0})
+            check(got == "Specs repo: NOT COMMITTED — this run's preflight stayed on prd/B-2-y, which no key of this run "
+                         "names, and its files could not be committed on main without leaving it: .git/index.lock is "
+                         "held by another git process, or was left by one that died, and this plugin never deletes a "
+                         "lock; they stay in your working tree, held for main, and the next run tries again",
+                  "l_fill_landing: the held row with reason.locked, an index.lock at the landing's start (%r)" % got)
 
         try:
             if not all(t in T for t in pinned):
