@@ -2802,7 +2802,8 @@ def _held_lines(run, head, got):
             "<SPECS_PATH>": rec.get("specs") or specs, "<sha7>": x["sha"][:7], "<specs-git.py's path>": SG_SCRIPT,
             "<default-ref>": rec["default_ref"]})
     tried = [x["sha"] for kind in ("failed", "stuck") for x in got.get(kind) or []]
-    rec["held_attempted"] = list(dict.fromkeys(list(rec.get("held_attempted") or []) + tried))
+    base = got["settled"] if "settled" in got else (rec.get("held_attempted") or [])  # as P8's rebuilds left it
+    rec["held_attempted"] = list(dict.fromkeys(list(base) + tried))
     snap = rec.get("start_dirty")
     if isinstance(snap, dict):
         for x in [x for kind in ("landed", "finished") for y in got.get(kind) or [] for x in y.get("lifted") or []]:
@@ -3700,18 +3701,24 @@ def _p8_gone(root, also=()):
     return held, {e["c2"]: set(e["paths"]) - keep[e["c2"]] for e in held}
 
 
-def _apply_p8(root, also=()):
+def _apply_p8(root, also=(), moved=None):
     """P8, the step land's retries and retry_held share before their oldest-first walk, which a commit that carried
     held files changed since they were held repeats after it (_held_committed): over the held entries of the
     record (refused set), each path changed since it was held -- edited, committed, removed or restored, as
     _still_held reads it (_p8_gone), with <also> (the run's own change, in land; in no record, or in it under its own
     c2, and never rebuilt here) as the newest link a held entry's path may chain to -- leaves its entry, rebuilt without
-    it (held_rebuild); an entry left with no file is dropped. Returns how many were dropped."""
+    it (held_rebuild); an entry left with no file is dropped. <moved>, a dict where given, takes each rebuilt entry's
+    old c2 -> its new c2, or None where it was dropped, so retry_held's settled list follows it. Returns how many were
+    dropped."""
     held, gone = _p8_gone(root, also)
     dropped = 0
     for e in held:
-        if gone[e["c2"]] and held_rebuild(root, e, gone[e["c2"]]) is None:
-            dropped += 1
+        if gone[e["c2"]]:
+            new = held_rebuild(root, e, gone[e["c2"]])
+            if moved is not None:
+                moved[e["c2"]] = new["c2"] if new is not None else None
+            if new is None:
+                dropped += 1
     return dropped
 
 
@@ -4113,11 +4120,12 @@ def retry_held(root, default, default_ref, register_rebuild=None, check=None, re
     would race -- each permanent one reported stuck, a landing journal verified from the local refs alone (_verified,
     no fetch) reported nowhere, its lift waiting as a here journal's does, every other reported failed with a locked
     refusal naming the lock (the record keeps its own). <settled>: the c2 of each entry this start has already tried
-    and reported failed or stuck (the held stage's held_attempted), kept and reported nowhere again -- a failed one
-    still holding back, with its own refusal, the later entries that share a path with it -- so a resumed stage
-    spends no budget on it. Where none stands: P8 first (_apply_p8, which land's retries share); then, oldest first,
-    each landing journal lifted where its move is verified (_verified), else landed again as a held entry; each
-    permanent entry reported stuck; each transient one landed by _land_change (C2's test and the refspec push
+    and reported failed or stuck (the held stage's held_attempted), kept and reported nowhere again -- one P8
+    rebuilds under a new c2 following it there, the list as followed returned as settled where one was given; a
+    failed one still holding back, with its own refusal, the later entries that share a path with it -- so a resumed
+    stage spends no budget on it. Where none stands: P8 first (_apply_p8, which land's retries share); then, oldest
+    first, each landing journal lifted where its move is verified (_verified), else landed again as a held entry;
+    each permanent entry reported stuck; each transient one landed by _land_change (C2's test and the refspec push
     included; locally only where <retry_remote> is false; <check>(cost) before its capped calls, whose _Stop is
     raised after the landings so far are lifted), unless an earlier one that stays held shares a path with it -- then
     it is reported failed, and recorded, with that entry's refusal. Then _finish: each landing's lift override
@@ -4179,7 +4187,7 @@ def _retry_body(root, default, default_ref, register_rebuild, check, retry_remot
         _held_remove(root, [e["c2"] for e in rest])
         out["dropped"] += len(rest)
         return out
-    settled = set(settled)
+    tried, settled = list(settled), set(settled)
     shown, lock = sb.git_paths(root, "index.lock")[0]
     if rest and os.path.lexists(lock):  # specs-repo-git §3.2: under the lock every entry is kept as it is
         locked = {"reason": "locked", "path": shown, "detail": None, "permanent": False}
@@ -4193,7 +4201,11 @@ def _retry_body(root, default, default_ref, register_rebuild, check, retry_remot
             else:
                 out["failed"].append(dict(_held_info(e), refused=locked))
         return out
-    out["dropped"] += _apply_p8(root)
+    moved = {}
+    out["dropped"] += _apply_p8(root, moved=moved)
+    if tried:  # a settled entry P8 rebuilt keeps its place under its new c2, which the caller keeps (held_attempted)
+        tried = list(dict.fromkeys(c for c in (moved.get(c, c) for c in tried) if c))
+        settled, out["settled"] = set(tried), tried
     chain, done, blocked = [], [], {}
     try:
         for e in held_entries(root):
@@ -10133,6 +10145,38 @@ def selftest():
                   and line not in (got.get("print") or []) and rebuilt_to_left(r),
                   "e_end_changed_shown: shown once, a later resume does not repeat it (%r, %r, %r)" % (first, pending, got))
 
+        def t_held_resume_rebuilt():
+            """The re-review's out-of-scope case, ruled in: an entry E (FB and LEFT) settled as failed on one call of a
+            start, then FB edited before the next, so P8 rebuilds E under a new c2: the resumed stage still counts it as
+            tried -- not retried, its failed line not printed again -- and goes on to the next entry F. --budget 0, w2
+            on main, origin unreachable."""
+            third = "specifications/PRD-ACME-1-x/dev-workflows/feedback/third.md"
+            r, env, _w2 = held_transient("t-held-resume-rebuilt", files=[(FB, ENTRY % "mine"), (LEFT, ENTRY % "left")])
+            start_of(env)
+            r.write(third, ENTRY % "third")
+            run_end(env, "/feedback")
+            before = held(r)
+            calls = [start_of(env, "--budget", "0")]
+            calls.append(shell(calls[-1]["next"]["run"], env) if (calls[-1].get("next") or {}).get("run") else {})
+            r.write(FB, ENTRY % "edited")
+            calls.append(shell(calls[-1]["next"]["run"], env) if (calls[-1].get("next") or {}).get("run") else {})
+            after = held(r)
+
+            def failed(e):
+                detail = e["refused"].get("detail") or {}
+                clause = lines.fill("reason.land.checked-out", {"<path>": e["refused"]["path"], "<default>": "main",
+                                                                CHECKED: 0, "<reason>": detail.get("text")})
+                return lines.fill("pre.held.failed", {"<default>": "main", "<reason clause>": clause, FAILED_TAIL: 0})
+
+            want = ([[env_line(r.path)], [failed(after[0])], [failed(after[1]), g1_land(r)]]
+                    if len(after) == 2 else None)
+            check(len(before) == 2 and sorted(before[0]["paths"]) == [FB, LEFT] and list(before[1]["paths"]) == [third]
+                  and len(after) == 2 and list(after[0]["paths"]) == [LEFT] and after[0]["c2"] != before[0]["c2"]
+                  and [c.get("print") for c in calls] == want and calls[-1].get("next") is None
+                  and (record(env, "/feedback") or {}).get("held_attempted") == [],
+                  "t_held_resume_rebuilt: the rebuilt entry not retried, its line not printed again (%r, %r)"
+                  % ([c.get("print") for c in calls], after))
+
         def t_held_here_finished():
             """A here journal cut off before its update-ref (P2), HEAD on main: the next start's held stage runs the here
             form again and prints pre.here.finished -- its <branch> and <N> from retry_held's finished entry -- before
@@ -10200,7 +10244,7 @@ def selftest():
                          ("e_end_changed_resume", e_end_changed_resume), ("t_held_resume_stuck", t_held_resume_stuck),
                          ("e_end_changed_resume_push", e_end_changed_resume_push),
                          ("e_end_changed_resume_twice", e_end_changed_resume_twice),
-                         ("e_end_changed_shown", e_end_changed_shown)):
+                         ("e_end_changed_shown", e_end_changed_shown), ("t_held_resume_rebuilt", t_held_resume_rebuilt)):
             case(name, fn)
 
     def scenarios_land(tmp):
