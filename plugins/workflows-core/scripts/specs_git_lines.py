@@ -306,8 +306,6 @@ T = {
     "pre.rerun-failed": "Specs preflight: could not switch back to <branch> (<git's first error line>); this run goes on from <current>",
     # The re-run's switch back left undone where status could not run earlier in the run (specs-repo-git §3.5).
     "pre.rerun-stay": "Specs preflight: staying on <current> — the uncommitted paths could not be listed, so no branch is switched (it would have switched back to <branch>, as a key of this run names it)",
-    # The re-run's switch back left undone under a run typed mid-run (specs-repo-git §3.5), <command> the open run's.
-    "pre.rerun-stay.midrun": "Specs preflight: staying on <current> — <command>'s run in this session is still open on it, so no branch is switched (it would have switched back to <branch>, as a key of this run names it)",
     "pre.session-not-run": "Specs preflight: session-branch.py could not run (<the first line of its stderr>)",
     "pre.stopped": "Specs preflight: stopped early (<the error>) — what it did is above, and the next run's preflight goes on from where this one stands",
     # §8: commit-artifacts' report of a lift or put-back around step 2, or a step 4 commit after a lift's commit made the

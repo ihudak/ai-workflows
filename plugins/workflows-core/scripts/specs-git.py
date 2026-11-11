@@ -1269,12 +1269,13 @@ def _replay_next(specs, command, branch, set_upstream, for_="end", started=None)
     return {"run": run, "timeout_ms": REPLAY_TIMEOUT_MS, "on_timeout": run + " --timed-out"}
 
 
-def _resume_next(command, args, budget=None):
+def _resume_next(command, args, budget=None, started=None):
     """The call that goes on with a start the replay or a budget stop interrupted: start --resume, repeating the start
     call's --specs, every --key in order, --commit-key and --register-rebuild as the record's <args> hold them, so the
     resume passes resumable's argument test, and --budget where the record's <budget> holds one (a start call's that
-    was not the default) -- how the preflight is split across calls, which no argument test reads; in a Bash call of
-    its own, start's 600 s, nothing to run on a timeout."""
+    was not the default) -- how the preflight is split across calls, which no argument test reads -- and --started
+    <started>, the record's own, where the call was given one, so the resume goes on with that record (state.find,
+    specs-repo-git §3.5); in a Bash call of its own, start's 600 s, nothing to run on a timeout."""
     parts = ["--specs", args.get("specs") or "", "start", "--command", command]
     for key in args.get("keys") or []:
         parts += ["--key", key]
@@ -1283,6 +1284,8 @@ def _resume_next(command, args, budget=None):
             parts += [flag, args[field]]
     if budget is not None:
         parts += ["--budget", "%g" % budget]
+    if started:
+        parts += ["--started", started]
     run = " ".join(["python3", shlex.quote(os.path.abspath(__file__))] + [shlex.quote(p) for p in parts + ["--resume"]])
     return {"run": run, "timeout_ms": START_TIMEOUT_MS, "on_timeout": None}
 
@@ -2419,7 +2422,7 @@ def _replay_start(run, rec, branch, set_upstream, timed_out):
     if stage == "settle-done" and rec["pending"]:
         nxt = _queued_next(run, rec)
     else:
-        nxt = _resume_next(run["command"], rec.get("args") or {}, rec.get("budget"))
+        nxt = _resume_next(run["command"], rec.get("args") or {}, rec.get("budget"), run.get("started"))
     return {"print": [line], "next": nxt, "error": None}
 
 
@@ -2456,7 +2459,7 @@ def _emit(run, line):
 
 
 def _save(run):
-    run["state"].save(run["session"], run["command"], run["rec"])
+    run["state"].save(run["session"], run["command"], run["rec"], at=run.get("record_path"))
 
 
 def _advance(run, stage):
@@ -2680,19 +2683,17 @@ def _block_part(block, label, text):
     return "\n".join(rows[:i] + [(pad + text).rstrip()] + rows[j:])
 
 
-def _g2_block(lines, specs, branch, default, variant=None, values=None, midrun=None):
+def _g2_block(lines, specs, branch, default, variant=None, values=None):
     """specs-repo-git §5's G2 block for <branch>; with <variant> (implement: a direct /implement run from inside the
     specs repository; session and self: session-branch mode, on another branch or on the session branch itself, their
     <identity> in <values>; no-identity: session-branch mode where §8.1 resolves no identity), its Not done, Fix and If
     ignored parts are the g2.<variant>.* prose SRG gives in their place, each unwrapped on its one line. The mode's
-    variants take precedence over implement (§5). Under a run typed mid-run (<midrun>, the record's: the open run), the
-    mid-run form of whichever variant it is (_g2_midrun)."""
+    variants take precedence over implement (§5)."""
     block = lines.T["g2"]
     if variant:
         for label, part in (("Not done:", "not_done"), ("Fix:", "fix"), ("If ignored:", "if_ignored")):
             block = _block_part(block, label, lines.T["g2.%s.%s" % (variant, part)])
-    block = lines.fill(block, dict({"<SPECS_PATH>": specs, "<branch>": branch, "<default>": default}, **(values or {})))
-    return _g2_midrun(lines, block, midrun) if midrun else block
+    return lines.fill(block, dict({"<SPECS_PATH>": specs, "<branch>": branch, "<default>": default}, **(values or {})))
 
 
 def _g2_midrun(lines, block, midrun):
@@ -3005,9 +3006,8 @@ def _fetch(run):
     the keys B3 and B4 read) -- in session-branch mode inside lift
     and put-back (_Session.wrap), a skipped one reported as a refused one -- left undone, pre.rerun-stay printed, where
     status could not run earlier in the run (pre.status-failed in reported, which --rerun carries), the dirty set
-    unknown, as _disposition stays then; and left undone under a run typed mid-run (the record's midrun), since the
-    switch would move the checkout under the open run, pre.rerun-stay.midrun printed and b4_left kept, so a later
-    re-run that is not typed mid-run still switches back (specs-repo-git §3.5). A gate that did not pass leaves nothing more to do; otherwise §3.2's held
+    unknown, as _disposition stays then. A run typed mid-run holds no branch B4 left -- its first start switched
+    nothing -- so a re-run that carries its open run makes no switch back (specs-repo-git §3.5). A gate that did not pass leaves nothing more to do; otherwise §3.2's held
     stage comes next -- under misrooted, which it never runs under, the disposition. The budget's one unit here covers
     both fetches: this stage is a call's first, whose first unit always goes ahead."""
     rec, specs = run["rec"], run["specs"]
@@ -3035,9 +3035,6 @@ def _fetch(run):
 
         if "pre.status-failed" in rec["reported"]:
             _emit(run, run["lines"].fill("pre.rerun-stay", {"<current>": current(), "<branch>": left}))
-        elif rec.get("midrun"):
-            _emit(run, run["lines"].fill("pre.rerun-stay.midrun", {"<current>": current(), "<branch>": left,
-                                                                    "<command>": rec["midrun"].get("command")}))
         else:
             sess = _session(run)
             why = switch_back() if sess is None else sess.wrap(switch_back)[1]
@@ -3094,7 +3091,8 @@ def _held_stage(run):
                 _emit(run, lines.fill("pre.pushed-left", {"<N>": len(commits), "<branch>": default}))
             elif done["outcome"] == "rejected":
                 _save(run)
-                return _replay_next(specs, run["command"], default, done["set_upstream"], "start")
+                return _replay_next(specs, run["command"], default, done["set_upstream"], "start",
+                                    started=run.get("started"))
     rec["held_attempted"] = []  # the stage is done: nothing resumes it in this start
     _advance(run, "guards")
 
@@ -3250,7 +3248,7 @@ def _flush(run):
     done = _push(run, head)
     if done["outcome"] == "rejected":
         _save(run)
-        return _replay_next(specs, run["command"], head, done["set_upstream"], "start")
+        return _replay_next(specs, run["command"], head, done["set_upstream"], "start", started=run.get("started"))
     _advance(run, "settle")
 
 
@@ -3407,7 +3405,8 @@ def _carry(rec, old):
     keeps beside a block the re-run prints), the -D advisories given and the once-a-run reports printed, the branch B2
     or the merged-branch leave reported (which §3.4's loop skips for the whole run), the branch B4 left, the declined
     paths, the session branch's creation by a call other than the flush, which the run carries to its end (§8.2), and
-    the run's snapshot (§7), since a re-run takes none of its own and _close only narrows the one it carries. Never
+    the run's snapshot (§7), since a re-run takes none of its own and _close only narrows the one it carries, and the
+    open run the earlier start was typed under (midrun), which start then tests again (specs-repo-git §3.5). Never
     the stay: each preflight derives its own (§4 step 1), so a stay's reason is always one this preflight met -- an
     early stop asks branch-merged afresh (_stop_stay) -- and none survives where this one would no longer leave the
     branch or has left it."""
@@ -3422,13 +3421,15 @@ def _carry(rec, old):
     rec.update(advised_D=list(old.get("advised_D") or []), reported=list(old.get("reported") or []),
                b2_left=old.get("b2_left"), b4_left=old.get("b4_left"), declined=list(old.get("declined") or []),
                session_branch_created=old.get("session_branch_created"),
-               start_dirty=dict(snap) if isinstance(snap, dict) else None)
+               start_dirty=dict(snap) if isinstance(snap, dict) else None,
+               midrun=dict(old["midrun"]) if isinstance(old.get("midrun"), dict) else None)
 
 
 def _queued_next(run, rec):
     """The call that replays the first branch <rec>'s pending queue holds (specs-repo-git §3.4, after the loop)."""
     queued = rec["pending"][0]
-    return _replay_next(run["specs"], run["command"], queued["branch"], bool(queued.get("set_upstream")), "start")
+    return _replay_next(run["specs"], run["command"], queued["branch"], bool(queued.get("set_upstream")), "start",
+                        started=run.get("started"))
 
 
 def _start_result(run, nxt, replaced, error):
@@ -3503,18 +3504,25 @@ def _take_snapshot(run):
 
 
 def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun=False, resume=False,
-          budget=DEFAULT_BUDGET):
+          budget=DEFAULT_BUDGET, started=None):
     """specs-repo-git §3's specs-preflight for the run of this session and <command>, on <specs> (SPECS_PATH as set,
     "" meaning unset), with the run key set <keys>. A call that is not a resume prints the Environment: line and §3.1's
     notices (reads only), then saves a fresh record at stage fetch -- its first write -- takes the run's snapshot
     (_take_snapshot), save on a --rerun, and prunes -- having read, before that save, the open run this one is typed
     under, if any (rec["midrun"]), and parked this command's own record where it is an open run (replaced's parked:
-    true), save on a --rerun; a failure before that save raises, so the caller exits 2 with nothing done, and after it every outcome is returned, an exception as error and the pre.stopped line, after
+    true), save on a --rerun or a resume; a failure before that save raises, so the caller exits 2 with nothing done, and after it every outcome is returned, an exception as error and the pre.stopped line, after
     _stop_stay's ask on a plugin branch (§4 step 1's stay). The
     stages (START_STAGES) then run from the record's own, each saved on entering it and resumable from its start.
     <resume> goes on with the saved stage only where state.resumable holds for this call's arguments; otherwise the
     call runs fresh. <rerun> opens on this command's record, keeping what _carry
-    keeps, and saves this call's arguments, its key set among them. A stage that hands a replay over, and a unit of
+    keeps -- the open run its first start was typed under among them, tested again as end tests it (_midrun_stands),
+    and dropped where it no longer stands; a re-run reads no other record for one -- and saves this call's arguments,
+    its key set among them. <started>, with <rerun> or <resume> alone (--started, the run's last start JSON's): the
+    record is the one state.find names; where that is not <command>.json -- a parked run's -- a fresh call saves its
+    record under a stamp of its own (state.stamped), parked and protects as that record was, and removes the file it
+    replaced, <command>.json untouched; a resume goes on with it in place; and every next carries --started. A plain
+    start, and a resume that runs fresh, parks this command's own open record only where it is not a resume of that
+    record's run. A stage that hands a replay over, and a unit of
     capped calls <budget> would not hold, return next: the replay, or start --resume with the record's args. In
     session-branch mode the budget is checked before a wrapped move's lift, never between it and its put-back, so every
     call returns with the overlay in place; the closing put-back runs where the stages reach done or the call stops on
@@ -3527,12 +3535,16 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
             raise NotRun("usage: the key %s does not match addressing §1's key grammar" % key)
     if isinstance(budget, bool) or not isinstance(budget, (int, float)) or not math.isfinite(budget) or budget < 0:
         raise NotRun("usage: --budget takes seconds, 0 or more, got %s" % budget)
+    if started is not None and not (rerun or resume):
+        raise NotRun("usage: --started goes with --rerun or --resume, naming the run whose preflight runs again")
     session = state.session_id()
     args = {"specs": specs, "keys": list(keys), "commit_key": commit_key, "register_rebuild": register_rebuild}
-    old = state.load(session, command)
+    main = state.path(session, command)
+    at = _record_at(state, session, command, started) or main
+    old = state.load(session, command, at=at)
     run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "print": [],
-           "budget": _Budget(budget), "rec": old}
-    replaced, park = None, False
+           "budget": _Budget(budget), "rec": old, "record_path": None if at == main else at, "started": started}
+    replaced, park, apart = None, False, None
     fresh = not (resume and old is not None and old.get("stage") in START_STAGES and state.resumable(old, args))
     if fresh:
         env = env_line(specs)
@@ -3544,27 +3556,40 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
             rec.update(specs_git="misrooted", misrooted_notice=list(g["lines"]))
         if rerun and old is not None:
             _carry(rec, old)
-        elif old is not None:
+        elif old is not None and at == main:
             replaced = {"command": command, "started": old.get("started"), "parked": False}
-        # §3.5, read before the first save: the open run this one is typed under -- the oldest record of another
-        # command that the open-run test passes on HEAD's branch, which a parked one, marked protects: false, never
-        # does -- and, save on a --rerun, this command's own record where it is one, parked rather than replaced (the
-        # same command typed twice, P4)
+        # §3.5, read before the first save: on a run's first start, the open run this one is typed under -- the oldest
+        # record of another command that the open-run test passes on HEAD's branch, which a parked one, marked
+        # protects: false, never does; on a re-run, the one its first start found (_carry), tested again as end tests
+        # it, never one that started since -- and, on a plain start, this command's own record where it is an open
+        # run, parked rather than replaced (the same command typed twice, P4)
         head = _head_branch(specs) if g["state"] == "pass" else None
         if head is not None:
             now = time.time()
-            opened = next((o for o in state.others(session, command) if _open_run(o, head, g["top"], now)), None)
-            if opened is not None:
-                rec["midrun"] = {"command": opened.get("command"), "started": opened.get("started"), "branch": head}
-            park = not rerun and old is not None and _open_run(old, head, g["top"], now)
+            if rerun and old is not None:
+                if rec["midrun"] and not _midrun_stands(run, rec["midrun"], head, g["top"]):
+                    rec["midrun"] = None
+            else:
+                opened = next((o for o in state.others(session, command) if _open_run(o, head, g["top"], now)), None)
+                if opened is not None:
+                    rec["midrun"] = {"command": opened.get("command"), "started": opened.get("started"),
+                                     "branch": head}
+            park = (not rerun and not resume and old is not None and at == main
+                    and _open_run(old, head, g["top"], now))
+        if at != main:  # the run --started names keeps its record apart from <command>.json, under a stamp of its own
+            rec.update(parked=(old or {}).get("parked") is True, protects=(old or {}).get("protects") is not False)
+            apart, run["record_path"] = at, state.stamped(session, command, rec["started"])
         run["rec"], run["print"] = rec, [env] + list(g["lines"])
+    run["started"] = run["rec"]["started"] if started is not None else None
     # This call's budget where it is not the default, outside args: how the preflight is split across calls, which the
     # start --resume a budget stop or a replay names repeats, and resumable's argument test never reads.
     run["rec"]["budget"] = None if budget == DEFAULT_BUDGET else budget
     if fresh:
         if park and state.park(session, command):  # immediately before the first save
             replaced["parked"] = True
-        state.save(session, command, run["rec"])  # the first write: exit 2 is possible only before it
+        state.save(session, command, run["rec"], at=run["record_path"])  # the first write: exit 2 only before it
+        if apart and old is not None and apart != run["record_path"]:
+            state.remove(session, command, at=apart)
     nxt = error = None
     try:
         try:
@@ -3576,7 +3601,7 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
             if nxt is None:
                 _closing_put_back(run)
         except _Stop:
-            nxt = _resume_next(command, run["rec"]["args"], run["rec"]["budget"])
+            nxt = _resume_next(command, run["rec"]["args"], run["rec"]["budget"], run["started"])
         _close(run)
     except Exception as e:
         said = " ".join(str(e).split())
@@ -4749,6 +4774,7 @@ def main():
     p.add_argument("--rerun", action="store_true")
     p.add_argument("--resume", action="store_true")
     p.add_argument("--budget", type=float, default=DEFAULT_BUDGET)
+    p.add_argument("--started")
     p = sub.add_parser("replay")
     p.add_argument("--for", dest="for_", required=True, choices=("start", "end"))
     p.add_argument("--command", required=True)
@@ -4793,7 +4819,7 @@ def main():
             if a.specs is None:
                 raise NotRun("usage: start needs --specs, empty where SPECS_PATH is unset")
             print(json.dumps(start(a.specs, a.command, a.key, a.commit_key, a.register_rebuild, a.rerun, a.resume,
-                                   a.budget), indent=2, ensure_ascii=False))
+                                   a.budget, a.started), indent=2, ensure_ascii=False))
             return 0
         if a.cmd == "end":  # the --specs exception, as specs-root-check's
             if a.specs is None:
@@ -6605,7 +6631,7 @@ def selftest():
                   "pre.stay.midrun", "pre.held.landed", "pre.held.failed", "pre.held.stuck", "pre.held.changed",
                   "app.landed", "app.landed.unlisted", "app.held.stuck", "row.held", "row.held-stuck", "row.there",
                   "row.here", "row.midrun-kept", "pre.here.finished", "g1.landing.not_done.unlanded",
-                  "g1.not_done.uncommitted", "pre.rerun-stay.midrun"]
+                  "g1.not_done.uncommitted"]
         pinned += ["reason.land." + r for r in ("dropped", "edited", "forms", "deleted", "folder-gone", "register",
                                                 "moved", "checked-out", "no-preflight", "no-snapshot", "unfinished")]
         ids += pinned
@@ -15962,24 +15988,176 @@ def selftest():
 
         case("t_park_abandoned_middle", t_park_abandoned_middle)
 
-        def t_midrun_rerun_no_switch_back():
-            """§3.5: a --rerun typed mid-run does not switch back to the branch its first start's B4 left -- it prints
-            pre.rerun-stay.midrun and keeps b4_left -- and a later --rerun that is not typed mid-run switches back."""
-            r, env = mworld("t-midrun-rerun-no-switch-back", branch=LB)
-            first = start_(env, "/document", "--key", "ACME-1")
-            start_(env, "/specify")
-            again = start_(env, "/document", "--key", "ACME-1", "--key", "B-2", "--rerun")
-            want = lines.fill("pre.rerun-stay.midrun", {"<current>": "main", "<branch>": LB, "<command>": "/specify"})
-            rec = record(env, "/document") or {}
-            check(first.get("b4_left") == LB and again.get("print") == [env_line(r.path), want] and on(r) == "main"
-                  and rec.get("b4_left") == LB and (rec.get("midrun") or {}).get("command") == "/specify",
-                  "t_midrun_rerun_no_switch_back: no switch back under the open run, b4_left kept (%r)" % again)
-            run_end(env, "/specify")
-            later = start_(env, "/document", "--key", "ACME-1", "--key", "B-2", "--rerun")
-            check(later.get("midrun") is None and on(r) == LB and later.get("b4_left") is None,
-                  "t_midrun_rerun_no_switch_back: a later re-run not typed mid-run switches back (%r)" % later)
+        def follow(got, env):
+            """<got>, then each call the one before it names as next, run as the skill runs it, until one names none."""
+            seen = [got]
+            while (seen[-1].get("next") or {}).get("run") and len(seen) < 12:
+                seen.append(shell(seen[-1]["next"]["run"], env))
+            return seen
 
-        case("t_midrun_rerun_no_switch_back", t_midrun_rerun_no_switch_back)
+        def ahead(r, name):
+            """origin's main one commit ahead of r's: another clone's commit, which r fetches at its next start."""
+            o = clone(r, name)
+            o.write("specifications/PRD-ACME-1-x/notes-other.md", "o\n")
+            o.commit_all("ACME-1 Other work")
+            o.git("push", "-q", "origin", "main")
+            return o.git("rev-parse", "HEAD")
+
+        # I1: a re-run is a run typed mid-run only where its first start was one -- it carries that start's open run
+        # and tests it again, and never takes one that started since
+        def t_midrun_rerun():
+            r, env = mworld("t-midrun-rerun-later", branch=LB)
+            first = start_(env, "/document", "--key", "ACME-1")
+            start_(env, "/specify", "--key", "ACME-1")
+            r.write(FUP, "- [ ] specify's\n")
+            again = start_(env, "/document", "--key", "ACME-1", "--key", "B-2", "--rerun")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/document")
+            line = e.get("line") or ""
+            check(first.get("b4_left") == LB and again.get("midrun") is None and again.get("b4_left") is None
+                  and on(r) == LB and e.get("row") == "pushed-plugin" and "still open" not in line
+                  and "was open" not in line,
+                  "t_midrun_rerun: a re-run under a run started since its first start switches back as any B4 re-run, "
+                  "and its end has no mid-run wording (%r, %r)" % (again, e))
+            for name, ended in (("t-midrun-rerun-standing", False), ("t-midrun-rerun-ended", True)):
+                r, env = mworld(name)
+                start_(env, "/specify", "--key", "ACME-1")
+                f = start_(env, "/document", "--key", "ACME-1")
+                if ended:
+                    run_end(env, "/specify")
+                again = start_(env, "/document", "--key", "ACME-1", "--key", "B-2", "--rerun")
+                r.write(FB, "fb\n")
+                e = run_end(env, "/document")
+                ok = (f.get("midrun") or {}).get("command") == "/specify" and on(r) == "main"
+                if ended:
+                    ok = ok and again.get("midrun") is None and e.get("row") == "pushed-default"
+                else:
+                    ok = ok and again.get("midrun") == f.get("midrun") and e.get("row") == "here"
+                check(ok, "t_midrun_rerun: %s -- the re-run tests its first start's open run again (%r, %r)"
+                      % (name, again, e))
+
+        case("t_midrun_rerun", t_midrun_rerun)
+
+        # M1, as SRG §4 step 1's here form words it: the typed run's own handoff moved HEAD off the branch it started
+        # on, onto one a key of the open run names too; the here form does not run, and steps 2-4 commit every session
+        # file uncommitted there, the open run's line among them
+        def t_midrun_handoff_moved():
+            r, env = mworld("t-midrun-handoff-moved", follow="- [ ] a\n")
+            start_(env, "/specify", "--key", "ACME-1")
+            append(r, FUP, "- [ ] specify's\n")
+            c = start_(env, "/create-ard", "--key", "ACME-1")
+            r.git("switch", "-q", "-c", "ard/ACME-1-x")
+            r.write(FB, "ard's\n")
+            e = run_end(env, "/create-ard", "--commit-key", "ACME-1")
+            h = head(r)
+            check((c.get("midrun") or {}).get("command") == "/specify" and e.get("row") == "origin-lacks"
+                  and e.get("branch") == "ard/ACME-1-x" and changed(r, h) == sorted([FB, FUP])
+                  and "- [ ] specify's" in show(r, h, FUP),
+                  "t_midrun_handoff_moved: HEAD moved by the run's own handoff -- steps 2-4, as worded (%r)" % e)
+
+        case("t_midrun_handoff_moved", t_midrun_handoff_moved)
+
+        # M2: a parked run's re-run reads and writes its own record by --started: its new record parked under a stamp
+        # of its own, the old parked file removed, every next repeating --started; the second run's <command>.json
+        # byte for byte as before; its end then ends on its own record
+        def t_park_rerun():
+            r, env = mworld("t-park-rerun")
+            start_(env, "/document", "--key", "ACME-1")
+            a = backdate(env, "/document", 240)
+            start_(env, "/document", "--key", "ACME-1")
+            b = backdate(env, "/document", 120)
+            declined_(env, "/document", "--started", b, "--path", "notes.md")
+            b_raw = raw(env, "/document")
+            ahead(r, "t-park-rerun-other")  # a catch-up for the re-run's flush: a second unit, past --budget 0
+            calls = follow(start_(env, "/document", "--key", "ACME-1", "--key", "B-2", "--rerun", "--started", a,
+                                  "--budget", "0"), env)
+            new = calls[-1].get("started")
+            new_file = file_of(env, "/document", "document.%s.json" % stamp_of(new or a))
+            nrec = json.load(open(new_file, encoding="utf-8")) if os.path.exists(new_file) else {}
+            nexts = [c["next"]["run"] for c in calls if (c.get("next") or {}).get("run")]
+            check(len(calls) > 1 and all("--started " + new in x for x in nexts) and new != a
+                  and raw(env, "/document") == b_raw and nrec.get("parked") is True and nrec.get("protects") is False
+                  and "notes.md" not in (nrec.get("declined") or [])
+                  and not os.path.exists(file_of(env, "/document", "document.%s.json" % stamp_of(a))),
+                  "t_park_rerun: the re-run's record parked under its own stamp, every next carrying --started, "
+                  "<command>.json byte for byte (%r)" % [(c.get("started"), c.get("next")) for c in calls])
+            r.write(FB, "fb\n")
+            e = run_end(env, "/document", "--started", new)
+            check(e.get("record") == "found" and e.get("error") is None and raw(env, "/document") == b_raw
+                  and not os.path.exists(new_file),
+                  "t_park_rerun: its end ends on its own record, the second run's untouched (%r)" % e)
+
+        case("t_park_rerun", t_park_rerun)
+
+        # A start --resume that runs fresh -- its record past resumable's 15 minutes -- replaces its own record and
+        # never parks it: the record is the same run's
+        def t_resume_stale_no_park():
+            r, env = mworld("t-resume-stale-no-park")
+            ahead(r, "t-resume-stale-no-park-other")
+            first = start_(env, "/specify", "--budget", "0")
+            path = file_of(env, "/specify")
+            rec = json.load(open(path, encoding="utf-8"))
+            rec["updated"] = time.strftime(STAMP_FMT, time.gmtime(time.time() - 1200))
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(rec, fh)
+            got = shell(first["next"]["run"], env) if (first.get("next") or {}).get("run") else {}
+            sdir = os.path.dirname(path)
+            check(rec.get("stage") in START_STAGES and got.get("replaced") == {"command": "/specify", "started":
+                                                                                first.get("started"), "parked": False}
+                  and sorted(os.listdir(sdir)) == ["specify.json"],
+                  "t_resume_stale_no_park: a resume run fresh replaces its own record, parking none (%r)" % got)
+
+        case("t_resume_stale_no_park", t_resume_stale_no_park)
+
+        # M3, R1: on a branch a key names, the here form's refused clause names HEAD's branch in <default>
+        def e_midrun_kept_b3():
+            r, env = mworld("e-midrun-kept-b3", branch=SPEC)
+            resume = "specifications/PRD-ACME-1-x/dev-workflows/resume.md"
+            r.write(resume, "r1\n")
+            r.commit_all("ACME-1-01 resume")
+            r.git("push", "-q", "origin", SPEC)
+            age(r)
+            start_(env, "/specify", "--key", "ACME-1-01")
+            r.write(resume, "r2, in progress\n")
+            start_(env, "/feedback", "--key", "ACME-1")
+            os.remove(os.path.join(r.path, resume))
+            old = head(r)
+            e = run_end(env, "/feedback")
+            clause = lines.fill("reason.land.deleted", {"<path>": resume, "<default>": SPEC})
+            check(e.get("row") == "midrun-kept" and e.get("print") == [kept_row(SPEC, clause)] and head(r) == old,
+                  "e_midrun_kept_b3: the refused clause names HEAD's branch (%r)" % e)
+
+        case("e_midrun_kept_b3", e_midrun_kept_b3)
+
+        # M3, R5: once the open run no longer stands, steps 2-4 catch up on main before they commit, so the push goes
+        # with no replay
+        def e_midrun_kept_ended_catch_up():
+            r, env = mworld("e-midrun-kept-ended-catch-up", follow="- [ ] a\n")
+            start_(env, "/specify", "--key", "ACME-1")
+            append(r, FUP, "- [ ] s\n")
+            up = ahead(r, "e-midrun-kept-ended-catch-up-other")
+            start_(env, "/feedback")
+            r.write(FUP, "- [ ] a\n- [x] s\n- [ ] f\n")
+            r.write(FB, "fb\n")
+            drop(env, "/specify")
+            e = run_end(env, "/feedback")
+            check(e.get("row") == "pushed-default" and e.get("next") is None and r.git("rev-parse", "HEAD^") == up
+                  and on_origin(r) == head(r),
+                  "e_midrun_kept_ended_catch_up: the catch-up, then the push, no replay (%r)" % e)
+
+        case("e_midrun_kept_ended_catch_up", e_midrun_kept_ended_catch_up)
+
+        # M3, R2: an end --no-preflight whose --started names the run's own open <command>.json excludes it from P5's
+        # test, and commits
+        def e_no_preflight_named():
+            r, env = mworld("e-no-preflight-named")
+            s0 = start_(env, "/specify")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/specify", "--no-preflight", "--started", s0.get("started"))
+            check(e.get("record") == "ignored" and e.get("row") == "pushed-default" and on_origin(r) == head(r),
+                  "e_no_preflight_named: the record --started names is no open run beside itself (%r)" % e)
+
+        case("e_no_preflight_named", e_no_preflight_named)
 
         # t_midrun_abandoned (Review Focus 5): /specify open on prd/B-2-y, never ended; three commands after it each
         # stay, name it, and land their own file

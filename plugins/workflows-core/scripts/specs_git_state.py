@@ -5,8 +5,9 @@ keyed by the CLAUDE_CODE_SESSION_ID environment variable (Claude Code sets it in
 the command. A different command typed in the middle of another run (specs-repo-git §3.5) is kept off the open
 run's record by its own file; the same command typed twice, by parking: the second run's start moves the first's
 record aside to <command>.<stamp>.json, the stamp its started with "-" and ":" removed (park), and each run names its
-own record by the started its start returned (find, end --started), so the two may end in either order, the second's
-end restoring the first's record (unpark). save, load and remove take that path as at. Python standard library
+own record by the started its start returned (find; end, declined, and start --rerun and --resume, by --started), so
+the two may end in either order, the second's end restoring the first's record (unpark), and the first's re-run
+saving its new record under a stamp of its own (stamped). save, load and remove take that path as at. Python standard library
 only; loaded by specs-git.py only for the subcommands that need it.
 
 Of the fields start keeps: branch is the branch HEAD stands on when a start call returns (null on a detached HEAD,
@@ -293,6 +294,12 @@ def _parked_path(session, command, started, taken=True):
     while taken and os.path.lexists(target):
         target, n = "%s-%d.json" % (base, n), n + 1
     return target
+
+
+def stamped(session, command, started):
+    """A record file of its own for the run of <command> that started at <started>: <name>.<stamp>.json, -2, -3 before
+    .json where taken -- where a re-run of a run whose record is not <command>.json saves its new record (§3.5)."""
+    return _parked_path(session, command, started)
 
 
 def park(session, command):
