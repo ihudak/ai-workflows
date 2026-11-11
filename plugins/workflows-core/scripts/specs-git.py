@@ -1476,24 +1476,28 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
             run["view"] = _end_view(lines, rec, view, rec.get("default"), specs, rec.get("stay"), False)
             run["wrote"] = True
             run["record"] = "found"
-            return _resume_landing(run, rec, view, commit_key, landing)
-        commit = (pending if pending.get("sha7") else _landed_session(specs, rec) if "session" in pending
-                  else _landed(specs, pending))
-        if commit is not None:  # the run's commit is made: what follows is past its first write
-            view = _view(rec, declined)
-            stay = rec.get("stay") if isinstance(landing, dict) else None
-            run["view"] = _end_view(lines, rec, view, rec.get("default"), specs, stay, False)  # first, as above
-            run["wrote"] = True
-            run["record"] = "found"
-            if commit is not rec["end_commit"]:
-                created = commit.pop("created", None)
-                if created and not rec.get("session_branch_created"):
-                    rec["session_branch_created"] = created
-                rec["end_commit"] = commit
-                state.save(session, command, rec)
-            default = rec.get("default") or resolve_default(specs, False)["default"]
-            return _push_step(run, rec, commit, default,
-                              _end_view(lines, rec, view, default, specs, stay, not (landing or {}).get("stuck")))
+            got = _resume_landing(run, rec, view, commit_key, landing)
+            if got is not None:
+                return got
+            # the journal dropped, HEAD off the stay's branch: step 1 goes on as for a HEAD that moved (§4 step 1)
+        else:
+            commit = (pending if pending.get("sha7") else _landed_session(specs, rec) if "session" in pending
+                      else _landed(specs, pending))
+            if commit is not None:  # the run's commit is made: what follows is past its first write
+                view = _view(rec, declined)
+                stay = rec.get("stay") if isinstance(landing, dict) else None
+                run["view"] = _end_view(lines, rec, view, rec.get("default"), specs, stay, False)  # first, as above
+                run["wrote"] = True
+                run["record"] = "found"
+                if commit is not rec["end_commit"]:
+                    created = commit.pop("created", None)
+                    if created and not rec.get("session_branch_created"):
+                        rec["session_branch_created"] = created
+                    rec["end_commit"] = commit
+                    state.save(session, command, rec)
+                default = rec.get("default") or resolve_default(specs, False)["default"]
+                return _push_step(run, rec, commit, default,
+                                  _end_view(lines, rec, view, default, specs, stay, not (landing or {}).get("stuck")))
 
     # Step 1: the record. Each kind but found takes the no-preflight path; an ignored record is replaced or removed.
     if rec is None:
@@ -1660,9 +1664,10 @@ def _landing_end(run, saved, d, stay, got, view):
     each held entry it landed first, before the row. landed: the commit saved as end_commit with its landing -- the
     journal's pending, moves and stuck -- then the refspec push's pushed-default row at once, else steps 5-7 on
     <default> (_push_step); held: the held row, its tail by mode_takes, or the held, stuck row where the cause will not
-    pass; there, nothing and locked: their rows. Each row carries §6's appends, and is followed by G1's block, from the
-    plain <view>, in the landing form, its Not done the not-landed one unless the run's whole change landed
-    (_end_view)."""
+    pass; there, nothing and locked: their rows; any other status raises, so no template id is ever printed. Each row
+    carries §6's appends -- the held, held-stuck and there rows, which commit none of the run's files, without the
+    unsupported clause -- and is followed by G1's block, from the plain <view>, in the landing form, its Not done the
+    not-landed one unless the run's whole change landed (_end_view)."""
     lines, specs, state = run["lines"], run["specs"], run["state"]
     default, branch = d["default"], stay["branch"]
     for h in got["held_landed"]:
@@ -1691,10 +1696,16 @@ def _landing_end(run, saved, d, stay, got, view):
         if row == "held":
             v[lines.placeholder("row.held", "<held for")] = 1 if mode_takes(refused) else 0
         line = lines.fill("row." + row, v)
-    else:  # there, nothing, or locked
+    elif got["status"] in ("there", "nothing", "locked"):
         row = got["status"]
         line = lines.fill("row." + row, {"<default>": default, "<branch>": branch})
-    line += _appends(lines, _append_facts(specs, saved, branch))
+    else:  # kept is the here form's alone, which no landing's journal takes
+        raise NotRun("the landing returned %s, for which §4 step 1 gives the landing no row" % got["status"])
+    # §6: the held, held-stuck and there rows, none of which commits the files this run, take no unsupported clause
+    facts = _append_facts(specs, saved, branch)
+    if row in ("held", "held-stuck", "there"):
+        facts["mode"] = None
+    line += _appends(lines, facts)
     return finish_end(run, row, line, view, branch=branch)
 
 
@@ -1705,9 +1716,11 @@ def _resume_landing(run, rec, view, commit_key, landing):
     is verified (_verified: <default> holds the journalled commit, or, for a refspec push, origin/<default> does, after
     a fetch), the files are lifted and the journal entry and its ref removed (_finish) -- the paths split off it and
     held alone found again by its c1, the register moves its rebuild made read from the journal (JOURNAL_MOVES) --
-    then the landing's outcome as at the end (_landing_end): steps 5-7, or the
-    refspec push's row at once. Otherwise the change is landed again from its journal (land's resume), never lifted
-    unverified (P6)."""
+    then the landing's outcome as at the end (_landing_end): steps 5-7, or the refspec push's row at once. Otherwise,
+    with HEAD still on the stay's branch, the change is landed again from its journal (land's resume), never lifted
+    unverified (P6); with HEAD off it -- on <default> or another branch -- the journal entry is dropped, nothing having
+    moved and the files still in the working tree, and None is returned: the end goes on from step 1 as one whose HEAD
+    moved off the branch it stayed on. A landing's journal is never finished by the here form."""
     lines, specs, state = run["lines"], run["specs"], run["state"]
     d = {k: rec.get(k) for k in ("default", "default_ref", "remote")}
     stay, head = rec.get("stay"), _head_branch(specs)
@@ -1727,6 +1740,10 @@ def _resume_landing(run, rec, view, commit_key, landing):
                "moves": list(landing.get(JOURNAL_MOVES) or []), "pending": landing,
                "stuck": None if stuck is None else {"sha": stuck["c2"], "paths": sorted(stuck["paths"]),
                                                     "refused": stuck["refused"]}}
+    elif head is None or head != (stay or {}).get("branch"):
+        _held_remove(specs, [landing["c2"]])
+        rec["end_commit"] = None
+        return None
     else:
         def on_move(pending):
             rec["end_commit"] = {"branch": d["default"], "landing": pending}
@@ -2171,7 +2188,8 @@ def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, commi
     <committed> is the start's None, or, as the run's end repeats the block (§5), whether the end committed the run's
     whole change -- its landing landed it, no path held alone, or, with no stay, its commit was made: where False, the
     Not done is g1.landing.not_done.unlanded with a stay and g1.not_done.uncommitted without one, the mid-run form's
-    included, the Fix and If ignored as they are."""
+    included; with neither a stay nor a run typed mid-run, the If ignored is g1.if_ignored.uncommitted too (the
+    not-committed form), and otherwise the Fix and If ignored are as they are."""
     kind = lines.placeholder("g1.landing.not_done", "<which no key")
     v = {"<branch>": branch, "<default>": default, "<SPECS_PATH>": specs,
          "<path list>": " ".join(shlex.quote(p) for p in paths)}
@@ -2185,7 +2203,10 @@ def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, commi
         block = _block_part(block, "Fix:", "")
         return _block_part(block, "If ignored:", lines.fill("g1.midrun.if_ignored", v))
     if not stay:
-        return _block_part(block, "Not done:", lines.T["g1.not_done.uncommitted"]) if committed is False else block
+        if committed is not False:
+            return block
+        block = _block_part(block, "Not done:", lines.T["g1.not_done.uncommitted"])
+        return _block_part(block, "If ignored:", lines.T["g1.if_ignored.uncommitted"])
     v["<command>"] = stay.get("command")
     block = _block_part(block, "Not done:", lines.fill(landing, dict(v, **{kind: STAY_KINDS.index(stay["kind"])})))
     if stay.get("merged"):
@@ -2265,11 +2286,11 @@ def _block_part(block, label, text):
     """<block> with the part <label> opens -- its line from the label on, and the indented lines that continue it --
     replaced by the label, the padding its line gives it, and <text>, unwrapped on one line; an empty <text> (a Fix
     part with nothing to run, or nothing it can give ready to paste, specs-repo-git §5) leaves the label alone, with no
-    padding after it. A block with no such part -- not one §5 renders -- is returned as it is."""
+    padding after it. ValueError where <block> has no such part: it is not a block §5 renders."""
     rows = block.split("\n")
     i = next((k for k, row in enumerate(rows) if row.startswith(label)), None)
     if i is None:
-        return block
+        raise ValueError("_block_part: the block has no %s part" % label)
     j = i + 1
     while j < len(rows) and rows[j].startswith(" "):
         j += 1
@@ -3505,7 +3526,8 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
     committed on the result, journalled, then moved. C2's test first: where another worktree has <default> checked out,
     the result is built on <default-ref> and pushed by refspec where push_check leaves no row but scope (the push names
     one commit on <default-ref>, so push-scope does not apply), the local branch never moved (ruling C2); <remote> False
-    keeps the change off that path (P28), as it stands, and <check>(cost) comes before its capped calls. Otherwise onto
+    keeps the change off that path (P28), as it stands, and <check>(cost) comes before its capped calls. Where
+    <default-ref> names no commit -- an origin with no <default> yet -- local <default> stands in for it. Otherwise onto
     is <default-ref>'s commit where local <default> is absent or strictly behind it, else local <default>, which
     sb.move_branch(here=False) moves -- created where it is absent -- and a branch-moved or checkout-moved refusal is
     tried once more on the new tip. <in_record>: the entry stands in the held record, where each change to it replaces
@@ -3527,9 +3549,11 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
             return dict(out, status="held", refused=refused)
         if elsewhere and check:
             check(PUSH_COST)
-        local, upstream = sb.rev(root, "refs/heads/" + default), _commit(root, default_ref)
-        behind = local is None or (local != upstream and sb.is_ancestor(root, local, upstream))
-        onto = upstream if elsewhere or behind else local
+        local, upstream = sb.rev(root, "refs/heads/" + default), sb.rev(root, default_ref)
+        if local is None and upstream is None:
+            raise NotRun("neither %s nor %s names a commit" % (default, default_ref))
+        behind = upstream is not None and (local is None or (local != upstream and sb.is_ancestor(root, local, upstream)))
+        onto = upstream if upstream is not None and (elsewhere or behind) else local
         got = sb.own_change(root, onto, entry["c1"], entry["c2"], register_rebuild)
         if got["refused"]:
             stuck, rest = _split(root, entry, got["refused"])
@@ -3712,6 +3736,13 @@ def _finish_here(root, e, register_rebuild, on_move=None, own=False):
     return "dropped", None
 
 
+def _default_base(root, default, default_ref):
+    """The landing's base must exist: local <default>, or <default-ref>'s commit -- an origin with no <default> yet
+    leaves local <default> alone (specs-repo-git §4 step 1 (2), (3)). NotRun where neither names a commit."""
+    if sb.rev(root, "refs/heads/" + default) is None:
+        _commit(root, default_ref)
+
+
 def land(root, branch, default, default_ref, message, snap, register_rebuild=None, here=False, facts=None,
          on_move=None, resume=None, retry_remote=True, check=None):
     """specs-repo-git §4 step 1's landing for the checkout standing on <branch> (NotRun otherwise): the run's own
@@ -3738,8 +3769,13 @@ def land(root, branch, default, default_ref, message, snap, register_rebuild=Non
     the paths held alone beside a landing; held_landed: [{sha, files, paths, branch}]; moves (sb._moves); pending}."""
     if _head_branch(root) != branch:
         raise NotRun("HEAD is not on %s" % branch)
-    _commit(root, default_ref)
-    here = bool(here or branch == default or (resume or {}).get("here"))
+    _default_base(root, default, default_ref)
+    if resume:  # a journal is finished in its own form: a landing's never by the here form
+        here = bool(resume.get("here"))
+        if not here and branch == default:
+            raise NotRun("a landing's journal is not finished with HEAD on %s" % default)
+    else:
+        here = bool(here or branch == default)
     return _write_bounded(_land, root, branch, default, default_ref, message, snap, register_rebuild, here, facts,
                           on_move, resume, retry_remote, check)
 
@@ -3862,7 +3898,7 @@ def retry_held(root, default, default_ref, register_rebuild=None, check=None, re
     branch, kind, command, sha}], dropped: count}; lifted: [{path, blob}], the blob written back (None where removed),
     for P11's snapshot. An error after its first ref write is LandStopped carrying that object as far as it got
     (_retry_report)."""
-    _commit(root, default_ref)
+    _default_base(root, default, default_ref)
     return _write_bounded(_retry_held, root, default, default_ref, register_rebuild, check, retry_remote)
 
 
@@ -3994,7 +4030,7 @@ def land_cli(a):
     reason.land.checked-out is worded (checked_out_values); for moved, the move's last refusal (branch-moved or
     checkout-moved) or null; for register-rebuild, none or failed; else null."""
     default = _default_of(a.default_ref)
-    _commit(a.specs, a.default_ref)
+    _default_base(a.specs, default, a.default_ref)
     if a.retry_held or a.drop_held:
         if (a.retry_held and a.drop_held) or a.branch or a.command or a.commit_key or a.snapshot or a.here \
                 or (a.drop_held and a.register_rebuild):
@@ -5167,9 +5203,15 @@ def selftest():
               and block == g2_session(r.path, "feature/x"),
               "m_not_finished: no created clause, and the G2 block start saved after the line (%r)" % got)
         check(got2.get("print") == [stop], "m_not_finished: no unsupported clause either (%r)" % got2)
-        # a resumed record holding a G1 block, stopped before its push step: the line, then the block
+        # a resumed record holding a G1 block, stopped before its push step: the line, then the block, in the
+        # not-committed form §5 gives the NOT FINISHED line
         r, env = mode_world("m-not-finished-resume", on=False)
-        seed(env, "/feedback", default=None, guard="G1", guard_block="the G1 block",
+        g1_block = lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": 1, "<path list>": ["notes.md", "notes.md"]})
+        rows = g1_block.split("\n")
+        at = {x: next(k for k, row in enumerate(rows) if row.startswith(x)) for x in ("Not done:", "Fix:", "If ignored:")}
+        g1_stopped = "\n".join(rows[:at["Not done:"]] + ["Not done: " + lines.T["g1.not_done.uncommitted"]]
+                               + rows[at["Fix:"]:at["If ignored:"]] + ["If ignored: " + lines.T["g1.if_ignored.uncommitted"]])
+        seed(env, "/feedback", default=None, guard="G1", guard_block=g1_block, guard_paths=["notes.md"],
              end_commit={"sha7": "abc1234", "files": 1, "branch": "main", "paths": [RESUME], "hook_paths": []})
         real_default = g["resolve_default"]
         g["resolve_default"] = broken
@@ -5178,7 +5220,7 @@ def selftest():
                 got = end(r.path, "/feedback", resume=True)
         finally:
             g["resolve_default"] = real_default
-        check(got.get("print") == [stop, "the G1 block"] and got.get("record") == "found",
+        check(got.get("print") == [stop, g1_stopped] and got.get("record") == "found",
               "m_not_finished: end --resume's stop before its push step still repeats the block (%r)" % got)
         r, env = mode_world("m-not-finished-replay")
         seed(env, "/feedback", guard="G2", guard_block="the G2 block")
@@ -5894,8 +5936,8 @@ def selftest():
               "stage's commits (%r)" % part[:120])
 
         # l_g1_end: the forms of G1 the run's end repeats (§5), by whether it committed the run's whole change: with no
-        # stay, the plain block, or, where nothing of the run's was committed, its Not done the not-committed one, its
-        # Fix and If ignored the plain block's; with a stay, the landing form, or its not-landed Not done; under a run
+        # stay, the plain block, or, where nothing of the run's was committed, the not-committed form -- its Not done
+        # and If ignored -- its Fix the plain block's; with a stay, the landing form, or its not-landed Not done; under a run
         # typed mid-run, the mid-run form, whose Not done each outcome picks the same way
         landing = globals().get("_g1_landing")
         S, paths = "/s", ["notes.md"]
@@ -5929,12 +5971,15 @@ def selftest():
             got = {"error": "%s: %s" % (type(e).__name__, e)}
         p0 = parts(plain)
         uncommitted = T.get("g1.not_done.uncommitted", "")
+        ignored = T.get("g1.if_ignored.uncommitted", "")
         check(got.get("plain") == p0 and got.get("none", {}).get("Not done:") == uncommitted
-              and got["none"]["Fix:"] == p0["Fix:"] and got["none"]["If ignored:"] == p0["If ignored:"]
+              and got["none"]["Fix:"] == p0["Fix:"] and got["none"]["If ignored:"] == ignored
               and "WILL still be committed" not in uncommitted and "WILL still be committed" in p0["Not done:"]
-              and "the Specs repo: line above this notice says what came of them" in uncommitted,
-              "l_g1_end: no stay -- the plain block where the end committed, the not-committed Not done where it did "
-              "not, the Fix and If ignored the plain block's (%r)" % got)
+              and "the Specs repo: line above this notice says what came of them" in uncommitted
+              and "committed alongside them" in p0["If ignored:"] and "committed alongside" not in ignored
+              and "the Specs repo: line above this notice says what came of this run's artifacts" in ignored,
+              "l_g1_end: no stay -- the plain block where the end committed; where it did not, the not-committed form, "
+              "its Not done and If ignored, the Fix the plain block's (%r)" % got)
         check(got.get("whole", {}).get("Not done:") == lines.fill("g1.landing.not_done", dict(v, **{kinds: 0}))
               and got.get("held", {}).get("Not done:") == lines.fill("g1.landing.not_done.unlanded",
                                                                      dict(v, **{kinds: 0}))
@@ -5950,8 +5995,8 @@ def selftest():
                       for k in ("m-plain", "m-none", "m-whole", "m-held")),
               "l_g1_end: under a run typed mid-run, the mid-run form, its Not done by the same outcomes, a mid-run row "
               "that committed nothing taking the not-committed one (%r)" % got)
-        check(landing(lines, "the G1 block", "b", "main", S, paths, None, None, False) == "the G1 block",
-              "l_g1_end: a block with no Not done part is left as it is")
+        check(raises_naming("no Not done: part", landing, lines, "the G1 block", "b", "main", S, paths, None, None, False),
+              "l_g1_end: a block with no Not done part is refused, never rendered unchanged")
 
         # l_fill_basic
         check(lines.fill("row.nothing", {}) == "Specs repo: no session artifacts to commit", "l_fill_basic: row.nothing")
@@ -7844,6 +7889,9 @@ def selftest():
         def held(r):
             return held_entries(r.path)
 
+        def held_refs(r):
+            return r.git("for-each-ref", "--format=%(refname)", HELD_REF).split()
+
         def on_lb(r):
             return r.git("symbolic-ref", "--short", "HEAD") == LB
 
@@ -8369,6 +8417,201 @@ def selftest():
                   "e_land_kill_register: the resumed line carries the register clause the uninterrupted end prints "
                   "(%r)" % (shown,))
 
+        def set_mode(env, mode):
+            """The record's mode, as start records it: unsupported on a git whose merge-tree cannot merge without a
+            checkout, with session-branch mode opted in."""
+            with in_env(env):
+                rec = state.load(env["CLAUDE_CODE_SESSION_ID"], "/feedback")
+                rec["mode"] = mode
+                state.save(env["CLAUDE_CODE_SESSION_ID"], "/feedback", rec)
+
+        def e_land_unsupported():
+            """I1, §6: in unsupported mode, the held, held-stuck and there rows -- none of which commits the files this
+            run -- take no unsupported clause; the nothing row, which §6 does not except, keeps it."""
+            unsupported = lines.fill("app.session.unsupported", {"<branch>": LB})
+            # held: an index.lock at the landing's start
+            r, env = lworld("e-land-unsup-held")
+            start_of(env)
+            set_mode(env, "unsupported")
+            r.write(FB, ENTRY % "mine")
+            lock = os.path.join(r.path, ".git", "index.lock")
+            open(lock, "w").close()
+            try:
+                got = run_end(env, "/feedback")
+            finally:
+                os.remove(lock)
+            want = lines.fill("row.held", {"<branch>": LB, "<default>": "main", HELD_KIND: 0, HELD_TAIL: 0,
+                                           "<reason clause>": lines.fill("reason.locked", {"<path>": ".git/index.lock"})})
+            check(got.get("row") == "held" and got.get("print") == [want, g1_land(r, unlanded=True)],
+                  "e_land_unsupported: the held row takes no unsupported clause (%r)" % got)
+            # held, stuck: an entry main holds, edited
+            r, env = lworld("e-land-unsup-stuck", extra=[(COST, COST_BODY)])
+            start_of(env)
+            set_mode(env, "unsupported")
+            r.write(COST, COST_BODY.replace("body", "edited"))
+            got = run_end(env, "/feedback")
+            entries = held(r)
+            sha7 = entries[0]["c2"][:7] if len(entries) == 1 else "?"
+            want = lines.fill("row.held-stuck", {"<branch>": LB, "<default>": "main", STUCK_KIND: 0,
+                                                 "<reason clause>": lines.fill("reason.land.edited", {"<path>": COST}),
+                                                 "<SPECS_PATH>": r.path, "<sha7>": sha7, "<specs-git.py's path>": me,
+                                                 "<default-ref>": "origin/main"})
+            check(got.get("row") == "held-stuck" and got.get("print") == [want, g1_land(r, unlanded=True)],
+                  "e_land_unsupported: the held, stuck row takes no unsupported clause (%r)" % got)
+            # there: the run's change already on main
+            r, env = lworld("e-land-unsup-there", notes=False)
+            r.git("switch", "-q", "main")
+            r.write(FB, ENTRY % "mine")
+            r.commit_all("NOISSUE Add dev-workflows session artifacts (/feedback)")
+            r.git("push", "-q", "origin", "main")
+            r.git("switch", "-q", LB)
+            r.write("notes.md", "n\n")
+            start_of(env)
+            set_mode(env, "unsupported")
+            r.write(FB, ENTRY % "mine")
+            got = run_end(env, "/feedback")
+            check(got.get("row") == "there"
+                  and got.get("print") == [lines.fill("row.there", {"<default>": "main", "<branch>": LB}),
+                                           g1_land(r, unlanded=True)],
+                  "e_land_unsupported: the there row takes no unsupported clause (%r)" % got)
+            # nothing: §6 does not except it, so the clause stands
+            r, env = lworld("e-land-unsup-nothing")
+            start_of(env)
+            set_mode(env, "unsupported")
+            got = run_end(env, "/feedback")
+            check(got.get("row") == "nothing" and got.get("print") == [T["row.nothing"] + unsupported,
+                                                                     g1_land(r, unlanded=True)],
+                  "e_land_unsupported: the nothing row keeps the unsupported clause (%r)" % got)
+
+        def e_land_resume_moved():
+            """I2: a landing cut off before its move, then HEAD switched off the stayed branch: end --resume drops the
+            journal entry -- nothing moved, the file still in the working tree -- and goes on as an end whose HEAD
+            moved, committing where HEAD stands: on main (pushed), and on a third branch (not on origin)."""
+            for to in ("main", "prd/B-2-z"):
+                r, env = lworld("e-land-resume-moved-" + to.replace("/", "-"))
+                start_of(env)
+                r.write(FB, ENTRY % "mine")
+                real = g["land"]
+
+                def land_killed(*args, **kw):
+                    inner = kw["on_move"]
+
+                    def on_move(pending):
+                        inner(pending)
+                        raise KeyboardInterrupt
+                    kw["on_move"] = on_move
+                    return real(*args, **kw)
+
+                g["land"] = land_killed
+                try:
+                    with in_env(env):
+                        end(r.path, "/feedback")
+                except KeyboardInterrupt:
+                    pass
+                finally:
+                    g["land"] = real
+                old = main_of(r)
+                r.git("switch", "-q", *(["main"] if to == "main" else ["-c", to]))
+                got = run_end(env, "/feedback", "--resume")
+                h = head(r)
+                if to == "main":
+                    row = pushed_default(h[:7], r.path)
+                    ok = got.get("row") == "pushed-default" and on_origin(r) == h and r.git("rev-parse", h + "^") == old
+                else:
+                    row = lines.fill("row.origin-lacks", {"<sha7>": h[:7], "<N>": 1, "<branch>": to, "<SPECS_PATH>": r.path})
+                    ok = got.get("row") == "origin-lacks" and main_of(r) == old
+                check(ok and got.get("print") == [row, g1_plain(r)] and changed(r, h) == [FB]
+                      and r.git("symbolic-ref", "--short", "HEAD") == to and held(r) == [] and held_refs(r) == []
+                      and r.git("status", "--porcelain") == "?? notes.md" and record(env, "/feedback") is None,
+                      "e_land_resume_moved: HEAD on %s, the journal dropped, committed where HEAD stands (%r)" % (to, got))
+            # no row is ever filled from a status the landing's end has none for (a raw template id)
+            run = {"state": state, "lines": lines, "specs": tmp, "session": "x", "command": "/feedback", "record": "found",
+                   "wrote": True, "pre": [], "commit": None}
+            try:
+                _landing_end(run, {}, {"default": "main", "default_ref": "origin/main"}, UNKEYED,
+                             {"status": "kept", "held_landed": [], "stuck": None}, {"declined": [], "guard_block": None,
+                                                                                   "guard_paths": []})
+                raised = None
+            except NotRun as e:
+                raised = str(e)
+            check(raised and "kept" in raised,
+                  "e_land_resume_moved: a status with no landing row raises, never prints its id (%r)" % raised)
+
+        def e_land_origin_lacks_default():
+            """I3: origin exists but has no main yet (t_merged_unknown's world): G1 keeps an unkeyed stay, and the
+            landing builds on local main, as (2) gives it; the push follows push_check's row for main -- none where main
+            tracks nothing (push-scope finds every other commit on origin's prd/B-2-y, so the push creates origin's
+            main), remote-deleted where main tracks an origin/main origin no longer has."""
+            for name, tracks in (("e-land-no-origin-main", False), ("e-land-no-origin-main-tracked", True)):
+                bare = os.path.join(tmp, name + ".git")
+                subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)
+                r = new_repo(tmp, name)
+                r.write(PRD, "---\nkind: prd\nkey: ACME-1\n---\n\n# PRD\n")
+                r.commit_all("ACME-1 Add the PRD")
+                r.git("remote", "add", "origin", bare)
+                r.bare = bare
+                if tracks:
+                    r.git("config", "branch.main.remote", "origin")
+                    r.git("config", "branch.main.merge", "refs/heads/main")
+                env = {"HOME": os.path.join(tmp, "home-" + name), "CLAUDE_CODE_SESSION_ID": name, "SPECS_PATH": r.path}
+                os.makedirs(env["HOME"])
+                other_key(r, LB)
+                r.write("notes.md", "n\n")
+                local = main_of(r)
+                first = start_of(env)
+                r.write(FB, ENTRY % "mine")
+                got = run_end(env, "/feedback")
+                tip = main_of(r) or ""
+                if tracks:
+                    row = (lines.fill("row.remote-deleted", {"<sha7>": tip[:7], "<N>": 1, "<branch>": "main",
+                                                             "<SPECS_PATH>": r.path})
+                           + lines.fill("row.remote-deleted.default-tail", {"<SPECS_PATH>": r.path}))
+                    want = ("remote-deleted", landed(r, 1, row=row), None)
+                else:
+                    want = ("pushed-default", landed(r, 1), tip)
+                check(first.get("stay") == UNKEYED and first.get("default_ref") == "origin/main"
+                      and (got.get("row"), got.get("line"), on_origin(r)) == want and got.get("error") is None
+                      and tip != local and r.git("rev-parse", tip + "^") == local and changed(r, tip) == [FB]
+                      and gone(r, FB) and on_lb(r) and (got.get("print") or [""])[-1] == g1_land(r),
+                      "%s: landed on local main, its row from push_check (%r)" % (name.replace("-", "_").replace(
+                          "e_land_no_origin_main", "e_land_origin_lacks_default"), got))
+
+        def e_land_held_mode_takes():
+            """row.held's session-branch tail (checked-out's alternatives 4 and 5, mode_takes): w2 has main checked out,
+            and origin refuses the refspec push, which is then recorded -- or a refusal was recorded already, after the
+            start -- so the next run, in session-branch mode, drops the hold and commits the files as that mode does."""
+            for name, alt in (("e-land-held-refused", 4), ("e-land-held-refused-before", 5)):
+                r, env = lworld(name)
+                worktree_on_main(r, name + "-w2")
+                start_of(env)
+                if alt == 4:
+                    with open(os.path.join(r.bare, "hooks", "pre-receive"), "w", encoding="utf-8") as fh:
+                        fh.write("#!/bin/sh\nwhile read old new ref; do [ \"$ref\" = refs/heads/main ] && exit 1; done\n"
+                                 "exit 0\n")
+                    os.chmod(os.path.join(r.bare, "hooks", "pre-receive"), 0o755)
+                else:
+                    path = os.path.join(r.path, ".git", "workflows", "push-refused", "main")
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
+                    with open(path, "w", encoding="utf-8") as fh:
+                        fh.write("2026-11-01\n")
+                old = main_of(r)
+                r.write(FB, ENTRY % "mine")
+                got = run_end(env, "/feedback")
+                entries = held(r)
+                refused = entries[0]["refused"] if len(entries) == 1 else {}
+                detail = refused.get("detail") or {}
+                v = {"<path>": refused.get("path"), "<default>": "main", CHECKED: alt}
+                v.update({"<the refusal>": detail.get("text")} if alt == 4 else
+                         {"<date>": detail.get("date"), "<record>": detail.get("record")})
+                want = lines.fill("row.held", {"<branch>": LB, "<default>": "main", HELD_KIND: 0, HELD_TAIL: 1,
+                                               "<reason clause>": lines.fill("reason.land.checked-out", v)})
+                check(got.get("row") == "held" and got.get("print") == [want, g1_land(r, unlanded=True)]
+                      and detail.get("outcome") == ("refused" if alt == 4 else "refused-before") and detail.get("record")
+                      and refused.get("permanent") is False and main_of(r) == old and read(r, FB) == ENTRY % "mine"
+                      and want.endswith("and the next run, in session-branch mode, drops this hold and commits them as "
+                                        "that mode commits session files"),
+                      "e_land_held_mode_takes: alternative %d, the session-branch tail (%r, %r)" % (alt, got, entries))
+
         def e_land_kill_before_move():
             """A kill in on_move -- the journal written, nothing moved: end --resume lands the change once, then lifts
             it, the held record emptied."""
@@ -8663,7 +8906,8 @@ def selftest():
 
         def e_g1_uncommitted():
             """No stay: the plain block after an end that committed nothing of the run's -- Locked, Commit failed, and the
-            NOT FINISHED line -- takes the not-committed Not done; after a commit, the plain block as it was."""
+            NOT FINISHED line -- takes the not-committed form, its Not done and If ignored; after a commit, the plain
+            block as it was."""
             uncommitted = T["g1.not_done.uncommitted"]
             for name in ("locked", "commit-failed", "stopped"):
                 r, env = world(tmp, "e-g1-uncommitted-" + name)
@@ -8698,7 +8942,8 @@ def selftest():
                         g["commit_session_files"] = real
                     row = lines.fill("end.stopped", {"<the error>": "RuntimeError: boom"})
                 shown = (got.get("print") or ["", ""])
-                check(shown == [row, g1_form(r, uncommitted)] and "WILL still be committed" not in shown[-1],
+                check(shown == [row, g1_form(r, uncommitted, T["g1.if_ignored.uncommitted"])]
+                      and "WILL still be committed" not in shown[-1] and "committed alongside" not in shown[-1],
                       "e_g1_uncommitted: after %s, the not-committed Not done (%r)" % (name, got))
 
         for name, fn in (("e_land_g1", e_land_g1), ("e_land_refused", e_land_refused),
@@ -8712,7 +8957,10 @@ def selftest():
                          ("e_land_there", e_land_there), ("e_land_kill", e_land_kill),
                          ("e_land_kill_resumed", e_land_kill_resumed),
                          ("e_land_kill_register", e_land_kill_register),
-                         ("e_land_kill_before_move", e_land_kill_before_move), ("e_land_push_rows", e_land_push_rows),
+                         ("e_land_kill_before_move", e_land_kill_before_move),
+                         ("e_land_unsupported", e_land_unsupported), ("e_land_resume_moved", e_land_resume_moved),
+                         ("e_land_held_mode_takes", e_land_held_mode_takes),
+                         ("e_land_origin_lacks_default", e_land_origin_lacks_default), ("e_land_push_rows", e_land_push_rows),
                          ("e_land_nonff", e_land_nonff), ("e_land_declined", e_land_declined),
                          ("e_land_locked", e_land_locked), ("e_land_locked_held", e_land_locked_held),
                          ("e_land_mode", e_land_mode), ("e_land_hand_edit", e_land_hand_edit),
@@ -9096,6 +9344,23 @@ def selftest():
             check(got.get("status") == "locked" and held(r) == before and len(before) == 1 and before[0]["tip"]
                   and before[0]["refused"] is None and main_of(r) == old and read(r, FB) == ENTRY % "mine",
                   "l_land_locked: a resumed journal under the lock is left for a later call (%r)" % got)
+
+        def l_land_resume_on_default():
+            """A landing's journal is never finished by the here form: resumed with HEAD on <default>, land refuses
+            before any write, the journal and main as they were."""
+            r = lworld("l-resume-on-default")
+            r.write(FB, ENTRY % "mine")
+            e = stopped(lambda: do_land(r, on_move=kill))
+            before, old = held(r), main_of(r)
+            r.git("switch", "-q", "main")
+            try:
+                do_land(r, branch="main", resume=e.pending if e else None)
+                said = None
+            except NotRun as x:
+                said = str(x)
+            check(said and "is not finished with HEAD on main" in said and held(r) == before and len(before) == 1
+                  and main_of(r) == old and read(r, FB) == ENTRY % "mine",
+                  "l_land_resume_on_default: refused, nothing done (%r)" % said)
 
         def l_land_old_git():
             fake = os.path.join(tmp, "l-old-git-bin")
@@ -10951,6 +11216,14 @@ def selftest():
         KINDS = lines.placeholder("g1.landing.not_done", "<which no key")
         LANDED = lines.placeholder("app.landed", "<which no key")
 
+        def lacks_row(r, branch):
+            """origin-lacks' line for HEAD's one-file commit on <branch>, a plugin branch origin does not have."""
+            return lines.fill("row.origin-lacks", {"<sha7>": head(r)[:7], "<N>": 1, "<branch>": branch,
+                                                   "<SPECS_PATH>": r.path})
+
+        def plugin_row(r, branch):
+            return "Specs repo: committed %s (1 file) on %s — pushed" % (head(r)[:7], branch)
+
         def landed_row(r, n, branch, kind="merged"):
             """pushed-default's line for the landing's commit, main's tip, of <n> files, then app.landed for a stay of
             <kind> (STAY_KINDS) on <branch>."""
@@ -10987,14 +11260,17 @@ def selftest():
             return g1_form(r, paths, lines.fill("g1.landing.not_done", v), None, T["g1.landing.if_ignored"])
 
         def g1_uncommitted(block):
-            """G1's plain <block> as end repeats it after a line that committed none of the run's files (§5): its Not
-            done g1.not_done.uncommitted, on one line, its Fix and If ignored as they are."""
+            """G1's plain <block> as end repeats it after a line that committed none of the run's files (§5): the
+            not-committed form, its Not done g1.not_done.uncommitted and If ignored g1.if_ignored.uncommitted, each on
+            one line, its Fix as it is."""
             rows = block.split("\n")
             i = next(k for k, row in enumerate(rows) if row.startswith("Not done:"))
             j = i + 1
             while j < len(rows) and rows[j].startswith(" "):
                 j += 1
-            return "\n".join(rows[:i] + ["Not done: " + T["g1.not_done.uncommitted"]] + rows[j:])
+            k = next(x for x, row in enumerate(rows) if row.startswith("If ignored:"))
+            return "\n".join(rows[:i] + ["Not done: " + T["g1.not_done.uncommitted"]] + rows[j:k]
+                             + ["If ignored: " + T["g1.if_ignored.uncommitted"]])
 
         def g1_unlanded(r, paths, branch, kind):
             """G1's landing form as end repeats it after a landing that did not land the run's whole change (§5): its
@@ -12319,8 +12595,12 @@ def selftest():
               "t_land_merged_rerun_b3: the re-run on B3 keeps no stay (%r)" % got)
         r.write(FEED_A, "f\n")
         got = run_end(env, "/feedback")
-        check(got.get("row") not in (None, "pushed-default") and got.get("branch") == A and not untracked(r, FEED_A),
-              "t_land_merged_rerun_b3: end commits on the branch (%r)" % got)
+        mine = r.git("rev-list", "-1", "--grep=^my notes$", "HEAD")
+        want = lines.fill("row.scope", {"<sha7>": [head(r)[:7], mine[:7]], "<N>": 1, "<branch>": A,
+                                        "<subject>": "my notes", "<path>": "notes.md"})
+        check(got.get("row") == "scope" and got.get("print") == [want] and got.get("branch") == A and mine
+              and on_origin(r, A) != head(r) and not untracked(r, FEED_A),
+              "t_land_merged_rerun_b3: end commits on the branch, not pushed past the user's commit (%r)" % got)
 
         # t_land_merged_b3_g1: an unmerged branch a key of the run names (B3), with G1: the plain block, no stay, and end
         # commits on it as before
@@ -12335,7 +12615,7 @@ def selftest():
         check(got.get("print") == [env_line(r.path), plain] and got.get("branch") == PLUGIN and stay_of(env) is None,
               "t_land_merged_b3_g1: G1's plain block, no stay (%r)" % got)
         got = run_end(env, "/feedback", "--commit-key", "ACME-1")
-        check(got.get("row") not in (None, "pushed-default") and (got.get("print") or [""])[-1] == plain
+        check(got.get("row") == "origin-lacks" and got.get("print") == [lacks_row(r, PLUGIN), plain]
               and got.get("branch") == PLUGIN and got.get("sha7") == head(r)[:7]
               and subject(r) == SUBJECT % ("ACME-1", "/feedback") and r.git("show", "--name-only", "--format=", "HEAD") == RESUME,
               "t_land_merged_b3_g1: end commits on the branch as before (%r)" % got)
@@ -12346,8 +12626,8 @@ def selftest():
         run_start(env, "/feedback")
         r.git("switch", "-q", "-c", "prd/A-1-y")
         got = run_end(env, "/feedback")
-        check(got.get("row") not in (None, "pushed-default") and got.get("branch") == "prd/A-1-y"
-              and (got.get("print") or [""])[-1] == g1_plain(r, ["notes.md"]) and got.get("sha7") == head(r)[:7]
+        check(got.get("row") == "origin-lacks" and got.get("branch") == "prd/A-1-y"
+              and got.get("print") == [lacks_row(r, "prd/A-1-y"), g1_plain(r, ["notes.md"])] and got.get("sha7") == head(r)[:7]
               and r.git("show", "--name-only", "--format=", "HEAD") == RES_A and not untracked(r, RES_A),
               "t_land_merged_moved: end commits where HEAD now stands, with G1's plain block (%r)" % got)
 
@@ -12395,8 +12675,8 @@ def selftest():
         r.git("switch", "-q", "-c", "prd/A-1-y")
         r.write(RES_A, "r\n")
         got = run_end(env, "/feedback")
-        check(got.get("row") not in (None, "pushed-default") and got.get("branch") == "prd/A-1-y"
-              and got.get("sha7") == head(r)[:7] and not untracked(r, RES_A),
+        check(got.get("row") == "origin-lacks" and got.get("print") == [lacks_row(r, "prd/A-1-y")]
+              and got.get("branch") == "prd/A-1-y" and got.get("sha7") == head(r)[:7] and not untracked(r, RES_A),
               "t_land_merged_budget_moved: end commits on the branch HEAD moved to (%r)" % got)
 
         # t_land_merged_budget_done: a record whose start finished holds no stay on a branch it did not leave, so end
@@ -12408,13 +12688,14 @@ def selftest():
         seed(env, "/feedback", branch=A)
         r.write(RES_A, "r\n")
         got = run_end(env, "/feedback")
-        check(got.get("row") not in (None, "pushed-default") and got.get("branch") == A and got.get("sha7") == head(r)[:7]
-              and not untracked(r, RES_A),
+        check(got.get("row") == "pushed-plugin" and got.get("print") == [plugin_row(r, A)] and got.get("branch") == A
+              and got.get("sha7") == head(r)[:7] and on_origin(r, A) == head(r) and not untracked(r, RES_A),
               "t_land_merged_budget_done: a finished start's record, end commits (%r)" % got)
         seed(env, "/feedback", branch=A, stage="settle", keys=["A-1"])
         r.write(RES_A, "r2\n")
         got = run_end(env, "/feedback")
-        check(got.get("row") not in (None, "pushed-default") and got.get("branch") == A and got.get("sha7") == head(r)[:7],
+        check(got.get("row") == "pushed-plugin" and got.get("print") == [plugin_row(r, A)] and got.get("branch") == A
+              and got.get("sha7") == head(r)[:7] and on_origin(r, A) == head(r),
               "t_land_merged_budget_done: an unfinished start on an unmerged branch a key names, end commits (%r)" % got)
 
         # t_land_merged_nothing: the stay recorded and nothing of the run's dirty at end: step 3's nothing to commit
@@ -12466,7 +12747,7 @@ def selftest():
         check(got.get("print") == [env_line(r.path), plain] and stay_of(env) is None,
               "t_land_merged_g1_unknown: a --rerun reports nothing again, and keeps no stay (%r)" % got)
         got = run_end(env, "/feedback", "--commit-key", "ACME-1")
-        check(got.get("row") not in (None, "pushed-default") and (got.get("print") or [""])[-1] == plain
+        check(got.get("row") == "origin-lacks" and got.get("print") == [lacks_row(r, PLUGIN), plain]
               and got.get("sha7") == head(r)[:7] and r.git("show", "--name-only", "--format=", "HEAD") == RESUME,
               "t_land_merged_g1_unknown: end commits on the branch as before (%r)" % got)
 
