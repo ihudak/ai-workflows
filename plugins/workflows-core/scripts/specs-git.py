@@ -5759,20 +5759,23 @@ def selftest():
             check(got[0].endswith("); they stay in your working tree, and the next run tries again")
                   and got[1].endswith("); they stay in your working tree, " + mode_tail),
                   "l_fill_landing: pre.held.failed's two tails (%r)" % got)
-            # G1's end forms after a landing that did not land: the not-landed Not done promises nothing, by kind; the
-            # landing, merged and mid-run If ignored lines claim nothing about where this run's artifacts went
+            # G1's end forms after a landing that did not land the run's whole change: the not-landed Not done promises
+            # nothing, by kind, and names the run's Specs repo: outcome line -- printed above the repeated block -- by
+            # what it is, not as "the line above", which in the block is its Found line; the landing, merged and
+            # mid-run If ignored lines claim nothing about where this run's artifacts went
             unl = span("g1.landing.not_done.unlanded", "<which no key")
             got = [lines.fill("g1.landing.not_done.unlanded", {"<branch>": "prd/B-2-y", "<default>": "main",
                                                                "<command>": "/specify", unl: k}) for k in range(3)]
             head_ = ("the preflight did not switch branches, and did not commit or push these files. Those files are "
                      "yours, and switching branches would carry them along. This run's own artifacts were to be "
                      "committed at the end of the run on main, not on prd/B-2-y, ")
-            tail_ = ", and your checkout is not moved; the line above says what came of that."
+            tail_ = ", and your checkout is not moved; the Specs repo: line above this notice says what came of them."
             check(got == [head_ + w + tail_ for w in ("which no key of this run names", "which is merged into main",
                                                       "where /specify's run in this session was open when this run "
                                                       "started")]
-                  and not any("WILL" in x for x in got),
-                  "l_fill_landing: g1.landing.not_done.unlanded by kind, promising nothing (%r)" % got)
+                  and not any("WILL" in x or "the line above says" in x for x in got),
+                  "l_fill_landing: g1.landing.not_done.unlanded by kind, promising nothing, naming the Specs repo: "
+                  "line (%r)" % got)
             neutral = [T[k] for k in ("g1.landing.if_ignored", "g1.merged.if_ignored", "g1.midrun.if_ignored")]
             check(all("nothing of this run's is committed with them" in x.lower() for x in neutral)
                   and not any("reach <default>" in x or "committed without them" in x for x in neutral),
