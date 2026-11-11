@@ -27,7 +27,9 @@ misrooted flag stands and session-branch mode is not on, and null where it could
 gate passed narrows it as it returns to the paths still dirty, each keeping its blob, and a --rerun carries its first
 start's. midrun is null, or {command, started, branch}: the open run this one was typed under (specs-repo-git §3.5).
 protects is true, save on a record a later run of the same command restored, which no longer protects its branch
-(§3.5). A record an earlier version wrote lacks these four fields: load gives each its default.
+(§3.5). A record an earlier version wrote lacks these four fields: load gives each its default. held_changed holds
+the paths the held stage took out of their held entries as changed since they were held (specs-repo-git §3.2), which
+the flush reports for each it commits (§3.4); a record that lacks it reads as holding none.
 """
 
 import calendar
@@ -84,6 +86,7 @@ FIELDS = {
     "stage": "new",
     "pending": [],
     "settle_todo": [],
+    "held_changed": [],  # the held stage's changed held files, which the flush reports where it commits them
     "budget": None,  # a start call's --budget where it was not the default; never part of args
     "end_commit": None,
 }
