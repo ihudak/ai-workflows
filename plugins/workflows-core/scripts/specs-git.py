@@ -683,8 +683,9 @@ LAND_PERMANENT = frozenset({"dropped", "edited", "forms", "deleted", "folder-gon
 
 
 # The detail of a refusal on the landing's remote path (ruling C2's refspec push), a JSON object the held record keeps:
-# outcome, the refspec push's (failed, rejected, refused) or push_check's row (no-remote, elsewhere, remote-deleted,
-# refused-before); text, the push's reason for failed and rejected, origin's refusal for refused; remote, the remote
+# outcome, the refspec push's (failed, rejected, refused), push_check's row (no-remote, elsewhere, remote-deleted,
+# refused-before), or origin-lacks, where <default-ref> names no commit, so there is nothing the push could name alone
+# to build on (specs-repo-git §4 step 1 (3)); text, the push's reason for failed and rejected, origin's refusal for refused; remote, the remote
 # the user's configuration pushes <default> to, for elsewhere; record and date, the push-refusal record -- the one push
 # wrote for refused (None where it could write none), and for refused-before the one that stood, with the date it holds
 # (specs-repo-git §1 rule 8: the record holds a date, never the refusal's text); record_error, for refused where push
@@ -695,8 +696,10 @@ CHECKED_OUT_DETAIL = ("outcome", "text", "remote", "record", "date", "record_err
 # was pushed, and the next run builds on the newer <default-ref> and pushes again. refused-before is worded as §6's
 # refused-before row words it, from the record's date and path; a refused push with no record takes the unrecorded
 # form, CHECKED_OUT_UNRECORDED, as §6's push-refused row does, since nothing turns session-branch mode on.
+# remote-deleted and origin-lacks share the fourth, origin has no <default>, true whether origin never had it or no
+# longer has it.
 CHECKED_OUT_ALTERNATIVE = {"failed": 0, "rejected": 0, "no-remote": 1, "elsewhere": 2, "remote-deleted": 3,
-                           "refused": 4, "refused-before": 5}
+                           "origin-lacks": 3, "refused": 4, "refused-before": 5}
 CHECKED_OUT_UNRECORDED = 6
 
 
@@ -3526,9 +3529,11 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
     committed on the result, journalled, then moved. C2's test first: where another worktree has <default> checked out,
     the result is built on <default-ref> and pushed by refspec where push_check leaves no row but scope (the push names
     one commit on <default-ref>, so push-scope does not apply), the local branch never moved (ruling C2); <remote> False
-    keeps the change off that path (P28), as it stands, and <check>(cost) comes before its capped calls. Where
-    <default-ref> names no commit -- an origin with no <default> yet -- local <default> stands in for it. Otherwise onto
-    is <default-ref>'s commit where local <default> is absent or strictly behind it, else local <default>, which
+    keeps the change off that path (P28), as it stands, and <check>(cost) comes before its capped calls; that path
+    never builds on local <default>, whose own commits the push would publish unmeasured, so where <default-ref> names
+    no commit -- an origin with no <default>, never or no longer -- the change is held, checked-out with the detail
+    origin-lacks, permanent (P22). Otherwise onto is <default-ref>'s commit where local <default> is absent or strictly
+    behind it, else local <default> -- <default-ref> naming no commit counting as neither -- which
     sb.move_branch(here=False) moves -- created where it is absent -- and a branch-moved or checkout-moved refusal is
     tried once more on the new tip. <in_record>: the entry stands in the held record, where each change to it replaces
     it. Lifts nothing. Returns status landed (its journal entry standing for the caller's lift), there (onto already
@@ -3547,9 +3552,13 @@ def _land_change(root, entry, default, default_ref, register_rebuild, in_record,
             refused = entry["refused"] or {"reason": "checked-out", "path": elsewhere[0], "detail": None,
                                            "permanent": False}
             return dict(out, status="held", refused=refused)
+        local, upstream = sb.rev(root, "refs/heads/" + default), sb.rev(root, default_ref)
+        if elsewhere and upstream is None:  # (3): never built on local <default>, whose commits a push would publish
+            refused = {"reason": "checked-out", "path": elsewhere[0], "detail": _checked_out_detail("origin-lacks"),
+                       "permanent": True}
+            break
         if elsewhere and check:
             check(PUSH_COST)
-        local, upstream = sb.rev(root, "refs/heads/" + default), sb.rev(root, default_ref)
         if local is None and upstream is None:
             raise NotRun("neither %s nor %s names a commit" % (default, default_ref))
         behind = upstream is not None and (local is None or (local != upstream and sb.is_ancestor(root, local, upstream)))
@@ -3737,8 +3746,9 @@ def _finish_here(root, e, register_rebuild, on_move=None, own=False):
 
 
 def _default_base(root, default, default_ref):
-    """The landing's base must exist: local <default>, or <default-ref>'s commit -- an origin with no <default> yet
-    leaves local <default> alone (specs-repo-git §4 step 1 (2), (3)). NotRun where neither names a commit."""
+    """The landing's base must exist: local <default>, or <default-ref>'s commit. Where <default-ref> names no commit --
+    an origin with no <default> -- local <default> is the only base left (specs-repo-git §4 step 1 (2)); with another
+    worktree on <default>, (3) holds the change instead (_land_change). NotRun where neither names a commit."""
     if sb.rev(root, "refs/heads/" + default) is None:
         _commit(root, default_ref)
 
@@ -8576,6 +8586,50 @@ def selftest():
                       "%s: landed on local main, its row from push_check (%r)" % (name.replace("-", "_").replace(
                           "e_land_no_origin_main", "e_land_origin_lacks_default"), got))
 
+        def e_land_origin_lacks_checked_out():
+            """New Important 1 (round 2): origin has no main, w2 has main checked out, and local main holds a private
+            commit of the user's: the landing never builds on local main for a refspec push, which would publish that
+            commit unmeasured -- the change is held stuck (checked-out, origin has no main), nothing pushed, origin and
+            both branches as they were."""
+            name = "e-land-no-origin-main-co"
+            bare = os.path.join(tmp, name + ".git")
+            subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)
+            r = new_repo(tmp, name)
+            r.write(PRD, "---\nkind: prd\nkey: ACME-1\n---\n\n# PRD\n")
+            r.commit_all("ACME-1 Add the PRD")
+            r.git("remote", "add", "origin", bare)
+            r.bare = bare
+            env = {"HOME": os.path.join(tmp, "home-" + name), "CLAUDE_CODE_SESSION_ID": name, "SPECS_PATH": r.path}
+            os.makedirs(env["HOME"])
+            other_key(r, LB)
+            r.git("switch", "-q", "main")
+            r.write("private.txt", "my private notes\n")
+            r.commit_all("my private notes")
+            r.git("switch", "-q", LB)
+            r.write("notes.md", "n\n")
+            w2 = worktree_on_main(r, name + "-w2")
+            local = main_of(r)
+            bare_refs = subprocess.run(["git", "--git-dir", bare, "for-each-ref"], stdout=subprocess.PIPE).stdout
+            first = start_of(env)
+            r.write(FB, ENTRY % "mine")
+            got = run_end(env, "/feedback")
+            entries = held(r)
+            refused = entries[0]["refused"] if len(entries) == 1 else {}
+            sha7 = entries[0]["c2"][:7] if len(entries) == 1 else "?"
+            clause = lines.fill("reason.land.checked-out", {"<path>": refused.get("path"), "<default>": "main",
+                                                            CHECKED: 3})
+            want = lines.fill("row.held-stuck", {"<branch>": LB, "<default>": "main", STUCK_KIND: 0,
+                                                 "<reason clause>": clause, "<SPECS_PATH>": r.path, "<sha7>": sha7,
+                                                 "<specs-git.py's path>": me, "<default-ref>": "origin/main"})
+            check(first.get("stay") == UNKEYED and first.get("default_ref") == "origin/main"
+                  and got.get("row") == "held-stuck" and got.get("print") == [want, g1_land(r, unlanded=True)]
+                  and clause.endswith("and origin has no main") and refused.get("permanent") is True
+                  and (refused.get("detail") or {}).get("outcome") == "origin-lacks"
+                  and os.path.samefile(refused.get("path"), w2.path) and main_of(r) == local
+                  and subprocess.run(["git", "--git-dir", bare, "for-each-ref"], stdout=subprocess.PIPE).stdout == bare_refs
+                  and read(r, FB) == ENTRY % "mine" and w2.git("status", "--porcelain") == "",
+                  "e_land_origin_lacks_checked_out: held stuck, nothing pushed, origin unchanged (%r)" % got)
+
         def e_land_held_mode_takes():
             """row.held's session-branch tail (checked-out's alternatives 4 and 5, mode_takes): w2 has main checked out,
             and origin refuses the refspec push, which is then recorded -- or a refusal was recorded already, after the
@@ -8960,6 +9014,7 @@ def selftest():
                          ("e_land_kill_before_move", e_land_kill_before_move),
                          ("e_land_unsupported", e_land_unsupported), ("e_land_resume_moved", e_land_resume_moved),
                          ("e_land_held_mode_takes", e_land_held_mode_takes),
+                         ("e_land_origin_lacks_checked_out", e_land_origin_lacks_checked_out),
                          ("e_land_origin_lacks_default", e_land_origin_lacks_default), ("e_land_push_rows", e_land_push_rows),
                          ("e_land_nonff", e_land_nonff), ("e_land_declined", e_land_declined),
                          ("e_land_locked", e_land_locked), ("e_land_locked_held", e_land_locked_held),
@@ -9716,7 +9771,11 @@ def selftest():
                  lambda r: subprocess.run(["git", "-C", r.bare, "update-ref", "-d", "refs/heads/main"], check=True),
                  "origin/main",
                  lambda r, d: d == dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome="remote-deleted"),
-                 lambda r, d: "and origin has no main any more"),
+                 lambda r, d: "and origin has no main"),
+                # (3): no <default-ref> to build on -- never built on local main -- held as origin has no main
+                ("l-cod-origin-lacks", lambda r: r.git("update-ref", "-d", "refs/remotes/origin/main"), "origin/main",
+                 lambda r, d: d == dict(dict.fromkeys(CHECKED_OUT_DETAIL), outcome="origin-lacks"),
+                 lambda r, d: "and origin has no main"),
                 ("l-cod-refused", lambda r: hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 1\n"), "origin/main",
                  lambda r, d: d["outcome"] == "refused" and d["text"] == "pre-receive hook declined"
                  and same_path(d["record"], record_of(r)) and d["date"] is None and d["record_error"] is None,
@@ -9814,7 +9873,8 @@ def selftest():
             rendered.append(line)
             takes["l-cod-unrecorded"] = mode_takes(refused)
             check(takes == {"l-cod-failed": False, "l-cod-rejected": False, "l-cod-no-remote": False,
-                            "l-cod-elsewhere": False, "l-cod-remote-deleted": False, "l-cod-refused": True,
+                            "l-cod-elsewhere": False, "l-cod-remote-deleted": False, "l-cod-origin-lacks": False,
+                            "l-cod-refused": True,
                             "l-cod-refused-before": True, "l-cod-unrecorded": False}
                   and mode_takes(None) is False and mode_takes({"reason": "moved", "detail": "branch-moved"}) is False,
                   "l_checked_out_detail: mode_takes is true exactly where a record turns session-branch mode on, so the "

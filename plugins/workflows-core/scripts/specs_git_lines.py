@@ -241,9 +241,10 @@ T = {
     "reason.land.register": "<path> needs its register rebuilt, <and this command hands the run no register.py to rebuild it | and that rebuild failed>",
     "reason.land.moved": "<default> moved twice while the run was committing on it",
     # The alternative by the printed detail (specs-git.py's checked_out_values): a refspec push that failed or was
-    # rejected; no-remote; elsewhere; remote-deleted; a push origin refused, recorded; refused-before, worded as
-    # row.refused-before words it; a push origin refused that could be recorded neither way, as app.unrecorded.
-    "reason.land.checked-out": "another worktree, <path>, has <default> checked out, and <the push of the commit by refspec failed (<reason>) | there is no origin to push the commit to | your git configuration pushes <default> to <remote>, not to origin | origin has no <default> any more | origin refuses pushes to <default> (<the refusal>), so from the next run session-branch mode takes these files | origin refused pushes to <default> on <date> (<record>), so from the next run session-branch mode takes these files | origin refuses pushes to <default> (<the refusal>), but this could not be recorded (<error>, the configuration write's), so a later run pushes <default> again>",
+    # rejected; no-remote; elsewhere; remote-deleted or origin-lacks; a push origin refused, recorded; refused-before,
+    # worded as row.refused-before words it; a push origin refused that could be recorded neither way, as
+    # app.unrecorded.
+    "reason.land.checked-out": "another worktree, <path>, has <default> checked out, and <the push of the commit by refspec failed (<reason>) | there is no origin to push the commit to | your git configuration pushes <default> to <remote>, not to origin | origin has no <default> | origin refuses pushes to <default> (<the refusal>), so from the next run session-branch mode takes these files | origin refused pushes to <default> on <date> (<record>), so from the next run session-branch mode takes these files | origin refuses pushes to <default> (<the refusal>), but this could not be recorded (<error>, the configuration write's), so a later run pushes <default> again>",
     "reason.land.no-preflight": "this run stopped before its preflight, so nothing tells its files from that run's",
     # A run typed mid-run whose start took no snapshot (status could not run, or the start was cut off before taking
     # one), the open run still standing at its end: it commits nothing, by the landing or the here form (specs-repo-git
