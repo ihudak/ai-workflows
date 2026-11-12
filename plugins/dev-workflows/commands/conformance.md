@@ -173,7 +173,7 @@ model_routing:
 ```
 
 The synthesis (Phase 2) and the re-check (Phase 3) run inline on `current_model`. Where that is not an
-Opus model, say so in `notes` and in the report: they are the judgement steps of this run.
+Opus-tier model (`workflows-core:model-routing/classification` §4: Opus, Fable or Mythos), say so in `notes` and in the report: they are the judgement steps of this run.
 
 ---
 

@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.38.2] — 2026-11-12
+
+Keyed `/document`'s orchestration advisory tests the session for an Opus-tier model. Update with `workflows-core` 1.83.1.
+
+### Fixed
+
+- **Keyed `/document` offered a Fable or Mythos session a relaunch "under Opus"**, a weaker model. Its Phase 1.5 advisory split sessions into "on the §2 chain" and not, and Fable and Mythos are on no chain. It now tests `workflows-core:model-routing/classification` §4's Opus-tier model (Opus, Fable or Mythos): such a session gets no advisory, and the report's session-model line says "Opus-tier — no degradation". The model-routing page says the same.
+
 ## [1.38.1] — 2026-11-10
 
 `/document` and `/release-notes` say when a BRD slice's second preflight leaves a switch undone: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; the environment page and the skill-listing figure describe `workflows-core` 1.82.0, and with it the reworded sentences also cover its new stay after a failed `status` read.

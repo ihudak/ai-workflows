@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.83.1] — 2026-11-12
+
+Claude Mythos is routed as Opus-tier. Update with `dev-workflows` 4.62.3, `docs-workflows` 1.38.2 and `product-workflows` 3.79.2, whose commands apply the same test; `security-workflows` 0.11.2 changes the scan's model handling only.
+
+### Fixed
+
+- **A Mythos session was routed as a model below Opus.** `model-routing/classification` §4's coding-model test named only `claude-opus-*` and `claude-fable-*` ids, so from MODERATE up a Mythos session's coding went to the §2 Opus chain, and `/implement`'s session-model gate asked it to relaunch on Opus. §4 now defines an **Opus-tier model** once — a `claude-opus-*`, `claude-fable-*` or `claude-mythos-*` id — and every gate, advisory or degrade path that tests `current_model` for Opus names it. That covers the HARD gates in `/design` and `/create-ard` and the stops in `/prd-proposal`, `/brd-proposal` and `/promote-decisions`, whose "Opus-tier" was never defined, so whether a Fable or Mythos session passed them was left to the running agent; and `/design`'s soft advisory, keyed `/document`'s relaunch advisory and `/conformance`'s note on its judgement steps, which tested "Opus" or "the §2 chain" and so treated a Fable or Mythos session as below Opus. §9.1's advisory now fires only on a session that is not Opus-tier, and §9.1's and §9.2's narrowed window advisory and §9.3's gate rule say Opus-tier too. The degrade paths of `/idea`, `/create-prd`, `/update-prd`, `/brd-interview`, `/brd-split` and `/brd-reconcile`, which recorded a degradation whenever "no Opus resolves" for the session, name the test too.
+- **A Mythos id had no dispatch form in a family-only harness.** §5 maps an id to its family name where the agent tool accepts only family names, and Claude Code's lists `opus`, `sonnet`, `haiku` and `fable`. In such a harness a `claude-mythos-*` id now passes no `model:` argument, so the agent inherits the session's model, that id, unless the harness is configured with a default model for subagents, which then runs instead. §2's statement of inheritance carries the same proviso. Where the parameter accepts ids, the id passes as itself. Before this, a Mythos session at SIMPLE already resolved `implementation_model` to its own id with no form to pass.
+
 ## [1.83.0] — 2026-11-12
 
 Claude Fable 5.2 and Claude Mythos 5.2 are priced. Update with `dev-workflows` 4.62.2, whose session-cost page describes this release's price lookup.
