@@ -863,7 +863,7 @@ ADDITIVE — this phase itself NEVER fails the run and touches neither `_readine
 branch (whichever of those happened, happened earlier, in Phase 5 step 3, behind the §4.3 consent
 choice — `ready/<KEY>-<slug>` is the only deliverable branch `/ready` ever creates, and this terminal step neither
 creates it nor undoes it; it only commits the bounded session-artifact paths in `$SPECS_PATH` onto
-whatever branch Phase 5 left checked out, or, in session-branch mode, onto `session/<identity>`, which its commit creates where it does not exist yet (`workflows-core:specs-repo-git` §8.2)), and NEVER writes into
+whatever branch Phase 5 left checked out, save where the preflight stayed on a plugin branch it would have left and the checkout still stands there, where it takes `workflows-core:specs-repo-git` §4 step 1's landing onto `<default>` without moving the checkout, creating local `<default>` where none exists (§4 step 1 (3)); or, in session-branch mode, onto `session/<identity>`, which its commit creates where it does not exist yet (§8.2)), and NEVER writes into
 a code or docs repository, or the current working directory, where it is not the specs repository; no user name is ever written (§10 privacy).
 
 ---
@@ -875,9 +875,9 @@ a code or docs repository, or the current working directory, where it is not the
 - Creates a deliverable branch only via the Phase 5 step 3 `workflows-core:phase-handoff` §4.3 consent choice, creating
   `ready/<KEY>-<slug>` — `specs-preflight` itself still creates no deliverable branch, a hard invariant: it only
   switches `$SPECS_PATH` between branches that already exist, and only plugin-created ones, per
-  `workflows-core:specs-repo-git` §2.2; the one branch it may create is `session/<identity>`, in
+  `workflows-core:specs-repo-git` §2.2; the branches it may create are `session/<identity>`, in
   session-branch mode, where its flush commits session files there (§8.2) — a branch that holds no
-  deliverable and that the checkout never stands on (§8.1)
+  deliverable and that the checkout never stands on (§8.1) — and, outside that mode, a local `<default>` where none exists, which its held stage's landing of an earlier run's held change creates at the commit it lands, moving no checkout (§3.2, §4 step 1 (3))
 - NEVER auto-commit `_readiness.md` or what Phase 5 step 2a's agents edited — the commit is offered at that same §4.3 choice, never automatic;
   declining leaves them uncommitted (still true — `_readiness.md` is the deliverable and the edits step 2a records in
   `maintenance_paths` ride it, OTHER paths the terminal `commit-artifacts` step never stages, §2.1; an edit step 2a
