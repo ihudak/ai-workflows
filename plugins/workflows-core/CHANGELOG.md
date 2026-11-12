@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.83.0] — 2026-11-12
+
+Claude Fable 5.2 and Claude Mythos 5.2 are priced. No other plugin's text depends on this release.
+
+### Added
+
+- **`cost-prices.yaml` keys `claude-fable-5-2` and `claude-mythos-5-2`**, from the pricing page on 2026-11-12. Both are $8 / $40 per MTok, with 5-minute cache writes at $10, 1-hour cache writes at $16 and cache reads at $0.20 (0.025x input, as on 5.1). Each key sits above its 5.1 key, strongest first. Without the keys, longest-prefix fallback priced both at their 5 key's rates: cache reads 5x high and every other rate 1.25x high.
+- **Fast mode on 5.2 is priced.** Each key carries a `fast:` block at $16 / $80, with the cache multipliers applied to the fast input price (cache reads $0.40). Fable and Mythos 5.1 have no fast mode, so a fast turn on them is still `unpriced-speed:fast`.
+- **`session-cost.py --selftest` pins the shipped keys.** It prices both 5.2 ids at standard and fast rates, and asserts that Fable 5.1 and Mythos 5.1 carry no fast block. Dropping either 5.2 key, or mispricing its fast cache read, fails the self-test.
+
+### Changed
+
+- The 0.025x cache-read exception and the list of fast-mode models now name Fable 5.2 and Mythos 5.2, in `cost-prices.yaml`'s comments, in `cost-emission` §4 and on the session-cost reference page.
+- No routing change. `model-routing/classification` names no Fable model, and `run-flags`' `fable` alias already resolves to the highest reachable `claude-fable-…` version, which is now 5.2. Every Opus-or-Fable test matches on the `claude-fable-*` prefix, so it covers 5.2 too.
+
 ## [1.82.0] — 2026-11-10
 
 GIT-G1 Part 2, batch 2a: every command's specs-repository start and end runs by script, through the new `specs-git` skill. Update with `product-workflows` 3.79.1, whose four register and ARD stops print `phase-handoff` §4.4's new per-row commands; `docs-workflows` 1.38.1 and the patches of `dev-workflows`, `security-workflows` and `guideline-reviewers` — pages, and in `dev-workflows` one citation — need nothing of this release to run.

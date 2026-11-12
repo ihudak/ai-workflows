@@ -202,7 +202,7 @@ default: null
 
 **Two facts in a transcript change the rate rather than the token count, and both are priced.** Every assistant message carries `usage.speed` (`standard` | `fast`) and `usage.inference_geo` (`global` | `us` | `not_available`). The engine buckets each model's tokens by that pair and prices each bucket separately:
 
-- **`speed: fast`** prices from the model's own `fast:` sub-block — explicit rates, like every other rate in the table, never a multiplier. Fast mode exists on Opus 5.5 ($8/$40) and on Opus 5 and Opus 4.8 ($10/$50). Opus 4.6 accepts `speed: fast` but runs and bills at standard, so its `fast:` block repeats the standard rates; Opus 4.7 rejects it and has no block. Prompt-caching multipliers apply on top of the fast input price, so Opus 5.5's fast cache read is 0.05 × $8, not 0.05 × $4. A fast record on a model whose entry has no `fast:` block is **`unpriced-speed:fast`, cost null** — never priced at the standard rate, which would be a confident figure known to be low by half.
+- **`speed: fast`** prices from the model's own `fast:` sub-block — explicit rates, like every other rate in the table, never a multiplier. Fast mode exists on Fable 5.2 and Mythos 5.2 ($16/$80), on Opus 5.5 ($8/$40) and on Opus 5 and Opus 4.8 ($10/$50); the Fable and Mythos models before 5.2 have none. Opus 4.6 accepts `speed: fast` but runs and bills at standard, so its `fast:` block repeats the standard rates; Opus 4.7 rejects it and has no block. Prompt-caching multipliers apply on top of the fast input price, so Opus 5.5's fast cache read is 0.05 × $8, not 0.05 × $4. A fast record on a model whose entry has no `fast:` block is **`unpriced-speed:fast`, cost null** — never priced at the standard rate, which would be a confident figure known to be low by half.
 - **`inference_geo: us`** multiplies every category by `modifiers.inference_geo.us` (1.1), and stacks on fast mode. `global`, `not_available` and an absent field are the standard case and are never looked up, so an override file written before this map existed still prices every global record. Any other value with no entry is **`unpriced-inference-geo:<value>`, cost null**.
 
 **Prompt length changes the rate on a model that bills by it** — Haiku 5.5 alone today ($0.10/$0.50 up to 100,000 prompt tokens, $0.50/$2.50 above). Its entry carries a `long_context:` block holding `above:` and the long rates, and the engine classes each message by its own prompt — input + cache read + cache write — billing all of a message's tokens at the long rates once that prompt exceeds `above`. Summed totals cannot make that split, which is why each message is classed as it is accumulated. A `long_context:` block with no numeric `above:` is **`unpriced-long-context`, cost null**.
@@ -227,7 +227,7 @@ is set to.
 
 Cache multipliers follow Anthropic's standard model (read 0.1x, 5m write 1.25x,
 1h write 2x) — except Opus 5.5 and Sonnet 5.5, whose cache reads bill at 0.05x, and
-Fable 5.1 and Mythos 5.1, whose bill at 0.025x — and the table keys
+Fable 5.2, Mythos 5.2, Fable 5.1 and Mythos 5.1, whose bill at 0.025x — and the table keys
 every rate explicitly for that reason; the transcript's `ephemeral_5m` / `ephemeral_1h` split lets cache
 pricing be exact, and a message without the split prices
 `cache_creation_input_tokens` at the 5m rate.

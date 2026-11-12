@@ -968,7 +968,8 @@ def _selftest_body(tmp):
     _shipped = load_prices(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                         "..", "references", "cost-prices.yaml"))
     for _mid, _want in (("claude-opus-5-5", 4.2), ("claude-opus-5", 5.5),
-                        ("claude-fable-5-1", 10.25), ("claude-fable-5", 11.0),
+                        ("claude-fable-5-2", 8.2), ("claude-fable-5-1", 10.25),
+                        ("claude-fable-5", 11.0),
                         ("claude-sonnet-5-5", 2.1), ("claude-sonnet-5", 2.2)):
         _got = price_model(_mid, _tk, _shipped)
         check(_got[1] is None and _got[0] is not None and abs(_got[0] - _want) < 1e-9,
@@ -1041,7 +1042,8 @@ def _selftest_body(tmp):
           "a standard row carries no modifiers field")
     # ...and the SHIPPED table carries the blocks the engine needs.
     for _mid, _want in (("claude-opus-5-5", 8.4), ("claude-opus-5", 11.0),
-                        ("claude-opus-4-8", 11.0)):
+                        ("claude-opus-4-8", 11.0), ("claude-fable-5-2", 16.4),
+                        ("claude-mythos-5-2", 16.4)):
         check(_cost(_mid, _shipped, _use("fast"))[0] == (_want, None),
               "shipped cost-prices.yaml prices %s in fast mode (1M in + 1M cache read = $%s)"
               % (_mid, _want))
@@ -1080,11 +1082,13 @@ def _selftest_body(tmp):
     check(_cost(_hk, {"models": {_hk: {"input": 1, "long_context": {"input": 5}}}},
                 _use(inp=200_000, cr=0))[0] == (None, "unpriced-long-context"),
           "a long_context block with no `above` is unpriced, never guessed")
-    for _mid in ("claude-opus-4-7", "claude-sonnet-5-5"):
+    for _mid in ("claude-opus-4-7", "claude-sonnet-5-5", "claude-fable-5-1",
+                 "claude-mythos-5-1"):
         check(_cost(_mid, _shipped, _use("fast"))[0] == (None, "unpriced-speed:fast"),
               "shipped cost-prices.yaml gives %s no fast block (fast mode does not exist there)"
               % _mid)
-    for _mid, _want in (("claude-mythos-5-1", 10.25), ("claude-mythos-5", 11.0)):
+    for _mid, _want in (("claude-mythos-5-2", 8.2), ("claude-mythos-5-1", 10.25),
+                        ("claude-mythos-5", 11.0)):
         _got = price_model(_mid, _tk, _shipped)
         check(_got[1] is None and _got[0] is not None and abs(_got[0] - _want) < 1e-9,
               "shipped cost-prices.yaml keys %s at its own rates (1M in + 1M cache read = $%s)"

@@ -3,7 +3,8 @@
 # first-party Claude API, Sonnet/Opus/Haiku/Fable re-verified live 2026-09-02; Opus 5.5 added from the
 # same page 2026-09-23; Fable 5.1 and Sonnet 5.5 keys, and the fast-mode and data-residency
 # rules, taken from it 2026-09-30; Haiku 5.5 and its prompt-length rule added from it
-# 2026-10-08). The Batch discount is NOT applied: an interactive session is never a batch.
+# 2026-10-08; Fable 5.2 and Mythos 5.2 keys, with their fast-mode rates, taken from it
+# 2026-11-12). The Batch discount is NOT applied: an interactive session is never a batch.
 #
 # PROMPT LENGTH is priced where a model bills by it -- Haiku 5.5 alone today: "a prompt of
 # over 100,000 tokens pays higher prices". A `long_context:` block inside a model's rates
@@ -19,8 +20,9 @@
 # tokens by that pair and prices each bucket at its own rate.
 #
 #   * FAST MODE is a per-model `fast:` sub-block, keyed explicitly like every other rate here.
-#     It exists on Opus 5.5 ($8/$40) and on Opus 5 and Opus 4.8 ($10/$50) -- 2x their standard
-#     rates. Opus 4.7 rejects `speed: "fast"` outright, so it has no block; Opus 4.6 accepts
+#     It exists on Fable 5.2 and Mythos 5.2 ($16/$80), on Opus 5.5 ($8/$40) and on Opus 5 and
+#     Opus 4.8 ($10/$50) -- 2x their standard rates. The Fable and Mythos models before 5.2
+#     have no fast mode, so no block. Opus 4.7 rejects `speed: "fast"` outright, so it has no block; Opus 4.6 accepts
 #     it but runs and bills at standard, so its block repeats the standard rates. "Prompt caching multipliers apply on top of
 #     fast mode pricing", so a fast block's cache rates are the model's own multipliers applied
 #     to its FAST input price -- Opus 5.5's cache read is 0.05 x $8, not 0.05 x $4. A `fast`
@@ -61,9 +63,9 @@
 # Override without editing this file: set $DEV_WORKFLOWS_COST_PRICES to a path, or
 # drop a repo-local cost-prices.yaml. Cache multipliers follow Anthropic's model
 # (cache_read = input * 0.1, cache_write_5m = input * 1.25, cache_write_1h = input * 2.0),
-# except Opus 5.5 and Sonnet 5.5, whose cache reads bill at input * 0.05, and Fable 5.1 and
-# Mythos 5.1, whose bill at input * 0.025 -- which is why every rate below is keyed explicitly rather than derived
-# from `input`.
+# except Opus 5.5 and Sonnet 5.5, whose cache reads bill at input * 0.05, and Fable 5.2,
+# Mythos 5.2, Fable 5.1 and Mythos 5.1, whose bill at input * 0.025 -- which is why every
+# rate below is keyed explicitly rather than derived from `input`.
 models:
   # Opus chain (§2). Opus 5.5 bills at $4 / $20 with cache reads at 0.05x ($0.20);
   # Opus 5 and Opus 4.6-4.8 all bill at $5 / $25.
@@ -165,16 +167,34 @@ models:
     cache_write_5m: 3.75
     cache_write_1h: 6.0
   # Fable. Not reachable by the routing policy (§2/§2.1 never select it), but a session may
-  # RUN on it, and an unpriced session records tokens with a null cost. Two traps, both
+  # RUN on it, and an unpriced session records tokens with a null cost. Each family's keys
+  # (Mythos here, Fable below) run strongest first: 5.2, then 5.1, then 5. Two traps, both
   # load-bearing:
-  #   1. Fable 5.1 reads cache at 0.025x input ($0.25), not the 0.1x every other model here
-  #      uses. Anthropic states it as a per-model exception on the pricing page.
-  #   2. `claude-fable-5` is a strict PREFIX of `claude-fable-5-1`, so dropping the 5.1 key
-  #      does not yield "no price" -- longest-prefix fallback silently prices 5.1's cache
-  #      reads at Fable 5's $1, 4x high, on the token class that dominates a cached agentic
-  #      session. Both keys must stay, and stay separate. This comment used to assert the
-  #      opposite ("the longest-prefix rule prices both from this one entry"), which is true
-  #      of input/output and false of cache_read -- the field that matters most here.
+  #   1. Fable 5.2 and 5.1 read cache at 0.025x input ($0.20 and $0.25), where Fable 5 reads
+  #      it at the standard 0.1x ($1). Anthropic states it as a per-model exception on the
+  #      pricing page.
+  #   2. `claude-fable-5` is a strict PREFIX of `claude-fable-5-2` and `claude-fable-5-1`, so
+  #      dropping either key does not yield "no price" -- longest-prefix fallback silently
+  #      prices that model at Fable 5's rates: 5.1's cache reads 4x high, on the token class
+  #      that dominates a cached agentic session, and every 5.2 rate high (cache reads 5x,
+  #      the rest 1.25x), its fast turns unpriced, since Fable 5 has no `fast:` block. All
+  #      three keys must stay, and stay separate. This comment used to assert the opposite
+  #      ("the longest-prefix rule prices both from this one entry"), which is true of
+  #      input/output for 5.1 and false of cache_read -- the field that matters most here.
+  #   Of the Fable and Mythos models only 5.2 has fast mode ($16/$80, 2x standard); its
+  #   `fast:` block applies the 0.025x / 1.25x / 2x cache multipliers to the FAST input price.
+  claude-mythos-5-2:
+    input: 8.0
+    output: 40.0
+    cache_read: 0.2
+    cache_write_5m: 10.0
+    cache_write_1h: 16.0
+    fast:                   # usage.speed == "fast": $16 / $80, cache multipliers on the FAST input
+      input: 16.0
+      output: 80.0
+      cache_read: 0.4       # 0.025 x 16.0
+      cache_write_5m: 20.0
+      cache_write_1h: 32.0
   claude-mythos-5-1:
     input: 10.0
     output: 50.0
@@ -187,10 +207,22 @@ models:
     cache_read: 1.0
     cache_write_5m: 12.5
     cache_write_1h: 20.0
-  # ^ Mythos (limited availability, invitation only). Priced identically to the Fable pair
-  #   below and keyed for the same reason and with the SAME trap: `claude-mythos-5` is a
-  #   strict prefix of `claude-mythos-5-1`, and 5.1's cache reads are 0.025x input where 5's
-  #   are 0.1x.
+  # ^ Mythos (limited availability, invitation only). Priced identically to the Fable keys
+  #   below, version for version, fast mode on 5.2 included, and keyed for the same reason
+  #   and with the SAME trap: `claude-mythos-5` is a strict prefix of `claude-mythos-5-2` and
+  #   `claude-mythos-5-1`, and their cache reads are 0.025x input where 5's are 0.1x.
+  claude-fable-5-2:
+    input: 8.0
+    output: 40.0
+    cache_read: 0.2
+    cache_write_5m: 10.0
+    cache_write_1h: 16.0
+    fast:                   # usage.speed == "fast": $16 / $80, cache multipliers on the FAST input
+      input: 16.0
+      output: 80.0
+      cache_read: 0.4       # 0.025 x 16.0 -- Fable 5.2's own cache-read multiplier, not 0.1
+      cache_write_5m: 20.0
+      cache_write_1h: 32.0
   claude-fable-5-1:
     input: 10.0
     output: 50.0
