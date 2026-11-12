@@ -129,7 +129,7 @@ Phase 1's inventory and every plan read versions off the tree, and Phase 2 appli
 
 1. **Create feature branch**
    - Resolve the branch name by invoking `Skill(skill: "workflows-core:reference", args: "branch-naming")` and following it — **the repo's own documented convention wins**. Read the repo's `CONTRIBUTING.md`, `CONTRIBUTION.md`, `README.md`, `DOCUMENTATION-GUIDELINES.md`, `CLAUDE.md` for a branch-naming section (§1.1) and fill its segments (§1.2): an **identity** placeholder from the §2 ladder (`$GIT_USER_INITIALS` → `git config user.initials` → inference → the §2.5 prompt), an **issue-key** segment from the documented no-issue literal, the run being keyless (Phase 0), and the **description** segment from the slug `upgrade-<component>-to-<version>` (or `upgrade-<first>-and-<N>-more` for a batch). Never add an identity segment the pattern does not ask for. Only when no convention is documented (§1.4) build `<prefix>/<slug>` with the §2 ladder's fallback `chore/`.
-   - Run `git checkout -b <branch-name>` from wherever Phase 0.5 left HEAD. If it exists, append `-<7-char-sha>`.
+   - Run `git checkout --no-track -b <branch-name>` from wherever Phase 0.5 left HEAD — `--no-track` because a user's `branch.autoSetupMerge=always` would otherwise make the new branch track the one HEAD stands on, a write that, where `.git/config` cannot be written, leaves the branch made and HEAD where it was, exit 1. If it exists, append `-<7-char-sha>`.
 
 2. **Capture baseline tests** — Invoke the existing test baseline agent once and reuse the result for the entire batch:
 

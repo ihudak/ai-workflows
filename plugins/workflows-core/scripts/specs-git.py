@@ -7815,7 +7815,7 @@ def selftest():
 
         def refused_tail(branch, specs, record_text, clear, day):
             return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
-                    "git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
+                    "git -C \"%s\" branch --no-track session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
                     "standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes to %s again, %s"
                     % (branch, specs, day, branch, specs, day, branch, specs, branch, branch, clear))
 
@@ -12497,7 +12497,7 @@ def selftest():
 
         def refused_tail(branch, specs, record_path, day):
             return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
-                    "git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
+                    "git -C \"%s\" branch --no-track session-files-%s %s && git -C \"%s\" push -u origin session-files-%s — then, "
                     "standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes to %s again, rm \"%s\""
                     % (branch, specs, day, branch, specs, day, branch, specs, branch, branch, record_path))
 
@@ -13582,12 +13582,32 @@ def selftest():
         p, rec_file = r.path, os.path.join(r.path, ".git", "workflows", "push-refused", PLUGIN)
         want = [[env_line(p), "Specs preflight: %s not pushed — origin refused it (pre-receive hook declined), and this is "
                  "recorded so no later run pushes it; to land the commits on local %s, put them on a branch of their own and "
-                 "open a pull request from it — git -C \"%s\" branch session-files-%s %s && git -C \"%s\" push -u origin "
+                 "open a pull request from it — git -C \"%s\" branch --no-track session-files-%s %s && git -C \"%s\" push -u origin "
                  "session-files-%s — then, standing on %s, git -C \"%s\" reset --keep origin/%s; once origin takes pushes "
                  "to %s again, rm \"%s\"" % (PLUGIN, PLUGIN, p, d, PLUGIN, p, d, PLUGIN, p, PLUGIN, PLUGIN, rec_file)]
                 for d in days]
         check(got.get("print") in want and os.path.isfile(rec_file) and on_origin(r, PLUGIN) != head(r)
               and got.get("branch") == PLUGIN, "t_flush_refused: the refusal in its Specs preflight: form, recorded (%r)" % got)
+
+        # t_session_files_always: the refusal's remedy makes session-files-<date> with branch --no-track (specs-repo-git
+        # §6), so a user's branch.autoSetupMerge=always writes no upstream: run as printed -- its branch and push, joined
+        # by && -- with that setting and .git/config held locked, as a hardened container's read-only one fails a write,
+        # it makes the branch at PLUGIN's tip and pushes it, exit 0. A plain `git branch` there makes the branch, fails on
+        # the tracking write and exits 1, and the && never pushes.
+        sfa = re.search(r'(git -C "[^"]+" branch (?:--no-track )?(session-files-[0-9-]+) \S+ && git -C "[^"]+" push -u origin '
+                        r'session-files-[0-9-]+)', (got.get("print") or [""])[-1])
+        hook(os.path.join(r.bare, "hooks", "pre-receive"), "exit 0\n")
+        r.git("config", "branch.autoSetupMerge", "always")
+        sfa_lock = os.path.join(r.path, ".git", "config.lock")
+        open(sfa_lock, "w").close()
+        try:
+            sfa_rc = shell(sfa.group(1), env)["_rc"] if sfa else None
+        finally:
+            os.remove(sfa_lock)
+        check(sfa is not None and sfa_rc == 0 and on_origin(r, sfa.group(2)) == r.git("rev-parse", PLUGIN)
+              and rev(r, sfa.group(2)) == r.git("rev-parse", PLUGIN),
+              "t_session_files_always: the remedy, run with branch.autoSetupMerge=always and .git/config locked, makes "
+              "and pushes the branch (%r, rc %r)" % (sfa.group(1) if sfa else None, sfa_rc))
 
         # t_flush_failed: origin unreachable once the fetch has run, so the flush's push fails
         r, env = world(tmp, "t-flush-failed")

@@ -746,7 +746,7 @@ Before writing any file, cut the branch, from where Phase 1.4 left HEAD: run the
 
 2. **Generate slug** — derive from the implementation description (reads run-state `files.task_description_file`): lowercase, hyphens, max 40 chars, strip punctuation and special chars. Example: "Add user authentication to login page" → `add-user-authentication-login-page`. When `unit_key` is set and the chosen shape has no separate issue-key segment, prefix it: `<unit_key>-<slug>`.
 
-3. **Create and checkout** — `git checkout -b <the name steps 1–2 resolved>`. If that name already exists, append the first 7 chars of HEAD's SHA to it: `<that name>-<short-sha>`. The name it creates writes run-state `branch`.
+3. **Create and checkout** — `git checkout --no-track -b <the name steps 1–2 resolved>`, `--no-track` because a user's `branch.autoSetupMerge=always` would otherwise make the new branch track the one HEAD stands on, a write that, where `.git/config` cannot be written, leaves the branch made and HEAD where it was, exit 1. If that name already exists, append the first 7 chars of HEAD's SHA to it: `<that name>-<short-sha>`. The name it creates writes run-state `branch`.
 
 ---
 
