@@ -103,7 +103,8 @@ task is `SIGNIFICANT` / `HIGH-RISK`, proceed with Sonnet but **announce the
 degradation** in the Phase 0 / Step 0 routing record and again in the final report.
 
 The "currently selected model" is whatever the orchestrator itself is running
-under. Sub-agents inherit it unless the orchestrator explicitly overrides via
+under. Sub-agents inherit it — an agent's own frontmatter pin, or a default model the
+harness is configured with for subagents, aside — unless the orchestrator explicitly overrides via
 the `task` tool's `model` argument (and under §10 every dispatch overrides it).
 
 ---
@@ -163,7 +164,7 @@ The orchestrator MUST execute these steps in order:
    exact `task` invocation pattern.
 3. **Implement** with the currently selected model **or** Sonnet (Sonnet is fine
    for raw coding throughput; Opus is not required here). Sub-agents that do
-   the actual file edits inherit the orchestrator's model unless overridden.
+   the actual file edits inherit the orchestrator's model unless overridden (§2's provisos aside).
    `/implement` is the exception: its `code-writer` and `review-fixer` dispatches
    run on §4's `implementation_model`.
 4. **Opus code review** of the completed implementation. This is a dedicated
@@ -232,14 +233,24 @@ the model that dispatch is passed, in §5's dispatch form. It is resolved by the
 class:
 
 - `SIMPLE` → `current_model`;
-- `MODERATE`, `SIGNIFICANT`, `HIGH-RISK` → `current_model` where it is an Opus or Fable
-  model (a `claude-opus-*` or `claude-fable-*` id), else the §2 Opus
-  chain's first available row;
+- `MODERATE`, `SIGNIFICANT`, `HIGH-RISK` → `current_model` where it is an **Opus-tier
+  model**, else the §2 Opus chain's first available row;
 - `--enforce-model` overrides both (§10).
 
-So from MODERATE up a Fable session codes on Fable, an Opus session on its own Opus,
-and a Sonnet or Haiku session on the §2 Opus chain; at SIMPLE each codes on its own
-model. A re-classification mid-run re-resolves `implementation_model` for every later
+**An Opus-tier model** is a `claude-opus-*`, `claude-fable-*` or `claude-mythos-*` id:
+Opus, or a family above it. This is the family's one test of the term, and every gate,
+advisory or degrade path that tests `current_model` for Opus tests it as an Opus-tier
+model, the term this section defines. Examples that exist today: this rule; §9.1's
+advisory; `/implement`'s session-model gate; `/design`'s HARD gate and soft advisory and
+`/create-ard`'s HARD gate (§9.1); the stops in `/prd-proposal`, `/brd-proposal` and
+`/promote-decisions`; keyed `/document`'s orchestration advisory; `/conformance`'s note on
+its inline judgement steps; and the degrade paths of `/idea`, `/create-prd`,
+`/update-prd`, `/brd-interview`, `/brd-split` and `/brd-reconcile`. A Fable or Mythos
+session passes each.
+
+So from MODERATE up a Fable or Mythos session codes on its own model, an Opus session
+on its own Opus, and a Sonnet or Haiku session on the §2 Opus chain; at SIMPLE each
+codes on its own model. A re-classification mid-run re-resolves `implementation_model` for every later
 dispatch; steps already coded stay as they are. `fixes_model` = `implementation_model`
 for `/implement`, so its `review-fixer` follows the same rule; = `detection_model`
 elsewhere (§2.1).
@@ -297,7 +308,7 @@ task(
 )
 ```
 
-**The dispatch rule — the record keeps the id, the argument passes what the tool accepts.** The `model_routing` record (§4) keeps the resolved id — it is the record of intent, and a family-level §10 value is recorded as the family. The `task` tool's `model:` argument passes the **dispatch form** of that id: the id itself where the tool's `model` parameter accepts ids, and otherwise — in a §2 family-only harness — that id's **family name** (`claude-opus-*` → `opus`, `claude-sonnet-*` → `sonnet`, `claude-haiku-*` → `haiku`, `claude-fable-*` → `fable`; a value that already is a family name passes unchanged). This one rule covers every dispatch in every command and agent of the family: wherever a command, an agent or this file says a dispatch passes, carries or is pinned to an id — a chain's resolution, §10's enforced id, or a `model: <…>` placeholder naming one — that id is what the record says, and the argument is its dispatch form.
+**The dispatch rule — the record keeps the id, the argument passes what the tool accepts.** The `model_routing` record (§4) keeps the resolved id — it is the record of intent, and a family-level §10 value is recorded as the family. The `task` tool's `model:` argument passes the **dispatch form** of that id: the id itself where the tool's `model` parameter accepts ids, and otherwise — in a §2 family-only harness — that id's **family name** (`claude-opus-*` → `opus`, `claude-sonnet-*` → `sonnet`, `claude-haiku-*` → `haiku`, `claude-fable-*` → `fable`; a value that already is a family name passes unchanged). **In a §2 family-only harness, an id whose family the parameter does not list — a `claude-mythos-*` id, where no `mythos` family is listed — has no family name to pass:** its dispatch passes no `model:` argument at all, and the agent inherits the session's model (§2), save where the harness is configured with a default model for subagents, which then runs instead. In such a harness only `current_model` can be such an id — no chain names Mythos, and `workflows-core:run-flags` §2's Reachability stops an enforced id the harness cannot select — so, with no such default configured, the inherited model is the very id the record keeps. Where the parameter accepts ids, a Mythos id passes as itself, like any other. This one rule covers every dispatch in every command and agent of the family: wherever a command, an agent or this file says a dispatch passes, carries or is pinned to an id — a chain's resolution, §10's enforced id, or a `model: <…>` placeholder naming one — that id is what the record says, and the argument is its dispatch form, or no argument where this rule gives none.
 
 **`risk-planner` and `code-review` belong to `dev-workflows`, not to the plugin that ships this file.** **`dev-workflows`'s own commands name them directly and nothing here conditions that** — some name them by that exact `dev-workflows:` form and some by bare name, and either reaches the agent because a command's own plugin is installed whenever that command runs, so the owning plugin is never the *dependency* case this note is about. **No per-command list of which form each uses stands here on purpose:** it would be a census of three commands' call sites inside a shared reference, going stale on the next edit to any of them, and the rule it was offered as evidence for does not turn on it. Any *other* plugin can count on naming them as a `subagent_type` only by declaring `dev-workflows` in its `dependencies`, which is what installs it alongside; a reader in `workflows-core` — or in any other plugin that neither ships those agents nor declares `dev-workflows` — has no such agent to count on and takes the `general-purpose` fallback below. For those readers the fallback is not a degraded path bolted on for a missing environment: it is the *normal* one, and the §6 checklist this file already carries is complete for them, because none of them hands `code-review` any of the three optional inputs that add a dimension beyond §6's eight — `applicable_ard` and `applicable_spec` (`/implement` only) and `claims_file` (all three of `dev-workflows`'s code-changing commands). **A caller that does pass one and still has to fall back — on the environment half of the trigger below — carries that dimension into the fallback prompt itself**, because §6 does not list it.
 
@@ -543,18 +554,18 @@ map govern every command, and §9.4 applies them to scanning.
 - **Orchestrator-executed** judgment steps — the inline prose writing and the
   interactive gates, plus the orchestration itself — run on the session model
   and CANNOT be overridden from inside a running command. Except under §10, where none of the rest of this bullet fires — no advisory, no gate, no degrade path, for any command that carries one (§10's *Opus-session gates do not fire* bullet is the general rule, and `workflows-core:run-flags` §3 step 7's advisory is the only notice) — handle them with an
-  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where what a session below Opus gets wrong is the orchestration itself — the classification, the routing of every dispatch, the review gate and the phase order — a command can gate on `current_model` on every class, before it classifies, since the class is the session's own judgment: `/implement` does, in its Phase 0, asking a `current_model` that is no Opus or Fable model (§4's coding-model test) to stop and relaunch on Opus, recommended, or to go on anyway, recorded in its report, with no relaunch offered where no Opus model is available (§9.3). Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added (`/implement`'s MODERATE `code-review` gate, and its `code-writer` and `review-fixer` dispatches, on §4's `implementation_model`, aside), so a command that offers a soft advisory anyway (`/design`), or asks on every class with going on offered (`/implement`'s session-model gate), is stricter by its own choice and not in breach.
+  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK and `current_model` is not an Opus-tier model (§4). Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where what a session below Opus gets wrong is the orchestration itself — the classification, the routing of every dispatch, the review gate and the phase order — a command can gate on `current_model` on every class, before it classifies, since the class is the session's own judgment: `/implement` does, in its Phase 0, asking a `current_model` that is no Opus-tier model (§4: Opus, Fable or Mythos) to stop and relaunch on Opus, recommended, or to go on anyway, recorded in its report, with no relaunch offered where no Opus model is available (§9.3). Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large run not on an Opus-tier model (§4), as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added (`/implement`'s MODERATE `code-review` gate, and its `code-writer` and `review-fixer` dispatches, on §4's `implementation_model`, aside), so a command that offers a soft advisory anyway (`/design`), or asks on every class with going on offered (`/implement`'s session-model gate), is stricter by its own choice and not in breach.
 
 ### 9.2 Role → chain map
 
 | Role | Chain |
 |------|-------|
 | Synthesis / planner (e.g. `doc-planner`) | §2 reasoning (Opus) |
-| `/implement`'s `code-writer` and `review-fixer` dispatches | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus or Fable model, else §2 reasoning (Opus) |
+| `/implement`'s `code-writer` and `review-fixer` dispatches | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus-tier model (§4), else §2 reasoning (Opus) |
 | Reader / summarizer / locator / style-checker / fixer (save `/implement`'s `code-writer` and `review-fixer` dispatches, row above) / maintenance (`code-scanner`, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
 | Domain reviewer (`doc-reviewer`, `epic-reviewer`) | §2 review (Opus) — usually already frontmatter-pinned; the orchestrator records it and adds **no** override — unless §10 enforces a model |
 | Delegated writer (`doc-writer` / `epic-writer`) | §2 reasoning (Opus) for SIGNIFICANT/judgment writing; §2.1 detection (Sonnet) for MODERATE writing |
-| Coordination + interactive gates (the orchestrator itself) | session model; where the writing is delegated, a narrowed window advisory for large non-Opus runs, save `/implement`'s session-model gate on every class (§9.1); where the authoring is inline, the command's own (§9.1) |
+| Coordination + interactive gates (the orchestrator itself) | session model; where the writing is delegated, a narrowed window advisory for large runs not on an Opus-tier model (§4), save `/implement`'s session-model gate on every class (§9.1); where the authoring is inline, the command's own (§9.1) |
 
 ### 9.3 No-Opus degradation
 
@@ -568,7 +579,7 @@ the two are separate fields of the same block. §2 resolves it against what the
 `task` tool can reach; the session's own tier is `current_model`, which §2 names
 separately as "whatever the orchestrator itself is running under". Two
 consequences, and a command that confuses the fields gets both wrong at once.
-A gate that exists to **require an Opus session** — an inline-authoring
+A gate that exists to **require an Opus-tier session** (§4) — an inline-authoring
 command's HARD gate — tests `current_model`, the tier a relaunch does change,
 and never `opus_available`, which is true on every Sonnet session that merely
 *could* dispatch Opus and so lets the gate miss the one state it was written

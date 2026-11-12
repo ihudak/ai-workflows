@@ -57,7 +57,7 @@ Each of these stops the run before anything is written:
 - the architecture repository is read-only, dirty, off its default branch, or ahead of origin;
 - the knowledge base is missing;
 - an earlier `kb/` branch is unmerged, or records under `architecture/` are uncommitted;
-- a non-Opus session, unless you override.
+- a session not on Opus, Fable or Mythos, unless you override.
 
 A failing repository test, or a mark the script refuses, stops it before the commit, on the run's branch: the stop names it and how to go on. No secret scanner ships with product-workflows, and the final report says so.
 

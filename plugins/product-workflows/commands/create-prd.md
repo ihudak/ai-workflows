@@ -472,7 +472,7 @@ model_routing:
   notes: <any §2/§2.1 fallback or degradation>
 ```
 
-The grill + authoring run inline on `current_model` (the §2 Opus chain — interactive judgment, not a delegated subagent). If no Opus resolves, **degrade to best-available + record** in `notes` and the final report — do not hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps use the enforced model, while the grill and authoring still run on `current_model`.
+The grill + authoring run inline on `current_model` (the §2 Opus chain — interactive judgment, not a delegated subagent). If `current_model` is not an Opus-tier model (`workflows-core:model-routing/classification` §4: Opus, Fable or Mythos), **go on, on the session's model, and record the degradation** in `notes` and the final report — do not hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps use the enforced model, while the grill and authoring still run on `current_model`.
 
 **Profile nudge (complex PRDs).** If `classification` is **SIGNIFICANT** (a
 complex / cross-cutting PRD) and the chosen profile is `--lean` or `--hybrid`

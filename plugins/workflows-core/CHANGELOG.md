@@ -5,6 +5,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.83.1] — 2026-11-12
+
+Claude Mythos is routed as Opus-tier. Update with `dev-workflows` 4.62.3, `docs-workflows` 1.38.2 and `product-workflows` 3.79.2, whose commands apply the same test; `security-workflows` 0.11.2 changes the scan's model handling only.
+
+### Fixed
+
+- **A Mythos session was routed as a model below Opus.** `model-routing/classification` §4's coding-model test named only `claude-opus-*` and `claude-fable-*` ids, so from MODERATE up a Mythos session's coding went to the §2 Opus chain, and `/implement`'s session-model gate asked it to relaunch on Opus. §4 now defines an **Opus-tier model** once — a `claude-opus-*`, `claude-fable-*` or `claude-mythos-*` id — and every gate, advisory or degrade path that tests `current_model` for Opus names it. That covers the HARD gates in `/design` and `/create-ard` and the stops in `/prd-proposal`, `/brd-proposal` and `/promote-decisions`, whose "Opus-tier" was never defined, so whether a Fable or Mythos session passed them was left to the running agent; and `/design`'s soft advisory, keyed `/document`'s relaunch advisory and `/conformance`'s note on its judgement steps, which tested "Opus" or "the §2 chain" and so treated a Fable or Mythos session as below Opus. §9.1's advisory now fires only on a session that is not Opus-tier, and §9.1's and §9.2's narrowed window advisory and §9.3's gate rule say Opus-tier too. The degrade paths of `/idea`, `/create-prd`, `/update-prd`, `/brd-interview`, `/brd-split` and `/brd-reconcile`, which recorded a degradation whenever "no Opus resolves" for the session, name the test too.
+- **A Mythos id had no dispatch form in a family-only harness.** §5 maps an id to its family name where the agent tool accepts only family names, and Claude Code's lists `opus`, `sonnet`, `haiku` and `fable`. In such a harness a `claude-mythos-*` id now passes no `model:` argument, so the agent inherits the session's model, that id, unless the harness is configured with a default model for subagents, which then runs instead. §2's statement of inheritance carries the same proviso. Where the parameter accepts ids, the id passes as itself. Before this, a Mythos session at SIMPLE already resolved `implementation_model` to its own id with no form to pass.
+
+## [1.83.0] — 2026-11-12
+
+Claude Fable 5.2 and Claude Mythos 5.2 are priced. Update with `dev-workflows` 4.62.2, whose session-cost page describes this release's price lookup.
+
+### Added
+
+- **`cost-prices.yaml` keys `claude-fable-5-2` and `claude-mythos-5-2`**, from the pricing page on 2026-11-12. Both are $8 / $40 per MTok, with 5-minute cache writes at $10, 1-hour cache writes at $16 and cache reads at $0.20 (0.025x input, as on 5.1). Each key sits above its 5.1 key, newest first. Without the keys, longest-prefix fallback priced both at their 5 key's rates: cache reads 5x high and every other rate 1.25x high.
+- **Fast mode on 5.2 is priced.** Each key carries a `fast:` block at $16 / $80, with the cache multipliers applied to the fast input price (cache reads $0.40). Fable and Mythos 5.1 have no fast mode, so a fast turn on them is still `unpriced-speed:fast`.
+- **`session-cost.py --selftest` pins the shipped keys.** It prices every rate class of both 5.2 ids, at standard and at fast rates, with a different token count in each class, checks that Fable 5.1 and Mythos 5.1 carry no fast block, and pins the prefix rule below. Dropping either 5.2 key, or changing any of its rates, fails the self-test.
+
+### Fixed
+
+- **A price key ending in a version digit could take a dated id of a shorter key.** The engine's prefix fallback was a raw `startswith`, so the new `claude-fable-5-2` was a prefix of a dated Fable 5 id such as `claude-fable-5-20260115` and would have priced it as Fable 5.2: cache reads 5x low, every other rate 0.8x, and fast turns priced instead of unpriced. A key now counts as a prefix only where the id does not continue with a digit right after it. Dated ids of every other key resolve as before, and no transcript observed so far carries a dated Fable or Mythos id. `cost-prices.yaml`'s header, `cost-emission` §4 and `run-flags` §2's unpriced-id check state the narrower rule.
+
+### Changed
+
+- The 0.025x cache-read exception now names Fable 5.2 and Mythos 5.2 in `cost-prices.yaml`'s comments and `cost-emission` §4. The list of fast-mode models names them in both places and on the session-cost reference page.
+- No routing change. `model-routing/classification` names no Fable model in any chain. Where the agent tool's model parameter accepts ids, `run-flags`' `fable` alias resolves to the highest reachable `claude-fable-…` version, which is now 5.2. In a family-only harness, which Claude Code's Agent tool is today, `fable` passes the family name and the harness picks the version; a version-specific Fable form such as `fable5.2` is refused there, as before. Every Opus-or-Fable test matches on the `claude-fable-*` prefix, so it covers 5.2 too.
+
 ## [1.82.0] — 2026-11-10
 
 GIT-G1 Part 2, batch 2a: every command's specs-repository start and end runs by script, through the new `specs-git` skill. Update with `product-workflows` 3.79.1, whose four register and ARD stops print `phase-handoff` §4.4's new per-row commands; `docs-workflows` 1.38.1 and the patches of `dev-workflows`, `security-workflows` and `guideline-reviewers` — pages, and in `dev-workflows` one citation — need nothing of this release to run.

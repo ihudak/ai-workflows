@@ -404,13 +404,13 @@ Each subagent dispatch below cites which chain it uses (the §9 role→chain map
 
 **Orchestration advisory (window-focused).** `doc-planner` (5.7) and `doc-writer` (6.3) run on the §2 Opus chain regardless of session; only coordination + the interactive gates (5.8 decision, 6.1) run on `current_model`. **Unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then neither the relaunch bullet nor the degradation bullet below fires: `planning_model`, `review_model` and `implementation_model` already carry the enforced id, per this phase's `model_routing` block, and §10 suppresses this relaunch advisory alongside its own degradation notice):**
 
-- **`current_model` is on the §2 chain** → no advisory.
-- **`current_model` is NOT on the §2 chain and `opus_available: true`** → the heavy synthesis + writing are already on Opus; the residual risk is the orchestrator's **context window** on a **large multi-repo ticket**. Offer relaunch **only** on such a ticket — that condition gates the prompt, so once the list is shown the recommendation holds unconditionally (per the marker rule, *The `(Recommended)` marker is unconditional*, in `workflows-core:escalation-rules`):
+- **`current_model` is an Opus-tier model** (`workflows-core:model-routing/classification` §4: Opus, Fable or Mythos) → no advisory.
+- **`current_model` is NOT an Opus-tier model and `opus_available: true`** → the heavy synthesis + writing are already on Opus; the residual risk is the orchestrator's **context window** on a **large multi-repo ticket**. Offer relaunch **only** on such a ticket — that condition gates the prompt, so once the list is shown the recommendation holds unconditionally (per the marker rule, *The `(Recommended)` marker is unconditional*, in `workflows-core:escalation-rules`):
   ```
   choices: ["Relaunch /docs-workflows:document under Opus — I'll restart (Recommended)", "Proceed on <current_model>", "Cancel"]
   ```
   Otherwise proceed without prompting. The relaunch and **Cancel** both end this run, and where Phase 0 step 4(c) committed a generated profile, each ends with that step's left-on-a-branch notice.
-- **`current_model` is NOT on the §2 chain and `opus_available: false`** → `planning_model`, `review_model`, and the **doc-writer** all fall to the Sonnet floor; record the degradation in `notes` and the Phase 9 report; proceed.
+- **`current_model` is NOT an Opus-tier model and `opus_available: false`** → `planning_model`, `review_model`, and the **doc-writer** all fall to the Sonnet floor; record the degradation in `notes` and the Phase 9 report; proceed.
 
 ---
 
@@ -1357,7 +1357,7 @@ Output a structured report — do NOT ask any closing confirmation:
 SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 
 ### Model Routing
-- Session model (current_model): [model] — [if it ran degraded: "Sonnet; user proceeded past the Phase 1.5 advisory" | "Sonnet; no Opus available" | "on §2 chain — no degradation"]
+- Session model (current_model): [model] — [if it ran degraded: "Sonnet; user proceeded past the Phase 1.5 advisory" | "Sonnet; no Opus available" | "Opus-tier — no degradation"]
 - doc-planner synthesis (planning_model): [model]
 - doc-writer (implementation_model): [model]
 - Detection steps — diff-summarizer, doc-location-finder, docs-style-checker, doc-fixer, maintenance (detection_model): [model]

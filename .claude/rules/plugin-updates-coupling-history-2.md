@@ -5,9 +5,9 @@ paths:
   - "plugins/*/CHANGELOG.md"
 ---
 
-# Plugin updates — which plugins to update together (continued, 1.59.0 to 1.73.0)
+# Plugin updates — which plugins to update together (continued, 1.59.0 to 1.74.0)
 
-This file continues `.claude/rules/plugin-updates-coupling.md`, whose `paths:` it shares and whose rules bind it: the bullets for `workflows-core` 1.59.0 to 1.73.0, moved here to keep that file under 20,000 characters when `.claude/rules/plugin-updates-coupling-history.md`, which holds the older ones, had no room for them. New bullets go to `plugin-updates-coupling.md`.
+This file continues `.claude/rules/plugin-updates-coupling.md`, whose `paths:` it shares and whose rules bind it: the bullets for `workflows-core` 1.59.0 to 1.74.0, moved here to keep that file under 20,000 characters when `.claude/rules/plugin-updates-coupling-history.md`, which holds the older ones, had no room for them. New bullets go to `plugin-updates-coupling.md`.
 
 ## Releases to update together
 
@@ -33,3 +33,4 @@ This file continues `.claude/rules/plugin-updates-coupling.md`, whose `paths:` i
 - **Update `workflows-core` 1.72.2 with `product-workflows` 3.68.0**: wording only, since `/prd-ground` Phase 6 sets every horizon either way. An older `workflows-core`'s `grounding-format` §2 says the grounders emit `prerequisite`, which 3.68.0's never do.
 - **Update `workflows-core` 1.72.0 or later with `dev-workflows` 4.55.0, `product-workflows` 3.66.0 and `docs-workflows` 1.31.0**: their consent steps request `phase-handoff handoff-to-main`, and an older `workflows-core`'s loader executes a named entry point inline — §2's branch, commit, push and pull request — before §4.3's choice is shown; 1.72.0's loader presents the choice first.
 - **Update `workflows-core` 1.73.0 with `product-workflows` 3.70.0 and `dev-workflows` 4.56.0**: 3.70.0's `/specify`, `/epics` and `/update-spec` and 4.56.0's `/design` request `document-lineage record` and `document-lineage upstream-check`, a reference no older `workflows-core` carries, so beside 1.72.x the loader fails the request and the run stops. The reverse is harmless: no older command cites the reference, and the documents it writes carry no lineage record, which a covered consumer asks about once.
+- **Update `workflows-core` 1.74.0 with `dev-workflows` 4.57.0 and `product-workflows` 3.71.0**: 4.57.0's `/ready` passes `lineage.py check --accepted-from`, which an older script refuses, so beside 1.73.0 every `/ready` run reports its lineage check as a failed ⚠ finding; 4.57.0's `/implement` would record an acceptance as a frontmatter on `implementation.md`, which `specs-repo-git` refuses to settle against another session's block; and 3.71.0's `/create-prd` stamps an idea-less PRD with an empty record, which 1.73.0 writes as none. Beside older commands, 1.74.0 counts `prd.md` and the ARDs as covered, so each consumer asks once about every PRD and ARD with no lineage record — the migration path every unrecorded document takes.
