@@ -2943,11 +2943,15 @@ def _to_default(run, branch, field):
     B2's and B4's switch and pull are wrapped in lift and put-back (§8.3, _Session.wrap), the caller's budget checked
     before it; a second unpreserved skips the move, which returns text.lift-unpreserved in place of git's first error
     line, so the step reports it as it would a refused switch (§8.3). With no identity the move runs unwrapped
-    (§8.1). A switch that leaves the branch a stay names clears that stay (§4 step 1)."""
+    (§8.1). A switch that leaves the branch a stay names clears that stay (§4 step 1). Where no local <default>
+    exists, _make_default creates it first, and the switch takes --no-guess, so git never makes the branch itself
+    (§3.5): its own --guess writes an upstream as it switches, and where .git/config cannot be written it leaves the
+    index and files on <default>'s tree with HEAD on the branch and exits 1, which this would read as a refusal."""
     rec, specs = run["rec"], run["specs"]
 
     def move():
-        r = sb.git(specs, "switch", rec["default"], check=False)
+        _make_default(specs, rec)
+        r = sb.git(specs, "switch", "--no-guess", rec["default"], check=False)
         if r.returncode != 0:
             return _first_line(r, error=True)
         rec[field] = branch
@@ -2962,6 +2966,24 @@ def _to_default(run, branch, field):
 
     sess = _session(run)
     return move() if sess is None else sess.wrap(move)[1]
+
+
+def _make_default(specs, rec):
+    """specs-repo-git §3.5: where no local <default> exists, create it at <default-ref> by update-ref against the null
+    id, which writes no configuration, then set its upstream to origin/<default> best-effort -- a configuration write
+    that moves nothing, left unset with no word where .git/config cannot be written. Nothing where the branch exists,
+    or where <default-ref> names no commit (the switch that follows then refuses). A switch git then refuses leaves
+    this branch at <default-ref>, holding nothing a push would publish."""
+    default, ref = rec.get("default"), rec.get("default_ref")
+    if not default or not ref or sb.rev(specs, "refs/heads/" + default):
+        return
+    tip = sb.rev(specs, ref)
+    if not tip:
+        return
+    if sb.git(specs, "update-ref", "refs/heads/" + default, tip, "0" * len(tip), check=False).returncode != 0:
+        return
+    if rec.get("remote") == "origin" and ref == "origin/" + default:
+        sb.git(specs, "branch", "--set-upstream-to=" + ref, default, check=False)
 
 
 def _leave(run, branch, test, merged_flush=False):
@@ -3034,8 +3056,8 @@ def _fetch(run):
         def current():
             return _head_branch(specs) or sb.text(sb.git(specs, "rev-parse", "--short", "HEAD"))
 
-        def switch_back():
-            r = sb.git(specs, "switch", left, check=False)
+        def switch_back():  # --no-guess: a branch deleted since is never made again from origin's copy (§3.5)
+            r = sb.git(specs, "switch", "--no-guess", left, check=False)
             if r.returncode != 0:
                 return _first_line(r, error=True)
             return None
@@ -13981,6 +14003,50 @@ def selftest():
                                    + lines.fill("pre.b4.count", {"<N>": 2})]
               and got.get("default_ref") == "refs/heads/main" and got.get("remote") == "none" and got.get("branch") == "main",
               "t_b4_no_remote: no pull and no pull-failed line where there is no origin (%r)" % got)
+
+        # t_b4_no_local_default: no local main, B4 makes it at origin/main by update-ref (specs-repo-git §3.5) and
+        # switches. (a) .git/config held locked, as a hardened container's read-only one fails a write: no upstream is
+        # set, and the checkout moves whole -- git's own --guess would have written the upstream as it switched, failed
+        # there, and left the index and files on main's tree with HEAD on the branch, exit 1, which read as a switch
+        # refused with nothing moved. (b) .git/config writable: main tracks origin/main.
+        for nld_label, nld_locked in (("locked", True), ("writable", False)):
+            r, env = world(tmp, "t-b4-nld-" + nld_label)
+            other_key(r)
+            r.git("branch", "-q", "-D", "main")
+            nld_lock = os.path.join(r.path, ".git", "config.lock")
+            if nld_locked:
+                open(nld_lock, "w").close()
+            try:
+                got = run_start(env, "/feedback")
+            finally:
+                if os.path.exists(nld_lock):
+                    os.remove(nld_lock)
+            nld_head = r.git("symbolic-ref", "-q", "--short", "HEAD", check=False)
+            nld_status = r.git("status", "--porcelain", "--untracked-files=all")
+            nld_upstream = r.git("config", "--get", "branch.main.merge", check=False)
+            check(got.get("branch") == "main" and nld_head == "main" and nld_status == ""
+                  and rev(r, "main") == r.git("rev-parse", "origin/main")
+                  and got.get("print") == [env_line(r.path), lines.fill("pre.b4", {"<branch>": "prd/B-2-y", "<default>": "main"})]
+                  and nld_upstream == ("" if nld_locked else "refs/heads/main"),
+                  "t_b4_no_local_default (%s): main made at origin/main, %s, and the checkout moved whole (%r, head %r, "
+                  "status %r, upstream %r)" % (nld_label, "no upstream" if nld_locked else "tracking origin/main", got, nld_head,
+                                                   nld_status, nld_upstream))
+
+        # t_rerun_no_guess: the re-run's switch back takes --no-guess (specs-repo-git §3.5), so a branch B4 left that
+        # was deleted locally since is not made again from origin's copy -- git's --guess would write its upstream as it
+        # switched -- and the re-run goes on from where it stands, pre.rerun-failed printed
+        r, env = world(tmp, "t-rerun-no-guess")
+        r.git("switch", "-q", "-c", SPEC)
+        r.write("specifications/PRD-ACME-1-x/EPIC-ACME-1-01-x/specification.md", "s\n")
+        r.commit_all("ACME-1-01 Add the specification")
+        r.git("push", "-q", "-u", "origin", SPEC)
+        got = run_start(env, "/document", "--key", "ACME-2")
+        r.git("branch", "-q", "-D", SPEC)
+        got = run_start(env, "/document", "--rerun", "--key", "ACME-2", "--key", "ACME-1-01")
+        shown = got.get("print") or []
+        check(len(shown) == 2 and shown[1].startswith("Specs preflight: could not switch back to %s (" % SPEC)
+              and got.get("branch") == "main" and rev(r, SPEC) is None,
+              "t_rerun_no_guess: no switch back makes the deleted branch again from origin's copy (%r)" % got)
 
         # t_rerun_blocked: a run --rerun carries blocked into prints the re-run's own block and keeps G0's for end. G0's
         # date is one of the days dated() reads just before and just after the call that rendered it, never one fixed at
