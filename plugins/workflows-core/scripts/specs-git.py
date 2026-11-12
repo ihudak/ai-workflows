@@ -2719,26 +2719,27 @@ def _g2_midrun(lines, block, midrun):
 
 def _make_default_fix(lines, specs, default, ref, block):
     """specs-repo-git §5 part 3: <block> with its Fix line, where that line opens with the switch to <default>
-    (g2.self.fix's text, which G2's plain block and g1.merged.fix open with too), opening with fix.make-default
-    instead where refs/heads/<default> names no commit and <ref>, <default-ref>, names one -- so the branch is made with
-    no configuration write before the switch, never by git's guess, whose upstream write half-moves the checkout where
-    .git/config cannot be written (§3.5). Judged each time a block is printed: a prefix an earlier print added is taken
-    off first, so the start's block and the end's repeat of it each name what the clone needs then. Any other block,
-    or one with no default to name, is returned as it is."""
+    (g2.self.fix's text, which G2's plain block and g1.merged.fix open with too), opening with fix.make-default in that
+    switch's place where refs/heads/<default> names no commit and <ref>, <default-ref>, names one: the branch made with
+    no configuration write, its upstream set best-effort behind a `;`, then `switch --no-guess`, so git's guess, whose
+    upstream write half-moves the checkout where .git/config cannot be written (§3.5), is never reached, and the line
+    runs again after a refused switch. Judged each time a block is printed: a form an earlier print made is turned back
+    into the plain switch first, so the start's block and the end's repeat of it each name what the clone needs then.
+    Any other block, or one with no default to name, is returned as it is."""
     if not block or not default or not ref:
         return block
     values = {"<SPECS_PATH>": specs, "<default>": default, "<default-ref>": ref}
-    switch, prefix = lines.fill("g2.self.fix", values), lines.fill("fix.make-default", values) + " "
+    switch, made = lines.fill("g2.self.fix", values), lines.fill("fix.make-default", values)
     rows = block.split("\n")
     for i, row in enumerate(rows):
         if not row.startswith("Fix:"):
             continue
         pad = re.match(r"Fix: *", row).group(0)
         text = row[len(pad):]
-        text = text[len(prefix):] if text.startswith(prefix) else text
+        text = switch + text[len(made):] if text.startswith(made) else text
         if text == switch or text.startswith(switch + " "):
             missing = sb.rev(specs, "refs/heads/" + default) is None and sb.rev(specs, ref) is not None
-            rows[i] = pad + (prefix if missing else "") + text
+            rows[i] = pad + (made + text[len(switch):] if missing else text)
         return "\n".join(rows)
     return block
 
@@ -5757,7 +5758,8 @@ def selftest():
         got = end_of(env)
         want = ("Specs repo: committed %s (1 file) on main — pushed straight to main, and no pull request was opened: this "
                 "plugin lands its session files there without review; to land them through a pull request of your own "
-                "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true; "
+                "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true — on the host, "
+                "where a container mounts this repository's .git/config read-only; "
                 "session-branch mode is on for this clone, but this git's merge-tree cannot merge without a checkout (it "
                 "needs --write-tree and -X), so these files stay on main until git is upgraded" % (head(r)[:7], r.path))
         check(got.get("row") == "pushed-default" and got.get("print") == [want],
@@ -7810,8 +7812,8 @@ def selftest():
         def pushed_default(sha7, specs, n=1):
             return ("Specs repo: committed %s (%s) on main — pushed straight to main, and no pull request was opened: this "
                     "plugin lands its session files there without review; to land them through a pull request of your own "
-                    "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true"
-                    % (sha7, files(n), specs))
+                    "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true — on the host, "
+                    "where a container mounts this repository's .git/config read-only" % (sha7, files(n), specs))
 
         def refused_tail(branch, specs, record_text, clear, day):
             return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
@@ -13269,8 +13271,8 @@ def selftest():
         def pushed_default(sha7, specs):
             return ("Specs repo: committed %s (1 file) on main — pushed straight to main, and no pull request was opened: "
                     "this plugin lands its session files there without review; to land them through a pull request of your "
-                    "own instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true"
-                    % (sha7, specs))
+                    "own instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true — on the host, "
+                    "where a container mounts this repository's .git/config read-only" % (sha7, specs))
 
         # The landing's pieces (specs-repo-git §4 step 1, §6): the row a landing's commit on main takes once pushed with
         # app.landed, G1's plain block, its §5 forms, and the stay the record holds.
@@ -14103,7 +14105,9 @@ def selftest():
         # locked, as a hardened container's read-only one fails a write, move the checkout whole onto main, exit 0. A
         # bare `switch main` there takes git's --guess, whose upstream write fails after the index and the files moved:
         # HEAD left where it was, exit 1. The end repeats G2's block with its Fix judged again, and with a local main
-        # the Fix is the plain switch.
+        # the Fix is the plain switch. With .git/config writable the line sets main's upstream to origin/main, as git's
+        # guess did. Run again after git refused its switch -- an untracked file in the way, then moved -- the same line
+        # switches whole, its first command's `already exists` stopping nothing.
         def fix_of(block):
             return next((row[len("Fix:"):].strip() for row in block.split("\n") if row.startswith("Fix:")), "")
 
@@ -14136,6 +14140,45 @@ def selftest():
         got = run_start(env, "/feedback")
         check(fix_of((got.get("print") or [""])[-1]) == 'git -C "%s" switch main' % r.path,
               "t_fix_no_local_default (g2, local main): the plain switch (%r)" % got)
+
+        r, env = world(tmp, "t-fix-nld-g2-writable")
+        r.git("switch", "-q", "-c", "feature/x")
+        r.write("feature.md", "f\n")
+        r.commit_all("NOISSUE feature")
+        r.git("branch", "-q", "-D", "main")
+        got = run_start(env, "/feedback")
+        fix = fix_of((got.get("print") or [""])[-1])
+        run_end(env, "/feedback")
+        rc = shell(fix, env)["_rc"]
+        fnld_head = r.git("symbolic-ref", "-q", "--short", "HEAD", check=False)
+        fnld_up = (r.git("config", "--get", "branch.main.remote", check=False),
+                   r.git("config", "--get", "branch.main.merge", check=False))
+        check(rc == 0 and fnld_head == "main" and fnld_up == ("origin", "refs/heads/main"),
+              "t_fix_no_local_default (g2, writable): the Fix sets main's upstream to origin/main (%r, rc %r, head %r, "
+              "upstream %r)" % (fix, rc, fnld_head, fnld_up))
+
+        r, env = world(tmp, "t-fix-nld-g2-again")
+        r.git("switch", "-q", "-c", "feature/x")
+        r.git("rm", "-q", PRD)
+        r.commit_all("NOISSUE drop the PRD")
+        r.git("branch", "-q", "-D", "main")
+        got = run_start(env, "/feedback")
+        fix = fix_of((got.get("print") or [""])[-1])
+        run_end(env, "/feedback")
+        r.write(PRD, "mine\n")
+        rc1 = run_locked(r, fix, env)
+        head1 = r.git("symbolic-ref", "-q", "--short", "HEAD", check=False)
+        with open(os.path.join(r.path, PRD), encoding="utf-8") as fh:
+            kept = fh.read()
+        os.rename(os.path.join(r.path, PRD), os.path.join(r.path, "mine.md"))
+        rc2 = run_locked(r, fix, env)
+        head2 = r.git("symbolic-ref", "-q", "--short", "HEAD", check=False)
+        fnld_status = r.git("status", "--porcelain", "--untracked-files=no")
+        check(got.get("guard") == "G2" and rc1 != 0 and head1 == "feature/x" and kept == "mine\n" and rc2 == 0
+              and head2 == "main" and fnld_status == "" and rev(r, "main") == r.git("rev-parse", "origin/main"),
+              "t_fix_no_local_default (g2, run again): refused over the file in the way, nothing moved; once it is moved, "
+              "the same line switches whole (%r, rc %r then %r, head %r then %r, status %r)"
+              % (fix, rc1, rc2, head1, head2, fnld_status))
 
         r, env = world(tmp, "t-fix-nld-g1")
         ff_merged(r, "t-fix-nld-g1-other", A, "specifications/PRD-A-1-x/prd.md")

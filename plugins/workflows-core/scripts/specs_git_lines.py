@@ -87,9 +87,9 @@ T = {
     "g1.midrun.if_ignored": "nothing is lost — these may be <command>'s files in progress, and nothing is to be run here while that run is open: let it finish, or end it, first. Nothing of this run's is committed with them. Until these paths are committed or removed, the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped.",
     "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" add <path list> && git -C \"<SPECS_PATH>\" commit",
     # §5 part 3: where refs/heads/<default> names no commit and <default-ref> names one, a Fix line that opens with the
-    # switch to <default> -- G2's plain and session-branch-itself forms, g1.merged.fix -- opens with this instead, then
-    # a space and the line as it stands; judged each time the block is printed.
-    "fix.make-default": "git -C \"<SPECS_PATH>\" branch --no-track <default> <default-ref> &&",
+    # switch to <default> -- G2's plain and session-branch-itself forms, g1.merged.fix -- has that switch replaced by
+    # this, the rest of the line as it stands; judged each time the block is printed.
+    "fix.make-default": "git -C \"<SPECS_PATH>\" branch --no-track <default> <default-ref> && git -C \"<SPECS_PATH>\" branch --set-upstream-to=<default-ref> <default>; git -C \"<SPECS_PATH>\" switch --no-guess <default>",
     "g1.merged.if_ignored": "nothing is lost — your files stay uncommitted, and nothing of this run's is committed with them. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed. Fix commits them on <default>, not on <branch>, and where git refuses its switch it commits nothing, git naming the files in its way; committed on <branch>, they make it read unmerged, and no later run removes it. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     # §5's G2 variants: each replaces the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G2,
     # rendered on its one line, unwrapped; an empty Fix leaves the label alone (§5: nothing to run, or nothing it can
@@ -114,7 +114,7 @@ T = {
 
     # §6's rows, in its order (ROWS below); "silent" prints nothing and has none.
     "row.pushed-plugin": "Specs repo: committed <sha7> (<N> files) on <branch> — pushed",
-    "row.pushed-default": "Specs repo: committed <sha7> (<N> files) on <default> — pushed straight to <default>, and no pull request was opened: this plugin lands its session files there without review; to land them through a pull request of your own instead, turn on session-branch mode (§8) with git -C \"<SPECS_PATH>\" config workflows.sessionBranch true",
+    "row.pushed-default": "Specs repo: committed <sha7> (<N> files) on <default> — pushed straight to <default>, and no pull request was opened: this plugin lands its session files there without review; to land them through a pull request of your own instead, turn on session-branch mode (§8) with git -C \"<SPECS_PATH>\" config workflows.sessionBranch true — on the host, where a container mounts this repository's .git/config read-only",
     "row.pushed-session": "Specs repo: committed <sha7> (<N> files) on session/<identity> — pushed; <F> session file(s) not on <default> yet: merge its pull request, or open one with gh pr create --head session/<identity> --base <default>",
     "row.no-identity": "Specs repo: NOT COMMITTED — session-branch mode is on and no identity names its branch; set GIT_USER_INITIALS (or git config user.initials), and the next run commits these files",
     "row.session-not-run": "Specs repo: NOT COMMITTED — session-branch.py could not run (<the first line of its stderr>); the files stay in your working tree, and the next run commits them",
