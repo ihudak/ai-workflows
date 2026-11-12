@@ -31,11 +31,14 @@ or {path: blob or null}: the snapshot of the session files dirty when the run's 
 kept as a blob (null for a path with no file), taken by a fresh start that is not a --rerun, where the gate passed, no
 misrooted flag stands and session-branch mode is not on, and null where it could not be taken; every start call whose
 gate passed narrows it as it returns to the paths still dirty, each keeping its blob, and a --rerun carries its first
-start's. midrun is null, or {command, started, branch}: the open run this one was typed under (specs-repo-git §3.5).
+start's. midrun is null, or {command, started, branch, keys}: the open run this one was typed under (specs-repo-git
+§3.5), keys its key set when this run started (a record an earlier version wrote lacks it).
 protects is true, save on a record a later start of the same command with the same run key set, or where either start
 recorded none, parked or marked so (stop_protecting) -- a restart, after which it no longer protects its branch, and
 the later run's own record protects it while that run stands (§3.5); one parked by a later start whose key set
-differs keeps it true, and park, unpark and a re-run keep it as it stands. parked is true on a record park moved aside,
+differs keeps it true. park sets it by the two starts' key sets (the start passes protects), stop_protecting writes it
+false, unpark keeps it as it stands, a re-run of a parked record keeps it on the record it saves in its place, and a
+re-run of the record at <command>.json saves a new record, its protects true. parked is true on a record park moved aside,
 and only there: unpark takes no other, so a record a declined call made at a derived path (find) is never taken for a
 parked one. started_before lists the started of each earlier start of the run whose record a re-run, or a continuation that
 started afresh on its own record -- named by --started, or, named by none, one marked call_returned false --
@@ -105,8 +108,9 @@ FIELDS = {
     "b4_left": None,
     "stay": None,  # {branch, kind, reason, merged, command}: the branch the preflight stayed on and would have left
     "start_dirty": None,  # {path: blob | None}: the session files dirty when the start took its snapshot
-    "midrun": None,  # {command, started, branch}: the open run this one was typed under
-    "protects": True,  # false on a record a later run of the same command parked or restored
+    "midrun": None,  # {command, started, branch, keys}: the open run this one was typed under
+    "protects": True,  # false on a record a later start of its command with the same key set, or keyless, parked or
+    # marked (stop_protecting), and kept by the end that restores it; true where the key sets differed
     "parked": False,  # true on a record park moved aside for a later run of the same command
     "started_before": [],  # the started of each earlier start of the run whose record a later start of it took over
     "call_returned": True,  # false from an unnamed plain start's or continuation's first write until its JSON returns
