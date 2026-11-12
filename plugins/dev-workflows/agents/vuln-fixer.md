@@ -108,8 +108,8 @@ reconstruct it.
      status this agent returns, and reads the same marks off its own capture besides.
 
 2. **Create the fix branch — before any file is touched** — first check the request carries `branch:`
-   and `pre_edit_tree:`, and that the report still describes the tree (both below), then run `git checkout -b <the branch name the
-   orchestrator supplied>`. The name is **always** supplied in the input (`branch:`); never derive
+   and `pre_edit_tree:`, and that the report still describes the tree (both below), then run `git checkout --no-track -b <the branch name the
+   orchestrator supplied>` — `--no-track` because a user's `branch.autoSetupMerge=always` would otherwise make the new branch track the one HEAD stands on, a write that, where `.git/config` cannot be written, leaves the branch made and HEAD where it was, exit 1. The name is **always** supplied in the input (`branch:`); never derive
    one yourself, because `/vuln` Step 3.9 pushes the name *it* resolved and a name you invented
    would fail that step's gate on the mismatch. A missing `branch:` is an orchestrator bug: return
    `status: BLOCKED` naming it, and change nothing — no branch either. So is a missing `pre_edit_tree:`,
@@ -130,7 +130,7 @@ reconstruct it.
    **A rerun is the one exception.** When the branch already exists and points at HEAD itself
    (`git rev-parse <branch>` prints what `git rev-parse HEAD` prints) — an earlier run's `BUILD_FAILED`
    left it in place and empty, and a rerun with `--allow-install-scripts` is the ordinary way back — run
-   `git switch <branch>` in place of `git checkout -b`. A switch that fails returns `status: BLOCKED`
+   `git switch <branch>` in place of `git checkout --no-track -b`. A switch that fails returns `status: BLOCKED`
    with git's error, and changes nothing else.
 
    **On a collision, stop — do not improvise.** If the branch already exists and points anywhere

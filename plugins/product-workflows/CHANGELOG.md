@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.79.3] — 2026-11-12
+
+`/epics`' two sentences on what a run may create in `$SPECS_PATH`, and two pages, describe `workflows-core` 1.84.0's landing and its switches that write no `.git/config`. Update with `workflows-core` 1.84.0.
+
+### Fixed
+
+- **`/epics` said that besides its `epics/` branch the one branch a run may create in `$SPECS_PATH` is `session/<identity>`.** Both copies of the sentence now name a local default branch too, where none exists: made by the preflight's switch to the default branch at `origin/<default>`, as `require-on-main`'s row C repair now makes it before its switch, and, outside session-branch mode, by `workflows-core:specs-repo-git` §4 step 1's landing at the commit it lands, at the run's end or in its preflight's held stage. From `workflows-core` 1.84.0 both make that branch with no write to `.git/config` before they switch, where git's own guess, which writes its upstream there, half-moved a checkout whose `.git/config` cannot be written — a hardened container that mounts it read-only. They also say the preflight switches `$SPECS_PATH` only onto the default branch or onto a plugin-created branch that already exists, where they said only between branches that already exist.
+- **The session-cost and session-feedback pages** say that where the run's preflight had to stay on a plugin branch it would have left, and the checkout still stands there at the run's end, the entry is landed on the default branch, or held in the working tree where it cannot be; that an entry committed on the branch by a command typed while another run of the session was open there — another command's, or the same command's with another key — is not pushed while that run stays open; and how a run you stopped and never ended ends.
+
 ## [3.79.2] — 2026-11-12
 
 Six degrade paths and five pages. Update with `workflows-core` 1.83.1.

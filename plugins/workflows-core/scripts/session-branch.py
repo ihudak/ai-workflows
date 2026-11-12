@@ -3,9 +3,12 @@
 where its default branch takes no direct push.
 
 Run by workflows-core:specs-repo-git §8 (session-branch mode), and around each move of the
-specs checkout by that reference and by workflows-core:phase-handoff; and, as replay, by its
-§4 step 6 where origin rejected a push of the run's session-file commits. The rules are that
-reference's; this script is their plumbing, and a change to either is a change to both.
+specs checkout by that reference and by workflows-core:phase-handoff; and, as replay, by
+workflows-core:specs-repo-git §4 step 6 where origin rejected a push of the run's session-file
+commits. Its own_change is run by workflows-core:specs-repo-git §4 step 1's landing, through
+specs-git.py, which imports it: a run's own change to its session files, applied per path onto
+another commit. The rules are that reference's; this script is their plumbing, and a change to
+either is a change to both.
 Python standard library only.
 
   session-branch.py --specs <root> mode --default <name>
@@ -1066,11 +1069,13 @@ def _fill(root, tree, prefix, dest):
 _SPEC_DIR_RE = re.compile(r"^(specs|specifications|vis)/")
 
 
-def _directories_gone(root, p, onto, added):
-    """Of <added> (paths a commit on <p> adds), sorted, each with an ancestor specification folder
-    (_SPEC_DIR_RE, outside any dev-workflows/) that <p> holds and <onto> does not: a folder the other
-    side removed, or renamed away. One cat-file --batch-check per commit answers every folder at once."""
-    dirs = sorted({d for d in (x.rsplit("/", i)[0] for x in added for i in range(1, x.count("/") + 1))
+def _directories_gone(root, p, onto, paths):
+    """Of <paths> -- the paths a commit on <p> adds, for replay_commits; every path a run's change writes,
+    added or changed, for own_change -- sorted, each with an ancestor specification folder (_SPEC_DIR_RE,
+    outside any dev-workflows/) that <p> holds and <onto> does not: a folder the other side removed, or
+    renamed away, or one <onto> never had. One cat-file --batch-check per commit answers every folder at
+    once."""
+    dirs = sorted({d for d in (x.rsplit("/", i)[0] for x in paths for i in range(1, x.count("/") + 1))
                    if _SPEC_DIR_RE.match(d) and "dev-workflows" not in d.split("/")})
     if not dirs:
         return []
@@ -1080,7 +1085,7 @@ def _directories_gone(root, p, onto, added):
                 data="".join("%s:%s\n" % (commit, d) for d in dirs).encode("utf-8", "surrogateescape"))
         return {d for d, kind in zip(dirs, r.stdout.decode("utf-8", "surrogateescape").split("\n")) if kind == "tree"}
     gone = trees(p) - trees(onto)
-    return sorted(x for x in added if any(x.startswith(d + "/") for d in gone))
+    return sorted(x for x in paths if any(x.startswith(d + "/") for d in gone))
 
 
 def _rebuild(root, tree, slug, register_rebuild):
@@ -1260,6 +1265,141 @@ def replay_commits(root, onto, commits, register_rebuild):
     return {"tip": tip, "replayed": replayed, "dropped": dropped, "numbers": numbers, "refused": None}
 
 
+def own_change(root, onto, c1, c2, register_rebuild=None):
+    """A run's own change to its session files -- <c1>, the files as they stood when it started, to <c2>,
+    as it ends -- applied per path onto <onto> with no checkout: only objects are written, and nothing in
+    the checkout, the index or any ref moves. Never a three-way merge, and never merge-tree: a merge on c1
+    carries into the result what c1 holds and onto lacks, which is not the run's own. For each path
+    diff-tree -r --no-renames lists for c1..c2, from onto's version:
+      - a deletion (c2 lacks the path): removed where onto holds c1's blob; nothing where onto lacks it;
+        refused "deleted" where onto holds another;
+      - a path c2 adds or changes under a specification folder that c1 holds and onto holds nothing
+        under (_directories_gone) -- a folder a teammate removed or renamed away, or one only the
+        stayed branch has: refused "folder-gone", since writing it would bring that folder back on onto;
+      - "block": refused "edited" where any entry of c1 (entry_key) is missing from c2, whoever holds it --
+        an edit, a removal, or an addition to its last entry -- and where c1 holds the file and c2
+        changed its header (by entry_key), which onto's version would not carry and the landing's lift
+        would then discard; refused "forms" where onto's version and
+        c2's are not in one line-ending form (_forms_differ); otherwise onto's version (where onto lacks
+        the file, c2's header: the bytes before its first entry, written even where no entry follows),
+        followed by each entry of c2 that neither c1 nor onto holds, as _append_entries appends one;
+      - "lines" (follow-ups.md): refused "dropped" where a line of c1 (_task_lines) that onto lacks is
+        missing from c2; refused "forms" as above; otherwise onto's version, given a final line ending
+        where it lacks one, followed by each line of c2 that neither c1 nor onto holds, in c2's order,
+        each with the line ending c2's version uses; where there is no such line, onto's version as it
+        is, absent where onto lacks the file. A line onto holds that c2 dropped stays; its edited copy
+        (a ticked task) is a line c1 lacks, and is added beside it;
+      - "whole", and any other path (a runs/ or scans/ record): c2's version;
+      - "register": deleted or not, the rebuild's. Every security/<slug>/ whose register.json or
+        register.md the change touches is rebuilt by <register_rebuild> over the result's
+        security/<slug>/ (_rebuild), and its two files written, as replay_commits writes them; where no
+        script was handed over, or a rebuild fails, every path of the change under that security/<slug>/
+        is refused "register-rebuild" (detail "none" or "failed") and none of them is applied.
+    A block-shaped file onto holds that gains no entry keeps onto's version as it is.
+    Returns {tree: onto's tree with every accepted path applied (onto's own where none changed it),
+    paths: the accepted paths, refused: [{reason, path, detail}], one per refused path in path order,
+    detail None but for "register-rebuild", numbers: {before_remote, before_run, after}, each slug -> the
+    numbers map rebuild printed over onto, over c2 and over the result, for every register rebuilt}."""
+    tip = rev(root, onto)
+    if tip is None:
+        raise NotRun("no such commit: %s" % onto)
+    base = text(git(root, "rev-parse", tip + "^{tree}"))
+    changed = sorted(nul_list(git(root, "diff-tree", "-r", "-z", "--no-renames", "--name-only", c1, c2)))
+    at_o, at_1, at_2 = (_tree_entries(root, t, changed) for t in (tip, c1, c2))
+    gone = set(_directories_gone(root, c1, tip, [p for p in changed if p in at_2]))
+    slugs = sorted({_SLUG_RE.match(p).group(1) for p in changed if merge_class(p) == "register"})
+    entries, refused = {}, {}
+
+    def read(held, p):
+        return git(root, "cat-file", "blob", held[p][1]).stdout if p in held else None
+
+    def sha(held, p):
+        return held[p][1] if p in held else None
+
+    for p in changed:
+        cls = merge_class(p)
+        if cls == "register":
+            continue  # the rebuild's, below
+        o, b1 = sha(at_o, p), sha(at_1, p)
+        if p not in at_2:
+            if o is not None and o == b1:
+                entries[p] = "0 %s\t%s" % (ZERO, p)
+            elif o is not None:
+                refused[p] = ("deleted", None)
+            continue
+        if p in gone:
+            refused[p] = ("folder-gone", None)
+            continue
+        mode, mine, ons = at_2[p][0], read(at_2, p), read(at_o, p)
+        if cls == "block":
+            head1, ents1 = split_entries(read(at_1, p) or b"")
+            first = {entry_key(e) for e in ents1}
+            head, ents = split_entries(mine)
+            if first - {entry_key(e) for e in ents} or (p in at_1 and entry_key(head1) != entry_key(head)):
+                refused[p] = ("edited", None)
+                continue
+            if _forms_differ(ons, mine):
+                refused[p] = ("forms", None)
+                continue
+            have = {entry_key(e) for e in split_entries(ons or b"")[1]}
+            known = first | have
+            new = [e for e in ents if entry_key(e) not in known]
+            if ons is not None and not new:
+                continue  # nothing of the run's own to add: onto's version stands as it is
+            out = head if ons is None else ons
+            if out and not out.endswith(b"\n"):
+                out += _line_ending(out, last=True)
+            data = _append_entries(out, new, have)
+        elif cls == "lines":
+            first, held, lines = set(_task_lines(read(at_1, p))), set(_task_lines(ons)), _task_lines(mine)
+            kept = set(lines)
+            if any(x not in held and x not in kept for x in first):
+                refused[p] = ("dropped", None)
+                continue
+            if _forms_differ(ons, mine):
+                refused[p] = ("forms", None)
+                continue
+            new = [x for x in lines if x not in first and x not in held]
+            if not new:
+                continue  # nothing of the run's own to add: onto's version stands
+            out = ons or b""
+            if out and not out.endswith(b"\n"):
+                out += _line_ending(out, last=True)
+            eol = _line_ending(mine)
+            data = out + b"".join(x + eol for x in new)
+        else:
+            entries[p] = "%s %s\t%s" % (mode, at_2[p][1], p)
+            continue
+        entries[p] = "%s %s\t%s" % (mode, text(git(root, "hash-object", "-w", "--stdin", data=data)), p)
+    numbers = {"before_remote": {}, "before_run": {}, "after": {}}
+    if slugs:
+        # each rebuild reads its own security/<slug>/ alone, so one tree serves every slug's
+        tree = tree_with(root, base, [entries[p] for p in sorted(entries)])
+        for s in slugs:
+            group = [p for p in changed if p.startswith("security/%s/" % s) and p not in refused]
+            # the result's first: the two files it writes, and the numbers after; then onto's and c2's
+            rebuilt = [_rebuild(root, tree, s, register_rebuild)] if register_rebuild else [None]
+            if rebuilt[0] is not None:
+                rebuilt += [_rebuild(root, c, s, register_rebuild) for c in (tip, c2)]
+            if None in rebuilt:
+                for p in group:
+                    refused[p] = ("register-rebuild", "failed" if register_rebuild else "none")
+                    entries.pop(p, None)
+                continue
+            for key, got in zip(("after", "before_remote", "before_run"), rebuilt):
+                numbers[key][s] = got[0]
+            files = rebuilt[0][1] or {}
+            names = ["security/%s/%s" % (s, n) for n in sorted(files)]
+            held = _tree_entries(root, tree, names)
+            for path in names:
+                written = text(git(root, "hash-object", "-w", "--stdin", data=files[path.rsplit("/", 1)[1]]))
+                entries[path] = "%s %s\t%s" % (held.get(path, ("100644",))[0], written, path)
+    tree = tree_with(root, base, [entries[p] for p in sorted(entries)]) if entries else base
+    return {"tree": tree, "paths": [p for p in changed if p not in refused],
+            "refused": [{"reason": refused[p][0], "path": p, "detail": refused[p][1]} for p in sorted(refused)],
+            "numbers": numbers}
+
+
 # ---- the move and the push (spec §3.1, §3.4, §3.5): the replay subcommand ------------------------------
 
 # Every refused.reason replay prints: replay_commits' two, then the move's, the conditions' and the
@@ -1428,14 +1568,14 @@ def git_bounded(root, seconds, *args):
             del _pending[:]
 
 
-def ref_transaction(root, branch):
-    """git update-ref --stdin, one transaction on <branch> whose reflog entry names the replay, which
-    move_branch drives line by line -- start, update, prepare, then commit or abort. start, prepare,
-    commit and abort are each answered "<verb>: ok" on stdout; update draws no answer. Its stderr is
-    never read: no reason is taken from git's text. Where the driver goes away while prepared, stdin
-    closes and git aborts, releasing both locks."""
+def ref_transaction(root, branch, message=None):
+    """git update-ref --stdin, one transaction on <branch> whose reflog entry is <message>, or names the
+    replay where it is None, which move_branch drives line by line -- start, update, prepare, then commit
+    or abort. start, prepare, commit and abort are each answered "<verb>: ok" on stdout; update draws no
+    answer. Its stderr is never read: no reason is taken from git's text. Where the driver goes away
+    while prepared, stdin closes and git aborts, releasing both locks."""
     return subprocess.Popen(["git", "-C", root, "-c", "core.quotePath=false", "update-ref", "--stdin", "-m",
-                             "session-branch: replayed onto origin/" + branch],
+                             "session-branch: replayed onto origin/" + branch if message is None else message],
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
 
@@ -1545,10 +1685,11 @@ def _put_back(root, old, path, mode):
     os.chmod(full, bits | (bits & 0o444) >> 2 if mode == "100755" else bits & ~0o111)
 
 
-def move_branch(root, branch, old, tip, here):
+def move_branch(root, branch, old, tip, here, message=None):
     """Spec §3.4 steps 1 and 2: move refs/heads/<branch> from <old> to <tip>. None where it moved, else
     the refusal, with nothing moved -- its reason read from exit codes, refs and files, never from git's
-    text (Review Focus 8). A path named is given as git_paths shows it.
+    text (Review Focus 8). A path named is given as git_paths shows it. <message> is the reflog's
+    (ref_transaction): the replay's where None.
     <here>, the checkout at <root> standing on the branch: update-index -q --refresh first, so a file
     rewritten with the same bytes does not fail read-tree as not up to date (a failure: "locked", the
     index.lock named); then "would-overwrite" where _would_overwrite names any path, before anything
@@ -1583,7 +1724,7 @@ def move_branch(root, branch, old, tip, here):
         if where:
             return {"reason": "checked-out", "path": where[0]}
         top = os.path.realpath(text(git(root, "rev-parse", "--show-toplevel")))
-        txn = ref_transaction(root, branch)
+        txn = ref_transaction(root, branch, message)
         try:
             if _tell(txn, "start") != "start: ok" or _tell(txn, "update %s %s %s\nprepare" % (ref, tip, old)) != "prepare: ok":
                 txn.stdin.close()
@@ -1614,7 +1755,7 @@ def move_branch(root, branch, old, tip, here):
     paths = _would_overwrite(root, old, tip)
     if paths:
         return {"reason": "would-overwrite", "path": paths[0], "paths": paths}
-    txn = ref_transaction(root, branch)
+    txn = ref_transaction(root, branch, message)
     try:
         if _tell(txn, "start") != "start: ok" or _tell(txn, "update %s %s %s\nprepare" % (ref, tip, old)) != "prepare: ok":
             txn.stdin.close()
@@ -3977,6 +4118,390 @@ def selftest():
         if can_replay:
             for attrs in (None, "* merge=text\n", "* -merge\n", "security/** export-ignore\n"):
                 replay_cases(attrs)
+
+        # ---- own_change (ruling C1): a run's own change to its session files, applied per path onto another
+        # commit. Each case a repository whose HEAD commits <head>, onto and c1 built on HEAD and c2 on c1 by
+        # tree_with and commit_tree, as the landing builds them, each {path: text, or None to remove} over its
+        # parent's tree. Every *_snapshot case has a path dirty at the start (in c1) that the run also appends
+        # to: what c1 holds and onto lacks is never the run's to land. Needs no merge-tree, so it runs on any git.
+        OC_PRD = "specifications/PRD-A-1-x/prd.md"
+        OC_COST = "specifications/PRD-A-1-x/dev-workflows/cost/5e55a0d1.md"
+        OC_SLUG = "web"
+        OC_REG = "security/%s/" % OC_SLUG
+        OC_RA, OC_RT, OC_RX = (OC_REG + "runs/%s.json" % n for n in ("a", "t", "x"))
+        OC_REGJ, OC_REGM = OC_REG + "register.json", OC_REG + "register.md"
+        OC_E0, OC_S, OC_R, OC_R2, OC_B = (cost(t) for t in ("2026-11-01T08:00:00Z", "2026-11-10T09:00:00Z",
+                                                            "2026-11-10T10:00:00Z", "2026-11-10T11:00:00Z",
+                                                            "2026-11-05T12:00:00Z"))
+        OC_EMPTY = {"before_remote": {}, "before_run": {}, "after": {}}
+
+        def oc_commit(r, base, files):
+            """<base>'s tree with <files> written over it, committed on <base> by tree_with and commit_tree."""
+            entries = []
+            for p, body in sorted(files.items()):
+                if body is None:
+                    entries.append("0 %s\t%s" % (ZERO, p))
+                else:
+                    sha = text(git(r.path, "hash-object", "-w", "--stdin", data=body.encode("utf-8")))
+                    entries.append("100644 %s\t%s" % (sha, p))
+            return commit_tree(r.path, tree_with(r.path, r.git("rev-parse", base + "^{tree}"), entries), [base], "oc\n")
+
+        def oc(tmp, label, head, onto, c1, c2, register_rebuild=None, path_first=None):
+            """own_change(onto, c1, c2) in a repository whose HEAD commits <head> and OC_PRD, its checkout left
+            as a stayed run leaves it: c2's session files in the working tree, a staged edit and an untracked
+            file of the user's own; with <path_first>, that folder first on PATH for the call. Checks
+            oc_checkout_untouched -- HEAD, the index, git status, every ref and the working copies as they
+            were -- and returns (the repository, onto, the result)."""
+            r = Repo(os.path.join(tmp, label))
+            subprocess.run(["git", "init", "-q", "-b", "main", r.path], check=True)
+            r.configure()
+            files = {OC_PRD: "# PRD\n"}
+            files.update(head)
+            for p, body in files.items():
+                r.write(p, body)
+            r.commit_all("base")
+            h = r.git("rev-parse", "HEAD")
+            o, k1 = oc_commit(r, h, onto), oc_commit(r, h, c1)
+            k2 = oc_commit(r, k1, c2)
+            for p, body in c2.items():
+                if body is not None:
+                    r.write(p, body)
+                elif os.path.exists(os.path.join(r.path, p)):
+                    os.remove(os.path.join(r.path, p))
+            r.write(OC_PRD, "# PRD, staged\n")
+            r.git("add", OC_PRD)
+            r.write("notes.txt", "the user's own, untracked\n")
+            before = frozen(r) + tuple(r.read(p) for p in sorted(c2))
+            path = os.environ.get("PATH", "")
+            if path_first:
+                os.environ["PATH"] = path_first + os.pathsep + path
+            try:
+                got = own_change(r.path, o, k1, k2, register_rebuild)
+            finally:
+                os.environ["PATH"] = path
+            check(frozen(r) + tuple(r.read(p) for p in sorted(c2)) == before,
+                  "[own_change: oc_checkout_untouched, %s] HEAD, the index, git status, every ref and the working "
+                  "copies are as they were" % label)
+            return r, o, got
+
+        def oc_onto_tree(r, o):
+            return r.git("rev-parse", o + "^{tree}")
+
+        def oc_refused(reason, *paths, detail=None):
+            return [{"reason": reason, "path": p, "detail": detail} for p in sorted(paths)]
+
+        def oc_cases():
+            with tempfile.TemporaryDirectory() as tmp:
+                # follow-ups.md: onto's lines, then the lines c2 adds that neither c1 nor onto holds
+                def lines_snapshot(label, path_first=None):
+                    return oc(tmp, label, {R_FU: "- [ ] a\n"}, {}, {R_FU: "- [ ] a\n- [ ] OUTER\n"},
+                              {R_FU: "- [ ] a\n- [ ] OUTER\n- [ ] INNER\n"}, path_first=path_first)
+
+                def oc_lines_snapshot():
+                    r, o, got = lines_snapshot("oc_lines_snapshot")
+                    check(got.get("refused") == [] and got.get("paths") == [R_FU] and got.get("numbers") == OC_EMPTY
+                          and at(r, got.get("tree"), R_FU) == "- [ ] a\n- [ ] INNER\n",
+                          "[own_change: oc_lines_snapshot] onto's line, then the run's INNER; c1's OUTER never lands "
+                          "(%r, %r)" % (got, at(r, got.get("tree"), R_FU)))
+                guarded("oc_lines_snapshot", oc_lines_snapshot)
+
+                def oc_lines_branch_only():
+                    r, o, got = oc(tmp, "oc_lines_branch_only", {R_FU: "- [ ] a\n- [ ] b\n"}, {R_FU: "- [ ] a\n"}, {},
+                                   {R_FU: "- [ ] a\n- [x] b\n- [ ] n\n"})
+                    check(got.get("refused") == oc_refused("dropped", R_FU) and got.get("paths") == []
+                          and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_lines_branch_only] a branch-only line ticked is refused dropped, onto's tree "
+                          "unchanged (%r)" % got)
+                guarded("oc_lines_branch_only", oc_lines_branch_only)
+
+                def oc_lines_remove_branch_only():
+                    r, o, got = oc(tmp, "oc_lines_remove_branch_only", {R_FU: "- [ ] a\n- [ ] b\n"}, {R_FU: "- [ ] a\n"},
+                                   {}, {R_FU: "- [ ] a\n"})
+                    check(got.get("refused") == oc_refused("dropped", R_FU) and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_lines_remove_branch_only] a branch-only line removed is refused dropped (%r)"
+                          % got)
+                guarded("oc_lines_remove_branch_only", oc_lines_remove_branch_only)
+
+                def oc_lines_tick_onto():
+                    r, o, got = oc(tmp, "oc_lines_tick_onto", {R_FU: "- [ ] a\n"}, {}, {}, {R_FU: "- [x] a\n"})
+                    check(got.get("refused") == [] and got.get("paths") == [R_FU]
+                          and at(r, got.get("tree"), R_FU) == "- [ ] a\n- [x] a\n",
+                          "[own_change: oc_lines_tick_onto] a line onto holds, ticked, lands as a second copy beside it "
+                          "(%r, %r)" % (got, at(r, got.get("tree"), R_FU)))
+                guarded("oc_lines_tick_onto", oc_lines_tick_onto)
+
+                def oc_lines_remove_onto():
+                    r, o, got = oc(tmp, "oc_lines_remove_onto", {R_FU: "- [ ] a\n- [ ] k\n"}, {}, {}, {R_FU: "- [ ] k\n"})
+                    check(got.get("refused") == [] and got.get("paths") == [R_FU] and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_lines_remove_onto] a line onto holds that the run dropped stays: accepted, "
+                          "onto's file unchanged (%r)" % got)
+                guarded("oc_lines_remove_onto", oc_lines_remove_onto)
+
+                def oc_lines_onto_has():
+                    r, o, got = oc(tmp, "oc_lines_onto_has", {R_FU: "- [ ] a\n"}, {R_FU: "- [ ] a\n- [ ] n\n"}, {},
+                                   {R_FU: "- [ ] a\n- [ ] n\n- [ ] m\n"})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), R_FU) == "- [ ] a\n- [ ] n\n- [ ] m\n",
+                          "[own_change: oc_lines_onto_has] a line the run adds that onto already holds is not added "
+                          "twice (%r, %r)" % (got, at(r, got.get("tree"), R_FU)))
+                guarded("oc_lines_onto_has", oc_lines_onto_has)
+
+                def oc_lines_new_file():
+                    for label, c1, c2, want in (
+                            ("oc_lines_new_file", {}, {R_FU: "- [ ] x\n- [ ] y\n"}, "- [ ] x\n- [ ] y\n"),
+                            ("oc_lines_new_file-c1", {R_FU: "- [ ] b\n"}, {R_FU: "- [ ] b\n- [ ] n\n"}, "- [ ] n\n")):
+                        r, o, got = oc(tmp, label, {}, {}, c1, c2)
+                        check(got.get("refused") == [] and got.get("paths") == [R_FU]
+                              and at(r, got.get("tree"), R_FU) == want,
+                              "[own_change: %s] onto lacks follow-ups.md: the lines c2 adds that c1 lacks (%r, %r)"
+                              % (label, got, at(r, got.get("tree"), R_FU)))
+                guarded("oc_lines_new_file", oc_lines_new_file)
+
+                # a block-shaped file: onto's version, then the entries c2 adds that neither c1 nor onto holds
+                def oc_block_snapshot():
+                    r, o, got = oc(tmp, "oc_block_snapshot", {OC_COST: COST_HEAD + OC_E0}, {},
+                                   {OC_COST: COST_HEAD + OC_E0 + "\n" + OC_S},
+                                   {OC_COST: COST_HEAD + OC_E0 + "\n" + OC_S + "\n" + OC_R})
+                    check(got.get("refused") == [] and got.get("paths") == [OC_COST]
+                          and at(r, got.get("tree"), OC_COST) == COST_HEAD + OC_E0 + "\n" + OC_R,
+                          "[own_change: oc_block_snapshot] onto plus the run's R, never c1's S, nothing refused (%r, %r)"
+                          % (got, at(r, got.get("tree"), OC_COST)))
+                guarded("oc_block_snapshot", oc_block_snapshot)
+
+                def oc_block_branch_only():
+                    head = {OC_COST: COST_HEAD + OC_E0 + "\n" + OC_B}
+                    onto = {OC_COST: COST_HEAD + OC_E0}
+                    r, o, got = oc(tmp, "oc_block_branch_only", head, onto, {},
+                                   {OC_COST: COST_HEAD + OC_E0 + "\n" + OC_B + "\n" + OC_R})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), OC_COST) == COST_HEAD + OC_E0 + "\n" + OC_R,
+                          "[own_change: oc_block_branch_only] a branch-only entry B stays off onto, the run's R lands "
+                          "(%r, %r)" % (got, at(r, got.get("tree"), OC_COST)))
+                    edited = OC_B.replace("duration_s: 1284", "duration_s: 1300")
+                    r, o, got = oc(tmp, "oc_block_branch_only-edited", head, onto, {},
+                                   {OC_COST: COST_HEAD + OC_E0 + "\n" + edited + "\n" + OC_R})
+                    check(got.get("refused") == oc_refused("edited", OC_COST) and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_block_branch_only] B edited to B' is refused edited (%r)" % got)
+                guarded("oc_block_branch_only", oc_block_branch_only)
+
+                def oc_block_edit_onto():
+                    edited = OC_E0.replace("duration_s: 1284", "duration_s: 1300")
+                    r, o, got = oc(tmp, "oc_block_edit_onto", {OC_COST: COST_HEAD + OC_E0}, {}, {},
+                                   {OC_COST: COST_HEAD + edited + "\n" + OC_R})
+                    check(got.get("refused") == oc_refused("edited", OC_COST) and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_block_edit_onto] an entry onto holds, edited, is refused edited (%r)" % got)
+                guarded("oc_block_edit_onto", oc_block_edit_onto)
+
+                def oc_block_new_file():
+                    r, o, got = oc(tmp, "oc_block_new_file", {}, {}, {}, {OC_COST: COST_HEAD + OC_R + "\n" + OC_R2})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), OC_COST) == COST_HEAD + OC_R + "\n" + OC_R2,
+                          "[own_change: oc_block_new_file] onto lacks the file: c2's header, then the entries c2 adds "
+                          "(%r, %r)" % (got, at(r, got.get("tree"), OC_COST)))
+                    # c2's header with no entry after it is written too: an accepted path the landing then lifts
+                    # is never one whose content reached no commit
+                    r, o, got = oc(tmp, "oc_block_new_file-header", {}, {}, {}, {OC_COST: COST_HEAD})
+                    check(got.get("refused") == [] and got.get("paths") == [OC_COST] and at(r, got.get("tree"), OC_COST) == COST_HEAD,
+                          "[own_change: oc_block_new_file] a new file of c2's header alone is written as it is (%r)" % got)
+                guarded("oc_block_new_file", oc_block_new_file)
+
+                def oc_block_forms():
+                    r, o, got = oc(tmp, "oc_block_forms", {OC_COST: COST_HEAD + OC_E0}, {OC_COST: crlf(COST_HEAD + OC_E0)},
+                                   {}, {OC_COST: COST_HEAD + OC_E0 + "\n" + OC_R})
+                    check(got.get("refused") == oc_refused("forms", OC_COST) and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_block_forms] CRLF on onto, LF in c2: refused forms (%r)" % got)
+                guarded("oc_block_forms", oc_block_forms)
+
+                # a header the run changed in a file c1 holds: onto's version would not carry it and the lift would
+                # discard it, so refused; a header only onto changed is onto's, and the run's entry still lands
+                def oc_block_header():
+                    other = COST_HEAD.replace("prd: ACME-77", "prd: ACME-78")
+                    r, o, got = oc(tmp, "oc_block_header", {OC_COST: COST_HEAD + OC_E0}, {}, {},
+                                   {OC_COST: other + OC_E0 + "\n" + OC_R})
+                    check(got.get("refused") == oc_refused("edited", OC_COST) and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_block_header] a header the run changed is refused edited (%r)" % got)
+                    r, o, got = oc(tmp, "oc_block_header-onto", {OC_COST: COST_HEAD + OC_E0}, {OC_COST: other + OC_E0}, {},
+                                   {OC_COST: COST_HEAD + OC_E0 + "\n" + OC_R})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), OC_COST) == other + OC_E0 + "\n" + OC_R,
+                          "[own_change: oc_block_header] a header only onto changed stays onto's, the run's entry after it "
+                          "(%r, %r)" % (got, at(r, got.get("tree"), OC_COST)))
+                guarded("oc_block_header", oc_block_header)
+
+                def oc_lines_forms():
+                    r, o, got = oc(tmp, "oc_lines_forms", {R_FU: "- [ ] a\n"}, {R_FU: "- [ ] a\r\n"}, {},
+                                   {R_FU: "- [ ] a\n- [ ] n\n"})
+                    check(got.get("refused") == oc_refused("forms", R_FU) and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_lines_forms] follow-ups.md CRLF on onto, LF in c2: refused forms (%r)" % got)
+                guarded("oc_lines_forms", oc_lines_forms)
+
+                # onto's version lacking a final line ending is given one before the run's entry or line
+                def oc_final_line_ending():
+                    r, o, got = oc(tmp, "oc_final_line_ending", {OC_COST: COST_HEAD + OC_E0},
+                                   {OC_COST: (COST_HEAD + OC_E0).rstrip("\n")}, {}, {OC_COST: COST_HEAD + OC_E0 + "\n" + OC_R})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), OC_COST) == COST_HEAD + OC_E0 + "\n" + OC_R,
+                          "[own_change: oc_final_line_ending] a block file: onto's last line completed, an empty line, the "
+                          "run's entry (%r, %r)" % (got, at(r, got.get("tree"), OC_COST)))
+                    r, o, got = oc(tmp, "oc_final_line_ending-lines", {R_FU: "- [ ] a\n"}, {R_FU: "- [ ] a"}, {},
+                                   {R_FU: "- [ ] a\n- [ ] n\n"})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), R_FU) == "- [ ] a\n- [ ] n\n",
+                          "[own_change: oc_final_line_ending-lines] follow-ups.md: onto's last line completed, then the "
+                          "run's line (%r, %r)" % (got, at(r, got.get("tree"), R_FU)))
+                guarded("oc_final_line_ending", oc_final_line_ending)
+
+                def oc_untracked_leftover():
+                    left = entry("2026-10-28", "/document", "a leftover of an earlier run")
+                    mine = entry("2026-10-28", "/document", "the run's own")
+                    r, o, got = oc(tmp, "oc_untracked_leftover", {}, {}, {R_DOCS: DOCS_HEAD + left},
+                                   {R_DOCS: DOCS_HEAD + left + "\n" + mine})
+                    check(got.get("refused") == [] and at(r, got.get("tree"), R_DOCS) == DOCS_HEAD + mine,
+                          "[own_change: oc_untracked_leftover] a leftover untracked at the start: only the entries the "
+                          "run appended (%r, %r)" % (got, at(r, got.get("tree"), R_DOCS)))
+                guarded("oc_untracked_leftover", oc_untracked_leftover)
+
+                # an overwritten shape: c2's version; a deletion only where onto holds c1's blob
+                def oc_whole():
+                    r, o, got = oc(tmp, "oc_whole", {R_RS: "pos: R0\n"}, {}, {R_RS: "pos: R1\n"}, {R_RS: "pos: R2\n"})
+                    check(got.get("refused") == [] and got.get("paths") == [R_RS] and at(r, got.get("tree"), R_RS) == "pos: R2\n",
+                          "[own_change: oc_whole] resume.md is c2's version (%r)" % got)
+                guarded("oc_whole", oc_whole)
+
+                def oc_delete():
+                    held = COST_HEAD + OC_E0
+                    for label, onto, want in (("oc_delete", {}, "removed"),
+                                              ("oc_delete-another", {R_PEND: held + "\n" + OC_R}, "refused"),
+                                              ("oc_delete-absent", {R_PEND: None}, "untouched")):
+                        r, o, got = oc(tmp, label, {R_PEND: held}, onto, {}, {R_PEND: None})
+                        tree = got.get("tree")
+                        if want == "removed":
+                            ok = got.get("refused") == [] and got.get("paths") == [R_PEND] and tree and at(r, tree, R_PEND) is None
+                        elif want == "refused":
+                            ok = got.get("refused") == oc_refused("deleted", R_PEND) and tree == oc_onto_tree(r, o)
+                        else:
+                            ok = got.get("refused") == [] and got.get("paths") == [R_PEND] and tree == oc_onto_tree(r, o)
+                        check(ok, "[own_change: %s] a deletion where onto holds %s: %s (%r)"
+                              % (label, {"removed": "c1's blob", "refused": "another", "untouched": "nothing"}[want], want, got))
+                guarded("oc_delete", oc_delete)
+
+                # P29: a refusal is per path -- the paths accepted are applied, the rest listed
+                def oc_partial():
+                    r, o, got = oc(tmp, "oc_partial", {R_FU: "- [ ] a\n- [ ] b\n"}, {R_FU: "- [ ] a\n"}, {},
+                                   {R_FU: "- [ ] a\n", FB: SEED})
+                    tree = got.get("tree")
+                    check(got.get("refused") == oc_refused("dropped", R_FU) and got.get("paths") == [FB]
+                          and tree and at(r, tree, FB) == SEED and at(r, tree, R_FU) == "- [ ] a\n",
+                          "[own_change: oc_partial] the feedback file lands, follow-ups.md stays onto's and is refused "
+                          "(%r)" % got)
+                guarded("oc_partial", oc_partial)
+
+                # a register: rebuilt over the result by the handed-over script; without one, or where it fails,
+                # every path of that security/<slug>/ refused and none applied, while the rest still is
+                def oc_register():
+                    stub, failing = os.path.join(tmp, "stub-register.py"), os.path.join(tmp, "failing-register.py")
+                    with open(stub, "w", encoding="utf-8") as fh:
+                        fh.write(STUB)
+                    with open(failing, "w", encoding="utf-8") as fh:
+                        fh.write(STUB + "sys.exit(3)  # it wrote both files and printed its numbers, then failed\n")
+
+                    def reg(*paths):
+                        js, md, numbers = stub_register(paths)
+                        return js, md.replace("# Security register: %s\n" % SLUG, "# Security register: %s\n" % OC_SLUG), numbers
+                    a, at_, ax, atx = reg(OC_RA), reg(OC_RA, OC_RT), reg(OC_RA, OC_RX), reg(OC_RA, OC_RT, OC_RX)
+                    mine = SEED + "\n" + today("mine, beside the scan")
+                    head = {OC_RA: run_record(1, "2026-11-01T08:00:00Z", "s1:v3:aa"), OC_REGJ: a[0], OC_REGM: a[1], FB: SEED}
+                    onto = {OC_RT: run_record(2, "2026-11-10T11:00:00Z", "s2:v3:tt"), OC_REGJ: at_[0], OC_REGM: at_[1]}
+                    c2 = {OC_RX: run_record(2, "2026-11-10T10:00:00Z", "s2:v3:xx"), OC_REGJ: ax[0], OC_REGM: ax[1], FB: mine}
+                    r, o, got = oc(tmp, "oc_register", head, onto, {}, c2, register_rebuild=stub)
+                    tree = got.get("tree")
+                    check(got.get("refused") == [] and got.get("paths") == sorted([FB, OC_REGJ, OC_REGM, OC_RX])
+                          and tree and at(r, tree, OC_RX) == c2[OC_RX] and at(r, tree, OC_RT) == onto[OC_RT]
+                          and at(r, tree, OC_REGJ) == atx[0] and at(r, tree, OC_REGM) == atx[1] and at(r, tree, FB) == mine,
+                          "[own_change: oc_register] the run's record added, both register files the stub's over the "
+                          "result (%r)" % got)
+                    check(got.get("numbers") == {"before_remote": {OC_SLUG: at_[2]}, "before_run": {OC_SLUG: ax[2]},
+                                                 "after": {OC_SLUG: atx[2]}}
+                          and len({json.dumps(n, sort_keys=True) for n in (at_[2], ax[2], atx[2])}) == 3,
+                          "[own_change: oc_register] the numbers maps over onto, c2 and the result (%r)" % got.get("numbers"))
+                    for label, script, detail in (("oc_register-none", None, "none"),
+                                                  ("oc_register-failing", failing, "failed")):
+                        r, o, got = oc(tmp, label, head, onto, {}, c2, register_rebuild=script)
+                        tree = got.get("tree")
+                        check(got.get("refused") == oc_refused("register-rebuild", OC_REGJ, OC_REGM, OC_RX, detail=detail)
+                              and got.get("paths") == [FB] and got.get("numbers") == OC_EMPTY
+                              and tree and at(r, tree, OC_RX) is None and at(r, tree, OC_REGJ) == at_[0]
+                              and at(r, tree, OC_REGM) == at_[1] and at(r, tree, FB) == mine,
+                              "[own_change: %s] every security/%s/ path refused register-rebuild (%s), none applied; "
+                              "the feedback file still is (%r)" % (label, OC_SLUG, detail, got))
+                guarded("oc_register", oc_register)
+
+                # a folder c1 holds and onto lacks entirely: every path the run adds or changes under it is
+                # refused, since writing one would bring the folder back on onto; a deletion there writes nothing
+                def oc_dirs_gone():
+                    x = "specifications/PRD-X-1-x/"
+                    added, cost_, fu, rs, old = (x + "dev-workflows/X-1-feedback.md", x + "dev-workflows/cost/5e55a0d1.md",
+                                                 x + "follow-ups.md", x + "dev-workflows/resume.md",
+                                                 x + "dev-workflows/cost/0ddba11.md")
+                    head = {x + "prd.md": "# PRD X\n", cost_: COST_HEAD + OC_E0, fu: "- [ ] a\n", rs: "pos: 0\n",
+                            old: COST_HEAD + OC_B}
+                    c2 = {added: SEED, cost_: COST_HEAD + OC_E0 + "\n" + OC_R, fu: "- [ ] a\n- [ ] n\n", rs: "pos: 1\n",
+                          old: None}
+                    r, o, got = oc(tmp, "oc_dirs_gone", head, {p: None for p in head}, {}, c2)
+                    check(got.get("refused") == oc_refused("folder-gone", added, cost_, fu, rs) and got.get("paths") == [old]
+                          and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_dirs_gone] a file added, a block file, follow-ups.md and resume.md changed under "
+                          "a specification folder onto lacks are each refused folder-gone; a deletion there is accepted "
+                          "(%r)" % got)
+                guarded("oc_dirs_gone", oc_dirs_gone)
+
+                def oc_nothing():
+                    landed = {FB: SEED + "\n" + today("already landed"), R_FU: "- [ ] a\n- [ ] n\n", R_RS: "pos: R2\n"}
+                    r, o, got = oc(tmp, "oc_nothing", {FB: SEED, R_FU: "- [ ] a\n", R_RS: "pos: R0\n"}, landed, {}, landed)
+                    check(got.get("refused") == [] and got.get("paths") == sorted(landed)
+                          and got.get("tree") == oc_onto_tree(r, o),
+                          "[own_change: oc_nothing] a change onto already holds leaves onto's tree as it is (%r)" % got)
+                guarded("oc_nothing", oc_nothing)
+
+                # a git without merge-tree --merge-base: own_change never calls merge-tree, so the same tree
+                def oc_old_git():
+                    fake = os.path.join(tmp, "old-git")
+                    os.makedirs(fake)
+                    with open(os.path.join(fake, "git"), "w") as fh:
+                        fh.write('#!/bin/sh\nfor x in "$@"; do\n  if [ "$x" = merge-tree ]; then\n    cat <<\'EOF\'\n'
+                                 "usage: git merge-tree [--write-tree] [<options>] <branch1> <branch2>\n\n"
+                                 "    --write-tree          do a real merge instead of a trivial merge\n"
+                                 "    -X, --strategy-option <option=value>\nEOF\n    exit 129\n  fi\ndone\n"
+                                 "exec '%s' \"$@\"\n" % shutil.which("git").replace("'", "'\\''"))
+                    os.chmod(os.path.join(fake, "git"), 0o755)
+                    path = os.environ.get("PATH", "")
+                    os.environ["PATH"] = fake + os.pathsep + path
+                    try:
+                        shim = replay_ok(tmp)
+                    finally:
+                        os.environ["PATH"] = path
+                    _r, _o, plain = lines_snapshot("oc_old_git-plain")
+                    _r, _o, old = lines_snapshot("oc_old_git", path_first=fake)
+                    check(shim is False and plain.get("tree") and old == plain,
+                          "[own_change: oc_old_git] under a git without merge-tree --merge-base, the same result (%r, %r, %r)"
+                          % (shim, old, plain))
+                guarded("oc_old_git", oc_old_git)
+
+                # the landing's reflog message: move_branch and ref_transaction take one
+                def mb_message():
+                    r = Repo(os.path.join(tmp, "mb_message"))
+                    subprocess.run(["git", "init", "-q", "-b", "main", r.path], check=True)
+                    r.configure()
+                    r.write(OC_PRD, "# PRD\n")
+                    r.commit_all("base")
+                    old = r.git("rev-parse", "HEAD")
+                    r.git("branch", "-q", "side")
+                    tip = oc_commit(r, old, {R_FU: "- [ ] landed\n"})
+                    got = move_branch(r.path, "side", old, tip, False, message="specs-git: landed abc1234")
+                    log = r.git("reflog", "-1", "--format=%gs", "refs/heads/side")
+                    check(got is None and r.git("rev-parse", "side") == tip and log == "specs-git: landed abc1234",
+                          "[own_change: mb_message] move_branch's message is the reflog's (%r, %r)" % (got, log))
+                    tip2 = oc_commit(r, tip, {R_FU: "- [ ] landed\n- [ ] again\n"})
+                    got = move_branch(r.path, "side", tip, tip2, False)
+                    log = r.git("reflog", "-1", "--format=%gs", "refs/heads/side")
+                    check(got is None and r.git("rev-parse", "side") == tip2 and log == "session-branch: replayed onto origin/side",
+                          "[own_change: mb_message] without one, the replay's text as before (%r, %r)" % (got, log))
+                guarded("mb_message", mb_message)
+        oc_cases()
 
         # ---- the replay subcommand (spec §3.1, §3.4, §3.5, §3.8): fetch, replay, locked move, push ----
         REAL_GIT = shutil.which("git")
