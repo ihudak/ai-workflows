@@ -16338,6 +16338,32 @@ def selftest():
 
         case("t_midrun_open_rerun", t_midrun_open_rerun)
 
+        # A continuation of the open run that starts afresh leaves it standing where it names the run's record by
+        # --started (it takes it over, started_before listing the stamp the run typed under it holds), and ends it
+        # where it names none (the record set aside): the run typed under it then commits its own change and pushes it
+        def t_midrun_open_resume():
+            got = {}
+            for name, named in (("named", True), ("unnamed", False)):
+                r, env = mworld("t-midrun-open-resume-" + name)
+                up = on_origin(r)
+                start_(env, "/document", "--key", "ACME-1")
+                a = backdate(env, "/document", 240)
+                f = start_(env, "/feedback")
+                again = start_(env, "/document", "--key", "ACME-1", "--resume", *(("--started", a) if named else ()))
+                r.write(FB, "fb\n")
+                e = run_end(env, "/feedback")
+                got[name] = ((f.get("midrun") or {}).get("started") == a, again.get("started") != a,
+                             (again.get("replaced") or {}).get("started"), e.get("row"), e.get("pushed"),
+                             on_origin(r) == up)
+            check(got.get("named") == (True, True, None, "here", False, True)
+                  and got.get("unnamed", ())[:3] == (True, True, a) and got["unnamed"][4] is True
+                  and got["unnamed"][5] is False,
+                  "t_midrun_open_resume: a fresh continuation named by --started leaves the open run standing (the "
+                  "here row, nothing pushed); one naming none sets its record aside, and the run typed under it "
+                  "pushes (%r)" % got)
+
+        case("t_midrun_open_resume", t_midrun_open_resume)
+
         # The file a cut-off re-run leaves behind outlives no save over the record that lists its stamp: the second
         # run's end restores the re-run's record (unpark, no clean-up), a third plain start of the command saves its own
         # record over it -- not an open run, protects false -- and the file left behind goes with it, so the third
@@ -16828,7 +16854,8 @@ def selftest():
             ("`export SPECS_PATH='<the value>';`", "the land call does not open with The call's export"))
         START_LAST = "the first call's, or that of the last `start --rerun` or `start --resume` made since"
         LAND_FAILS = ("exits 2 on a line that does not begin `specs-git: not run (usage:`", "has `error` set",
-                      "`Specs repo: NOT FINISHED` line")
+                      "whatever it left in the held record — a held entry, or the journal of a move it began — stays "
+                      "there", "`Specs repo: NOT FINISHED` line")
 
         def fallback_problems(text, ref):
             sections = {s.split("\n", 1)[0]: s for s in text.split("\n## ")}
@@ -16899,7 +16926,10 @@ def selftest():
                 (START_LAST, "the first call's, or the last `start --resume` a `next` led to",
                  "leaves out a start --rerun's", srg),
                 (None, None, "says nothing of the land call's exit 2 or error",
-                 srg.replace("`Specs repo: NOT FINISHED` line, `<the error>`", "outcome line, `<the error>`"))):
+                 srg.replace("`Specs repo: NOT FINISHED` line, `<the error>`", "outcome line, `<the error>`")),
+                (None, None, "says nothing of the land call's exit 2 or error",
+                 srg.replace("whatever it left in the held record — a held entry, or the journal of a move it began — "
+                             "stays there", "what it held or journalled stays in the held record"))):
             got = fallback_problems(skill.replace(old, new) if old else skill, ref)
             check((old is None or skill.count(old) >= 1) and any(want in p for p in got),
                   "k_skill_fallback: a fallback off its rule fails (%s: %r)" % (want, got))

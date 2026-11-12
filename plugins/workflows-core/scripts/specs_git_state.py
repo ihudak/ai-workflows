@@ -396,7 +396,8 @@ def find(session, command, started):
     derived path, never one a re-run left behind), one whose started is <started> or whose started_before lists it, the
     newest started where several are; on a tie <command>.json, then <name>.<stamp>.json, the stamp derived from
     <started> as park derives it, then its -2, -3; else that derived path by name, with its record, or with None where
-    no file stands there. Never <command>.json for another run: only a re-run of the run <started> names lists it."""
+    no file stands there. Never <command>.json for another run: only a later start of the run <started> names lists it
+    -- its re-run (_carry), or its continuation, named by --started, that started afresh."""
     main = path(session, command)
     derived = _parked_path(session, command, started, taken=False)
     base = derived[:-len(".json")]
