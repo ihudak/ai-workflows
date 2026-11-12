@@ -35,13 +35,15 @@ protects is true, save on a record a later run of the same command parked or res
 branch -- while the later run stands, its own record protects it (§3.5). parked is true on a record park moved aside,
 and only there: unpark takes no other, so a record a declined call made at a derived path (find) is never taken for a
 parked one. started_before lists the started of each earlier start of the run whose record a re-run, or a continuation that
-started afresh on its own record -- named by --started, or, named by none, one whose last start call never returned --
+started afresh on its own record -- named by --started, or, named by none, one marked call_returned false --
 took over, oldest first, so that find reaches the run's record by any stamp its
 starts returned; a record whose started another record of its command lists there is one a re-run cut off between its
 save and its removal of the file it re-ran from left behind: records() leaves it out, so no reader restores it, reads
 it as open or names it, and the next save or the removal of the record that lists it, or the save of another run's
-record over that one, removes it. call_returned is false from a start call's first write until it returns its JSON,
-so a record a call the harness stopped left keeps it false. A record an earlier
+record over that one, removes it. call_returned is false from the first write of a plain start or a continuation given
+no --started -- calls whose run learns the stamp only from their JSON -- until that call returns its JSON, an error's
+included; a named call or a re-run, whose run holds a stamp already, never writes it false. So a record such a call
+left where the harness stopped it keeps it false. A record an earlier
 version wrote lacks these seven fields: load gives each its default (call_returned true: returned). held_changed holds
 the paths the held stage took out of their held entries as changed since they were held (specs-repo-git §3.2), which
 the flush reports for each it commits (§3.4); a record that lacks it reads as holding none. held_attempted holds the
@@ -103,7 +105,7 @@ FIELDS = {
     "protects": True,  # false on a record a later run of the same command parked or restored
     "parked": False,  # true on a record park moved aside for a later run of the same command
     "started_before": [],  # the started of each earlier start of the run whose record a later start of it took over
-    "call_returned": True,  # false from a start call's first write until it returns its JSON: a stopped call leaves it
+    "call_returned": True,  # false from an unnamed plain start's or continuation's first write until its JSON returns
     "branch": None,  # the branch HEAD stands on when a start call returns
     "advised_D": [],
     "reported": [],  # start's once-a-run reports printed: "<template id>[ <branch>]"
@@ -401,7 +403,7 @@ def find(session, command, started):
     <started> as park derives it, then its -2, -3; else that derived path by name, with its record, or with None where
     no file stands there. Never <command>.json for another run: only a later start of the run <started> names lists it
     -- its re-run (_carry), or its continuation that started afresh on its record, named by --started or, named by
-    none, finding its last start call never returned."""
+    none, finding it marked call_returned false."""
     main = path(session, command)
     derived = _parked_path(session, command, started, taken=False)
     base = derived[:-len(".json")]

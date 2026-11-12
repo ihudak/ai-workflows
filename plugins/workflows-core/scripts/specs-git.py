@@ -3531,11 +3531,13 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     notices (reads only), then saves a fresh record at stage fetch -- its first write -- takes the run's snapshot
     (_take_snapshot), save on a --rerun, and prunes -- having read, before that save, the open run this one is typed
     under, if any (rec["midrun"]), and parked this command's own record where it is an open run (replaced's parked:
-    true), save on a --rerun or a resume; a failure before that save raises, so the caller exits 2 with nothing done, and after it every outcome is returned, an exception as error and the pre.stopped line, after
+    true), save on a --rerun or on a resume that does not meet the record as a plain start does (below); a failure before that save raises, so the caller exits 2 with nothing done, and after it every outcome is returned, an exception as error and the pre.stopped line, after
     _stop_stay's ask on a plugin branch (§4 step 1's stay). The
     stages (START_STAGES) then run from the record's own, each saved on entering it and resumable from its start.
     <resume> goes on with the saved stage only where state.resumable holds for this call's arguments; otherwise the
-    call runs fresh. <rerun> opens on this command's record, keeping what _carry
+    call runs fresh. A resume with no <started> or <rerun> uses <command>.json only where that record is marked
+    call_returned false with this call's arguments; any other, marked true or lacking the mark, it meets as a plain
+    start does. <rerun> opens on this command's record, keeping what _carry
     keeps -- the open run its first start was typed under among them, tested again as end tests it (_midrun_stands),
     and dropped where it no longer stands; a re-run reads no other record for one, save where it finds no record of its
     own (dropped, or a session id changed since), when it reads them as a first start does, taking no snapshot as no
@@ -3547,12 +3549,13 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     and protects as that record was, and removes the file it replaced, <command>.json untouched; a fresh call keeps the
     record's stamps in started_before (_carry on a re-run; a resume started afresh on its own record likewise), so the
     run's earlier stamps still name the new record, as a re-run the harness stopped before its JSON needs; a resume
-    goes on with it in place. A resume with no <started> that starts afresh takes <command>.json as its own record only
-    where that record's last start call never returned (call_returned false, which every call sets at its first write
-    and _close clears) with this call's arguments -- the harness's stop of this run's own start, which returned no
-    next -- and sets any other aside. A plain
-    start parks this command's own open record; a resume never does, even one that runs fresh, the record being its
-    own run's. A stage that hands a replay over, and a unit of
+    goes on with it in place. A resume with no <started> that starts afresh takes <command>.json as its own record,
+    marked call_returned false with this call's arguments -- the harness's stop of this run's own start, which
+    returned no next. A plain start or a resume with no <started> writes the
+    mark false at its first write, and its JSON, through _close or, on an error, apart from it, writes it true; a named
+    call or a re-run, whose run holds a stamp already, never writes it false. A plain
+    start parks this command's own open record, and so does a resume with no <started> that meets it as a plain start
+    does; any other resume never does, even one that runs fresh, the record being its own run's. A stage that hands a replay over, and a unit of
     capped calls <budget> would not hold, return next: the replay, or start --resume with the record's args. Every
     next names the record by --started, its own started, whether or not this call was given one, so the call it leads
     to reaches that record however long after it is made, and a resume past resumable's 15 minutes takes it over
@@ -3578,6 +3581,14 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "print": [],
            "budget": _Budget(budget), "rec": old, "record_path": None if at == main else at, "started": started}
     replaced, park, apart = None, False, None
+    # A continuation given no --started is only ever the skill's remake of a first start the harness stopped before
+    # it returned its JSON -- every next names the record (_resume_next) -- and that first start, a plain one, marked
+    # its record call_returned false at its first write. So it uses <command>.json only where the record is marked so,
+    # with this call's arguments; any other record, marked true or lacking the mark, it meets as a plain start does --
+    # parked where it is an open run, else set aside -- its own first start having written nothing (specs-repo-git
+    # §3.5)
+    if resume and started is None and not rerun:
+        resume = old is not None and old.get("call_returned") is False and old.get("args") == args
     fresh = not (resume and old is not None and old.get("stage") in START_STAGES and state.resumable(old, args))
     if fresh:
         env = env_line(specs)
@@ -3587,13 +3598,12 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
                         stage="fetch")
         if g["misrooted"]:
             rec.update(specs_git="misrooted", misrooted_notice=list(g["lines"]))
-        # A continuation's own record, started afresh: the one --started names, or, named by none, a record whose last
-        # start call never returned its JSON (call_returned false, as the harness's stop leaves it) with this call's
-        # arguments -- a stopped start's, whose stamp no run ever learned, so none can name it (specs-repo-git §3.5).
-        # Any other record an unnamed resume finds may be another run's, whose end can name it: set aside. Every next
-        # names the record (_resume_next), so an unnamed resume is the remake of a start that returned no JSON.
-        own = resume and not rerun and old is not None and (started is not None or (
-            at == main and old.get("call_returned") is False and old.get("args") == args))
+        # A continuation's own record, started afresh: the one --started names, or, named by none, the only record a
+        # continuation given no --started uses, marked call_returned false with this call's arguments (above) -- left
+        # by a plain start or a continuation given no --started, whose run learns the stamp only from the JSON that
+        # call never returned, as the harness's stop of this run's own start leaves it. Taken over, never set aside
+        # (replaced)
+        own = resume and not rerun and old is not None
         if rerun and old is not None:
             _carry(rec, old)
         elif old is not None and at == main and not own:
@@ -3628,10 +3638,13 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     # This call's budget where it is not the default, outside args: how the preflight is split across calls, which the
     # start --resume a budget stop or a replay names repeats, and resumable's argument test never reads.
     run["rec"]["budget"] = None if budget == DEFAULT_BUDGET else budget
-    # False from this call's first write until _close: a call the harness stops leaves it so (own, above)
-    run["rec"]["call_returned"] = False
-    if not fresh:  # a continuation's first write, so a stop anywhere in its stages leaves the mark
-        state.save(session, command, run["rec"], at=run["record_path"])
+    # False from the first write of a plain start or a continuation given no --started -- calls whose run learns the
+    # stamp only from their JSON -- until that JSON returns (_close, or the error path apart from it): a call the
+    # harness stops leaves it so (own, above). Such a continuation goes on only with a record marked so already
+    # (above), so only a fresh one writes it here, in its first save. A named call or a re-run, whose run holds a stamp
+    # already, never writes it false: it leaves it as the record holds it, a fresh one's new record true
+    if started is None and not rerun:
+        run["rec"]["call_returned"] = False
     if fresh:
         if park and state.park(session, command):  # immediately before the first save
             replaced["parked"] = True
@@ -3666,8 +3679,12 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
         _emit(run, lines.fill("pre.stopped", {"<the error>": error}))
         try:
             _close(run)
-        except Exception:
-            pass
+        except Exception:  # the JSON still returns, the record's stamp in it: the mark is saved true apart from _close
+            run["rec"]["call_returned"] = True
+            try:
+                _save(run)
+            except Exception:
+                pass
     return _start_result(run, nxt, replaced, error)
 
 
@@ -14312,7 +14329,9 @@ def selftest():
         session_commit(r, L, "PRD-ACME-7-l")
         r.git("switch", "-q", "main")
         seed(env, "/create-ard", stage="settle", settle_todo=None)
-        got = run_start(env, "/create-ard", "--resume")
+        # the resume a next names, by the record's started: one given no --started meets a record not marked
+        # call_returned false as a plain start does
+        got = run_start(env, "/create-ard", "--resume", "--started", (record(env, "/create-ard") or {}).get("started"))
         check(got.get("print") == ["Specs preflight: pushed 1 session-file commit(s) left on %s" % L]
               and got.get("replaced") is None and fields(got) and on_origin(r, L) == rev(r, L)
               and (record(env, "/create-ard") or {}).get("stage") == "done",
@@ -16384,8 +16403,8 @@ def selftest():
         case("t_midrun_open_rerun", t_midrun_open_rerun)
 
         # A continuation of the open run that starts afresh leaves it standing where it takes its record over: named by
-        # --started, or, named by none, a record whose last start call never returned (call_returned false, as the
-        # harness's stop of the run's start leaves it) -- started_before then lists the stamp the run typed under it
+        # --started, or, named by none, a record marked call_returned false, as the harness's stop of the run's start
+        # leaves it -- started_before then lists the stamp the run typed under it
         # holds. Named by none and finding a record whose start returned, it sets that record aside, and the run typed
         # under it commits its own change and pushes it. The take-over deletes nothing of another run: a parked record of
         # an earlier run of the command stays byte for byte
@@ -16438,8 +16457,9 @@ def selftest():
 
         case("t_midrun_open_resume", t_midrun_open_resume)
 
-        # call_returned: a start call writes it false at its first write -- a fresh call's first save, a continuation's
-        # own save before its stages -- and true as it returns, so a call killed anywhere in its stages leaves it false
+        # call_returned: a plain start writes it false at its first save and true as it returns, so one killed anywhere
+        # in its stages leaves it false; the continuation given no --started that remakes it goes on with that record,
+        # marked so already, leaves it false where it is killed in turn, and true once it returns
         def t_call_returned_mark():
             r, env = mworld("t-call-returned")
             ahead(r, "t-call-returned-other")  # a second unit, so --budget 0 stops the first call with a next
@@ -16451,7 +16471,7 @@ def selftest():
                 raise Killed()
 
             marks = []
-            for resume in (True, False):  # a continuation that goes on, then a fresh start
+            for resume in (False, True):  # a fresh plain start, then the continuation that remakes it
                 g["_start_stages"] = killed
                 try:
                     with in_env(env):
@@ -16460,13 +16480,126 @@ def selftest():
                     pass
                 finally:
                     g["_start_stages"] = real
-                marks.append((rec_of(env, "/document").get("stage"), rec_of(env, "/document").get("call_returned")))
+                rec = rec_of(env, "/document")
+                marks.append((rec.get("stage"), rec.get("call_returned"), rec.get("started")))
+            again = start_(env, "/document", "--key", "ACME-1", "--resume")
+            back = rec_of(env, "/document").get("call_returned")
             check((first.get("next") or {}).get("run") and after_first is True
-                  and marks[0][0] in START_STAGES and marks[0][1] is False and marks[1][1] is False,
-                  "t_call_returned_mark: true once a call returns; false where a continuation or a fresh start is killed "
-                  "in its stages (%r, %r)" % (after_first, marks))
+                  and marks[0][0] in START_STAGES and marks[0][1] is False
+                  and marks[1][0] in START_STAGES and marks[1][1] is False and marks[1][2] == marks[0][2]
+                  and again.get("error") is None and again.get("started") == marks[0][2] and back is True,
+                  "t_call_returned_mark: true once a call returns; false where a plain start, then the continuation "
+                  "that goes on with its record, is killed in its stages; true once that continuation returns "
+                  "(%r, %r, %r)" % (after_first, marks, back))
 
         case("t_call_returned_mark", t_call_returned_mark)
+
+        # call_returned and a named call: a call given --started, or a re-run, belongs to a run that holds the record's
+        # stamp already, so it never writes the mark false -- killed in its stages after a stage's save, a continuation
+        # that goes on leaves the record as the start that returned the stamp left it, true, and a fresh named
+        # continuation or a re-run leaves its new record true. So another run's continuation given no --started, with the same arguments and
+        # past 15 minutes, sets that record aside rather than taking it up as its own stopped start's
+        def t_call_returned_named():
+            r, env = mworld("t-call-returned-named")
+            ahead(r, "t-call-returned-named-other")  # a second unit, so --budget 0 stops the first call with a next
+            first = start_(env, "/document", "--key", "ACME-1", "--budget", "0")
+            a = first.get("started")
+            real = g["_start_stages"]
+
+            def killed(run):  # stopped inside its stages, after the first stage's save
+                g["_advance"](run, run["rec"].get("stage") or "fetch")
+                raise Killed()
+
+            def kill(**kw):
+                g["_start_stages"] = killed
+                try:
+                    with in_env(env):
+                        start(env["SPECS_PATH"], "/document", ["ACME-1"], **kw)
+                except Killed:
+                    pass
+                finally:
+                    g["_start_stages"] = real
+                rec = rec_of(env, "/document")
+                return rec.get("stage"), rec.get("call_returned")
+
+            def aged():  # the record saved 20 minutes ago: past resumable's 15
+                path = file_of(env, "/document")
+                rec = json.load(open(path, encoding="utf-8"))
+                rec["updated"] = time.strftime(STAMP_FMT, time.gmtime(time.time() - 1200))
+                with open(path, "w", encoding="utf-8") as fh:
+                    json.dump(rec, fh)
+                return rec.get("started")
+
+            went_on = kill(resume=True, started=a)  # within 15 minutes: it goes on with the record
+            aged()
+            other = start_(env, "/document", "--key", "ACME-1", "--resume")  # another run's remake, named by none
+            c = aged()
+            fresh = kill(resume=True, started=c)  # past 15 minutes: a fresh named continuation, its record taken over
+            rerun = kill(rerun=True)  # a re-run, given no --started: its record new
+            check(went_on[0] in START_STAGES and [went_on[1], fresh[1], rerun[1]] == [True, True, True],
+                  "t_call_returned_named: a named continuation, a fresh named one and a re-run, each killed in its "
+                  "stages, leave the mark true (%r, %r, %r)" % (went_on, fresh, rerun))
+            check(other.get("error") is None and (other.get("replaced") or {}).get("started") == a,
+                  "t_call_returned_named: the record a killed named call left is set aside by another run's unnamed "
+                  "continuation, never taken up as its own (%r)" % other.get("replaced"))
+
+        case("t_call_returned_named", t_call_returned_named)
+
+        # call_returned on the error path: a call whose stages raise returns its JSON, the record's stamp in it, even
+        # where _close raises too -- the mark is saved true apart from _close
+        def t_call_returned_error():
+            r, env = mworld("t-call-returned-error")
+            real_stages, real_head = g["_start_stages"], g["_head_branch"]
+
+            def no_head(_specs):
+                raise RuntimeError("no HEAD to read")
+
+            def broken(_run):  # the stages raise, and from here on HEAD cannot be read, so _close raises as well
+                g["_head_branch"] = no_head
+                raise RuntimeError("the stages failed")
+
+            g["_start_stages"] = broken
+            try:
+                with in_env(env):
+                    got = start(env["SPECS_PATH"], "/document", ["ACME-1"])
+            finally:
+                g["_start_stages"], g["_head_branch"] = real_stages, real_head
+            rec = rec_of(env, "/document")
+            check("the stages failed" in (got.get("error") or "") and got.get("started") == rec.get("started")
+                  and rec.get("call_returned") is True,
+                  "t_call_returned_error: a call whose stages and whose _close both raise still returns its JSON, its "
+                  "stamp in it, and leaves the mark true (%r, %r)" % (got.get("error"), rec.get("call_returned")))
+
+        case("t_call_returned_error", t_call_returned_error)
+
+        # A continuation given no --started meets another run's record -- marked call_returned true, at a start stage,
+        # made with the same arguments and saved within 15 minutes, which resumable alone would let it go on with -- as a
+        # plain start does: it parks that open run's record and starts afresh. The other run's next, made as given, still
+        # goes on with its own record, this run's record untouched
+        def t_resume_unnamed_other_run():
+            r, env = mworld("t-resume-unnamed-other-run")
+            ahead(r, "t-resume-unnamed-other-run-other")  # a second unit, so --budget 0 stops the first call with a next
+            first = start_(env, "/document", "--key", "ACME-1", "--budget", "0")
+            a, nxt = first.get("started"), (first.get("next") or {}).get("run") or ""
+            before = rec_of(env, "/document")
+            while time.strftime(STAMP_FMT, time.gmtime()) <= (a or ""):  # this run's own stamp a later second, so its
+                time.sleep(0.05)  # record and the other run's never share one
+            other = start_(env, "/document", "--key", "ACME-1", "--resume")  # this run's remake, named by none
+            mine = raw(env, "/document")
+            parked = [n for n in names_of(env, "/document") if n != "document.json"]
+            theirs = shell(nxt, env) if nxt else {}
+            got = (before.get("stage") in START_STAGES, before.get("call_returned"),
+                   (other.get("print") or [None])[0] == env_line(r.path), other.get("error"), other.get("replaced"),
+                   other.get("started") not in (None, a), parked)
+            check(got == (True, True, True, None, {"command": "/document", "started": a, "parked": True}, True,
+                          ["document.%s.json" % stamp_of(a or "")]),
+                  "t_resume_unnamed_other_run: a continuation given no --started meets another run's record marked true "
+                  "as a plain start does -- it parks it and starts afresh (%r)" % (got,))
+            check(theirs.get("error") is None and theirs.get("started") == a and raw(env, "/document") == mine,
+                  "t_resume_unnamed_other_run: the other run's next, by its --started, goes on with its own record, "
+                  "this run's untouched (%r)" % ({k: theirs.get(k) for k in ("started", "replaced", "error")},))
+
+        case("t_resume_unnamed_other_run", t_resume_unnamed_other_run)
 
         # A start that returned a start --resume next, made past resumable's 15 minutes -- a replay that hung to its
         # timeout, then another call: the next names the record by --started, so the resume, starting afresh, takes the
