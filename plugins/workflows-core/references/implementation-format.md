@@ -7,8 +7,10 @@ Design authority: `docs/superpowers/specs/2026-08-31-specs-native-pipeline-desig
 **Written by `/implement`. Read by `/document` and `/release-notes`**, which hand the refs it records
 to `diff-summarizer`; and, for whether it holds a block (§1) or for the repositories its entries
 name, by `references/epic-picker.md`'s ● marker, `/ready`, `/specify` and `/epics`; and, for the
-date each block's heading carries, by `/dev-workflows:ready`'s *Delivery verified* test, which
-counts a block dated after the PRD's conformance record as work implemented since; and, for the
+date each block's heading carries and the instant its `at:` gives it (§1), by `/dev-workflows:ready`'s
+*Delivery verified* and *Release Preparation* tests (its Phase 1 steps 2b and 2c), which count a
+block dated later — by instant where both carry one, else by date — than the PRD's conformance
+record, or than a release-preparation draft, as work implemented since; and, for the
 branch that carries a unit's work and whether it has merged, by the consumers of §5's `unit-branch`,
 which §5 names. §3's commit
 convention is a separate thing with a wider writer set — all three of the commands that change code
@@ -27,6 +29,7 @@ One `## <YYYY-MM-DD> — /implement` block per run that committed (below), with 
   base:    main
   commit:  a3f91c2
   pushed:  true
+  at:      2026-08-31T14:02:11Z
 
 ## 2026-09-02 — /implement
 - repo:    billing-api
@@ -34,7 +37,10 @@ One `## <YYYY-MM-DD> — /implement` block per run that committed (below), with 
   base:    main
   commit:  7be0d41
   pushed:  false            # local only — resolvable on this machine
+  at:      2026-09-02T09:47:30Z
 ```
+
+**Each entry `/implement` writes carries `at:`**, after `pushed:` and before any `accepted:` (below): the instant Phase 4.7 appends the block, in UTC, exactly `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$`, written by pasting the output of `date -u +%Y-%m-%dT%H:%M:%SZ` verbatim. It is taken when the block is written, so it is never earlier than the work the block records. The heading keeps the writer's own date, so its day and the instant's can differ. A value that does not match the pattern — hand-typed, in an offset form, truncated — is no instant, and it never makes the block unreadable. **A block's instant** is the valid `at:` its entries carry, where every entry carries the same one; otherwise the block has none. Only a block with several entries can differ that way: one appended before `dev-workflows` 4.7.0 may carry one entry per repository (above), and an `at:` only where a hand edit put it. A block written before `dev-workflows` 4.63.0 carries no `at:`, and so has no instant. Its one reader is `/dev-workflows:ready` (Phase 1 steps 2b and 2c). No other reader takes the field.
 
 **Append-only.** No command edits or removes a block, and a re-run adds a block rather than
 replacing one. This is the shape `grounding/baselines.md` already uses, one layer up. The one hand
@@ -49,6 +55,7 @@ edit this file names is the operator's move below.
   base:    main
   commit:  c41d9e0
   pushed:  true
+  at:      2026-11-03T15:20:04Z
   accepted:
     - path: specifications/PRD-ACME-77-checkout/prd.md
       blob: 9f2c1e7a4b0d8c3f6e5a1b2c3d4e5f6a7b8c9d0e
