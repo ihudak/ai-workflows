@@ -4,7 +4,8 @@ The record lives outside every repository, under ~/.claude/dev-workflows/specs-g
 keyed by the CLAUDE_CODE_SESSION_ID environment variable (Claude Code sets it in Bash tool subprocesses) and
 the command. A different command typed in the middle of another run (specs-repo-git §3.5) is kept off the open
 run's record by its own file; the same command typed twice, by parking: the second run's start moves the first's
-record aside to <command>.<stamp>.json, the stamp its started with "-" and ":" removed (park), and each run names its
+record aside to <command>.<stamp>.json, the stamp its started with "-" and ":" removed (park) -- still protecting its
+branch where the two starts' run key sets differ -- and each run names its
 own record by any started its starts returned (find; end, declined, and start --rerun and --resume, by --started), so
 the two may end in either order, the second's end restoring the first's record (unpark), and the first's re-run
 saving its new record under a stamp of its own (stamped). save, load and remove take that path as at. Python standard library
@@ -31,8 +32,10 @@ kept as a blob (null for a path with no file), taken by a fresh start that is no
 misrooted flag stands and session-branch mode is not on, and null where it could not be taken; every start call whose
 gate passed narrows it as it returns to the paths still dirty, each keeping its blob, and a --rerun carries its first
 start's. midrun is null, or {command, started, branch}: the open run this one was typed under (specs-repo-git §3.5).
-protects is true, save on a record a later run of the same command parked or restored, which no longer protects its
-branch -- while the later run stands, its own record protects it (§3.5). parked is true on a record park moved aside,
+protects is true, save on a record a later start of the same command with the same run key set, or where either start
+recorded none, parked or marked so (stop_protecting) -- a restart, after which it no longer protects its branch, and
+the later run's own record protects it while that run stands (§3.5); one parked by a later start whose key set
+differs keeps it true, and park, unpark and a re-run keep it as it stands. parked is true on a record park moved aside,
 and only there: unpark takes no other, so a record a declined call made at a derived path (find) is never taken for a
 parked one. started_before lists the started of each earlier start of the run whose record a re-run, or a continuation that
 started afresh on its own record -- named by --started, or, named by none, one marked call_returned false --
@@ -43,7 +46,8 @@ it as open or names it, and the next save or the removal of the record that list
 record over that one, removes it. call_returned is false from the first write of a plain start or a continuation given
 no --started -- calls whose run learns the stamp only from their JSON -- until that call returns its JSON, an error's
 included; a named call or a re-run, whose run holds a stamp already, never writes it false. So a record such a call
-left where the harness stopped it keeps it false. A record an earlier
+left where the harness stopped it keeps it false -- until a later start parks it and an end restores it (unpark),
+which marks it true. A record an earlier
 version wrote lacks these seven fields: load gives each its default (call_returned true: returned). held_changed holds
 the paths the held stage took out of their held entries as changed since they were held (specs-repo-git §3.2), which
 the flush reports for each it commits (§3.4); a record that lacks it reads as holding none. held_attempted holds the
@@ -360,34 +364,51 @@ def stamped(session, command, started):
     return _parked_path(session, command, started)
 
 
-def park(session, command):
+def park(session, command, protects=False):
     """<command>.json moved aside to <name>.<stamp>.json, the stamp its started with "-" and ":" removed (-2, -3
-    before .json where taken), marked parked: true and protects: false, its updated stamp kept: the record of an open
-    run of the same command typed twice (specs-repo-git §3.5), for that run's own end, which protects nothing from
-    then on -- the later run's own record protects the branch while it stands. Its new path, or None where no record
-    stood."""
+    before .json where taken), marked parked: true, its updated stamp kept: the record of an open run of the same
+    command typed twice (specs-repo-git §3.5), for that run's own end. <protects>: true where the two starts' run key
+    sets differ -- that run stays protected, and the later run is typed under it -- else false, a restart: it protects
+    nothing from then on, and the later run's own record protects the branch while it stands. Its new path, or None
+    where no record stood."""
     src = path(session, command)
     rec = _read(src)
     if rec is None:
         return None
     target = _parked_path(session, command, rec.get("started") or _now())
-    rec.update(parked=True, protects=False)
+    rec.update(parked=True, protects=bool(protects))
     _write(target, rec)
     os.unlink(src)
     return target
 
 
+def stop_protecting(target):
+    """The record file <target> -- a parked record of an open run whose command a later start typed again with the
+    same run key set (specs-repo-git §3.5) -- marked protects: false, its updated stamp kept. False where none stands
+    there."""
+    rec = _read(target)
+    if rec is None:
+        return False
+    rec["protects"] = False
+    _write(target, rec)
+    return True
+
+
 def unpark(session, command, keep):
     """The newest parked file of <command> -- one marked parked: true, never a record at a derived path -- back to
-    <command>.json, parked no longer and protects: false still, where keep(record) holds: "restored"; removed
-    otherwise: "dropped". None where none is parked."""
+    <command>.json, parked no longer, its protects as it stands (false where the start that parked it was a restart,
+    true where its key set differed), where keep(record) holds: "restored"; removed otherwise: "dropped". None where
+    none is parked. A restored record is marked call_returned: true: a later start of its command parked it, so the
+    start that left it false was overtaken, and no continuation given no --started remakes it -- the skill makes one
+    only straight after the harness stops its run's own start -- so such a continuation of another run, made with the
+    same arguments, meets it as a plain start does (specs-repo-git §3.5) rather than going on with it."""
     parked = [(full, rec) for full, rec in mine(session, command)
               if full != path(session, command) and rec.get("parked") is True]
     if not parked:
         return None
     full, rec = parked[-1]
     if keep(rec):
-        rec.update(parked=False, protects=False)
+        rec.update(parked=False, call_returned=True)
         _write(path(session, command), rec)
         os.unlink(full)
         return "restored"
