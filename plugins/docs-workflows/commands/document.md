@@ -871,7 +871,16 @@ Every git call in this phase, and in Phase 6.3's commit and Phase 8.5, runs as `
    ```
    choices: ["Proceed from current base state (Recommended)", "Cancel"]
    ```
-   A stash runs `workflows-core:escalation-rules` § *Stashing the user's changes*: named, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends. The changes were carried here by the switch, so the branch it records is the one `git -C <docs_repo_path> branch --show-current` printed **before** that switch — read it then, on every run that switches.
+   **Where the local `<base>` has diverged.** Before asking, read `git -C <docs_repo_path> rev-list --count origin/<base>..<base>`. Where it prints a number above 0, the local `<base>` holds that many commits `origin/<base>` does not have, and the branch step 5 cuts from it, and its pull request, would carry them: the question's own text says so, naming the count, and no choice is marked `(Recommended)`, whether to take those commits along being the user's call — where the tree is dirty,
+   ```
+   choices: ["Stash local changes and continue", "Proceed from current base state", "Cancel"]
+   ```
+   and where it is clean,
+   ```
+   choices: ["Proceed from current base state", "Cancel"]
+   ```
+   so too where that read fails, its error named in place of the count. Where it prints 0, the choices are the two lists above.
+   A stash runs `workflows-core:escalation-rules` § *Stashing the user's changes*: named, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends. The changes were carried here by the switch, so the branch it records is `<start>`, the one `git -C <docs_repo_path> branch --show-current` printed **before** that switch — read it then, on every run that switches, taking `git -C <docs_repo_path> rev-parse HEAD` instead where it prints nothing, HEAD being detached. **Cancel** at any of these lists stops the run as step 2's **Cancel** does, and the stop says, where `<start>` is not `<base>`, that the docs repository is now on `<base>`, and names `git -C <docs_repo_path> switch <start>` (`switch --detach <start>` where `<start>` is a commit) to go back.
 
 2. **Clean-tree check.** `git -C <docs_repo_path> status --porcelain`; if non-empty:
    ```
