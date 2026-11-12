@@ -12,13 +12,14 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py --specs <root> push-scope --branch <name> [--session-default-ref <ref>]
   specs-git.py --specs <root> mode --default <name>
   specs-git.py owner-repo --repo <path> [--no-alias]
-  specs-git.py declined --command /<name> --path <p> [--path <p>]...
+  specs-git.py declined --command /<name> [--started <stamp>] --path <p> [--path <p>]...
   specs-git.py --specs "<value>" specs-root-check
   specs-git.py --specs "<value>" start --command /<name> [--key <K>]... [--commit-key <K>] [--register-rebuild <path>]
-               [--rerun] [--resume] [--budget <seconds>]
+               [--rerun] [--resume] [--budget <seconds>] [--started <stamp>, with --rerun or --resume]
   specs-git.py --specs "<value>" end --command /<name> [--commit-key <K>] [--register-rebuild <path>] [--no-preflight]
-               [--misrooted-stdin] [--session-branch-created <sha7>] [--declined <p>]... [--resume]
+               [--misrooted-stdin] [--session-branch-created <sha7>] [--declined <p>]... [--resume] [--started <stamp>]
   specs-git.py --specs <root> replay --for start|end --command /<name> --branch <name> [--set-upstream] [--timed-out]
+               [--started <stamp>]
   specs-git.py --specs <root> land --branch <name> --default-ref <ref> --command /<name> [--commit-key <K>]
                [--snapshot <file> | --snapshot -] [--register-rebuild <path>] [--here]
   specs-git.py --specs <root> land --default-ref <ref> --retry-held [--register-rebuild <path>]
@@ -1262,7 +1263,9 @@ def _end_result(**kw):
 def _replay_next(specs, command, branch, set_upstream, for_="end", started=None):
     """The call a rejected push hands the run (specs-repo-git §4 step 6): the replay, in a Bash call of its own, and
     the same with --timed-out where the harness ends that call at its timeout. <for_>: end, or start for §3.4's.
-    <started>: the end's --started, repeated, so the replay reads and writes the record that end did (P19)."""
+    <started>, so the replay reads and writes the record the call that hands it over did (P19): for end, the end's
+    --started, repeated; for start, the record's own started, whether or not the start call was given one, as every
+    start-side next names it (_resume_next)."""
     run = "python3 %s --specs %s replay --for %s --command %s --branch %s%s%s" % (
         shlex.quote(os.path.abspath(__file__)), shlex.quote(specs), for_, shlex.quote(command), shlex.quote(branch),
         " --set-upstream" if set_upstream else "", " --started " + shlex.quote(started) if started else "")
@@ -1274,8 +1277,10 @@ def _resume_next(command, args, budget=None, started=None):
     call's --specs, every --key in order, --commit-key and --register-rebuild as the record's <args> hold them, so the
     resume passes resumable's argument test, and --budget where the record's <budget> holds one (a start call's that
     was not the default) -- how the preflight is split across calls, which no argument test reads -- and --started
-    <started>, the record's own, where the call was given one, so the resume goes on with that record (state.find,
-    specs-repo-git §3.5); in a Bash call of its own, start's 600 s, nothing to run on a timeout."""
+    <started>, the record's own, whether or not the call was given one, so the resume goes on with that record
+    (state.find, specs-repo-git §3.5) however long after it is made: past resumable's 15 minutes it starts afresh and
+    takes that record over, never setting it aside; in a Bash call of its own, start's 600 s, nothing to run on a
+    timeout."""
     parts = ["--specs", args.get("specs") or "", "start", "--command", command]
     for key in args.get("keys") or []:
         parts += ["--key", key]
@@ -2337,7 +2342,8 @@ def replay(specs, for_, command, branch, set_upstream=False, timed_out=False, st
     Exit 2 only before the record is found; after it, an exception is exit-0 JSON with error set and the stopped
     line, the record kept as it stood -- which is how a record with nothing for this call to replay is refused. A
     replay a signal ended prints nothing and leaves the record as it stood for the --timed-out call: the process ends
-    by that signal (_exit_by). <started>, the end's --started that next repeats, names the record (P19)."""
+    by that signal (_exit_by). <started>, the --started the next that names this call carries -- the end's, repeated,
+    or the start record's own -- names the record (P19); a next this call returns names the record by its own."""
     state, lines = _flow()
     if not state.COMMAND_RE.fullmatch(command):
         raise NotRun("usage: --command is /<name>, got %s" % command)
@@ -2398,7 +2404,8 @@ def _replay_start(run, rec, branch, set_upstream, timed_out):
     alone, so a checkout another session switched during the replay the harness ended still lets start go on), of
     <default>, which §3.2's held stage pushed with HEAD elsewhere (stage held: the replay moves it by update-ref alone,
     and the record goes on at guards), or of a branch the settle loop queued (stage settle-done, <branch> in pending,
-    whose standing names the branch the run stands on)."""
+    whose standing names the branch the run stands on). Its next -- the next queued replay, or start --resume -- names
+    the record by its own started, whatever --started this call was given, as every start-side next does."""
     stage, pending = rec.get("stage"), list(rec.get("pending") or [])
     if stage == "flush" and (timed_out or branch == _head_branch(run["specs"])):
         standing = branch
@@ -2422,7 +2429,7 @@ def _replay_start(run, rec, branch, set_upstream, timed_out):
     if stage == "settle-done" and rec["pending"]:
         nxt = _queued_next(run, rec)
     else:
-        nxt = _resume_next(run["command"], rec.get("args") or {}, rec.get("budget"), run.get("started"))
+        nxt = _resume_next(run["command"], rec.get("args") or {}, rec.get("budget"), rec.get("started"))
     return {"print": [line], "next": nxt, "error": None}
 
 
@@ -3438,10 +3445,11 @@ def _earlier_stamps(old):
 
 
 def _queued_next(run, rec):
-    """The call that replays the first branch <rec>'s pending queue holds (specs-repo-git §3.4, after the loop)."""
+    """The call that replays the first branch <rec>'s pending queue holds (specs-repo-git §3.4, after the loop), naming
+    <rec> by its own started, as every start-side next does (_resume_next)."""
     queued = rec["pending"][0]
     return _replay_next(run["specs"], run["command"], queued["branch"], bool(queued.get("set_upstream")), "start",
-                        started=run.get("started"))
+                        started=rec.get("started"))
 
 
 def _start_result(run, nxt, replaced, error):
@@ -3538,14 +3546,17 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     <command>.json -- a parked run's -- a fresh call saves its record under a stamp of its own (state.stamped), parked
     and protects as that record was, and removes the file it replaced, <command>.json untouched; a fresh call keeps the
     record's stamps in started_before (_carry on a re-run; a resume started afresh on its own record likewise), so the
-    run's earlier stamps still name the new record, as a re-run the harness stopped before its JSON needs. A resume
-    with no <started> that starts afresh takes <command>.json as its own record only where that record's last start
-    call never returned (call_returned false, which every call sets at its first write and _close clears) with this
-    call's arguments -- the harness's stop of this run's own start -- and sets any other aside; a resume goes on with it in
-    place; and every next carries --started. A plain
+    run's earlier stamps still name the new record, as a re-run the harness stopped before its JSON needs; a resume
+    goes on with it in place. A resume with no <started> that starts afresh takes <command>.json as its own record only
+    where that record's last start call never returned (call_returned false, which every call sets at its first write
+    and _close clears) with this call's arguments -- the harness's stop of this run's own start, which returned no
+    next -- and sets any other aside. A plain
     start parks this command's own open record; a resume never does, even one that runs fresh, the record being its
     own run's. A stage that hands a replay over, and a unit of
-    capped calls <budget> would not hold, return next: the replay, or start --resume with the record's args. In
+    capped calls <budget> would not hold, return next: the replay, or start --resume with the record's args. Every
+    next names the record by --started, its own started, whether or not this call was given one, so the call it leads
+    to reaches that record however long after it is made, and a resume past resumable's 15 minutes takes it over
+    rather than setting it aside. In
     session-branch mode the budget is checked before a wrapped move's lift, never between it and its put-back, so every
     call returns with the overlay in place; the closing put-back runs where the stages reach done or the call stops on
     an error (_closing_put_back), never at a budget stop."""
@@ -3579,7 +3590,8 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
         # A continuation's own record, started afresh: the one --started names, or, named by none, a record whose last
         # start call never returned its JSON (call_returned false, as the harness's stop leaves it) with this call's
         # arguments -- a stopped start's, whose stamp no run ever learned, so none can name it (specs-repo-git §3.5).
-        # Any other record an unnamed resume finds may be another run's, whose end can name it: set aside.
+        # Any other record an unnamed resume finds may be another run's, whose end can name it: set aside. Every next
+        # names the record (_resume_next), so an unnamed resume is the remake of a start that returned no JSON.
         own = resume and not rerun and old is not None and (started is not None or (
             at == main and old.get("call_returned") is False and old.get("args") == args))
         if rerun and old is not None:
@@ -3611,7 +3623,8 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
             rec.update(parked=(old or {}).get("parked") is True, protects=(old or {}).get("protects") is not False)
             apart, run["record_path"] = at, state.stamped(session, command, rec["started"])
         run["rec"], run["print"] = rec, [env] + list(g["lines"])
-    run["started"] = run["rec"]["started"] if started is not None else None
+    # Every next this call returns names the record by its own started, named by this call or not (_resume_next)
+    run["started"] = run["rec"]["started"]
     # This call's budget where it is not the default, outside args: how the preflight is split across calls, which the
     # start --resume a budget stop or a replay names repeats, and resumable's argument test never reads.
     run["rec"]["budget"] = None if budget == DEFAULT_BUDGET else budget
@@ -5968,7 +5981,7 @@ def selftest():
             calls.append(shell(calls[-1]["next"]["run"], env))
             states.append(overlay(r))
         resume0 = " ".join(["python3", shlex.quote(me), "--specs", shlex.quote(r.path), "start", "--command", "/feedback",
-                            "--budget", "0", "--resume"])
+                            "--budget", "0", "--started", calls[0].get("started") or "", "--resume"])
         check(len(calls) == 3 and all(c["_rc"] == 0 and c.get("error") is None for c in calls)
               and all(c["next"] == {"run": resume0, "timeout_ms": 600000, "on_timeout": None} for c in calls[:-1])
               and calls[-1].get("next") is None and on_origin(r) == head(r) and on_origin(r, A) == ref(r, A)
@@ -10438,7 +10451,8 @@ def selftest():
             tip = on_origin(r)
             first = r.git("rev-parse", tip + "^")
             check(len(entries) == 2 and len(calls) == 3 and stages == ["held", "held"]
-                  and all(c["next"]["run"].endswith("--budget 0 --resume") for c in calls[:2])
+                  and all(c["next"]["run"].endswith("--budget 0 --started %s --resume" % calls[0].get("started"))
+                          for c in calls[:2])
                   and [c.get("print") for c in calls] == [[env_line(r.path)], [held_landed(first)],
                                                           [held_landed(tip), g1_land(r)]]
                   and calls[-1].get("next") is None and sorted(changed(r, tip) + changed(r, first)) == sorted([FB, LEFT])
@@ -12452,6 +12466,11 @@ def selftest():
             return " ".join(["python3", shlex.quote(me), "--specs", shlex.quote(specs), "replay", "--for", "start",
                              "--command", command, "--branch", branch] + list(more))
 
+        def own_started(env, command):
+            """The started of <command>'s record, which every next a replay --for start returns names it by, whatever
+            --started the call was given (none, in these cases)."""
+            return (record(env, command) or {}).get("started") or ""
+
         # r_replayed
         r, env = world(tmp, "r-replayed")
         seed(env, "/create-ard")
@@ -12620,7 +12639,8 @@ def selftest():
         seed(env, "/specify", stage="flush", args=args)
         got = replay_cli(env, "start", "/specify", "main")
         h = head(r)
-        resume = resume_line(r.path, "/specify", "--key", "ACME-1", "--key", "ACME-1-01", "--commit-key", "ACME-1")
+        resume = resume_line(r.path, "/specify", "--key", "ACME-1", "--key", "ACME-1-01", "--commit-key", "ACME-1",
+                             "--started", own_started(env, "/specify"))
         check(got["_rc"] == 0 and {k for k in got if not k.startswith("_")} == {"print", "next", "error"}
               and got.get("print") == [replayed("Specs preflight: main", "main", 1)] and got.get("error") is None
               and got.get("next") == {"run": resume, "timeout_ms": 600000, "on_timeout": None} and on_origin(r) == h,
@@ -12632,7 +12652,9 @@ def selftest():
         got = replay_cli(env, "start", "/specify", "main", "--timed-out")
         want = rejected("Specs preflight: main", "main", TIMED % ("main", r.path, "main", "main", "main"),
                         plain(r.path, "main"))
-        check(got.get("print") == [want] and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify"),
+        check(got.get("print") == [want]
+              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify", "--started",
+                                                                    own_started(env, "/specify")),
               "r_start_current: rejected on the branch the run stands on, the remedy names no switch (%r)" % got)
         r, env = world(tmp, "r-start-current-timed-out-moved")
         seed(env, "/specify", stage="flush")
@@ -12641,7 +12663,8 @@ def selftest():
         want = rejected("Specs preflight: main", "main", TIMED % ("main", r.path, "main", "main", "main"),
                         plain(r.path, "main"))
         check(got["_rc"] == 0 and got.get("error") is None and got.get("print") == [want]
-              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify")
+              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify", "--started",
+                                                                    own_started(env, "/specify"))
               and (record(env, "/specify") or {}).get("stage") == "settle",
               "r_start_current: --timed-out after another session switched the checkout off the branch still prints the "
               "420 s row and goes on to settle (%r)" % got)
@@ -12682,7 +12705,7 @@ def selftest():
                         "both sides changed %s, or the folder holding it, and the run cannot settle it" % RES_Y,
                         'run git -C "%s" switch %s, git -C "%s" pull --rebase --no-autostash origin %s and git -C "%s" push '
                         'origin %s, then switch back to main' % (p, Y, p, Y, p, Y))
-        nz = replay_line(p, "/specify", Z)
+        nz = replay_line(p, "/specify", Z, "--started", own_started(env, "/specify"))
         check(got["_rc"] == 0 and got.get("print") == [want] and got.get("error") is None
               and got.get("next") == {"run": nz, "timeout_ms": 420000, "on_timeout": nz + " --timed-out"}
               and r.git("rev-parse", Y) == mine_y and r.git("symbolic-ref", "--short", "HEAD") == "main",
@@ -12693,7 +12716,8 @@ def selftest():
         got = shell(nz, env)
         z = r.git("rev-parse", Z)
         check(got["_rc"] == 0 and got.get("print") == [replayed("Specs preflight: " + Z, Z, 1)]
-              and got.get("next") == {"run": resume_line(p, "/specify"), "timeout_ms": 600000, "on_timeout": None}
+              and got.get("next") == {"run": resume_line(p, "/specify", "--started", own_started(env, "/specify")),
+                                      "timeout_ms": 600000, "on_timeout": None}
               and on_origin(r, Z) == z and r.git("rev-parse", Z + "~1") == head(o)
               and r.git("symbolic-ref", "--short", "HEAD") == "main",
               "r_start_queued: the last replay names start --resume, HEAD still on main (%r)" % got)
@@ -12704,7 +12728,8 @@ def selftest():
         seed(env, "/specify", stage="settle-done", pending=[{"branch": Y, "set_upstream": False, "standing": "main"},
                                                            {"branch": Z, "set_upstream": True, "standing": "main"}])
         got = replay_cli(env, "start", "/specify", Y, "--timed-out")
-        check((got.get("next") or {}).get("run") == replay_line(r.path, "/specify", Z, "--set-upstream"),
+        check((got.get("next") or {}).get("run") == replay_line(r.path, "/specify", Z, "--set-upstream", "--started",
+                                                                own_started(env, "/specify")),
               "r_start_queued: the next replay carries --set-upstream where its queue entry does (%r)" % got)
 
         # r_start_refused: a queued branch's replay moved it, and origin refused the push
@@ -12725,7 +12750,8 @@ def selftest():
                  "is recorded and no later run pushes it; %s" % (V, V, V, V, refused_tail(V, r.path, rec_file, d))]
                 for d in days]
         check(got["_rc"] == 0 and got.get("print") in want and got.get("error") is None
-              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify")
+              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify", "--started",
+                                                                    own_started(env, "/specify"))
               and r.git("rev-parse", V + "~1") == head(o) and on_origin(r, V) == head(o)
               and r.git("symbolic-ref", "--short", "HEAD") == "main",
               "r_start_refused: moved, not pushed, its refused form in Specs preflight: form (%r)" % got)
@@ -13042,7 +13068,8 @@ def selftest():
                               "r_signalled: then --timed-out prints the 420 s row and removes the record (%r)" % got)
                     else:
                         check(got.get("print") == [rejected("Specs preflight: main", "main", timed, plain(r.path, "main"))]
-                              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify", "--key", "ACME-1")
+                              and (got.get("next") or {}).get("run") == resume_line(r.path, "/specify", "--key", "ACME-1",
+                                                                                    "--started", own_started(env, command))
                               and (record(env, command) or {}).get("stage") == "settle",
                               "r_signalled: then --timed-out prints the 420 s row, the record on to settle (%r)" % got)
         finally:
@@ -14021,7 +14048,8 @@ def selftest():
 
         moved = back()
         got = run_start(env, "/document", "--rerun", "--key", "ACME-2", "--key", "ACME-1-01", "--budget", "0")
-        want = resume_line(r.path, "/document", "--key", "ACME-2", "--key", "ACME-1-01", "--budget", "0")
+        want = resume_line(r.path, "/document", "--key", "ACME-2", "--key", "ACME-1-01", "--budget", "0", "--started",
+                           got.get("started") or "")
         check(got.get("next") == {"run": want, "timeout_ms": 600000, "on_timeout": None}
               and (record(env, "/document") or {}).get("args", {}).get("keys") == ["ACME-2", "ACME-1-01"]
               and got.get("branch") == SPEC, "t_rerun_resume: next repeats the rerun's own keys, in order (%r)" % got)
@@ -14062,7 +14090,8 @@ def selftest():
         chain = follow(got, env)
         shown = [c.get("print") for c in chain[1:]]
         check(len(chain) == 3 and shown[0] and shown[0][0].startswith("Specs preflight: main — pushed after a replay")
-              and chain[1].get("next", {}).get("run") == resume_line(r.path, "/feedback")
+              and chain[1].get("next", {}).get("run") == resume_line(r.path, "/feedback", "--started",
+                                                                     chain[0].get("started") or "")
               and shown[1] == ["Specs preflight: deleted merged prd/Z-9-z"] and chain[2].get("next") is None
               and (record(env, "/feedback") or {}).get("stage") == "done" and rev(r, Z) is None,
               "t_nonff_order: the replay's line, then the settle line, across the calls (%r)" % shown)
@@ -14110,10 +14139,11 @@ def selftest():
                and len(calls) < 8):
             calls.append(shell(calls[-1]["next"]["run"], env))
         rec = record(env, "/feedback") or {}
-        resume0 = resume_line(r.path, "/feedback", "--budget", "0")
+        resume0 = resume_line(r.path, "/feedback", "--budget", "0", "--started", calls[0].get("started") or "")
         check(len(calls) == 3 and all(c["next"]["run"] == resume0 for c in calls[:-1])
               and [p for c in calls for p in c.get("print") or []] == [env_line(r.path)]
-              and calls[-1]["next"]["run"].endswith("replay --for start --command /feedback --branch " + Y)
+              and calls[-1]["next"]["run"].endswith("replay --for start --command /feedback --branch %s --started %s"
+                                                    % (Y, calls[0].get("started")))
               and rec.get("stage") == "settle-done" and rec.get("budget") == 0
               and rec.get("pending") == [{"branch": Y, "set_upstream": False, "standing": W},
                                          {"branch": X, "set_upstream": False, "standing": W}],
@@ -14153,7 +14183,8 @@ def selftest():
             calls.append(shell(calls[-1]["next"]["run"], env))
             landed.append(sum(on_origin(r, b) == rev(r, b) for b in branches))
         check(len(calls) == 4 and landed == [0, 1, 2, 3] and all(c["_rc"] == 0 and fields(c) for c in calls)
-              and all(c["next"] == {"run": resume_line(r.path, "/feedback", "--budget", "0"), "timeout_ms": 600000,
+              and all(c["next"] == {"run": resume_line(r.path, "/feedback", "--budget", "0", "--started",
+                                                       got.get("started") or ""), "timeout_ms": 600000,
                                     "on_timeout": None} for c in calls[:-1]) and calls[-1].get("next") is None,
               "t_budget_resume: each call one push, each naming start --resume, to the end (%r)" % landed)
         check(all(updates(r, b) == 2 for b in branches), "t_budget_resume: every branch pushed exactly once")
@@ -16437,6 +16468,40 @@ def selftest():
 
         case("t_call_returned_mark", t_call_returned_mark)
 
+        # A start that returned a start --resume next, made past resumable's 15 minutes -- a replay that hung to its
+        # timeout, then another call: the next names the record by --started, so the resume, starting afresh, takes the
+        # record over (started_before, replaced null) rather than setting it aside, and a run typed under it still reads
+        # it as standing -- the here row, nothing pushed
+        def t_midrun_open_next_aged():
+            r, env = mworld("t-midrun-open-next-aged")
+            ahead(r, "t-midrun-open-next-aged-other")  # a unit of capped calls, so --budget 0 stops with a next
+            first = start_(env, "/document", "--key", "ACME-1", "--budget", "0")
+            a, nxt = first.get("started"), (first.get("next") or {}).get("run") or ""
+            path = file_of(env, "/document")
+            rec = json.load(open(path, encoding="utf-8"))
+            rec["updated"] = time.strftime(STAMP_FMT, time.gmtime(time.time() - 1200))  # past resumable's 15 minutes
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(rec, fh)
+            f = start_(env, "/feedback")
+            up = on_origin(r)
+            while time.strftime(STAMP_FMT, time.gmtime()) <= (a or ""):  # the take-over's own stamp a later second, so
+                time.sleep(0.05)  # only started_before, never a shared stamp, can name it by <a>
+            again = shell(nxt, env) if nxt else {}
+            taken = rec_of(env, "/document")
+            chain = follow(again, env)
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            got = (" start --command /document " in nxt and nxt.endswith(" --resume"), rec.get("stage") in START_STAGES,
+                   (f.get("midrun") or {}).get("started") == a, "replaced" in again, again.get("replaced"),
+                   again.get("started") not in (None, a), taken.get("started_before") == [a], chain[-1].get("error"),
+                   e.get("row"), e.get("pushed"), on_origin(r) == up)
+            check(got == (True, True, True, True, None, True, True, None, "here", False, True),
+                  "t_midrun_open_next_aged: the next, made past 15 minutes, takes its record over -- started_before "
+                  "[the first start's stamp], replaced null -- and the run typed under it still reads it as standing "
+                  "(%r, %r)" % (got, nxt))
+
+        case("t_midrun_open_next_aged", t_midrun_open_next_aged)
+
         # The file a cut-off re-run leaves behind outlives no save over the record that lists its stamp: the second
         # run's end restores the re-run's record (unpark, no clean-up), a third plain start of the command saves its own
         # record over it -- not an open run, protects false -- and the file left behind goes with it, so the third
@@ -16547,8 +16612,8 @@ def selftest():
 
         case("t_midrun_rerun_no_record", t_midrun_rerun_no_record)
 
-        # A start --resume that runs fresh -- its record past resumable's 15 minutes -- replaces its own record and
-        # never parks it: the record is the same run's
+        # A start --resume that runs fresh -- its record past resumable's 15 minutes -- takes over its own record, which
+        # the next names by --started, and never parks it: the record is the same run's
         def t_resume_stale_no_park():
             r, env = mworld("t-resume-stale-no-park")
             ahead(r, "t-resume-stale-no-park-other")
@@ -16560,10 +16625,12 @@ def selftest():
                 json.dump(rec, fh)
             got = shell(first["next"]["run"], env) if (first.get("next") or {}).get("run") else {}
             sdir = os.path.dirname(path)
-            check(rec.get("stage") in START_STAGES and got.get("replaced") == {"command": "/specify", "started":
-                                                                                first.get("started"), "parked": False}
+            taken = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
+            check(rec.get("stage") in START_STAGES and "replaced" in got and got.get("replaced") is None
+                  and taken.get("started_before") == [first.get("started")]
                   and sorted(os.listdir(sdir)) == ["specify.json"],
-                  "t_resume_stale_no_park: a resume run fresh replaces its own record, parking none (%r)" % got)
+                  "t_resume_stale_no_park: a resume run fresh takes over its own record, parking none (%r, %r)"
+                  % (got.get("replaced"), taken.get("started_before")))
 
         case("t_resume_stale_no_park", t_resume_stale_no_park)
 
