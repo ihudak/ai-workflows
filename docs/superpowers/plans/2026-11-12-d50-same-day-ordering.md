@@ -26,11 +26,11 @@ Every existing heading and line is unchanged. One pair rule decides the order, s
   - It is written by pasting the output of `date -u +%Y-%m-%dT%H:%M:%SZ` verbatim.
   - A value that does not match is **no instant**. It never makes a record unreadable.
   - Two instants that both match are compared with `[ "$a" \> "$b" ]`. Equal is not later.
-- **The guard's recipe**, stated identically wherever it appears (Tasks 2, 3 and 5). An `At:` is no instant where
+- **The guard's recipe**, stated identically wherever it appears (Tasks 2, 3 and 5). An `At:` is an instant only where
   ```
   python3 -c 'import sys,datetime as d; print(abs((d.date.fromisoformat(sys.argv[1][:10])-d.date.fromisoformat(sys.argv[2])).days)>1)' "<At value>" "<Run: date>"
   ```
-  prints `True`.
+  prints `False`. Anything else means no instant: `True` (more than a day from its `Run:` date), or an error and no output, which an impossible date in either argument causes (`2026-11-31`, `9999-99-99`, a malformed `Run:` date).
 - **A multi-entry block** has an instant only where every entry carries the same valid `at:`.
 
 ### The records
