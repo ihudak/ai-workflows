@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.83.1] — 2026-11-12
+
+Claude Mythos is routed as Opus-tier. Update with `dev-workflows` 4.62.3, whose `/implement` applies the same test; `product-workflows` 3.79.2 and `security-workflows` 0.11.2 change pages and the scan's model handling only.
+
+### Fixed
+
+- **A Mythos session was routed as a model below Opus.** `model-routing/classification` §4's coding-model test named only `claude-opus-*` and `claude-fable-*` ids, so from MODERATE up a Mythos session's coding went to the §2 Opus chain, and `/implement`'s session-model gate asked it to relaunch on Opus. §4 now defines an **Opus-tier model** once — a `claude-opus-*`, `claude-fable-*` or `claude-mythos-*` id — and every gate that asks whether `current_model` is Opus-tier applies it. That includes the HARD gates in `/design` and `/create-ard` and the stops in `/prd-proposal`, `/brd-proposal` and `/promote-decisions`, whose "Opus-tier" was never defined, so whether a Fable or Mythos session passed them was left to the running agent.
+- **A Mythos id had no dispatch form in a family-only harness.** §5 maps an id to its family name where the agent tool accepts only family names, and Claude Code's lists `opus`, `sonnet`, `haiku` and `fable`. A `claude-mythos-*` id now passes no `model:` argument, so the agent inherits the session's model, which is that id. Before this, a Mythos session at SIMPLE already resolved `implementation_model` to its own id with no form to pass.
+
 ## [1.83.0] — 2026-11-12
 
 Claude Fable 5.2 and Claude Mythos 5.2 are priced. Update with `dev-workflows` 4.62.2, whose session-cost page describes this release's price lookup.

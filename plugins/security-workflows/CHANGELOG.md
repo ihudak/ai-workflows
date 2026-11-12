@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.11.2] — 2026-11-12
+
+`/security-workflows:scan` handles a Mythos session. Needs nothing of the other plugins' releases.
+
+### Fixed
+
+- **A scan on a Mythos session matched none of Phase 0's model cases** — Opus, Sonnet or lower, Fable — so what it asked was left to the running agent. On Mythos it now asks nothing, as on Fable, since the user chose the model and so approved its cost, and Phase 3 asks its one confirmation. The scan never escalates to Fable or Mythos. The command page, the getting-started page and the rules say so.
+
 ## [0.11.1] — 2026-11-10
 
 Docs only: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; the two pages describe `workflows-core` 1.82.0.

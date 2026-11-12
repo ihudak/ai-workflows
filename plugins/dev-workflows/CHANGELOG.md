@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.62.3] — 2026-11-12
+
+`/implement` treats a Mythos session as Opus-tier. Update with `workflows-core` 1.83.1.
+
+### Fixed
+
+- **`/implement` asked a Mythos session to relaunch on Opus, and coded its MODERATE-and-up work on the Opus chain.** Its session-model gate and its coding-model rule tested for a `claude-opus-*` or `claude-fable-*` id only. Both now take `workflows-core:model-routing/classification` §4's Opus-tier test, which adds `claude-mythos-*`: a Mythos session passes silently and codes on its own model. In Claude Code, whose agent tool has no Mythos family name, the coding dispatch passes no `model:` and inherits the session's model.
+- The implement and model-routing pages name Mythos beside Opus and Fable, and say an Opus-tier model is Opus, Fable or Mythos.
+
 ## [4.62.2] — 2026-11-12
 
 One page, describing `workflows-core` 1.83.0's price table. Update the two together.

@@ -102,8 +102,9 @@ Claude Security's working agents inherit the session model, and nothing inside a
 | Opus | asks nothing | the cost confirmation only |
 | Sonnet, or a lower tier | asks first that its scan agents may find fewer or weaker issues, offering *Cancel — rerun after /model opus* (recommended) or *Scan on Sonnet anyway* | the cost confirmation; the report records the answer |
 | Fable | asks nothing: you chose Fable, which approves its cost | the cost confirmation, plus one line: Fable's safety filters will re-run some of the scan's requests on Opus |
+| Mythos | asks nothing: you chose Mythos, which approves its cost | the cost confirmation only |
 
-The question on Sonnet offers *Cancel — rerun after /model opus* (recommended) or *Scan on Sonnet anyway*. **The scan never escalates to Fable.** A run that scans nothing, `--import` or `--triage`, asks nothing here. Under `--enforce-model` the Sonnet question does not fire, as no Opus-session gate does in the family, and the report names the session model the scan ran on instead.
+The question on Sonnet offers *Cancel — rerun after /model opus* (recommended) or *Scan on Sonnet anyway*. **The scan never escalates to Fable or Mythos.** A run that scans nothing, `--import` or `--triage`, asks nothing here. Under `--enforce-model` the Sonnet question does not fire, as no Opus-session gate does in the family, and the report names the session model the scan ran on instead.
 
 ## Triage
 
