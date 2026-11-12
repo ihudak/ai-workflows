@@ -220,9 +220,13 @@ T = {
     "app.landed": "; this run's preflight stayed on <branch>, <which no key of this run names | which is merged into <default> | where <command>'s run in this session was open when this run started>, so its files were committed on <default> without leaving <branch>, and taken out of your working tree there",
     "app.landed.unlisted": "; its preflight could not list the uncommitted paths, so every session file uncommitted on <branch> went with them",
     # §4 step 1 (1): after the here row, after app.landed (and app.landed.unlisted, which never meets it), or after the
-    # there and nothing rows of the landing or the here form, the paths a run left out of its change while a run open
-    # on the branch, of <command>, stood (N1: the one midrun names, else another the session holds open there).
+    # there and nothing rows of the landing or the here form, the paths §4 step 1 (1)'s guard left out of the run's
+    # change, where a run open on the branch, of <command>, stood at its end (the one midrun names, else another the
+    # session holds open there).
     "app.open-run-kept": "; <path>[, …] stayed out, as they stand in your working tree: uncommitted when this run started, they may be the work of <command>'s run in this session, still open on this branch, whose terminal commit takes them",
+    # The same, where no run of the session stands open on the branch at the end: a run typed mid-run, whose guard is
+    # on whatever stands then (N1, ruling (a)); <branch> the stayed branch, or HEAD's in the here form.
+    "app.open-run-kept.none": "; <path>[, …] stayed out, as they stand in your working tree: uncommitted when this run started, they are left for a later commit on <branch>",
     "app.held.stuck": "; <path>[, …] could not go with them: <reason clause>; they stay in your working tree, and no landing takes them; dropping the hold — as a later run on <default> or in session-branch mode does, or as you can — leaves them ordinary uncommitted files, which a later commit takes: see their change with 'git -C \"<SPECS_PATH>\" show <sha7>', put it on <default> yourself if you want it there, then run 'python3 \"<specs-git.py's path>\" --specs \"<SPECS_PATH>\" land --default-ref <default-ref> --drop-held <sha7>'",
 
     # §6's reason clauses, by refused.reason, and §4 step 6's own three.

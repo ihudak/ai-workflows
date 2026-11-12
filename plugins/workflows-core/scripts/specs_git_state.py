@@ -32,7 +32,9 @@ kept as a blob (null for a path with no file), taken by a fresh start that is no
 misrooted flag stands and session-branch mode is not on, and null where it could not be taken; every start call whose
 gate passed narrows it as it returns to the paths still dirty, each keeping its blob, and a --rerun carries its first
 start's. midrun is null, or {command, started, branch, keys}: the open run this one was typed under (specs-repo-git
-§3.5), keys its key set when this run started (a record an earlier version wrote lacks it).
+§3.5), keys its key set when this run started (a record an earlier version wrote lacks it). typed_mid_run is true where
+the run's first start read an open run -- set with midrun, kept by a re-run, and left true where a re-run's test drops
+midrun -- which turns §4 step 1 (1)'s guard on whatever stands at the run's end.
 protects is true, save on a record a later start of the same command with the same run key set, or where either start
 recorded none, parked or marked so (stop_protecting) -- a restart, after which it no longer protects its branch, and
 the later run's own record protects it while that run stands (§3.5); one parked by a later start whose key set
@@ -51,7 +53,7 @@ no --started -- calls whose run learns the stamp only from their JSON -- until t
 included; a named call or a re-run, whose run holds a stamp already, never writes it false. So a record such a call
 left where the harness stopped it keeps it false -- until a later start parks it and an end restores it (unpark),
 which marks it true. A record an earlier
-version wrote lacks these seven fields: load gives each its default (call_returned true: returned). held_changed holds
+version wrote lacks these eight fields: load gives each its default (call_returned true: returned). held_changed holds
 the paths the held stage took out of their held entries as changed since they were held (specs-repo-git §3.2), which
 the flush reports for each it commits (§3.4); a record that lacks it reads as holding none. held_attempted holds the
 held entries (each held commit's id) the held stage has tried in this start and reported held again or stuck, which a
@@ -109,6 +111,7 @@ FIELDS = {
     "stay": None,  # {branch, kind, reason, merged, command}: the branch the preflight stayed on and would have left
     "start_dirty": None,  # {path: blob | None}: the session files dirty when the start took its snapshot
     "midrun": None,  # {command, started, branch, keys}: the open run this one was typed under
+    "typed_mid_run": False,  # true where the run's first start read an open run, a re-run's dropped midrun included
     "protects": True,  # false on a record a later start of its command with the same key set, or keyless, parked or
     # marked (stop_protecting), and kept by the end that restores it; true where the key sets differed
     "parked": False,  # true on a record park moved aside for a later run of the same command
@@ -197,7 +200,8 @@ def _read(target):
         if isinstance(old, dict) and old.get("branch") and rec.get("stay") is None:
             rec["stay"] = {"branch": old["branch"], "kind": "merged", "reason": old.get("reason"), "merged": True,
                            "command": None}
-    for key in ("stay", "start_dirty", "midrun", "protects", "parked", "started_before", "call_returned"):  # earlier
+    for key in ("stay", "start_dirty", "midrun", "protects", "parked", "started_before", "call_returned",  # earlier
+                "typed_mid_run"):
         rec.setdefault(key, copy.deepcopy(FIELDS[key]))
     return rec
 

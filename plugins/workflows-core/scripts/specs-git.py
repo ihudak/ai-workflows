@@ -1397,12 +1397,15 @@ def _land_clause(lines, refused, default, onto=None):
     return lines.fill(LAND_REASONS[reason], v)
 
 
-def _kept_append(lines, kept, command):
-    """specs-repo-git §6's app.open-run-kept for the paths <kept> a run typed mid-run left out of its change while the
-    open run, of <command>, stood (§4 step 1 (1)); '' where none."""
+def _kept_append(lines, kept, command, branch):
+    """specs-repo-git §6's append for the paths <kept> the guard of §4 step 1 (1) left out of the run's change: where a
+    run of the session stood open on <branch> at the end, of <command>, app.open-run-kept naming it; where none did
+    (<command> None), app.open-run-kept.none, leaving them for a later commit on <branch>; '' where nothing was kept."""
     if not kept:
         return ""
-    return lines.fill("app.open-run-kept", {"<path>": list(kept), "<command>": command})
+    if command:
+        return lines.fill("app.open-run-kept", {"<path>": list(kept), "<command>": command})
+    return lines.fill("app.open-run-kept.none", {"<path>": list(kept), "<branch>": branch})
 
 
 def _landing_append(lines, commit, rec):
@@ -1421,7 +1424,7 @@ def _landing_append(lines, commit, rec):
                                     lines.placeholder("app.landed", "<which no key"): STAY_KINDS.index(stay.get("kind"))})
     if "pre.status-failed" in (rec.get("reported") or []):
         out += lines.fill("app.landed.unlisted", {"<branch>": stay.get("branch")})
-    out += _kept_append(lines, landing.get(KEPT), landing.get(KEPT_BY) or stay.get("command"))
+    out += _kept_append(lines, landing.get(KEPT), landing.get(KEPT_BY), stay.get("branch"))
     clause = _register_clause(lines, landing.get("moves"))
     if clause:
         out += "; " + clause
@@ -1480,6 +1483,7 @@ def _push_step(run, rec, commit, default, view):
                 hook = [path for path in commit["hook_paths"] if not sb.classify(path)]
                 facts["hook"] = hook
     line = (_row_line(lines, row, facts) + _landing_append(lines, commit, rec)
+            + _kept_append(lines, commit.get(KEPT), commit.get(KEPT_BY), branch)
             + _appends(lines, _append_facts(specs, rec, branch, session)))
     return finish_end(run, row, line, view, commit=commit, branch=branch, pushed=pushed, hook=hook)
 
@@ -1698,11 +1702,15 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     midrun = rec.get("midrun") if found else None
     standing = bool(midrun) and _midrun_stands(run, midrun, branch, g["top"])
     here = midrun is not None and stay is None and mode != "on" and branch == midrun.get("branch")
-    # N1: the guard of §4 step 1 (1) stays on while any other run of the session stands on HEAD's branch, not only
-    # the one midrun names; it widens what the change leaves out, never the stay, the here form or the row
+    # §4 step 1 (1)'s guard, which widens what the change leaves out, never the stay, the here form or the row: for a
+    # run typed mid-run -- its first start read an open run (midrun, or typed_mid_run where a re-run dropped it) -- on
+    # whatever stands at its end (N1, ruling (a)); for any other run, while another record of the session stands open
+    # on HEAD's branch (_open_other). <guard> is the command of the run the line names -- the one midrun names where it
+    # stands, else another the session holds open there -- or True where none stands, or None: no guard
+    typed = found and (bool(midrun) or bool(rec.get("typed_mid_run")))
     guard = midrun.get("command") if standing else None
     if guard is None and mode != "on" and (stay is not None or here):
-        guard = (_open_other(run, branch, g["top"]) or {}).get("command")
+        guard = (_open_other(run, branch, g["top"]) or {}).get("command") or (typed or None)
     if standing and mode != "on" and (stay is not None or here) and rec.get("start_dirty") is None:
         return _midrun_kept(run, midrun, branch, lines.T["reason.land.no-snapshot"],
                             _end_view(lines, keep, view, d["default"], specs, stay, False),
@@ -1880,6 +1888,8 @@ def _here_outcome(run, saved, d, branch, got, view, standing, midrun):
     if status == "landed":
         commit = {"sha7": got["sha"][:7], "files": got["files"], "branch": branch, "paths": got["paths"],
                   "hook_paths": []}
+        if got.get("kept"):  # the guard's paths, for the row steps 5-7 give it (_push_step), a resumed one's too
+            commit.update({KEPT: list(got["kept"]), KEPT_BY: got.get("kept_by")})
         run["commit"] = commit
         shown = _end_view(lines, saved, view, default, specs, None, True)
         if not standing:
@@ -1890,7 +1900,7 @@ def _here_outcome(run, saved, d, branch, got, view, standing, midrun):
         line = lines.fill("row.here", {"<sha7>": commit["sha7"], "<N>": commit["files"], "<branch>": branch,
                                        "<command>": midrun.get("command"), "<keys>": open_run_keys(midrun),
                                        lines.placeholder("row.here", "<the next push"): alt})
-        line += _kept_append(lines, got.get("kept"), got.get("kept_by") or midrun.get("command"))
+        line += _kept_append(lines, got.get("kept"), got.get("kept_by"), branch)
         line += _appends(lines, _append_facts(specs, saved, branch))
         return finish_end(run, "here", line, shown, commit=commit, branch=branch)
     shown = _end_view(lines, saved, view, default, specs, None, False)
@@ -1901,8 +1911,7 @@ def _here_outcome(run, saved, d, branch, got, view, standing, midrun):
         return _midrun_kept(run, midrun, branch, clause, shown, _append_facts(specs, saved, branch))
     if status in ("there", "nothing", "locked"):
         row = "locked" if status == "locked" else "nothing"
-        line = (lines.fill("row." + row, {}) + _kept_append(lines, got.get("kept"), got.get("kept_by")
-                                                             or midrun.get("command"))
+        line = (lines.fill("row." + row, {}) + _kept_append(lines, got.get("kept"), got.get("kept_by"), branch)
                 + _appends(lines, _append_facts(specs, saved, branch)))
         return finish_end(run, row, line, shown, branch=branch)
     raise NotRun("the here form returned %s, for which §4 step 1 gives it no row" % status)
@@ -2055,7 +2064,7 @@ def _landing_end(run, saved, d, stay, got, view):
     elif got["status"] in ("there", "nothing", "locked"):
         row = got["status"]
         line = lines.fill("row." + row, {"<default>": default, "<branch>": branch})
-        line += _kept_append(lines, got.get("kept"), got.get("kept_by") or stay.get("command"))
+        line += _kept_append(lines, got.get("kept"), got.get("kept_by"), branch)
     else:  # kept is the here form's alone, which no landing's journal takes
         raise NotRun("the landing returned %s, for which §4 step 1 gives the landing no row" % got["status"])
     # §6: the held, held-stuck and there rows, none of which commits the files this run, take no unsupported clause
@@ -2454,6 +2463,7 @@ def _replay_end(run, rec, branch, set_upstream, timed_out):
     f = _replay_facts(run, rec, cls, result, error, branch, (stay or {}).get("branch") or branch, False)
     shown = dict(commit, sha7=_replay_sha7(cls, result, commit["sha7"]))
     line = (_replay_line(lines, cls, result, f) + _landing_append(lines, commit, rec)
+            + _kept_append(lines, commit.get(KEPT), commit.get(KEPT_BY), branch)
             + _appends(lines, _append_facts(run["specs"], rec, branch)))
     view = _end_view(lines, rec, _view(rec), rec.get("default"), run["specs"], stay, not (landing or {}).get("stuck"))
     return finish_end(run, cls["row"], line, view, commit=shown, branch=branch, pushed=cls["row"] == "replayed")
@@ -3545,7 +3555,8 @@ def _carry(rec, old):
     or the merged-branch leave reported (which §3.4's loop skips for the whole run), the branch B4 left, the declined
     paths, the session branch's creation by a call other than the flush, which the run carries to its end (§8.2), and
     the run's snapshot (§7), since a re-run takes none of its own and _close only narrows the one it carries, and the
-    open run the earlier start was typed under (midrun), which start then tests again (specs-repo-git §3.5), and the
+    open run the earlier start was typed under (midrun), which start then tests again (specs-repo-git §3.5), whether the
+    run was typed mid-run at all (typed_mid_run), which stays true where that test drops midrun (§4 step 1 (1)), and the
     run's earlier stamps (started_before, _earlier_stamps), so that any stamp its starts returned names the new record
     (state.find). Never the stay: each preflight derives its own (§4 step 1), so a stay's reason is always one this preflight met -- an
     early stop asks branch-merged afresh (_stop_stay) -- and none survives where this one would no longer leave the
@@ -3563,6 +3574,7 @@ def _carry(rec, old):
                session_branch_created=old.get("session_branch_created"),
                start_dirty=dict(snap) if isinstance(snap, dict) else None,
                midrun=dict(old["midrun"]) if isinstance(old.get("midrun"), dict) else None,
+               typed_mid_run=bool(old.get("typed_mid_run") or old.get("midrun")),
                started_before=_earlier_stamps(old))
 
 
@@ -3742,6 +3754,7 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
             replaced = {"command": command, "started": old.get("started"), "parked": False}
         if own:  # taken over, never set aside (replaced)
             rec["started_before"] = _earlier_stamps(old)
+            rec["typed_mid_run"] = bool(old.get("typed_mid_run") or old.get("midrun"))
         # §3.5, read before the first save: on a run's first start, the open run this one is typed under -- the oldest
         # record the open-run test passes on HEAD's branch, of another command, or of this one where the two starts'
         # run key sets differ (_keys_differ), but never the run's own; one marked protects: false never passes -- on a
@@ -3767,6 +3780,7 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
                 if opened is not None:
                     rec["midrun"] = {"command": opened.get("command"), "started": opened.get("started"),
                                      "branch": head, "keys": list(opened.get("keys") or [])}
+                    rec["typed_mid_run"] = True
             park = plain and old is not None and at == main and _open_run(old, head, g["top"], now)
             if plain:
                 restarts = _restarts(state, session, command, keys, head, g["top"], now)
@@ -3842,12 +3856,12 @@ PENDING_FIELDS = ("c1", "c2", "old", "tip", "onto", "paths", "remote_only", "her
 # a resumed landing prints the register clause the end would have (specs-repo-git §6). An entry with none -- a held
 # entry, a here journal, or one an earlier version wrote -- reads as no move.
 JOURNAL_MOVES = "moves"
-# A change's own extra field for a run typed mid-run (specs-repo-git §4 step 1 (1)): kept, the snapshot paths of a class
-# that is not appended that _own_commits left out of the change while the open run stood, each changed since the
-# snapshot -- they stay in the working tree for that run's terminal commit -- carried with the entry into its journal
-# (_pending), so the run's row, a resumed one's included, names them (app.open-run-kept). None or absent: none.
-# KEPT_BY: the command of the open run the guard stood for (N1: the one midrun names, or another the session holds open
-# on the branch), which that append names; None or absent: the one midrun names.
+# A change's own extra field where §4 step 1 (1)'s guard is on (specs-repo-git): kept, the snapshot paths of a class
+# that is not appended that _own_commits left out of the change, each changed since the snapshot -- they stay in the
+# working tree, where the next commit on the branch takes them -- carried with the entry into its journal (_pending),
+# so the run's row, a resumed one's included, names them. KEPT_BY: the command of the run of the session still open on
+# the branch at the end (the one midrun names, or another the session holds open there), which app.open-run-kept names;
+# None or absent: none stood, and app.open-run-kept.none leaves them for a later commit on the branch.
 KEPT = "kept"
 KEPT_BY = "kept_by"
 # end_commit's field for §4 step 2's held files changed since they were held, which its commit takes as they stand:
@@ -4082,9 +4096,10 @@ def _own_commits(root, snap, message, open_run=False):
     """The run's own change, as the landing (specs-repo-git §4 step 1) takes it: c1, HEAD's tree with each <snap> path at
     its blob (None: removed), committed on HEAD; c2, c1's tree with each ARTIFACT path status() lists now at its working
     copy (written; its mode from the file; removed where no file stands), committed on c1 with <message>. Where
-    <open_run> -- the open run this one was typed under still stands (§3.5) -- a <snap> path whose class is not appended
-    (sb.merge_class outside sb.SETTLED: a whole file, a record or a register) keeps c1's version in c2: left out of the
-    change, so neither landed, lifted nor committed here, it stays in the working tree for that run's terminal commit;
+    <open_run> -- §4 step 1 (1)'s guard: a run typed mid-run, whatever stands at its end, or another run of the session
+    standing open on the branch -- a <snap> path whose class is not appended (sb.merge_class outside sb.SETTLED: a whole
+    file, a record or a register) keeps c1's version in c2: left out of the change, so neither landed, lifted nor
+    committed here, it stays in the working tree, where the next commit on the branch takes it;
     an appended file's entries go with the change as before. Returns (c1, c2, kept): c2 None where the two trees are
     one, nothing of the run's; kept the paths so left out whose working copy differs from the snapshot's version,
     sorted."""
@@ -4601,8 +4616,9 @@ def land(root, branch, default, default_ref, message, snap, register_rebuild=Non
     is <default>: the here form instead (_here_move). <facts> {kind, merged, command, stayed} go into a held entry;
     <on_move>(pending) is called just before the move or the refspec push, once the journal entry is written; a landing's
     pending carries the moves its register rebuild made (JOURNAL_MOVES), which a resumed landing reports. <open_run>:
-    the open run this one was typed under still stands (specs-repo-git §3.5), so _own_commits leaves its overwritten
-    snapshot paths out of the change; the paths it left out ride the entry and its pending as KEPT. <resume>,
+    §4 step 1 (1)'s guard is on, so _own_commits leaves the overwritten snapshot paths out of the change -- the command
+    of the run of the session still open on the branch (a str), which the paths it left out ride the entry and its
+    pending with as KEPT_BY, or True where none is; the paths ride as KEPT. <resume>,
     an earlier call's pending, is landed again from its c1 and c2 -- lifted only where its move is verified (P6) -- and
     its own journal entry is never retried as a held one. LandStopped's pending is the run's own change's journal alone.
     Returns {status: landed, there, nothing, held, kept or locked (the here form, or a resumed journal, under an
@@ -4920,8 +4936,8 @@ def land_cli(a):
     object carries the refusal it ends on as reason, detail, path and permanent: detail is the refusal's own --
     for checked-out the CHECKED_OUT_DETAIL object {outcome, text, remote, record, date, record_error}, from which
     reason.land.checked-out is worded (checked_out_values); for moved, the move's last refusal (branch-moved or
-    checkout-moved) or null; for register-rebuild, none or failed; else null. kept names the paths --open-run left out
-    of the change for the open run (specs-repo-git §4 step 1 (1)), [] for none."""
+    checkout-moved) or null; for register-rebuild, none or failed; else null. kept names the paths --open-run -- §4 step
+    1 (1)'s guard, passed by a run typed mid-run -- left out of the change (specs-repo-git), [] for none."""
     default = _default_of(a.default_ref)
     _default_base(a.specs, default, a.default_ref)
     if a.retry_held or a.drop_held:
@@ -17185,8 +17201,8 @@ def selftest():
         # M3, R1: on a branch a key names, the here form's refused clause names HEAD's branch in <default>
         def e_midrun_kept_b3():
             r, env = mworld("e-midrun-kept-b3", branch=SPEC)
-            # a block-shaped file, which goes with the run's change while the open run stands (§4 step 1 (1)); an
-            # overwritten one the open run had uncommitted at the start would be left out, never refused
+            # a block-shaped file, which goes with the run's change (§4 step 1 (1)); an overwritten one already
+            # uncommitted at the start would be left out by the guard, never refused
             resume = "specifications/PRD-ACME-1-x/dev-workflows/feedback/r.md"
             r.write(resume, "r1\n")
             r.commit_all("ACME-1-01 resume")
@@ -17350,10 +17366,11 @@ def selftest():
 
         case("t_started_missing_end", t_started_missing_end)
 
-        # I2 (final review): while the open run stands, an overwritten file it had uncommitted when the typed run
-        # started stays out of the typed run's change -- neither landed, lifted nor committed there -- however the open
-        # run rewrites it before that end, and the line names it (app.open-run-kept); an appended file's entries added
-        # since the start still travel. Both forms: the landing (a mid-run stay) and the here form
+        # I2 (final review): for a run typed mid-run, an overwritten file the open run had uncommitted when the typed
+        # run started stays out of the typed run's change -- neither landed, lifted nor committed there -- however the
+        # open run rewrites it before that end, and the line names the open run, still open (app.open-run-kept); an
+        # appended file's entries added since the start still travel. Both forms: the landing (a mid-run stay) and the
+        # here form
         RES = "specifications/PRD-ACME-1-x/dev-workflows/resume.md"
         COST = "specifications/PRD-ACME-1-x/dev-workflows/cost/s.md"
         CENTRY = "## 2026-11-12T10:0%d:00Z — /specify — p%d\n\nentry %d\n"
@@ -17540,37 +17557,74 @@ def selftest():
 
         case("t_resume_unnamed_restored", t_resume_unnamed_restored)
 
-        # N1 (final re-review; the coordinator's ruling): the guard of §4 step 1 (1) stays on while any other run of
-        # the session stands on the branch, not only the one midrun names. K1 open on SPEC with its resume pointer in
-        # progress; K2 typed with another key set, a mid-run stay under K1; K1's key set typed again, a restart, so K1's
-        # parked record protects nothing and K2's midrun no longer stands; the restart rewrites the pointer; K2 ends
-        # while the restart is open: it leaves the pointer out, naming the restart's command, and the working copy keeps
-        # v2; the restart's own end then commits v2 on SPEC
-        def t_guard_other_run():
-            r, env = mworld("t-guard-other-run", branch=SPEC)
+        # N1 (final re-review; the coordinator's ruling (a)): for a run typed mid-run, §4 step 1 (1)'s guard is on
+        # whatever stands at its end. The re-review's s3: K1 open on SPEC with its resume pointer in progress; K2 typed
+        # with another key set, a mid-run stay under K1; K1's key set typed again, a restart, under K2, so K1's parked
+        # record protects nothing; the restart rewrites the pointer. In either end order the middle run, K2, leaves the
+        # pointer out and the working copy keeps v2: its line names the restart's command where the restart still
+        # stands, and leaves the pointer for a later commit on SPEC where none does. The restart, typed under K2, leaves
+        # its own rewrite out too -- the rule's cost -- so v2 stays uncommitted on SPEC, for the branch's next commit
+        def kept_none(paths, branch=SPEC):
+            return lines.fill("app.open-run-kept.none", {"<path>": paths, "<branch>": branch})
+
+        def t_guard_s3(order):
+            name = "t-guard-s3-" + order
+            r, env = mworld(name, branch=SPEC)
             start_(env, "/specify", "--key", "ACME-1-01")
             r.write(RES, "resume v1\n")
             backdate(env, "/specify", 240)
             start_(env, "/specify", "--key", "B-2")
             k2 = backdate(env, "/specify", 120)
+            r.write(FB, "## 2026-11-12 — /specify — note\n\nB-2's\n")  # K2's own file, before the restart starts
             c = start_(env, "/specify", "--key", "ACME-1-01")
             r.write(RES, "resume v2\n")
-            r.write(FB, "## 2026-11-12 — /specify — note\n\nB-2's\n")
-            e = run_end(env, "/specify", "--started", k2)
+            main0 = rev(r, "main")
+            ends = ("middle", "restart") if order == "middle-first" else ("restart", "middle")
+            got = {}
+            for who in ends:
+                got[who] = run_end(env, "/specify", "--started", k2 if who == "middle" else c.get("started"))
+                got[who + "-wc"] = read(r, RES)
             m = rev(r, "main")
-            line = e.get("line") or ""
-            check(c.get("midrun", {}).get("started") == k2 and e.get("record") == "found"
-                  and e.get("row") == "pushed-default" and changed(r, m) == [FB] and read(r, RES) == "resume v2\n"
-                  and line.endswith(landed_app(SPEC) + kept_app([RES])) and on(r) == SPEC,
-                  "t_guard_other_run: the middle run leaves the restarted run's pointer out while the restart stands, "
-                  "the working copy at v2 (%r)" % e)
-            e = run_end(env, "/specify", "--started", c.get("started"))
-            h = rev(r, SPEC)
-            check(e.get("record") == "found" and e.get("row") == "pushed-plugin" and show(r, h, RES) == "resume v2"
-                  and on_origin(r, SPEC) == h,
-                  "t_guard_other_run: the restart's own end commits its pointer on its branch (%r)" % e)
+            middle, restart = got["middle"].get("line") or "", got["restart"].get("line") or ""
+            named = kept_app([RES]) if order == "middle-first" else kept_none([RES])
+            ok = (c.get("midrun", {}).get("started") == k2 and got["middle-wc"] == got["restart-wc"] == "resume v2\n"
+                  and got["middle"].get("record") == got["restart"].get("record") == "found"
+                  and got["middle"].get("row") == "pushed-default" and m != main0 and changed(r, m) == [FB]
+                  and middle.endswith(landed_app(SPEC) + named) and got["restart"].get("row") == "nothing"
+                  and show(r, SPEC, RES) == "" and on(r) == SPEC
+                  and RES in r.git("status", "--porcelain", "--untracked-files=all"))
+            want_restart = (T["row.nothing"] + (kept_app([RES]) if order == "restart-first" else kept_none([RES])))
+            check(ok and restart == want_restart,
+                  "%s: the middle run leaves the restarted run's pointer out in either end order, the working copy at "
+                  "v2, and the restart, typed under it, leaves its own rewrite out too (%r)" % (name, got))
 
-        case("t_guard_other_run", t_guard_other_run)
+        case("t_guard_s3_middle_first", lambda: t_guard_s3("middle-first"))
+        case("t_guard_s3_restart_first", lambda: t_guard_s3("restart-first"))
+
+        # N1, ruling (a): a run typed mid-run whose open run has ended before its end -- here, an abandoned run's record
+        # dropped, as prune or a /clear leaves it -- still leaves a snapshot path of an overwritten class out of its
+        # change, in the landing and in the here form, and leaves it for a later commit on its branch
+        def t_guard_open_run_ended():
+            got = {}
+            for form in ("stay", "here"):
+                r, env = mworld("t-guard-ended-" + form, branch=SPEC if form == "stay" else None)
+                start_(env, "/specify", "--key", "ACME-1-01" if form == "stay" else "ACME-1")
+                r.write(RES, "resume v1\n")
+                f = start_(env, "/feedback")
+                r.write(RES, "resume v2\n")
+                r.write(FB, "## 2026-11-12 — /feedback — note\n\nmine\n")
+                drop(env, "/specify")
+                e = run_end(env, "/feedback")
+                branch = SPEC if form == "stay" else "main"
+                c = rev(r, "main")
+                got[form] = (bool(f.get("midrun")), e.get("row"), changed(r, c), read(r, RES),
+                             (e.get("line") or "").endswith(kept_none([RES], branch)))
+            check(got == {"stay": (True, "pushed-default", [FB], "resume v2\n", True),
+                          "here": (True, "pushed-default", [FB], "resume v2\n", True)},
+                  "t_guard_open_run_ended: the pointer left out though the open run has ended, left for a later commit "
+                  "on the branch (%r)" % got)
+
+        case("t_guard_open_run_ended", t_guard_open_run_ended)
 
         # k_started: --started on end, declined and replay -- a stamp is required to be one; a rejected push's next
         # repeats it
