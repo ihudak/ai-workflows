@@ -618,11 +618,15 @@ def model_rates(model, prices):
     table = prices.get("models") if isinstance(prices.get("models"), dict) else {}
     rates = table.get(model)
     if not isinstance(rates, dict):
-        # Exact miss -> longest table key that is a prefix of the model id
-        # (so undated key "claude-sonnet-5" prices "claude-sonnet-5-20250930").
+        # Exact miss -> longest table key that is a prefix of the model id and is not
+        # followed by a digit there (so undated key "claude-sonnet-5" prices
+        # "claude-sonnet-5-20250930"). The digit test keeps a key ending in a version
+        # digit from taking a dated id of a shorter key: "claude-fable-5-2" is a raw
+        # prefix of "claude-fable-5-20260115", which is Fable 5's, not Fable 5.2's.
         best = None
         for k, v in table.items():
-            if isinstance(v, dict) and isinstance(model, str) and model.startswith(k):
+            if (isinstance(v, dict) and isinstance(model, str) and model.startswith(k)
+                    and not model[len(k):len(k) + 1].isdigit()):
                 if best is None or len(k) > len(best):
                     best = k
         rates = table.get(best) if best is not None else None
@@ -1087,6 +1091,29 @@ def _selftest_body(tmp):
         check(_cost(_mid, _shipped, _use("fast"))[0] == (None, "unpriced-speed:fast"),
               "shipped cost-prices.yaml gives %s no fast block (fast mode does not exist there)"
               % _mid)
+    # A key ending in a version digit must not take a dated id of a shorter key:
+    # `claude-fable-5-2` is a raw prefix of `claude-fable-5-20260115`, a dated Fable 5 id.
+    for _mid in ("claude-fable-5-20260115", "claude-mythos-5-20260115"):
+        check(price_model(_mid, _tk, _shipped) == (11.0, None),
+              "%s prices at its 5 key, not the 5.2 key that is a raw prefix of it" % _mid)
+    for _mid, _want in (("claude-fable-5-2-20261101", 8.2), ("claude-opus-5-5[1m]", 4.2),
+                        ("claude-sonnet-5-20250930", 2.2)):
+        check(price_model(_mid, _tk, _shipped) == (_want, None),
+              "%s still prices at its own base key ($%s)" % (_mid, _want))
+    # Every rate class of the 5.2 keys, standard and fast: 1M tokens in each of the five.
+    for _mid in ("claude-fable-5-2", "claude-mythos-5-2"):
+        for _speed, _want in ((None, 74.2), ("fast", 148.4)):
+            _u = {"input_tokens": 1_000_000, "output_tokens": 1_000_000,
+                  "cache_read_input_tokens": 1_000_000,
+                  "cache_creation_input_tokens": 2_000_000,
+                  "cache_creation": {"ephemeral_5m_input_tokens": 1_000_000,
+                                     "ephemeral_1h_input_tokens": 1_000_000}}
+            if _speed:
+                _u["speed"] = _speed
+            _got = _cost(_mid, _shipped, _u)[0]
+            check(_got[1] is None and abs(_got[0] - _want) < 1e-9,
+                  "shipped cost-prices.yaml prices every rate class of %s%s ($%s)"
+                  % (_mid, " in fast mode" if _speed else "", _want))
     for _mid, _want in (("claude-mythos-5-2", 8.2), ("claude-mythos-5-1", 10.25),
                         ("claude-mythos-5", 11.0)):
         _got = price_model(_mid, _tk, _shipped)

@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.62.2] — 2026-11-12
+
+One page, describing `workflows-core` 1.83.0's price table. Update the two together.
+
+### Fixed
+
+- **The session-cost page gave every model's cache read as roughly a tenth of the input rate.** That has been false since Opus 5.5, Sonnet 5.5 and Fable 5.1 were priced, and a user checking a row by hand computed cache reads 2x or 4x too high. The page now names the exceptions: a twentieth on Opus 5.5 and Sonnet 5.5, a fortieth on Fable and Mythos 5.1 and 5.2. It points to the price table, which keys every rate explicitly, as the place to check a figure.
+- **The same page's prefix-lookup sentence** now states `workflows-core` 1.83.0's narrower rule: a prefix counts only where the model id does not continue with a digit right after it, so a dated Fable 5 id prices as Fable 5, not as Fable 5.2.
+
 ## [4.62.1] — 2026-11-10
 
 Pages, and one citation in three commands: GIT-G1 Part 2, batch 2a. Needs nothing from the other plugins' releases to run; the environment page and the skill-listing figure describe `workflows-core` 1.82.0.

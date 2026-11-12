@@ -22,8 +22,9 @@
 #   * FAST MODE is a per-model `fast:` sub-block, keyed explicitly like every other rate here.
 #     It exists on Fable 5.2 and Mythos 5.2 ($16/$80), on Opus 5.5 ($8/$40) and on Opus 5 and
 #     Opus 4.8 ($10/$50) -- 2x their standard rates. The Fable and Mythos models before 5.2
-#     have no fast mode, so no block. Opus 4.7 rejects `speed: "fast"` outright, so it has no block; Opus 4.6 accepts
-#     it but runs and bills at standard, so its block repeats the standard rates. "Prompt caching multipliers apply on top of
+#     have no fast mode, so no block. Opus 4.7 rejects `speed: "fast"` outright, so it has
+#     no block; Opus 4.6 accepts it but runs and bills at standard, so its block repeats the
+#     standard rates. "Prompt caching multipliers apply on top of
 #     fast mode pricing", so a fast block's cache rates are the model's own multipliers applied
 #     to its FAST input price -- Opus 5.5's cache read is 0.05 x $8, not 0.05 x $4. A `fast`
 #     record on a model with no `fast:` block is reported `unpriced-speed:fast` with a null
@@ -57,8 +58,10 @@
 # the Sonnet chain (§2.1: claude-sonnet-5-5 -> 5 -> 4-6 -> 4-5) -- plus Opus 4.5, Mythos,
 # Fable and Haiku, which no chain names but a session or an enforced model may run on.
 # The engine exact-matches first, then falls back to the longest table key that is a prefix of the
-# model id, so a dated id (claude-sonnet-5-20250930, claude-haiku-4-5-20251001) prices
-# off its undated base key automatically.
+# model id and is not followed there by a digit, so a dated id (claude-sonnet-5-20250930,
+# claude-haiku-4-5-20251001) prices off its undated base key automatically -- and a dated
+# Fable 5 id (claude-fable-5-20260115) off claude-fable-5, never off claude-fable-5-2,
+# which is a raw prefix of it.
 #
 # Override without editing this file: set $DEV_WORKFLOWS_COST_PRICES to a path, or
 # drop a repo-local cost-prices.yaml. Cache multipliers follow Anthropic's model
@@ -168,8 +171,9 @@ models:
     cache_write_1h: 6.0
   # Fable. Not reachable by the routing policy (§2/§2.1 never select it), but a session may
   # RUN on it, and an unpriced session records tokens with a null cost. Each family's keys
-  # (Mythos here, Fable below) run strongest first: 5.2, then 5.1, then 5. Two traps, both
-  # load-bearing:
+  # (Mythos here, Fable below) run newest first, 5.2 then 5.1 then 5, each the successor of
+  # the one below it. The order is not load-bearing: the engine resolves by exact match,
+  # then longest prefix. Two traps, both load-bearing:
   #   1. Fable 5.2 and 5.1 read cache at 0.025x input ($0.20 and $0.25), where Fable 5 reads
   #      it at the standard 0.1x ($1). Anthropic states it as a per-model exception on the
   #      pricing page.
@@ -207,7 +211,8 @@ models:
     cache_read: 1.0
     cache_write_5m: 12.5
     cache_write_1h: 20.0
-  # ^ Mythos (limited availability, invitation only). Priced identically to the Fable keys
+  # ^ Mythos (limited availability: 5 and 5.1 by invitation, 5.2 to organizations verified
+  #   through Anthropic's verification programs). Priced identically to the Fable keys
   #   below, version for version, fast mode on 5.2 included, and keyed for the same reason
   #   and with the SAME trap: `claude-mythos-5` is a strict prefix of `claude-mythos-5-2` and
   #   `claude-mythos-5-1`, and their cache reads are 0.025x input where 5's are 0.1x.

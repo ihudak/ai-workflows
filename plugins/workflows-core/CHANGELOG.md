@@ -7,18 +7,22 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.83.0] — 2026-11-12
 
-Claude Fable 5.2 and Claude Mythos 5.2 are priced. No other plugin's text depends on this release.
+Claude Fable 5.2 and Claude Mythos 5.2 are priced. Update with `dev-workflows` 4.62.2, whose session-cost page describes this release's price lookup.
 
 ### Added
 
-- **`cost-prices.yaml` keys `claude-fable-5-2` and `claude-mythos-5-2`**, from the pricing page on 2026-11-12. Both are $8 / $40 per MTok, with 5-minute cache writes at $10, 1-hour cache writes at $16 and cache reads at $0.20 (0.025x input, as on 5.1). Each key sits above its 5.1 key, strongest first. Without the keys, longest-prefix fallback priced both at their 5 key's rates: cache reads 5x high and every other rate 1.25x high.
+- **`cost-prices.yaml` keys `claude-fable-5-2` and `claude-mythos-5-2`**, from the pricing page on 2026-11-12. Both are $8 / $40 per MTok, with 5-minute cache writes at $10, 1-hour cache writes at $16 and cache reads at $0.20 (0.025x input, as on 5.1). Each key sits above its 5.1 key, newest first. Without the keys, longest-prefix fallback priced both at their 5 key's rates: cache reads 5x high and every other rate 1.25x high.
 - **Fast mode on 5.2 is priced.** Each key carries a `fast:` block at $16 / $80, with the cache multipliers applied to the fast input price (cache reads $0.40). Fable and Mythos 5.1 have no fast mode, so a fast turn on them is still `unpriced-speed:fast`.
-- **`session-cost.py --selftest` pins the shipped keys.** It prices both 5.2 ids at standard and fast rates, and asserts that Fable 5.1 and Mythos 5.1 carry no fast block. Dropping either 5.2 key, or mispricing its fast cache read, fails the self-test.
+- **`session-cost.py --selftest` pins the shipped keys.** It prices every rate class of both 5.2 ids, at standard and at fast rates, checks that Fable 5.1 and Mythos 5.1 carry no fast block, and pins the prefix rule below. Dropping either 5.2 key, or changing any of its rates, fails the self-test.
+
+### Fixed
+
+- **A price key ending in a version digit could take a dated id of a shorter key.** The engine's prefix fallback was a raw `startswith`, so the new `claude-fable-5-2` was a prefix of a dated Fable 5 id such as `claude-fable-5-20260115` and would have priced it as Fable 5.2: cache reads 5x low, every other rate 0.8x, and fast turns priced instead of unpriced. A key now counts as a prefix only where the id does not continue with a digit right after it. Dated ids of every other key resolve as before, and no transcript observed so far carries a dated Fable or Mythos id. `cost-prices.yaml`'s header, `cost-emission` §4 and `run-flags` §2's unpriced-id check state the narrower rule.
 
 ### Changed
 
-- The 0.025x cache-read exception and the list of fast-mode models now name Fable 5.2 and Mythos 5.2, in `cost-prices.yaml`'s comments, in `cost-emission` §4 and on the session-cost reference page.
-- No routing change. `model-routing/classification` names no Fable model, and `run-flags`' `fable` alias already resolves to the highest reachable `claude-fable-…` version, which is now 5.2. Every Opus-or-Fable test matches on the `claude-fable-*` prefix, so it covers 5.2 too.
+- The 0.025x cache-read exception now names Fable 5.2 and Mythos 5.2 in `cost-prices.yaml`'s comments and `cost-emission` §4. The list of fast-mode models names them in both places and on the session-cost reference page.
+- No routing change. `model-routing/classification` names no Fable model in any chain. Where the agent tool's model parameter accepts ids, `run-flags`' `fable` alias resolves to the highest reachable `claude-fable-…` version, which is now 5.2. In a family-only harness, which Claude Code's Agent tool is today, `fable` passes the family name and the harness picks the version; a version-specific Fable form such as `fable5.2` is refused there, as before. Every Opus-or-Fable test matches on the `claude-fable-*` prefix, so it covers 5.2 too.
 
 ## [1.82.0] — 2026-11-10
 

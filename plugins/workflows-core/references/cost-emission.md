@@ -211,7 +211,10 @@ Both follow this file's one rule about an unknown: a null the run reports beats 
 
 Model lookup is exact-first, then longest-prefix: an undated base key (e.g.
 `claude-sonnet-5`) prices a dated transcript model id (e.g.
-`claude-sonnet-5-20250930`) when no exact key matches.
+`claude-sonnet-5-20250930`) when no exact key matches. A key counts as a prefix only
+where the id does not continue with a digit right after it, so a key ending in a
+version digit (`claude-fable-5-2`) never takes a dated id of a shorter key
+(`claude-fable-5-20260115`, Fable 5's).
 
 The `models:` wrapper is **required** — `price_model()` reads
 `prices.get("models")`, so model ids placed at the top level (as siblings of
