@@ -2,12 +2,12 @@
 
 **Plan:** `docs/superpowers/plans/2026-11-10-stay2-midrun.md`. **Design:** `docs/superpowers/specs/2026-11-10-stay2-midrun-design.md`, with its research memo `2026-11-10-stay2-midrun-research.md` beside it. **Releases:** `workflows-core` 1.84.0, with `dev-workflows` 4.62.4, `product-workflows` 3.79.3, `docs-workflows` 1.38.3 and `security-workflows` 0.11.3 beside it, each section dated 2026-11-12. **Branch:** `fix/stay2-midrun`, base `38aec858` (`main` after PR #182, GIT-G1 Part 2a), with `main` at `8e441fa0` (PRs #183 and #184) merged into it at `a17e4758`. Measured at `25166a8b`, after the final review's third fix pass; the commits after it touch only `docs/superpowers/`. Written last, against the branch's own tree. Every figure below is re-derived here, with its command beside it; none is copied from the plan or a task report. Where a figure is the ledger's and not re-derived, the sentence says so.
 
-The rulings summary is `2026-11-10-stay2-midrun-rulings.md` beside this file, and the ledger, copied as it stood when this record was written, is `2026-11-10-stay2-midrun-ledger.md`.
+The rulings summary is `2026-11-10-stay2-midrun-rulings.md` beside this file, and the ledger, copied as it stood just before the branch was pushed, is `2026-11-10-stay2-midrun-ledger.md`.
 
 **Trees.** Several recipes take a commit's tree as their argument. Each tree is unpacked from the repository root into an empty scratch directory `$SCRATCH`, and nothing is ever added to it: the counting recipes read every file under it, so a file left there is counted (the sweep's recipe below says how this record learned that):
 
 ```bash
-for sha in 38aec858 a17e4758 25166a8b; do mkdir -p "$SCRATCH/tree-$sha" && git archive "$sha" | tar -x -C "$SCRATCH/tree-$sha"; done
+for sha in 38aec858 d9aa2ae7 a17e4758 25166a8b; do mkdir -p "$SCRATCH/tree-$sha" && git archive "$sha" | tar -x -C "$SCRATCH/tree-$sha"; done
 ```
 
 The branch holds 69 commits on its first-parent line (`git log --oneline --first-parent 38aec858..25166a8b | wc -l`), the merge of `main` among them. Against the `main` it merged, `git diff --shortstat 8e441fa0 25166a8b` gives 67 files changed, 12,677 insertions and 839 deletions.
@@ -214,7 +214,7 @@ The task read every site in `plugins/*/{commands,agents,references,skills,script
 ```python
 import os, sys
 A, B = sys.argv[1], sys.argv[2]
-SITES = [  # (label, a file or a directory under the tree, the fixed form): the table's 23 rows
+SITES = [  # (label, a file or a directory under the tree, the fixed form): 23 entries for the table's 21 rows
     ('1-3', 'plugins/workflows-core/scripts/specs_git_lines.py', '"fix.make-default"'),
     ('1-3 wording', 'plugins/workflows-core/references/specs-repo-git.md', 'makes the branch first where none exists'),
     ('4', 'plugins/workflows-core/references/phase-handoff.md', 'switch --no-guess <default>'),
@@ -386,7 +386,7 @@ For the generic subjects — `B4`, `keyless`, `--no-preflight`, `commits nothing
 
 ## The gates and the budgets
 
-The gate chain — the `run:` steps of `.github/workflows/validate-catalog.yml` in order as one `&&` chain, `check-docs.sh --selftest` included — run from the worktree root with this record, the rulings summary and the ledger in place, ending `; echo "EXIT=$?"`, printed `EXIT=0`. Of `check-docs.sh`'s checks, 14 and 19 read this directory — 14 greps the whole repository and 19 every tracked and untracked file — and 13 does not: it reads the plugins and `INSTRUCTION_TIERS` (`CLAUDE.md`, `.claude/rules/*.md`, `docs/maintainers/*.md`; `scripts/check-docs.sh:178`). The three files were grepped by hand for check 13's `VENDOR_TOKENS`, for an internal standard's name, for an email address and for a home-directory path: none.
+The gate chain — the `run:` steps of `.github/workflows/validate-catalog.yml` in order as one `&&` chain, `check-docs.sh --selftest` included — run from the worktree root with this record, the rulings summary and the ledger in place, ending `; echo "EXIT=$?"`, printed `EXIT=0`. Of `check-docs.sh`'s checks, 14 and 19 read this directory — 14 greps the whole repository and 19 every tracked and untracked file that is not git-ignored and not a `CHANGELOG.md` — and 13 does not: it reads the plugins and `INSTRUCTION_TIERS` (`CLAUDE.md`, `.claude/rules/*.md`, `docs/maintainers/*.md`; `scripts/check-docs.sh:178`). The three files were grepped by hand for check 13's `VENDOR_TOKENS`, for an internal standard's name, for an email address and for a home-directory path: none.
 
 `len()` of `CLAUDE.md` and of every rules file the branch touched, at the base, at the `main` it merged, and at the tip. Run from the repository root as `python3 -I budgets.py`:
 

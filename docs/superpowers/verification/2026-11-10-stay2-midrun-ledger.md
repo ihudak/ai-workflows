@@ -5,7 +5,7 @@ This is the ledger of branch `fix/stay2-midrun`, cut from `main` at `38aec858` (
 - The verification record is `2026-11-10-stay2-midrun.md` beside this file.
 
 The branch was run with `superpowers:subagent-driven-development`. That skill keeps its ledger in a git-ignored scratch directory and deletes the directory when the branch finishes, so the ledger is copied here.
-- **Copied as it stood during the verification record's fix round — 432 lines, md5 `235cef2bb26d19d72294dfc53912d4d0` before masking — except for one change:** each subagent's internal id is replaced with `<agent>` (every `a` followed by 7 to 17 hex digits that names no commit of this repository). The ledger goes on after that copy; its final form replaces this one before the branch is pushed.
+- **Copied as it stood just before the branch was pushed — 436 lines, md5 `03efb03caeb74a6cef693b0754d03a1c` before masking — except for one change:** each subagent's internal id is replaced with `<agent>` (every `a` followed by 7 to 17 hex digits that names no commit of this repository). The ledger goes on after that copy; its final form replaces this one before the branch is pushed.
 - **The rulings summary** is in `2026-11-10-stay2-midrun-rulings.md` beside this file.
 - **It is in a text block** so that its bare placeholders, such as `<default>` and `<command>.json`, survive Markdown rendering.
 
@@ -444,4 +444,8 @@ Ruling: concern 1 accepted — a RED-first failure before the code existed is th
 Task 11: Opus review dispatched → task-11-review.md
 Task 11: review — spec ❌, Needs fixes; 0 Critical, 3 Important (three sweep counts wrong at both trees — the counting copy session-branch-counted.py was left in the unpacked trees and counted; fresh git-archive trees give replaced 307→353, commits nothing 60→73, keyless 177→198 (+4/+2 unchanged), so the task reports were right and the record's gap paragraph is false; the own_change recipe at :98 returns 0 — guarded( not case(; the rulings summary misses ledger :79's inline ruling — 167 vs 166), 4 Minor (rulings row 15 F4–F7 in the cost column; record :401 "both" omits coupling-history.md; "forty-eight names" unlisted and its scope cannot total 48; sites.py and the "One file …" subject abbreviated, not re-runnable). Ledger copy verbatim (first 427 lines, 36 ids masked), hard figures, 9b measurements, mutants (410), final review, decisions, bans, order all confirmed. Note: check 13's scope excludes docs/superpowers/ (checks 14 and 19 cover it; grep clean). task-11-review.md.
 Task 11: fix round 1 sent to the same implementer (all 7 + a fresh masked re-copy of the ledger).
+Task 11: fix round 1 607669f5 (sweep counts on clean trees, gap paragraph, own_change recipe, 168 rulings incl. inline :79 and :390, Minors, check-13 scope, ledger re-copied from 432 lines md5 235cef2b…); gates t11/gates-2.txt EXIT=0.
+Task 11: scoped re-review dispatched (opus, the same reviewer) on 443ab664..607669f5 → task-11-rereview-1.md
+Task 11: re-review 1 — all 3 Important, 4 Minor and the check-13 note ADDRESSED; no new breakage; three optional nits (sites.py comment "23 rows" vs 21 rows/23 entries; the Trees loop does not unpack d9aa2ae7; line 5 "copied when this record was written") and check 19's scope worded wider than it is (it skips git-ignored files and CHANGELOG.md). task-11-rereview-1.md.
+Task 11: complete (head 607669f5). Controller applied the reviewer's three nits and the check-19 wording verbatim to the reviewer's fixes, and re-copied this ledger, masked, in one closing commit; then the full gate chain, push and PR.
 ```
