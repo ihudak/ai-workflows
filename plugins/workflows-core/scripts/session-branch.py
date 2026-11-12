@@ -2248,7 +2248,7 @@ def selftest():
         # split_entries and entry_key
         head, ents = split_entries((IMPL_HEAD + IMPL_1 + "\n" + IMPL_2).encode())
         check(head == IMPL_HEAD.encode() and ents == [(IMPL_1 + "\n").encode(), IMPL_2.encode()],
-              "split_entries cuts implementation-format §1's example into its header and two blocks (%r, %r)"
+              "split_entries cuts implementation-format §1's example, without its at: lines, into its header and two blocks (%r, %r)"
               % (head, ents))
         for fmt, head, first in (("feedback", FB_HEAD, FB_1), ("_security.md", SEC_HEAD, SEC_1),
                                  ("cost", COST_HEAD, COST)):
@@ -2272,15 +2272,16 @@ def selftest():
         check(got == base + "\n" + IMPL_2 + "\n" + noted, "an entry holding a ## Notes line is carried whole (%r)" % got)
 
         # implementation-format §1's `at:` line, after `pushed:`, splits no heading: two same-day
-        # blocks, each with its own instant, are two entries, and a merge keeps each whole
+        # blocks that differ only in their instants are two entries, and a merge keeps each whole
         IMPL_2A = IMPL_2 + "  at:      2026-09-02T09:15:00Z\n"
-        IMPL_2PA = IMPL_2P + "  at:      2026-09-02T16:40:00Z\n"
-        head, ents = split_entries((IMPL_HEAD + IMPL_2A + "\n" + IMPL_2PA).encode())
-        check(head == IMPL_HEAD.encode() and ents == [(IMPL_2A + "\n").encode(), IMPL_2PA.encode()],
-              "two same-day /implement blocks, each carrying an at: line, are two entries (%r)" % (ents,))
-        got = esm(base, base + "\n" + IMPL_2A, base + "\n" + IMPL_2PA)
-        check(got == base + "\n" + IMPL_2A + "\n" + IMPL_2PA,
-              "a block added on each side is kept whole, each with its at: line (%r)" % got)
+        IMPL_2B = IMPL_2 + "  at:      2026-09-02T16:40:00Z\n"
+        head, ents = split_entries((IMPL_HEAD + IMPL_2A + "\n" + IMPL_2B).encode())
+        check(head == IMPL_HEAD.encode() and ents == [(IMPL_2A + "\n").encode(), IMPL_2B.encode()],
+              "two same-day /implement blocks differing only in their at: lines are two entries (%r)" % (ents,))
+        got = esm(base, base + "\n" + IMPL_2A, base + "\n" + IMPL_2B)
+        check(got == base + "\n" + IMPL_2A + "\n" + IMPL_2B,
+              "a block added on each side, the two differing only in at:, is kept whole, each with its at: line (%r)"
+              % got)
 
         # an entry both sides hold is kept once
         base = FB_HEAD + FB_1
