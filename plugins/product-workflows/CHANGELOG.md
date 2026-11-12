@@ -7,11 +7,12 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.79.2] — 2026-11-12
 
-Two pages. Update with `workflows-core` 1.83.1.
+Six degrade paths and three pages. Update with `workflows-core` 1.83.1.
 
 ### Fixed
 
 - **The model-routing page did not say what "Opus-tier" means** for the HARD gates in `/create-ard`, `/prd-proposal`, `/brd-proposal` and `/promote-decisions`. It now says Opus, Fable or Mythos, the test `workflows-core` 1.83.1 defines, and "unless no Opus model is reachable" where it meant the Opus fallback chain. The `/promote-decisions` page's "a non-Opus session" says the same.
+- **`/idea`, `/create-prd`, `/update-prd`, `/brd-interview`, `/brd-split` and `/brd-reconcile` recorded a degradation on a Fable or Mythos session.** Each runs its grill, reading or walk inline on the session model and degraded "if no Opus resolves" for it. Each now tests `workflows-core:model-routing/classification` §4's Opus-tier model (Opus, Fable or Mythos), so only a session below Opus records a degradation. The `/create-prd`, `/update-prd` and `/brd-reconcile` pages say the same; two of them had read the path as "no Opus anywhere in the environment", which `workflows-core:model-routing/classification` §9.1 and §10 never did.
 
 ## [3.79.1] — 2026-11-10
 

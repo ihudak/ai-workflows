@@ -515,7 +515,7 @@ model_routing:
 `/brd-interview` dispatches no grounding or review agent of its own — every finding it reads was
 already independently re-derived by `/prd-ground`'s `grounding-verifier` pass, and re-deriving it
 here would be a second unverified opinion, not a second check. `detection_model` therefore exists
-only for the terminal `impl-maintenance` dispatch. If no Opus resolves for `current_model`, degrade
+only for the terminal `impl-maintenance` dispatch. If `current_model` is not an Opus-tier model (`workflows-core:model-routing/classification` §4: Opus, Fable or Mythos), degrade
 to best-available, record it in `notes` and in the final report, and never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps (`impl-maintenance`, or `defect-reporter` under `--skip-feedback`) use the enforced model, while the round's reading, tagging and interactive walk still run on `current_model`.
 
 ---

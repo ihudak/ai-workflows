@@ -103,7 +103,8 @@ task is `SIGNIFICANT` / `HIGH-RISK`, proceed with Sonnet but **announce the
 degradation** in the Phase 0 / Step 0 routing record and again in the final report.
 
 The "currently selected model" is whatever the orchestrator itself is running
-under. Sub-agents inherit it unless the orchestrator explicitly overrides via
+under. Sub-agents inherit it — an agent's own frontmatter pin, or a default model the
+harness is configured with for subagents, aside — unless the orchestrator explicitly overrides via
 the `task` tool's `model` argument (and under §10 every dispatch overrides it).
 
 ---
@@ -238,12 +239,14 @@ class:
 
 **An Opus-tier model** is a `claude-opus-*`, `claude-fable-*` or `claude-mythos-*` id:
 Opus, or a family above it. This is the family's one test of the term, and every gate,
-advisory or degrade path that tests `current_model` for Opus names it as "an Opus-tier
-model (§4)". Examples that exist today: this rule; `/implement`'s session-model gate;
-`/design`'s HARD gate and soft advisory and `/create-ard`'s HARD gate (§9.1); the stops
-in `/prd-proposal`, `/brd-proposal` and `/promote-decisions`; keyed `/document`'s
-orchestration advisory; and `/conformance`'s note on its inline judgement steps. A Fable
-or Mythos session passes each.
+advisory or degrade path that tests `current_model` for Opus tests it as an Opus-tier
+model, the term this section defines. Examples that exist today: this rule; §9.1's
+advisory; `/implement`'s session-model gate; `/design`'s HARD gate and soft advisory and
+`/create-ard`'s HARD gate (§9.1); the stops in `/prd-proposal`, `/brd-proposal` and
+`/promote-decisions`; keyed `/document`'s orchestration advisory; `/conformance`'s note on
+its inline judgement steps; and the degrade paths of `/idea`, `/create-prd`,
+`/update-prd`, `/brd-interview`, `/brd-split` and `/brd-reconcile`. A Fable or Mythos
+session passes each.
 
 So from MODERATE up a Fable or Mythos session codes on its own model, an Opus session
 on its own Opus, and a Sonnet or Haiku session on the §2 Opus chain; at SIMPLE each
@@ -551,7 +554,7 @@ map govern every command, and §9.4 applies them to scanning.
 - **Orchestrator-executed** judgment steps — the inline prose writing and the
   interactive gates, plus the orchestration itself — run on the session model
   and CANNOT be overridden from inside a running command. Except under §10, where none of the rest of this bullet fires — no advisory, no gate, no degrade path, for any command that carries one (§10's *Opus-session gates do not fire* bullet is the general rule, and `workflows-core:run-flags` §3 step 7's advisory is the only notice) — handle them with an
-  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where what a session below Opus gets wrong is the orchestration itself — the classification, the routing of every dispatch, the review gate and the phase order — a command can gate on `current_model` on every class, before it classifies, since the class is the session's own judgment: `/implement` does, in its Phase 0, asking a `current_model` that is no Opus-tier model (§4: Opus, Fable or Mythos) to stop and relaunch on Opus, recommended, or to go on anyway, recorded in its report, with no relaunch offered where no Opus model is available (§9.3). Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added (`/implement`'s MODERATE `code-review` gate, and its `code-writer` and `review-fixer` dispatches, on §4's `implementation_model`, aside), so a command that offers a soft advisory anyway (`/design`), or asks on every class with going on offered (`/implement`'s session-model gate), is stricter by its own choice and not in breach.
+  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK and `current_model` is not an Opus-tier model (§4). Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where what a session below Opus gets wrong is the orchestration itself — the classification, the routing of every dispatch, the review gate and the phase order — a command can gate on `current_model` on every class, before it classifies, since the class is the session's own judgment: `/implement` does, in its Phase 0, asking a `current_model` that is no Opus-tier model (§4: Opus, Fable or Mythos) to stop and relaunch on Opus, recommended, or to go on anyway, recorded in its report, with no relaunch offered where no Opus model is available (§9.3). Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large run not on an Opus-tier model (§4), as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added (`/implement`'s MODERATE `code-review` gate, and its `code-writer` and `review-fixer` dispatches, on §4's `implementation_model`, aside), so a command that offers a soft advisory anyway (`/design`), or asks on every class with going on offered (`/implement`'s session-model gate), is stricter by its own choice and not in breach.
 
 ### 9.2 Role → chain map
 

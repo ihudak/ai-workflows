@@ -466,8 +466,8 @@ is recorded and is not a dispatch**: Phase 1.5 reads a slicing instruction again
 may grill the residue, and Phase 4 walks the ledger — all in the session, the same way
 `/brd-intake` records its own interactive defect walk. Recording it matters because the reading is a
 judgement about the operator's words, so a run that made it on a degraded model should say which
-model made it. If no Opus
-resolves for `current_model`, degrade to best-available + record in `notes` and the final report —
+model made it. If
+`current_model` is not an Opus-tier model (`workflows-core:model-routing/classification` §4: Opus, Fable or Mythos), degrade to best-available + record in `notes` and the final report —
 never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps (`impl-maintenance`, or `defect-reporter` under `--skip-feedback`) use the enforced model, while Phase 1.5's reading and grill and Phase 4's walk still run on `current_model`.
 
 ---

@@ -625,7 +625,7 @@ model_routing:
 **The classification floors at `SIGNIFICANT`** because of what this run changes rather than how much
 of it there is: a `[CD#n]` is the only record in this workflow that carries authority the delivery
 organisation cannot re-take on its own, and the propagation sweep writes into registers belonging to
-BRDs this run was not pointed at. If no Opus resolves for `current_model`, degrade to best-available,
+BRDs this run was not pointed at. If `current_model` is not an Opus-tier model (`workflows-core:model-routing/classification` §4: Opus, Fable or Mythos), degrade to best-available,
 record it in `notes` and in the final report, and never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps use the enforced model, while the confirmation walk, the freeze and the sweep still run on `current_model`.
 
 `customer-review-reader` runs at `detection_model` and carries no frontmatter pin, and that is safe
