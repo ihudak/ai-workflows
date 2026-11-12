@@ -164,7 +164,7 @@ The orchestrator MUST execute these steps in order:
    exact `task` invocation pattern.
 3. **Implement** with the currently selected model **or** Sonnet (Sonnet is fine
    for raw coding throughput; Opus is not required here). Sub-agents that do
-   the actual file edits inherit the orchestrator's model unless overridden.
+   the actual file edits inherit the orchestrator's model unless overridden (§2's provisos aside).
    `/implement` is the exception: its `code-writer` and `review-fixer` dispatches
    run on §4's `implementation_model`.
 4. **Opus code review** of the completed implementation. This is a dedicated

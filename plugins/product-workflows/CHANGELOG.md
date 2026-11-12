@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.79.2] — 2026-11-12
 
-Six degrade paths and three pages. Update with `workflows-core` 1.83.1.
+Six degrade paths and five pages. Update with `workflows-core` 1.83.1.
 
 ### Fixed
 

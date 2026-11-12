@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.83.1] — 2026-11-12
 
-Claude Mythos is routed as Opus-tier. Update with `dev-workflows` 4.62.3 and `docs-workflows` 1.38.2, whose commands apply the same test; `product-workflows` 3.79.2 changes pages only, and `security-workflows` 0.11.2 changes the scan's model handling only.
+Claude Mythos is routed as Opus-tier. Update with `dev-workflows` 4.62.3, `docs-workflows` 1.38.2 and `product-workflows` 3.79.2, whose commands apply the same test; `security-workflows` 0.11.2 changes the scan's model handling only.
 
 ### Fixed
 

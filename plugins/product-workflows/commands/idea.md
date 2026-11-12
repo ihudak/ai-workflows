@@ -128,8 +128,8 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    ```
    The grill + authoring run inline on `current_model` (the §2 Opus chain — interactive judgment, not a
    delegated subagent). `idea-reader` runs on `detection_model`, and `figure-reader` on `extraction_model`.
-   If `current_model` is not an Opus-tier model (`workflows-core:model-routing/classification` §4: Opus, Fable or Mythos), **degrade to the
-   best available and record the degradation** in `notes` and the final report — do NOT hard-block (a PM
+   If `current_model` is not an Opus-tier model (`workflows-core:model-routing/classification` §4: Opus, Fable or Mythos), **go on, on
+   the session's model, and record the degradation** in `notes` and the final report — do NOT hard-block (a PM
    must not be blocked from capturing an idea by a momentary Opus outage). Under `run_flags.enforced_model`
    (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps use the
    enforced model, while the grill and authoring still run on `current_model`. A `--ground-code` run does
