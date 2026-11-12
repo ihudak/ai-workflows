@@ -4,7 +4,7 @@
 
 The rulings summary is `2026-11-10-stay2-midrun-rulings.md` beside this file, and the ledger, copied as it stood when this record was written, is `2026-11-10-stay2-midrun-ledger.md`.
 
-**Trees.** Several recipes take a commit's tree as their argument. Each tree is unpacked from the repository root into an empty scratch directory `$SCRATCH`:
+**Trees.** Several recipes take a commit's tree as their argument. Each tree is unpacked from the repository root into an empty scratch directory `$SCRATCH`, and nothing is ever added to it: the counting recipes read every file under it, so a file left there is counted (the sweep's recipe below says how this record learned that):
 
 ```bash
 for sha in 38aec858 a17e4758 25166a8b; do mkdir -p "$SCRATCH/tree-$sha" && git archive "$sha" | tar -x -C "$SCRATCH/tree-$sha"; done
@@ -24,7 +24,7 @@ Each run from the root of its tree (`id -u` prints 502, so `g_read_only` ran):
 | `python3 plugins/workflows-core/scripts/session-branch.py --selftest` | `session-branch selftest: PASS`, real 38.1 s | `session-branch selftest: PASS`, real 40.2 s |
 | The same, with `check` counting its calls | 851 checks | 919 checks |
 
-`session-branch.py` prints no count, by the ruling of Task 1 that its PASS line keeps its existing format. The last row is a copy of the script in each scratch tree whose selftest `check` adds one to a counter on every call and whose PASS line prints it; nothing else in the copy changes.
+`session-branch.py` prints no count, by the ruling of Task 1 that its PASS line keeps its existing format. The last row is a copy of the script whose selftest `check` adds one to a counter on every call and whose PASS line prints it; nothing else in the copy changes. The copy is made in a second unpacked copy of each tree, kept apart from the `$SCRATCH/tree-<sha>` trees the counts below read, and run from that copy's root.
 
 ```python
 import sys
@@ -95,7 +95,7 @@ for g in sorted(set(base) & set(tip)):
     print(g, sorted(n for n in set(b) & set(t) & keep if b[n] != t[n]))
 ```
 
-`own_change`'s checks live in `session-branch.py`, whose selftest registers its cases by `case("<name>"`; the base has none of the `oc_*` cases, and the tip has 24 (a regex for `case("(oc_\w+|mb_message)"` after `def selftest(`).
+`own_change`'s checks live in `session-branch.py`, whose selftest registers its cases by `guarded("<name>", …)`; the base has none of the `oc_*` cases, and the tip has 24 (the distinct matches of `guarded\("(oc_\w+|mb_message)"` after `def selftest(`: 0 at `38aec858`, 24 at `25166a8b`).
 
 | Group | Names, base → tip | Added | Rewritten | Removed |
 |---|---|---|---|---|
@@ -111,7 +111,7 @@ for g in sorted(set(base) & set(tip)):
 | `replay` | 17 → 17 | — | `r_canned`, `r_refused_form`, `r_signalled`, `r_start_current`, `r_start_queued`, `r_start_refused` | — |
 | `gate`, `push_scope` | unchanged | — | — | — |
 
-Forty-eight names — every check the Done-when list below cites, and every check the final passes added — were looked up one by one at the tip (`grep -c "[\"']<name>[\"': (]" plugins/workflows-core/scripts/specs-git.py`, none 0). The final passes' `t_guard_other_run` and `l_cli_open_run` are gone (the same grep, 0), replaced by `t_guard_s3_*` and `l_cli_start_dirty` under rulings (a) and P1.
+Sixty-two names were looked up one by one at the tip (`grep -c "[\"']<name>[\"': (]" plugins/workflows-core/scripts/specs-git.py`, none 0): the 48 the Done-when table's *Checks* column names below — 25 single names, the two `t_same_command_other_key_*` and the 21 `t_land_merged_*` — and the 14 other checks the final passes added: `t_midrun_open_writes_stay`, `t_midrun_open_writes_here`, `t_same_command_restart`, `t_same_command_restarts_parked`, `t_no_start_end_beside`, `t_resume_unnamed_restored`, `t_guard_s3_middle_first`, `t_guard_s3_restart_first`, `t_guard_open_run_ended`, `t_guard_s4_later_first`, `t_guard_s4_untyped_first`, `t_guard_untyped_alone`, `t_guard_here_replay` and `l_cli_start_dirty`. The final passes' `t_guard_other_run` and `l_cli_open_run` are gone (the same grep, 0), replaced by `t_guard_s3_*` and `l_cli_start_dirty` under rulings (a) and P1.
 
 ### The spec's §5, item by item
 
@@ -209,23 +209,43 @@ The task read every site in `plugins/*/{commands,agents,references,skills,script
 | Round 1: `phase-handoff` §2.3's `branch -d` | `phase-handoff.md` | `warning: update of config-file failed` | 0 | 1 |
 | Round 1: the *pushed straight to `<default>`* row's `config workflows.sessionBranch true` | `specs_git_lines.py` | `config workflows.sessionBranch true — where a` | 0 | 1 |
 
-`sites.py`, its list of sites cut to the shape (each row of the table above is one entry):
+`sites.py`, whole:
 
 ```python
 import os, sys
 A, B = sys.argv[1], sys.argv[2]
-SITES = [  # (label, a file or a directory under the tree, the fixed form)
-    ("1-3", "plugins/workflows-core/scripts/specs_git_lines.py", '"fix.make-default"'),
-    ("4", "plugins/workflows-core/references/phase-handoff.md", "switch --no-guess <default>"),
-    # … one entry per row of the table, with the file and the form the row names
+SITES = [  # (label, a file or a directory under the tree, the fixed form): the table's 23 rows
+    ('1-3', 'plugins/workflows-core/scripts/specs_git_lines.py', '"fix.make-default"'),
+    ('1-3 wording', 'plugins/workflows-core/references/specs-repo-git.md', 'makes the branch first where none exists'),
+    ('4', 'plugins/workflows-core/references/phase-handoff.md', 'switch --no-guess <default>'),
+    ('5-9', 'plugins/workflows-core/references/phase-handoff.md', 'A switch onto `<default>` that a stop names'),
+    ('10', 'plugins/workflows-core/references/read-only-repos.md', 'A switch never makes the branch'),
+    ('11-12', 'plugins/workflows-core/agents/code-scanner.md', 'pull --ff-only --no-rebase origin <default-branch>'),
+    ('13', 'plugins/docs-workflows/agents/diff-summarizer.md', 'A switch never makes the branch'),
+    ('14', 'plugins/dev-workflows/references/code-handoff.md', 'switch --no-guess <base>'),
+    ('15', 'plugins/dev-workflows/commands/implement.md', 'switch --no-track -c <branch> origin/<branch>'),
+    ('16', 'plugins/security-workflows/commands/scan.md', '--no-track -c'),
+    ('17', 'plugins/dev-workflows/commands/conformance.md', 'pull --ff-only --no-rebase origin <default>'),
+    ('18', 'plugins/docs-workflows/commands/document.md', 'switch --no-guess'),
+    ('19', 'plugins/docs-workflows/commands/docs-profile.md', 'switch --no-guess'),
+    ('20', 'plugins/docs-workflows/commands/docs-init.md', 'switch --no-guess'),
+    ('21', 'plugins/docs-workflows/commands/docs-brand.md', 'switch --no-guess'),
+    ('pre-review: docs cuts', 'plugins/docs-workflows/commands/', 'switch --no-track -c <name>'),
+    ('pre-review: architecture-promotion', 'plugins/workflows-core/references/architecture-promotion.md', 'switch --no-track -c <branch>'),
+    ('pre-review: phase-handoff cuts', 'plugins/workflows-core/references/phase-handoff.md', 'switch --no-track -c <new-branch>'),
+    ('pre-review: dev-workflows cuts', 'plugins/dev-workflows/', 'checkout --no-track -b'),
+    ('pre-review: session-files', 'plugins/workflows-core/references/specs-repo-git.md', 'branch --no-track session-files-'),
+    ('round 1: rename', 'plugins/docs-workflows/commands/document.md', 'branch is renamed, but update of config-file failed'),
+    ('round 1: branch -d', 'plugins/workflows-core/references/phase-handoff.md', 'warning: update of config-file failed'),
+    ('round 1: sessionBranch', 'plugins/workflows-core/scripts/specs_git_lines.py', 'config workflows.sessionBranch true — where a'),
 ]
 def text(root, rel):
     p = os.path.join(root, rel)
-    fs = [p] if os.path.isfile(p) else [os.path.join(d, f) for d, _, n in os.walk(p) for f in n
-                                        if f.endswith(".md") and f != "CHANGELOG.md" and "/docs/" not in os.path.join(d, f)]
+    fs = [p] if os.path.isfile(p) else [os.path.join(d, f) for d, _, n in os.walk(p) for f in n if f.endswith(".md") and f != "CHANGELOG.md" and "/docs/" not in os.path.join(d, f)]
     return [" ".join(open(f, encoding="utf-8").read().split()) for f in fs if os.path.exists(f)]
 for label, rel, form in SITES:
-    print(label, rel, form, sum(t.count(form) for t in text(A, rel)), sum(t.count(form) for t in text(B, rel)), sep="\t")
+    a = sum(t.count(form) for t in text(A, rel)); b = sum(t.count(form) for t in text(B, rel))
+    print("%s\t%s\t%s\t%d\t%d" % (label, rel, form, a, b))
 ```
 
 **Not exposed**, each with the reason the task's report gives (not re-read site by site for this record; the task's three re-reviews and the final review read this table):
@@ -307,7 +327,7 @@ for line in sys.stdin:
             print("\t\t  %s %d" % (f, n))
 ```
 
-It reads every file of the unpacked archive, `.py` and `.json` among them. Three base figures differ from the reports': `replaced` 310 where Task 3 counted 308 and Task 9 307, `commits nothing` 61 where Task 9 counted 60, and `Nothing here but start, end and replay writes` 1 where Task 3 counted 0. Each figure here is this recipe's count of `38aec858`'s tree. Task 3 counted at `d9aa2ae7`, where Task 2 had already rewritten that docstring sentence to name `land` (`git show d9aa2ae7:plugins/workflows-core/scripts/specs-git.py`), which accounts for the last; the reports do not state their counters' scope closely enough to account for the other two.
+It reads every file of the unpacked archive, `.py` and `.json` among them. At `38aec858` its figures agree with Task 9's, which counted at that commit: `replaced` 307, `commits nothing` 60, `keyless` 177 and `Nothing here but start, end and replay writes` 1. Task 3 counted at its own base, `d9aa2ae7`, where the recipe gives Task 3's figures: `replaced` 308, since Task 2 had added one `replaced` to `specs-git.py`, and `Nothing here …` 0, since Task 2 had rewritten that docstring sentence to name `land`. So the task reports were right. This record's first version gave 310, 61 and 179 at the base (356, 74 and 200 at the tip) and blamed the reports: its trees held the untracked counting copy of `session-branch.py`, which holds 3 `replaced`, 1 `commits nothing` and 2 `keyless`. The figures below are counted on fresh `git archive` trees with nothing added (`comm -23` of each tree's file list against `git ls-tree -r --name-only <sha>` prints nothing).
 
 ### Task 3 Step 1's and Task 9 Step 1's subjects
 
@@ -329,22 +349,22 @@ It reads every file of the unpacked archive, `.py` and `.json` among them. Three
 | `every local plugin branch` | 1 | 1 | The rules file's §3.4 retry, unchanged and true. |
 | `Nothing here but start, end and replay writes` | 1 | 0 | `specs-git.py`'s docstring now names `land` too (Task 2). |
 | `the preflight did not commit, switch branches, or push` | 5 | 0 | G1's *Not done* opening reworded (P30, Task 3). |
-| `replaced` | 310+2 | 356+2 | The record field `replaced` (SRG §7, the skill, the selftest's asserts) is Tasks 7 and 8's, stated with `parked`. Every hit of `replace` in SRG, the skill, the state module, the rationale, the rules file and References was read at the tip: the rest are other senses — a pointer overwritten, a commit replaced in the record, D5's hold replaced by the landing — and none states the old collision. Task 9 classed the hits elsewhere as unrelated English uses. |
+| `replaced` | 307+2 | 353+2 | The record field `replaced` (SRG §7, the skill, the selftest's asserts) is Tasks 7 and 8's, stated with `parked`. Every hit of `replace` in SRG, the skill, the state module, the rationale, the rules file and References was read at the tip: the rest are other senses — a pointer overwritten, a commit replaced in the record, D5's hold replaced by the landing — and none states the old collision. Task 9 classed the hits elsewhere as unrelated English uses. |
 | `held back` | 23 | 23 | Unrelated senses (brd-split, coverage ledgers, grilling, an overrule in `/conformance`), and SRG's and the rationale's held entries, true to §3.2. |
 | `holds back` | 4 | 8 | SRG 2 ("an entry still held holds back the run's own change … where they share a path"), `specs-git.py` 3 (selftest messages), and `install-time-code.md` and `brd-interview.md`, unrelated. |
 | `state of its own` | 1 | 1 | The rules file's hard rules; its list gained the held commits and their record (Task 9). |
 | `artifacts are committed alongside them` | 2 | 2 | G1's plain *If ignored*, used only where the plain block is true (Task 5). |
 | `nothing is lost` | 12 | 17 | `idea.md` and `frames.md` ("G1 does not set blocked, so the terminal `commit-artifacts` still runs and nothing is lost") stay true: the step runs, and a held landing keeps the files. The rest are SRG's and the templates' own, or unrelated. |
 | ``the terminal `commit-artifacts` still runs`` | 2 | 2 | `idea.md` and SRG §3.3, as above. |
-| `commits nothing` | 61 | 74 | The rules file's D5 clause was changed (Task 9); the new hits are the no-snapshot and no-start cases' own statements, true. Every docs and command hit is about misrooted, G0, a read-only mount, no identity, *Cancel* or the code handoff. |
+| `commits nothing` | 60 | 73 | The rules file's D5 clause was changed (Task 9); the new hits are the no-snapshot and no-start cases' own statements, true. Every docs and command hit is about misrooted, G0, a read-only mount, no identity, *Cancel* or the code handoff. |
 | `stay uncommitted` | 15+1 | 17+1 | Other causes (`implement.md`, `conformance.md`, `code-handoff.md`, `document.md`, `session-hygiene.md`); SRG's and the templates' are the batch's own. |
 | `a later run commits them` | 6 | 3 | Left: the *Commit failed* row, its template and its selftest, unrelated. |
 | `leaves the branch first` | 0 | 0 | — |
 | `never touches the outer run's record` | 1 | 0 | `specs_git_state.py`'s docstring at the base, false for the same command typed twice; it now says a different command is kept off the open run's record by its own file, and the same command by parking and `--started` (Tasks 4 and 7). |
-| `one file per session and command`, `One file …` | 2, 2 | 2, 2 | SRG §7 now says what one file keeps apart (two sessions; a different command typed mid-run) and that the same command twice is kept off by parking; the rationale and `specs-git.py`'s synopsis say the same. |
+| `one file per session and command`, `One file per session and command` | 2, 2 | 2, 2 | SRG §7 now says what one file keeps apart (two sessions; a different command typed mid-run) and that the same command twice is kept off by parking; the rationale and `specs-git.py`'s synopsis say the same. |
 | `B4` | 125+1 | 188+1 | The `prompt*.md` and `harvest-decisions.md` sentences state B4's normal action, whose exceptions already stood; the mid-run stay joins them. `document.md`'s mermaid node ids and `feedback-emission`'s follow-ups "B4" are unrelated. The new hits are the batch's own. |
 | `switches the checkout` | 2 | 2 | SRG's replay and a CHANGELOG line, unchanged. |
-| `keyless` | 179+4 | 200+4 | Cost-entry and run-key-set senses, the B4 sentences above, and the batch's mid-run text. |
+| `keyless` | 177+4 | 198+4 | Cost-entry and run-key-set senses, the B4 sentences above, and the batch's mid-run text. |
 | `--no-preflight` | 16 | 32 | The skill's and SRG's no-start `end`, and the selftest's calls. |
 | `otherwise silent unless it acts, a guard fires, or §3.1 reports` | 27 | 27 | The plan's "30 command lines" are 27 by the exact string. Each stays true: a held landing is an act, and SRG §3's silence list needs HEAD on the default branch, where the held stage drops entries silently and pushes nothing. |
 
@@ -366,7 +386,7 @@ For the generic subjects — `B4`, `keyless`, `--no-preflight`, `commits nothing
 
 ## The gates and the budgets
 
-The gate chain — the `run:` steps of `.github/workflows/validate-catalog.yml` in order as one `&&` chain, `check-docs.sh --selftest` included — run from the worktree root with this record, the rulings summary and the ledger in place, ending `; echo "EXIT=$?"`, printed `EXIT=0`.
+The gate chain — the `run:` steps of `.github/workflows/validate-catalog.yml` in order as one `&&` chain, `check-docs.sh --selftest` included — run from the worktree root with this record, the rulings summary and the ledger in place, ending `; echo "EXIT=$?"`, printed `EXIT=0`. Of `check-docs.sh`'s checks, 14 and 19 read this directory — 14 greps the whole repository and 19 every tracked and untracked file — and 13 does not: it reads the plugins and `INSTRUCTION_TIERS` (`CLAUDE.md`, `.claude/rules/*.md`, `docs/maintainers/*.md`; `scripts/check-docs.sh:178`). The three files were grepped by hand for check 13's `VENDOR_TOKENS`, for an internal standard's name, for an email address and for a home-directory path: none.
 
 `len()` of `CLAUDE.md` and of every rules file the branch touched, at the base, at the `main` it merged, and at the tip. Run from the repository root as `python3 -I budgets.py`:
 
@@ -398,7 +418,7 @@ for path in sorted(set(batch) | set(merged)):
 | `.claude/rules/dev-workflows-implement.md` | 19,380 | 19,412 | 19,412 | `main` | 20,000 |
 | `.claude/rules/security-workflows.md` | 17,318 | 17,356 | 17,356 | `main` | 20,000 |
 
-Every one is under its budget: `CLAUDE.md` under the 36,000-character warning `scripts/validate-catalog.py` sets, every rules file under the 20,000-character one. `CLAUDE.md` and `plugin-updates.md` are "both" where `main`'s change kept their length. Task 10 moved the coupling file's bullets for `workflows-core` 1.75.0 to 1.78.13 into the new `plugin-updates-coupling-history-3.md`, by the precedent `history-2` was made by, to make room for the 1.84.0 bullet. `workflows-core-git.md` is the tightest file, 40 characters under its warning: the next addition there must make room first, and GIT-G1 Part 3 will need it.
+Every one is under its budget: `CLAUDE.md` under the 36,000-character warning `scripts/validate-catalog.py` sets, every rules file under the 20,000-character one. `CLAUDE.md`, `plugin-updates.md` and `plugin-updates-coupling-history.md` are "both" where `main`'s change kept their length. Task 10 moved the coupling file's bullets for `workflows-core` 1.75.0 to 1.78.13 into the new `plugin-updates-coupling-history-3.md`, by the precedent `history-2` was made by, to make room for the 1.84.0 bullet. `workflows-core-git.md` is the tightest file, 40 characters under its warning: the next addition there must make room first, and GIT-G1 Part 3 will need it.
 
 ## The reviews
 
