@@ -35,10 +35,11 @@ protects is true, save on a record a later run of the same command parked or res
 branch -- while the later run stands, its own record protects it (§3.5). parked is true on a record park moved aside,
 and only there: unpark takes no other, so a record a declined call made at a derived path (find) is never taken for a
 parked one. started_before lists the started of each earlier start of the run whose record a re-run, or a continuation
---started named that started afresh, replaced, oldest first, so that find reaches the run's record by any stamp its
+--started named that started afresh, took over, oldest first, so that find reaches the run's record by any stamp its
 starts returned; a record whose started another record of its command lists there is one a re-run cut off between its
 save and its removal of the file it re-ran from left behind: records() leaves it out, so no reader restores it, reads
-it as open or names it, and the next save or the removal of the record that lists it removes it. A record an earlier
+it as open or names it, and the next save or the removal of the record that lists it, or the save of another run's
+record over that one, removes it. A record an earlier
 version wrote lacks these six fields: load gives each its default. held_changed holds
 the paths the held stage took out of their held entries as changed since they were held (specs-repo-git §3.2), which
 the flush reports for each it commits (§3.4); a record that lacks it reads as holding none. held_attempted holds the
@@ -99,7 +100,7 @@ FIELDS = {
     "midrun": None,  # {command, started, branch}: the open run this one was typed under
     "protects": True,  # false on a record a later run of the same command parked or restored
     "parked": False,  # true on a record park moved aside for a later run of the same command
-    "started_before": [],  # the started of each earlier start of the run whose record a later start of it replaced
+    "started_before": [],  # the started of each earlier start of the run whose record a later start of it took over
     "branch": None,  # the branch HEAD stands on when a start call returns
     "advised_D": [],
     "reported": [],  # start's once-a-run reports printed: "<template id>[ <branch>]"
@@ -191,10 +192,16 @@ def _read(target):
 def save(session, command, rec, at=None):
     """<rec> written as the record of <session> and <command> -- at <at>, the record file to write in place of
     <command>.json, where given -- its updated stamp set to now; then each file it left behind removed
-    (_remove_left_behind)."""
+    (_remove_left_behind). Where <at> already holds a record -- another run's among them -- each file that record
+    left behind is removed first, as its own removal would: once it is overwritten, nothing lists their stamps, and they
+    would be listed, restored and named again. Whose record it is goes untested, since a started stamp tells two runs
+    apart only to the second: for one of this run's records the files are the ones <rec> lists too."""
     _check_keys(rec)
     rec["updated"] = _now()
     target = at or path(session, command)
+    there = _read(target)
+    if there is not None:
+        _remove_left_behind(session, command, there, target)
     _write(target, rec)
     _remove_left_behind(session, command, rec, target)
 
@@ -257,7 +264,7 @@ def remove(session, command, at=None):
 
 def earlier(rec):
     """The stamps <rec> lists in started_before: the started of each earlier start of its run whose record a later
-    start of it replaced (specs-repo-git §7)."""
+    start of it took over (specs-repo-git §7)."""
     got = rec.get("started_before") if isinstance(rec, dict) else None
     return [s for s in got if isinstance(s, str) and s] if isinstance(got, list) else []
 

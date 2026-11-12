@@ -3428,8 +3428,8 @@ def _carry(rec, old):
 
 
 def _earlier_stamps(old):
-    """The started_before of a record that replaces <old>, a record of the same run (specs-repo-git §7): <old>'s own,
-    then <old>'s started -- each stamp once, oldest first."""
+    """The started_before of a record that takes over <old>, a record of the same run (specs-repo-git §7): <old>'s
+    own, then <old>'s started -- each stamp once, oldest first."""
     out = []
     for stamp in _load_module("specs_git_state").earlier(old) + [old.get("started")]:
         if isinstance(stamp, str) and stamp and stamp not in out:
@@ -3574,10 +3574,10 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
             rec.update(specs_git="misrooted", misrooted_notice=list(g["lines"]))
         if rerun and old is not None:
             _carry(rec, old)
-        elif old is not None and at == main:
+        elif old is not None and at == main and not (resume and started is not None):
             replaced = {"command": command, "started": old.get("started"), "parked": False}
-        if resume and not rerun and started is not None and old is not None:  # the run's own record, started afresh
-            rec["started_before"] = _earlier_stamps(old)
+        if resume and not rerun and started is not None and old is not None:  # the run's own record, started afresh:
+            rec["started_before"] = _earlier_stamps(old)  # taken over, never set aside (replaced)
         # §3.5, read before the first save: on a run's first start, the open run this one is typed under -- the oldest
         # record of another command that the open-run test passes on HEAD's branch, which a parked one, marked
         # protects: false, never does; on a re-run, the one its first start found (_carry), tested again as end tests
@@ -6636,6 +6636,23 @@ def selftest():
                 check(not os.path.exists(p_path) and os.path.exists(n_path),
                       "s_left_behind: the next save of the record that lists it removes the file left behind")
                 state.remove("s10", "/specify", at=n_path)
+                # another run's record saved over the one that lists the stamp takes the file left behind with it --
+                # one whose started falls in the same second, which no stamp tells apart, among them -- and never a
+                # third run's live record: a parked one, and the record it writes
+                lay()
+                state.unpark("s10", "/specify", lambda rec: True)  # the re-run's record to <name>.json, no clean-up
+                d_path = os.path.join(sdir, "specify.20261110T100700Z.json")
+                d = state.new("/specify", session="s10", parked=True, protects=False)
+                state._write(d_path, dict(d, started="2026-11-10T10:07:00Z", updated="2026-11-10T10:07:00Z"))
+                c = state.new("/specify", session="s10")
+                c["started"] = y
+                state.save("s10", "/specify", c)
+                check(not os.path.exists(p_path) and os.path.exists(d_path)
+                      and (state.load("s10", "/specify") or {}).get("started_before") == [],
+                      "s_left_behind: a save of another run's record over the one that lists it removes the file left "
+                      "behind, a third run's parked record and its own kept (%r)" % sorted(os.listdir(sdir)))
+                state.remove("s10", "/specify")
+                state.remove("s10", "/specify", at=d_path)
 
             case("s_left_behind", s_left_behind)
 
@@ -16202,7 +16219,8 @@ def selftest():
             ahead(r, "t-rerun-stopped-other")  # a catch-up for the re-run's flush: a second unit, past --budget 0
             stopped = start_(env, "/document", *RERUN_KEYS, "--rerun", "--started", a, "--budget", "0")
             saved = rec_of(env, "/document")  # what the harness's stop leaves: the re-run's record, its JSON unseen
-            calls = follow(start_(env, "/document", *RERUN_KEYS, "--resume", "--started", a), env)
+            # the skill's remake: the same call again with --resume added (When the JSON names next)
+            calls = follow(start_(env, "/document", *RERUN_KEYS, "--rerun", "--resume", "--started", a), env)
             done = rec_of(env, "/document")
             check((stopped.get("next") or {}).get("run") and saved.get("stage") in START_STAGES
                   and saved.get("started") not in (None, a) and saved.get("started_before") == [a]
@@ -16292,12 +16310,62 @@ def selftest():
             fresh = start_(env2, "/document", "--key", "ACME-1", "--resume", "--started", a2)  # at done: it starts afresh
             r2.write(FB, "fb\n")
             e2 = run_end(env2, "/document", "--started", a2)
-            check(fresh.get("started") not in (None, a2) and e2.get("record") == "found" and e2.get("error") is None
-                  and names_of(env2, "/document") == [],
-                  "t_rerun_old_stamp_end: after a start --resume --started that starts afresh, the earlier stamp still "
-                  "names the run's record (%r, %r)" % (fresh.get("started"), e2.get("record")))
+            check(fresh.get("started") not in (None, a2) and fresh.get("replaced") is None
+                  and e2.get("record") == "found" and e2.get("error") is None and names_of(env2, "/document") == [],
+                  "t_rerun_old_stamp_end: after a start --resume --started that starts afresh, setting nothing aside, "
+                  "the earlier stamp still names the run's record (%r, %r, %r)"
+                  % (fresh.get("started"), fresh.get("replaced"), e2.get("record")))
 
         case("t_rerun_old_stamp_end", t_rerun_old_stamp_end)
+
+        # A re-run of the open run leaves it standing: it takes over that run's record, whose started_before keeps the
+        # stamp a run typed under it recorded (midrun), so that run's end still finds it open and commits its own change
+        # by the here form, unpushed
+        def t_midrun_open_rerun():
+            r, env = mworld("t-midrun-open-rerun")
+            up = on_origin(r)
+            start_(env, "/document", "--key", "ACME-1")
+            a = backdate(env, "/document", 240)
+            f = start_(env, "/feedback")
+            calls = follow(start_(env, "/document", *RERUN_KEYS, "--rerun", "--started", a), env)
+            r.write(FB, "fb\n")
+            e = run_end(env, "/feedback")
+            check((f.get("midrun") or {}).get("started") == a and calls[-1].get("error") is None
+                  and calls[0].get("started") not in (None, a) and e.get("row") == "here" and e.get("pushed") is False
+                  and on_origin(r) == up,
+                  "t_midrun_open_rerun: after the open run's re-run, the run typed under it still reads it as standing "
+                  "-- the here row, nothing pushed (%r)" % e)
+
+        case("t_midrun_open_rerun", t_midrun_open_rerun)
+
+        # The file a cut-off re-run leaves behind outlives no save over the record that lists its stamp: the second
+        # run's end restores the re-run's record (unpark, no clean-up), a third plain start of the command saves its own
+        # record over it -- not an open run, protects false -- and the file left behind goes with it, so the third
+        # run's end restores nothing
+        def t_rerun_cut_off_overwritten():
+            r, env = mworld("t-rerun-cut-off-over")
+            start_(env, "/document", "--key", "ACME-1")
+            a = backdate(env, "/document", 360)
+            start_(env, "/document", "--key", "ACME-1")
+            b = backdate(env, "/document", 240)
+            old_name = "document.%s.json" % stamp_of(a)
+            old_raw = raw(env, "/document", old_name)
+            follow(start_(env, "/document", *RERUN_KEYS, "--rerun", "--started", a), env)
+            with open(file_of(env, "/document", old_name), "wb") as fh:  # the old file, as the cut-off leaves it
+                fh.write(old_raw or b"")
+            r.write(FB, "fb\n")
+            run_end(env, "/document", "--started", b)  # unpark: the re-run's record back to <command>.json
+            restored = rec_of(env, "/document")
+            third = start_(env, "/document", "--key", "ACME-1")
+            after_third = names_of(env, "/document")
+            e = run_end(env, "/document", "--started", third.get("started") or "")
+            check(old_raw is not None and restored.get("started_before") == [a] and restored.get("protects") is False
+                  and (third.get("replaced") or {}).get("parked") is False and old_name not in after_third
+                  and after_third == ["document.json"] and e.get("error") is None and names_of(env, "/document") == [],
+                  "t_rerun_cut_off_overwritten: the third start's save over the re-run's record takes the file left "
+                  "behind with it, and its end restores nothing (%r, %r)" % (after_third, names_of(env, "/document")))
+
+        case("t_rerun_cut_off_overwritten", t_rerun_cut_off_overwritten)
 
         # N2: every start-side next repeats --started -- the flush's replay and the resume after it, the held stage's
         # replay of <default>, and the settle loop's queued replay -- so a parked run's re-run never touches the second
@@ -16747,6 +16815,21 @@ def selftest():
                 return ""
             return next((p for p in step1.split("\n\n") if p.lstrip().startswith("**By hand**, the landing is one call")), "")
 
+        # The clauses the fallback must keep word for word: where it makes no land call (SRG §4 step 1 (1)), which
+        # branch and default ref the call names, where land's own failure goes, and the export The call opens with
+        fallback_pins = (
+            ("save where its (1) says neither the landing nor the here form commits anything",
+             "the fallback makes the land call where §4 step 1 (1) says neither form commits"),
+            ("`<branch>` the branch HEAD stands on", "the fallback's <branch> is not the branch HEAD stands on"),
+            ("`<default_ref>` your last `start` call's `default_ref` field",
+             "the fallback's <default_ref> is not start's default_ref field"),
+            ("in place of this section's own exit-2 rule",
+             "the fallback sends no land exit 2 or error to the *By hand* paragraph"),
+            ("`export SPECS_PATH='<the value>';`", "the land call does not open with The call's export"))
+        START_LAST = "the first call's, or that of the last `start --rerun` or `start --resume` made since"
+        LAND_FAILS = ("exits 2 on a line that does not begin `specs-git: not run (usage:`", "has `error` set",
+                      "`Specs repo: NOT FINISHED` line")
+
         def fallback_problems(text, ref):
             sections = {s.split("\n", 1)[0]: s for s in text.split("\n## ")}
             fallback = sections.get("Where the script cannot start", "")
@@ -16774,6 +16857,16 @@ def selftest():
                 problems.append("the fallback does not send the land call's status to §4 step 1's *By hand* paragraph")
             problems += ["the fallback restates the status %s, the *By hand* paragraph's" % s for s in statuses
                          if "`%s`" % s in fallback]
+            if re.search(r"\bpush", fallback):
+                problems.append("the fallback names a push, which only the *By hand* paragraph may say, by status")
+            problems += [said for pin, said in fallback_pins if pin not in fallback]
+            if START_LAST not in sections.get("Start", ""):
+                problems.append("Start's last start JSON leaves out a start --rerun's")
+            tos = [re.search(r"timeout of ([0-9]+) ms", s) for s in (sections.get("The call", ""), fallback)]
+            if not all(tos) or tos[0].group(1) != tos[1].group(1):
+                problems.append("the land call's timeout is not The call's")
+            if not all(s in para for s in LAND_FAILS):
+                problems.append("§4 step 1's *By hand* paragraph says nothing of the land call's exit 2 or error")
             return problems
 
         got = fallback_problems(skill, srg)
@@ -16792,7 +16885,21 @@ def selftest():
                 ("says its `status` leads to", "says its `status` leads to, `landed` the commit's row",
                  "restates the status landed", srg),
                 (None, None, "names --here, which §4 step 1's *By hand* call does not",
-                 srg.replace(", and `--here` for the here form below", ""))):
+                 srg.replace(", and `--here` for the here form below", "")),
+                ("says its `status` leads to", "says its `status` leads to, a push included", "names a push", srg),
+                ("save where its (1) says neither the landing nor the here form commits anything, ", "",
+                 "where §4 step 1 (1) says neither form commits", srg),
+                ("`<branch>` the branch HEAD stands on", "`<branch>` the branch your `stay` names",
+                 "is not the branch HEAD stands on", srg),
+                ("your last `start` call's `default_ref` field", "your last `start` call's `default` field",
+                 "is not start's default_ref field", srg),
+                ("in place of this section's own exit-2 rule", "", "sends no land exit 2 or error", srg),
+                ("`export SPECS_PATH='<the value>';` where", "where", "does not open with The call's export", srg),
+                ("a timeout of 600000 ms, opened", "a timeout of 120000 ms, opened", "timeout is not The call's", srg),
+                (START_LAST, "the first call's, or the last `start --resume` a `next` led to",
+                 "leaves out a start --rerun's", srg),
+                (None, None, "says nothing of the land call's exit 2 or error",
+                 srg.replace("`Specs repo: NOT FINISHED` line, `<the error>`", "outcome line, `<the error>`"))):
             got = fallback_problems(skill.replace(old, new) if old else skill, ref)
             check((old is None or skill.count(old) >= 1) and any(want in p for p in got),
                   "k_skill_fallback: a fallback off its rule fails (%s: %r)" % (want, got))
