@@ -292,10 +292,13 @@ jobs:
 
       - name: Self-test the session branch
         # specs-repo-git §8 commits, merges and lifts session files with it on a specs
-        # repository whose default branch takes no push. Its failure mode loses entries: a
-        # merge that drops a teammate's appended line, or a lift that discards a file not
-        # yet on the session branch. Fixtures are built at run time, with a bare remote
-        # that refuses its default branch.
+        # repository whose default branch takes no push, and §4 step 1's landing applies a
+        # run's own change with its own_change, path by path. Its failure mode loses
+        # entries: a merge that drops a teammate's appended line, or a lift that discards a
+        # file not yet on the session branch; or puts them where they do not belong: a
+        # snapshot's lines leaking into another commit, or a branch's own entries reaching
+        # the default branch. Fixtures are built at run time, with a bare remote that
+        # refuses its default branch.
         run: python3 plugins/workflows-core/scripts/session-branch.py --selftest
 
       - name: Self-test the specs-repo git primitives
@@ -303,10 +306,14 @@ jobs:
         # branch-merged, branch-key, push-scope, owner-repo and mode, and addressing for
         # specs-root-check; the specs-git skill runs a run's whole start and end through
         # it (start, end, replay, declined), keeping their shared state in a record under
-        # ~/.claude. Its failure mode is silent: a session file classified OTHER stays dirty
-        # forever, a merged branch read unmerged keeps a run on it, a key read out of a
-        # branch name sends a run to the wrong branch, a commit is made under a flag that
-        # should have stopped it, and a notice the run must repeat at its end is lost to a
-        # compaction. Fixtures are built at run time, with a bare remote and a HOME and
-        # session id of their own.
+        # ~/.claude, and a stayed run's files go to the default branch by its landing --
+        # land and snapshot by hand, the end and the preflight's held stage otherwise. Its
+        # failure mode is silent: a session file classified OTHER stays dirty forever, a
+        # merged branch read unmerged keeps a run on it, a key read out of a branch name
+        # sends a run to the wrong branch, a commit is made under a flag that should have
+        # stopped it, a notice the run must repeat at its end is lost to a compaction, a
+        # stayed run's files are committed into another key's pull request, another run's
+        # lines are committed under this run's message, or files are left dirty so every
+        # later switch is refused. Fixtures are built at run time, with a bare remote and a
+        # HOME and session id of their own.
         run: python3 plugins/workflows-core/scripts/specs-git.py --selftest
