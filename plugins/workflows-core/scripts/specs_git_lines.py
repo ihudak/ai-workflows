@@ -114,7 +114,7 @@ T = {
 
     # §6's rows, in its order (ROWS below); "silent" prints nothing and has none.
     "row.pushed-plugin": "Specs repo: committed <sha7> (<N> files) on <branch> — pushed",
-    "row.pushed-default": "Specs repo: committed <sha7> (<N> files) on <default> — pushed straight to <default>, and no pull request was opened: this plugin lands its session files there without review; to land them through a pull request of your own instead, turn on session-branch mode (§8) with git -C \"<SPECS_PATH>\" config workflows.sessionBranch true — on the host, where a container mounts this repository's .git/config read-only",
+    "row.pushed-default": "Specs repo: committed <sha7> (<N> files) on <default> — pushed straight to <default>, and no pull request was opened: this plugin lands its session files there without review; to land them through a pull request of your own instead, turn on session-branch mode (§8) with git -C \"<SPECS_PATH>\" config workflows.sessionBranch true — where a container mounts this repository's .git/config read-only, run it on the host",
     "row.pushed-session": "Specs repo: committed <sha7> (<N> files) on session/<identity> — pushed; <F> session file(s) not on <default> yet: merge its pull request, or open one with gh pr create --head session/<identity> --base <default>",
     "row.no-identity": "Specs repo: NOT COMMITTED — session-branch mode is on and no identity names its branch; set GIT_USER_INITIALS (or git config user.initials), and the next run commits these files",
     "row.session-not-run": "Specs repo: NOT COMMITTED — session-branch.py could not run (<the first line of its stderr>); the files stay in your working tree, and the next run commits them",

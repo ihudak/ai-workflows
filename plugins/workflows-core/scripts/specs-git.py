@@ -5758,8 +5758,8 @@ def selftest():
         got = end_of(env)
         want = ("Specs repo: committed %s (1 file) on main — pushed straight to main, and no pull request was opened: this "
                 "plugin lands its session files there without review; to land them through a pull request of your own "
-                "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true — on the host, "
-                "where a container mounts this repository's .git/config read-only; "
+                "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true — where a "
+                "container mounts this repository's .git/config read-only, run it on the host; "
                 "session-branch mode is on for this clone, but this git's merge-tree cannot merge without a checkout (it "
                 "needs --write-tree and -X), so these files stay on main until git is upgraded" % (head(r)[:7], r.path))
         check(got.get("row") == "pushed-default" and got.get("print") == [want],
@@ -7812,8 +7812,8 @@ def selftest():
         def pushed_default(sha7, specs, n=1):
             return ("Specs repo: committed %s (%s) on main — pushed straight to main, and no pull request was opened: this "
                     "plugin lands its session files there without review; to land them through a pull request of your own "
-                    "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true — on the host, "
-                    "where a container mounts this repository's .git/config read-only" % (sha7, files(n), specs))
+                    "instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true — where a "
+                    "container mounts this repository's .git/config read-only, run it on the host" % (sha7, files(n), specs))
 
         def refused_tail(branch, specs, record_text, clear, day):
             return ("to land the commits on local %s, put them on a branch of their own and open a pull request from it — "
@@ -13271,8 +13271,8 @@ def selftest():
         def pushed_default(sha7, specs):
             return ("Specs repo: committed %s (1 file) on main — pushed straight to main, and no pull request was opened: "
                     "this plugin lands its session files there without review; to land them through a pull request of your "
-                    "own instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true — on the host, "
-                    "where a container mounts this repository's .git/config read-only" % (sha7, specs))
+                    "own instead, turn on session-branch mode (§8) with git -C \"%s\" config workflows.sessionBranch true — where a "
+                    "container mounts this repository's .git/config read-only, run it on the host" % (sha7, specs))
 
         # The landing's pieces (specs-repo-git §4 step 1, §6): the row a landing's commit on main takes once pushed with
         # app.landed, G1's plain block, its §5 forms, and the stay the record holds.
