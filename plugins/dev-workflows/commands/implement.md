@@ -1310,15 +1310,15 @@ wherever `focus_key` is set, whether the address named that Epic or Phase 0's pi
 path chose it, and the resolved folder for a broad PRD-level slice. Invoke
 `Skill(skill: "workflows-core:reference", args: "implementation-format")` and append one block per
 run against its §1, which says why the record lives with its unit: one entry, the code repository
-this run branched, naming `repo` (its `<repo-slug>`, as §1 says), `branch`, `base`, `commit` and `pushed` (reads run-state `branch`, `code_repo_outcome`). Append-only — never edit or
+this run branched, naming `repo` (its `<repo-slug>`, as §1 says), `branch`, `base`, `commit`, `pushed` (reads run-state `branch`, `code_repo_outcome`) and `at`. **Write `at:` last, after `pushed:`** — the instant this step appends the block, in UTC (`workflows-core:implementation-format` §1) — so it stands before any `accepted:` the acceptance below adds. Take it here, as you write the block — run `date -u +%Y-%m-%dT%H:%M:%SZ` and paste its output verbatim — never an instant taken earlier in the run, and never one typed by hand. Append-only — never edit or
 remove an earlier block, and a re-run adds a block rather than replacing one.
 
 **Then record the acceptance** where run-state `lineage.check_file` is set — it adds nothing where nothing was stale or unrecorded: execute `Skill(skill: "workflows-core:reference", args: "document-lineage record")` §5 step 2's `accept` alone — never its `stamp`, since `implementation.md` records no upstreams — with `--doc` this `implementation.md`'s absolute path and `--check` that file. It adds the `accepted:` field to the block just written (`workflows-core:implementation-format` §1): part of writing that block, never an edit of an earlier one. A non-zero exit does **not** stop the run, unlike §5's rule: the code is already committed, and a missing acceptance only means the next run asks again. Write `Lineage: acceptance not recorded — <the first line of the script's stderr>` to run-state `lineage.line` instead, which the Phase 5 report prints.
 
-**Beyond that field, it records refs and nothing else.** No summary of what was implemented: a summary is a
+**Beyond `accepted:` and `at:`, it records refs and nothing else.** No summary of what was implemented: a summary is a
 *description*, `workflows-core:source-truth` exists because descriptions drift
 from the code they describe, and one here would be an unverified description in a folder of grounded
-artifacts. A ref cannot drift.
+artifacts. A ref cannot drift, and neither can the instant a block was written.
 
 **Record `pushed:` as it actually is.** A later run reading `pushed: false` says *"this was never
 pushed"* rather than reporting an empty diff against a ref the remote does not hold.
