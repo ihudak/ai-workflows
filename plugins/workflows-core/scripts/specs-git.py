@@ -1368,15 +1368,19 @@ def _end_view(lines, rec, view, default, specs, stay, committed):
     """<view> with the G1 block the run's end repeats in the form specs-repo-git §5 gives the end (_g1_landing): the
     landing form where <stay>, the stay the end's landing ran on, stands; the plain block where none does; under a run
     typed mid-run, the mid-run form; its Not done by <committed>, whether the end committed the run's whole change. A
-    G2 block in its mid-run form under a run typed mid-run (_g2_midrun), else as it is; none, as it is."""
+    G2 block in its mid-run form under a run typed mid-run (_g2_midrun), else as it is; none, as it is. A G1 or G2
+    block's Fix switch to <default> is judged again (_make_default_fix)."""
     rec = rec or {}
+    top = rec.get("specs") or specs
     if view.get("guard_block") and rec.get("guard") == "G2" and rec.get("midrun"):
         return dict(view, guard_block=_g2_midrun(lines, view["guard_block"], rec["midrun"]))
+    if view.get("guard_block") and rec.get("guard") == "G2":
+        return dict(view, guard_block=_make_default_fix(lines, top, default, rec.get("default_ref"), view["guard_block"]))
     if not view.get("guard_block") or rec.get("guard") != "G1":
         return view
-    return dict(view, guard_block=_g1_landing(lines, view["guard_block"], (stay or {}).get("branch"), default,
-                                              rec.get("specs") or specs, view["guard_paths"], stay, rec.get("midrun"),
-                                              committed))
+    return dict(view, guard_block=_make_default_fix(lines, top, default, rec.get("default_ref"), _g1_landing(
+        lines, view["guard_block"], (stay or {}).get("branch"), default, top, view["guard_paths"], stay,
+        rec.get("midrun"), committed)))
 
 
 def _land_clause(lines, refused, default, onto=None):
@@ -2713,6 +2717,32 @@ def _g2_midrun(lines, block, midrun):
         "<command>": midrun.get("command"), "<branch>": midrun.get("branch")}))
 
 
+def _make_default_fix(lines, specs, default, ref, block):
+    """specs-repo-git §5 part 3: <block> with its Fix line, where that line opens with the switch to <default>
+    (g2.self.fix's text, which G2's plain block and g1.merged.fix open with too), opening with fix.make-default
+    instead where refs/heads/<default> names no commit and <ref>, <default-ref>, names one -- so the branch is made with
+    no configuration write before the switch, never by git's guess, whose upstream write half-moves the checkout where
+    .git/config cannot be written (§3.5). Judged each time a block is printed: a prefix an earlier print added is taken
+    off first, so the start's block and the end's repeat of it each name what the clone needs then. Any other block,
+    or one with no default to name, is returned as it is."""
+    if not block or not default or not ref:
+        return block
+    values = {"<SPECS_PATH>": specs, "<default>": default, "<default-ref>": ref}
+    switch, prefix = lines.fill("g2.self.fix", values), lines.fill("fix.make-default", values) + " "
+    rows = block.split("\n")
+    for i, row in enumerate(rows):
+        if not row.startswith("Fix:"):
+            continue
+        pad = re.match(r"Fix: *", row).group(0)
+        text = row[len(pad):]
+        text = text[len(prefix):] if text.startswith(prefix) else text
+        if text == switch or text.startswith(switch + " "):
+            missing = sb.rev(specs, "refs/heads/" + default) is None and sb.rev(specs, ref) is not None
+            rows[i] = pad + (prefix if missing else "") + text
+        return "\n".join(rows)
+    return block
+
+
 def _inside(top):
     """Whether the current directory is in the work tree whose top level is <top>: a direct /implement run from inside
     the specs repository (specs-repo-git §5)."""
@@ -3207,7 +3237,7 @@ def _guards(run):
                             rec["stay"] if _stayed_on(rec, head) else None, rec.get("midrun"))
     elif found[0] == "G2" and rec.get("midrun"):
         shown = _g2_midrun(lines, found[1], rec["midrun"])
-    _emit(run, shown or found[1])
+    _emit(run, _make_default_fix(lines, specs, rec["default"], rec.get("default_ref"), shown or found[1]))
     _advance(run, "done")
 
 
@@ -6797,7 +6827,7 @@ def selftest():
               "l_pins_all: a landing row missing from SRG is reported (%r)" % got)
 
         # l_ids
-        ids = ["g0", "g1", "g2", "g1.merged.fix", "g1.merged.if_ignored"]
+        ids = ["g0", "g1", "g2", "g1.merged.fix", "g1.merged.if_ignored", "fix.make-default"]
         ids += ["g2.%s.%s" % (v, part) for v in ("session", "self", "no-identity", "implement")
                 for part in ("not_done", "fix", "if_ignored")]
         # the pins table's ids (the landing, held commits and the run typed mid-run)
@@ -14047,6 +14077,59 @@ def selftest():
         check(len(shown) == 2 and shown[1].startswith("Specs preflight: could not switch back to %s (" % SPEC)
               and got.get("branch") == "main" and rev(r, SPEC) is None,
               "t_rerun_no_guess: no switch back makes the deleted branch again from origin's copy (%r)" % got)
+
+        # t_fix_no_local_default: a Fix line that switches to main, where no local main exists (specs-repo-git §5 part
+        # 3), makes it first: G2's plain block and G1's on a merged branch, each run as pasted with .git/config held
+        # locked, as a hardened container's read-only one fails a write, move the checkout whole onto main, exit 0. A
+        # bare `switch main` there takes git's --guess, whose upstream write fails after the index and the files moved:
+        # HEAD left where it was, exit 1. The end repeats G2's block with its Fix judged again, and with a local main
+        # the Fix is the plain switch.
+        def fix_of(block):
+            return next((row[len("Fix:"):].strip() for row in block.split("\n") if row.startswith("Fix:")), "")
+
+        def run_locked(r, line, env):
+            lock = os.path.join(r.path, ".git", "config.lock")
+            open(lock, "w").close()
+            try:
+                return shell(line, dict(env, GIT_EDITOR="printf 'NOISSUE notes\\n' >"))["_rc"]
+            finally:
+                os.remove(lock)
+
+        r, env = world(tmp, "t-fix-nld-g2")
+        r.git("switch", "-q", "-c", "feature/x")
+        r.write("feature.md", "f\n")
+        r.commit_all("NOISSUE feature")
+        r.git("branch", "-q", "-D", "main")
+        got = run_start(env, "/feedback")
+        fix = fix_of((got.get("print") or [""])[-1])
+        end = run_end(env, "/feedback")
+        end_fix = fix_of((end.get("print") or [""])[-1])
+        rc = run_locked(r, fix, env)
+        fnld_head = r.git("symbolic-ref", "-q", "--short", "HEAD", check=False)
+        fnld_status = r.git("status", "--porcelain", "--untracked-files=no")
+        check(got.get("guard") == "G2" and rc == 0 and fnld_head == "main" and fnld_status == ""
+              and rev(r, "main") == r.git("rev-parse", "origin/main") and end_fix == fix,
+              "t_fix_no_local_default (g2): the Fix, run with .git/config locked, moves the checkout whole onto main, "
+              "and the end repeats it (%r, rc %r, head %r, status %r, end %r)" % (fix, rc, fnld_head, fnld_status, end_fix))
+        r, env = world(tmp, "t-fix-nld-g2-local")
+        r.git("switch", "-q", "-c", "feature/x")
+        got = run_start(env, "/feedback")
+        check(fix_of((got.get("print") or [""])[-1]) == 'git -C "%s" switch main' % r.path,
+              "t_fix_no_local_default (g2, local main): the plain switch (%r)" % got)
+
+        r, env = world(tmp, "t-fix-nld-g1")
+        ff_merged(r, "t-fix-nld-g1-other", A, "specifications/PRD-A-1-x/prd.md")
+        r.git("branch", "-q", "-D", "main")
+        r.write("notes.md", "n\n")
+        got = run_start(env, "/feedback", "--key", "A-1")
+        fix = fix_of((got.get("print") or [""])[-1])
+        rc = run_locked(r, fix, env)
+        fnld_head = r.git("symbolic-ref", "-q", "--short", "HEAD", check=False)
+        fnld_status = r.git("status", "--porcelain", "--untracked-files=no")
+        check(got.get("guard") == "G1" and rc == 0 and fnld_head == "main" and fnld_status == ""
+              and r.git("log", "-1", "--format=%s") == "NOISSUE notes" and r.git("show", "HEAD:notes.md") == "n",
+              "t_fix_no_local_default (g1 merged): the Fix, run with .git/config locked, switches to main whole and "
+              "commits notes.md there (%r, rc %r, head %r, status %r)" % (fix, rc, fnld_head, fnld_status))
 
         # t_rerun_blocked: a run --rerun carries blocked into prints the re-run's own block and keeps G0's for end. G0's
         # date is one of the days dated() reads just before and just after the call that rendered it, never one fixed at
