@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.11.3] — 2026-11-12
+
+The scan's switch onto a branch only `origin` has no longer half-moves a checkout whose `.git/config` cannot be written. Needs nothing of the other plugins' releases.
+
+### Fixed
+
+- **`/security-workflows:scan`'s *Switch* onto a branch only `origin` has let git create it by implicit tracking.** It ran `git switch --track origin/<branch>`, whose upstream write, where `.git/config` cannot be written — a hardened container that mounts it read-only — comes after git has created the branch and moved the index and the working tree onto it, so the switch exited 1 with HEAD where it was, and the scan reported a refused switch over a staged reversal of HEAD's branch. It now makes the branch with `git switch --no-track -c <branch> origin/<branch>`, with no configuration write, then sets its upstream best-effort with `git branch --set-upstream-to=origin/<branch> <branch>`, whose failure moves nothing and stops nothing. The command page, which describes the switch without naming its git command, stays as it was.
+
 ## [0.11.2] — 2026-11-12
 
 `/security-workflows:scan` handles a Mythos session. Needs nothing of the other plugins' releases.
