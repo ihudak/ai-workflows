@@ -5,7 +5,7 @@ keyed by the CLAUDE_CODE_SESSION_ID environment variable (Claude Code sets it in
 the command. A different command typed in the middle of another run (specs-repo-git §3.5) is kept off the open
 run's record by its own file; the same command typed twice, by parking: the second run's start moves the first's
 record aside to <command>.<stamp>.json, the stamp its started with "-" and ":" removed (park), and each run names its
-own record by the started its start returned (find; end, declined, and start --rerun and --resume, by --started), so
+own record by any started its starts returned (find; end, declined, and start --rerun and --resume, by --started), so
 the two may end in either order, the second's end restoring the first's record (unpark), and the first's re-run
 saving its new record under a stamp of its own (stamped). save, load and remove take that path as at. Python standard library
 only; loaded by specs-git.py only for the subcommands that need it.
@@ -34,8 +34,12 @@ start's. midrun is null, or {command, started, branch}: the open run this one wa
 protects is true, save on a record a later run of the same command parked or restored, which no longer protects its
 branch -- while the later run stands, its own record protects it (§3.5). parked is true on a record park moved aside,
 and only there: unpark takes no other, so a record a declined call made at a derived path (find) is never taken for a
-parked one. A record an earlier version wrote lacks these five
-fields: load gives each its default. held_changed holds
+parked one. started_before lists the started of each earlier start of the run whose record a re-run, or a continuation
+--started named that started afresh, replaced, oldest first, so that find reaches the run's record by any stamp its
+starts returned; a record whose started another record of its command lists there is one a re-run cut off between its
+save and its removal of the file it re-ran from left behind: records() leaves it out, so no reader restores it, reads
+it as open or names it, and the next save or the removal of the record that lists it removes it. A record an earlier
+version wrote lacks these six fields: load gives each its default. held_changed holds
 the paths the held stage took out of their held entries as changed since they were held (specs-repo-git §3.2), which
 the flush reports for each it commits (§3.4); a record that lacks it reads as holding none. held_attempted holds the
 held entries (each held commit's id) the held stage has tried in this start and reported held again or stuck, which a
@@ -95,6 +99,7 @@ FIELDS = {
     "midrun": None,  # {command, started, branch}: the open run this one was typed under
     "protects": True,  # false on a record a later run of the same command parked or restored
     "parked": False,  # true on a record park moved aside for a later run of the same command
+    "started_before": [],  # the started of each earlier start of the run whose record a later start of it replaced
     "branch": None,  # the branch HEAD stands on when a start call returns
     "advised_D": [],
     "reported": [],  # start's once-a-run reports printed: "<template id>[ <branch>]"
@@ -178,17 +183,20 @@ def _read(target):
         if isinstance(old, dict) and old.get("branch") and rec.get("stay") is None:
             rec["stay"] = {"branch": old["branch"], "kind": "merged", "reason": old.get("reason"), "merged": True,
                            "command": None}
-    for key in ("stay", "start_dirty", "midrun", "protects", "parked"):  # the fields an earlier version's record lacks
+    for key in ("stay", "start_dirty", "midrun", "protects", "parked", "started_before"):  # an earlier version lacks them
         rec.setdefault(key, copy.deepcopy(FIELDS[key]))
     return rec
 
 
 def save(session, command, rec, at=None):
     """<rec> written as the record of <session> and <command> -- at <at>, the record file to write in place of
-    <command>.json, where given -- its updated stamp set to now."""
+    <command>.json, where given -- its updated stamp set to now; then each file it left behind removed
+    (_remove_left_behind)."""
     _check_keys(rec)
     rec["updated"] = _now()
-    _write(at or path(session, command), rec)
+    target = at or path(session, command)
+    _write(target, rec)
+    _remove_left_behind(session, command, rec, target)
 
 
 def _write(target, rec):
@@ -236,18 +244,56 @@ def remove(session, command, at=None):
     <command>.json, where given -- and the session's directory with it where that leaves it empty. False where none
     stood there."""
     target = at or path(session, command)
+    rec = _read(target)
     try:
         os.unlink(target)
     except FileNotFoundError:
         return False
+    if rec is not None:
+        _remove_left_behind(session, command, rec, target)
     _rmdir_if_empty(os.path.dirname(target))
     return True
+
+
+def earlier(rec):
+    """The stamps <rec> lists in started_before: the started of each earlier start of its run whose record a later
+    start of it replaced (specs-repo-git §7)."""
+    got = rec.get("started_before") if isinstance(rec, dict) else None
+    return [s for s in got if isinstance(s, str) and s] if isinstance(got, list) else []
+
+
+def _remove_left_behind(session, command, rec, keep):
+    """Each file of <command> but <keep> whose record's started <rec> lists in started_before removed: a file a re-run
+    cut off between its save and its removal of the file it re-ran from left behind (specs-repo-git §3.5). Best
+    effort: one another call removes first is passed over."""
+    stamps = set(earlier(rec))
+    if not stamps:
+        return
+    for full, other in _scan(session):
+        if full != keep and _name_of(full) == command.lstrip("/") and other.get("started") in stamps:
+            try:
+                os.unlink(full)
+            except OSError:
+                pass
 
 
 def records(session):
     """(path, record) for every record in the session's directory -- <name>.json and <name>.<stamp>.json alike, parked
     ones and those at a derived path included -- oldest started first; a temporary file (.tmp-*), a file of another
-    name, one that cannot be read and one another version wrote are left out."""
+    name, one that cannot be read and one another version wrote are left out, and so is a record another record of its
+    command lists in started_before: a file a re-run cut off before removing it left behind (_remove_left_behind), which
+    no reader restores, reads as an open run or names (others, mine, unpark, find)."""
+    found = _scan(session)
+    listed = {}
+    for full, rec in found:
+        for stamp in earlier(rec):
+            listed.setdefault((_name_of(full), stamp), set()).add(full)
+    return [(full, rec) for full, rec in found
+            if not listed.get((_name_of(full), rec.get("started")), set()) - {full}]
+
+
+def _scan(session):
+    """records() before it leaves out the files re-runs left behind."""
     if not SESSION_RE.fullmatch(session):
         raise ValueError("not a session id: %r" % session)
     directory = os.path.join(root(), session)
@@ -338,22 +384,28 @@ def unpark(session, command, keep):
 
 
 def find(session, command, started):
-    """The record of <command>'s run that <started> names (specs-repo-git §7's end --started): (path, record) --
-    <command>.json where its started is <started>; else <name>.<stamp>.json, the stamp derived from <started> as park
-    derives it, or the first of its -2, -3 whose started is <started>; else that derived path by name, with its record,
-    or with None where no file stands there. Never <command>.json for another run."""
+    """The record of <command>'s run that <started> names (specs-repo-git §7's end --started), by any stamp that run's
+    starts returned: (path, record) -- of <command>'s own records (mine: <command>.json, parked ones and those at a
+    derived path, never one a re-run left behind), one whose started is <started> or whose started_before lists it, the
+    newest started where several are; on a tie <command>.json, then <name>.<stamp>.json, the stamp derived from
+    <started> as park derives it, then its -2, -3; else that derived path by name, with its record, or with None where
+    no file stands there. Never <command>.json for another run: only a re-run of the run <started> names lists it."""
     main = path(session, command)
-    rec = _read(main)
-    if rec is not None and rec.get("started") == started:
-        return main, rec
     derived = _parked_path(session, command, started, taken=False)
-    base, n = derived[:-len(".json")], 2
-    candidate = derived
-    while os.path.lexists(candidate):
-        rec = _read(candidate)
-        if rec is not None and rec.get("started") == started:
-            return candidate, rec
-        candidate, n = "%s-%d.json" % (base, n), n + 1
+    base = derived[:-len(".json")]
+
+    def rank(full):
+        if full == main:
+            return 0
+        if full == derived:
+            return 1
+        m = re.fullmatch(re.escape(base) + r"-([0-9]+)\.json", full)
+        return int(m.group(1)) if m else 1 << 30
+
+    hits = [(full, rec) for full, rec in mine(session, command)
+            if rec.get("started") == started or started in earlier(rec)]
+    if hits:
+        return max(hits, key=lambda pr: (str(pr[1].get("started") or ""), -rank(pr[0])))
     return derived, _read(derived)
 
 

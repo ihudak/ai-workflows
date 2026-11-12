@@ -3406,8 +3406,9 @@ def _carry(rec, old):
     or the merged-branch leave reported (which §3.4's loop skips for the whole run), the branch B4 left, the declined
     paths, the session branch's creation by a call other than the flush, which the run carries to its end (§8.2), and
     the run's snapshot (§7), since a re-run takes none of its own and _close only narrows the one it carries, and the
-    open run the earlier start was typed under (midrun), which start then tests again (specs-repo-git §3.5). Never
-    the stay: each preflight derives its own (§4 step 1), so a stay's reason is always one this preflight met -- an
+    open run the earlier start was typed under (midrun), which start then tests again (specs-repo-git §3.5), and the
+    run's earlier stamps (started_before, _earlier_stamps), so that any stamp its starts returned names the new record
+    (state.find). Never the stay: each preflight derives its own (§4 step 1), so a stay's reason is always one this preflight met -- an
     early stop asks branch-merged afresh (_stop_stay) -- and none survives where this one would no longer leave the
     branch or has left it."""
     if rec["specs_git"] is None and old.get("specs_git"):
@@ -3422,7 +3423,18 @@ def _carry(rec, old):
                b2_left=old.get("b2_left"), b4_left=old.get("b4_left"), declined=list(old.get("declined") or []),
                session_branch_created=old.get("session_branch_created"),
                start_dirty=dict(snap) if isinstance(snap, dict) else None,
-               midrun=dict(old["midrun"]) if isinstance(old.get("midrun"), dict) else None)
+               midrun=dict(old["midrun"]) if isinstance(old.get("midrun"), dict) else None,
+               started_before=_earlier_stamps(old))
+
+
+def _earlier_stamps(old):
+    """The started_before of a record that replaces <old>, a record of the same run (specs-repo-git §7): <old>'s own,
+    then <old>'s started -- each stamp once, oldest first."""
+    out = []
+    for stamp in _load_module("specs_git_state").earlier(old) + [old.get("started")]:
+        if isinstance(stamp, str) and stamp and stamp not in out:
+            out.append(stamp)
+    return out
 
 
 def _queued_next(run, rec):
@@ -3520,10 +3532,13 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
     own (dropped, or a session id changed since), when it reads them as a first start does, taking no snapshot as no
     re-run does: its first start's reading is lost, and the reading now only protects more -- and saves this call's
     arguments,
-    its key set among them. <started>, with <rerun> or <resume> alone (--started, the run's last start JSON's): the
-    record is the one state.find names; where that is not <command>.json -- a parked run's -- a fresh call saves its
-    record under a stamp of its own (state.stamped), parked and protects as that record was, and removes the file it
-    replaced, <command>.json untouched; a resume goes on with it in place; and every next carries --started. A plain
+    its key set among them. <started>, with <rerun> or <resume> alone (--started, any stamp the run's starts
+    returned): the record is the one state.find names, by its started or its started_before; where that is not
+    <command>.json -- a parked run's -- a fresh call saves its record under a stamp of its own (state.stamped), parked
+    and protects as that record was, and removes the file it replaced, <command>.json untouched; a fresh call keeps the
+    record's stamps in started_before (_carry on a re-run; a resume started afresh likewise), so the run's earlier stamps
+    still name the new record, as a re-run the harness stopped before its JSON needs; a resume goes on with it in
+    place; and every next carries --started. A plain
     start parks this command's own open record; a resume never does, even one that runs fresh, the record being its
     own run's. A stage that hands a replay over, and a unit of
     capped calls <budget> would not hold, return next: the replay, or start --resume with the record's args. In
@@ -3561,6 +3576,8 @@ def start(specs, command, keys=(), commit_key=None, register_rebuild=None, rerun
             _carry(rec, old)
         elif old is not None and at == main:
             replaced = {"command": command, "started": old.get("started"), "parked": False}
+        if resume and not rerun and started is not None and old is not None:  # the run's own record, started afresh
+            rec["started_before"] = _earlier_stamps(old)
         # §3.5, read before the first save: on a run's first start, the open run this one is typed under -- the oldest
         # record of another command that the open-run test passes on HEAD's branch, which a parked one, marked
         # protects: false, never does; on a re-run, the one its first start found (_carry), tested again as end tests
@@ -6551,6 +6568,76 @@ def selftest():
                 check(raises(ValueError, state.find, "s8", "/specify", "yesterday"), "s_find: a bad stamp is a ValueError")
 
             case("s_find", s_find)
+
+            # s_find_before: any stamp a run's starts returned names its record -- its started, or one its
+            # started_before lists -- the newest started where two list it; never another run's <name>.json
+            def s_find_before():
+                env()
+                sdir = os.path.dirname(state.path("s9", "/specify"))
+
+                def put(started, before, name=None, **f):
+                    rec = state.new("/specify", session="s9", started_before=list(before), **f)
+                    rec["started"] = started
+                    at = None if name is None else os.path.join(sdir, name)
+                    state.save("s9", "/specify", rec, at=at)
+                    return at or state.path("s9", "/specify"), rec
+
+                main = put("2026-11-10T12:00:00Z", ["2026-11-10T11:00:00Z"])
+                n1 = put("2026-11-10T10:30:00Z", ["2026-11-10T10:00:00Z"], "specify.20261110T103000Z.json", parked=True)
+                n2 = put("2026-11-10T10:40:00Z", ["2026-11-10T10:00:00Z"], "specify.20261110T104000Z.json", parked=True)
+                got = [state.find("s9", "/specify", s) for s in ("2026-11-10T11:00:00Z", "2026-11-10T12:00:00Z",
+                                                                 "2026-11-10T10:00:00Z", "2026-11-10T10:30:00Z")]
+                check(got == [main, main, n2, n1],
+                      "s_find_before: <name>.json by a stamp its started_before lists, the newest of two listing one, "
+                      "a parked one by its started (%r)" % ([g[0] for g in got],))
+                put("2026-11-10T13:00:00Z", [])  # another run's <name>.json, listing no stamp
+                got = state.find("s9", "/specify", "2026-11-10T11:00:00Z")
+                check(got == (os.path.join(sdir, "specify.20261110T110000Z.json"), None),
+                      "s_find_before: another run's <name>.json is never named (%r)" % (got,))
+
+            case("s_find_before", s_find_before)
+
+            # s_left_behind: a re-run cut off between its save and its removal of the parked file it re-ran from leaves
+            # that file behind; no reader lists it -- mine, others, unpark, find -- and the save or the removal of the
+            # record that lists its started removes it
+            def s_left_behind():
+                env()
+                sdir = os.path.dirname(state.path("s10", "/specify"))
+                x, y = "2026-11-10T10:00:00Z", "2026-11-10T10:05:00Z"
+                p_path = os.path.join(sdir, "specify.20261110T100000Z.json")
+                n_path = os.path.join(sdir, "specify.20261110T100500Z.json")
+
+                def lay():  # both files as the cut-off leaves them, written with no save's clean-up
+                    p = state.new("/specify", session="s10", parked=True, protects=False)
+                    n = state.new("/specify", session="s10", parked=True, protects=False, started_before=[x])
+                    state._write(p_path, dict(p, started=x, updated=x))
+                    state._write(n_path, dict(n, started=y, updated=y))
+                    return dict(n, started=y)
+
+                lay()
+                mine = [os.path.basename(f) for f, _rec in state.mine("s10", "/specify")]
+                others = [rec["started"] for rec in state.others("s10", "/feedback")]
+                check(mine == ["specify.20261110T100500Z.json"] and others == [y]
+                      and state.find("s10", "/specify", x)[0] == n_path,
+                      "s_left_behind: the file left behind is listed by neither mine nor others, and its stamp names "
+                      "the re-run's record (%r, %r)" % (mine, others))
+                first = state.unpark("s10", "/specify", lambda rec: True)
+                second = state.unpark("s10", "/specify", lambda rec: True)
+                check(first == "restored" and (state.load("s10", "/specify") or {}).get("started") == y
+                      and second is None and os.path.exists(p_path),
+                      "s_left_behind: unpark restores the re-run's record, never the file it left behind (%r, %r)"
+                      % (first, second))
+                state.remove("s10", "/specify")
+                check(not os.path.exists(p_path) and not os.path.exists(state.path("s10", "/specify")),
+                      "s_left_behind: removing the record that lists it removes the file left behind (%r)"
+                      % (os.listdir(sdir) if os.path.isdir(sdir) else None))
+                n = lay()
+                state.save("s10", "/specify", n, at=n_path)
+                check(not os.path.exists(p_path) and os.path.exists(n_path),
+                      "s_left_behind: the next save of the record that lists it removes the file left behind")
+                state.remove("s10", "/specify", at=n_path)
+
+            case("s_left_behind", s_left_behind)
 
             # s_lazy_import
             lone = os.path.join(tmp, "lazy")
@@ -16092,6 +16179,125 @@ def selftest():
                   "t_park_rerun: its end ends on its own record, the second run's untouched (%r)" % e)
 
         case("t_park_rerun", t_park_rerun)
+
+        # A re-run the harness stops before its JSON: the run knows only the stamp of the start before it, which the
+        # re-run's record keeps in started_before, so the start --resume --started <that stamp> the skill makes goes on
+        # with the re-run's record -- no fresh record beside it; for a parked run's re-run, the second run's
+        # <command>.json byte for byte as it was
+        RERUN_KEYS = ("--key", "ACME-1", "--key", "B-2")
+
+        def rec_of(env, command, name=None):
+            path = file_of(env, command, name)
+            return json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
+
+        def names_of(env, command):
+            sdir = os.path.dirname(file_of(env, command))
+            prefix = command.lstrip("/")
+            return sorted(n for n in os.listdir(sdir) if n.startswith(prefix + ".")) if os.path.isdir(sdir) else []
+
+        def t_rerun_stopped():
+            r, env = mworld("t-rerun-stopped")
+            start_(env, "/document", "--key", "ACME-1")
+            a = backdate(env, "/document", 240)
+            ahead(r, "t-rerun-stopped-other")  # a catch-up for the re-run's flush: a second unit, past --budget 0
+            stopped = start_(env, "/document", *RERUN_KEYS, "--rerun", "--started", a, "--budget", "0")
+            saved = rec_of(env, "/document")  # what the harness's stop leaves: the re-run's record, its JSON unseen
+            calls = follow(start_(env, "/document", *RERUN_KEYS, "--resume", "--started", a), env)
+            done = rec_of(env, "/document")
+            check((stopped.get("next") or {}).get("run") and saved.get("stage") in START_STAGES
+                  and saved.get("started") not in (None, a) and saved.get("started_before") == [a]
+                  and calls[0].get("started") == saved.get("started") and calls[-1].get("error") is None
+                  and done.get("stage") == "done" and done.get("started") == saved.get("started")
+                  and names_of(env, "/document") == ["document.json"],
+                  "t_rerun_stopped: start --resume --started <the earlier stamp> goes on with the re-run's record, "
+                  "<command>.json the one record (%r, %r)" % (names_of(env, "/document"),
+                                                              [(c.get("started"), c.get("error")) for c in calls]))
+
+        case("t_rerun_stopped", t_rerun_stopped)
+
+        def t_rerun_stopped_parked():
+            r, env = mworld("t-rerun-stopped-parked")
+            start_(env, "/document", "--key", "ACME-1")
+            a = backdate(env, "/document", 240)
+            start_(env, "/document", "--key", "ACME-1")
+            backdate(env, "/document", 120)
+            b_raw = raw(env, "/document")
+            ahead(r, "t-rerun-stopped-parked-other")
+            stopped = start_(env, "/document", *RERUN_KEYS, "--rerun", "--started", a, "--budget", "0")
+            after_stop = names_of(env, "/document")
+            calls = follow(start_(env, "/document", *RERUN_KEYS, "--resume", "--started", a), env)
+            new = calls[0].get("started") or a
+            nrec = rec_of(env, "/document", "document.%s.json" % stamp_of(new))
+            check((stopped.get("next") or {}).get("run") and new != a and raw(env, "/document") == b_raw
+                  and after_stop == names_of(env, "/document") == sorted(["document.json", "document.%s.json" % stamp_of(new)])
+                  and calls[-1].get("error") is None and nrec.get("stage") == "done"
+                  and nrec.get("started_before") == [a] and nrec.get("parked") is True,
+                  "t_rerun_stopped_parked: the parked run's re-run goes on from the earlier stamp on its own record, "
+                  "the second run's <command>.json byte for byte (%r, %r)"
+                  % (after_stop, [(c.get("started"), c.get("error")) for c in calls]))
+
+        case("t_rerun_stopped_parked", t_rerun_stopped_parked)
+
+        # The cut-off: the parked run's re-run saved its new record and was stopped before removing the file it re-ran
+        # from. That stamp names the new record; the file left behind is listed to no open-run test and restored by
+        # no end; the end that removes the record listing it removes it too
+        def t_rerun_cut_off():
+            r, env = mworld("t-rerun-cut-off")
+            start_(env, "/document", "--key", "ACME-1")
+            a = backdate(env, "/document", 240)
+            start_(env, "/document", "--key", "ACME-1")
+            b = backdate(env, "/document", 120)
+            old_name = "document.%s.json" % stamp_of(a)
+            old_raw = raw(env, "/document", old_name)
+            calls = follow(start_(env, "/document", *RERUN_KEYS, "--rerun", "--started", a), env)
+            new = calls[0].get("started") or a
+            with open(file_of(env, "/document", old_name), "wb") as fh:  # the old file, as the cut-off leaves it
+                fh.write(old_raw or b"")
+            with in_env(env):
+                session = env["CLAUDE_CODE_SESSION_ID"]
+                found = state.find(session, "/document", a)[0]
+                listed = [rec.get("started") for rec in state.others(session, "/feedback")]
+            r.write(FB, "fb\n")
+            e_b = run_end(env, "/document", "--started", b)
+            restored = rec_of(env, "/document")
+            e_a = run_end(env, "/document", "--started", a)
+            check(old_raw is not None and new != a
+                  and found == file_of(env, "/document", "document.%s.json" % stamp_of(new)) and a not in listed
+                  and e_b.get("error") is None and restored.get("started") == new
+                  and e_a.get("record") == "found" and e_a.get("error") is None and names_of(env, "/document") == [],
+                  "t_rerun_cut_off: the earlier stamp names the re-run's record, the file left behind is never listed, "
+                  "restored or left after the end (%r, %r, %r)" % (listed, restored.get("started"), names_of(env, "/document")))
+
+        case("t_rerun_cut_off", t_rerun_cut_off)
+
+        # The old stamp at the end: after a completed re-run, the stamp of the start before it still names the run's
+        # record -- for declined and for end -- and so does it after a start --resume --started that starts afresh
+        def t_rerun_old_stamp_end():
+            r, env = mworld("t-rerun-old-stamp")
+            start_(env, "/document", "--key", "ACME-1")
+            a = backdate(env, "/document", 240)
+            calls = follow(start_(env, "/document", *RERUN_KEYS, "--rerun", "--started", a), env)
+            d = declined_(env, "/document", "--started", a, "--path", "notes.md")
+            rec = rec_of(env, "/document")
+            r.write(FB, "fb\n")
+            e = run_end(env, "/document", "--started", a)
+            check(calls[-1].get("started") not in (None, a) and d.get("record") == "found"
+                  and rec.get("declined") == ["notes.md"] and e.get("record") == "found" and e.get("error") is None
+                  and names_of(env, "/document") == [],
+                  "t_rerun_old_stamp_end: declined and end by the earlier stamp reach the re-run's record (%r, %r, %r)"
+                  % (d, e.get("record"), names_of(env, "/document")))
+            r2, env2 = mworld("t-resume-fresh-old-stamp")
+            start_(env2, "/document", "--key", "ACME-1")
+            a2 = backdate(env2, "/document", 240)
+            fresh = start_(env2, "/document", "--key", "ACME-1", "--resume", "--started", a2)  # at done: it starts afresh
+            r2.write(FB, "fb\n")
+            e2 = run_end(env2, "/document", "--started", a2)
+            check(fresh.get("started") not in (None, a2) and e2.get("record") == "found" and e2.get("error") is None
+                  and names_of(env2, "/document") == [],
+                  "t_rerun_old_stamp_end: after a start --resume --started that starts afresh, the earlier stamp still "
+                  "names the run's record (%r, %r)" % (fresh.get("started"), e2.get("record")))
+
+        case("t_rerun_old_stamp_end", t_rerun_old_stamp_end)
 
         # N2: every start-side next repeats --started -- the flush's replay and the resume after it, the held stage's
         # replay of <default>, and the settle loop's queued replay -- so a parked run's re-run never touches the second
