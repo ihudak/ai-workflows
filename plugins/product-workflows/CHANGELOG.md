@@ -7,11 +7,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.79.2] — 2026-11-12
 
-One page. Update with `workflows-core` 1.83.1.
+Two pages. Update with `workflows-core` 1.83.1.
 
 ### Fixed
 
-- **The model-routing page did not say what "Opus-tier" means** for the HARD gates in `/create-ard`, `/prd-proposal`, `/brd-proposal` and `/promote-decisions`. It now says Opus, Fable or Mythos, the test `workflows-core` 1.83.1 defines.
+- **The model-routing page did not say what "Opus-tier" means** for the HARD gates in `/create-ard`, `/prd-proposal`, `/brd-proposal` and `/promote-decisions`. It now says Opus, Fable or Mythos, the test `workflows-core` 1.83.1 defines, and "unless no Opus model is reachable" where it meant the Opus fallback chain. The `/promote-decisions` page's "a non-Opus session" says the same.
 
 ## [3.79.1] — 2026-11-10
 
