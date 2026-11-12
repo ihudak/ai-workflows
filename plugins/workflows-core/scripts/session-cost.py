@@ -618,11 +618,15 @@ def model_rates(model, prices):
     table = prices.get("models") if isinstance(prices.get("models"), dict) else {}
     rates = table.get(model)
     if not isinstance(rates, dict):
-        # Exact miss -> longest table key that is a prefix of the model id
-        # (so undated key "claude-sonnet-5" prices "claude-sonnet-5-20250930").
+        # Exact miss -> longest table key that is a prefix of the model id and is not
+        # followed by a digit there (so undated key "claude-sonnet-5" prices
+        # "claude-sonnet-5-20250930"). The digit test keeps a key ending in a version
+        # digit from taking a dated id of a shorter key: "claude-fable-5-2" is a raw
+        # prefix of "claude-fable-5-20260115", which is Fable 5's, not Fable 5.2's.
         best = None
         for k, v in table.items():
-            if isinstance(v, dict) and isinstance(model, str) and model.startswith(k):
+            if (isinstance(v, dict) and isinstance(model, str) and model.startswith(k)
+                    and not model[len(k):len(k) + 1].isdigit()):
                 if best is None or len(k) > len(best):
                     best = k
         rates = table.get(best) if best is not None else None
@@ -968,7 +972,8 @@ def _selftest_body(tmp):
     _shipped = load_prices(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                         "..", "references", "cost-prices.yaml"))
     for _mid, _want in (("claude-opus-5-5", 4.2), ("claude-opus-5", 5.5),
-                        ("claude-fable-5-1", 10.25), ("claude-fable-5", 11.0),
+                        ("claude-fable-5-2", 8.2), ("claude-fable-5-1", 10.25),
+                        ("claude-fable-5", 11.0),
                         ("claude-sonnet-5-5", 2.1), ("claude-sonnet-5", 2.2)):
         _got = price_model(_mid, _tk, _shipped)
         check(_got[1] is None and _got[0] is not None and abs(_got[0] - _want) < 1e-9,
@@ -1041,7 +1046,8 @@ def _selftest_body(tmp):
           "a standard row carries no modifiers field")
     # ...and the SHIPPED table carries the blocks the engine needs.
     for _mid, _want in (("claude-opus-5-5", 8.4), ("claude-opus-5", 11.0),
-                        ("claude-opus-4-8", 11.0)):
+                        ("claude-opus-4-8", 11.0), ("claude-fable-5-2", 16.4),
+                        ("claude-mythos-5-2", 16.4)):
         check(_cost(_mid, _shipped, _use("fast"))[0] == (_want, None),
               "shipped cost-prices.yaml prices %s in fast mode (1M in + 1M cache read = $%s)"
               % (_mid, _want))
@@ -1080,11 +1086,38 @@ def _selftest_body(tmp):
     check(_cost(_hk, {"models": {_hk: {"input": 1, "long_context": {"input": 5}}}},
                 _use(inp=200_000, cr=0))[0] == (None, "unpriced-long-context"),
           "a long_context block with no `above` is unpriced, never guessed")
-    for _mid in ("claude-opus-4-7", "claude-sonnet-5-5"):
+    for _mid in ("claude-opus-4-7", "claude-sonnet-5-5", "claude-fable-5-1",
+                 "claude-mythos-5-1"):
         check(_cost(_mid, _shipped, _use("fast"))[0] == (None, "unpriced-speed:fast"),
               "shipped cost-prices.yaml gives %s no fast block (fast mode does not exist there)"
               % _mid)
-    for _mid, _want in (("claude-mythos-5-1", 10.25), ("claude-mythos-5", 11.0)):
+    # A key ending in a version digit must not take a dated id of a shorter key:
+    # `claude-fable-5-2` is a raw prefix of `claude-fable-5-20260115`, a dated Fable 5 id.
+    for _mid in ("claude-fable-5-20260115", "claude-mythos-5-20260115"):
+        check(price_model(_mid, _tk, _shipped) == (11.0, None),
+              "%s prices at its 5 key, not the 5.2 key that is a raw prefix of it" % _mid)
+    for _mid, _want in (("claude-fable-5-2-20261101", 8.2), ("claude-opus-5-5[1m]", 4.2),
+                        ("claude-sonnet-5-20250930", 2.2)):
+        check(price_model(_mid, _tk, _shipped) == (_want, None),
+              "%s still prices at its own base key ($%s)" % (_mid, _want))
+    # Every rate class of the 5.2 keys, standard and fast, at a DISTINCT count per class
+    # (1M input, 2M output, 3M cache read, 4M 5m write, 5M 1h write), so two transposed
+    # rates change the total too, not only a changed one.
+    for _mid in ("claude-fable-5-2", "claude-mythos-5-2"):
+        for _speed, _want in ((None, 208.6), ("fast", 417.2)):
+            _u = {"input_tokens": 1_000_000, "output_tokens": 2_000_000,
+                  "cache_read_input_tokens": 3_000_000,
+                  "cache_creation_input_tokens": 9_000_000,
+                  "cache_creation": {"ephemeral_5m_input_tokens": 4_000_000,
+                                     "ephemeral_1h_input_tokens": 5_000_000}}
+            if _speed:
+                _u["speed"] = _speed
+            _got = _cost(_mid, _shipped, _u)[0]
+            check(_got[1] is None and abs(_got[0] - _want) < 1e-9,
+                  "shipped cost-prices.yaml prices every rate class of %s%s ($%s)"
+                  % (_mid, " in fast mode" if _speed else "", _want))
+    for _mid, _want in (("claude-mythos-5-2", 8.2), ("claude-mythos-5-1", 10.25),
+                        ("claude-mythos-5", 11.0)):
         _got = price_model(_mid, _tk, _shipped)
         check(_got[1] is None and _got[0] is not None and abs(_got[0] - _want) < 1e-9,
               "shipped cost-prices.yaml keys %s at its own rates (1M in + 1M cache read = $%s)"
