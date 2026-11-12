@@ -13,7 +13,7 @@ Claude Fable 5.2 and Claude Mythos 5.2 are priced. Update with `dev-workflows` 4
 
 - **`cost-prices.yaml` keys `claude-fable-5-2` and `claude-mythos-5-2`**, from the pricing page on 2026-11-12. Both are $8 / $40 per MTok, with 5-minute cache writes at $10, 1-hour cache writes at $16 and cache reads at $0.20 (0.025x input, as on 5.1). Each key sits above its 5.1 key, newest first. Without the keys, longest-prefix fallback priced both at their 5 key's rates: cache reads 5x high and every other rate 1.25x high.
 - **Fast mode on 5.2 is priced.** Each key carries a `fast:` block at $16 / $80, with the cache multipliers applied to the fast input price (cache reads $0.40). Fable and Mythos 5.1 have no fast mode, so a fast turn on them is still `unpriced-speed:fast`.
-- **`session-cost.py --selftest` pins the shipped keys.** It prices every rate class of both 5.2 ids, at standard and at fast rates, checks that Fable 5.1 and Mythos 5.1 carry no fast block, and pins the prefix rule below. Dropping either 5.2 key, or changing any of its rates, fails the self-test.
+- **`session-cost.py --selftest` pins the shipped keys.** It prices every rate class of both 5.2 ids, at standard and at fast rates, with a different token count in each class, checks that Fable 5.1 and Mythos 5.1 carry no fast block, and pins the prefix rule below. Dropping either 5.2 key, or changing any of its rates, fails the self-test.
 
 ### Fixed
 

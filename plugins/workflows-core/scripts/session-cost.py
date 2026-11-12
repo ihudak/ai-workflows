@@ -1100,14 +1100,16 @@ def _selftest_body(tmp):
                         ("claude-sonnet-5-20250930", 2.2)):
         check(price_model(_mid, _tk, _shipped) == (_want, None),
               "%s still prices at its own base key ($%s)" % (_mid, _want))
-    # Every rate class of the 5.2 keys, standard and fast: 1M tokens in each of the five.
+    # Every rate class of the 5.2 keys, standard and fast, at a DISTINCT count per class
+    # (1M input, 2M output, 3M cache read, 4M 5m write, 5M 1h write), so two transposed
+    # rates change the total too, not only a changed one.
     for _mid in ("claude-fable-5-2", "claude-mythos-5-2"):
-        for _speed, _want in ((None, 74.2), ("fast", 148.4)):
-            _u = {"input_tokens": 1_000_000, "output_tokens": 1_000_000,
-                  "cache_read_input_tokens": 1_000_000,
-                  "cache_creation_input_tokens": 2_000_000,
-                  "cache_creation": {"ephemeral_5m_input_tokens": 1_000_000,
-                                     "ephemeral_1h_input_tokens": 1_000_000}}
+        for _speed, _want in ((None, 208.6), ("fast", 417.2)):
+            _u = {"input_tokens": 1_000_000, "output_tokens": 2_000_000,
+                  "cache_read_input_tokens": 3_000_000,
+                  "cache_creation_input_tokens": 9_000_000,
+                  "cache_creation": {"ephemeral_5m_input_tokens": 4_000_000,
+                                     "ephemeral_1h_input_tokens": 5_000_000}}
             if _speed:
                 _u["speed"] = _speed
             _got = _cost(_mid, _shipped, _u)[0]
