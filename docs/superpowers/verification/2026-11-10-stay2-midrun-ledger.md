@@ -5,7 +5,7 @@ This is the ledger of branch `fix/stay2-midrun`, cut from `main` at `38aec858` (
 - The verification record is `2026-11-10-stay2-midrun.md` beside this file.
 
 The branch was run with `superpowers:subagent-driven-development`. That skill keeps its ledger in a git-ignored scratch directory and deletes the directory when the branch finishes, so the ledger is copied here.
-- **Copied as it stood just before the branch was pushed — 436 lines, md5 `03efb03caeb74a6cef693b0754d03a1c` before masking — except for one change:** each subagent's internal id is replaced with `<agent>` (every `a` followed by 7 to 17 hex digits that names no commit of this repository). The ledger goes on after that copy; its final form replaces this one before the branch is pushed.
+- **Copied as it stood just before the branch was pushed — 437 lines, md5 `b8030c199d8694a4447d18dd94b035c1` before masking — except for one change:** each subagent's internal id is replaced with `<agent>` (every `a` followed by 7 to 17 hex digits that names no commit of this repository). Its last lines, the push and the pull request, come after this copy.
 - **The rulings summary** is in `2026-11-10-stay2-midrun-rulings.md` beside this file.
 - **It is in a text block** so that its bare placeholders, such as `<default>` and `<command>.json`, survive Markdown rendering.
 
@@ -448,4 +448,5 @@ Task 11: fix round 1 607669f5 (sweep counts on clean trees, gap paragraph, own_c
 Task 11: scoped re-review dispatched (opus, the same reviewer) on 443ab664..607669f5 → task-11-rereview-1.md
 Task 11: re-review 1 — all 3 Important, 4 Minor and the check-13 note ADDRESSED; no new breakage; three optional nits (sites.py comment "23 rows" vs 21 rows/23 entries; the Trees loop does not unpack d9aa2ae7; line 5 "copied when this record was written") and check 19's scope worded wider than it is (it skips git-ignored files and CHANGELOG.md). task-11-rereview-1.md.
 Task 11: complete (head 607669f5). Controller applied the reviewer's three nits and the check-19 wording verbatim to the reviewer's fixes, and re-copied this ledger, masked, in one closing commit; then the full gate chain, push and PR.
+Correction to the line above: the reviewer's three nits and the check-19 scope were applied as true wordings of their own, not verbatim — the sites.py comment reads "23 entries for the table's 21 rows" and check 19's sentence names what it skips (git-ignored files, CHANGELOG.md), as scripts/check-docs.sh :2320–:2350 has it; the closing review (closing-review.md) confirmed both wordings true. Closing gates on 2aa19f47: scratch-keep/closing/gates-1.txt EXIT=0. The ledger copy's header drops "its final form replaces this one before the branch is pushed".
 ```
