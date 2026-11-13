@@ -49,7 +49,7 @@ The orchestrator stops writing code. For each step of the approved plan, it disp
 - **No change to `test-writer`, `code-review`, `risk-planner`, `test-baseliner` or the maintenance agents.** Their models and briefs stay as they are, save where the run-state file changes what they are handed.
 - **No per-step review.** The Opus `code-review` gate still judges the whole change once, as now. SIMPLE runs still have no Opus review gate.
 - **No change to `/vuln`'s or `/upgrade`'s routing,** nor to the classification's §3.1 for any command but `/implement`.
-- **No resuming of a crashed or abandoned run** from the run-state file. The file is read only inside the run that wrote it. Using it to resume is a possible later feature, and is out of scope.
+- **No resuming of a crashed or abandoned run** from the run-state file. The file is read only inside the run that wrote it. Using it to resume is a possible later feature, and is out of scope. *Later built as IMP-G5:* `docs/superpowers/specs/2026-11-12-imp-g5-implement-resume-design.md`, where a later `/implement` in the same worktree resumes a stopped run from that file.
 - **No change to `/vuln` or `/upgrade`.** Their fixers already code in subagents.
 - **No parallel coding.** Steps are coded one after another, because they edit one working tree.
 

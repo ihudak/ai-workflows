@@ -57,8 +57,10 @@ in another container — with `$SPECS_PATH` and `$REPOS_PATH` pointing elsewhere
 loader on another install. Unchecked, such a run goes on to branch, write and commit in a
 repository it never resolved. §7 checks every run against the line its preflight printed, asking
 nothing; this section checks a run that keeps a session file against that file, and asks. It is cited by every
-command that keeps a session file it resumes from: `/design` (`_design-session.md`) and `/specify`
-(`_session.md`).
+command that keeps a session file it resumes from: `/design` (`_design-session.md`), `/specify`
+(`_session.md`) and `/implement`, whose session file here is its run-state file,
+`$(git rev-parse --git-path dev-workflows/implement-run.json)` in the code repository, which a later
+`/implement` in the same worktree resumes from (**`/implement`'s record**, under **Record**).
 
 **Record.** Whatever step first writes the session file — a fresh run's first write, in whichever
 phase its command makes it, or the file a *Start fresh* answer begins again — opens it, after its
@@ -67,8 +69,8 @@ title, with:
 ```markdown
 ## Run environment
 
-- specs_path: <realpath -- "$SPECS_PATH">
-- specs_origin: <git -C "$SPECS_PATH" remote get-url origin 2>/dev/null, or none where it prints nothing>
+- specs_path: <realpath -- "$SPECS_PATH", or unset where $SPECS_PATH is unset or empty>
+- specs_origin: <git -C "$SPECS_PATH" remote get-url origin 2>/dev/null, or none where it prints nothing or $SPECS_PATH is unset or empty, since git -C "" reads the current directory's repository>
 - repos_path: <$REPOS_PATH as the citing command resolved it, verbatim, or unresolved where it resolved none>
 - reference_loader: <the base directory the harness named for the workflows-core:reference skill when it loaded in this run, or unobserved where it named none>
 ```
@@ -78,18 +80,36 @@ gets it at that resume, from the values resolved then, and the run says in one l
 nothing to compare. *Go on in the current environment* (under **On a mismatch**) rewrites the
 section with the values resolved now.
 
+**`/implement`'s record** is the same four members, written as one JSON object into its run-state
+file's `run_environment` key, never as a section, by Phase 1.4's `init`, from the object it is
+handed, when it creates that file — a fresh run's first write into it, or the file a *Start fresh*
+answer leads to. Each is resolved as **Record**'s template resolves it, so `specs_path` reads
+`unset` and `specs_origin` `none` where `$SPECS_PATH` is unset or empty, as on a direct run with no
+specs tree, and `repos_path` always reads `unresolved`, since `/implement` resolves no `$REPOS_PATH`
+— so that member is never compared. On a resume, wherever this section reads the
+`## Run environment` section, `/implement` reads that key, off the file as its Phase 0 `peek`
+printed it; a key that is `null` is a file with no section; and wherever this section writes or
+rewrites that section — the record a file without one gets at that resume, or *Go on in the current
+environment* — `/implement` writes the key with `run-state.py set`, once its resume has taken the
+file over (`init --resume`), since until then the file is the earlier session's. In the
+`RESUME_ENVIRONMENT_CHANGED:` stop line, `<address>` is the file's `key`, left out on a direct run,
+and `<session file path>` the run-state file's path. `/implement` compares at point 1 alone.
+
 **Compare** at three points, each named by the citing command:
 
 1. **On a resume** — the run took the resume option of its resume-vs-fresh question, or resumed a
-   session file its picker offered — once the command has resolved `$REPOS_PATH`, and before
-   anything the resumed run writes after Phase 0's preflight.
+   session file its picker offered — once the command has resolved `$REPOS_PATH`, or, in a command
+   that resolves none, straight after the preflight, and before anything the resumed run writes
+   after Phase 0's preflight.
 2. **Before the deliverable write that leads to `handoff-to-main`**, and so before the handoff.
 3. **Before the run's first write in its emitter tail** — feedback, follow-ups, cost, `resume.md`
    (§5 rule 2) — and so before the terminal `commit-artifacts`, unless an earlier comparison this
    run ended in *Stop*.
 
-Points 2 and 3 run on every run that created or resumed its session file: a resumed conversation
-is not something the run can observe, and this comparison is what observes it. **Each point loads
+Points 2 and 3 run on every run that created or resumed its session file, in a command that names
+them: a resumed conversation is not something the run can observe, and this comparison is what
+observes it. A command that names point 1 alone — `/implement` — leaves its handoff and its tail to
+§7's `env-check`, which compares them with the line its preflight printed. **Each point loads
 this part afresh** —
 `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` — even where it is already in the conversation word for word, the one
 exception to the citing command's load-by-part rule: that load is what has the harness name the
