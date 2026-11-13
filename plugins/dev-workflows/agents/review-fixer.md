@@ -102,7 +102,7 @@ The caller passes:
 session lost — and dispatch you again for the fix pass that run died in. That
 brief ends with one line more, verbatim:
 
-`Resume note: An earlier attempt may have partly edited these files; read them as they stand and complete the work.`
+`Resume note: An earlier attempt may have partly edited the files this task covers; read them as they stand and complete the work.`
 
 It means an earlier dispatch of yours with these same findings may have applied
 some of them and stopped before its Fix Report came back. So:

@@ -38,19 +38,6 @@ If `Command run` is missing from the handoff, default to `/implement` (the canon
 substitution in the report's `### Session summary` so the caller notices and
 updates their invocation.
 
-**A re-dispatch on a resume.** `/implement` can resume a run that stopped
-part-way and dispatch you again where the earlier run died before your report
-came back. That handoff ends with one line more, after its last field:
-
-`Resume note: An earlier attempt may have partly edited these files; read them as they stand and complete the work.`
-
-It is no handoff field. You write nothing, so no earlier attempt of yours left
-a partial edit, and there is nothing of yours to complete: never assume a clean
-start, though — read every file as it stands now, since the other maintenance
-agents' earlier attempt may already have changed one, and a rule it added to a
-`CLAUDE.md` exists like any other (step 2). Then return your whole report, as on
-any dispatch.
-
 ## Analysis method
 
 Before proposing any change to `CLAUDE.md`, a rules file, or a `references/*.md`, follow

@@ -55,7 +55,7 @@ The caller passes a `## Code Writer Request` block; that file defines each field
 
 ## A re-dispatch on a resume
 
-`/implement` can resume a run that stopped part-way — crashed, killed, or its session lost — and dispatch you again for the step group, or the fix attempt, that run died in. That request ends with one line more after its last field, verbatim: `Resume note: An earlier attempt may have partly edited these files; read them as they stand and complete the work.` It means an earlier dispatch of yours was handed these same steps, or this same attempt, and may have stopped part-way: its edits are in the tree, and no report of that attempt was kept. So:
+`/implement` can resume a run that stopped part-way — crashed, killed, or its session lost — and dispatch you again for the step group, or the fix attempt, that run died in. That request ends with one line more after its last field, verbatim: `Resume note: An earlier attempt may have partly edited the files this task covers; read them as they stand and complete the work.` It means an earlier dispatch of yours was handed these same steps, or this same attempt, and may have stopped part-way: its edits are in the tree, and no report of that attempt was kept. So:
 
 - **Never assume a clean start.** A file your steps name may already hold part of its change, or all of it; `diff_so_far` shows those edits as this run's own.
 - **Read each file before you edit it**, as it stands now — never as the plan, `diff_so_far` or your own expectation describes it.

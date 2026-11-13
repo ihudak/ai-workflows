@@ -95,7 +95,7 @@ report_file: /tmp/dw-impl-code-AbC123
 **The resume note.** Where `/implement` resumes a stopped run and dispatches `code-writer` again for the step group, or the fix attempt, the earlier run died in, the request above ends with one line more after its last field, verbatim:
 
 ```
-Resume note: An earlier attempt may have partly edited these files; read them as they stand and complete the work.
+Resume note: An earlier attempt may have partly edited the files this task covers; read them as they stand and complete the work.
 ```
 
 It is no field of the request and has no read to fail. It says an earlier dispatch of the same steps may have stopped part-way, its edits in the tree and in no report: the agent reads each file before editing it, completes a partial change in place rather than writing it again, never assumes a clean start, and lists under `### Files changed` each file the steps changed, whichever attempt made the change (`code-writer`'s *A re-dispatch on a resume*).

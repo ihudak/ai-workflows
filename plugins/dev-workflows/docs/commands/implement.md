@@ -93,7 +93,7 @@ Where the tree is not proven, only *Start fresh* and *Cancel* are offered. Where
 
 - a question whose answer the file holds is not asked again, and every other question the step reaches is, since its earlier answer ended with the session that heard it;
 - a step group whose report came back is not coded again, a review whose return landed is neither dispatched nor triaged again, and a commit the earlier run made is adopted as this run's rather than made twice, the push and pull-request question asked again, since no answer to it is kept;
-- a coding, test-writing, fixing or maintenance agent sent again is told that an earlier attempt may have partly done its work, so it reads each file as it stands and completes the work rather than writing it twice;
+- a coding, test-writing or fixing agent sent again, or one of Phase 4's documentation, knowledge-base and instructions reviews, is told that an earlier attempt may have partly done its work, so it reads each file as it stands and completes the work rather than writing it twice; `impl-maintenance`, or `defect-reporter` in its place, edits nothing and is told nothing;
 - a run that died while stopping resumes as that stop.
 
 The Final Report's *Assumptions & limitations* names each earlier session the run resumed, whose cost this run's cost entry does not include.

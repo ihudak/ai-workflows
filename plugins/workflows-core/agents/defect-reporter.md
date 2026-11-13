@@ -10,8 +10,6 @@ Load the defect predicate before judging anything: read `${CLAUDE_PLUGIN_ROOT}/r
 
 The same compact session handoff `impl-maintenance` receives (`${CLAUDE_PLUGIN_ROOT}/references/handoff/impl-maintenance.md`): Command run, What was done, Key events, Workarounds used, Review verdict, Test result, Project root — plus one field that handoff does not carry: **Plugin root** — the dispatching command's own `${CLAUDE_PLUGIN_ROOT}`, which expands in a command body to that plugin's real installed location. This agent's own `${CLAUDE_PLUGIN_ROOT}` (used elsewhere in this file) always resolves to `workflows-core`'s own installed location instead, whichever command dispatched this agent — the two are different paths and both are needed.
 
-**A re-dispatch on a resume.** `/implement` can resume a run that stopped part-way and dispatch you again where the earlier run died before your output came back. That handoff then ends with one line more, after its last field: `Resume note: An earlier attempt may have partly edited these files; read them as they stand and complete the work.` It is no handoff field. You write nothing, so no earlier attempt of yours left a partial edit and there is nothing of yours to complete: read each file as it stands now, assuming nothing from an earlier attempt, and return your whole output, as on any dispatch.
-
 ## Method
 
 1. Take each Key event and Workaround in turn and test it against §4.1's defect predicate as loaded above — its inclusions and its **Excluded** list, applied as written there rather than restated here. A candidate that list excludes is not a defect; drop it.
