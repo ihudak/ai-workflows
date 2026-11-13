@@ -1,12 +1,12 @@
 # GIT-G1 Part 3, batch 1 — the selftest out of `specs-git.py` — verification record
 
-**Plan:** `docs/superpowers/plans/2026-11-13-git-g1-part3-batch1-selftest-split.md`. **Design:** `docs/superpowers/specs/2026-11-13-git-g1-part3-design.md`, §5.1 and §9 (*Batch 1*, *Each batch*). **Release:** `workflows-core` 1.85.2, its changelog section dated 2026-11-13 (cut as 1.85.1 at `cea76e95` and renumbered at `7deeb75c`; *The release* below). **Branch:** `feat/git-g1-p3-selftest`, base `80760699` (the plan's two commits, `bc817dbe` and `6299098a`, on the design branch `feat/git-g1-part3`, which stands on `main` at `84527132`, merged with that branch's `a935c468`), with `main` merged twice: `d25e1d89` (PR #187, the design) at `9ba6eff1`, and `3016ead8` (PR #188) at `7deeb75c`. Measured at `174af1e6`, which is `7deeb75c` plus one changelog sentence (*The release*); the commits after it touch only this file. Written last, after the final review's fix wave and its closing fixes. Every figure below is re-derived here with its command beside it or in a code block above it; where a figure is a report's or the ledger's and was not re-run, the sentence says so.
+**Plan:** `docs/superpowers/plans/2026-11-13-git-g1-part3-batch1-selftest-split.md`. **Design:** `docs/superpowers/specs/2026-11-13-git-g1-part3-design.md`, §5.1 and §9 (*Batch 1*, *Each batch*). **Release:** `workflows-core` 1.85.2, its changelog section dated 2026-11-13 (cut as 1.85.1 at `cea76e95` and renumbered at `7deeb75c`; *The release* below). **Branch:** `feat/git-g1-p3-selftest`, base `80760699` (the plan's two commits, `bc817dbe` and `6299098a`, on the design branch `feat/git-g1-part3`, which stands on `main` at `84527132`, merged with that branch's `a935c468`), with `main` merged twice: `d25e1d89` (PR #187, the design) at `9ba6eff1`, and `3016ead8` (PR #188) at `7deeb75c`. Measured at `174af1e6`, which is `7deeb75c` plus one changelog sentence (*The release*); what the closing review changed was measured again at `c6eefbaf`, and every commit after `174af1e6`, with what it changes, is listed in *The gates and the budgets*. Written last, after the final review's fix wave and its closing fixes, and corrected after the closing review (*The reviews*). Every figure below is re-derived here with its command beside it or in a code block above it; where a figure is a report's or the ledger's and was not re-run, the sentence says so.
 
 The rulings summary is `2026-11-13-git-g1-part3-batch1-rulings.md` beside this file, and the ledger, verbatim, is `2026-11-13-git-g1-part3-batch1-ledger.md`; the controller writes both.
 
 **Where and how it was measured.** One 12-core machine (`nproc`), Python 3.15.2 (`python3 --version`), git 2.43.0, uid 502 (`id -u`; not root, so the selftest's root-skipped cases ran). Every command ran from the worktree root, `/workspace/.worktrees/git-g1-p3-selftest`, unless a tree is named. `$S` is a scratch directory outside the repository; a commit's tree is unpacked there as `git archive <sha> | tar -x -C "$S/tree-<sha>"`.
 
-**The branch.** After `git fetch origin main`, `origin/main` is `3016ead8` and an ancestor of the branch. `git log --oneline --first-parent origin/main..174af1e6 | wc -l` gives 20 (the two plan commits, the base's merge of the design branch, two merges of `main`, and fifteen others). `git diff --shortstat origin/main 174af1e6` gives 13 files changed, 14,212 insertions(+), 13,020 deletions(-); the 13 are `.claude-plugin/marketplace.json`, `.claude/rules/specs-git-selftest.md`, `.github/workflows/validate-catalog.yml`, `CLAUDE.md`, `docs/maintainers/rationale.md`, the plan, the design, `plugins/workflows-core/.claude-plugin/plugin.json`, `plugins/workflows-core/CHANGELOG.md`, `plugins/workflows-core/scripts/specs-git.py`, and the three files under `scripts/selftests/`.
+**The branch.** After `git fetch origin main`, `origin/main` is `3016ead8` and an ancestor of the branch. At `c6eefbaf`, the closing review's fixes, `git log --oneline --first-parent origin/main..c6eefbaf | wc -l` gives 24 (the two plan commits, the base's merge of the design branch, two merges of `main`, and nineteen others). `git diff --shortstat origin/main c6eefbaf` gives 16 files changed, 14,719 insertions(+), 13,020 deletions(-); the 16 are `.claude-plugin/marketplace.json`, `.claude/rules/specs-git-selftest.md`, `.github/workflows/validate-catalog.yml`, `CLAUDE.md`, `docs/maintainers/rationale.md`, the plan, the design, this record and the two files beside it, `plugins/workflows-core/.claude-plugin/plugin.json`, `plugins/workflows-core/CHANGELOG.md`, `plugins/workflows-core/scripts/specs-git.py`, and the three files under `scripts/selftests/`.
 
 ## What the batch delivered against the design's §5.1 and §9
 
@@ -133,7 +133,7 @@ python3 -B scripts/selftests/mutants.py --list | wc -l    # 23
 python3 -B scripts/selftests/mutants.py --check           # mutants: 23 checked, 0 stale   (rc 0, real 0.204 s)
 ```
 
-`--list` prints `<id> <group> <fails>`:
+The three ran at `174af1e6`, and again on the tree `c6eefbaf` commits (run just before that commit, with no edit between) with the same count, rc and last line. There, after the closing review tightened five `fails` (*The five `fails` the closing review tightened*, below), `--list` prints `<id> <group> <fails>`:
 
 ```
 e_land_refused end e_land_refused:
@@ -141,8 +141,8 @@ e_land_stopped end e_land_stopped:
 e_land_offline end e_land_offline:
 e_land_no_origin end e_land_no_origin:
 t_held_journal end t_held_journal:
-t_midrun_keyed_other midrun t-midrun-keyed-other:
-e_midrun_here_kill midrun e_midrun_here_kill:
+t_midrun_keyed_other midrun t-midrun-keyed-other: no commit on the branch
+e_midrun_here_kill midrun e_midrun_here_kill: error set
 e_midrun_here_no_resume midrun e_midrun_here_no_resume:
 status_rename_original status status: a rename's original path
 branch_merged_squash branch_merged branch-merged: a squash merge is test 3
@@ -150,22 +150,22 @@ branch_key_underscore_slug branch_key branch-key: ard/EPIC-008-01_slug with
 push_scope_merge_commit push_scope push-scope: a merge commit fails
 owner_repo_alias_host_kept owner_repo owner-repo: git@github-ig.com:acme/repo.git (alias False) gives
 mode_m_remote_deleted mode m_remote_deleted:
-state_s_remove state s_remove:
+state_s_remove state s_remove: load then None
 lines_l_literal_bracket lines l_literal_bracket:
-gate_g_file gate g_file:
+gate_g_file gate g_file: a regular file
 land_l_land_absent land l_land_absent:
 replay_r_not_run replay r_not_run:
 start_t_b4_no_remote start t_b4_no_remote:
-skill_k_skill_options skill k_skill_options:
+skill_k_skill_options skill k_skill_options: every option
 selftest_s_group_without_selftest selftest s_group_without_selftest:
 selftest_s_group_alone selftest s_group_alone:
 ```
 
 **Every group has one.** The sixteen names `specs-git.py --selftest --group '?'` prints, split one per line and sorted, against `--list | awk '{print $2}' | sort -u`: `comm -3` prints nothing. Per group (`--list | awk '{print $2}' | sort | uniq -c`): `end` 5, `midrun` 3, `selftest` 2, every other group 1. By file (the mutants file's `file`): `specs-git.py` 21, `specs_git_state.py` 1 (`state_s_remove`), `specs_git_lines.py` 1 (`lines_l_literal_bracket`).
 
-**The eight checks the STAY-2 record named** (`docs/superpowers/verification/2026-11-10-stay2-midrun.md`, *Not examined*, line 489) each have a mutant whose `id` is the check's name: `e_land_refused`, `e_land_stopped`, `e_land_offline`, `e_land_no_origin` and `t_held_journal` in group `end`, and `t_midrun_keyed_other`, `e_midrun_here_kill` and `e_midrun_here_no_resume` in group `midrun`. `t_midrun_keyed_other`'s `fails` is `t-midrun-keyed-other:`, the label its case builds from its `name` argument (plan Task 4 step 2).
+**The eight checks the STAY-2 record named** (`docs/superpowers/verification/2026-11-10-stay2-midrun.md`, *Not examined*, line 489) each have a mutant whose `id` is the check's name: `e_land_refused`, `e_land_stopped`, `e_land_offline`, `e_land_no_origin` and `t_held_journal` in group `end`, and `t_midrun_keyed_other`, `e_midrun_here_kill` and `e_midrun_here_no_resume` in group `midrun`. `t_midrun_keyed_other`'s `fails` starts `t-midrun-keyed-other:`, the label its case builds from its `name` argument (plan Task 4 step 2).
 
-**One run of every mutant**, at `174af1e6`, in five foreground invocations of `--only`. A Bash call that runs past 180 seconds here is moved to the background by the harness, so the full run, which the rules file says takes over nine minutes, was split so that each invocation stays under that; the split costs a second baseline run each of `end` and `midrun`.
+**One run of every mutant**, at `174af1e6`, before the closing review tightened five `fails`, in five foreground invocations of `--only`. A Bash call that runs past 180 seconds here is moved to the background by the harness, so the full run, which the rules file says takes over nine minutes, was split so that each invocation stays under that; the split costs a second baseline run each of `end` and `midrun`.
 
 | Invocation (`( time python3 -B scripts/selftests/mutants.py --only … ) 2>&1`) | Last line | Real time | Exit |
 |---|---|---|---|
@@ -204,6 +204,32 @@ selftest_s_group_alone selftest s_group_alone:
 | `selftest_s_group_alone` | `selftest` | 3 | `s_group_alone: one group runs alone and says so` |
 
 No mutant failed more than 4 of its group's checks. Task 4's report names the extra failure lines of the multi-line ones (`e_land_offline` also fails `e_push_failed`; `e_land_no_origin` also `e_no_remote` and `e_land_checked_out_no_origin`; `replay_r_not_run` two `r_canned` lines; `t_midrun_keyed_other` three keyed-case lines and `t_midrun_rerun_no_record`, never `t-midrun-keyless`); the fix report names `selftest_s_group_alone`'s (`s_group_order`, `s_group_unknown`). Neither was re-derived here. After the five runs, `ls -d /tmp/mutants-*` found nothing and no process named a mutants copy.
+
+**The five `fails` the closing review tightened.** The closing review (*The reviews*) logged every message a full run checks, 1,187 of them, and found five `fails` that stopped at a label more than one of them carries at run time — in each case several assertions of one named check: `t-midrun-keyed-other:` 3, `e_midrun_here_kill:` 2, `s_remove:` 3, `g_file:` 2 and `k_skill_options:` 10, nine of them one written message checked in a loop over nine wrong options. `c6eefbaf` set each to the value the review gave, each of which the review found to match exactly one of the 1,187 messages (not re-derived here: this record kept no log of a run's messages):
+
+| Mutant | `fails` before | `fails` at `c6eefbaf` | `grep -cF '"<fails>' scripts/selftests/specs_git_selftest.py` |
+|---|---|---|---|
+| `t_midrun_keyed_other` | `t-midrun-keyed-other:` | `t-midrun-keyed-other: no commit on the branch` | 0: the label is built from a `name` argument |
+| `e_midrun_here_kill` | `e_midrun_here_kill:` | `e_midrun_here_kill: error set` | 1 |
+| `state_s_remove` | `s_remove:` | `s_remove: load then None` | 1 |
+| `gate_g_file` | `g_file:` | `g_file: a regular file` | 1 |
+| `skill_k_skill_options` | `k_skill_options:` | `k_skill_options: every option` | 1 |
+
+Run on the tree `c6eefbaf` commits, before that commit, with no edit between; each value dump is cut here:
+
+```
+$ ( time python3 -B scripts/selftests/mutants.py --only state_s_remove --only gate_g_file --only skill_k_skill_options ) 2>&1   # EXIT=0, real 6.528 s
+killed state_s_remove (1 failure lines): s_remove: load then None, and s2/ is gone with its last record
+killed gate_g_file (1 failure lines): g_file: a regular file is not a directory (…)
+killed skill_k_skill_options (1 failure lines): k_skill_options: every option the skill names is the CLI's, where it names it (…)
+mutants: 3 killed, 0 survived, 0 stale, 0 timed out, 0 on a red baseline, of 3
+$ ( time python3 -B scripts/selftests/mutants.py --only t_midrun_keyed_other --only e_midrun_here_kill ) 2>&1   # EXIT=0, real 2 min 21.944 s
+killed t_midrun_keyed_other (4 failure lines): t-midrun-keyed-other: no commit on the branch, HEAD unmoved, pre.stay.midrun naming /specify, a mid-run stay (…)
+killed e_midrun_here_kill (1 failure lines): e_midrun_here_kill: error set, the index showing the reversal, end_commit.here and the held record holding the journal (…)
+mutants: 2 killed, 0 survived, 0 stale, 0 timed out, 0 on a red baseline, of 2
+```
+
+Each of the five printed the same failure line as at `174af1e6` (the table above), and the same number of failure lines. On the same tree, `python3 -B plugins/workflows-core/scripts/specs-git.py --selftest --group selftest | tail -1` printed `specs-git selftest: PASS (11 checks; partial: selftest)`: the mutants file is data the selftest does not read, and the rest of `c6eefbaf` is prose.
 
 ### The runner's proofs
 
@@ -263,19 +289,21 @@ The whole selftest took 3 min 12.0 s at the base and 1 min 38.4 s at `174af1e6` 
 | the same at `f437dd48` | 5,106 | 312,063 |
 | the same at `174af1e6` | 5,120 | 313,021 |
 | `scripts/selftests/specs_git_selftest.py` at `174af1e6` | 13,126 | 848,120 |
-| `scripts/selftests/mutants.py` | 438 | 22,489 |
-| `scripts/selftests/specs-git-mutants.json` | 186 | 6,824 |
+| `scripts/selftests/mutants.py` at `174af1e6` | 438 | 22,489 |
+| the same at `c6eefbaf` (its docstring reflowed, no word changed) | 437 | 22,489 |
+| `scripts/selftests/specs-git-mutants.json` at `174af1e6` | 186 | 6,824 |
+| the same at `c6eefbaf` (five `fails` tightened) | 186 | 6,901 |
 
 The changelog's "from 18,105 lines to 5,120 (`wc -l`)" and its "eleven checks" agree with these runs, and the rationale's "over 840,000 bytes" with the test file's 848,120.
 
 ## What the batch added beyond the plan, and why
 
 - **`--group` is refused in CI.** Where `GITHUB_ACTIONS` is `true`, `selftest(groups)` prints one `not run` line and exits 2 before any group runs (`s_group_refused_in_ci`). The final review's I1: `s_ci_runs_all` sits in the `selftest` group, so a CI line given `--group end` never ran it and exited 0, measured by the reviewer.
-- **The nested-run marker.** `scenarios_selftest` starts every run with `SPECS_GIT_SELFTEST_NESTED=1`; such a run that would include the `selftest` group fails at once, at `selftest()`'s head and again on `scenarios_selftest`'s first line (`s_nested_refused`; mutant `selftest_s_group_alone`). Task 2's deferred Minor and the final review's I2 (a break in group selection recursed without end, so the group's own checks could have no mutant); the head guard alone missed a break in the selftest's own selection line, which the re-review's N1 measured (49 temporary directories left at `timeout 20`).
+- **The nested-run marker.** `scenarios_selftest` starts every run with `SPECS_GIT_SELFTEST_NESTED=1`; such a run fails before any group runs where it asks for the `selftest` group, at `selftest()`'s head, and on reaching that group where it reaches it by another route, on `scenarios_selftest`'s first line (the head guard: `s_nested_refused`, mutant `selftest_s_group_alone`; the first-line guard: none, *Known limits*). Task 2's deferred Minor and the final review's I2 (a break in group selection recursed without end, so the group's own checks could have no mutant); the head guard alone missed a break in the selftest's own selection line, which the re-review's N1 found (36 temporary directories left under `timeout`) and the closing fix measured again at `edb40b7f` (49 left at `timeout 20`). With the first-line guard, a break on the selftest's side fails only once the nested run has run every group it selected ahead of `selftest`, which is last in the run order; the closing review measured 140 s for a selection line made `if True:` (not re-derived here).
 - **`mutants.py --check` and its CI step.** It counts each mutant's `old` text in the repository and runs no mutant and no group; CI runs it after the selftest step. The final review's I3: nothing kept the mutants from going stale, and batch 2 rewrites the script 21 of the 23 name.
 - **The loader's two refusals.** An unreadable selftest path (`s_selftest_unreadable`) and a test file that rebinds a name of the script (`s_selftest_redefines`), with the test file's header made a `#` comment block. Task 1's two deferred Minors, the final review's M2 and M3: any `OSError` printed "is not there", and the test file's docstring replaced the script's `__doc__` while it ran.
 - **A fresh copy per run.** Every run, each baseline included, is made in its own copy of the runner's pristine copy, discarded after it; the restore and the bytecode stop it needed went with it. The final review's M11: whatever a mutated run wrote into the one shared copy outlived the restore.
-- **`fails` may run past the label.** The runner's validator takes any prefix of a failure line holding a colon after a label, and the `branch_merged`, `branch_key`, `push_scope` and `owner_repo` mutants' `fails` were tightened to their one check. Task 4's deferred Minor and the final review's M1: every check of those four groups prints one shared label, so their `fails` matched the whole group.
+- **`fails` may run past the label.** The runner's validator takes any prefix of a failure line holding a colon after a label, and the `branch_merged`, `branch_key`, `push_scope` and `owner_repo` mutants' `fails` were tightened to their one check. Task 4's deferred Minor and the final review's M1: every check of those four groups prints one shared label, so their `fails` matched the whole group. The closing review's I1 found five more `fails` stopping at a label several assertions share, and `c6eefbaf` tightened them (*The five `fails` the closing review tightened*): nine in all.
 - **The guard when the test file is run directly.** Its first statement exits 1 with one line naming the command that runs it (`s_file_run_directly`). Task 1's deferred Minor and the final review's M9: a direct run died with a bare `NameError`.
 - **The runner's own hardening**, from Task 3's review and the final review's M7 and M8: SIGTERM, SIGHUP and SIGINT end it with the copy removed; the run's process group is ended with SIGTERM, then SIGKILL three seconds later; stderr is kept for a reason line; a baseline cap of 900 s; a per-run `TMPDIR` inside the copy; a temporary directory under the repository refused; and the group names read from the script's usage error instead of a copy of them. The `status` mutant was moved from `Parser.error` onto the status classifier (M12), and the rules file's `paths:` gained `specs_git_state.py` and `specs_git_lines.py` (M6).
 
@@ -283,7 +311,7 @@ The changelog's "from 18,105 lines to 5,120 (`wc -l`)" and its "eleven checks" a
 
 - **As it happened.** Task 6 read `1.85.0` from `plugins/workflows-core/.claude-plugin/plugin.json` and released 1.85.1 at `cea76e95`. While the fix wave ran, PR #188 merged into `main` as `3016ead8` and took `workflows-core` 1.85.1 for itself. The release implementer merged `origin/main` at `7deeb75c` (the one conflict was the changelog; `main`'s `[1.85.1]` section was kept as `main` has it) and renumbered this branch's section and both manifests to 1.85.2 (the report's *Re-release after main moved*).
 - **The manifests.** `git diff origin/main 174af1e6 -- .claude-plugin/marketplace.json plugins/workflows-core/.claude-plugin/plugin.json` changes one line in each, `"version": "1.85.1"` to `"version": "1.85.2"`. `git grep -n '1\.85\.2' 174af1e6` finds three lines: the two manifests and the changelog heading.
-- **The changelog.** `## [1.85.2] — 2026-11-13` sits directly above `main`'s `## [1.85.1] — 2026-11-13`. Its opening said `workflows-core` "is updated alone", while 1.85.1 below it says to update with `dev-workflows` 4.64.0; by the ledger's last ruling, `174af1e6` rewords that clause to "so this release needs no other plugin's update beyond what 1.85.1 names", and changes nothing else (`git diff 7deeb75c 174af1e6` is that one line). Before that edit `grep -rn 'updated alone'` over `plugins/`, `README.md`, `CLAUDE.md`, `.claude/rules/` and `docs/maintainers/` found that one line, and after it none; the new phrase is found once.
+- **The changelog.** `## [1.85.2] — 2026-11-13` sits directly above `main`'s `## [1.85.1] — 2026-11-13`. Its opening said `workflows-core` "is updated alone", while 1.85.1 below it says to update with `dev-workflows` 4.64.0; by the ledger's last ruling, `174af1e6` rewords that clause to "so this release needs no other plugin's update beyond what 1.85.1 names", and changes nothing else (`git diff 7deeb75c 174af1e6` is that one line). Before that edit `grep -rn 'updated alone'` over `plugins/`, `README.md`, `CLAUDE.md`, `.claude/rules/` and `docs/maintainers/` found that one line, and after it none; the new phrase is found once. `c6eefbaf` rewords one more sentence of the section, in *Added* (the closing review's I3): a marked run "fails before any group runs where it would include the `selftest` group, and on reaching that group where it reaches it by any other route", where it said "fails at once where it would include the `selftest` group or reaches that group by any route"; `git diff 174af1e6 c6eefbaf -- plugins/workflows-core/CHANGELOG.md` is that one line, and under `plugins/` `c6eefbaf` changes nothing else.
 - **No coupling bullet.** `.claude/rules/plugin-updates-coupling.md`'s test (line 12): "**A release that relies on another plugin's newer text gets a bullet here** … A batch that changes a `workflows-core` reference a dependent cites adds one". Against `origin/main`, the branch changes under `plugins/` only `specs-git.py`, the changelog and `plugin.json` (`git diff --stat origin/main 174af1e6`), so it changes no reference, relies on no other plugin's text, and no other plugin's text relies on it. `main`'s 1.85.1 bullet stays true beside 1.85.2.
 
 ## The gates and the budgets
@@ -297,15 +325,26 @@ Which gate steps ran at which commit, each chain one `&&` chain whose own exit v
 | `5ae96dae`, `a214c835` | the same, without the selftest | `CHAIN_EXIT=0` at each | the fix report |
 | `7deeb75c` | all 33 `run:` steps (step 33, `mutants.py --check`, is this branch's; `main` added none), plus `ASSERT_PUBLISHED=1` `check-docs.sh`, in three chains split at step boundaries (steps 1–12, 13–29, 30–33) | `CHAIN_A_EXIT=0`, `CHAIN_B_EXIT=0`, `CHAIN_C_EXIT=0` | the re-release section of Task 6's report |
 
-Not re-run here: those chains. The commits after `7deeb75c` change one changelog sentence (`174af1e6`) and add this file (`0b19e96d`), so at `0b19e96d` this record re-ran the steps that read either of them, as one chain:
+The whole workflow, all 33 `run:` steps, last ran at `7deeb75c`; none of the chains in the table was re-run here. What each later commit changes:
+
+| Commit | What it changes |
+|---|---|
+| `174af1e6` | the changelog's opening clause (*The release*) |
+| `0b19e96d` | adds this record |
+| `be9d96ec` | this record's gates paragraph |
+| `fee02904` | adds the rulings summary and the ledger copy beside this record (the controller's commit) |
+| `c6eefbaf` | the closing review's fixes: five `fails` in `scripts/selftests/specs-git-mutants.json`, two sentences of `.claude/rules/specs-git-selftest.md`, the reflow of one paragraph of `scripts/selftests/mutants.py`'s docstring, one sentence each of `plugins/workflows-core/CHANGELOG.md` and `docs/maintainers/rationale.md` |
+| the commits after `c6eefbaf` | change only this record and the two files beside it: this record's corrections after the closing review, and any refresh of the ledger copy and the rulings summary |
+
+This record's writer ran the documentation gates as one chain at `0b19e96d`, at `be9d96ec` and at `c6eefbaf`, each time printing `CHAIN_EXIT=0`:
 
 ```bash
 python3 scripts/validate-catalog.py && ./scripts/check-docs.sh --root . && ASSERT_PUBLISHED=1 ./scripts/check-docs.sh --root . && ./scripts/check-id-grammar.sh --root . && ./scripts/check-id-grammar.sh --baseline && python3 scripts/reference-parts.py check-parts && python3 -B scripts/selftests/mutants.py --check; echo "CHAIN_EXIT=$?"
 ```
 
-Each step's last line, in order: `0 error(s), 0 warning(s) across 1 repo(s).`; `PASS: docs are consistent with the plugin(s) under …`, plainly and again with `ASSERT_PUBLISHED=1`; `PASS: no dash-form requirement IDs under .`; `PASS: the spec-ID census under . equals scripts/spec-id-baseline.txt`; `reference-parts check-parts: PASS -- 4 split reference(s), 3 entry file(s), 36 generated file(s) fresh`; `mutants: 23 checked, 0 stale`; then `CHAIN_EXIT=0`. Separately, `node scripts/mermaid/check-mermaid.mjs --root .`, which reads every tracked markdown file, printed `PASS: all 50 mermaid blocks in 1206 tracked markdown files parse (mermaid 11.17.2, marked 16.4.2)` and exited 0. No other step of the workflow ran at `0b19e96d`; each of them ran at `7deeb75c` (the table). The commit after `0b19e96d` changes only this paragraph.
+At `c6eefbaf`, each step's last line, in order: `0 error(s), 0 warning(s) across 1 repo(s).`; `PASS: docs are consistent with the plugin(s) under …`, plainly and again with `ASSERT_PUBLISHED=1`; `PASS: no dash-form requirement IDs under .`; `PASS: the spec-ID census under . equals scripts/spec-id-baseline.txt`; `reference-parts check-parts: PASS -- 4 split reference(s), 3 entry file(s), 36 generated file(s) fresh`; `mutants: 23 checked, 0 stale`; then `CHAIN_EXIT=0`. At each of the three commits, `node scripts/mermaid/check-mermaid.mjs --root .`, which reads every tracked markdown file, also exited 0: `PASS: all 50 mermaid blocks in 1208 tracked markdown files parse (mermaid 11.17.2, marked 16.4.2)` at `c6eefbaf`, and 1206 files at the two before `fee02904`. No other step of the workflow ran at any of the three. The controller runs the chain again at the pushed head and reports it in the pull request, outside this record.
 
-**Budgets** (`LC_ALL=C.UTF-8 wc -m`): `CLAUDE.md` 34,838 at `174af1e6` (34,608 at `origin/main`; this branch adds one table row), under the 36,000-character warning `scripts/validate-catalog.py` sets; `.claude/rules/specs-git-selftest.md` 12,483, new, under the 20,000-character rules-file warning. The plan's Global Constraints keep this batch out of `.claude/rules/gates.md` and `.claude/rules/workflows-core-git.md`, and `git diff --stat origin/main 174af1e6` lists neither.
+**Budgets** (`LC_ALL=C.UTF-8 wc -m`): `CLAUDE.md` 34,838 at `174af1e6` (34,608 at `origin/main`; this branch adds one table row), under the 36,000-character warning `scripts/validate-catalog.py` sets; `.claude/rules/specs-git-selftest.md`, new, 12,483 at `174af1e6` and 12,857 at `c6eefbaf`, under the 20,000-character rules-file warning; `CLAUDE.md` is 34,838 at `c6eefbaf` too. The plan's Global Constraints keep this batch out of `.claude/rules/gates.md` and `.claude/rules/workflows-core-git.md`, and `git diff --stat origin/main c6eefbaf` lists neither.
 
 ## The reviews
 
@@ -325,7 +364,8 @@ Counts are the ledger's and the findings files'; the review reports themselves a
 | Final whole-branch review | Fable 5.2 | `d25e1d89..cea76e95` | ready to merge with fixes: 0 Critical, 3 Important (I1–I3), 13 Minor | M13, an ignored `scripts/selftests/__pycache__/` a reviewer's compile check had left, removed by the controller; I1–I3 and M1–M12 to the fix wave, with the controller's choice where the reviewer offered two (`final-findings.md`) |
 | Final fix wave | Opus, resumed from its transcript after the CLI crashed mid-wave | `530ca7cc`, `5a9f1106`, `ee8564f3`, `edb40b7f` | 15 of 15 fixed, two in another form (I2's mutant, M11 wider) | — |
 | Its re-review | Fable 5.2 | `cea76e95..edb40b7f` | 15 of 15 addressed; its six departures sound; 0 new Critical or Important; 6 new Minor (N1–N6); 1 out of scope (`cli()` starts its nested runs without `-B`) | N1–N6 fixed in `5ae96dae` and `a214c835`; the out-of-scope item stands by ruling (*Known limits*) |
-| Closing fixes, the re-release merge, `174af1e6` | — | `edb40b7f..174af1e6` | not yet reviewed when this record was written | the ledger gives them their review seat with this record, in Task 6's deferred task review |
+| Closing review: the closing fixes, the re-release merge, `174af1e6`, this record, the rulings summary and the ledger copy (Task 6's deferred task review) | Opus | `edb40b7f..fee02904` | N1–N6 all fixed; the merge and the release correct; 0 Critical, 4 Important (I1–I4), 5 Minor (M1–M5) (`closing-findings.md`) | eight fixed: I1, I3, M3 and M1's rationale half in `c6eefbaf`; I2, I4, M2, M5 and M1's record half in this record's correction after it; M4, naming 1.85.2 in the pull request, is the controller's |
+| `c6eefbaf` and this record's correction after it | — | after `fee02904` | not reviewed before they were committed | — |
 
 ## What departs from the design or the plan
 
@@ -339,16 +379,17 @@ Counts are the ledger's and the findings files'; the review reports themselves a
 - **Commit trailers.** The plan's Global Constraints name the Fable line or "the implementer's own model line"; by the ledger's first ruling the implementers' commits carry the Opus line.
 - **The release** was cut as 1.85.1 and renumbered to 1.85.2 when `main` took 1.85.1; the release commit (`cea76e95`) and this record are separate commits, where the plan's Task 6 step 6 commits them together.
 - **The full mutant run** ran here in five invocations, not one (*The mutants*).
+- **The gate run at `7deeb75c` was three `&&` chains**, split at step boundaries, where the plan's Task 6 step 3 and `CLAUDE.md` § *Running the gates* ask for one: a single call cannot run that long in this environment.
 - **Fix rounds.** Task 3's and Task 5's Minors went into each task's own fix round rather than to the final review, and the re-review's six Minors got a closing commit after the skill's one fix wave, both by the maintainer's fix-all rule as the ledger's rulings record; the closing work is two commits, the second only a rewrap of a CI comment, since no amend was allowed.
 
 ## Known limits and what was not examined
 
-- **What a kill shows.** A kill shows that, with that one edit in place, the group's run failed with a failure line starting with the mutant's `fails`: a check whose message begins so caught the edit. It says nothing of any other check. Four mutants' `fails` stop at a label that 2 or 3 check messages share (`grep -cF '"<label>' scripts/selftests/specs_git_selftest.py`): `e_midrun_here_kill:` 2, `s_remove:` 3, `g_file:` 2, `k_skill_options:` 2; for those, a kill shows that one of that family failed; each of the four failed one line in this record's run, the one its `killed` line in *The mutants* quotes. Two `fails` match no message written in the file, because their message is built at run time (`branch-key: ard/EPIC-008-01_slug with`, `owner-repo: git@github-ig.com:acme/repo.git (alias False) gives`), and `t-midrun-keyed-other:` is built from a `name` argument; the grep recipe cannot count those.
-- **The rules file says more than the tree on one point.** *What none of this can see* says that where its label is shared, a mutant's `fails` "goes on into the message as far as tells the check it targets from the others, as the `status`, `branch_merged`, `branch_key`, `push_scope` and `owner_repo` mutants' do". It holds for those five; `e_midrun_here_kill`, `state_s_remove`, `gate_g_file` and `skill_k_skill_options` stop at a shared label. This record does not edit the rules file.
-- **A check with no mutant** can assert too little in every run and in CI alike. The 23 mutants target 23 checks, or families of checks sharing a label, among the 1,187; any other check has no mutant.
+- **What a kill shows.** A kill shows that, with that one edit in place, the group's run failed with a failure line starting with the mutant's `fails`: a check whose message begins so caught the edit. It says nothing of any other check. Five mutants' `fails` stopped at a label other checks share — `t-midrun-keyed-other:` 3 checks at run time, `e_midrun_here_kill:` 2, `s_remove:` 3, `g_file:` 2, `k_skill_options:` 10 (nine from one loop) — until `c6eefbaf` tightened each to one of the 1,187 messages a full run checks, all five re-run and killed there. Three `fails` match no message written in the file, so the rules file's grep recipe cannot count what they match: `branch-key: ard/EPIC-008-01_slug with` and `owner-repo: git@github-ig.com:acme/repo.git (alias False) gives`, whose messages are formatted from a row of a loop at run time (test file lines 288 and 430), and `t-midrun-keyed-other: no commit on the branch`, whose label is built from a `name` argument.
+- **The first-line guard has no check and no mutant.** The test on `scenarios_selftest`'s first line, which stops a marked run that reaches the `selftest` group by a route the head guard does not see, has as its only evidence the closing fix's scratch-copy run (the fix report's N1: exit 1 in 0.5 s, against exit 124 under `timeout 20` without it). No mutant can reach it, since a mutant's `file` is under `plugins/workflows-core/scripts/` and the guard is in the test file; `s_nested_refused` and `selftest_s_group_alone` reach only the head guard.
+- **A check with no mutant** can assert too little in every run and in CI alike. The 23 mutants target 23 of the 1,187 checks; any other check has no mutant.
 - **Python 3.11 was not available locally** (`/opt/pyenv/versions/` holds only 3.15.2); CI pins `python-version: "3.11"` (`.github/workflows/validate-catalog.yml:74`) and is the first run on it. No CI run of this branch is part of this record: the branch was not pushed when it was written, so the design's §9 "CI is green" is not shown here.
 - **Bytecode after a local run.** The test file's `cli()` starts each nested run as `[sys.executable, script or me, *args]`, without `-B`. After this record's runs at `174af1e6` made with `python3 -B` and no `PYTHONDONTWRITEBYTECODE` (the full run and the per-group count loop), `plugins/workflows-core/scripts/__pycache__/` held `session-branch.cpython-315.pyc`, `specs_git_lines.cpython-315.pyc` and `specs_git_state.cpython-315.pyc`; `.gitignore:14` ignores it, so no commit or install carries it, and it was removed. The ruling lets this stand, since the text is the moved tests' own and the runner sets `PYTHONDONTWRITEBYTECODE=1` for its runs.
-- **Not re-derived here:** the signal proofs (Task 3's fix round; the fix report's M7(a)); M7(b), shown only by reading; the runner's refusals of a malformed file, an unknown id, a usage error and a temporary directory under the repository (Task 3); the case of the plan's Task 3 rule 6, a copy that lacks a file the repository has, which no group showed (Task 3's report); the rationale's compile and start-up timings; the extra failure lines of the multi-line mutants; the counts at `440f2e5a`, `edb40b7f` and `5ae96dae`; the gate chains of the table above; the plan review's findings by severity, which are in no source this record had.
+- **Not re-derived here:** the signal proofs (Task 3's fix round; the fix report's M7(a)); M7(b), shown only by reading; the runner's refusals of a malformed file, an unknown id, a usage error and a temporary directory under the repository (Task 3); the case of the plan's Task 3 rule 6, a copy that lacks a file the repository has, which no group showed (Task 3's report); the rationale's compile and start-up timings; the extra failure lines of the multi-line mutants; the counts at `440f2e5a`, `edb40b7f` and `5ae96dae`; the gate chains of the table above; the plan review's findings by severity, which are in no source this record had; the closing review's log of the 1,187 messages a full run checks, on which the five tightened `fails` rest, and its 140-second run of a selftest-side break.
 - **The copy is narrower than the repository for one check.** `k_no_dollar_session` walks every plugin under `plugins/`, and the runner's copy holds `workflows-core` alone (Task 3's report); no mutant names a file outside `plugins/workflows-core/scripts/`, so no verdict depends on it.
 - **The `scripts/**` observation** (a partial Read of `specs-git.py` also loaded the `gates*.md` rules files) predates the branch; the final review ruled it can stand.
 - **Timings are one machine's**, in one session (`uptime` gave a load average of 0.21 just before the first run).
