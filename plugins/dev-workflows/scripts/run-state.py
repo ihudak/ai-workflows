@@ -1,23 +1,66 @@
 #!/usr/bin/env python3
-"""run-state.py -- /implement's run-state file: create it, open a phase, set, append, read, remove.
+"""run-state.py -- /implement's run-state file: create, resume or peek at it, open a phase, set,
+append, persist, read, remove.
 
 The file is `$(git rev-parse --git-path dev-workflows/implement-run.json)` in the code repository
 the run works in: per worktree, inside the git directory, never staged. `/implement` Phase 1.4
 creates it and every later phase opens with `open`; commands/implement.md says what each key holds
 and where it is written. Run every call from the working directory (or pass --repo <dir>). One
 `/implement` run per worktree at a time is the precondition; the lock below serialises one run's own
-calls, never two runs.
+calls, never two runs, and the session guard below stops a run that another has taken over. Beside
+the file, in the same directory, are the durable directory, `implement-run.d/`, which holds the
+copies `persist` makes, and the tombstone, `implement-run.done`, which `remove` leaves.
+
+The session is the environment's CLAUDE_CODE_SESSION_ID, null where it is unset or empty. `init`
+writes `session` and `started`, `init --resume` writes `session`, nothing else touches `session`, and
+every call that changes the file stamps `updated`; both times are UTC YYYY-MM-DDTHH:MM:SSZ. The
+session guard: `open`, `set`, `append`, `persist`, `remove` and `init --recover` exit 9, nothing
+written, where the file's `session` and the caller's are both non-null and differ. `read`, `peek`,
+plain `init` and `init --resume` are not guarded. `session`, `started`, `updated`, `durable` and
+`tree.snapshot` are the script's own: `set`, `append` and `init` refuse each with exit 3,
+`tree.snapshot` also as a member of an object given for `tree`.
 
   run-state.py init [--recover]      a JSON object on stdin, merged over KEYS' defaults: every key or
                                      member it omits takes the default KEYS gives it, and it may hold
-                                     no key or member KEYS lacks, nor one of the wrong type -- all
-                                     checked before anything is moved. A file already there is moved
+                                     no key or member KEYS lacks, nor one of the wrong type, nor one
+                                     of the script's own -- all checked before anything is moved; it
+                                     writes `format` 2. A file already there is moved
                                      aside unread, as implement-run.json.stale-<UTC stamp>, after any
                                      older such file is removed, so at most one is kept; the move is
-                                     printed and appended to `assumptions` as a file an earlier run
-                                     left. Under --recover the line appended names the file as this
-                                     run's own, written again, and says whether one was moved aside.
-  run-state.py open <phase>          set `phase` and print the file.
+                                     printed. Plain init also deletes the durable directory, printed
+                                     `removed: <it>` where there was one, and the tombstone; and
+                                     appends to `assumptions` that a file an earlier run left was not
+                                     resumed and was moved aside, saying its durable copies were
+                                     deleted where the directory held any. Under --recover the
+                                     directory and the tombstone stay, `durable` starts empty, and the
+                                     line appended names the file as this run's own, written again,
+                                     and says whether one was moved aside; --recover exits 9 where the
+                                     tombstone names a session that is non-null and not the caller's.
+  run-state.py init --resume         take over in place the file an earlier run left, never moving it:
+                                     exit 1 with no file, 5 where it does not parse, 8 where its
+                                     format is not 2. Stdin is a JSON object holding only specs_git,
+                                     specs_merged_branch, lineage, routing, coding_model, run_flags,
+                                     inputs_read and report.notices -- any other key, or a value of
+                                     the wrong type, exits 3, nothing written: inputs_read's and
+                                     report.notices' values are appended to the file's lists, and the
+                                     others written as set writes them. Then each path location --
+                                     every `files` member, each `step_groups` report, each `reviews`
+                                     diff and return file, each `patches` path, and
+                                     `lineage.check_file` (never `tree.snapshot`, which names its own
+                                     copy) -- is, the first that applies: left, where a file is at
+                                     its path; repointed to the copy, where `durable[<its key path>]`
+                                     has `of` equal to its path and that copy is a file -- the
+                                     original deleted where something not a directory is left at its
+                                     name and the name begins `dw-impl-` -- printed `repointed:`;
+                                     else set to null, printed `cleared:`. No other location is
+                                     touched. It appends `Resumed at <phase> step <step> after session
+                                     <id> stopped at <updated>` to `assumptions` (` step <step>` left
+                                     out where `step` is null, a null session or time as `unknown`),
+                                     and writes `session`.
+  run-state.py peek                  print the file, changing, moving and locking nothing: exit 1 with
+                                     no file, 5 where it does not parse, 8 where its format is not 2,
+                                     printing nothing.
+  run-state.py open <phase>          set `phase`, reset `step` to null, and print the file.
   run-state.py read [<key>]          print the file, or one key, changing nothing.
   run-state.py set <key> <json> [<key> <json> ...]
                                      set each key to the JSON value after it, the key written again
@@ -30,12 +73,19 @@ calls, never two runs.
                                      key whose default is an object, given an object, takes its
                                      members over the ones the file holds: a member it leaves out
                                      keeps its value. A deeper path or a list entry is not checked.
+                                     Each `durable` entry whose label is a key path that names neither
+                                     its `of` nor its copy after the write is dropped; a `note:` entry
+                                     and the `tree.snapshot` entry never are.
                                      Once the write lands, each path the file named before the call --
                                      a `files` member, a `step_groups` report, a `reviews` diff or
                                      return file or a `patches` path --
                                      that none of them names after it is removed, where it is a
                                      regular file, not a symlink, whose name begins `dw-impl-`, and
-                                     printed `removed: <path>`; one whose removal fails is printed
+                                     lies outside the durable directory, and
+                                     printed `removed: <path>`; then each dropped entry's copy inside
+                                     the durable directory, where no path location, `tree.snapshot`
+                                     or other entry names it, printed the same way; one whose
+                                     removal fails is printed
                                      `left: <path> -- <error>`, and the call still exits 0.
   run-state.py append <key> <json> [<key> <json> ...]
                                      append each value to its key's list, the key written again
@@ -43,12 +93,29 @@ calls, never two runs.
                                      -- or a JSON object on stdin; a key that is null becomes a
                                      one-element list. Each value is one entry, so a value that is a
                                      JSON array, in either form, exits 2, nothing written: give one
-                                     value per pair, or write the whole list with set.
+                                     value per pair, or write the whole list with set. An object
+                                     appended to `step_groups` is stamped `started`, the UTC time.
+  run-state.py persist <label> <file>
+                                     copy <file> into the durable directory, print the copy's absolute
+                                     path, and set durable[<label>] to {"copy": <that path>, "of":
+                                     <file as given>}. The label is a key path naming one of the
+                                     path locations init --resume walks, or `tree.snapshot` -- a
+                                     negative list index (step_groups.-1.report) written as its
+                                     absolute index -- or note:<path>, for a note's working copy. A
+                                     label has one copy, which its next persist replaces. `persist
+                                     tree.snapshot` also writes `tree.snapshot`, the copy's path: it
+                                     is that key's only writer. A file that is not there exits 2, and
+                                     a label naming no path location exits 3.
   run-state.py remove [--keep <path>] ...
                                      the end-of-run removal: every temp file `files` names, each
                                      `step_groups` report, each `reviews` diff and return file and each `patches` path marked `temp`
                                      -- only a regular file whose name begins `dw-impl-`, and never
-                                     a --keep path -- then the file itself, only at the git path.
+                                     a --keep path; a path inside the durable directory is skipped,
+                                     unprinted -- then the file itself, only at the git path, leaving
+                                     the tombstone, {"session": <the caller's>, "at": <UTC time>};
+                                     then the durable directory, whole, printed `removed: <it>`. With
+                                     no file it deletes the durable directory alone, and writes no
+                                     tombstone.
 
 A key is a top-level name or a dotted path into one (`files.plan_file`); a list entry is named by
 its index (`triage.-1.followed_by`, the last entry's). `set`, `append` and `read` refuse a key the
@@ -68,18 +135,26 @@ Exit codes:
   1  there is no run-state file (and nothing was created)
   2  usage: bad arguments -- set's or append's among them an odd count, or a key opening with `"`,
      `[` or `{`, a value written where its key belongs, and append's a JSON array value -- a value
-     that does not parse, input that is not UTF-8, a path through null, no such list entry
-  3  a key the file does not hold (set, append, read), or an init object or a set call adding a key
-     or member KEYS lacks, or giving one the wrong type
+     that does not parse, input that is not UTF-8, a path through null, no such list entry, and
+     persist's file not there
+  3  a key the file does not hold (set, append, read, persist), or an init object or a set call adding
+     a key or member KEYS lacks, or giving one the wrong type; a script-owned key written (set,
+     append, init); a persist label naming no path location; an init --resume key outside its list
   4  the file could not be reached: an OSError reading or writing it -- an unreadable directory on
      its path included -- or git failing to name it
   5  the run-state file is there and does not parse
+  8  the run-state file's format is not 2 (peek, init --resume)
+  9  the session guard: the file belongs to another session; or, from init --recover, the tombstone
+     names another session
+No call exits 6 or 7: commands/implement.md keeps 6 for a missing path its own `test -e` finds.
 Standard library only; `python3 run-state.py --selftest` runs the tests.
 """
 import copy
+import hashlib
 import json
 import os
 import re
+import shutil
 import stat
 import subprocess
 import sys
@@ -95,6 +170,13 @@ REL = "dev-workflows/implement-run.json"
 STALE_RE = re.compile(r"^implement-run\.json\.stale-\d{8}T\d{6}Z$")
 TEMP_PREFIX = "dw-impl-"
 LOCK = ".implement-run.lock"
+DURABLE = "implement-run.d"  # beside the file: git's own `--git-path dev-workflows/implement-run.d`
+TOMBSTONE = "implement-run.done"
+OWNED = ("session", "started", "updated", "durable")  # and tree.snapshot: the script's own keys
+NOTE = "note:"
+RESUME_KEYS = ("specs_git", "specs_merged_branch", "lineage", "routing", "coding_model", "run_flags",
+               "inputs_read", "report.notices")
+RESUME_APPENDED = ("inputs_read", "report.notices")
 
 # Every key the file holds, and no other, each beside the default init gives it where the caller's
 # object omits it. A key whose default is an object holds exactly that object's members -- the ones
@@ -109,11 +191,19 @@ LOCK = ".implement-run.lock"
 #            "paths" a piece's matched paths, or for "overall" the paths no piece matched;
 #            the two files temp files
 #   check_run_answers  {"path", "answer"} -- one per path a check run touched, as its answer settles it
+#   step_groups  each entry stamped "started", the UTC time, by `append step_groups`
+#   report.maintenance  each entry carries "agent": docs, knowledge, instructions, impl-maintenance or
+#            defect-reporter -- the run writes it
+# Two objects whose members are not fixed: `durable` -- {<label>: {"copy", "of"}}, written by persist
+# alone -- and `conformance.note_blobs` -- {<annotated path>: <its blob>}.
 # commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
 KEYS = [
-    ("format", 1), ("phase", "Phase 1.4"), ("mode", None), ("key", None), ("source", None),
+    ("format", 2), ("session", None), ("started", None), ("updated", None),
+    ("phase", "Phase 1.4"), ("step", None), ("stopping", None),
+    ("mode", None), ("key", None), ("source", None),
     ("focus_key", None), ("unit_key", None), ("workitem_key", None), ("unit_folder", None),
-    ("run_flags", None), ("specs_git", None), ("specs_merged_branch", None), ("lineage", None),
+    ("run_flags", None), ("run_environment", None), ("specs_git", None), ("specs_merged_branch", None),
+    ("lineage", None),
     ("inputs_read", []),
     ("spec_context", {"spec_paths": [], "in_scope_ids": None, "applicable_spec": None,
                       "applicable_ard": None, "ard_paths": [], "companion_run": None,
@@ -121,7 +211,7 @@ KEYS = [
     ("task_shape", None), ("clarifications", {"settled": [], "answers": []}),
     ("routing", {"block": None, "history": []}), ("class", None), ("coding_model", None),
     ("branch_answer", {"answer": None, "moves": [], "lines": []}), ("branch", None),
-    ("stash_ref", None), ("pre_existing_dirty", None), ("check_run_answers", []),
+    ("stash_before", None), ("stash_ref", None), ("pre_existing_dirty", None), ("check_run_answers", []),
     ("session_branch_lift", False),
     ("session_branch_created", None), ("test_decision", None), ("test_typechecks", []),
     ("clean_finish", True),
@@ -130,13 +220,15 @@ KEYS = [
                "test_report_file": None, "typecheck_file": None, "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
                "review_file": None, "claims_file": None, "failure_file": None,
                "snapshot_before": None, "snapshot_after": None}),
-    ("step_groups", []), ("pieces", []), ("reviews", []), ("patches", []),
+    ("tree", {"head": None, "snapshot": None, "when": None}),
+    ("step_groups", []), ("pieces", []), ("reviews", []), ("review_in_hand", None), ("patches", []),
     ("triage", []),
-    ("conformance", {"summary": None, "annotated": [], "gaps": [], "handoff_line": None}),
+    ("conformance", {"summary": None, "annotated": [], "gaps": [], "handoff_line": None, "note_blobs": {}}),
     ("other_repo_changes", []), ("assumptions", []), ("deferred", []),
     ("report", {"commands_run": [], "maintenance": [], "notices": [], "phase1_tasks": [],
                 "confirmed_cause": None}),
-    ("code_repo_outcome", None), ("replans_used", 0),
+    ("phase46_head", None), ("code_repo_outcome", None), ("replans_used", 0),
+    ("durable", {}),
 ]
 KEYS_LINE = " ".join(k + ("{%s}" % " ".join(d) if isinstance(d, dict) else "") for k, d in KEYS)
 
@@ -163,6 +255,47 @@ def guarded(path):
     """True only for the run-state file's own path, as git names it."""
     return (os.path.basename(path) == "implement-run.json"
             and os.path.basename(os.path.dirname(path)) == "dev-workflows")
+
+
+def durable_dir(f):
+    return os.path.join(os.path.dirname(f), DURABLE)
+
+
+def tombstone_path(f):
+    return os.path.join(os.path.dirname(f), TOMBSTONE)
+
+
+def inside(p, d):
+    """True where path p lies inside directory d."""
+    return os.path.abspath(p).startswith(os.path.abspath(d) + os.sep)
+
+
+def now():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def guard(d, session, verb):
+    """The session guard: exit 9 where the file's session and the caller's are both non-null and differ."""
+    held = d.get("session") if isinstance(d, dict) else None
+    if held is not None and session is not None and held != session:
+        raise Fail(9, "%s: the run-state file belongs to session %s, not this call's session %s -- another "
+                      "/implement took this run over; nothing written" % (verb, held, session))
+
+
+def clear(d):
+    """Delete the durable directory whole; True where there was one."""
+    if not os.path.lexists(d):
+        return False
+    if os.path.isdir(d) and not os.path.islink(d):
+        shutil.rmtree(d)
+    else:
+        os.unlink(d)
+    return True
+
+
+def format2(d):
+    v = d.get("format")
+    return isinstance(v, int) and not isinstance(v, bool) and v == 2
 
 
 class locked(object):
@@ -259,17 +392,33 @@ def typed(name, value, default, wrong):
     return value
 
 
-def refuse(what, extra, wrong):
-    """Exit 3 naming every key or member KEYS lacks and every wrong type at once, where there is any."""
-    if extra or wrong:
+def refuse(what, extra, wrong, own=()):
+    """Exit 3 naming every key or member KEYS lacks, every wrong type and every script-owned key
+    written at once, where there is any."""
+    if extra or wrong or own:
         raise Fail(3, "%s %s" % (what, "; ".join(
             x for x in ("holds unknown " + ", ".join(extra) if extra else "",
-                        "; ".join(wrong)) if x)))
+                        "; ".join(wrong),
+                        "writes %s, which the script alone writes" % ", ".join(own) if own else "") if x)))
+
+
+def owned(todo):
+    """The script-owned keys among (key, value) pairs: session, started, updated and durable, a path
+    into one, and tree.snapshot -- dotted, or as a member of an object given for tree."""
+    out = []
+    for key, v in todo:
+        parts = key.split(".")
+        if parts[0] in OWNED or parts[:2] == ["tree", "snapshot"]:
+            out.append(show(key))
+        elif key == "tree" and isinstance(v, dict) and "snapshot" in v:
+            out.append("tree.snapshot")
+    return out
 
 
 def merged(d):
     """The init object over KEYS' defaults: each key or member it omits takes its default. Exits 3 on a
-    key or member KEYS lacks, or one given with the wrong type, before anything is written."""
+    key or member KEYS lacks, one given with the wrong type, or a script-owned one, before anything is
+    written."""
     want = dict(KEYS)
     extra = [show(k) for k in d if k not in want]
     wrong = []
@@ -284,15 +433,15 @@ def merged(d):
             v = dict((m, typed("%s.%s" % (k, m), v[m], md, wrong) if m in v else copy.deepcopy(md))
                      for m, md in default.items())
         out[k] = v
-    refuse("init: the object", extra, wrong)
+    refuse("init: the object", extra, wrong, owned(list(d.items())))
     return out
 
 
-def checked(todo):
-    """set's pairs held to KEYS as init's object is: exits 3 on a key or member KEYS lacks, or a
-    top-level key or an object key's <key>.<member> given a value of another type than its default
-    fixes -- every slip in the call named at once, before anything is written. A deeper path or a
-    list entry is not checked."""
+def checked(todo, what="set: the call"):
+    """set's pairs held to KEYS as init's object is: exits 3 on a key or member KEYS lacks, a top-level
+    key or an object key's <key>.<member> given a value of another type than its default fixes, or a
+    script-owned key -- every slip in the call named at once, before anything is written. A deeper
+    path or a list entry is not checked."""
     want = dict(KEYS)
     extra, wrong = [], []
     for key, v in todo:
@@ -314,7 +463,7 @@ def checked(todo):
                 typed(key, v, default[parts[1]], wrong)
             else:
                 extra.append(show(key))
-    refuse("set: the call", extra, wrong)
+    refuse(what, extra, wrong, owned(todo))
 
 
 def resolve(d, key):
@@ -346,7 +495,24 @@ def resolve(d, key):
             raise Fail(2, "%s: %s is null -- write that key whole" % (show(key), show(here)))
 
 
-PAIRS = ("takes <key> '<json>' [<key> '<json>' ...], the key written again before each value, "
+def absolute(d, key):
+    """A dotted key the file holds, each list index in it written as its absolute index (-1 the last
+    entry's); resolve's exits where the file does not hold it."""
+    resolve(d, key)
+    o, out = d, []
+    for u in key.split("."):
+        if isinstance(o, list):
+            i = int(u)
+            i = i + len(o) if i < 0 else i
+            out.append(str(i))
+            o = o[i]
+        else:
+            out.append(u)
+            o = o[u]
+    return ".".join(out)
+
+
+PAIRS =("takes <key> '<json>' [<key> '<json>' ...], the key written again before each value, "
          "as in: append assumptions '\"a\"' assumptions '\"b\"'")
 
 
@@ -370,15 +536,43 @@ def emit(out, value):
     out.write((json.dumps(value, indent=1, ensure_ascii=False) + "\n").encode("utf-8"))
 
 
-def cmd_init(f, args, stdin, out):
+def read_tombstone(f):
+    """The tombstone's object, or None where there is none or it does not parse."""
+    try:
+        with open(tombstone_path(f), encoding="utf-8") as r:
+            t = json.load(r)
+    except FileNotFoundError:
+        return None
+    except ValueError:
+        return None
+    return t if isinstance(t, dict) else None
+
+
+def cmd_init(f, args, stdin, out, session):
+    if args == ["--resume"]:
+        return cmd_resume(f, stdin, out, session)
     if args not in ([], ["--recover"]):
-        raise Fail(2, "init takes only --recover")
+        raise Fail(2, "init takes only --recover or --resume")
+    recover = args == ["--recover"]
     d = parse(stdin.read(), "stdin")
-    if not isinstance(d, dict) or d.get("format", 1) != 1:
-        raise Fail(2, "init reads a JSON object on stdin, its format 1 where it gives one")
+    if not isinstance(d, dict) or d.get("format", 2) != 2:
+        raise Fail(2, "init reads a JSON object on stdin, its format 2 where it gives one")
     d = merged(d)
     os.makedirs(os.path.dirname(f), exist_ok=True)
+    dd = durable_dir(f)
+    removed_dir = False
     with locked(f):
+        if recover:
+            t = read_tombstone(f)
+            if t is not None and t.get("session") is not None and t.get("session") != session:
+                raise Fail(9, "init --recover: session %s finished this run at %s and removed its state (%s); "
+                              "nothing written" % (t.get("session"), t.get("at"), tombstone_path(f)))
+            try:
+                old = load(f)
+            except (Fail, OSError, ValueError):  # missing, unreadable or unparseable: no session to compare
+                old = None
+            if old is not None:
+                guard(old, session, "init --recover")
         s = None
         if os.path.lexists(f):
             here = os.path.dirname(f)
@@ -389,24 +583,119 @@ def cmd_init(f, args, stdin, out):
             s = "%s.stale-%s" % (f, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
             os.replace(f, s)
             out.write(("moved aside: %s\n" % s).encode("utf-8"))
-        if args == ["--recover"]:
+        held = False
+        if not recover:
+            held = os.path.isdir(dd) and not os.path.islink(dd) and bool(os.listdir(dd))
+            removed_dir = clear(dd)
+            if os.path.lexists(tombstone_path(f)):
+                os.unlink(tombstone_path(f))
+        if recover:
             d["assumptions"].append(
                 "This run's run-state file could not be read back, and was written again from what the run "
                 "still held: " + ("the file there was moved aside unread, as %s" % s if s else
                                   "no file was there, so none was moved aside"))
         elif s:
-            d["assumptions"].append("Run-state file an earlier run left, moved aside unread: %s" % s)
+            d["assumptions"].append("Run-state file an earlier run left, not resumed, moved aside%s: %s"
+                                    % (" and its durable copies deleted" if held else "", s))
+        d["session"] = session
+        d["started"] = d["updated"] = now()
         save(f, d)
+    if removed_dir:
+        out.write(("removed: %s\n" % dd).encode("utf-8"))
     out.write(("created: %s\n" % f).encode("utf-8"))
 
 
-def cmd_open(f, args, out):
+def append_to(d, key, v, verb):
+    """Append v to the list at key; a null key becomes a one-element list."""
+    o, k = resolve(d, key)
+    if o[k] is None:
+        o[k] = [v]
+    elif isinstance(o[k], list):
+        o[k].append(v)
+    else:
+        raise Fail(2, "%s: %s is not a list or null" % (verb, show(key)))
+
+
+def cmd_resume(f, stdin, out, session):
+    given = parse(stdin.read(), "stdin")
+    if not isinstance(given, dict):
+        raise Fail(2, "init --resume reads a JSON object on stdin, holding only %s" % ", ".join(RESUME_KEYS))
+    refuse("init --resume: the object", [show(k) for k in given if k not in RESUME_KEYS], [])
+    checked(list(given.items()), "init --resume: the object")
+    require(f)
+    want = dict(KEYS)
+    lines, originals = [], []
+    with locked(f):
+        d = load(f)
+        if not format2(d):
+            raise Fail(8, "the run-state file at %s is format %s, not 2 -- no resume takes it"
+                       % (f, json.dumps(d.get("format"))))
+        was, stopped = d.get("session"), d.get("updated")
+        for key, v in given.items():
+            if key in RESUME_APPENDED:
+                for x in v:
+                    append_to(d, key, x, "init --resume")
+                continue
+            o, k = resolve(d, key)
+            if isinstance(want.get(key), dict) and isinstance(v, dict) and isinstance(o[k], dict):
+                o[k] = dict(o[k])
+                o[k].update(v)
+            else:
+                o[k] = v
+        durable = d.get("durable") if isinstance(d.get("durable"), dict) else {}
+        for kp, p in walk(d):
+            if not isinstance(p, str) or os.path.isfile(p):
+                continue
+            o, k = resolve(d, kp)
+            e = durable.get(kp)
+            if (isinstance(e, dict) and e.get("of") == p and isinstance(e.get("copy"), str)
+                    and os.path.isfile(e["copy"])):
+                o[k] = e["copy"]
+                lines.append("repointed: %s: %s -> %s" % (kp, p, e["copy"]))
+                if (os.path.basename(p).startswith(TEMP_PREFIX) and os.path.lexists(p)
+                        and not os.path.isdir(p)):
+                    originals.append(p)
+            else:
+                o[k] = None
+                lines.append("cleared: %s: %s" % (kp, p))
+        step = d.get("step")
+        append_to(d, "assumptions", "Resumed at %s%s after session %s stopped at %s" % (
+            d.get("phase"), "" if step is None else " step %s" % step,
+            "unknown" if was is None else was, "unknown" if stopped is None else stopped), "init --resume")
+        d["session"] = session
+        d["updated"] = now()
+        save(f, d)
+        for p in originals:
+            try:
+                os.unlink(p)
+                lines.append("removed: %s" % p)
+            except OSError as e:
+                lines.append("left: %s -- %s" % (p, e))
+    for line in lines:
+        out.write((line + "\n").encode("utf-8"))
+    out.write(("resumed: %s\n" % f).encode("utf-8"))
+
+
+def cmd_peek(f, args, out):
+    if args:
+        raise Fail(2, "peek takes no argument")
+    d = load(f)
+    if not format2(d):
+        raise Fail(8, "the run-state file at %s is format %s, not 2 -- no resume takes it"
+                   % (f, json.dumps(d.get("format"))))
+    emit(out, d)
+
+
+def cmd_open(f, args, out, session):
     if len(args) != 1:
         raise Fail(2, "open takes the phase's name, as its heading names it")
     require(f)
     with locked(f):
         d = load(f)
+        guard(d, session, "open")
         d["phase"] = args[0]
+        d["step"] = None
+        d["updated"] = now()
         save(f, d)
     emit(out, d)
 
@@ -422,39 +711,98 @@ def cmd_read(f, args, out):
         raise Fail(2, "read takes at most one key")
 
 
-def named(d):
-    """Each path the file names that a set may stop naming: every `files` member's, each `step_groups`
-    entry's report, each `reviews` entry's diff and return file and each `patches` entry's path, in that
-    order, each once."""
+def walk(d):
+    """Each path location the file holds, as (key path, value), whatever the value: every `files`
+    member, each `step_groups` entry's report, each `reviews` entry's diff and return file and each
+    `patches` entry's path, in that order, then `lineage.check_file` -- a list entry by its absolute
+    index, each where its container holds it."""
     out = []
     files = d.get("files")
     if isinstance(files, dict):
-        out += [p for p in files.values() if isinstance(p, str)]
-    groups, reviews, patches = d.get("step_groups"), d.get("reviews"), d.get("patches")
-    for g in groups if isinstance(groups, list) else []:
-        if isinstance(g, dict) and isinstance(g.get("report"), str):
-            out.append(g["report"])
-    for v in reviews if isinstance(reviews, list) else []:
-        if isinstance(v, dict):
-            out += [v[k] for k in ("diff_file", "return_file") if isinstance(v.get(k), str)]
-    for p in patches if isinstance(patches, list) else []:
-        if isinstance(p, dict) and isinstance(p.get("path"), str):
-            out.append(p["path"])
+        out += [("files.%s" % m, v) for m, v in files.items()]
+    for name, members in (("step_groups", ("report",)), ("reviews", ("diff_file", "return_file")),
+                          ("patches", ("path",))):
+        entries = d.get(name)
+        for i, e in enumerate(entries if isinstance(entries, list) else []):
+            if isinstance(e, dict):
+                out += [("%s.%d.%s" % (name, i, m), e[m]) for m in members if m in e]
+    lineage = d.get("lineage")
+    if isinstance(lineage, dict) and "check_file" in lineage:
+        out.append(("lineage.check_file", lineage["check_file"]))
+    return out
+
+
+def named(d):
+    """Each path the file names that a set may stop naming: every `files` member's, each `step_groups`
+    entry's report, each `reviews` entry's diff and return file and each `patches` entry's path, in that
+    order, each once -- walk()'s locations but `lineage.check_file`."""
     seen, once = set(), []
-    for p in out:
-        if os.path.abspath(p) not in seen:
+    for k, p in walk(d):
+        if k != "lineage.check_file" and isinstance(p, str) and os.path.abspath(p) not in seen:
             seen.add(os.path.abspath(p))
             once.append(p)
     return once
 
 
-def cmd_set(f, args, stdin, out):
+def copies_named(d):
+    """Every path a path location, tree.snapshot or a durable entry's copy names."""
+    out = set(os.path.abspath(p) for _, p in walk(d) if isinstance(p, str))
+    tree = d.get("tree")
+    if isinstance(tree, dict) and isinstance(tree.get("snapshot"), str):
+        out.add(os.path.abspath(tree["snapshot"]))
+    durable = d.get("durable")
+    for e in durable.values() if isinstance(durable, dict) else []:
+        if isinstance(e, dict) and isinstance(e.get("copy"), str):
+            out.add(os.path.abspath(e["copy"]))
+    return out
+
+
+def drop(d):
+    """Drop each durable entry whose label is a key path that names neither its `of` nor its copy any
+    more -- never a note: entry or the tree.snapshot entry -- and return the dropped copies no path
+    location and no other entry still names, to delete once the write lands."""
+    durable = d.get("durable")
+    if not isinstance(durable, dict):
+        return []
+    gone = []
+    for label in list(durable):
+        if label.startswith(NOTE) or label == "tree.snapshot":
+            continue
+        e = durable[label]
+        try:
+            o, k = resolve(d, label)
+            v = o[k]
+        except Fail:
+            v = None
+        if isinstance(e, dict) and v is not None and v in (e.get("of"), e.get("copy")):
+            continue
+        del durable[label]
+        if isinstance(e, dict) and isinstance(e.get("copy"), str):
+            gone.append(e["copy"])
+    still = copies_named(d)
+    return [c for c in gone if os.path.abspath(c) not in still]
+
+
+def unlink_each(paths, out):
+    for p in paths:
+        try:
+            os.unlink(p)
+            out.write(("removed: %s\n" % p).encode("utf-8"))
+        except FileNotFoundError:
+            pass
+        except OSError as e:
+            out.write(("left: %s -- %s\n" % (p, e)).encode("utf-8"))
+
+
+def cmd_set(f, args, stdin, out, session):
     todo = pairs(args, stdin, "set")
     checked(todo)
     require(f)
     want = dict(KEYS)
+    dd = durable_dir(f)
     with locked(f):
         d = load(f)
+        guard(d, session, "set")
         before = named(d)
         for key, v in todo:
             o, k = resolve(d, key)
@@ -463,42 +811,110 @@ def cmd_set(f, args, stdin, out):
                 o[k].update(v)
             else:
                 o[k] = v
+        gone = drop(d)
+        d["updated"] = now()
         save(f, d)
         after = set(os.path.abspath(p) for p in named(d))
         for p in before:
             a = os.path.abspath(p)
             if (a in after or not os.path.basename(a).startswith(TEMP_PREFIX) or not os.path.isfile(a)
-                    or os.path.islink(a)):
+                    or os.path.islink(a) or inside(a, dd)):
                 continue
             try:
                 os.unlink(a)
                 out.write(("removed: %s\n" % p).encode("utf-8"))
             except OSError as e:
                 out.write(("left: %s -- %s\n" % (p, e)).encode("utf-8"))
+        unlink_each([c for c in gone if inside(c, dd)], out)
 
 
-def cmd_append(f, args, stdin):
+def cmd_append(f, args, stdin, session):
     todo = pairs(args, stdin, "append")
     lists = [show(key) for key, v in todo if isinstance(v, list)]
     if lists:
         raise Fail(2, "append: the value for %s is a JSON array, which append would add as one entry -- "
                    "give one value per pair (append %s '<a>' %s '<b>'), or write the whole list with "
                    "set %s '<json>'" % (", ".join(lists), lists[0], lists[0], lists[0]))
+    refuse("append: the call", [], [], owned(todo))
     require(f)
     with locked(f):
         d = load(f)
+        guard(d, session, "append")
+        stamp = now()
         for key, v in todo:
-            o, k = resolve(d, key)
-            if o[k] is None:
-                o[k] = [v]
-            elif isinstance(o[k], list):
-                o[k].append(v)
-            else:
-                raise Fail(2, "append: %s is not a list or null" % key)
+            if key == "step_groups" and isinstance(v, dict):
+                v = dict(v, started=stamp)
+            append_to(d, key, v, "append")
+        d["updated"] = stamp
         save(f, d)
 
 
-def cmd_remove(f, args, out):
+def copy_name(label):
+    """The one copy file name a label has in the durable directory: the label made safe, then a hash of
+    it, so two labels never share one. It never begins `dw-impl-`, so no temp-file removal takes it."""
+    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", label).strip("._-")[:60] or "copy"
+    return "%s-%s" % (safe, hashlib.sha256(label.encode("utf-8")).hexdigest()[:12])
+
+
+def cmd_persist(f, args, out, session):
+    if len(args) != 2:
+        raise Fail(2, "persist takes <label> <file>: a key path, or note:<path>, then the file to copy")
+    label, src = args
+    try:
+        label.encode("utf-8")
+        src.encode("utf-8")
+    except UnicodeError:
+        raise Fail(2, "persist: the label or the file is not UTF-8")
+    note = label.startswith(NOTE)
+    if note and label == NOTE:
+        raise Fail(2, "persist: note: takes the note's path, as note:<path>")
+    if not os.path.isfile(src):
+        raise Fail(2, "persist: %s is no file to copy" % show(src))
+    require(f)
+    dd = durable_dir(f)
+    with locked(f):
+        d = load(f)
+        guard(d, session, "persist")
+        durable = d.get("durable")
+        if not isinstance(durable, dict):
+            raise Fail(3, "persist: the run-state file holds no durable object")
+        if not note:
+            label = absolute(d, label)
+            if label != "tree.snapshot" and label not in dict(walk(d)):
+                raise Fail(3, "persist: %s names no path location -- a files member, a step_groups report, a "
+                              "reviews diff or return file, a patches path, lineage.check_file or tree.snapshot"
+                           % show(label))
+        os.makedirs(dd, exist_ok=True)
+        target = os.path.join(dd, copy_name(label))
+        try:
+            r = open(src, "rb")
+        except OSError as e:
+            raise Fail(2, "persist: cannot read %s: %s" % (show(src), e))
+        fd, t = tempfile.mkstemp(dir=dd, prefix=".persist.")
+        try:
+            with r, os.fdopen(fd, "wb") as w:
+                shutil.copyfileobj(r, w)
+            os.replace(t, target)
+        except BaseException:
+            if os.path.exists(t):
+                os.unlink(t)
+            raise
+        old = durable.get(label)
+        durable[label] = {"copy": target, "of": src}
+        if label == "tree.snapshot":
+            d["tree"]["snapshot"] = target
+        d["updated"] = now()
+        save(f, d)
+        if (isinstance(old, dict) and isinstance(old.get("copy"), str) and old["copy"] != target
+                and inside(old["copy"], dd) and os.path.abspath(old["copy"]) not in copies_named(d)):
+            try:  # silent: persist prints the copy's path alone
+                os.unlink(old["copy"])
+            except OSError:
+                pass
+    out.write(("%s\n" % target).encode("utf-8"))
+
+
+def cmd_remove(f, args, out, session):
     keep = set()
     i = 0
     while i < len(args):
@@ -509,10 +925,13 @@ def cmd_remove(f, args, out):
             raise Fail(2, "remove takes only --keep <path> options")
     if not guarded(f):
         raise Fail(4, "refusing to remove %s: not the run-state file's path" % f)
+    dd = durable_dir(f)
     try:
         os.lstat(f)
     except FileNotFoundError:
-        out.write(("no run-state file at %s -- nothing to remove\n" % f).encode("utf-8"))
+        if clear(dd):
+            out.write(("removed: %s\n" % dd).encode("utf-8"))
+        out.write(("no run-state file at %s -- nothing else to remove\n" % f).encode("utf-8"))
         return
     except OSError as e:
         raise Fail(4, "cannot reach the run-state file at %s: %s" % (f, e))
@@ -521,6 +940,7 @@ def cmd_remove(f, args, out):
             d = load(f)
         except Fail:
             d = {}
+        guard(d, session, "remove")
         paths = []
         files = d.get("files")
         if isinstance(files, dict):
@@ -539,6 +959,8 @@ def cmd_remove(f, args, out):
             paths.append(lineage["check_file"])
         for p in paths:
             a = os.path.abspath(p)
+            if inside(a, dd):
+                continue  # the durable directory goes whole, below
             if a in keep:
                 out.write(("kept: %s\n" % p).encode("utf-8"))
             elif (os.path.basename(a).startswith(TEMP_PREFIX) and os.path.isfile(a)
@@ -548,33 +970,45 @@ def cmd_remove(f, args, out):
             elif os.path.lexists(a):
                 out.write(("left: %s -- not a %s* temp file\n" % (p, TEMP_PREFIX)).encode("utf-8"))
         os.unlink(f)
+        save(tombstone_path(f), {"session": session, "at": now()})
+        removed_dir = clear(dd)
+    if removed_dir:
+        out.write(("removed: %s\n" % dd).encode("utf-8"))
     out.write(("removed: %s\n" % f).encode("utf-8"))
 
 
-def run(argv, stdin, out, repo="."):
+VERBS = ("init", "open", "read", "peek", "set", "append", "persist", "remove")
+
+
+def run(argv, stdin, out, repo=".", session=None):
+    """One call; session is the caller's CLAUDE_CODE_SESSION_ID, None where it has none."""
     if argv[:1] == ["--repo"]:
         if len(argv) < 2:
             raise Fail(2, "--repo takes a directory")
         repo, argv = argv[1], argv[2:]
     if not argv:
-        raise Fail(2, "usage: run-state.py [--repo <dir>] init|open|read|set|append|remove ...")
+        raise Fail(2, "usage: run-state.py [--repo <dir>] %s ..." % "|".join(VERBS))
     verb, args = argv[0], argv[1:]
-    if verb not in ("init", "open", "read", "set", "append", "remove"):
+    if verb not in VERBS:
         raise Fail(2, "unknown subcommand %s" % verb)
     f = state_path(repo)
     try:
         if verb == "init":
-            cmd_init(f, args, stdin, out)
+            cmd_init(f, args, stdin, out, session)
         elif verb == "open":
-            cmd_open(f, args, out)
+            cmd_open(f, args, out, session)
         elif verb == "read":
             cmd_read(f, args, out)
+        elif verb == "peek":
+            cmd_peek(f, args, out)
         elif verb == "set":
-            cmd_set(f, args, stdin, out)
+            cmd_set(f, args, stdin, out, session)
         elif verb == "append":
-            cmd_append(f, args, stdin)
+            cmd_append(f, args, stdin, session)
+        elif verb == "persist":
+            cmd_persist(f, args, out, session)
         else:
-            cmd_remove(f, args, out)
+            cmd_remove(f, args, out, session)
     except OSError as e:
         raise Fail(4, "%s: %s" % (f, e))
 
@@ -596,11 +1030,12 @@ def selftest():
 
     said = [""]  # the last call's error message, "" where it succeeded
 
-    def call(argv, stdin="", repo=None):
+    def call(argv, stdin="", repo=None, session=None):
+        # the session is passed, never read from the environment
         out = io.BytesIO()
         said[0] = ""
         try:
-            run((["--repo", repo] if repo else []) + argv, io.StringIO(stdin), out)
+            run((["--repo", repo] if repo else []) + argv, io.StringIO(stdin), out, session=session)
             code = 0
         except Fail as e:
             code = e.code
@@ -609,9 +1044,16 @@ def selftest():
 
     def fresh(**over):
         # only what a caller holds: init gives every other key its default
-        d = {"format": 1, "assumptions": ["seeded"]}
+        d = {"format": 2, "assumptions": ["seeded"]}
         d.update(over)
         return d
+
+    def clean_env(**over):
+        # a child's environment with no session in it, so main() writes as a null session unless told
+        env = dict(os.environ)
+        env.pop("CLAUDE_CODE_SESSION_ID", None)
+        env.update(over)
+        return env
 
     me = os.path.abspath(__file__)
     impl = os.path.join(os.path.dirname(os.path.dirname(me)), "commands", "implement.md")
@@ -658,7 +1100,7 @@ def selftest():
               and d2["reviews"] == [re_])
         check("init refuses pieces given as a string", call(["init"], json.dumps(fresh(pieces="x")), repo)[0] == 3)
         check("init refuses a non-object", call(["init"], "[1]", repo)[0] == 2)
-        check("init refuses a format other than 1", call(["init"], json.dumps(fresh(format=2)), repo)[0] == 2)
+        check("init refuses a format other than 2", call(["init"], json.dumps(fresh(format=1)), repo)[0] == 2)
 
         # a nested member default: a given object keeps its members and takes the rest's defaults
         task_x = os.path.join(tmp, "dw-impl-task-x")
@@ -699,8 +1141,9 @@ def selftest():
         check("one stale file kept, the older ones removed", len(stale) == 1 and stale[0] not in olds)
         check("unrelated stale-named file left", os.path.exists(os.path.join(here, "implement-run.json.stale-notes.txt")))
         a = json.load(open(f, encoding="utf-8"))["assumptions"]
-        check("move-aside named once, as an earlier run's", len(a) == 2 and a[0] == "seeded"
-              and a[1].endswith(stale[0]) and "an earlier run left" in a[1])
+        check("move-aside named once, as an earlier run's, not resumed", len(a) == 2 and a[0] == "seeded"
+              and a[1] == "Run-state file an earlier run left, not resumed, moved aside: %s"
+              % os.path.join(here, stale[0]))
 
         # an unparseable file: its own code, and --recover names it as this run's own
         with open(f, "w", encoding="utf-8") as w:
@@ -888,14 +1331,15 @@ def selftest():
 
         # the lock: parallel appends keep every entry
         procs = [subprocess.Popen([sys.executable, me, "--repo", repo, "append", "report.notices", json.dumps("n%d" % i)],
-                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) for i in range(24)]
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=clean_env())
+                 for i in range(24)]
         codes = [p.wait() for p in procs]
         notices = json.load(open(f, encoding="utf-8"))["report"]["notices"]
         check("parallel appends keep every entry", codes == [0] * 24
               and sorted(notices) == sorted("n%d" % i for i in range(24)))
 
         # input as UTF-8 under a C locale, UTF-8 mode off: argv and stdin
-        env = dict(os.environ, LC_ALL="C", LANG="C", PYTHONUTF8="0", PYTHONIOENCODING="")
+        env = clean_env(LC_ALL="C", LANG="C", PYTHONUTF8="0", PYTHONIOENCODING="")
         env.pop("PYTHONIOENCODING")
         r1 = subprocess.run([sys.executable, me, "--repo", repo, "set", "branch", json.dumps("feat/ünï", ensure_ascii=False)],
                             env=env, capture_output=True)
@@ -916,10 +1360,12 @@ def selftest():
 
         # invalid UTF-8 in argv: exit 2, the file unchanged
         before = open(f, "rb").read()
-        r = subprocess.run([sys.executable, me, "--repo", repo, "set", "branch", b'"\xff"'], capture_output=True)
+        r = subprocess.run([sys.executable, me, "--repo", repo, "set", "branch", b'"\xff"'], capture_output=True,
+                           env=clean_env())
         check("invalid UTF-8 in argv exits 2, the file unchanged", r.returncode == 2
               and b"Traceback" not in r.stderr and open(f, "rb").read() == before)
-        r = subprocess.run([sys.executable, me, "--repo", repo, "read", b"files.\xff"], capture_output=True)
+        r = subprocess.run([sys.executable, me, "--repo", repo, "read", b"files.\xff"], capture_output=True,
+                           env=clean_env())
         check("an invalid-UTF-8 key exits 3, shown as \\xff", r.returncode == 3
               and b"files.\\xff" in r.stderr and b"udcff" not in r.stderr)
 
@@ -1038,6 +1484,383 @@ def selftest():
                        capture_output=True)
         check("a worktree's file is its own", state_path(wt) != f and guarded(state_path(wt)))
 
+        # ---- format 2: the stamps, the session guard, peek, persist, the tombstone, init --resume ----
+        g = os.path.join(tmp, "g5 [r] q")
+        subprocess.run(["git", "init", "-q", g], check=True)
+        gf = state_path(g)
+        gd = os.path.dirname(gf)
+        dd = os.path.join(gd, "implement-run.d")
+        tomb_p = os.path.join(gd, "implement-run.done")
+        stamp_re = re.compile(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+        OLD = "2000-01-01T00:00:00Z"
+
+        def st():
+            with open(gf, encoding="utf-8") as r:
+                return json.load(r)
+
+        def poke(**kv):
+            # the file written directly, as a dead run or another session left it
+            d = st()
+            d.update(kv)
+            with open(gf, "w", encoding="utf-8") as w:
+                json.dump(d, w)
+
+        def mkf(name, text):
+            p = os.path.join(tmp, name)
+            with open(p, "w", encoding="utf-8") as w:
+                w.write(text)
+            return p
+
+        def stamped(v):
+            return isinstance(v, str) and bool(stamp_re.match(v))
+
+        def git_path(rel):
+            p = subprocess.run(["git", "-C", g, "rev-parse", "--git-path", rel], capture_output=True, text=True,
+                               check=True).stdout.rstrip("\n")
+            return p if os.path.isabs(p) else os.path.join(os.path.abspath(g), p)
+
+        check("the durable directory and the tombstone are git's own paths",
+              git_path("dev-workflows/implement-run.d") == dd and git_path("dev-workflows/implement-run.done") == tomb_p)
+        check("KEYS_LINE names every format-2 key", dict(KEYS)["format"] == 2
+              and all(" %s " % k in " %s " % KEYS_LINE for k in ("session", "started", "updated", "step",
+                                                                 "review_in_hand", "phase46_head", "run_environment",
+                                                                 "stash_before", "stopping"))
+              and " tree{head snapshot when} " in KEYS_LINE and " durable{}" in KEYS_LINE
+              and " note_blobs}" in KEYS_LINE and "code_handoff_choice" not in KEYS_LINE)
+
+        # peek: 1, 5 and 8; on a format-2 file, the file printed and nothing changed, moved or locked
+        code, out = call(["peek"], repo=g)
+        check("peek with no file exits 1, creating nothing", code == 1 and not os.path.exists(gd))
+        os.makedirs(gd)
+        with open(gf, "w", encoding="utf-8") as w:
+            w.write("{broken")
+        check("peek on a file that does not parse exits 5", call(["peek"], repo=g)[0] == 5)
+        with open(gf, "w", encoding="utf-8") as w:
+            json.dump({"format": 1, "phase": "Phase 3B"}, w)
+        code, out = call(["peek"], repo=g)
+        check("peek on a format-1 file exits 8, printing nothing", code == 8 and out == "")
+        check("peek takes no argument", call(["peek", "phase"], repo=g)[0] == 2)
+        os.unlink(gf)
+
+        # init: format 2, session and started stamped, every format-2 key at its default
+        code, _ = call(["init"], json.dumps(fresh()), g)
+        check("init with a null session writes session null", code == 0 and st()["session"] is None)
+        code, _ = call(["init"], json.dumps(fresh()), g, session="A")
+        d = st()
+        started0 = d["started"]
+        check("init writes format 2", code == 0 and d["format"] == 2)
+        check("init stamps session, started and updated", d["session"] == "A" and stamped(d["started"])
+              and d["updated"] == d["started"])
+        check("init gives the format-2 keys their defaults", d["step"] is None and d["review_in_hand"] is None
+              and d["tree"] == {"head": None, "snapshot": None, "when": None} and d["phase46_head"] is None
+              and d["durable"] == {} and d["run_environment"] is None and d["stash_before"] is None
+              and d["stopping"] is None and d["conformance"]["note_blobs"] == {})
+        check("tree is never null", call(["set", "tree", "null"], repo=g, session="A")[0] == 3)
+        lock = os.path.join(gd, LOCK)
+        os.unlink(lock)
+        raw, mtime = open(gf, "rb").read(), os.stat(gf).st_mtime_ns
+        code, out = call(["peek"], repo=g, session="B")
+        check("peek prints a format-2 file, unguarded, changing and locking nothing", code == 0
+              and json.loads(out) == json.loads(raw.decode("utf-8")) and open(gf, "rb").read() == raw
+              and os.stat(gf).st_mtime_ns == mtime and not os.path.exists(lock))
+
+        # every call that changes the file stamps updated; only init touches session and started
+        for verb, argv in (("set", ["set", "class", '"SIMPLE"']), ("open", ["open", "Phase 1.5"]),
+                           ("append", ["append", "deferred", '"x"'])):
+            poke(updated=OLD)
+            code, _ = call(argv, repo=g, session="A")
+            d = st()
+            check("%s stamps updated, leaving session and started" % verb, code == 0 and stamped(d["updated"])
+                  and d["updated"] != OLD and d["session"] == "A" and d["started"] == started0)
+        poke(updated=OLD)
+        code, _ = call(["set", "class", '"MODERATE"'], repo=g)
+        d = st()
+        check("a null-session write passes the guard, leaving session as it was", code == 0
+              and d["class"] == "MODERATE" and d["session"] == "A" and d["updated"] != OLD)
+        poke(session=None)
+        code, _ = call(["set", "class", '"SIMPLE"'], repo=g, session="B")
+        check("a file whose session is null takes another caller's write, its session left null", code == 0
+              and st()["session"] is None)
+        poke(session="A")
+
+        # the guard: each guarded call exits 9 on "A" against "B", changing nothing
+        src = mkf("dw-impl-src-g", "source")
+        call(["set", "files.summary_file", json.dumps(src)], repo=g, session="A")
+        before, names = open(gf, "rb").read(), sorted(os.listdir(gd))
+        for name, argv, stdin in (("open", ["open", "Phase 2A"], ""), ("set", ["set", "class", '"X"'], ""),
+                                  ("append", ["append", "deferred", '"y"'], ""),
+                                  ("persist", ["persist", "files.summary_file", src], ""),
+                                  ("remove", ["remove"], ""),
+                                  ("init --recover", ["init", "--recover"], json.dumps(fresh()))):
+            code, _ = call(argv, stdin, g, session="B")
+            check("%s exits 9 against another session's file, naming it" % name, code == 9 and "session A" in said[0])
+        check("a call the guard refuses changes nothing", open(gf, "rb").read() == before
+              and sorted(os.listdir(gd)) == names and os.path.isfile(src))
+        check("read is not guarded", call(["read", "class"], repo=g, session="B")[0] == 0)
+        code, _ = call(["init"], json.dumps(fresh()), g, session="C")
+        check("plain init is not guarded", code == 0 and st()["session"] == "C")
+
+        # the script's own keys: set, append and init refuse each, tree.snapshot in both forms
+        before = open(gf, "rb").read()
+        for argv in (["set", "session", '"C"'], ["set", "started", json.dumps(OLD)], ["set", "updated", json.dumps(OLD)],
+                     ["set", "durable", "{}"], ["set", "tree.snapshot", '"x"'], ["set", "tree", '{"snapshot": "x"}']):
+            code, _ = call(argv, repo=g, session="C")
+            check("set refuses %s %s, the script's own" % (argv[1], argv[2]), code == 3
+                  and "the script alone writes" in said[0])
+        code, _ = call(["set"], json.dumps({"tree": {"head": "h", "snapshot": "x"}}), g, session="C")
+        check("set's stdin object refuses tree.snapshot as a member of tree", code == 3)
+        check("append refuses a script-owned key", call(["append", "session", '"x"'], repo=g, session="C")[0] == 3)
+        check("init refuses a script-owned key in its object",
+              call(["init"], json.dumps(fresh(session="X")), g, session="C")[0] == 3
+              and call(["init"], json.dumps(fresh(tree={"snapshot": "x"})), g, session="C")[0] == 3)
+        check("a refused script-owned write changes nothing", open(gf, "rb").read() == before)
+
+        # open resets step; append step_groups stamps started
+        call(["set", "step", '"3B.6"'], repo=g, session="C")
+        code, out = call(["open", "Phase 3.5"], repo=g, session="C")
+        d = st()
+        check("open sets phase and resets step to null", code == 0 and json.loads(out)["step"] is None
+              and d["step"] is None and d["phase"] == "Phase 3.5")
+        code, _ = call(["append", "step_groups", json.dumps({"steps": [1], "status": None, "report": None})],
+                       repo=g, session="C")
+        call(["append"], json.dumps({"step_groups": {"steps": [2], "status": None, "report": None}}), g, session="C")
+        sg = st()["step_groups"]
+        check("append step_groups stamps each entry's started", code == 0 and len(sg) == 2
+              and all(stamped(e.get("started")) for e in sg) and sg[0]["steps"] == [1])
+
+        # persist: the copy's path printed, {copy, of} recorded, a -1 normalised
+        rep = mkf("dw-impl-code-g1", "report one")
+        call(["set", "step_groups.-1.report", json.dumps(rep)], repo=g, session="C")
+        poke(updated=OLD)
+        code, out = call(["persist", "step_groups.-1.report", rep], repo=g, session="C")
+        rc = out.rstrip("\n")
+        d = st()
+        check("persist prints the copy's absolute path, in the durable directory", code == 0 and out == rc + "\n"
+              and os.path.isabs(rc) and os.path.dirname(rc) == dd and open(rc, encoding="utf-8").read() == "report one")
+        check("persist records {copy, of} under the label, its -1 normalised to the absolute index",
+              d["durable"] == {"step_groups.1.report": {"copy": rc, "of": rep}})
+        check("persist stamps updated", stamped(d["updated"]) and d["updated"] != OLD)
+        s1 = mkf("dw-impl-snap-g1", "snap one")
+        code, out = call(["persist", "tree.snapshot", s1], repo=g, session="C")
+        sc = out.rstrip("\n")
+        d = st()
+        check("persist tree.snapshot writes tree.snapshot, to the copy's path", code == 0
+              and d["tree"]["snapshot"] == sc and d["durable"]["tree.snapshot"] == {"copy": sc, "of": s1})
+        code, _ = call(["set", "tree", json.dumps({"head": "abc", "when": "before commit"})], repo=g, session="C")
+        d = st()
+        check("set tree's head and when keeps tree.snapshot, its entry and its copy", code == 0
+              and d["tree"] == {"head": "abc", "snapshot": sc, "when": "before commit"}
+              and d["durable"]["tree.snapshot"]["copy"] == sc and os.path.isfile(sc))
+        s2 = mkf("dw-impl-snap-g2", "snap two")
+        code, out = call(["persist", "tree.snapshot", s2], repo=g, session="C")
+        d = st()
+        check("the next persist tree.snapshot replaces the copy", code == 0 and d["tree"]["snapshot"] == out.rstrip("\n")
+              and open(d["tree"]["snapshot"], encoding="utf-8").read() == "snap two"
+              and d["durable"]["tree.snapshot"]["of"] == s2 and len(os.listdir(dd)) == 2)
+        check("persist refuses a file that is not there",
+              call(["persist", "files.plan_file", os.path.join(tmp, "absent-g")], repo=g, session="C")[0] == 2)
+        check("persist refuses a key the file does not hold",
+              call(["persist", "files.plan", s2], repo=g, session="C")[0] == 3)
+        check("persist refuses a key that names no path", call(["persist", "class", s2], repo=g, session="C")[0] == 3)
+        check("persist refuses a list entry the file lacks",
+              call(["persist", "step_groups.9.report", s2], repo=g, session="C")[0] == 2)
+        check("persist takes a label and a file", call(["persist", "files.plan_file"], repo=g, session="C")[0] == 2)
+
+        # set drops a copy whose key has moved on; a note: entry and tree.snapshot's stay
+        pp = mkf("dw-impl-plan-g1", "plan")
+        call(["set", "files.pending_plan_file", json.dumps(pp)], repo=g, session="C")
+        pc = call(["persist", "files.pending_plan_file", pp], repo=g, session="C")[1].rstrip("\n")
+        note = mkf("note g.md", "a note")
+        nc = call(["persist", "note:" + note, note], repo=g, session="C")[1].rstrip("\n")
+        code, _ = call(["set", "class", '"SIGNIFICANT"'], repo=g, session="C")
+        d = st()
+        check("a set that leaves a key naming its of keeps its entry and copy", code == 0
+              and "files.pending_plan_file" in d["durable"] and os.path.isfile(pc))
+        code, out = call(["set", "files.pending_plan_file", "null"], repo=g, session="C")
+        d = st()
+        check("pending_plan_file set to null drops its entry and deletes its copy", code == 0
+              and "files.pending_plan_file" not in d["durable"] and not os.path.exists(pc)
+              and "removed: %s" % pc in out)
+        check("a note: entry survives set", d["durable"].get("note:" + note) == {"copy": nc, "of": note}
+              and os.path.isfile(nc))
+        check("tree.snapshot's entry survives set", d["durable"]["tree.snapshot"]["copy"] == sc and os.path.isfile(sc))
+        sm1, sm2 = mkf("dw-impl-sum-g1", "a"), mkf("dw-impl-sum-g2", "b")
+        call(["set", "files.summary_file", json.dumps(sm1)], repo=g, session="C")
+        smc = call(["persist", "files.summary_file", sm1], repo=g, session="C")[1].rstrip("\n")
+        code, out = call(["set", "files.summary_file", json.dumps(sm2)], repo=g, session="C")
+        check("a key set to another path drops its entry and deletes its copy", code == 0
+              and "files.summary_file" not in st()["durable"] and not os.path.exists(smc))
+        cf = mkf("dw-impl-claims-g1", "claims")
+        call(["set", "files.claims_file", json.dumps(cf)], repo=g, session="C")
+        cc = call(["persist", "files.claims_file", cf], repo=g, session="C")[1].rstrip("\n")
+        call(["set", "files.review_file", json.dumps(cc)], repo=g, session="C")
+        code, out = call(["set", "files.claims_file", "null"], repo=g, session="C")
+        check("a dropped entry's copy that another key still names is kept", code == 0
+              and "files.claims_file" not in st()["durable"] and os.path.isfile(cc))
+
+        # the tombstone: init --recover exits 9 where it names another session; --recover keeps the directory
+        held = sorted(os.listdir(dd))
+        with open(tomb_p, "w", encoding="utf-8") as w:
+            json.dump({"session": "Z", "at": OLD}, w)
+        before = open(gf, "rb").read()
+        code, _ = call(["init", "--recover"], json.dumps(fresh()), g, session="C")
+        check("init --recover exits 9 against a tombstone from another session, naming it", code == 9
+              and "session Z" in said[0] and open(gf, "rb").read() == before)
+        check("init --recover with a null session exits 9 against a tombstone naming one",
+              call(["init", "--recover"], json.dumps(fresh()), g)[0] == 9)
+        with open(tomb_p, "w", encoding="utf-8") as w:
+            json.dump({"session": None, "at": OLD}, w)
+        code, _ = call(["init", "--recover"], json.dumps(fresh()), g, session="C")
+        d = st()
+        check("init --recover passes a tombstone whose session is null, leaving it", code == 0
+              and os.path.isfile(tomb_p))
+        check("init --recover keeps the durable directory, and durable starts empty",
+              sorted(os.listdir(dd)) == held and d["durable"] == {} and d["session"] == "C")
+        with open(tomb_p, "w", encoding="utf-8") as w:
+            json.dump({"session": "C", "at": OLD}, w)
+        check("init --recover passes a tombstone of its own session",
+              call(["init", "--recover"], json.dumps(fresh()), g, session="C")[0] == 0)
+
+        # plain init empties the durable directory and removes the tombstone
+        code, out = call(["init"], json.dumps(fresh()), g, session="C")
+        a = st()["assumptions"]
+        moved = sorted(n for n in os.listdir(gd) if STALE_RE.match(n))
+        check("plain init empties the durable directory and removes the tombstone", code == 0
+              and (not os.path.exists(dd) or os.listdir(dd) == []) and not os.path.lexists(tomb_p)
+              and "removed: %s" % dd in out)
+        check("plain init's line says the earlier run's durable copies were deleted", len(moved) == 1 and len(a) == 2
+              and a[-1] == "Run-state file an earlier run left, not resumed, moved aside and its durable copies "
+                           "deleted: %s" % os.path.join(gd, moved[0]))
+
+        # remove: the durable directory goes whole, a path inside it skipped unprinted, a tombstone left
+        pf = mkf("dw-impl-plan-g2", "plan two")
+        call(["set", "files.plan_file", json.dumps(pf)], repo=g, session="C")
+        pfc = call(["persist", "files.plan_file", pf], repo=g, session="C")[1].rstrip("\n")
+        call(["set", "files.review_file", json.dumps(pfc)], repo=g, session="C")
+        code, out = call(["remove"], repo=g, session="C")
+        t = json.load(open(tomb_p, encoding="utf-8")) if os.path.isfile(tomb_p) else None
+        check("remove takes the file, its temp files and the durable directory", code == 0 and not os.path.exists(gf)
+              and not os.path.exists(dd) and not os.path.exists(pf) and "removed: %s" % dd in out)
+        check("remove skips a path inside the durable directory, unprinted", pfc not in out)
+        check("remove leaves a tombstone naming its session and when", isinstance(t, dict)
+              and sorted(t) == ["at", "session"] and t["session"] == "C" and stamped(t["at"]))
+        os.unlink(tomb_p)
+        os.makedirs(dd)
+        open(os.path.join(dd, "orphan"), "w").close()
+        code, out = call(["remove"], repo=g, session="C")
+        check("remove with no file deletes the durable directory and writes no tombstone", code == 0
+              and not os.path.exists(dd) and not os.path.lexists(tomb_p))
+
+        # init --resume: 1, 5 and 8
+        code, _ = call(["init", "--resume"], "{}", g, session="E")
+        check("init --resume with no file exits 1, creating nothing", code == 1 and not os.path.exists(gf))
+        with open(gf, "w", encoding="utf-8") as w:
+            w.write("{broken")
+        check("init --resume on a file that does not parse exits 5",
+              call(["init", "--resume"], "{}", g, session="E")[0] == 5)
+        with open(gf, "w", encoding="utf-8") as w:
+            json.dump(dict(fresh(format=1), phase="Phase 3B"), w)
+        check("init --resume on a format-1 file exits 8", call(["init", "--resume"], "{}", g, session="E")[0] == 8)
+        os.unlink(gf)
+
+        # init --resume: in place; its stdin merged; each path location left, repointed or nulled
+        lin = os.path.join(tmp, "dw-impl-lineage-g")  # named, never made
+        call(["init"], json.dumps(fresh(
+            unit_folder=os.path.join(tmp, "no such unit"),
+            pre_existing_dirty=[{"path": "gone/file.txt", "fingerprint": "f", "status": " M"}],
+            lineage={"check_file": lin, "line": "Lineage: current"}, inputs_read=["a.md"],
+            report={"notices": ["n0"]}, routing={"block": {"classification": "MODERATE"}, "history": ["h"]},
+            coding_model="m1")), g, session="D")
+        live, rep, ret = mkf("dw-impl-plan-g3", "live"), mkf("dw-impl-code-g2", "group"), mkf("dw-impl-ret-g1", "ret")
+        gone = os.path.join(tmp, "dw-impl-summary-g9")  # named, never made, no copy
+        old_c, new_c = mkf("dw-impl-claims-g2", "old claims"), os.path.join(tmp, "dw-impl-claims-g3")
+        call(["set", "files.plan_file", json.dumps(live), "files.review_return_file", json.dumps(ret),
+              "files.summary_file", json.dumps(gone), "files.claims_file", json.dumps(new_c),
+              "phase", '"Phase 3B"', "step", '"3B.6"'], repo=g, session="D")
+        call(["append", "step_groups", json.dumps({"steps": [1], "status": "done", "report": rep})], repo=g, session="D")
+        live_c = call(["persist", "files.plan_file", live], repo=g, session="D")[1].rstrip("\n")
+        rep_c = call(["persist", "step_groups.-1.report", rep], repo=g, session="D")[1].rstrip("\n")
+        ret_c = call(["persist", "files.review_return_file", ret], repo=g, session="D")[1].rstrip("\n")
+        snap = mkf("dw-impl-snap-g3", "snap three")
+        snap_c = call(["persist", "tree.snapshot", snap], repo=g, session="D")[1].rstrip("\n")
+        call(["set", "tree", json.dumps({"head": "abc", "when": "after commit"})], repo=g, session="D")
+        call(["persist", "files.claims_file", old_c], repo=g, session="D")  # a copy of another file than the key names
+        os.unlink(rep)  # Review Focus 4: the report's temp is gone
+        os.unlink(ret)
+        os.symlink(os.path.join(tmp, "no-target-g"), ret)  # something left at the name, no file
+        os.unlink(snap)
+        poke(updated="2026-01-02T03:04:05Z")
+        d0 = st()
+        stale0, held = sorted(n for n in os.listdir(gd) if STALE_RE.match(n)), sorted(os.listdir(dd))
+        code, out = call(["init", "--resume"], json.dumps({
+            "coding_model": "m2", "routing": {"block": {"classification": "SIGNIFICANT"}}, "inputs_read": ["b.md"],
+            "report.notices": ["n1"], "specs_git": "blocked"}), g, session="E")
+        d = st()
+        check("init --resume takes the file over in place, moving nothing aside", code == 0
+              and "resumed: %s" % gf in out and sorted(n for n in os.listdir(gd) if STALE_RE.match(n)) == stale0
+              and sorted(os.listdir(dd)) == held)
+        check("init --resume writes session, keeps started and stamps updated", d["session"] == "E"
+              and d["started"] == d0["started"] and stamped(d["updated"]) and d["updated"] != d0["updated"])
+        check("init --resume appends its line to assumptions",
+              d["assumptions"][-1] == "Resumed at Phase 3B step 3B.6 after session D stopped at 2026-01-02T03:04:05Z")
+        check("init --resume appends inputs_read and report.notices", d["inputs_read"] == ["a.md", "b.md"]
+              and d["report"]["notices"] == ["n0", "n1"])
+        check("init --resume writes its other keys as set writes them", d["coding_model"] == "m2"
+              and d["specs_git"] == "blocked"
+              and d["routing"] == {"block": {"classification": "SIGNIFICANT"}, "history": ["h"]})
+        check("init --resume leaves a path whose file is there, though a copy exists",
+              d["files"]["plan_file"] == live and os.path.isfile(live_c))
+        check("init --resume repoints a step group's missing report to its copy (Review Focus 4)",
+              d["step_groups"][0]["report"] == rep_c and os.path.isfile(rep_c))
+        check("init --resume repoints a missing path whose of matches, deleting its dw-impl- original",
+              d["files"]["review_return_file"] == ret_c and not os.path.lexists(ret) and "removed: %s" % ret in out)
+        check("init --resume nulls a missing path with no copy", d["files"]["summary_file"] is None
+              and d["lineage"]["check_file"] is None)
+        check("init --resume nulls a missing path whose copy is of another file", d["files"]["claims_file"] is None)
+        check("init --resume leaves pre_existing_dirty and unit_folder alone",
+              d["pre_existing_dirty"][0]["path"] == "gone/file.txt" and d["unit_folder"] == os.path.join(tmp, "no such unit"))
+        check("init --resume leaves tree.snapshot, which names its copy", d["tree"]["snapshot"] == snap_c
+              and os.path.isfile(snap_c))
+        code, _ = call(["set", "step", '"3B.7"'], repo=g, session="E")
+        d = st()
+        check("a repointed report keeps its key and its copy through a later set", code == 0
+              and d["step_groups"][0]["report"] == rep_c and os.path.isfile(rep_c) and "step_groups.0.report" in d["durable"])
+        check("the session that was taken over is refused", call(["set", "class", '"X"'], repo=g, session="D")[0] == 9)
+        before = open(gf, "rb").read()
+        check("init --resume refuses a stdin key outside its list",
+              call(["init", "--resume"], '{"class": "X"}', g, session="E")[0] == 3
+              and call(["init", "--resume"], json.dumps({"report": {"notices": []}}), g, session="E")[0] == 3)
+        check("init --resume refuses a value of the wrong type",
+              call(["init", "--resume"], '{"inputs_read": "x"}', g, session="E")[0] == 3)
+        check("init --resume refuses a non-object", call(["init", "--resume"], "[1]", g, session="E")[0] == 2)
+        check("a refused init --resume changes nothing", open(gf, "rb").read() == before)
+        call(["open", "Phase 4"], repo=g, session="E")
+        upd = st()["updated"]
+        code, _ = call(["init", "--resume"], "{}", g, session="F")
+        check("init --resume names the phase alone where step is null", code == 0 and st()["session"] == "F"
+              and st()["assumptions"][-1] == "Resumed at Phase 4 after session E stopped at %s" % upd)
+
+        # the new calls, with no file, create nothing
+        nf = mkf("dw-impl-plan-g4", "x")
+        codes = [call(c, s, repo2, session="A")[0] for c, s in ((["peek"], ""), (["persist", "files.plan_file", nf], ""),
+                                                               (["init", "--resume"], "{}"))]
+        check("peek, persist and init --resume with no file exit 1, creating nothing", codes == [1, 1, 1]
+              and not os.path.exists(os.path.dirname(state_path(repo2))))
+
+        # main() takes the session from CLAUDE_CODE_SESSION_ID, an empty one as null
+        def main_call(argv, stdin="", **env):
+            return subprocess.run([sys.executable, me, "--repo", g] + argv, input=stdin.encode("utf-8"),
+                                  capture_output=True, env=clean_env(**env))
+        r = main_call(["init"], json.dumps(fresh()), CLAUDE_CODE_SESSION_ID="S1")
+        check("main takes the session from CLAUDE_CODE_SESSION_ID", r.returncode == 0 and st()["session"] == "S1")
+        r = main_call(["set", "class", '"X"'], CLAUDE_CODE_SESSION_ID="S2")
+        check("main's guard exits 9 for another session", r.returncode == 9 and b"session S1" in r.stderr)
+        r = main_call(["set", "class", '"Y"'])
+        check("main with the variable unset writes as a null session", r.returncode == 0 and st()["class"] == "Y"
+              and st()["session"] == "S1")
+        r = main_call(["init"], json.dumps(fresh()), CLAUDE_CODE_SESSION_ID="")
+        check("main takes an empty CLAUDE_CODE_SESSION_ID as null", r.returncode == 0 and st()["session"] is None)
+
     if failures:
         for n in failures:
             print("FAIL %s" % n)
@@ -1054,8 +1877,10 @@ def main(argv):
         sys.stdin.reconfigure(encoding="utf-8")
     except (AttributeError, ValueError):
         pass
+    session = os.environ.get("CLAUDE_CODE_SESSION_ID") or None
     try:
-        run(utf8_argv(argv), sys.stdin, sys.stdout.buffer)
+        run(utf8_argv(argv), sys.stdin, sys.stdout.buffer,
+            session=utf8_argv([session])[0] if session else None)
         return 0
     except Fail as e:
         sys.stderr.write("run-state.py: %s\n" % e)
