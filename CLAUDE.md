@@ -89,7 +89,8 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
 | `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
-| `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | invariants, map, callers |
+| `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | plugin facts, map, callers |
+| `product-workflows-prd-flow.md` | as `product-workflows.md` | the PRD-creation flow's invariants |
 | `brd-route.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`, `conformance.md`; `workflows-core/references/addressing.md`; `workflows-core/commands/frames.md`; `docs-workflows/commands/`: `document.md`, `release-notes.md` | BRD-route map lines, folder-kind invariants |
 | `brd-route-detection.md` | as `brd-route.md` | BRD-route detection |
 | `prd-ground-verification.md` | as `brd-route.md` | `/prd-ground`'s blind verification |

@@ -61,7 +61,7 @@
 
 - **`$ARCHITECTURE_REPO_PATH`** — a local clone of your organisation's architecture repository (technology radar, standards, principles, patterns, ADRs), read-only; no default.
 
-**Resolution.** Resolved by the family's shared architecture-grounding gate, consumed here by `/design` (and by the companion plugin's `/product-workflows:create-ard` and `/product-workflows:specify`); `--no-arch` turns it off for a run.
+**Resolution.** Resolved by the family's shared architecture-grounding gate, consumed here by `/design` (and by the companion plugin's `/product-workflows:create-ard` and `/product-workflows:specify`); `--no-arch` turns off, for a run, this repository and the two other sources architecture grounding reads: the team knowledge base and the security findings registers under `$SPECS_PATH/security/`.
 
 **When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it; the team knowledge base under `$SPECS_PATH/architecture/` is resolved separately, and still read where it exists.
 

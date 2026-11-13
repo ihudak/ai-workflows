@@ -109,7 +109,7 @@ The `ON` clauses combine, in the order shown. The staleness clause appears above
   ```
 
   Where `weakness.recurs` is true and `governing` is null, append `, or by an ARD decision whose Prevents names that CWE, made with /product-workflows:create-ard <PRD-KEY>`, `<PRD-KEY>` being the key of the PRD folder the specification belongs to (`/specify`'s `prd_dir`; on the BRD route the slice's). The CWE appears only as the link: `/epics` copies a specification's text into Epics, and pre-lint reports a bare `CWE-<n>` there.
-- **A design records citations and departures**, per `dev-workflows:design-format` § Architecture governance: a link citation where a binding artifact settles a decision, and an `Architecture deviation:` line under `## Risks & mitigations` for each departure. A design never supersedes a team record; only an ARD does.
+- **A design records citations, departures and known weaknesses**, per `dev-workflows:design-format` § Architecture governance: a link citation where a binding artifact settles a decision, an `Architecture deviation:` line under `## Risks & mitigations` for each departure, and a `Known weakness:` line there for each `known-weakness` challenge. A design never supersedes a team record; only an ARD does.
 - **On the BRD route**, in `/create-ard` and `/specify` alike, a frozen `[VD#n]` or `[CD#n]` that conflicts with a reference is never re-grilled: the conflict is an open question naming both.
 
 ## Invariants
