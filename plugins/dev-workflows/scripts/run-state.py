@@ -2211,6 +2211,21 @@ def selftest():
         code, out = call(["peek"], repo=g, session="H")
         check("no fill outside FILLED: read of another key the file lacks still exits 3", codes == [3, 3]
               and code == 0 and "phase" not in json.loads(out) and "clean_finish" not in json.loads(out))
+        # the fill acts on an absent key alone: a stored value -- null, an object lacking a member, a wrong
+        # type -- is returned as the file holds it, never filled over, so a damaged record still shows
+        kept = []
+        for stored, choice_exit in ((None, 2), ({"source": "answer"}, 3), ("fable", 2)):
+            call(["init"], json.dumps(fresh()), g, session="H")
+            poke(fable_escalation=stored)
+            raw = open(gf, "rb").read()
+            rcode, rout = call(["read", "fable_escalation"], repo=g, session="H")
+            pcode, pout = call(["peek"], repo=g, session="H")
+            ccode = call(["read", "fable_escalation.choice"], repo=g, session="H")[0]
+            kept.append(rcode == 0 and json.loads(rout) == stored and pcode == 0
+                        and json.loads(pout).get("fable_escalation", FE0) == stored
+                        and ccode == choice_exit and open(gf, "rb").read() == raw)
+        check("the fill overwrites no stored fable_escalation: null, a partial object and a string read as stored",
+              kept == [True, True, True])
 
     if failures:
         for n in failures:
