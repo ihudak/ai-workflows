@@ -77,9 +77,10 @@ These facts are exact. Task 1 implements them, and every later task relies on th
 - **The label** is a key path, or `note:<path>` for a note's working copy.
 - **A negative list index** in a key path (`step_groups.-1.report`) is normalised to its absolute index, under the lock, before recording.
 - **`persist tree.snapshot <file>` also writes `tree.snapshot`**, to the copy's path. It is the only writer of that key.
+- **A copy another location reads is never overwritten.** A label's next `persist` replaces its copy in place, unless a location other than the label's own key, or another entry, names that copy: then it writes a fresh name.
 
 **Dropping copies**
-- `set`, after its write, drops each `durable` entry whose label is a key path that no longer names its `of`, and deletes that entry's copy.
+- `set`, after its write, drops each `durable` entry whose label is a key path that names neither its `of` nor its copy (both compared as absolute paths), and deletes that entry's copy where nothing else names it.
 - **Never dropped by `set`:**
   - `note:` entries;
   - the `tree.snapshot` entry, whose key names the copy itself. Only the next `persist tree.snapshot` replaces it, and that replaces the copy.
@@ -87,22 +88,23 @@ These facts are exact. Task 1 implements them, and every later task relies on th
 **The durable directory and the tombstone**
 - Plain `init` empties the durable directory.
 - `init --recover` keeps the directory and `durable`.
-- `remove` deletes the directory even where the file is absent. It skips any path inside the directory silently, since the directory goes whole.
+- `remove` deletes the directory even where the file is absent, under the lock. It skips any path inside the directory silently, since the directory goes whole. A `--keep` path inside the directory is first moved out, to `$(git rev-parse --git-path dev-workflows)/implement-run.kept-<basename>`, and printed `kept: <new path>`.
 - **The tombstone.**
-  - When `remove` deletes an existing file, it leaves a tombstone, `$(git rev-parse --git-path dev-workflows/implement-run.done)`, holding `{"session", "at"}`. A `remove` that finds no file writes none.
-  - `init --recover` exits 9 where the tombstone's session is non-null and differs from the caller's. There is no time window: any later run's plain `init` removes the tombstone, so it can meet only a superseded run.
+  - When `remove` deletes an existing file, it leaves a tombstone, `$(git rev-parse --git-path dev-workflows/implement-run.done)`, holding `{"session", "at"}`: the removed file's own `session`, or the caller's where the file holds none. A `remove` that finds no file writes none.
+  - `init --recover` exits 9 where the tombstone's session and the caller's are both non-null and differ, as the guard does. There is no time window: any later run's plain `init` removes the tombstone, so it can meet only a superseded run.
 - **`init --recover`** runs with the file missing or unparseable, so `durable` starts empty. Copies already in the directory stay orphaned until they are persisted again.
 
 **`init --resume`**
-- **Exits:** with no old file, exit 1; a file that does not parse, exit 5; format not 2, exit 8.
+- **Exits:** with no old file, exit 1; a file that does not parse, exit 5; format not 2, exit 8. The file is checked before stdin, so a missing file exits 1 whatever stdin holds.
 - **The file** is rewritten **in place**, never moved aside.
 - **Stdin** is a JSON object holding only these keys: `specs_git`, `specs_merged_branch`, `lineage`, `routing`, `coding_model`, `run_flags`, `inputs_read`, `report.notices`. Any other key exits 3.
   - `inputs_read` and `report.notices` are **appended** to the file's lists.
+  - `routing` is **merged** over the file's own members, as `set` merges an object key, so `routing.history` survives.
   - The others replace the file's values.
 - **What it writes:** it appends to `assumptions` `Resumed at <phase> step <step> after session <id> stopped at <updated>`, then writes `session`.
 - **Its path rules** walk the key locations `named()` covers, plus `lineage.check_file`, through a new walker that returns `(key path, value)` pairs. `tree.snapshot` already names its copy. For each location, in this order:
   1. Where the path's file exists, leave it: a live file is never older than its copy.
-  2. Else, where `durable[<key path>].of` equals the value, repoint the location to that entry's `copy`, and delete the original if it exists and its name begins `dw-impl-`.
+  2. Else, where `durable[<key path>].of` names the value (compared as absolute paths) and the entry's `copy` is a file, repoint the location to that `copy`, and delete the original once if it exists and its name begins `dw-impl-`.
   3. Else, set it to null.
 
   No other location is touched.

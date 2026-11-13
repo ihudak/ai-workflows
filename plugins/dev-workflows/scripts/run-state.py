@@ -25,33 +25,39 @@ plain `init` and `init --resume` are not guarded. `session`, `started`, `updated
                                      no key or member KEYS lacks, nor one of the wrong type, nor one
                                      of the script's own -- all checked before anything is moved; it
                                      writes `format` 2. A file already there is moved
-                                     aside unread, as implement-run.json.stale-<UTC stamp>, after any
+                                     aside, as implement-run.json.stale-<UTC stamp>, none of it carried
+                                     into the new file -- plain init never reads it, and --recover
+                                     only for its `session` -- after any
                                      older such file is removed, so at most one is kept; the move is
-                                     printed. Plain init also deletes the durable directory, printed
-                                     `removed: <it>` where there was one, and the tombstone; and
+                                     printed. Plain init first deletes the durable directory, printed
+                                     `removed: <it>` where there was one, and the tombstone, so a
+                                     failure there leaves the file where it was; and it
                                      appends to `assumptions` that a file an earlier run left was not
                                      resumed and was moved aside, saying its durable copies were
                                      deleted where the directory held any. Under --recover the
                                      directory and the tombstone stay, `durable` starts empty, and the
                                      line appended names the file as this run's own, written again,
                                      and says whether one was moved aside; --recover exits 9 where the
-                                     tombstone names a session that is non-null and not the caller's.
+                                     tombstone's session and the caller's are both non-null and differ.
   run-state.py init --resume         take over in place the file an earlier run left, never moving it:
                                      exit 1 with no file, 5 where it does not parse, 8 where its
-                                     format is not 2. Stdin is a JSON object holding only specs_git,
+                                     format is not 2 -- the file checked before stdin is read, so a
+                                     missing file exits 1 whatever stdin holds. Stdin is a JSON object holding only specs_git,
                                      specs_merged_branch, lineage, routing, coding_model, run_flags,
                                      inputs_read and report.notices -- any other key, or a value of
                                      the wrong type, exits 3, nothing written: inputs_read's and
                                      report.notices' values are appended to the file's lists, and the
-                                     others written as set writes them. Then each path location --
+                                     others written as set writes them -- `routing`, an object, merged
+                                     over the file's own members. Then each path location --
                                      every `files` member, each `step_groups` report, each `reviews`
                                      diff and return file, each `patches` path, and
                                      `lineage.check_file` (never `tree.snapshot`, which names its own
                                      copy) -- is, the first that applies: left, where a file is at
                                      its path; repointed to the copy, where `durable[<its key path>]`
-                                     has `of` equal to its path and that copy is a file -- the
-                                     original deleted where something not a directory is left at its
-                                     name and the name begins `dw-impl-` -- printed `repointed:`;
+                                     has `of` naming its path (compared as absolute paths) and that
+                                     copy is a file -- the original deleted, once, where something not
+                                     a directory is left at its name and the name begins `dw-impl-` --
+                                     printed `repointed:`;
                                      else set to null, printed `cleared:`. No other location is
                                      touched. It appends `Resumed at <phase> step <step> after session
                                      <id> stopped at <updated>` to `assumptions` (` step <step>` left
@@ -74,8 +80,9 @@ plain `init` and `init --resume` are not guarded. `session`, `started`, `updated
                                      members over the ones the file holds: a member it leaves out
                                      keeps its value. A deeper path or a list entry is not checked.
                                      Each `durable` entry whose label is a key path that names neither
-                                     its `of` nor its copy after the write is dropped; a `note:` entry
-                                     and the `tree.snapshot` entry never are.
+                                     its `of` nor its copy after the write, compared as absolute
+                                     paths, is dropped; a `note:` entry and the `tree.snapshot` entry
+                                     never are.
                                      Once the write lands, each path the file named before the call --
                                      a `files` member, a `step_groups` report, a `reviews` diff or
                                      return file or a `patches` path --
@@ -102,7 +109,11 @@ plain `init` and `init --resume` are not guarded. `session`, `started`, `updated
                                      path locations init --resume walks, or `tree.snapshot` -- a
                                      negative list index (step_groups.-1.report) written as its
                                      absolute index -- or note:<path>, for a note's working copy. A
-                                     label has one copy, which its next persist replaces. `persist
+                                     label has one copy, which its next persist replaces in place --
+                                     save where a location other than the label's own key, or another
+                                     entry, names that copy: then the copy is written under a fresh
+                                     name, and the one it supersedes is deleted once nothing names
+                                     it. `persist
                                      tree.snapshot` also writes `tree.snapshot`, the copy's path: it
                                      is that key's only writer. A file that is not there exits 2, and
                                      a label naming no path location exits 3.
@@ -112,10 +123,14 @@ plain `init` and `init --resume` are not guarded. `session`, `started`, `updated
                                      -- only a regular file whose name begins `dw-impl-`, and never
                                      a --keep path; a path inside the durable directory is skipped,
                                      unprinted -- then the file itself, only at the git path, leaving
-                                     the tombstone, {"session": <the caller's>, "at": <UTC time>};
-                                     then the durable directory, whole, printed `removed: <it>`. With
-                                     no file it deletes the durable directory alone, and writes no
-                                     tombstone.
+                                     the tombstone, {"session": <the removed file's session, or the
+                                     caller's where it holds none>, "at": <UTC time>}; then the
+                                     durable directory, whole, printed `removed: <it>`. A --keep path
+                                     inside the durable directory is first moved out, beside the file,
+                                     as implement-run.kept-<its name>, printed `kept: <that path>`,
+                                     where it stays. With no file it deletes the durable directory
+                                     alone, under the lock, the same --keep paths moved out first, and
+                                     writes no tombstone.
 
 A key is a top-level name or a dotted path into one (`files.plan_file`); a list entry is named by
 its index (`triage.-1.followed_by`, the last entry's). `set`, `append` and `read` refuse a key the
@@ -127,8 +142,8 @@ is read as UTF-8 whatever the locale, and the file is UTF-8 with non-ASCII writt
 (ensure_ascii=False), so a path comes back as git's -z record gave it. JSON escapes `"`, `\\` and
 control characters -- `\\t`, `\\n`, `\\r` and the like -- in what `open` and `read` print, and each
 escape reads back as one character. A call other than `init` that finds no file creates nothing: it
-checks for the file before it makes the lock beside it. The lock file, like a stale file, is never
-removed.
+checks for the file before it makes the lock beside it -- save `remove`, which, finding a durable
+directory there, takes the lock to delete it. The lock file, like a stale file, is never removed.
 
 Exit codes:
   0  done
@@ -268,6 +283,11 @@ def tombstone_path(f):
 def inside(p, d):
     """True where path p lies inside directory d."""
     return os.path.abspath(p).startswith(os.path.abspath(d) + os.sep)
+
+
+def same(a, b):
+    """True where a and b are both paths naming the same absolute path."""
+    return isinstance(a, str) and isinstance(b, str) and os.path.abspath(a) == os.path.abspath(b)
 
 
 def now():
@@ -564,7 +584,8 @@ def cmd_init(f, args, stdin, out, session):
     with locked(f):
         if recover:
             t = read_tombstone(f)
-            if t is not None and t.get("session") is not None and t.get("session") != session:
+            if t is not None and t.get("session") is not None and session is not None \
+                    and t.get("session") != session:
                 raise Fail(9, "init --recover: session %s finished this run at %s and removed its state (%s); "
                               "nothing written" % (t.get("session"), t.get("at"), tombstone_path(f)))
             try:
@@ -573,6 +594,12 @@ def cmd_init(f, args, stdin, out, session):
                 old = None
             if old is not None:
                 guard(old, session, "init --recover")
+        held = False
+        if not recover:  # before the file is moved aside, so a failure here leaves it where it was
+            held = os.path.isdir(dd) and not os.path.islink(dd) and bool(os.listdir(dd))
+            removed_dir = clear(dd)
+            if os.path.lexists(tombstone_path(f)):
+                os.unlink(tombstone_path(f))
         s = None
         if os.path.lexists(f):
             here = os.path.dirname(f)
@@ -583,16 +610,10 @@ def cmd_init(f, args, stdin, out, session):
             s = "%s.stale-%s" % (f, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
             os.replace(f, s)
             out.write(("moved aside: %s\n" % s).encode("utf-8"))
-        held = False
-        if not recover:
-            held = os.path.isdir(dd) and not os.path.islink(dd) and bool(os.listdir(dd))
-            removed_dir = clear(dd)
-            if os.path.lexists(tombstone_path(f)):
-                os.unlink(tombstone_path(f))
         if recover:
             d["assumptions"].append(
                 "This run's run-state file could not be read back, and was written again from what the run "
-                "still held: " + ("the file there was moved aside unread, as %s" % s if s else
+                "still held: " + ("the file there, none of it carried over, was moved aside as %s" % s if s else
                                   "no file was there, so none was moved aside"))
         elif s:
             d["assumptions"].append("Run-state file an earlier run left, not resumed, moved aside%s: %s"
@@ -616,20 +637,26 @@ def append_to(d, key, v, verb):
         raise Fail(2, "%s: %s is not a list or null" % (verb, show(key)))
 
 
+def resumable(f):
+    """The file, loaded: exit 1 with none, 5 where it does not parse, 8 where its format is not 2."""
+    d = load(f)
+    if not format2(d):
+        raise Fail(8, "the run-state file at %s is format %s, not 2 -- no resume takes it"
+                   % (f, json.dumps(d.get("format"))))
+    return d
+
+
 def cmd_resume(f, stdin, out, session):
+    resumable(f)  # the file first: no file exits 1 whatever stdin holds
     given = parse(stdin.read(), "stdin")
     if not isinstance(given, dict):
         raise Fail(2, "init --resume reads a JSON object on stdin, holding only %s" % ", ".join(RESUME_KEYS))
     refuse("init --resume: the object", [show(k) for k in given if k not in RESUME_KEYS], [])
     checked(list(given.items()), "init --resume: the object")
-    require(f)
     want = dict(KEYS)
     lines, originals = [], []
     with locked(f):
-        d = load(f)
-        if not format2(d):
-            raise Fail(8, "the run-state file at %s is format %s, not 2 -- no resume takes it"
-                       % (f, json.dumps(d.get("format"))))
+        d = resumable(f)
         was, stopped = d.get("session"), d.get("updated")
         for key, v in given.items():
             if key in RESUME_APPENDED:
@@ -648,12 +675,12 @@ def cmd_resume(f, stdin, out, session):
                 continue
             o, k = resolve(d, kp)
             e = durable.get(kp)
-            if (isinstance(e, dict) and e.get("of") == p and isinstance(e.get("copy"), str)
+            if (isinstance(e, dict) and same(e.get("of"), p) and isinstance(e.get("copy"), str)
                     and os.path.isfile(e["copy"])):
                 o[k] = e["copy"]
                 lines.append("repointed: %s: %s -> %s" % (kp, p, e["copy"]))
                 if (os.path.basename(p).startswith(TEMP_PREFIX) and os.path.lexists(p)
-                        and not os.path.isdir(p)):
+                        and not os.path.isdir(p) and not any(same(p, q) for q in originals)):
                     originals.append(p)
             else:
                 o[k] = None
@@ -679,11 +706,7 @@ def cmd_resume(f, stdin, out, session):
 def cmd_peek(f, args, out):
     if args:
         raise Fail(2, "peek takes no argument")
-    d = load(f)
-    if not format2(d):
-        raise Fail(8, "the run-state file at %s is format %s, not 2 -- no resume takes it"
-                   % (f, json.dumps(d.get("format"))))
-    emit(out, d)
+    emit(out, resumable(f))
 
 
 def cmd_open(f, args, out, session):
@@ -774,7 +797,7 @@ def drop(d):
             v = o[k]
         except Fail:
             v = None
-        if isinstance(e, dict) and v is not None and v in (e.get("of"), e.get("copy")):
+        if isinstance(e, dict) and (same(v, e.get("of")) or same(v, e.get("copy"))):
             continue
         del durable[label]
         if isinstance(e, dict) and isinstance(e.get("copy"), str):
@@ -850,10 +873,24 @@ def cmd_append(f, args, stdin, session):
 
 
 def copy_name(label):
-    """The one copy file name a label has in the durable directory: the label made safe, then a hash of
-    it, so two labels never share one. It never begins `dw-impl-`, so no temp-file removal takes it."""
+    """The copy file name a label has in the durable directory: the label made safe, then a hash of it,
+    so two labels never share one. It never begins `dw-impl-`, so no temp-file removal takes it."""
     safe = re.sub(r"[^A-Za-z0-9._-]+", "_", label).strip("._-")[:60] or "copy"
     return "%s-%s" % (safe, hashlib.sha256(label.encode("utf-8")).hexdigest()[:12])
+
+
+def named_elsewhere(d, label):
+    """Every path a location other than the label's own key names: each other path location,
+    tree.snapshot unless it is the label, and each other durable entry's copy."""
+    out = set(os.path.abspath(p) for k, p in walk(d) if k != label and isinstance(p, str))
+    tree = d.get("tree")
+    if label != "tree.snapshot" and isinstance(tree, dict) and isinstance(tree.get("snapshot"), str):
+        out.add(os.path.abspath(tree["snapshot"]))
+    durable = d.get("durable")
+    for other, e in durable.items() if isinstance(durable, dict) else []:
+        if other != label and isinstance(e, dict) and isinstance(e.get("copy"), str):
+            out.add(os.path.abspath(e["copy"]))
+    return out
 
 
 def cmd_persist(f, args, out, session):
@@ -885,7 +922,11 @@ def cmd_persist(f, args, out, session):
                               "reviews diff or return file, a patches path, lineage.check_file or tree.snapshot"
                            % show(label))
         os.makedirs(dd, exist_ok=True)
-        target = os.path.join(dd, copy_name(label))
+        base = copy_name(label)
+        target, elsewhere, n = os.path.join(dd, base), named_elsewhere(d, label), 0
+        while os.path.abspath(target) in elsewhere:  # never overwrite a copy another location reads
+            n += 1
+            target = os.path.join(dd, "%s-%d" % (base, n))
         try:
             r = open(src, "rb")
         except OSError as e:
@@ -929,7 +970,12 @@ def cmd_remove(f, args, out, session):
     try:
         os.lstat(f)
     except FileNotFoundError:
-        if clear(dd):
+        removed_dir = False
+        if os.path.lexists(dd):
+            with locked(f):
+                rescue(keep, f, dd, out)
+                removed_dir = clear(dd)
+        if removed_dir:
             out.write(("removed: %s\n" % dd).encode("utf-8"))
         out.write(("no run-state file at %s -- nothing else to remove\n" % f).encode("utf-8"))
         return
@@ -960,7 +1006,7 @@ def cmd_remove(f, args, out, session):
         for p in paths:
             a = os.path.abspath(p)
             if inside(a, dd):
-                continue  # the durable directory goes whole, below
+                continue  # the durable directory goes whole, below, a --keep path in it moved out first
             if a in keep:
                 out.write(("kept: %s\n" % p).encode("utf-8"))
             elif (os.path.basename(a).startswith(TEMP_PREFIX) and os.path.isfile(a)
@@ -969,12 +1015,24 @@ def cmd_remove(f, args, out, session):
                 out.write(("removed: %s\n" % p).encode("utf-8"))
             elif os.path.lexists(a):
                 out.write(("left: %s -- not a %s* temp file\n" % (p, TEMP_PREFIX)).encode("utf-8"))
+        held = d.get("session") if isinstance(d, dict) else None
         os.unlink(f)
-        save(tombstone_path(f), {"session": session, "at": now()})
+        save(tombstone_path(f), {"session": session if held is None else held, "at": now()})
+        rescue(keep, f, dd, out)
         removed_dir = clear(dd)
     if removed_dir:
         out.write(("removed: %s\n" % dd).encode("utf-8"))
     out.write(("removed: %s\n" % f).encode("utf-8"))
+
+
+def rescue(keep, f, dd, out):
+    """Move each --keep path inside the durable directory out beside the file, as
+    implement-run.kept-<its name>, before the directory goes, printing `kept: <that path>`."""
+    for a in sorted(keep):
+        if inside(a, dd) and os.path.lexists(a) and not os.path.isdir(a):
+            moved = os.path.join(os.path.dirname(f), "implement-run.kept-" + os.path.basename(a))
+            os.replace(a, moved)
+            out.write(("kept: %s\n" % moved).encode("utf-8"))
 
 
 VERBS = ("init", "open", "read", "peek", "set", "append", "persist", "remove")
@@ -1155,7 +1213,7 @@ def selftest():
         check("--recover names this run's own file", code == 0 and "This run's run-state file" in a[-1]
               and "earlier run" not in a[-1])
         check("--recover names the file it moved aside", len(a) == 2 and len(moved) == 1
-              and "moved aside unread, as" in a[-1] and a[-1].endswith(moved[0]))
+              and "none of it carried over, was moved aside as" in a[-1] and a[-1].endswith(moved[0]))
 
         # open sets phase and prints
         code, out = call(["open", "Phase 1.5"], repo=repo)
@@ -1706,8 +1764,8 @@ def selftest():
         code, _ = call(["init", "--recover"], json.dumps(fresh()), g, session="C")
         check("init --recover exits 9 against a tombstone from another session, naming it", code == 9
               and "session Z" in said[0] and open(gf, "rb").read() == before)
-        check("init --recover with a null session exits 9 against a tombstone naming one",
-              call(["init", "--recover"], json.dumps(fresh()), g)[0] == 9)
+        check("init --recover with a null session passes a tombstone naming one, as the guard does",
+              call(["init", "--recover"], json.dumps(fresh()), g)[0] == 0)
         with open(tomb_p, "w", encoding="utf-8") as w:
             json.dump({"session": None, "at": OLD}, w)
         code, _ = call(["init", "--recover"], json.dumps(fresh()), g, session="C")
@@ -1860,6 +1918,169 @@ def selftest():
               and st()["session"] == "S1")
         r = main_call(["init"], json.dumps(fresh()), CLAUDE_CODE_SESSION_ID="")
         check("main takes an empty CLAUDE_CODE_SESSION_ID as null", r.returncode == 0 and st()["session"] is None)
+
+        # ---- the review's cases ----
+        # persist never overwrites a copy another location names: a resumed pending plan, approved, then a re-plan
+        call(["init"], json.dumps(fresh()), g, session="D")
+        ap = mkf("dw-impl-plan-g5", "APPROVED")
+        call(["set", "files.pending_plan_file", json.dumps(ap)], repo=g, session="D")
+        call(["persist", "files.pending_plan_file", ap], repo=g, session="D")
+        os.unlink(ap)
+        call(["init", "--resume"], "{}", g, session="E")
+        cp = st()["files"]["pending_plan_file"]
+        call(["set", "files.plan_file", json.dumps(cp), "files.pending_plan_file", "null"], repo=g, session="E")
+        call(["persist", "files.plan_file", cp], repo=g, session="E")
+        rp = mkf("dw-impl-plan-g6", "UNAPPROVED")
+        call(["set", "files.pending_plan_file", json.dumps(rp)], repo=g, session="E")
+        code, out = call(["persist", "files.pending_plan_file", rp], repo=g, session="E")
+        np_c = out.rstrip("\n")
+        d = st()
+        check("persist writes a fresh copy where another location names the label's own", code == 0
+              and np_c != cp and d["files"]["plan_file"] == cp and open(cp, encoding="utf-8").read() == "APPROVED"
+              and open(np_c, encoding="utf-8").read() == "UNAPPROVED"
+              and d["durable"]["files.pending_plan_file"] == {"copy": np_c, "of": rp})
+        rp2 = mkf("dw-impl-plan-g7", "UNAPPROVED TWO")
+        call(["set", "files.pending_plan_file", json.dumps(rp2)], repo=g, session="E")
+        code, out = call(["persist", "files.pending_plan_file", rp2], repo=g, session="E")
+        check("a later persist of that label still leaves the copy another location names", code == 0
+              and out.rstrip("\n") != cp and open(cp, encoding="utf-8").read() == "APPROVED"
+              and open(out.rstrip("\n"), encoding="utf-8").read() == "UNAPPROVED TWO")
+
+        # remove --keep: a kept path inside the durable directory is moved out, never deleted
+        call(["init"], json.dumps(fresh()), g, session="D")
+        kr = mkf("dw-impl-ret-g2", "RET")
+        call(["set", "files.review_return_file", json.dumps(kr)], repo=g, session="D")
+        call(["persist", "files.review_return_file", kr], repo=g, session="D")
+        os.unlink(kr)
+        call(["init", "--resume"], "{}", g, session="E")
+        kc = st()["files"]["review_return_file"]
+        kept_p = os.path.join(gd, "implement-run.kept-" + os.path.basename(kc))
+        code, out = call(["remove", "--keep", kc], repo=g, session="E")
+        check("remove --keep moves a kept path inside the durable directory out, and names it", code == 0
+              and os.path.isfile(kept_p) and open(kept_p, encoding="utf-8").read() == "RET"
+              and "kept: %s" % kept_p in out and not os.path.exists(dd) and not os.path.exists(gf))
+        if os.path.exists(kept_p):
+            os.unlink(kept_p)
+        os.makedirs(dd)
+        orphan = os.path.join(dd, "orphan-g")
+        with open(orphan, "w", encoding="utf-8") as w:
+            w.write("O")
+        code, out = call(["remove", "--keep", orphan], repo=g, session="E")
+        kept_o = os.path.join(gd, "implement-run.kept-orphan-g")
+        check("remove --keep with no file moves a kept path out of the durable directory too", code == 0
+              and os.path.isfile(kept_o) and "kept: %s" % kept_o in out and not os.path.exists(dd))
+        if os.path.exists(kept_o):
+            os.unlink(kept_o)
+
+        # of is compared by its absolute path: a relative path, or a persist before its own set, keeps its copy
+        call(["init"], json.dumps(fresh()), g, session="E")
+        sa = mkf("dw-impl-sum-g5", "S")
+        call(["set", "files.summary_file", json.dumps(sa)], repo=g, session="E")
+        sa_c = call(["persist", "files.summary_file", os.path.relpath(sa)], repo=g, session="E")[1].rstrip("\n")
+        code, _ = call(["set", "class", '"SIMPLE"'], repo=g, session="E")
+        check("set keeps an entry whose of names the key's path relatively", code == 0
+              and "files.summary_file" in st()["durable"] and os.path.isfile(sa_c))
+        cl = mkf("dw-impl-claims-g5", "C")
+        cl_c = call(["persist", "files.claims_file", cl], repo=g, session="E")[1].rstrip("\n")
+        code, _ = call(["set", "files.claims_file", json.dumps(os.path.relpath(cl))], repo=g, session="E")
+        check("a persist before its own set, the set naming the path relatively, keeps its copy", code == 0
+              and st()["durable"].get("files.claims_file", {}).get("copy") == cl_c and os.path.isfile(cl_c))
+        os.unlink(sa)
+        code, out = call(["init", "--resume"], "{}", g, session="F")
+        check("init --resume matches of by its absolute path", code == 0
+              and st()["files"]["summary_file"] == sa_c)
+
+        # the tombstone names the removed file's session, the caller's only where the file holds none
+        call(["init"], json.dumps(fresh()), g, session="D")
+        call(["remove"], repo=g)
+        t = json.load(open(tomb_p, encoding="utf-8"))
+        check("the tombstone names the removed file's session", t["session"] == "D")
+        call(["init"], json.dumps(fresh()), g)
+        call(["remove"], repo=g, session="C")
+        t = json.load(open(tomb_p, encoding="utf-8"))
+        check("the tombstone names the caller's session where the file holds none", t["session"] == "C")
+
+        # init --resume checks the file before stdin: no file exits 1 whatever stdin holds
+        check("init --resume with no file exits 1 whatever stdin holds",
+              [call(["init", "--resume"], s, g, session="E")[0] for s in ("[1]", '{"class": "X"}', "not json")]
+              == [1, 1, 1])
+
+        # plain init clears the durable directory before it moves the file aside: a failure leaves the file
+        if hasattr(os, "geteuid") and os.geteuid() != 0:
+            call(["init"], json.dumps(fresh()), g, session="E")
+            stuck = os.path.join(dd, "stuck")
+            os.makedirs(stuck)
+            open(os.path.join(stuck, "x"), "w").close()
+            os.chmod(stuck, 0o500)
+            try:
+                code, _ = call(["init"], json.dumps(fresh()), g, session="E")
+            finally:
+                os.chmod(stuck, 0o700)
+            check("a plain init that cannot empty the durable directory leaves the file in place", code == 4
+                  and os.path.isfile(gf))
+            clear(dd)
+
+        # remove with no file takes the lock before it deletes the durable directory
+        if fcntl is not None:
+            if os.path.exists(gf):
+                os.unlink(gf)
+            os.makedirs(dd, exist_ok=True)
+            lk = os.open(os.path.join(gd, LOCK), os.O_RDWR | os.O_CREAT, 0o600)
+            fcntl.flock(lk, fcntl.LOCK_EX)
+            p = subprocess.Popen([sys.executable, me, "--repo", g, "remove"], stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, env=clean_env())
+            time.sleep(1.0)
+            waited = p.poll() is None and os.path.isdir(dd)
+            fcntl.flock(lk, fcntl.LOCK_UN)
+            os.close(lk)
+            check("remove with no file waits for the lock before deleting the durable directory", waited
+                  and p.wait() == 0 and not os.path.exists(dd))
+
+        # two locations repointed from one missing original: the original removed once, no left: line
+        call(["init"], json.dumps(fresh()), g, session="D")
+        two = mkf("dw-impl-plan-g8", "P")
+        call(["set", "files.plan_file", json.dumps(two), "files.pending_plan_file", json.dumps(two)], repo=g, session="D")
+        call(["persist", "files.plan_file", two], repo=g, session="D")
+        call(["persist", "files.pending_plan_file", two], repo=g, session="D")
+        os.unlink(two)
+        os.symlink(os.path.join(tmp, "no-target-g2"), two)
+        code, out = call(["init", "--resume"], "{}", g, session="E")
+        check("an original two locations repoint from is removed once, never reported left", code == 0
+              and out.count("removed: %s" % two) == 1 and "left: " not in out and not os.path.lexists(two))
+
+        # init --resume: a missing copy is never repointed to; a non-dw-impl- original is never deleted;
+        # tree.snapshot is never walked, even where its copy is gone
+        call(["init"], json.dumps(fresh()), g, session="D")
+        mc, nd = mkf("dw-impl-ret-g3", "R"), mkf("notes-g", "N")
+        sn = mkf("dw-impl-snap-g4", "SN")
+        call(["set", "files.review_return_file", json.dumps(mc), "files.review_file", json.dumps(nd)], repo=g, session="D")
+        mc_c = call(["persist", "files.review_return_file", mc], repo=g, session="D")[1].rstrip("\n")
+        nd_c = call(["persist", "files.review_file", nd], repo=g, session="D")[1].rstrip("\n")
+        sn_c = call(["persist", "tree.snapshot", sn], repo=g, session="D")[1].rstrip("\n")
+        os.unlink(mc)
+        os.unlink(mc_c)
+        os.unlink(nd)
+        os.symlink(os.path.join(tmp, "no-target-g3"), nd)
+        os.unlink(sn_c)
+        code, out = call(["init", "--resume"], "{}", g, session="E")
+        d = st()
+        check("init --resume nulls a path whose copy is gone, never repointing to it", code == 0
+              and d["files"]["review_return_file"] is None)
+        check("init --resume repoints, but never deletes, an original not named dw-impl-",
+              d["files"]["review_file"] == nd_c and os.path.lexists(nd))
+        check("init --resume leaves tree.snapshot alone though its copy is gone", d["tree"]["snapshot"] == sn_c)
+
+        # a null on either side passes the guard, on every guarded call
+        for held, caller in ((None, "B"), ("A", None)):
+            for name, argv, stdin in (("open", ["open", "Phase 2A"], ""), ("set", ["set", "class", '"X"'], ""),
+                                      ("append", ["append", "deferred", '"y"'], ""),
+                                      ("persist", ["persist", "files.summary_file", sn], ""),
+                                      ("remove", ["remove"], ""),
+                                      ("init --recover", ["init", "--recover"], json.dumps(fresh()))):
+                call(["init"], json.dumps(fresh()), g, session=held)
+                code, _ = call(argv, stdin, g, session=caller)
+                check("%s passes the guard where the %s session is null" % (
+                    name, "file's" if held is None else "caller's"), code == 0)
 
     if failures:
         for n in failures:
