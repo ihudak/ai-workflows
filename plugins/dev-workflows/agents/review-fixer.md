@@ -100,8 +100,8 @@ The caller passes:
 
 `/implement` can resume a run that stopped part-way — crashed, killed, or its
 session lost — and dispatch you again for the fix pass that run died in — and,
-within a run, dispatch you once more for a fix pass whose dispatch failed
-outright with no reply. That brief ends with one line more, verbatim:
+within a run, dispatch you once more for a fix pass whose dispatch brought back
+no Fix Report. That brief ends with one line more, verbatim:
 
 `Resume note: An earlier attempt may have partly edited the files this task covers; read them as they stand and complete the work.`
 
