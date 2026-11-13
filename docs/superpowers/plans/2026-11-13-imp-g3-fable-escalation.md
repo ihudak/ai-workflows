@@ -2,9 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Precondition:** IMP-G5 merged; merge origin/main and re-derive sites by phrase before Task 1.
-- `git merge origin/main` into `feat/imp-g3-fable-escalation`. Never rebase it.
-- IMP-G5 rewrites `run-state.py` and `implement.md` (format 2, `peek`, `persist`, `init --resume`, exits 8 and 9, `step`, tree records, Phase 0's resume path, `## Resuming a stopped run`). Every site below is named by phrase. Where a phrase this plan names is missing after the merge, stop and report it; never guess a site.
+**Precondition — met.** IMP-G5 merged (#188, `3016ead8`; dev-workflows 4.64.0, workflows-core 1.85.1), and `origin/main` is merged into `feat/imp-g3-fable-escalation` at `265094b6`. Never rebase the branch.
+- IMP-G5 rewrote `run-state.py` and `implement.md` (format 2, `peek`, `persist`, `init --resume`, exits 8 and 9, `step`, `stopping`, `review_in_hand`, `conformance.note_blobs`, tree records, Phase 0's resume path, `## Resuming a stopped run`, the agents' resume note). Every site below was re-derived by phrase on `265094b6`, wrap-insensitively; the site table is `.superpowers/sdd/2026-11-13-imp-g3-fable-escalation/preflight-report.md`. A `:N` beside a phrase is that tree's line, a hint only: locate by the phrase. Where a phrase this plan names is missing when you reach it, stop and report it; never guess a site.
 
 **Goal:** at HIGH-RISK, `/dev-workflows:implement`'s `code-writer` and `review-fixer` run on Fable, where Fable is reachable, nothing else already decides the model, the run fixes no security finding, and the user agreed once — for the run, or for all runs through a setting.
 
@@ -14,9 +13,9 @@
 
 **Tech Stack:** Python 3.11 standard library (`run-state.py` and its selftest); markdown prose that agents execute; the repository gates.
 
-**Spec:** `docs/superpowers/specs/2026-11-13-imp-g3-fable-escalation-design.md`, revision 3, approved 2026-11-13. Read it whole first; § numbers below are its own. IMP-G5's plan (`docs/superpowers/plans/2026-11-13-imp-g5-implement-resume.md`) states the run-state facts this plan builds on.
+**Spec:** `docs/superpowers/specs/2026-11-13-imp-g3-fable-escalation-design.md`, revision 3, approved 2026-11-13. Read it whole first; § numbers below are its own. The run-state facts this plan builds on are the shipped `run-state.py` and `implement.md`, which rule over IMP-G5's plan (`docs/superpowers/plans/2026-11-13-imp-g5-implement-resume.md`) wherever the two differ.
 
-**Reviewed:** by Fable on 2026-11-13, against IMP-G5 at `893d9349`: *approve with changes*. Every item is folded in.
+**Reviewed:** by Fable on 2026-11-13, against IMP-G5 at `893d9349`: *approve with changes*. Every item is folded in. **Re-derived** on the merged tree at `265094b6` on 2026-11-13: facts, sites and versions only, no ruling changed.
 
 **Where this plan and the spec differ, this plan's Rulings rule.** Each ruling is marked for Fable's plan review.
 
@@ -34,7 +33,7 @@
 - **No per-run override.** `--enforce-model=fable` is the one-run route. It also pins the planner, the reviewer and the scanners, and `workflows-core`'s environment page says so.
 
 ### The record (§3.6)
-- **The key.** `KEYS` gains `("fable_escalation", {"source": None, "choice": None})`, immediately after `coding_model`. `KEYS_LINE` then reads `… coding_model fable_escalation{source choice} branch_answer{…} …`. `implement.md`'s quote changes in Task 1's commit.
+- **The key.** `KEYS` gains `("fable_escalation", {"source": None, "choice": None})`, immediately after `coding_model`. `KEYS_LINE` then reads `… coding_model fable_escalation{source choice} branch_answer{answer moves lines} …`. `implement.md`'s quote (Phase 1.4, after "which `run-state.py`'s `KEYS` defines, and no other:", `:470`) changes in Task 1's commit.
 - **Its members.** `source` is `answer`, `setting`, `fallback`, `security` or `unreachable`. `choice` is the escalated value or the unescalated one.
 - **A Fable value** is a `claude-fable-*` id, or the family `fable`. **The escalated value** is the highest listed `claude-fable-*` id by version number; in a family-only harness, `fable`. **The unescalated value** is §4's `implementation_model` without the third clause: Opus, or the Sonnet floor where no Opus is available.
 - **`load` fills** only the keys of a named tuple, `FILLED = ("fable_escalation",)` — the keys added since format 2 — each absent one with its `KEYS` default, on read.
@@ -67,12 +66,12 @@
 - **The guard's own calls.**
   - Its reads (the setting, the security grep, the reachability reading) go in one Bash call.
   - It loads `run-flags` only under `ask`, or where the outcome escalates: for the price table and the unpriced warning.
-  - Its `set` is chained onto the run's next Bash command after the guard, whatever it is, so an answer never sits unwritten. At the `code-writer` sites that command is the `step_groups` append (`set … && append step_groups …`), so a refused `set` (exit 3 or 9) also refuses the record. At the Review-fixer sub-step it is the `review_file` mktemp.
+  - Its `set` is chained onto the run's next Bash command after the guard, whatever it is, so an answer never sits unwritten — Phase 1.4's *A write never takes a turn of its own* applied. On the merged tree *Each dispatch* opens with the report file's `mktemp`, which the `step_groups` append then records, so there the `set` is chained before whichever of the two the run's next Bash command makes (`set … && …`); at the Phase 3.5 fix attempt that command is the `failure_file` mktemp and its write, which come before that attempt's append. Either way a refused `set` (exit 3 or 9) stops the chain before the record. At the Review-fixer sub-step it is the `review_file` mktemp.
 - **The auth sentence.** Where `routing.block.reason` cites a §1.1 authentication or security trigger (Ruling R10), the question and the `always` line add: *Fable's safety filters may re-run some of this run's requests on Opus.*
 - **An escalating write** sets `routing.block`'s `implementation_model` and `fixes_model`, and `coding_model`, to the escalated value, and appends to the block's `notes`. It also prices the escalated value as `run-flags` §2's *Unpriced reachable id* paragraph does, and prints that paragraph's warning where it is unpriced.
 - **Class changes.**
   - A fall below HIGH-RISK drops the escalation for later dispatches; the key stays. A rise back applies the recorded choice and never asks again.
-  - **The guard does not apply a recorded choice**: it acts only on a null `choice`. The six sites that write `routing`, `class` and `coding_model` do, by re-resolving with §4, whose clause reads the record (Task 3 Step 1 lists them).
+  - **The guard does not apply a recorded choice**: it acts only on a null `choice`. The six sites that write `routing`, `class` and `coding_model` do, by re-resolving with §4, whose clause reads the record (Task 3 Step 1 lists them). On a resume, Phase 0's *Resuming* step 8 re-resolves `routing` and `coding_model` too, with the record Task 5 settles, for `init --resume` (no `class` write; Task 5 owns it).
 
 ### The question (§3.2, verbatim)
 ```
@@ -81,7 +80,7 @@ choices: ["Write it on Fable (Recommended)", "Write it on <unescalated model>"]
 ```
 - **`<unescalated model>`** is the unescalated value, its id or family as resolved.
 - **`<multiple>`** is Fable's `input` price over the unescalated model's `input` price, from the price table `run-flags` §2 resolves, rounded to one decimal place and written `2.0×`. In a family-only harness it is `about twice or more`. For an unpriced model, see Ruling R1.
-- **A free-text answer** is normalised to one of the two options or re-asked (`workflows-core:escalation-rules`, closed-vocabulary pickers). It never writes the setting.
+- **A free-text answer** is normalised to one of the two options or re-asked (`workflows-core:escalation-rules`, *Closed-vocabulary pickers must normalise the free-text answer* — cite it by that exact rule name, as `implement.md`'s other citations of it do: its rule index maps it to part `pickers`, which `implement.md`'s load-by-part paragraph loads before the rule is applied). It never writes the setting.
 
 ### The fallback (§3.4)
 - **When it fires.** All three must hold:
@@ -123,7 +122,7 @@ choices: ["Write it on Fable (Recommended)", "Write it on <unescalated model>"]
 - **GIT-G1's sections are not edited**, in any file: Ending early, the specs preflight, `branch-check`, `require-on-main`, the specs handover, the terminal `commit-artifacts`. Never edit:
   - `specs-repo-git.md`;
   - `phase-handoff.md`;
-  - `scripts/specs-git.py`;
+  - `plugins/workflows-core/scripts/specs-git.py` (no `scripts/specs-git.py` exists at the repository root);
   - `.github/workflows/validate-catalog.yml`;
   - `.claude/rules/workflows-core-git.md`.
 - **Rules files** stay under 20,000 characters, and nothing is cut to fit. Measure with `python3 -c "print(len(open('<f>',encoding='utf-8').read()))"`.
@@ -162,6 +161,7 @@ choices: ["Write it on Fable (Recommended)", "Write it on <unescalated model>"]
     print("TOTAL", n)
     PY
     ```
+  - **On the merged tree** (`265094b6`) the recipe prints `TOTAL 106`: `implement.md` 14 (IMP-G5's *Resuming* step 8 among them), `classification.md` 8, the `/implement` page 6, the `dev-workflows` model-routing page 2, `.claude/rules/dev-workflows-implement.md` 1, `.claude/rules/plugin-updates-coupling.md` 1; `references/handoff/code-writer.md` has none (its `claude-opus-5-5` comment is lower-case). Each task still records its own before-count.
   - **The expected after-count** is the before-count plus the sentences the task adds, each listed in the report. A difference is explained, hit by hit.
   - **Dispositions.** Record each hit as one of:
     - rewritten;
@@ -207,27 +207,35 @@ choices: ["Write it on Fable (Recommended)", "Write it on <unescalated model>"]
   Where the reason is unclear against that list, print the sentence.
 - **R11 — the guard's place and its calls.**
   - **Place.** The guard runs before the dispatch's first record, so an appended entry never records the coding model from before the guard ran:
-    - at Phase 3A step 1, it opens the *Each dispatch* paragraph;
-    - at the Phase 3.5 fix attempt, it comes before the `failure_file` and append text;
-    - at the Review-fixer sub-step, it opens the sub-step.
+    - at Phase 3A step 1, it opens the *Each dispatch* paragraph (`:941`), before its report file and `step_groups` append; IMP-G5's `before dispatch:code-writer` record comes later in that paragraph;
+    - at the Phase 3.5 fix attempt, it comes before the `failure_file` and append text (`:1078`), whose `before dispatch:code-writer` record follows the append;
+    - at the Review-fixer sub-step, it opens the sub-step (`:1207`), before its `review_file` mktemp; IMP-G5's sentence "Every `review-fixer` dispatch — the one below, a plan ruling's second dispatch (below) and the pass an **Apply** makes (step 7's offer, above) — is made between two tree records" follows the `review_file` persist.
   - **Reads.** They go in one Bash call. It loads `run-flags` only under `ask` or an escalating outcome.
-  - **Write.** One `set` of `fable_escalation`, `routing` (the block whole: `set` merges `routing`'s members, so `history` stays) and `coding_model`. It is chained onto the run's next Bash command after the guard, whatever it is, so under `ask` the answer never waits on a later record. At the `code-writer` sites that command is the `step_groups` append, so a refused `set` refuses the record too; at the Review-fixer sub-step it is the `review_file` mktemp.
+  - **Write.** One `set` of `fable_escalation`, `routing` (the block whole: `set` merges `routing`'s members, so `history` stays) and `coding_model`. It is chained onto the run's next Bash command after the guard, whatever it is, so under `ask` the answer never waits on a later record. At *Each dispatch* that command makes the report file and the `step_groups` append, and at the fix attempt the `failure_file`, so a refused `set` refuses the record too; at the Review-fixer sub-step it is the `review_file` mktemp.
 - **R13 — a `security` record from an unreadable task description.** The record keeps the design's `source: security`, so the five values stand. The report tells the two cases apart from state at Phase 5. Where `patches` is empty and no `[SEC#n]` is found in `report.phase1_tasks` or in a readable `task_description_file`, the line is wording 8, not wording 7, which might be false.
 - **R12 — where the text goes.**
-  - The guard is a new top-level section, `## The Fable escalation guard`, placed immediately before `## Invariants (always enforced)`.
+  - The guard is a new top-level section, `## The Fable escalation guard`, placed immediately before `## Invariants (always enforced)` (`:1670`): on the merged tree that is after IMP-G5's `## Resuming a stopped run` and the `---` that closes it (`:1668`), the new section closed by its own `---`.
   - The setting is `run-flags` §8.
   - `classification` §4's clause also gets a bullet in `.claude/rules/workflows-core-model-routing.md`, the authority's rules file.
-  - `dev-workflows-implement.md` gains only a short clause, since it is near its limit: 19,412 characters before IMP-G5's Tasks 3 and 4. Where fewer than 150 characters are left after the merge, the clause goes only in `workflows-core-model-routing.md`, and the task report says so.
+  - `dev-workflows-implement.md` gains only a short clause, since it is near its limit. Where fewer than 150 characters are left after the merge, the clause goes only in `workflows-core-model-routing.md`, and the task report says so. **Measured on the merged tree: 19,959 characters, 41 left — the fallback applies**: the clause goes only in `workflows-core-model-routing.md`. That leaves the bullet's two-clause restatement ("…else the §2 Opus chain's first available row; `--enforce-model` over both") standing beside a three-clause rule — *Needs a controller ruling*, item A, settled before Task 6.
 
 ## Review Focus
 
 These are the five cases no task's selftest exercises that are most likely to bite. Each owning task's verification step quotes the sentence that decides it.
 
-1. **A resume over an escalated `code-writer` the dead session left in flight.** The entry is marked `failed` and re-dispatched on Fable, with no fallback and no `source: fallback` (R9). Owners: Tasks 4 and 5.
+1. **A resume over an escalated `code-writer` the dead session left in flight.** The entry is written `failed` (the step-group row's "the `null` written `failed` first") and its group re-dispatched on Fable, with no fallback and no `source: fallback` (R9). Owners: Tasks 4 and 5.
 2. **`WORKFLOWS_FABLE_ESCALATION` set to ` Always `, `NEVER`, `yes` or empty.** These read as `always`, `never`, `ask` with the one-line notice, and `ask` silently. Owners: Tasks 3 and 5.
 3. **Claude Code's family-only harness.** Fable is reachable only where `fable` is listed. The escalated value, the recorded `model` and the dispatch argument are all `fable`, and `<multiple>` is `about twice or more`. Owners: Tasks 2 (§5) and 3.
 4. **An escalated dispatch fails outright after an earlier Fable step group returned `done`.** It gets an ordinary same-model retry, with no fallback. Owner: Task 4.
 5. **A security-finding run, resumed after a reboot under `always`.** Its `security` record is kept, never re-tested. A guard that meets a null or unreadable `task_description_file` takes row 3. The run is never escalated. Owners: Tasks 3 and 5.
+
+## Needs a controller ruling (pre-flight on the merged tree, 2026-11-13)
+
+Raised by facts the merged tree changed or exposed; none is decided here, and each names the task it holds. The pre-flight report gives each recommendation.
+
+- **A — `dev-workflows-implement.md`'s two-clause restatement** (R12, Task 6 Step 4). The fallback adds nothing there, but the "orchestrator writes no source code" bullet restates §4's rule in two clauses and ends "`--enforce-model` over both", which an escalated HIGH-RISK run falsifies. A 35-character in-place amendment fits the 41 left. Holds Task 6.
+- **B — R8's retry and IMP-G5's resume note** (Task 4 Step 3). IMP-G5 shipped `review-fixer`'s *A re-dispatch on a resume* and its `Resume note:` line for a pass that may have partly applied its fixes, which is also what R8's retry after an outright failure meets; R8 hands the retry nothing of the kind. Holds Task 4.
+- **C — R8's `NEEDS HUMAN` outcome on the routes with no `NEEDS HUMAN` branch** (Task 4 Step 3). IMP-G5's tree-record sentence names three `review-fixer` dispatches: the sub-step's (taken from the BLOCK and the PASS WITH RECOMMENDATIONS branches), a plan ruling's second dispatch, and an **Apply** pass. Only the BLOCK branch tests `Stop condition flag`; the PASS branch does not, and the post-re-review **Apply** pass's flag "stops nothing". Holds Task 4.
 
 ---
 
@@ -235,11 +243,11 @@ These are the five cases no task's selftest exercises that are most likely to bi
 
 **Files:**
 - Modify `plugins/dev-workflows/scripts/run-state.py`:
-  - `KEYS`, and the list-shapes comment above it (`step_groups` entries carry `model`, written by the run);
-  - a new `FILLED` tuple beside `KEYS`, and `load()`;
+  - `KEYS` (`("coding_model", None)` is followed by `("branch_answer", …)` in the `routing` row), and the list-shapes comment above it — its `step_groups` line, which says each entry is stamped `started` (`step_groups` entries carry `model`, written by the run);
+  - a new `FILLED` tuple beside `KEYS`, and `load()` — on the merged tree it is `require`, read, `json.loads`, the not-an-object check, `return d`; `peek` and `init --resume` reach it through `resumable()`, which tests `format` after it, and `read`, `open`, `set`, `append`, `persist`, `remove`'s `remove_file()` and `init --recover` call it directly;
   - the docstring paragraph that opens "A key is a top-level name";
   - `selftest()`.
-- Modify `plugins/dev-workflows/commands/implement.md`: only the `KEYS_LINE` quote after "which `run-state.py`'s `KEYS` defines, and no other:".
+- Modify `plugins/dev-workflows/commands/implement.md`: only the `KEYS_LINE` quote after "which `run-state.py`'s `KEYS` defines, and no other:" (`:470`).
 
 **Interfaces:** produces `fable_escalation` `{source, choice}`, `FILLED = ("fable_escalation",)`, and `load(f) -> dict`, which fills each absent key of `FILLED` and no other.
 
@@ -263,7 +271,7 @@ These are the five cases no task's selftest exercises that are most likely to bi
     - on a second such file, `init --resume` with `{}` exits 0 and writes the default.
   - **No fill of `format`.** Delete `format` from a file: `peek` exits 8, and so does `init --resume`.
   - **No fill outside `FILLED`.** Delete `phase` from a file: `read phase` exits 3.
-- [ ] **Step 2: Run** `python3 plugins/dev-workflows/scripts/run-state.py --selftest`. Expected: the new cases fail, every existing case PASSES, and "implement.md quotes KEYS exactly" now fails.
+- [ ] **Step 2: Run** `python3 plugins/dev-workflows/scripts/run-state.py --selftest`. Expected: the new cases fail and every existing case passes — "implement.md quotes KEYS exactly" among them, since `KEYS` and the quote change together in Step 3. On the merged tree, before Step 1, it prints `run-state selftest: PASS (231 checks)`.
 - [ ] **Step 3: Implement.**
   - The `KEYS` entry.
   - `FILLED`, with a comment: the keys added since format 2, which a file an earlier format-2 release wrote can lack.
@@ -277,17 +285,17 @@ These are the five cases no task's selftest exercises that are most likely to bi
 ### Task 2: `workflows-core` — the clause, the setting, their pages
 
 **Files:**
-- Modify `plugins/workflows-core/references/model-routing/classification.md`:
-  - §3.2 step 3;
-  - §4's coding-model bullets and its closing paragraph ("So from MODERATE up a Fable or Mythos session codes on its own model");
-  - §5's dispatch-rule sentence "a family-level §10 value is recorded as the family";
-  - §9.1's `code-writer` bullet;
-  - §9.2's `/implement` row.
-- Modify `plugins/workflows-core/references/run-flags.md`:
-  - its opening line;
-  - §2's *Unpriced reachable id* paragraph;
-  - a new `## 8.` section after §7.
-- Modify `plugins/workflows-core/docs/reference/environment.md`, `docs/getting-started.md` and `docs/reference/references.md` (its `run-flags.md` entry).
+- Modify `plugins/workflows-core/references/model-routing/classification.md` (IMP-G5 did not touch it):
+  - §3.2 step 3 (`:166`);
+  - §4's coding-model bullets (`:236`–`:238`, "`--enforce-model` overrides both (§10)") and its closing paragraph ("So from MODERATE up a Fable or Mythos session codes on its own model", `:251`);
+  - §5's dispatch-rule sentence "a family-level §10 value is recorded as the family" (`:311`);
+  - §9.1's `code-writer` bullet (`:549`);
+  - §9.2's `/implement` row (`:563`).
+- Modify `plugins/workflows-core/references/run-flags.md` (not a reference that loads by part):
+  - its opening line ("Single source of truth for the three run flags", `:3`);
+  - §2's *Unpriced reachable id* paragraph (`:58`);
+  - a new `## 8.` section after `## 7. Temporary files` (`:130`), the file's last section.
+- Modify `plugins/workflows-core/docs/reference/environment.md`, `docs/getting-started.md` and `docs/reference/references.md` (its `run-flags.md` entry, `:70`).
 
 **Interfaces:** produces classification §4's third clause, and `run-flags` §8. Tasks 3 to 6 cite both.
 
@@ -310,12 +318,12 @@ These are the five cases no task's selftest exercises that are most likely to bi
 - [ ] **Step 4: Pages.**
   - **`environment.md`:**
     - a `## \`$WORKFLOWS_FABLE_ESCALATION\`` section in the page's per-variable shape (Resolution, When unset, when the value is bad, unreadable "not applicable"), saying where it is set and the `--enforce-model=fable` route;
-    - it sits outside the page's `## Run flags` group (the flags' three defaults), so re-read that group's intro and keep it true: the new variable is no run flag's default;
-    - "nine" becomes "ten" at every count of the variables;
+    - it sits outside the page's `## Run flags` group (the flags' three defaults: `## Run flags` at `:105`, then the three `$WORKFLOWS_*` sections, all at `##`, running to the page's end, so a section appended after them reads as one of the group), so re-read that group's intro and keep it true: the new variable is no run flag's default;
+    - "nine" becomes "ten" at every count of the variables: on the merged tree four, at `:3` ("reads nine user-settable variables", check 9's sentence), `:5` twice and `:99`;
     - "Four of the nine are …" names the setting;
     - the sentence saying each variable "is read by a reference this plugin ships" is rewritten true for a variable `/implement` alone reads;
     - the `dev-workflows` bullet gains it.
-  - **`getting-started.md`:** a ``### `WORKFLOWS_FABLE_ESCALATION` `` entry, backticked as its neighbours' headings are, and both of its "nine"s.
+  - **`getting-started.md`:** a ``### `WORKFLOWS_FABLE_ESCALATION` `` entry, backticked as its neighbours' headings are (the variables' `###` headings run `:31` to `:63`, under `## What you set on your machine`), and both of its "nine"s (`:29`, `:53`).
   - **`references.md`:** the `run-flags.md` entry names §8.
 - [ ] **Step 5: Re-count.** Run the sweep recipe; record the after-count against the expected one, and re-read every hit. Then `grep -rn 'nine' plugins/workflows-core/docs`; expect no count of variables.
 - [ ] **Step 6: Gates.** Expected: `EXIT=0`. Check 5 now finds a reader for the documented variable, and check 9's "ten user-settable" agrees.
@@ -325,11 +333,11 @@ These are the five cases no task's selftest exercises that are most likely to bi
 
 **Files:** modify `plugins/dev-workflows/commands/implement.md`:
 - the new section `## The Fable escalation guard`, placed by R12;
-- Phase 1.5's `model_routing` block (its `implementation_model:` comment), and the paragraph after the block ("the code-writing ones — `code-writer` and `review-fixer` — pass `implementation_model`");
-- the run-state contract:
-  - a `fable_escalation` bullet after the `routing` bullet;
-  - the `step_groups` bullet's member list and meaning;
-  - one sentence beside the `KEYS` paragraph: `fable_escalation` reads as its default in a file an earlier release wrote without it;
+- Phase 1.5's `model_routing` block (its `implementation_model:` comment, `:603`), and the paragraph after the block ("the code-writing ones — `code-writer` and `review-fixer` — pass `implementation_model`", `:609`);
+- the run-state contract, in Phase 1.4's *What it holds*:
+  - a `fable_escalation` bullet after the `routing` bullet (`:441`, "`routing` — `{"block", "history"}`"), before the `branch_answer` bullet;
+  - the `step_groups` bullet's member list and meaning (`:454`, "`step_groups` — `[{"steps", "plan", "attempt", "status", "report", "answer", "left_to_caller"}]`");
+  - one sentence beside the `KEYS` paragraph ("The file holds exactly these keys", `:470`): `fable_escalation` reads as its default in a file an earlier release wrote without it;
 - every dispatch site of `code-writer` and `review-fixer`, and Phase 3A step 1's *Each dispatch* append object;
 - any of the six class-change sites (Step 1) whose re-resolution does not already cite §4's rule.
 
@@ -338,16 +346,16 @@ These are the five cases no task's selftest exercises that are most likely to bi
 - Produces the section and its paragraphs, *When it runs*, *Who is escalated*, *The setting*, *The question* and *What it writes*. Task 4 adds *The fallback*, and Task 5 *On a resume*.
 
 - [ ] **Step 1: Inventory.**
-  - **Dispatch sites.** For each dispatch, list the first record it makes (`step_groups` append, `failure_file`, `before dispatch:` tree record) and the arrow line: Phase 3A step 1's *Each dispatch*, Phase 3B step 1, the Phase 3.5 fix attempt, the Review-fixer sub-step. Also list every prose dispatch of `review-fixer` ("dispatches `review-fixer`", "dispatch `review-fixer` as above"); each must dispatch "as" a site that cites the guard. Record the counts.
-  - **The six class-change sites** that write `routing`, `class` and `coding_model`: five tagged ``writes run-state `routing`, `class`, `coding_model` ``, and Phase 1.5's ``writes run-state `routing.block`, `class`, `coding_model` ``. On IMP-G5's branch these are:
-    - Phase 1.5's *Resolve the per-step routing*;
-    - Phase 1.6's `fan_out = true` floor;
-    - Phase 2A's *Re-test the class against the plan*;
-    - Phase 2B's `### Re-classification`;
-    - Phase 3A step 1's raise ("Re-classified upward during implementation");
-    - Phase 3B step 6's accepted `### Re-classification`.
+  - **Dispatch sites.** For each dispatch, list the first record it makes (`step_groups` append, `failure_file`, `before dispatch:` tree record) and the arrow line: Phase 3A step 1's *Each dispatch* (`:941`, arrow `:943`), Phase 3B step 1 (`:1108`, arrow `:1110`), the Phase 3.5 fix attempt (`:1078`, arrow `:1080`), the Review-fixer sub-step (`:1207`, arrow `:1209`) — four arrows in all. On the merged tree Phase 3B step 1 dispatches "with the request Phase 3A step 1 writes, between the `before dispatch:code-writer` and `after dispatch:code-writer` tree records that step takes around each dispatch": it names no record of its own. Also list every prose dispatch of `review-fixer`; each must dispatch "as" a site that cites the guard. On the merged tree they are "invoke the review-fixer agent" twice (`:1188` BLOCK, `:1189` PASS WITH RECOMMENDATIONS, each "see Review-fixer sub-step below"), "as the Review-fixer sub-step makes one" (`:1203`), "dispatches `review-fixer` once more … as the Review-fixer sub-step dispatches one" (`:1204`) and "dispatch `review-fixer` as above" (`:1226`, the plan ruling's second dispatch); IMP-G5's sentence "Every `review-fixer` dispatch — the one below, a plan ruling's second dispatch (below) and the pass an **Apply** makes" (`:1207`) enumerates them. The `code-writer` prose dispatches are Phase 3.5's two directed fixes, "made as step 6 makes one" (`:1074`) and "made as an attempt is" (`:1091`); the restart table's re-dispatches are Task 5's. Record the counts.
+  - **The six class-change sites** that write `routing`, `class` and `coding_model`: five tagged ``writes run-state `routing`, `class`, `coding_model` `` (`:631`, `:740`, `:811`, `:995`, `:1187` — the last now reads "…`coding_model`, and `review_in_hand`: `null`, … in one `set`"), and Phase 1.5's ``writes run-state `routing.block`, `class`, `coding_model` `` (`:591`). On the merged tree these are:
+    - Phase 1.5's *Resolve the per-step routing* (`:591`);
+    - Phase 1.6's `fan_out = true` floor (`:631`);
+    - Phase 2A's *Re-test the class against the plan* (`:740`);
+    - Phase 2B's `### Re-classification` ("If the return contains `### Re-classification`", `:811`);
+    - Phase 3A step 5's raise ("Re-classified upward during implementation", `:995`, its sub-step 1 — step 5, not step 1);
+    - Phase 3B step 7's accepted `### Re-classification` ("Accept revised classification (Recommended)", `:1187` — step 7, *Act on the return*, which reads step 6's review).
 
-    Quote each one's §4 citation. A site that re-resolves `implementation_model` without citing §4's rule gains "by §4's coding-model rule".
+    Quote each one's §4 citation; on the merged tree only `:995` says "by §4's coding-model rule". A site that re-resolves `implementation_model` without citing §4's rule gains "by §4's coding-model rule". Phase 0's *Resuming* step 8 (`:95`, "**Routing** is resolved again") re-resolves `routing` and `coding_model` as Phase 1.5 does, untagged and with no `class` write: it is no seventh site here, and Task 5 owns it.
   - Run the sweep recipe over this file, and record its before-count.
 - [ ] **Step 2: Write the section's five paragraphs**, exactly as the Global Constraints' guard, setting, question and record state them.
   - **Self-contained.** It names the three values and the `printenv WORKFLOWS_FABLE_ESCALATION || true` read itself, so it needs no `run-flags` reload after a compaction.
@@ -361,11 +369,11 @@ These are the five cases no task's selftest exercises that are most likely to bi
   - At the opening of the Review-fixer sub-step.
   - At Phase 3B step 1, where its own records begin, unless it makes them through Phase 3A step 1's *Each dispatch*.
   - **The `model:` placeholders.** Each arrow line's placeholder gains "; at HIGH-RISK, the Fable value `fable_escalation.choice` holds, where it holds one".
-  - **The append object.** Phase 3A step 1's *Each dispatch* object gains `"model": "<run-state coding_model>"`. Phase 3.5's fix attempt appends "as Phase 3A step 1 makes one"; confirm it, and change it only if it lists the members.
+  - **The append object.** Phase 3A step 1's *Each dispatch* object gains `"model": "<run-state coding_model>"`. Phase 3.5's fix attempt appends "as Phase 3A step 1 makes one"; confirm it, and change it only if it lists the members. On the merged tree it reads "Then make the dispatch as Phase 3A step 1 makes one — its report file, its `step_groups` entry appended before it, here with `"steps": []`, `"plan": null` and `"attempt"` that number, the diff so far, and its two tree records": it names only the three members it overrides, so `model` comes with Phase 3A step 1's object.
 - [ ] **Step 4: Phase 1.5 and the contract**, as Files lists. The `step_groups` bullet says what `model` holds, by the Global Constraints' wording.
 - [ ] **Step 5: Review Focus 2, 3 and 5, and the free-text answer.** Quote, in the report, the sentence that decides each. A case with no deciding sentence is a gap to fix now.
 - [ ] **Step 6: Close.**
-  - **Order, by offset.** *Each dispatch* is one long line, so line numbers cannot order the citation against the append. For each site, compare offsets in the whitespace-collapsed text: the last "Fable escalation guard" before the site's first record, against that record. Add Phase 3B step 1's pair where it makes its own records. A phrase the merge changed raises `ValueError`: re-derive it, never drop the site. The check does not rely on `before dispatch:`, which matches nothing until IMP-G5's Task 3 lands.
+  - **Order, by offset.** *Each dispatch* is one long line, so line numbers cannot order the citation against the append. For each site, compare offsets in the whitespace-collapsed text: the last "Fable escalation guard" before the site's first record, against that record, and against the site's IMP-G5 `before dispatch:` tree record, which on the merged tree follows that record at all three sites. Add Phase 3B step 1's pair where it makes its own records. A phrase that changed raises `ValueError`: re-derive it, never drop the site. On the merged tree each anchor below resolves: every opening phrase once; `"steps": [` at `:941` and `:1078`, `dw-impl-review-XXXXXX` at `:1207` and `:1225`, each first match after its opening being the site's own.
     ```bash
     python3 - <<'PY'
     import re
@@ -378,9 +386,10 @@ These are the five cases no task's selftest exercises that are most likely to bi
     for head, rec in sites:
         h = t.index(head)
         r = t.index(rec, h)
+        b = t.index("before dispatch:", h)
         g = t.rfind("Fable escalation guard", 0, r)
-        print(head, g, r)
-        assert h - 300 <= g < r, head
+        print(head, g, r, b)
+        assert h - 300 <= g < r < b, head
     PY
     ```
   - Each arrow's placeholder carries the clause, and the citation count equals Step 1's site count.
@@ -393,11 +402,11 @@ These are the five cases no task's selftest exercises that are most likely to bi
 
 **Files:** modify `plugins/dev-workflows/commands/implement.md`:
 - the guard section's *The fallback* paragraph;
-- Phase 3A step 1's *Read the return* rule ("It is **unreadable** where the dispatch failed outright" and "An unreadable return is retried once with the same request");
-- Phase 3B step 7's Review-fixer sub-step ("Wait for the fix report.");
-- Phase 3B's opening paragraph ("The code is written by `code-writer` on `implementation_model`");
-- Phase 5's `### Classification`, beside the `Model routing: bypassed` line;
-- `## Invariants`: the "ALWAYS dispatch `code-writer` and `review-fixer` with `model: <implementation_model>`" bullet, and one new ALWAYS bullet for the guard.
+- Phase 3A step 1's *Read the return* rule ("It is **unreadable** where the dispatch failed outright" and "An unreadable return is retried once with the same request", both `:964`);
+- Phase 3B step 7's Review-fixer sub-step ("Wait for the fix report.", `:1218`), and IMP-G5's sentence opening "Every `review-fixer` dispatch — the one below, a plan ruling's second dispatch (below) and the pass an **Apply** makes" (`:1207`): R8's retry is a `review-fixer` dispatch too, made between its own `before dispatch:review-fixer` and `after dispatch:review-fixer` records, so it joins that sentence's list — as `code-writer`'s retry already sits in *Each dispatch*'s "Every dispatch of this step — a retry, and each dispatch afresh after a return, included — is made between two tree records";
+- Phase 3B's opening paragraph ("The code is written by `code-writer` on `implementation_model`", `:1103`);
+- Phase 5's `### Classification`, beside the `Model routing: bypassed` line (`:1462`);
+- `## Invariants`: the "ALWAYS dispatch `code-writer` and `review-fixer` with `model: <implementation_model>`" bullet (`:1677`, which ends "Opus is otherwise reserved for planning and review"), and one new ALWAYS bullet for the guard.
 
 **Interfaces:** consumes Task 3's section and `step_groups[].model`. It produces *The fallback*, which Task 5's R9 sentence names.
 
@@ -405,7 +414,7 @@ These are the five cases no task's selftest exercises that are most likely to bi
 - [ ] **Step 2: *The fallback*.** Write the Global Constraints' three conditions and four actions, the readable statuses, R6, R7, and the kept attempt number.
 - [ ] **Step 3: Hook it in.**
   - **`code-writer`'s retry.** It goes "on the unescalated value where *The fallback* fires, else on the same model". The retried entry's `model` is the model it passes.
-  - **`review-fixer`.** It gains R8, worded as R8 quotes, after "Wait for the fix report." Quote, in the report, the sentence the existing `NEEDS HUMAN` branch acts on, and confirm it reads nothing from the absent Fix Report. Where it does, word what it reads for the no-report case.
+  - **`review-fixer`.** It gains R8, worded as R8 quotes, after "Wait for the fix report." Quote, in the report, the sentence the existing `NEEDS HUMAN` branch acts on, and confirm it reads nothing from the absent Fix Report. Where it does, word what it reads for the no-report case. On the merged tree it does: the BLOCK branch (`:1188`) says "If `Stop condition flag` is `NEEDS HUMAN`, do not re-review: surface the deferred BLOCKER(s) to the user with the reason `review-fixer` gave and stop", so the no-report wording is needed. Rulings B and C (*Needs a controller ruling*) bear on this step: settle them first.
 - [ ] **Step 4: The report line.** Use the eight wordings (R13 tells 7 from 8), R4's and R5's counts-only lines, and the mixed-model counts (no `failed` entry, no `review-fixer` dispatch), read from `fable_escalation` and `step_groups[].model`.
 - [ ] **Step 5: The invariants and Phase 3B's opening.**
   - The ALWAYS bullet gains the clause. Re-read its "Opus is otherwise reserved for planning and review" against Fable coding, and keep it true.
@@ -416,12 +425,17 @@ These are the five cases no task's selftest exercises that are most likely to bi
 
 ### Task 5: `implement.md` — the escalation across an IMP-G5 resume
 
-**Files:** modify `plugins/dev-workflows/commands/implement.md`:
+**Files:** modify `plugins/dev-workflows/commands/implement.md` — the sites as the merged tree names them:
 - the guard section's *On a resume* paragraph;
-- Phase 0's resume path: the step that builds `init --resume`'s stdin from re-resolved `routing` and `coding_model`, and the step right after `init --resume`;
-- `## Resuming a stopped run`: its Phase 2A/2B rows, and its step-group and `3B.8, or 3.5` rows' "marked `failed`" sentences.
+- Phase 0's *Resuming* steps (the numbered list after "**Resuming.** On *Resume*", `:86`–`:116`). Its steps are cited by number across the file (*Resuming* steps 1, 5, 7, 8, 9, 10 and 11, "its step 9", "its step 11"), so add no numbered step and renumber none:
+  - step 8 (`:95`), "**The lineage check** runs as on any run, into a new check file. **Routing** is resolved again where the file's `class` is set: the `model_routing` block, as Phase 1.5's *Resolve the per-step routing* resolves it, …, with `coding_model` its `implementation_model`." The settle (Step 2) goes here, before its **Routing** sentence, and that sentence re-resolves with the settled record — it is what builds the stdin's `routing` and `coding_model`;
+  - step 9 (`:96`), "**Take the file over** with `init --resume`": its stdin keys stay as they are (`RESUME_KEYS` unchanged; `routing` as `{"block": <the block>}`, and `coding_model`, "where step 8 resolved them"); its tail paragraph, "Once it has exited `0`, read `step` as the file now holds it" (`:113`), is the step right after `init --resume`, where the `unreachable` re-test and the `set` go, beside the writes that tail already makes ("write what steps 4 and 5 left to write; append each line Phase 0 recorded");
+- `## Resuming a stopped run` (`:1622`):
+  - *What a re-entered step asks* (`:1628`), whose list "an answer in `clarifications.answers`, a `step_groups` entry's `answer`, a `triage` entry's `settled` or `offered`, a `check_run_answers` entry, `test_decision`, `branch_answer.answer`" names the answers the file holds: a `fable_escalation` whose `source` is `answer` is one, so it joins the list (extent face: the guard's question is now one a re-entered step can reach);
+  - its two Phase 2A/2B rows, "`Phase 2A` or `Phase 2B`, `step_groups` empty" (`:1645`) and "`Phase 2A` or `Phase 2B`, `step_groups` not empty" (`:1646`);
+  - the rows that dispatch `code-writer` or `review-fixer` again, and their `failed` writes — the merged tree says "written `failed`", never "marked `failed`" (0 hits): the step-group row "`3A.1`, `3A.5` or `3B.1`, or `Phase 3A` or `Phase 3B` with `step` `null`" (`:1649`, "dispatching that group again, with the resume note, as the step retries an unreadable return, the `null` written `failed` first and a fresh entry appended"); the row "`3B.7`, with `review_in_hand` `null`" (`:1655`, "a `review-fixer` pass, where one is due …, dispatched again, with the resume note"), which writes no `failed`; and the row "`3B.8` with `review_in_hand` `null`, `3.5.3` to `3.5.6`, or `Phase 3.5` with `step` `null`" (`:1657`, "the attempt the run died in, written `failed` first", and the directed fix's "It is written `failed`"). The "`Phase 2A` or `Phase 2B`, `step_groups` not empty" row reaches `code-writer` too, at "On approval the run returns to the phase that re-planned".
 
-**Interfaces:** consumes IMP-G5's `peek`, `init --resume` and restart table, and Tasks 3 and 4.
+**Interfaces:** consumes IMP-G5's `peek`, `init --resume` and restart table, and Tasks 3 and 4. On the merged tree: the run writes nothing into the run-state file before step 9's `init --resume` (the *Resuming* opening paragraph says so); `peek` prints the whole file and, after Task 1, a file without the key with `fable_escalation` at its default; `init --resume` repoints each path location to its durable copy or nulls it, and Phase 1.4 persists `files.task_description_file`, so R3's "repointed to its durable copy or nulled" holds; every `set` after `init --resume` is this session's, the session guard (exit 9) applying.
 
 - [ ] **Step 1: Locate each site by phrase.** Name each in the report.
 - [ ] **Step 2: *On a resume*, before `init --resume`,** by R2 to R4. It settles the record from `peek`'s record (a file without the key reads `{null, null}`), against this invocation's flags, `current_model`, setting and reachability. It reads no file. The first rule that holds decides:
@@ -434,15 +448,16 @@ These are the five cases no task's selftest exercises that are most likely to bi
      - `never` gives `{setting, <unescalated>}`.
      - `ask` gives `{null, null}`.
   6. `unreachable`: keep it for now, its choice rewritten to this invocation's unescalated value. It is re-tested after `init --resume` (Step 3).
-- [ ] **Step 3: The resume path.**
-  1. Settle the record by Step 2.
-  2. Re-resolve `routing` and `coding_model` with it, for `init --resume`'s stdin.
-  3. Run `init --resume`.
-  4. On an `unreachable` record the file held (rule 6), never one rule 3 wrote in this resume, run rows 3 to 5 against the paths `init --resume` repointed or nulled. A null or unreadable `task_description_file` makes row 3 hold; an `ask` outcome gives `{null, null}`.
-  5. Send one `set` of the record, the block and `coding_model` with the next tool call, wherever the record changed from the file's.
+- [ ] **Step 3: The resume path**, on *Resuming*'s own steps.
+  1. Settle the record by Step 2 — at *Resuming* step 8, before its **Routing** sentence, as part of that step.
+  2. Re-resolve `routing` and `coding_model` with it, for `init --resume`'s stdin — step 8's **Routing** sentence, which then says it resolves with the record *On a resume* settled, never the file's (§4's clause reads run-state `fable_escalation`, and until step 9 the file is the earlier session's).
+  3. Run `init --resume` — step 9, unchanged.
+  4. On an `unreachable` record the file held (rule 6), never one rule 3 wrote in this resume, run rows 3 to 5 against the paths `init --resume` repointed or nulled — in step 9's "Once it has exited `0`" tail. A null or unreadable `task_description_file` makes row 3 hold; an `ask` outcome gives `{null, null}`.
+  5. Send one `set` of the record, the block and `coding_model` with the next tool call, wherever the record changed from the file's — in that same tail, in one `set` with the writes it already makes there, where they fall in one call.
 - [ ] **Step 4: The restart table.**
-  - **The Phase 2A/2B rows:** the guard runs before the first coding dispatch, so a resume past *Approve* still meets it.
-  - **One sentence for every row that re-dispatches `code-writer` or `review-fixer`:** it meets the guard as any dispatch does, and a `failed` mark the resume writes is no outright failure (R9).
+  - **The Phase 2A/2B rows** (both: `step_groups` empty and not empty): the guard runs before the first coding dispatch, so a resume past *Approve* still meets it.
+  - **One sentence for every row that re-dispatches `code-writer` or `review-fixer`**, saying it meets the guard as any dispatch does, and that a `failed` the resume writes is no outright failure (R9). On the merged tree those rows are the step-group row (`3A.1`, `3A.5` or `3B.1`, …), the `3B.7` row with `review_in_hand` `null`, and the `3B.8`/`3.5.3`–`3.5.6` row; the "`step_groups` not empty" row reaches the step-group dispatches through its re-plan, which the Phase 2A/2B sentence above covers. On the step-group row the guard comes after "the `null` written `failed` first" and before "a fresh entry appended": the fresh entry is the re-dispatch's first record (R11), the `failed` write the dead entry's.
+  - **What a re-entered step asks:** its list of answers the file holds gains `fable_escalation` where its `source` is `answer`.
 - [ ] **Step 5: Review Focus 1, 2 and 5, and four scenarios.** For each, quote the deciding sentence:
   - an `answer` kept under a changed setting;
   - `setting: always` resumed under `ask`;
@@ -455,17 +470,19 @@ These are the five cases no task's selftest exercises that are most likely to bi
 
 **Files:**
 - `plugins/dev-workflows/docs/commands/implement.md`, at three sites:
-  - the subagent paragraph's "`code-writer` and `review-fixer` run on the run's coding model (*Who writes the code*, below)";
-  - the paragraph "`code-writer` and `review-fixer` run on the run's coding model, which the class decides";
-  - the related-pages line "as `code-writer` and `review-fixer` do from `MODERATE` up on a session not already on Opus, Fable or Mythos".
-- `plugins/dev-workflows/docs/reference/model-routing.md`: its sentences on `/implement`'s coding model.
-- `plugins/dev-workflows/docs/reference/environment.md`: its opening sentence, "Nothing else it reads is yours to set".
-- `plugins/dev-workflows/references/handoff/code-writer.md`: the `implementation_model:` line's comment.
-- `.claude/rules/dev-workflows-implement.md`: the coding-model sentence in the "orchestrator writes no source code" bullet.
-- `.claude/rules/workflows-core.md`: the `run-flags.md` paragraph.
-- `.claude/rules/workflows-core-model-routing.md`: a §4 bullet (R12).
-- `docs/superpowers/specs/2026-10-17-implement-coding-subagents-design.md`: a pointer at its superseded non-goal.
-- `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md`: a pointer at row F part 2.
+  - the subagent paragraph's "`code-writer` and `review-fixer` run on the run's coding model (*Who writes the code*, below)" (`:46`);
+  - the paragraph "`code-writer` and `review-fixer` run on the run's coding model, which the class decides" (`:52`, under `### Who writes the code`);
+  - the related-pages line "as `code-writer` and `review-fixer` do from `MODERATE` up on a session not already on Opus, Fable or Mythos" (`:163`).
+
+  IMP-G5 added the page's `### Resuming a stopped run` (`:67`); its *How a resume goes on* says "a question whose answer the file holds is not asked again", which the escalation keeps true, and names no model.
+- `plugins/dev-workflows/docs/reference/model-routing.md`: its sentences on `/implement`'s coding model (`:22`, `:39`).
+- `plugins/dev-workflows/docs/reference/environment.md`: its opening sentence, "Nothing else it reads is yours to set" (`:3`).
+- `plugins/dev-workflows/references/handoff/code-writer.md`: the `implementation_model:` line's comment (`:84`; IMP-G5's *The resume note* paragraph now follows the request block).
+- `.claude/rules/dev-workflows-implement.md`: the coding-model sentence in the "orchestrator writes no source code" bullet ("Both run on `workflows-core:model-routing/classification` §4's `implementation_model` — … `--enforce-model` over both"). R12's fallback applies (41 characters left); ruling A decides whether that sentence changes.
+- `.claude/rules/workflows-core.md`: the `run-flags.md` paragraph (`:30`, "`plugins/workflows-core/references/run-flags.md` is the **single source of truth** for the three run flags").
+- `.claude/rules/workflows-core-model-routing.md`: a §4 bullet (R12), in its `## Model routing reference` list.
+- `docs/superpowers/specs/2026-10-17-implement-coding-subagents-design.md`: a pointer at its superseded non-goal (`:48`, "**No Fable escalation (part 2 of F).**"). IMP-G5 set the form at that file's resume non-goal: "*Later built as IMP-G5:* `docs/superpowers/specs/2026-11-12-imp-g5-implement-resume-design.md`".
+- `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md`: a pointer at row F part 2 (`:105`, the `| **F** |` row).
 
 **Interfaces:** consumes every earlier task's names.
 
@@ -476,8 +493,8 @@ These are the five cases no task's selftest exercises that are most likely to bi
   - **The `dev-workflows` environment page:** the setting `/implement` reads, documented by `workflows-core`. Name the variable in plain backticks: never as a heading and never bold-backticked, either of which check 5's reverse direction reads as documented here.
   - **Diagrams.** A changed mermaid label quotes `[ ] ( ) { } |` and `#`.
 - [ ] **Step 3: The handoff.** The comment says `implementation_model` can be the escalated Fable value at HIGH-RISK.
-- [ ] **Step 4: Rules.** Measure each file before and after; keep each under 20,000 characters, cutting nothing.
-  - **`dev-workflows-implement.md`:** at most about 150 characters — "; at `HIGH-RISK`, Fable where the run chose it (`.claude/rules/workflows-core-model-routing.md`)" — and "`--enforce-model` over all three". Where fewer than 150 characters are left, add nothing here; the clause lives only in `workflows-core-model-routing.md`, and the report says so (R12).
+- [ ] **Step 4: Rules.** Measure each file before and after; keep each under 20,000 characters, cutting nothing (`validate-catalog.py` warns above 20,000). On the merged tree: `dev-workflows-implement.md` 19,959, `workflows-core.md` 18,205, `workflows-core-model-routing.md` 4,548.
+  - **`dev-workflows-implement.md`:** at most about 150 characters — "; at `HIGH-RISK`, Fable where the run chose it (`.claude/rules/workflows-core-model-routing.md`)" — and "`--enforce-model` over all three". Where fewer than 150 characters are left, add nothing here; the clause lives only in `workflows-core-model-routing.md`, and the report says so (R12). On the merged tree 41 are left, so this is the case — save what ruling A allows.
   - **`workflows-core.md`:** §8's setting, read by `/implement` alone at its guard, outside `strip-run-flags`.
   - **`workflows-core-model-routing.md`:** the clause, the guard, fallback and resume as its writers, and security fixes unescalated.
 - [ ] **Step 5: The pointers.** Each is one line naming this design.
@@ -493,16 +510,18 @@ These are the five cases no task's selftest exercises that are most likely to bi
 - `.claude/rules/plugin-updates-coupling.md`, and the history file and pointers Step 2 names where a move is needed;
 - `docs/superpowers/to-fix.md`.
 
-- [ ] **Step 1: Versions.** Run `git fetch origin`, then take the next free **minor** of `workflows-core` and of `dev-workflows`, read from `origin/main` after IMP-G5. `plugin.json` must equal `marketplace.json`. Each CHANGELOG section is dated with the landing day (UTC), never left `— Unreleased`.
+- [ ] **Step 1: Versions.** Run `git fetch origin`, then take the next free **minor** of `workflows-core` and of `dev-workflows`, read from `origin/main` after IMP-G5. On `origin/main` at `3016ead8` they are dev-workflows 4.64.0 and workflows-core 1.85.1 (both `plugin.json`s equal to `marketplace.json`), so the next free minors are **dev-workflows 4.65.0** and **workflows-core 1.86.0** — re-read them at release, since other branches land on `main`. `plugin.json` must equal `marketplace.json`. Each CHANGELOG section is dated with the landing day (UTC), never left `— Unreleased`.
 - [ ] **Step 2: The coupling bullet.** `**Update \`workflows-core\` <X> with \`dev-workflows\` <Y>**`, saying both directions:
   - a newer `/implement` beside an older `workflows-core` cites a §4 clause and a `run-flags` §8 setting that do not exist;
   - a newer `workflows-core` beside an older `/implement` names an escalation the command never makes.
 
-  Measure the file. Above 19,000 characters, move its oldest bullets byte for byte into the highest-numbered `plugin-updates-coupling-history-*.md`, or into a new one where adding to it would pass 20,000 characters. Then update every range pointer: the coupling file's intro, the receiving file's title and intro, and `plugin-updates.md`. A new history file also needs:
+  It goes after the last `workflows-core` bullet (on the merged tree "**Update `workflows-core` 1.85.1 with `dev-workflows` 4.64.0**", IMP-G5's) and before the two `prose-style` bullets that close the list. Measure the file. Above 19,000 characters, move its oldest bullets byte for byte into the highest-numbered `plugin-updates-coupling-history-*.md`, or into a new one where adding to it would pass 20,000 characters. Then update every range pointer: the coupling file's intro, the receiving file's title and intro, and `plugin-updates.md`. A new history file also needs:
   - the shared `paths:` frontmatter;
   - the "Read all N" count in `plugin-updates.md` and in the coupling file's intro;
-  - its row in `CLAUDE.md`'s rules table. `CLAUDE.md` is at 34,609 characters against its 36,000 warning, so measure it after.
-- [ ] **Step 3: `to-fix.md`.** Delete the IMP-G3 entry. In its place, add `**IMP-G3-MEASURE**` with the follow-up text verbatim.
+  - its row in `CLAUDE.md`'s rules table. `CLAUDE.md` is at 34,608 characters against its 36,000 warning, so measure it after.
+
+  On the merged tree no move is due: `plugin-updates-coupling.md` is 16,715 characters (12 bullets, its oldest `dev-workflows` 4.61.0's), so a bullet under about 2,280 characters leaves it below 19,000. For reference, the coupling set is four files — `plugin-updates.md` says "Read all four" — and the highest-numbered history file is `plugin-updates-coupling-history-3.md`, 10,549 characters, holding the bullets for `workflows-core` 1.75.0 to 1.80.0; `-history-2.md` is 19,965 and `plugin-updates-coupling-history.md` 19,359, neither with room.
+- [ ] **Step 3: `to-fix.md`.** Delete the IMP-G3 entry ("**IMP-G3 — deferred: Fable escalation, sub-project F part 2, is not picked up.**", `:173`). In its place, add `**IMP-G3-MEASURE**` with the follow-up text verbatim.
 - [ ] **Step 4: Gates.** Measure the rules files and `CLAUDE.md`. Expected: `EXIT=0`, and 0 warnings.
 - [ ] **Step 5: Commit**: `release(imp-g3): workflows-core <X>, dev-workflows <Y>`.
 
@@ -512,8 +531,8 @@ These are the five cases no task's selftest exercises that are most likely to bi
   - `implement.md`'s `fable_escalation` bullet lists exactly the five `source` values. Every record the guard section writes (in *Who is escalated*, *The fallback* and *On a resume*) uses one of them, and so does every report wording.
   - The question text in `implement.md` equals the Global Constraints' verbatim.
   - No `dev-workflows` file holds `$WORKFLOWS_FABLE_ESCALATION` or `WORKFLOWS_FABLE_ESCALATION-`.
-  - No added executed regex holds `\d`: `git diff origin/main...HEAD | grep '^+' | grep -F '\d'` is empty.
+  - No added executed regex holds `\d`: `git diff origin/main...HEAD -- plugins | grep '^+' | grep -F '\d'` is empty. (Scoped to `plugins/`: unscoped, it always hits this plan's own lines that name `\d`, the plan and the design being on the branch and not on `main`.)
   - At every dispatch site, the guard's citation precedes the dispatch's first record (Task 3 Step 6's offset check, re-run).
-- [ ] **Step 2: GIT-G1.** `git diff --stat origin/main...HEAD` names none of the five never-edit files. No `implement.md` hunk falls in Ending early, the specs preflight, `branch-check`, `require-on-main`, the specs handover or the terminal `commit-artifacts`: name each hunk's section.
+- [ ] **Step 2: GIT-G1.** `git diff --stat origin/main...HEAD` names none of the five never-edit files. No `implement.md` hunk falls in Ending early (the bold paragraph "**Ending early.**" before Phase 0, `:16`), the specs preflight, `branch-check`, `require-on-main`, the specs handover or the terminal `commit-artifacts`: name each hunk's section.
 - [ ] **Step 3: The full CI list.** Every `run:` step of `.github/workflows/validate-catalog.yml`, with its `--selftest`s, mermaid where `node` exists.
 - [ ] **Step 4: The whole-branch review.** This is the controller's job, with Fable as the final reviewer, handed this plan's Rulings and Review Focus.
