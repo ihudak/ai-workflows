@@ -45,7 +45,7 @@
     "file": "plugins/workflows-core/scripts/specs-git.py",
     "old": "found = [k for k in keys if rest == k or rest.startswith(k + \"-\")",
     "new": "found = [k for k in keys if rest == k or rest.startswith(k.split(\"-\")[0] + \"-\")",
-    "fails": "t-midrun-keyed-other:"
+    "fails": "t-midrun-keyed-other: no commit on the branch"
   },
   {
     "id": "e_midrun_here_kill",
@@ -53,7 +53,7 @@
     "file": "plugins/workflows-core/scripts/specs-git.py",
     "old": "PENDING_FIELDS = (\"c1\", \"c2\", \"old\", \"tip\",",
     "new": "PENDING_FIELDS = (\"c1\", \"c2\", \"tip\",",
-    "fails": "e_midrun_here_kill:"
+    "fails": "e_midrun_here_kill: error set"
   },
   {
     "id": "e_midrun_here_no_resume",
@@ -117,7 +117,7 @@
     "file": "plugins/workflows-core/scripts/specs_git_state.py",
     "old": "    _rmdir_if_empty(os.path.dirname(target))",
     "new": "    _rmdir_if_empty(target)",
-    "fails": "s_remove:"
+    "fails": "s_remove: load then None"
   },
   {
     "id": "lines_l_literal_bracket",
@@ -133,7 +133,7 @@
     "file": "plugins/workflows-core/scripts/specs-git.py",
     "old": "if os.path.isdir(specs) else None",
     "new": "if os.path.exists(specs) else None",
-    "fails": "g_file:"
+    "fails": "g_file: a regular file"
   },
   {
     "id": "land_l_land_absent",
@@ -165,7 +165,7 @@
     "file": "plugins/workflows-core/scripts/specs-git.py",
     "old": "    if started is not None and not (rerun or resume):",
     "new": "    if started is not None and not rerun:",
-    "fails": "k_skill_options:"
+    "fails": "k_skill_options: every option"
   },
   {
     "id": "selftest_s_group_without_selftest",

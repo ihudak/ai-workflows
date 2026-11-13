@@ -22,15 +22,14 @@ check made to assert less, which only a run shows.
 The runner copies plugins/workflows-core/, scripts/selftests/ and .github/workflows/validate-catalog.yml into a new
 temporary directory, at the same relative paths and without any __pycache__ directory, writes only under that
 directory and makes every group run there: it never writes under the repository, and the directory is removed when it
-exits, whatever happened. That copy is
-never run in: each run, a baseline's included, is in a fresh copy of it, removed after the run, so nothing a run
-writes -- a file a case leaves, or bytecode -- reaches another run. A SIGTERM, SIGHUP or SIGINT ends the run under way
-and removes the directory, any further one ignored meanwhile, and the runner exits 128 + the signal's number; one the
-runner inherited as ignored, as under nohup, stays ignored. Every run is `python3 -B specs-git.py --selftest --group
-<group>` in its copy, in a session of its own, with PYTHONDONTWRITEBYTECODE=1, with GITHUB_ACTIONS empty, since the
-selftest refuses --group in CI, and with its TMPDIR inside the temporary directory. However a run ends, its process
-group then gets SIGTERM, so a process in it can pass the signal on to a session of its own, and SIGKILL three seconds
-later where any of the group is left.
+exits, whatever happened. That copy is never run in: each run, a baseline's included, is in a fresh copy of it,
+removed after the run, so nothing a run writes -- a file a case leaves, or bytecode -- reaches another run. A SIGTERM,
+SIGHUP or SIGINT ends the run under way and removes the directory, any further one ignored meanwhile, and the runner
+exits 128 + the signal's number; one the runner inherited as ignored, as under nohup, stays ignored. Every run is
+`python3 -B specs-git.py --selftest --group <group>` in its copy, in a session of its own, with
+PYTHONDONTWRITEBYTECODE=1, with GITHUB_ACTIONS empty, since the selftest refuses --group in CI, and with its TMPDIR
+inside the temporary directory. However a run ends, its process group then gets SIGTERM, so a process in it can pass
+the signal on to a session of its own, and SIGKILL three seconds later where any of the group is left.
 
 For each group a selected mutant names, the group first runs once unchanged, capped at 900 seconds, and its time is
 kept; where that run does not end in a PASS line, BASELINE RED <group> is printed with a line under it saying why --
