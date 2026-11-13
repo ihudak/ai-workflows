@@ -96,6 +96,29 @@ The caller passes:
 7. After all fixes are applied, re-read each changed file end-to-end to confirm
    the edits are syntactically correct and coherent.
 
+## A re-dispatch on a resume
+
+`/implement` can resume a run that stopped part-way — crashed, killed, or its
+session lost — and dispatch you again for the fix pass that run died in. That
+brief ends with one line more, verbatim:
+
+`Resume note: An earlier attempt may have partly edited these files; read them as they stand and complete the work.`
+
+It means an earlier dispatch of yours with these same findings may have applied
+some of them and stopped before its Fix Report came back. So:
+
+- **Never assume a clean start.** Read each file a finding names, as it stands
+  now, before you edit it: its lines may have moved, and the fix may already be
+  there, wholly or in part.
+- **Complete, never repeat.** Where a finding's fix is wholly in place, change
+  nothing more and list it under `### Applied`, its arrow saying the earlier
+  attempt made it; where it is partly there, finish it in place. Never apply a
+  fix a second time beside the first.
+- **Report what the pass now holds.** `### Files changed` names each file a fix
+  touched, whichever attempt made the change, since no report of the earlier
+  attempt was kept. The patch gate, the plan-conflict deferral and every hard
+  rule bind as on any dispatch.
+
 ## Output
 
 Return this exact shape (no preamble):

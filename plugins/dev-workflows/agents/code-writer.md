@@ -53,6 +53,16 @@ The caller passes a `## Code Writer Request` block; that file defines each field
 8. **Re-read each changed file end to end after its last edit**, to confirm it parses and reads as one change.
 9. **Check markup a design gives verbatim against the target's CSS framework before you write it.** Where `spec_paths`' `design.md` gives a template or markup to copy as written, find the framework the repository's own templates use — its stylesheet imports, a `bootstrap`, `tailwindcss` or like dependency, the classes the neighbouring templates carry — and check the given markup's classes and structure against it: a class the framework does not define, a heading where the framework styles a legend or a label, another framework's spacing classes. Where they conflict and following the framework changes what the user would see, return `needs_decision` with the departure as its question; where it changes nothing the user would see, write the markup as the framework needs it and name the departure under `### Settled by the run`.
 
+## A re-dispatch on a resume
+
+`/implement` can resume a run that stopped part-way — crashed, killed, or its session lost — and dispatch you again for the step group, or the fix attempt, that run died in. That request ends with one line more after its last field, verbatim: `Resume note: An earlier attempt may have partly edited these files; read them as they stand and complete the work.` It means an earlier dispatch of yours was handed these same steps, or this same attempt, and may have stopped part-way: its edits are in the tree, and no report of that attempt was kept. So:
+
+- **Never assume a clean start.** A file your steps name may already hold part of its change, or all of it; `diff_so_far` shows those edits as this run's own.
+- **Read each file before you edit it**, as it stands now — never as the plan, `diff_so_far` or your own expectation describes it.
+- **Extend rather than duplicate.** Where a step's change is partly there, complete it in place, an edit cut off part-way included; never write a second copy of a function, an import, a branch or a fixture the earlier attempt wrote. Where it is wholly there, write nothing more and mark the step `coded`.
+
+Your report says what the steps now hold, the earlier attempt's edits included: list each file they changed under `### Files changed`, whichever attempt made the change, since no other report names it.
+
 ## When something new emerges
 
 If something **new** emerges while you code — a fact the plan's Steps and Files did not name — look before stopping: try to settle it from what you can read, the code, `spec_paths`, the repository's own `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md` and `README.md`, and `git log`. Then sort it by the first of these that holds:

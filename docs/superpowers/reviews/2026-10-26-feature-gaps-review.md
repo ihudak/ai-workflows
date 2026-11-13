@@ -34,7 +34,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 | IMP-G2 | dev-workflows — /implement | implement-coding-subagents' *Success* cost bar was never met, and no verification record closes it |
 | IMP-G3 | dev-workflows — /implement | Sub-project F part 2, Fable escalation, deferred and never picked up |
 | IMP-G4 | dev-workflows — /implement | No gate checks that every `code-writer` / `review-fixer` dispatch in `implement.md` names a model |
-| IMP-G5 | dev-workflows — /implement | Resuming a crashed run from the run-state file (explicitly a possible later feature) |
+| IMP-G5 | dev-workflows — /implement | Resuming a crashed run from the run-state file (explicitly a possible later feature) — resolved by the IMP-G5 build |
 | DEV-G1 | dev-workflows — /design, /ready, /conformance | `/conformance` Plan 2, part 1: the optional *Delivery verified* stage in `workflow-states` and `/ready` was never built |
 | DEV-G2 | dev-workflows — /design, /ready, /conformance | `/conformance` Plan 2, part 2: the documentation readers never take a recorded decision (D18) |
 | VU-G1 | dev-workflows — /vuln, /upgrade | Poetry, uv, PDM, Hatch, Composer and Bundler still install with their install-time code |
@@ -191,7 +191,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** marginal — it guards the text, not the run, and the run-time failure is addressed by Phase 0's session-model gate. Cheap if added.
 - **Suggested scope:** a check that each `→ Agent (subagent_type: "dev-workflows:code-writer"…` and `"dev-workflows:review-fixer"` line carries `model:`.
 
-### IMP-G5 — Resuming a crashed run from the run-state file (explicitly a possible later feature) — **Recorded in to-fix.md (batch B29): deferred**
+### IMP-G5 — Resuming a crashed run from the run-state file (explicitly a possible later feature) — **Recorded in to-fix.md (batch B29): deferred. Resolved by the IMP-G5 build**: designed on 2026-11-12 (`docs/superpowers/specs/2026-11-12-imp-g5-implement-resume-design.md`) and built by its plan (`docs/superpowers/plans/2026-11-13-imp-g5-implement-resume.md`); a later `/implement` in the same worktree offers to resume a stopped run, on a proven tree, at its step, and the to-fix.md entry is deleted
 - **Designed in:** `specs/2026-10-17-implement-coding-subagents-design.md` § Non-goals: "**No resuming of a crashed or abandoned run** from the run-state file … Using it to resume is a possible later feature, and is out of scope."
 - **Current state:** not built: `init` moves any leftover file aside unread (`implement.md:311`).
 - **Still worth doing?:** low — listed so the deferral is visible; IMP-G1 may change the state model anyway.

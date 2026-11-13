@@ -166,7 +166,6 @@ Decisions on gaps `docs/superpowers/reviews/2026-10-26-feature-gaps-review.md` f
 
 - **FBB-B16 — deferred: no shipped tool for mechanical spec edits and checks.** Large `/specify` runs write ad-hoc Python to insert test cases, make exact-match replacements and run structural checks (feedback `specify-scratch-scripts-for-tc-and-fixes` in `BOOK-2-01-feedback.md`). The decisions list answered "not yet": build one `spec-tool.py` (`insert-tcs`, `replace`, `check`), called from `/specify`, only if live runs keep needing it. FBA-G6's renumbering note (product-workflows 3.38.0, batch B08) covers renumbering meanwhile. Listed so the deferral stays visible; no work is planned.
 - **IMP-G3 — deferred: Fable escalation, sub-project F part 2, is not picked up.** `docs/superpowers/specs/2026-10-17-implement-coding-subagents-design.md` § Non-goals deferred it because no run had shown Opus falling short, and an ask before every high-risk run adds friction for an unmeasured gain. That ground still holds; only the "never below the session" clause ships (a Fable session codes on Fable, `workflows-core:model-routing/classification` §4). Revisit only with a measured case of Opus falling short.
-- **IMP-G5 — deferred: no resume-from-run-state for a crashed `/implement`.** The same design's § Non-goals called resuming from the run-state file a possible later feature; `init` still moves an earlier run's file aside unread (`/dev-workflows:implement` Phase 1.4, `run-state.py init`). IMP-G1 shipped as piece review (dev-workflows 4.32.0), which added the run-state keys `pieces` and `reviews` and changed nothing else of the state model, so the deferral's premise is unchanged. Listed so the deferral stays visible; no work is planned.
 
 ## From GIT-G1 Part 2a — any machine
 
@@ -185,6 +184,16 @@ Found while batch 2a moved the specs-repository start and end into `specs-git.py
 - **RO-SIZE — `require-on-main`'s entry file is over the Read tool's limit.** Owner: `workflows-core`, `phase-handoff` and its generated `reference-parts/phase-handoff/require-on-main.md` (`scripts/reference-parts.py`). Priority: the maintainer's to schedule.
   - **The case.** A consumer's `Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")` reads that file whole, and it is over the Read tool's 25,000-token limit, so the run needs two ranged reads where the entry file was meant to need one.
   - **Evidence.** Already over the limit at `bfa147fd`; 2a grew it, mostly with §4.4's per-row commands. Its bytes and the Read tool's token count at both trees are in `docs/superpowers/verification/2026-11-09-git-g1-part2a.md`, *The Read cap*.
+
+## From IMP-G5 — any machine
+
+Found while IMP-G5 built `/dev-workflows:implement`'s resume of a stopped run (`docs/superpowers/plans/2026-11-13-imp-g5-implement-resume.md`), which its design left to the builder to confirm (`docs/superpowers/specs/2026-11-12-imp-g5-implement-resume-design.md` §6).
+
+- **HANDOFF-NOPR — a handoff whose push landed and whose pull request was not opened is never finished by `handoff-to-main`.** Owner: GIT-G1 Part 3, `workflows-core`: `phase-handoff` §2.3's rule for a reused branch, and §2.6. Priority: with Part 3.
+  - **The case.** A run that dies after `phase-handoff` §2.5's push and before §2.6 opens the pull request leaves its branch on `origin` with no pull request. A later `handoff-to-main` on the same deliverable reuses that branch (§2.2 rule 3) and finds nothing to stage; §2.3 re-publishes a reused branch only where it carries a commit that `origin`'s copy lacks, so §2.5 and §2.6 are skipped, and the branch keeps the pull request it has — none. §4.1's *Nothing to commit* line reports the deliverable on that branch, unmerged, and that no pull request was opened, and nothing opens one.
+  - **Where it reaches.** Any producer run again after such a death. `/dev-workflows:implement`'s resume reaches it at its `## Resuming a stopped run` table's `Phase 4.5` row, which says beside that line that the branch's pull request may not be open, names the branch, and goes on; it leaves `phase-handoff` as it is, GIT-G1's.
+  - **What would fix it.** §2.3's reused-branch rule asking §2.6's probe whether the branch has an open pull request, and opening one where it has none, the branch being on `origin` already.
+  - **Evidence.** IMP-G5's design §4, its `Phase 4.5` row, and §6, *Confirming `handoff-to-main`'s behaviour on a half-made handoff*; `phase-handoff` §2.3's *A reused branch* bullet, §2.5's opening rule and §4.1's *Nothing to commit* row.
 
 ## Accepted — known, not to fix
 

@@ -212,7 +212,7 @@ RESUME_APPENDED = ("inputs_read", "report.notices")
 #   report.maintenance  each entry carries "agent": docs, knowledge, instructions, impl-maintenance or
 #            defect-reporter -- the run writes it
 # Two objects whose members are not fixed: `durable` -- {<label>: {"copy", "of"}}, written by persist
-# alone -- and `conformance.note_blobs` -- {<annotated path>: <its blob>}.
+# alone -- and `conformance.note_blobs` -- {<annotated path>: <its blob on <default-ref>, or null>}.
 # commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
 KEYS = [
     ("format", 2), ("session", None), ("started", None), ("updated", None),
