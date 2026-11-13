@@ -30,8 +30,9 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
   shell functions, and an `rm -i` or `rm -I` of theirs would ask before removing the file, be answered
   no from that shell's empty standard input, and leave it behind; `--` ends `rm`'s options. **Nothing
   else removes one** — save on `/implement`, whose `run-state.py` removes such files itself: its `set`
-  each `dw-impl-` file a write stops naming, and its `remove` every `dw-impl-` one its run-state file
-  still names at the run's end (`commands/implement.md` Phase 1.4). These files sit in the session's scratchpad
+  each `dw-impl-` file a write stops naming, its `init --resume` what is left at each `dw-impl-` path
+  it repoints to a durable copy, and its `remove` every `dw-impl-` one its run-state file still names
+  at the run's end (`commands/implement.md` Phase 1.4). These files sit in the session's scratchpad
   directory where the session names one, else under the system's temporary directory, outside every
   repository, where no later phase and no later run looks, save an `/implement` that resumes the run
   that made one, which takes it over with that run's state (`commands/implement.md`,
