@@ -135,14 +135,14 @@ plain `init` and `init --resume` are not guarded. `session`, `started`, `updated
                                      file another call wrote while this one waited is guarded.
 
 A key is a top-level name or a dotted path into one (`files.plan_file`); a list entry is named by
-its index (`triage.-1.followed_by`, the last entry's). `set`, `append` and `read` refuse a key the
-file does not hold, and `set` a path through a null value: write that key whole. Every
+its index (`triage.-1.followed_by`, the last entry's). `set`, `append`, `read` and `persist` refuse a
+key the file does not hold, and `set` a path through a null value: write that key whole. Every
 read-modify-write holds an exclusive lock (fcntl.flock on .implement-run.lock beside the file) and
 replaces the file whole (a temp file beside it, then os.replace), so a write is never half done and
 parallel calls lose nothing; a value that does not parse changes nothing. Input -- stdin and argv --
 is read as UTF-8 whatever the locale, and the file is UTF-8 with non-ASCII written as itself
 (ensure_ascii=False), so a path comes back as git's -z record gave it. JSON escapes `"`, `\\` and
-control characters -- `\\t`, `\\n`, `\\r` and the like -- in what `open` and `read` print, and each
+control characters -- `\\t`, `\\n`, `\\r` and the like -- in what `open`, `read` and `peek` print, and each
 escape reads back as one character. A call other than `init` that finds no file creates nothing: it
 checks for the file before it makes the lock beside it -- save `remove`, which, finding a durable
 directory there, takes the lock to delete it. The lock file, like a stale file, is never removed.

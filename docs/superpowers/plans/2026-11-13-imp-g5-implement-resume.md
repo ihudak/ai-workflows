@@ -53,7 +53,7 @@ These facts are exact. Task 1 implements them, and every later task relies on th
 
 **Script-owned keys**
 - `set` refuses `session`, `started`, `updated`, `durable`, and `tree.snapshot` in **both** forms: the dotted `set tree.snapshot …`, and as a member of an object given to `set tree '{…}'`. Exit 3.
-- Its meaning in `implement.md`'s exit list is "a command defect, never corrected and retried".
+- Its meaning in `implement.md`'s exit list is "a command defect". `set` refuses the whole call, so the run says so, naming the call and the keys, then makes the same call once more without the script-owned keys (`tree`'s `snapshot` member included), so that the call's other keys land, and goes on. From `init`, which wrote no file, it stops as exit 4 does. *(Amended at Task 2a's review: the earlier "never corrected and retried" lost every other key in the refused call.)*
 
 **New keys, with their defaults:**
 - `session` null, `started` null, `updated` null;
