@@ -22,7 +22,7 @@ Every existing heading and line is unchanged. One pair rule decides the order, s
 
 ### The instant and how it compares
 
-- **The instant's form:** exactly `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$`.
+- **The instant's form:** exactly `^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$`.
   - It is written by pasting the output of `date -u +%Y-%m-%dT%H:%M:%SZ` verbatim.
   - A value that does not match is **no instant**. It never makes a record unreadable.
   - Two instants that both match are compared with `[ "$a" \> "$b" ]`. Equal is not later.
@@ -225,7 +225,7 @@ These are prose behaviours. Each named task's reviewer checks the deciding sente
   - The `Delivery:` line keeps `(checked <Run: date>)`.
 - [ ] **Step 3: Step 2c.**
   - **Documentation.**
-    - Read the last line with `git -C "$SPECS_PATH" show "<default-ref>:./<path>" | tail -n 1`, against `^<!-- implementation records read: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z) -->$`.
+    - Read the last line with `git -C "$SPECS_PATH" show "<default-ref>:./<path>" | tail -n 1`, against `^<!-- implementation records read: ([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z) -->$`.
     - "Its text is not read" becomes "only its last line is read".
     - **No match:** test `git -C "$SPECS_PATH" rev-parse --is-shallow-repository`. Where it prints `true`, the draft could not be dated. Otherwise use today's `%cs` command. Its sentence "Where that prints no date — a shallow clone that lacks the commit" is replaced by the shallow test.
   - **Release note:** a draft's instant is its comment's `at:` line, where present.

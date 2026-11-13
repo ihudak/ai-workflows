@@ -47,7 +47,7 @@ one addressed to an Epic — and the date the run appended the draft. **The seco
 or `stage: dev`, names the stage the run drafted at** — its `run_phase`, which `/release-notes`
 Phase 0 infers from whether a specification or a design exists for the PRD — written alone on its
 line, one space after the colon. **The line after `stage:`, `at: <instant>`, is the instant the
-run started**, in UTC, exactly `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$`, written alone on its line, one
+run started**, in UTC, exactly `^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$`, written alone on its line, one
 space after the colon and nothing after the instant: `/release-notes` takes it right after
 `strip-run-flags`, before it reads anything in the specs tree, by pasting the output of `date -u +%Y-%m-%dT%H:%M:%SZ`
 verbatim, carries it through the run and writes it here (its Phase 0 and Phase 8 step 1), so work

@@ -102,7 +102,7 @@ Compose the draft and BOTH write and show it:
   Where the docs repository carries a pull-request template, the body is that
   template, filled with these facts, per `workflows-core:phase-handoff` §2.7.1,
   with the DO-NOT-MERGE banner below, where there is one, as its required first line.
-- **DO-NOT-MERGE banner** at the very top WHEN Phase 5.8 recorded any
+- **DO-NOT-MERGE banner** at the very top of the body WHEN Phase 5.8 recorded any
   `document-as-spec` / `skip-and-report` decision — never counting one its
   step 0 took from a conformance record, which drafts no gap and holds nothing
   (`workflows-core:source-truth` §7.8):
@@ -114,13 +114,16 @@ Compose the draft and BOTH write and show it:
   instant the run started, in UTC — the `started_at` `/document` took in its
   *Mode detection*, verbatim — then exactly one newline and nothing else: no
   blank line, no trailing space. The DO-NOT-MERGE banner, where there is one,
-  stays the draft's first line, and this line is the file's last.
-  `/dev-workflows:ready` reads the file's last line against exactly
-  `^<!-- implementation records read: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z) -->$`,
-  as the instant the run that wrote the draft started; a draft whose last line
-  does not match — one written before `docs-workflows` 1.39.0, or one ending in
-  a blank line — has no instant there, and that command falls back to git's
-  date for it.
+  stays the body's first line, where the banner bullet above puts it, and this
+  line is the file's last. `/dev-workflows:ready` reads the file's last line
+  against exactly
+  `^<!-- implementation records read: ([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z) -->$`,
+  as the instant the run that wrote the draft started. Where the line does not
+  match — a draft written before `docs-workflows` 1.39.0, or one ending in a
+  blank line — or its value is one that command sets aside — an impossible
+  time, or one later than the instant its own run started — the draft has no
+  instant, and that command dates it as its Phase 1 step 2c says: by the last
+  commit that changed it, or, in a shallow clone, not at all.
 - **host footer**:
   - Bitbucket (Cloud / Server) → "Open a pull request in the web UI and paste
     the title + body above." (No API.)
