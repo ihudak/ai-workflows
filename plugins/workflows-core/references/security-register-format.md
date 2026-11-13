@@ -290,7 +290,7 @@ Neither carries a `[SEC#n]`, so neither is ever a finding's line.
 weakness-classes.py across --specs <root> --ref <ref> [--today <YYYY-MM-DD>]
 ```
 
-`across` reports the CWEs that recur across registers: each whose class (§7.3) holds at least one judged-real finding in each of two or more of the registers at `<ref>` (§7.1). `--specs` is the top level of the specs repository's work tree, and `--ref` any ref there that names a commit. `--today` is as in `classes` (§7.4).
+`across` reports the CWEs that recur across registers: each whose class (§7.3) holds at least one judged-real finding in each of two or more of the registers at `<ref>` (§7.1). `--specs` is the top level of the specs repository's work tree, and `--ref` a ref there that names a commit and passes the check below. `--today` is as in `classes` (§7.4).
 
 **Exits** are those of `classes` (§7.4) — `0` and `2`, with the same single line on stderr — and the `<why>` is the first of these that applies:
 

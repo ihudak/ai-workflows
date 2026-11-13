@@ -2064,6 +2064,20 @@ def case_across_symlink_blob(tmp):
     assert (res["registers"], res["kb_skipped"], res["classes"]) == ([], 0, []), res
 
 
+def case_across_specs_spellings(tmp):
+    """--specs is matched to git's top level by realpath on both sides, so the same top level written another way --
+    with a trailing /, through a symbolic link to it, or relative -- runs, and reads the same."""
+    specs = _repo(tmp)
+    _register(specs, "api", [_finding(1, status="fix")])
+    _register(specs, "web", [_finding(1, status="fix")])
+    _commit(specs)
+    want, _ = _across(specs)
+    link = os.path.join(tmp, "via-link")
+    os.symlink(specs, link)
+    for spelling in (specs + "/", link, link + "/", os.path.relpath(specs)):
+        assert _across(spelling)[0] == want, spelling
+
+
 def case_across_stray_git_env(tmp):
     """Every git call gets a fresh environment with each GIT_ variable removed: a stray GIT_DIR pointing at another
     repository -- or GIT_WORK_TREE, GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY or GIT_CONFIG_PARAMETERS -- never moves the
