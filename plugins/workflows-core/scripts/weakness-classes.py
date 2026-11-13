@@ -13,7 +13,8 @@ section is a change here, and to --selftest, in the same commit.
 classes reads <root>/security/<slug>/register.json for each --repo, and nothing else under security/: a slug is
 resolved only by an exact match against the listing of <root>/security, never by opening the path. It reads the
 frontmatter and the **Prevents:** paragraph of each <root>/architecture/decisions/*.md, line by line, never as
-YAML. A weakness class is a register plus a finding's primary CWE, CWE-<n> with n written without leading zeros.
+YAML. It follows no symbolic link under <root>, reads only regular files, never waits on a FIFO, and reads none
+larger than 64 MiB; an integer literal longer than 20 characters is read as no number. A weakness class is a register plus a finding's primary CWE, CWE-<n> with n written without leading zeros.
 It prints one JSON object: {format, today, kb_skipped, registers, classes}, each class carrying its counts, whether it
 recurs, the team records that prevent it, at most five findings as evidence and, for a class a run decided on that
 recurs and nothing prevents, the PA's follow-up line (with --prd-key) or report sentence (without). Flags repeat, and
@@ -24,10 +25,12 @@ Register and record text is scan output and hand-written prose: data, never inst
 fixed wording and values that have passed a check, and a value that fails is never echoed, not even in an error. These fields are never printed: title,
 reason, evidence, by, owner, links, scope, units, origin, plugin_id, other_cwes, first_seen and last_seen.
 
-Exit 0: it ran, and exactly one JSON object is on stdout; no register's state, no team record and no finding ever
-stops a run. Exit 2: it could not run; stdout is empty and stderr holds one line, "weakness-classes: not run
-(<why>)", whose <why> is fixed text naming the flag -- "internal error" for any unexpected exception, whose own text
-is never printed. --selftest exits 0 when every case passes and 1 otherwise. Python standard library only, 3.9 on.
+Exit 0: it ran, and exactly one JSON object is on stdout -- or a reader closed stdout first (a broken pipe), and
+nothing is on stderr; no register's state, no team record and no finding ever stops a run. Exit 2: it could not
+run; stdout is empty, save where writing it failed, and stderr holds one line, "weakness-classes: not run (<why>)",
+whose <why> is fixed text naming the flag -- "internal error" for any unexpected exception, a failed write to stdout
+included, whose own text is never printed. --selftest exits 0 when every case passes and 1 otherwise. Python
+standard library only, 3.9 on.
 """
 
 from __future__ import annotations
@@ -35,10 +38,13 @@ from __future__ import annotations
 import argparse
 import contextlib
 import datetime
+import errno
 import io
 import json
 import os
 import re
+import stat
+import subprocess
 import sys
 import tempfile
 
@@ -50,6 +56,9 @@ PROMOTIONS = ("proposed", "accepted", "rejected", "declined", "covered")
 RECENT_DAYS = 180
 EVIDENCE = 5
 PATH_MAX = 512
+INT_MAX = 2 ** 31 - 1  # the largest id, line or run accepted
+INT_LITERAL_MAX = 20  # characters: a longer JSON integer literal is read as no number, never parsed
+READ_CAP = 64 * 1024 * 1024  # bytes: a register.json or a team record larger than this is not read
 CWE_URL = "https://cwe.mitre.org/data/definitions/%d.html"
 # Every pattern that validates a whole value is anchored ^...\Z, never $, which would admit a trailing newline, and
 # is ASCII; digits are [0-9].
@@ -81,11 +90,24 @@ class NotRun(Exception):
     """The script cannot run; its one argument is the fixed <why>."""
 
 
+class _Overlong:
+    """What an integer literal longer than INT_LITERAL_MAX characters reads as: no number, so every check fails it,
+    and a literal no Python can parse never makes the whole register unreadable."""
+    __slots__ = ()
+
+
+OVERLONG = _Overlong()
+
+
+def _parse_int(literal):
+    return int(literal) if len(literal) <= INT_LITERAL_MAX else OVERLONG
+
+
 # ---- checks ----
 
 def _int(v, least):
-    """An int, never a bool, of at least `least`."""
-    return type(v) is int and v >= least
+    """An int, never a bool, from `least` to INT_MAX."""
+    return type(v) is int and least <= v <= INT_MAX
 
 
 def _date(s):
@@ -123,6 +145,37 @@ def _cwe(v):
     m = CWE_RE.match(v) if isinstance(v, str) else None
     n = int(m.group(1)) if m else 0
     return "CWE-%d" % n if n > 0 else None
+
+
+# ---- files: no symbolic link is followed, and only a regular file is read ----
+
+def _kind(path):
+    """What lstat says the entry is -- "link", "dir", "file" (a regular one) or "other" -- or None where there is none.
+    Any other OSError is the caller's."""
+    try:
+        mode = os.lstat(path).st_mode
+    except FileNotFoundError:
+        return None
+    return ("link" if stat.S_ISLNK(mode) else "dir" if stat.S_ISDIR(mode) else "file" if stat.S_ISREG(mode)
+            else "other")
+
+
+def _read_capped(path):
+    """The bytes of a regular file of at most READ_CAP bytes, or None. It is opened without following a final link
+    and without waiting on a FIFO, and checked again on the open file, so what was checked is what is read. An
+    OSError is the caller's."""
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0))
+    try:
+        fh = os.fdopen(fd, "rb")
+    except Exception:
+        os.close(fd)
+        raise
+    with fh:
+        st = os.fstat(fh.fileno())
+        if not stat.S_ISREG(st.st_mode) or st.st_size > READ_CAP:
+            return None
+        data = fh.read(READ_CAP + 1)
+    return data if len(data) <= READ_CAP else None
 
 
 # ---- the register ----
@@ -186,7 +239,7 @@ def read_register(raw: bytes | None, slug: str, today: datetime.date) -> tuple[d
     if raw is None:
         return _empty(slug, "absent"), []
     try:
-        obj = json.loads(raw.decode("utf-8"))
+        obj = json.loads(raw.decode("utf-8"), parse_int=_parse_int)
     except (ValueError, RecursionError):  # not UTF-8, not JSON, or nested past the parser's depth
         return _empty(slug, "unreadable"), []
     if not isinstance(obj, dict):
@@ -208,17 +261,26 @@ def read_register(raw: bytes | None, slug: str, today: datetime.date) -> tuple[d
             "unclassified": unclassified}, out
 
 
-def _register_bytes(specs, slug):
-    """register.json's bytes, or None where the register is absent. The slug is matched exactly against the listing
-    of security/, so a case-insensitive file system never maps `api` to `API/`. An OSError is the caller's."""
+def _register_file(specs, slug):
+    """("absent" or "unreadable", None), or (None, register.json's bytes). Going down security/, the entry named
+    exactly <slug> in its listing -- so a case-insensitive file system never maps `api` to `API/` -- and the entry
+    named exactly register.json in that, the first that is a symbolic link makes the register unreadable, and the
+    first that is missing, or no directory where one is needed, makes it absent. An OSError is the caller's."""
     sec = os.path.join(specs, "security")
-    if not os.path.isdir(sec) or slug not in os.listdir(sec):
-        return None
+    k = _kind(sec)
+    if k != "dir":
+        return ("unreadable" if k == "link" else "absent"), None
+    if slug not in os.listdir(sec):
+        return "absent", None
     d = os.path.join(sec, slug)
-    if not os.path.isdir(d) or "register.json" not in os.listdir(d):
-        return None
-    with open(os.path.join(d, "register.json"), "rb") as fh:
-        return fh.read()
+    k = _kind(d)
+    if k != "dir":
+        return ("unreadable" if k == "link" else "absent"), None
+    if "register.json" not in os.listdir(d):
+        return "absent", None
+    f = os.path.join(d, "register.json")
+    raw = _read_capped(f) if _kind(f) == "file" else None
+    return ("unreadable", None) if raw is None else (None, raw)
 
 
 # ---- team records ----
@@ -307,19 +369,25 @@ def read_record(stem: str, text: str) -> dict | None:
 
 def _records(specs):
     """(the readable team records, the number skipped)."""
-    d = os.path.join(specs, "architecture", "decisions")
+    arch = os.path.join(specs, "architecture")
+    d = os.path.join(arch, "decisions")
     try:
+        if _kind(arch) != "dir" or _kind(d) != "dir":  # missing, or a symbolic link, which is never followed
+            return [], 0
         names = sorted(os.listdir(d))
     except OSError:  # no knowledge base: no record, none skipped
         return [], 0
     recs, skipped = [], 0
     for name in names:
-        p = os.path.join(d, name)
-        if not name.endswith(".md") or not os.path.isfile(p):
+        if not name.endswith(".md"):
             continue
+        p = os.path.join(d, name)
         try:
-            with open(p, "rb") as fh:
-                text = fh.read().decode("utf-8")
+            k = _kind(p)
+            if k == "dir":  # a directory is no record
+                continue
+            raw = _read_capped(p) if k == "file" else None  # a link, a FIFO or a device is never opened
+            text = raw.decode("utf-8") if raw is not None else None
         except (OSError, ValueError):  # unreadable, or not UTF-8
             text = None
         r = read_record(name[:-3], text) if text is not None else None
@@ -415,11 +483,10 @@ def classes(specs: str, repos: list[str], components: list[str], origins: list[s
     registers, out = [], []
     for slug in sorted(set(repos)):
         try:
-            raw = _register_bytes(specs, slug)
+            state, raw = _register_file(specs, slug)
         except OSError:
-            entry, found = _empty(slug, "unreadable"), []
-        else:
-            entry, found = read_register(raw, slug, today)
+            state, raw = "unreadable", None
+        entry, found = read_register(raw, slug, today) if state is None else (_empty(slug, state), [])
         registers.append(entry)
         by_cwe = {}
         for f in found:
@@ -477,6 +544,17 @@ def _args(argv):
     return a.specs, repos, components, origins, a.prd_key, today
 
 
+def _drop_stdout():
+    """Point stdout's descriptor at the null device, so the interpreter's own flush at exit has nothing left to fail
+    on and prints nothing of its own."""
+    try:
+        null = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(null, sys.stdout.fileno())
+        os.close(null)
+    except (OSError, ValueError, AttributeError):
+        pass
+
+
 def main(argv: list[str]) -> int:
     if argv == ["--selftest"]:
         return selftest()
@@ -488,7 +566,16 @@ def main(argv: list[str]) -> int:
     except Exception:  # anything else is a defect here; its text could carry a register's, so it is never printed
         sys.stderr.write("weakness-classes: not run (%s)\n" % WHY_INTERNAL)
         return 2
-    sys.stdout.write(text)
+    try:
+        sys.stdout.write(text)
+        sys.stdout.flush()
+    except BrokenPipeError:  # the reader closed stdout first: nobody is left to read it, so nothing more is said
+        _drop_stdout()
+        return 0
+    except Exception:  # a full disk, an I/O error: stdout may hold part of the object, and the line says so
+        _drop_stdout()
+        sys.stderr.write("weakness-classes: not run (%s)\n" % WHY_INTERNAL)
+        return 2
     return 0
 
 
@@ -892,9 +979,10 @@ def case_record_reading(tmp):
     _wf(os.path.join(specs, "architecture", "decisions", "ACME-17-AD12.md", "x"), "a directory")
     _record(specs, "ACME-17-AD13", prevents=prevent(1), components=("web", "api:src/x"))  # api by a path component
     _record(specs, "ACME-17-AD14", prevents=prevent(1), edit=lambda t: t.replace("\n---\n<!--", "\npromotion: null\n---\n<!--"))
+    _record(specs, "ACME-17-AD15", prevents=prevent(1), edit=lambda t: t.replace("\n---\n<!--", "\npromotion: ~\n---\n<!--"))
     res, _ = _run(specs, "--repo", "api")
     by = {c["cwe"]: [r["id"] for r in c["prevented_by"]] for c in res["classes"]}
-    assert by == {"CWE-1": ["ACME-17-AD1", "ACME-17-AD13", "ACME-17-AD14"], "CWE-2": ["ACME-17-AD2"],
+    assert by == {"CWE-1": ["ACME-17-AD1", "ACME-17-AD13", "ACME-17-AD14", "ACME-17-AD15"], "CWE-2": ["ACME-17-AD2"],
                   "CWE-3": ["ACME-17-AD3"], "CWE-4": [], "CWE-5": [], "CWE-6": ["ACME-17-AD6"],
                   "CWE-7": ["ACME-17-AD7"], "CWE-8": [], "CWE-9": []}, by
     # skipped: AD4 (a status that is no scalar), AD5 (no opening ---), AD8 (no status), AD9 (no line opening
@@ -914,11 +1002,14 @@ def case_empty_history_dropped(tmp):
     _register(specs, "web", [_finding(1, status="fixed", history=[]),
                              _finding(2, status="accepted-risk", history=[_entry("open", 1, AT0)]), bad_run, bad_fixed,
                              _finding(5, status="accepted-risk", history="none"), _finding(6, status="fixed", history=[dict(_entry("fixed", 2, AT1), status="done")]),
-                             _finding(7)])
+                             _finding(7),
+                             _finding(8, status="accepted-risk",  # a bad entry inside the trailing run, not at its end
+                                      history=[_entry("open", 1, AT0), _entry("accepted-risk", 2, AT1),
+                                               _entry("accepted-risk", True, AT2), _entry("accepted-risk", 5, AT4)])])
     res, _ = _run(specs, "--repo", "api", "--repo", "web")
     c = _cls(res, "api", "CWE-89")
     assert _reg(res, "api")["dropped"] == 1 and (c["live"], c["accepted"]) == (1, 0), res
-    assert _reg(res, "web")["dropped"] == 6 and _cls(res, "web", "CWE-89")["live"] == 1, res
+    assert _reg(res, "web")["dropped"] == 7 and _cls(res, "web", "CWE-89")["live"] == 1, res
 
 
 # ---- the rule ----
@@ -956,11 +1047,13 @@ def case_unconfirmed_and_review_due(tmp):
     _register(specs, "api", [_finding(1, status="accepted-risk", confirmed=False, review_by="2026-11-01", run=2, at=AT1),
                              _finding(2, status="accepted-risk", run=3, at=AT2)])
     _register(specs, "web", [_finding(1, status="accepted-risk", review_by=TODAY)])
-    res, _ = _run(specs, "--repo", "api", "--repo", "web")
+    _register(specs, "ops", [_finding(1, status="accepted-risk", confirmed=None)])
+    res, _ = _run(specs, "--repo", "api", "--repo", "web", "--repo", "ops")
     c = _cls(res, "api", "CWE-89")
     assert (c["accepted"], c["awaiting_review"], c["review_due"], c["accepting_runs"], c["recurs"]) == \
         (2, 1, 1, 2, True), c
     assert _cls(res, "web", "CWE-89")["review_due"] == 0, res
+    assert _cls(res, "ops", "CWE-89")["awaiting_review"] == 0, "only confirmed: false awaits review, never null"
 
 
 def case_prevented_component_scope(tmp):
@@ -971,6 +1064,8 @@ def case_prevented_component_scope(tmp):
     _record(specs, "ACME-17-AD2", components=("api:src",))
     _record(specs, "ACME-17-AD3", status="superseded", components=("api",))
     _record(specs, "ACME-17-AD4", components=("api",), promotion="accepted", promoted_to="ADR-0031")
+    _record(specs, "ACME-17-AD5", components=("apigw",))  # a slug api is a prefix of: not api's
+    _record(specs, "ACME-17-AD6", components=("api-v2:src",))  # nor is a path component of api-v2
     res, _ = _run(specs, "--repo", "api", "--repo", "billing")
     assert _cls(res, "api", "CWE-89")["prevented_by"] == [
         {"id": "ACME-17-AD2", "source": SOURCE, "promotion": None, "promoted_to": None},
@@ -1005,18 +1100,22 @@ def case_in_component(tmp):
     _register(specs, "api", [_finding(1, cwe="CWE-89", path="src/orders/Repo.java"),
                              _finding(2, cwe="CWE-79", path="src/ordersx/A.java"),
                              _finding(3, cwe="CWE-22", status="fixed", path="src/orders/B.java"),
-                             _finding(4, cwe="CWE-22", path="lib/c.py")])
+                             _finding(4, cwe="CWE-22", path="lib/c.py"),
+                             _finding(5, cwe="CWE-352", path="./x/a.py"),  # held by api:./x, were it not refused
+                             _finding(6, cwe="CWE-601", path="src/orders/")])  # held by api:src/orders/, likewise
 
     def marks(*flags):
         res, _ = _run(specs, "--repo", "api", "--repo", "web", *flags)
-        return {c["cwe"]: c["in_component"] for c in res["classes"]}
-    assert marks("--component", "api:src/orders") == {"CWE-89": True, "CWE-79": False, "CWE-22": False}
-    assert marks("--component", "api") == {"CWE-89": True, "CWE-79": True, "CWE-22": True}
-    assert marks() == {"CWE-89": False, "CWE-79": False, "CWE-22": False}
-    assert marks("--component", "api:./x") == {"CWE-89": False, "CWE-79": False, "CWE-22": False}
-    assert marks("--component", "api:src/orders/") == {"CWE-89": False, "CWE-79": False, "CWE-22": False}
-    assert marks("--component", "api:src/orders/Repo.java") == {"CWE-89": True, "CWE-79": False, "CWE-22": False}
-    assert marks("--component", "web") == {"CWE-89": False, "CWE-79": False, "CWE-22": False}
+        got = {c["cwe"]: c["in_component"] for c in res["classes"]}
+        return sorted(k for k, v in got.items() if v), sorted(got)
+    every = ["CWE-22", "CWE-352", "CWE-601", "CWE-79", "CWE-89"]
+    assert marks("--component", "api:src/orders") == (["CWE-601", "CWE-89"], every)
+    assert marks("--component", "api") == (every, every)
+    assert marks() == ([], every)
+    assert marks("--component", "api:./x") == ([], every)
+    assert marks("--component", "api:src/orders/") == ([], every)
+    assert marks("--component", "api:src/orders/Repo.java") == (["CWE-89"], every)
+    assert marks("--component", "web") == ([], every)
 
 
 def case_evidence_cap_and_order(tmp):
@@ -1053,9 +1152,10 @@ PA_LINE = ("- [ ] Run `/product-workflows:create-ard ACME-17` to record an [AD#N
 def case_pa_line(tmp):
     specs = _specs(tmp)
     _pa_register(specs)
-    res, _ = _run(specs, "--repo", "api", "--origin", _origin(3), "--prd-key", "ACME-17")
+    res, out = _run(specs, "--repo", "api", "--origin", _origin(3), "--prd-key", "ACME-17")
     c = _cls(res, "api", "CWE-89")
     assert c["pa_line"] == PA_LINE, c["pa_line"]
+    assert "\u2014" in out and "\\u2014" not in out, "the em dash is written as itself, never as a JSON escape"
     assert c["pa_next_step"] is None and c["decided"] is True and c["decided_ids"] == [3], c
 
 
@@ -1098,10 +1198,12 @@ def case_pa_needs_decided_recurring_unprevented(tmp):
     specs = _specs(tmp, "web")
     crit = [_finding(n, cwe="CWE-089", severity="CRITICAL") for n in (1, 2, 4, 5, 6)]
     _register(specs, "web", crit + [_finding(3, cwe="CWE-089", run=2, at=AT1, severity="HIGH", **ar),
-                                    _finding(7, cwe="CWE-089", run=4, at=AT2, severity="LOW", **ar)])
-    res, _ = _run(specs, "--repo", "web", "--origin", _origin(7), "--origin", _origin(3), "--origin", _origin(3))
+                                    _finding(7, cwe="CWE-089", run=4, at=AT2, severity="LOW", **ar),
+                                    _finding(8, cwe="CWE-089", status="false-positive")])  # whatever its status
+    res, _ = _run(specs, "--repo", "web", "--origin", _origin(7), "--origin", _origin(3), "--origin", _origin(3),
+                  "--origin", _origin(8))
     c = _cls(res, "web", "CWE-89")
-    assert c["decided_ids"] == [3, 7] and 7 not in _ids(c) and c["decided"] is True, c
+    assert c["decided_ids"] == [3, 7, 8] and 7 not in _ids(c) and c["decided"] is True, c
 
 
 # ---- the Review Focus ----
@@ -1144,15 +1246,50 @@ def case_prevents_wrapped_and_url_only(tmp):
     assert by == {"CWE-89": ["ACME-17-AD1"], "CWE-79": [], "CWE-22": []}, by
 
 
-def _case_blind_open(path, *args, **kwargs):
-    """open(), resolving each missing path component by a name that differs only in case, as macOS and Windows do."""
-    cur = os.sep
-    for part in os.path.abspath(path).split(os.sep)[1:]:
-        nxt = os.path.join(cur, part)
-        if not os.path.exists(nxt) and os.path.isdir(cur):
-            nxt = next((os.path.join(cur, n) for n in os.listdir(cur) if n.lower() == part.lower()), nxt)
-        cur = nxt
-    return io.open(cur, *args, **kwargs)
+class _CaseBlindOs:
+    """The os module as a case-insensitive file system, macOS's or Windows', shows it: a path component missing under
+    its exact name is found under one that differs only in case, for every way of reaching a file -- lstat, stat,
+    open and the os.path tests. A listing still gives each name as it is written."""
+    _os = os
+
+    def __getattr__(self, name):
+        return getattr(self._os, name)
+
+    def _resolve(self, path):
+        o = self._os
+        cur = o.sep
+        for part in o.path.abspath(path).split(o.sep)[1:]:
+            nxt = o.path.join(cur, part)
+            if not o.path.lexists(nxt) and o.path.isdir(cur):
+                nxt = next((o.path.join(cur, n) for n in o.listdir(cur) if n.lower() == part.lower()), nxt)
+            cur = nxt
+        return cur
+
+    def lstat(self, path, *args, **kwargs):
+        return self._os.lstat(self._resolve(path), *args, **kwargs)
+
+    def stat(self, path, *args, **kwargs):
+        return self._os.stat(self._resolve(path), *args, **kwargs)
+
+    def open(self, path, *args, **kwargs):
+        return self._os.open(self._resolve(path), *args, **kwargs)
+
+    @property
+    def path(self):
+        return _CaseBlindPath(self)
+
+
+class _CaseBlindPath:
+    """os.path for _CaseBlindOs: its tests of a file resolve the path the same way; the rest is os.path's own."""
+
+    def __init__(self, blind):
+        self._blind = blind
+
+    def __getattr__(self, name):
+        real = getattr(_CaseBlindOs._os.path, name)
+        if name in ("exists", "lexists", "isfile", "isdir", "islink", "getsize"):
+            return lambda path, *a, **k: real(self._blind._resolve(path), *a, **k)
+        return real
 
 
 def case_non_register_dirs(tmp):
@@ -1161,13 +1298,18 @@ def case_non_register_dirs(tmp):
     _wf(os.path.join(specs, "security", "my team", "register.json"), _dump({"format": 1, "findings": [_finding(1)]}))
     _wf(os.path.join(specs, "security", "web", "dev-workflows", "cost", "abcd1234.md"), "cost\n")
     _register(specs, "API", [_finding(1)])
+    _register(specs, "ops", [_finding(1)])
+    os.rename(os.path.join(specs, "security", "ops", "register.json"), os.path.join(specs, "security", "ops", "REGISTER.JSON"))
     g = globals()
-    g["open"] = _case_blind_open  # this module's open() now resolves a path as a case-insensitive file system does
+    g["os"] = _CaseBlindOs()  # this module's file access now resolves a path as a case-insensitive file system does
+    g["open"] = lambda path, *a, **k: io.open(g["os"]._resolve(path), *a, **k)
     try:
-        res, _ = _run(specs, "--repo", "api", "--repo", "web", "--repo", "docs")
+        res, _ = _run(specs, "--repo", "api", "--repo", "web", "--repo", "docs", "--repo", "ops")
     finally:
+        g["os"] = _CaseBlindOs._os
         del g["open"]
-    assert {r["repo"]: r["state"] for r in res["registers"]} == {"api": "absent", "web": "absent", "docs": "absent"}, res
+    assert {r["repo"]: r["state"] for r in res["registers"]} == {"api": "absent", "web": "absent", "docs": "absent",
+                                                                "ops": "absent"}, res
     assert res["classes"] == [] and res["kb_skipped"] == 0, res
     res, _ = _run(specs, "--repo", "API")
     assert _reg(res, "API")["state"] == "ok" and _cls(res, "API", "CWE-89"), res
@@ -1187,6 +1329,137 @@ def case_fixed_window_boundary(tmp):
     c = _cls(res, "api", "CWE-89")
     assert (c["fixed_recent"], _reg(res, "api")["dropped"]) == (2, 1), (c, res["registers"])
     assert _ids(c) == [4, 1, 3], c["findings"]
+
+
+# ---- files and streams ----
+
+def case_no_link_followed(tmp):
+    """A symbolic link under --specs is never followed: not security/, a slug's directory, register.json,
+    architecture/, its decisions/ or a record."""
+    outside = _specs(tmp, "outside")
+    _register(outside, "x", [_finding(1, path="src/outside_tree.py")])
+    _record(outside, "ACME-17-AD1")  # would prevent api's CWE-89
+    specs = _specs(tmp)
+    os.makedirs(os.path.join(specs, "security", "api"))
+    os.symlink(os.path.join(outside, "security", "x", "register.json"),
+               os.path.join(specs, "security", "api", "register.json"))
+    os.symlink(os.path.join(outside, "security", "x"), os.path.join(specs, "security", "linked"))
+    _register(specs, "plain", [_finding(1)])
+    os.makedirs(os.path.join(specs, "architecture", "decisions"))
+    os.symlink(os.path.join(outside, "architecture", "decisions", "ACME-17-AD1.md"),
+               os.path.join(specs, "architecture", "decisions", "ACME-17-AD1.md"))
+    _record(specs, "ACME-17-AD2", components=("plain",))
+    res, out = _run(specs, "--repo", "api", "--repo", "linked", "--repo", "plain")
+    assert {r["repo"]: r["state"] for r in res["registers"]} == {"api": "unreadable", "linked": "unreadable",
+                                                                "plain": "ok"}, res["registers"]
+    assert res["kb_skipped"] == 1 and "outside_tree" not in out, res
+    assert [r["id"] for r in _cls(res, "plain", "CWE-89")["prevented_by"]] == ["ACME-17-AD2"], res
+    specs = _specs(tmp, "linked-dirs")
+    os.symlink(os.path.join(outside, "security"), os.path.join(specs, "security"))
+    res, _ = _run(specs, "--repo", "x")
+    assert _reg(res, "x")["state"] == "unreadable" and res["classes"] == [], res
+    specs = _specs(tmp, "linked-kb")
+    _register(specs, "api", [_finding(1)])
+    os.symlink(os.path.join(outside, "architecture"), os.path.join(specs, "architecture"))
+    res, _ = _run(specs, "--repo", "api")
+    assert res["kb_skipped"] == 0 and _cls(res, "api", "CWE-89")["prevented_by"] == [], res
+    specs = _specs(tmp, "linked-decisions")
+    _register(specs, "api", [_finding(1)])
+    os.makedirs(os.path.join(specs, "architecture"))
+    os.symlink(os.path.join(outside, "architecture", "decisions"), os.path.join(specs, "architecture", "decisions"))
+    res, _ = _run(specs, "--repo", "api")
+    assert res["kb_skipped"] == 0 and _cls(res, "api", "CWE-89")["prevented_by"] == [], res
+
+
+def case_fifo_and_device_never_opened(tmp):
+    """Run in a child process with a timeout, so a reader that opened a FIFO fails the case instead of hanging it."""
+    if not hasattr(os, "mkfifo"):
+        print("     (no FIFOs on this platform: the FIFO checks are skipped)")
+        return
+    specs = _specs(tmp)
+    os.makedirs(os.path.join(specs, "security", "api"))
+    os.mkfifo(os.path.join(specs, "security", "api", "register.json"))
+    os.makedirs(os.path.join(specs, "architecture", "decisions"))
+    os.mkfifo(os.path.join(specs, "architecture", "decisions", "ACME-17-AD1.md"))
+    flags = ["--repo", "api", "--repo", "web"]
+    _register(specs, "web", [_finding(1)])
+    if os.path.exists("/dev/zero"):
+        os.makedirs(os.path.join(specs, "security", "zero"))
+        os.symlink("/dev/zero", os.path.join(specs, "security", "zero", "register.json"))
+        flags += ["--repo", "zero"]
+    p = subprocess.run([sys.executable, os.path.abspath(__file__), "classes", "--specs", specs, "--today", TODAY]
+                       + flags, capture_output=True, timeout=60)
+    assert p.returncode == 0 and p.stderr == b"", (p.returncode, p.stderr)
+    res = json.loads(p.stdout.decode("utf-8"))
+    states = {r["repo"]: r["state"] for r in res["registers"]}
+    assert states.pop("zero", "unreadable") == "unreadable" and states == {"api": "unreadable", "web": "ok"}, res
+    assert res["kb_skipped"] == 1, res
+
+
+def case_read_cap(tmp):
+    assert READ_CAP == 64 * 1024 * 1024, "the cap the format's section 7 states"
+    specs = _specs(tmp)
+    _register(specs, "api", [_finding(1)])
+    _record(specs, "ACME-17-AD1")
+    reg = os.path.getsize(os.path.join(specs, "security", "api", "register.json"))
+    rec = os.path.getsize(os.path.join(specs, "architecture", "decisions", "ACME-17-AD1.md"))
+    assert rec < reg, (rec, reg)
+    g = globals()
+    try:
+        got = {}
+        for cap in (reg, reg - 1, rec - 1):
+            g["READ_CAP"] = cap
+            res, _ = _run(specs, "--repo", "api")
+            got[cap] = (_reg(res, "api")["state"], res["kb_skipped"])
+    finally:
+        g["READ_CAP"] = 64 * 1024 * 1024
+    assert got == {reg: ("ok", 0), reg - 1: ("unreadable", 0), rec - 1: ("unreadable", 1)}, got
+
+
+def case_int_bounds(tmp):
+    specs = _specs(tmp)
+    run_big = _finding(6, status="accepted-risk", run=INT_MAX + 1)
+    _register(specs, "api", [_finding(INT_MAX, line=INT_MAX), _finding(2, line=INT_MAX + 1), _finding(INT_MAX + 1),
+                             _finding(4, line=777777777), _finding(5, line=666666666), run_big])
+    path = os.path.join(specs, "security", "api", "register.json")
+    text = open(path, encoding="utf-8").read()
+    huge, long_ = "9" * 5000, "8" * 4000  # past 3.11's int parsing limit, and under it
+    assert text.count('"line": 777777777') == 1 and text.count('"line": 666666666') == 1
+    _wf(path, text.replace('"line": 777777777', '"line": ' + huge).replace('"line": 666666666', '"line": ' + long_))
+    res, out = _run(specs, "--repo", "api")
+    assert _reg(res, "api")["state"] == "ok" and _reg(res, "api")["dropped"] == 5, res["registers"]
+    assert [(e["id"], e["line"]) for e in _cls(res, "api", "CWE-89")["findings"]] == [(INT_MAX, INT_MAX)], res
+    assert huge[:30] not in out and long_[:30] not in out
+
+
+class _FailingOut(io.StringIO):
+    """A stdout whose every write raises the exception it was given."""
+
+    def __init__(self, exc):
+        super().__init__()
+        self._exc = exc
+
+    def write(self, s):
+        raise self._exc
+
+
+def case_stdout_write_errors(tmp):
+    specs = _specs(tmp)
+    _register(specs, "api", [_finding(1)])
+    argv = ["classes", "--specs", specs, "--repo", "api", "--today", TODAY]
+    for exc, want in ((OSError(errno.ENOSPC, EVIL), (2, INTERNAL)), (BrokenPipeError(errno.EPIPE, EVIL), (0, ""))):
+        err = io.StringIO()
+        with contextlib.redirect_stdout(_FailingOut(exc)), contextlib.redirect_stderr(err):
+            code = main(argv)
+        assert (code, err.getvalue()) == want, (exc, code, err.getvalue())
+    r, w = os.pipe()  # a real pipe whose reader is gone before the script starts
+    os.close(r)
+    try:
+        p = subprocess.run([sys.executable, os.path.abspath(__file__)] + argv, stdout=w, stderr=subprocess.PIPE,
+                           timeout=60)
+    finally:
+        os.close(w)
+    assert (p.returncode, p.stderr) == (0, b""), (p.returncode, p.stderr)
 
 
 # ---- the envelope ----

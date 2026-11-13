@@ -160,20 +160,20 @@ The commands and agents that load this reference are what `grep -l 'args: "secur
 
 ## 7. Weakness classes
 
-A **weakness class** is a register plus a finding's primary CWE. `workflows-core`'s `scripts/weakness-classes.py` implements this section, the one place the class and its rule are computed; a change here is a change there, and to its `--selftest`, in the same commit. It only reads: it writes nothing, decides no change to a register, and opens no path a register names. It reads two things, a register's `register.json` and the team records `workflows-core:architecture-kb` §3 lays out, and it prints only counts, fixed wording and values that have passed a check (§7.2, §7.4), so a finding's text (§3) never reaches what reads its output.
+A **weakness class** is a register plus a finding's primary CWE. `workflows-core`'s `scripts/weakness-classes.py` implements this section, the one place the class and its rule are computed; a change here is a change there, and to its `--selftest`, in the same commit. It only reads: it writes nothing, decides no change to a register, opens no path a register names, and follows no symbolic link under `--specs` (§7.1). It reads two things, a register's `register.json` and the team records `workflows-core:architecture-kb` §3 lays out, and it prints only counts, fixed wording and values that have passed a check (§7.2, §7.4), so a finding's text (§3) never reaches what reads its output.
 
 `register.json` is derived (§1), so it lags any run record still on an unmerged `session/*` branch until a rebuild after the merge. The output is advice, so a lag of one rebuild is acceptable.
 
 ### 7.1 What it reads
 
-- **The register.** For each `--repo <slug>`, `<specs>/security/<slug>/register.json`, and nothing else under `security/`: never `register.md`, `runs/` or `scans/`. The slug resolves only by an exact match against the listing of `<specs>/security/`, never by opening the path, so a case-insensitive file system never maps `api` to `API/`. A directory there that holds no `register.json` — a team's own documents, or only `dev-workflows/` cost entries — is no register, and a `--repo` naming it is `absent`.
+- **The register.** For each `--repo <slug>`, `<specs>/security/<slug>/register.json`, and nothing else under `security/`: never `register.md`, `runs/` or `scans/`. The slug resolves only by an exact match against the listing of `<specs>/security/`, never by opening the path, so a case-insensitive file system never maps `api` to `API/`. `register.json` resolves the same way in the slug's directory. A directory there that holds no `register.json` — a team's own documents, or only `dev-workflows/` cost entries — is no register, and a `--repo` naming it is `absent`. No symbolic link is followed, and only a regular file is read: it is opened without following a link and without waiting on a FIFO, checked again once open, and read up to 64 MiB and no further.
 - **A register's state** is the first of these that applies. A state other than `ok` gives `last_at: null` and zero counts, and never stops a run:
-  - `absent`: no such file;
-  - `unreadable`: an `OSError`, or bytes that are not UTF-8 JSON, or JSON nested too deep to parse;
+  - `unreadable` or `absent`, at the first of `security/`, the entry in it named `<slug>` and the entry in that named `register.json` that is a symbolic link (`unreadable`, whatever it points at), is missing (`absent`), or, for the first two, is any other entry that is no directory (`absent`);
+  - `unreadable`: a `register.json` that is not a regular file or is larger than 64 MiB, an `OSError` on the way, bytes that are not UTF-8 JSON, or JSON nested too deep to parse;
   - `unknown-format`: a JSON object whose `format` is not the integer `1`;
   - `malformed`: not an object, a `findings` that is not a list, or a `last_at` that is present and neither `null` nor a real `YYYY-MM-DDTHH:MM:SSZ`;
   - `ok`: otherwise.
-- **A team record.** Each `<specs>/architecture/decisions/*.md` file, read line by line, never as YAML:
+- **A team record.** Each `*.md` entry of `<specs>/architecture/decisions/` that is no directory, read line by line, never as YAML. No symbolic link is followed here either: a symlinked `architecture/` or `architecture/decisions/` is read as holding no record, so nothing there prevents a class, and a record that is a symbolic link, is not a regular file (a FIFO, a device) or is larger than 64 MiB is skipped (§7.2). Within a record:
   - its frontmatter lies between a first line `---` and the next `---` line. A key is a line opening `<key>:`, and a key written twice is read from its last line;
   - a scalar is the rest of its key's line, trimmed. It loses a trailing ` #` comment unless it opens with `"`. A value that then opens with `[`, `{`, `|` or `>` is no scalar; any other loses one pair of matching quotes, and is absent where it is then empty, `null` or `~`;
   - `components` is a flow list on its key's line, read with `json.loads`;
@@ -185,17 +185,17 @@ Every pattern is anchored `^…\Z` and ASCII, and each check is at least as stri
 
 | Value | Check | On failure |
 |---|---|---|
-| `id` | an integer, not a boolean, of at least 1 | the finding is dropped |
-| `line` | an integer, not a boolean, of at least 0 | dropped |
+| `id` | an integer, not a boolean, from 1 to 2147483647 | the finding is dropped |
+| `line` | an integer, not a boolean, from 0 to 2147483647 | dropped |
 | `severity` | `CRITICAL`, `HIGH`, `MEDIUM` or `LOW` | dropped |
 | `status` | `new`, `open`, `fix`, `fixing`, `fixed`, `reopened`, `false-positive` or `accepted-risk` | dropped |
 | `review_by` | a real `YYYY-MM-DD` on an `accepted-risk`; `null` or absent on any other status | dropped |
 | `confirmed` | a boolean, `null` or absent | dropped |
-| each `history` entry the rule reads (below) | its `status` one of the statuses above; its `at` a real `YYYY-MM-DDTHH:MM:SSZ`; its `run` an integer, not a boolean, of at least 1 | dropped |
+| each `history` entry the rule reads (below) | its `status` one of the statuses above; its `at` a real `YYYY-MM-DDTHH:MM:SSZ`; its `run` an integer, not a boolean, from 1 to 2147483647 | dropped |
 | `cwe` | `^CWE-[0-9]{1,6}\Z`, its digits not all `0` | counted in `unclassified`, in no class |
 | `path` | `^[A-Za-z0-9._@+][A-Za-z0-9._/@+-]*\Z`, no `..` segment, at most 512 characters | printed as `null` |
 | a team record's id | its file's stem, `^[A-Z][A-Z0-9_]*(-[0-9]+)+(-[a-z0-9]+)*-AD[0-9]+\Z` | the record is skipped, counted in `kb_skipped` |
-| the record's file | readable, UTF-8, with a frontmatter (§7.1) | skipped |
+| the record's file | a regular file reached through no symbolic link, of at most 64 MiB, readable, UTF-8, with a frontmatter (§7.1) | skipped |
 | its `status` | a scalar, present | skipped |
 | its `source` | present, and the `path` check | skipped |
 | its `promotion` | absent, or `proposed`, `accepted`, `rejected`, `declined` or `covered` | skipped |
@@ -204,6 +204,7 @@ Every pattern is anchored `^…\Z` and ASCII, and each check is at least as stri
 | its Prevents paragraph | present | skipped |
 
 - **The `history` entries the rule reads** are every entry of the unbroken run of `accepted-risk` entries that ends an `accepted-risk` finding's `history`, and the last entry of a `fixed` finding's. An `accepted-risk` finding whose `history` does not end in an `accepted-risk` entry is dropped too, as is a `fixed` one with no last entry: the rule cannot be applied to either, and `register.py` always writes that entry (§3).
+- **Integer literals.** `register.json` is parsed with every integer literal longer than 20 characters read as no number and never converted, so such a literal fails the check of the field that holds it, and never makes the register `unreadable` on a Python that refuses to convert it.
 - `dropped` counts the dropped findings. `unclassified` counts the others whose `cwe` fails its check.
 - **Never printed:** `title`, `reason`, `evidence`, `by`, `owner`, `links`, `scope`, `units`, `origin`, `plugin_id`, `other_cwes`, `first_seen` and `last_seen`, nor any value that failed its check, not even in an error.
 
@@ -227,7 +228,7 @@ weakness-classes.py --selftest
 
 Flags repeat, and a repeated value counts once. `--today` defaults to today's UTC date, and the script reads no environment variable. An `--origin` is compared exactly with the `origin` values the register holds, and one that matches none is ignored.
 
-**Exits.** `0`: it ran, and stdout holds exactly one JSON object. `2`: it could not run. Stdout is then empty, and stderr holds one line, `weakness-classes: not run (<why>)`, whose `<why>` is the first of these that applies — fixed text, never a value from the command line, a register or a record:
+**Exits.** `0`: it ran, and stdout holds exactly one JSON object — or the reader closed stdout before the object was written (a broken pipe), and then stderr holds nothing either, since nobody is left to read it. `2`: it could not run. Stdout is then empty, save where writing it failed, and stderr holds one line, `weakness-classes: not run (<why>)`, whose `<why>` is the first of these that applies — fixed text, never a value from the command line, a register or a record:
 
 | `<why>` | When |
 |---|---|
@@ -239,7 +240,7 @@ Flags repeat, and a repeated value counts once. `--today` defaults to today's UT
 | `--today is not a real YYYY-MM-DD date` | `--today` is not a real date written `YYYY-MM-DD` |
 | `--component names a repository no --repo names` | a `--component`'s slug, the id or its part before the first `:`, is no `--repo` |
 | `--specs is not a directory` | `--specs` names no directory |
-| `internal error` | any other exception; its text, and any traceback, is never printed |
+| `internal error` | any other exception, a failed write to stdout other than a broken pipe included, after which stdout may hold part of the object; the exception's text, and any traceback, is never printed |
 
 No register's state, no team record and no finding ever causes exit 2. `--selftest` exits 0 where every case passes and 1 otherwise.
 
