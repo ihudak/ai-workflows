@@ -130,7 +130,9 @@ plain `init` and `init --resume` are not guarded. `session`, `started`, `updated
                                      as implement-run.kept-<its name>, printed `kept: <that path>`,
                                      where it stays. With no file it deletes the durable directory
                                      alone, under the lock, the same --keep paths moved out first, and
-                                     writes no tombstone.
+                                     writes no tombstone. Wherever the file or the directory is there,
+                                     the lock is taken first and the file tested again under it, so a
+                                     file another call wrote while this one waited is guarded.
 
 A key is a top-level name or a dotted path into one (`files.plan_file`); a list entry is named by
 its index (`triage.-1.followed_by`, the last entry's). `set`, `append` and `read` refuse a key the
@@ -967,62 +969,74 @@ def cmd_remove(f, args, out, session):
     if not guarded(f):
         raise Fail(4, "refusing to remove %s: not the run-state file's path" % f)
     dd = durable_dir(f)
-    try:
-        os.lstat(f)
-    except FileNotFoundError:
-        removed_dir = False
-        if os.path.lexists(dd):
-            with locked(f):
-                rescue(keep, f, dd, out)
-                removed_dir = clear(dd)
-        if removed_dir:
-            out.write(("removed: %s\n" % dd).encode("utf-8"))
+    if not there(f) and not os.path.lexists(dd):  # nothing to remove: no lock made, nothing created
         out.write(("no run-state file at %s -- nothing else to remove\n" % f).encode("utf-8"))
         return
-    except OSError as e:
-        raise Fail(4, "cannot reach the run-state file at %s: %s" % (f, e))
+    removed_file = False
     with locked(f):
-        try:
-            d = load(f)
-        except Fail:
-            d = {}
-        guard(d, session, "remove")
-        paths = []
-        files = d.get("files")
-        if isinstance(files, dict):
-            paths += [p for p in files.values() if isinstance(p, str)]
-        for g in d.get("step_groups") or []:
-            if isinstance(g, dict) and isinstance(g.get("report"), str):
-                paths.append(g["report"])
-        for v in d.get("reviews") or []:
-            if isinstance(v, dict):
-                paths += [v[k] for k in ("diff_file", "return_file") if isinstance(v.get(k), str)]
-        for p in d.get("patches") or []:
-            if isinstance(p, dict) and p.get("temp") is True and isinstance(p.get("path"), str):
-                paths.append(p["path"])
-        lineage = d.get("lineage")
-        if isinstance(lineage, dict) and isinstance(lineage.get("check_file"), str):
-            paths.append(lineage["check_file"])
-        for p in paths:
-            a = os.path.abspath(p)
-            if inside(a, dd):
-                continue  # the durable directory goes whole, below, a --keep path in it moved out first
-            if a in keep:
-                out.write(("kept: %s\n" % p).encode("utf-8"))
-            elif (os.path.basename(a).startswith(TEMP_PREFIX) and os.path.isfile(a)
-                  and not os.path.islink(a)):
-                os.unlink(a)
-                out.write(("removed: %s\n" % p).encode("utf-8"))
-            elif os.path.lexists(a):
-                out.write(("left: %s -- not a %s* temp file\n" % (p, TEMP_PREFIX)).encode("utf-8"))
-        held = d.get("session") if isinstance(d, dict) else None
-        os.unlink(f)
-        save(tombstone_path(f), {"session": session if held is None else held, "at": now()})
+        # the file tested again under the lock: one another call wrote while this one waited is guarded
+        if there(f):
+            removed_file = True
+            remove_file(f, dd, keep, out, session)
         rescue(keep, f, dd, out)
         removed_dir = clear(dd)
     if removed_dir:
         out.write(("removed: %s\n" % dd).encode("utf-8"))
-    out.write(("removed: %s\n" % f).encode("utf-8"))
+    if removed_file:
+        out.write(("removed: %s\n" % f).encode("utf-8"))
+    else:
+        out.write(("no run-state file at %s -- nothing else to remove\n" % f).encode("utf-8"))
+
+
+def there(f):
+    """True where something is at the file's path; 4 where it cannot be reached."""
+    try:
+        os.lstat(f)
+        return True
+    except FileNotFoundError:
+        return False
+    except OSError as e:
+        raise Fail(4, "cannot reach the run-state file at %s: %s" % (f, e))
+
+
+def remove_file(f, dd, keep, out, session):
+    """Under the lock: the guard, the temp files the file names, then the file, leaving the tombstone."""
+    try:
+        d = load(f)
+    except Fail:
+        d = {}
+    guard(d, session, "remove")
+    paths = []
+    files = d.get("files")
+    if isinstance(files, dict):
+        paths += [p for p in files.values() if isinstance(p, str)]
+    for g in d.get("step_groups") or []:
+        if isinstance(g, dict) and isinstance(g.get("report"), str):
+            paths.append(g["report"])
+    for v in d.get("reviews") or []:
+        if isinstance(v, dict):
+            paths += [v[k] for k in ("diff_file", "return_file") if isinstance(v.get(k), str)]
+    for p in d.get("patches") or []:
+        if isinstance(p, dict) and p.get("temp") is True and isinstance(p.get("path"), str):
+            paths.append(p["path"])
+    lineage = d.get("lineage")
+    if isinstance(lineage, dict) and isinstance(lineage.get("check_file"), str):
+        paths.append(lineage["check_file"])
+    for p in paths:
+        a = os.path.abspath(p)
+        if inside(a, dd):
+            continue  # the durable directory goes whole once cmd_remove has moved a --keep path in it out
+        if a in keep:
+            out.write(("kept: %s\n" % p).encode("utf-8"))
+        elif (os.path.basename(a).startswith(TEMP_PREFIX) and os.path.isfile(a)
+              and not os.path.islink(a)):
+            os.unlink(a)
+            out.write(("removed: %s\n" % p).encode("utf-8"))
+        elif os.path.lexists(a):
+            out.write(("left: %s -- not a %s* temp file\n" % (p, TEMP_PREFIX)).encode("utf-8"))
+    held = d.get("session") if isinstance(d, dict) else None
+    os.unlink(f)
+    save(tombstone_path(f), {"session": session if held is None else held, "at": now()})
 
 
 def rescue(keep, f, dd, out):
@@ -2035,6 +2049,26 @@ def selftest():
             os.close(lk)
             check("remove with no file waits for the lock before deleting the durable directory", waited
                   and p.wait() == 0 and not os.path.exists(dd))
+            # a remove that found no file before the lock re-tests under it: a file written meanwhile is
+            # guarded, so a superseded session is refused and the new file's directory stays
+            os.makedirs(dd)
+            with open(os.path.join(dd, "files.plan_file-b"), "w", encoding="utf-8") as w:
+                w.write("B's copy")
+            lk = os.open(os.path.join(gd, LOCK), os.O_RDWR | os.O_CREAT, 0o600)
+            fcntl.flock(lk, fcntl.LOCK_EX)
+            p = subprocess.Popen([sys.executable, me, "--repo", g, "remove"], stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.PIPE, env=clean_env(CLAUDE_CODE_SESSION_ID="A"))
+            time.sleep(1.0)
+            with open(gf, "w", encoding="utf-8") as w:  # B's init --recover lands while A waits on the lock
+                json.dump(dict(merged(fresh()), session="B"), w)
+            fcntl.flock(lk, fcntl.LOCK_UN)
+            os.close(lk)
+            err = p.communicate()[1]
+            check("a remove that found no file re-tests under the lock, refusing another session's new file",
+                  p.returncode == 9 and b"session B" in err and os.path.isfile(gf)
+                  and os.path.isfile(os.path.join(dd, "files.plan_file-b")))
+            os.unlink(gf)
+            clear(dd)
 
         # two locations repointed from one missing original: the original removed once, no left: line
         call(["init"], json.dumps(fresh()), g, session="D")
