@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.85.1] — 2026-11-13
+## [1.85.2] — 2026-11-13
 
 GIT-G1 Part 3, batch 1: `specs-git.py`'s selftest moves out of the script the plugin ships and into the repository's `scripts/selftests/`, and `--selftest --group <name>` runs one group of it alone. No command's behaviour, output or exit status changes, and no other plugin changes with this release or relies on it, so `workflows-core` is updated alone.
 
@@ -16,6 +16,22 @@ GIT-G1 Part 3, batch 1: `specs-git.py`'s selftest moves out of the script the pl
 ### Added
 
 - **`specs-git.py --selftest --group <name>`** runs only the named group of the selftest, and `--group` may be repeated; the named groups run in the selftest's own order, whatever order they are named in. An unknown name is a usage error naming every group, `--group` without `--selftest` is a usage error too, and a run with `--group` prints `specs-git selftest: PASS (<n> checks; partial: <groups>)`, which is never evidence that the whole selftest passes; so in CI, where `GITHUB_ACTIONS` is `true`, a run with `--group` is refused with one line on stderr and exit 2. Every run of the selftest that its `selftest` group starts carries `SPECS_GIT_SELFTEST_NESTED=1`, and such a run fails at once where it would include the `selftest` group or reaches that group by any route, so a break in group selection, in the script or in the selftest, fails that group rather than recursing. The selftest's new `selftest` group pins all this with eleven checks: one group alone, the order, an unknown name, `--group` without `--selftest`, the refusal in CI, a marked run of the `selftest` group, the not-shipped line, an unreadable selftest path, a selftest file that rebinds a name of the script, the selftest file run on its own, and CI's one `run:` line naming the script, which carries no `--group`. The repository also gains `scripts/selftests/mutants.py`, a runner for one-line mutants of this plugin's scripts, and its mutants file, `scripts/selftests/specs-git-mutants.json`; CI runs only `mutants.py --check`, which counts each mutant's `old` text in its file and runs no mutant. `.claude/rules/specs-git-selftest.md` describes the selftest's place, its groups and the mutants.
+
+## [1.85.1] — 2026-11-13
+
+IMP-G5: `session-hygiene` §6 names `/dev-workflows:implement`, whose run-state file is now a session file a later `/implement` in the same worktree resumes from, and states that command's record, its stop line and the one point at which it compares. Update with `dev-workflows` 4.64.0, whose `/implement` resumes a stopped run and compares the environment its run-state file records. No other command's behaviour changes: `/dev-workflows:design` and `/product-workflows:specify` compare at the three points they named before.
+
+### Changed
+
+- **§6 lists `/implement`** among the commands that keep a session file they resume from — its run-state file, `$(git rev-parse --git-path dev-workflows/implement-run.json)` in the code repository — and gains **`/implement`'s record**:
+  - the same four members, written as one JSON object into the run-state file's `run_environment` key by Phase 1.4's `init` when it creates the file, never as a section;
+  - on a resume, `/implement` reads that key off the file as its Phase 0 `peek` printed it, a `null` key being a file with no section, and writes it with `run-state.py set` once its `init --resume` has taken the file over, since until then the file is the earlier session's;
+  - in the `RESUME_ENVIRONMENT_CHANGED:` stop line, `<address>` is the file's `key`, left out on a direct run, and `<session file path>` is the run-state file's path;
+  - `/implement` compares at point 1 alone.
+- **§6's Record resolves an unset `$SPECS_PATH`.** `specs_path` reads `unset`, and `specs_origin` `none`, where `$SPECS_PATH` is unset or empty, since `git -C ""` reads the current directory's repository — on `/implement`'s direct run, the code repository's. Where `$SPECS_PATH` is set, both read as before.
+- **§6's compare points.** Point 1, in a command that resolves no `$REPOS_PATH`, comes straight after the preflight. Points 2 and 3 run in a command that names them, and a command that names point 1 alone — `/implement` — leaves its handoff and its tail to §7's `env-check`, which compares them with the `Environment:` line its preflight printed.
+- **§7** says the commands §6 serves keep a record to compare with at the points each names, `/implement` only when a later invocation resumes its run, and its *Callers* paragraph says §6 checks before a deliverable write for the commands that name its point 2, where it said for the two commands it serves. The generated parts `session-hygiene/resume-environment.md` and `session-hygiene/env-check.md` carry the §6 and §7 changes respectively.
+- **Pages.** The References page's `session-hygiene` entry says a command that resumes from a session file compares its recorded environment on a resume and, where the command says so, before its handoff and its terminal writes. The environment page names `/dev-workflows:design` and `/product-workflows:specify` as the two commands that compare their session file's recorded environment before their deliverable write.
 
 ## [1.85.0] — 2026-11-13
 

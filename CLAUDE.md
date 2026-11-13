@@ -113,7 +113,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `plugin-updates-coupling.md` | `*/.claude-plugin/plugin.json`, `*/CHANGELOG.md`; `.claude-plugin/marketplace.json` (repo root) | which plugins to update together, one bullet per release pair |
 | `plugin-updates-coupling-history.md` | as `plugin-updates-coupling.md` | its older bullets, up to `workflows-core` 1.58.0 |
 | `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.74.0 |
-| `plugin-updates-coupling-history-3.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.75.0 to 1.78.13 |
+| `plugin-updates-coupling-history-3.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.75.0 to 1.80.0 |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
