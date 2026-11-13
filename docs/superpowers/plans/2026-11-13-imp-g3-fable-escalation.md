@@ -67,7 +67,7 @@
 - **The guard's own calls.**
   - Its reads (the setting, the security grep, the reachability reading) go in one Bash call.
   - It loads `run-flags` only under `ask`, or where the outcome escalates: for the price table and the unpriced warning.
-  - Its `set` is chained with the dispatch's first record in one Bash command — `set … && append step_groups …`, or, for `review-fixer`, `set … &&` the `before dispatch:` tree record — so a refused `set` (exit 3 or 9) also refuses the record.
+  - Its `set` is chained onto the run's next Bash command after the guard, whatever it is, so an answer never sits unwritten. At the `code-writer` sites that command is the `step_groups` append (`set … && append step_groups …`), so a refused `set` (exit 3 or 9) also refuses the record. At the Review-fixer sub-step it is the `review_file` mktemp.
 - **The auth sentence.** Where `routing.block.reason` cites a §1.1 authentication or security trigger (Ruling R10), the question and the `always` line add: *Fable's safety filters may re-run some of this run's requests on Opus.*
 - **An escalating write** sets `routing.block`'s `implementation_model` and `fixes_model`, and `coding_model`, to the escalated value, and appends to the block's `notes`. It also prices the escalated value as `run-flags` §2's *Unpriced reachable id* paragraph does, and prints that paragraph's warning where it is unpriced.
 - **Class changes.**
@@ -104,6 +104,7 @@ choices: ["Write it on Fable (Recommended)", "Write it on <unescalated model>"]
   5. `HIGH-RISK coding on <unescalated model> — Fable not reachable`
   6. `HIGH-RISK coding on <unescalated model> — Fable was not available (fallback)`
   7. A security-finding run: `HIGH-RISK coding on <unescalated model> — security-finding fixes are not escalated`
+  8. A `security` record held only because the task description could not be read (Ruling R13): `HIGH-RISK coding on <unescalated model>: not escalated, since the task description could not be read to rule out a security finding`
 - **Mixed models.** Where step groups ran on different models, the line names how many ran on each (`step_groups[].model`). The counts leave out `failed` entries, and count no `review-fixer` dispatch.
 - **No line.** A run that was never HIGH-RISK prints none. For a null `choice`, see Ruling R5; under rows 1 or 2 at report time, Ruling R4.
 
@@ -188,7 +189,7 @@ choices: ["Write it on Fable (Recommended)", "Write it on <unescalated model>"]
   - An escalated `choice` whose Fable is no longer reachable becomes `{unreachable, <unescalated>}`, from any source, with a printed note (§3.7).
   - A `choice` that is not a Fable value is rewritten to this invocation's unescalated value, so the report names this session's model.
   - Under rows 1 or 2 on this invocation, the record is kept untouched.
-  - Under rows 1 or 2 at report time, the record's reason would be false: an `{answer, <Opus>}` record reported from a Fable session would say "you chose it". The line then gives the counts only — `HIGH-RISK coding — <n> step group(s) on <model>, <m> on <model>` — and nothing where no step group ran.
+  - Under rows 1 or 2 at report time, where `choice` is not null, the record's reason would be false: an `{answer, <Opus>}` record reported from a Fable session would say "you chose it". The line then gives the counts only — `HIGH-RISK coding — <n> step group(s) on <model>, <m> on <model>` — and nothing where no step group ran.
 - **R5 — a null `choice` at the report.** It prints no line, save one case: a run that was HIGH-RISK (`class`, or a `routing.history` line naming HIGH-RISK) and whose `step_groups` record models, because a resume reset the record and no coding dispatch followed. That run's line reads `HIGH-RISK coding — <n> step group(s) on <model>, <m> on <model>; the escalation was not decided again after the resume`.
 - **R6 — "readable" is a `step_groups` status.** Condition 3 reads `step_groups` alone. A readable `review-fixer` return is recorded nowhere new. Every route found to a run's first escalated dispatch reaches a `code-writer` step group first: the class rises to HIGH-RISK only before step groups or through a re-plan, and `code-review` re-classifies only to SIMPLE. The one exception is a resume that re-decides the escalation past the last group. There a later `code-writer` outright failure falls back rather than retrying on Fable: the cheaper direction, and reported.
 - **R7 — `review-fixer`'s recorded model** is `routing.block.fixes_model` at its dispatch, which the escalation rewrites.
@@ -210,7 +211,8 @@ choices: ["Write it on Fable (Recommended)", "Write it on <unescalated model>"]
     - at the Phase 3.5 fix attempt, it comes before the `failure_file` and append text;
     - at the Review-fixer sub-step, it opens the sub-step.
   - **Reads.** They go in one Bash call. It loads `run-flags` only under `ask` or an escalating outcome.
-  - **Write.** One `set` of `fable_escalation`, `routing` (the block whole: `set` merges `routing`'s members, so `history` stays) and `coding_model`. It is chained as `set … && <the dispatch's first record>` in one Bash command, so a refused `set` refuses the record too.
+  - **Write.** One `set` of `fable_escalation`, `routing` (the block whole: `set` merges `routing`'s members, so `history` stays) and `coding_model`. It is chained onto the run's next Bash command after the guard, whatever it is, so under `ask` the answer never waits on a later record. At the `code-writer` sites that command is the `step_groups` append, so a refused `set` refuses the record too; at the Review-fixer sub-step it is the `review_file` mktemp.
+- **R13 — a `security` record from an unreadable task description.** The record keeps the design's `source: security`, so the five values stand. The report tells the two cases apart from state at Phase 5. Where `patches` is empty and no `[SEC#n]` is found in `report.phase1_tasks` or in a readable `task_description_file`, the line is wording 8, not wording 7, which might be false.
 - **R12 — where the text goes.**
   - The guard is a new top-level section, `## The Fable escalation guard`, placed immediately before `## Invariants (always enforced)`.
   - The setting is `run-flags` §8.
@@ -349,7 +351,7 @@ These are the five cases no task's selftest exercises that are most likely to bi
   - Run the sweep recipe over this file, and record its before-count.
 - [ ] **Step 2: Write the section's five paragraphs**, exactly as the Global Constraints' guard, setting, question and record state them.
   - **Self-contained.** It names the three values and the `printenv WORKFLOWS_FABLE_ESCALATION || true` read itself, so it needs no `run-flags` reload after a compaction.
-  - **Its calls**, by R11: the reads in one Bash call; `run-flags` loaded only under `ask` or an escalating outcome; the `set` chained with the dispatch's first record.
+  - **Its calls**, by R11: the reads in one Bash call; `run-flags` loaded only under `ask` or an escalating outcome; the `set` chained onto the run's next Bash command after the guard.
   - **The question.** It is presented verbatim, with R1's unpriced wording, then the free-text rule.
   - **The setting's notice.** An unrecognised value prints its one line in the same guard run.
   - **One sentence:** the six class-change sites, not the guard, apply a recorded choice, by re-resolving with §4.
@@ -363,7 +365,24 @@ These are the five cases no task's selftest exercises that are most likely to bi
 - [ ] **Step 4: Phase 1.5 and the contract**, as Files lists. The `step_groups` bullet says what `model` holds, by the Global Constraints' wording.
 - [ ] **Step 5: Review Focus 2, 3 and 5, and the free-text answer.** Quote, in the report, the sentence that decides each. A case with no deciding sentence is a gap to fix now.
 - [ ] **Step 6: Close.**
-  - **Order.** At every dispatch site from Step 1, no `step_groups` append, `failure_file` write or `before dispatch:` record precedes the citation. Check by line number: `grep -nE 'Fable escalation guard|"steps": \[|failure_file|before dispatch:' plugins/dev-workflows/commands/implement.md`, read per site.
+  - **Order, by offset.** *Each dispatch* is one long line, so line numbers cannot order the citation against the append. For each site, compare offsets in the whitespace-collapsed text: the last "Fable escalation guard" before the site's first record, against that record. Add Phase 3B step 1's pair where it makes its own records. A phrase the merge changed raises `ValueError`: re-derive it, never drop the site. The check does not rely on `before dispatch:`, which matches nothing until IMP-G5's Task 3 lands.
+    ```bash
+    python3 - <<'PY'
+    import re
+    t = re.sub(r"\s+", " ", open("plugins/dev-workflows/commands/implement.md", encoding="utf-8").read())
+    sites = [  # (the site's opening phrase, its first record)
+        ("**Each dispatch.**", '"steps": ['),
+        ("**Each fix attempt is a `code-writer` dispatch", "dw-impl-failure-XXXXXX"),
+        ("**Review-fixer sub-step**", "dw-impl-review-XXXXXX"),
+    ]
+    for head, rec in sites:
+        h = t.index(head)
+        r = t.index(rec, h)
+        g = t.rfind("Fable escalation guard", 0, r)
+        print(head, g, r)
+        assert h - 300 <= g < r, head
+    PY
+    ```
   - Each arrow's placeholder carries the clause, and the citation count equals Step 1's site count.
   - Run the sweep, and record the after-count against the expected one.
   - `grep -rn '\$WORKFLOWS_FABLE_ESCALATION\|WORKFLOWS_FABLE_ESCALATION-' plugins/dev-workflows` prints nothing.
@@ -386,8 +405,8 @@ These are the five cases no task's selftest exercises that are most likely to bi
 - [ ] **Step 2: *The fallback*.** Write the Global Constraints' three conditions and four actions, the readable statuses, R6, R7, and the kept attempt number.
 - [ ] **Step 3: Hook it in.**
   - **`code-writer`'s retry.** It goes "on the unescalated value where *The fallback* fires, else on the same model". The retried entry's `model` is the model it passes.
-  - **`review-fixer`.** It gains R8, worded as R8 quotes, after "Wait for the fix report."
-- [ ] **Step 4: The report line.** Use the seven wordings, R4's and R5's counts-only lines, and the mixed-model counts (no `failed` entry, no `review-fixer` dispatch), read from `fable_escalation` and `step_groups[].model`.
+  - **`review-fixer`.** It gains R8, worded as R8 quotes, after "Wait for the fix report." Quote, in the report, the sentence the existing `NEEDS HUMAN` branch acts on, and confirm it reads nothing from the absent Fix Report. Where it does, word what it reads for the no-report case.
+- [ ] **Step 4: The report line.** Use the eight wordings (R13 tells 7 from 8), R4's and R5's counts-only lines, and the mixed-model counts (no `failed` entry, no `review-fixer` dispatch), read from `fable_escalation` and `step_groups[].model`.
 - [ ] **Step 5: The invariants and Phase 3B's opening.**
   - The ALWAYS bullet gains the clause. Re-read its "Opus is otherwise reserved for planning and review" against Fable coding, and keep it true.
   - The new bullet: the guard before every `code-writer` and `review-fixer` dispatch, asked at most once a run; security-finding runs never escalated.
@@ -419,7 +438,7 @@ These are the five cases no task's selftest exercises that are most likely to bi
   1. Settle the record by Step 2.
   2. Re-resolve `routing` and `coding_model` with it, for `init --resume`'s stdin.
   3. Run `init --resume`.
-  4. On an `unreachable` record, run rows 3 to 5 against the paths `init --resume` repointed or nulled. A null or unreadable `task_description_file` makes row 3 hold; an `ask` outcome gives `{null, null}`.
+  4. On an `unreachable` record the file held (rule 6), never one rule 3 wrote in this resume, run rows 3 to 5 against the paths `init --resume` repointed or nulled. A null or unreadable `task_description_file` makes row 3 hold; an `ask` outcome gives `{null, null}`.
   5. Send one `set` of the record, the block and `coding_model` with the next tool call, wherever the record changed from the file's.
 - [ ] **Step 4: The restart table.**
   - **The Phase 2A/2B rows:** the guard runs before the first coding dispatch, so a resume past *Approve* still meets it.
@@ -494,7 +513,7 @@ These are the five cases no task's selftest exercises that are most likely to bi
   - The question text in `implement.md` equals the Global Constraints' verbatim.
   - No `dev-workflows` file holds `$WORKFLOWS_FABLE_ESCALATION` or `WORKFLOWS_FABLE_ESCALATION-`.
   - No added executed regex holds `\d`: `git diff origin/main...HEAD | grep '^+' | grep -F '\d'` is empty.
-  - At every dispatch site, the guard's citation precedes the dispatch's first record (Task 3 Step 6's order check, re-run).
+  - At every dispatch site, the guard's citation precedes the dispatch's first record (Task 3 Step 6's offset check, re-run).
 - [ ] **Step 2: GIT-G1.** `git diff --stat origin/main...HEAD` names none of the five never-edit files. No `implement.md` hunk falls in Ending early, the specs preflight, `branch-check`, `require-on-main`, the specs handover or the terminal `commit-artifacts`: name each hunk's section.
 - [ ] **Step 3: The full CI list.** Every `run:` step of `.github/workflows/validate-catalog.yml`, with its `--selftest`s, mermaid where `node` exists.
 - [ ] **Step 4: The whole-branch review.** This is the controller's job, with Fable as the final reviewer, handed this plan's Rulings and Review Focus.
