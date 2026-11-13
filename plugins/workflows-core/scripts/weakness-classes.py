@@ -174,8 +174,8 @@ def _read_capped(path):
         st = os.fstat(fh.fileno())
         if not stat.S_ISREG(st.st_mode) or st.st_size > READ_CAP:
             return None
-        data = fh.read(READ_CAP + 1)
-    return data if len(data) <= READ_CAP else None
+        data = fh.read(st.st_size + 1)  # never more than the file held when checked: a file grown since reads past it
+    return data if len(data) <= st.st_size else None
 
 
 # ---- the register ----
