@@ -2159,8 +2159,9 @@ def selftest():
 
         # ---- entry_set_merge -------------------------------------------------------------------
         # Spec §3.3's entry-set rule, on the real formats: implementation-format §1's two example
-        # blocks, feedback-emission §1's entry, /security-workflows:scan §7.3's _security.md block
-        # and a cost-emission §6 entry, each as its reference writes it.
+        # blocks, without the `at:` line a block carries from dev-workflows 4.63.0 (the cases that
+        # carry it are below), feedback-emission §1's entry, /security-workflows:scan §7.3's
+        # _security.md block and a cost-emission §6 entry, each as its reference writes it.
         IMPL_HEAD = "# Implementation — ACME-77-01 order intake\n\n"
         IMPL_1 = ("## 2026-08-31 — /implement\n"
                   "- repo:    orders-service\n"
@@ -2247,7 +2248,7 @@ def selftest():
         # split_entries and entry_key
         head, ents = split_entries((IMPL_HEAD + IMPL_1 + "\n" + IMPL_2).encode())
         check(head == IMPL_HEAD.encode() and ents == [(IMPL_1 + "\n").encode(), IMPL_2.encode()],
-              "split_entries cuts implementation-format §1's example into its header and two blocks (%r, %r)"
+              "split_entries cuts implementation-format §1's example, without its at: lines, into its header and two blocks (%r, %r)"
               % (head, ents))
         for fmt, head, first in (("feedback", FB_HEAD, FB_1), ("_security.md", SEC_HEAD, SEC_1),
                                  ("cost", COST_HEAD, COST)):
@@ -2269,6 +2270,18 @@ def selftest():
         check(got is not None and got.count("# Implementation —") == 1, "…under one header (%r)" % got)
         got = esm(base, base + "\n" + IMPL_2, base + "\n" + noted)
         check(got == base + "\n" + IMPL_2 + "\n" + noted, "an entry holding a ## Notes line is carried whole (%r)" % got)
+
+        # implementation-format §1's `at:` line, after `pushed:`, splits no heading: two same-day
+        # blocks that differ only in their instants are two entries, and a merge keeps each whole
+        IMPL_2A = IMPL_2 + "  at:      2026-09-02T09:15:00Z\n"
+        IMPL_2B = IMPL_2 + "  at:      2026-09-02T16:40:00Z\n"
+        head, ents = split_entries((IMPL_HEAD + IMPL_2A + "\n" + IMPL_2B).encode())
+        check(head == IMPL_HEAD.encode() and ents == [(IMPL_2A + "\n").encode(), IMPL_2B.encode()],
+              "two same-day /implement blocks differing only in their at: lines are two entries (%r)" % (ents,))
+        got = esm(base, base + "\n" + IMPL_2A, base + "\n" + IMPL_2B)
+        check(got == base + "\n" + IMPL_2A + "\n" + IMPL_2B,
+              "a block added on each side, the two differing only in at:, is kept whole, each with its at: line (%r)"
+              % got)
 
         # an entry both sides hold is kept once
         base = FB_HEAD + FB_1

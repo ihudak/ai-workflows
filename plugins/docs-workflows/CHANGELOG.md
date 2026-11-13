@@ -5,6 +5,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.0] — 2026-11-13
+
+D50: the two release-preparation drafts record the instant their run started, so `dev-workflows` 4.63.0's `/ready` can order them against work implemented the same day, and `/document` and `/release-notes` read the conformance record's `At:` line for `workflows-core` 1.85.0's `source-truth` §7.8 rule 1. Update with `workflows-core` 1.85.0 and `dev-workflows` 4.63.0. A draft written before this release carries no instant and is dated as before.
+
+### Added
+
+- **The scope comment's `at:` line** (`release-note-types` §1). `/release-notes` takes the run's start instant right after `strip-run-flags`, before it reads anything in the specs tree, by pasting the output of `date -u +%Y-%m-%dT%H:%M:%SZ` verbatim, and carries it as `started_at`, taken once, a slice's re-entry of Phase 0 step 1 included. Phase 8 step 1 writes `at: <instant>` on the line after `stage:`, before the `read:` lines — or, where the run no longer holds `started_at` verbatim, no `at:` line, never a new reading of the clock, which would be later than the start. The first line, its date and the `read:` lines are unchanged, and the boundary rules still read only those, passing over `stage:` and `at:` alike. A value that does not match the pattern, or any value of a comment with more than one `at:` line, is no instant, and changes how nothing else in the comment is read; the one-line form stays a date-only record.
+- **`pr-draft.md`'s last line** (`references/finish-and-handoff.md` §5). `/document` takes the run's start instant in *Mode detection*, in both modes, right after `strip-run-flags`, and Mode A's Phase 8.5 step 3 writes `<!-- implementation records read: <instant> -->` below the draft's body, then exactly one newline and nothing else — or, where the run no longer holds `started_at` verbatim, no last line, never a new reading of the clock. The DO-NOT-MERGE banner, where there is one, stays the body's first line. The run prints the draft without that line, so each footer's paste carries no comment; `gh pr create --body-file` passes the file whole, and GitHub shows no HTML comment in a pull request's description. Stated as a limit: pasting from the file itself onto a host that shows HTML comments shows the line. Mode B writes no `pr-draft.md` and never writes the instant.
+
+### Changed
+
+- **`/document` and `/release-notes` take each conformance record's `At:` lines** in their read lists (`/document` Phase 3, `/release-notes` Phase 0), for `workflows-core` 1.85.0's `source-truth` §7.8 rule 1, which orders an Epic's record against the PRD folder's by the instant each run started where both carry one.
+- **`release-note-types` §1** states the release-note signal as `/ready` applies it — it holds where at least one `stage: dev` draft has no block later than it, by instant where both carry one, else by date — in place of the newest draft being dated no earlier than the latest block, and says a change to any of the three lines `/ready` reads, the first, `stage:` and `at:`, is a change to that command too. Its pattern is in POSIX `[0-9]` form, as is `finish-and-handoff` §5's.
+- **Pages and rules.** The `/release-notes` page says the hidden scope comment records the moment the run started and how `/ready` compares it; the `/document` page says `pr-draft.md` ends with a hidden line, that the printed draft leaves it out, and where pasting the file shows it; the References page names the moment. `.claude/rules/release-notes.md` says the same.
+
+### Fixed
+
+- **`diff-summarizer`'s field list.** The agent and its handoff reference listed what `workflows-core:implementation-format` §1 records as `repo` / `branch` / `base` / `commit` / `pushed`, which `accepted:` already made untrue and `at:` would again. Both now call those five an entry's refs, and say its other fields, an `at:` instant and any `accepted:` lineage links, are no refs.
+
+### Notes
+
+- **Found and logged, not fixed: PRDRAFT-TITLE.** The GitHub footer's `gh pr create --title '<title>' --body-file <pr-draft path>` posts a body that begins with the title too, since `pr-draft.md` holds the title above the body. It is older than this release and logged for the maintainer to schedule; `/document` Phase 8.5 step 4 and `finish-and-handoff` §5 are unchanged in that respect.
+
 ## [1.38.3] — 2026-11-12
 
 Commands and pages that describe `workflows-core` 1.84.0's landing, and switches onto a docs repository's base that no longer half-move a checkout whose `.git/config` cannot be written. Update with `workflows-core` 1.84.0, whose `read-only-repos` §3 holds the rule these switches cite.

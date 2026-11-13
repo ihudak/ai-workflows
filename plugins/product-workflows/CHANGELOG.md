@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.79.4] — 2026-11-13
+
+One page, describing `dev-workflows` 4.63.0's `/ready`. Update with `dev-workflows` 4.63.0; it needs nothing of `workflows-core`.
+
+### Changed
+
+- **The Workflow overview page** said in two places that `/dev-workflows:ready` reads the dates of the implementation records. The paragraph under the diagram, on the `_conformance.md` edge into `/ready`, now says it reads that record beside when the implementation records were written. The *artifacts* bullet now says, as `dev-workflows` 4.63.0's `/ready` does, that *Delivery verified* and *Release Preparation* compare the moment each record carries where both carry one, and their dates otherwise, and that *Release Preparation* falls short where work was implemented after the pull-request draft, or after every dev-stage release-note draft.
+
 ## [3.79.3] — 2026-11-12
 
 `/epics`' two sentences on what a run may create in `$SPECS_PATH`, and two pages, describe `workflows-core` 1.84.0's landing and its switches that write no `.git/config`. Update with `workflows-core` 1.84.0.

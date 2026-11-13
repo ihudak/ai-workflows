@@ -1023,6 +1023,24 @@ def test_accept_into_implementation_block():
     _with_repo(body)
 
 
+def test_accept_after_at_field():
+    # implementation-format §1: a block's entry carries `at:` after `pushed:`; `accepted:`, which
+    # accept appends at the block's end, lands after it, and the reader still finds it there.
+    at = "  at:      2026-01-02T10:00:00Z\n"
+    def body(r):
+        rel = f"{r.dir}/implementation.md"
+        r.write(rel, IMPL + at)
+        doc = os.path.join(r.root, rel)
+        accept(doc, {"stale": [{"upstream": r.prd, "current": {"blob": "c" * 40}}], "missing": [],
+                     "accepted": [{"upstream": r.spec, "blob": "d" * 40}]})
+        text = r.read(rel)
+        _check("earlier text unchanged", text.startswith(IMPL + at), text)
+        _check("accepted after at:", text[len(IMPL):] == at + f"  accepted:\n    - path: {r.prd}\n      blob: {'c' * 40}\n", text)
+        got = _accepted_of(doc)
+        _check("read back past at:", got == [{"path": r.prd, "blob": "c" * 40}], json.dumps(got))
+    _with_repo(body)
+
+
 def test_implementation_acceptances_read():
     def body(r):
         r.chain()

@@ -27,8 +27,9 @@ Refuse to run without `repo_path` and at least one element in **`refs`**.
 **No `model_routing:` block is passed.** The caller pins this agent's tier with `model:` on the dispatch, and nothing in the agent reads a field of that block.
 
 **`refs` is the shape the callers have, and the only one.** `workflows-core:implementation-format` §1
-records `repo` / `branch` / `base` / `commit` / `pushed` — no URL, no host, no PR id — so there is no
-host to route on and no forge to ask. The diff is taken directly
+records an entry's refs as `repo` / `branch` / `base` / `commit` / `pushed` — its other fields, an
+`at:` instant and any `accepted:` lineage links, are no refs — and records no URL, no host, no PR id,
+so there is no host to route on and no forge to ask. The diff is taken directly
 (`git -C <repo_path> diff <branch_to>...<branch_from>`, `branch_from` accepted as a commit sha, the
 form both callers hand, `branch_to` read as `origin/<branch_to>` wherever the local branch is absent
 or an ancestor of it) — except where `branch_from` has already landed on `branch_to`, which empties that range:
