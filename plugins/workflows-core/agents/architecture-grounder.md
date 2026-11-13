@@ -83,11 +83,11 @@ arch_challenges:
     evidence: <file:line from stack_facts, or a sentence of feature_summary quoted; for known-weakness, step 5a's line>
     governing: { id: <id>, title: <title>, root: organisation | team, path: <path>, url: <link or null>, rule: "<quoted>", prd: <team only>, source: <team only> }   # null for radar-absent, and for a known-weakness nothing prevents; a known-weakness's takes step 5a's shapes
     weakness: { repo: <repo>, cwe: <cwe>, cwe_url: <url>, live: <n>, accepted: <n>, awaiting_review: <n>, review_due: <n>, fixed_recent: <n>, recurs: <true|false>, register: security/<repo>/register.md }   # known-weakness only; omit for every other kind
-root_errors: ["<arch_root | team_root>: <its path> — <what failed, in a few words>", …]   # OK or EMPTY only: each set root you could not read; omit the key where every set root was read
+root_errors: ["<arch_root | team_root> <its path>: <what failed, in a few words>", …]   # OK or EMPTY only: each set root you could not read; omit the key where every set root was read
 error: <one line — ERROR only>
 ```
 
-`EMPTY` — the sources were read and nothing bears on the work; both lists are `[]`. It cannot occur where `weakness_classes` could be read and holds a class, since step 5a raises a `known-weakness` for each class it takes.
+`EMPTY` — the sources it could read were read and nothing bears on the work; both lists are `[]`, and `root_errors` names any set root it could not read. It cannot occur where `weakness_classes` could be read and holds a class, since step 5a raises a `known-weakness` for each class it takes.
 
 A team record's `prd:` and `source:` are copied from its frontmatter as written: the caller tells by them whether a departure from the record takes **Supersedes** (another PRD's) or a refinement of the ARD `source:` names (its own PRD's).
 

@@ -217,25 +217,33 @@ No register state, team record or finding ever causes exit 2 by itself.
 
 **`resolve-architecture-grounding`.**
 - It returns, beside its existing fields, `security_registers` (`ON`, `OFF` or `none`), `security_root`, `security_count` and `security_reason`.
-- `none` means `$SPECS_PATH/security/` is not a directory. Then no line prints and nothing is called.
-- `security_count` is the number of `register.json` files directly under `$SPECS_PATH/security/*/`.
-- Step 1 (`--no-arch`) returns `OFF` with the reason `disabled with --no-arch` wherever `security/` is a directory.
+- `none` means `$SPECS_PATH` is unset or empty, or `$SPECS_PATH/security` is neither a directory nor a symbolic link. Then no line prints and nothing is called.
+- A symbolic link at `$SPECS_PATH/security` is `OFF` with the reason `<specs>/security is a symbolic link` (Task 4 review M3): the script follows no link, so it would read every register through one as `unreadable`.
+- `security_count` is the number of `register.json` files directly under `$SPECS_PATH/security/*/`, counted with `find … 2>/dev/null | wc -l` so that no name under `security/` reaches the run.
+- Step 1 (`--no-arch`) returns `OFF` with the reason `disabled with --no-arch` wherever the resolution would not return `none`.
 
 **Configure lines** (design §4.1), shown beside the team line:
 ```
 security registers: ON <specs>/security (<n> registers; read for the repositories the work touches)
 security registers: OFF (disabled with --no-arch)
 security registers: OFF (no findings register under <specs>/security — it holds only cost or feedback entries, or other files)
+security registers: OFF (<specs>/security is a symbolic link)
 security registers: OFF (<specs>/security is not readable)
 ```
 
 **The consumer's call.**
 - **When:** only where `security_registers: ON` and the component set is not empty, whether or not a root is ON. Make it once the scan's last batch has returned — in `/create-ard`, after Phase 3 step 4's scan; in `/specify` and `/design`, where Phase 4's paragraph waits for it — the point where `stack_facts` is built (review M2):
   `Skill(skill: "workflows-core:weakness-classes", args: "classes --repo '<slug>' … --component '<id>' …")`
-- **Arguments:** one `--component` for every component id the grounder gets, bare slugs included. One `--repo` for each distinct slug: an id up to its first `:`, or the whole id where it has none (`workflows-core:components` §1).
+- **Arguments:** an id's slug is the id up to its first `:`, or the whole id where it has none (`workflows-core:components` §1). Keep each component id the grounder gets that passes all three tests, and leave out every other one (`architecture-grounding.md` § Dispatch, *The argument*; Task 4 review M1):
+  1. every character lies in the skill's class `[A-Za-z0-9._:/@+=-]`;
+  2. it does not open with `-`;
+  3. its slug is not empty, holds only letters, digits, `.`, `_` and `-`, and is neither `.` nor `..` (the script's slug check, which would otherwise refuse the whole call).
+
+  Then one `--repo` for each distinct slug of the ids kept, and after the last of them one `--component` for each id kept, bare slugs included: every `--repo` before any `--component`, and no other flag. Where no id is kept, make no call.
 - **Dispatch condition:** `arch_grounding: ON`, or `team_grounding: ON`, or a non-empty `classes`.
 - **New dispatch input:** `weakness_classes: <absolute path of the JSON> | null`, set only where `classes` is non-empty.
-- **When the skill fails:** grounding runs exactly as without the call, and the final report carries `security registers: not read — <the skill's error>`.
+- **When the skill fails:** grounding runs exactly as without the call, and the final report carries `security registers: not read — <the skill's error>`. `<the skill's error>` is the skill's `weakness-classes: not run (…)` line; for a path whose file cannot be used, `the JSON file the skill named could not be read`; for any other output, the Skill tool's own failure among it, `the skill printed neither a path nor a not-run line`, never that output (Task 4 review M5).
+- **`root_errors`** (Task 4 review M6). `architecture-grounder`'s output gains one optional key, `root_errors: ["<arch_root | team_root> <its path>: <what failed>", …]`, on an `OK` or `EMPTY` digest only, naming each set root it could not read, and omitted where every set root was read; `error:` stays `ERROR`-only. Where the digest carries it, each command's final report carries one line for all its entries, copied verbatim from `architecture-grounding.md`: `architecture grounding: root not read — <entry>[; <entry>…]`, each `<entry>` as the digest gives it, in its order. It matters most where the run holds a class and no set root could be read: the digest is then `OK` with `known-weakness` challenges alone, where it was `ERROR` before.
 - **When it ran:** the final report's `architecture grounding:` line gains `; registers read: <each slug in state ok, comma-separated>`, then `; skipped: <slug> (<state>), …` for `unreadable`, `unknown-format` and `malformed` registers. `absent` is silent.
 
 **`known-weakness`** (design §4.3–4.4).
@@ -334,7 +342,7 @@ The "before" column was measured on `55ccb0f1`.
 | S18 | `A promoted team record is not read` | 1 | 4 | 1, plus its exception |
 | S19 | ``Never blocks; every miss is `OFF` with a reason`` | 1 | 4 | 1, plus the failed-call line |
 | S20 | `At least one of the two roots is set` / ``No root readable → `status: ERROR` `` | 1 / 1 | 4 | 0 / 0 |
-| S21 | `At most 8 challenges` / `the sources were read and nothing bears on the work` | 1 / 1 | 4 | 1 / 1, each re-worded around it |
+| S21 | `At most 8 challenges` / `the sources were read and nothing bears on the work` | 1 / 1 | 4 | 1 / 0: the cap is re-worded around it; the EMPTY sentence becomes `the sources it could read were read`, since an `EMPTY` digest can carry `root_errors` (Task 4 re-check) |
 | S22 | ``Where it resolved `arch_grounding: ON` or `team_grounding: ON` `` | 3 | 5 | 0 |
 | S23 | `` `architecture grounding:` and `team decisions:` lines `` | 9 | 5 | 2, the two CHANGELOGs. The seven sites in `create-ard.md` (2), `specify.md` (2), `design.md` (2) and `docs/commands/specify.md` (1) name the security line too |
 | S24 | `` `docs grounding:`, `architecture grounding:` and `team decisions:` `` | 1 | 5 | 0: `update-spec.md:68`, a site the design missed |
