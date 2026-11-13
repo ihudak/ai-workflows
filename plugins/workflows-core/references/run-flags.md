@@ -167,4 +167,4 @@ Any other value reads as `ask`, and the run prints one line saying so, wherever 
 
 **What it is not.** It is no run flag. `strip-run-flags` (§3) never reads it, the `run_flags` record has no member for it, the `Run flags:` line (§3 step 6) never names it, and no command-line flag sets it. No other command reads it, and no other command's Phase 0 touches it.
 
-**One run on Fable.** There is no per-run override of the variable. A one-run route to Fable, whatever the variable says, is `--enforce-model=fable` (§1, §2), and it pins more than the coding: under `classification.md` §10 every subagent the run dispatches runs on Fable, the planner, the reviewer and the scanners among them, and the guard does not run.
+**One run on Fable.** There is no per-run override of the variable. A one-run route to Fable, whatever the variable says, is `--enforce-model=fable` (§1, §2), and it pins more than the coding: under `classification.md` §10 every subagent the run dispatches runs on Fable, the planner, the reviewer and the scanners among them, and the guard writes nothing.
