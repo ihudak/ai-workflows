@@ -104,16 +104,16 @@ Until that pull request merges, your specs checkout shows those files as modifie
 
 ## `$WORKFLOWS_FABLE_ESCALATION`
 
-- **`$WORKFLOWS_FABLE_ESCALATION`** — whether `/dev-workflows:implement` writes the code of a HIGH-RISK change on Fable, the strongest model the session can reach, rather than on the model it would otherwise write it on: `ask`, `always` or `never`. `/implement` alone reads it. It is no run flag and has no command-line form, so it is not among the three under Run flags, below.
+- **`$WORKFLOWS_FABLE_ESCALATION`** — whether `/dev-workflows:implement` writes the code of a HIGH-RISK change on Fable rather than on the model it would otherwise write it on: `ask`, `always` or `never`. `/implement` alone reads it. It is no run flag and has no command-line form, so it is not among the three under Run flags, below.
 
-**Resolution.** Matched case-insensitively, after trimming surrounding whitespace. `ask` asks you before the run's first HIGH-RISK coding step, stating how Fable's per-token price compares with the other model's, with Fable recommended; `always` takes Fable without asking, and `never` keeps the other model, each saying so in one line. The answer, or the setting, covers every step that writes or fixes the run's code while the run is HIGH-RISK: the plan's steps, the fixes for a failing test, lint or build, and the fixes after review. A run re-classified below HIGH-RISK codes as its new class says from then on, and one that rises back takes the same answer again, never asking twice. Where a Fable step fails outright before any Fable step has returned, the run retries it once on the other model, codes on that model from then on, and its report says so. Nothing is escalated, whatever the value, where any of these holds:
+**Resolution.** Matched case-insensitively, after trimming surrounding whitespace. `ask` asks you before the run's first HIGH-RISK coding step, stating how Fable's per-token price compares with the other model's, with Fable recommended; `always` takes Fable without asking, and `never` keeps the other model, each saying so in one line. The answer, or the setting, covers every step that writes or fixes the run's code while the run is HIGH-RISK: the plan's steps, the fixes for a failing test, lint or build, and the fixes after review. A run re-classified below HIGH-RISK codes as its new class says from then on, and one that rises back takes the same answer again, never asking twice. Where a Fable step fails outright before any Fable step group has returned, the run retries it once on the other model, codes on that model from then on, and its report says so. Nothing is escalated, whatever the value, where any of these holds:
 
 - the run enforces a model with `--enforce-model`, which decides every step's model itself;
 - the session already runs on Fable or Mythos, which writes the code on its own model;
 - the run fixes a security finding, or cannot rule one out, since Fable's safety filters would re-run such requests on Opus and the run would pay twice;
 - Fable is not reachable from the session; under `always`, the run says so in one line.
 
-A stopped run you resume keeps an answer you gave it while Fable stays reachable; a choice the setting made follows the setting's value when you resume.
+A stopped run you resume keeps an answer you gave it, save that an answer for Fable gives way to the other model where Fable is no longer reachable; a choice the setting made follows the setting's value when you resume.
 
 **Where it is set.** In the environment the session runs in, as the other variables on this page are. No command writes it, and an answer to the question decides only the run it was given in.
 
@@ -123,7 +123,7 @@ A stopped run you resume keeps an answer you gave it while Fable stays reachable
 
 **When it points somewhere unreadable.** Not applicable — this variable holds a literal value, not a path.
 
-**One run on Fable**, whatever the variable says, is `--enforce-model=fable` (Run flags, below). It runs every subagent the run dispatches on Fable — the planner, the reviewer and the scanners too, not only the steps that write code — and asks nothing.
+**A one-run route to Fable**, whatever the variable says, is `--enforce-model=fable` (Run flags, below). It runs every subagent the run dispatches on Fable — the planner, the reviewer and the scanners too, not only the steps that write code — and asks nothing.
 
 ## Run flags
 

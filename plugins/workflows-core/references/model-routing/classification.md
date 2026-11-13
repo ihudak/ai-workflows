@@ -166,8 +166,8 @@ The orchestrator MUST execute these steps in order:
    for raw coding throughput; Opus is not required here). Sub-agents that do
    the actual file edits inherit the orchestrator's model unless overridden (§2's provisos aside).
    `/implement` is the exception: its `code-writer` and `review-fixer` dispatches
-   run on §4's `implementation_model`, which at HIGH-RISK is Fable where the run chose
-   it (§4's third clause).
+   run on §4's `implementation_model` — at HIGH-RISK, on a session not on Fable or
+   Mythos and with no `--enforce-model`, Fable where the run chose it (§4's third clause).
 4. **Opus code review** of the completed implementation. This is a dedicated
    `code-review` sub-agent invocation pinned to Opus. It MUST cover every item
    in the §6 checklist. Tests MUST NOT be run until this review completes.
@@ -242,8 +242,8 @@ class:
 
 Escalated, `implementation_model` is that `choice`. **A Fable value** is a `claude-fable-*` id,
 or the family `fable`; nothing escalates to Mythos. Only `/implement`'s Fable escalation guard,
-its fallback and its resume write `fable_escalation`, and the setting the guard reads is
-`workflows-core:run-flags` §8.
+its fallback and its resume set `fable_escalation`'s members — `run-state.py`'s `init` and
+`load` put nothing there but their null default — and the setting the guard reads is `workflows-core:run-flags` §8.
 
 **An Opus-tier model** is a `claude-opus-*`, `claude-fable-*` or `claude-mythos-*` id:
 Opus, or a family above it. This is the family's one test of the term, and every gate,
@@ -562,7 +562,7 @@ map govern every command, and §9.4 applies them to scanning.
   `code-writer` and `review-fixer` dispatches are the exception — `code-writer`'s
   step and fix dispatches alike, raw coding throughput though they are (§3.2 step 3):
   they run on §4's `implementation_model`, escalated to Fable at HIGH-RISK where the run
-  chose it (§4).
+  chose it, on a session not on Fable or Mythos and with no `--enforce-model` (§4).
 - **Orchestrator-executed** judgment steps — the inline prose writing and the
   interactive gates, plus the orchestration itself — run on the session model
   and CANNOT be overridden from inside a running command. Except under §10, where none of the rest of this bullet fires — no advisory, no gate, no degrade path, for any command that carries one (§10's *Opus-session gates do not fire* bullet is the general rule, and `workflows-core:run-flags` §3 step 7's advisory is the only notice) — handle them with an
@@ -573,7 +573,7 @@ map govern every command, and §9.4 applies them to scanning.
 | Role | Chain |
 |------|-------|
 | Synthesis / planner (e.g. `doc-planner`) | §2 reasoning (Opus) |
-| `/implement`'s `code-writer` and `review-fixer` dispatches | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus-tier model (§4), else §2 reasoning (Opus); at HIGH-RISK, Fable where the run chose it and the session is not on Fable or Mythos (§4) |
+| `/implement`'s `code-writer` and `review-fixer` dispatches | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus-tier model (§4), else §2 reasoning (Opus); at HIGH-RISK, Fable where the run chose it and the session is not on Fable or Mythos (§4); `--enforce-model` overrides all three (§10) |
 | Reader / summarizer / locator / style-checker / fixer (save `/implement`'s `code-writer` and `review-fixer` dispatches, row above) / maintenance (`code-scanner`, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
 | Domain reviewer (`doc-reviewer`, `epic-reviewer`) | §2 review (Opus) — usually already frontmatter-pinned; the orchestrator records it and adds **no** override — unless §10 enforces a model |
 | Delegated writer (`doc-writer` / `epic-writer`) | §2 reasoning (Opus) for SIGNIFICANT/judgment writing; §2.1 detection (Sonnet) for MODERATE writing |

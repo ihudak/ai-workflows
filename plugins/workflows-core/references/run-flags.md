@@ -151,7 +151,7 @@ nothing for it.
 
 ## 8. Fable escalation — `$WORKFLOWS_FABLE_ESCALATION`
 
-**What it settles.** Whether `/implement` writes HIGH-RISK code on Fable: `classification.md` §4's third clause escalates `implementation_model` where `/implement`'s run-state `fable_escalation.choice` is a Fable value, and `/implement`'s Fable escalation guard records that choice before a HIGH-RISK `code-writer` or `review-fixer` dispatch where none is recorded yet. This variable governs that choice wherever the guard's own test leaves it to the setting: no `--enforce-model`, a session not on Fable or Mythos, a run that fixes no security finding, and Fable reachable. The test itself is the guard's, in `/implement`.
+**What it settles.** Whether `/implement` writes HIGH-RISK code on Fable: `classification.md` §4's third clause escalates the `implementation_model` of a session not on Fable or Mythos where `/implement`'s run-state `fable_escalation.choice` is a Fable value, `--enforce-model` overriding it (`classification.md` §10), and `/implement`'s Fable escalation guard records that choice before a HIGH-RISK `code-writer` or `review-fixer` dispatch where none is recorded yet. This variable governs that choice wherever the guard's own test leaves it to the setting: no `--enforce-model`, a session not on Fable or Mythos, a run that fixes no security finding, and Fable reachable. The test itself is the guard's, in `/implement`.
 
 **Values.** Matched case-insensitively, after trimming surrounding whitespace:
 
@@ -167,4 +167,4 @@ Any other value reads as `ask`, and the run prints one line saying so, wherever 
 
 **What it is not.** It is no run flag. `strip-run-flags` (§3) never reads it, the `run_flags` record has no member for it, the `Run flags:` line (§3 step 6) never names it, and no command-line flag sets it. No other command reads it, and no other command's Phase 0 touches it.
 
-**One run on Fable.** There is no per-run override of the variable. The one-run route to Fable is `--enforce-model=fable` (§1, §2), and it pins more than the coding: under `classification.md` §10 every subagent the run dispatches runs on Fable, the planner, the reviewer and the scanners among them, and the guard does not run.
+**One run on Fable.** There is no per-run override of the variable. A one-run route to Fable, whatever the variable says, is `--enforce-model=fable` (§1, §2), and it pins more than the coding: under `classification.md` §10 every subagent the run dispatches runs on Fable, the planner, the reviewer and the scanners among them, and the guard does not run.
