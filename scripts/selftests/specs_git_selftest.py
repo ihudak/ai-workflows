@@ -13014,7 +13014,8 @@ def selftest(groups=None):
         ALL = ("status, branch_merged, branch_key, push_scope, owner_repo, mode, state, lines, gate, end, land, replay, "
                "start, midrun, skill, selftest")
         # Every run started here is marked nested, so a break in group selection fails rather than recursing, and
-        # runs with GITHUB_ACTIONS empty, outside CI's refusal of --group, so this group passes in CI too.
+        # every run but s_group_refused_in_ci's has GITHUB_ACTIONS empty, outside CI's refusal of --group, so this
+        # group passes in CI too.
         nested = {"SPECS_GIT_SELFTEST_NESTED": "1", "GITHUB_ACTIONS": ""}
         got = cli("--selftest", "--group", "branch_key", cwd=tmp, env=nested)
         check(got["_rc"] == 0 and re.fullmatch(r"specs-git selftest: PASS \([1-9][0-9]* checks; partial: branch_key\)",
