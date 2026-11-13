@@ -374,10 +374,12 @@ Design §10 items 13–16, which have no phrase row:
 - **R15:** sites the design's §10 missed: S4's register page, S23, S24, S26, S29's page, S33–S36 (the review's I3), `references.md`'s three entries, and the `agents.md` rows.
 - **R16:** two bullets sit outside the premise "grounding ON": `ard-format`'s CWE bullet binds every decision whose Prevents names a CWE, and `design-format`'s premise widens to "or `architecture-grounder` returned a `known-weakness` challenge".
 - **R17:** two pieces of the scan's wording are fixed here: its report line `- Weakness classes: …`, and Phase 5's row note `prevented by <id>[, <id>…]`.
-- **R18 (review I5):** the PA line's folder and `--prd-key` come from what Phase 0 step 4 already holds, never from a folder name read by pattern. The cases:
-  - an Epic-scoped run (resolved `kind` EPIC, two keys in the run key set): the resolved folder's parent folder, and the parent's key;
-  - a single-key run (resolved `kind` PRD): the resolved folder and its key;
-  - otherwise — a path run, or any other kind — no `--prd-key`, and the sentence goes to the report.
+- **R18 (review I5, as amended by the controller):** the PA line's folder and `--prd-key` are the folder and key `/create-ard` would read a PRD from. That is tested by the artifact `/create-ard` consumes, **never by the folder's asserted `kind` or its prefix**. `CLAUDE.md`, *Hard constraints*: "Any kind gate must test the artifact it actually cares about, never the folder's asserted kind — a BRD-route slice is `PRD-`-prefixed yet asserts `kind: brd`." `.claude/rules/brd-route.md` (the bullet "A slice folder is `PRD-`-prefixed and asserts `kind: brd`") explains why: "An asserted-kind gate would refuse every slice and accept nothing". It also gives the artifact test this follows: `/epics`'s accept gate "tests **`prd.md`'s own `kind: prd`** one file down".
+  - **The artifact, by `/create-ard`'s own name and test.** Its Phase 0 gate (the phrase "**Gate the PRD — on every route, with no branch.**") runs `require-on-main` "against the PRD file in that folder … that file is `prd.md`, a constant". Its Phase 2 (the phrase "Read the PRD from the folder `resolve-address <PRD>` returned") reads "its `prd.md`, whose frontmatter is `kind: prd`". So a folder qualifies where it holds a top-level `prd.md` whose frontmatter `kind:` is `prd`.
+  - **The candidate folders** come from what Phase 0 step 4 already holds, never from a folder name read by pattern:
+    - an Epic-scoped run (two keys in the run key set): the resolved folder's parent folder and the parent's key, where the parent qualifies;
+    - a single-key run: the resolved folder and its key, where it qualifies.
+  - **Otherwise** — a path run, a candidate without such a `prd.md` (a BRD container, or a slice with no PRD authored yet) — pass no `--prd-key`, and the sentence goes to the report.
 
 ## Review Focus
 
@@ -697,18 +699,25 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - **Phase 7.2**, only where `register.py commit` ran — after its `REGISTER_MOVED` and `TRIAGE_*` retries settle — and its decisions file holds ≥ 1 `accepted-risk` decision:
     - one `classes` call with `--repo '<repo-slug>'`;
     - one `--origin` per such decision: for `id:<n>`, `answered-plan.json`'s `origins["<n>"]`; for `plugin:<pid>`, `<the plan's scan.id>:<pid>`. Phase 5 step 7 names a match or an existing finding only by `id:<n>`, so a `plugin:` target is always a new finding;
-    - `--prd-key '<KEY>'` per R18: on an Epic-scoped run, the parent's key; on a PRD run, the resolved key; otherwise none (review I5);
+    - `--prd-key '<KEY>'` per R18: on an Epic-scoped run, the parent's key, and on a single-key run the resolved key, each only where that folder holds a `prd.md` whose frontmatter `kind:` is `prd`; otherwise none (review I5). Never test the folder's asserted `kind` or its prefix;
     - keep each `pa_line` for 7.6 and each `pa_next_step` for the report.
   - **7.5's report:**
     - `### Register` gains `- Weakness classes: [each PA line, pending the preview; each sentence for the PA; "none"; or "not read — <the skill's error>"]`;
     - `### Next step` carries each `pa_next_step` verbatim.
   - **7.6's follow-ups paragraph:**
     - S27: the persist step runs where 7.2 built any line or the call printed a `pa_line`;
-    - S28: each PA line is written exactly as the script printed it. Its `unit_folder` and `key` come from R18, out of what Phase 0 step 4 holds: on an Epic-scoped run, the resolved folder's parent and the parent's key; on a PRD run, the resolved folder and its key. Never re-derive a kind from a folder name;
+    - S28: each PA line is written exactly as the script printed it. Its `unit_folder` and `key` are the folder and key that passed R18's `prd.md` test: on an Epic-scoped run, the resolved folder's parent and the parent's key; on a single-key run, the resolved folder and its key. Never test a kind from a folder name, prefix or asserted `kind`;
     - on a run with a PA line, **every** item of the `followup-emission` call carries its own `unit_folder` and `key`, the per-item form §8 uses "instead". Each finding's line takes the unit's folder and key, and each PA line takes the PRD's. The call is never a mix of a call-level `unit_folder` and per-item ones;
     - the cancel rule excludes the PA line: leaving it out records nothing and returns no finding to `fix`;
     - this step's output line `N follow-ups written to <target>` (S34) becomes one line per target: the unit's `follow-ups.md`, and the PRD folder's where a PA line was written.
   - **Invariants** (S34): `register.py commit builds them from structured fields only` becomes: `register.py commit` builds each finding's follow-up and prompt line, and `weakness-classes.py` builds the PA line and sentence, each from structured fields only.
+- **The BRD-route rules' population** (R18 makes `scan.md` carry a kind gate). `.claude/rules/brd-route.md` says, at the phrase "a kind gate added elsewhere needs its file added to these `paths:`", that such a file joins its `paths:`. So, after the `scan.md` edits:
+  - run that file's two greps;
+  - where `plugins/security-workflows/commands/scan.md` is returned, add it to the `paths:` of `brd-route.md`, `brd-route-detection.md` and `prd-ground-verification.md`, which share them;
+  - name `security-workflows`' `/scan` in `brd-route.md`'s opening list of named files;
+  - add it to `CLAUDE.md`'s `brd-route.md` table row.
+
+  `brd-route.md` stands at 19,881 characters. Measure it after the edit; it must stay under 20,000.
 - `plugins/workflows-core/references/followup-emission.md`:
   - §5: after S29, a paragraph **A decision for the PA**. Its identity is the PRD key in its `/product-workflows:create-ard <KEY>` span, its `[CWE-<n>]` link text and its `(security/<slug>/register.md)`, each compared exactly as the run holds it. It matches only an **open** line carrying all three, so a ticked line never stands for it.
   - §6: a bullet: a decision another role must record — here the scan's line for the PA.
