@@ -197,7 +197,9 @@ No register state, team record or finding ever causes exit 2 by itself.
 `plugins/workflows-core/skills/weakness-classes/SKILL.md`:
 - **Frontmatter:** `name: weakness-classes`, a `description` of at most 600 characters, `user-invocable: false`, `allowed-tools: Bash`.
 - **Argument:** the verb and its flags, as the caller wrote them, each value single-quoted. The skill adds `--specs`.
-- **The argument rule (review I1).** An origin is scanner-written text (`register.py` checks only that its plugin ID holds a `:`). So the skill never puts on the command line a value holding any character outside `[A-Za-z0-9._:/@+=-]`. Where one fails, it runs nothing, prints `weakness-classes: not run (an argument holds a character the skill does not pass)` and no path.
+- **The argument rule (review I1).** An origin is scanner-written text (`register.py` checks only that its plugin ID holds a `:`). So the skill never puts on the command line a value holding any character outside `[A-Za-z0-9._:/@+=-]`.
+  - A `--component` value that fails is **dropped**, and its `--repo` is kept, so an odd component path costs only `in_component`, as R6 has it (re-check N2).
+  - Where any other flag's value fails, the skill runs nothing, prints `weakness-classes: not run (an argument holds a character the skill does not pass)`, and prints no path.
 - **The call:** one Bash call:
   ```
   out=$(TMPDIR="<scratchpad>" command mktemp -t dw-weakness-classes-XXXXXX.json) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/weakness-classes.py" <verb> --specs "${SPECS_PATH-}" <flags> > "$out"
@@ -552,7 +554,9 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - a bad `--repo` prints the `not run` line and no path, and leaves no file;
   - a hostile `--origin` holding a single quote plus `; touch <scratch>/pwned` prints `weakness-classes: not run (an argument holds a character the skill does not pass)` and no path, and `<scratch>/pwned` does not exist afterwards (review I1).
 
-  Record all three outputs in the report.
+  - a `--component 'api:a b'` beside `--repo 'api'` is dropped, and the call still runs and prints a path (re-check N2).
+
+  Record all four outputs in the report.
 - [ ] **Step 3: The authority and rules edits. Then the pages.** Measure every rules file and `CLAUDE.md` you touched.
 - [ ] **Step 4: After counts**, against the table. Re-read every paragraph that holds a hit (refinement 1).
 - [ ] **Step 5: Gates.** Expected: check 4 and check 9 pass with four skills.
@@ -621,7 +625,7 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
      - Replace the condition.
      - Add `weakness_classes` to the dispatch.
      - Add the failed-call rule.
-     - Reword its closing `Where it resolved OFF, dispatch nothing` (S33), which the widened trigger contradicts: "Where neither root resolved ON and the call returned no class, dispatch nothing." Leave the docs-grounding paragraph's sentence of the same words alone.
+     - Reword its closing `Where it resolved OFF, dispatch nothing` (S33), which the widened trigger contradicts: "Where neither root resolved ON and the run holds no class — the call was not made, failed, or returned none — dispatch nothing." Leave the docs-grounding paragraph's sentence of the same words alone.
   3. **The final report** (S23): `create-ard.md`'s *Report:* sentence, `specify.md`'s `### Run details` block plus its line-detail paragraph, and `design.md`'s *Report:* sentence. Add the `registers read:` clause and the `not read` line.
 - The grill sites:
   - **`create-ard.md` Phase 4**, after its team-record paragraph:
@@ -699,7 +703,7 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - **Phase 7.2**, only where `register.py commit` ran — after its `REGISTER_MOVED` and `TRIAGE_*` retries settle — and its decisions file holds ≥ 1 `accepted-risk` decision:
     - one `classes` call with `--repo '<repo-slug>'`;
     - one `--origin` per such decision: for `id:<n>`, `answered-plan.json`'s `origins["<n>"]`; for `plugin:<pid>`, `<the plan's scan.id>:<pid>`. Phase 5 step 7 names a match or an existing finding only by `id:<n>`, so a `plugin:` target is always a new finding;
-    - `--prd-key '<KEY>'` per R18: on an Epic-scoped run, the parent's key, and on a single-key run the resolved key, each only where that folder holds a `prd.md` whose frontmatter `kind:` is `prd`; otherwise none (review I5). Never test the folder's asserted `kind` or its prefix;
+    - `--prd-key '<KEY>'` per R18: on an Epic-scoped run, the parent's key, and on a single-key run the resolved key, each only where that folder holds a `prd.md` whose frontmatter `kind:` is `prd`; otherwise none (review I5). The `scan.md` sentence carries the literal phrase `asserted kind`, without backticks around `kind`, as in "never by the folder's asserted kind or its prefix", so `brd-route.md`'s grep finds it (re-check N1);
     - keep each `pa_line` for 7.6 and each `pa_next_step` for the report.
   - **7.5's report:**
     - `### Register` gains `- Weakness classes: [each PA line, pending the preview; each sentence for the PA; "none"; or "not read — <the skill's error>"]`;
@@ -711,13 +715,13 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
     - the cancel rule excludes the PA line: leaving it out records nothing and returns no finding to `fix`;
     - this step's output line `N follow-ups written to <target>` (S34) becomes one line per target: the unit's `follow-ups.md`, and the PRD folder's where a PA line was written.
   - **Invariants** (S34): `register.py commit builds them from structured fields only` becomes: `register.py commit` builds each finding's follow-up and prompt line, and `weakness-classes.py` builds the PA line and sentence, each from structured fields only.
-- **The BRD-route rules' population** (R18 makes `scan.md` carry a kind gate). `.claude/rules/brd-route.md` says, at the phrase "a kind gate added elsewhere needs its file added to these `paths:`", that such a file joins its `paths:`. So, after the `scan.md` edits:
-  - run that file's two greps;
-  - where `plugins/security-workflows/commands/scan.md` is returned, add it to the `paths:` of `brd-route.md`, `brd-route-detection.md` and `prd-ground-verification.md`, which share them;
-  - name `security-workflows`' `/scan` in `brd-route.md`'s opening list of named files;
-  - add it to `CLAUDE.md`'s `brd-route.md` table row.
+- **The BRD-route rules' population** (R18 makes `scan.md` carry a kind gate). `.claude/rules/brd-route.md` says, at the phrase "a kind gate added elsewhere needs its file added to these `paths:`", that such a file joins its `paths:`. So, unconditionally (re-check N1):
+  - add `plugins/security-workflows/commands/scan.md` to the `paths:` of `brd-route.md`, `brd-route-detection.md` and `prd-ground-verification.md`, which share them;
+  - name it in `brd-route.md`'s opening list of named files, as briefly as `security-workflows`' `/scan`;
+  - add it to `CLAUDE.md`'s `brd-route.md` table row;
+  - then run that file's second grep, `grep -lE 'kind it asserts|asserted kind|asserts .kind: brd|asserting .brd' plugins/*/commands/*.md plugins/*/references/*.md`. It must now return `scan.md`, which checks that the `scan.md` sentence carries the literal phrase.
 
-  `brd-route.md` stands at 19,881 characters. Measure it after the edit; it must stay under 20,000.
+  `brd-route.md` stands at 19,881 characters and lands at about 19,965–19,970. Measure it after the edit; it must stay under 20,000.
 - `plugins/workflows-core/references/followup-emission.md`:
   - §5: after S29, a paragraph **A decision for the PA**. Its identity is the PRD key in its `/product-workflows:create-ard <KEY>` span, its `[CWE-<n>]` link text and its `(security/<slug>/register.md)`, each compared exactly as the run holds it. It matches only an **open** line carrying all three, so a ticked line never stands for it.
   - §6: a bullet: a decision another role must record — here the scan's line for the PA.
