@@ -329,7 +329,8 @@ jobs:
       - name: Check the specs-git mutants are not stale
         # scripts/selftests/specs-git-mutants.json holds one-line mutants of the scripts under
         # plugins/workflows-core/scripts/, which scripts/selftests/mutants.py runs against
-        # groups of the selftest; a full run takes minutes, so CI runs none. --check only counts each mutant's old text
-        # in its file and fails where any is not found exactly once: a mutant whose text an
-        # edit has taken away. A check made to assert less shows only in a run.
+        # groups of the selftest; a full run takes minutes, so CI runs none. --check only
+        # counts each mutant's old text in its file and fails where any is not found exactly
+        # once: a mutant whose text an edit has taken away. A check made to assert less shows
+        # only in a run.
         run: python3 scripts/selftests/mutants.py --check
