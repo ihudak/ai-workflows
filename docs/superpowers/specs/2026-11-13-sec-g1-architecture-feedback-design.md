@@ -1,6 +1,6 @@
 # SEC-G1 — the architecture feedback loop (security sub-project E)
 
-**Date:** 2026-11-13. **Status:** revision 2.1, for the maintainer's approval. It applies a Fable design review's findings and the controller's rulings on the draft's five open questions (revision 2), then the four minors from Fable's re-check. Nothing here is implemented. **Roadmap:** row E of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:101`, read with its non-goal at `:151`, D2 at `:208`–`:210`, the accepted-risk claim at `:395` and the free-text rule at `:475`. **Branch:** `feat/sec-g1-arch-feedback`.
+**Date:** 2026-11-13. **Status:** revision 2.1, approved by the maintainer on 2026-11-13. It applies a Fable design review's findings and the controller's rulings on the draft's five open questions (revision 2), then the four minors from Fable's re-check. Nothing here is implemented. **Roadmap:** row E of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:101`, read with its non-goal at `:151`, D2 at `:208`–`:210`, the accepted-risk claim at `:395` and the free-text rule at `:475`. **Branch:** `feat/sec-g1-arch-feedback`.
 
 **my call** marks a choice the roadmap leaves open and no ruling settled. **ruled** marks one the controller settled; §12 gives each ruling's reason.
 
