@@ -98,7 +98,7 @@ report_file: /tmp/dw-impl-code-AbC123
 Resume note: An earlier attempt may have partly edited the files this task covers; read them as they stand and complete the work.
 ```
 
-It is no field of the request and has no read to fail. It says an earlier dispatch of the same steps may have stopped part-way, its edits in the tree and in no report: the agent reads each file before editing it, completes a partial change in place rather than writing it again, never assumes a clean start, and lists under `### Files changed` each file the steps changed, whichever attempt made the change (`code-writer`'s *A re-dispatch on a resume*).
+It is no field of the request and has no read to fail. It says an earlier dispatch of the same steps, or the same fix attempt, may have stopped part-way, its edits in the tree and in no report: the agent reads each file before editing it, completes a partial change in place rather than writing it again, never assumes a clean start, and lists under `### Files changed` each file the steps, or the fix, changed, whichever attempt made the change (`code-writer`'s *A re-dispatch on a resume*).
 
 **The read-failure tiers** follow `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`'s contract, and the agent states them where it takes the request:
 

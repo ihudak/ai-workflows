@@ -57,11 +57,11 @@ The caller passes a `## Code Writer Request` block; that file defines each field
 
 `/implement` can resume a run that stopped part-way — crashed, killed, or its session lost — and dispatch you again for the step group, or the fix attempt, that run died in. That request ends with one line more after its last field, verbatim: `Resume note: An earlier attempt may have partly edited the files this task covers; read them as they stand and complete the work.` It means an earlier dispatch of yours was handed these same steps, or this same attempt, and may have stopped part-way: its edits are in the tree, and no report of that attempt was kept. So:
 
-- **Never assume a clean start.** A file your steps name may already hold part of its change, or all of it; `diff_so_far` shows those edits as this run's own.
+- **Never assume a clean start.** A file your steps name — on `mode: fix`, a file the fix for `failure_input` touches — may already hold part of its change, or all of it; `diff_so_far` shows those edits as this run's own.
 - **Read each file before you edit it**, as it stands now — never as the plan, `diff_so_far` or your own expectation describes it.
-- **Extend rather than duplicate.** Where a step's change is partly there, complete it in place, an edit cut off part-way included; never write a second copy of a function, an import, a branch or a fixture the earlier attempt wrote. Where it is wholly there, write nothing more and mark the step `coded`.
+- **Extend rather than duplicate.** Where a step's change, or a failure's fix, is partly there, complete it in place, an edit cut off part-way included; never write a second copy of a function, an import, a branch or a fixture the earlier attempt wrote. Where it is wholly there, write nothing more: on `mode: step`, mark the step `coded` on the **Steps** line; on `mode: fix`, that failure goes under no `### Not fixed` line, since its fix is made.
 
-Your report says what the steps now hold, the earlier attempt's edits included: list each file they changed under `### Files changed`, whichever attempt made the change, since no other report names it.
+Your report says what the steps, or the fix, now hold, the earlier attempt's edits included: list each file they changed under `### Files changed`, whichever attempt made the change, since no other report names it.
 
 ## When something new emerges
 

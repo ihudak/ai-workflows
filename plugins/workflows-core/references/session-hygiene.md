@@ -398,15 +398,17 @@ nothing to compare. *Go on in the current environment* (under **On a mismatch**)
 section with the values resolved now.
 
 **`/implement`'s record** is the same four members, written as one JSON object into its run-state
-file's `run_environment` key, never as a section, when Phase 1.4 creates that file — a fresh run's
-first write into it, or the file a *Start fresh* answer leads to. Each is resolved as **Record**'s
-template resolves it, so `specs_path` reads `unset` and `specs_origin` `none` where `$SPECS_PATH` is
-unset or empty, as on a direct run with no specs tree, and `repos_path` always reads `unresolved`,
-since `/implement` resolves no `$REPOS_PATH` — so that member is never compared. Wherever this
-section reads the `## Run environment` section, `/implement` reads that key, off the file as its
-Phase 0 `peek` printed it; a key that is `null` is a file with no section; and wherever it writes or
-rewrites that section, `/implement` writes the key with `run-state.py set`, once its resume has
-taken the file over (`init --resume`), since until then the file is the earlier session's. In the
+file's `run_environment` key, never as a section, by Phase 1.4's `init`, from the object it is
+handed, when it creates that file — a fresh run's first write into it, or the file a *Start fresh*
+answer leads to. Each is resolved as **Record**'s template resolves it, so `specs_path` reads
+`unset` and `specs_origin` `none` where `$SPECS_PATH` is unset or empty, as on a direct run with no
+specs tree, and `repos_path` always reads `unresolved`, since `/implement` resolves no `$REPOS_PATH`
+— so that member is never compared. On a resume, wherever this section reads the
+`## Run environment` section, `/implement` reads that key, off the file as its Phase 0 `peek`
+printed it; a key that is `null` is a file with no section; and wherever this section writes or
+rewrites that section — the record a file without one gets at that resume, or *Go on in the current
+environment* — `/implement` writes the key with `run-state.py set`, once its resume has taken the
+file over (`init --resume`), since until then the file is the earlier session's. In the
 `RESUME_ENVIRONMENT_CHANGED:` stop line, `<address>` is the file's `key`, left out on a direct run,
 and `<session file path>` the run-state file's path. `/implement` compares at point 1 alone.
 
