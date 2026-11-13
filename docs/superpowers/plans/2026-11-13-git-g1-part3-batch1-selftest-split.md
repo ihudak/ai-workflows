@@ -14,15 +14,16 @@
 
 ## Global Constraints
 
-- **The script's non-test code does not change**, beyond the loader, the `--group` argument and one usage line that Tasks 1 and 2 name. No subcommand's behaviour, output or exit status changes.
-- **Measured on this base:** `python3 plugins/workflows-core/scripts/specs-git.py --selftest` prints `specs-git selftest: PASS (1176 checks)` and takes about 3 minutes 12 seconds. Task 1 must print exactly that line. If the base has moved, re-derive the count on the new base before Task 1 and use that number wherever this plan says 1176.
+- **The script's non-test code does not change**, beyond what Tasks 1 and 2 name: the loader, the `--group` argument, the usage line and the `--selftest` help text, and the two imports and three constants that only the tests use, which move with them. No subcommand's behaviour, output or exit status changes.
+- **Measured on this base:** `python3 plugins/workflows-core/scripts/specs-git.py --selftest` prints `specs-git selftest: PASS (1176 checks)` and takes about 3 minutes 12 seconds. Task 1 must print exactly that line. The plan's reviewer measured about 99 seconds once the tests are out of the script, since each child process no longer compiles them; measure it again wherever a time is written down, and never copy either figure. If the base has moved, re-derive the count on the new base before Task 1 and use that number wherever this plan says 1176.
 - **Python 3, standard library only.**
-- **Every command runs in the worktree**, `/workspace/.worktrees/git-g1-p3-selftest`. Never `git checkout` or `git switch` in `/workspace/ai-workflows`. Never a bare `git stash`. Run `git branch --show-current` immediately before every commit; it must print `feat/git-g1-p3-selftest`.
+- **Every Bash call begins `cd /workspace/.worktrees/git-g1-p3-selftest &&`.** An agent's shell starts in `/workspace/ai-workflows`, whose `specs-git.py` is the unsplit one: run there, the selftest prints `PASS (1176 checks)` whatever the worktree holds. No shell variable survives from one Bash call to the next, so this plan names literal paths. Never `git checkout` or `git switch` in `/workspace/ai-workflows`. Never a bare `git stash`. Run `git branch --show-current` immediately before every commit; it must print `feat/git-g1-p3-selftest`.
 - **Never hard-wrap prose** in a markdown file this plan writes: one paragraph, one line.
 - **Sizes:** a rules file stays under 20,000 characters and `CLAUDE.md` under 36,000 (`LC_ALL=C.UTF-8 wc -m`). `.claude/rules/gates.md` is at 19,997 and `.claude/rules/workflows-core-git.md` at 19,960: write nothing into either.
 - **`plugins/workflows-core/reference-parts/` is generated** and is not touched.
 - **The release version is derived at release time** (Task 6), never taken from this plan.
 - **The verification record is written last**, after the final review's fix wave, and every number in it is re-derived on the tree it describes.
+- **Two departures from the design's §9, *Each batch*, both corrected there in the same pull request:** the check count is unchanged by the move (Task 1) and rises by the six checks Task 2 adds; and a coupling bullet is written only where `.claude/rules/plugin-updates-coupling.md`'s own test is met, which this release's is not.
 - **Commit messages** end with `Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>`, or the implementer's own model line where the implementer is another model.
 
 ## Review Focus
@@ -39,18 +40,20 @@
 
 **Files:**
 - Create: `scripts/selftests/specs_git_selftest.py`
-- Modify: `plugins/workflows-core/scripts/specs-git.py` (remove lines 5093–18101; add the loader near `main`; lines 5018–5019)
+- Modify: `plugins/workflows-core/scripts/specs-git.py` (remove lines 5093–18101; add the loader near `main`; lines 5018–5019; the help text at line 4954; the imports and constants step 3 names)
 
 **Interfaces:**
 - Produces: `SELFTEST_FILE` (module constant in the script) — `os.path.join(HERE, "..", "..", "..", "scripts", "selftests", "specs_git_selftest.py")`.
 - Produces: `_run_selftest() -> int` in the script. Task 2 changes it to `_run_selftest(groups)`.
 - Produces: `selftest() -> int`, defined by the test file once executed. Its body is unchanged in this task.
 
-- [ ] **Step 1: Record the baseline.** Run `python3 plugins/workflows-core/scripts/specs-git.py --selftest` and keep its last line. Expected: `specs-git selftest: PASS (1176 checks)`. Save the function's bytes for step 4: `sed -n '5093,18101p' plugins/workflows-core/scripts/specs-git.py > "$TMPDIR/selftest-before.py"`. Its first line must be `def selftest():` and its last `    return 0`.
+- [ ] **Step 1: Record the baseline.** Run `python3 plugins/workflows-core/scripts/specs-git.py --selftest` and keep its last line. Expected: `specs-git selftest: PASS (1176 checks)`. Save the function's bytes for step 4: `cd /workspace/.worktrees/git-g1-p3-selftest && sed -n '5093,18101p' plugins/workflows-core/scripts/specs-git.py > /tmp/g1p3-selftest-before.py`. Its first line must be `def selftest():` and its last `    return 0`.
 
-- [ ] **Step 2: Create the test file.** It holds a module docstring, one blank line, then the 13,009 lines saved in step 1, unchanged, then a final newline. The docstring says, in these words or closer ones: this is `specs-git.py`'s selftest; `specs-git.py --selftest` executes this file in that script's own namespace, so every name here that the file does not define is the script's; it is never imported, because the tests read and patch the script through `globals()` and read its source through `__file__`; it lives outside the plugin so that it is not shipped to users.
+- [ ] **Step 2: Create the test file.** It holds a module docstring, then the names of step 3 that only the tests use, then the 13,009 lines saved in step 1, unchanged, then a final newline. The docstring says, in these words or closer ones: this is `specs-git.py`'s selftest; `specs-git.py --selftest` executes this file in that script's own namespace, so every name here that the file does not define is the script's; it is never imported, because the tests read and patch the script through `globals()` and read its source through `__file__`; it lives outside the plugin so that it is not shipped to users.
 
-- [ ] **Step 3: Replace the function in the script with the loader.** Delete lines 5093–18101. In their place write `_run_selftest`, and change line 5019's `return selftest()` to `return _run_selftest()`. Add `SELFTEST_FILE` beside the script's other path constants (line 93).
+- [ ] **Step 3: Replace the function in the script with the loader.** Delete lines 5093–18101. In their place write `_run_selftest`, and change line 5019's `return selftest()` to `return _run_selftest()`. Add `SELFTEST_FILE` after `HERE` (line 92). Change the `--selftest` help text at line 4954 to `run the selftest, which the repository keeps under scripts/selftests, and exit`.
+
+  **Move what only the tests use** (the design's "and everything only it uses"). Once the function is out, the script's own code no longer uses `import contextlib`, `import tempfile`, or the constants `SPECS_REPO_GIT`, `ADDRESSING` and `SESSION_HYGIENE` (lines 93–95). Confirm each with `grep -n` on the script after the deletion: a name with a remaining use stays where it is. Move the others to the head of the test file, above `def selftest():`, unchanged. They are executed into the script's namespace, so the tests still find them, and no later clean-up of unused names in the script can break the selftest.
 
 ```python
 def _run_selftest():
@@ -72,11 +75,11 @@ def _run_selftest():
 - [ ] **Step 4: Verify the move.** All three must hold.
 
 ```bash
-python3 plugins/workflows-core/scripts/specs-git.py --selftest | tail -1
+cd /workspace/.worktrees/git-g1-p3-selftest && python3 plugins/workflows-core/scripts/specs-git.py --selftest | tail -1
 # Expected: specs-git selftest: PASS (1176 checks)
-tail -n +"$(grep -n '^def selftest():' scripts/selftests/specs_git_selftest.py | cut -d: -f1)" scripts/selftests/specs_git_selftest.py | cmp - "$TMPDIR/selftest-before.py" && echo IDENTICAL
+cd /workspace/.worktrees/git-g1-p3-selftest && tail -n +"$(grep -n '^def selftest():' scripts/selftests/specs_git_selftest.py | cut -d: -f1)" scripts/selftests/specs_git_selftest.py | cmp - /tmp/g1p3-selftest-before.py && echo IDENTICAL
 # Expected: IDENTICAL
-grep -c '^def selftest' plugins/workflows-core/scripts/specs-git.py
+cd /workspace/.worktrees/git-g1-p3-selftest && grep -c '^def selftest' plugins/workflows-core/scripts/specs-git.py
 # Expected: 0
 ```
 
@@ -87,8 +90,7 @@ grep -c '^def selftest' plugins/workflows-core/scripts/specs-git.py
 ```bash
 (cd / && python3 /workspace/.worktrees/git-g1-p3-selftest/plugins/workflows-core/scripts/specs-git.py --selftest | tail -1)
 # Expected: specs-git selftest: PASS (1176 checks)
-d="$(mktemp -d)"; mkdir -p "$d/plugins/workflows-core"; cp -r plugins/workflows-core/scripts "$d/plugins/workflows-core/"
-python3 "$d/plugins/workflows-core/scripts/specs-git.py" --selftest; echo "rc=$?"
+cd /workspace/.worktrees/git-g1-p3-selftest && d="$(mktemp -d)" && mkdir -p "$d/plugins/workflows-core" && cp -r plugins/workflows-core/scripts "$d/plugins/workflows-core/" && { python3 "$d/plugins/workflows-core/scripts/specs-git.py" --selftest; echo "rc=$?"; }
 # Expected: one line on stderr beginning "specs-git: not run (the selftest is not shipped with the plugin", then rc=2
 ```
 
@@ -148,18 +150,18 @@ def scenarios_selftest(tmp):
 
 `parsed()` sets `_stdout` only where stdout is not JSON, which a selftest's output never is; where the helper's keys differ from this sketch, use the helper as it is and keep the six check labels and what each asserts.
 
-- [ ] **Step 2: Run it to see it fail.** Call `scenarios_selftest(tmp)` last in `scenarios()`, then run `python3 plugins/workflows-core/scripts/specs-git.py --selftest | head -8`. Expected: `specs-git selftest: FAIL`, with `s_group_alone`, `s_group_order`, `s_group_unknown` and `s_group_without_selftest` among the failures. `s_selftest_not_shipped` and `s_ci_runs_all` already pass on Task 1's code; say so in the report.
+- [ ] **Step 2: Run it to see it fail.** Call `scenarios_selftest(tmp)` last in `scenarios()`, then run `cd /workspace/.worktrees/git-g1-p3-selftest && python3 plugins/workflows-core/scripts/specs-git.py --selftest | head -8`. Expected: `specs-git selftest: FAIL`, with `s_group_alone`, `s_group_order`, `s_group_unknown` and `s_group_without_selftest` among the failures. `s_selftest_not_shipped` and `s_ci_runs_all` already pass on Task 1's code; say so in the report.
 
 - [ ] **Step 3: Implement group selection in the test file.** `selftest(groups=None)`. Replace the body of `scenarios()` with a loop over one ordered table of `(name, function)` pairs, the sixteen above, run where `groups is None or name in groups`. Before running anything, where `groups` holds a name the table lacks, print `specs-git: not run (usage: --group takes one of: <ALL>)` on stderr and return 2. The last lines print the partial forms of the Interfaces block where `groups` is not `None`. A full run's two lines are unchanged.
 
 - [ ] **Step 4: Implement the argument in the script.** `ap.add_argument("--group", action="append", metavar="NAME", help="with --selftest: run only this group; repeatable")` beside `--selftest` (line 4954). In `main`, before the `a.selftest` test: where `a.group` is set and `a.selftest` is not, `ap.error("--group needs --selftest")`. `_run_selftest(groups)` passes `a.group` through to `selftest(groups)`. Change the docstring's line 28 to `  specs-git.py --selftest [--group <name>]...`.
 
-- [ ] **Step 5: Run the whole selftest.** `python3 plugins/workflows-core/scripts/specs-git.py --selftest | tail -1`. Expected: `specs-git selftest: PASS (1182 checks)`, the 1176 of Task 1 and the six new ones.
+- [ ] **Step 5: Run the whole selftest.** `cd /workspace/.worktrees/git-g1-p3-selftest && python3 plugins/workflows-core/scripts/specs-git.py --selftest | tail -1`. Expected: `specs-git selftest: PASS (1182 checks)`, the 1176 of Task 1 and the six new ones.
 
 - [ ] **Step 6: Run each group alone (Review Focus 4).**
 
 ```bash
-total=0
+cd /workspace/.worktrees/git-g1-p3-selftest && total=0
 for g in status branch_merged branch_key push_scope owner_repo mode state lines gate end land replay start midrun skill selftest; do
   line="$(python3 plugins/workflows-core/scripts/specs-git.py --selftest --group "$g" | tail -1)"
   echo "$g: $line"
@@ -167,7 +169,7 @@ for g in status branch_merged branch_key push_scope owner_repo mode state lines 
   total=$((total + ${n:-0}))
 done
 echo "sum=$total"
-# Expected: sixteen PASS lines, each naming its own group, and sum=1182
+# Expected: sixteen PASS lines, each naming its own group, and sum=1182 (the plan's reviewer got: status 11, branch_merged 12, branch_key 13, push_scope 11, owner_repo 16, mode 86, state 70, lines 105, gate 57, end 211, land 124, replay 106, start 172, midrun 135, skill 47, selftest 6)
 ```
 
 Put the sixteen lines and the time each took in the task report. A group that fails alone leans on an earlier group's leftovers: make it build what it needs through a helper the two share, never by reordering the table and never by having `--group` run a second group. If the fix is not a few lines, stop and report.
@@ -190,26 +192,28 @@ git commit -m "feat(specs-git): --selftest --group runs one group of the selftes
 
 **Interfaces:**
 - Consumes: `specs-git.py --selftest --group <name>` and its output lines, from Task 2.
-- Produces: `python3 scripts/selftests/mutants.py [--only <id>]... [--list]`.
+- Produces: `python3 scripts/selftests/mutants.py [--only <id>]... [--list] [--file <mutants file>]`; `--file` defaults to `scripts/selftests/specs-git-mutants.json`.
 - Produces: the mutants file, a JSON list of objects with exactly these keys: `id` (unique), `group` (one of Task 2's sixteen names), `file` (a path under `plugins/workflows-core/scripts/`, relative to the repository root), `old` and `new` (each one line of text, with no newline), and `fails` (the label of the check it must fail, up to and including its colon, such as `e_land_refused:`).
 
 **What the runner does:**
 
-1. It copies `plugins/workflows-core/`, `scripts/selftests/` and `.github/workflows/validate-catalog.yml` into a new temporary directory, at the same relative paths. Everything it then writes or runs is in that copy. **It never writes under the repository.**
-2. For each group that a selected mutant names, it runs the group once in the unchanged copy. Where that run does not end in a PASS line, it prints `BASELINE RED <group>` and counts every mutant of the group as not killed.
-3. For each selected mutant, it counts `old` in the copy of `file`. Where the count is not exactly 1, it prints `STALE <id>: old text found <n> times in <file>`. Otherwise it replaces `old` with `new`, runs the mutant's group, and restores the file.
-4. A mutant is **killed** where the run exits 1 and an output line, stripped, starts with `fails`: it prints `killed <id>: <that line, cut at 160 characters>`. Otherwise it prints `SURVIVED <id>`.
-5. Where a group's baseline is red in the copy and green in the repository, the copy lacks a file that group reads: add that path to what step 1 copies, and say so in the task report.
-6. Its last line is `mutants: <k> killed, <s> survived, <t> stale, of <n>`. It exits 0 only where every selected mutant was killed; a malformed mutants file, or an `--only` id the file lacks, is one line on stderr and exit 2.
+1. It copies `plugins/workflows-core/`, `scripts/selftests/` and `.github/workflows/validate-catalog.yml` into a new temporary directory, at the same relative paths, leaving out every `__pycache__` directory. Everything it then writes or runs is in that copy. **It never writes under the repository.**
+2. **Every run is `python3 -B`, with `PYTHONDONTWRITEBYTECODE=1` in its environment.** The script loads its three sibling modules through `importlib`, whose cached bytecode is keyed on the source's size and its modification time in whole seconds. A mutant of the same length as the text it replaces, applied and restored within one second, would otherwise stay in force after the file is restored, and every later run in the copy would carry it. The plan's reviewer reproduced this.
+3. For each group that a selected mutant names, it runs the group once in the unchanged copy and keeps how long that took. Where that run does not end in a PASS line, it prints `BASELINE RED <group>` and counts every mutant of the group as on a red baseline.
+4. For each selected mutant, it counts `old` in the copy of `file`. Where the count is not exactly 1, it prints `STALE <id>: old text found <n> times in <file>`. Otherwise it replaces `old` with `new`, runs the mutant's group with a time limit of ten times the group's baseline and never under 60 seconds, and restores the file. A run stopped at the limit prints `TIMEOUT <id>`.
+5. A mutant is **killed** where the run exits 1 and an output line, stripped, starts with `fails`: it prints `killed <id> (<f> failure lines): <that line, cut at 160 characters>`, `<f>` being the number of failure lines the run printed, so a mutant that fails most of its group shows as one. Otherwise it prints `SURVIVED <id>`. **A case that crashes is not a kill**: the selftest's `case()` wrappers print `<name> crashed: …`, which does not start with `<name>:`, and the match is not to be widened to take it. A mutant should make its check fail, not make its case raise.
+6. Where a group's baseline is red in the copy and green in the repository, the copy lacks a file that group reads: add that path to what rule 1 copies, and say so in the task report. The plan's reviewer found the three paths enough for all sixteen groups.
+7. Its last line is `mutants: <k> killed, <s> survived, <t> stale, <o> timed out, <r> on a red baseline, of <n>`. It exits 0 only where every selected mutant was killed; a malformed mutants file, or an `--only` id the file lacks, is one line on stderr and exit 2.
 
-- [ ] **Step 1: Write the runner** to the six rules above. `--list` prints each mutant's `id`, `group` and `fails`, one per line, and runs nothing.
+- [ ] **Step 1: Write the runner** to the seven rules above. `--list` prints each mutant's `id`, `group` and `fails`, one per line, and runs nothing.
 
-- [ ] **Step 2: Prove it can tell a kill from a survival (Review Focus 5).** With a scratch mutants file passed in place of the real one (give the runner a `--file <path>` option for this, defaulting to `scripts/selftests/specs-git-mutants.json`), run three mutants against group `branch_key`:
-  - one that changes what `branch_key` computes, with `fails` naming a `branch_key` check it breaks. Expected: `killed`.
-  - one whose `new` only appends a comment to a line of the script. Expected: `SURVIVED`, exit 1.
+- [ ] **Step 2: Prove it can tell a kill from a survival (Review Focus 5).** With a scratch mutants file outside the repository, passed with `--file`, run four mutants:
+  - one that changes what `branch_key` computes, against group `branch_key`, with `fails` naming a check of that group it breaks. Expected: `killed`.
+  - one whose `new` only appends a comment to a line of the script, against `branch_key`. Expected: `SURVIVED`, exit 1.
   - one whose `old` is text the file does not hold. Expected: `STALE`, exit 1.
+  - one in `specs_git_state.py` whose `old` and `new` are the same length, such as `VERSION = 1` to `VERSION = 2`, against group `state`, followed in the same run by the comment-only mutant against `state`. Expected: the first `killed`, the second `SURVIVED`. This is rule 2's case: without it the second reads `killed` by the first one's leftover.
 
-  Put the three output lines in the task report. Then run `git status --short` in the worktree. Expected: only the two new files of this task.
+  Put the output lines in the task report. Then run `git status --short` in the worktree. Expected: only the two new files of this task.
 
 - [ ] **Step 3: Commit.**
 
@@ -225,7 +229,6 @@ git commit -m "test(specs-git): a runner for one-line mutants, on a copy of the 
 
 **Files:**
 - Modify: `scripts/selftests/specs-git-mutants.json`
-- Modify, only if step 2 needs it: `scripts/selftests/specs_git_selftest.py`
 
 **Interfaces:**
 - Consumes: the runner and the file format of Task 3.
@@ -233,19 +236,19 @@ git commit -m "test(specs-git): a runner for one-line mutants, on a copy of the 
 
 **Why they are written anew.** The earlier records list each mutant by the check it failed and do not hold its text (`docs/superpowers/verification/2026-11-10-stay2-midrun.md`, *Appendix: the mutants*: "applied in a scratch copy, run, and discarded"). So the design's "take each mutant from the appendix" can supply a target check, never the edit. This file is where the edits are kept from now on.
 
-- [ ] **Step 1: Write the eight mutants the STAY-2 record says are missing.** One each, its `id` and `fails` the check's own name: `e_land_refused`, `e_land_stopped`, `e_land_offline`, `e_land_no_origin`, `t_held_journal` (all in group `end`), and `t_midrun_keyed_other`, `e_midrun_here_kill`, `e_midrun_here_no_resume` (group `midrun`). Each changes one line of non-test code that the check exercises, such as a condition inverted or a call dropped, and is not a line whose change fails most of its group.
+- [ ] **Step 1: Write the eight mutants the STAY-2 record says are missing.** One each, its `id` the check's own name: `e_land_refused`, `e_land_stopped`, `e_land_offline`, `e_land_no_origin`, `t_held_journal` (all in group `end`), and `t_midrun_keyed_other`, `e_midrun_here_kill`, `e_midrun_here_no_resume` (group `midrun`). `fails` is that name and a colon, which no longer-named neighbour's line starts with, save for `t_midrun_keyed_other` (step 2). Each changes one line of non-test code that the check exercises, such as a condition inverted, and makes the check fail, not its case raise. None is a line whose change fails most of its group: the runner's `(<f> failure lines)` shows it, against the group's size in Task 2 step 6.
 
-- [ ] **Step 2: `t_midrun_keyed_other` must fail on its own case.** It runs the body of `t_midrun_keyless` with `/create-ard` and `--key ACME-2` (test file, the `case("t_midrun_keyed_other", …)` line). Its mutant must fail that case while `t_midrun_keyless` itself passes: a change on the path only a keyed run takes. Where the shared body's check lines do not carry the case's name, first make them carry it, so the runner can tell the two apart. That edit changes no check's count: run the whole selftest after it and expect `PASS (1182 checks)`.
+- [ ] **Step 2: `t_midrun_keyed_other` must fail on its own case.** It runs the body of `t_midrun_keyless` with `/create-ard` and `--key ACME-2` (the `case("t_midrun_keyed_other", …)` line of the test file). That body labels its checks with the name it is passed, `t-midrun-keyed-other`, with hyphens, so this mutant's `fails` is `t-midrun-keyed-other:`. It must fail that case while the keyless case passes: a change on the path only a keyed run takes. Run `--selftest --group midrun` in a scratch copy with the mutant applied and put its failure lines in the task report; none may start `t-midrun-keyless:`. No edit of the test file is needed for this.
 
 - [ ] **Step 3: Write one mutant for each of the other fourteen groups:** `status`, `branch_merged`, `branch_key`, `push_scope`, `owner_repo`, `mode`, `state`, `lines`, `gate`, `land`, `replay`, `start`, `skill` and `selftest`. Choose any check of the group as the target; `id` is `<group>_<the check's name>`. The `selftest` group's mutant is in `_run_selftest` or the `--group` handling.
 
-- [ ] **Step 4: Run them all.** `python3 scripts/selftests/mutants.py`. Expected last line: `mutants: 22 killed, 0 survived, 0 stale, of 22`, exit 0. Put the full output in the task report. Then `git status --short`: only the mutants file, and the test file if step 2 edited it.
+- [ ] **Step 4: Run them all.** `python3 scripts/selftests/mutants.py`. Expected last line: `mutants: 22 killed, 0 survived, 0 stale, 0 timed out, 0 on a red baseline, of 22`, exit 0. Put the full output in the task report. Then `git status --short`: only the mutants file.
 
 - [ ] **Step 5: Commit.**
 
 ```bash
 git branch --show-current
-git add scripts/selftests/specs-git-mutants.json scripts/selftests/specs_git_selftest.py
+git add scripts/selftests/specs-git-mutants.json
 git commit -m "test(specs-git): a mutant for every selftest group and for the eight checks that had none"
 ```
 
@@ -268,12 +271,14 @@ git commit -m "test(specs-git): a mutant for every selftest group and for the ei
   - that an installed plugin holds no selftest, and what `--selftest` prints there;
   - `--group`, the sixteen names by a command that prints them rather than a count, and that a run with `--group` prints `partial:` and is never evidence that the selftest passes;
   - the mutants file and the runner: what a mutant is, the three outcomes besides `killed`, that the runner works on a copy, and that CI does not run it, since it takes minutes;
-  - **what none of this can see:** a check that asserts too little is caught only where a mutant was written for it, and 22 mutants cover 22 checks;
+  - **what none of this can see:** a check that asserts too little is caught only where a mutant was written for it; `python3 scripts/selftests/mutants.py --list` prints which checks have one, and no count is written in the rules file;
+  - **which rules load with the tests:** reading a file under `scripts/selftests/` loads the `gates*.md` rules and not the specs-repo git rules, which loaded with the tests while they were in the script. Tell the reader to Read `plugins/workflows-core/scripts/specs-git.py` before editing a test, which loads `.claude/rules/workflows-core-git.md` and its companions;
+  - how long a full run and each group take, measured, with the command that measures them;
   - a `why` link to the rationale section of step 3.
 
-- [ ] **Step 2: Add the row to `CLAUDE.md`'s table.** `specs-git-selftest.md`, its two paths in the table's abbreviated form, and "where `specs-git.py`'s selftest lives, how it runs, group runs, the mutants". Then `LC_ALL=C.UTF-8 wc -m CLAUDE.md`. Expected: under 36,000.
+- [ ] **Step 2: Add the row to `CLAUDE.md`'s table.** `specs-git-selftest.md`, its two paths in the table's abbreviated form, the first marked `(repo root)` as `gates.md`'s row marks its own, and "where `specs-git.py`'s selftest lives, how it runs, group runs, the mutants". Then `LC_ALL=C.UTF-8 wc -m CLAUDE.md`. Expected: under 36,000.
 
-- [ ] **Step 3: Write the rationale section**, headed so its anchor is `specs-git-selftest`. It holds the evidence: the script was 18,105 lines of which 13,009 were the test function; the three-minute run; that the 410 mutants of the STAY-2 batch were discarded with their workspace and survive only as the names of the checks they failed; and why outside the plugin (the size of the file, re-measured with `wc -c`, shipped to every user for a command no user runs).
+- [ ] **Step 3: Write the rationale section**, headed so its anchor is `specs-git-selftest`. It holds the evidence: the script was 18,105 lines of which 13,009 were the test function; the run's time before and after the move, both measured; that the 410 mutants of the STAY-2 batch were discarded with their workspace and survive only as the names of the checks they failed; and why outside the plugin (the size of the file, re-measured with `wc -c`, shipped to every user for a command no user runs).
 
 - [ ] **Step 4: Update the CI comment.** Add to the comment above the step that the tests are in `scripts/selftests/specs_git_selftest.py`, which the script executes, and that the step runs every group. Leave the `run:` line as it is: `s_ci_runs_all` reads it.
 
@@ -311,9 +316,11 @@ git commit -m "docs: where specs-git.py's selftest lives, how it runs, and why"
 
 - [ ] **Step 3: Run the gate chain** as one `&&` chain, in the order of `.github/workflows/validate-catalog.yml`'s `run:` steps, and read the chain's own exit status. Expected: 0. The mermaid gate needs `npm ci` in `scripts/mermaid/` first.
 
-- [ ] **Step 4: Write the verification record, last.** After the final review and its fixes. It holds, each re-derived on the final tree: the check count before and after, with the six added checks named; the byte comparison of Task 1 step 4; Task 1 step 5's reading of the three source-reading checks; the sixteen single-group lines, their times and their sum; the runner's three proof lines of Task 3; the full output of the 22 mutants; the script's size before and after (`wc -l`, `wc -c`); the gate chain's exit status; the reviews and what each found; and what was not examined.
+- [ ] **Step 4: Write the verification record, last.** After the final review and its fixes. It holds, each re-derived on the final tree: the check count at the base, at Task 1's commit (unchanged) and at the end, with the six added checks named; the byte comparison of Task 1 step 4; Task 1 step 5's reading of the three source-reading checks; the sixteen single-group lines, their times and their sum; the runner's three proof lines of Task 3; the full output of the 22 mutants; the script's size before and after (`wc -l`, `wc -c`); the gate chain's exit status; the reviews and what each found; and what was not examined.
 
-- [ ] **Step 5: Commit, push, open the pull request.**
+- [ ] **Step 5: The rulings and the ledger (the controller's step).** Before the execution workspace is removed, the controller commits a summary of the rulings it made during execution and the ledger, verbatim, to `docs/superpowers/verification/`, beside the record.
+
+- [ ] **Step 6: Commit, push, open the pull request.**
 
 ```bash
 git branch --show-current
