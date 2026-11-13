@@ -87,7 +87,7 @@ These facts are exact. Task 1 implements them, and every later task relies on th
 
 **The durable directory and the tombstone**
 - Plain `init` empties the durable directory.
-- `init --recover` keeps the directory and `durable`.
+- `init --recover` keeps the directory's files; its `durable` map starts empty, since the file it replaces was missing or unparseable (the last bullet below).
 - `remove` deletes the directory even where the file is absent, under the lock. It skips any path inside the directory silently, since the directory goes whole. A `--keep` path inside the directory is first moved out, to `$(git rev-parse --git-path dev-workflows)/implement-run.kept-<basename>`, and printed `kept: <new path>`.
 - **The tombstone.**
   - When `remove` deletes an existing file, it leaves a tombstone, `$(git rev-parse --git-path dev-workflows/implement-run.done)`, holding `{"session", "at"}`: the removed file's own `session`, or the caller's where the file holds none. A `remove` that finds no file writes none.
