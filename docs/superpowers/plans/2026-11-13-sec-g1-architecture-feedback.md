@@ -34,6 +34,8 @@
   - `.claude/rules/workflows-core.md`: IMP-G3 edits the `run-flags.md` paragraph; SEC-G1 edits the *Plugin facts* paragraph.
   - `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md`: IMP-G3 edits row F; SEC-G1 edits row E and D2.
   - `docs/superpowers/reviews/2026-10-26-feature-gaps-review.md`: each marks its own row and heading.
+  - `plugins/dev-workflows/docs/reference/environment.md`: IMP-G3 edits its opening sentence; SEC-G1 edits its `--no-arch` sentence (S36).
+  - `plugins/workflows-core/docs/reference/environment.md`: IMP-G3 edits its run-flags text; SEC-G1 edits its `--no-arch` resolution sentence (S36).
   - The release files: both bump `workflows-core` and `dev-workflows` (`plugin.json`, `.claude-plugin/marketplace.json`, `CHANGELOG.md`), and each adds a bullet to `.claude/rules/plugin-updates-coupling.md`, which may move bullets to a history file and change `plugin-updates.md` and `CLAUDE.md`.
 
   SEC-G1 does not edit `implement.md`, `run-state.py`, `model-routing/classification` or `run-flags`. Where IMP-G3 lands first, `git merge origin/main` into this branch (never rebase), keep both sides in every overlap file, and re-derive versions and sizes (Task 8).
@@ -73,14 +75,15 @@ weakness-classes.py --selftest
 
 **Exits.**
 - `0`: it ran. Exactly one JSON object goes to stdout (`json.dumps(…, indent=2)`).
-- `2`: it could not run. One stderr line, `weakness-classes: not run (<why>)`, and nothing on stdout. Causes:
-  - a usage error, or a flag value that fails its check;
+- `2`: it could not run. One stderr line, `weakness-classes: not run (<why>)`, and nothing on stdout. Each cause has its own fixed `<why>`, which names the flag and never echoes a register or record value:
+  - a usage error, or a flag value that fails its check (argparse's error is overridden to print this one line);
   - `--specs` is not a directory;
   - a `--component` whose slug is not among the `--repo` values;
-  - for `across`: `--specs` is not a git work tree, or `--ref` does not resolve to a commit.
+  - for `across`: `--specs` is not a git work tree, or `--ref` does not resolve to a commit;
+  - **any other exception:** `main` catches it and prints exactly `weakness-classes: not run (internal error)`, never the exception's text or a traceback (review I2).
 - `--selftest`: `0` when every case passes, `1` otherwise.
 
-No register state, team record or finding ever causes exit 2.
+No register state, team record or finding ever causes exit 2 by itself.
 
 **Validators** (design §8; at least as strict as `register.py`'s):
 
@@ -88,7 +91,7 @@ No register state, team record or finding ever causes exit 2.
 |---|---|---|
 | slug (`--repo`; a directory name in `across`) | `^[A-Za-z0-9._-]+\Z`, not `.` or `..` | exit 2; in `across`, the directory is not a register |
 | `--prd-key` | `^[A-Z][A-Z0-9_]*(-[0-9]+)+\Z` | exit 2 |
-| `--component` | `<slug>` or `<slug>:<path>`; `<path>` passes the path check, with no leading `./` and no trailing `/` | exit 2 |
+| `--component` | `<slug>` or `<slug>:<path>`; the slug must be among `--repo`; `<path>` passes the path check, with no leading `./` and no trailing `/` | an unnamed slug is exit 2; a failing `<path>` is ignored for `in_component` (R6) |
 | `--today` | a real `YYYY-MM-DD` | exit 2 |
 | `--origin` | compared exactly with the `origin` values the register holds | an unknown one is ignored |
 | `cwe` | `^CWE-[0-9]{1,6}\Z`. The **class key is `CWE-<int(digits)>`**, so `CWE-089` is `CWE-89`. Digits equal to 0 fail | the finding is counted in `unclassified` and joins no class |
@@ -104,7 +107,7 @@ No register state, team record or finding ever causes exit 2.
 | the record's `status` | a scalar | skipped |
 | the record's `source` | the path check | skipped |
 | the record's `promotion` | absent, or one of `proposed`, `accepted`, `rejected`, `declined`, `covered` | skipped |
-| the record's `promoted_to` | absent, or `^[A-Za-z0-9._-]{1,128}\Z`, not `.` or `..` | skipped |
+| the record's `promoted_to` | absent, or `promotion-signals.py`'s `PROMOTED_TO_RE` shape, `^[A-Za-z0-9][A-Za-z0-9._-]{0,99}\Z` | skipped |
 | the record's `components` | a flow list `json.loads` reads as a list of strings | skipped |
 | the record's `**Prevents:**` paragraph | present | skipped |
 
@@ -114,7 +117,7 @@ No register state, team record or finding ever causes exit 2.
 
 **What it reads.**
 - `classes` reads the working tree:
-  - `<specs>/security/<slug>/register.json`, and nothing else under `security/`;
+  - `<specs>/security/<slug>/register.json`, and nothing else under `security/`. A slug resolves only by an exact match against `os.listdir(<specs>/security)`, never by opening the path directly, so a case-insensitive file system never maps `api` to `API/`;
   - the frontmatter and `**Prevents:**` paragraph of `<specs>/architecture/decisions/*.md`.
 - `across` reads the same two kinds of file **at `<ref>`**, through `git ls-tree` and `git show` (or `git cat-file`), with `GIT_TERMINAL_PROMPT=0` and `GIT_OPTIONAL_LOCKS=0`. It never checks anything out.
 - **A team record** is parsed as design §3.3 says:
@@ -140,7 +143,7 @@ No register state, team record or finding ever causes exit 2.
 - **Recurs** (`classes`): `accepting_runs` — the distinct accepting-run pairs among the class's `accepted-risk` findings — is ≥ 2.
 - **Prevents.** A record prevents a class where:
   - its `status` is `accepted`; and
-  - its Prevents paragraph holds the class key as a whole token: not preceded by `[A-Za-z0-9_-]`, and not followed by `[A-Za-z0-9_]`. So `[CWE-89](…)` matches, while `CWE-890` and `XCWE-89` do not.
+  - its Prevents paragraph names the class as a whole token, `CWE-0*<int>`: not preceded by `[A-Za-z0-9_-]`, and not followed by `[A-Za-z0-9_]`. So `[CWE-89](…)` and `CWE-089` match class `CWE-89`, while `CWE-890` and `XCWE-89` do not (review I4).
 
   In `classes`, one of the record's `components` must also have the register's slug: the id itself, or its part before the first `:`.
 
@@ -164,7 +167,7 @@ No register state, team record or finding ever causes exit 2.
   - `repo`, `cwe`, `cwe_url`;
   - `live`, `accepted`, `accepting_runs`, `awaiting_review` (live `accepted-risk` with `confirmed: false`), `review_due` (`accepted-risk` whose `review_by` is before `--today`) and `fixed_recent`;
   - `top_severity`, `in_component`, `recurs`;
-  - `decided`, a key present only when `--origin` was given;
+  - `decided` and `decided_ids`, keys present only when `--origin` was given. `decided_ids` lists the `id` of each finding of the class whose origin was passed, as validated ints, ascending. Phase 5 maps its rows by these `[SEC#n]`, never by CWE (review I4);
   - `prevented_by: [{id, source, promotion, promoted_to}]`;
   - `findings: [{id, status, severity, path, line, review_by, confirmed}]`;
   - `pa_line` and `pa_next_step`.
@@ -194,6 +197,7 @@ No register state, team record or finding ever causes exit 2.
 `plugins/workflows-core/skills/weakness-classes/SKILL.md`:
 - **Frontmatter:** `name: weakness-classes`, a `description` of at most 600 characters, `user-invocable: false`, `allowed-tools: Bash`.
 - **Argument:** the verb and its flags, as the caller wrote them, each value single-quoted. The skill adds `--specs`.
+- **The argument rule (review I1).** An origin is scanner-written text (`register.py` checks only that its plugin ID holds a `:`). So the skill never puts on the command line a value holding any character outside `[A-Za-z0-9._:/@+=-]`. Where one fails, it runs nothing, prints `weakness-classes: not run (an argument holds a character the skill does not pass)` and no path.
 - **The call:** one Bash call:
   ```
   out=$(TMPDIR="<scratchpad>" command mktemp -t dw-weakness-classes-XXXXXX.json) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/weakness-classes.py" <verb> --specs "${SPECS_PATH-}" <flags> > "$out"
@@ -201,7 +205,7 @@ No register state, team record or finding ever causes exit 2.
   - Drop the `TMPDIR` assignment where the session names no scratchpad that exists (`workflows-core:run-flags` §7, stated in the skill itself). Write `TMPDIR` without a `$`, so `check-docs` check 5 does not read it as a variable the plugin reads.
   - Where the run took `$SPECS_PATH` from an answer rather than the environment, open the call with `export SPECS_PATH='<the value>';`, as `specs-git` does.
 - **On exit 0:** print the file's absolute path as the skill's last line. The file is never edited and, like the promotion signals file, never removed.
-- **On exit 2:** remove the empty file, and print the script's stderr line. That line is "the skill's error" in every caller's report line. Print no path.
+- **On any non-zero exit:** remove the file. Print the script's stderr line only where it starts `weakness-classes: not run (`; otherwise print `weakness-classes: not run (the script exited <code>)`. Never print any other stderr text. That one line is "the skill's error" in every caller's report line. Print no path.
 - **The caller:**
   - hands the path to its agent, or reads the JSON's fields itself;
   - never opens a register;
@@ -224,7 +228,7 @@ security registers: OFF (<specs>/security is not readable)
 ```
 
 **The consumer's call.**
-- **When:** only where `security_registers: ON` and the component set is not empty. Make it at the point where `stack_facts` is built:
+- **When:** only where `security_registers: ON` and the component set is not empty, whether or not a root is ON. Make it once the scan's last batch has returned — in `/create-ard`, after Phase 3 step 4's scan; in `/specify` and `/design`, where Phase 4's paragraph waits for it — the point where `stack_facts` is built (review M2):
   `Skill(skill: "workflows-core:weakness-classes", args: "classes --repo '<slug>' … --component '<id>' …")`
 - **Arguments:** one `--component` for every component id the grounder gets, bare slugs included. One `--repo` for each distinct slug: an id up to its first `:`, or the whole id where it has none (`workflows-core:components` §1).
 - **Dispatch condition:** `arch_grounding: ON`, or `team_grounding: ON`, or a non-empty `classes`.
@@ -267,7 +271,7 @@ security registers: OFF (<specs>/security is not readable)
   ```
   - The first line is a candidate's reason.
   - The second is a *Reported only* line.
-  - The third is the count line (ruling R11), printed where either count is ≥ 1.
+  - The third is the count line (ruling R11), printed where either count is ≥ 1. A class both covered and prevented counts once, as covered (review M4).
 
 ### Gates
 
@@ -340,6 +344,10 @@ The "before" column was measured on `55ccb0f1`.
 | S30 | `no candidate and no superseding entry` / ``neither root is readable, or `signals` is not the JSON described`` | 1 / 1 | 7 | 0 / 0 |
 | S31 | ``No record with `candidate: true` and no artifact with friction`` | 1 | 7 | 0 |
 | S32 | `` `architecture-grounder` never writes, fetches, pulls or switches the architecture repository `` | 1 | 4 | 1, plus "never opens a file under the specs repository's `security/`" |
+| S33 | `Where it resolved OFF, dispatch nothing` | 8 | 5 | 5. The three that close the architecture dispatch paragraphs (`create-ard.md` Phase 3 step 6, `specify.md` and `design.md` Phase 4) are reworded: they contradict the widened trigger, where both roots are OFF and classes exist. The five docs-grounding twins stay, and are recorded by file and line as the five left (`create-ard.md`'s step 5, `create-prd.md`, `idea.md`, `specify.md`'s docs paragraph, `update-prd.md`) (review I3a) |
+| S34 | `builds them from structured fields only` / `follow-ups written to <target>` | 1 / 3 | 6 | 0 / 2. In `scan.md`'s Invariants, "`register.py commit` builds them" becomes false for the PA line and sentence, so it is reworded. 7.6's output names two targets now, so its `N follow-ups written to <target>` is reworded; `/conformance`'s and `/ready`'s stay (review I3b) |
+| S35 | `turns both off` / `turns off both architecture roots` / `Disable both per run with` | 2 / 1 / 1 | 4, 5 | 0 / 0 / 0. These are `architecture-grounding.md` `:39` (Task 4), `product-workflows/docs/workflow.md:190` (Task 5), core `grounding.md:37` (Task 4) and the repository-root `README.md:102` (Task 5). Each names the security registers as the flag's third source (review I3c) |
+| S36 | `turns off architecture grounding for the run` / `` `--no-arch` turns it off for a run `` / `forces architecture grounding off` | 1 / 2 / 1 | 4, 5 | 0 / 0 / 0. These are `design.md:26` (Task 5), the `dev-workflows` and `product-workflows` `environment.md` pages (Task 5) and the `workflows-core` `environment.md` page (Task 4). Then every remaining `--no-arch` hit (38 before) is dispositioned. The usage, synopsis and flag-strip lines stay; any other description of what the flag turns off names the registers. Core `grounding.md`'s *At a glance* table gains a *Security registers* row, with `--no-arch` as its off switch (Task 4) |
 
 Design §10 items 13–16, which have no phrase row:
 - Item 13 is S14.
@@ -351,25 +359,29 @@ Design §10 items 13–16, which have no phrase row:
 
 - **R1:** `[0-9]` in place of `\d`. This is identical under `re.ASCII`, and it is the repository's executed-regex rule.
 - **R2:** the CWE class key is canonical: `CWE-089` is `CWE-89`, and `CWE-0` is unclassified. A link to `…/089.html` would be broken, and two keys for one weakness would split its count.
-- **R3:** checks on the printed team-record fields that §8's table omits: `source`, `promotion` and `promoted_to`, and the id taken as the file stem. Design §8 says a field that fails its check is never echoed, and these fields are printed.
+- **R3:** checks on the printed team-record fields that §8's table omits: `source`, `promotion`, `promoted_to` (in `promotion-signals.py`'s stricter `PROMOTED_TO_RE` shape, by the review's ruling), and the id taken as the file stem. Design §8 says a field that fails its check is never echoed, and these fields are printed.
 - **R4:** an `accepted-risk` finding with no readable accepting entry, or a `fixed` one with no readable last entry, is dropped. The rule cannot be applied to it, and `register.py` always writes those entries.
 - **R5:** exit 2 covers every case where the script could not run: usage errors, `--specs` not a directory, and `across` with no repository or no such ref. Design §3.1 knows only exit 0 and 2.
-- **R6:** every component id is passed as `--component`, bare slugs included, and a component of an unnamed slug is exit 2. This makes `in_component` mean "inside the work's components"; a caller that mis-derives a slug is a defect, not a silent miss.
+- **R6:** every component id is passed as `--component`, bare slugs included. A component of an unnamed slug is exit 2, since a caller that mis-derives a slug is a defect, not a silent miss. A component whose `<path>` fails the path check is ignored for `in_component` (the review's ruling). This makes `in_component` mean "inside the work's components".
 - **R7:** `across` prints `ref` as the sha it resolved to, which is deterministic, and orders its classes by register count, then `real`, then CWE.
 - **R8:** `pa_next_step`'s copy, which design §3.2 names but does not fix.
 - **R9:** the commands derive `--repo` from the component ids (exact, by `components` §1), and make no call for an empty set.
 - **R10:** the grounder takes the first `prevented_by` entry as `governing`. With `team_root` null it gives the id and source only. An unreadable `weakness_classes` file is `ERROR` only where no root is readable; otherwise the grounder raises no `known-weakness`.
 - **R11:** the Part 3 count line also counts uncovered classes whose preventing record is not a shortlist row, so no class is silently absent.
 - **R12:** *Not in this ARD* writes nothing into the ARD, and the final report names the class.
-- **R13:** `.claude/rules/product-workflows.md` stands at 19,989 characters, so its `## Invariants` section moves byte for byte to a new `.claude/rules/product-workflows-prd-flow.md` (Task 5). `dev-workflows.md` stands at 19,945 characters, so it takes a 28-character edit and no split, unless the measure at Task 5 says otherwise.
+- **R13:** `.claude/rules/product-workflows.md` stands at 19,989 characters, so its `## Invariants` section moves byte for byte to a new `.claude/rules/product-workflows-prd-flow.md` (Task 5). `dev-workflows.md` stands at 19,945 characters, so it takes a 28-character edit and no split, unless the measure at Task 5, or Task 8's after the merge, says otherwise. **The `/design` map line's asymmetry is deliberate** (review M6): it gains only the widened `when` clause and no `[weakness-classes …]` bracket, while the product lines gain both. The skill call is a step inside the grounder's dispatch, which the map draws as one bracket, and `dev-workflows.md` has no room for more.
 - **R14:** `.claude/rules/security-workflows.md`'s `paths:` gains the script, as `docs-grounding.md`'s does. The register invariants bind it, and `CLAUDE.md`'s table row follows.
-- **R15:** sites the design's §10 missed: S4's register page, S23, S24, S26, S29's page, `references.md`'s three entries, and the `agents.md` rows.
+- **R15:** sites the design's §10 missed: S4's register page, S23, S24, S26, S29's page, S33–S36 (the review's I3), `references.md`'s three entries, and the `agents.md` rows.
 - **R16:** two bullets sit outside the premise "grounding ON": `ard-format`'s CWE bullet binds every decision whose Prevents names a CWE, and `design-format`'s premise widens to "or `architecture-grounder` returned a `known-weakness` challenge".
 - **R17:** two pieces of the scan's wording are fixed here: its report line `- Weakness classes: …`, and Phase 5's row note `prevented by <id>[, <id>…]`.
+- **R18 (review I5):** the PA line's folder and `--prd-key` come from what Phase 0 step 4 already holds, never from a folder name read by pattern. The cases:
+  - an Epic-scoped run (resolved `kind` EPIC, two keys in the run key set): the resolved folder's parent folder, and the parent's key;
+  - a single-key run (resolved `kind` PRD): the resolved folder and its key;
+  - otherwise — a path run, or any other kind — no `--prd-key`, and the sentence goes to the report.
 
 ## Review Focus
 
-1. **A CWE written with leading zeros** (`CWE-089`) is the same class as `CWE-89`, and its URL ends `/89.html`. Lowercase `cwe-89` and `CWE-0` are unclassified. Test: Task 1, `case_cwe_canonical`.
+1. **A CWE written with leading zeros** (`CWE-089`) is the same class as `CWE-89`, and its URL ends `/89.html`. A record whose Prevents names `CWE-089` prevents class `CWE-89`. Lowercase `cwe-89` and `CWE-0` are unclassified. Test: Task 1, `case_cwe_canonical`.
 2. **A risk re-accepted at its review date in a later run** (Phase 5's review-due re-date, or a `sec` confirmation) is still one acceptance. accept → fix → accept is a new one. Test: Task 1, `case_redated_risk_is_one_acceptance`.
 3. **A Prevents paragraph wrapped over lines** prevents the class. One naming the CWE only inside a link's URL (`[SQL injection](https://cwe.mitre.org/data/definitions/89.html)`) does not. Test: Task 1, `case_prevents_wrapped_and_url_only`.
 4. **Directories under `security/` that are no register** are silent. Such a directory is a team's document folder, a name with a space, or one holding only `dev-workflows/` cost entries. A `--repo api` beside a `security/API/` is `absent`. Tests: Task 1, `case_non_register_dirs`; Task 2, `case_across_non_register_dirs`. Task 4's configure step counts only `register.json` holders.
@@ -384,7 +396,7 @@ Design §10 items 13–16, which have no phrase row:
 - Modify `plugins/workflows-core/references/security-register-format.md`:
   - the opening sentence `is the register's only writer and implements this file` (S2): `register.py` implements §1 to §5, and `scripts/weakness-classes.py` implements §7, each changing with its section in one commit;
   - §3's structured-fields list: the PA line's closed list (the CWE and its URL, the slug, the register path, the counts and the PRD key), built by `weakness-classes.py`;
-  - a new `## 7. Weakness classes`: the class, the tables of Global Constraints *The rule*, the validators, what is never printed, `classes`' output and PA fields, and design §3.3's staleness note (`register.json` may lag records on unmerged `session/*` branches; the output is advice, so a lag of one rebuild is acceptable). `across` comes in Task 2.
+  - a new `## 7. Weakness classes`: the class, the tables of Global Constraints *The rule*, the validators, what is never printed, the fixed `not run` lines (no exception text), `classes`' output, `decided_ids` and the PA fields, and design §3.3's staleness note (`register.json` may lag records on unmerged `session/*` branches; the output is advice, so a lag of one rebuild is acceptable). `across` comes in Task 2.
 - Modify `.github/workflows/validate-catalog.yml`: one step, `name: Self-test the weakness classes reader`, after "Self-test the security register". It carries a comment in that step's style, naming its silent failure modes: scan text reaching a question or a line, `CWE-890` taken for `CWE-89`, and one batch's acceptances counted as recurring. It runs `python3 plugins/workflows-core/scripts/weakness-classes.py --selftest`.
 
 **Interfaces — produces:**
@@ -399,7 +411,7 @@ Design §10 items 13–16, which have no phrase row:
 Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
 
 - [ ] **Step 1: The failing selftest.**
-  - **Harness:** `register.py`'s. Each `case_*(tmp)` runs in a `TemporaryDirectory` and prints `ok   <name>` or `FAIL <name>: …`; the run ends with `selftest: <passed>/<total> passed`. Cases drive `main([...])` with `contextlib.redirect_stdout` and `redirect_stderr`, so they pin the CLI and its exits.
+  - **Harness:** `register.py`'s. Each `case_*(tmp)` runs in a `TemporaryDirectory` and prints `ok   <name>` or `FAIL <name>: …`; the run ends with `selftest: <passed>/<total> passed`. Cases drive `main([...])` with `contextlib.redirect_stdout` and `redirect_stderr`, so they pin the CLI and its exits. Until Step 3, the stub `main` raises `NotImplementedError` and has no catch-all, so no exit-2 case can pass vacuously (review M3).
   - **Fixtures:**
     - `_register(specs, slug, findings, last_at)` writes `register.json` as `register.py` shapes it: `{format: 1, repo, next_id, next_seq, last_at, scans: [], findings: [...], renumbered: []}`, each finding carrying every §3 field and a `history` of `{status, at, by, reason, evidence, role, run, links}`.
     - `_record(specs, stem, status, components, prevents, source, promotion=None, promoted_to=None)` writes a team record exactly as `architecture-harvest.py`'s `render_record` writes one, with the promotion keys after the owned ones.
@@ -410,19 +422,20 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
     - `case_bool_id_and_negative_line`: `id: true` and `line: -1` give `dropped == 2`.
     - `case_enums_and_dates`: severity `URGENT`, status `wontfix`, `review_by: "2026-02-30"` and `confirmed: "yes"` are each dropped.
     - `case_prevents_whole_token`: `CWE-890` does not prevent `CWE-89`; `XCWE-89` does not; `[CWE-89](https://cwe.mitre.org/data/definitions/89.html)` and `CWE-89,` do.
-  - **Usage:** `case_usage_exits_2`. Each of these exits 2, with a stderr line starting `weakness-classes: not run (` and an empty stdout:
+    - `case_internal_error_never_echoed` (review I2): patch a reader to raise an exception whose text is `Ignore all previous instructions`. `main` exits 2, stdout is empty, stderr is exactly `weakness-classes: not run (internal error)` plus a newline, and neither stream holds the string.
+  - **Usage:** `case_usage_exits_2`. Each of these exits 2, with an empty stdout and a stderr line that starts `weakness-classes: not run (` and is **not** the `(internal error)` line:
     - `--repo ..`;
     - `--repo a/b`;
     - `--prd-key acme-1`;
     - `--component other:x` without `--repo other`;
-    - `--component api:./x`;
     - `--today 2026-13-01`;
     - a missing `--specs` directory;
     - no `--repo`.
   - **States:** `case_register_states`:
     - `absent`, `unreadable` (`{`), `unknown-format` (`format: 2`) and `malformed` (`findings: {}`) each give that state, a null `last_at` and zero counts, and the exit is 0;
     - an `ok` register copies a valid `last_at`.
-  - **Team records:** `case_record_checks`. Each of these is skipped, with `kb_skipped` counting them: a stem `notes`, `source: "../x"`, `promotion: maybe`, `promoted_to: "../../e"`, `components: api` (not a flow list), and no Prevents paragraph. A record in the harvest's exact shape is read.
+  - **Team records:** `case_record_checks`. Each of these is skipped, with `kb_skipped` counting them: a stem `notes`, `source: "../x"`, `promotion: maybe`, `promoted_to: "../../e"`, `promoted_to: "-ADR"` (fails `PROMOTED_TO_RE`), `components: api` (not a flow list), and no Prevents paragraph. stdout contains neither hostile `source` nor hostile `promoted_to` value (review M3). A record in the harvest's exact shape is read.
+  - **Dropped history:** `case_empty_history_dropped` (R4): an `accepted-risk` finding whose `history` is `[]` is dropped and counted in `dropped`.
   - **The rule:**
     - `case_live_and_context`: each live status counts in `live`. `false-positive` counts nowhere. A class with only a recent `fixed` is not listed.
     - `case_accepting_runs`: two findings accepted in run 3 at one `at` give `accepting_runs 1` and `recurs false`. Adding one accepted in run 4 gives `2` and `true`. Two findings with run 3 at different `at` values give `2`.
@@ -432,7 +445,7 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
       - `status: superseded` does not prevent;
       - `promotion: accepted` still prevents, and is printed with `promotion` and `promoted_to`.
     - `case_ranking`: four classes, built so that each ranking key decides one pair, come out in the exact order of Global Constraints *Ranking*, and CWE-79 sorts before CWE-100.
-    - `case_in_component`: `--component api:src/orders` marks `src/orders/Repo.java` true and `src/ordersx/A.java` false. A bare `--component api` marks both true. With no component, both are false.
+    - `case_in_component`: `--component api:src/orders` marks `src/orders/Repo.java` true and `src/ordersx/A.java` false. A bare `--component api` marks both true. With no component, both are false. `--component api:./x` exits 0 and marks nothing (R6).
     - `case_evidence_cap_and_order`: seven findings give five entries: live by severity, then id.
   - **The PA fields:**
     - `case_pa_line`: `--origin` of an `accepted-risk` finding in a recurring, unprevented class, with `--prd-key ACME-17`, makes `pa_line` equal, character for character:
@@ -441,7 +454,7 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
       ```
       and `pa_next_step` is null.
     - `case_pa_next_step`: the same, without `--prd-key`, makes `pa_line` null and `pa_next_step` equal to the copy in Global Constraints. With `awaiting_review` 0, the clause is absent.
-    - `case_pa_needs_decided_recurring_unprevented`: a prevented class, a non-recurring class and an unknown `--origin` each give null for both fields. Without `--origin`, the `decided` key is absent.
+    - `case_pa_needs_decided_recurring_unprevented`: a prevented class, a non-recurring class and an unknown `--origin` each give null for both fields. Without `--origin`, the `decided` and `decided_ids` keys are absent. With `--origin` of findings 3 and 7, both in a class whose `cwe` the register writes `CWE-089`, that class's `decided_ids` is `[3, 7]`, even where 7 is not among its five evidence entries (review I4).
   - **Review Focus:** `case_cwe_canonical`, `case_redated_risk_is_one_acceptance`, `case_prevents_wrapped_and_url_only`, `case_non_register_dirs` and `case_fixed_window_boundary`, with the assertions their Review Focus lines state.
   - **The envelope:** `case_envelope`:
     - stdout parses as one object with keys exactly `format`, `today`, `kb_skipped`, `registers` and `classes`;
@@ -450,7 +463,8 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
     - a repeated `--repo` gives one register entry.
 - [ ] **Step 2: Run** `python3 plugins/workflows-core/scripts/weakness-classes.py --selftest`. Expected: every case FAILs, since nothing is implemented beneath the harness.
 - [ ] **Step 3: Implement** to the Global Constraints contract.
-  - The whole-token test is `re.search(r"(?<![A-Za-z0-9_-])" + re.escape(cwe) + r"(?![A-Za-z0-9_])", prevents)`.
+  - The whole-token test, for class `CWE-<n>`, is `re.search(r"(?<![A-Za-z0-9_-])CWE-0*" + str(n) + r"(?![A-Za-z0-9_])", prevents)`.
+  - `main` overrides argparse's error to print the one `not run (usage: …)` line, and wraps everything else in the catch-all that prints `not run (internal error)`.
   - Read a team record by lines; never import YAML.
   - Use `from __future__ import annotations` for the type hints, since 3.9 is the floor.
   - The docstring names the verbs, the exits and the never-printed fields.
@@ -498,7 +512,8 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - §1's two "as a run's state" sentences become "as the register's state" (S3, S4);
   - its "for the readers §6 names" is re-read;
   - §3's `every reader of the register reads it the same way` (S9) becomes: every reader of the register reads a finding's text that way, and `weakness-classes.py` prints none of it;
-  - §6 keeps the loaders' recipe and adds a second one: `grep -l 'skill: "workflows-core:weakness-classes"' plugins/*/commands/*.md`, the commands that read the register through §7's script. §6 gives the recipes only, never a list, so it stays true while Tasks 5–7 add callers (`CLAUDE.md`, *Re-measure in one place*).
+  - §6 keeps the loaders' recipe and adds a second one: `grep -l 'skill: "workflows-core:weakness-classes"' plugins/*/commands/*.md`, the commands that read the register through §7's script. §6 gives the recipes only, never a list, so it stays true while Tasks 5–7 add callers (`CLAUDE.md`, *Re-measure in one place*);
+  - §7 gains the skill's argument rule (review I1): an origin is scanner-written text, so the skill passes no value holding a character outside `[A-Za-z0-9._:/@+=-]`, and refuses the call where one does.
 - `plugins/workflows-core/references/architecture-kb.md`: the opening's `The script implements it` (S12) names `weakness-classes.py` as the second implementer. It reads the frontmatter keys and the Prevents paragraph, so a format change changes both scripts in one commit.
 - `.claude/rules/security-workflows.md`:
   - `paths:` gains `plugins/workflows-core/scripts/weakness-classes.py` (R14);
@@ -532,9 +547,10 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
 - [ ] **Step 1: Before counts** for S3, S4, S5, S6, S9, S10, S11, S12, S13 and S14.
 - [ ] **Step 2: Write the skill.** Then run its Bash call by hand, with `CLAUDE_PLUGIN_ROOT` set to the worktree's `plugins/workflows-core` and `SPECS_PATH` set to a scratch tree built like Task 1's fixtures:
   - a `classes` call prints a path whose file parses;
-  - a bad `--repo` prints the `not run` line and no path, and leaves no file.
+  - a bad `--repo` prints the `not run` line and no path, and leaves no file;
+  - a hostile `--origin` holding a single quote plus `; touch <scratch>/pwned` prints `weakness-classes: not run (an argument holds a character the skill does not pass)` and no path, and `<scratch>/pwned` does not exist afterwards (review I1).
 
-  Record both outputs in the report.
+  Record all three outputs in the report.
 - [ ] **Step 3: The authority and rules edits. Then the pages.** Measure every rules file and `CLAUDE.md` you touched.
 - [ ] **Step 4: After counts**, against the table. Re-read every paragraph that holds a hit (refinement 1).
 - [ ] **Step 5: Gates.** Expected: check 4 and check 9 pass with four skills.
@@ -548,7 +564,7 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - *Consumers*: each consumer calls the skill at its dispatch step (`/update-spec` through `/specify`'s);
   - step 1 and a new step 5a: Global Constraints *resolve fields*, and the count of `register.json` holders;
   - step 6's return;
-  - the *Plan-approval line* section: the four lines; no line where `security/` is no directory; S16 gains a sentence;
+  - the *Plan-approval line* section: the four lines; no line where `security/` is no directory; S16 gains a sentence; S35's "turns both off" names all three sources `--no-arch` turns off;
   - *Dispatch*: S17 becomes the widened condition, the skill call is stated as the consumer's step, the dispatch block gains `weakness_classes:`, and the failed-call line is added;
   - *Consumption*:
     - S18 gains its exception: a promoted record's `promoted_to` is taken for `governing`, and only its promotion keys are read;
@@ -568,7 +584,11 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - the `architecture-grounding` authority paragraph (`:58`) names the weakness classes and the skill;
   - the grounder bullet (S32) adds that it never opens a file under `security/`.
 - Pages:
-  - `plugins/workflows-core/docs/reference/grounding.md`: a new `## Security registers` section after *Team decision records*, with *Feeds*, *Turned on by*, *Status line* and *Off switch*, in that section's form;
+  - `plugins/workflows-core/docs/reference/grounding.md`:
+    - a new `## Security registers` section after *Team decision records*, with *Feeds*, *Turned on by*, *Status line* and *Off switch*, in that section's form;
+    - a *Security registers* row in the *At a glance* table, read by `/create-ard`, `/specify`, `/update-spec` and `/dev-workflows:design`, turned on by a findings register under `$SPECS_PATH/security/`, off switch `--no-arch` (S36);
+    - *Team decision records*' off switch, `turns off both architecture roots` (S35), names the registers too;
+  - `plugins/workflows-core/docs/reference/environment.md`: `forces architecture grounding off` (S36) names the team decisions and the security registers as well;
   - `docs/reference/agents.md`: the `architecture-grounder` row (cell ≤ 200 characters);
   - `docs/reference/references.md`: the `architecture-grounding.md` entry.
 
@@ -576,9 +596,10 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
 - Consumes Task 3's skill call.
 - Produces the resolve fields, the lines, the dispatch input and the challenge shape (Global Constraints).
 
-- [ ] **Step 1: Before counts** for S15–S21 and S32.
+- [ ] **Step 1: Before counts** for S15–S21, S32, and S35–S36's `workflows-core` sites.
 - [ ] **Step 2: Edit the reference, then the agent.** Re-read every dispatch-condition consequence against the new trigger (`CLAUDE.md`, *Extent face*):
   - a run with both roots OFF and classes present dispatches with `arch_root: null`, `team_root: null` and `snapshot: none`;
+  - that run still builds `stack_facts`, `feature_summary` and `themes` as the dispatch section says, and the skill call sits once the scan's last batch has returned, whether or not a root is ON (review M2);
   - its `layout` is `[]`;
   - it raises only `known-weakness` challenges;
   - "On `status: ERROR` … OFF from there on" still holds.
@@ -598,6 +619,7 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
      - Replace the condition.
      - Add `weakness_classes` to the dispatch.
      - Add the failed-call rule.
+     - Reword its closing `Where it resolved OFF, dispatch nothing` (S33), which the widened trigger contradicts: "Where neither root resolved ON and the call returned no class, dispatch nothing." Leave the docs-grounding paragraph's sentence of the same words alone.
   3. **The final report** (S23): `create-ard.md`'s *Report:* sentence, `specify.md`'s `### Run details` block plus its line-detail paragraph, and `design.md`'s *Report:* sentence. Add the `registers read:` clause and the `not read` line.
 - The grill sites:
   - **`create-ard.md` Phase 4**, after its team-record paragraph:
@@ -617,12 +639,32 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
 - `plugins/dev-workflows/references/design-format.md`:
   - § Architecture governance: its premise (R16), the *Known weakness* bullet (advisory; `design-reviewer` raises no finding on it), and S26 becoming "Where grounding was OFF and no `known-weakness` challenge was raised, nothing in this section is required.";
   - `## Risks & mitigations` (`:176`): "Each `Architecture deviation:` line" adds "and each `Known weakness:` line".
+- `--no-arch` descriptions (S35, S36), each naming the security registers as the flag's third source:
+  - `design.md:26`'s `turns off architecture grounding for the run`;
+  - `plugins/dev-workflows/docs/reference/environment.md` and `plugins/product-workflows/docs/reference/environment.md`, each `` `--no-arch` turns it off for a run ``;
+  - `plugins/product-workflows/docs/workflow.md:190`'s `turns both off`;
+  - the repository-root `README.md:102`'s `Disable both per run with`;
+  - the three command pages' "turned off with `--no-arch`" sentences (`dev-workflows` `design.md`, `product-workflows` `create-ard.md` and `specify.md`), and `update-spec.md`'s flag line.
+
+  Usage, synopsis and flag-strip lines stay. Record each of the 38 hits' dispositions.
 - `.claude/rules/product-workflows.md`:
-  1. Move `## Invariants` and its subsection, byte for byte, to a new `.claude/rules/product-workflows-prd-flow.md` with the same `paths:`. Give it a title and a one-line *split out to keep under 20,000 characters* intro, in `brd-route.md`'s form.
-  2. Fix the pointer the move strands: the opening's "the PRD-creation invariants below bind" (`CLAUDE.md`, *Pointer face*). Name the new file in the opening's split sentence.
+  1. Move `## Invariants` and its subsection, byte for byte, to a new `.claude/rules/product-workflows-prd-flow.md`. It takes the same `paths:`, all eight globs:
+     ```yaml
+     paths:
+       - "plugins/product-workflows/**"
+       - "plugins/dev-workflows/commands/design.md"
+       - "plugins/dev-workflows/commands/ready.md"
+       - "plugins/dev-workflows/commands/implement.md"
+       - "plugins/docs-workflows/commands/release-notes.md"
+       - "plugins/workflows-core/references/addressing.md"
+       - "plugins/workflows-core/references/grilling-technique.md"
+       - "plugins/workflows-core/references/prd-format.md"
+     ```
+     Its title is `# product-workflows — the PRD-creation flow's invariants`. Its intro follows `brd-route-detection.md`'s form: "Loaded with `.claude/rules/product-workflows.md`, whose `paths:` it shares. Split out of `.claude/rules/product-workflows.md` to keep that file under 20,000 characters; …".
+  2. In `product-workflows.md`, the H1 `# product-workflows — invariants, workflow map, agent callers` becomes `# product-workflows — plugin facts, workflow map, agent callers`. Fix the pointer the move strands: the opening's "the PRD-creation invariants below bind" (`CLAUDE.md`, *Pointer face*). Name the new file in the opening's split sentence.
   3. Grep the sweep scope for `product-workflows.md` § Invariants and `Key invariants for the PRD-creation flow`, and repoint each live hit.
   4. Edit the `/create-ard` and `/specify` map lines: `[weakness-classes (security registers ON)]` before the grounder, `or a register holds a class` in its `when`, and, on `/create-ard`'s grill, `a recurring unprevented class offers an [AD#N] preventing its CWE`.
-- `.claude/rules/dev-workflows.md`, the `/design` line: `(when either root resolves)` becomes `(when either root resolves or a register holds a class)`. Measure the file. If it reaches 20,000 characters, move `### /design and /ready` byte for byte to `.claude/rules/dev-workflows-design-ready.md`, with the same `paths:`, a pointer, a `CLAUDE.md` row, and the moved PRD-flow file's "their own bullets are in" sentence repointed.
+- `.claude/rules/dev-workflows.md`, the `/design` line: `(when either root resolves)` becomes `(when either root resolves or a register holds a class)`, and nothing more (R13: the asymmetry with the product lines is deliberate). Measure the file. If it reaches 20,000 characters, move `### /design and /ready` byte for byte to `.claude/rules/dev-workflows-design-ready.md`, with the same `paths:`, a pointer, a `CLAUDE.md` row, and the moved PRD-flow file's "their own bullets are in" sentence repointed.
 - `CLAUDE.md`'s rules table:
   - a row ``| `product-workflows-prd-flow.md` | as `product-workflows.md` | the PRD-creation flow's invariants |``;
   - `product-workflows.md`'s row reads "plugin facts, map, callers".
@@ -634,7 +676,7 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
 
 **Interfaces:** consumes Task 4's fields, lines, dispatch input and challenge shape, and Global Constraints' exact copy.
 
-- [ ] **Step 1: Before counts** for S22–S26. **Size** `product-workflows.md`, `dev-workflows.md` and `CLAUDE.md`.
+- [ ] **Step 1: Before counts** for S22–S26, S33, and S35–S36's sites in this task. **Size** `product-workflows.md`, `dev-workflows.md` and `CLAUDE.md`.
 - [ ] **Step 2: The three commands, site by site.** Keep the three dispatch paragraphs' shared wording identical, so a later sweep matches all three.
   - `/create-ard`'s choice question is preceded by its command's existing **Load the question rules.** step. `check-questions` holds that.
 - [ ] **Step 3: `update-spec`, the two formats, the rules split, the map lines and the pages.**
@@ -648,22 +690,25 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
 - `plugins/security-workflows/commands/scan.md`:
   - **Phase 5 step 1**, after its `rebuild`, only where the plan's `review_due` is non-empty:
     - `Skill(skill: "workflows-core:weakness-classes", args: "classes --repo '<repo-slug>' --origin '<origins[n]>' …")`, one origin per review-due number, taken from `plan.json`'s `origins`;
-    - read only `prevented_by`. Each review-due row whose CWE equals a `decided` class's `cwe` gains `prevented by <id>[, <id>…]` (R17);
+    - read only `prevented_by` and `decided_ids`. Each review-due row whose `[SEC#n]` is in a class's `decided_ids` gains `prevented by <id>[, <id>…]` from that class's `prevented_by` (R17). Rows are mapped by `[SEC#n]`, never by CWE text, which the register may write as `CWE-089` (review I4);
     - the row's suggestion is unchanged: it still offers the finding's current status (design §5.7);
     - ignore `pa_line` and `pa_next_step`;
     - a failed call leaves the rows as they are and adds the report line.
   - **Phase 7.2**, only where `register.py commit` ran — after its `REGISTER_MOVED` and `TRIAGE_*` retries settle — and its decisions file holds ≥ 1 `accepted-risk` decision:
     - one `classes` call with `--repo '<repo-slug>'`;
-    - one `--origin` per such decision: for `id:<n>`, `answered-plan.json`'s `origins["<n>"]`; for `plugin:<pid>` on a `new` row, `<the plan's scan.id>:<pid>`; for `plugin:<pid>` on a row showing an existing `[SEC#n]`, that number's origin;
-    - `--prd-key '<KEY>'` where the run key set holds a PRD key (design §5.3);
+    - one `--origin` per such decision: for `id:<n>`, `answered-plan.json`'s `origins["<n>"]`; for `plugin:<pid>`, `<the plan's scan.id>:<pid>`. Phase 5 step 7 names a match or an existing finding only by `id:<n>`, so a `plugin:` target is always a new finding;
+    - `--prd-key '<KEY>'` per R18: on an Epic-scoped run, the parent's key; on a PRD run, the resolved key; otherwise none (review I5);
     - keep each `pa_line` for 7.6 and each `pa_next_step` for the report.
   - **7.5's report:**
     - `### Register` gains `- Weakness classes: [each PA line, pending the preview; each sentence for the PA; "none"; or "not read — <the skill's error>"]`;
     - `### Next step` carries each `pa_next_step` verbatim.
   - **7.6's follow-ups paragraph:**
     - S27: the persist step runs where 7.2 built any line or the call printed a `pa_line`;
-    - S28: each PA line is written exactly as the script printed it, as an item with its own `unit_folder` and `key` (followup-emission §8). The PRD folder is the resolved folder where it is a `PRD-` folder, else its nearest `PRD-` ancestor, whose key is the run key set's PRD key;
-    - the cancel rule excludes the PA line: leaving it out records nothing and returns no finding to `fix`.
+    - S28: each PA line is written exactly as the script printed it. Its `unit_folder` and `key` come from R18, out of what Phase 0 step 4 holds: on an Epic-scoped run, the resolved folder's parent and the parent's key; on a PRD run, the resolved folder and its key. Never re-derive a kind from a folder name;
+    - on a run with a PA line, **every** item of the `followup-emission` call carries its own `unit_folder` and `key`, the per-item form §8 uses "instead". Each finding's line takes the unit's folder and key, and each PA line takes the PRD's. The call is never a mix of a call-level `unit_folder` and per-item ones;
+    - the cancel rule excludes the PA line: leaving it out records nothing and returns no finding to `fix`;
+    - this step's output line `N follow-ups written to <target>` (S34) becomes one line per target: the unit's `follow-ups.md`, and the PRD folder's where a PA line was written.
+  - **Invariants** (S34): `register.py commit builds them from structured fields only` becomes: `register.py commit` builds each finding's follow-up and prompt line, and `weakness-classes.py` builds the PA line and sentence, each from structured fields only.
 - `plugins/workflows-core/references/followup-emission.md`:
   - §5: after S29, a paragraph **A decision for the PA**. Its identity is the PRD key in its `/product-workflows:create-ard <KEY>` span, its `[CWE-<n>]` link text and its `(security/<slug>/register.md)`, each compared exactly as the run holds it. It matches only an **open** line carrying all three, so a ticked line never stands for it.
   - §6: a bullet: a decision another role must record — here the scan's line for the PA.
@@ -682,10 +727,10 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
     - one edge `secscan -.->|"follow-up for the PA: a recurring accepted risk"| createard`;
     - a sentence in the scan bullet: the registers also feed `/create-ard`, `/specify`, `/design` and `/promote-decisions`.
 
-**Interfaces:** consumes Task 1's `classes` JSON (`pa_line`, `pa_next_step`, `prevented_by`, `decided`) through Task 3's skill.
+**Interfaces:** consumes Task 1's `classes` JSON (`pa_line`, `pa_next_step`, `prevented_by`, `decided`, `decided_ids`) through Task 3's skill.
 
-- [ ] **Step 1: Before counts** for S7, S8 and S27–S29.
-- [ ] **Step 2: `scan.md`.** Read Phase 5 to 7.6 end to end first. None of these edits enters *Ending early*, the preflight or the terminal `commit-artifacts` paragraph.
+- [ ] **Step 1: Before counts** for S7, S8, S27–S29 and S34.
+- [ ] **Step 2: `scan.md`.** Read Phase 5 to 7.6, and the Invariants, end to end first. None of these edits enters *Ending early*, the preflight or the terminal `commit-artifacts` paragraph.
 - [ ] **Step 3: `followup-emission`, the rules, the pages.** Run the mermaid gate where `node` exists.
 - [ ] **Step 4: After counts.** Re-read 7.6's cancel rule against the PA line, and §5's existing `[SEC#n]` paragraph against the new one. Two live contradictory rules are a defect.
 - [ ] **Step 5: Gates.**
@@ -704,11 +749,11 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - **§7:**
     - item 1's ranking: after cluster size, a row whose record is in a class's `prevented_by` gains the reason, and ranks on it;
     - item 5, *Reported only*: the uncovered line;
-    - the count line;
+    - the count line, where a class both covered and prevented counts once, as covered (review M4);
     - design §6.3 item 4's case, with classes and no candidate;
     - the command builds every row and line from the JSON's fields only, and never opens a register.
 - `plugins/workflows-core/agents/promotion-scout.md`:
-  - the description (≤ 600 characters);
+  - the description (≤ 600 characters). It has 53 characters of room, so make room by replacing wording, not by appending. Dropping "(dispatch-pinned to the §2 Opus chain)" frees 39, and the pin stays stated where it binds, in `architecture-promotion` §6;
   - *Inputs*: `weakness_classes`;
   - a Method step: per class, `covered` (an `accepted` ADR or `active` standard names the CWE or states a rule implying it, and the scout reads every artifact it cites) or `uncovered`;
   - *Output*: `weakness_classes: [{cwe, relation, artifact}]`;
@@ -750,6 +795,7 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - Each CHANGELOG gets a section dated with the landing day (UTC), never `— Unreleased`. It says what each plugin's users see, in each plugin's own terms.
   - No `description` changes: each blurb stays true.
   - S1 stays; record it.
+  - The `workflows-core` CHANGELOG notes that an Opus `architecture-grounder` dispatch made only for `known-weakness` challenges will be the common case for teams with registers and no knowledge base or architecture repository.
 - [ ] **Step 3: The coupling bullet.**
   - **Its title:** ``**Update `workflows-core` <X> with `product-workflows` <Y>, `dev-workflows` <Z> and `security-workflows` <W>**``, after the last `workflows-core` bullet and before the `prose-style` bullets.
   - **Its two directions** (design §11):
@@ -760,7 +806,7 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - Row E gains `*Built as SEC-G1:*` with the design's path and the four versions, in the form IMP-G5 used.
   - D2 (design §10 item 16) gains one amendment line: the scan joins E's consumers, and the register's one reader outside `register.py` is `workflows-core`'s `weakness-classes.py`, through its skill. The agents get its JSON and never read a register.
   - The feature-gaps review's SEC-G1 row and its `### SEC-G1` heading are marked resolved, in IMP-G5's form.
-- [ ] **Step 5: Gates.** Measure every rules file this branch touched, and `CLAUDE.md`.
+- [ ] **Step 5: Gates.** Measure every rules file this branch touched, and `CLAUDE.md`. Re-measure `.claude/rules/dev-workflows.md` after Step 1's merge in particular. If it now reaches 20,000 characters, take Task 5's fallback split here.
 - [ ] **Step 6: Commit:** `release(sec-g1): workflows-core <X>, product-workflows <Y>, dev-workflows <Z>, security-workflows <W> — the architecture feedback loop`.
 
 ### Task 9: Close
@@ -776,4 +822,8 @@ Task 2 reuses `read_register`, `read_record` and `prevents` unchanged.
   - For each edited command, no hunk falls inside a GIT-G1 section (read each hunk's heading context).
 - [ ] **Step 3: The sweep, closed.** Re-run every S-row. Each after-count equals its intended value. Record the table.
 - [ ] **Step 4: The full CI list.** Every step `validate-catalog.yml` runs, in order, including every `--selftest`, the mermaid gate where `node` exists, and `check-docs.sh --selftest`. Expected: all pass.
-- [ ] **Step 5: The whole-branch review** is the controller's: Fable reviews the branch against the design and this plan.
+- [ ] **Step 5: The PR text** (review M5). Draft the pull request description in the task report, for the controller to open the PR with. It must:
+  - name the one step added to `.github/workflows/validate-catalog.yml` ("Self-test the weakness classes reader") for the GIT-G1 owner, and say that no other GIT-G1 file or section changed;
+  - list the four versions and the IMP-G3 overlap files;
+  - end with the attribution lines the session's system reminder gives for pull requests.
+- [ ] **Step 6: The whole-branch review** is the controller's: Fable reviews the branch against the design and this plan.
