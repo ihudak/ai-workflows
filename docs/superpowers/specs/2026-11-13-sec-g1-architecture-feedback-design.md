@@ -1,154 +1,185 @@
 # SEC-G1 — the architecture feedback loop (security sub-project E)
 
-**Date:** 2026-11-13. **Status:** draft, for a Fable design review and then the maintainer's approval. Nothing here is implemented. **Roadmap:** row E of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:101`, read with its non-goal at `:151`, D2 at `:208`–`:210`, the accepted-risk claim at `:395` and the free-text rule at `:475`. **Branch:** `feat/sec-g1-arch-feedback`.
+**Date:** 2026-11-13. **Status:** revision 2. A Fable design review found the draft fit to approve with changes; its findings and the controller's rulings on the draft's five open questions are applied here, and this revision goes to the maintainer for approval. Nothing here is implemented. **Roadmap:** row E of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:101`, read with its non-goal at `:151`, D2 at `:208`–`:210`, the accepted-risk claim at `:395` and the free-text rule at `:475`. **Branch:** `feat/sec-g1-arch-feedback`.
 
-Calls marked **my call** are where the roadmap leaves a choice open. §12 lists the ones the maintainer should look at first.
+**my call** marks a choice the roadmap leaves open and no ruling settled. **ruled** marks one the controller settled; §12 gives each ruling's reason.
 
 ## 1. The decisions
 
 | # | Decision | |
 |---|---|---|
-| E1 | **One reader, in `workflows-core`.** A new standard-library script, `scripts/weakness-classes.py`, reads `register.json` by format and prints structured fields only. A new skill, `workflows-core:weakness-classes`, which users cannot invoke, runs it for commands in other plugins. `register.py` does not change. | my call |
-| E2 | **A weakness class is a register plus the finding's primary CWE**, validated as `^CWE-\d+$`. `other_cwes` is not used, and CWEs are not rolled up into parent classes. | my call |
-| E3 | **The repositories a piece of work touches** are the repo-slugs of the `components` each consumer already passes to `architecture-grounder`. No new input is added. | my call |
-| E4 | **Part 1.** The registers become architecture grounding's third root (`security_grounding`). It resolves next to the team root and is turned off by `--no-arch`. The grounder returns at most three `known-weakness` challenges, ranked after `contradicts-*`. | my call (cap, rank, flag) |
-| E5 | **What feeds Part 1.** Live findings count: `open`, `fix`, `fixing`, `reopened` and `accepted-risk`. A `fixed` finding closed in the last 180 days adds context, but never raises a class by itself. A false positive never counts. | my call (window) |
-| E6 | **Part 2: "recurs".** A class recurs when its register holds two or more findings at `accepted-risk`. Risks a Dev accepted and risks past their review date both count. The review-by date serves as the window. | my call (threshold) |
-| E7 | **Part 2: "prevented".** A class is prevented when the `**Prevents:**` of a live team record names its CWE. A prevented class raises no follow-up. | from the row |
-| E8 | **Part 2: who raises it.** The scan raises the follow-up for the PA, on a key run that records an accepted risk of a recurring, unprevented class. `/create-ard`'s grill also offers the `[AD#N]` itself. Nothing writes a decision without the PA. | my call (emitter) |
-| E9 | **The decision names its CWE as a link** to the CWE's own page. Pre-lint then passes it, and the coverage test in E7 can find it. | my call |
-| E10 | **Part 3.** A "team" is a register, which means one code repository. A class recurs across teams when two or more registers hold a finding of it that a person has judged real. The signal surfaces in `/promote-decisions`' shortlist. | my call |
-| E11 | **Safety.** No agent opens a register file. The reader is the only way in, and it never prints a finding's text. | stricter than `:475` |
-| E12 | **Plugins.** `workflows-core`, `product-workflows`, `dev-workflows` and `security-workflows` each take a minor bump. No plugin gains a dependency on `security-workflows`. | — |
+| E1 | **One reader, in `workflows-core`.** A standard-library script, `scripts/weakness-classes.py`, reads `register.json` and the team records by format. It prints structured fields and finished follow-up lines only. A new skill, `workflows-core:weakness-classes`, which users cannot invoke, is the only way any caller runs it, and every caller is a command. `register.py` does not change | ruled (Q5) |
+| E2 | **A weakness class is a register plus the finding's primary CWE**, validated as `^CWE-\d{1,6}\Z`. `other_cwes` is not used, and CWEs are not rolled up into parent classes | my call |
+| E3 | **The repositories a piece of work touches** are the repo-slugs of the `components` each consumer already passes to `architecture-grounder` | my call |
+| E4 | **Part 1.** At dispatch, the command calls the skill with its component slugs. When the result holds at least one class, the command hands the JSON to the grounder, which returns at most three `known-weakness` challenges, ranked after `contradicts-*`. When it holds none, everything happens as it does today | ruled (review item 2) |
+| E5 | **What counts for Part 1.** Live findings count: `open`, `fix`, `fixing`, `reopened` and `accepted-risk`. A `fixed` finding closed in the last 180 days adds context only. A false positive never counts | my call |
+| E6 | **Part 2: a class "recurs"** when its register holds two or more findings at `accepted-risk` that were accepted in distinct runs. A Dev's unconfirmed acceptance counts, and so does a risk past its review date | ruled (Q1, Q4) |
+| E7 | **"Prevented."** For Parts 1 and 2, a class is prevented when a live team record meets two conditions: its frontmatter `components` holds the register's slug, and its `**Prevents:**` names the CWE. Part 3 counts any live record that names the CWE | ruled (item 1) |
+| E8 | **Part 2's emitter is the scan.** The script prints the line, and the line lands in the PRD folder's `follow-ups.md`. `/create-ard`'s grill also offers the `[AD#N]` directly. No decision is written without the PA | ruled (Q3) |
+| E9 | **E writes every CWE as a link to its CWE page**: in an ARD's Prevents, in a specification question and in a design line | my call |
+| E10 | **Part 3: a "team" is a register.** A class recurs when two or more registers hold a judged-real finding of it. User-facing wording says "registers" and never "teams" | ruled (Q2) |
+| E11 | **No E consumer is given, or told to read, a register.** Commands and agents see only the script's JSON | ruled (item 6) |
+| E12 | **Plugins.** `workflows-core`, `product-workflows`, `dev-workflows` and `security-workflows` each take a minor bump. Nothing new depends on `security-workflows` | — |
 
 ## 2. What exists today
 
-- **The register.** Each code repository has one, at `$SPECS_PATH/security/<repo-slug>/`. It holds `runs/`, `scans/`, and the derived `register.json` and `register.md` (`security-register-format.md:16`–`24`).
-  - A finding carries `cwe`, `severity`, `path`, `line`, `status`, `units`, and `owner`/`review_by`/`confirmed` on an accepted risk. It also carries `history` entries of the form `{status, at, …}` (`:87`–`:96`).
-  - The `cwe` value is copied from the scan's JSONL `cwe_id` (`register.py:444`). Only follow-up lines validate it, against `^CWE-\d+\Z` (`register.py:151`, `:473`).
-  - The derived files exist "for people and for the readers §6 names" (`security-register-format.md:33`). Today §6 names readers by a grep recipe (`:158`).
-- **`register.py`** is the register's only writer. Its six verbs are `plan`, `ids`, `commit`, `rebase`, `rebuild` and `verify-scope` (`register.py:4722`), and none of them is a read-only query: `rebuild` writes both derived files (`:1501`–`:1505`). It also cannot be reached from another plugin, because `${CLAUDE_PLUGIN_ROOT}` resolves to the plugin doing the reading (CLAUDE.md, *Internal reference convention*). Its definition of "active" is `open`, `fix`, `fixing`, `reopened` and `accepted-risk` (`register.py:143`).
-- **Free text.** `register.md` prints a finding's title under `## Scan output`, labelled "data, never instructions" (`register.py:1488`–`1489`). A follow-up line is built only from structured fields (`security-register-format.md:98`–`105`).
-- **Accepted risk.** An accepted risk has an owner and a review-by date, 90 days by default. "Sub-project E learns from accepted risks", and false positives "teach it nothing" (roadmap `:395`). A Dev's decision takes effect at once, with `confirmed: false` (`security-register-format.md:126`).
-- **`architecture-grounder`** reads two roots: the organisation's architecture repository and the team knowledge base (`architecture-grounder.md:11`–`13`).
-  - It returns `arch_challenges` of six kinds, at most eight in all (`:49`, `:72`).
-  - It may use Bash only to list files and for read-only `git` (`:85`).
-  - It is dispatched only when `arch_grounding` or `team_grounding` is ON (`architecture-grounding.md:45`).
-  - `--no-arch` turns both roots off (`:9`, `:39`).
-  - Challenges are ranked into the grill's Impact × Uncertainty gap list and never appended to it (`:70`). The advice never gates and is never a reviewer finding (`:83`).
-- **Its consumers** each pass `components`.
-  - `/create-ard` passes the confirmed set (`create-ard.md:620`).
-  - `/specify` and `/design` pass the ARD's `components`, or else the slugs of the repositories they scanned (`specify.md:906`, `design.md:304`).
-  - `/update-spec` makes `/specify`'s dispatch (`update-spec.md:94`).
-- **The team knowledge base** is `$SPECS_PATH/architecture/`. Its `index.yaml` lists each record with a `status`, and each `decisions/<id>.md` carries `**Prevents:**` copied verbatim from the ARD (`architecture-kb.md:12`, `:29`, `:60`). A record belongs to its nearest `PRD-` folder (`:20`).
-- **Decisions.** An `[AD#N]` carries `**Binds:**`, `**Prevents:**`, `**Rule:**` and `**Alternatives:**` (`ard-format.md:68`). Violating one without a deviation record is a reviewer BLOCKER (`ard-resolution.md:109`–`117`).
-- **Promotion.** `/promote-decisions` stops with "Nothing to promote" when no record is a candidate and no artifact has friction (`architecture-promotion.md:98`).
-  - It ranks candidates by cluster size "in distinct groups" (`:123`), where a group is a PRD (`promotion-scout.md:30`).
-  - Other teams appear only as other specs repositories that share the architecture repository (`architecture-promotion.md:56`).
-- **Follow-ups.** A run that resolved no folder keeps its follow-ups in the report only (`followup-emission.md:44`).
-  - A line carrying `[SEC#n]` is matched as a security finding's line (`:86`).
-  - ``repository `<name>` `` is reserved for the other-repository identity (`:93`).
-  - `register.py` treats any task line that names ``repository `<slug>` `` and carries `[SEC#n]` as that finding's own line (`register.py:882`–`885`).
-- **Pre-lint.** Pre-lint's autolink grep runs over PRDs, ARDs and Epics (`pre-lint.md:44`, `:48`). A hit inside a markdown link is discarded (`:56`). A standards token such as `CWE-89` is reported as a MINOR (`:63`).
+- **The register.** Each code repository has one register at `$SPECS_PATH/security/<repo-slug>/`, made of `runs/`, `scans/` and the derived `register.json` and `register.md` (`security-register-format.md:16`–`24`).
+  - A finding carries `cwe`, `severity`, `path`, `line`, `status`, `units`, `owner`, `review_by` and `confirmed`, plus `history` entries of the form `{status, at, …, run}` (`:87`–`:96`).
+  - The `cwe` value is the scan's own `cwe_id` (`register.py:444`). It is validated only when a follow-up line is built (`:151`, `:473`).
+  - The derived files exist "for people and for the readers §6 names" (`security-register-format.md:33`), and §6 names those readers by a grep recipe (`:158`).
+- **`register.py`** is the register's only writer.
+  - Its six verbs are `plan`, `ids`, `commit`, `rebase`, `rebuild` and `verify-scope` (`register.py:4722`). None of them is a read-only query, since `rebuild` writes (`:1501`–`1505`).
+  - Another plugin cannot reach it (CLAUDE.md, *Internal reference convention*).
+  - "Active" means `open`, `fix`, `fixing`, `reopened` or `accepted-risk` (`:143`).
+  - Every status change is a decision in a run record, automatic closures included (`:1282`–`1285`, `:1317`). `_apply` is the only code that writes a status (`:715`). It appends a `history` entry carrying the record's `at` and `seq` (`:725`–`726`). So every `fixed` finding has a dated entry, which the 180-day window relies on.
+- **Free text.** `register.md` prints a finding's title under `## Scan output`, labelled as data (`register.py:1488`–`1489`). A follow-up line is built only from a closed list of structured fields (`security-register-format.md:98`–`103`).
+- **Accepted risk.** An accepted risk has an owner and a review-by date, 90 days by default. E learns from accepted risks, and false positives teach it nothing (roadmap `:395`). A Dev's decision takes effect at once, with `confirmed: false` (`security-register-format.md:126`).
+- **`architecture-grounder`** reads an organisation root and a team root (`architecture-grounder.md:11`–`13`). It skips `own_sources` and promoted records (`:42`), caps challenges at eight, of six kinds (`:49`, `:72`), and may use Bash only to list files and for read-only `git` (`:85`).
+  - It is dispatched only when `arch_grounding` or `team_grounding` is ON (`architecture-grounding.md:45`), and `--no-arch` turns both roots off (`:9`, `:39`).
+  - Its challenges are ranked into the grill's gap list and never appended (`:70`). It is advisory only (`:83`).
+- **The grounder's consumers.** `/create-ard` passes the confirmed `components` (`create-ard.md:620`). `/specify` and `/design` pass the ARD's components, or else the slugs they scanned (`specify.md:906`, `design.md:304`). `/update-spec` makes `/specify`'s dispatch (`update-spec.md:94`).
+- **The team knowledge base.** `decisions/<id>.md` carries frontmatter `status`, `source`, `components` (an inline list) and `tags`, and the promotion keys once marked. Its `**Prevents:**` is verbatim from the ARD (`architecture-kb.md:26`–`35`, `:60`, `:81`). `architecture-harvest.py` implements the format (`:3`).
+- **Decisions and promotion.**
+  - An `[AD#N]` has Binds, Prevents, Rule and Alternatives (`ard-format.md:68`); wording that leaves a Rule's meaning unchanged is not a change (`:107`); breaking a decision without a deviation record is a reviewer BLOCKER (`ard-resolution.md:109`–`117`).
+  - `/promote-decisions` stops with "Nothing to promote" when no record is a candidate and no artifact has friction (`architecture-promotion.md:98`). Groups are PRDs (`promotion-scout.md:30`). Other teams are other specs repositories (`architecture-promotion.md:56`).
+- **Follow-ups.** The scan's run key set includes the parent PRD's key (`scan.md:93`). A caller can name a folder per item (`followup-emission.md` §2, §8, the `/conformance` precedent). The scan persists follow-ups only "where 7.2 built any", and returns a cancelled line's finding to `fix` (`scan.md:566`).
+  - `register.py` takes any task line naming ``repository `<slug>` `` and carrying `[SEC#n]` as that finding's own line (`register.py:882`–`885`).
+  - `/implement` reads back only lines with a `/dev-workflows:implement <unit_key>` span and that same repository form (`implement.md:266`).
+- **Pre-lint.** Pre-lint's autolink grep runs over PRDs, ARDs and Epics (`pre-lint.md:44`). It discards a hit inside a markdown link (`:56`), and reports `CWE-89` as a MINOR (`:63`).
 
 ## 3. The data path
 
-### 3.1 One reader in `workflows-core` (E1)
+### 3.1 The reader and its skill (E1)
 
-**Decision.** Add `plugins/workflows-core/scripts/weakness-classes.py`. It uses the standard library only, has a `--selftest` that CI runs next to `register.py`'s (`.github/workflows/validate-catalog.yml:242`), and has two verbs:
+**Decision.** Add `plugins/workflows-core/scripts/weakness-classes.py`. It uses only the standard library and has a `--selftest`. It has two verbs, prints one JSON object, and exits 0 whenever it could run; exit 2 means a usage error.
 
-- `classes --specs <root> --repo <slug>… [--component <id>…] [--today <date>]` reads the named registers, for Parts 1 and 2.
-- `across --specs <root> [--ref <ref>] [--today <date>]` reads every register in the tree, for Part 3. With `--ref` it reads `git show <ref>:security/<slug>/register.json`.
+- `classes --specs <root> --repo <slug>… [--component <id>…] [--origin <origin>…] [--prd-key <KEY>] [--today <date>]` reads the named registers and the working tree's team records. It serves Part 1, Part 2 and the review-due annotation.
+- `across --specs <root> --ref <ref> [--today <date>]` reads every register and every team record at `<ref>` with `git ls-tree` and `git show`, as every promotion input is read (`architecture-kb.md:85`). It serves Part 3.
 
-It prints one JSON object and exits 0 whenever it could run. Exit 2 means a usage error.
+**The skill.** `plugins/workflows-core/skills/weakness-classes/SKILL.md` (`user-invocable: false`, `allowed-tools: Bash`) runs the script. It writes the JSON to a `mktemp` file, under the rule in `workflows-core:run-flags` §7, and prints that file's path. This follows `specs-git` (`skills/specs-git/SKILL.md:1`–`14`).
 
-- **`workflows-core` agents run the script by path.** That is `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/weakness-classes.py"`; `code-scanner.md:62` is the precedent for an agent running its own plugin's script.
-- **Commands in other plugins run it through a skill**, `plugins/workflows-core/skills/weakness-classes/SKILL.md`, with `user-invocable: false`. The skill runs the script and passes its JSON through. This follows the `specs-git` precedent, a `workflows-core` skill that runs `workflows-core`'s script for every plugin's commands (`skills/specs-git/SKILL.md:1`–`14`).
+**Who calls it.** Five commands call the skill: the scan, `/create-ard`, `/specify`, `/design` and `/promote-decisions`. Each passes the file's path to its agent, if it has one, as `/promote-decisions` already does with `signals` (`architecture-promotion.md:96`–`116`). No agent runs the script.
 
-**Why.**
+**Why.** `register.py` cannot be reached from another plugin and has no read verb; the rule has three consumers but must have one implementation; and the copied-scripts rule (`.claude/rules/workflows-core-bounded-run.md:17`) suits small utilities, not a domain rule.
 
-- `register.py` cannot be reached across the plugin boundary, and it has no read verb.
-- An agent reading `register.json` directly would also read the titles (E11).
-- The recurrence rule needs exactly one implementation, because three consumers apply it.
-- Copying the script byte for byte, as the copied-scripts rule allows (`.claude/rules/workflows-core-bounded-run.md:17`), would give three copies of a domain rule rather than of a utility. That is the alternative in §12 Q5.
+**Two formats, so two authorities.** The script reads two formats:
+- **The register.** The rule goes into a new §7 of `workflows-core:security-register-format`, *Weakness classes*. §6 then names the reference's loaders and the skill's callers.
+- **The knowledge base.** This makes the script `architecture-kb`'s second implementer, beside `architecture-harvest.py`. `architecture-kb.md:3` names both, so a change to the format changes both scripts in one commit. `.claude/rules/docs-grounding.md:60` gains that note.
 
-**Where the rule lives.** It goes in a new §7 of `workflows-core:security-register-format`, *Weakness classes*. §6 becomes "the readers are the callers of `weakness-classes.py`", and §1's "register.py implements this file" is narrowed to §1–§5 (§10).
+### 3.2 Output
 
-### 3.2 Which registers (E3)
+`classes` lists only classes with at least one live finding:
 
-- **Part 1 and the scan's Part 2.** For each `components` id, the slug is the part before the first `:`. A slug never contains `:` or `/`, because it is the last segment of the URL after `/` or `:` (`components.md:11`–`14`), so the split is exact. Each slug is then resolved against the known set: the directory names under `$SPECS_PATH/security/` that hold a `register.json`. A slug that is not in that set has no register, and that is the normal case.
-- **Part 3.** Every `security/<dir>/register.json` on the ref, where `<dir>` matches `register.py`'s slug pattern.
-- **Why `components` (my call).** It is the one set every consumer already passes and the grounder already holds. The Epic's `target:` and `implementation.md` blocks name a narrower or later set. Reading them would add an input to fix a gap nobody has measured (CLAUDE.md, *Measure the population*).
+```json
+{ "format": 1, "today": "2026-11-13", "kb_skipped": 0,
+  "registers": [ { "repo": "api", "state": "ok", "last_at": "2026-11-02T09:14:00Z",
+                   "findings": 14, "dropped": 0, "unclassified": 1 } ],
+  "classes": [ { "repo": "api", "cwe": "CWE-89", "cwe_url": "https://cwe.mitre.org/data/definitions/89.html",
+                 "live": 3, "accepted": 2, "accepting_runs": 2, "awaiting_review": 1, "review_due": 0,
+                 "fixed_recent": 1, "top_severity": "HIGH", "in_component": true, "recurs": true,
+                 "decided": true,
+                 "prevented_by": [ { "id": "ACME-17-AD3", "source": "specifications/PRD-ACME-17-x/ard.md",
+                                     "promotion": null, "promoted_to": null } ],
+                 "findings": [ { "id": 3, "status": "accepted-risk", "severity": "HIGH",
+                                 "path": "src/orders/Repo.java", "line": 88,
+                                 "review_by": "2027-01-10", "confirmed": false } ],
+                 "pa_line": null, "pa_next_step": null } ] }
+```
 
-### 3.3 What it reads, and what happens when a register is missing or bad
+- **`findings`** is the evidence. It holds at most five entries: live findings first, by severity, then by id.
+- **`decided`** appears only with `--origin`. It is true on each class holding a finding whose `origin` was passed.
+- **`pa_line`** is set only when the class is `decided`, `recurs` and has an empty `prevented_by`. With `--prd-key` it holds the finished task line of §5.3, and `pa_next_step` stays null. Without `--prd-key`, `pa_line` stays null and `pa_next_step` holds the finished report sentence.
 
-- **It reads `register.json` only.** It never reads `runs/` or `scans/`, because replaying them is `register.py`'s logic, and it never reads `register.md`.
-- **Part 1 reads the working tree**, with the team root's "differs from `<default-ref>`" clause carried over (`architecture-grounding.md:19`). **Part 3 reads `--ref`**, as every promotion input does (`architecture-kb.md:85`).
-- **Each register reports one `state`.** None of them stops a run:
+`across` has the same envelope, plus `ref`. Its classes are the ones held in two or more registers:
 
-| `state` | When | Effect |
-|---|---|---|
-| `ok` | It parses, `format` is `1`, and `findings` is a list | Read. An empty list gives no classes |
-| `absent` | No `register.json` for the slug | Silent |
-| `unreadable` | An I/O or JSON error | Skipped; the report names it |
-| `unknown-format` | `format` is not `1` | Skipped; the report names it |
-| `malformed` | The top-level shape is wrong | Skipped; the report names it |
+```json
+{ "cwe": "CWE-89", "cwe_url": "…", "real": 5, "accepted": 4, "fixed_recent": 1,
+  "registers": [ { "repo": "api", "real": 3, "accepted": 2, "fixed_recent": 1, "last_at": "2026-11-02T09:14:00Z" } ],
+  "prevented_by": [ { "id": "ACME-17-AD3", "promotion": "proposed", "promoted_to": "ADR-0031" } ] }
+```
 
-  Within an `ok` register, a finding whose required field fails its check (§8) is dropped and counted in `dropped`.
-- **Staleness is accepted.** The file is derived, and may lag records that sit on unmerged `session/*` branches (`security-register-format.md:33`, `:61`). The output is advice, so a lag of one rebuild is acceptable. The plan line says when the tree differs.
+**Fields shared by both verbs.**
 
-### 3.4 The class, and the rule (E2, E5, E6)
-
-- **Key: `(repo-slug, cwe)`.** `cwe` is the primary one, and must match `^CWE-\d+$`. A finding that fails the pattern is counted under `unclassified` and never forms a class.
-- **Why only the primary CWE.** §5 rule 1 matches on "same CWE" (`security-register-format.md:130`). Using `other_cwes` as well would count one finding into several classes.
-- **What counts toward each part:**
-
-| Use | Statuses that count |
+| Field | What it holds |
 |---|---|
-| Part 1, live | `open`, `fix`, `fixing`, `reopened`, `accepted-risk` (`register.py:143`), plus a transient `new` |
-| Part 1, context | `fixed`, where the `at` of its last `history` entry is within 180 days of `--today` |
-| Part 2, recurs | `accepted-risk` in at least 2 findings of one register |
+| `state` | `ok`, `absent`, `unreadable`, `unknown-format` (a `format` other than `1`) or `malformed` (the top-level shape is wrong) |
+| `dropped` | Findings that failed a field check (§8) |
+| `unclassified` | Counted findings whose CWE failed its check |
+| `kb_skipped` | Team records whose frontmatter could not be read |
+| `last_at` | `register.json`'s own `last_at`, the last run, which shows when a register has gone quiet |
+
+### 3.3 What it reads, and when a register is missing or bad
+
+- **The register.** The script reads only `security/<slug>/register.json`. It never reads `register.md`, `runs/` or `scans/`, because replaying run records is `register.py`'s job.
+  - `<slug>` must match `register.py`'s slug pattern, and must not be `.` or `..`.
+  - For `classes`, each slug is the part of a `components` id before its first `:`, which is exact (`components.md:11`–`14`). It is then resolved against the directories under `security/` that hold a `register.json`.
+  - Any `state` other than `ok` is shown in a report line and never stops a run. `absent` is silent.
+- **Team records** are read with the standard library only, from the frontmatter of `architecture/decisions/<id>.md` and not from `index.yaml`:
+  - Read line by line between the first two `---` lines.
+  - Take `status`, `source`, `promotion` and `promoted_to` as scalars, stripping one pair of quotes.
+  - Take `components` as a flow list, parsed with `json.loads`, in the shape the harvest writes (`architecture-kb.md:34`).
+  - Take the body paragraph that opens `**Prevents:**`, up to the next blank line.
+  - A record that fails any of these is skipped and counted in `kb_skipped`.
+- **Staleness.** `register.json` is derived, and may lag records still on unmerged `session/*` branches (`security-register-format.md:33`, `:61`). The output is advice, so a lag of one rebuild is acceptable.
+
+### 3.4 The class and the rule (E2, E5, E6, E7)
+
+| Use | What counts |
+|---|---|
+| Part 1, live | `open`, `fix`, `fixing`, `reopened`, `accepted-risk` (`register.py:143`), and a transient `new` |
+| Part 1, context | `fixed`, where the `at` of its last `history` entry falls within 180 days of `--today` |
+| Part 2, recurs | `accepted-risk`, in at least 2 findings with distinct **accepting runs** |
 | Part 3, judged real | `fix`, `fixing`, `reopened`, `accepted-risk`, and `fixed` within 180 days |
 | Never | `false-positive` (roadmap `:395`). Part 3 also excludes undecided `open` |
 
-- **`prevented_by`.** Lists the ids of team records that meet both of these:
-  - their `index.yaml` status is `accepted`;
-  - the `**Prevents:**` paragraph of `decisions/<id>.md` holds the class's CWE as a whole token, so that `CWE-89` is not matched by `CWE-890`.
-
-  This matches a token the reader already holds, the same way the commit scan does (`.claude/rules/workflows-core.md:36`). It never extracts an identifier from the text. A promoted record still counts, because the organisation artifact it names covers the class too.
-- **Ranking.** Classes are sorted by:
+- **The accepting run.** A finding's accepting run is the `(run, at)` of the earliest entry in the unbroken run of `accepted-risk` entries that ends its `history`.
+  - Pairing `run` with `at` matters because two runs can share a `seq` (`security-register-format.md:43`).
+  - Taking the earliest entry means a security engineer's confirmation, made later in one batch, does not merge two acceptances made in separate runs into one.
+- **Prevented.**
+  - A record prevents a class when its `status` is `accepted` and its Prevents paragraph holds the CWE as a whole token, so that `CWE-89` does not match `CWE-890`.
+  - For `classes`, the record's `components` must also hold an id whose slug is the register's (item 1).
+  - The test matches a token the script already holds. It never extracts one (`.claude/rules/workflows-core.md:36`).
+  - A promoted record still prevents the class, because its organisation artifact covers it.
+- **Ranking**, in order:
   1. recurring and not prevented;
-  2. the highest live severity;
-  3. the live count;
-  4. whether a finding lies under a `--component` path;
+  2. on a run that passes `--component <slug>:<path>`, a finding under that path (`in_component`);
+  3. the highest live severity;
+  4. the live count;
   5. the slug;
   6. the CWE number.
 
 ## 4. Part 1 — the `known-weakness` challenge
 
-### 4.1 Resolution (E4)
+### 4.1 The configure-time line
 
-`resolve-architecture-grounding` gains a step 5a, **the register root**, inside the one resolution the run already makes (`architecture-grounding.md:85`):
-
-- `security_root` is `$SPECS_PATH/security`.
-- `security_grounding` is ON when at least one `*/register.json` exists under it.
-- `--no-arch` turns it OFF with the other two roots.
-
-The plan-approval line is shown with the team line:
+`resolve-architecture-grounding` gains a step 5a, inside the one resolution the run already makes (`architecture-grounding.md:85`). Where `$SPECS_PATH/security/` exists, it prints a line next to the team line:
 
 ```
-security registers: ON <specs>/security (<n> registers[; differs from <default-ref>])
-security registers: OFF (<reason>)
+security registers: ON <specs>/security (<n> registers; read for the repositories the work touches)
+security registers: OFF (disabled with --no-arch)
+security registers: OFF (no findings register under <specs>/security — it holds only cost or feedback entries, or other files)
+security registers: OFF (<specs>/security is not readable)
 ```
 
-**No line at all where `$SPECS_PATH/security/` does not exist (my call).** A tree that has never run a scan then prints exactly what it prints today. The team line, by contrast, is always shown (`:39`), because every family install has a knowledge base. Registers come from an optional plugin.
+**No line at all when `security/` does not exist (my call).** Registers come from an optional plugin, so a tree that has never run a scan prints exactly what it prints today. The team line, by contrast, always prints (`:39`).
 
-### 4.2 Dispatch and the agent
+### 4.2 Dispatch (E4)
 
-- **The dispatch condition widens.** "`arch_grounding: ON` or `team_grounding: ON`" becomes "… or `security_grounding: ON`" in `architecture-grounding.md:45`, `create-ard.md:620`, `specify.md:906` and `design.md:304`. `/update-spec` follows `/specify` (`update-spec.md:94`).
-- **The agent gains the input** `security_root: <specs>/security | null`. The extent of "at least one root is set" (`architecture-grounder.md:13`, `:20`) widens to three roots.
-- **New method step 5a.** Run `weakness-classes.py classes` with the slugs and ids from `components`. Raise one `known-weakness` per class that holds a live finding, taking the script's order.
-- **Hard rule `:85` widens by exactly that one script.**
+- **When the command calls the skill.** Only when the line said ON, and at the point where it builds `stack_facts`:
+
+  ```
+  Skill(workflows-core:weakness-classes, "classes --repo <slug>… --component <id>…")
+  ```
+
+  - `/create-ard` calls it at `create-ard.md:620`, `/specify` at `specify.md:906` and `/design` at `design.md:304`.
+  - `/update-spec` follows `/specify` (`update-spec.md:94`).
+- **What triggers a dispatch.** A result with at least one class is a trigger in its own right. The dispatch condition at `architecture-grounding.md:45` and in those three steps becomes: `arch_grounding: ON`, or `team_grounding: ON`, or a non-empty `classes`.
+- **What the grounder receives.** A new input, `weakness_classes: <absolute path of the JSON> | null`, set only when classes exist.
+- **What changes in the agent.**
+  - "At least one root is set" (`architecture-grounder.md:13`, `:20`) widens to "at least one of the two roots, or `weakness_classes`".
+  - A new method step 5a reads that file and raises one `known-weakness` per class, taking the script's order.
+  - Hard rule `:85` does not change. A new hard rule says never to open a file under `<specs>/security/`.
+- **When the skill fails.** The command keeps grounding exactly as it would have run without the call, and writes one line in the final report: `security registers: not read — <the skill's error>`.
 
 ### 4.3 Shape
 
@@ -157,232 +188,261 @@ arch_challenges:
   - kind: known-weakness
     subject: CWE-89 in api
     evidence: "security/api/register.md — [SEC#3] accepted-risk HIGH src/orders/Repo.java:88; [SEC#7] fixing MEDIUM src/search/Query.java:41"
-    governing: { id: ACME-17-AD3, title: …, root: team, path: architecture/decisions/ACME-17-AD3.md, url: null, rule: "<quoted>", prd: ACME-17, source: … }   # null where no live record prevents the class
-    weakness: { repo: api, cwe: CWE-89, live: 2, accepted: 1, awaiting_review: 1, review_due: 0, fixed_recent: 1, recurs: false, register: security/api/register.md }
-security_registers: [{ repo: api, state: ok }, { repo: billing, state: malformed }]
+    governing: { id: ACME-17-AD3, title: …, root: team, path: architecture/decisions/ACME-17-AD3.md, url: null, rule: "<quoted>", prd: ACME-17, source: … }   # null where nothing prevents the class
+    weakness: { repo: api, cwe: CWE-89, cwe_url: "https://cwe.mitre.org/data/definitions/89.html", live: 2, accepted: 1, awaiting_review: 1, review_due: 0, fixed_recent: 1, recurs: false, register: security/api/register.md }
 ```
 
-- **Evidence lists at most five findings.** Each is its `[SEC#n]`, status, severity and `path:line`. Where the path fails its check, the entry reads "location in register.md".
-- **`governing`** names the first id in `prevented_by`, with its Rule quoted, as the grounder quotes any record. It does so even when the record's `source:` is in `own_sources`: the caller then learns that its own ARD already prevents the class.
+**`governing` follows the standing rules, with two exceptions, each stated where its rule is:**
+- **Own source.** Where the record's `source:` is in `own_sources`, `governing` gives the record's `id` and `source` only. The caller holds that decision's live text. This is an exception to `architecture-grounder.md:42`.
+- **Promoted.** Where the record's `promotion` is `accepted` or `covered`, `governing` names its `promoted_to` artifact instead of quoting the record, and takes the artifact's id. This is an exception to `architecture-grounder.md:42` and to "A promoted team record is not read" (`architecture-grounding.md:71`). Only the promotion keys are taken.
 
 ### 4.4 Rank and cap
 
-- At most **three** `known-weakness` challenges, inside the existing cap of eight.
-- The order becomes `contradicts-*`, then `known-weakness`, then the radar kinds (my call). A recorded, triaged weakness in the code the work touches is measured evidence. A radar ring is policy about a technology.
+At most **three** `known-weakness` challenges, inside the existing cap of eight. The order becomes `contradicts-*`, then `known-weakness`, then the radar kinds (my call). A triaged weakness in code the work touches is measured evidence, while a radar ring is policy.
 
 ### 4.5 How each command presents it
 
-The challenge competes for a question slot like any other; it never adds one (`architecture-grounding.md:70`). The question cites the `[SEC#n]`, the CWE and the register link, and never a finding's text. It asks how the work avoids adding to the class.
+**What every command shares.** The challenge competes for a question slot (`architecture-grounding.md:70`). The command never opens a register: it builds the question from the JSON fields only, meaning `[SEC#n]`, the CWE link and the register link. The question asks how the work avoids adding to the class.
 
 - **`/create-ard` (the PA).**
-  - Where `recurs` is true and `governing` is null, the question offers the decision itself: `choices: ["Record an [AD#N] that prevents CWE-89 (Recommended)", "Not in this ARD"]`. A yes is grilled into Binds, Prevents, Rule and Alternatives like any decision, and `ard-reviewer` gates it.
-  - The ARD records nothing for the challenge itself.
-  - The grill also checks the ARD's own unharvested `[AD#N]` Prevents lines, which the run holds (`architecture-grounding.md:72`).
-- **`/specify`, and `/update-spec` for the items it revises.** Where the grill cannot settle the challenge, it writes a `- [ ]` open question. The question names the class and links the register relative to the specification. It says what settles it: a Security / privacy acceptance criterion in the specification, or, where the class recurs and nothing prevents it, an ARD decision whose Prevents names the CWE, through `/product-workflows:create-ard <PRD-KEY>`. This follows the shape at `architecture-grounding.md:75`.
-- **`/design` (the Dev).** `design-format` § Architecture governance gains a line under `## Risks & mitigations` (`design-format.md:176`) (my call):
+  - Where `recurs` is true and `governing` is null, the question offers `choices: ["Record an [AD#N] that prevents CWE-89 (Recommended)", "Not in this ARD"]`.
+  - A yes is grilled like any other decision, and `ard-reviewer` gates it.
+  - The grill also checks the Prevents lines of the ARD's own unharvested decisions (`:72`).
+- **`/specify`, and `/update-spec` for the items it revises.** A challenge the grill cannot settle becomes a `- [ ]` open question that:
+  - names `[CWE-89](https://cwe.mitre.org/data/definitions/89.html)` and links the register;
+  - says what settles it: a Security / privacy acceptance criterion, or, where the class recurs unprevented, an ARD decision whose Prevents names the CWE, made with `/product-workflows:create-ard <PRD-KEY>`.
+
+  The CWE must be a link here too, because `/epics` copies specification text into Epics, which pre-lint reads.
+- **`/design` (the Dev).** `design-format` § Architecture governance gains a line under `## Risks & mitigations` (`design-format.md:176`) (my call). It is advisory, and `design-reviewer` never gates on it:
 
   ```
-  - Known weakness: CWE-89 in api ([register](<link>)) — <how this design avoids adding to it, or why it accepts it>
+  - Known weakness: [CWE-89](https://cwe.mitre.org/data/definitions/89.html) in api ([register](<link>)) — <how this design avoids adding to it, or why it accepts it>
   ```
 
-  The line is advisory. `design-reviewer` never gates on it.
-- **The final report** extends its `architecture grounding:` line with `registers read: api; skipped: billing (malformed)`.
+- **The final report** adds `registers read: api; skipped: billing (malformed)` to its `architecture grounding:` line.
 
 ### 4.6 When there is no register
 
-- With no `security/` directory, or no register for any touched slug, `security_grounding` is OFF, or `classes` returns nothing. The dispatch and the digest are then exactly today's.
-- A script failure, or `status: ERROR` from the grounder, turns architecture grounding OFF in the way that already applies (`architecture-grounding.md:65`).
-- No command stops, asks or becomes unavailable because of a register.
+- **No `security/` directory.** Nothing prints and nothing is called.
+- **Registers exist but the work touches no class.** The dispatch and the digest are exactly today's. The one addition is the configure-time line.
+- **No run waits on a register.** No register state stops a run, asks a question or makes a command unavailable.
 
 ## 5. Part 2 — recurring accepted risks become a decision
 
 ### 5.1 Recurs (E6)
 
-A class recurs when its register holds **two or more** findings whose current status is `accepted-risk`.
+A class recurs when its register holds at least two findings at `accepted-risk` with distinct accepting runs (§3.4).
 
-- **No separate window.** An accepted risk returns to triage at its review-by date (roadmap `:395`). A risk that is then fixed, or ruled a false positive, stops counting at once. The review-by date already bounds the count.
-- **A review-due risk still counts.** It remains accepted until someone decides again, and the line says it is due.
-- **A Dev's accepted risk counts** (`confirmed: false`). It "takes effect at once" (`security-register-format.md:126`), and the PA decides whatever is proposed. If the Security Engineer overrules it, it drops out at the next read.
+- **One run is one judgement.** One triage that accepts two SQL injections in a single batch is one decision, not a pattern.
+- **There is no separate window.** A risk that is fixed, or ruled a false positive, at its review-by date stops counting at once.
+- **Some risks still count.** A review-due risk stays accepted until someone decides again. A Dev's unconfirmed risk is in effect now (`security-register-format.md:126`). The line says how many still await security review.
 
 ### 5.2 Prevented (E7)
 
-A class is prevented when `prevented_by` is not empty (§3.4). Only harvested records are visible to this test. Between the PA recording the `[AD#N]` and `/harvest-decisions` running, the test still reports the class unprevented. That costs at most a duplicate follow-up line, and §5's dedupe catches it within a folder.
+- **What the test sees.** Only harvested records. Between the PA recording a decision and the next `/harvest-decisions`, the class still reads as unprevented. A further accepted risk in that gap can raise a second line, which dedupe catches while the first stays open.
+- **An existing decision that covers the class in words.** Where one of the ARD's decisions already prevents the class in words, without naming the CWE, the PA can answer by adding the CWE link to that decision's Prevents. Wording that leaves the Rule's meaning unchanged is not a change (`ard-format.md:107`). A Rule that would need to say more is a new `[AD#M]`.
 
 ### 5.3 Who raises it (E8)
 
-**Decision: the scan raises it.** An accepted-risk decision is made only in the scan's triage, so the scan is where the event happens. The scan is already a `followup-emission` caller (`followup-emission.md:7`–`9`).
+**The scan raises it.** An accepted risk is decided only in the scan's triage.
 
-**When.** After 7.2's `commit`, the scan calls the skill: `classes --repo <repo-slug>`. Where both of these hold, it adds one item to 7.6's follow-ups:
-
-- the run's decisions include an `accepted-risk`, new or confirmed, for a finding of class C;
-- after the rebuild, C recurs with an empty `prevented_by`.
-
-That read informs a follow-up and changes nothing in the register, so it is not a read of the register's state (§10, item 3).
-
-**The line:**
+**When the scan calls the skill.** Only on a run that recorded at least one `accepted-risk` decision, after 7.2's commit. The call passes each such finding's `origin` and, on a key run, the run key set's PRD key (`scan.md:93`):
 
 ```
-- [ ] Run `/product-workflows:create-ard ACME-17` to record an [AD#N] whose Prevents names CWE-89 — 2 accepted risks of CWE-89 in the api register (security/api/register.md), and no team decision prevents it — raised by /security-workflows:scan
+classes --repo <repo-slug> --origin <origin>… [--prd-key <PRD-KEY>]
 ```
 
-- **It carries no `[SEC#n]` and no ``repository `<name>` ``.** Otherwise `register.py` would count the line as a finding's own follow-up (`register.py:882`–`885`), and `followup-emission` would match it as a security line (`:86`).
-- **It dedupes on the CWE and the register path.**
-- **The key is the nearest `PRD-` folder at or above the unit folder**, by the rule at `architecture-kb.md:20`.
-- **Where it lands.**
-  - On a key run, it lands in the unit's folder (§2 of `followup-emission`).
-  - On a path run it is report-only, in `### Next step`, because there is no folder. The `/create-ard` grill and Part 3 still reach that class later.
+- **Where an origin comes from.** For an existing finding, the answered plan's `origins` holds it (`register.py:939`). For a new finding, it is `<scan id>:<plugin id>` (`security-register-format.md:85`).
+- **Why origins and not numbers.** A number can move between the plan a person answered and the rebuilt register (§2 there). An origin never changes.
+- **What it misses.** A new finding whose allocation gave way has another origin, so it is missed. The next accepted risk of that class raises the line instead.
+- **Not a state read.** The read decides no register change, so it does not read the register's state (§10, item 3).
 
-**`/create-ard` raises it directly** when the PA is there (§4.5). No command writes an `[AD#N]` itself: the PA answers the grill, and `ard-reviewer` gates the result.
+The script prints the finished line, so the line is deterministic and covered by the selftest:
 
-### 5.4 The decision's form (E9)
+```
+- [ ] Run `/product-workflows:create-ard ACME-17` to record an [AD#N] whose Prevents names [CWE-89](https://cwe.mitre.org/data/definitions/89.html) — 2 accepted risks of CWE-89 in the api register (security/api/register.md), accepted in 2 runs, 1 awaiting security review, and no team decision for api prevents it — raised by /security-workflows:scan
+```
 
-`**Prevents:**` names the CWE as a link: `[CWE-89](https://cwe.mitre.org/data/definitions/89.html)`, where the number is the validated digits.
+- **No `[SEC#n]` and no ``repository `<name>` ``.** The line carries neither, so `register.py` does not take it for a finding's line (`:882`–`885`), and `/implement` does not read it back (`implement.md:266`).
+- **It lands in the PRD folder's `follow-ups.md`.** The scan passes that item with its own `unit_folder` and `key`, the PRD's, as `/conformance` does (`followup-emission.md` §2, §8). The decision belongs in the PRD-level ARD.
+- **The key run is the main source.** In practice the written line comes from a Dev's key run. A path run has no folder, so its `pa_next_step` sentence goes in the report's `### Next step` only (`followup-emission.md:44`). There, `/create-ard`'s grill (§4.5) and Part 3 are the backstop.
 
-- A bare `CWE-89` in an ARD is a pre-lint MINOR on every run (`pre-lint.md:63`). A token inside a link is discarded (`:56`).
-- The coverage test finds the token in the link text.
-- `ard-format` § Architecture governance gains one sentence saying this. The pre-lint grep is not touched (CLAUDE.md, *One key namespace*).
+### 5.4 Phase 7.6 mechanics in the scan
 
-### 5.5 Downstream
+- **The persist step runs when the PA line is the only follow-up.** Today it runs only "where 7.2 built any" (`scan.md:566`).
+- **The line is written exactly as the script printed it**, beside the lines `commit` printed.
+- **Cancelling the PA line records nothing.** Cancelling a finding's line writes a second run record that returns the finding to `fix`. The PA line has no finding, so no decision is cancelled. The class is raised again by its next accepted risk.
+- **Dedupe matches open lines only.** The identity is the PRD key, the CWE and the register path. A ticked line does not suppress the next one, so a later accepted risk raises the class again.
+- **`followup-emission` declares the identity.** §6 gains the predicate: a decision another role must record, here the scan's line for the PA. §5 gains the identity and its open-only match, beside *A security finding's line* (`:86`).
+
+### 5.5 The decision's form (E9)
+
+`**Prevents:**` names the CWE as a link built from the validated digits, for example `[CWE-89](https://cwe.mitre.org/data/definitions/89.html)`. Pre-lint discards a hit inside a link (`pre-lint.md:56`), and the coverage test finds the token in the link text. `ard-format` § Architecture governance gains one sentence saying this. The pre-lint grep itself is not touched (CLAUDE.md, *One key namespace*).
+
+### 5.6 Downstream
 
 From here on, nothing new is involved:
 
 1. The ARD merges through `handoff-to-main`.
-2. `/harvest-decisions` turns the decision into a team record, with Prevents carried verbatim (`architecture-kb.md:60`).
-3. `prevented_by` now names that record, so Part 2 goes quiet for the class and Part 1 shows it as `governing`.
+2. `/harvest-decisions` records the decision (`architecture-kb.md:60`).
+3. The class's `prevented_by` now names that record, so Part 2 goes quiet and Part 1 shows the record as `governing`.
 4. `/promote-decisions` offers the record (§6).
-5. `ard-resolution` makes breaking the decision a reviewer BLOCKER (`ard-resolution.md:117`).
+5. `ard-resolution` makes breaking it a reviewer BLOCKER (`ard-resolution.md:117`).
 
-### 5.6 Review-by interaction
+### 5.7 Review-by interaction
 
-1. **A decision changes no risk.** No status, owner or review-by date moves when an `[AD#N]` lands. `ard-resolution` binds the artifacts that consume the ARD, not code a person has already accepted.
-2. **The review date is when the decision reaches existing code** (my call). Scan Phase 5's row for a review-due accepted risk (`scan.md:305`) names the live team record whose Prevents covers its class. The data comes from one `classes` call made before the triage. Re-accepting then means choosing visibly against a team decision. The suggestion stays as it is today: the current status, shown for a new decision.
+1. **A new decision changes no accepted risk.** No status, owner or date moves when a decision lands. `ard-resolution` binds the artifacts that consume the ARD, not code someone has already accepted.
+2. **The review date is when a decision reaches existing code (my call).**
+   - On a scan run whose triage holds at least one review-due row, Phase 5 calls `classes --origin <each review-due finding's origin>`, after its rebuild (`scan.md:300`). No other run makes that call.
+   - Each such row then names the live team record that prevents its class, so re-accepting the risk means choosing against that record in the open.
+   - The suggestion is unchanged: the row still offers the finding's current status.
 
-## 6. Part 3 — recurrence across teams
+## 6. Part 3 — recurrence across registers
 
 ### 6.1 What a team is (E10)
 
-**A team is a register: one code repository.**
-
-- One `/promote-decisions` run sees one specs repository. Other teams are other specs repositories, which no run can read (`architecture-promotion.md:56`).
-- Inside one specs repository, the register is the only unit of ownership the tree records (`security-register-format.md:3`).
-- PRD groups (`promotion-scout.md:30`) lose every finding raised by a path run, because those carry no `units` (`register.py:521`).
-- Aggregating across specs repositories is a non-goal (§9). Coverage is still checked organisation-wide, because another team's promoted ADR or standard sits in the architecture repository the scout reads.
+A team is a register: one code repository.
+- **Why not the specs repository.** One `/promote-decisions` run sees one specs repository, and other teams are other specs repositories (`architecture-promotion.md:56`).
+- **Why not a PRD group.** A PRD group (`promotion-scout.md:30`) loses every finding raised by a path run, because those carry no `units` (`register.py:521`).
+- **Coverage is still checked organisation-wide.** The scout reads the shared architecture repository.
+- **Wording.** User-facing text says "recurs in N registers".
 
 ### 6.2 Signal and threshold
 
-A class recurs across teams when **two or more registers** each hold at least one judged-real finding of it (§3.4). Undecided findings and false positives do not count.
+A class recurs across registers when **two or more registers** each hold at least one judged-real finding of it (§3.4).
 
 ### 6.3 Where it surfaces
 
-1. **§5 signals.** `/promote-decisions` also runs `weakness-classes across --ref <default-ref>` through the skill, and writes the JSON next to the signals file. "Nothing to promote" now also requires that no class recurs across teams (`architecture-promotion.md:98`).
-2. **§6 comparison.** `promotion-scout` gains the input `weakness_classes`, the path of that JSON.
-   - For each class it returns `relation: covered | uncovered`, together with the `accepted` ADR or `active` standard that prevents it. "Prevents" means the artifact names the CWE or states a rule that implies it; the scout reads every artifact it cites.
-   - `EMPTY` (`promotion-scout.md:58`) also requires no classes.
+1. **§5 signals.** `/promote-decisions` calls the skill with `across --ref <default-ref>`, and keeps the JSON beside the signals file. "Nothing to promote" now also requires no classes (`architecture-promotion.md:98`).
+2. **§6 comparison.** `promotion-scout` gains the input `weakness_classes`, the path of that file.
+   - For each class it returns `relation: covered | uncovered`, together with the `accepted` ADR or `active` standard that names the CWE or states a rule implying it. It reads every artifact it cites.
+   - `EMPTY` and `ERROR` (`promotion-scout.md:58`) take the classes and their file into account.
+   - The command builds rows from the JSON fields only. It never opens a register.
 3. **§7 shortlist.**
-   - **A promotion row whose record is in a class's `prevented_by`** gains the reason `prevents CWE-89, which recurs in 3 registers (api, billing, web)`. It ranks on that reason right after cluster size (`:123`) (my call).
-   - **An uncovered class that no record prevents** is listed, unnumbered, under *Reported only* (`:132`): `CWE-89 — recurs in 3 registers (api, billing, web): 4 accepted risks, 2 fixed — no team decision prevents it, and no ADR or standard covers it — record one with /product-workflows:create-ard`.
+   - **A candidate row whose record is in `prevented_by`** gains the reason `prevents CWE-89, which recurs in 3 registers (api, billing, web)`, and ranks on it right after cluster size (`:123`) (my call).
+   - **An uncovered class that no record prevents** is listed, unnumbered, under *Reported only* (`:132`), with each register's last run date:
+
+     ```
+     CWE-89 — recurs in 3 registers: api (last run 2026-11-02), billing (2026-06-30), web (2026-10-19); 4 accepted risks, 2 fixed — no team decision prevents it, and no ADR or standard covers it — record one with /product-workflows:create-ard
+     ```
+
    - **Covered classes** get one count line.
-   - **No ADR is drafted from a class alone.** A decision starts in an ARD (§5).
+4. **With classes but no candidate.** The scout is still dispatched, and the classes are listed. No row is numbered and nothing is drafted, so the run goes to §11.2 with §4's marks, or stops where there are none. A decision always starts in an ARD (§5).
 
 ## 7. Plugin boundaries
 
 | Plugin | Changes |
 |---|---|
-| `workflows-core` | Adds `scripts/weakness-classes.py` (with `--selftest` in CI) and `skills/weakness-classes/`. Changes `security-register-format` §1, §6 and the new §7; `architecture-grounding` (step 5a, plan line, dispatch condition, consumption); `architecture-grounder` (input, step 5a, `known-weakness`, hard rule); `architecture-promotion` §5–§7; and `promotion-scout` (input, output, `EMPTY`) |
-| `product-workflows` | `create-ard.md`, `specify.md` (`update-spec` follows it), `promote-decisions.md`, and the Prevents-link sentence in `ard-format.md` |
-| `dev-workflows` | `design.md`'s dispatch condition, and `design-format.md`'s *Known weakness* line |
-| `security-workflows` | `scan.md` Phase 5 (the review-due annotation) and Phases 7.2/7.6 (the PA follow-up). `register.py` is unchanged |
+| `workflows-core` | New: `scripts/weakness-classes.py` and `skills/weakness-classes/`. `security-register-format`: §1, §6 and a new §7. `architecture-grounding`: step 5a, the line, the dispatch condition, §Consumption and its exception at `:71`. `architecture-grounder`: the input, step 5a, `known-weakness`, the exception at `:42` and the new hard rule. `architecture-promotion` §5–§7. `promotion-scout`. `followup-emission` §5 and §6. `architecture-kb`: its second implementer |
+| `product-workflows` | `create-ard.md`, `specify.md` (which `update-spec` follows), `promote-decisions.md`, and the Prevents-link sentence in `ard-format.md` |
+| `dev-workflows` | `design.md`'s skill call and dispatch condition; the *Known weakness* line in `design-format.md` |
+| `security-workflows` | `scan.md` Phase 5 (the gated annotation) and Phases 7.2 and 7.6 (the PA line). `register.py` does not change |
 | `docs-workflows` | None |
 
-**How no plugin comes to depend on `security-workflows`.**
-
-- The register is data in SPECS, and reading it needs no dependency (roadmap `:210`).
-- Its format and its only reader are both in `workflows-core`, which every family plugin already declares.
+**No plugin comes to depend on `security-workflows`.**
+- The register is data in SPECS, so reading it needs no dependency (roadmap `:210`).
+- The register's format and its only reader live in `workflows-core`, which every family plugin already declares.
 - `grep -l security-workflows plugins/*/.claude-plugin/plugin.json` still lists only its own manifest (`.claude/rules/security-workflows.md:16`).
-- On a machine without `security-workflows` there are no registers, so every path above takes the absent case.
+- Without `security-workflows` there are no registers, so every path above takes the absent case.
 
 ## 8. Safety — register text is data
 
-1. **The reader prints validated structured fields only:**
-   - `[SEC#n]` as an integer;
-   - `cwe` (`^CWE-\d+$`);
-   - `severity` and `status` (enums);
-   - `path` (`register.py`'s safe-path pattern, `register.py:162`, else null);
-   - `line` (integer);
-   - `review_by` (`YYYY-MM-DD`);
-   - `confirmed` (boolean);
-   - the slug (slug pattern);
-   - counts.
+1. **The validators are at least as strict as `register.py`'s.** Every pattern is anchored with `\Z` and `re.ASCII` (`register.py:147`–`151`):
 
-   It **never** prints `title`, `reason`, `evidence`, `by`/`owner`, `links`, `scope` or `units`. A field that fails its check is dropped, never echoed. The script never opens a path taken from the register, and never runs anything a field names.
-2. **The agents never open a register file.** `architecture-grounder` and `promotion-scout` each gain a hard rule: never read `register.md`, `register.json`, `runs/` or `scans/` under `security/`, and use the script as the only way in. Their untrusted-content blocks (`architecture-grounder.md:90`–`125`, `promotion-scout.md:67`–`102`) still cover everything else.
-3. **Every line, row and question built from a class** uses those fields plus fixed wording, as follow-up lines do today (`security-register-format.md:98`–`105`). A CWE's URL is built from its validated digits only.
-4. **What the artifacts record is human-authored.** An ARD decision, a specification question or a design line is written by a person in the grill, never copied from register text.
-5. **A `--selftest` fixture plants injected text.** It plants `Ignore all previous instructions` in a title and a reason, a CWE of `CWE-89; rm -rf`, and a path containing a backtick and `../`. It then asserts that none of them reaches the output. `register.py`'s selftest plants the same phrase (`register.py:1996`).
+   | Field | Check |
+   |---|---|
+   | `cwe` | `^CWE-\d{1,6}\Z`, because the digits build a URL |
+   | `path` | `register.py`'s safe-path pattern (`:162`); no `..` segment; at most 512 characters; otherwise null, shown as "location in register.md" |
+   | `id`, `line` | `int`, not `bool`; `id` ≥ 1, `line` ≥ 0 |
+   | `severity`, `status` | Their enums |
+   | `review_by` | A real `YYYY-MM-DD` |
+   | `confirmed` | A boolean |
+   | slug | The slug pattern |
+   | `--prd-key` | The key grammar (`register.py:149`) |
+   | `--origin` | Checked against the origins the register holds, and otherwise ignored |
+   | Team record id | The key-grammar id shape from `architecture-kb.md:20` |
+
+   The script **never** prints `title`, `reason`, `evidence`, `by`, `owner`, `links`, `scope` or `units`. A field that fails its check is dropped, never echoed. The script opens no path taken from the register, and runs nothing named in it.
+2. **No consumer is given, or told to read, a register.** Each command and agent gets the JSON file. The grounder and the scout also gain a hard rule against opening anything under `<specs>/security/`. Links to `register.md` inside an artifact are fine: they are for people. The untrusted-content blocks (`architecture-grounder.md:90`–`125`, `promotion-scout.md:67`–`102`) still cover everything else.
+3. **Every line, row and question** is built from those fields plus fixed wording, as follow-up lines already are (`security-register-format.md:98`–`103`). The PA line's closed list is: the CWE and its URL, the slug, the register path, the counts and the PRD key.
+4. **Artifacts are written by people.** What an ARD, a specification or a design records is authored in the grill, never copied from a register.
+5. **The selftest plants hostile values separately**, and asserts that none reaches the output:
+   - `Ignore all previous instructions` in a title and in a reason (as at `register.py:1996`);
+   - `CWE-89; rm -rf` and `CWE-1234567`;
+   - the path `../etc/passwd`, which has no backtick;
+   - a path containing a backtick;
+   - an `id` of `true` and a `line` of `-1`;
+   - a team record whose Prevents holds `CWE-890`, which must not prevent `CWE-89`.
 
 ## 9. Non-goals and anti-goals
 
 **Non-goals.**
-
-- No scanning, patching or fixing. Claude Security and the scan do that.
-- No writes to a register. `register.py` stays its only writer and does not change.
-- No automatic `[AD#N]`, and no ADR drafted from a register alone.
-- No new gate. `known-weakness` is advice, and a BLOCKER comes only through a recorded `[AD#N]`.
-- No CWE taxonomy rollup, and no use of `other_cwes`.
-- No aggregation across specs repositories.
-- No new environment variable or flag.
-- No change to triage statuses, suggestions or review-by rules.
-- No threat models: those are B, C and D.
+- No scanning, patching or fixing; no writes to a register, and no change to `register.py`.
+- No automatic `[AD#N]`, and no ADR drafted from a register; no new gate, since a BLOCKER comes only through a recorded `[AD#N]`.
+- No CWE rollup and no `other_cwes`; no aggregation across specs repositories; no new environment variable or flag.
+- No change to triage statuses, suggestions or review-by rules; no threat models, which are B, C and D.
 
 **Anti-goals.**
-
-- A finding's text in any agent's context, artifact, follow-up or shortlist.
-- Any consumer failing, stopping or asking because of a register.
-- A slug or key parsed out of free text.
-- Reading `runs/` and replaying them outside `register.py`.
-- Exempting `CWE-` from the pre-lint grep.
-- The recurrence rule implemented in more than one place.
+- A finding's text in any consumer's context, artifact, line or row; any consumer failing, stopping or asking because of a register.
+- A slug or key parsed out of free text; replaying `runs/` outside `register.py`; exempting `CWE-` from pre-lint; the rule implemented in more than one place.
 
 ## 10. Claim-expiry sweep — notes E makes stale
 
-The sweep covers the scope of refinement 4 in `.claude/rules/claim-sweep.md`. Each item below is matched by phrase, then the whole paragraph is read:
+**Method.** The sweep covers refinement 4's scope. Each match is by phrase, and the whole paragraph around it is read. The subject is "who reads the register, and who builds a follow-up line" (refinement 6).
 
-1. **`security-workflows/CHANGELOG.md:235`**: "Not built yet … Not in it: E". This stays: it is true of that release. The new entry says what E adds.
-2. **`security-register-format.md:11`**: "register.py … implements this file" is narrowed to §1–§5. §7 is `weakness-classes.py`'s.
-3. **`security-register-format.md:33`**: "No run reads the derived files back as its state … One read is the exception". This is an exclusivity probe (refinement 3). E's reads, including the scan's Part 2 read after its own rebuild, decide no register change. The sentence must say "as the register's state", so the reads are visibly outside it. `.claude/rules/security-workflows.md:34` ("The one read of a derived file as state") needs the same change.
-4. **`security-register-format.md:158`** (§6) and **`.claude/rules/security-workflows.md:22`**: the readers recipe greps for `args: "security-register-format`, which misses readers that go through the script. Rewrite it as "the callers of `weakness-classes.py`", with a grep recipe that matches the execution phrase.
-5. **`architecture-grounding.md`** `:3` ("a second, team root"), `:39` ("the two roots … turns both off"), `:45` (the dispatch condition), `:81` (the invariant on what it never writes), and its Consumers line.
-6. **`architecture-grounder.md`** `:3` (the description), `:13` and `:20` (two roots), `:72` (the kinds enum), and `:85` (Bash).
-7. **The three dispatch sentences**: `create-ard.md:620`, `specify.md:906` and `design.md:304`. `update-spec.md:94` must be re-read, not edited.
-8. **`.claude/rules/docs-grounding.md:58`, `:64`** (what the grounder reads) and its `paths:`, which gain the skill and the script.
-9. **`.claude/rules/workflows-core.md:18`** ("three bundled skills") and **`plugins/workflows-core/docs/README.md:32`** ("the three bundled skills").
-10. **`promotion-scout.md:3`, `:58`** and **`architecture-promotion.md:98`**, which hold the early exit.
-11. **The roadmap spec** `:151` and `:208` ("E's consumers (`architecture-grounder` and `promotion-scout`)") are outside the sweep's scope. The scan joins the consumers through Part 2, so D2's sentence can take an amendment line, as the roadmap's earlier amendments did.
-
-A sweep for the subject, "who reads the register", covers items 3, 4 and 11 (refinement 6).
+1. **`security-workflows/CHANGELOG.md:235`.** It says E is not built yet. It stays, because it is true of that release.
+2. **`security-register-format.md:11`.** "register.py … implements this file" narrows to §1–§5.
+3. **"Never read back as its state", and its one exception** (refinement 3). These need "as the register's state":
+   - `security-register-format.md:22`–`23` and `:33`;
+   - `.claude/rules/security-workflows.md:34`;
+   - `security-workflows/docs/workflow.md:70`.
+4. **Who builds follow-up lines.** `security-register-format.md:98`–`103` gives §3's closed list. `.claude/rules/security-workflows.md:37` ("`register.py commit` builds every follow-up line") and `:44` ("builds them at Phase 7.2") must also name the script's PA line and its own closed list.
+5. **Who reads the register.**
+   - `security-register-format.md:105` ("every reader … reads it the same way");
+   - `:158`, §6's recipe, and `.claude/rules/security-workflows.md:22`. Both become the reference's loaders plus the skill's callers, each found by a grep on its execution phrase.
+6. **`architecture-grounding.md`:**
+   - `:3`, `:39` and `:45`;
+   - `:71`, which gains its exception;
+   - `:81`, and `:82` ("every miss is OFF"), which gains the line for a failed skill call;
+   - the Consumers line, and § Consumption, which gains "never opens a register".
+7. **`architecture-grounder.md`:** `:3` and `:7` (the description and the purpose); `:13` and `:20` (the roots); `:42`, which gains its exceptions; and `:49`, `:72` and `:79`, since `EMPTY` can no longer occur when classes are present.
+8. **The dispatch steps.** `create-ard.md:620`, `specify.md:906` and `design.md:304` change. `update-spec.md:94` must be re-read, not edited.
+9. **`scan.md`.**
+   - `:300` gains the gated call.
+   - `:566` changes in three places: the persist condition, "written exactly as `commit` printed it", and cancel-to-`fix`, which must not apply to the PA line.
+10. **`followup-emission.md`.** §5 and §6. The caller list at `:7`–`9` does not change.
+11. **Promotion.** `promotion-scout.md:3`; `:58`, both its `EMPTY` and its `ERROR` half; and `architecture-promotion.md:98`.
+12. **`architecture-kb.md:3`** ("The script implements it"), and **`.claude/rules/docs-grounding.md`**: `:58`, `:60`, `:64`, and `paths:`, which gains the skill and the script.
+13. **The skill count.** `.claude/rules/workflows-core.md:18` and `plugins/workflows-core/docs/README.md:32` both say "three bundled skills".
+14. **`CLAUDE.md`.** The Shared-authorities bullet for `security-register-format` ("the rules `register.py` applies"), and its `workflows-core` paragraph.
+15. **The CI step.** A new `weakness-classes.py --selftest` step goes in `.github/workflows/validate-catalog.yml`, next to `register.py`'s at `:242`. **That file is GIT-G1's to edit**, so this is a coordination point for the pull request. No edit is planned without its owner.
+16. **The roadmap** at `:151` and `:208` ("E's consumers …") is outside the sweep's scope. The scan joins those consumers, so D2 can take an amendment line.
 
 ## 11. Docs, versions, coupling
 
 **Pages.**
-
-- **`workflows-core`:** `docs/reference/grounding.md`, `agents.md`, `references.md#skills` (a new skill fails `check-docs.sh` without its entry), `README.md:32`, and `family-map.md`'s security lane.
+- **`workflows-core`:** `docs/reference/grounding.md`, `agents.md`, `references.md#skills` (a new skill without its entry fails `check-docs.sh`), `README.md:32`, and `family-map.md`'s security lane.
 - **`product-workflows`:** `docs/commands/create-ard.md`, `specify.md`, `update-spec.md` and `promote-decisions.md`.
 - **`dev-workflows`:** `docs/commands/design.md`.
-- **`security-workflows`:** `docs/commands/scan.md`, `workflow.md`, `reference/security-register.md` (who reads the register) and `roles-and-phases.md` (the PA receives the follow-up).
+- **`security-workflows`:** `docs/commands/scan.md`, `workflow.md`, `reference/security-register.md` and `roles-and-phases.md`, which says the PA receives the line.
 
-**Rules files.** The rules files named in §10, and the workflow-map lines in `.claude/rules/product-workflows.md:42`, `:44` and `:45`, `security-workflows.md:27` and `dev-workflows.md` (`/design`).
+**Workflow-map lines.** `.claude/rules/product-workflows.md:42`, `:44` and `:45`, `security-workflows.md:27`, and the `/design` line in `dev-workflows.md`.
 
-**Versions.** Each plugin takes its next minor at merge: `workflows-core` from 1.85.0, `product-workflows` from 3.79.4, `dev-workflows` from 4.63.0 and `security-workflows` from 0.11.3. Each has a dated `CHANGELOG.md` entry.
+**Versions.** Each plugin takes its next minor at merge, from today's `workflows-core` 1.85.0, `product-workflows` 3.79.4, `dev-workflows` 4.63.0 and `security-workflows` 0.11.3, each with a dated `CHANGELOG.md` entry.
 
-**Coupling.** One bullet in `.claude/rules/plugin-updates-coupling.md` naming all four, in both directions:
+**Coupling.** One bullet naming all four plugins, covering both directions:
+- **Older dependents with the newer core.** They never call the skill, so grounding is today's and no PA line is written.
+- **Newer dependents with the older core.** The skill is missing, so each call fails and leaves one report line (§4.2), and no run breaks.
 
-- **An older dependent beside the newer `workflows-core`.** The old commands never resolve `security_grounding` and never pass `security_root`, so the grounder behaves as it does today, and no PA line is written.
-- **A newer dependent beside the older `workflows-core`.** `security_grounding` is never returned, so it is never ON. The skill does not exist, and a failed reader call is skipped with one report line by design (§4.6), so no run breaks. The signals are lost until both sides are updated.
+## 12. Review rulings, and checks made after review
 
-## 12. Open questions for the maintainer
+**Rulings.** No question is left open.
+- **Q1: the threshold is 2 for both Part 2 and Part 3**, with Part 2's two accepted risks coming from distinct runs. Each acceptance is a deliberate decision with an owner, and the distinct-runs rule keeps one batch from counting as a pattern.
+- **Q2: a team is a register.** A PRD group loses every finding raised by a path run, and a specs repository is out of reach from one run.
+- **Q3: the scan raises the follow-up.** The accepted risk is decided there, and the row says "a follow-up for the PA". The grill alone would wait until a PA happened to refine an ARD that touches the repository.
+- **Q4: unconfirmed acceptances count.** They are in effect at once, an overrule removes them at the next read, and the line says how many await security review.
+- **Q5: one script, reached through a skill.** That gives one implementation of a domain rule, and `specs-git` shows the route works.
 
-1. **Threshold: is it 2 for both Part 2 (accepted risks in one register) and Part 3 (registers)?** *Recommend 2.* Every accepted risk is a deliberate decision with an owner, so two of one class are already a pattern. The PA or the architect filters what is proposed.
-2. **Is a "team" a register (one code repository) or a PRD group?** *Recommend the register* (§6.1). A group loses every finding from a path run. A team as a specs repository cannot be reached from one run.
-3. **Should the scan raise the PA follow-up, or should only `/create-ard`'s grill?** *Recommend the scan, on key runs* (§5.3). The row says "a follow-up for the PA", and the scan is where the accepted risk is decided. The grill alone would wait until the PA happens to refine an ARD for a PRD that touches the repository.
-4. **Should a Dev's accepted risk, still awaiting security review, count toward recurrence?** *Recommend yes* (§5.1). It is in effect now. An overrule removes it at the next read, and the PA decides the outcome anyway.
-5. **One script reached through a skill, or byte-identical copies in three plugins?** *Recommend the skill* (§3.1): one implementation of a domain rule, as `specs-git` already does. Copies are allowed under the copied-scripts rule, but that rule was written for small utilities.
+**Checked after review.**
+- **Automatic closures carry a dated `history` entry.** `_apply` is the only status write (`register.py:715`). Automatic closures are recorded decisions (`:1282`–`1285`, `:1317`). Each decision appends `at` and `run` (`:725`–`726`).
+- **`/implement`'s read-back ignores the PA line.** It takes only lines whose span is `/dev-workflows:implement <unit_key>` and that carry ``repository `<name>` `` (`implement.md:266`). The PA line has neither.
