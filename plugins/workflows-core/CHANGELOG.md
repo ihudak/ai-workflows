@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.85.1] — 2026-11-13
+
+GIT-G1 Part 3, batch 1: `specs-git.py`'s selftest moves out of the script the plugin ships and into the repository's `scripts/selftests/`, and `--selftest --group <name>` runs one group of it alone. No command's behaviour, output or exit status changes, and no other plugin changes with this release or relies on it, so `workflows-core` is updated alone.
+
+### Changed
+
+- **`specs-git.py` no longer carries its selftest.** The tests are `scripts/selftests/specs_git_selftest.py`, outside the plugin, and `python3 plugins/workflows-core/scripts/specs-git.py --selftest`, run from a checkout of the repository, is still the command that runs them and the one CI runs: the script's `_run_selftest` executes that file in the script's own namespace. The two imports and three constants that only the tests used move with them, and the shipped script falls from 18,105 lines to 5,110 (`wc -l`). An installed copy holds no `scripts/selftests/`, so there `--selftest` prints one line on stderr, starting `specs-git: not run (the selftest is not shipped with the plugin`, and exits 2. Every subcommand behaves, prints and exits as before.
+
+### Added
+
+- **`specs-git.py --selftest --group <name>`** runs only the named group of the selftest, and `--group` may be repeated; the named groups run in the selftest's own order, whatever order they are named in. An unknown name is a usage error naming every group, `--group` without `--selftest` is a usage error too, and a run with `--group` prints `specs-git selftest: PASS (<n> checks; partial: <groups>)`, which is never evidence that the whole selftest passes. The selftest's new `selftest` group pins it with six checks: one group alone, the order, an unknown name, `--group` without `--selftest`, the not-shipped line, and CI's one `run:` line naming the script, which carries no `--group`. The repository also gains `scripts/selftests/mutants.py`, a runner for one-line mutants of this plugin's scripts, and its mutants file, `scripts/selftests/specs-git-mutants.json`; CI does not run the mutants. `.claude/rules/specs-git-selftest.md` describes the selftest's place, its groups and the mutants.
+
 ## [1.85.0] — 2026-11-13
 
 D50: work done on one day is ordered by a UTC instant. An `implementation.md` block carries `at:`, the instant `/implement` appended it, and `source-truth` §7.8 rule 1 orders an Epic's conformance record against the PRD folder's by the instant each run started, its `At:` line, wherever both records carry one, and by their `Run:` dates, as before, wherever either does not. Update with `dev-workflows` 4.63.0, whose `/implement` and `/conformance` write the two lines and whose `/ready` orders by them; `docs-workflows` 1.39.0, whose `/document` and `/release-notes` read `At:` for rule 1 and write instants of their own; and `product-workflows` 3.79.4, whose workflow page describes the new order. A record written before this release carries no instant and reads exactly as before; nothing is migrated.
