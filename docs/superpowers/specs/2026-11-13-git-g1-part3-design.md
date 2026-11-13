@@ -32,9 +32,9 @@ Since the parent design was written, the STAY-2 and MIDRUN-B4 batch (PR #185) ta
 | L2 | **Wrapper slimming is merged with Part 2's 2b+ batches**, so each command file is edited once for its start, end, handoff and gate wrappers together. |
 | L3 | **Whether a command asks is resolved from `--command` against the exempt set of five, which the script holds.** Any other command asks, so a new command asks by default. It is never a flag a run must remember to pass: four live runs dropped lines that rested on the run remembering (LC31). This changes the mechanism told to the maintainer on 2026-11-13, a flag each command passes, and keeps its point: nothing is inferred. |
 | L4 | **Batch 1 does not wait for the r4 rehearsal; batch 2's plan does.** |
-| L6 | **The handoff asks too.** P4's exemption of the five logging commands was agreed on the lead's statement that they finish before the run they were typed under goes on. That is false: each of the five can wait on the user while its run is open (§3), and so the outer run could hand off and switch the checkout under one. So the handoff's prepare call makes the open-run test again, over every other run of the session, and asks the same question before the consent choice (§4.4). Moving each logging command's start call below its last question was considered and refused: `/prompt` does free-form work on the open run's files after its question, a question of `/diagnose-session` is held in a reference where no gate on the command's text sees it, and the move would reverse `CLAUDE.md`'s rule that the preflight runs at run start. |
-| L7 | **D15 is closed in batch 2 by one shared read.** Git overwrites a git-ignored copy at a gated path in a switch, a merge or a fast-forward pull without a word. Row B′ already tests for such a copy. The scripted gates make the same read before every switch, merge or pull they run or name. That set is derived at build time from PH §4.4's per-row commands, row C's repair and §6.1's stops, never from a list in this document. No run is known to reach D15, and `to-fix.md` says to fix it only with a measured case; it is taken here because the read is a few lines once the gates are in the script, where it was a paragraph per row in prose. |
-| L8 | **The start's question fires only on a first start.** A call that carries the answer, a `--rerun`, and a `--resume` that finds its run's record keep 1.84.0's identity rules untouched (P2), so a run is never asked about itself. A `--rerun` or a `--resume` that finds no record of its own is its run's first start, and asks. That covers the skill's remake of a first start the harness stopped: the first call saved nothing, so its remake finds no record. |
+| L6 | **Every call that moves the checkout asks too.** P4's exemption of the five logging commands was agreed on the lead's statement that they finish before the run they were typed under goes on. That is false: each of the five can wait on the user while its run is open (§3), and so the outer run could go on and switch the checkout under one. So every scripted call that would move the checkout makes the open-run test again, over every other run of the session, and asks the same question first; and a remedy printed while another run is open names nothing to run (§4.4). Moving each logging command's start call below its last question was considered and refused: `/prompt` does free-form work on the open run's files after its question, a question of `/diagnose-session` is held in a reference where no gate on the command's text sees it, and the move would reverse `CLAUDE.md`'s rule that the preflight runs at run start. |
+| L7 | **D15 is closed in batch 2 by one shared read.** Git overwrites a git-ignored copy at a gated path in a switch, a merge or a fast-forward pull without a word. Row B′ already tests for such a copy. The scripted gates make the same read before every switch, merge or pull they run or name. That set is §4.4's: derived at build time from the script's own calls and the remedies it prints, never from a list in this document. No run is known to reach D15, and `to-fix.md` says to fix it only with a measured case; it is taken here because the read is a few lines once the gates are in the script, where it was a paragraph per row in prose. |
+| L8 | **The start's question fires only on a first start.** A call that carries the answer, a `--rerun`, and a `--resume` that finds its run's record keep 1.84.0's identity rules untouched (P2), so a run is never asked about itself. A `--rerun` or a `--resume` that finds no record of its own is its run's first start, and asks. That covers the skill's remake of a first start the harness stopped: the first call saved nothing, so its remake finds no record. A re-run that would move the checkout still takes §4.4's test, which is about other runs. |
 | L5 | **The three open rule gaps of the parent design's §6** are settled in the design-questions step of the batch that needs each, as that section says: (i) and (iii) in batch 2, (ii) with `/brd-package`'s preparation. |
 
 ## 3. What was measured
@@ -69,8 +69,8 @@ The question fires only on a first start (L8).
 ### 4.2 What it replaces, and what it leaves alone
 
 - **The five logging commands are unchanged at their start.** Typed mid-run, they keep decision S3 as 1.84.0 shipped it: they switch nothing and commit only their own change, by the landing or the here form. Commenting on a run in progress is what they are for.
-- **No pipeline command runs mid-run again.** After the question, either the open run no longer protects, or the typed command has stopped. So a producer's own handoff never moves the checkout under an open run, which was MIDRUN-HANDOFF's case, and its shared-key case with it.
-- **No gate runs under an open run.** Every `require-on-main` caller is a producer (§3), and no `branch-check` caller is a logging command. PH §3.3's *Row B′'s remedy* and §4.4's per-row commands keep their wording. PH §6.1's mid-run stop forms become unreachable: batch 2 verifies the caller set again and retires them in its claim sweep.
+- **No pipeline command starts mid-run again.** After the question, either the open run no longer protects, or the typed command has stopped. So a producer's handoff never moves the checkout under a run that was open when the producer started, which was MIDRUN-HANDOFF's case, and its shared-key case with it.
+- **No gate starts under an open run.** Every `require-on-main` caller is a producer (§3), and no `branch-check` caller is a logging command, so the start's `midrun` field is never set when a gate runs. A run can still be open beside a gate in the reverse order, a logging command typed after the gate's own run started; §4.4 covers that, and PH §6.1's mid-run stop forms are kept for it, keyed on the test the gate call makes and no longer on `midrun`.
 - **A prerequisite still in progress is caught.** Today, `/specify` typed while `/create-ard` still waits on a question for the same key reads the ARD as absent and carries on without it. Under P4 it asks first.
 - **The same command typed again gets the same question.** For the 30 commands that ask, this replaces the key-set comparison (the STAY-2 rulings' M1). M1's keyless gap, a keyed run retyped with no key reading as a restart, can then arise only among the five logging commands. It stays listed, and P2's identity question after the rehearsal settles it.
 
@@ -80,18 +80,31 @@ The question fires only on a first start (L8).
 - **The prose path.** With no session id there are no records. SRG already states an observable trigger for a run typed mid-run by hand (§3.5: another run of this conversation has printed its preflight's `Environment:` line, and no `Specs repo:` line since); the question is asked on that trigger too.
 - **The question rules.** A command that asks must have loaded the question rules before its start call. Both reviews of this design read that step ahead of the start call in all 30 commands that ask. `check-questions` holds the step above a command's first question, not above its start call, so batch 2 either adds that test or states that review holds it.
 
-### 4.4 The handoff asks too (L6)
+### 4.4 Every call that moves the checkout asks too (L6)
 
-**Before the consent choice, the handoff's prepare call applies the open-run test to every other record of the session**, whichever run started first. Where one passes, it returns §4.1's question, and the skill asks it before presenting the consent array.
+**No scripted call moves the checkout while another run of this session is open on HEAD's branch, unless the user has said that run is finished or abandoned.** The rule is stated by class, and its members are derived at build time from the script's own calls: every call of the scripted handoff and gates, and of a re-run's branch disposition, that would switch, merge or pull in the checkout. As the tree stands, they are:
 
-- **Finished or abandoned.** The answer call of §4.1 runs, and the handoff goes on to its consent choice.
-- **Still in progress.** The handoff is not made while that run stands. The run says so, names the other run, and waits; when the user says to go on, it makes the prepare call again.
+- the handoff's switch onto a branch that is not HEAD's (PH §2.2), and its switch back (§2.3);
+- `require-on-main` row C's repair, which switches to the default branch and pulls;
+- `branch-check` §6.2's switch onto an open branch;
+- the branch disposition of a `start --rerun`, which `/document` and `/release-notes` make after a question.
 
-This closes three cases with one test:
+**How each asks.** The call that would move makes the open-run test over every other record of the session, whichever run started first. Where one passes, it moves nothing and returns §4.1's question.
+
+- **Finished or abandoned.** The answer call of §4.1 runs, and the call goes on.
+- **Still in progress.** Nothing moves while that run stands. The run says so, names the other run, and waits; when the user says to go on, it makes the call again.
+
+**Where the question stands.** A handoff's prepare call makes the same test, so an ordinary producer hears the question before its consent choice and not after it. `/brd-package` executes its handoff two phases after its consent, so its question comes at the execution. A handoff that reuses HEAD's own branch moves nothing and asks nothing.
+
+**Remedies.** A stop the script prints while another run of the session is open names no switch, merge or pull: it says to wait until that run finishes or is ended, in the form PH §6.1 already has. One rule gives every `require-on-main` remedy (PH §3.3's *Row B′'s remedy*, §4.4's per-row commands) that form too.
+
+**The re-run is the one place this rule touches the start's 1.84.0 paths** (P2). Batch 2's design questions confirm it against the rehearsal's findings. Where the test cannot be added there without changing an identity rule, the re-run is stated as not covered and filed in `to-fix.md`.
+
+This closes three cases with one rule:
 
 - **A logging command left open at its own question** while the user goes back to the run it was typed under.
 - **`/prompt` in the middle of its correction.**
-- **A run the user reported finished that goes on after all.** Its own handoff then finds the later run open, and asks.
+- **A run the user reported finished that goes on after all.** Its own next move then finds the later run open, and asks.
 
 **What it does not close:** an earlier run's end commits the session files it finds dirty, a later open run's unfinished ones included, under its own message. Nothing is lost and no checkout moves. Telling those files apart is MIDRUN-LATEWRITE's subject, and goes to TAIL-G1 with it (§6).
 
@@ -117,7 +130,7 @@ What the script and the skill must support is the parent design's §5.2, §5.4 a
 - **The pull request is a call of its own.** Its body is written by the run, and filling a repository's template is the run's judgment (PH §2.7.1), so the commit-and-push call returns, the run writes the body, and a further call opens the pull request.
 - **Judgment stays with the run, and its text moves beside the skill.** Choosing the consent class (PH §4.0), the title and body facts, the template fill, and what a caller does on `absent` are not scripted. What a run must read to make them lives in the skill's text or in small files beside it, as `run-key-set.md` does for the run key set.
 - **The record gains what the handoff and gates share.** The branch this run created or reused (row B's ownership test reads it), a consent answer carried to a later phase, and the gate results a later step reads. Each call names its record by `--started` (P2).
-- **§4's question**, at the start with the exempt set of L3, and at the handoff (§4.4).
+- **§4's question**, at the start with the exempt set of L3, and at every call that moves the checkout, with the remedies' rule (§4.4).
 - **The loader's routing (L1)**, and with it the fate of the three generated entry files. The citations of PH that the skill's text and the script's output serve, and those that still read a file, are stated in the loader's paragraph, as they are for SRG. `scripts/reference-parts.py`'s entry-file checks change in the same batch, so the gates stay green.
 - **D15 (L7).** One primitive reads whether an ignored copy stands at a gated path, and each scripted row that runs or names a switch, a merge or a pull warns as row B′ does, with `git add -f` and a commit first. `/update-spec`'s own pending-change test, which lists no ignored file, is routed through the same read. The fourth bullet of D15, a read-only mount refreshed from outside, is outside any run's reach, and moves to `to-fix.md`'s *Accepted* section in the commit that closes the rest.
 - **RO-SIZE closes here.** Done when no ordinary run of any of the 16 consumers makes a read over the Read tool's limit. Show it by listing every citation of PH in those commands with the text that serves each, and by measuring the bytes a producer and a consumer read for their handoff and gates before and after (the parent design's §8).
@@ -144,7 +157,7 @@ The fix `to-fix.md` named was a per-run list of the paths each run wrote. The me
 - **A list of paths cannot attribute a shared file.** Two runs of one session append to the same cost file, so ownership is per entry. The snapshot comparison already works per entry.
 - **It would rest on the run remembering.** Most session files are written by the run's own Write calls, so the run would have to report each one, and LC31 is that kind of rule being dropped.
 - **Almost nothing reaches it.** One of its two routes needs a background writer of session files, which the family does not have. The other needs three runs open on one branch, ended out of order.
-- **The handoff does not need it.** A producer passes its deliverable paths explicitly, and after P4 no pipeline command runs beside an open run at all.
+- **The handoff does not need it.** A producer passes its deliverable paths explicitly, and after P4 no pipeline command starts beside an open run. What can still stand beside one is a logging command, and a run the user reported finished that goes on (§4.4).
 - **TAIL-G1 gives it a natural home.** That track puts the tail's writers under the skill. A script that makes the writes can record them without relying on the run.
 
 ## 7. Goals, non-goals, anti-goals
@@ -155,7 +168,7 @@ The parent design's §2 stands. For Part 3:
 
 1. The handoff and both gates have one implementation, tested, with every caller on it.
 2. A run reads less to hand off or to gate than it does today, and nothing over the Read tool's limit.
-3. Fewer reachable states than today, not more: after P4, the only run that can start beside an open run is a logging command, and after L6 no handoff moves the checkout under any open run without the user's answer.
+3. Fewer reachable states than today, not more: after P4, the only run that can start beside an open run is a logging command, and after L6 no scripted call moves the checkout under any open run without the user's answer.
 4. `specs-git.py` is a file an implementer can read and a reviewer can check.
 
 **Non-goals**
@@ -168,7 +181,7 @@ The parent design's §2 stands. For Part 3:
 
 **Anti-goals**
 
-- A handoff that moves the checkout under a run that is still open, without the user having said that run is finished or abandoned.
+- A scripted call that moves the checkout under a run that is still open, without the user having said that run is finished or abandoned.
 - A test of which commands ask that rests on a flag, a naming pattern, or anything a run must remember (L3).
 - A new record field or call that infers which run it belongs to (P2).
 - A gate that reads more after this part than before it.
@@ -185,7 +198,7 @@ The parent design's §3 stands: the plugin-root boundary, Python 3 standard libr
 ## 9. Done when
 
 - **Batch 1:** the selftest lives outside `specs-git.py`; the check count is unchanged; a mutant per scenario group still fails its check; the eight named checks each have a mutant on record; one group can be run alone; CI is green.
-- **Batch 2:** all 23 producers, 16 consumers and 24 `branch-check` callers run through the skill; §4's question has a selftest for each answer, for several open runs, for the same command typed again with the earlier run's end still finding its record, for a re-run and a continuation that find their record and are not asked, for a remade first start that finds none and is, and for a logging command left unchanged; the handoff's test (§4.4) has one for each answer, with the other run started before and started after; RO-SIZE is shown closed as §5.2 says; D15's read has a selftest for each row that uses it; MIDRUN-HANDOFF, RO-SIZE and D15 are gone from `to-fix.md`, D15's read-only-mount bullet moved to its *Accepted* section; the claim sweep's before and after counts are on record; the gate chain exits 0.
+- **Batch 2:** all 23 producers, 16 consumers and 24 `branch-check` callers run through the skill; §4's question has a selftest for each answer, for several open runs, for the same command typed again with the earlier run's end still finding its record, for a re-run and a continuation that find their record and are not asked, for a remade first start that finds none and is, and for a logging command left unchanged; each call §4.4 names has one for each answer, with the other run started before and started after, and each remedy one for its form under an open run; RO-SIZE is shown closed as §5.2 says; D15's read has a selftest for each row that uses it; MIDRUN-HANDOFF, RO-SIZE and D15 are gone from `to-fix.md`, D15's read-only-mount bullet moved to its *Accepted* section; the claim sweep's before and after counts are on record; the gate chain exits 0.
 - **Batches 3 onward:** the parent design's §8 measurements, before and after each batch.
 - **The last batch:** neither reference is read whole by any run, and each one's size is stated before and after.
 - **Each batch:** a verification record written last, the rulings and the verbatim ledger committed before the workspace goes, dated changelogs, and a coupling bullet for each `workflows-core` release.
