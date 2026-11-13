@@ -19,6 +19,7 @@ Loaded with `.claude/rules/workflows-core.md`, whose `paths:` it shares: the cal
 - The model fallback chain (Opus 5.5 → 5 → 4.8 → 4.7 → 4.6 → Sonnet 5.5 → Sonnet 5 → Sonnet 4.6 → Sonnet 4.5)
 - The mandatory Opus code-review checklist
 - The `model_routing` YAML handoff block shared between commands and agents
+- §4's third coding-model clause — at `HIGH-RISK`, `/implement` codes on Fable where run-state `fable_escalation.choice` is a Fable value; `run-flags` §8 is its setting
 - The `phase: verify-resume` protocol for review-gated verification
 - The large-input scan fan-out policy (§8): the input-shape trigger, the `resolved-folder read → parallel code-scanner (cap 4) → Opus synthesis` pattern, the SIGNIFICANT floor it imposes, and §8.5's opt-in seeded second round with its rule that an unresolved theme is named, never flattened into a gap ([why](../../docs/maintainers/rationale.md#model-routing-fan-out))
 - `defect-reporter`'s tier: under `--skip-feedback` it runs on the §2.1 Sonnet chain, the tier of the `impl-maintenance` it replaces (recorded as `defect_model` in the `model_routing` block). No `classification.md` chain names Haiku; the Haiku rows the `haiku` alias resolves against, which serve as Haiku's chain wherever `run-flags` says chain row, are `workflows-core:run-flags` §2's ([why](../../docs/maintainers/rationale.md#defect-reporter-tier))
