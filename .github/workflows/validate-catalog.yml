@@ -319,6 +319,7 @@ jobs:
         #
         # The tests are in scripts/selftests/specs_git_selftest.py, outside the plugin, and the
         # script executes that file in its own namespace. With no --group, this step runs every
-        # group of the selftest; s_ci_runs_all, in its selftest group, fails where the run: line
-        # below changes at all.
+        # group of the selftest. s_ci_runs_all, in its selftest group, fails unless the run: line
+        # below, stripped of the whitespace around it, is the only run: line here naming
+        # specs-git.py and reads exactly as written; a change of indentation alone passes it.
         run: python3 plugins/workflows-core/scripts/specs-git.py --selftest
