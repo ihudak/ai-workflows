@@ -113,11 +113,11 @@ Compose the draft and BOTH write and show it:
   `<!-- implementation records read: <instant> -->`, `<instant>` being the
   instant the run started, in UTC — the `started_at` `/document` took in its
   *Mode detection*, verbatim — then exactly one newline and nothing else: no
-  blank line, no trailing space. Where the run no longer holds `started_at`
-  verbatim, it writes no last line, never a new reading of the clock, which
-  would be later than its start. The DO-NOT-MERGE banner, where there is one,
+  blank line, no trailing space. The DO-NOT-MERGE banner, where there is one,
   stays the body's first line, where the banner bullet above puts it, and this
-  line is the file's last. `/dev-workflows:ready` reads the file's last line
+  comment line is the file's last. Where the run no longer holds `started_at`
+  verbatim, it writes no such comment line, never a new reading of the clock,
+  which would be later than its start. `/dev-workflows:ready` reads the file's last line
   against exactly
   `^<!-- implementation records read: ([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z) -->$`,
   as the instant the run that wrote the draft started. Where the line does not
