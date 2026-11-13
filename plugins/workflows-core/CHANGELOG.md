@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.85.1] — 2026-11-13
+
+IMP-G5: `session-hygiene` §6 names `/dev-workflows:implement`, whose run-state file is now a session file a later `/implement` in the same worktree resumes from, and states that command's record, its stop line and the one point at which it compares. Update with `dev-workflows` 4.64.0, whose `/implement` resumes a stopped run and compares the environment its run-state file records. No other command's behaviour changes: `/dev-workflows:design` and `/product-workflows:specify` compare at the three points they named before.
+
+### Changed
+
+- **§6 lists `/implement`** among the commands that keep a session file they resume from — its run-state file, `$(git rev-parse --git-path dev-workflows/implement-run.json)` in the code repository — and gains **`/implement`'s record**:
+  - the same four members, written as one JSON object into the run-state file's `run_environment` key by Phase 1.4's `init` when it creates the file, never as a section;
+  - on a resume, `/implement` reads that key off the file as its Phase 0 `peek` printed it, a `null` key being a file with no section, and writes it with `run-state.py set` once its `init --resume` has taken the file over, since until then the file is the earlier session's;
+  - in the `RESUME_ENVIRONMENT_CHANGED:` stop line, `<address>` is the file's `key`, left out on a direct run, and `<session file path>` is the run-state file's path;
+  - `/implement` compares at point 1 alone.
+- **§6's Record resolves an unset `$SPECS_PATH`.** `specs_path` reads `unset`, and `specs_origin` `none`, where `$SPECS_PATH` is unset or empty, since `git -C ""` reads the current directory's repository — on `/implement`'s direct run, the code repository's. Where `$SPECS_PATH` is set, both read as before.
+- **§6's compare points.** Point 1, in a command that resolves no `$REPOS_PATH`, comes straight after the preflight. Points 2 and 3 run in a command that names them, and a command that names point 1 alone — `/implement` — leaves its handoff and its tail to §7's `env-check`, which compares them with the `Environment:` line its preflight printed.
+- **§7** says the commands §6 serves keep a record to compare with at the points each names, `/implement` only when a later invocation resumes its run, and its *Callers* paragraph says §6 checks before a deliverable write for the commands that name its point 2, where it said for the two commands it serves. The generated parts `session-hygiene/resume-environment.md` and `session-hygiene/env-check.md` carry both changes.
+- **Pages.** The References page's `session-hygiene` entry says a command that resumes from a session file compares its recorded environment on a resume and, where the command says so, before its handoff and its terminal writes. The environment page names `/dev-workflows:design` and `/product-workflows:specify` as the two commands that compare their session file's recorded environment before their deliverable write.
+
 ## [1.85.0] — 2026-11-13
 
 D50: work done on one day is ordered by a UTC instant. An `implementation.md` block carries `at:`, the instant `/implement` appended it, and `source-truth` §7.8 rule 1 orders an Epic's conformance record against the PRD folder's by the instant each run started, its `At:` line, wherever both records carry one, and by their `Run:` dates, as before, wherever either does not. Update with `dev-workflows` 4.63.0, whose `/implement` and `/conformance` write the two lines and whose `/ready` orders by them; `docs-workflows` 1.39.0, whose `/document` and `/release-notes` read `At:` for rule 1 and write instants of their own; and `product-workflows` 3.79.4, whose workflow page describes the new order. A record written before this release carries no instant and reads exactly as before; nothing is migrated.
