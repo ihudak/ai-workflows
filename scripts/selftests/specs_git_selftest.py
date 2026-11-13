@@ -13011,6 +13011,11 @@ def selftest(groups=None):
 
     def scenarios_selftest(tmp):
         """The selftest's own command line: one group alone, the partial line, the refusals, and the file's absence."""
+        if os.environ.get("SPECS_GIT_SELFTEST_NESTED") == "1":
+            # A run this group started reached it by a route selftest()'s head guard does not see, which tests only
+            # the names asked for -- a break in the selection below, say: fail at once and start nothing.
+            check(False, "s_nested: a nested run was asked for every group, or for group selftest")
+            return
         ALL = ("status, branch_merged, branch_key, push_scope, owner_repo, mode, state, lines, gate, end, land, replay, "
                "start, midrun, skill, selftest")
         # Every run started here is marked nested, so a break in group selection fails rather than recursing, and
@@ -13041,7 +13046,7 @@ def selftest(groups=None):
                   "specs-git selftest: FAIL (nested)",
                   "  s_nested: a nested run was asked for every group, or for group selftest"],
               "s_nested_refused: a nested run of group selftest fails rather than recursing (%r)" % got)
-        lone =os.path.join(tmp, "s-lone", "plugins", "workflows-core")
+        lone = os.path.join(tmp, "s-lone", "plugins", "workflows-core")
         os.makedirs(lone)
         shutil.copytree(HERE, os.path.join(lone, "scripts"))
         got = cli("--selftest", script=os.path.join(lone, "scripts", "specs-git.py"), env=nested)
@@ -13079,7 +13084,7 @@ def selftest(groups=None):
               and got["_err"] == ("specs_git_selftest.py: not run (it runs only inside specs-git.py: "
                                   "python3 plugins/workflows-core/scripts/specs-git.py --selftest)\n"),
               "s_file_run_directly: the selftest file run on its own names the command that runs it (%r)" % got)
-        ci =os.path.join(HERE, "..", "..", "..", ".github", "workflows", "validate-catalog.yml")
+        ci = os.path.join(HERE, "..", "..", "..", ".github", "workflows", "validate-catalog.yml")
         with open(ci, encoding="utf-8") as fh:
             runs = [line.strip() for line in fh if line.strip().startswith("run:") and "specs-git.py" in line]
         check(runs == ["run: python3 plugins/workflows-core/scripts/specs-git.py --selftest"],

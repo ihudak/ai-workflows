@@ -8,26 +8,29 @@ The mutants file (default scripts/selftests/specs-git-mutants.json) is a JSON li
 (unique), group (one of the selftest's groups), file (a path under plugins/workflows-core/scripts/, relative to the
 repository root), old and new (each one line of text, with no newline) and fails (the start of the failure line of
 the check the mutant must fail: at least the check's label up to and including its colon, such as "e_land_refused:",
-and as much of the message after it as tells that check from others with the same label). The selftest's groups, in
-its run order, are read from the usage error `specs-git.py --selftest --group '?'` prints on stderr, run on the
-repository's script writing no bytecode and with GITHUB_ACTIONS empty, since the selftest refuses --group in CI before
-it reads a name. --only <id> selects one mutant and may be repeated; with none, every mutant is selected. --list
-prints each selected mutant's id, group and fails, one per line, and runs nothing. --check reads each selected
-mutant's file in the repository, never writing there, and counts its old text in it, overlapping occurrences each
-counted, as a run does; it prints STALE <id>: old text found <n> times in <file> for each not found exactly once,
-then "mutants: <n> checked, <t> stale", runs nothing, and exits 0 only where none is stale. It finds a mutant whose
-old text has gone, never a check made to assert less, which only a run shows.
+and as much of the message after it as tells that check from others with the same label). In every mode the runner
+first reads the selftest's groups, in their run order, from the usage error `specs-git.py --selftest --group '?'`
+prints on stderr: one run of the repository's script, which runs no group and writes nothing, with -B and with
+GITHUB_ACTIONS empty, since the selftest refuses --group in CI before it reads a name. --only <id> selects one mutant
+and may be repeated; with none, every mutant is selected. --list prints each selected mutant's id, group and fails,
+one per line, and runs no mutant and no group. --check reads each selected mutant's file in the repository, never
+writing there, and counts its old text in it, overlapping occurrences each counted, as a run does; it prints STALE
+<id>: old text found <n> times in <file> for each not found exactly once, then "mutants: <n> checked, <t> stale",
+runs no mutant and no group, and exits 0 only where none is stale. It finds a mutant whose old text has gone, never a
+check made to assert less, which only a run shows.
 
 The runner copies plugins/workflows-core/, scripts/selftests/ and .github/workflows/validate-catalog.yml into a new
-temporary directory, at the same relative paths and without any __pycache__ directory, and writes and runs only there:
-it never writes under the repository, and the directory is removed when it exits, whatever happened. That copy is
+temporary directory, at the same relative paths and without any __pycache__ directory, writes only under that
+directory and makes every group run there: it never writes under the repository, and the directory is removed when it
+exits, whatever happened. That copy is
 never run in: each run, a baseline's included, is in a fresh copy of it, removed after the run, so nothing a run
 writes -- a file a case leaves, or bytecode -- reaches another run. A SIGTERM, SIGHUP or SIGINT ends the run under way
 and removes the directory, any further one ignored meanwhile, and the runner exits 128 + the signal's number; one the
 runner inherited as ignored, as under nohup, stays ignored. Every run is `python3 -B specs-git.py --selftest --group
-<group>` in its copy, in a session of its own, with PYTHONDONTWRITEBYTECODE=1 and its TMPDIR inside the temporary
-directory. However a run ends, its process group then gets SIGTERM, so a process in it can pass the signal on to a
-session of its own, and SIGKILL three seconds later where any of the group is left.
+<group>` in its copy, in a session of its own, with PYTHONDONTWRITEBYTECODE=1, with GITHUB_ACTIONS empty, since the
+selftest refuses --group in CI, and with its TMPDIR inside the temporary directory. However a run ends, its process
+group then gets SIGTERM, so a process in it can pass the signal on to a session of its own, and SIGKILL three seconds
+later where any of the group is left.
 
 For each group a selected mutant names, the group first runs once unchanged, capped at 900 seconds, and its time is
 kept; where that run does not end in a PASS line, BASELINE RED <group> is printed with a line under it saying why --
@@ -231,14 +234,15 @@ def _end_group(p):
 
 
 def run_group(top, tree, group, limit):
-    """One run of <group> in the copy <tree>, in a session of its own, writing and reading no bytecode, its temporary
-    files in a directory of its own under <top>: (its exit status, None where <limit> seconds stopped it; the lines of
+    """One run of <group> in the copy <tree>, in a session of its own, writing and reading no bytecode, with
+    GITHUB_ACTIONS empty, since the selftest refuses --group in CI, its temporary files in a directory of its own under
+    <top>: (its exit status, None where <limit> seconds stopped it; the lines of
     its standard output; the lines of its stderr; the seconds it took). Its process group is ended however it ends
     (_end_group), a signal that reaches the runner just before _end_group holds signals included. What a killed run
     leaves in its directory that cannot be removed now -- a directory a case made read-only, say -- goes when <top>
     does, since TemporaryDirectory's cleanup restores the write bits first."""
     scratch = tempfile.mkdtemp(prefix="tmp-", dir=top)
-    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", TMPDIR=scratch)
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", GITHUB_ACTIONS="", TMPDIR=scratch)
     cmd = [sys.executable, "-B", os.path.join(tree, SCRIPT), "--selftest", "--group", group]
     with open(os.path.join(top, "out"), "w+b") as out, open(os.path.join(top, "err"), "w+b") as err:
         p = None
@@ -304,7 +308,7 @@ def _first(lines):
 
 def check_stale(chosen):
     """--check: each mutant <chosen>'s old text counted in its file in the repository, read and never written, a
-    STALE line for each not found exactly once, then the count; runs nothing. Returns the exit status."""
+    STALE line for each not found exactly once, then the count; runs no mutant and no group. Returns the exit status."""
     stale = 0
     for m in chosen:
         with open(os.path.join(ROOT, m["file"]), "rb") as fh:
@@ -394,9 +398,11 @@ def main(argv=None):
                                                "groups of the specs-git.py selftest, on a temporary copy of the tree.")
     ap.add_argument("--only", action="append", metavar="ID", help="run only this mutant; repeatable")
     mode = ap.add_mutually_exclusive_group()
-    mode.add_argument("--list", action="store_true", help="print each selected mutant's id, group and fails; run nothing")
+    mode.add_argument("--list", action="store_true",
+                      help="print each selected mutant's id, group and fails; run no mutant and no group")
     mode.add_argument("--check", action="store_true",
-                      help="count each selected mutant's old text in its file in the repository; run nothing")
+                      help="count each selected mutant's old text in its file in the repository; run no mutant and "
+                           "no group")
     ap.add_argument("--file", default=DEFAULT_FILE, metavar="PATH", help="the mutants file (default: %(default)s)")
     a = ap.parse_args(argv)
     groups = selftest_groups()
