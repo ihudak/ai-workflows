@@ -19,7 +19,7 @@ All six commands in this plugin load the `model-routing` skill, run this classif
 
 ## What classification changes
 
-`SIMPLE` and `MODERATE` continue on whatever model the session is already running, with nothing extra added on their account — save `/implement`'s `MODERATE` work. `/implement` authors its code through a coding subagent, `code-writer`, rather than in the session itself, and picks that subagent's model by class: `SIMPLE` work is coded on the session's own model and stays unreviewed, while from `MODERATE` up the code is written on the session's model where that is already Opus, Fable or Mythos, and otherwise on the first available model of [the fallback chain](#the-fallback-chain) — Opus wherever one is reachable — so a Sonnet session's `MODERATE` code is written on Opus. `review-fixer` takes the same model there. `/implement` also reviews `MODERATE` work with the same Opus `code-review` gate as `SIGNIFICANT` work, before its tests run, though with no `risk-planner` call.
+`SIMPLE` and `MODERATE` continue on whatever model the session is already running, with nothing extra added on their account — save `/implement`'s `MODERATE` work. `/implement` authors its code through a coding subagent, `code-writer`, rather than in the session itself, and picks that subagent's model by class: `SIMPLE` work is coded on the session's own model and stays unreviewed, while from `MODERATE` up the code is written on the session's model where that is already Opus, Fable or Mythos, and otherwise on the first available model of [the fallback chain](#the-fallback-chain) — Opus wherever one is reachable — so a Sonnet session's `MODERATE` code is written on Opus. `review-fixer` takes the same model there. At `HIGH-RISK`, on a session on neither Fable nor Mythos, both can write the code on Fable instead, as settled before the run's first coding step at that class by `WORKFLOWS_FABLE_ESCALATION` — a setting the companion `workflows-core` plugin documents, whose default asks you — and never on a run that fixes a security finding or cannot rule one out, nor where Fable is not reachable, and never under `--enforce-model`, which decides every model itself; `risk-planner` and `code-review` keep their Opus models either way ([`/implement`](../commands/implement.md#who-writes-the-code)). `/implement` also reviews `MODERATE` work with the same Opus `code-review` gate as `SIGNIFICANT` work, before its tests run, though with no `risk-planner` call.
 
 `SIGNIFICANT` and `HIGH-RISK` change different things depending on which command you're running, because three distinct patterns share this classification:
 
@@ -36,7 +36,7 @@ All six commands in this plugin load the `model-routing` skill, run this classif
 
 ## The fallback chain
 
-Every `SIGNIFICANT`/`HIGH-RISK` Opus step — and `/implement`'s `MODERATE` review, and its coding from `MODERATE` up wherever the session is not already on Opus, Fable or Mythos — resolves against the same ordered list, taking the first model available in the environment:
+Every `SIGNIFICANT`/`HIGH-RISK` Opus step — and `/implement`'s `MODERATE` review, and its coding from `MODERATE` up wherever the session is not already on Opus, Fable or Mythos and that coding is not moved to Fable at `HIGH-RISK` (above) — resolves against the same ordered list, taking the first model available in the environment:
 
 1. `claude-opus-5-5`
 2. `claude-opus-5`

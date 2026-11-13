@@ -82,10 +82,14 @@ failure_input: /tmp/dw-impl-failure-AbC123
 model_routing:             # CONTEXT, inline. The run's model_routing block
   classification: SIGNIFICANT     # (workflows-core:model-routing/classification §4), as far as this
   implementation_model: claude-opus-5-5   # handoff declares it: the class `class` carries, the model
-  enforced_model: opus     # this dispatch runs on, and — only where §10 enforces a model —
-  routing: bypassed        # enforced_model with routing: bypassed. code-writer acts on no field of it:
-                           # its tier is the dispatch's model:, its class is `class`, and it makes no
-                           # dispatch of its own for enforced_model to reach.
+  enforced_model: opus     # this dispatch runs on — at HIGH-RISK, the escalated Fable value (a
+  routing: bypassed        # claude-fable-* id, or the family fable) where /implement's run-state
+                           # fable_escalation records the run's choice of Fable, by §4's third clause
+                           # (/implement's Fable escalation guard) — and, only where §10 enforces a
+                           # model, enforced_model with routing: bypassed.
+                           # code-writer acts on no field of it: its tier is the dispatch's model:, its
+                           # class is `class`, and it makes no dispatch of its own for enforced_model
+                           # to reach.
 report_file: /tmp/dw-impl-code-AbC123
                            # WRITTEN, never read. An empty file the caller made outside every repository
                            # (`command mktemp -t dw-impl-code-XXXXXX`); the report goes here and nowhere

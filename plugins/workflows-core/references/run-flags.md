@@ -161,7 +161,7 @@ nothing for it.
 
 Any other value reads as `ask`, and the run prints one line saying so, wherever it reads the variable.
 
-**Who reads it.** `/implement` alone, at its guard and on a resume of a stopped run, to apply `classification.md` §4's third clause. Its guard restates these values and its read in its own text, which a compaction cannot take from it. On a resume, a choice the variable made follows its value on the resuming invocation, while an answer the user gave, or a fallback the run made, is kept whatever the variable now says.
+**Who reads it.** `/implement` alone, at its guard and on a resume of a stopped run, to apply `classification.md` §4's third clause. Its guard restates these values and its read in its own text, which a compaction cannot take from it. On a resume, a choice the variable made follows its value on the resuming invocation, while an answer the user gave, or a fallback the run made, is kept whatever the variable now says — save that a resuming invocation under `--enforce-model`, or on a Fable or Mythos session, keeps the record as it stands, and that otherwise a choice of Fable the resuming session cannot reach gives way to the unescalated model, whatever made it.
 
 **Where it is set.** In the session's environment, as the run flags' environment defaults are. No command writes it, and no answer to the guard's question changes it.
 
