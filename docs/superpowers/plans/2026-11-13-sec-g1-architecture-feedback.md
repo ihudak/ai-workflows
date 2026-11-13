@@ -244,7 +244,7 @@ security registers: OFF (<specs>/security is not readable)
   - `weakness` is `{repo, cwe, cwe_url, live, accepted, awaiting_review, review_due, fixed_recent, recurs, register: security/<repo>/register.md}`.
 - **Cap and order:** at most **3**, inside the existing cap of 8, taken in the script's order. Challenges are ordered `contradicts-*`, then `known-weakness`, then `radar-retire`, `radar-hold`, `radar-absent`.
 - **`governing`:**
-  - It is null where `prevented_by` is empty. Otherwise it is the first `prevented_by` entry.
+  - It is null where `prevented_by` is empty. Otherwise it is picked in tiers (Task 4's ruling, as `architecture-grounder.md` step 5a states): a record from the run's own ARD first, then one the agent can quote, then a promoted one; `prevented_by`'s text order breaks only ties. Consumers test only whether it is null.
   - Normally it is quoted from `team_root/decisions/<id>.md`, as any team reference is.
   - Where its `source` is in `own_sources`, or `team_root` is null, it gives `{id, source}` only.
   - Where its `promotion` is `accepted` or `covered`, it is `{ id: <promoted_to>, title: null, root: organisation, path: null, url: null, rule: null }`, with no `prd` and no `source`.
@@ -368,7 +368,7 @@ Design §10 items 13–16, which have no phrase row:
 - **R7:** `across` prints `ref` as the sha it resolved to, which is deterministic, and orders its classes by register count, then `real`, then CWE.
 - **R8:** `pa_next_step`'s copy, which design §3.2 names but does not fix.
 - **R9:** the commands derive `--repo` from the component ids (exact, by `components` §1), and make no call for an empty set.
-- **R10:** the grounder takes the first `prevented_by` entry as `governing`. With `team_root` null it gives the id and source only. An unreadable `weakness_classes` file is `ERROR` only where no root is readable; otherwise the grounder raises no `known-weakness`.
+- **R10:** the grounder picks `governing` in tiers (own ARD, then quotable, then promoted; text order breaks ties) — amended after Task 4, since `prevented_by` sorts ids as text (`AD10` before `AD2`). With `team_root` null it gives the id and source only. An unreadable `weakness_classes` file is `ERROR` only where no root is readable; otherwise the grounder raises no `known-weakness`.
 - **R11:** the Part 3 count line also counts uncovered classes whose preventing record is not a shortlist row, so no class is silently absent.
 - **R12:** *Not in this ARD* writes nothing into the ARD, and the final report names the class.
 - **R13:** `.claude/rules/product-workflows.md` stands at 19,989 characters, so its `## Invariants` section moves byte for byte to a new `.claude/rules/product-workflows-prd-flow.md` (Task 5). `dev-workflows.md` stands at 19,945 characters, so it takes a 28-character edit and no split, unless the measure at Task 5, or Task 8's after the merge, says otherwise. **The `/design` map line's asymmetry is deliberate** (review M6): it gains only the widened `when` clause and no `[weakness-classes …]` bracket, while the product lines gain both. The skill call is a step inside the grounder's dispatch, which the map draws as one bracket, and `dev-workflows.md` has no room for more.
