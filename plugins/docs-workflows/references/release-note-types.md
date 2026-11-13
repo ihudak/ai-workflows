@@ -51,7 +51,9 @@ run started**, in UTC, exactly `^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0
 space after the colon and nothing after the instant: `/release-notes` takes it right after
 `strip-run-flags`, before it reads anything in the specs tree, by pasting the output of `date -u +%Y-%m-%dT%H:%M:%SZ`
 verbatim, carries it through the run and writes it here (its Phase 0 and Phase 8 step 1), so work
-that lands while the run is going on counts as implemented since the draft. The first line keeps
+that lands while the run is going on counts as implemented since the draft. Where the run no longer
+holds that value verbatim, it writes no `at:` line, never a new reading of the clock, which would be
+later than its start. The first line keeps
 the writer's own date, so its day and the instant's can differ. A value that does not match the
 pattern — hand-typed, in an offset form, truncated — is no instant, nor is any value of a comment
 carrying more than one `at:` line, and neither changes how the rest of the comment is read;
