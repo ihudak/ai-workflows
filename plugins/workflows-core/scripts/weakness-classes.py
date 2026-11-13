@@ -24,12 +24,16 @@ a repeated value counts once.
 across reads the same two kinds of file, but at the commit <ref> resolves to in the git work tree whose top level is
 <root>, and never from the working tree, the index or a checkout: one `git ls-tree` lists every
 security/<slug>/register.json and architecture/decisions/*.md there, and each is read by its object id with
-`git cat-file blob`, up to 64 MiB. Only a regular file is a file at the ref: an entry git records as a symbolic link,
-whose blob is the link's target and never the file, as a submodule or as a directory is no register and no record.
+`git cat-file blob`, up to 64 MiB. Only a regular file is read, and no link is followed, as in classes: an entry git
+records as a symbolic link, whose blob is the link's target and never the file, makes the register it stands for
+unreadable (at register.json or in place of the register's directory) and is a skipped record; a submodule or a
+directory at register.json makes it unreadable, and one named *.md is no record.
 It prints one JSON object: {format, today, ref, kb_skipped, registers, classes}, ref being the commit's full sha and
 each class a CWE judged real in two or more registers, with its counts, each register's counts and last run, and the
-team records that prevent it, whatever their components. git runs as an argument list, no shell, with the environment
-the script was given plus GIT_TERMINAL_PROMPT=0 and GIT_OPTIONAL_LOCKS=0, and its stderr is never printed.
+team records that prevent it, whatever their components. git runs in <root> (-C) as an argument list, no shell, with a
+fresh environment: the script's own, less every variable whose name starts with GIT_, plus GIT_TERMINAL_PROMPT=0,
+GIT_OPTIONAL_LOCKS=0 and GIT_NO_LAZY_FETCH=1, so a partial clone never fetches a blob it lacks (git before 2.44
+ignores that variable). Its stderr is never printed.
 
 --today defaults to today's UTC date. The script reads no environment variable itself, runs nothing named in a
 register and opens no path taken from one.
@@ -89,9 +93,11 @@ REF_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._/@+-]*\Z", re.ASCII)  # a plain r
 OID_RE = re.compile(r"^[0-9a-f]{40}([0-9a-f]{24})?\Z", re.ASCII)  # a full object id, SHA-1 or SHA-256
 PREVENTS = "**Prevents:**"
 JUDGED_REAL = ("fix", "fixing", "reopened", "accepted-risk")  # and a recent fixed one
-FILE_MODES = (b"100644", b"100755")  # a regular file; 120000 is a symbolic link, whose blob holds its target's name
-# across runs git with the environment it was given, never prompting and taking no optional lock.
-GIT_ENV = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
+FILE_MODES = (b"100644", b"100755")  # a regular file
+LINK_MODE = b"120000"  # a symbolic link, whose blob holds its target's name and never the file
+# What across adds to the environment, once every GIT_ variable is gone: no prompt, no optional lock, and no fetch
+# of an object a partial clone lacks (git before 2.44 ignores the last).
+GIT_SET = {"GIT_TERMINAL_PROMPT": "0", "GIT_OPTIONAL_LOCKS": "0", "GIT_NO_LAZY_FETCH": "1"}
 
 # The fixed <why> of every exit 2; none carries a value from the command line, a register or a record.
 WHY_USAGE = "usage: an unknown verb or flag, or a flag without its value"
@@ -540,26 +546,35 @@ def classes(specs: str, repos: list[str], components: list[str], origins: list[s
 
 # ---- across: the registers and the team records at a git ref ----
 
+def _git_env():
+    """A fresh environment for one git call: the one the script was given, less every variable whose name starts with
+    GIT_ -- so a stray GIT_DIR, GIT_WORK_TREE or GIT_INDEX_FILE never points git away from --specs -- plus GIT_SET."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env.update(GIT_SET)
+    return env
+
+
 def _git(specs, *args):
     """(git's exit code, its stdout) for `git -C <specs> <args>`, an argument list and no shell. Its stderr is
     discarded, never printed: it can echo a path or a ref. NotRun where no git can be started."""
     try:
         r = subprocess.run(["git", "-C", specs] + list(args), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                           stderr=subprocess.DEVNULL, env=GIT_ENV)
+                           stderr=subprocess.DEVNULL, env=_git_env())
     except OSError:
         raise NotRun(WHY_NO_GIT)
     return r.returncode, r.stdout
 
 
 def _blob(specs, oid, size):
-    """The bytes of the blob `oid`, which ls-tree listed at `size`; or None where that size is unknown (git could not
-    read the object) or larger than READ_CAP, git cannot read it, or it is not that long. It is read by its object id,
-    never by a path, with no filter or conversion, and never more than one byte past `size`."""
-    if size is None or size > READ_CAP:
+    """The bytes of the blob `oid`, which ls-tree listed at `size`; or None where there is no blob to read (`oid` None:
+    a link, a submodule or a directory), its size is unknown (ls-tree could not read the object -- a partial clone's
+    missing blob among them) or larger than READ_CAP, git cannot read it, or it is not that long. It is read by its
+    object id, never by a path, with no filter or conversion, and never more than one byte past `size`."""
+    if oid is None or size is None or size > READ_CAP:
         return None
     try:
         p = subprocess.Popen(["git", "-C", specs, "cat-file", "blob", oid], stdin=subprocess.DEVNULL,
-                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=GIT_ENV)
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=_git_env())
     except OSError:
         return None
     with p:
@@ -585,32 +600,38 @@ def _resolve(specs, ref):
 
 def _listing(specs, sha):
     """([(slug, oid, size)] for each register, [(stem, oid, size)] for each team record) at `sha`, both sorted, from
-    one ls-tree. Only a regular file is a file here: an entry git records as a symbolic link (120000), whose blob is the
-    link's target and never the file, as a submodule or as a directory is none."""
-    code, out = _git(specs, "ls-tree", "-r", "-l", "-z", "--full-tree", sha, "--", "security", "architecture/decisions")
+    one ls-tree, trees included. Only a regular file is read, and a link is never followed, as classes has it: oid is
+    None for a register whose register.json is a symbolic link (120000), a submodule or a directory, or whose own
+    directory is a symbolic link -- each unreadable -- and for a record that is a symbolic link, which is skipped. A
+    directory or a submodule named *.md is no record."""
+    code, out = _git(specs, "ls-tree", "-r", "-t", "-l", "-z", "--full-tree", sha, "--", "security",
+                     "architecture/decisions")
     if code != 0:
         raise NotRun(WHY_LIST)
     registers, records = [], []
     for item in out.split(b"\0"):
         head, tab, name = item.partition(b"\t")
         fields = head.split()
-        if not tab or len(fields) != 4 or fields[0] not in FILE_MODES or fields[1] != b"blob":
+        if not tab or len(fields) != 4 or not OID_RE.match(fields[2].decode("ascii", "replace")):
             continue
-        oid = fields[2].decode("ascii", "replace")
+        mode, kind, oid = fields[0], fields[1], fields[2].decode("ascii")
+        regular, link = kind == b"blob" and mode in FILE_MODES, kind == b"blob" and mode == LINK_MODE
         size = int(fields[3]) if fields[3].isdigit() else None  # ls-tree prints BAD for a blob it cannot read
         parts = name.decode("utf-8", "surrogateescape").split("/")
-        if not OID_RE.match(oid) or len(parts) != 3:
-            continue
-        if parts[0] == "security" and parts[2] == "register.json" and _slug(parts[1]):
-            registers.append((parts[1], oid, size))
-        elif parts[0] == "architecture" and parts[1] == "decisions" and parts[2].endswith(".md"):
-            records.append((parts[2][:-3], oid, size))
+        if parts[0] == "security" and len(parts) in (2, 3) and _slug(parts[1]):
+            if len(parts) == 3 and parts[2] == "register.json":
+                registers.append((parts[1], oid if regular else None, size))
+            elif len(parts) == 2 and link:  # the register's directory itself a link
+                registers.append((parts[1], None, None))
+        elif len(parts) == 3 and parts[:2] == ["architecture", "decisions"] and parts[2].endswith(".md"):
+            if regular or link:
+                records.append((parts[2][:-3], oid if regular else None, size))
     return sorted(registers, key=lambda e: e[0]), sorted(records, key=lambda e: e[0])
 
 
 def _record_texts_at(specs, entries):
-    """(stem, text or None) for each record ls-tree listed, one at a time: None where it is larger than the cap, git
-    cannot read it, or it is not UTF-8."""
+    """(stem, text or None) for each record ls-tree listed, one at a time: None where it is a symbolic link, is larger
+    than the cap, git cannot read it, or it is not UTF-8."""
     for stem, oid, size in entries:
         raw = _blob(specs, oid, size)
         text = None
@@ -1667,10 +1688,17 @@ AT_OPS = "2026-06-30T10:00:00Z"
 URL79 = "https://cwe.mitre.org/data/definitions/79.html"
 
 
+def _fixture_env():
+    """The fixtures' git environment: no GIT_ variable of the caller's, none of the user's or the system's config."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", **GIT_ID)
+    return env
+
+
 def _g(repo, *args, data=None):
-    """git in a fixture repository, under the selftest's git environment; its stdout, stripped."""
+    """git in a fixture repository; its stdout, stripped."""
     r = subprocess.run(["git", "-C", repo] + list(args), input=data, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                       env=dict(GIT_ENV, **GIT_ID))
+                       env=_fixture_env())
     assert r.returncode == 0, (args, r.stderr)
     return r.stdout.decode("utf-8").strip()
 
@@ -1913,15 +1941,15 @@ def case_across_exits(tmp):
     for argv, w in ((at(specs, "nosuch"), WHY_UNKNOWN_REF), (at(plain), WHY_NOT_REPO)):
         p = subprocess.run([sys.executable, os.path.abspath(__file__)] + argv, capture_output=True, timeout=60)
         assert (p.returncode, p.stdout, p.stderr) == (2, b"", why(w).encode("utf-8")), (argv, p)
-    saved = GIT_ENV.get("PATH")
-    GIT_ENV["PATH"] = _specs(tmp, "no-git")  # no git on the path
+    saved = os.environ.get("PATH")
+    os.environ["PATH"] = _specs(tmp, "no-git")  # no git on the path
     try:
         got = _call(at(specs))
     finally:
         if saved is None:
-            del GIT_ENV["PATH"]
+            del os.environ["PATH"]
         else:
-            GIT_ENV["PATH"] = saved
+            os.environ["PATH"] = saved
     assert got == (2, "", why(WHY_NO_GIT)), got
     g = globals()
     for name in ("read_register", "read_record"):
@@ -2000,28 +2028,100 @@ def case_across_hostile_text(tmp):
 
 
 def case_across_symlink_blob(tmp):
-    """A mode-120000 entry is a symbolic link, its blob the link's target and never the file: no register and no
-    record, even where that target text is a whole register or record. A submodule is neither either."""
+    """A mode-120000 entry is a symbolic link, its blob the link's target and never the file, and it is handled as
+    classes handles a link: never read, even where that target text is a whole register or record; a register it
+    stands for is unreadable, reported and never hidden, and a record skipped and counted. A submodule or a directory
+    at register.json is unreadable too; a submodule or a directory named *.md is no record."""
     specs = _repo(tmp)
     _register(specs, "api", [_finding(1, status="accepted-risk")])
     _register(specs, "web", [_finding(1, status="fix")])
+    _wf(os.path.join(specs, "security", "dir", "register.json", "x"), "a directory named register.json")
+    _wf(os.path.join(specs, "architecture", "decisions", "ACME-17-AD3.md", "x"), "a directory named *.md")
     first = _commit(specs)
     linked = _dump({"format": 1, "repo": "ops", "last_at": None,
                     "findings": [_finding(1, status="fix", path="src/linked_target.py")]})
-    _plant(specs, "security/ops/register.json", linked, mode="120000")
+    _plant(specs, "security/ops/register.json", linked, mode="120000")  # a link at register.json
+    _plant(specs, "security/linkdir", "../outside/x", mode="120000")  # a link in place of the register's directory
     _plant(specs, "architecture/decisions/ACME-17-AD1.md", _record_text(tmp, "ACME-17-AD1"), mode="120000")
     _g(specs, "update-index", "--add", "--cacheinfo", "160000,%s,security/sub/register.json" % first)
     _g(specs, "update-index", "--add", "--cacheinfo", "160000,%s,architecture/decisions/ACME-17-AD2.md" % first)
     _commit(specs, add=False)
     res, out = _across(specs)
-    assert [r["repo"] for r in res["registers"]] == ["api", "web"] and res["kb_skipped"] == 0, res
-    assert _xcls(res, "CWE-89")["prevented_by"] == [] and "linked_target" not in out, res
-    specs = _repo(tmp, "linked-dirs")  # security/ and architecture/ themselves links
+    assert _states(res) == {"api": "ok", "dir": "unreadable", "linkdir": "unreadable", "ops": "unreadable",
+                            "sub": "unreadable", "web": "ok"}, res["registers"]
+    for r in res["registers"]:
+        if r["state"] != "ok":
+            assert r == {"repo": r["repo"], "state": "unreadable", "last_at": None, "findings": 0, "dropped": 0,
+                         "unclassified": 0}, r
+    assert res["kb_skipped"] == 1, res["kb_skipped"]  # AD1, the link; AD2 and AD3 are no records
+    c = _xcls(res, "CWE-89")
+    assert _rows(c) == ["api", "web"] and c["prevented_by"] == [] and "linked_target" not in out, res
+    specs = _repo(tmp, "linked-dirs")  # security/ and architecture/ themselves links: nothing to list under them
     _plant(specs, "security", "../outside/security", mode="120000")
     _plant(specs, "architecture", "../outside/architecture", mode="120000")
     _commit(specs, add=False)
     res, _ = _across(specs)
     assert (res["registers"], res["kb_skipped"], res["classes"]) == ([], 0, []), res
+
+
+def case_across_stray_git_env(tmp):
+    """Every git call gets a fresh environment with each GIT_ variable removed: a stray GIT_DIR pointing at another
+    repository -- or GIT_WORK_TREE, GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY or GIT_CONFIG_PARAMETERS -- never moves the
+    read off --specs, in this process or in a child that inherits them."""
+    specs = _repo(tmp)
+    _register(specs, "api", [_finding(1, status="fix")])
+    _register(specs, "web", [_finding(1, status="fix")])
+    _commit(specs)
+    other = _repo(tmp, "other")
+    _register(other, "ops", [_finding(1, cwe="CWE-79", status="fix")])
+    _register(other, "zzz", [_finding(1, cwe="CWE-79", status="fix")])
+    _commit(other)
+    want, _ = _across(specs)
+    assert [r["repo"] for r in want["registers"]] == ["api", "web"], want
+    odir = os.path.join(other, ".git")
+    for stray in ({"GIT_DIR": odir}, {"GIT_DIR": odir, "GIT_WORK_TREE": other},
+                  {"GIT_OBJECT_DIRECTORY": os.path.join(odir, "objects"), "GIT_INDEX_FILE": os.path.join(odir, "index")},
+                  {"GIT_CONFIG_PARAMETERS": "'core.bare=true'"}):
+        saved = {k: os.environ.get(k) for k in stray}
+        os.environ.update(stray)
+        try:
+            got = _call(["across", "--specs", specs, "--ref", "main", "--today", TODAY])
+            p = subprocess.run([sys.executable, os.path.abspath(__file__), "across", "--specs", specs, "--ref", "main",
+                                "--today", TODAY], capture_output=True, timeout=60)
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+        assert got[0] == 0 and json.loads(got[1]) == want, (stray, got)
+        assert p.returncode == 0 and json.loads(p.stdout.decode("utf-8")) == want, (stray, p)
+
+
+def case_across_partial_clone(tmp):
+    """A partial clone never fetches over the network: with GIT_NO_LAZY_FETCH=1 a blob it lacks is never fetched, so
+    a register whose blob is missing is unreadable and such a record skipped. Git before 2.44 ignores the variable
+    and fetches, so there only the run itself is checked."""
+    origin = _repo(tmp, "origin")
+    _register(origin, "api", [_finding(1, status="fix")])
+    _register(origin, "web", [_finding(1, status="fix")])
+    _record(origin, "ACME-17-AD1")
+    sha = _commit(origin)
+    _g(origin, "config", "uploadpack.allowFilter", "true")
+    clone = os.path.join(tmp, "clone")
+    _g(tmp, "clone", "-q", "--no-checkout", "--filter=blob:none", "file://" + origin, clone)
+    blob = _g(clone, "rev-parse", "main:security/api/register.json")
+    res, _ = _across(clone)
+    assert res["ref"] == sha, res
+    version = tuple(int(n) for n in re.findall(r"[0-9]+", _g(tmp, "--version"))[:2])
+    if version < (2, 44):
+        print("     (git %d.%d ignores GIT_NO_LAZY_FETCH: the no-fetch checks are skipped)" % version)
+        return
+    assert _states(res) == {"api": "unreadable", "web": "unreadable"}, res["registers"]
+    assert (res["kb_skipped"], res["classes"]) == (1, []), res
+    still = subprocess.run(["git", "-C", clone, "cat-file", "-e", blob], env=dict(_fixture_env(), GIT_NO_LAZY_FETCH="1"),
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    assert still.returncode != 0, "the blob was fetched"
 
 
 def case_across_read_cap(tmp):
@@ -2149,20 +2249,28 @@ def case_across_envelope(tmp):
 
 
 def selftest():
-    for env in (os.environ, GIT_ENV):  # the fixtures' git and the script's own both see none of the user's config
-        env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+    # The script's own git drops every GIT_ variable, so the user's global git config is kept from it by pointing HOME
+    # and XDG_CONFIG_HOME at each case's empty directory; the fixtures' git sets GIT_CONFIG_GLOBAL and _NOSYSTEM too.
+    saved = {k: os.environ.get(k) for k in ("HOME", "XDG_CONFIG_HOME")}
     cases = sorted((name, fn) for name, fn in globals().items() if name.startswith("case_"))
     failed = 0
-    for name, fn in cases:
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp = os.path.realpath(tmp)
-            os.environ["GIT_CEILING_DIRECTORIES"] = GIT_ENV["GIT_CEILING_DIRECTORIES"] = tmp
-            try:
-                fn(tmp)
-                print("ok   " + name)
-            except Exception as e:  # any exception is that case failing, and it is named
-                failed += 1
-                print("FAIL %s: %s: %s" % (name, type(e).__name__, e))
+    try:
+        for name, fn in cases:
+            with tempfile.TemporaryDirectory() as tmp:
+                tmp = os.path.realpath(tmp)
+                os.environ["HOME"] = os.environ["XDG_CONFIG_HOME"] = tmp
+                try:
+                    fn(tmp)
+                    print("ok   " + name)
+                except Exception as e:  # any exception is that case failing, and it is named
+                    failed += 1
+                    print("FAIL %s: %s: %s" % (name, type(e).__name__, e))
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
     print("selftest: %d/%d passed" % (len(cases) - failed, len(cases)))
     return 1 if failed else 0
 
