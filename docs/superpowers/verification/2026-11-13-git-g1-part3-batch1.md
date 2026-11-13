@@ -297,7 +297,13 @@ Which gate steps ran at which commit, each chain one `&&` chain whose own exit v
 | `5ae96dae`, `a214c835` | the same, without the selftest | `CHAIN_EXIT=0` at each | the fix report |
 | `7deeb75c` | all 33 `run:` steps (step 33, `mutants.py --check`, is this branch's; `main` added none), plus `ASSERT_PUBLISHED=1` `check-docs.sh`, in three chains split at step boundaries (steps 1–12, 13–29, 30–33) | `CHAIN_A_EXIT=0`, `CHAIN_B_EXIT=0`, `CHAIN_C_EXIT=0` | the re-release section of Task 6's report |
 
-Not re-run here: those chains. The commits after `7deeb75c` change one changelog sentence (`174af1e6`) and add this file, so this record re-runs the steps that read either of them, at the commit that adds it; the next commit records the result.
+Not re-run here: those chains. The commits after `7deeb75c` change one changelog sentence (`174af1e6`) and add this file (`0b19e96d`), so at `0b19e96d` this record re-ran the steps that read either of them, as one chain:
+
+```bash
+python3 scripts/validate-catalog.py && ./scripts/check-docs.sh --root . && ASSERT_PUBLISHED=1 ./scripts/check-docs.sh --root . && ./scripts/check-id-grammar.sh --root . && ./scripts/check-id-grammar.sh --baseline && python3 scripts/reference-parts.py check-parts && python3 -B scripts/selftests/mutants.py --check; echo "CHAIN_EXIT=$?"
+```
+
+Each step's last line, in order: `0 error(s), 0 warning(s) across 1 repo(s).`; `PASS: docs are consistent with the plugin(s) under …`, plainly and again with `ASSERT_PUBLISHED=1`; `PASS: no dash-form requirement IDs under .`; `PASS: the spec-ID census under . equals scripts/spec-id-baseline.txt`; `reference-parts check-parts: PASS -- 4 split reference(s), 3 entry file(s), 36 generated file(s) fresh`; `mutants: 23 checked, 0 stale`; then `CHAIN_EXIT=0`. Separately, `node scripts/mermaid/check-mermaid.mjs --root .`, which reads every tracked markdown file, printed `PASS: all 50 mermaid blocks in 1206 tracked markdown files parse (mermaid 11.17.2, marked 16.4.2)` and exited 0. No other step of the workflow ran at `0b19e96d`; each of them ran at `7deeb75c` (the table). The commit after `0b19e96d` changes only this paragraph.
 
 **Budgets** (`LC_ALL=C.UTF-8 wc -m`): `CLAUDE.md` 34,838 at `174af1e6` (34,608 at `origin/main`; this branch adds one table row), under the 36,000-character warning `scripts/validate-catalog.py` sets; `.claude/rules/specs-git-selftest.md` 12,483, new, under the 20,000-character rules-file warning. The plan's Global Constraints keep this batch out of `.claude/rules/gates.md` and `.claude/rules/workflows-core-git.md`, and `git diff --stat origin/main 174af1e6` lists neither.
 
