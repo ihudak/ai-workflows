@@ -136,7 +136,10 @@ plain `init` and `init --resume` are not guarded. `session`, `started`, `updated
 
 A key is a top-level name or a dotted path into one (`files.plan_file`); a list entry is named by
 its index (`triage.-1.followed_by`, the last entry's). `set`, `append`, `read` and `persist` refuse a
-key the file does not hold, and `set` a path through a null value: write that key whole. Every
+key the file does not hold, and `set` a path through a null value: write that key whole. A file
+lacking a key of FILLED (one an earlier format-2 release wrote) reads as holding that key's default,
+which `read` and `peek` print and the next call that writes the file saves into it; any other key it
+lacks is still exit 3, and the fill itself writes nothing. Every
 read-modify-write holds an exclusive lock (fcntl.flock on .implement-run.lock beside the file) and
 replaces the file whole (a temp file beside it, then os.replace), so a write is never half done and
 parallel calls lose nothing; a value that does not parse changes nothing. Input -- stdin and argv --
@@ -208,7 +211,8 @@ RESUME_APPENDED = ("inputs_read", "report.notices")
 #            "paths" a piece's matched paths, or for "overall" the paths no piece matched;
 #            the two files temp files
 #   check_run_answers  {"path", "answer"} -- one per path a check run touched, as its answer settles it
-#   step_groups  each entry stamped "started", the UTC time, by `append step_groups`
+#   step_groups  each entry stamped "started", the UTC time, by `append step_groups`; each carries
+#            "model", the coding_model its dispatch passed -- the run writes it
 #   report.maintenance  each entry carries "agent": docs, knowledge, instructions, impl-maintenance or
 #            defect-reporter -- the run writes it
 # Two objects whose members are not fixed: `durable` -- {<label>: {"copy", "of"}}, written by persist
@@ -227,6 +231,7 @@ KEYS = [
                       "tasks_only": None}),
     ("task_shape", None), ("clarifications", {"settled": [], "answers": []}),
     ("routing", {"block": None, "history": []}), ("class", None), ("coding_model", None),
+    ("fable_escalation", {"source": None, "choice": None}),
     ("branch_answer", {"answer": None, "moves": [], "lines": []}), ("branch", None),
     ("stash_before", None), ("stash_ref", None), ("pre_existing_dirty", None), ("check_run_answers", []),
     ("session_branch_lift", False),
@@ -248,6 +253,9 @@ KEYS = [
     ("durable", {}),
 ]
 KEYS_LINE = " ".join(k + ("{%s}" % " ".join(d) if isinstance(d, dict) else "") for k, d in KEYS)
+# The keys added since format 2, which a file an earlier format-2 release wrote can lack: load gives
+# each one it lacks its KEYS default. No other key is filled -- `format` least of all.
+FILLED = ("fable_escalation",)
 
 
 class Fail(Exception):
@@ -363,6 +371,10 @@ def load(f):
         raise Fail(5, "the run-state file at %s does not parse: %s" % (f, e))
     if not isinstance(d, dict):
         raise Fail(5, "the run-state file at %s is not a JSON object" % f)
+    want = dict(KEYS)
+    for k in FILLED:  # in memory only: the file changes when a call writes it
+        if k not in d:
+            d[k] = copy.deepcopy(want[k])
     return d
 
 
@@ -2115,6 +2127,90 @@ def selftest():
                 code, _ = call(argv, stdin, g, session=caller)
                 check("%s passes the guard where the %s session is null" % (
                     name, "file's" if held is None else "caller's"), code == 0)
+
+        # ---- fable_escalation, and load's fill of a FILLED key an earlier format-2 release's file lacks ----
+        FE0 = {"source": None, "choice": None}
+        ks = [k for k, _ in KEYS]
+        check("KEYS holds fable_escalation after coding_model", "fable_escalation" in ks
+              and ks.index("fable_escalation") == ks.index("coding_model") + 1
+              and dict(KEYS)["fable_escalation"] == FE0)
+        check("KEYS_LINE names fable_escalation{source choice}",
+              " coding_model fable_escalation{source choice} " in " %s " % KEYS_LINE)
+        check("FILLED holds only keys KEYS holds, never format", "fable_escalation" in FILLED
+              and all(k in dict(KEYS) for k in FILLED) and "format" not in FILLED)
+        call(["init"], json.dumps(fresh()), g, session="H")
+        check("init gives fable_escalation its default", st().get("fable_escalation") == FE0)
+        fe = {"source": "answer", "choice": "fable"}
+        code, _ = call(["set", "fable_escalation", json.dumps(fe)], repo=g, session="H")
+        rcode, out = call(["read", "fable_escalation"], repo=g, session="H")
+        check("set fable_escalation takes {source, choice}, and it reads back equal", code == 0 and rcode == 0
+              and json.loads(out) == fe)
+        code, _ = call(["set", "fable_escalation.choice", '"claude-fable-5-2"'], repo=g, session="H")
+        check("set fable_escalation.choice keeps source", code == 0
+              and st().get("fable_escalation") == {"source": "answer", "choice": "claude-fable-5-2"})
+        before = open(gf, "rb").read()
+        code, _ = call(["set", "fable_escalation", '{"model": "x"}'], repo=g, session="H")
+        check("set refuses a fable_escalation member KEYS lacks, writing nothing", code == 3
+              and "fable_escalation.model" in said[0] and open(gf, "rb").read() == before)
+        code, _ = call(["set", "fable_escalation", '"fable"'], repo=g, session="H")
+        check("set refuses fable_escalation given as a string, writing nothing", code == 3
+              and "fable_escalation must be an object" in said[0] and open(gf, "rb").read() == before)
+        code, _ = call(["init", "--resume"], json.dumps({"fable_escalation": fe}), g, session="I")
+        check("init --resume refuses fable_escalation on its stdin, outside its list, writing nothing", code == 3
+              and "fable_escalation" in said[0] and open(gf, "rb").read() == before)
+        code, _ = call(["init", "--resume"], json.dumps({"routing": {"block": {}}, "coding_model": "opus"}), g,
+                       session="I")
+        d = st()
+        check("a recorded fable_escalation survives init --resume", code == 0 and d["coding_model"] == "opus"
+              and d.get("fable_escalation") == {"source": "answer", "choice": "claude-fable-5-2"})
+
+        def lacking(*keys):
+            # a file init wrote, the keys deleted from its JSON on disk: an earlier release's file, or a damaged one
+            call(["init"], json.dumps(fresh()), g, session="H")
+            d = st()
+            for k in keys:
+                d.pop(k, None)
+            with open(gf, "w", encoding="utf-8") as w:
+                json.dump(d, w)
+            return open(gf, "rb").read()
+
+        raw = lacking("fable_escalation")
+        code, out = call(["read", "fable_escalation"], repo=g, session="H")
+        check("read of a FILLED key the file lacks prints its default, writing nothing", code == 0
+              and json.loads(out) == FE0 and open(gf, "rb").read() == raw)
+        code, out = call(["peek"], repo=g, session="H")
+        check("peek of a file lacking a FILLED key prints its default, the file's bytes unchanged", code == 0
+              and json.loads(out).get("fable_escalation") == FE0 and open(gf, "rb").read() == raw)
+        code, _ = call(["set", "fable_escalation.choice", '"fable"'], repo=g, session="H")
+        check("set into a FILLED key the file lacks saves the key, its other member at its default", code == 0
+              and st().get("fable_escalation") == {"source": None, "choice": "fable"})
+        check("the fill hands out a copy, KEYS' default left as it was", dict(KEYS).get("fable_escalation") == FE0)
+        lacking("fable_escalation")
+        code, _ = call(["set", "class", '"HIGH-RISK"'], repo=g, session="H")
+        d = st()
+        check("a set of another key saves the FILLED key the file lacked, at its default", code == 0
+              and d["class"] == "HIGH-RISK" and d.get("fable_escalation") == FE0)
+        lacking("fable_escalation")
+        code, _ = call(["append", "deferred", '"x"'], repo=g, session="H")
+        d = st()
+        check("an append saves the FILLED key the file lacked, at its default", code == 0
+              and d["deferred"] == ["x"] and d.get("fable_escalation") == FE0)
+        lacking("fable_escalation")
+        code, _ = call(["init", "--resume"], "{}", g, session="I")
+        check("init --resume on a file lacking a FILLED key writes its default", code == 0
+              and st().get("fable_escalation") == FE0)
+        lacking("format")
+        code, out = call(["peek"], repo=g, session="H")
+        check("peek on a file lacking format exits 8: format is never filled", code == 8 and out == "")
+        raw = open(gf, "rb").read()
+        code, _ = call(["init", "--resume"], "{}", g, session="I")
+        check("init --resume on a file lacking format exits 8, writing nothing", code == 8
+              and open(gf, "rb").read() == raw)
+        lacking("phase", "clean_finish")
+        codes = [call(["read", k], repo=g, session="H")[0] for k in ("phase", "clean_finish")]
+        code, out = call(["peek"], repo=g, session="H")
+        check("no fill outside FILLED: read of another key the file lacks still exits 3", codes == [3, 3]
+              and code == 0 and "phase" not in json.loads(out) and "clean_finish" not in json.loads(out))
 
     if failures:
         for n in failures:
