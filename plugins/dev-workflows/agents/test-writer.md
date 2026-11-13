@@ -80,6 +80,16 @@ With a **Type-check errors** input, the caller has run the project's own type-ch
 - Leave an error located in such a file whose fix lies outside the files you may edit — in production code, in a file another writer owns, in a test file this run did not change — or that the file had before this run, and name it under `### Notes`, with why.
 - Re-read each file you edited as step 7 says, and return the report in its usual shape: `**Tests written**` and `### Tests added` count and name only tests this round added — none, since it writes no test case: `0` and `none (correction round)` — so the caller does not count the earlier report's tests twice; `### Skipped (pre-existing untested code)` `none`; `**Files touched**` the files this round edited, or `none`.
 
+## A re-dispatch on a resume
+
+`/implement` can resume a run that stopped part-way — crashed, killed, or its session lost — and dispatch you again where that run died before your report was written down: for step 4a's tests, for Phase 3.5's, or for a correction round. That brief ends with one line more, verbatim: `Resume note: Test files may already exist from an earlier attempt; extend or correct them, and never duplicate them.` It means an earlier dispatch of yours with this same brief may have written tests and stopped, so the **Diff** — captured afresh — can show test files that attempt added or changed. So:
+
+- **Never assume a clean start.** Before writing a test, read each test file the **Diff** adds or changes, as it stands now: a behaviour a test there already covers gets no second test.
+- **Extend or correct in place.** Where such a test falls short of step 5's rules — an error or edge path it lacks, an assertion too weak for step 6, a file cut off part-way — edit that test, rather than writing another beside it. A test the earlier attempt wrote is this run's, not an existing test *Hard rules* protects.
+- **Report every test of yours the work now holds.** No report of the earlier attempt was kept, and the caller counts the run's tests from yours, so `### Tests added` names, and **Tests written** counts, each test you added, extended or corrected and each the earlier attempt wrote that you kept as it stands — a test the **Diff** adds, save one a **Plan** step writes, which is the code's. With an **Owns** line, only in what you own.
+
+On a correction round the note means the earlier round may have fixed some of the listed errors already: fix each that still stands, in the file as it stands, and keep the round's report shape — `0` and `none (correction round)`.
+
 ## Output
 
 Return this exact shape (no preamble, no chatter):
