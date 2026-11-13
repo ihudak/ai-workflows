@@ -25,7 +25,7 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py --specs <root> land --default-ref <ref> --retry-held [--register-rebuild <path>]
   specs-git.py --specs <root> land --default-ref <ref> --drop-held <sha7>
   specs-git.py --specs <root> snapshot
-  specs-git.py --selftest
+  specs-git.py --selftest [--group <name>]...
 
 declined appends paths to the run's state record (specs_git_state.py, one file per session and command, outside
 every repository), creating the record where the command's start never ran. specs-root-check runs addressing §3's
@@ -4948,6 +4948,7 @@ def main():
     ap = Parser(description="The deterministic git primitives of specs-repo-git and phase-handoff.")
     ap.add_argument("--specs", help="the specs repository's top level; for specs-root-check, SPECS_PATH as set")
     ap.add_argument("--selftest", action="store_true", help="run the selftest, which the repository keeps under scripts/selftests, and exit")
+    ap.add_argument("--group", action="append", metavar="NAME", help="with --selftest: run only this group; repeatable")
     sub = ap.add_subparsers(dest="cmd")
     sub.add_parser("status")
     p = sub.add_parser("branch-merged")
@@ -5011,8 +5012,10 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8", errors="surrogateescape")
     except AttributeError:
         pass
+    if a.group and not a.selftest:
+        ap.error("--group needs --selftest")
     if a.selftest:
-        return _run_selftest()
+        return _run_selftest(a.group)
     if not a.cmd:
         print("specs-git: not run (a subcommand is required)", file=sys.stderr)
         return 2
@@ -5086,9 +5089,10 @@ def dispatch(a):
     raise NotRun("unknown subcommand %s" % a.cmd)
 
 
-def _run_selftest():
+def _run_selftest(groups):
     """The selftest, which lives outside the plugin (SELFTEST_FILE): executed in this module's namespace, since
-    its tests reach this script through globals() and __file__. Exit 2 where the file is not there to run."""
+    its tests reach this script through globals() and __file__; groups, from --group, is None for every group or
+    the names of the groups to run. Exit 2 where the file is not there to run."""
     path = os.path.normpath(SELFTEST_FILE)
     try:
         with open(path, encoding="utf-8") as fh:
@@ -5099,7 +5103,7 @@ def _run_selftest():
         return 2
     scope = globals()
     exec(compile(source, path, "exec"), scope)
-    return scope["selftest"]()
+    return scope["selftest"](groups)
 
 
 if __name__ == "__main__":

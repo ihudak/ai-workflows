@@ -13,8 +13,9 @@ ADDRESSING = os.path.join(HERE, "..", "references", "addressing.md")
 SESSION_HYGIENE = os.path.join(HERE, "..", "references", "session-hygiene.md")
 
 
-def selftest():
-    """Every rule this script carries, on repositories built at run time."""
+def selftest(groups=None):
+    """Every rule this script carries, on repositories built at run time: every group where groups is None, else
+    only the named groups, in the selftest's own order."""
     failures = []
     count = [0]
     me = os.path.abspath(__file__)
@@ -12992,23 +12993,55 @@ def selftest():
         check(sorted(found) == ["x/hooks/a.sh", "x/skills/s/SKILL.md"],
               "k_no_dollar_session: both written forms found, the plain name and a scripts/ file not (%r)" % found)
 
+    def scenarios_selftest(tmp):
+        """The selftest's own command line: one group alone, the partial line, and the file's absence."""
+        ALL = ("status, branch_merged, branch_key, push_scope, owner_repo, mode, state, lines, gate, end, land, replay, "
+               "start, midrun, skill, selftest")
+        got = cli("--selftest", "--group", "branch_key", cwd=tmp)
+        check(got["_rc"] == 0 and re.fullmatch(r"specs-git selftest: PASS \([1-9][0-9]* checks; partial: branch_key\)",
+                                               (got.get("_stdout", "").strip().splitlines() or [""])[-1]) is not None,
+              "s_group_alone: one group runs alone and says so (%r)" % got)
+        got = cli("--selftest", "--group", "owner_repo", "--group", "branch_key", cwd=tmp)
+        check(got["_rc"] == 0 and got.get("_stdout", "").strip().endswith("partial: branch_key, owner_repo)"),
+              "s_group_order: groups run and are named in the selftest's order (%r)" % got)
+        got = cli("--selftest", "--group", "nope")
+        check(one_not_run_line(got)
+              and got["_err"].strip() == "specs-git: not run (usage: --group takes one of: %s)" % ALL,
+              "s_group_unknown: an unknown group is a usage error naming every group (%r)" % got)
+        got = cli("--group", "status")
+        check(one_not_run_line(got) and "usage: --group needs --selftest" in got["_err"],
+              "s_group_without_selftest: --group alone is a usage error (%r)" % got)
+        lone = os.path.join(tmp, "s-lone", "plugins", "workflows-core")
+        os.makedirs(lone)
+        shutil.copytree(HERE, os.path.join(lone, "scripts"))
+        got = cli("--selftest", script=os.path.join(lone, "scripts", "specs-git.py"))
+        check(one_not_run_line(got)
+              and got["_err"].startswith("specs-git: not run (the selftest is not shipped with the plugin"),
+              "s_selftest_not_shipped: a tree without the selftest file says so in one line (%r)" % got)
+        ci = os.path.join(HERE, "..", "..", "..", ".github", "workflows", "validate-catalog.yml")
+        with open(ci, encoding="utf-8") as fh:
+            runs = [line.strip() for line in fh if line.strip().startswith("run:") and "specs-git.py" in line]
+        check(runs == ["run: python3 plugins/workflows-core/scripts/specs-git.py --selftest"],
+              "s_ci_runs_all: CI runs the whole selftest, with no --group (%r)" % runs)
+
+    # The groups, in run order: --selftest --group <name> runs only the named ones, still in this order.
+    GROUPS = (("status", scenarios_status), ("branch_merged", scenarios_branch_merged),
+              ("branch_key", scenarios_branch_key), ("push_scope", scenarios_push_scope),
+              ("owner_repo", scenarios_owner_repo), ("mode", scenarios_mode), ("state", scenarios_state),
+              ("lines", scenarios_lines), ("gate", scenarios_gate), ("end", scenarios_end), ("land", scenarios_land),
+              ("replay", scenarios_replay), ("start", scenarios_start), ("midrun", scenarios_midrun),
+              ("skill", scenarios_skill), ("selftest", scenarios_selftest))
+    names = [name for name, _ in GROUPS]
+    if groups is not None and any(g not in names for g in groups):
+        print("specs-git: not run (usage: --group takes one of: %s)" % ", ".join(names), file=sys.stderr)
+        return 2
+    partial = None if groups is None else ", ".join(name for name in names if name in groups)
+
     def scenarios():
         with tempfile.TemporaryDirectory() as tmp:
-            scenarios_status(tmp)
-            scenarios_branch_merged(tmp)
-            scenarios_branch_key(tmp)
-            scenarios_push_scope(tmp)
-            scenarios_owner_repo(tmp)
-            scenarios_mode(tmp)
-            scenarios_state(tmp)
-            scenarios_lines(tmp)
-            scenarios_gate(tmp)
-            scenarios_end(tmp)
-            scenarios_land(tmp)
-            scenarios_replay(tmp)
-            scenarios_start(tmp)
-            scenarios_midrun(tmp)
-            scenarios_skill(tmp)
+            for name, run in GROUPS:
+                if groups is None or name in groups:
+                    run(tmp)
 
     try:
         scenarios()
@@ -13016,9 +13049,12 @@ def selftest():
         failures.append("selftest crashed: %s: %s" % (type(e).__name__, str(e).strip()[:500]))
 
     if failures:
-        print("specs-git selftest: FAIL")
+        print("specs-git selftest: FAIL" if partial is None else "specs-git selftest: FAIL (partial: %s)" % partial)
         for f in failures:
             print("  " + f)
         return 1
-    print("specs-git selftest: PASS (%d checks)" % count[0])
+    if partial is None:
+        print("specs-git selftest: PASS (%d checks)" % count[0])
+    else:
+        print("specs-git selftest: PASS (%d checks; partial: %s)" % (count[0], partial))
     return 0
