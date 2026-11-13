@@ -216,8 +216,8 @@ aside — as `inputs_read`, as it reads it, for the handoff contract, which take
   Epic folder's and the PRD folder's (Phase 3 says which of the PRD folder's entries a focus run
   takes); otherwise the PRD folder's and each `EPIC-` folder's directly under it. A missing record is
   the absence of one, never a prerequisite, and a folder without one is not reported. Read each
-  record's header — its `Run:` line (an Epic or a PRD run, the role, the date), its `At:` line
-  where it has one (the instant that run started), its `Code
+  record's header — its `Run:` line (an Epic or a PRD run, the role, the date), its `At:` lines
+  where it has any (the instant that run started; `workflows-core:source-truth` §7.8 counts them), its `Code
   checked:` line, one repository, ref and commit per line, and its `Verdicts:` line — and print one line per record before
   Phase 1 asks anything: `Conformance: <the folder's key> checked <date> (<Epic | PRD> run) — <repo> @ <commit>, …`,
   or `Conformance: no record taken` where there is none, or each is set aside as below. A record that cannot be read is a ⚠
