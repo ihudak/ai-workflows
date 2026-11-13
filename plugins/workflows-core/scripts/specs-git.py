@@ -5092,17 +5092,27 @@ def dispatch(a):
 def _run_selftest(groups):
     """The selftest, which lives outside the plugin (SELFTEST_FILE): executed in this module's namespace, since
     its tests reach this script through globals() and __file__; groups, from --group, is None for every group or
-    the names of the groups to run. Exit 2 where the file is not there to run."""
+    the names of the groups to run. Exit 2 where the file is not there to run, cannot be read, or rebinds a name this
+    module already held, since the script's own code would then meet the file's object under that name."""
     path = os.path.normpath(SELFTEST_FILE)
     try:
         with open(path, encoding="utf-8") as fh:
             source = fh.read()
-    except OSError:
+    except (FileNotFoundError, NotADirectoryError):
         print("specs-git: not run (the selftest is not shipped with the plugin; run it from the repository: "
               "%s is not there)" % path, file=sys.stderr)
         return 2
+    except OSError as e:
+        print("specs-git: not run (the selftest could not be read: %s: %s)" % (path, e.strerror), file=sys.stderr)
+        return 2
     scope = globals()
+    before = dict(scope)
     exec(compile(source, path, "exec"), scope)
+    rebound = sorted(name for name, value in before.items() if scope.get(name, value) is not value)
+    if rebound:
+        print("specs-git: not run (the selftest file redefines a name of the script: %s)" % ", ".join(rebound),
+              file=sys.stderr)
+        return 2
     return scope["selftest"](groups)
 
 

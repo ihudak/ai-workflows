@@ -1,9 +1,14 @@
-"""specs_git_selftest.py — specs-git.py's selftest.
+# specs_git_selftest.py — specs-git.py's selftest.
+#
+# specs-git.py --selftest executes this file in that script's own namespace, so every name here that this file does
+# not define is the script's. It is never imported, because the tests read and patch the script through globals() and
+# read its source through __file__. It lives outside the plugin so that it is not shipped to users.
 
-specs-git.py --selftest executes this file in that script's own namespace, so every name here that this file does
-not define is the script's. It is never imported, because the tests read and patch the script through globals() and
-read its source through __file__. It lives outside the plugin so that it is not shipped to users.
-"""
+# Run on its own, this file has no script around it: _run_selftest is a name only specs-git.py defines. (__name__
+# cannot tell the two apart, since in the script's namespace it is "__main__" too.)
+if "_run_selftest" not in globals():
+    raise SystemExit("specs_git_selftest.py: not run (it runs only inside specs-git.py: "
+                     "python3 plugins/workflows-core/scripts/specs-git.py --selftest)")
 
 import contextlib
 import tempfile
@@ -16,6 +21,17 @@ SESSION_HYGIENE = os.path.join(HERE, "..", "references", "session-hygiene.md")
 def selftest(groups=None):
     """Every rule this script carries, on repositories built at run time: every group where groups is None, else
     only the named groups, in the selftest's own order."""
+    # Before anything runs: CI reads only the exit status, so a partial run there is refused; and a run that
+    # scenarios_selftest started (SPECS_GIT_SELFTEST_NESTED) fails where it would run group selftest, which would start
+    # runs of its own, so a break in group selection fails that group instead of recursing.
+    if groups is not None and os.environ.get("GITHUB_ACTIONS") == "true":
+        print("specs-git: not run (--group is refused in CI, where GITHUB_ACTIONS is true: a partial run is never "
+              "evidence that the selftest passes)", file=sys.stderr)
+        return 2
+    if os.environ.get("SPECS_GIT_SELFTEST_NESTED") == "1" and (groups is None or "selftest" in groups):
+        print("specs-git selftest: FAIL (nested)")
+        print("  s_nested: a nested run was asked for every group, or for group selftest")
+        return 1
     failures = []
     count = [0]
     me = os.path.abspath(__file__)
@@ -12994,31 +13010,75 @@ def selftest(groups=None):
               "k_no_dollar_session: both written forms found, the plain name and a scripts/ file not (%r)" % found)
 
     def scenarios_selftest(tmp):
-        """The selftest's own command line: one group alone, the partial line, and the file's absence."""
+        """The selftest's own command line: one group alone, the partial line, the refusals, and the file's absence."""
         ALL = ("status, branch_merged, branch_key, push_scope, owner_repo, mode, state, lines, gate, end, land, replay, "
                "start, midrun, skill, selftest")
-        got = cli("--selftest", "--group", "branch_key", cwd=tmp)
+        # Every run started here is marked nested, so a break in group selection fails rather than recursing, and
+        # runs with GITHUB_ACTIONS empty, outside CI's refusal of --group, so this group passes in CI too.
+        nested = {"SPECS_GIT_SELFTEST_NESTED": "1", "GITHUB_ACTIONS": ""}
+        got = cli("--selftest", "--group", "branch_key", cwd=tmp, env=nested)
         check(got["_rc"] == 0 and re.fullmatch(r"specs-git selftest: PASS \([1-9][0-9]* checks; partial: branch_key\)",
                                                (got.get("_stdout", "").strip().splitlines() or [""])[-1]) is not None,
               "s_group_alone: one group runs alone and says so (%r)" % got)
-        got = cli("--selftest", "--group", "owner_repo", "--group", "branch_key", cwd=tmp)
+        got = cli("--selftest", "--group", "owner_repo", "--group", "branch_key", cwd=tmp, env=nested)
         check(got["_rc"] == 0 and got.get("_stdout", "").strip().endswith("partial: branch_key, owner_repo)"),
               "s_group_order: groups run and are named in the selftest's order (%r)" % got)
-        got = cli("--selftest", "--group", "nope")
+        got = cli("--selftest", "--group", "nope", env=nested)
         check(one_not_run_line(got)
               and got["_err"].strip() == "specs-git: not run (usage: --group takes one of: %s)" % ALL,
               "s_group_unknown: an unknown group is a usage error naming every group (%r)" % got)
-        got = cli("--group", "status")
+        got = cli("--group", "status", env=nested)
         check(one_not_run_line(got) and "usage: --group needs --selftest" in got["_err"],
               "s_group_without_selftest: --group alone is a usage error (%r)" % got)
-        lone = os.path.join(tmp, "s-lone", "plugins", "workflows-core")
+        got = cli("--selftest", "--group", "branch_key", env=dict(nested, GITHUB_ACTIONS="true"))
+        check(got["_rc"] == 2 and got["_raw"] == b""
+              and got["_err"] == ("specs-git: not run (--group is refused in CI, where GITHUB_ACTIONS is true: a partial "
+                                  "run is never evidence that the selftest passes)\n"),
+              "s_group_refused_in_ci: a run with --group is refused in CI, in one line (%r)" % got)
+        got = cli("--selftest", "--group", "selftest", env=nested)
+        check(got["_rc"] == 1 and got.get("_stdout", "").splitlines() == [
+                  "specs-git selftest: FAIL (nested)",
+                  "  s_nested: a nested run was asked for every group, or for group selftest"],
+              "s_nested_refused: a nested run of group selftest fails rather than recursing (%r)" % got)
+        lone =os.path.join(tmp, "s-lone", "plugins", "workflows-core")
         os.makedirs(lone)
         shutil.copytree(HERE, os.path.join(lone, "scripts"))
-        got = cli("--selftest", script=os.path.join(lone, "scripts", "specs-git.py"))
+        got = cli("--selftest", script=os.path.join(lone, "scripts", "specs-git.py"), env=nested)
         check(one_not_run_line(got)
               and got["_err"].startswith("specs-git: not run (the selftest is not shipped with the plugin"),
               "s_selftest_not_shipped: a tree without the selftest file says so in one line (%r)" % got)
-        ci = os.path.join(HERE, "..", "..", "..", ".github", "workflows", "validate-catalog.yml")
+        unread = os.path.join(tmp, "s-unread")
+        shutil.copytree(HERE, os.path.join(unread, "plugins", "workflows-core", "scripts"))
+        at = os.path.join(unread, "scripts", "selftests", "specs_git_selftest.py")
+        os.makedirs(at)  # a directory where the file belongs, which no one can read as a file, root included
+        try:
+            open(at, encoding="utf-8").close()
+            why = None
+        except OSError as e:
+            why = e.strerror
+        got = cli("--selftest", script=os.path.join(unread, "plugins", "workflows-core", "scripts", "specs-git.py"),
+                  env=nested)
+        check(one_not_run_line(got) and why is not None
+              and got["_err"].strip() == "specs-git: not run (the selftest could not be read: %s: %s)"
+              % (os.path.normpath(at), why),
+              "s_selftest_unreadable: a selftest path that cannot be read says why in one line (%r, %r)" % (why, got))
+        clash = os.path.join(tmp, "s-clash")
+        shutil.copytree(HERE, os.path.join(clash, "plugins", "workflows-core", "scripts"))
+        os.makedirs(os.path.join(clash, "scripts", "selftests"))
+        with open(os.path.join(clash, "scripts", "selftests", "specs_git_selftest.py"), "w", encoding="utf-8") as fh:
+            fh.write("HERE = 1\n\n\ndef selftest(groups=None):\n    print(\"specs-git selftest: PASS (0 checks)\")\n"
+                     "    return 0\n")
+        got = cli("--selftest", script=os.path.join(clash, "plugins", "workflows-core", "scripts", "specs-git.py"),
+                  env=nested)
+        check(one_not_run_line(got) and got["_raw"] == b""
+              and got["_err"] == "specs-git: not run (the selftest file redefines a name of the script: HERE)\n",
+              "s_selftest_redefines: a selftest file that rebinds a name of the script is not run (%r)" % got)
+        got = cli(script=os.path.normpath(SELFTEST_FILE), env=nested)
+        check(got["_rc"] == 1 and got["_raw"] == b""
+              and got["_err"] == ("specs_git_selftest.py: not run (it runs only inside specs-git.py: "
+                                  "python3 plugins/workflows-core/scripts/specs-git.py --selftest)\n"),
+              "s_file_run_directly: the selftest file run on its own names the command that runs it (%r)" % got)
+        ci =os.path.join(HERE, "..", "..", "..", ".github", "workflows", "validate-catalog.yml")
         with open(ci, encoding="utf-8") as fh:
             runs = [line.strip() for line in fh if line.strip().startswith("run:") and "specs-git.py" in line]
         check(runs == ["run: python3 plugins/workflows-core/scripts/specs-git.py --selftest"],
