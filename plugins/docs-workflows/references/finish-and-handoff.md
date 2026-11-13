@@ -92,27 +92,53 @@ Classify the docs repo's `git -C <docs_repo_path> remote get-url origin`, its ho
 Compose the draft and BOTH write and show it:
 - **write** to the resolved PRD folder as `pr-draft.md`
   (the resolved PRD folder; ask if
-  none) — the same destination convention as the release-notes / bug drafts.
+  none) — the same destination convention as the release-notes / bug drafts —
+  the draft, then its **last line** (below).
+- **show** the draft without that last line: the title + body a footer below
+  tells the user to paste is the printed one, and carries no comment.
 - **title**: per `commit_convention` (e.g. `<KEY> <summary>`).
 - **body**: what was documented; the output files; the Phase 6.5
   render-verification summary; deferred style/review/render items; a link back to the PRD.
   Where the docs repository carries a pull-request template, the body is that
   template, filled with these facts, per `workflows-core:phase-handoff` §2.7.1,
   with the DO-NOT-MERGE banner below, where there is one, as its required first line.
-- **DO-NOT-MERGE banner** at the very top WHEN Phase 5.8 recorded any
+- **DO-NOT-MERGE banner** at the very top of the body WHEN Phase 5.8 recorded any
   `document-as-spec` / `skip-and-report` decision — never counting one its
   step 0 took from a conformance record, which drafts no gap and holds nothing
   (`workflows-core:source-truth` §7.8):
   `> ⚠ DO NOT MERGE until <KEY>-implementation-gaps.md is resolved.`
   WHEN any of those is `document-as-spec`, a second line beneath it:
   `> ⚠ These pages describe behaviour the code does not have yet (gaps <n>, …): hold the release until each is fixed.`
+- **last line**, in the file only, below the body:
+  `<!-- implementation records read: <instant> -->`, `<instant>` being the
+  instant the run started, in UTC — the `started_at` `/document` took in its
+  *Mode detection*, verbatim — then exactly one newline and nothing else: no
+  blank line, no trailing space. The DO-NOT-MERGE banner, where there is one,
+  stays the body's first line, where the banner bullet above puts it, and this
+  comment line is the file's last. Where the run no longer holds `started_at`
+  verbatim, it writes no such comment line, never a new reading of the clock,
+  which would be later than its start. `/dev-workflows:ready` reads the file's last line
+  against exactly
+  `^<!-- implementation records read: ([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z) -->$`,
+  as the instant the run that wrote the draft started. Where the line does not
+  match — a draft written before `docs-workflows` 1.39.0, or one ending in a
+  blank line — or its value is one that command sets aside — an impossible
+  time, or one later than the instant its own run started — the draft has no
+  instant, and that command dates it as its Phase 1 step 2c says: by the last
+  commit that changed it, or, in a shallow clone, not at all.
 - **host footer**:
   - Bitbucket (Cloud / Server) → "Open a pull request in the web UI and paste
     the title + body above." (No API.)
   - GitHub → additionally offer a command the USER may run:
     `gh pr create --title '<title>' --body-file <pr-draft path>`, the title in
     single quotes with each `'` it holds written `'\''`, since inside double
-    quotes its backticks and `$(…)` would be command-substituted.
+    quotes its backticks and `$(…)` would be command-substituted. `--body-file`
+    passes the file as written, its last line included, and GitHub shows no
+    HTML comment in a pull request's description.
   - other → "Open a pull request in your host and paste the title + body above."
+
+**A limit of the last line:** a user who pastes from `pr-draft.md` itself, not
+from the printed draft, onto a host that shows an HTML comment in a pull
+request's description shows that line there too.
 
 For a Bitbucket-hosted docs repo there is no CLI to open the pull request with, so this flow writes the draft and the user opens it. This is a host capability limit, not a policy: the family does open one where a host offers a CLI (`workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo), and no command of this plugin opens one in a docs repository — `/docs-workflows:release-notes` opens one in `$SPECS_PATH` alone, for its draft, through `handoff-to-main`.
