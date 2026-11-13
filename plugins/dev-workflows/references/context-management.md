@@ -30,12 +30,15 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
   shell functions, and an `rm -i` or `rm -I` of theirs would ask before removing the file, be answered
   no from that shell's empty standard input, and leave it behind; `--` ends `rm`'s options. **Nothing
   else removes one** — save on `/implement`, whose `run-state.py` removes such files itself: its `set`
-  each `dw-impl-` file a write stops naming, and its `remove` every `dw-impl-` one its run-state file
-  still names at the run's end (`commands/implement.md` Phase 1.4). These files sit in the session's scratchpad
+  each `dw-impl-` file a write stops naming, its `init --resume` what is left at each `dw-impl-` path
+  it repoints to a durable copy, and its `remove` every `dw-impl-` one its run-state file still names
+  at the run's end (`commands/implement.md` Phase 1.4). These files sit in the session's scratchpad
   directory where the session names one, else under the system's temporary directory, outside every
-  repository, where no later phase and no later run looks — a resume pointer
-  names artifacts, never a handoff file (`workflows-core:session-hygiene` §1) — so one a run leaves
-  behind stays until the host clears it. Where a file must outlive its run, the step that
+  repository, where no later phase and no later run looks, save an `/implement` that resumes the run
+  that made one, which takes it over with that run's state (`commands/implement.md`,
+  `## Resuming a stopped run`) — a resume pointer names artifacts, never a handoff file
+  (`workflows-core:session-hygiene` §1) — so one a run leaves behind stays until the host clears it,
+  or until such a resume removes it. Where a file must outlive its run, the step that
   keeps it says why and names it to the user. **A file a stop names to the user because it could not
   be read stays where it is**: the run has just told them where to look, and a path reported and
   then removed is worse than either.

@@ -374,8 +374,10 @@ in another container — with `$SPECS_PATH` and `$REPOS_PATH` pointing elsewhere
 loader on another install. Unchecked, such a run goes on to branch, write and commit in a
 repository it never resolved. §7 checks every run against the line its preflight printed, asking
 nothing; this section checks a run that keeps a session file against that file, and asks. It is cited by every
-command that keeps a session file it resumes from: `/design` (`_design-session.md`) and `/specify`
-(`_session.md`).
+command that keeps a session file it resumes from: `/design` (`_design-session.md`), `/specify`
+(`_session.md`) and `/implement`, whose session file here is its run-state file,
+`$(git rev-parse --git-path dev-workflows/implement-run.json)` in the code repository, which a later
+`/implement` in the same worktree resumes from (**`/implement`'s record**, under **Record**).
 
 **Record.** Whatever step first writes the session file — a fresh run's first write, in whichever
 phase its command makes it, or the file a *Start fresh* answer begins again — opens it, after its
@@ -384,8 +386,8 @@ title, with:
 ```markdown
 ## Run environment
 
-- specs_path: <realpath -- "$SPECS_PATH">
-- specs_origin: <git -C "$SPECS_PATH" remote get-url origin 2>/dev/null, or none where it prints nothing>
+- specs_path: <realpath -- "$SPECS_PATH", or unset where $SPECS_PATH is unset or empty>
+- specs_origin: <git -C "$SPECS_PATH" remote get-url origin 2>/dev/null, or none where it prints nothing or $SPECS_PATH is unset or empty, since git -C "" reads the current directory's repository>
 - repos_path: <$REPOS_PATH as the citing command resolved it, verbatim, or unresolved where it resolved none>
 - reference_loader: <the base directory the harness named for the workflows-core:reference skill when it loaded in this run, or unobserved where it named none>
 ```
@@ -395,18 +397,36 @@ gets it at that resume, from the values resolved then, and the run says in one l
 nothing to compare. *Go on in the current environment* (under **On a mismatch**) rewrites the
 section with the values resolved now.
 
+**`/implement`'s record** is the same four members, written as one JSON object into its run-state
+file's `run_environment` key, never as a section, by Phase 1.4's `init`, from the object it is
+handed, when it creates that file — a fresh run's first write into it, or the file a *Start fresh*
+answer leads to. Each is resolved as **Record**'s template resolves it, so `specs_path` reads
+`unset` and `specs_origin` `none` where `$SPECS_PATH` is unset or empty, as on a direct run with no
+specs tree, and `repos_path` always reads `unresolved`, since `/implement` resolves no `$REPOS_PATH`
+— so that member is never compared. On a resume, wherever this section reads the
+`## Run environment` section, `/implement` reads that key, off the file as its Phase 0 `peek`
+printed it; a key that is `null` is a file with no section; and wherever this section writes or
+rewrites that section — the record a file without one gets at that resume, or *Go on in the current
+environment* — `/implement` writes the key with `run-state.py set`, once its resume has taken the
+file over (`init --resume`), since until then the file is the earlier session's. In the
+`RESUME_ENVIRONMENT_CHANGED:` stop line, `<address>` is the file's `key`, left out on a direct run,
+and `<session file path>` the run-state file's path. `/implement` compares at point 1 alone.
+
 **Compare** at three points, each named by the citing command:
 
 1. **On a resume** — the run took the resume option of its resume-vs-fresh question, or resumed a
-   session file its picker offered — once the command has resolved `$REPOS_PATH`, and before
-   anything the resumed run writes after Phase 0's preflight.
+   session file its picker offered — once the command has resolved `$REPOS_PATH`, or, in a command
+   that resolves none, straight after the preflight, and before anything the resumed run writes
+   after Phase 0's preflight.
 2. **Before the deliverable write that leads to `handoff-to-main`**, and so before the handoff.
 3. **Before the run's first write in its emitter tail** — feedback, follow-ups, cost, `resume.md`
    (§5 rule 2) — and so before the terminal `commit-artifacts`, unless an earlier comparison this
    run ended in *Stop*.
 
-Points 2 and 3 run on every run that created or resumed its session file: a resumed conversation
-is not something the run can observe, and this comparison is what observes it. **Each point loads
+Points 2 and 3 run on every run that created or resumed its session file, in a command that names
+them: a resumed conversation is not something the run can observe, and this comparison is what
+observes it. A command that names point 1 alone — `/implement` — leaves its handoff and its tail to
+§7's `env-check`, which compares them with the line its preflight printed. **Each point loads
 this part afresh** —
 `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-environment")` — even where it is already in the conversation word for word, the one
 exception to the citing command's load-by-part rule: that load is what has the harness name the
@@ -461,7 +481,7 @@ stays where it is. The stop line is:
 <!-- part: env-check -->
 ## 7. `env-check` — the environment a run started in, compared before it writes
 
-A conversation resumed in another container — `claude --resume`, a continuation — goes on against whatever `$SPECS_PATH` and `$REPOS_PATH` name there, and only the two commands §6 serves keep a record to compare it with. So every run prints its environment once, at its start, and `env-check` compares the environment it stands in with that line before the run writes into the specs repository. Prompt-free, as `workflows-core:specs-repo-git`'s two entry points are (its §1 rule 7): a question at the first write would come after the work, and the operator re-runs where the run started instead.
+A conversation resumed in another container — `claude --resume`, a continuation — goes on against whatever `$SPECS_PATH` and `$REPOS_PATH` name there, and only the commands §6 serves keep a record to compare it with, at the points each names — `/implement` only when a later invocation resumes its run. So every run prints its environment once, at its start, and `env-check` compares the environment it stands in with that line before the run writes into the specs repository. Prompt-free, as `workflows-core:specs-repo-git`'s two entry points are (its §1 rule 7): a question at the first write would come after the work, and the operator re-runs where the run started instead.
 
 **The line.** `specs-preflight` (`workflows-core:specs-repo-git` §3) prints, on every run and before its first act, what this one Bash call prints, which `scripts/specs-git.py` runs as written — its selftest holds the two equal:
 
@@ -485,5 +505,5 @@ The conversation carries the line, and the conversation is the one thing a resum
 
 **The flag does the rest, everywhere it is read** — `workflows-core:specs-repo-git` §3.1 records this as one of its setters: `handoff-to-main` refuses (`workflows-core:phase-handoff` §2.1, which repeats this notice), every emitter of the tail falls to its report-only tier, no `resume.md` is written, and `commit-artifacts` skips, repeating the notice. A new flag would need every one of those consumers taught it; this one is already honoured by all of them, and the case is one it records: the run is no longer in the environment it started in.
 
-**Callers.** `handoff-to-main`, first in its §2.1 gate, and the first step of every write of the tail: `workflows-core:feedback-emission` §2, `workflows-core:followup-emission` §2, `workflows-core:cost-emission` §8, and this reference's §1 before it writes `resume.md`. So a command that never hands off — `/dev-workflows:vuln`, `/docs-workflows:document`, `/security-workflows:scan` — is still checked before its first write of the tail. And, where the record the run's start made stands (`workflows-core:specs-repo-git` §7), that reference's §4 step 1 compares the `SPECS_PATH` half of the run's `Environment:` line itself, at the end, so a run whose tail wrote nothing is still checked before its commit. A deliverable a command writes before its handoff is not covered: it lands where `$SPECS_PATH` names at that moment, and §6 alone checks before that write, for the two commands it serves.
+**Callers.** `handoff-to-main`, first in its §2.1 gate, and the first step of every write of the tail: `workflows-core:feedback-emission` §2, `workflows-core:followup-emission` §2, `workflows-core:cost-emission` §8, and this reference's §1 before it writes `resume.md`. So a command that never hands off — `/dev-workflows:vuln`, `/docs-workflows:document`, `/security-workflows:scan` — is still checked before its first write of the tail. And, where the record the run's start made stands (`workflows-core:specs-repo-git` §7), that reference's §4 step 1 compares the `SPECS_PATH` half of the run's `Environment:` line itself, at the end, so a run whose tail wrote nothing is still checked before its commit. A deliverable a command writes before its handoff is not covered: it lands where `$SPECS_PATH` names at that moment, and §6 alone checks before that write, for the commands that name its point 2.
 <!-- /part -->
