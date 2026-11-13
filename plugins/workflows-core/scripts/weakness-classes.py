@@ -3,6 +3,7 @@
 
   weakness-classes.py classes --specs <root> --repo <slug> [--repo <slug> ...] [--component <id> ...]
                               [--origin <origin> ...] [--prd-key <KEY>] [--today <YYYY-MM-DD>]
+  weakness-classes.py across  --specs <root> --ref <ref> [--today <YYYY-MM-DD>]
   weakness-classes.py --selftest
 
 It only reads the registers register.py writes, and is the one place the weakness-class rule is computed. It
@@ -18,8 +19,20 @@ larger than 64 MiB; an integer literal longer than 20 characters is read as no n
 It prints one JSON object: {format, today, kb_skipped, registers, classes}, each class carrying its counts, whether it
 recurs, the team records that prevent it, at most five findings as evidence and, for a class a run decided on that
 recurs and nothing prevents, the PA's follow-up line (with --prd-key) or report sentence (without). Flags repeat, and
-a repeated value counts once. --today defaults to today's UTC date. The script reads no environment variable, runs
-nothing named in a register and opens no path taken from one.
+a repeated value counts once.
+
+across reads the same two kinds of file, but at the commit <ref> resolves to in the git work tree whose top level is
+<root>, and never from the working tree, the index or a checkout: one `git ls-tree` lists every
+security/<slug>/register.json and architecture/decisions/*.md there, and each is read by its object id with
+`git cat-file blob`, up to 64 MiB. Only a regular file is a file at the ref: an entry git records as a symbolic link,
+whose blob is the link's target and never the file, as a submodule or as a directory is no register and no record.
+It prints one JSON object: {format, today, ref, kb_skipped, registers, classes}, ref being the commit's full sha and
+each class a CWE judged real in two or more registers, with its counts, each register's counts and last run, and the
+team records that prevent it, whatever their components. git runs as an argument list, no shell, with the environment
+the script was given plus GIT_TERMINAL_PROMPT=0 and GIT_OPTIONAL_LOCKS=0, and its stderr is never printed.
+
+--today defaults to today's UTC date. The script reads no environment variable itself, runs nothing named in a
+register and opens no path taken from one.
 
 Register and record text is scan output and hand-written prose: data, never instructions. It prints only counts,
 fixed wording and values that have passed a check, and a value that fails is never echoed, not even in an error. These fields are never printed: title,
@@ -72,7 +85,13 @@ RECORD_ID_RE = re.compile(r"^[A-Z][A-Z0-9_]*(-[0-9]+)+(-[a-z0-9]+)*-AD[0-9]+\Z",
 PROMOTED_TO_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}\Z", re.ASCII)  # promotion-signals.py's, anchored \Z
 FM_KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):(.*)\Z", re.ASCII)
 COMMENT_RE = re.compile(r"\s+#.*\Z", re.ASCII)
+REF_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._/@+-]*\Z", re.ASCII)  # a plain ref name: never an option, ^, ~, : or {
+OID_RE = re.compile(r"^[0-9a-f]{40}([0-9a-f]{24})?\Z", re.ASCII)  # a full object id, SHA-1 or SHA-256
 PREVENTS = "**Prevents:**"
+JUDGED_REAL = ("fix", "fixing", "reopened", "accepted-risk")  # and a recent fixed one
+FILE_MODES = (b"100644", b"100755")  # a regular file; 120000 is a symbolic link, whose blob holds its target's name
+# across runs git with the environment it was given, never prompting and taking no optional lock.
+GIT_ENV = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
 
 # The fixed <why> of every exit 2; none carries a value from the command line, a register or a record.
 WHY_USAGE = "usage: an unknown verb or flag, or a flag without its value"
@@ -83,6 +102,12 @@ WHY_PRD_KEY = "--prd-key is not a key"
 WHY_TODAY = "--today is not a real YYYY-MM-DD date"
 WHY_COMPONENT = "--component names a repository no --repo names"
 WHY_SPECS = "--specs is not a directory"
+WHY_NO_REF = "usage: --ref is required"
+WHY_REF = "--ref is not a plain ref name"
+WHY_NO_GIT = "git could not be run in --specs"
+WHY_NOT_REPO = "--specs is not the top level of a git work tree"
+WHY_UNKNOWN_REF = "--ref names no commit in --specs"
+WHY_LIST = "git could not list --specs at --ref"
 WHY_INTERNAL = "internal error"
 
 
@@ -367,17 +392,29 @@ def read_record(stem: str, text: str) -> dict | None:
             "components": components, "prevents": para}
 
 
-def _records(specs):
-    """(the readable team records, the number skipped)."""
+def _tally(texts):
+    """(the readable team records, the number skipped), from (stem, text) pairs whose text is None where the record's
+    file could not be read."""
+    recs, skipped = [], 0
+    for stem, text in texts:
+        r = read_record(stem, text) if text is not None else None
+        if r is None:
+            skipped += 1
+        else:
+            recs.append(r)
+    return recs, skipped
+
+
+def _record_texts(specs):
+    """(stem, text or None) for each record in the working tree, one at a time."""
     arch = os.path.join(specs, "architecture")
     d = os.path.join(arch, "decisions")
     try:
         if _kind(arch) != "dir" or _kind(d) != "dir":  # missing, or a symbolic link, which is never followed
-            return [], 0
+            return
         names = sorted(os.listdir(d))
     except OSError:  # no knowledge base: no record, none skipped
-        return [], 0
-    recs, skipped = [], 0
+        return
     for name in names:
         if not name.endswith(".md"):
             continue
@@ -390,12 +427,12 @@ def _records(specs):
             text = raw.decode("utf-8") if raw is not None else None
         except (OSError, ValueError):  # unreadable, or not UTF-8
             text = None
-        r = read_record(name[:-3], text) if text is not None else None
-        if r is None:
-            skipped += 1
-        else:
-            recs.append(r)
-    return recs, skipped
+        yield name[:-3], text
+
+
+def _records(specs):
+    """(the readable team records in the working tree, the number skipped)."""
+    return _tally(_record_texts(specs))
 
 
 def prevents(record: dict, cwe: str) -> bool:
@@ -501,6 +538,126 @@ def classes(specs: str, repos: list[str], components: list[str], origins: list[s
             "classes": out}
 
 
+# ---- across: the registers and the team records at a git ref ----
+
+def _git(specs, *args):
+    """(git's exit code, its stdout) for `git -C <specs> <args>`, an argument list and no shell. Its stderr is
+    discarded, never printed: it can echo a path or a ref. NotRun where no git can be started."""
+    try:
+        r = subprocess.run(["git", "-C", specs] + list(args), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                           stderr=subprocess.DEVNULL, env=GIT_ENV)
+    except OSError:
+        raise NotRun(WHY_NO_GIT)
+    return r.returncode, r.stdout
+
+
+def _blob(specs, oid, size):
+    """The bytes of the blob `oid`, which ls-tree listed at `size`; or None where that size is unknown (git could not
+    read the object) or larger than READ_CAP, git cannot read it, or it is not that long. It is read by its object id,
+    never by a path, with no filter or conversion, and never more than one byte past `size`."""
+    if size is None or size > READ_CAP:
+        return None
+    try:
+        p = subprocess.Popen(["git", "-C", specs, "cat-file", "blob", oid], stdin=subprocess.DEVNULL,
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=GIT_ENV)
+    except OSError:
+        return None
+    with p:
+        data = p.stdout.read(size + 1)
+        if len(data) != size:
+            p.kill()
+    return data if p.returncode == 0 and len(data) == size else None
+
+
+def _resolve(specs, ref):
+    """The full sha of the commit `ref` names in `specs`, once `specs` is shown to be a work tree's top level, so that
+    every path below is the tree's own."""
+    code, out = _git(specs, "rev-parse", "--show-toplevel")
+    top = out.rstrip(b"\n")
+    if code != 0 or not top or os.path.realpath(os.fsdecode(top)) != os.path.realpath(specs):
+        raise NotRun(WHY_NOT_REPO)
+    code, out = _git(specs, "rev-parse", "--verify", "--quiet", "--end-of-options", ref + "^{commit}")
+    sha = out.decode("ascii", "replace").strip()
+    if code != 0 or not OID_RE.match(sha):
+        raise NotRun(WHY_UNKNOWN_REF)
+    return sha
+
+
+def _listing(specs, sha):
+    """([(slug, oid, size)] for each register, [(stem, oid, size)] for each team record) at `sha`, both sorted, from
+    one ls-tree. Only a regular file is a file here: an entry git records as a symbolic link (120000), whose blob is the
+    link's target and never the file, as a submodule or as a directory is none."""
+    code, out = _git(specs, "ls-tree", "-r", "-l", "-z", "--full-tree", sha, "--", "security", "architecture/decisions")
+    if code != 0:
+        raise NotRun(WHY_LIST)
+    registers, records = [], []
+    for item in out.split(b"\0"):
+        head, tab, name = item.partition(b"\t")
+        fields = head.split()
+        if not tab or len(fields) != 4 or fields[0] not in FILE_MODES or fields[1] != b"blob":
+            continue
+        oid = fields[2].decode("ascii", "replace")
+        size = int(fields[3]) if fields[3].isdigit() else None  # ls-tree prints BAD for a blob it cannot read
+        parts = name.decode("utf-8", "surrogateescape").split("/")
+        if not OID_RE.match(oid) or len(parts) != 3:
+            continue
+        if parts[0] == "security" and parts[2] == "register.json" and _slug(parts[1]):
+            registers.append((parts[1], oid, size))
+        elif parts[0] == "architecture" and parts[1] == "decisions" and parts[2].endswith(".md"):
+            records.append((parts[2][:-3], oid, size))
+    return sorted(registers, key=lambda e: e[0]), sorted(records, key=lambda e: e[0])
+
+
+def _record_texts_at(specs, entries):
+    """(stem, text or None) for each record ls-tree listed, one at a time: None where it is larger than the cap, git
+    cannot read it, or it is not UTF-8."""
+    for stem, oid, size in entries:
+        raw = _blob(specs, oid, size)
+        text = None
+        if raw is not None:
+            try:
+                text = raw.decode("utf-8")
+            except ValueError:
+                pass
+        yield stem, text
+
+
+def _judged_real(f):
+    return f["status"] in JUDGED_REAL or (f["status"] == "fixed" and f["recent"])
+
+
+def across(specs: str, ref: str, today: datetime.date) -> dict:
+    """The `across` verb: each CWE whose class holds a judged-real finding in two or more of the registers at `ref`.
+    Its arguments have passed main's checks: ref is a plain ref name, specs a directory and today a date."""
+    sha = _resolve(specs, ref)
+    reg_entries, rec_entries = _listing(specs, sha)
+    records, kb_skipped = _tally(_record_texts_at(specs, rec_entries))
+    registers, held = [], {}
+    for slug, oid, size in reg_entries:
+        raw = _blob(specs, oid, size)
+        entry, found = read_register(raw, slug, today) if raw is not None else (_empty(slug, "unreadable"), [])
+        registers.append(entry)
+        for f in found:
+            if f["cwe"] is not None and _judged_real(f):
+                held.setdefault(f["cwe"], {}).setdefault(slug, []).append(f)
+    last_at = {r["repo"]: r["last_at"] for r in registers}
+    out = []  # records came sorted by id, the listing's order, so each prevented_by is too
+    for cwe, by_slug in held.items():
+        if len(by_slug) < 2:
+            continue
+        rows = [{"repo": slug, "real": len(fs), "accepted": sum(1 for f in fs if f["status"] == "accepted-risk"),
+                 "fixed_recent": sum(1 for f in fs if f["status"] == "fixed"), "last_at": last_at[slug]}
+                for slug, fs in sorted(by_slug.items())]
+        out.append({"cwe": cwe, "cwe_url": CWE_URL % int(cwe[len("CWE-"):]),
+                    "real": sum(r["real"] for r in rows), "accepted": sum(r["accepted"] for r in rows),
+                    "fixed_recent": sum(r["fixed_recent"] for r in rows), "registers": rows,
+                    "prevented_by": [{"id": r["id"], "promotion": r["promotion"], "promoted_to": r["promoted_to"]}
+                                     for r in records if prevents(r, cwe)]})
+    out.sort(key=lambda c: (-len(c["registers"]), -c["real"], int(c["cwe"][len("CWE-"):])))
+    return {"format": FORMAT, "today": today.isoformat(), "ref": sha, "kb_skipped": kb_skipped,
+            "registers": registers, "classes": out}
+
+
 # ---- the command line ----
 
 class _Parser(argparse.ArgumentParser):
@@ -510,8 +667,16 @@ class _Parser(argparse.ArgumentParser):
         raise NotRun(WHY_USAGE)
 
 
+def _today(value):
+    """--today's date, today's UTC date where it is not given; NotRun where it is no real date."""
+    today = datetime.datetime.now(datetime.timezone.utc).date() if value is None else _date(value)
+    if today is None:
+        raise NotRun(WHY_TODAY)
+    return today
+
+
 def _args(argv):
-    """classes()' arguments, every flag checked; NotRun names the first that fails."""
+    """(the verb's function, its arguments), every flag checked; NotRun names the first that fails."""
     ap = _Parser(prog="weakness-classes.py", add_help=False, allow_abbrev=False)
     sub = ap.add_subparsers(dest="verb")
     sp = sub.add_parser("classes", add_help=False, allow_abbrev=False)
@@ -520,11 +685,23 @@ def _args(argv):
         sp.add_argument(flag, action="append")
     sp.add_argument("--prd-key")
     sp.add_argument("--today")
+    xp = sub.add_parser("across", add_help=False, allow_abbrev=False)
+    for flag in ("--specs", "--ref", "--today"):
+        xp.add_argument(flag)
     a = ap.parse_args(argv)
-    if a.verb != "classes":
+    if a.verb not in ("classes", "across"):
         raise NotRun(WHY_USAGE)
     if a.specs is None:
         raise NotRun(WHY_NO_SPECS)
+    if a.verb == "across":
+        if a.ref is None:
+            raise NotRun(WHY_NO_REF)
+        if not REF_RE.match(a.ref):  # so nothing git reads as an option, a range or a path ever reaches it
+            raise NotRun(WHY_REF)
+        today = _today(a.today)
+        if not os.path.isdir(a.specs):
+            raise NotRun(WHY_SPECS)
+        return across, (a.specs, a.ref, today)
     if not a.repo:
         raise NotRun(WHY_NO_REPO)
     repos = list(dict.fromkeys(a.repo))
@@ -532,16 +709,14 @@ def _args(argv):
         raise NotRun(WHY_REPO)
     if a.prd_key is not None and not KEY_RE.match(a.prd_key):
         raise NotRun(WHY_PRD_KEY)
-    today = datetime.datetime.now(datetime.timezone.utc).date() if a.today is None else _date(a.today)
-    if today is None:
-        raise NotRun(WHY_TODAY)
+    today = _today(a.today)
     components = list(dict.fromkeys(a.component or []))
     if any(c.partition(":")[0] not in repos for c in components):
         raise NotRun(WHY_COMPONENT)
     if not os.path.isdir(a.specs):
         raise NotRun(WHY_SPECS)
     origins = list(dict.fromkeys(a.origin)) if a.origin is not None else None
-    return a.specs, repos, components, origins, a.prd_key, today
+    return classes, (a.specs, repos, components, origins, a.prd_key, today)
 
 
 def _drop_stdout():
@@ -559,7 +734,8 @@ def main(argv: list[str]) -> int:
     if argv == ["--selftest"]:
         return selftest()
     try:
-        text = json.dumps(classes(*_args(argv)), indent=2, ensure_ascii=False) + "\n"
+        verb, args = _args(argv)
+        text = json.dumps(verb(*args), indent=2, ensure_ascii=False) + "\n"
     except NotRun as e:
         sys.stderr.write("weakness-classes: not run (%s)\n" % e.args[0])
         return 2
@@ -886,7 +1062,7 @@ def case_usage_exits_2(tmp):
              ["classes", "--specs", os.path.join(tmp, "missing"), "--repo", "api", "--today", TODAY], base,
              # beyond the brief: no verb, an unknown verb or flag, a flag without its value, --help, a bare
              # component slug no --repo names, an abbreviated flag, and no --specs
-             [], ["across"], base + ["--repo", "api", "--bogus"], base + ["--repo"], base + ["--repo", "api", "-h"],
+             [], ["bogus"], base + ["--repo", "api", "--bogus"], base + ["--repo"], base + ["--repo", "api", "-h"],
              base + ["--repo", "api", "--component", "web"], base + ["--rep", "api"], ["classes", "--repo", "api"],
              base + ["--repo", "."], base + ["--repo", "api", "--today", "20261113"]]
     whys = set()
@@ -1481,13 +1657,508 @@ def case_envelope(tmp):
     assert list(res["classes"][0]) == CLASS_KEYS[:12] + ["decided", "decided_ids"] + CLASS_KEYS[12:], res
 
 
+# ==== across: every fixture is a throwaway git repository ====
+
+GIT_ID = {"GIT_AUTHOR_NAME": "Tester", "GIT_AUTHOR_EMAIL": "tester@example.invalid", "GIT_COMMITTER_NAME": "Tester",
+          "GIT_COMMITTER_EMAIL": "tester@example.invalid"}
+AT_API = "2026-11-02T09:14:00Z"  # _register's last_at
+AT_WEB = "2026-10-19T08:00:00Z"
+AT_OPS = "2026-06-30T10:00:00Z"
+URL79 = "https://cwe.mitre.org/data/definitions/79.html"
+
+
+def _g(repo, *args, data=None):
+    """git in a fixture repository, under the selftest's git environment; its stdout, stripped."""
+    r = subprocess.run(["git", "-C", repo] + list(args), input=data, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                       env=dict(GIT_ENV, **GIT_ID))
+    assert r.returncode == 0, (args, r.stderr)
+    return r.stdout.decode("utf-8").strip()
+
+
+def _repo(tmp, name="specs"):
+    specs = _specs(tmp, name)
+    _g(specs, "init", "-q")
+    _g(specs, "symbolic-ref", "HEAD", "refs/heads/main")
+    return specs
+
+
+def _commit(specs, add=True):
+    """Commit the working tree, or (add=False) the index as it stands; the new commit's sha."""
+    if add:
+        _g(specs, "add", "-A")
+    _g(specs, "commit", "-q", "--allow-empty", "-m", "snapshot")
+    return _g(specs, "rev-parse", "HEAD")
+
+
+def _plant(specs, path, data, mode="100644"):
+    """Stage a blob holding `data` at `path` with `mode`, straight into the index: a symbolic link (120000) is recorded
+    with whatever text it is given as its target, on any file system."""
+    oid = _g(specs, "hash-object", "-w", "--stdin", data=data if isinstance(data, bytes) else data.encode("utf-8"))
+    _g(specs, "update-index", "--add", "--cacheinfo", "%s,%s,%s" % (mode, oid, path))
+    return oid
+
+
+def _record_text(tmp, stem, **kw):
+    """A team record's text exactly as _record writes it, written nowhere a fixture reads."""
+    scratch = tempfile.mkdtemp(dir=tmp)
+    _record(scratch, stem, **kw)
+    with io.open(os.path.join(scratch, "architecture", "decisions", stem + ".md"), encoding="utf-8", newline="") as fh:
+        return fh.read()
+
+
+def _drop_object(specs, oid):
+    """Remove a loose object from the fixture's object store, as a damaged or partial clone lacks it."""
+    os.remove(os.path.join(specs, ".git", "objects", oid[:2], oid[2:]))
+
+
+def _across(specs, ref="main", today=TODAY):
+    code, out, err = _call(["across", "--specs", specs, "--ref", ref, "--today", today])
+    assert code == 0 and err == "", (code, out, err)
+    return json.loads(out), out
+
+
+def _xcls(res, cwe):
+    hits = [c for c in res["classes"] if c["cwe"] == cwe]
+    assert len(hits) <= 1, hits
+    return hits[0] if hits else None
+
+
+def _rows(c):
+    return [r["repo"] for r in c["registers"]]
+
+
+def _states(res):
+    return {r["repo"]: r["state"] for r in res["registers"]}
+
+
+def case_across_reads_at_ref_only(tmp):
+    """Only the commit --ref names is read: never the working tree, the index or another commit."""
+    specs = _repo(tmp)
+    _register(specs, "api", [_finding(1, status="accepted-risk")])
+    _register(specs, "web", [_finding(1, status="fix")], last_at=AT_WEB)
+    first = _commit(specs)
+    _g(specs, "branch", "first")
+    _record(specs, "ACME-17-AD1", components=("billing",))
+    sha = _commit(specs)
+    _register(specs, "ops", [_finding(1, status="accepted-risk")])  # a register never committed
+    _register(specs, "web", [_finding(1, status="open")], last_at=AT_WEB)  # web's finding, no longer judged real
+    os.remove(os.path.join(specs, "architecture", "decisions", "ACME-17-AD1.md"))  # the record, gone from the tree
+    _record(specs, "ACME-17-AD2", prevents="[CWE-79](%s)." % URL79)  # a record never committed
+    _record(specs, "ACME-17-AD3", source="../x")  # one that would be skipped, were it read
+    res, _ = _across(specs)
+    assert res["ref"] == sha == _g(specs, "rev-parse", "main") and OID_RE.match(res["ref"]), res["ref"]
+    assert [r["repo"] for r in res["registers"]] == ["api", "web"] and res["kb_skipped"] == 0, res
+    c = _xcls(res, "CWE-89")
+    assert _rows(c) == ["api", "web"] and [p["id"] for p in c["prevented_by"]] == ["ACME-17-AD1"], c
+    _g(specs, "add", "-A")  # staged, and still not committed
+    assert _across(specs)[0] == res
+    for ref in (sha, "refs/heads/main", "HEAD"):
+        assert _across(specs, ref=ref)[0] == res, ref
+    old, _ = _across(specs, ref="first")
+    assert old["ref"] == first and _xcls(old, "CWE-89")["prevented_by"] == [], old
+
+
+def case_across_threshold(tmp):
+    specs = _repo(tmp)
+    today = datetime.date.fromisoformat(TODAY)
+
+    def day(n):
+        return (today - datetime.timedelta(days=n)).isoformat() + "T23:59:59Z"
+
+    def web(cwe79):
+        _register(specs, "web", [_finding(1, status="fixing"), _finding(2, cwe="CWE-79", status=cwe79),
+                                 _finding(3, cwe="CWE-79", status="false-positive"),
+                                 _finding(4, cwe="CWE-22", status="fix"), _finding(5, cwe="CWE-352", status="accepted-risk"),
+                                 _finding(6, cwe="CWE-78", status="new")], last_at=AT_WEB)
+    _register(specs, "api", [
+        _finding(1, status="accepted-risk", run=2, at=AT1), _finding(2, status="accepted-risk", run=3, at=AT2),
+        _finding(3, status="fixed", at=day(10)), _finding(4, status="open"), _finding(5, status="false-positive"),
+        _finding(6, status="new"), _finding(7, cwe="CWE-79", status="fix"),
+        _finding(8, cwe="CWE-22", status="fixed", at=day(180)), _finding(9, cwe="CWE-352", status="fixed", at=day(181)),
+        _finding(10, cwe="CWE-78", status="reopened")])
+    web("open")
+    _register(specs, "ops", [_finding(1, cwe="CWE-79", status="open"), _finding(2, status="reopened"),
+                             _finding(3, status="fixed", at=day(181))], last_at=AT_OPS)
+    _commit(specs)
+    res, _ = _across(specs)
+    # CWE-79 is judged real in api alone (web's is open or a false positive, ops' open), CWE-352 in web alone (api's
+    # was fixed 181 days ago), CWE-78 in api alone (web's is new)
+    assert [c["cwe"] for c in res["classes"]] == ["CWE-89", "CWE-22"], res["classes"]
+    assert _xcls(res, "CWE-89") == {
+        "cwe": "CWE-89", "cwe_url": URL89, "real": 5, "accepted": 2, "fixed_recent": 1,
+        "registers": [{"repo": "api", "real": 3, "accepted": 2, "fixed_recent": 1, "last_at": AT_API},
+                      {"repo": "ops", "real": 1, "accepted": 0, "fixed_recent": 0, "last_at": AT_OPS},
+                      {"repo": "web", "real": 1, "accepted": 0, "fixed_recent": 0, "last_at": AT_WEB}],
+        "prevented_by": []}, _xcls(res, "CWE-89")
+    assert _xcls(res, "CWE-22") == {
+        "cwe": "CWE-22", "cwe_url": "https://cwe.mitre.org/data/definitions/22.html", "real": 2, "accepted": 0,
+        "fixed_recent": 1,
+        "registers": [{"repo": "api", "real": 1, "accepted": 0, "fixed_recent": 1, "last_at": AT_API},
+                      {"repo": "web", "real": 1, "accepted": 0, "fixed_recent": 0, "last_at": AT_WEB}],
+        "prevented_by": []}, _xcls(res, "CWE-22")
+    web("accepted-risk")  # web now judges its CWE-79 real: a second register
+    _commit(specs)
+    res, _ = _across(specs)
+    c = _xcls(res, "CWE-79")
+    assert c and _rows(c) == ["api", "web"] and (c["real"], c["accepted"], c["fixed_recent"]) == (2, 1, 0), res
+
+
+def case_across_dead_repository(tmp):
+    """A register whose repository has stopped running still counts what it judged real, and its last_at shows it
+    gone quiet; its fixes age out of the 180 days like any other."""
+    specs = _repo(tmp)
+    _register(specs, "legacy", [_finding(1, status="accepted-risk", run=2, at="2025-01-10T09:00:00Z"),
+                                _finding(2, cwe="CWE-79", status="fixed", at="2025-01-12T09:00:00Z")],
+              last_at="2025-01-12T09:00:00Z")
+    _register(specs, "api", [_finding(1, status="fix"), _finding(2, cwe="CWE-79", status="fix")])
+    _register(specs, "never", [_finding(1, status="accepted-risk")], last_at=None)
+    _commit(specs)
+    res, _ = _across(specs)
+    assert {r["repo"]: r["last_at"] for r in res["registers"]} == {
+        "api": AT_API, "legacy": "2025-01-12T09:00:00Z", "never": None}, res["registers"]
+    assert _xcls(res, "CWE-89")["registers"] == [
+        {"repo": "api", "real": 1, "accepted": 0, "fixed_recent": 0, "last_at": AT_API},
+        {"repo": "legacy", "real": 1, "accepted": 1, "fixed_recent": 0, "last_at": "2025-01-12T09:00:00Z"},
+        {"repo": "never", "real": 1, "accepted": 1, "fixed_recent": 0, "last_at": None}], res["classes"]
+    assert _xcls(res, "CWE-79") is None, res["classes"]
+
+
+def case_across_prevented_any_component(tmp):
+    """Coverage across registers is organisation-wide: a live record naming the CWE prevents it whatever its
+    components, and only {id, promotion, promoted_to} of it is printed."""
+    specs = _repo(tmp)
+    _register(specs, "api", [_finding(1, status="accepted-risk")])
+    _register(specs, "web", [_finding(1, status="fix")])
+    _record(specs, "ACME-17-AD1", components=("billing",))  # no register's slug
+    _record(specs, "ACME-17-AD2", components=("web:src", "api"), promotion="covered", promoted_to="STD-API-001")
+    _record(specs, "ACME-17-AD3", status="superseded", components=("api",))  # not live
+    _record(specs, "ACME-17-AD4", components=("api",), prevents="CWE-890 in the queries.")  # another class
+    _record(specs, "ACME-17-AD5", components=("api",), prevents="[SQL injection](%s)." % URL89)  # in the URL alone
+    _commit(specs)
+    res, out = _across(specs)
+    c = _xcls(res, "CWE-89")
+    assert c["prevented_by"] == [{"id": "ACME-17-AD1", "promotion": None, "promoted_to": None},
+                                 {"id": "ACME-17-AD2", "promotion": "covered", "promoted_to": "STD-API-001"}], c
+    assert all(list(p) == ["id", "promotion", "promoted_to"] for p in c["prevented_by"]), c
+    assert SOURCE not in out and "billing" not in out and res["kb_skipped"] == 0, out
+
+
+def case_across_prevented_still_listed(tmp):
+    """R11: a class a record prevents is listed all the same, once, in R7's order, its prevented_by saying whether
+    the record's rule was promoted -- so a caller counts every class, a covered one as covered."""
+    specs = _repo(tmp)
+    held = [_finding(1, status="accepted-risk"), _finding(2, cwe="CWE-79", status="fix"),
+            _finding(3, cwe="CWE-352", status="reopened")]
+    _register(specs, "api", held)
+    _register(specs, "web", held)
+    _record(specs, "ACME-17-AD1")  # prevents CWE-89
+    _record(specs, "ACME-17-AD2", components=("web",), prevents="[CWE-79](%s)." % URL79, promotion="covered",
+            promoted_to="STD-API-001")
+    _record(specs, "ACME-17-AD3", prevents="[CWE-79](%s)." % URL79, promotion="accepted", promoted_to="ADR-0031")
+    _commit(specs)
+    res, _ = _across(specs)
+    assert [c["cwe"] for c in res["classes"]] == ["CWE-79", "CWE-89", "CWE-352"], res["classes"]
+    assert _xcls(res, "CWE-89")["prevented_by"] == [{"id": "ACME-17-AD1", "promotion": None, "promoted_to": None}]
+    assert _xcls(res, "CWE-79")["prevented_by"] == [
+        {"id": "ACME-17-AD2", "promotion": "covered", "promoted_to": "STD-API-001"},
+        {"id": "ACME-17-AD3", "promotion": "accepted", "promoted_to": "ADR-0031"}], res["classes"]
+    assert _xcls(res, "CWE-352")["prevented_by"] == [], res["classes"]
+
+
+def case_across_order(tmp):
+    """R7: more registers first, then the larger real, then the CWE number, compared as a number."""
+    specs = _repo(tmp)
+
+    def fs(*cwes):
+        return [_finding(n, cwe=cwe, status="fix") for n, cwe in enumerate(cwes, 1)]
+    _register(specs, "api", fs("CWE-900", "CWE-800", "CWE-800", "CWE-800", "CWE-100", "CWE-22"))
+    _register(specs, "web", fs("CWE-900", "CWE-800", "CWE-800", "CWE-100", "CWE-22"))
+    _register(specs, "ops", fs("CWE-900"))
+    _commit(specs)
+    res, _ = _across(specs)
+    got = [(c["cwe"], len(c["registers"]), c["real"]) for c in res["classes"]]
+    assert got == [("CWE-900", 3, 3), ("CWE-800", 2, 5), ("CWE-22", 2, 2), ("CWE-100", 2, 2)], got
+
+
+def case_across_exits(tmp):
+    """Each way across cannot run has its own fixed line, which echoes no value, git's stderr included."""
+    specs = _repo(tmp)
+    _register(specs, "api", [_finding(1, status="fix")])
+    _register(specs, "web", [_finding(1, status="fix")])
+    _record(specs, "ACME-17-AD1")
+    _commit(specs)
+    tree = _g(specs, "rev-parse", "main^{tree}")
+    blob = _g(specs, "rev-parse", "main:security/api/register.json")
+    empty, plain = _repo(tmp, "empty"), _specs(tmp, "plain")  # a repository with no commit; no repository at all
+
+    def why(w):
+        return "weakness-classes: not run (%s)\n" % w
+
+    def at(root, ref="main"):
+        return ["across", "--specs", root, "--ref", ref, "--today", TODAY]
+    base = at(specs)[:-4] + ["--today", TODAY]
+    cases = [(at(specs, "nosuch"), WHY_UNKNOWN_REF), (at(specs, tree), WHY_UNKNOWN_REF), (at(specs, blob), WHY_UNKNOWN_REF),
+             (at(specs, "main..main"), WHY_UNKNOWN_REF), (at(empty), WHY_UNKNOWN_REF), (at(plain), WHY_NOT_REPO),
+             (at(os.path.join(specs, "security")), WHY_NOT_REPO), (at(os.path.join(tmp, "missing")), WHY_SPECS),
+             (base, WHY_NO_REF), (["across", "--ref", "main"], WHY_NO_SPECS), (at(specs) + ["--today", "2026-02-30"], WHY_TODAY),
+             (at(specs) + ["--repo", "api"], WHY_USAGE), (base + ["--ref", "-c"], WHY_USAGE), (["across", "-h"], WHY_USAGE),
+             (base + ["--re", "main"], WHY_USAGE)]
+    hostile = ["--output=x", "-c", "main;id", "a b", "HEAD:security", "main^{tree}", "@{-1}", "HEAD~1", "", "main\n",
+               "$(id)", ".main", "/main", "mаin", "main\x7f", "main`id`"]
+    cases += [(base + ["--ref=" + ref], WHY_REF) for ref in hostile]
+    for argv, w in cases:
+        code, out, err = _call(argv)
+        assert (code, out, err) == (2, "", why(w)), (argv, code, out, err)
+    # git's own stderr goes to a descriptor redirect_stderr never sees: run the script itself and read that too
+    for argv, w in ((at(specs, "nosuch"), WHY_UNKNOWN_REF), (at(plain), WHY_NOT_REPO)):
+        p = subprocess.run([sys.executable, os.path.abspath(__file__)] + argv, capture_output=True, timeout=60)
+        assert (p.returncode, p.stdout, p.stderr) == (2, b"", why(w).encode("utf-8")), (argv, p)
+    saved = GIT_ENV.get("PATH")
+    GIT_ENV["PATH"] = _specs(tmp, "no-git")  # no git on the path
+    try:
+        got = _call(at(specs))
+    finally:
+        if saved is None:
+            del GIT_ENV["PATH"]
+        else:
+            GIT_ENV["PATH"] = saved
+    assert got == (2, "", why(WHY_NO_GIT)), got
+    g = globals()
+    for name in ("read_register", "read_record"):
+        saved_fn = g[name]
+
+        def boom(*_a, **_k):
+            raise RuntimeError(EVIL)
+        g[name] = boom
+        try:
+            got = _call(at(specs))
+        finally:
+            g[name] = saved_fn
+        assert got == (2, "", INTERNAL), (name, got)
+    _drop_object(specs, tree)  # the commit resolves, and its tree cannot be listed
+    assert _call(at(specs)) == (2, "", why(WHY_LIST))
+
+
+def case_across_no_security(tmp):
+    specs = _repo(tmp)
+    _wf(os.path.join(specs, "README.md"), "# Specs\n")
+    sha = _commit(specs)
+    _register(specs, "api", [_finding(1, status="fix")])  # in the working tree only
+    _register(specs, "web", [_finding(1, status="fix")])
+    _record(specs, "ACME-17-AD1", source="../x")
+    code, out, err = _call(["across", "--specs", specs, "--ref", "main", "--today", TODAY])
+    assert (code, err) == (0, ""), (code, err)
+    assert json.loads(out) == {"format": 1, "today": TODAY, "ref": sha, "kb_skipped": 0, "registers": [],
+                               "classes": []}, out
+
+
+def case_across_non_register_dirs(tmp):
+    """Review Focus 4 at a ref: an entry under security/ that is no file at security/<slug>/register.json is silent."""
+    specs = _repo(tmp)
+
+    def reg(slug):
+        return _dump({"format": 1, "repo": slug, "last_at": None, "findings": [_finding(1, status="fix")]})
+    _wf(os.path.join(specs, "security", "docs", "README.md"), "# Our threat model\n")
+    _wf(os.path.join(specs, "security", "my team", "register.json"), reg("my team"))
+    _wf(os.path.join(specs, "security", "web", "dev-workflows", "cost", "abcd1234.md"), "cost\n")
+    _wf(os.path.join(specs, "security", "ops", "REGISTER.JSON"), reg("ops"))
+    _wf(os.path.join(specs, "security", "register.json"), reg("top"))
+    _wf(os.path.join(specs, "security", "deep", "x", "register.json"), reg("deep"))
+    _wf(os.path.join(specs, "securityX", "lab", "register.json"), reg("lab"))
+    _register(specs, "api", [_finding(1, status="fix")])
+    _g(specs, "add", "-A")
+    _plant(specs, "security/API/register.json", reg("API"))  # beside api, as git holds it on any file system
+    _plant(specs, "Security/cap/register.json", reg("cap"))
+    _commit(specs, add=False)
+    res, _ = _across(specs)
+    assert [r["repo"] for r in res["registers"]] == ["API", "api"], res["registers"]
+    assert _rows(_xcls(res, "CWE-89")) == ["API", "api"] and res["kb_skipped"] == 0, res
+
+
+def case_across_hostile_text(tmp):
+    """The Task 1 injection assertions, at a ref: no hostile value reaches the output, and no field outside the
+    printed set does."""
+    specs = _repo(tmp)
+    f1 = _finding(1, status="accepted-risk", title=EVIL, owner=EVIL, units=[EVIL], links={"followup": EVIL, "patch": EVIL},
+                  other_cwes=[EVIL], plugin_id=EVIL, origin=EVIL, scope=EVIL)
+    f1["history"][-1].update(reason=EVIL, evidence=EVIL, by=EVIL, links={"followup": EVIL})
+    f1["first_seen"]["scan"] = f1["last_seen"]["scan"] = EVIL
+    _register(specs, "api", [f1, _finding(2, cwe="CWE-89; " + EVIL, status="fix"), _finding(EVIL, status="fix"),
+                             _finding(4, status="fix", path="src/" + EVIL, line=EVIL), _finding(5, status="fix")],
+              scans=[{"id": EVIL, "scope": [EVIL]}], repo=EVIL)
+    _register(specs, "web", [_finding(1, status="fix", title=EVIL, origin=EVIL, path="../" + EVIL)])
+    _record(specs, "ACME-17-AD1", components=(EVIL,), edit=lambda t: t.replace("Every query is parameterised.", EVIL))
+    _record(specs, "ACME-17-AD2", source=EVIL)
+    _record(specs, "ACME-17-AD3", promotion="accepted", promoted_to=EVIL)
+    _commit(specs)
+    res, out = _across(specs)
+    assert EVIL not in out, out
+    assert not set(_keys(res)) & set(NEVER), sorted(set(_keys(res)) & set(NEVER))
+    assert (_reg(res, "api")["dropped"], _reg(res, "api")["unclassified"], res["kb_skipped"]) == (2, 1, 2), res
+    c = _xcls(res, "CWE-89")
+    assert _rows(c) == ["api", "web"] and c["real"] == 3 and [p["id"] for p in c["prevented_by"]] == ["ACME-17-AD1"], c
+
+
+def case_across_symlink_blob(tmp):
+    """A mode-120000 entry is a symbolic link, its blob the link's target and never the file: no register and no
+    record, even where that target text is a whole register or record. A submodule is neither either."""
+    specs = _repo(tmp)
+    _register(specs, "api", [_finding(1, status="accepted-risk")])
+    _register(specs, "web", [_finding(1, status="fix")])
+    first = _commit(specs)
+    linked = _dump({"format": 1, "repo": "ops", "last_at": None,
+                    "findings": [_finding(1, status="fix", path="src/linked_target.py")]})
+    _plant(specs, "security/ops/register.json", linked, mode="120000")
+    _plant(specs, "architecture/decisions/ACME-17-AD1.md", _record_text(tmp, "ACME-17-AD1"), mode="120000")
+    _g(specs, "update-index", "--add", "--cacheinfo", "160000,%s,security/sub/register.json" % first)
+    _g(specs, "update-index", "--add", "--cacheinfo", "160000,%s,architecture/decisions/ACME-17-AD2.md" % first)
+    _commit(specs, add=False)
+    res, out = _across(specs)
+    assert [r["repo"] for r in res["registers"]] == ["api", "web"] and res["kb_skipped"] == 0, res
+    assert _xcls(res, "CWE-89")["prevented_by"] == [] and "linked_target" not in out, res
+    specs = _repo(tmp, "linked-dirs")  # security/ and architecture/ themselves links
+    _plant(specs, "security", "../outside/security", mode="120000")
+    _plant(specs, "architecture", "../outside/architecture", mode="120000")
+    _commit(specs, add=False)
+    res, _ = _across(specs)
+    assert (res["registers"], res["kb_skipped"], res["classes"]) == ([], 0, []), res
+
+
+def case_across_read_cap(tmp):
+    """A blob larger than the cap is never read: an unreadable register, a skipped record."""
+    assert READ_CAP == 64 * 1024 * 1024
+    specs = _repo(tmp)
+    _register(specs, "api", [_finding(1, status="fix")])
+    _register(specs, "web", [_finding(1, status="fix"), _finding(2, status="fix")])
+    _record(specs, "ACME-17-AD1")
+    _commit(specs)
+
+    def size(path):
+        return int(_g(specs, "cat-file", "-s", "main:" + path))
+    api, web, rec = size("security/api/register.json"), size("security/web/register.json"), size(
+        "architecture/decisions/ACME-17-AD1.md")
+    assert rec < api < web, (rec, api, web)
+    g, got = globals(), {}
+    try:
+        for cap in (web, api, rec - 1):
+            g["READ_CAP"] = cap
+            res, _ = _across(specs)
+            got[cap] = (_states(res), res["kb_skipped"])
+    finally:
+        g["READ_CAP"] = 64 * 1024 * 1024
+    assert got == {web: ({"api": "ok", "web": "ok"}, 0), api: ({"api": "ok", "web": "unreadable"}, 0),
+                   rec - 1: ({"api": "unreadable", "web": "unreadable"}, 1)}, got
+
+
+def case_across_int_bounds(tmp):
+    specs = _repo(tmp)
+    _register(specs, "api", [_finding(1, status="fix", line=777777777), _finding(2, status="fix"),
+                             _finding(INT_MAX + 1, status="fix"), _finding(4, status="accepted-risk", run=INT_MAX + 1),
+                             _finding(INT_MAX, status="fix")])
+    _register(specs, "web", [_finding(1, status="fix")], format=666666666)
+    _register(specs, "ops", [_finding(1, status="fix")])
+    huge, long_ = "9" * 5000, "6" * 4000  # past 3.11's int parsing limit, and under it
+    for slug, old, new in (("api", '"line": 777777777', '"line": ' + huge), ("web", '"format": 666666666',
+                                                                            '"format": ' + long_)):
+        path = os.path.join(specs, "security", slug, "register.json")
+        text = io.open(path, encoding="utf-8").read()
+        assert text.count(old) == 1, (slug, old)
+        _wf(path, text.replace(old, new))
+    _commit(specs)
+    res, out = _across(specs)
+    assert _states(res) == {"api": "ok", "ops": "ok", "web": "unknown-format"}, res["registers"]
+    assert (_reg(res, "api")["findings"], _reg(res, "api")["dropped"]) == (5, 3), res["registers"]
+    assert _xcls(res, "CWE-89")["registers"][0]["real"] == 2 and huge[:30] not in out and long_[:30] not in out, res
+
+
+def case_across_register_states(tmp):
+    specs = _repo(tmp)
+    _wf(os.path.join(specs, "security", "unread", "register.json"), "{")
+    _wf(os.path.join(specs, "security", "latin", "register.json"), b'{"format": 1, "findings": [], "x": "\xe9"}')
+    _wf(os.path.join(specs, "security", "deep", "register.json"), "[" * 100000 + "]" * 100000)
+    _register(specs, "unknown", [_finding(1, status="fix")], format=2)
+    _register(specs, "malformed", [_finding(1, status="fix")], findings={})
+    _register(specs, "lastat", [_finding(1, status="fix")], last_at="2026-11-02")
+    _register(specs, "gone", [_finding(1, status="fix")])
+    _register(specs, "ok1", [_finding(1, status="fix")])
+    _register(specs, "ok2", [_finding(1, status="fix")], last_at=AT_WEB)
+    _record(specs, "ACME-17-AD1")
+    _record(specs, "ACME-17-AD2", components=("web",))
+    _wf(os.path.join(specs, "architecture", "decisions", "ACME-17-AD3.md"), b"---\nstatus: accepted\n\xff\n---\n")
+    _commit(specs)
+    for path in ("security/gone/register.json", "architecture/decisions/ACME-17-AD1.md"):  # git cannot read these blobs
+        _drop_object(specs, _g(specs, "rev-parse", "main:" + path))
+    res, _ = _across(specs)
+    assert res["kb_skipped"] == 2, res["kb_skipped"]  # AD1, which git cannot read, and AD3, which is not UTF-8
+    assert [p["id"] for p in _xcls(res, "CWE-89")["prevented_by"]] == ["ACME-17-AD2"], res["classes"]
+    assert _states(res) == {"deep": "unreadable", "gone": "unreadable", "lastat": "malformed", "latin": "unreadable",
+                            "malformed": "malformed", "ok1": "ok", "ok2": "ok", "unknown": "unknown-format",
+                            "unread": "unreadable"}, res["registers"]
+    for r in res["registers"]:
+        if r["state"] != "ok":
+            assert r == {"repo": r["repo"], "state": r["state"], "last_at": None, "findings": 0, "dropped": 0,
+                         "unclassified": 0}, r
+    assert [(c["cwe"], _rows(c)) for c in res["classes"]] == [("CWE-89", ["ok1", "ok2"])], res["classes"]
+
+
+def case_across_hostile_names(tmp):
+    """A path name in the tree is data too: a directory or a record named to look like a command, or with a newline,
+    a tab or bytes that are not UTF-8, is never a register, is skipped as a record, and is never printed."""
+    specs = _repo(tmp)
+    reg = _dump({"format": 1, "last_at": None, "findings": [_finding(1, status="fix")]})
+    for name in ("api;rm -rf ~", "$(touch pwned)", "a\nb", "a\tb", "été", "`id`"):
+        _wf(os.path.join(specs, "security", name, "register.json"), reg)
+    _register(specs, "api", [_finding(1, status="fix")])
+    _register(specs, "web", [_finding(1, status="fix")])
+    rec = _record_text(tmp, "ACME-17-AD1")  # a whole record, which would prevent CWE-89, under each hostile name
+    for stem in ("$(id)", "ACME-17-AD1;rm", "ACME-17-AD1\n", "a\tb"):
+        _wf(os.path.join(specs, "architecture", "decisions", stem + ".md"), rec)
+    _g(specs, "add", "-A")
+    if os.name == "posix":  # names that are not UTF-8, which git holds as bytes
+        _plant(specs, "architecture/decisions/\udcff.md", rec)
+        _plant(specs, "security/\udcff/register.json", reg)
+    _commit(specs, add=False)
+    res, out = _across(specs)
+    assert [r["repo"] for r in res["registers"]] == ["api", "web"], res["registers"]
+    assert res["kb_skipped"] == (5 if os.name == "posix" else 4) and _xcls(res, "CWE-89")["prevented_by"] == [], res
+    for bad in ("rm -rf", "touch", "`", "$(", "é", "�", "\\u", "\t"):
+        assert bad not in out, bad
+
+
+def case_across_envelope(tmp):
+    specs = _repo(tmp)
+    _register(specs, "api", [_finding(1, status="fix")])
+    _register(specs, "web", [_finding(1, status="accepted-risk")])
+    _record(specs, "ACME-17-AD1")
+    sha = _commit(specs)
+    code, out, err = _call(["across", "--specs", specs, "--ref", "main", "--today", TODAY])
+    assert (code, err) == (0, ""), (code, err)
+    obj = json.loads(out)
+    assert list(obj) == ["format", "today", "ref", "kb_skipped", "registers", "classes"], list(obj)
+    assert (obj["format"], obj["today"], obj["ref"], obj["kb_skipped"]) == (1, TODAY, sha, 0), obj
+    assert list(obj["registers"][0]) == ["repo", "state", "last_at", "findings", "dropped", "unclassified"], obj
+    c = obj["classes"][0]
+    assert list(c) == ["cwe", "cwe_url", "real", "accepted", "fixed_recent", "registers", "prevented_by"], list(c)
+    assert list(c["registers"][0]) == ["repo", "real", "accepted", "fixed_recent", "last_at"], c
+    assert list(c["prevented_by"][0]) == ["id", "promotion", "promoted_to"], c
+    assert out == json.dumps(obj, indent=2, ensure_ascii=False) + "\n", "one object, indented, and nothing else"
+    before = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+    code, out, err = _call(["across", "--ref", "main", "--specs", specs])  # any order; --today defaults to UTC's
+    after = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+    assert (code, err) == (0, "") and json.loads(out)["today"] in (before, after), (code, out, err)
+
+
 def selftest():
+    for env in (os.environ, GIT_ENV):  # the fixtures' git and the script's own both see none of the user's config
+        env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
     cases = sorted((name, fn) for name, fn in globals().items() if name.startswith("case_"))
     failed = 0
     for name, fn in cases:
         with tempfile.TemporaryDirectory() as tmp:
+            tmp = os.path.realpath(tmp)
+            os.environ["GIT_CEILING_DIRECTORIES"] = GIT_ENV["GIT_CEILING_DIRECTORIES"] = tmp
             try:
-                fn(os.path.realpath(tmp))
+                fn(tmp)
                 print("ok   " + name)
             except Exception as e:  # any exception is that case failing, and it is named
                 failed += 1

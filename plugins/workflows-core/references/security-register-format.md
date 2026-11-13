@@ -160,24 +160,28 @@ The commands and agents that load this reference are what `grep -l 'args: "secur
 
 ## 7. Weakness classes
 
-A **weakness class** is a register plus a finding's primary CWE. `workflows-core`'s `scripts/weakness-classes.py` implements this section, the one place the class and its rule are computed; a change here is a change there, and to its `--selftest`, in the same commit. It only reads: it writes nothing, decides no change to a register, opens no path a register names, and follows no symbolic link under `--specs` (§7.1). It reads two things, a register's `register.json` and the team records `workflows-core:architecture-kb` §3 lays out, and it prints only counts, fixed wording and values that have passed a check (§7.2, §7.4), so a finding's text (§3) never reaches what reads its output.
+A **weakness class** is a register plus a finding's primary CWE. `workflows-core`'s `scripts/weakness-classes.py` implements this section, the one place the class and its rule are computed; a change here is a change there, and to its `--selftest`, in the same commit. It only reads: it writes nothing, decides no change to a register, opens no path a register names, and follows no symbolic link, under `--specs` or at a git ref (§7.1). It reads two things, a register's `register.json` and the team records `workflows-core:architecture-kb` §3 lays out — `classes` from the working tree, `across` at a git ref — and it prints only counts, fixed wording and values that have passed a check (§7.2, §7.4, §7.5), so a finding's text (§3) never reaches what reads its output.
 
 `register.json` is derived (§1), so it lags any run record still on an unmerged `session/*` branch until a rebuild after the merge. The output is advice, so a lag of one rebuild is acceptable.
 
 ### 7.1 What it reads
 
-- **The register.** For each `--repo <slug>`, `<specs>/security/<slug>/register.json`, and nothing else under `security/`: never `register.md`, `runs/` or `scans/`. The slug resolves only by an exact match against the listing of `<specs>/security/`, never by opening the path, so a case-insensitive file system never maps `api` to `API/`. `register.json` resolves the same way in the slug's directory. A directory there that holds no `register.json` — a team's own documents, or only `dev-workflows/` cost entries — is no register, and a `--repo` naming it is `absent`. No symbolic link is followed, and only a regular file is read: it is opened without following a link and without waiting on a FIFO, checked again once open, and read up to 64 MiB and no further.
+- **The register, in `classes`.** For each `--repo <slug>`, `<specs>/security/<slug>/register.json`, and nothing else under `security/`: never `register.md`, `runs/` or `scans/`. The slug resolves only by an exact match against the listing of `<specs>/security/`, never by opening the path, so a case-insensitive file system never maps `api` to `API/`. `register.json` resolves the same way in the slug's directory. A directory there that holds no `register.json` — a team's own documents, or only `dev-workflows/` cost entries — is no register, and a `--repo` naming it is `absent`. No symbolic link is followed, and only a regular file is read: it is opened without following a link and without waiting on a FIFO, checked again once open, and read up to 64 MiB and no further.
 - **A register's state** is the first of these that applies. A state other than `ok` gives `last_at: null` and zero counts, and never stops a run:
-  - `unreadable` or `absent`, at the first of `security/`, the entry in it named `<slug>` and the entry in that named `register.json` that is a symbolic link (`unreadable`, whatever it points at), is missing (`absent`), or, for the first two, is any other entry that is no directory (`absent`);
-  - `unreadable`: a `register.json` that is not a regular file or is larger than 64 MiB, an `OSError` on the way, bytes that are not UTF-8 JSON, or JSON nested too deep to parse;
+  - in `classes`, `unreadable` or `absent`, at the first of `security/`, the entry in it named `<slug>` and the entry in that named `register.json` that is a symbolic link (`unreadable`, whatever it points at), is missing (`absent`), or, for the first two, is any other entry that is no directory (`absent`);
+  - `unreadable`: a `register.json` that is not a regular file or is larger than 64 MiB, an `OSError` on the way — at a ref, a blob git cannot read — bytes that are not UTF-8 JSON, or JSON nested too deep to parse;
   - `unknown-format`: a JSON object whose `format` is not the integer `1`;
   - `malformed`: not an object, a `findings` that is not a list, or a `last_at` that is present and neither `null` nor a real `YYYY-MM-DDTHH:MM:SSZ`;
   - `ok`: otherwise.
-- **A team record.** Each `*.md` entry of `<specs>/architecture/decisions/` that is no directory, read line by line, never as YAML. No symbolic link is followed here either: a symlinked `architecture/` or `architecture/decisions/` is read as holding no record, so nothing there prevents a class, and a record that is a symbolic link, is not a regular file (a FIFO, a device) or is larger than 64 MiB is skipped (§7.2). Within a record:
+- **A team record, in `classes`.** Each `*.md` entry of `<specs>/architecture/decisions/` that is no directory, read line by line, never as YAML. No symbolic link is followed here either: a symlinked `architecture/` or `architecture/decisions/` is read as holding no record, so nothing there prevents a class, and a record that is a symbolic link, is not a regular file (a FIFO, a device) or is larger than 64 MiB is skipped (§7.2). Within a record:
   - its frontmatter lies between a first line `---` and the next `---` line. A key is a line opening `<key>:`, and a key written twice is read from its last line;
   - a scalar is the rest of its key's line, trimmed. It loses a trailing ` #` comment unless it opens with `"`. A value that then opens with `[`, `{`, `|` or `>` is no scalar; any other loses one pair of matching quotes, and is absent where it is then empty, `null` or `~`;
   - `components` is a flow list on its key's line, read with `json.loads`;
   - its Prevents paragraph runs from the first body line that starts `**Prevents:**` to the next blank line, its lines trimmed and joined by single spaces.
+- **At a ref, in `across`.** Both kinds of file are read from the commit `--ref` resolves to, never from the working tree, the index or a checkout, so a change not committed there counts for nothing. One `git ls-tree -r -l -z --full-tree <sha> -- security architecture/decisions` lists them, and each is read by its object id with `git cat-file blob`, never by a path and with no filter, up to 64 MiB and no further: a blob larger than that, or one whose size `ls-tree` cannot give, is never read. Nothing else the listing names is read: never `register.md`, `runs/` or `scans/`. Only a regular file, mode `100644` or `100755`, is a file at a ref. An entry git records as a symbolic link (mode `120000`), whose blob holds the link's target and never the file, as a submodule or as a directory is none, so no link is followed and a link's target text is never read as a register or a record.
+  - A register is a file at exactly `security/<slug>/register.json` whose `<slug>` passes the slug check (§7.2). Any other entry under `security/` is no register, and is silent: a team's own documents, a directory holding only `dev-workflows/` cost entries, a name the slug check refuses (one with a space, a `;` or a byte that is not ASCII), a `register.json` deeper or shallower than that, and one that is no file. The path is matched exactly, so `Security/` holds no register. No register at a ref is `absent`; its state is otherwise the first of the *A register's state* list that applies.
+  - A team record is a file at exactly `architecture/decisions/<name>.md`, its id the stem `<name>`, read within as the *A team record* bullet reads one. One larger than 64 MiB, one git cannot read and one that is not UTF-8 are skipped (§7.2); an entry there that is no file is no record, and is not counted.
+  - `git` runs in `--specs` as an argument list, with no shell, and with the environment the script was given plus `GIT_TERMINAL_PROMPT=0` and `GIT_OPTIONAL_LOCKS=0`; what it writes to stderr is discarded, never printed.
 
 ### 7.2 The checks
 
@@ -194,8 +198,9 @@ Every pattern is anchored `^…\Z` and ASCII, and each check is at least as stri
 | each `history` entry the rule reads (below) | its `status` one of the statuses above; its `at` a real `YYYY-MM-DDTHH:MM:SSZ`; its `run` an integer, not a boolean, from 1 to 2147483647 | dropped |
 | `cwe` | `^CWE-[0-9]{1,6}\Z`, its digits not all `0` | counted in `unclassified`, in no class |
 | `path` | `^[A-Za-z0-9._@+][A-Za-z0-9._/@+-]*\Z`, no `..` segment, at most 512 characters | printed as `null` |
+| a register's directory name, at a ref | the slug check: `^[A-Za-z0-9._-]+\Z`, not `.` or `..` | the directory is no register (§7.1) |
 | a team record's id | its file's stem, `^[A-Z][A-Z0-9_]*(-[0-9]+)+(-[a-z0-9]+)*-AD[0-9]+\Z` | the record is skipped, counted in `kb_skipped` |
-| the record's file | a regular file reached through no symbolic link, of at most 64 MiB, readable, UTF-8, with a frontmatter (§7.1) | skipped |
+| the record's file | a regular file reached through no symbolic link, of at most 64 MiB, readable, UTF-8, with a frontmatter (§7.1); at a ref, a file git can read, of at most 64 MiB, UTF-8, with a frontmatter, an entry that is no file being no record | skipped |
 | its `status` | a scalar, present | skipped |
 | its `source` | present, and the `path` check | skipped |
 | its `promotion` | absent, or `proposed`, `accepted`, `rejected`, `declined` or `covered` | skipped |
@@ -213,10 +218,11 @@ Every pattern is anchored `^…\Z` and ASCII, and each check is at least as stri
 - **The class key** is `CWE-<n>`, `<n>` being the `cwe`'s digits read as a number, so `CWE-089` is class `CWE-89`. `other_cwes` is not used, and no CWE is rolled up into a parent class.
 - **Live:** `new`, `open`, `fix`, `fixing`, `reopened` and `accepted-risk`.
 - **Recent fixed:** `fixed`, where the `at` of the last `history` entry falls at most 180 days before the run's date, `--today`. Day 180 counts, day 181 does not, and a later date counts.
+- **Judged real** (`across`): `fix`, `fixing`, `reopened`, `accepted-risk` and recent fixed. `new` and `open` are undecided, and are not judged real.
 - **Never counted:** `false-positive`.
 - **The accepting run** of an `accepted-risk` finding is the `(run, at)` of the earliest entry in the unbroken run of `accepted-risk` entries that ends its `history`. Two runs can share a `seq` (§2), hence the pair. A risk re-accepted at its review date, or confirmed by a `sec` run, keeps its first acceptance; accepted, then fixed, then accepted again is a new one.
-- **Recurs:** the class's `accepting_runs`, the distinct accepting runs among its `accepted-risk` findings, is 2 or more. One run that accepts two findings of a class is one judgement, not a pattern. A `dev` run's unconfirmed acceptance counts, and so does a risk past its review date.
-- **Prevented.** A team record prevents a class where its `status` is `accepted`, one of its `components` has the register's slug (the id itself, or its part before the first `:`), and its Prevents paragraph names the class as a whole token: `CWE-`, any run of `0`s and the class's number, not preceded by `[A-Za-z0-9_-]` and not followed by `[A-Za-z0-9_]`. So a link whose text is `CWE-89`, and `CWE-089`, name class `CWE-89`, while `CWE-890`, `XCWE-89` and a link naming the CWE only in its URL do not. A promoted record, `promotion` `accepted` or `covered`, still prevents.
+- **Recurs** (`classes`): the class's `accepting_runs`, the distinct accepting runs among its `accepted-risk` findings, is 2 or more. One run that accepts two findings of a class is one judgement, not a pattern. A `dev` run's unconfirmed acceptance counts, and so does a risk past its review date.
+- **Prevented.** A team record prevents a class where its `status` is `accepted` and its Prevents paragraph names the class as a whole token: `CWE-`, any run of `0`s and the class's number, not preceded by `[A-Za-z0-9_-]` and not followed by `[A-Za-z0-9_]`. So a link whose text is `CWE-89`, and `CWE-089`, name class `CWE-89`, while `CWE-890`, `XCWE-89` and a link naming the CWE only in its URL do not. In `classes`, one of its `components` must also have the register's slug (the id itself, or its part before the first `:`). In `across`, whose CWEs recur across registers, a record's `components` do not limit it: one naming the CWE prevents it in every register. A promoted record, `promotion` `accepted` or `covered`, still prevents.
 - **`in_component`:** some `--component` holds a live finding of the class. A bare `<slug>` holds every finding of its register, and `<slug>:<path>` holds a finding whose `path` equals `<path>` or starts with `<path>/`. A `<path>` that fails the `path` check, opens with `./` or ends with `/` holds none.
 
 ### 7.4 `classes`
@@ -226,7 +232,7 @@ weakness-classes.py classes --specs <root> --repo <slug> [--repo <slug> …] [--
 weakness-classes.py --selftest
 ```
 
-Flags repeat, and a repeated value counts once. `--today` defaults to today's UTC date, and the script reads no environment variable. An `--origin` is compared exactly with the `origin` values the register holds, and one that matches none is ignored.
+Flags repeat, and a repeated value counts once. `--today` defaults to today's UTC date, and the script reads no environment variable itself; only the `git` that `across` runs is handed the environment (§7.1). An `--origin` is compared exactly with the `origin` values the register holds, and one that matches none is ignored.
 
 **Exits.** `0`: it ran, and stdout holds exactly one JSON object — or the reader closed stdout before the object was written (a broken pipe), and then stderr holds nothing either, since nobody is left to read it. `2`: it could not run. Stdout is then empty, save where writing it failed, and stderr holds one line, `weakness-classes: not run (<why>)`, whose `<why>` is the first of these that applies — fixed text, never a value from the command line, a register or a record:
 
@@ -277,3 +283,43 @@ Record an [AD#N] whose Prevents names [<cwe>](<cwe_url>), with `/product-workflo
 ```
 
 Neither carries a `[SEC#n]`, so neither is ever a finding's line.
+
+### 7.5 `across`
+
+```
+weakness-classes.py across --specs <root> --ref <ref> [--today <YYYY-MM-DD>]
+```
+
+`across` reports the CWEs that recur across registers: each whose class (§7.3) holds at least one judged-real finding in each of two or more of the registers at `<ref>` (§7.1). `--specs` is the top level of the specs repository's work tree, and `--ref` any ref there that names a commit. `--today` is as in `classes` (§7.4).
+
+**Exits** are those of `classes` (§7.4) — `0` and `2`, with the same single line on stderr — and the `<why>` is the first of these that applies:
+
+| `<why>` | When |
+|---|---|
+| `usage: an unknown verb or flag, or a flag without its value` | the command line does not parse, a flag only `classes` takes, such as `--repo`, included |
+| `usage: --specs is required` | no `--specs` |
+| `usage: --ref is required` | no `--ref` |
+| `--ref is not a plain ref name` | `--ref` fails `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*\Z`, so a value git would read as an option, or one holding `^`, `~`, `:`, `{` or a space, never reaches git |
+| `--today is not a real YYYY-MM-DD date` | `--today` is not a real date written `YYYY-MM-DD` |
+| `--specs is not a directory` | `--specs` names no directory |
+| `git could not be run in --specs` | no `git` could be started |
+| `--specs is not the top level of a git work tree` | `git rev-parse --show-toplevel` in `--specs` fails, or names another directory |
+| `--ref names no commit in --specs` | `git rev-parse --verify --quiet --end-of-options <ref>^{commit}` resolves it to no commit |
+| `git could not list --specs at --ref` | §7.1's `ls-tree` fails |
+| `internal error` | as in `classes` |
+
+No register's state, no team record and no finding causes exit 2 here either.
+
+**Output.** `{format: 1, today, ref, kb_skipped, registers, classes}`:
+
+- `ref` is the full sha of the commit `--ref` resolved to, never the string given. `today` is the run's date, and `kb_skipped` the number of team records skipped at that commit (§7.2).
+- `registers` holds one `{repo, state, last_at, findings, dropped, unclassified}` per register at that commit (§7.1), sorted by slug, each field as in `classes`; none is `absent`.
+- `classes` holds every CWE that recurs across registers, whether or not a record prevents it, in the order below. Each holds:
+  - `cwe`, and `cwe_url`, `https://cwe.mitre.org/data/definitions/<n>.html`;
+  - `real`, `accepted` and `fixed_recent`: its judged-real findings, its `accepted-risk` ones and its recent fixed ones, summed over its registers;
+  - `registers`, one `{repo, real, accepted, fixed_recent, last_at}` per register holding a judged-real finding of it, sorted by slug. `last_at` is that register's own, the last run's `at`, so a register whose repository no longer runs shows as quiet while its accepted risks still count;
+  - `prevented_by`, one `{id, promotion, promoted_to}` per record that prevents it (§7.3), whatever the record's `components`, sorted by id. `promotion` and `promoted_to` are the record's promotion keys, `null` where absent, so a caller can tell a record whose rule was promoted (`accepted` or `covered`) from one that is the team's alone.
+
+  No finding is printed: not its `id`, `status`, `path` or text.
+
+**Order:** more registers first, then the larger `real`, then the CWE number, ascending, compared as a number.
