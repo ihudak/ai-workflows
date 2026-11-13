@@ -100,7 +100,7 @@ The Final Report's *Assumptions & limitations* names each earlier session the ru
 
 **Durable copies.** As the run records each temp file a resume needs — the task description, the plan, the codebase summary, the test baseline, the type-check errors a test-writing correction round is handed, each coding and test-writing report, each review's return and the tree snapshots among them — it has the script copy it into a directory beside the run-state file, `implement-run.d`. A resume that finds a temp file gone, as after a reboot clears the temp directory, reads its copy instead, and one with no copy is taken again where its step needs it. The end-of-run removal deletes the directory with the file.
 
-**A stated limit.** A stop that runs no Phase 4.6 and dies before its end-of-run removal leaves the run-state file naming the phase the stop was made in, so the next `/implement` offers to resume the run there, even after a *Cancel*; answering *Start fresh* then has the stop's effect, nothing of that run resumed or committed.
+**A stated limit.** A stop that runs no Phase 4.6 and dies before its end-of-run removal leaves the run-state file naming the phase the stop was made in, so the next `/implement` offers to resume the run there, even after a *Cancel*; answering *Start fresh* then has the stop's effect, nothing of that run resumed or committed. And on a direct run from inside the specs repository, a session whose run another `/implement` has taken over still writes its cost entry and commits its specs-repository files as it stops, so that commit may land on the run's branch, which the resuming session now holds.
 
 ### Multi-component PRDs
 
