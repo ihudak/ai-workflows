@@ -92,7 +92,10 @@ Classify the docs repo's `git -C <docs_repo_path> remote get-url origin`, its ho
 Compose the draft and BOTH write and show it:
 - **write** to the resolved PRD folder as `pr-draft.md`
   (the resolved PRD folder; ask if
-  none) — the same destination convention as the release-notes / bug drafts.
+  none) — the same destination convention as the release-notes / bug drafts —
+  the draft, then its **last line** (below).
+- **show** the draft without that last line: the title + body a footer below
+  tells the user to paste is the printed one, and carries no comment.
 - **title**: per `commit_convention` (e.g. `<KEY> <summary>`).
 - **body**: what was documented; the output files; the Phase 6.5
   render-verification summary; deferred style/review/render items; a link back to the PRD.
@@ -106,13 +109,31 @@ Compose the draft and BOTH write and show it:
   `> ⚠ DO NOT MERGE until <KEY>-implementation-gaps.md is resolved.`
   WHEN any of those is `document-as-spec`, a second line beneath it:
   `> ⚠ These pages describe behaviour the code does not have yet (gaps <n>, …): hold the release until each is fixed.`
+- **last line**, in the file only, below the body:
+  `<!-- implementation records read: <instant> -->`, `<instant>` being the
+  instant the run started, in UTC — the `started_at` `/document` took in its
+  *Mode detection*, verbatim — then exactly one newline and nothing else: no
+  blank line, no trailing space. The DO-NOT-MERGE banner, where there is one,
+  stays the draft's first line, and this line is the file's last.
+  `/dev-workflows:ready` reads the file's last line against exactly
+  `^<!-- implementation records read: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z) -->$`,
+  as the instant the run that wrote the draft started; a draft whose last line
+  does not match — one written before `docs-workflows` 1.39.0, or one ending in
+  a blank line — has no instant there, and that command falls back to git's
+  date for it.
 - **host footer**:
   - Bitbucket (Cloud / Server) → "Open a pull request in the web UI and paste
     the title + body above." (No API.)
   - GitHub → additionally offer a command the USER may run:
     `gh pr create --title '<title>' --body-file <pr-draft path>`, the title in
     single quotes with each `'` it holds written `'\''`, since inside double
-    quotes its backticks and `$(…)` would be command-substituted.
+    quotes its backticks and `$(…)` would be command-substituted. `--body-file`
+    passes the file as written, its last line included, and GitHub shows no
+    HTML comment in a pull request's description.
   - other → "Open a pull request in your host and paste the title + body above."
+
+**A limit of the last line:** a user who pastes from `pr-draft.md` itself, not
+from the printed draft, onto a host that shows an HTML comment in a pull
+request's description shows that line there too.
 
 For a Bitbucket-hosted docs repo there is no CLI to open the pull request with, so this flow writes the draft and the user opens it. This is a host capability limit, not a policy: the family does open one where a host offers a CLI (`workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo), and no command of this plugin opens one in a docs repository — `/docs-workflows:release-notes` opens one in `$SPECS_PATH` alone, for its draft, through `handoff-to-main`.

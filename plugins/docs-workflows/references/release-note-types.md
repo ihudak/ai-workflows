@@ -31,11 +31,12 @@ draft. A run whose version the operator declined files under `# Unreleased`. The
 `# Release notes — <PRD> <slug>`, is its first line, names the PRD folder's key and slug — on a run
 addressed to an Epic as on one addressed to the PRD — and names no version.
 
-**Each draft records its scope, its stage and what its run read, in one HTML comment directly above it:**
+**Each draft records its scope, its stage, when its run started and what its run read, in one HTML comment directly above it:**
 
 ```
 <!-- release-note scope: ACME-77-01 2026-09-20
 stage: dev
+at: 2026-09-20T13:41:07Z
 read: orders-service 3f9a1c2b4e5d 7be0d41c9a2f
 read: billing-api 1c2d3e4f5a6b
 -->
@@ -45,19 +46,34 @@ The first line names `<KEY>` — the PRD folder's key on a run addressed to the 
 one addressed to an Epic — and the date the run appended the draft. **The second line, `stage: pm`
 or `stage: dev`, names the stage the run drafted at** — its `run_phase`, which `/release-notes`
 Phase 0 infers from whether a specification or a design exists for the PRD — written alone on its
-line, one space after the colon. Its closing `-->` aside, it is the comment's only line that is
-neither its first nor a `read:` line, and it bounds nothing: the boundary rules below read a note's scope off the first line
-and its read set off the `read:` lines alone, so they pass over it. **A draft appended before
-`docs-workflows` 1.37.0 carries no `stage:` line**, nor does a comment of the one-line form described
-below; it states no stage, and a reader takes it as neither `pm` nor `dev` —
-never guessing one from its date or its place in the file. `/dev-workflows:ready` reads this line,
-and the first line's date: a draft counts toward the PRD's *Release Preparation* only where its
-comment carries `stage: dev`, the file holding it is on the specs repository's default branch, and
-the newest such draft is dated no earlier than the latest `implementation.md` block in the PRD's
-tree — so a draft without the line counts toward no stage, and a `/release-notes` run at the dev
-stage, after the latest work, appends one that does. `dev-workflows` cannot load this reference,
-so `/dev-workflows:ready` states the form it reads itself, and a change to either line is a change
-to that command too. Each `read:` line names a
+line, one space after the colon. **The line after `stage:`, `at: <instant>`, is the instant the
+run started**, in UTC, exactly `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$`, written alone on its line, one
+space after the colon and nothing after the instant: `/release-notes` takes it right after
+`strip-run-flags`, before it reads anything in the specs tree, by pasting the output of `date -u +%Y-%m-%dT%H:%M:%SZ`
+verbatim, carries it through the run and writes it here (its Phase 0 and Phase 8 step 1), so work
+that lands while the run is going on counts as implemented since the draft. The first line keeps
+the writer's own date, so its day and the instant's can differ. A value that does not match the
+pattern — hand-typed, in an offset form, truncated — is no instant, nor is any value of a comment
+carrying more than one `at:` line, and neither changes how the rest of the comment is read;
+`/dev-workflows:ready` also sets aside a value that names no real time or is later than the
+instant its own run started. The comment's closing `-->` aside, `stage:` and `at:` are its only
+lines that are neither its first nor a `read:` line, and they bound nothing: the boundary rules
+below read a note's scope off the first line and its read set off the `read:` lines alone, so they
+pass over both. **A draft appended before `docs-workflows` 1.37.0 carries no `stage:` line**, nor
+does a comment of the one-line form described below; it states no stage, and a reader takes it as
+neither `pm` nor `dev` — never guessing one from its date or its place in the file. **A draft
+appended before `docs-workflows` 1.39.0 carries no `at:` line** unless a hand edit put one there,
+nor does a comment of the one-line form, which stays a date-only record; a draft with none has no
+instant. `/dev-workflows:ready` reads the `stage:` line, the `at:` line and the first line's date:
+a draft counts toward the PRD's *Release Preparation* only where its comment carries `stage: dev`
+and the file holding it is on the specs repository's default branch, and the signal holds where
+at least one such draft has no `implementation.md` block in the PRD's tree later than it — by
+instant where the draft and the block both carry one, and otherwise by the block's heading date
+against the first line's date, an equal instant or date never later — so a draft without the
+`stage:` line counts toward no stage, and a `/release-notes` run at the dev stage, after the
+latest work, appends one that does. `dev-workflows` cannot load this reference, so
+`/dev-workflows:ready` states the form it reads itself, and a change to any of the three lines is
+a change to that command too. Each `read:` line names a
 repository, by the `repo:` name the implementation records use or, for one only the scan reached, the
 slug the run resolved it by, and then **every commit the run read there**: each block's `commit:`
 whose diff it read, each commit its scan kept whose diff it read, and each commit a key-commit
