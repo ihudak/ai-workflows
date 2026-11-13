@@ -1,6 +1,6 @@
 # SEC-G1 — the architecture feedback loop (security sub-project E)
 
-**Date:** 2026-11-13. **Status:** revision 2. A Fable design review found the draft fit to approve with changes; its findings and the controller's rulings on the draft's five open questions are applied here, and this revision goes to the maintainer for approval. Nothing here is implemented. **Roadmap:** row E of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:101`, read with its non-goal at `:151`, D2 at `:208`–`:210`, the accepted-risk claim at `:395` and the free-text rule at `:475`. **Branch:** `feat/sec-g1-arch-feedback`.
+**Date:** 2026-11-13. **Status:** revision 2.1, for the maintainer's approval. It applies a Fable design review's findings and the controller's rulings on the draft's five open questions (revision 2), then the four minors from Fable's re-check. Nothing here is implemented. **Roadmap:** row E of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:101`, read with its non-goal at `:151`, D2 at `:208`–`:210`, the accepted-risk claim at `:395` and the free-text rule at `:475`. **Branch:** `feat/sec-g1-arch-feedback`.
 
 **my call** marks a choice the roadmap leaves open and no ruling settled. **ruled** marks one the controller settled; §12 gives each ruling's reason.
 
@@ -194,7 +194,7 @@ arch_challenges:
 
 **`governing` follows the standing rules, with two exceptions, each stated where its rule is:**
 - **Own source.** Where the record's `source:` is in `own_sources`, `governing` gives the record's `id` and `source` only. The caller holds that decision's live text. This is an exception to `architecture-grounder.md:42`.
-- **Promoted.** Where the record's `promotion` is `accepted` or `covered`, `governing` names its `promoted_to` artifact instead of quoting the record, and takes the artifact's id. This is an exception to `architecture-grounder.md:42` and to "A promoted team record is not read" (`architecture-grounding.md:71`). Only the promotion keys are taken.
+- **Promoted.** Where the record's `promotion` is `accepted` or `covered`, `governing` names its `promoted_to` artifact instead of quoting the record. It is `{ id: <promoted_to>, title: null, root: organisation, path: null, url: null, rule: null }`, with `prd` and `source` omitted as for any organisation artifact, so the shape stays fixed. This is an exception to `architecture-grounder.md:42` and to "A promoted team record is not read" (`architecture-grounding.md:71`). Only the promotion keys are taken.
 
 ### 4.4 Rank and cap
 
@@ -240,7 +240,7 @@ A class recurs when its register holds at least two findings at `accepted-risk` 
 ### 5.2 Prevented (E7)
 
 - **What the test sees.** Only harvested records. Between the PA recording a decision and the next `/harvest-decisions`, the class still reads as unprevented. A further accepted risk in that gap can raise a second line, which dedupe catches while the first stays open.
-- **An existing decision that covers the class in words.** Where one of the ARD's decisions already prevents the class in words, without naming the CWE, the PA can answer by adding the CWE link to that decision's Prevents. Wording that leaves the Rule's meaning unchanged is not a change (`ard-format.md:107`). A Rule that would need to say more is a new `[AD#M]`.
+- **An existing decision that covers the class in words.** Where one of the ARD's decisions already prevents the class in words, without naming the CWE, the PA can answer by adding the CWE link to that decision's Prevents. The new `ard-format` sentence (§5.5) says outright that adding a CWE link to a decision's Prevents is not a change to the decision. A decision that would also need its Rule to require more is a new `[AD#M]`.
 
 ### 5.3 Who raises it (E8)
 
@@ -252,6 +252,7 @@ A class recurs when its register holds at least two findings at `accepted-risk` 
 classes --repo <repo-slug> --origin <origin>… [--prd-key <PRD-KEY>]
 ```
 
+- **A key run with no PRD key.** Where the unit is under no `PRD-` folder, the run key set holds no PRD key, so the scan omits `--prd-key`. The sentence then goes to the report, as on a path run.
 - **Where an origin comes from.** For an existing finding, the answered plan's `origins` holds it (`register.py:939`). For a new finding, it is `<scan id>:<plugin id>` (`security-register-format.md:85`).
 - **Why origins and not numbers.** A number can move between the plan a person answered and the rebuilt register (§2 there). An origin never changes.
 - **What it misses.** A new finding whose allocation gave way has another origin, so it is missed. The next accepted risk of that class raises the line instead.
@@ -277,7 +278,7 @@ The script prints the finished line, so the line is deterministic and covered by
 
 ### 5.5 The decision's form (E9)
 
-`**Prevents:**` names the CWE as a link built from the validated digits, for example `[CWE-89](https://cwe.mitre.org/data/definitions/89.html)`. Pre-lint discards a hit inside a link (`pre-lint.md:56`), and the coverage test finds the token in the link text. `ard-format` § Architecture governance gains one sentence saying this. The pre-lint grep itself is not touched (CLAUDE.md, *One key namespace*).
+`**Prevents:**` names the CWE as a link built from the validated digits, for example `[CWE-89](https://cwe.mitre.org/data/definitions/89.html)`. Pre-lint discards a hit inside a link (`pre-lint.md:56`), and the coverage test finds the token in the link text. `ard-format` § Architecture governance gains one sentence saying so, and saying that adding such a link to an existing decision's Prevents is not a change to the decision (§5.2). The pre-lint grep itself is not touched (CLAUDE.md, *One key namespace*).
 
 ### 5.6 Downstream
 
@@ -295,6 +296,7 @@ From here on, nothing new is involved:
 2. **The review date is when a decision reaches existing code (my call).**
    - On a scan run whose triage holds at least one review-due row, Phase 5 calls `classes --origin <each review-due finding's origin>`, after its rebuild (`scan.md:300`). No other run makes that call.
    - Each such row then names the live team record that prevents its class, so re-accepting the risk means choosing against that record in the open.
+   - Phase 5 reads only `prevented_by` from that call, and ignores `pa_line` and `pa_next_step`. Passing `--origin` sets `decided`, so a recurring unprevented class would otherwise raise the PA line on a run that accepted nothing.
    - The suggestion is unchanged: the row still offers the finding's current status.
 
 ## 6. Part 3 — recurrence across registers
