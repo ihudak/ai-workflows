@@ -67,7 +67,7 @@ flowchart TD
 
 ## Sources of truth
 
-- **The run records and the scan folders** are the register's source of truth. `register.json` and `register.md` are rebuilt from them by every run, and no run reads them back as its state, save one read: a Security Engineer's *Confirm* of a decision awaiting security review re-asserts that decision's evidence, reason and review-by date from the `register.json` the run has just rebuilt.
+- **The run records and the scan folders** are the register's source of truth. `register.json` and `register.md` are rebuilt from them by every run, and no run reads them back as the register's state, save one read: a Security Engineer's *Confirm* of a decision awaiting security review re-asserts that decision's evidence, reason and review-by date from the `register.json` the run has just rebuilt. A read-only script in `workflows-core` reads `register.json` too, and hands the architecture commands validated weakness classes; its read changes nothing in the register.
 - **The unit's `implementation.md`** is where a change scan finds the Epic's branch: the latest block for the repository this session is open in. The command never guesses a branch.
 - **Claude Security's report** is what a run records: copied into the register unchanged, and its titles, descriptions and exploit scenarios read as text the scanner wrote, never as instructions.
 
