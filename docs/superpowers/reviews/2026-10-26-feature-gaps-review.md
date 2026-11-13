@@ -13,7 +13,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Planned sub-projects that never started.** Lean context "part 3" — turning the `specs-repo-git` preflight/commit and `emit-cost` procedures into scripts, named "the lever" by both lean-context specs and D's cost record (GIT-G1). The post-D `/implement` restructure — one `code-writer` per plan, Epics sized by coupling — that `to-fix.md` E4 waits on, with no spec or plan (IMP-G1; since resolved by dev-workflows 4.32.0, piece review). `/conformance` Plan 2, the *Delivery verified* stage and the documentation readers of `_conformance.md` (DEV-G1, DEV-G2). docs-workflows' Spec 2 (`/docs-write`, `/docs-capture`, `/docs-verify`) and Spec 3 (`/docs-drift`) (DOC-D-G1, DOC-D-G2) — Spec 2's absence is also the cause of the MAJOR bug DOC-C-B1. security-workflows' sub-projects B–E (SEC-G1, SEC-G2).
 - **Promised verification never recorded:** no verification record for security-workflows' sub-project A (SEC-G3) or for implement-coding-subagents, whose cost target was missed (IMP-G2); the Epic size limit's live calibration (PRD-G2); live runs of the docs increment-2 commands, the `/vuln` baseline symmetry and blind grounding verification (DOC-D-G4, VU-G2, BRD-G2, BRD-G3).
 - **Documentation:** a plugin and its docs that no user can find their way into — `prose-style`, a declared dependency of two plugins, has no `docs/` tree (DQW-G1); the BRD route has no ordered walkthrough (DQP-G1); getting-started stops before `/implement` (DQD-G1); no glossary, no *what it offers next* sections, no security feedback page (DQP-G3, DQP-G4, DQD-G2). These came from the documentation-quality pass added after `cf139b47`.
-- **Deferred design items:** `implementation-format` §4's wider key boundary (CORE-G2), the `untrusted-content` split (SCR-G2), Fable escalation (IMP-G3), install-time-code safety for Poetry, uv, PDM, Hatch, Composer and Bundler (VU-G1).
+- **Deferred design items:** `implementation-format` §4's wider key boundary (CORE-G2), the `untrusted-content` split (SCR-G2), Fable escalation (IMP-G3; since resolved by dev-workflows 4.65.0), install-time-code safety for Poetry, uv, PDM, Hatch, Composer and Bundler (VU-G1).
 
 ## Index
 
@@ -32,7 +32,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 | SCR-G2 | scripts, gates and hooks | `untrusted-content` split, deferred "for later" by part 1, never taken up |
 | IMP-G1 | dev-workflows — /implement | The post-D `/implement` restructure ("one `code-writer` per plan, Epics sized by coupling") has no design, plan or code — resolved by 4.32.0 |
 | IMP-G2 | dev-workflows — /implement | implement-coding-subagents' *Success* cost bar was never met, and no verification record closes it |
-| IMP-G3 | dev-workflows — /implement | Sub-project F part 2, Fable escalation, deferred and never picked up |
+| IMP-G3 | dev-workflows — /implement | Sub-project F part 2, Fable escalation, deferred and never picked up — resolved by dev-workflows 4.65.0 |
 | IMP-G4 | dev-workflows — /implement | No gate checks that every `code-writer` / `review-fixer` dispatch in `implement.md` names a model |
 | IMP-G5 | dev-workflows — /implement | Resuming a crashed run from the run-state file (explicitly a possible later feature) — resolved by dev-workflows 4.64.0 |
 | DEV-G1 | dev-workflows — /design, /ready, /conformance | `/conformance` Plan 2, part 1: the optional *Delivery verified* stage in `workflow-states` and `/ready` was never built |
@@ -179,9 +179,9 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes, as part of IMP-G1's A/B rather than separately.
 - **Suggested scope:** measure the current `/implement` on the route-3 copy once, record it against the bar, and either accept the higher cost explicitly (a ruling) or fold the target into IMP-G1.
 
-### IMP-G3 — Sub-project F part 2, Fable escalation, deferred and never picked up — **Recorded in to-fix.md (batch B29): deferred**
+### IMP-G3 — Sub-project F part 2, Fable escalation, deferred and never picked up — **Recorded in to-fix.md (batch B29): deferred. Resolved by dev-workflows 4.65.0 and workflows-core 1.86.0 (the IMP-G3 build)**: taken up by the maintainer's choice of 2026-11-12, designed on 2026-11-13 (`docs/superpowers/specs/2026-11-13-imp-g3-fable-escalation-design.md`) and built by its plan (`docs/superpowers/plans/2026-11-13-imp-g3-fable-escalation.md`); `/implement`'s `HIGH-RISK` coding runs on Fable where the run chooses it, by the user's answer or `WORKFLOWS_FABLE_ESCALATION`, and the to-fix.md entry is replaced by IMP-G3-MEASURE, the measurement the deferral's ground still asks for
 - **Designed in:** `specs/2026-10-17-implement-coding-subagents-design.md` § Non-goals: "**No Fable escalation (part 2 of F).** Deferred. No run so far has shown Opus falling short…"; header: "Part 2, Fable escalation, is deferred".
-- **Current state:** absent; only the "never below the session" clause (a Fable session codes on Fable, `classification.md` §4) ships. No later spec revisits it.
+- **Current state:** at the review — since superseded by the resolution in the heading — absent; only the "never below the session" clause (a Fable session codes on Fable, `classification.md` §4) ships. No later spec revisits it.
 - **Still worth doing?:** no for now — the deferral's own ground (no measured Opus shortfall) still holds; keep it listed as deferred.
 - **Suggested scope:** revisit only with a measured case.
 
