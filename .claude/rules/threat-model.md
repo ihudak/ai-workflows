@@ -7,11 +7,12 @@ paths:
   - "plugins/product-workflows/agents/ard-reviewer.md"
   - "plugins/product-workflows/agents/threat-modeler.md"
   - "plugins/product-workflows/docs/commands/create-ard.md"
+  - "plugins/dev-workflows/references/design-format.md"
 ---
 
-# The ARD threat model — authority, invariants, readers
+# The ARD threat model and the design threat review — authority, invariants, readers
 
-Loaded when the threat model's format (`workflows-core:threat-model-format`), `workflows-core:pre-lint`, whose *Threat model* block checks a model, the lineage kind table (`plugins/workflows-core/scripts/lineage-kinds.json`), `/product-workflows:create-ard`, which writes the model, `product-workflows:ard-reviewer`, which reviews it, `product-workflows:threat-modeler`, which proposes its candidate threats, or `/create-ard`'s page is read. The format is `workflows-core`'s, and its paragraph is kept here rather than in `.claude/rules/workflows-core.md`, whose 20,000-character budget leaves it no room to grow as the model gains readers. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`; the design is `docs/superpowers/specs/2026-11-14-sec-g2-b-threat-model-design.md`.
+Loaded when the threat model's format (`workflows-core:threat-model-format`), `workflows-core:pre-lint`, whose *Threat model* block checks a model and whose *design* block checks a design's `## Threat review`, the lineage kind table (`plugins/workflows-core/scripts/lineage-kinds.json`), `/product-workflows:create-ard`, which writes the model, `product-workflows:ard-reviewer`, which reviews it, `product-workflows:threat-modeler`, which proposes its candidate threats, `/create-ard`'s page, or `dev-workflows:design-format`, whose optional `## Threat review` records the design threat review's answers to the model, is read. The format is `workflows-core`'s, and its paragraph is kept here rather than in `.claude/rules/workflows-core.md`, whose 20,000-character budget leaves it no room to grow as the model gains readers. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`; the designs are `docs/superpowers/specs/2026-11-14-sec-g2-b-threat-model-design.md` (the model) and `docs/superpowers/specs/2026-11-14-sec-g2-c-design-threat-review-design.md` (the design threat review).
 
 ## Authority
 

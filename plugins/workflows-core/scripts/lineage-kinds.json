@@ -67,7 +67,7 @@
         "^- \\*\\*Version\\*\\*:",
         "^- \\*\\*Open questions\\*\\*:"
       ],
-      "_source": "dev-workflows/references/design-format.md: Header (Version), Traceability & identifiers (cites spec ids, defines none); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
+      "_source": "dev-workflows/references/design-format.md: Header (Version), Traceability & identifiers (cites spec ids; its optional ## Threat review defines [DT#N], which no lineage item reads); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
     },
     "prd": {
       "match": [
