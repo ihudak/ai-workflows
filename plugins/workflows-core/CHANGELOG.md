@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.89.0] — 2026-11-14
+
+The status line follows plugin updates. `/workflows-core:statusline` installs a copy of the script, which an update left at the version installed until the command was run again; a new `statusline-refresh` hook now brings an unedited copy up to the shipped script at session start. No other plugin relies on this release, so it needs no other plugin's update of its own.
+
+### Added
+
+- **The `statusline-refresh` hook, on `SessionStart`.** Where `/workflows-core:statusline` installed `~/.claude/dev-workflows/statusline-command.sh` and it differs from the script the running plugin version ships, the hook puts the shipped one in place and keeps the old one as `statusline-command.sh.prev`, so after `claude plugin update workflows-core@shipwright` and a restart the new status line arrives with nothing to re-run. It replaces the script only while it matches the SHA-256 recorded beside it in `statusline-command.sh.sha256`, so a copy edited by hand is never overwritten. It never installs a status line, prints nothing, and does nothing without `shasum` or `sha256sum`; like the other two hooks, it always exits 0.
+- **`/workflows-core:statusline` records the installed script's fingerprint** (Phase 3), the record the hook checks, and its report says the status line now follows updates.
+
+### Changed
+
+- **An install made before this release keeps its script until `/workflows-core:statusline` is run once more**, since it has no fingerprint to prove it unedited, unless it already equals the shipped script, in which case the hook records it on the next session start. The statusline page's new *Updates* section says so, and the hooks page describes the hook.
+
 ## [1.88.0] — 2026-11-14
 
 The status line shows more of your usage limits. It draws a Claude apps gateway's spend limit, which Claude Code hands it alongside the 5h and 7d windows, and, opt-in, the plan usage Claude Code does not hand it at all: an Enterprise seat's monthly usage budget and the per-model weekly windows. No command's behaviour changes, and no other plugin relies on this release, so it needs no other plugin's update of its own: the copies of `tree-snapshot.py` in `dev-workflows`, `docs-workflows` and `product-workflows` change only in their self-test.

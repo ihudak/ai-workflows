@@ -25,6 +25,14 @@ Takes no arguments. None of the three run flags apply to this command ([`environ
 
 Installs the vendored script to a stable per-user path (`~/.claude/dev-workflows/statusline-command.sh`, `chmod +x`'d) and merges a `statusLine` block into `~/.claude/settings.json`, preserving every other key. **It is idempotent and backs up anything it would overwrite** — an existing `statusLine` block, or an existing installed script — suffixing `-2`, `-3`, … rather than clobbering a prior backup. Installing it also enables — given `jq`, as *What it needs* says — the per-session **cost snapshot** behind the [status-line cross-check](../reference/session-cost.md#status-line-cross-check), the `cost_statusline_usd` figure a cost entry carries beside the computed one. **This is the only settings change the command makes**, and it never commits anything; every write stays under `~/.claude/` — though enabling the cost snapshot does change what every cost-emitting command's Session cost line reports.
 
+## Updates
+
+The installed script is a copy, so a plugin update does not change it by itself. The plugin's [`statusline-refresh` hook](../reference/hooks.md) closes that gap: at every session start it compares the installed copy with the script the installed plugin version ships, and where they differ it puts the new one in place, keeping the old one as `statusline-command.sh.prev`. So after a `claude plugin update` of `workflows-core` and a restart, the new status line arrives with nothing to re-run.
+
+**It replaces only a copy it can prove is unedited.** The install records the installed script's SHA-256 in `~/.claude/dev-workflows/statusline-command.sh.sha256`, and the hook replaces the script only while it still matches that record, then records the new one. A copy you edit by hand stops matching, and from then on the hook leaves it alone; run `/workflows-core:statusline` again to go back to the shipped script and to updates.
+
+**An install made before 1.89.0 has no record**, so the hook leaves it alone too, unless it already equals the shipped script, in which case the hook records it and updates follow from then on. Run `/workflows-core:statusline` once to start following updates. Without `shasum` or `sha256sum` the hook does nothing, and the status line stays at the version last installed.
+
 ## Usage limits
 
 The status line's fourth line shows your usage limits, as far as Claude Code or your account tells it:

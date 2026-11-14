@@ -1,6 +1,16 @@
 {
-  "description": "workflows-core plugin hooks — session-wide completion and test-run notification, shared by every plugin that depends on this one",
+  "description": "workflows-core plugin hooks — session-wide completion and test-run notification, and the status line's refresh at session start, shared by every plugin that depends on this one",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/statusline-refresh.sh\""
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

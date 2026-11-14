@@ -32,7 +32,7 @@
 - [Skills](reference/references.md#skills) — the four bundled skills, `model-routing`, `reference`, `specs-git` and `weakness-classes`: what each is for, and whether it is user-invocable.
 - [Environment](reference/environment.md) — every environment variable this plugin reads, and what it configures, and the three run flags — `--skip-costs`, `--skip-feedback` and `--enforce-model` — whose defaults three of them set.
 - [Grounding sources](reference/grounding.md) — every source the family's authoring commands ground on — shipped docs, the architecture repository and the team's decision records, mounted code, design frames — what turns each on, its status line and its off switch.
-- [Hooks](reference/hooks.md) — the two session-wide hooks this plugin bundles, and why they live here rather than in a pipeline plugin.
+- [Hooks](reference/hooks.md) — the three session-wide hooks this plugin bundles, and why they live here rather than in a pipeline plugin.
 - [Session cost](reference/session-cost.md) — how a run's dollar cost is computed, attributed, and persisted.
 - [Session feedback](reference/session-feedback.md) — what `/feedback` and the three `/prompt*` commands record, and where it lands.
 
