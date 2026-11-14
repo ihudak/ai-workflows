@@ -14,6 +14,7 @@ Epic-level ARD goes deeper on that Epic's repos/areas.
 - **Epic-level** (`/create-ard <EPIC-KEY>` — one address; the Epic's key encodes its ancestry, so the PRD is the folder above it and is never typed beside it, D4) — deeper grounding on the Epic's repos/areas; **inherits the PRD-level ARD's `AD#N` read-only** and must not contradict them.
 - **Per-area** — a big Epic spanning separable areas in one repo (e.g. backend `server/` + frontend `ui/`) may split into `ard-<area>.md` beside the folder's `ard.md` (grill-decided).
 - **Multi-component** — a PRD-level ARD whose `components:` lists two or more `kind: code` components (`workflows-core:components` §3) also carries `## Contracts`: the interfaces between those components, fixed here so that the one-component Epics on either side fit together once each is implemented on its own.
+- **A threat model** — `threat-model.md`, beside the folder's ARD files, drafted by `/create-ard`'s optional Phase 4.3 and written at its Phase 6. It is not an ARD; its format is `workflows-core:threat-model-format`. A decision recorded for a threat is an ordinary `[AD#N]`, held to this file's bar and fields, and `/create-ard` hands that bar to `threat-modeler` from this file's text.
 
 ## Frontmatter
 
