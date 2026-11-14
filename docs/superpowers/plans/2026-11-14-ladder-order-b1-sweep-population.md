@@ -12,7 +12,7 @@
 
 A phrase hit dispositions its whole paragraph (refinement 1), so most rows cite a range. A row's first words are the start of the statement, not of the line where they differ.
 
-**Totals** (after fix round 1): **212 rows** — **86 rewrite** (Task 2: 12, Task 3: 14, Task 4: 16, Task 5: 27, Task 6: 17; 28 of them *beyond plan*), **74 keep**, **52 later** (batch 2: 29, batch 3: 7, batch 4: 16). The first pass's totals were 193 rows (73, 77, 43). Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does:
+**Totals** (after fix round 1, and A13–A14, found by Task 2): **214 rows** — **88 rewrite** (Task 2: 14, Task 3: 14, Task 4: 16, Task 5: 27, Task 6: 17; 30 of them *beyond plan*), **74 keep**, **52 later** (batch 2: 29, batch 3: 7, batch 4: 16). The first pass's totals were 193 rows (73, 77, 43); fix round 1's, 212 (86, 74, 52). Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does:
 
 ```bash
 python3 -I - docs/superpowers/plans/2026-11-14-ladder-order-b1-sweep-population.md <<'EOF'
@@ -173,6 +173,8 @@ print("TOTAL",tot)' "$@"; }
 | `the shape of their PRD rows` | 1 | 1 | PH 1 | |
 | `*"Gate the PRD — on every route"*` | 1 | 1 | PH 1 | |
 | `It stood there on the strength of` | 1 | 1 | PH 1 | |
+| `the caller proceeds exactly as it did before this feature` (A13, added by Task 2; counted before its edit) | 1 | 1 | PH 1 | |
+| `reports the artifact absent and stops on that` (A14, added by Task 2; counted before its edit) | 1 | — | `wc/references/addressing.md` 1 | |
 | ``with their stops named `UPDATE_SPEC_` in place of `SPECIFY_` `` | 1 | — | `pw/commands/update-spec.md` 1 | |
 | ``gated as [`/specify`](specify.md) gates them`` | 1 | — | `pw/docs/commands/update-spec.md` 1 | |
 | `then its inputs as /specify gates them` | 1 | — | `.claude/rules/product-workflows.md` 1 | |
@@ -202,6 +204,8 @@ print("TOTAL",tot)' "$@"; }
 | A10 | PH:611 | "- **F — a caller's own stop on a file in the folder and on no ref**, …" | rewrite | Task 2 Step 5 (the committed form) |
 | A11 | PH:623 | "3. A consumer acts on the returned state, and on `absent` applies its own pre-existing behaviour (§3.4). **No consumer turns an optional input into a prerequisite.** …" | rewrite | Task 2 Step 4 |
 | A12 | `wc/docs/reference/references.md:26` | "- `phase-handoff.md` — the three phase-boundary git entry points … so an optional input never becomes a prerequisite, and only a consumer whose input was never optional stops" | rewrite | Task 2 Step 7 |
+| A13 | PH:263 | "\| H \| — \| — \| gate of §3.1 fails \| **silent skip** — return `unmanaged`; the caller proceeds exactly as it did before this feature \|" | rewrite | Task 2, *beyond plan*, *found by Task 2* (controller ruling, Task 2 fix round). Design L7 has `/create-ard` and `/specify` stop with `*_NEEDS_PRD` on an unmanaged tree whose idea-route PRD folder holds no `prd.md`, so row H can no longer speak for the caller; `/update-spec` (`UPDATE_SPEC_NO_BASE`) and `/brd-reconcile` with no `@<review-file>` already stopped there. The two new §3.4 rows say what they do on `unmanaged` |
+| A14 | `wc/references/addressing.md:686–689` | "… a command meeting the old filename reports the artifact absent and stops on that, most with a remedy written for a folder that never had one — `/product-workflows:prd-proposal`'s stop names the rename instead." | rewrite | Task 2, *beyond plan*, *found by Task 2* (controller ruling, Task 2 fix round). Once Tasks 3 and 4 land, `CREATE_ARD_NEEDS_PRD` and `SPECIFY_NEEDS_PRD` name the rename too, so its one example becomes one of three; and *stops on that* was never true of every command that meets the old filename (`/update-spec`, and a slice's `/create-ard` and `/specify`, go on) |
 
 ### Task 3 — `/create-ard` and its docs page
 
