@@ -10,7 +10,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 64 gaps. The ones that matter most:
 
-- **Planned sub-projects that never started.** Lean context "part 3" — turning the `specs-repo-git` preflight/commit and `emit-cost` procedures into scripts, named "the lever" by both lean-context specs and D's cost record (GIT-G1). The post-D `/implement` restructure — one `code-writer` per plan, Epics sized by coupling — that `to-fix.md` E4 waits on, with no spec or plan (IMP-G1; since resolved by dev-workflows 4.32.0, piece review). `/conformance` Plan 2, the *Delivery verified* stage and the documentation readers of `_conformance.md` (DEV-G1, DEV-G2). docs-workflows' Spec 2 (`/docs-write`, `/docs-capture`, `/docs-verify`) and Spec 3 (`/docs-drift`) (DOC-D-G1, DOC-D-G2) — Spec 2's absence is also the cause of the MAJOR bug DOC-C-B1. security-workflows' sub-projects B–E (SEC-G1, SEC-G2; E since resolved by workflows-core 1.87.0, product-workflows 3.80.0, dev-workflows 4.66.0 and security-workflows 0.12.0).
+- **Planned sub-projects that never started.** Lean context "part 3" — turning the `specs-repo-git` preflight/commit and `emit-cost` procedures into scripts, named "the lever" by both lean-context specs and D's cost record (GIT-G1). The post-D `/implement` restructure — one `code-writer` per plan, Epics sized by coupling — that `to-fix.md` E4 waits on, with no spec or plan (IMP-G1; since resolved by dev-workflows 4.32.0, piece review). `/conformance` Plan 2, the *Delivery verified* stage and the documentation readers of `_conformance.md` (DEV-G1, DEV-G2). docs-workflows' Spec 2 (`/docs-write`, `/docs-capture`, `/docs-verify`) and Spec 3 (`/docs-drift`) (DOC-D-G1, DOC-D-G2) — Spec 2's absence is also the cause of the MAJOR bug DOC-C-B1. security-workflows' sub-projects B–E (SEC-G1, SEC-G2; E since resolved by workflows-core 1.87.0, product-workflows 3.80.0, dev-workflows 4.66.0 and security-workflows 0.12.0, and B by workflows-core 1.90.0, product-workflows 3.81.0, docs-workflows 1.39.2 and security-workflows 0.12.1).
 - **Promised verification never recorded:** no verification record for security-workflows' sub-project A (SEC-G3) or for implement-coding-subagents, whose cost target was missed (IMP-G2); the Epic size limit's live calibration (PRD-G2); live runs of the docs increment-2 commands, the `/vuln` baseline symmetry and blind grounding verification (DOC-D-G4, VU-G2, BRD-G2, BRD-G3).
 - **Documentation:** a plugin and its docs that no user can find their way into — `prose-style`, a declared dependency of two plugins, has no `docs/` tree (DQW-G1); the BRD route has no ordered walkthrough (DQP-G1); getting-started stops before `/implement` (DQD-G1); no glossary, no *what it offers next* sections, no security feedback page (DQP-G3, DQP-G4, DQD-G2). These came from the documentation-quality pass added after `cf139b47`.
 - **Deferred design items:** `implementation-format` §4's wider key boundary (CORE-G2), the `untrusted-content` split (SCR-G2), Fable escalation (IMP-G3; since resolved by dev-workflows 4.65.0), install-time-code safety for Poetry, uv, PDM, Hatch, Composer and Bundler (VU-G1).
@@ -20,7 +20,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 | ID | Area | Title |
 |---|---|---|
 | SEC-G1 | security-workflows | Sub-project E, the architecture feedback loop, never started — resolved by workflows-core 1.87.0, product-workflows 3.80.0, dev-workflows 4.66.0 and security-workflows 0.12.0 |
-| SEC-G2 | security-workflows | Sub-projects B, C and D (threat models and security conformance) not started |
+| SEC-G2 | security-workflows | Sub-projects C and D (design threat review and security conformance) not started — B resolved by workflows-core 1.90.0, product-workflows 3.81.0, docs-workflows 1.39.2 and security-workflows 0.12.1 |
 | SEC-G3 | security-workflows | No verification record for sub-project A |
 | SEC-G4 | security-workflows | False-positive evidence is never compared with the finding's own location |
 | SEC-G5 | security-workflows | A patch verified on review alone reaches `/implement` with no caveat |
@@ -94,11 +94,11 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes — it is what turns accepted risks into decisions; the register already holds the data.
 - **Suggested scope:** its own spec, per the roadmap's three parts.
 
-### SEC-G2 — Sub-projects B, C and D (threat models and security conformance) not started
+### SEC-G2 — Sub-projects C and D (design threat review and security conformance) not started — **B resolved by workflows-core 1.90.0, product-workflows 3.81.0, docs-workflows 1.39.2 and security-workflows 0.12.1 (the SEC-G2 B build)**: designed on 2026-11-14 (`docs/superpowers/specs/2026-11-14-sec-g2-b-threat-model-design.md`) and built by its plan (`docs/superpowers/plans/2026-11-14-sec-g2-b-threat-model.md`); `/create-ard` can now add, check and refine an ARD's threat model, `threat-model.md`, one `[TH#N]` per concrete attack on a named component or contract, each mitigated by `[AD#N]` decisions, deferred to design, or accepted with an owner, a reason and a review date
 - **Designed in:** same spec § The roadmap (rows B "ARD threat model", C "Design threat review", D "Security conformance"); CHANGELOG 0.1.0 *Not built yet* says the same.
-- **Current state:** nothing shipped; no specs.
+- **Current state:** B shipped: `/create-ard`'s optional threat model, its format `workflows-core:threat-model-format`, the `threat-modeler` agent and `ard-reviewer`'s review of it. C and D: nothing shipped; no specs.
 - **Still worth doing?:** yes, as roadmap items (each needs its own spec; D depends on B or C).
-- **Suggested scope:** B first, per the dependency column.
+- **Suggested scope:** B first, per the dependency column — done, as SEC-G2 B; then C or D, each with its own spec.
 
 ### SEC-G3 — No verification record for sub-project A — **Done 2026-10-27: `docs/superpowers/verification/2026-10-15-security-workflows-scan.md`**
 - **Outcome:** route 7 and the clean install had run on 2026-10-16 and 17; only the record was missing. The build session's transcript still held the ledger, so the record, the ledger and its rulings are rebuilt from it. Both were re-run at 0.4.0, and run 6 of `docs/superpowers/verification/2026-10-26-live-checks.md` covers the session half of SEC-B1.

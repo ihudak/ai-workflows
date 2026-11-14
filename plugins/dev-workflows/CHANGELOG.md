@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.66.1] — 2026-11-14
 
-A superseded `/implement` writes nothing in the specs repository when that is its code repository, and a code repository's default branch whose name holds shell characters is passed over: batch B39. Update with `workflows-core` 1.89.2.
+A superseded `/implement` writes nothing in the specs repository when that is its code repository, and a code repository's default branch whose name holds shell characters is passed over: batch B39. Update with `workflows-core` 1.90.1.
 
 ### Fixed
 

@@ -5,13 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.39.2] — 2026-11-14
+## [1.39.3] — 2026-11-14
 
-Wording only, beside `workflows-core` 1.89.2: batch B39.
+Wording only, beside `workflows-core` 1.90.1: batch B39.
 
 ### Fixed
 
 - **`/docs-init`, `/docs-brand`, `/docs-profile`, `/document` and `diff-summarizer` name the safe class among rung 1's failures**: `workflows-core:read-only-repos` §3 rung 1 now passes over an `origin/HEAD` naming a branch whose name holds shell characters, and each restatement listed only an unset `origin/HEAD` and one naming a ref that no longer exists.
+
+## [1.39.2] — 2026-11-14
+
+`/document`'s and `/release-notes`' checkout note covers only a document one of their lineage checks read, as `workflows-core` 1.90.0 decides it. Update with `workflows-core` 1.90.0, whose `document-lineage` §6 step 6 and `lineage.py check` make the change; this release words it in the two commands and their pages.
+
+### Changed
+
+- **The checkout note's set.** Phase 0's print step in `/document` and `/release-notes` notes each document the run's lineage checks read that this checkout changed from the default branch — the set `document-lineage` §6 step 6 keeps — where it named every document the checkout changed, and each report template names the same set. A changed file the check never read, such as an ARD no checked record names, or a `threat-model.md`, which `product-workflows` 3.81.0's `/create-ard` may now write and which no check of either command reads, prints no note and no longer withholds `Lineage: current`.
+- **Pages.** The `/document` and `/release-notes` pages say the note covers the documents the check read, changed on the specs checkout from the default branch's copy, and that a changed file the check never read gets no note.
 
 ## [1.39.1] — 2026-11-14
 
