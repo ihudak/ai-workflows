@@ -936,6 +936,16 @@ def _cls(res, repo, cwe):
     return hits[0] if hits else None
 
 
+def _deep_state():
+    """The state a register nested 100,000 deep gets: `unreadable` where the parser raises RecursionError, and
+    `malformed` -- a list, not an object -- where it parses it, as Python 3.15's does."""
+    try:
+        json.loads("[" * 100000 + "]" * 100000)
+    except RecursionError:
+        return "unreadable"
+    return "malformed"
+
+
 def _reg(res, repo):
     return next(r for r in res["registers"] if r["repo"] == repo)
 
@@ -1202,7 +1212,7 @@ def case_register_states(tmp):
         flags += ["--repo", s]
     res, _ = _run(specs, *flags)
     assert {r["repo"]: r["state"] for r in res["registers"]} == {
-        "latin": "unreadable", "isdir": "unreadable", "deep": "unreadable", "fmttrue": "unknown-format",
+        "latin": "unreadable", "isdir": "unreadable", "deep": _deep_state(), "fmttrue": "unknown-format",
         "fmtfloat": "unknown-format", "list": "malformed", "lastat": "malformed", "nolast": "ok"}, res["registers"]
     assert [c["repo"] for c in res["classes"]] == ["nolast"], res["classes"]
 
@@ -2359,7 +2369,7 @@ def case_across_register_states(tmp):
     res, _ = _across(specs)
     assert res["kb_skipped"] == 2, res["kb_skipped"]  # AD1, which git cannot read, and AD3, which is not UTF-8
     assert [p["id"] for p in _xcls(res, "CWE-89")["prevented_by"]] == ["ACME-17-AD2"], res["classes"]
-    assert _states(res) == {"deep": "unreadable", "gone": "unreadable", "lastat": "malformed", "latin": "unreadable",
+    assert _states(res) == {"deep": _deep_state(), "gone": "unreadable", "lastat": "malformed", "latin": "unreadable",
                             "malformed": "malformed", "ok1": "ok", "ok2": "ok", "unknown": "unknown-format",
                             "unread": "unreadable"}, res["registers"]
     for r in res["registers"]:
