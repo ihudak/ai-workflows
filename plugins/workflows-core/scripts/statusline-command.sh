@@ -3,7 +3,10 @@
 # Line 1: session-name  version  agent  cwd  project_dir  added_dirs
 # Line 2: repo/dir  git-branch  context-bar  emoji%  tokens  cost  velocity  model
 # Line 3: effort  thinking  duration  context sizes
-# Line 4: 5h rate-limit bar  weekly rate-limit bar
+# Line 4: 5h rate-limit bar  weekly rate-limit bar  gateway spend-limit bar
+#         plus, opt-in (WORKFLOWS_STATUSLINE_PLAN_USAGE=1), the plan usage the
+#         status-line input does not carry: a monthly usage budget and per-model
+#         windows, read from the account's usage endpoint (see "plan usage" below)
 
 input=$(cat)
 
@@ -37,6 +40,12 @@ five_pct=$(echo "$input"       | jq -r '.rate_limits.five_hour.used_percentage  
 five_reset=$(echo "$input"     | jq -r '.rate_limits.five_hour.resets_at        // ""')
 week_pct=$(echo "$input"       | jq -r '.rate_limits.seven_day.used_percentage  // ""')
 week_reset=$(echo "$input"     | jq -r '.rate_limits.seven_day.resets_at        // ""')
+# Claude apps gateway spend limit: the percentage arrives with every response,
+# the dollar figures and period separately and later, so each is optional
+spend_pct=$(echo "$input"      | jq -r '.rate_limits.spend_limit.used_percentage // ""')
+spend_reset=$(echo "$input"    | jq -r '.rate_limits.spend_limit.resets_at       // ""')
+spend_usd=$(echo "$input"      | jq -r '.rate_limits.spend_limit | if .used_usd != null and .limit_usd != null then "$\(.used_usd * 100 | round / 100) / $\(.limit_usd * 100 | round / 100)" else "" end' 2>/dev/null)
+spend_period=$(echo "$input"   | jq -r '.rate_limits.spend_limit.period          // ""')
 
 # ── repo name ────────────────────────────────────────────────────────────────
 repo_name=""
@@ -282,11 +291,19 @@ rate_bar_segment() {
     if [ "$diff" -gt 0 ]; then
       h=$(( diff / 3600 ))
       m=$(( (diff % 3600) / 60 ))
-      reset_in=" $(dim)$(rgb 140 140 140)resets ${h}h${m}m$(reset)"
+      if [ "$h" -ge 48 ]; then
+        reset_in=" $(dim)$(rgb 140 140 140)resets $(( h / 24 ))d$(( h % 24 ))h$(reset)"
+      else
+        reset_in=" $(dim)$(rgb 140 140 140)resets ${h}h${m}m$(reset)"
+      fi
     fi
   fi
 
-  printf '%s' "$(dim)$(rgb 140 140 140)${label}$(reset) ${bar} ${pct_color}${pct_int}%$(reset)${reset_in}"
+  # optional detail after the percentage, e.g. "$314.12 / $500 monthly"
+  local detail=""
+  [ -n "$4" ] && detail=" $(rgb 220 200 0)$4$(reset)"
+
+  printf '%s' "$(dim)$(rgb 140 140 140)${label}$(reset) ${bar} ${pct_color}${pct_int}%$(reset)${detail}${reset_in}"
 }
 
 # ══ LINE 1 — session identity + paths ════════════════════════════════════════
@@ -447,6 +464,83 @@ if [ -n "$tok_seg" ]; then
   line3="${line3}🪙 ${tok_seg}"
 fi
 
+# ── plan usage (opt-in: WORKFLOWS_STATUSLINE_PLAN_USAGE=1) ─────────────────────
+# Claude Code hands the status line only the 5h and 7d windows, and only to
+# Pro, Max and Ultra subscribers. The account's usage endpoint, the one Claude
+# Code's /usage and the desktop app read, also carries a monthly usage budget
+# (an Enterprise seat's only limit) and per-model weekly windows. It is not a
+# public API: reading it takes the Claude Code login token, so it is off unless
+# the variable is set, and any field it stops sending simply drops out.
+# The fetch runs in the background, at most every 5 minutes, into a cache file;
+# a render only reads the cache, so it never waits on the network, and a cache
+# older than an hour is not drawn. The token is never printed, written to disk
+# or put on a command line: curl reads its header from stdin.
+plan_usage_lines=""
+if [ "${WORKFLOWS_STATUSLINE_PLAN_USAGE:-}" = "1" ]; then
+  _pu_dir="$HOME/.claude/dev-workflows"
+  _pu_cache="$_pu_dir/plan-usage.json"
+  _pu_attempt="$_pu_dir/plan-usage.attempt"
+  _pu_now=$(date +%s)
+  _pu_mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0; }
+
+  _pu_last=0
+  [ -f "$_pu_attempt" ] && _pu_last=$(_pu_mtime "$_pu_attempt")
+  if [ $(( _pu_now - _pu_last )) -ge 300 ] && command -v curl >/dev/null 2>&1 \
+     && mkdir -p "$_pu_dir" 2>/dev/null && touch "$_pu_attempt" 2>/dev/null; then
+    (
+      _creds=""
+      if command -v security >/dev/null 2>&1; then
+        _creds=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null)
+      fi
+      if [ -z "$_creds" ] && [ -f "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json" ]; then
+        _creds=$(cat "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json" 2>/dev/null)
+      fi
+      # skip an expired token: Claude Code refreshes it, this script never does
+      _tok=$(printf '%s' "$_creds" | jq -r --argjson now "$(date +%s)" '
+        .claudeAiOauth | select(.accessToken != null)
+        | select((.expiresAt // 0) == 0 or (.expiresAt / 1000) > $now) | .accessToken' 2>/dev/null)
+      [ -z "$_tok" ] && exit 0
+      _tmp="$_pu_cache.tmp.$$"
+      _code=$(printf 'header = "Authorization: Bearer %s"\n' "$_tok" \
+        | curl -sS -m 10 -K - -o "$_tmp" -w '%{http_code}' \
+            -H "anthropic-beta: oauth-2025-04-20" \
+            https://api.anthropic.com/api/oauth/usage 2>/dev/null)
+      if [ "$_code" = "200" ] && jq -e 'type == "object"' "$_tmp" >/dev/null 2>&1; then
+        mv -f "$_tmp" "$_pu_cache"
+      else
+        rm -f "$_tmp"
+      fi
+    ) </dev/null >/dev/null 2>&1 &
+  fi
+
+  if [ -f "$_pu_cache" ] && [ $(( _pu_now - $(_pu_mtime "$_pu_cache") )) -lt 3600 ]; then
+    # windows: five_hour, seven_day and any five_hour_* / seven_day_* (per model)
+    # that carries a utilization; the monthly budget from extra_usage
+    plan_usage_lines=$(jq -r '
+      def epoch: if type == "string"
+        then (sub("\\.[0-9]+"; "") | sub("(\\+00:00|Z)$"; "Z") | try fromdateiso8601 catch "")
+        else (. // "") end;
+      def money($v; $dp): ($v / pow(10; $dp)) | tostring
+        | if test("\\.") then (. + "00" | capture("^(?<a>[^.]*\\.[0-9]{2})").a) else . + ".00" end;
+      ( to_entries[]
+        | select(.key | test("^(five_hour|seven_day)(_[a-z0-9_]+)?$"))
+        | select((.value | type) == "object" and (.value.utilization | type) == "number")
+        | [ (.key | sub("^five_hour"; "5h") | sub("^seven_day"; "7d") | sub("_"; "-")),
+            (.value.utilization | tostring), (.value.resets_at | epoch | tostring), "" ]
+      ),
+      ( .extra_usage
+        | select(type == "object" and .is_enabled == true
+                 and (.monthly_limit | type) == "number" and .monthly_limit > 0)
+        | (.decimal_places // 2) as $dp
+        | (if (.currency // "USD") == "USD" then "$" else ((.currency // "") + " ") end) as $c
+        | [ "usage",
+            ((.utilization // (100 * (.used_credits // 0) / .monthly_limit)) | tostring), "",
+            "\($c)\(money(.used_credits // 0; $dp)) / \($c)\(money(.monthly_limit; $dp)) monthly" ]
+      )
+      | join("\u001f")' "$_pu_cache" 2>/dev/null)
+  fi
+fi
+
 # ══ LINE 4 — rate limits ═════════════════════════════════════════════════════
 line4=""
 
@@ -459,6 +553,31 @@ if [ -n "$week_pct" ] && [ "$week_pct" != "null" ]; then
   [ -n "$line4" ] && line4="${line4} ${PIPE} "
   seg=$(rate_bar_segment "7d" "$week_pct" "$week_reset")
   line4="${line4}${seg}"
+fi
+
+if [ -n "$spend_pct" ] && [ "$spend_pct" != "null" ]; then
+  [ -n "$line4" ] && line4="${line4} ${PIPE} "
+  spend_detail="$spend_usd"
+  [ -n "$spend_detail" ] && [ -n "$spend_period" ] && spend_detail="${spend_detail} ${spend_period}"
+  seg=$(rate_bar_segment "spend" "$spend_pct" "$spend_reset" "$spend_detail")
+  line4="${line4}${seg}"
+fi
+
+# plan usage (opt-in): one segment per line of `plan_usage_lines`, each
+# "label<US>percent<US>reset-epoch<US>detail" (US = \037: a tab is IFS
+# whitespace, so an empty field between two would collapse); a 5h or 7d window the input
+# already carried is not drawn twice
+if [ -n "$plan_usage_lines" ]; then
+  while IFS="$(printf '\037')" read -r pu_label pu_pct pu_reset pu_detail; do
+    [ -z "$pu_label" ] && continue
+    [ "$pu_label" = "5h" ] && [ -n "$five_pct" ] && [ "$five_pct" != "null" ] && continue
+    [ "$pu_label" = "7d" ] && [ -n "$week_pct" ] && [ "$week_pct" != "null" ] && continue
+    [ -n "$line4" ] && line4="${line4} ${PIPE} "
+    seg=$(rate_bar_segment "$pu_label" "$pu_pct" "$pu_reset" "$pu_detail")
+    line4="${line4}${seg}"
+  done <<EOF
+$plan_usage_lines
+EOF
 fi
 
 # ══ output ════════════════════════════════════════════════════════════════════

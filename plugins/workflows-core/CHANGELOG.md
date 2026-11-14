@@ -5,6 +5,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.88.0] — 2026-11-14
+
+The status line shows more of your usage limits. It draws a Claude apps gateway's spend limit, which Claude Code hands it alongside the 5h and 7d windows, and, opt-in, the plan usage Claude Code does not hand it at all: an Enterprise seat's monthly usage budget and the per-model weekly windows. No command's behaviour changes, and no other plugin relies on this release, so it needs no other plugin's update of its own: the copies of `tree-snapshot.py` in `dev-workflows`, `docs-workflows` and `product-workflows` change only in their self-test.
+
+### Added
+
+- **The gateway spend limit on the status line's fourth line.** Where Claude Code is routed through a Claude apps gateway that sets a spend limit, `rate_limits.spend_limit` draws a `spend` bar with its percentage and reset, and its dollar amounts and period once Claude Code has them (`spend ██████░░░░ 63% $314.12 / $500 monthly resets 4d23h`). Nothing to set: the line appears only where Claude Code sends the field.
+- **Plan usage, opt-in with `WORKFLOWS_STATUSLINE_PLAN_USAGE=1`.** Claude Code passes the status line only the 5h and 7d windows, and only for Pro, Max and Ultra subscribers, so an Enterprise seat saw no limit at all. With the variable set — in the `env` block of `~/.claude/settings.json` — the script reads the account's usage endpoint, the one Claude Code's `/usage` and the desktop app read, and draws a `usage` bar for a monthly usage budget (`usage ████░░░░░░ 43% $425.54 / $1000.00 monthly`) and one bar for each `five_hour…` or `seven_day…` window that has a value (`7d-opus`, `7d-sonnet`, and any other per-model window, Fable's among them where a plan carries it under such a name); a window Claude Code already passed is not drawn twice. It reads the Claude Code login token from the macOS Keychain, or `~/.claude/.credentials.json` elsewhere, skips an expired one and never refreshes it, and hands it to `curl` on stdin, so it is never printed, written to disk or put on a command line. The call runs in the background at most every five minutes into `~/.claude/dev-workflows/plan-usage.json`, so a render never waits on the network, and a cache more than an hour old is not drawn. The endpoint is not a public API: a field it stops sending drops out of the line. The `/workflows-core:statusline` page's new *Usage limits* section describes all three.
+
+### Changed
+
+- **A reset more than two days away reads in days and hours** (`resets 4d23h`), where it read in hours (`resets 119h0m`).
+
+### Fixed
+
+- **`weakness-classes.py --selftest` passes on Python 3.15.** Its `case_register_states` and `case_across_register_states` expected a register nested 100,000 deep to be `unreadable`, by the parser's `RecursionError`; Python 3.15's parser reads that nesting, so the register parses as a list and is `malformed`, and both cases failed. Each now expects the state the running interpreter gives. The script itself is unchanged: either state draws no counts.
+- **`tree-snapshot.py --selftest` passes on macOS.** Its byte-for-byte path case wrote a file named with a non-UTF-8 byte, which APFS refuses (`Illegal byte sequence`), so the self-test died before its first check. It now tries the name first and leaves that one path out where the filesystem refuses it, the only place such a name cannot occur; a filesystem that takes it is tested as before. The snapshot itself is unchanged, and the three copies stay byte-identical to this one.
+
 ## [1.87.2] — 2026-11-14
 
 `weakness-classes.py across` reads a partial clone of the specs repository under a git that fails a sized listing over one missing blob, where it stopped with `not run`. No other plugin changes with this release or relies on it, so this release needs no other plugin's update of its own; each release below it names its own.

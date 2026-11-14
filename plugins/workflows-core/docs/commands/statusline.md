@@ -25,6 +25,16 @@ Takes no arguments. None of the three run flags apply to this command ([`environ
 
 Installs the vendored script to a stable per-user path (`~/.claude/dev-workflows/statusline-command.sh`, `chmod +x`'d) and merges a `statusLine` block into `~/.claude/settings.json`, preserving every other key. **It is idempotent and backs up anything it would overwrite** — an existing `statusLine` block, or an existing installed script — suffixing `-2`, `-3`, … rather than clobbering a prior backup. Installing it also enables — given `jq`, as *What it needs* says — the per-session **cost snapshot** behind the [status-line cross-check](../reference/session-cost.md#status-line-cross-check), the `cost_statusline_usd` figure a cost entry carries beside the computed one. **This is the only settings change the command makes**, and it never commits anything; every write stays under `~/.claude/` — though enabling the cost snapshot does change what every cost-emitting command's Session cost line reports.
 
+## Usage limits
+
+The status line's fourth line shows your usage limits, as far as Claude Code or your account tells it:
+
+- **`5h` and `7d`**: your rolling five-hour and weekly windows. Claude Code hands them to the status line itself, only for claude.ai Pro, Max and Ultra subscribers, and only after the session's first response.
+- **`spend`**: your spend against a limit a Claude apps gateway sets for you — the percentage, and the dollar amounts and period once Claude Code has them. You set nothing: it appears only where your Claude Code is routed through such a gateway, which Claude Code reports by itself.
+- **Plan usage, opt-in.** Claude Code passes no other limit to the status line, so an Enterprise seat's monthly usage budget and the per-model weekly windows (`7d-opus`, `7d-sonnet`, and any other a plan carries) show nothing by default. Set `WORKFLOWS_STATUSLINE_PLAN_USAGE=1` — in the `env` block of `~/.claude/settings.json`, so the status line inherits it — and the script reads them from your account's usage endpoint, the one Claude Code's own `/usage` and the desktop app read: `usage` with your spend against the monthly budget, and one bar per per-model window that has a value. To do so it reads your Claude Code login token from the macOS Keychain, or from `~/.claude/.credentials.json` elsewhere, and sends it to Anthropic only; the token is never printed, never written to disk and never put on a command line, and an expired one is skipped, never refreshed. The call runs in the background, at most once every five minutes, into `~/.claude/dev-workflows/plan-usage.json`, so a render never waits on the network; a cache more than an hour old is not drawn. The endpoint is not a public API: a field it stops sending drops out of the line, and a field it sends only under an internal name is not shown. It needs `curl`.
+
+A window Claude Code already passed is never drawn twice.
+
 ## Gates
 
 No reviewer, no branch, no commit. The one checkpoint is the explicit confirmation question, shown against the exact settings diff, before your settings are written.
