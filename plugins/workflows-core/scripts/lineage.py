@@ -3,6 +3,8 @@
 
 The authority for what this script does is workflows-core:document-lineage; the kind table it reads
 is lineage-kinds.json beside it. Standard library only.
+
+stamp takes --capture once or more, and records the entries of every capture file, in the order given.
 """
 
 import json
@@ -940,7 +942,7 @@ def test_consumed_by_not_moved():
 
 
 def test_engineering_review_notes_all_kinds():
-    for kind in ("epic", "prd", "ard", "design"):
+    for kind in ("epic", "prd", "ard", "threat-model", "design"):
         old = "---\nkind: x\n---\n# T\n\n## Goal\n\nShip it.\n"
         new = old + "\n## Engineering review\n\n- [ ] A conformance gap.\n"
         r = compare(kind, old, new)
@@ -1510,6 +1512,118 @@ def test_run_section_not_moved():
     _check("finding in a run section counts", compare("grounding", f1, f2)["changed"] == ["[DG#1]"], str(compare("grounding", f1, f2)))
 
 
+TM = """---
+kind: threat-model
+key: PRD-1-02
+status: reviewed
+---
+# Checkout — threat model
+
+## Scope
+
+- **Components:** shop:web
+- **Contract rows:** none
+
+## Not considered
+
+_None._
+
+## Threats
+
+### [TH#1]: Payment page framed by another site
+
+- **Category:** T
+- **Where:** shop:web
+- **Threat:** attacker: a third-party site; action: frames the payment page to trick a customer into confirming; asset: the customer's confirmation of the payment
+- **CWE:** —
+- **Disposition:** Mitigated by ard.md [AD#2]
+
+### [TH#2]: Payment callback replayed
+
+- **Category:** S
+- **Where:** shop:web
+- **Threat:** attacker: anyone holding an earlier callback; action: sends it again to mark an unpaid order paid; asset: the order's paid state
+- **CWE:** —
+- **Disposition:** Deferred to design: how the callback handler rejects a callback it has already processed
+
+### [TH#3]: Another customer's receipt read by its id
+
+- **Category:** I
+- **Where:** shop:web
+- **Threat:** attacker: a signed-in customer; action: requests a receipt id that is not theirs; asset: other customers' receipts
+- **CWE:** [CWE-639](https://cwe.mitre.org/data/definitions/639.html)
+- **Disposition:** Accepted — the checkout lead; receipt ids are random UUIDs; review by 2027-02-12
+
+## Inherited threats
+
+- [[PRD-1]] [TH#9] Order total forged in the browser — Mitigated by [[PRD-1]] ard.md [AD#2]
+"""
+
+
+def test_threat_model_kind():
+    _check("kind threat-model", kind_of("specifications/PRD-1-x/threat-model.md") == "threat-model")
+    _check("kind ard-threat-model is an ARD", kind_of("specifications/PRD-1-x/ard-threat-model.md") == "ard")
+    keys = {k for k in items("threat-model", TM) if k.startswith("[")}
+    _check("threat-model items", keys == {"[TH#1]", "[TH#2]", "[TH#3]"}, str(sorted(keys)))
+
+
+def test_threat_model_redisposition_is_a_change():
+    new = TM.replace("- **Disposition:** Deferred to design: how the callback handler rejects a callback it has already processed",
+                     "- **Disposition:** Accepted — the payments lead; the gateway signs each callback; review by 2027-03-01")
+    _check("redisposition fixture", new != TM)
+    r = compare("threat-model", TM, new)
+    _check("test_threat_model_redisposition_is_a_change", r == {"added": [], "changed": ["[TH#2]"], "withdrawn": []}, str(r))
+
+
+def test_threat_model_records_ard():
+    def body(r):
+        ard, tm = f"{r.dir}/ard.md", f"{r.dir}/threat-model.md"
+        r.write(ard, "---\nkind: ard\nkey: PRD-1\n---\n# ARD\n\n## Architecture decisions\n\n"
+                     "### [AD#1]: x\n\n- **Rule:** the gateway signs each callback\n")
+        r.commit()
+        r.write(tm, TM)
+        stamp(r.root, "main", os.path.join(r.root, tm), capture(r.root, "main", [], [ard]))
+        r.commit()
+        r.write(ard, r.read(ard).replace("signs each callback", "signs and timestamps each callback"))
+        r.commit()
+        res = check(r.root, "main", [tm])
+        _check("threat model stale on its ARD", res["highest"] == {"downstream": tm, "reviser": "/product-workflows:create-ard <KEY>"}, json.dumps(res))
+        _check("threat model link", [(s["upstream"], s["changed"]) for s in res["stale"]] == [(ard, ["[AD#1]"])], json.dumps(res["stale"]))
+    _with_repo(body)
+
+
+def test_stamp_two_captures():
+    """stamp's --capture repeated: every capture file's entries, in the order given; one flag as before."""
+    import subprocess
+
+    def body(r):
+        for name in ("a.md", "m.md", "z.md"):
+            r.write(name, f"# {name}\n")
+        for name in ("one.md", "two.md"):
+            r.write(name, "---\nkind: threat-model\n---\n# Doc\n")
+        r.commit()
+        script = os.path.abspath(__file__)
+        first, second = os.path.join(r.root, "first.json"), os.path.join(r.root, "second.json")
+        for out, paths in ((first, ["z.md"]), (second, ["a.md", "m.md"])):
+            p = subprocess.run([sys.executable, script, "capture", "--specs", r.root, "--ref", "main",
+                                "--from-disk", *paths, "--out", out], capture_output=True, text=True)
+            _check("two captures: capture exit", p.returncode == 0, p.stderr.strip())
+
+        def stamped(doc, *captures):
+            flags = [a for c in captures for a in ("--capture", c)]
+            p = subprocess.run([sys.executable, script, "stamp", "--specs", r.root, "--ref", "main",
+                                "--doc", os.path.join(r.root, doc), *flags], capture_output=True, text=True)
+            _check("two captures: stamp exit", p.returncode == 0, p.stderr.strip())
+            return [(e["path"], e["blob"]) for e in read_record(r.read(doc))[0]["upstreams"]]
+
+        want = [(e["path"], e["blob"]) for e in _load_json(first) + _load_json(second)]
+        got = stamped("two.md", first, second)
+        _check("two captures: both files' entries, in order", got == want and [p for p, _ in got] == ["z.md", "a.md", "m.md"], str(got))
+        one = stamped("one.md", first)
+        _check("one capture as before", one == [(e["path"], e["blob"]) for e in _load_json(first)], str(one))
+    _with_repo(body)
+
+
 def main(argv):
     import argparse
     if argv[1:2] == ["--selftest"]:
@@ -1526,7 +1640,7 @@ def main(argv):
     s.add_argument("--specs", required=True)
     s.add_argument("--ref", required=True)
     s.add_argument("--doc", required=True)
-    s.add_argument("--capture", required=True)
+    s.add_argument("--capture", required=True, action="append")
     k = sub.add_parser("check")
     k.add_argument("--specs", required=True)
     k.add_argument("--ref", required=True)
@@ -1544,7 +1658,7 @@ def main(argv):
             with open(args.out, "w", encoding="utf-8") as fh:
                 json.dump(result, fh, indent=2)
         elif args.cmd == "stamp":
-            result = stamp(args.specs, args.ref, args.doc, _load_json(args.capture))
+            result = stamp(args.specs, args.ref, args.doc, [e for c in args.capture for e in _load_json(c)])
         elif args.cmd == "check":
             result = check(args.specs, args.ref, args.docs, output=args.output,
                            accepted_from=args.accepted_from)
