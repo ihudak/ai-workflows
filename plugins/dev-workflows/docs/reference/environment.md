@@ -1,6 +1,6 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, what happens when it points somewhere the plugin cannot read or write, and the directory layout it expects underneath it. This page documents five user-settable variables, each below: the plugin reads four, and documents `$DOCS_PATH` only because its git finish says it never touches it. Nothing else it reads is yours to set. The run flags' environment defaults, `WORKFLOWS_SKIP_COSTS`, `WORKFLOWS_SKIP_FEEDBACK` and `WORKFLOWS_ENFORCE_MODEL`, are read by `workflows-core`, whose own environment page documents them.
+[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, what happens when it points somewhere the plugin cannot read or write, and the directory layout it expects underneath it. This page documents five user-settable variables, each below: the plugin reads four, and documents `$DOCS_PATH` only because its git finish says it never touches it. One more setting it reads is yours to set, and the companion `workflows-core` plugin documents it on its own environment page, not this one: `WORKFLOWS_FABLE_ESCALATION`, which `/implement` alone reads, to settle whether a `HIGH-RISK` change's code is written on Fable — `ask`, the default, `always` or `never` ([`/implement`](../commands/implement.md#who-writes-the-code)). The run flags' environment defaults, `WORKFLOWS_SKIP_COSTS`, `WORKFLOWS_SKIP_FEEDBACK` and `WORKFLOWS_ENFORCE_MODEL`, are read by `workflows-core`, whose own environment page documents them.
 
 ## `$SPECS_PATH`
 
@@ -61,7 +61,7 @@
 
 - **`$ARCHITECTURE_REPO_PATH`** — a local clone of your organisation's architecture repository (technology radar, standards, principles, patterns, ADRs), read-only; no default.
 
-**Resolution.** Resolved by the family's shared architecture-grounding gate, consumed here by `/design` (and by the companion plugin's `/product-workflows:create-ard` and `/product-workflows:specify`); `--no-arch` turns it off for a run.
+**Resolution.** Resolved by the family's shared architecture-grounding gate, consumed here by `/design` (and by the companion plugin's `/product-workflows:create-ard` and `/product-workflows:specify`); `--no-arch` turns off, for a run, this repository and the two other sources architecture grounding reads: the team knowledge base and the security findings registers under `$SPECS_PATH/security/`.
 
 **When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it; the team knowledge base under `$SPECS_PATH/architecture/` is resolved separately, and still read where it exists.
 

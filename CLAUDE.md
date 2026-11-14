@@ -90,15 +90,17 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
 | `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
-| `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | invariants, map, callers |
-| `brd-route.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`, `conformance.md`; `workflows-core/references/addressing.md`; `workflows-core/commands/frames.md`; `docs-workflows/commands/`: `document.md`, `release-notes.md` | BRD-route map lines, folder-kind invariants |
+| `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | plugin facts, map, callers |
+| `product-workflows-prd-flow.md` | as `product-workflows.md` | the PRD-creation flow's invariants |
+| `brd-route.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`, `conformance.md`; `workflows-core/references/`: `addressing.md`, `cost-emission.md`; `workflows-core/commands/frames.md`; `docs-workflows/commands/`: `document.md`, `release-notes.md`; `security-workflows/commands/scan.md` | BRD-route map lines, folder-kind invariants |
+| `brd-route-recut.md` | as `brd-route.md` | the sibling re-cut |
 | `brd-route-detection.md` | as `brd-route.md` | BRD-route detection |
 | `prd-ground-verification.md` | as `brd-route.md` | `/prd-ground`'s blind verification |
 | `docs-workflows.md` | `docs-workflows/**`; `product-workflows/`: `commands/epics.md`, `agents/epic-*.md`, `docs/commands/epics.md` | invariants, map, callers |
 | `docs-workflows-gates.md` | as `docs-workflows.md` | three gate authorities |
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
-| `security-workflows.md` | `security-workflows/**`; `workflows-core/`: `references/security-register-format.md`, `docs/family-map.md` | plugin facts, map, register invariants |
+| `security-workflows.md` | `security-workflows/**`; `workflows-core/`: `references/security-register-format.md`, `scripts/weakness-classes.py`, `docs/family-map.md` | plugin facts, map, register invariants |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 24 command files: the ten docs-grounding consumers, `/design` (architecture only) and thirteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, authorities, map |
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |
@@ -113,7 +115,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `plugin-updates-coupling.md` | `*/.claude-plugin/plugin.json`, `*/CHANGELOG.md`; `.claude-plugin/marketplace.json` (repo root) | which plugins to update together, one bullet per release pair |
 | `plugin-updates-coupling-history.md` | as `plugin-updates-coupling.md` | its older bullets, up to `workflows-core` 1.58.0 |
 | `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.74.0 |
-| `plugin-updates-coupling-history-3.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.75.0 to 1.80.0 |
+| `plugin-updates-coupling-history-3.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.75.0 to 1.80.3 |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
@@ -161,11 +163,11 @@ The evidence behind the rules — measured cases, refused widenings, history —
 Each reference below is the **single source of truth** for what it owns; `<plugin>:<name>` is `plugins/<plugin>/references/<name>.md`. Its full paragraph — consumers, entry points, invariants — is in the `.claude/rules/` file named.
 
 - `workflows-core:model-routing/classification` — complexity classes, the model fallback chain, the Opus review checklist, the `model_routing` block, the §8 scan fan-out → `workflows-core-model-routing.md`
-- `workflows-core:run-flags` — `--skip-costs`, `--skip-feedback`, `--enforce-model` and their `WORKFLOWS_*` env defaults; where a run's `mktemp` files go → `workflows-core.md`
+- `workflows-core:run-flags` — `--skip-costs`, `--skip-feedback`, `--enforce-model` and their `WORKFLOWS_*` env defaults; where a run's `mktemp` files go; `WORKFLOWS_FABLE_ESCALATION`, `/implement`'s `HIGH-RISK` Fable setting, no run flag → `workflows-core.md`
 - `workflows-core:source-truth` — the Implementation-vs-Description discrepancy-escalation protocol, and §7.8's decisions a conformance record already holds → `workflows-core.md`
 - `workflows-core:prose-formatting` — output line-wrapping: never hard-wrap prose → `workflows-core.md`
 - `workflows-core:implementation-format` — the append-only `implementation.md` record, the `[<key>]` commit convention, the two-source read, `unit-branch` → `workflows-core.md`
-- `workflows-core:security-register-format` — the security findings register: its layout, run records, statuses, roles and the rules `register.py` applies → `security-workflows.md`
+- `workflows-core:security-register-format` — the security findings register: its layout, run records, statuses, roles and the rules `register.py` applies, and §7's weakness classes → `security-workflows.md`
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`

@@ -1,6 +1,6 @@
 # Run Flags — Shared Reference
 
-Single source of truth for the three run flags every applicable command accepts, their environment defaults, the model aliases, the `run_flags` record, the skipped-cost path, and where a run's temporary files go (§7). Read through the loader; commands execute `strip-run-flags` in Phase 0 and `skip-cost` in their cost phase.
+Single source of truth for the three run flags every applicable command accepts, their environment defaults, the model aliases, the `run_flags` record, the skipped-cost path, where a run's temporary files go (§7), and `$WORKFLOWS_FABLE_ESCALATION`, the setting `/implement` alone reads, which is no run flag (§8). Read through the loader; commands execute `strip-run-flags` in Phase 0 and `skip-cost` in their cost phase.
 
 ## 1. The flags
 
@@ -51,11 +51,11 @@ Single source of truth for the three run flags every applicable command accepts,
 
 What each dispatch was actually passed, and where it differs from the value requested, is what §6's `Model routing:` line reports.
 
-**Both stops — and every validation in this section — apply only to an `--enforce-model` (or `$WORKFLOWS_ENFORCE_MODEL`) that §3's applicability step has already found applicable to the running command.** An inapplicable one — an explicit flag on a command outside its set, or an env default anywhere outside its set — is never parsed against this table, never reachability-checked, and never stopped on; §3 disposes of it first, before this section is ever reached for it.
+**Both stops — and every validation in this section, save the unpriced-id warning's one reach beyond `--enforce-model` (below) — apply only to an `--enforce-model` (or `$WORKFLOWS_ENFORCE_MODEL`) that §3's applicability step has already found applicable to the running command.** An inapplicable one — an explicit flag on a command outside its set, or an env default anywhere outside its set — is never parsed against this table, never reachability-checked, and never stopped on; §3 disposes of it first, before this section is ever reached for it.
 
 **Both stops happen in Phase 0, before `specs-preflight` and before any write, and emit no feedback entry** — a bad or unreachable model name is a defect in the user's own invocation, not a gap in the plugin.
 
-**Unpriced reachable id.** The price table is the first of `$DEV_WORKFLOWS_COST_PRICES` (a path), a repo-local `cost-prices.yaml`, and the bundled `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml` that exists, and an id is priced when its `models:` map carries a key equal to the id or, failing that, a key the id starts with, where the id does not continue with a digit right after that key (the longest such key wins) — stated here so Phase 0 never loads `cost-emission.md` to make this check. A reachable id that resolves but carries no such key does not stop the run: print one warning line, `⚠ <id> is unpriced in cost-prices.yaml — its cost will be recorded as null`, and continue. The check prices the resolved id; for a bare family alias resolved in a family-only harness, which records no id, it prices that family's newest chain row (`claude-opus-5-5`, `claude-sonnet-5-5`, and `claude-haiku-5-5`, the first of the Haiku rows above) — and `fable`, which no chain names, counts as priced when the table carries any key beginning `claude-fable-`, the warning naming `<id>` as `fable` where it carries none. Like the two stops above, this warning is reached only for an applicable, enforced model — an inapplicable `--enforce-model` never resolves far enough to trigger it.
+**Unpriced reachable id.** The price table is the first of `$DEV_WORKFLOWS_COST_PRICES` (a path), a repo-local `cost-prices.yaml`, and the bundled `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml` that exists, and an id is priced when its `models:` map carries a key equal to the id or, failing that, a key the id starts with, where the id does not continue with a digit right after that key (the longest such key wins) — stated here so neither Phase 0 nor `/implement`, pricing its Fable escalation, loads `cost-emission.md` to make this check. A reachable id that resolves but carries no such key does not stop the run: print one warning line, `⚠ <id> is unpriced in cost-prices.yaml — its cost will be recorded as null`, and continue. The check prices the resolved id; for a bare family alias resolved in a family-only harness, which records no id, it prices that family's newest chain row (`claude-opus-5-5`, `claude-sonnet-5-5`, and `claude-haiku-5-5`, the first of the Haiku rows above) — and `fable`, which no chain names, counts as priced when the table carries any key beginning `claude-fable-`, the warning naming `<id>` as `fable` where it carries none. Like the two stops above, this warning is reached for `--enforce-model` only where it is applicable and enforces a model — an inapplicable `--enforce-model` never resolves far enough to trigger it. Beyond `--enforce-model`, it is reached for one value alone: the Fable value `/implement`'s escalation takes (§8), which `/implement` prices the same way.
 
 ## 3. `strip-run-flags` entry point
 
@@ -148,3 +148,23 @@ names one says so where it stands.
 reads this section, so the rule is stated beside each `mktemp` recipe an agent runs: in the agent's
 own body, or in the reference that holds the recipe, once for every caller. The dispatch carries
 nothing for it.
+
+## 8. Fable escalation — `$WORKFLOWS_FABLE_ESCALATION`
+
+**What it settles.** Whether `/implement` writes HIGH-RISK code on Fable: `classification.md` §4's third clause escalates the `implementation_model` of a session not on Fable or Mythos where `/implement`'s run-state `fable_escalation.choice` is a Fable value, `--enforce-model` overriding it (`classification.md` §10), and `/implement`'s Fable escalation guard records that choice before a HIGH-RISK `code-writer` or `review-fixer` dispatch where none is recorded yet. This variable governs that choice wherever the guard's own test leaves it to the setting: no `--enforce-model`, a session not on Fable or Mythos, a run that fixes no security finding, and Fable reachable. The test itself is the guard's, in `/implement`.
+
+**Values.** Matched case-insensitively, after trimming surrounding whitespace:
+
+- `ask` — the default, and what an unset, empty or whitespace-only variable reads as: the guard asks the user, and records the answer.
+- `always` — the guard escalates without asking, and the run prints one line naming the setting and the model chosen. Where Fable is not reachable, which the guard's test settles before the setting, the run codes on the unescalated model — `classification.md` §4's `implementation_model` without its third clause — and under `always` it says so in one line.
+- `never` — the guard records the unescalated model without asking, and the run prints one line naming the setting and the model chosen.
+
+Any other value reads as `ask`, and the run prints one line saying so, wherever it reads the variable.
+
+**Who reads it.** `/implement` alone, at its guard and on a resume of a stopped run, to apply `classification.md` §4's third clause. Its guard restates these values and its read in its own text, which a compaction cannot take from it. On a resume, a choice the variable made follows its value on the resuming invocation, while an answer the user gave, or a fallback the run made, is kept whatever the variable now says — save that a resuming invocation under `--enforce-model`, or on a Fable or Mythos session, keeps the record as it stands, and that otherwise a choice of Fable the resuming session cannot reach gives way to the unescalated model, whatever made it.
+
+**Where it is set.** In the session's environment, as the run flags' environment defaults are. No command writes it, and no answer to the guard's question changes it.
+
+**What it is not.** It is no run flag. `strip-run-flags` (§3) never reads it, the `run_flags` record has no member for it, the `Run flags:` line (§3 step 6) never names it, and no command-line flag sets it. No other command reads it, and no other command's Phase 0 touches it.
+
+**One run on Fable.** There is no per-run override of the variable. A one-run route to Fable, whatever the variable says, is `--enforce-model=fable` (§1, §2), and it pins more than the coding: under `classification.md` §10 every subagent the run dispatches runs on Fable, the planner, the reviewer and the scanners among them, and the guard writes nothing.

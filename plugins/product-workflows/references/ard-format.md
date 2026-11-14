@@ -99,8 +99,9 @@ Where `/create-ard` ran with architecture grounding ON (`workflows-core:architec
 - **Team records.** The team's knowledge base (`workflows-core:architecture-kb`) is cited the same way: a link whose text is the record's id and title, the target relative from the ARD to `architecture/decisions/<id>.md`. An `accepted` record binds. A decision departing from a record of another PRD either carries **Supersedes** (below) or is an `## Open questions` entry naming the record; one departing from a record of its own PRD (the nearest `PRD-` folder's key, on the BRD route the slice's, never this frontmatter's `prd:`) — a sibling Epic's, or on a PRD-level ARD one of its Epics' — is an `## Open questions` entry naming it, settled by refining the ARD the record came from.
 - **Supersedes.** `**Supersedes:** [<record id> <title>](<link>) — <why>` on a live decision replaces a record from **another** PRD for everyone: the next `/product-workflows:harvest-decisions` marks the record superseded by this decision's own record. A decision of the same PRD changes by refining the ARD it came from with **Superseded by**, never with **Supersedes**.
 - **Not an as-is claim.** A governance citation states what the organisation requires, not what the code does, so it needs no `grounded_repos` entry; `## Grounding findings` keeps its rule that every claim there cites a `file:line` in one.
+- **A CWE in Prevents.** A decision whose **Prevents** names a CWE names it as a link to its CWE page, `[CWE-<n>](https://cwe.mitre.org/data/definitions/<n>.html)`, `<n>` its number without leading zeros, whether or not grounding ran: pre-lint reports a bare `CWE-<n>` and discards one inside a markdown link, and the weakness-class test that reads a harvested decision's Prevents still finds the CWE in the link's text. Adding that link to an existing decision's Prevents is not a change to the decision (§ Superseding a decision). A decision that would also need its Rule to require more is a new `[AD#M]`.
 
-Where grounding was OFF, nothing in this section is required.
+Where grounding was OFF, nothing in this section is required but **A CWE in Prevents**.
 
 ## Superseding a decision
 

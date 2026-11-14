@@ -241,6 +241,13 @@ jobs:
         # scanner wrote from untrusted code. Fixtures and a git repository are built at run time.
         run: python3 plugins/security-workflows/scripts/register.py --selftest
 
+      - name: Self-test the weakness classes reader
+        # It reads the weakness classes the security registers hold, for the architecture work,
+        # and prints none of a finding's text. Its failure modes are silent: scan text reaching a
+        # question or a line, CWE-890 taken for CWE-89, or one batch's acceptances counted as
+        # recurring. Fixtures are built at run time.
+        run: python3 plugins/workflows-core/scripts/weakness-classes.py --selftest
+
       - name: Self-test the key discovery
         # /document and /release-notes run the whole-key commit scan, its probe and the optional
         # GitHub pull-request search with it. A boundary that matches a longer key, or a search
