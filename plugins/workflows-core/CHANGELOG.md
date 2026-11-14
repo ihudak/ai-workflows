@@ -21,7 +21,7 @@ IMP-G3: `classification` §4's coding-model rule gains a third clause, under whi
 
 ### Departures from the approved design
 
-The design (`docs/superpowers/specs/2026-11-13-imp-g3-fable-escalation-design.md`) is left as approved; `dev-workflows` 4.65.0's CHANGELOG names its four departures, all in `/implement`: the question no longer calls Fable "the strongest model reachable"; the fallback's wording is `— a Fable dispatch failed outright (fallback)`, not the design's wording 6, `— Fable was not available (fallback)`; the fallback prints its line when it fires; and a `security` record is kept on a resume and never tested again, overriding the design's §3.7. This release's §8 states the resume rule as it ships.
+The design (`docs/superpowers/specs/2026-11-13-imp-g3-fable-escalation-design.md`) is left as approved; `dev-workflows` 4.65.0's CHANGELOG names its six departures, all in `/implement`: the question no longer calls Fable "the strongest model reachable", reads `at a higher per-token price than <unescalated model>` where either model is unpriced, and is asked at most once an invocation rather than once a run, since a resume can ask it again; the fallback's wording is `— a Fable dispatch failed outright (fallback)`, not the design's wording 6, `— Fable was not available (fallback)`; the fallback prints its line when it fires; and a `security` record is kept on a resume and never tested again, overriding the design's §3.7. §8 states the setting's part of the resume rule as it ships.
 
 ## [1.85.1] — 2026-11-13
 
