@@ -15,5 +15,9 @@ As a PM, I want an export, so that I can share it.
 - [SEC-1] A security finding in the dash form.
 - A bare SEC-2 mention in prose.
 
+## Threats
+- [TH-1] A threat in the dash form.
+- A bare TH-2 mention in prose.
+
 ## References
 - [[PRODUCT-123]]

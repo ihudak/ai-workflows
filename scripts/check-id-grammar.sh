@@ -53,7 +53,7 @@ if [ "${1:-}" = "--selftest" ]; then
   # The form lists are the whole point: each one pins one alternation of PATTERN.
   # Bracketed and bare are separate branches of the regex and are asserted separately.
   expect "numeric dash forms are rejected"      1 "$here/fixtures/prd-bad.md" \
-         "[US-1]" "[AC-1]" "[AC-2]" "[SM-1]" "[SEC-1]" "bare SEC-2"
+         "[US-1]" "[AC-1]" "[AC-2]" "[SM-1]" "[SEC-1]" "bare SEC-2" "[TH-1]" "bare TH-2"
   expect "placeholder dash forms are rejected"  1 "$here/fixtures/prd-bad-placeholders.md" \
          "[US-n]" "[AC-x]" "[AC-X]" "[SM-Cx]" "bare SM-Cx"
   expect "hash forms and real keys are accepted" 0 "$here/fixtures/prd-good.md"
@@ -194,6 +194,9 @@ fi
 # a real key like PRODUCT-123 is legitimate and must never be flagged.
 # SEC is the security register's finding ID, [SEC#n] (security-workflows); it
 # joined both prefix alternations when nothing in the tree wrote a dash form of it.
+# TH is a threat's ID in an ARD's threat model, [TH#n]
+# (workflows-core:threat-model-format); it joined both prefix alternations when nothing
+# the gate scans wrote a dash form of it (0 hits, 2026-11-14).
 #
 # The number class is [NnXx0-9] everywhere, and identical on all four
 # alternations. It covers literal numbers plus every placeholder letter these
@@ -208,7 +211,7 @@ fi
 # below -- SM-C needs its own alternative because it doesn't fit the
 # \[(PREFIX)-[N0-9]+\] shape (the dash sits before the C, not after it).
 NUM='[NnXx0-9]'
-PATTERN="\[(US|AC|SM|SMC|UC|FR|AD|SEC)-${NUM}+\]|\[SM-C${NUM}+\]|(^|[^[:alnum:]_[])(US|AC|SM|SMC|UC|FR|AD|SEC)-${NUM}+([^[:alnum:]_]|\$)|(^|[^[:alnum:]_[])SM-C${NUM}+([^[:alnum:]_]|\$)"
+PATTERN="\[(US|AC|SM|SMC|UC|FR|AD|SEC|TH)-${NUM}+\]|\[SM-C${NUM}+\]|(^|[^[:alnum:]_[])(US|AC|SM|SMC|UC|FR|AD|SEC|TH)-${NUM}+([^[:alnum:]_]|\$)|(^|[^[:alnum:]_[])SM-C${NUM}+([^[:alnum:]_]|\$)"
 
 # Subtrees that legitimately carry the legacy form, anchored to the SCAN ROOT
 # rather than matched by bare directory name. `--exclude-dir=docs` would skip

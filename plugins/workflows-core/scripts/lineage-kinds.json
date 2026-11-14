@@ -118,6 +118,28 @@
       ],
       "_source": "product-workflows/references/ard-format.md:15 (ard-<area>.md), :63 (### [AD#N]:); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
     },
+    "threat-model": {
+      "match": [
+        "^threat-model\\.md$"
+      ],
+      "covered": true,
+      "altitude": "architecture",
+      "reviser": "/product-workflows:create-ard <KEY>",
+      "version": null,
+      "items": [
+        {
+          "level": 1,
+          "start": "^###\\s+\\[(TH#[0-9]+)\\]"
+        }
+      ],
+      "notes": [
+        "^##\\s+Engineering review\\b"
+      ],
+      "ignore_lines": [
+        "^\\s*[-*]\\s+\\[[ xX]\\]"
+      ],
+      "_source": "workflows-core/references/threat-model-format.md §3-§4 (### [TH#N]: headings; ## Inherited threats bullets are no items); notes and ignore_lines as the ard row, so a /dev-workflows:conformance note (sub-project D) never reads as a revision"
+    },
     "grounding": {
       "match": [
         "^code-grounding\\.md$",

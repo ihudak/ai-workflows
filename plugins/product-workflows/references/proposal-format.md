@@ -415,7 +415,7 @@ plugin's bracketed form to a reader who has never seen it makes the traceability
 its only reader.
 
 **The two artifacts sit outside `workflows-core:pre-lint`'s *Auto-link collision* check, which is
-scoped to PRD, ARD and Epic files, and that exclusion is deliberate rather than an oversight.** That
+scoped to PRD, ARD, threat-model and Epic files, and that exclusion is deliberate rather than an oversight.** That
 check is an auto-link detector for documents that get pasted into a tracker, and these two are not —
 they are sent to a customer, as a document. Everything else `pre-lint` performs — its universal checks,
 identifier integrity, required-section presence — does run.
