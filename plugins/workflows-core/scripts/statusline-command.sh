@@ -481,10 +481,24 @@ if [ "${WORKFLOWS_STATUSLINE_PLAN_USAGE:-}" = "1" ]; then
   _pu_cache="$_pu_dir/plan-usage.json"
   _pu_attempt="$_pu_dir/plan-usage.attempt"
   _pu_now=$(date +%s)
-  _pu_mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0; }
+  # GNU stat first, each attempt captured on its own: GNU reads `stat -f %m` as
+  # "file-system status of the files %m and $1", printing a report beside a
+  # failure, while BSD stat refuses `-c` with nothing on stdout. Anything but
+  # digits reads as 0: the cache's age test then fails, so nothing is drawn, and
+  # a fetch stamp that is there but reads 0 counts as made now, so a time that
+  # cannot be read never turns into a fetch on every render.
+  _pu_mtime() {
+    local t
+    t=$(stat -c %Y "$1" 2>/dev/null) || t=$(stat -f %m "$1" 2>/dev/null) || t=0
+    case $t in ''|*[!0-9]*) t=0 ;; esac
+    echo "$t"
+  }
 
   _pu_last=0
-  [ -f "$_pu_attempt" ] && _pu_last=$(_pu_mtime "$_pu_attempt")
+  if [ -f "$_pu_attempt" ]; then
+    _pu_last=$(_pu_mtime "$_pu_attempt")
+    [ "$_pu_last" -eq 0 ] && _pu_last=$_pu_now
+  fi
   if [ $(( _pu_now - _pu_last )) -ge 300 ] && command -v curl >/dev/null 2>&1 \
      && mkdir -p "$_pu_dir" 2>/dev/null && touch "$_pu_attempt" 2>/dev/null; then
     (
@@ -515,29 +529,47 @@ if [ "${WORKFLOWS_STATUSLINE_PLAN_USAGE:-}" = "1" ]; then
 
   if [ -f "$_pu_cache" ] && [ $(( _pu_now - $(_pu_mtime "$_pu_cache") )) -lt 3600 ]; then
     # windows: five_hour, seven_day and any five_hour_* / seven_day_* (per model)
-    # that carries a utilization; the monthly budget from extra_usage
+    # that carries a utilization; a model-scoped weekly limit the endpoint lists
+    # only in `limits` (kind weekly_scoped, scope.model.display_name), as 7d-<model>;
+    # the monthly budget from extra_usage. Each entry is read on its own, so a
+    # malformed one drops only itself. A label drawn once is not drawn again: a
+    # window named alike in both forms is drawn from its seven_day_* field. An
+    # entry scoped to a surface is not drawn, and is_active is not read: the
+    # reply marks only the binding limit active, and a scoped one beside it still
+    # carries a live percentage.
     plan_usage_lines=$(jq -r '
       def epoch: if type == "string"
         then (sub("\\.[0-9]+"; "") | sub("(\\+00:00|Z)$"; "Z") | try fromdateiso8601 catch "")
-        else (. // "") end;
+        elif type == "number" then floor
+        else "" end;
       def money($v; $dp): ($v / pow(10; $dp)) | tostring
         | if test("\\.") then (. + "00" | capture("^(?<a>[^.]*\\.[0-9]{2})").a) else . + ".00" end;
-      ( to_entries[]
-        | select(.key | test("^(five_hour|seven_day)(_[a-z0-9_]+)?$"))
-        | select((.value | type) == "object" and (.value.utilization | type) == "number")
-        | [ (.key | sub("^five_hour"; "5h") | sub("^seven_day"; "7d") | sub("_"; "-")),
-            (.value.utilization | tostring), (.value.resets_at | epoch | tostring), "" ]
-      ),
-      ( .extra_usage
-        | select(type == "object" and .is_enabled == true
-                 and (.monthly_limit | type) == "number" and .monthly_limit > 0)
-        | (.decimal_places // 2) as $dp
-        | (if (.currency // "USD") == "USD" then "$" else ((.currency // "") + " ") end) as $c
-        | [ "usage",
-            ((.utilization // (100 * (.used_credits // 0) / .monthly_limit)) | tostring), "",
-            "\($c)\(money(.used_credits // 0; $dp)) / \($c)\(money(.monthly_limit; $dp)) monthly" ]
-      )
-      | join("\u001f")' "$_pu_cache" 2>/dev/null)
+      [ ( to_entries[] | try (
+          select(.key | test("^(five_hour|seven_day)(_[a-z0-9_]+)?$"))
+          | select((.value | type) == "object" and (.value.utilization | type) == "number")
+          | [ (.key | sub("^five_hour"; "5h") | sub("^seven_day"; "7d") | gsub("_"; "-")),
+              (.value.utilization | tostring), (.value.resets_at | epoch | tostring), "" ] )
+        ),
+        ( .limits | arrays | .[] | try (
+          objects
+          | select(.kind == "weekly_scoped" and (.percent | type) == "number")
+          | (.scope | objects | select(.surface == null) | .model | objects | .display_name | strings
+             | ascii_downcase | gsub("[^\\p{L}\\p{N}]+"; "-") | ltrimstr("-") | rtrimstr("-")
+             | select(length > 0)) as $m
+          | [ "7d-" + $m, (.percent | tostring), (.resets_at | epoch | tostring), "" ] )
+        ),
+        ( try (
+          .extra_usage
+          | select(type == "object" and .is_enabled == true
+                   and (.monthly_limit | type) == "number" and .monthly_limit > 0)
+          | (.decimal_places // 2) as $dp
+          | (if (.currency // "USD") == "USD" then "$" else ((.currency // "") + " ") end) as $c
+          | [ "usage",
+              ((.utilization // (100 * (.used_credits // 0) / .monthly_limit)) | tostring), "",
+              "\($c)\(money(.used_credits // 0; $dp)) / \($c)\(money(.monthly_limit; $dp)) monthly" ] )
+        ) ]
+      | reduce .[] as $r ([]; if any(.[]; .[0] == $r[0]) then . else . + [$r] end)
+      | .[] | join("\u001f")' "$_pu_cache" 2>/dev/null)
   fi
 fi
 
