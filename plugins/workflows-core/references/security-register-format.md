@@ -158,7 +158,7 @@ A false positive overrules a finding Claude Security's three-voter panel confirm
 
 The commands and agents that load this reference are what `grep -l 'args: "security-register-format' plugins/*/commands/*.md plugins/*/agents/*.md` lists — a scope this file is outside. Each reads `register.json`, and reads a finding's text as §3 says.
 
-The commands that read the register through §7's script are what `grep -l 'skill: "workflows-core:weakness-classes"' plugins/*/commands/*.md` lists. The script reads `register.json` for them, by its format, and through the `workflows-core:weakness-classes` skill such a call gives the command the script's JSON and never the register: §7.4's and §7.5's fields, with no finding's text among them.
+The commands that read the register through §7's script are what `grep -l 'skill: "workflows-core:weakness-classes"' plugins/*/commands/*.md` lists — and `/product-workflows:update-spec`, which makes `/specify`'s call (`workflows-core:architecture-grounding`, *Consumers*). The script reads `register.json` for them, by its format, and through the `workflows-core:weakness-classes` skill such a call gives the command the script's JSON and never the register: §7.4's and §7.5's fields, with no finding's text among them.
 
 ## 7. Weakness classes
 

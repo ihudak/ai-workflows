@@ -91,7 +91,7 @@ Build one list from three entries, each item carrying its **source**, then confi
 
 ## Phase 3 — Ground the changed items
 
-Ground only the themes the confirmed list touches, by `/specify`'s own steps for each: the documentation and architecture dispatches as `/specify` Phase 4 makes them, with `feature_summary` naming the changed items rather than the whole specification and `own_sources` the `ard_paths` Phase 0 step 6a returned; the grounding findings read as `/specify` Phase 2's *grounding* section reads them; and `/specify` Phase 3–4's repository derivation and light code scan, scoped to the touched themes and skipped where none bears on code. Phase 1's OFF lines dispatch nothing.
+Ground only the themes the confirmed list touches, by `/specify`'s own steps for each: the documentation and architecture dispatches as `/specify` Phase 4 makes them, with `feature_summary` naming the changed items rather than the whole specification and `own_sources` the `ard_paths` Phase 0 step 6a returned; the grounding findings read as `/specify` Phase 2's *grounding* section reads them; and `/specify` Phase 3–4's repository derivation and light code scan, scoped to the touched themes and skipped where none bears on code. Phase 1's OFF lines dispatch nothing — the architecture dispatch's own condition, a register class among it, is `/specify` Phase 4's.
 
 ---
 

@@ -8,7 +8,7 @@ paths:
 
 # docs-workflows — invariants, workflow map, agent callers
 
-Loaded when a file under `plugins/docs-workflows/` is read, or `/epics`'s command, agent or docs page, since the bullets of *Key invariants for `/document` (keyed mode) and `/epics`* bind both commands: keep them here, never copied into `product-workflows.md`, where two copies would drift. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded when a file under `plugins/docs-workflows/` is read, or `/epics`'s command, agent or docs page, since the bullets of *Key invariants for `/document` (keyed mode) and `/epics`* bind both commands: keep them here, never copied into a product-workflows rules file, where two copies would drift. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 Split out to keep this file under 20,000 characters: `/docs-serve`'s map line and run state → `.claude/rules/docs-serve.md`; `/release-notes`' map line, invariants and the `release-note-types` authority → `.claude/rules/release-notes.md`; `$DOCS_PATH` docs grounding, whose rules bind consumers in three plugins → `.claude/rules/docs-grounding.md`; the three gate authorities (`gate-ledger`, `repo-verification-gates`, `toolchain-preflight`) → `.claude/rules/docs-workflows-gates.md`.
 
