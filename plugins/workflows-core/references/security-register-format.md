@@ -167,7 +167,7 @@ A **weakness class** is a register plus a finding's primary CWE. `workflows-core
 
 `register.json` is derived (§1), so it lags any run record still on an unmerged `session/*` branch until a rebuild after the merge. The output is advice, so a lag of one rebuild is acceptable.
 
-**A command runs the script through its skill, and an agent never does.** The `workflows-core:weakness-classes` skill resolves the script's path, adds `--specs`, writes the JSON to a temporary file and hands back that file's path, or else one line beginning `weakness-classes: not run (`; §6 names its callers. An origin is text the scanner wrote — `register.py` checks only that its plugin ID holds a `:` — so the skill places no value on the command line that holds a character outside `[A-Za-z0-9._:/@+=-]`. It drops a `--component` that holds one and keeps its `--repo`, so the run loses only that component's `in_component` (§7.3); where any other value holds one, it refuses the call and runs nothing. A value can also hold a quote that ends it early, so that the rest reads as more flags, and the script takes the last of a repeated single-value flag. So the skill takes the flags in one order only — every `--repo`, then every `--component`, then at most one `--prd-key`, then at most one `--ref`, then every `--origin`, last — and refuses the call, running nothing, on a flag out of that order, on a second `--prd-key` or `--ref`, and on `--specs` and `--today`, which it never passes: `--specs` is its own, and the script dates the run itself. A flag smuggled into an origin can then be only one more `--origin`.
+**A command runs the script through its skill, and an agent never does.** The `workflows-core:weakness-classes` skill resolves the script's path, adds `--specs`, writes the JSON to a temporary file and hands back that file's path, or else one line beginning `weakness-classes: not run (`; §6 names its callers. An origin is text the scanner wrote — `register.py` checks only that its plugin ID holds a `:` — so the skill places no value on the command line that holds a character outside `[A-Za-z0-9._:/@+=-]`. It drops a `--component` that holds one and keeps its `--repo`, so the run loses only that component's `in_component` (§7.3); where any other value holds one, it refuses the call and runs nothing. A value can also hold a quote that ends it early, so that the rest reads as more flags. So the script refuses a single-value flag given twice, where its parser would take the last, and any argument that opens with `--` and holds `=`, where it would take a flag and a value in one argument (§7.4); and, as a second layer, the skill takes the flags in one order only — every `--repo`, then every `--component`, then at most one `--prd-key`, then at most one `--ref`, then every `--origin`, last — and refuses the call, running nothing, on a flag out of that order, on a second `--prd-key` or `--ref`, and on `--specs` and `--today`, which it never passes: `--specs` is its own, and the script dates the run itself. A flag smuggled into an origin can then be only one more `--origin`.
 
 ### 7.1 What it reads
 
@@ -237,13 +237,13 @@ weakness-classes.py classes --specs <root> --repo <slug> [--repo <slug> …] [--
 weakness-classes.py --selftest
 ```
 
-Flags repeat, and a repeated value counts once. `--today` defaults to today's UTC date, and the script reads no environment variable itself; only the `git` that `across` runs is handed the environment, less every `GIT_` variable (§7.1). An `--origin` is compared exactly with the `origin` values the register holds, and one that matches none is ignored.
+`--repo`, `--component` and `--origin` repeat, and a repeated value counts once. `--specs`, `--prd-key` and `--today` are each taken once, and a second refuses the run. A value is always its own argument: one that opens with `--` and holds `=` refuses the run too, while a value may hold `=`. `--today` defaults to today's UTC date, and the script reads no environment variable itself; only the `git` that `across` runs is handed the environment, less every `GIT_` variable (§7.1). An `--origin` is compared exactly with the `origin` values the register holds, and one that matches none is ignored.
 
 **Exits.** `0`: it ran, and stdout holds exactly one JSON object — or the reader closed stdout before the object was written (a broken pipe), and then stderr holds nothing either, since nobody is left to read it. `2`: it could not run. Stdout is then empty, save where writing it failed, and stderr holds one line, `weakness-classes: not run (<why>)`, whose `<why>` is the first of these that applies — fixed text, never a value from the command line, a register or a record:
 
 | `<why>` | When |
 |---|---|
-| `usage: an unknown verb or flag, or a flag without its value` | the command line does not parse |
+| `usage: an unknown verb or flag, or a flag without its value` | the command line does not parse, `--specs`, `--prd-key` or `--today` is given twice, or an argument opens with `--` and holds `=` |
 | `usage: --specs is required` | no `--specs` |
 | `usage: --repo is required` | no `--repo` |
 | `--repo is not a repository slug` | a `--repo` fails `^[A-Za-z0-9._-]+\Z`, or is `.` or `..` |
@@ -301,7 +301,7 @@ weakness-classes.py across --specs <root> --ref <ref> [--today <YYYY-MM-DD>]
 
 | `<why>` | When |
 |---|---|
-| `usage: an unknown verb or flag, or a flag without its value` | the command line does not parse, a flag only `classes` takes, such as `--repo`, included |
+| `usage: an unknown verb or flag, or a flag without its value` | the command line does not parse, a flag only `classes` takes, such as `--repo`, included; `--specs`, `--ref` or `--today` is given twice; or an argument opens with `--` and holds `=` |
 | `usage: --specs is required` | no `--specs` |
 | `usage: --ref is required` | no `--ref` |
 | `--ref is not a plain ref name` | `--ref` fails `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*\Z`, so a value git would read as an option, or one holding `^`, `~`, `:`, `{` or a space, never reaches git |

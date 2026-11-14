@@ -18,8 +18,10 @@ YAML. It follows no symbolic link under <root>, reads only regular files, never 
 larger than 64 MiB; an integer literal longer than 20 characters is read as no number. A weakness class is a register plus a finding's primary CWE, CWE-<n> with n written without leading zeros.
 It prints one JSON object: {format, today, kb_skipped, registers, classes}, each class carrying its counts, whether it
 recurs, the team records that prevent it, at most five findings as evidence and, for a class a run decided on that
-recurs and nothing prevents, the PA's follow-up line (with --prd-key) or report sentence (without). Flags repeat, and
-a repeated value counts once.
+recurs and nothing prevents, the PA's follow-up line (with --prd-key) or report sentence (without). --repo, --component
+and --origin repeat, and a repeated value counts once. --specs, --prd-key, --ref and --today are each taken once: a
+second refuses the run, and so does any argument that opens with -- and holds =, since a value is always its own
+argument.
 
 across reads the same two kinds of file, but at the commit <ref> resolves to in the git work tree whose top level is
 <root>, and never from the working tree, the index or a checkout: one `git ls-tree` lists every
@@ -98,6 +100,7 @@ LINK_MODE = b"120000"  # a symbolic link, whose blob holds its target's name and
 # What across adds to the environment, once every GIT_ variable is gone: no prompt, no optional lock, and no fetch
 # of an object a partial clone lacks (git before 2.44 ignores the last).
 GIT_SET = {"GIT_TERMINAL_PROMPT": "0", "GIT_OPTIONAL_LOCKS": "0", "GIT_NO_LAZY_FETCH": "1"}
+SINGLE_FLAGS = ("--specs", "--prd-key", "--ref", "--today")  # each taken once: a second refuses the run
 
 # The fixed <why> of every exit 2; none carries a value from the command line, a register or a record.
 WHY_USAGE = "usage: an unknown verb or flag, or a flag without its value"
@@ -698,6 +701,10 @@ def _today(value):
 
 def _args(argv):
     """(the verb's function, its arguments), every flag checked; NotRun names the first that fails."""
+    # argparse takes --name=value as the flag and its value, and the last of a repeated flag, so a value a caller
+    # lets through after its own could replace it. A value is always its own argument, and never opens with -.
+    if any(t.startswith("--") and "=" in t for t in argv) or any(argv.count(f) > 1 for f in SINGLE_FLAGS):
+        raise NotRun(WHY_USAGE)
     ap = _Parser(prog="weakness-classes.py", add_help=False, allow_abbrev=False)
     sub = ap.add_subparsers(dest="verb")
     sp = sub.add_parser("classes", add_help=False, allow_abbrev=False)
@@ -1097,6 +1104,48 @@ def case_usage_exits_2(tmp):
         sorted(whys)  # each cause its own fixed line, none of them echoing a value
     code, out, err = _call(base + ["--repo", "api", "--prd-key", "ACME-17", "--component", "api:./x"])
     assert code == 0 and err == "", (code, err)
+
+
+def case_repeated_single_flag_refused(tmp):
+    """A single-value flag given twice refuses the run: argparse would take the last, so a --prd-key let through
+    after the caller's own would name another PRD in the PA line."""
+    specs = _specs(tmp)
+    _pa_register(specs)
+    usage = "weakness-classes: not run (%s)\n" % WHY_USAGE
+    ok = ["classes", "--specs", specs, "--repo", "api", "--origin", _origin(3), "--today", TODAY]
+    code, out, err = _call(ok + ["--prd-key", "ACME-17"])
+    assert code == 0 and err == "" and _cls(json.loads(out), "api", "CWE-89")["pa_line"] == PA_LINE, (code, err)
+    cases = [ok + ["--prd-key", "ACME-17", "--prd-key", "EVIL-1"],
+             ok + ["--prd-key", "ACME-17", "--prd-key", "ACME-17"], ok + ["--specs", specs], ok + ["--today", TODAY],
+             ok[:3] + ["--prd-key", "EVIL-1"] + ok[3:] + ["--prd-key", "ACME-17"],
+             ["across", "--specs", specs, "--ref", "main", "--ref", "EVIL", "--today", TODAY],
+             ["across", "--specs", specs, "--specs", specs, "--ref", "main"],
+             ["across", "--specs", specs, "--ref", "main", "--today", TODAY, "--today", TODAY]]
+    for argv in cases:
+        assert _call(argv) == (2, "", usage), argv
+    # the flags that repeat still do, and a repeated value counts once
+    code, out, err = _call(ok + ["--repo", "api", "--component", "api", "--component", "api", "--origin", _origin(3)])
+    assert code == 0 and err == "" and [r["repo"] for r in json.loads(out)["registers"]] == ["api"], (code, err)
+
+
+def case_inline_flag_value_refused(tmp):
+    """Any argument opening with -- that holds = refuses the run, whatever the flag: a value is always its own
+    argument. A value may hold = where it does not open with -."""
+    specs = _specs(tmp)
+    _pa_register(specs)
+    usage = "weakness-classes: not run (%s)\n" % WHY_USAGE
+    base = ["classes", "--specs", specs, "--repo", "api", "--today", TODAY]
+    cases = [base + ["--prd-key=EVIL-1"], base + ["--prd-key=ACME-17"], base + ["--origin=" + _origin(3)],
+             base + ["--component=api"], base + ["--repo=web"], ["classes", "--specs=" + specs, "--repo", "api"],
+             base[:-2] + ["--today=" + TODAY], base + ["--bogus=x"], base + ["--="], base + ["--prd-key="],
+             base + ["--origin", "--prd-key=EVIL-1"], ["across", "--specs", specs, "--ref=main", "--today", TODAY],
+             ["across", "--specs", specs, "--ref", "main", "--today=" + TODAY]]
+    for argv in cases:
+        code, out, err = _call(argv)
+        assert (code, out, err) == (2, "", usage), (argv, code, out, err)
+        assert "EVIL" not in err
+    code, out, err = _call(base + ["--component", "api:a=b", "--origin", "x=y", "--prd-key", "ACME-17"])
+    assert code == 0 and err == "", (code, out, err)
 
 
 def case_register_states(tmp):
@@ -1928,12 +1977,15 @@ def case_across_exits(tmp):
     cases = [(at(specs, "nosuch"), WHY_UNKNOWN_REF), (at(specs, tree), WHY_UNKNOWN_REF), (at(specs, blob), WHY_UNKNOWN_REF),
              (at(specs, "main..main"), WHY_UNKNOWN_REF), (at(empty), WHY_UNKNOWN_REF), (at(plain), WHY_NOT_REPO),
              (at(os.path.join(specs, "security")), WHY_NOT_REPO), (at(os.path.join(tmp, "missing")), WHY_SPECS),
-             (base, WHY_NO_REF), (["across", "--ref", "main"], WHY_NO_SPECS), (at(specs) + ["--today", "2026-02-30"], WHY_TODAY),
+             (base, WHY_NO_REF), (["across", "--ref", "main"], WHY_NO_SPECS), (at(specs)[:-2] + ["--today", "2026-02-30"], WHY_TODAY),
              (at(specs) + ["--repo", "api"], WHY_USAGE), (base + ["--ref", "-c"], WHY_USAGE), (["across", "-h"], WHY_USAGE),
              (base + ["--re", "main"], WHY_USAGE)]
     hostile = ["--output=x", "-c", "main;id", "a b", "HEAD:security", "main^{tree}", "@{-1}", "HEAD~1", "", "main\n",
                "$(id)", ".main", "/main", "mаin", "main\x7f", "main`id`"]
-    cases += [(base + ["--ref=" + ref], WHY_REF) for ref in hostile]
+    # each as its own argument, as the skill passes it: argparse refuses one opening with -, the ref check the rest;
+    # written --ref=<ref>, every one is refused before either reads it
+    cases += [(base + ["--ref", ref], WHY_USAGE if ref.startswith("-") else WHY_REF) for ref in hostile]
+    cases += [(base + ["--ref=" + ref], WHY_USAGE) for ref in hostile]
     for argv, w in cases:
         code, out, err = _call(argv)
         assert (code, out, err) == (2, "", why(w)), (argv, code, out, err)
