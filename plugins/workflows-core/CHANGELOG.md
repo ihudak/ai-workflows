@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.87.2] — 2026-11-14
+
+`weakness-classes.py across` reads a partial clone of the specs repository under a git that fails a sized listing over one missing blob, where it stopped with `not run`. No other plugin changes with this release or relies on it, so this release needs no other plugin's update of its own; each release below it names its own.
+
+### Fixed
+
+- **`across` no longer stops on a git that cannot size one blob of its listing.** `across` lists the registers and the team records with `git ls-tree -l`, which gives each blob's size. Under `GIT_NO_LAZY_FETCH=1`, which the script always sets, Ubuntu's git 2.43.0 fails that whole listing, exit 128, where a partial clone lacks any blob it names, and the run ended `weakness-classes: not run (git could not list --specs at --ref)`. Where the sized listing fails, the script now lists again without `-l`, which reads no blob, and asks `git cat-file -s` for the size of each register and record listed, one at a time: a blob git cannot read is an `unreadable` register or a skipped record, as it is under a git whose sized listing answers, and nothing is fetched. Only a commit neither listing can list still ends the run with that line. Where the sized listing answers, the script runs exactly as before.
+- **The selftest asks the git it runs on whether it honours `GIT_NO_LAZY_FETCH`**, in a second clone, where it read the answer off the version number: a build of a version before 2.44 can carry the variable, as Ubuntu's 2.43.0 does, and there the case `case_across_partial_clone` failed. A new case, `case_across_listing_without_sizes`, runs `across` under a `git` that fails every sized listing, so the second listing is tested on every git. The selftest now runs 57 cases.
+
+### Changed
+
+- **`security-register-format` §7.1** describes the second listing, says which gits ignore `GIT_NO_LAZY_FETCH` without naming a version as the test, and §7.5's table of `not run` reasons gives `git could not list --specs at --ref` as both listings failing.
+
 ## [1.87.1] — 2026-11-14
 
 GIT-G1 Part 3, batch 1: `specs-git.py`'s selftest moves out of the script the plugin ships and into the repository's `scripts/selftests/`, and `--selftest --group <name>` runs one group of it alone. No command's behaviour, output or exit status changes, and no other plugin changes with this release or relies on it, so this release needs no other plugin's update of its own; each release below it names its own.
