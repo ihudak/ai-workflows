@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.12.3] — 2026-11-14
+
+`/scan` takes a unit's branch from the block `implementation-format` §5 names latest: batch B41. Update with `workflows-core` 1.90.3.
+
+### Fixed
+
+- **The change scan's branch comes from the latest block by `workflows-core:implementation-format` §5's *Latest, earlier and earliest*** — by instant where a block carries one — never by its place in a merged `implementation.md`.
+
 ## [0.12.2] — 2026-11-14
 
 `/security-workflows:scan` never lists or names a branch whose name holds characters outside the safe class: batch B40. Update with `workflows-core` 1.90.2.

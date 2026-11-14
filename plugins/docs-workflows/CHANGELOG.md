@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.5] — 2026-11-14
+
+`/document`'s pull request no longer repeats its title in its description: batch B41 (PRDRAFT-TITLE).
+
+### Fixed
+
+- **The GitHub footer's command posts the body alone**: `pr-draft.md` holds the title on its first line, a blank line, then the body, and the footer offered `gh pr create --title '<title>' --body-file <pr-draft path>`, so the description began with the title the `--title` flag had already set. It now offers `tail -n +3 '<pr-draft path>' | gh pr create --title '<title>' --body-file -`, the path single-quoted as the title is; `finish-and-handoff` §5 and `/document` Phase 8.5 state the file's layout, and the `/document` page says so.
+
 ## [1.39.4] — 2026-11-14
 
 The docs commands never name, or switch back to, a branch whose name holds shell characters: batch B40. Update with `workflows-core` 1.90.2.

@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.90.3] — 2026-11-14
+
+`implementation-format` §5 says which block is the latest: batch B41 (IF5-LATEST). Update with `dev-workflows` 4.66.3 and `security-workflows` 0.12.3.
+
+### Fixed
+
+- **§5's *Latest, earlier and earliest* orders blocks by one key**: each block stands at its `at:` instant where it carries one, else at the start of its heading's date, and of two at the same point the one further down the file is later. `unit-branch` step 1's "latest block", the merged test's "earliest earlier block" and *A unit's work is merged*'s "latest block" said neither whether they meant a block's place in the file or its date; the two agree only while the file stands in time order, which an entry-set merge of two clones' blocks breaks, so a run could take an older block's branch for the unit's work. `next-phase-offer`'s use of the latest block cites the same order.
+
 ## [1.90.2] — 2026-11-14
 
 Branch names read outside the specs repository are held to the safe class too: batch B40 (CODE-HEAD-NAME). Update with `dev-workflows` 4.66.2, `docs-workflows` 1.39.4, `product-workflows` 3.81.2 and `security-workflows` 0.12.2.

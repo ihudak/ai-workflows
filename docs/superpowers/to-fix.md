@@ -142,12 +142,7 @@ The first items here were found by the 2026-10-15 review or its re-review (line 
   - **What would improve it.** The `at:` and `At:` instants that `workflows-core` 1.85.0 and `dev-workflows` 4.63.0 add — a block's `at:` (`workflows-core:implementation-format` §1) and a conformance record's `At:` (`dev-workflows:conformance-format` §2) — would make that dating exact, to the second in UTC, wherever a record carries one.
   - **Not a defect.** The rule's limits are stated, in `session-hygiene` §1 and under *Accepted* below (*The resume pointer's settle rule errs to carrying*). This is an improvement to them.
 
-- **IF5-LATEST — `implementation-format` §5 does not say what "latest block" means.** Found by D50's claim sweep (`docs/superpowers/plans/2026-11-12-d50-sweep-population.md`, *Examined and left out*). Owner: `workflows-core`, `implementation-format` §5. Priority: the maintainer's to schedule.
-  - **The case.** `unit-branch` step 1 takes "the latest block whose `repo:` is `<repo-slug>`", and *A unit's work is merged* reads "the latest block that names that repository". Neither says whether "latest" is a block's place in the file or its heading's date, and nor does the merged test's "earliest earlier block". The two readings agree only while the file stands in time order. After an entry-set merge (`entry_set_merge`, `plugins/workflows-core/scripts/session-branch.py:216`) it need not.
-  - **Where it reaches.** Every caller of `unit-branch` — `grep -l 'args: "implementation-format unit-branch' plugins/*/commands/*.md plugins/*/agents/*.md` lists them — and `/dev-workflows:conformance`'s own "latest block" sites.
 
-- **PRDRAFT-TITLE — the pull request's title is doubled in its body.** Found during D50, and older than it. Owner: `docs-workflows`: `/document` Phase 8.5 step 4, and `references/finish-and-handoff.md` §5, which composes the draft. Priority: the maintainer's to schedule.
-  - **The case.** The GitHub footer offers `gh pr create --title '<title>' --body-file <pr-draft path>`. `pr-draft.md` holds the title above the body, so the body the command posts begins with the title line too.
 
 ## From lean context D — any machine
 

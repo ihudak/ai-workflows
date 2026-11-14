@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.66.3] — 2026-11-14
+
+`/conformance` and `/ready` read "the latest block" by `implementation-format` §5's one order: batch B41. Update with `workflows-core` 1.90.3.
+
+### Fixed
+
+- **`/conformance` fetches and traces the branch of the block `workflows-core:implementation-format` §5's *Latest, earlier and earliest* names latest**, by instant where a block carries one, never by its place in a merged file; `/ready`'s *Release Preparation* test says its pair rule is its own and picks no single latest.
+
 ## [4.66.2] — 2026-11-14
 
 `/implement`, `/vuln` and `code-handoff` never name, or switch back to, a code repository's branch whose name holds shell characters: batch B40. Update with `workflows-core` 1.90.2.
