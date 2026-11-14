@@ -33,6 +33,10 @@ A `dev` run's *False positive* or *Accept the risk* takes effect at once: a fals
 
 That is a deliberate price. Until the Security Engineer reviews it, a risk the Dev accepted stays accepted. The register shows it plainly: `register.md` lists every such decision in its *Awaiting security review* section, every `sec` run's triage puts each one to the Security Engineer, and each run's report names them. A `dev` run's own triage shows none of them, since only a `sec` run decides them.
 
+## The product architect receives a line
+
+The command has no third role, but one line it raises is for the product architect (PA). Where a run — the Dev's or the Security Engineer's — records an accepted risk, and the risks accepted in its weakness class — its CWE, in this repository's register — were accepted in two or more runs while no team decision for the repository prevents the class, the run raises a follow-up for the PA: run `/product-workflows:create-ard` for the PRD, to record an `[AD#N]` whose Prevents names the CWE. It lands in the `follow-ups.md` of the folder that holds the PRD, or, where no folder does, in the report's next step ([What the registers feed](reference/security-register.md#what-the-registers-feed)). The PA's decision changes no accepted risk: the ARD binds the work that follows it, and once `/product-workflows:harvest-decisions` has recorded the decision, a later triage names it on each review-due row of that class, and the class raises no further line.
+
 ## Cost-attribution phases
 
 Every cost-emitting command tags its cost line with a `phase` and a `role`. This plugin's one command reaches one phase. The family's other lifecycle phases belong to the companion plugins' commands and are documented there.

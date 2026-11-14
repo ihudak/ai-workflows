@@ -70,9 +70,9 @@ Until that pull request merges, your specs checkout shows those files as modifie
 
 - **`$ARCHITECTURE_REPO_PATH`** — a local clone of your organisation's architecture repository (technology radar, standards, principles, patterns, ADRs). No default.
 
-**Resolution.** `--no-arch` forces architecture grounding off; otherwise the variable when set. A validity gate then has to pass: a readable directory holding a catalog (`index.yaml`, `index.json`, `catalog.yaml`), a radar file (`radar.{yaml,yml,json,csv}` at the root or under `radar/`), or an ADR folder with a markdown file. Nothing scans for a clone — no repository name is common enough to search for.
+**Resolution.** `--no-arch` turns off all three architecture sources — this variable's repository, the team decision records and the security registers; otherwise the variable when set. A validity gate then has to pass: a readable directory holding a catalog (`index.yaml`, `index.json`, `catalog.yaml`), a radar file (`radar.{yaml,yml,json,csv}` at the root or under `radar/`), or an ADR folder with a markdown file. Nothing scans for a clone — no repository name is common enough to search for.
 
-**When unset.** Architecture grounding is `OFF` with a line naming this variable, and the run proceeds exactly as without it; the team knowledge base under `$SPECS_PATH/architecture/` is resolved separately, and still read where it exists.
+**When unset.** Architecture grounding is `OFF` with a line naming this variable, and the run proceeds exactly as without it; the team knowledge base under `$SPECS_PATH/architecture/` and the security registers under `$SPECS_PATH/security/` are resolved separately, and still read where they exist.
 
 **When it points somewhere invalid.** `OFF` with a reason naming the variable and what failed — never an error, never a gate or reviewer finding.
 
