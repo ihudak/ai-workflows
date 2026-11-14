@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.90.2] — 2026-11-14
+
+Branch names read outside the specs repository are held to the safe class too: batch B40 (CODE-HEAD-NAME). Update with `dev-workflows` 4.66.2 and `docs-workflows` 1.39.4.
+
+### Fixed
+
+- **`read-only-repos` §3's *Branch names* rule** holds every branch name a run reads from a repository — a default branch's wherever it is resolved, HEAD's wherever it is read — to `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`, tested with a quoted here-document before any command names it. A default outside it counts as unresolved and the reader's own fallback goes on; HEAD on such a branch counts as detached, its commit recorded where a detached HEAD's would be; and the name is never printed. Batch B39 held the specs repository, and code and docs repositories' default branch at rung 1, to the class; a clone of a remote whose default branch holds `$(…)` stands on it, and every other read of HEAD's branch, and three other default reads, still named it.
+- **The `prep` block's working-tree branch** is `HEAD` for such a name, as for a detached HEAD, so `code-scanner`'s and `diff-summarizer`'s output never carries it.
+- **`architecture-promotion`, `architecture-grounding`, `scan-refresh` and `escalation-rules`' stash recipe** apply the rule: the architecture repository's default and HEAD, a scan's branch question, and the record of where HEAD stood, which a stash's restore command switches back to.
+
 ## [1.90.1] — 2026-11-14
 
 Branch names that would run as shell commands are never handed to a run in the specs repository, nor as a code or docs repository's default branch, and a superseded run's end writes nothing in a tree another session holds: batch B39. Update with `dev-workflows` 4.66.1, `product-workflows` 3.81.1 and `docs-workflows` 1.39.3.

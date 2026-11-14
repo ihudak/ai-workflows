@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.3 — 2026-11-14
+
+### Fixed
+- **`/prose-review-pr` never writes a default branch whose name holds shell characters into a diff** (batch B40): a name `origin/HEAD` gives outside `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$` — git allows `$`, `(`, `)`, `;`, a backtick and quotes in one — is tested before any command names it and taken as one the existence probes reject, so the fallback to `master` or `main` goes on, and it is never printed.
+
 ## 0.8.2 — 2026-11-07
 
 ### Fixed

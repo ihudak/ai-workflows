@@ -44,7 +44,7 @@ Called once per branch the run finished work on, at the point where **every** in
 Resolve the base branch (§2.8) **first** — the gate's last check needs its value. Then require all of:
 
 1. `repo` is set and is an existing directory, and `git -C "<repo>" rev-parse --git-dir` succeeds.
-2. `git -C "<repo>" symbolic-ref --quiet --short HEAD` succeeds (HEAD is on a branch, not detached). **`--short` is required**: without it the command prints `refs/heads/<name>`, which can never compare equal to the short name §2.8 resolves, so checks 3 and 4 would both silently pass on every run.
+2. `git -C "<repo>" symbolic-ref --quiet --short HEAD` succeeds (HEAD is on a branch, not detached), and prints a name inside `workflows-core:read-only-repos` §3's *Branch names* class: a HEAD outside it counts as detached, and is never named. **`--short` is required**: without it the command prints `refs/heads/<name>`, which can never compare equal to the short name §2.8 resolves, so checks 3 and 4 would both silently pass on every run.
 3. That name is **not** the resolved base branch.
 4. That name **equals the caller's `branch` input**. `git commit` writes to HEAD while `git push -u origin <branch>` pushes the ref *named* `<branch>`; if the two differ both succeed and the run reports a push that never happened. Mismatch is a gate failure naming both values, never a silent correction.
 

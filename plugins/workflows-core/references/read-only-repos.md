@@ -57,7 +57,9 @@ Then record three facts, all pure reads:
 
 - `git -C "<repo_path>" log -1 --format=%cI <ref>` → `ref_committed_at`
 - `git -C "<repo_path>" rev-list --left-right --count <ref>...HEAD` → `behind` then `ahead`, tab-separated
-- `git -C "<repo_path>" rev-parse --abbrev-ref HEAD` → the working-tree branch name
+- `git -C "<repo_path>" rev-parse --abbrev-ref HEAD` → the working-tree branch name — `HEAD`, as for a detached HEAD, where the name is outside the safe class (*Branch names*, below)
+
+**Branch names.** Every branch name a run reads from a repository is held to the safe class rung 1 gives, `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`: a default branch's, wherever it is resolved, and HEAD's, wherever a command, agent or reference reads it (`branch --show-current`, `symbolic-ref --short HEAD`, `rev-parse --abbrev-ref HEAD`). Test it as rung 1 does, with the quoted here-document, before any command names it. A default branch's name outside the class counts as unresolved, and the reader's own fallback goes on, as rung 1's does. HEAD on a branch whose name is outside it counts as detached: where the reader records or switches back to a detached HEAD's commit, `git -C "<repo_path>" rev-parse HEAD`, it does so here, and where it records `HEAD` or `detached`, so here. Such a name is never printed, nor written into a stop or a report; say `a branch whose name holds shell characters` in its place.
 
 **A switch takes the name; a read may take the ref.** The chain yields a **ref**: rung 1 prints
 `origin/<name>` — `origin/main` — and rungs 2–3 probe `origin/main` and `origin/master`. A caller that

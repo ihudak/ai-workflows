@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.66.2] — 2026-11-14
+
+`/implement`, `/vuln` and `code-handoff` never name, or switch back to, a code repository's branch whose name holds shell characters: batch B40. Update with `workflows-core` 1.90.2.
+
+### Fixed
+
+- **HEAD on such a branch counts as detached** (`workflows-core:read-only-repos` §3, *Branch names*): `/implement`'s run-state `branch`, which every stop and report reads, and its resume check record its commit; `/vuln` returns to its commit before each later CVE, never `switch <name>`; and `code-handoff` §2.1 check 2 takes it as a detached HEAD.
+
 ## [4.66.1] — 2026-11-14
 
 A superseded `/implement` writes nothing in the specs repository when that is its code repository, and a code repository's default branch whose name holds shell characters is passed over: batch B39. Update with `workflows-core` 1.90.1.
