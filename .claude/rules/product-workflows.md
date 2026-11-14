@@ -50,6 +50,7 @@ The `product-workflows` commands' lines of the family workflow map outside the B
                       └── epic-writer (product-workflows)            (used by /epics)
                       └── prd-reviewer (product-workflows)           (used by /create-prd, /update-prd)
                       └── ard-reviewer (product-workflows)           (used by /create-ard)
+                      └── threat-modeler (product-workflows)         (used by /create-ard)
                       └── spec-reviewer (product-workflows)          (used by /specify, /update-spec)
                       └── idea-reader (product-workflows)            (used by /idea)
                       └── figure-reader (product-workflows)          (used by /brd-intake, /idea)

@@ -5,12 +5,13 @@ paths:
   - "plugins/workflows-core/scripts/lineage-kinds.json"
   - "plugins/product-workflows/commands/create-ard.md"
   - "plugins/product-workflows/agents/ard-reviewer.md"
+  - "plugins/product-workflows/agents/threat-modeler.md"
   - "plugins/product-workflows/docs/commands/create-ard.md"
 ---
 
 # The ARD threat model — authority, invariants, readers
 
-Loaded when the threat model's format (`workflows-core:threat-model-format`), `workflows-core:pre-lint`, whose *Threat model* block checks a model, the lineage kind table (`plugins/workflows-core/scripts/lineage-kinds.json`), `/product-workflows:create-ard`, which writes the model, `product-workflows:ard-reviewer`, which reviews it, or `/create-ard`'s page is read. The format is `workflows-core`'s, and its paragraph is kept here rather than in `.claude/rules/workflows-core.md`, whose 20,000-character budget leaves it no room to grow as the model gains readers. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`; the design is `docs/superpowers/specs/2026-11-14-sec-g2-b-threat-model-design.md`.
+Loaded when the threat model's format (`workflows-core:threat-model-format`), `workflows-core:pre-lint`, whose *Threat model* block checks a model, the lineage kind table (`plugins/workflows-core/scripts/lineage-kinds.json`), `/product-workflows:create-ard`, which writes the model, `product-workflows:ard-reviewer`, which reviews it, `product-workflows:threat-modeler`, which proposes its candidate threats, or `/create-ard`'s page is read. The format is `workflows-core`'s, and its paragraph is kept here rather than in `.claude/rules/workflows-core.md`, whose 20,000-character budget leaves it no room to grow as the model gains readers. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`; the design is `docs/superpowers/specs/2026-11-14-sec-g2-b-threat-model-design.md`.
 
 ## Authority
 
@@ -28,3 +29,4 @@ Loaded when the threat model's format (`workflows-core:threat-model-format`), `w
 
    C and D must sweep this bullet when they land, with every other copy of the claim, found by its subject — the model's readers — and never by this wording (`.claude/rules/claim-sweep.md` refinement 6).
 6. **The PA alone accepts a risk.** An acceptance names its owner, its reason and its review date (format §4); the Security Engineer's check is the pull request that hands the model off.
+7. **`threat-modeler` calls no tool.** `product-workflows:threat-modeler`, which `/create-ard`'s Phase 4.3 dispatches once to propose candidate threats, declares `tools: ["CronList", "ListAgents"]` — two tools that read no file, make no network request the model chooses and execute nothing — only because a subagent with none cannot be dispatched: an empty or missing `tools:` grants every tool, and a list naming no recognised tool is refused at dispatch (design T6). It declares two so that a rename of one leaves the dispatch standing; a harness that recognises neither refuses it, and the run proposes no candidate, says why in one line, and leaves the PA free to add threats of their own. Its rule is to call neither. It never opens a register or anything under `security/`, since it opens nothing: everything, the decision bar included, arrives in its brief, so it names no `workflows-core:` reference and carries no loader preamble. `/create-ard` drops any candidate holding a `[SEC#n]` or a register path the brief did not carry.
