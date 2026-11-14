@@ -4,7 +4,8 @@
 The authority for what this script does is workflows-core:document-lineage; the kind table it reads
 is lineage-kinds.json beside it. Standard library only.
 
-stamp takes --capture once or more, and records the entries of every capture file, in the order given.
+stamp takes --capture once or more, and records the entries of every capture file, in the order given:
+an entry repeated exactly is recorded once, and one path at two blobs is refused.
 """
 
 import json
@@ -402,7 +403,9 @@ def stamp(specs, ref, doc, captured):
 def check(specs, ref, docs, output=None, accepted_from=()):
     """Walk from docs (paths relative to specs) up recorded upstreams through covered kinds. A link
     counts as accepted where output, or any document in accepted_from, records it accepted — read
-    from disk, or at ref where it is not on disk. A ref that does not resolve is an error."""
+    from disk, or at ref where it is not on disk. A ref that does not resolve is an error. walked lists
+    every document the walk reached: each of docs, and each upstream a record it read names, wherever
+    the ref holds that upstream."""
     if _git(specs, "rev-parse", "--verify", "-q", f"{ref}^{{commit}}")[0] != 0:
         raise LineageError(f"no {ref} in {specs} to read the documents at")
     accepted = []
@@ -461,6 +464,7 @@ def check(specs, ref, docs, output=None, accepted_from=()):
 
     for d in docs:
         walk(d, 0)
+    res["walked"] = sorted(seen)
     if best["stale"] is not None:
         d = best["stale"][1]
         res["highest"] = {"downstream": d, "reviser": kinds()[kind_of(d)]["reviser"]}
@@ -1624,6 +1628,69 @@ def test_stamp_two_captures():
     _with_repo(body)
 
 
+def _cli(*args):
+    import subprocess
+    return subprocess.run([sys.executable, os.path.abspath(__file__), *args], capture_output=True, text=True)
+
+
+def _captured(r, out, *paths):
+    p = _cli("capture", "--specs", r.root, "--ref", "main", "--from-disk", *paths, "--out", out)
+    _check("capture exit", p.returncode == 0, p.stderr.strip())
+
+
+def test_stamp_capture_two_blobs_refused():
+    """One path in two capture files at two blobs is refused, and the document is left as it was."""
+    def body(r):
+        r.write("a.md", "# a\n")
+        r.write("doc.md", "---\nkind: threat-model\n---\n# Doc\n")
+        r.commit()
+        early, late = os.path.join(r.root, "early.json"), os.path.join(r.root, "late.json")
+        _captured(r, early, "a.md")
+        r.write("a.md", "# a, edited\n")
+        _captured(r, late, "a.md")
+        before = r.read("doc.md")
+        p = _cli("stamp", "--specs", r.root, "--ref", "main", "--doc", os.path.join(r.root, "doc.md"),
+                 "--capture", early, "--capture", late)
+        _check("two blobs: exit 1", p.returncode == 1, f"{p.returncode} {p.stderr.strip()}")
+        _check("two blobs: the fixed error", p.stderr.startswith("lineage.py stamp: one path in two capture files at two blobs; capture each input once: a.md"), p.stderr.strip())
+        _check("two blobs: document untouched", r.read("doc.md") == before)
+    _with_repo(body)
+
+
+def test_stamp_capture_repeat_recorded_once():
+    """An entry in two capture files at one blob, or one file passed twice, is recorded once, in first-seen order."""
+    def body(r):
+        for name in ("a.md", "b.md", "c.md"):
+            r.write(name, f"# {name}\n")
+        r.write("doc.md", "---\nkind: threat-model\n---\n# Doc\n")
+        r.commit()
+        ab, bc = os.path.join(r.root, "ab.json"), os.path.join(r.root, "bc.json")
+        _captured(r, ab, "a.md", "b.md")
+        _captured(r, bc, "b.md", "c.md")
+        doc = os.path.join(r.root, "doc.md")
+        for flags, want in ((("--capture", ab, "--capture", bc), ["a.md", "b.md", "c.md"]),
+                            (("--capture", ab, "--capture", ab), ["a.md", "b.md"])):
+            p = _cli("stamp", "--specs", r.root, "--ref", "main", "--doc", doc, *flags)
+            _check("repeat: stamp exit", p.returncode == 0, p.stderr.strip())
+            got = [e["path"] for e in read_record(r.read("doc.md"))[0]["upstreams"]]
+            _check("repeat: recorded once", got == want, str(got))
+    _with_repo(body)
+
+
+def test_check_lists_walked():
+    """check's walked: the docs and every upstream a record it read names, wherever the ref holds it --
+    never a document beside them that no record names."""
+    def body(r):
+        r.chain()
+        tm = f"{r.dir}/threat-model.md"
+        r.write(tm, TM)
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        _check("walked: the chain", r.spec in res["walked"] and r.prd in res["walked"], json.dumps(res["walked"]))
+        _check("walked: no unrecorded neighbour", tm not in res["walked"], json.dumps(res["walked"]))
+    _with_repo(body)
+
+
 def main(argv):
     import argparse
     if argv[1:2] == ["--selftest"]:
@@ -1658,7 +1725,13 @@ def main(argv):
             with open(args.out, "w", encoding="utf-8") as fh:
                 json.dump(result, fh, indent=2)
         elif args.cmd == "stamp":
-            result = stamp(args.specs, args.ref, args.doc, [e for c in args.capture for e in _load_json(c)])
+            captured, at = [], {}
+            for e in (e for c in args.capture for e in _load_json(c)):
+                if at.setdefault(e["path"], e["blob"]) != e["blob"]:
+                    raise LineageError(f"one path in two capture files at two blobs; capture each input once: {e['path']}")
+                if e not in captured:
+                    captured.append(e)
+            result = stamp(args.specs, args.ref, args.doc, captured)
         elif args.cmd == "check":
             result = check(args.specs, args.ref, args.docs, output=args.output,
                            accepted_from=args.accepted_from)
