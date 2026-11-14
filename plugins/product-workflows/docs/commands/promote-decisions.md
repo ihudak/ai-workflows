@@ -31,8 +31,13 @@ flowchart TD
 
 1. **Reconcile.** Every ADR whose Context opens with `Origin: team decisions …` updates the records it names: `proposed`, then `accepted` or `rejected` as the ADR's status says.
 2. **Signals.** A bundled script reads the knowledge base and the specs tree on the default branch. It finds how often each decision is cited from other PRDs, where it was departed from, and which ADRs designs and ARDs keep departing from.
-3. **Comparison.** `workflows-core:promotion-scout` (Opus, read-only) marks each candidate `covered`, `conflicts` or `new` against the architecture repository, and groups the records of different teams that decide the same thing.
+   - **Weakness classes recurring across registers.** Where the specs repository keeps security findings registers — one per code repository, written by `/security-workflows:scan` — the run also reads, on the same default branch, each weakness class (a CWE) that two or more registers hold findings of that were judged real: a fix decided or under way, a finding reopened, a risk accepted, or a fix made in the last 180 days. A read-only script in `workflows-core` reads the registers and hands over checked fields only, never a finding's text, and neither the command nor its agents open a register.
+   - **When they cannot be read.** A read that fails, or a default branch whose name holds a character the read does not pass, costs only those classes: the report says `weakness classes: not read` and why, and the run goes on as it would without them. A register that cannot be read is named in the report, so a run never reports no class because it saw nothing.
+3. **Comparison.** `workflows-core:promotion-scout` (Opus, read-only) marks each candidate `covered`, `conflicts` or `new` against the architecture repository, and groups the records of different teams that decide the same thing. For each weakness class, it says whether an ADR or standard already covers it.
 4. **Shortlist.** You get two ranked lists, promotions and superseding proposals, each row with its reasons. You answer by number: draft, decline (with a reason), or mark as already covered.
+   - A decision that prevents a class recurring across registers gains the reason `prevents CWE-89, which recurs in 3 registers (api, billing, web)`, and ranks on it right after how many PRDs decided it.
+   - A class that no decision prevents and nothing covers is listed for information, with each register's last run date and a pointer to `/create-ard`. A class an ADR or standard already covers, or that a decision off the shortlist prevents, is counted in one line instead.
+   - No ADR is ever drafted from a class alone. Where the classes are all there is to show, nothing is asked, and the run records only what reconciliation found.
 5. **Draft and check.**
    - **Scaffold.** The repository's own ADR template is followed: the next number, its file-name pattern, its catalog entry where it keeps one.
    - **Write.** `workflows-core:adr-drafter` (Opus) writes the body. The command adds the overview row.
@@ -45,6 +50,7 @@ flowchart TD
 - **`$SPECS_PATH`**, with `architecture/index.yaml` on its default branch, no uncommitted change under `architecture/`, and no unmerged `kb/` branch.
 - **`python3`** — the signals are product-workflows' bundled script `scripts/promotion-signals.py`, run with `--layout prd`. `uv` is optional: it runs the repository's decision tests from prebuilt wheels, which needs the network; without it the run says the tests did not run.
 - **`gh`** (optional): it opens both pull requests, and checks whether a pending promotion's pull request was closed.
+- **Security findings registers** (optional): the registers `/security-workflows:scan` keeps under `$SPECS_PATH/security/`, read on the default branch for the weakness classes that recur across them. None is required, and none ever stops the run.
 
 ## What it produces
 
