@@ -41,7 +41,7 @@ raised only about the defects of a requirement the customer withdrew, to close t
   format-validated only, never checked against a tracker. **Only a slice is reconciled**: a resolved
   root stops with `BRD_RECONCILE_ROOT_LEVEL`, naming [`/brd-split`](brd-split.md) as the way to carve one, and an idea-route PRD folder — a `PRD-`
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_RECONCILE_NOT_A_SLICE`, naming
-  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one. `--sent`
+  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on, once its PRD is on the default branch wherever the specs tree is a git repository — after [`/create-prd`](create-prd.md), its handoff merged, where the folder holds none yet. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one. `--sent`
   does not lift it.
 - **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_RECONCILE_TWO_ADDRESSES`. Any other `@` token is the review file, which is never a directory.
 - **`@<review-file>`** (optional) — the file the customer sent back, **at whatever path it arrived
@@ -724,7 +724,7 @@ precondition the offered command actually enforces:
 | Handover | Offered when | Why |
 |---|---|---|
 | [`/create-prd <SLICE-KEY>`](create-prd.md) (PM) | **On a slice**, and only where no ledger row is still `unallocated` and one is `covered-here` | Exactly the three refusals its own Phase 0 raises; offering it otherwise hands over a run that stops immediately |
-| [`/create-ard <SLICE-KEY>`](create-ard.md) (PA, optional) | **On a slice**, with no further condition | Consults no tracker; the PRD gate runs on every route, but its `absent` branch proceeds, so no wait on an unauthored PRD; it reads neither `claims:` nor the ledger as an authoring input |
+| [`/create-ard <SLICE-KEY>`](create-ard.md) (PA, optional) | **On a slice**, with no further condition | Consults no tracker; on a slice holding no `prd.md` the PRD gate's `absent` branch proceeds, so no wait on an unauthored PRD; it reads neither `claims:` nor the ledger as an authoring input |
 | [`/specify <SLICE-KEY>`](specify.md) (PE) | **On a slice**, with no further condition | The same reasons, read out of its own Phase 0 rather than assumed symmetric with `/create-prd`'s |
 
 **A root BRD never reaches this phase.** `/brd-reconcile` refuses one at its own Phase 0, with
@@ -745,7 +745,7 @@ row holds no PRD of its own at all. Where `coverage-ledger.md` is absent, or pre
 
 Each takes **one** address: a second positional token is refused (`CREATE_ARD_ONE_ADDRESS` / `SPECIFY_ONE_ADDRESS`), on every route,
 so neither `/create-ard` nor `/specify` is ever offered with an Epic beside it. The three are **alternatives,
-not a sequence** — neither of the unconditional two waits on an unauthored PRD, though either stops on a `prd.md` that sits on an unmerged branch, a state this command cannot test for you — and **all three carry a merge
+not a sequence** — neither of the unconditional two waits on an unauthored PRD, though either stops on a `prd.md` written and never handed off — on an unmerged branch, or in the slice and on no ref — a state this command does not test for you — and **all three carry a merge
 clause** — a note of what must reach the default branch first, worded for how this run's handoff ended — because each runs `require-on-main` on the slice's `decisions.md`
 before it reads the register, and the register is one of the files this command hands off: each
 would stop on a register this run wrote and has not merged. The

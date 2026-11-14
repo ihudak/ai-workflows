@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.5] — 2026-11-14
+
+Docs only: LADDER-ORDER batch 1. The environment page says what a caller does on a specs tree that is no git repository. It describes `product-workflows` 3.82.0 and `workflows-core` 1.91.0, and needs nothing of the other plugins' releases, nor they of it.
+
+### Fixed
+
+- **Environment page.** Where `$SPECS_PATH` is no git repository, `require-on-main` returns `unmanaged` and verifies and decides nothing. The page said the caller then proceeds as it would with no gate at all. That was already false of `product-workflows`' `/update-spec`, which stops with no merged specification to revise, and since `product-workflows` 3.82.0 it is false of its `/create-ard` and `/specify`, which test the PRD folder's own `prd.md` and stop where an idea-route PRD folder holds none. The page now says most callers proceed as before, and a caller that requires its document, or a merged state, says what it does instead, naming those three among them. No command of this plugin runs that gate.
+
 ## [1.39.4] — 2026-11-14
 
 The docs commands never name, or switch back to, a branch whose name holds shell characters: batch B40. Update with `workflows-core` 1.90.2.
