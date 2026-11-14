@@ -196,7 +196,7 @@ fi
 # joined both prefix alternations when nothing in the tree wrote a dash form of it.
 # TH is a threat's ID in an ARD's threat model, [TH#n]
 # (workflows-core:threat-model-format); it joined both prefix alternations when nothing
-# in the tree wrote a dash form of it (0 hits, 2026-11-14).
+# the gate scans wrote a dash form of it (0 hits, 2026-11-14).
 #
 # The number class is [NnXx0-9] everywhere, and identical on all four
 # alternations. It covers literal numbers plus every placeholder letter these
