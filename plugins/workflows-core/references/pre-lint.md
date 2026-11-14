@@ -8,7 +8,7 @@ on its own; the reviewer remains the gate.
 
 Each caller cites this file, states its **artifact type** and the **file(s)** to check, runs three
 things — the **Universal checks**, then the **key-collision** check when the artifact is a PRD, an
-ARD, or an Epic file, then its **artifact-specific block** — and surfaces the findings. Severities: **BLOCKER**
+ARD, a threat model or an Epic file, then its **artifact-specific block** — and surfaces the findings. Severities: **BLOCKER**
 (missing required section, duplicate ID, stray generic placeholder), **MAJOR** (a structural rule
 broken), **MINOR** (ID gap, informational count). Inline-fix only the mechanical (renumber a duplicate
 ID this run introduced, never one the artifact already carried; delete a stray placeholder token); anything needing content goes back to the author/grill.
@@ -41,7 +41,7 @@ ID this run introduced, never one the artifact already carried; delete a stray p
 3. **Required-section presence** — every mandatory heading listed for the artifact is present
    (`grep -nF '## <heading>' <file>`). A missing required heading → BLOCKER.
 
-## Auto-link collision (PRD, ARD, Epic files only)
+## Auto-link collision (PRD, ARD, threat-model and Epic files only)
 
 An artifact whose body is pasted into a tracker must contain no token that tracker will auto-link. The pattern below matches the two-segment issue-key shape every common tracker links on; **it is an auto-link detector, not a key validator**, and its narrowness is exactly what makes it correct. Run:
 
@@ -49,7 +49,7 @@ An artifact whose body is pasted into a tracker must contain no token that track
 
 For the PRD, run against the body **below the frontmatter** — `/create-prd` pastes only that, and the
 frontmatter's `key:` / `ref:` / `seeded_from_prd:` / `revision_of:` legitimately carry keys.
-For the ARD, scan **below the frontmatter**. For Epic files, scan **below the frontmatter** as well —
+For the ARD and the threat model, scan **below the frontmatter**. For Epic files, scan **below the frontmatter** as well —
 `epic-writer` writes `kind:`, `key:` and `target:` there, and `key:` legitimately carries the Epic's
 key; scanning the whole file reported that line on every Epic of a live run.
 
@@ -57,13 +57,14 @@ Discard a hit ONLY when it is a deliberate tracker reference: inside a wikilink 
 a markdown link (link text or URL), or inside a fenced code block. Inline code (`` `KEY-123` ``) is NOT excluded and IS flagged.
 Classify every surviving hit into exactly one of four branches, and name the branch in the finding — the taxonomy is not exhaustive by assumption, so a hit that fits none of the first three belongs in the fourth:
 
-1. **A requirement ID** (`US`/`AC`/`SM`/`SMC`/`UC`/`FR`/`AD` prefix) → **BLOCKER**; convert it to `[PREFIX#N]`. Mechanical, so inline-fix it under the standard pre-lint contract.
+1. **A requirement ID** (`US`/`AC`/`SM`/`SMC`/`UC`/`FR`/`AD`/`TH` prefix) → **BLOCKER**; convert it to `[PREFIX#N]`. Mechanical, so inline-fix it under the standard pre-lint contract.
 2. **A specs-tree key** → **BLOCKER**. Extend the hit over every `-<digits>` segment that follows it — the grep matches only two segments, so on `ACME-90-01` it reports `ACME-90` — and resolve that whole key with `workflows-core:addressing`'s `resolve-key` (resolution against the tree, never a pattern). `found` puts it in this branch; `absent` sends it on to branch 3 or 4; `ambiguous` is reported with the hit and never stops the run, since pre-lint never hard-stops. A key in this branch is wrapped as `[[KEY]]`, the whole key, the specs tree's own traceability form (`workflows-core:doc-structure-conventions` §1). Mechanical — the resolution is the confirmation — so inline-fix it. Where the hit sits in inline code, which a wikilink cannot enter, take the key out of the span and write the wikilink beside it.
 3. **A real tracker ticket** (a key in a project that actually exists, and resolving to no specs folder) → **BLOCKER**; wrap it as `[[KEY-123]]` so a tracker and a wiki-style importer both read it as the deliberate reference it is. Not mechanical — confirm the key with the author before wrapping.
 4. **None of these — a standards, protocol, or algorithm reference** such as `ISO-8601`, `RFC-8446`, `TLS-13`, `SHA-256`, or `HTTP-2` → **MINOR**; leave the token **exactly as written** and report it. It is correct prose that happens to match the grep, so there is nothing in the artifact to fix. NEVER rewrite it as `[PREFIX#N]` and NEVER wrap it in a wikilink — `[[ISO-8601]]` is a dangling link to a ticket that does not exist, and the inline-fix clauses of branches 1 and 2 do not reach this branch. If a tracker project genuinely shares the prefix, that is the author's call to make, never the linter's.
 
 The ARD is not itself pasted anywhere, but `epic-writer` copies its `AD` references into Epic
 drafts, which are. Catching it at the source is cheaper than catching it downstream.
+The threat model is not pasted anywhere either. It is checked because it can name another folder's key — on an Epic-level model, an inherited decision's or threat's — which the specs tree writes as a `[[KEY]]` link, and because its own ids keep the `[TH#N]` form.
 
 ## PRD — `prd.md` (`/create-prd`; format `prd-format.md`)
 
@@ -85,6 +86,18 @@ drafts, which are. Catching it at the source is cheaper than catching it downstr
 - A `**Superseded by:**` line names an `[AD#M]` that exists in the same ARD and is neither superseded
   nor withdrawn; a `**Withdrawn:**` line carries a reason.
 - **Contracts — only when the frontmatter `components:` has two or more `kind: code` entries** (an entry's `kind` defaults to `code`) (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §5). `## Contracts` is then a required heading (missing → BLOCKER), with `### Schema ownership`, `### Versioning and compatibility` and `### Landing order` under it (a missing one → MAJOR). Every interface-table row's `AD` cell names an `[AD#N]` that has a `### [AD#N]` heading (else BLOCKER); every `Producer` and `Consumers` value is an `id` in `components:` (else MAJOR); every `Status` is `new`, `changed` or `exists` (else MAJOR). With fewer than two code entries `## Contracts` is not required, and its absence is not reported.
+
+## Threat model — `threat-model.md` (`/create-ard`; format `${CLAUDE_PLUGIN_ROOT}/references/threat-model-format.md`)
+
+- Frontmatter `kind: threat-model` (else MAJOR).
+- Required headings: `## Scope`, `## Not considered`, `## Threats`.
+- ID series: `[TH#N]` (in `### [TH#N]:` headings) — contiguous from 1, no duplicates, superseded and withdrawn threats counted. An id counts where its `### [TH#N]:` heading defines it; one cited anywhere else — a `**Superseded by:**` line, an `## Inherited threats` bullet, another folder's `[[KEY]] [TH#N]` — is a reference, never a duplicate.
+- Each `### [TH#N]` block carries `- **Where:**`, `- **Threat:**` and `- **Disposition:**` (a missing one → MAJOR). Its Threat line holds `attacker:`, `action:` and `asset:` (a missing one → MAJOR). Its `- **Category:**`, where it is not `—`, is one of `S`, `T`, `R`, `I`, `D`, `E` (else MINOR).
+- A live block — one carrying neither `**Superseded by:**` nor `**Withdrawn:**` — has a Disposition opening `Mitigated by `, `Deferred to design: ` or `Accepted — ` (else MAJOR). An `Accepted — ` Disposition matches `review by [0-9]{4}-[0-9]{2}-[0-9]{2}` and holds a non-empty owner and a non-empty reason ahead of it, `; `-separated as the format writes them (else MAJOR).
+- A `**Superseded by:**` line names a `[TH#M]` that has a `### [TH#M]:` heading in the same file and is neither superseded nor withdrawn (else MAJOR); a `**Withdrawn:**` line carries a reason (else MAJOR).
+- A `### [TH#N]` heading under `## Inherited threats` → MAJOR: an inherited threat is written as a bullet, so that neither this model's `[TH#N]` series nor its lineage items count it.
+- Where the run holds a prior copy of the model — `/create-ard`'s `threat_model.prior`, where it is not `none` — every `[TH#N]` with a `### [TH#N]:` heading there still has one here (else MAJOR): a threat is never renumbered or deleted, and the reviewer BLOCKs the same defect.
+- Of this block's findings, inline-fix only a duplicate `[TH#N]` this run introduced, under the opening's inline-fix contract; every other finding of this block goes back to the author.
 
 ## spec — `specification.md` (`/specify` and `/update-spec`; format `specification-format.md`)
 

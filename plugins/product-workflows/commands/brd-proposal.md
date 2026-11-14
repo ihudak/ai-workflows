@@ -719,7 +719,7 @@ that file describes the archived revision and not this one.
    `Skill(skill: "workflows-core:reference", args: "pre-lint")` against both artifacts this run wrote:
    its **Universal checks**, **identifier integrity** over the umbrella's own `[WP#n]` and `[ED#n]`
    series, and **required-section presence** against §4's and §10's section sets. **Its *Auto-link
-   collision* check does not run here**, that section being scoped to PRD, ARD and Epic files, and
+   collision* check does not run here**, that section being scoped to PRD, ARD, threat-model and Epic files, and
    `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §11 records why the exclusion is deliberate
    rather than an oversight to be corrected. Advisory — surface every finding, inline-fix the
    mechanical ones, and proceed; the reviewer is the gate. **The `priced-against` record is checked
