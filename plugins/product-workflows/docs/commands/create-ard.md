@@ -138,7 +138,7 @@ Each candidate is put to you as a question of its own, up to four at a time, wit
 - ***Accept the risk*** — asks for the owner and the reason, then the review date: *90 days* (recommended), *30 days* or *180 days* from today, or a date you type. Only you, the architect, accept a risk; the run never accepts one for you.
 - ***Not a threat — drop it*** — nothing is written.
 
-A threat whose answer is a product requirement the PRD does not state is deferred to design, never answered by a decision, and the ARD's `## Open questions` gains a line naming the requirement the PRD needs, to be added through [`/update-prd`](update-prd.md).
+A threat whose answer is a product requirement the PRD does not state is deferred to design, never answered by a decision, and the ARD's `## Open questions` gains a line naming the requirement the PRD needs, to be added through [`/update-prd`](update-prd.md) — one line per threat, however many times the gap is answered, in this run or a later one.
 
 **Your own threats.** After the candidates the run asks *Add a threat of my own* or *No more threats*, again after each one you add. You describe who attacks, what they do, to what, and where. An id outside the component set, or a contract no row holds, is named together with the set and asked for again, so it is never written. The run drafts the rest, plays it back and asks the four answers, none recommended.
 
