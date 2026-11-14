@@ -93,8 +93,8 @@ From Phase 0 on, `/create-ard` carries one record, `threat_model`:
 | `report` | counts and lines for the Final report | throughout |
 
 What each `state` means:
-- `not-offered`: no set resolved and the folder held no model.
-- `unchecked`: no set resolved, and the folder held a model.
+- `not-offered`: no set resolved, and the folder held no model, or held one *Start fresh* discarded (Task 6's M9 ruling: Phase 6 step 4 removes that old model, with one line saying so).
+- `unchecked`: no set resolved, and the folder held a model *Start fresh* did not discard.
 - `declined`: *Not this time*.
 - `added`: a new model was drafted.
 - `refined`: *Refine the threat model*.
