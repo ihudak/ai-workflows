@@ -437,7 +437,7 @@ Each hit about what `/create-ard` writes, or what reads an ARD's folder, is re-r
 - **R22 — `prior` is copied whenever Phase 0 found a model, save where `fresh`**, whatever the ARD's refine-or-fresh answer.
   - It is copied as `<default-ref>` holds it where it is there, else from the working tree, as `prior_ard` is.
   - Where `fresh`, `prior` is `none` (R23).
-  - It is removed with the `prior_ard` copies once the last review has returned.
+  - It is removed at the end of Phase 6, on every path that reaches it (Task 7's review: Phase 5's manual fix notes and the re-review, and Phase 6's second check, still read it).
 - **R23 — *Start fresh* (controller ruling).** *Start fresh* rewrites the ARD. "Decisions already on the default branch keep their IDs" (Phase 1's array; `ard-format` § Superseding a decision). Where `<default-ref>` carries no ARD file of the folder, nothing pins them, and the rewrite may renumber.
   - **Where Phase 1 took *Start fresh*, and `<default-ref>` carries none of the folder's ARD files and not `threat-model.md`,** `fresh` is `true` and `prior` is `none`. The working-tree model is discarded and walked fresh:
     - Phase 4.3 skips step 3;
