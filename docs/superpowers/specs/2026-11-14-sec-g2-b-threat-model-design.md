@@ -18,7 +18,7 @@ B adds that question to `/create-ard`, as an optional step the PA takes in the s
 2. **Every threat has one disposition**: mitigated by one or more `[AD#N]` (optionally with a remainder deferred to design), deferred to design, or accepted.
 3. **Security decisions are proposed as `[AD#N]`** that meet `ard-format`'s full bar and fields, with `Prevents:` naming the CWE where the threat names one; the PA decides each as any ARD decision is decided.
 4. **C and D get stable, unambiguous handles now**: `[TH#N]`, never renumbered; *Where* resolved against the run's resolved component set; every cited decision named with the ARD file that holds it.
-5. **No regression**: a run that declines the model, a PRD with none, and every command that does not read one behave as before — save one named, visible change (T9: `/document` and `/release-notes` may print a checkout note for the new file).
+5. **No regression**: a run that declines the model, a PRD with none, and every command that does not read one behave as before (T9: `/document` and `/release-notes` match the new file by path but never read it, so it gives them no note and never withholds `Lineage: current` — settled during the build).
 
 ## Non-goals
 
@@ -120,7 +120,7 @@ The `ard-reviewer` dispatch for the folder's `ard.md` (its input contract needs 
 
 A `threat-model` row in `lineage-kinds.json`: matches `^threat-model\.md$`, items `[TH#N]`, altitude `architecture`, reviser `/product-workflows:create-ard <KEY>`, and the same exclusions as the `ard` row (the lines `/conformance` writes), so D can write into it later without making it look revised. **It records the folder's ARD files**, captured in Phase 6 after the ARD's own `stamp` and `accept` (the ARD is the model's real input, and the lineage rule only bars recording a document that records this one); an Epic's model also records the PRD folder's `threat-model.md`. It records nothing else: an upstream check walks on through each covered upstream's own record, and re-capturing the PRD at Phase 6 would break "captured when the run reads the input". The chain prose places it after the folder's ARDs.
 
-The visible change elsewhere: `/document` and `/release-notes` keep every path a kind matches, so they may print a checkout note naming `threat-model.md`.
+No visible change elsewhere (corrected during the build): `/document` and `/release-notes` note only a file one of their lineage checks read, and none reads `threat-model.md`, so a model that differs on the checkout prints no note and never withholds `Lineage: current`. The same correction now holds for any matched file those checks never read — a behaviour change for existing kinds, named in the release.
 
 ### T10. A refine run
 
