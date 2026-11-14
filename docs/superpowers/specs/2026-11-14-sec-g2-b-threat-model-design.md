@@ -1,6 +1,6 @@
 # SEC-G2 B: the ARD threat model
 
-Date: 2026-11-14. Status: **approved** by the maintainer 2026-11-14, revision 3.1 (after Fable's builder review and two re-checks), with the recommended answer to each of the four questions below. Roadmap row **B** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` ("ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard`"), the first of SEC-G2's three sub-projects (B, then C, then D). It depends on A (the scan and its findings registers) and on E (SEC-G1, the architecture feedback loop).
+Date: 2026-11-14. Status: **approved** by the maintainer 2026-11-14, revision 3.1 (after Fable's builder review and two re-checks), with the recommended answer to each of the four questions below; **revision 3.2** (2026-11-14) amends the anti-goal and T6 for the threat modeler's tools, after the plan's probe showed a toolless agent cannot be declared — the maintainer accepted the recommended form, and this revision records the stronger one the probe made possible. Roadmap row **B** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` ("ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard`"), the first of SEC-G2's three sub-projects (B, then C, then D). It depends on A (the scan and its findings registers) and on E (SEC-G1, the architecture feedback loop).
 
 Every decision is written with a recommended answer. The four marked **(maintainer)** at the end are the calls only the maintainer can make; the rest are the author's, stated so they can be corrected.
 
@@ -31,7 +31,7 @@ B adds that question to `/create-ard`, as an optional step the PA takes in the s
 
 - **A generic STRIDE checklist.** Every threat names its element, a concrete attacker action and the asset at stake, or it is not written.
 - **A model nobody confirmed.** The agent proposes; the PA keeps, edits or drops each threat.
-- **Text steering the model.** Code, scanner output and register-derived values are data. The threat modeler has no tools (T6): it can open no register and nothing under `security/`.
+- **Text steering the model.** Code, scanner output and register-derived values are data. The threat modeler can read no file (T6): it can open no register and nothing under `security/`.
 
 ## Decisions
 
@@ -88,7 +88,7 @@ In `workflows-core` because `/design` and `/conformance` (`dev-workflows`) will 
 
 ### T6. `threat-modeler` proposes
 
-A new `product-workflows` agent, pinned to Opus in its frontmatter as `ard-reviewer` is; `/create-ard`'s `model_routing` block gains its line. **It has no tools** — declared in the form that grants none, which the plan verifies with `claude plugin validate` and `validate-catalog.py` (omitting `tools:` grants every tool): everything arrives in the brief, and the command reads the weakness-classes JSON's fields itself (as the skill allows) and passes them inline. Dispatched once per run with:
+A new `product-workflows` agent, pinned to Opus in its frontmatter as `ard-reviewer` is; `/create-ard`'s `model_routing` block gains its line. **It can read no file.** A toolless agent cannot be declared (an empty or missing `tools:` grants every tool, and a list naming no recognised tool is refused at dispatch), so it declares `tools: ["CronList", "ListAgents"]` — two recognised tools with no file, network or execution access, two so that the dispatch survives a rename of one; the plan's probe showed such an agent dispatches and, asked to read a file, has no tool to read it with. A harness that knows neither refuses the dispatch: the run proposes no candidates, says why in one line, and the PA may still add threats. Its rule is **call no tool**. Everything arrives in the brief: the command reads the weakness-classes JSON's fields itself (as the skill allows) and passes them inline, and passes `ard-format`'s quality rules and decision fields verbatim as a `Decision bar:` field. **A mechanical backstop** drops any returned candidate a field of which holds a `[SEC#n]` id or a path under `security/`. Dispatched once per run with:
 
 - the drafted ARD's resolved components, contracts and decisions, from the run;
 - the code scan the run already made, inline;
