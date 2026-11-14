@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.2] — 2026-11-14
+
+Wording only, beside `workflows-core` 1.89.2: batch B39.
+
+### Fixed
+
+- **`/docs-init`, `/docs-brand`, `/docs-profile`, `/document` and `diff-summarizer` name the safe class among rung 1's failures**: `workflows-core:read-only-repos` §3 rung 1 now passes over an `origin/HEAD` naming a branch whose name holds shell characters, and each restatement listed only an unset `origin/HEAD` and one naming a ref that no longer exists.
+
 ## [1.39.1] — 2026-11-14
 
 Docs only: SEC-G1. The skill-listing figure counts `workflows-core` 1.87.0's new skill. Needs nothing from the other plugins' releases.

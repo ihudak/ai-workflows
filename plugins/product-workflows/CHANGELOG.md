@@ -12,6 +12,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Fixed
 
 - **`/harvest-decisions`' stop on a checkout off the default branch prints G0's block in place of the branch's name** where G0 held it, since `workflows-core` 1.89.2 counts a branch whose name is outside the safe class as detached; `/brd-reconcile`'s gate sentence, and the `/idea`, `/brd-package` and `/brd-interview` pages, name that case beside a detached HEAD.
+- **`/harvest-decisions` compares the checkout's branch with the default branch's name**, the preflight's `default`, where it compared `<default-ref>` stripped of `origin/`: with no `origin`, `<default-ref>` is `refs/heads/<default>`, so the stop fired on the default branch itself.
 
 ## [3.80.0] — 2026-11-14
 

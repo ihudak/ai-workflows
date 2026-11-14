@@ -194,9 +194,11 @@ PREFIXES = ("idea", "prd", "ard", "spec", "epics", "design", "ready", "brd", "fr
 def branch_key(branch, keys):
     """specs-repo-git §3.5's branch-key: the key in the run's own set <keys> the branch was named for.
     Resolved against the keys the run already holds, never read out of the name: a key K is a
-    candidate where the rest of the name, past its prefix, is K or begins K- or K_; the longest wins."""
+    candidate where the rest of the name, past its prefix, is K or begins K- or K_; the longest wins. A name outside
+    §3.2's safe class is never a plugin branch, whatever its prefix: the plugin makes none, and every later step that
+    named it would run what it holds -- so no settle, delete, advisory or push ever reaches it."""
     prefix, _, rest = branch.partition("/")
-    if not _ or prefix not in PREFIXES:
+    if not _ or prefix not in PREFIXES or not safe_branch(branch):
         return {"plugin_branch": False, "prefix": None, "key": None}
     found = [k for k in keys if rest == k or rest.startswith(k + "-") or rest.startswith(k + "_")]
     return {"plugin_branch": True, "prefix": prefix, "key": max(found, key=len) if found else None}
@@ -1212,17 +1214,23 @@ def _values(line):
 
 def _g0_block(lines, specs, default):
     """specs-repo-git §5's G0 block for the checkout at <specs>: its HEAD's sha7, today's date for the rescue branch,
-    and the default branch to rejoin -- where there is none, the first local branch in the safe class, else main.
-    Where HEAD is on a branch, which G0 holds only for a name outside §3.2's safe class (_head_branch), its Found, Not
-    done and If ignored parts are the g0.unsafe ones, which name no branch."""
+    and the default branch to rejoin -- where there is none, the first local branch in the safe class; where there is
+    neither, the If ignored part names none (g0.if_ignored.no-rejoin). Where HEAD is on a branch, which G0 holds only for
+    a name outside §3.2's safe class (_head_branch), its Found, Not done and If ignored parts are the g0.unsafe ones,
+    which name no branch."""
     sha = sb.text(sb.git(specs, "rev-parse", "HEAD"))
     heads = sb.text(sb.git(specs, "for-each-ref", "--format=%(refname:short)", "refs/heads")).splitlines()
-    rejoin = default or next((b for b in heads if safe_branch(b)), None) or "main"
-    values = {"<SPECS_PATH>": specs, "<sha7>": sha[:7], "<YYYY-MM-DD>": _today(), "<branch>": rejoin}
+    rejoin = default or next((b for b in heads if safe_branch(b)), None)
+    values = {"<SPECS_PATH>": specs, "<sha7>": sha[:7], "<YYYY-MM-DD>": _today(), "<branch>": rejoin or ""}
     block = lines.fill("g0", values)
-    if sb.git(specs, "symbolic-ref", "-q", "HEAD", check=False).returncode == 0:
+    unsafe = sb.git(specs, "symbolic-ref", "-q", "HEAD", check=False).returncode == 0
+    if unsafe:
         block = _block_part(block, "Found:", lines.fill("g0.unsafe.found", values))
         block = _block_part(block, "Not done:", lines.T["g0.unsafe.not_done"])
+    if rejoin is None:
+        block = _block_part(block, "If ignored:", lines.T["g0.unsafe.if_ignored.no-rejoin" if unsafe
+                                                          else "g0.if_ignored.no-rejoin"])
+    elif unsafe:
         block = _block_part(block, "If ignored:", lines.fill("g0.unsafe.if_ignored", values))
     return block
 

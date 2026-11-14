@@ -1900,7 +1900,8 @@ def selftest(groups=None):
             "created.committed", "deleted", "delete-failed", "advisory-D", "advisory-D.rm", "pushed-left", "b2-config",
             "b2-squash", "b4", "b4.count", "stay", "stay.unlisted", "rerun-failed", "rerun-stay", "session-not-run",
             "stopped", "default-refused")]
-        ids += ["g0.unsafe.found", "g0.unsafe.not_done", "g0.unsafe.if_ignored"]
+        ids += ["g0.unsafe.found", "g0.unsafe.not_done", "g0.unsafe.if_ignored", "g0.if_ignored.no-rejoin",
+                "g0.unsafe.if_ignored.no-rejoin"]
         ids += ["end.stopped", "end.session-not-run", "text.push-capped", "text.pull-capped", "text.lift-unpreserved", "text.offline", "root.one-line",
                 "root.stray", "root.two-readings",
                 "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
@@ -3870,6 +3871,15 @@ def selftest(groups=None):
         block = _g0_block(lines, rj.path, resolve_default(rj.path, False)["default"])
         check("switch zz-safe" in block and "$(" not in block and "`" not in block,
               "e_unsafe_names: G0's rejoin branch skips a local branch outside the class (%r)" % block)
+        # ... and where no branch is there to rejoin, If ignored names none, in either form
+        rj.git("branch", "-D", "zz-safe")
+        block = _g0_block(lines, rj.path, None)
+        check(block.endswith(lines.T["g0.if_ignored.no-rejoin"]) and " switch " not in block.split("If ignored:")[1],
+              "e_unsafe_names: a detached HEAD with nothing to rejoin, If ignored names no branch (%r)" % block)
+        rj.git("switch", "-q", "a" + bad)
+        block = _g0_block(lines, rj.path, None)
+        check(block.endswith(lines.T["g0.unsafe.if_ignored.no-rejoin"]) and "$(" not in block,
+              "e_unsafe_names: HEAD on an unsafe branch with nothing to rejoin, If ignored names no branch (%r)" % block)
         # ... and an end with no record, HEAD on such a branch with something to stage, blocks as on a detached HEAD
         u.git("switch", "-q", bad)
         hu = head(u)
@@ -8621,6 +8631,16 @@ def selftest(groups=None):
               and not any("$(" in x or "`" in x for x in got.get("print") or [])
               and not any(os.path.exists(os.path.join(r.path, f)) for f in ("PWNED", "PWNED2")),
               "t_unsafe_head: G0's unsafe-name block, blocked, no branch named (%r)" % got)
+
+        # t_unsafe_plugin_branch: a merged local branch with a plugin prefix and an unsafe name is no plugin branch --
+        # never settled, deleted or named
+        r, env = world(tmp, "t-unsafe-plugin")
+        r.git("branch", "spec/a" + bad)
+        got = run_start(env, "/feedback")
+        check(got.get("print") == [env_line(r.path)] and rev(r, "spec/a" + bad)
+              and branch_key("spec/a" + bad, [])["plugin_branch"] is False
+              and not any(os.path.exists(os.path.join(r.path, f)) for f in ("PWNED", "PWNED2")),
+              "t_unsafe_plugin_branch: left alone and unnamed (%r)" % got)
 
         # t_default_refused: origin/HEAD naming an unsafe branch is refused once, with a line naming what stands in
         r, env = world(tmp, "t-default-refused")
