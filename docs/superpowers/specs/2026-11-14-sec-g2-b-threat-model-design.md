@@ -88,7 +88,7 @@ In `workflows-core` because `/design` and `/conformance` (`dev-workflows`) will 
 
 ### T6. `threat-modeler` proposes
 
-A new `product-workflows` agent, pinned to Opus in its frontmatter as `ard-reviewer` is; `/create-ard`'s `model_routing` block gains its line. **It has no tools**: everything arrives in the brief, and the command reads the weakness-classes JSON's fields itself (as the skill allows) and passes them inline. Dispatched once per run with:
+A new `product-workflows` agent, pinned to Opus in its frontmatter as `ard-reviewer` is; `/create-ard`'s `model_routing` block gains its line. **It has no tools** — declared in the form that grants none, which the plan verifies with `claude plugin validate` and `validate-catalog.py` (omitting `tools:` grants every tool): everything arrives in the brief, and the command reads the weakness-classes JSON's fields itself (as the skill allows) and passes them inline. Dispatched once per run with:
 
 - the drafted ARD's resolved components, contracts and decisions, from the run;
 - the code scan the run already made, inline;
@@ -114,7 +114,7 @@ The `ard-reviewer` dispatch for the folder's `ard.md` (its input contract needs 
 - MAJOR: a decision recorded for a threat missing a field `ard-format` requires (as `ard-reviewer` already raises it).
 - MINOR: a component or contract row in `## Scope` that no threat names and `## Not considered` does not explain.
 
-**After the one fix cycle**, where every unresolved BLOCKER is the model's and the folder held no model before this run, `/create-ard` asks its own question once, before the shared per-BLOCKER escalation (whose four-option array is fixed and shared by eight commands): *Hand off the ARD without the threat model* / *Settle the model's findings*. The first drops the new model from `deliverable_paths`; the ARD is never held hostage by its optional companion. On a refine there is no such escape: re-disposing the blocking threats (T10) is always possible.
+**After the one fix cycle**, where every unresolved BLOCKER is the model's and the folder held no model before this run, `/create-ard` asks its own question once, before the shared per-BLOCKER escalation (whose four-option array is fixed and shared by eight commands): *Hand off the ARD without the threat model* / *Settle the model's findings*. The first drops the new model from `deliverable_paths` and does not write it into the specs tree (an unwritten draft leaves no uncommitted path for the next preflight, and no unreviewed model for the next run to find); the ARD is never held hostage by its optional companion. On a refine there is no such escape: re-disposing the blocking threats (T10) is always possible.
 
 ### T9. Lineage: a covered kind, recording the ARD
 
@@ -124,11 +124,12 @@ The visible change elsewhere: `/document` and `/release-notes` keep every path a
 
 ### T10. A refine run
 
-Phase 0 detects `threat-model.md` beside the ARD and hands a copy of it (`prior_threat_model`, as `prior_ard`) to the reviewer and pre-lint. Whenever the file exists and a set resolves, **the run checks it mechanically, whatever the PA answers** — every cited decision live in the ARD file it names, every *Where* id still in the set — **twice**: at the new phase, to choose its question, and again in Phase 6 before the model is stamped, since Phase 5's fixes and manual fix notes can still supersede a decision.
+Phase 0 detects `threat-model.md` beside the ARD and hands a copy of it (`prior_threat_model`, as `prior_ard`) to the reviewer and pre-lint. Whenever the folder holds a model — one from an earlier run, or one this run drafted — and a set resolves, **the run checks it mechanically, whatever the PA answers** — every cited decision live in the ARD file it names, every *Where* id still in the set — **twice**: at the new phase, to choose its question, and again in Phase 6 before the model is stamped, since Phase 5's fixes and manual fix notes can still supersede a decision.
 
 - **The check passes:** *Refine the threat model (Recommended)* / *Leave it as it is*.
 - **The check fails:** *Leave it* is not offered. **The forced part is only a re-disposition of the stale entries** — no modeler dispatch and no candidate walk: each stale threat is re-disposed through T7's four choices, and `Deferred to design` or `Accepted` is always available with no new decision, so the PA can always finish. A stale model would send C and D to dead decisions.
-- **The second check fails** (Phase 5 changed a decision after the first): the run re-disposes the newly stale entries the same way before the model is stamped.
+- **The second check fails** (Phase 5 changed a decision after the first): the run re-disposes the newly stale entries before the model is stamped, offering only *Defer to design*, *Accept the risk* or naming an existing live decision — never a new decision, which would change the ARD after its review (T8).
+- **On an existing `[TH#N]`, *Not a threat — drop it* means `Withdrawn`**, with the reason; a threat is never deleted.
 - **A refine** keeps every `[TH#N]`, re-dispatches the modeler with the current threats (it proposes only what the changed architecture adds), and lists every acceptance past its review date for the PA to renew, re-dispose or keep. **The model follows the ARD's refine-versus-fresh semantics**: whatever *Start fresh* does to the ARD's numbering, it does to `[TH#N]`.
 
 ### T11. Pages, counts and claims
