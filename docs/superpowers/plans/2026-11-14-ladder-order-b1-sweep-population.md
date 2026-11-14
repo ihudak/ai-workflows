@@ -1,0 +1,412 @@
+# LADDER-ORDER batch 1 — the sweep population, before any edit
+
+**Written:** 2026-11-14, by Task 1 of `docs/superpowers/plans/2026-11-14-ladder-order-b1-prd-stops.md`, on branch `feat/ladder-order-b1` cut from `origin/main` at `0de91630`, before any plugin file was edited. The plan's line numbers are at `92fc7a75`; the one merge between (`0de91630`, a status-line change) touched none of the files below, and every line cited here was re-read at `0de91630`. Where the plan's number is off, the row gives the true one.
+
+**The subject** (claim-sweep refinement 6): *what `/create-ard` or `/specify` does when the PRD folder's `prd.md` is not on the default branch*, and *which consumers stop on `absent`* — so also every statement of the rule those two flip (*an absent optional input never becomes a prerequisite*, *only a consumer whose input was never optional stops*), every offer or stop that names `/create-ard` or `/specify` on terms the change falsifies (design L8, L12, L13), and the lists the four new ids join.
+
+**Scope** (refinement 4): `plugins/` — every `CHANGELOG.md` searched and never rewritten (§7), `reference-parts/` searched and never edited (§6) — plus `CLAUDE.md`, `.claude/rules/`, `docs/maintainers/` and the repo-root `README.md`.
+
+**Abbreviations.** PH = `plugins/workflows-core/references/phase-handoff.md`; ARD = `plugins/product-workflows/commands/create-ard.md`; SPEC = `plugins/product-workflows/commands/specify.md`; `pw/` = `plugins/product-workflows/`; `dw/` = `plugins/dev-workflows/`; `wc/` = `plugins/workflows-core/`. IMPL, CONF and DOC are the design's (`dw/commands/implement.md`, `dw/commands/conformance.md`, `plugins/docs-workflows/commands/document.md`).
+
+**Dispositions.** **rewrite** — this batch, with the task that owns it. **keep** — still true, with why. **later N** — a later batch's, per the design's §7. *Beyond plan* marks a rewrite row the plan's file lists do not name; *flagged* marks a row the controller should confirm (§9).
+
+A phrase hit dispositions its whole paragraph (refinement 1), so most rows cite a range. A row's first words are the start of the statement, not of the line where they differ.
+
+**Totals:** 193 rows — **73 rewrite** (Task 2: 12, Task 3: 14, Task 4: 16, Task 5: 14, Task 6: 17; 20 of them *beyond plan*, 2 flagged), **77 keep** (11 flagged), **43 later** (batch 2: 23, batch 3: 6, batch 4: 14). Counted by `python3` over the tables' rows, splitting cells on unescaped `|` as GitHub does.
+
+## 1. Searches run
+
+All from the worktree root. Each hit was read in its paragraph before it was dispositioned.
+
+```bash
+# the brief's starter, then the floor check (23 lines with reference-parts, 17 without)
+grep -rnE "not a prerequisite|No authored PRD on|never becomes a prerequisite|optional input|absent falls back|falls back|holds \*\*no .prd\.md|no .prd\.md.|does \*\*not\*\* require a PRD|absent. branch" plugins CLAUDE.md .claude/rules docs/maintainers README.md --include='*.md' | grep -v CHANGELOG.md          # 229 lines, 206 outside reference-parts
+grep -rnE "is not a prerequisite|not a prerequisite at all|is still not a prerequisite" plugins CLAUDE.md .claude/rules docs/maintainers README.md --include='*.md' | grep -v CHANGELOG.md   # 23
+# by subject, generalised from each hit's wording
+grep -rnE "prerequisite" <scope> | grep -E "optional|promot|becomes a|new prerequisite|not a prerequisite|is a prerequisite|never.{0,40}prerequisite|prerequisite.{0,40}never|no prerequisite"
+grep -rnoE ".{60}(whose gated input was never optional|whose input was never optional|input was never optional|never optional to begin with|was never optional).{60}" <scope>
+grep -rnE "absent (PRD|one is not|input)|an absent one|absent optional|absent input|missing one|never a missing|optional-input rule|optional input" plugins --include=*.md
+grep -rnE "(create-ard|/specify)[^.]{0,120}(absent|fall(s)? back|falling back|reported, (not|never) silent|never a missing|not a stop|no fallback)" <scope>
+grep -rnE "(architect|specif)(s|ies|ying|ing)? from (the resolved folder|what the folder|whatever)|from the folder as it stands|reads the resolved folder directly|reading the resolved folder directly|folder-read fallback|without a PRD|with no PRD|holds no PRD|no PRD yet|may legitimately hold no PRD" <scope>
+grep -rnE "reported, not silent|reported rather than silent|reported, never silently|never silently" <scope> | grep -iE "prd|absent|create-ard|specify"
+grep -rnE "PRD gate|absent. branch|unauthored PRD|on the level test alone|level alone" plugins/product-workflows/docs/commands/brd-*.md plugins/product-workflows/commands/brd-interview.md plugins/product-workflows/commands/brd-reconcile.md
+# exclusivity probe (refinement 3), filtered to the subject
+grep -rnE "(the hard stop is|the one state that|the only state|only stop|never a missing one|the only new stop|is the only|nothing else|and no other|only ever|only when|the sole|only (consumer|caller|command)|one exception|one hard exception|the exception)" <scope> | grep -iE "create-ard|specify|PRD gate|optional input|optional-input|absent|never optional|gated input|prd\.md"
+# every offer or stop that names the two commands, read for L8/L12
+grep -rnoE "/product-workflows:(create-ard|specify) <[A-Z-]+>|/(create-ard|specify) <[A-Z-]+>" plugins/*/commands/*.md plugins/*/references/*.md plugins/*/references/*/*.md
+# citations whose target text changes (pointer face)
+grep -rnE "§5 rule 3|rule 3's|caller-contract rule 3" plugins --include=*.md
+grep -rnE "row for .?/create-ard|/create-ard. row|/specify. row|\(an Epic\)\*\* row|§3\.4['’]s .?/" plugins --include=*.md
+grep -rnoE "[A-Z_]+_NOT_HANDED_OFF" plugins/*/commands/*.md
+grep -rn "3\.4\|row F\|row-F\|rule 3" .claude/rules/*.md CLAUDE.md
+grep -nE "optional input|prerequisite|§3\.4|row F|never optional|falls back|absent PRD|create-ard|/specify|pre-existing|promot|mandatory|ladder|delegat" docs/maintainers/rationale.md
+# docs pages, READMEs and the rules tier: the greps above cover plugins/*/docs, CLAUDE.md and .claude/rules; besides them
+grep -rnE "absent|optional input|prerequisite|falls back|without a PRD|PRD gate" plugins/*/README.md README.md
+grep -rnE "absent|optional|prerequisite|fall" plugins/product-workflows/docs/reference/glossary.md plugins/product-workflows/docs/reference/references.md plugins/product-workflows/docs/reference/environment.md
+grep -rnE "absent|optional input|prerequisite|falls back|fall back|never optional|stops? on|consumers? (with|whose|that)|nine consumers|No authored PRD|create-ard|/specify" .claude/rules CLAUDE.md docs/maintainers README.md
+grep -rn "create-ard\|product-workflows:specify" plugins/dev-workflows/docs/*.md plugins/dev-workflows/docs/commands/*.md | grep -iE "absent|same way|fall|gate"
+# CHANGELOGs (searched, never rewritten)
+grep -rnE "not a prerequisite|No authored PRD on|never becomes a prerequisite|optional input|absent falls back|holds \*\*no .prd\.md|does \*\*not\*\* require a PRD|absent PRD|never a missing one|architects from the resolved folder|specifies from the resolved folder|specifying from the resolved folder|architecting from the resolved folder" plugins --include=CHANGELOG.md
+grep -nE "PRD gate|Gate the PRD|absent. branch|falls back to (reading )?the resolved folder|no PRD on|without a PRD|does not require a PRD|create-prd. is (still )?not a prerequisite" plugins/*/CHANGELOG.md
+```
+
+`<scope>` is `plugins CLAUDE.md .claude/rules docs/maintainers README.md --include=*.md`, piped through `grep -v CHANGELOG | grep -v reference-parts`.
+
+## 2. Baseline counts
+
+Each count is taken with the command named beside it, before any edit; Task 8 re-runs each and fills the last column. The commands are below the table, verbatim, since a table cell would have to escape their pipes.
+
+| What | Command | Before | After (Task 8) |
+|---|---|---|---|
+| Consumers with a §3.4 row that stops on `absent` | R1 (`.claude/rules/workflows-core-handoff.md`'s recipe) | **9** — `/brd-interview` `/brd-package` `/brd-proposal` `/brd-reconcile` `/brd-split` `/design` `/prd-ground` `/prd-proposal` `/update-spec` | |
+| `No authored PRD on` in ARD | R2 | **1** (ARD:274) | |
+| `No authored PRD on` in SPEC | R3 | **1** (SPEC:315) | |
+| `No authored PRD on`, whole scope | R4 | **2** (the two above) | |
+| `CLAUDE.md` size | R5 | **35462** (warning 36,000) | |
+| Coupling file size | R6 | **18781** (warning 20,000) | |
+| The floor | R7 | **23** lines (17 outside `reference-parts/`) | |
+
+```bash
+# R1
+awk '/^### 3.4/{f=1} /^### 3.5/{f=0} f' plugins/workflows-core/references/phase-handoff.md | awk -F' \\| ' '/^\| `\// && $3 ~ /^\*\*stops/ {print $1}' | grep -o '`/[a-z:-]*`' | sort -u | wc -l
+# R2
+grep -c "No authored PRD on" plugins/product-workflows/commands/create-ard.md
+# R3
+grep -c "No authored PRD on" plugins/product-workflows/commands/specify.md
+# R4
+grep -rn "No authored PRD on" plugins CLAUDE.md .claude/rules docs/maintainers README.md --include=*.md | grep -v CHANGELOG
+# R5
+wc -c CLAUDE.md
+# R6
+wc -c .claude/rules/plugin-updates-coupling.md
+# R7 (and with `| grep -v reference-parts` for the 17)
+grep -rnE "is not a prerequisite|not a prerequisite at all|is still not a prerequisite" plugins CLAUDE.md .claude/rules docs/maintainers README.md --include='*.md' | grep -v CHANGELOG.md | wc -l
+```
+
+**Wrap-insensitive literal counts** (refinement 7). Paste this function into a shell at the worktree root, then run `wic "<string>"` for the scope above with every `CHANGELOG.md` and `reference-parts/` left out, or `wic "<string>" parts` for `reference-parts/` alone. It collapses whitespace across each whole file and across the string, so a sentence wrapped over two lines counts once — which `grep` does not do: `is not a prerequisite` counts 15 here and 14 by `grep -rn "is not a prerequisite"` over the same files, ARD:873–874 being the wrapped occurrence.
+
+```bash
+wic() { python3 -c 'import os,re,sys
+s=re.sub(r"\s+"," ",sys.argv[1]); parts=len(sys.argv)>2; tot=0
+for root in ["plugins","CLAUDE.md",".claude/rules","docs/maintainers","README.md"]:
+  ps=[root] if os.path.isfile(root) else sorted(os.path.join(d,f) for d,_,fs in os.walk(root) for f in fs if f.endswith(".md"))
+  for p in ps:
+    if p.endswith("CHANGELOG.md") or (("/reference-parts/" in p) != parts): continue
+    n=re.sub(r"\s+"," ",open(p,encoding="utf-8").read()).count(s)
+    if n: print(n,p); tot+=n
+print("TOTAL",tot)' "$@"; }
+```
+
+| `wic` string | Before (scope) | Before (`parts`) | Where, before | After (Task 8) |
+|---|---|---|---|---|
+| `is not a prerequisite` | 15 | 6 | ARD 4, SPEC 2, `pw/commands/create-prd.md` 2, `pw/docs/commands/create-ard.md` 2, `pw/docs/commands/create-prd.md` 1, `pw/docs/commands/specify.md` 1, `wc/references/next-phase-offer.md` 1, PH 1, `dw/docs/commands/vuln.md` 1 | |
+| `not a prerequisite at all` | 2 | — | ARD 1, SPEC 1 | |
+| `is still not a prerequisite` | 3 | — | ARD 1, SPEC 1, `pw/commands/brd-reconcile.md` 1 | |
+| `No authored PRD on` | 2 | — | ARD 1, SPEC 1 | |
+| `never optional` | 10 | — | PH 1, `.claude/rules/workflows-core-handoff.md` 1, `wc/docs/reference/references.md` 1, `pw/docs/roles-and-phases.md` 1, `dw/docs/roles-and-phases.md` 1, `dw/docs/getting-started.md` 1, `dw/docs/commands/design.md` 1, `dw/docs/commands/ready.md` 2, `pw/commands/brd-intake.md` 1 (another subject) | |
+| `whose gated input was never optional` | 6 | — | `pw/docs/roles-and-phases.md` 1, `dw/docs/roles-and-phases.md` 1, `dw/docs/getting-started.md` 1, `dw/docs/commands/design.md` 1, `dw/docs/commands/ready.md` 2 | |
+| `an absent optional input` | 4 | — | `CLAUDE.md` 1, `pw/docs/roles-and-phases.md` 1, `dw/docs/roles-and-phases.md` 1, `dw/references/context-management.md` 1 | |
+| `never becomes a prerequisite` | 2 | — | `CLAUDE.md` 1, `wc/docs/reference/references.md` 1 | |
+| `never a missing one` | 3 | — | `pw/docs/roles-and-phases.md` 3 | |
+| `the hard stop is an unmerged PRD` | 3 | — | `pw/docs/roles-and-phases.md` 3 | |
+| `` The hard stop is a `prd.md` that exists on an unmerged branch `` | 2 | — | `pw/docs/commands/create-ard.md` 1, `pw/docs/commands/specify.md` 1 | |
+| `falls back to reading the resolved folder` | 3 | — | `pw/docs/commands/create-ard.md` 1, `pw/docs/roles-and-phases.md` 2 | |
+| `falls back to the resolved folder` | 3 | — | `pw/commands/create-prd.md` 1, `pw/commands/update-prd.md` 1, `pw/docs/roles-and-phases.md` 1 | |
+| `does **not** require a PRD` | 2 | — | ARD 1, SPEC 1 | |
+| `may legitimately hold no PRD` | 2 | — | ARD 1, SPEC 1 | |
+| `on every route, with no branch` | 2 | — | ARD 1, SPEC 1 | |
+| `is reported and never a stop, on either route` | 1 | — | ARD 1 | |
+| `` on the `prd.md` test alone `` | 4 | — | ARD 3, SPEC 1 | |
+| `` the `absent` branch is what makes that safe `` | 3 | — | ARD 1, SPEC 1, `pw/commands/brd-reconcile.md` 1 (quotes the other two) | |
+| `` `absent` branch proceeds `` | 3 | 1 | `pw/commands/brd-reconcile.md` 1, `pw/docs/commands/brd-reconcile.md` 1, `wc/references/next-phase-offer.md` 1 | |
+| `its absent branch architects from the slice folder` | 1 | — | `.claude/rules/brd-route.md` 1 | |
+| `the one state that would make either wait` | 1 | — | `pw/commands/brd-reconcile.md` 1 | |
+| `absent falls back, unmerged stops` | 1 | — | `pw/docs/commands/specify.md` 1 | |
+| `An input that was optional before this gate existed stays optional` | 1 | 1 | PH 1 | |
+| `No consumer turns an optional input into a prerequisite` | 1 | 1 | PH 1 | |
+| `the gate never makes an optional input mandatory` | 1 | 1 | PH 1 | |
+| `` the same shape as `/create-ard`'s row `` | 1 | 1 | PH 1 | |
+| `the shape of their PRD rows` | 1 | 1 | PH 1 | |
+| `*"Gate the PRD — on every route"*` | 1 | 1 | PH 1 | |
+| `It stood there on the strength of` | 1 | 1 | PH 1 | |
+| ``with their stops named `UPDATE_SPEC_` in place of `SPECIFY_` `` | 1 | — | `pw/commands/update-spec.md` 1 | |
+| ``gated as [`/specify`](specify.md) gates them`` | 1 | — | `pw/docs/commands/update-spec.md` 1 | |
+| `then its inputs as /specify gates them` | 1 | — | `.claude/rules/product-workflows.md` 1 | |
+| `as on the idea route` | 6 | — | ARD:788 (branch naming), `pw/docs/commands/create-ard.md:73` (repositories), `pw/docs/commands/specify.md:88` (repository candidates) — another subject; SPEC:1393 (row K35); `pw/docs/workflow.md:199` (row E17); `pw/docs/brd-workflow.md:327` (row L-B4-10) | |
+| `CREATE_ARD_NEEDS_PRD` | 0 | — | — | |
+| `CREATE_ARD_PRD_NOT_HANDED_OFF` | 0 | — | — | |
+| `SPECIFY_NEEDS_PRD` | 0 | — | — | |
+| `SPECIFY_PRD_NOT_HANDED_OFF` | 0 | — | — | |
+| `UPDATE_SPEC_NEEDS_PRD` | 0 | — | — (must stay 0) | |
+| `UPDATE_SPEC_PRD_NOT_HANDED_OFF` | 0 | — | — (must stay 0) | |
+
+## 3. The population — rows this batch rewrites
+
+### Task 2 — `phase-handoff` and its docs page
+
+| # | file:line | First words | Disposition | Owner, and why |
+|---|---|---|---|---|
+| A1 | PH:312 | `### 3.4 Row F delegates — the gate never makes an optional input mandatory` | rewrite | Task 2. The heading states the rule two rows now break; design §7 names it, the plan's Task 2 steps do not — add it to Step 4 |
+| A2 | PH:314 | "Row F is the difference between … **An input that was optional before this gate existed stays optional, and that must not change.**" | rewrite | Task 2 Step 4 |
+| A3 | PH:316 | "Several consumers map `absent` to a hard stop, and every one of them is legitimate for the same reason: … **never optional to begin with**" | rewrite | Task 2 Step 4 |
+| A4 | PH:321 | "`/create-ard` · the PRD (`prd.md`) · read the resolved folder's own contents — **reported** rather than silent" | rewrite | Task 2 Step 1 |
+| A5 | PH:322 | "`/specify` `/update-spec` · the PRD (`prd.md`) · the folder read is already the primary read path …" | rewrite | Task 2 Step 2 (split) |
+| A6 | PH:323 | "`/create-ard` `/specify` `/update-spec` **(an Epic)** · … the shape of their PRD rows" | rewrite | Task 2 Step 3 — the pointer only; the Epic behaviour stays (L4) |
+| A7 | PH:351 | "**The build-ladder commands** — … `/create-ard`'s and `/specify`'s PRD rows say *"Gate the PRD — on every route"* in their own commands" | rewrite | Task 2 Step 3. It quotes the commands' heading (B2, C1): if Task 3 or 4 changes *Gate the PRD — on every route*, this quote follows |
+| A8 | PH:355 | "For the consumers that predate this gate, rows D and E add the only new stop: …" | rewrite | Task 2 Step 4. Its list of consumers that stop on `absent` gains the two; and its exclusive *the only new stop* (refinement 3) was true of what the gate added, while `/create-ard` and `/specify` now take a row-F stop as well, by a later decision — re-read the whole paragraph against that |
+| A9 | PH:535 | "**The PRD is what the quantifier was written for, …** It stood there on the strength of `/create-ard`'s and `/specify`'s rows …" | rewrite | Task 2 Step 3 |
+| A10 | PH:611 | "- **F — a caller's own stop on a file in the folder and on no ref**, …" | rewrite | Task 2 Step 5 (the committed form) |
+| A11 | PH:623 | "3. A consumer acts on the returned state, and on `absent` applies its own pre-existing behaviour (§3.4). **No consumer turns an optional input into a prerequisite.** …" | rewrite | Task 2 Step 4 |
+| A12 | `wc/docs/reference/references.md:26` | "- `phase-handoff.md` — the three phase-boundary git entry points … so an optional input never becomes a prerequisite, and only a consumer whose input was never optional stops" | rewrite | Task 2 Step 7 |
+
+### Task 3 — `/create-ard` and its docs page
+
+| # | file:line | First words | Disposition | Owner, and why |
+|---|---|---|---|---|
+| B1 | ARD:234–243 | "5. **Optionality advisory — one rule, gauged off everything the folder holds.** … as this step reads a PRD-level run's `prd.md` ahead of its gate" | rewrite | Task 3 Step 3. Once the advisory follows the gates, line 242's *on a PRD-level run with no `prd.md`* is a slice only |
+| B2 | ARD:274 | "**Gate the PRD — on every route, with no branch.** … on `absent`, the existing folder-read fallback applies — but report it: *"No authored PRD on …"*; on `unmanaged`, behave exactly as before this feature" | rewrite | Task 3 Step 2 |
+| B3 | ARD:276–292 | "**The BRD route runs this gate too, and the `absent` branch is what makes that safe.** … `/product-workflows:create-prd` is still not a prerequisite for this command, on either route. What the gate adds on both routes is … sitting on a branch (rows D/E)" | rewrite | Task 3 Step 4. Its bold lead is quoted at `pw/commands/brd-reconcile.md:3019–3020` (D13): keep the lead or move that quote with it |
+| B4 | ARD:429–436 | "**An absent `prd.md` is reported and never a stop, on either route.** … on the idea route it is unusual but supported" | rewrite | Task 3 Step 4 |
+| B5 | ARD:438 | "For an **Epic-level** run always read the Epic folder … — the authored-PRD-file check above only applies PRD-level." | rewrite | Task 3, *beyond plan*. Its pointer lands on B4's paragraph, and after this batch the PRD stop applies to an Epic-level run too (the PRD folder above) |
+| B6 | ARD:799–816 | "**One precondition governs every `/product-workflows:epics` option below, on both routes.** … This run does **not** require a PRD …" | rewrite | Task 3 Step 4 (the plan's 800–806) |
+| B7 | ARD:818–829 | "**`/create-prd` refuses three BRD-route shapes, not one** … an idea-route PRD folder has no gate set, so `/product-workflows:create-prd <ADDRESS>` is reachable there on the `prd.md` test alone" (822–823) and "On the idea route no row of it fires at all … which is why the PRD-level bullet can write its one substitution out in full" (827–829) | rewrite | Task 3 Step 4: the idea-route substitution is now unreachable |
+| B8 | ARD:846 | "- **PRD-level ARD:** if the PRD has 0 Epics → `choices: …` — with the first option becoming *"Author the PRD — /product-workflows:create-prd <ADDRESS> (PM) (Recommended)"* where the precondition above fails …" | rewrite | Task 3 Step 4: unreachable, so it goes, with every text written only for it (*Surgical Changes*) |
+| B9 | ARD:910 | "**The commercial step this run just unlocked, …** … so on a folder holding none, on either route, say instead …" | rewrite | Task 3, *beyond plan*: a folder holding none is now a slice's only |
+| B10 | ARD:943 | "**Capture-at-block invariant.** … **The eight argument-, tree- and git-shaped stops are of that second class**: `CREATE_ARD_NEEDS_KEY`, …" | rewrite | Task 3, *beyond plan*: the two new ids join the list and *eight* becomes ten — the place *Global Constraints*' "say so beside the stops" lands |
+| B11 | `pw/docs/commands/create-ard.md:52` | "- **The PRD on the specs repo's default branch** — … An **absent** PRD is not a stop: the run falls back to reading the resolved folder …" | rewrite | Task 3 Step 5 |
+| B12 | `pw/docs/commands/create-ard.md:74` | "- **The same PRD gate as the idea route, and the same PRD read.** … The hard stop is a `prd.md` that exists on an unmerged branch …" | rewrite | Task 3 Step 5. *The same … as the idea route* is false now, and *The hard stop is* is exclusive: a slice's `prd.md` in the folder and on no ref now stops too |
+| B13 | `pw/docs/commands/create-ard.md:129` | "The run resolves the PRD from the merged PRD file where present, …" | rewrite | Task 3, *beyond plan*: the idea-route example's merged PRD is required now, not "where present" |
+| B14 | `pw/docs/commands/create-ard.md:152` | "- **PRD-level ARD on the idea route, no Epics yet** → … Where the folder holds no authored `prd.md`, [`/create-prd <PRD>`] (PM, recommended) takes `/epics`'s place …" | rewrite | Task 3, *beyond plan's line list*: unreachable on the idea route |
+
+### Task 4 — `/specify`, `/update-spec` and their docs pages
+
+| # | file:line | First words | Disposition | Owner, and why |
+|---|---|---|---|---|
+| C1 | SPEC:315 | "**Gate the PRD — on every route, with no branch.** … on `absent`, `/specify`'s existing specs-tree behaviour is unaffected — but report it …" | rewrite | Task 4 Step 2 |
+| C2 | SPEC:317–331 | "**The BRD route runs this gate too, and the `absent` branch is what makes that safe.** …" | rewrite | Task 4 Step 4. Its lead is quoted at `pw/commands/brd-reconcile.md:3019–3020` (D13) |
+| C3 | SPEC:538–547 | "**A missing folder and a folder holding no `prd.md` are two different states, and only the first is a stop.** … and a supported one on the keyed route" | rewrite | Task 4 Step 3 |
+| C4 | SPEC:609–615 | "- **`/product-workflows:epics` is only offered where the resolved folder holds an authored `prd.md`.** … Where the folder holds none — the ordinary BRD-route state, and the one the Phase 0 gate reported as `absent` — …" | rewrite | Task 4 Step 3 (the idea-route half; the slice form is batch 4's, L-B4-6) |
+| C5 | SPEC:624–625 | "A folder carrying no `brd-link.md` has no gate set and takes `/product-workflows:create-prd <PRD>` on the container test alone." | rewrite | Task 4 Step 3 — the sentence goes |
+| C6 | SPEC:662–665 | "The same two states apply here as in Step A: … a folder holding **no `prd.md`** is not a stop …" | rewrite | Task 4 Step 3 (the plan's 660–666) |
+| C7 | SPEC:1190 | "**Capture-at-block invariant.** … **Every `SPECIFY_*` stop is argument-, tree- or git-shaped, and of that second class**: `SPECIFY_NEEDS_KEY`, …" | rewrite | Task 4, *beyond plan*: the two new ids join the list |
+| C8 | SPEC:1346–1355 | "**One precondition governs every `/product-workflows:epics` option above, on both routes.** … This run does **not** require a PRD …" | rewrite | Task 4 Step 3 |
+| C9 | SPEC:1357–1365 | "**`/create-prd` refuses three BRD-route shapes, not one** … an idea-route PRD folder has no gate set, so `/product-workflows:create-prd <PRD>` is reachable there on the `prd.md` test alone." (1364–1365) | rewrite | Task 4, *beyond plan's line list*: unreachable on the idea route |
+| C10 | SPEC:1405 | "**And the commercial step, in prose …** … so on a folder holding none, on either route, say instead …" | rewrite | Task 4, *beyond plan*: as B9 |
+| C11 | `pw/commands/update-spec.md:57` | "6. **Gate the inputs**, as `/specify` gates them — its *Gate the PRD*, *Gate the decision register* (BRD route) and *Gate the Epic* sections, …" | rewrite | Task 4 Step 5 (the carve-out) |
+| C12 | `pw/docs/commands/specify.md:68` | "- **The PRD on the specs repo's default branch** — … An **absent** PRD is not a stop: …" | rewrite | Task 4 Step 6 |
+| C13 | `pw/docs/commands/specify.md:84` | "- **The same PRD gate as the keyed route, and the same folder read.** … The hard stop is a `prd.md` that exists on an unmerged branch." | rewrite | Task 4 Step 6 — as B12 |
+| C14 | `pw/docs/commands/specify.md:137–138` | "- **PRD-level spec, no authored `prd.md`** → in place of `/epics`, [`/create-prd <PRD>`], only where it can run. On a BRD slice the slice's ledger decides:" | rewrite | Task 4, *beyond plan's line list*: a slice's only now |
+| C15 | `pw/docs/commands/specify.md:148` | "- [Roles and phases] — what the `pe` role owns, including the "absent falls back, unmerged stops" gates it shares with [`/create-ard`] …" | rewrite | Task 4 Step 6 |
+| C16 | `pw/docs/commands/update-spec.md:58` | "- **Its inputs on the default branch**, gated as [`/specify`](specify.md) gates them — the PRD, …" | rewrite | Task 4 Step 6: `/update-spec` does not take `/specify`'s two PRD stops |
+
+### Task 5 — the stops and offers that already exist
+
+| # | file:line | First words | Disposition | Owner, and why |
+|---|---|---|---|---|
+| D1 | `pw/commands/prd-ground.md:549–566` | "**Row F splits the same way the BRD route's row F does, …** … `PRD_GROUND_PRD_NOT_HANDED_OFF: <KEY>'s prd.md is written at <path> but is on no branch …`" | rewrite | Task 5 Step 1 (committed form). The plan's 559–566 is the id's block; the split it belongs to opens at 549 |
+| D2 | `pw/commands/prd-proposal.md:239–246` | "Where a `prd.md` is in the folder but on no ref: `PRD_PROPOSAL_PRD_NOT_HANDED_OFF: …`" | rewrite | Task 5 Step 1 |
+| D3 | `pw/docs/commands/prd-ground.md:325–332` | "- **`prd.md` already on the specs repo's main branch.** … the run stops with `PRD_GROUND_PRD_NOT_HANDED_OFF`, naming committing and merging it as the fix …" | rewrite | Task 5 Step 4 (the plan's :330) |
+| D4 | `pw/docs/commands/prd-proposal.md:52` | "- **A `PRD-` folder holding a `prd.md` on the specs repo's default branch** — … a `prd.md` in the folder and on no ref is `PRD_PROPOSAL_PRD_NOT_HANDED_OFF`, whose fix is to land the file already on disk …" | rewrite | Task 5 Step 4 |
+| D5 | `pw/commands/epics.md:1124` | "[Per `workflows-core:next-phase-offer`'s *PE — breakdown & specification* lane — … author its spec → `/product-workflows:specify <EPIC>` … Optionally … `/product-workflows:create-ard <EPIC>` …" | rewrite | Task 5 Step 2 (L13) |
+| D6 | `pw/docs/commands/epics.md:107–108` | "- **Each Epic just drafted** → [`/specify <EPIC>`] …" / "- **Optionally first, an Epic-level ARD** → [`/create-ard <EPIC>`] …" | rewrite | Task 5 Step 4 |
+| D7 | `pw/commands/epics.md:469` | `choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Split without <the missing artifacts>", "Cancel"]` | rewrite | Task 5, *beyond §7* — flagged (§9 item 1). `workflows-core:components` §6's remedy names `/create-ard <PRD>` or `/specify <PRD>`, which now stop where the PRD folder's `prd.md` is not on the default branch, and `/epics` reads that `prd.md` ungated (L13): the landing-first wording D5 adds is owed here too |
+| D8 | `pw/commands/epics.md:1059` | "- Split not made: <component> — not in the ARD's set; `/product-workflows:create-ard <PRD>` records it" | rewrite | Task 5, *beyond §7* — flagged (§9 item 1), as D7 |
+| D9 | `wc/references/next-phase-offer.md:323` | "- `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`." | rewrite | Task 5 Step 3 — the routing graph's line for D5's offers; give it D5's condition, or record why the lane line needs none beside `epics.md:1124` |
+| D10 | `wc/references/next-phase-offer.md:258–261` | "… the other two carry none of their own: neither reads the ledger as an authoring input, and although both now run the PRD gate on every route, that gate's `absent` branch proceeds — a slice holding no authored `prd.md` is the ordinary state for both …" | rewrite | Task 5, *beyond plan*. After this batch `absent` proceeds on a slice only where no `prd.md` is in the folder; one in the folder and on no ref stops on both routes (design §5.1, second bullet). The rest of the BRD part is batch 4's (L-B4-8) |
+| D11 | `pw/commands/create-prd.md:913` | "- **`/product-workflows:create-ard <ADDRESS>`** (PA, **optional**) — … so it stops where this PRD reached a branch and falls back to the resolved folder — reported, never silently — where it reached none …" | rewrite | Task 5, *beyond plan's file list*: a declined handoff now meets `CREATE_ARD_PRD_NOT_HANDED_OFF` |
+| D12 | `pw/commands/update-prd.md:235` | "**The spec and architecture routes carry `<merge-clause>` when offered; …** … **On no ref at all** — … the gate's row-F fallbacks apply unchanged: `/create-ard` falls back to the resolved folder, reported, and `/update-spec`'s PRD gate proceeds, reported …" | rewrite | Task 5, *beyond plan*: the `/create-ard` half now stops; the `/update-spec` half stays true by C11's carve-out |
+| D13 | `pw/commands/brd-reconcile.md:3016–3021` | "… both run the PRD gate — on every route, as of increment E — but neither waits on a PRD, because that gate's `absent` branch proceeds and reports, … the one state that would make either wait is a `prd.md` that exists on an unmerged branch …" | rewrite | Task 5, *beyond plan's file list* (design §7 names `:3018`). On a slice a `prd.md` in the folder and on no ref now stops both, so *neither waits on a PRD* and the exclusive *the one state* are false. It also quotes B3/C2's lead. The Phase 14 ledger half is batch 4's (L-B4-7) |
+| D14 | `pw/docs/commands/brd-reconcile.md:727` | "\[`/create-ard <SLICE-KEY>`\] (PA, optional) · **On a slice**, with no further condition · … the PRD gate runs on every route, but its `absent` branch proceeds, so no wait on an unauthored PRD …" | rewrite | Task 5, *beyond plan*: as D13 (the *no further condition* half is batch 4's) |
+
+### Task 6 — the instruction tier and the family's pages
+
+| # | file:line | First words | Disposition | Owner, and why |
+|---|---|---|---|---|
+| E1 | `CLAUDE.md:153` | "- A phase is not finished until its artifact is on the specs repo's default branch — … an absent optional input still delegates to the command's pre-existing behaviour and never becomes a prerequisite …" | rewrite | Task 6 Step 1 |
+| E2 | `.claude/rules/workflows-core-handoff.md:24` | "`plugins/workflows-core/references/phase-handoff.md` is the **single source of truth** … §3.4's row-F delegation table (an `absent` gated input falls back …, never a new prerequisite — the nine consumers with a row that stops instead, …, each gate an input that was never optional …" | rewrite | Task 6 Step 2 |
+| E3 | `.claude/rules/product-workflows.md:42` | "/create-ard → [require-on-main: PRD; on the BRD route, the slice's decisions.md; …]" | rewrite | Task 6 Step 3 |
+| E4 | `.claude/rules/product-workflows.md:45` | "/specify → [require-on-main: PRD; on the BRD route, the slice's decisions.md; …]" | rewrite | Task 6 Step 3 |
+| E5 | `.claude/rules/product-workflows.md:46` | "/update-spec → [require-on-main: the specification itself — … then its inputs as /specify gates them, …]" | rewrite | Task 6, *beyond plan*: as C16 |
+| E6 | `.claude/rules/brd-route.md:32` | "BRD route (tail) → … /create-ard <SLICE-KEY> [ard-seed.md; the PRD gate runs, and its absent branch architects from the slice folder] → /specify <SLICE-KEY> [… the same PRD gate, the same absent branch] …" | rewrite | Task 6 (the plan says re-read). True of a slice with no `prd.md`; false of one whose `prd.md` is in the folder and on no ref, which now stops (both routes) |
+| E7 | `pw/docs/roles-and-phases.md:10` | "- **No such branch carries it** — … an absent optional input is never promoted into a prerequisite. Several of this plugin's own commands are the exception: each whose gated input was never optional stops on its absence — …" | rewrite | Task 6 Step 6 |
+| E8 | `pw/docs/roles-and-phases.md:20` | "- **Hands over at the seam:** … `/create-ard` and `/specify` each gate on the PRD there — an absent PRD falls back to reading the resolved folder directly instead of stopping …" | rewrite | Task 6 Step 6, *beyond plan's line list* |
+| E9 | `pw/docs/roles-and-phases.md:32` | "- **Hands over at the seam:** `/create-ard` gates on the PRD — an absent PRD falls back …, and the hard stop is an unmerged PRD, never a missing one …" | rewrite | Task 6 Step 6, *beyond plan's line list* |
+| E10 | `pw/docs/roles-and-phases.md:41` | "- **Hands over at the seam:** `/specify` gates on the PRD the same way `/create-ard` does — an absent PRD falls back …" | rewrite | Task 6 Step 6, *beyond plan's line list* |
+| E11 | `dw/docs/roles-and-phases.md:10` | "- **No such branch carries it** — … (The companion `product-workflows` has several of its own — each command whose gated input was never optional: `/update-spec` …)" | rewrite | Task 6 — the parenthetical's list and its *never optional*; the `/design` sentence before it is batch 2's, as L-B2-12 is |
+| E12 | `dw/docs/roles-and-phases.md:26` | "- **Hands over at the seam:** … `/implement` gates its own in-scope `specification.md` / `design.md` the same way the companion plugin's `/product-workflows:create-ard` and `/product-workflows:specify` gate the PRD — an unmerged one is a hard stop, but an absent one is not …" | rewrite | Task 6 — the comparison is false after this batch; what `/implement` does is batch 2's |
+| E13 | `dw/docs/getting-started.md:108` | "1. **A gate.** `/design` refuses to start … (the companion `product-workflows` commands whose gated input was never optional stop too: …)" | rewrite | Task 6 — the parenthetical (the `/design` claim is batch 2's) |
+| E14 | `dw/docs/commands/design.md:59` | "- **The merged `specification.md` itself**, … (the companion `product-workflows` commands whose gated input was never optional stop too) …" | rewrite | Task 6 — the parenthetical (the dev-side claims are batch 2's) |
+| E15 | `dw/docs/commands/ready.md:55` | "- **The gated ARD/spec/design themselves — `/ready` is the one command here whose gated inputs never stop it.** … the companion `product-workflows` commands whose gated input was never optional stop on absence too." | rewrite | Task 6 — that clause |
+| E16 | `dw/docs/commands/ready.md:94` | "- [`/design`](design.md) — the opposite extreme on the same gate: … (the companion `product-workflows` commands whose gated input was never optional stop too) …" | rewrite | Task 6 — that clause |
+| E17 | `pw/docs/workflow.md:199` | "`/create-ard` · `<SLICE-KEY>` · … · On a slice, with no further condition — gates and reads `prd.md` as on the idea route, proceeding when there is none, and never authors from the ledger" | rewrite | Task 6 — *as on the idea route* beside *proceeding when there is none* now contradicts the idea route; *no further condition* is batch 4's |
+
+`docs/maintainers/rationale.md` holds no statement of the old rule: the searches in §1 found none. Task 6 Step 4 adds `#ladder-order`.
+
+## 4. The population — rows kept
+
+### Still true, with why
+
+| # | file:line | First words | Disposition | Why |
+|---|---|---|---|---|
+| K1 | PH:14 | "Single source of truth for the two entry points … save where §3.4 falls back" | keep | Generic: §3.4 still has falling-back rows |
+| K2 | PH:16 | "**The principle.** … save, for an artifact no plugin branch carries (§3.3 row F), where §3.4 records that it falls back to what it does without it." | keep | As K1 |
+| K3 | PH:274 | "F · not on ref · — · found on no ref · **delegate** — return `absent`; see §3.4" | keep | The gate does not change (design §4) |
+| K4 | PH:320 | "`/create-prd <KEY>` · `idea.md` · … **`/idea` is not a prerequisite.**" | keep | Another command — `/create-prd`'s idea ladder (design §6) |
+| K5 | PH:324 | "`/specify` `/update-spec` `/design` `/implement` `/epics` `/ready` · the ARD · `status: none` …" | keep | An optional input: the ARD (§6) |
+| K6 | PH:325 | "`/epics` · PRD-level `specification.md` · `vi_spec_present: false` …" | keep | An optional input (§6) |
+| K7 | PH:327, :328 | "`/design` · `specification.md` · **stops** …" / "`/update-spec` · its own base … **stops** — `UPDATE_SPEC_NO_BASE` …" | keep | Another command; unchanged (L5) |
+| K8 | PH:331 | "`/create-prd` `/create-ard` `/specify` `/update-spec` **(BRD route)** · the slice's `decisions.md` · **falls back, and splits row F** …" | keep | BRD route; an optional input (`decisions.md`, §6). Its stops' committed form is batch 4's (L-B4-14) |
+| K9 | PH:335, :336 | "`/prd-ground` **(idea route)** · `prd.md` · **stops** …" / "`/prd-proposal` · `prd.md` · **stops** …" | keep | Still true: *land the file already on disk* covers both of D1/D2's forms |
+| K10 | PH:338 | "`/brd-split` **(`split_mode: allocate-only`)** · `grounding/design-grounding.md` … the condition is what keeps it inside §5 rule 3" | keep | Another command; true of A11's rewritten rule 3 — re-read after it |
+| K11 | PH:379 | "`pass_amending` is row B. `absent` is row F and is the caller's to interpret per §3.4." | keep | Unchanged |
+| K12 | PH:449 | "**So the test is not "does this command stop", it is "does this command claim".** … `/epics` on `prd.md` … would breach §5 rule 3" | keep | L13; re-read after A11 |
+| K13 | PH:529 | "- **gated — falling back** … Four artifacts qualify as §3.4 stands …" | keep (batch 1) | Names no PRD row (the PRD left it at PH:535, A9). Its `design.md` member is batch 2's (L-B2-2); Task 2 Step 6 checks |
+| K14 | ARD:33 | "**Ending early.** Every stop in this command — each `CREATE_ARD_*` stop, among them …" | keep | *each `CREATE_ARD_*` stop* already covers the new ids; Task 3 may name them beside the register's row-F split |
+| K15 | ARD:258–266 | "**A slice can hold both, and where it does the PRD wins the gauge.** … no `prd.md` — the ordinary BRD-route state, since `/product-workflows:create-prd` is not a prerequisite for this command —" | keep | BRD route (the plan's Task 3 Step 4 says it stays). *for this command* reads unqualified out of its paragraph — Task 3 re-reads |
+| K16 | ARD:294–307 | "**Gate the decision register — on the BRD route, right after the PRD gate.** … Nothing becomes a prerequisite (§5 rule 3)." | keep | BRD route; an optional input; re-read after A11 |
+| K17 | ARD:350–352 | "… The PRD is gated above on every route." | keep | Still gated on every route; only what `absent` does changes |
+| K18 | ARD:372 | "1. **Confirm** the scope … and, on every route, whether an authored `prd.md` was found there (the Phase 0 gate's result) …" | keep | Still true (an idea-route run that reaches Phase 1 has one; a slice may not). The plan's Task 3 Step 4 lists it — re-read there |
+| K19 | ARD:404–416 | "**The PRD read below runs on every route.** …" | keep | Unchanged |
+| K20 | ARD:418 | "Read the PRD from the folder … — its `prd.md`, … when present (authored source) …" | keep | The stop now precedes it; *when present* stays true of a slice |
+| K21 | ARD:444–446 | "On the BRD route this phase **additionally** reads … found a `prd.md` or reported its absence." | keep | BRD route |
+| K22 | ARD:482–485 | "**Absence is reported, never a stop, and the seed's absence is the ordinary case.** …" | keep | Optional inputs (seed, register); batch 4 adds the ledger tests |
+| K23 | ARD:513–517 | "… Where `prd_dir` holds neither file, report that and proceed … grounding is optional to this command and nothing here gates on it." | keep | An optional input (grounding) |
+| K24 | ARD:858–859 | "- **The slice holds an authored `prd.md`** — `choices: …`" / "- **No `prd.md`, and the gate set clears both data tests** — `choices: …`" | keep | BRD route; the two arrays a slice that passes the ledger tests still takes (the four after them are L-B4-4) |
+| K25 | ARD:869–875 | "- **`/product-workflows:epics <SLICE-KEY>` is the second option of the first array only, …** … But **this route does not require a PRD** …" | keep | BRD route (875–880 are L-B4-5) |
+| K26 | ARD:977 | "Report: … **the PRD gate's return value and whether an authored `prd.md` was read from the resolved folder** — the same two lines on every route …" | keep | Still printed on every route |
+| K27 | ARD:1011–1013 | "… Say plainly whether `/product-workflows:epics` was offered and, when it was not, **why**: the resolved folder holds no authored `prd.md` …" | keep | Inside *On the BRD route, additionally* |
+| K28 | `pw/docs/commands/create-ard.md:146` | "[`/epics`] partitions a PRD and refuses a folder that holds none, and this route does not require one — `/create-prd` is not a prerequisite for `/create-ard` on it — …" | keep | BRD route: *on it* is the route of the slice example above it. The plan's Task 3 Step 5 lists it — re-read there |
+| K29 | `pw/docs/commands/create-ard.md:162` | "- **Where the PRD folder holds an authored `prd.md`** → [`/prd-proposal <PRD>`] … Without a PRD, the offer says …" | keep | Not route-scoped; reachable on a slice |
+| K30 | SPEC:30 | "**Ending early.** Every stop in this command — each `SPECIFY_*` stop, …" | keep | As K14 |
+| K31 | SPEC:333–344 | "**Gate the decision register — on the BRD route, right after the PRD gate.** … Nothing becomes a prerequisite (§5 rule 3)." | keep | As K16 |
+| K32 | SPEC:603–608 | "- **PRD with 0 Epics** → this PRD hasn't been split yet. …" | keep | The array is unchanged; the idea-route no-PRD state is stopped before it |
+| K33 | SPEC:626–627 | "The other two choices are unchanged either way: a broad spec authored from the folder as it stands is still reachable …" | keep | A slice's |
+| K34 | SPEC:1292 | "PRD gate: <the PRD gate's return value>; authored prd.md read from prd_dir: <yes\|no>" | keep | Still printed |
+| K35 | SPEC:1393–1398 | "- **`/product-workflows:epics <PRD>`**, on a PRD-level spec only … subject to the `prd.md` precondition above, which is the same test on both routes …" | keep | Still the same test; re-read after C8 |
+| K36 | `pw/commands/update-spec.md:60` | "7a. **Check above the base.** … each where step 6's gate returned `pass` or `pass_amending` …" | keep | Task 4 Step 5 checks it (the plan's :59; the true line is 60) |
+| K37 | `pw/docs/commands/specify.md:23` | "- **A PRD with 0 Epics and an authored `prd.md`** — … Without an authored PRD, the first option instead names the applicable PRD-authoring or BRD-allocation prerequisite" | keep | Still true, of a slice only now; Task 4 may say so |
+| K38 | `pw/docs/commands/specify.md:41–46` | mermaid: `noepics -->\|"No authored PRD — prerequisite offered"\| prerequisite[...]` | keep | A slice reaches it; the diagram draws no Phase 0 stop for any stop |
+| K39 | `pw/docs/commands/specify.md:143` | "- **Where the PRD folder holds an authored `prd.md`** → … Without a PRD, the step says …" | keep | As K29 |
+| K40 | `wc/references/next-phase-offer.md:205` | "- `/product-workflows:create-prd <ADDRESS>`: … `/product-workflows:create-ard <PRD>`, which gates this PRD and so carries `<merge-clause>` …" | keep | The clause's *Declined by the user* value already says the artifacts must reach the default branch, which is now enforced |
+| K41 | `wc/references/next-phase-offer.md:206` | "- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: …" | keep | `/update-prd` needs a PRD; its own terms are D12 |
+| K42 | `wc/references/next-phase-offer.md:278–283` | "… `/product-workflows:create-ard <KEY>` at tier 2, `/product-workflows:specify <KEY>` at tier 3 … both gate on `prd.md`, which a proposal run does not write." | keep | `/prd-proposal` already requires a merged `prd.md` |
+| K43 | `wc/references/next-phase-offer.md:287` | "- **Neither is a prerequisite for the build ladder.** …" | keep | Another subject (proposals) |
+| K44 | `wc/references/next-phase-offer.md:301–307` | "- `/product-workflows:create-ard <PRD>` (PRD-level) → PE → …" | keep | Unchanged |
+| K45 | `wc/references/next-phase-offer.md:332–347` | "**Every `/product-workflows:epics` option the routing graph names is conditional …** … holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd` is not a prerequisite for `/product-workflows:create-ard` there …" | keep | BRD route (the plan's Task 5 Step 3: stays). Design §7's *line 338* |
+| K46 | `pw/commands/create-prd.md:123–127` | "1. **in-contract** … **`/idea` is not a prerequisite for `/create-prd`** …" | keep | Another command (§6) |
+| K47 | `pw/commands/create-prd.md:380–383` | "… register absent and carries what the folder holds. Nothing becomes a prerequisite (§5 rule 3); a slice nobody has interviewed holds no register …" | keep | BRD route; re-read after A11 |
+| K48 | `pw/commands/create-prd.md:914` | "- **`/product-workflows:epics <ADDRESS>`** (PE) — … `/product-workflows:specify <ADDRESS>` `<merge-clause>`, which … gates this PRD … so it stops while this run's PRD sits on a branch" | keep | Not exclusive, and true; D11 sits beside it |
+| K49 | `pw/docs/commands/create-prd.md:57` | "- **In-contract — `<KEY>`'s own feature folder.** … absent falls through to the next rung without stopping ([`/idea`] is not a prerequisite for `/create-prd`) …" | keep | Another command |
+| K50 | `pw/docs/commands/create-prd.md:167–168` | "- **Hand to a Product Architect** (PA, optional) → [`/create-ard <ADDRESS>`]. It gates this PRD …" | keep | True; says the offer names the wait |
+| K51 | `pw/commands/prd-ground.md:2374–2397` | "**`/create-ard <KEY>` and `/specify <KEY>` each carry `<merge-clause>`** — both re-gate the same `prd.md` …" | keep | `/prd-ground`'s idea route already required a merged `prd.md` |
+| K52 | `pw/commands/prd-proposal.md:782`, `:786` | `choices: [… "Raise the tier first — /product-workflows:create-ard <KEY>, …"]` / `… /product-workflows:specify <KEY> …` | keep | `/prd-proposal` already required a merged `prd.md` |
+| K53 | `pw/docs/commands/prd-ground.md:61–62` | "… **optional and ungated**: nothing in [`/create-ard`] or [`/specify`] requires it to have run." | keep | An optional input (grounding) |
+| K54 | `pw/docs/commands/prd-ground.md:449–451` | "On the idea route, `prd.md` itself — … a document `/create-ard` and `/specify` cannot yet see." | keep | Still true |
+| K55 | `pw/commands/brd-split.md:225–227` | "… which is what keeps this test inside `workflows-core:phase-handoff` §5 rule 3 (a gate may not promote an optional input into a prerequisite) …" | keep | Another command; true of A11's rewrite — re-read after it |
+| K56 | `dw/references/context-management.md:78–79` | "This matches `workflows-core:phase-handoff` §3.4 (an absent optional input falls back to pre-existing behaviour, never becomes a new prerequisite) …" | keep | Speaks of optional context inputs, which §3.4 still says fall back; re-read after A1–A3 |
+| K57 | `wc/references/escalation-rules.md:230–234` | "**A folder that is there is never this case, whatever it holds** … a PRD folder with no `prd.md` — raises a named stop of its own …" | keep | The new stops are named, as it requires (SPEC:538–541 rests on it) |
+| K58 | `wc/references/ard-resolution.md:97` | "**`unmerged` is reachable only when an ARD file resolves.** … This status does not make `/create-ard` a prerequisite for anything." | keep | The ARD stays optional |
+| K59 | `pw/docs/workflow.md:226` | "- **The specs repo's default branch** is the source of truth … as absent, falling back from it or, for a few, stopping." | keep | Still true: a few more stop |
+| K60 | `pw/docs/workflow.md:101–102` | mermaid: `createard -.->\|"no prd.md — author the PRD"\| createvi` / `specify -.->\|…\| createvi` | keep | A slice whose ledger clears both tests reaches it; Task 6 re-reads |
+| K61 | `pw/docs/brd-workflow.md:91–94` | "… On a slice with no `prd.md`, `/create-ard` and `/specify` offer `/create-prd` where the slice can take a PRD …" | keep | BRD route |
+| K62 | `pw/docs/commands/brd-reconcile.md:748` | "… neither of the unconditional two waits on an unauthored PRD, though either stops on a `prd.md` that sits on an unmerged branch …" | keep | Not exclusive, and true; Task 5 re-reads it with D14 |
+| K63 | `pw/commands/idea.md:98` | "an Epic folder whose parent holds a `prd.md` asserting `kind: prd` · … or specify it with '/product-workflows:specify <KEY>'." | keep — flagged | §9 item 2 |
+| K64 | `pw/commands/brd-split.md:146` | "`BRD_SPLIT_NOT_A_BRD: <KEY> resolves to an idea-route PRD folder …` … `The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>' where the folder holds no prd.md yet).`" | keep — flagged | §9 item 2 |
+| K65 | `pw/commands/brd-interview.md:226` | "`BRD_INTERVIEW_NOT_A_SLICE: …` … The idea route goes on from its PRD: …" | keep — flagged | §9 item 2 |
+| K66 | `pw/commands/brd-reconcile.md:291` | "`BRD_RECONCILE_NOT_A_SLICE: …` … The idea route goes on from its PRD: …" | keep — flagged | §9 item 2 |
+| K67 | `pw/commands/brd-package.md:218` | "`BRD_PACKAGE_NOT_A_SLICE: …` … The idea route goes on from its PRD: …" | keep — flagged | §9 item 2 |
+| K68 | `pw/docs/commands/brd-split.md:277–281` | "- **Not an idea-route PRD folder.** … naming [`/create-ard`] and [`/specify`] as the way the idea route goes on …" | keep — flagged | §9 item 2 |
+| K69 | `pw/docs/brd-workflow.md:355` | "… (`BRD_INTERVIEW_NOT_A_SLICE`, `BRD_PACKAGE_NOT_A_SLICE`, `BRD_RECONCILE_NOT_A_SLICE`), each naming `/create-ard` and `/specify` as the way that route goes on;" | keep — flagged | §9 item 2 |
+| K70 | `dw/commands/design.md:107` | "- **Gate the resolved target on main** … naming `/product-workflows:specify <PRD>` … for an Epic with no `specification.md` …" | keep — flagged | §9 item 3 |
+| K71 | `dw/commands/design.md:240` | `choices: ["<Re-split — /product-workflows:epics <EPIC> \| Add the component first — /product-workflows:create-ard <PRD>> (Recommended)", …]` | keep — flagged | §9 item 3 |
+| K72 | `dw/commands/conformance.md:115` | "`CONFORMANCE_NO_REQUIREMENTS: <KEY> has no requirement to trace — … specify it with '/product-workflows:specify <KEY>' …`" | keep — flagged | §9 item 3 |
+| K73 | `dw/commands/conformance.md:572–577` | "- a PRD run → … `/product-workflows:epics <PRD-KEY>` or `/product-workflows:create-ard <KEY>`, as the note names …" | keep — flagged | §9 item 3 |
+| K74 | `wc/references/components.md:117–123` | "**The earliest gap's remedy**, which `/epics` and `/implement` recommend, … `ard_contract` → `/product-workflows:create-ard <PRD>`, `prd_spec` → `/product-workflows:specify <PRD>` …" | keep (batch 1) | The table names the authoring command per missing row; the landing precondition belongs at its `/epics` caller (D7). Batch 2 re-reads it for `/implement` (L12) |
+| K75 | `wc/references/security-register-format.md:283`, `:287`; `wc/references/followup-emission.md:90` | "- [ ] Run `/product-workflows:create-ard <PRD-KEY>` to record an [AD#N] …" | keep | :283 and followup-emission's line are a follow-up written into a record for a later run, which L8 exempts (as K76); :287 is the `pa_next_step` printed where the run has no `--prd-key`, and names no folder the run read, only a placeholder for the PRD the operator picks |
+| K76 | CONF:317 | "``Run `/dev-workflows:implement <EPIC-KEY>` from repository `<slug>`: <requirement> — <what shipped>``," | keep | A follow-up line written into a record for a later run: design L8 keeps its text |
+| K77 | `wc/references/architecture-grounding.md:112` | "Where `weakness.recurs` is true and `governing` is null, append `, or by an ARD decision … made with /product-workflows:create-ard <PRD-KEY>` …" | keep | Printed inside `/specify`'s own run, past its PRD stop |
+
+## 5. Later batches (design §7), recorded and left
+
+| # | file:line | First words | Disposition | Why |
+|---|---|---|---|---|
+| L-B2-1 | PH:326 | "`/implement` · `specification.md` / `design.md` · only an **in-scope** spec is gated …" | later 2 | Design §5.2 |
+| L-B2-2 | PH:529 (its `design.md` member), PH:565 | "- **gated — falling back** … and `design.md`, gated in-scope-only by `/implement` …" / "**gated — falling back** (§4.1 bullet 2) — … the ARD and `design.md` are two more artifacts …" | later 2 | `design.md` changes class (design §7) |
+| L-B2-3 | IMPL:219–220 | "- **On a multi-component PRD** — … / - **PRD with exactly 1 Epic** → …" | later 2 | L11 |
+| L-B2-4 | IMPL:236–237 | "unit nothing specified: … an absent in-scope spec being `absent` rather than a stop." | later 2 | Design §7 |
+| L-B2-5 | IMPL:256 | "`specification.md` but no `design.md` → ○; …" | later 2 | Design §5.2 (the ○ marker) |
+| L-B2-6 | IMPL:270 | "- **PRD with 0 Epics** → offer: split with `/product-workflows:epics` first, or implement one broad …" | later 2 | Design §5.2 |
+| L-B2-7 | IMPL:279–281 | "**re-resolve `specs`** now that `focus_key` is set. A keyed run's in-scope `specs` are the …" | later 2 | Design §5.2 (the expected pair) |
+| L-B2-8 | IMPL:316–321 | "- **Specs are required for keyed runs.** …" | later 2 | L6 |
+| L-B2-9 | IMPL:324 | "**Gate the in-scope specs on `$SPECS_PATH`'s main.** …" | later 2 | Design §5.2 |
+| L-B2-10 | IMPL:375 | "- **A prerequisite row that is neither `present` nor `unmanaged` — …" | later 2 | Design §5.2 |
+| L-B2-11 | IMPL:1366–1370 | "Where the set is an annotated `design.md` **alone**, present §4.3's **gated — falling back** array …" | later 2 | Design §5.2 |
+| L-B2-12 | `dw/docs/roles-and-phases.md:17` | "- **Hands over at the seam:** … this plugin's one hard exception to the optional-input rule above." | later 2 | `dev-workflows`' own exception set changes with `/implement` |
+| L-B2-13 | `dw/docs/commands/design.md:99` | "- [Roles and phases] — … this plugin's one exception where an absent gated input stops the run rather than falling back." | later 2 | As L-B2-12 |
+| L-B2-14 | `dw/docs/commands/implement.md:174` | "- [Roles and phases] — … how an unmerged in-scope spec/design stops the run while an absent one does not." | later 2 | Design §5.2 |
+| L-B2-23 | CONF:72, PH:330 | "4. **Gate the documents read.** … An `absent` document falls back per §3.4: the run traces what exists, and the report names each document it could not read." / "`/dev-workflows:conformance` · each document it traces or reads as context … · traces what exists …" | later 2 | `/conformance`'s own row-F fallback, which L9's trace settles |
+| L-B2-15 | CONF:105, :138 | "**(a) Clones and freshness.** …" / "- **PRD run.** Run the merged test on each Epic before tracing …" | later 2 | L9 trace |
+| L-B2-16 | CONF:118–119 | "- **Epic run.** … / `CONFORMANCE_NOT_IMPLEMENTED: …`" | later 2 | L12 |
+| L-B2-17 | CONF:560, :572 | "- an Epic run with a `fix-code` decision → `/dev-workflows:implement <EPIC-KEY>` …" / "- a PRD run → …" | later 2 | L8 (CONF:317, a record's follow-up line, keeps its text) |
+| L-B2-18 | `plugins/security-workflows/commands/scan.md:550` | "- **findings went to fix** → with a key, `/dev-workflows:implement <KEY>` …" | later 2 | L8 |
+| L-B2-19 | `.claude/rules/dev-workflows.md:33` | "/implement → [stopped run in the worktree: …] → … [require-on-main: in-scope spec/design] …" | later 2 | The map line |
+| L-B2-20 | `.claude/rules/dev-workflows-conformance.md:13` | "/conformance → [resolve-address: an EPIC- folder — …" | later 2 | Where L9 adds a stop |
+| L-B2-21 | `wc/references/next-phase-offer.md:69`, `:102`, `:356–369` | "- **Depth** — the next command for the SAME Epic (`/dev-workflows:design <EPIC>` → `/dev-workflows:implement <EPIC>`)." / "**The remaining Epics are named.** …" / the Dev lane's offers of `/dev-workflows:implement <EPIC>` | later 2 | Design §7: every `next-phase-offer` offer naming `/implement` (L8, L12) |
+| L-B2-22 | `.claude/rules/security-workflows.md:31` | "It is offered by `/dev-workflows:implement` and `/dev-workflows:conformance` … among the offers it prints in turn are `/dev-workflows:implement <KEY>` …" | later 2 | What `/implement` does with a finding |
+| L-B3-1 | DOC:58 | "**Ending early.** Every stop in either mode — …" | later 3 | Design §5.3 |
+| L-B3-2 | DOC:425 | "- `Repos: <value> …`" | later 3 | Design §5.3 |
+| L-B3-3 | DOC:548 | "- **`missing` is non-empty, and Phase 1 took *Proceed without the repos*** — …" | later 3 | Design §5.3 |
+| L-B3-4 | DOC:608 | "After every batch completes, if **every ref across every repo** is unresolved, …" | later 3 | Design §5.3 |
+| L-B3-5 | `wc/references/next-phase-offer.md:366`, `:370` | "PE → `/dev-workflows:conformance <PRD>` → `/docs-workflows:document <PRD>` → …" / "- `/docs-workflows:document <PRD>` (PRD-level, after all Epics) → …" | later 3 | Design §7: `next-phase-offer`'s offers naming `/document` |
+| L-B3-6 | `.claude/rules/docs-workflows.md:39` | "/document (keyed) → [document-lineage upstream-check per unit, Phase 0 …" | later 3 | The map line |
+| L-B4-1 | ARD:466–480 | "- **`brd-link.md`** — for `parent:` and `depends-on:` only. This run reads no `claims:` list and no coverage ledger **as an authoring input** …" | later 4 | Design §5.4 |
+| L-B4-2 | SPEC:702–717 | "- **`brd-link.md`** — for `parent:` and `depends-on:` only. …" | later 4 | Design §5.4 |
+| L-B4-3 | ARD:834–837 | the precondition table's failing-ledger rows, "A row still `unallocated`" … "No readable `coverage-ledger.md` beside the `brd-link.md` …" | later 4 | Design §5.4 |
+| L-B4-4 | ARD:860–863 | "- **No `prd.md`, and a claimed row is still `unallocated`** — `choices: …`" … "- **No `prd.md`, and either no row `covered-here` and none `unallocated` …" | later 4 | Design §5.4 |
+| L-B4-5 | ARD:875–880 | "`/epics` refuses one (`EPICS_NO_PRD`). **This route is where the second half of that test matters most** …" | later 4 | Design §5.4 |
+| L-B4-6 | SPEC:616–623, SPEC:1369–1375 | "**Passing that command's container refusal is not enough to name it**, …" / the `### Next step` gate-set table | later 4 | Design §5.4 |
+| L-B4-7 | `pw/commands/brd-reconcile.md:2987–3015`, `:3021–3027` | Phase 14's advancing list (the phase opens at 2971): the `/create-prd` ledger condition, and "… neither reads the `claims:` list or the coverage ledger **as an authoring input** …" | later 4 | Design §5.4 (D13 takes the PRD-gate sentences in this batch) |
+| L-B4-8 | `wc/references/next-phase-offer.md:224–266` | the BRD part's advance offers of `/create-ard <BRD-KEY>` and `/specify <BRD-KEY>` | later 4 | Design §5.4 (D10 takes one sentence in this batch) |
+| L-B4-9 | `pw/commands/brd-interview.md:2524–2535`, `:2563` | "**A slice that needs no customer review goes to the authoring ladder without a reconciliation** … on the level test alone" / the array | later 4 | Design §5.4 |
+| L-B4-10 | `pw/docs/brd-workflow.md:298–299`, `:327–328` | "… while `/create-ard` on the BRD route and `/specify` on the BRD route carry none of their own, … the PRD gate both run reports an absent PRD rather than stopping on it." / "`/create-ard` · `<SLICE-KEY>` · … gates `prd.md` as on the idea route …" | later 4 | Design §7. *as on the idea route* is looser after this batch (cf. E17); batch 4 rewrites the row |
+| L-B4-11 | `pw/docs/workflow.md:140`, `:142` | "The BRD-to-PRD route hands over at [`/brd-reconcile`] … the PRD gate both run reports an absent PRD rather than stopping on it." / "… `/create-ard` and `/specify` on the slice level alone …" | later 4 | Ledger conditions. *an absent PRD* reads as no PRD, which a slice still proceeds on |
+| L-B4-12 | `pw/docs/commands/create-ard.md:84`, `pw/docs/commands/specify.md:87` | "- **No coverage-ledger check.** …" | later 4 | Design §5.4 |
+| L-B4-13 | `pw/docs/commands/brd-reconcile.md:727` (*no further condition*) | the ledger half of D14's row | later 4 | Design §5.4 |
+| L-B4-14 | BRD-route `*_NOT_HANDED_OFF` stops: `pw/commands/brd-package.md:302`, `:318`; `pw/commands/brd-proposal.md:444`; `pw/commands/brd-reconcile.md:377`; ARD:318; `pw/commands/create-prd.md:397`; `pw/commands/prd-ground.md:337`, `:430`; SPEC:357 — each with its docs page | "`BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: …`", "`BRD_PACKAGE_SHIPPED_NOT_HANDED_OFF: …`", "BRD_PROPOSAL_SLICE_NOT_HANDED_OFF: …", "`BRD_RECONCILE_PACKAGE_NOT_HANDED_OFF: …`", "CREATE_ARD_REGISTER_NOT_HANDED_OFF: …", "CREATE_PRD_REGISTER_NOT_HANDED_OFF: …", "`PRD_GROUND_INVENTORY_NOT_HANDED_OFF: …`", "`PRD_GROUND_NOT_HANDED_OFF: …`", "SPECIFY_REGISTER_NOT_HANDED_OFF: …" | later 4 | Design §4: the committed form, batch 4 |
+
+## 6. Generated copies — `plugins/workflows-core/reference-parts/`
+
+Searched, never edited (*Global Constraints*): `python3 scripts/reference-parts.py generate` rewrites them from PH (Task 2 Step 8) and from `next-phase-offer` (Task 5 Step 3, if D9 or D10 edits it). The starter grep hits 23 lines there:
+
+- `phase-handoff/require-on-main.md` (12: lines 9, 11, 122, 148, 152, 156, 167, 171, 172, 176, 191, 251) — copies of PH:14, 16, 286, 312, 316, 320, 331, 335, 336, 340, 355, 623. They follow A1–A3, A8, A11, K1, K2, K4, K8 and K9; PH:286 (*`not on ref` describes the repository*) and PH:340 (`/brd-interview`'s defect-log row) are other subjects.
+- `phase-handoff/handoff-to-main.md` (3: lines 105, 287, 337) — PH:127 (unrelated), PH:529 (K13), PH:579 (unrelated).
+- `next-phase-offer/{epics-precondition,pm,pe,pa,dev}.md` (one each: the *is not a prerequisite for `/product-workflows:create-ard` there* sentence, K45) and `next-phase-offer/brd.md:205` (D10's sentence).
+- `escalation-rules/stops.md:188` (K57) and `escalation-rules/review.md:355` (unrelated).
+
+Their `wic … parts` counts are in §2.
+
+## 7. CHANGELOG hits — history, never rewritten
+
+Searched (refinement 4) and left as they are:
+
+- `dw/CHANGELOG.md:1512` (`/design`'s page once said every other producer's optional input falls back), `:3186` (*its `absent` branch reports and proceeds, so `/create-prd` …* on the BRD route), `:3205`, `:3212`, `:3292`, `:3366` (*`/idea` is not a prerequisite*), `:3432`, `:3499`, `:4297`, `:5065` (*Seven consumers refuse to proceed …*), plus `:786` and `:3827` (*optional input*, other subjects).
+- `pw/CHANGELOG.md:1424`, `:1571`, `:1651`, `:1652`, `:2726` (the PRD gate's history).
+- `wc/CHANGELOG.md:673` (*one optional input, `register_rebuild`*, another subject).
+
+## 8. Starter-grep hits that are not statements of the claim
+
+Read, and outside the subject: each is *falls back*, *optional input* or *no `prd.md`* about something else.
+
+- **`falls back` or `prerequisite` about something else:** `plugins/prose-style/commands/prose-review-docs.md:114`, `prose-review-pr.md:70`, `:180`, `plugins/prose-style/README.md:5`; `pw/references/proposal-format.md:618`; `pw/docs/reference/proposal-format.md:98`; `pw/docs/getting-started.md:36` (`REPOS_PATH`); `dw/references/handoff/test-baseliner.md:11`; `dw/docs/README.md:34`, `dw/docs/reference/test-suite-detection.md` (6 lines), `dw/agents/test-baseliner.md:95`, `:99`; `dw/docs/reference/session-cost.md:32`; `dw/docs/commands/implement.md:73`; `dw/commands/vuln.md:444`; `dw/references/code-handoff.md:34`; `dw/commands/ready.md:41`, `:208`; `dw/commands/implement.md:518`, `:1390`, `:1744`; `dw/docs/getting-started.md:38`; `dw/docs/commands/vuln.md:43`, `:46`; `plugins/docs-workflows/**` (render-verification, docs-profile-schema, release-note-types, doc-location-finder, docs-style-checker, docs-profile, document.md:258/1067/1068/1124, release-notes docs, environment, getting-started); `wc/references/escalation-rules.md:661`; `wc/references/addressing.md:640`; `wc/references/model-routing/classification.md:324`; `wc/agents/docs-grounder.md:51`, `code-scanner.md:62`; `wc/docs/reference/environment.md:109`; `wc/docs/family-map.md:187`; `.claude/rules/plugin-updates-coupling.md:21`, `.claude/rules/release-notes.md:31`, `.claude/rules/product-workflows.md:23`; `README.md:53`, `:54`.
+- **Another `optional input`:** `wc/references/specs-repo-git.md:1470`.
+- **`no prd.md` in a refusal of another command, or on a slice's ledger:** `pw/commands/idea.md:92–97`, `:99`; `pw/commands/prd-ground.md:153`, `:170`, `:254`, `:314`, `:371`, `:2545`; `pw/commands/create-prd.md:92`, `:150`, `:261`; `pw/commands/epics.md:75`, `:99`, `:193`, `:221`, `:247`, `:499`; `pw/commands/update-prd.md:38`, `:63`, `:247`; `pw/commands/prd-proposal.md:46`, `:159`, `:190`; `pw/commands/brd-split.md:141–144`; `pw/commands/brd-interview.md:2603`; `pw/commands/brd-reconcile.md:510`; `pw/commands/brd-proposal.md:358`; `pw/references/coverage-ledger-format.md:543`; `pw/references/proposal-format.md:165`; `pw/docs/commands/prd-ground.md:20`, `:44`, `:258`, `:267`; `pw/docs/commands/prd-proposal.md:26`; `pw/docs/commands/update-prd.md:45`, `:103`; `pw/docs/commands/brd-interview.md:251`; `pw/docs/commands/brd-proposal.md:61`; `pw/docs/commands/brd-split.md:349`, `:352`; `pw/docs/commands/create-prd.md:79`; `pw/docs/workflow.md:138`; `ARD:92`, `:241`, `:255`, `:811`; `SPEC:172`, `:801`; `dw/commands/design.md:75`; `dw/commands/implement.md:205`; `dw/commands/ready.md:79`; `wc/commands/frames.md:103`; `wc/docs/commands/frames.md:39`; `wc/references/addressing.md:614`, `:676`; `plugins/docs-workflows/commands/release-notes.md:72`, `:83`, `:131`; `plugins/docs-workflows/commands/document.md:34`, `:74`, `:85`, `:133`; `plugins/docs-workflows/docs/commands/document.md:18`.
+
+## 9. Notes for the controller
+
+1. **`/epics`' other offers of the two commands (D7, D8) — beyond §7.** Design L13 makes `epics.md:1124`'s offers say *land the PRD first* where it is not on the default branch. The same run makes two more: Phase 2.7's multi-component stop recommends `workflows-core:components` §6's earliest-gap remedy (`/create-ard <PRD>` or `/specify <PRD>`), and the final report's *Split not made* line names `/create-ard <PRD>`. Both now name a run that stops where the PRD is on no ref. I dispositioned them *rewrite (Task 5)* by L8 and L13; confirm the scope.
+2. **Stops that name the idea route's next step (K63–K69) — flagged keep.** `/idea`'s Epic-folder refusal and the four BRD-route *not a slice* stops name `/create-ard <KEY>` or `/specify <KEY>`, the BRD ones *after `/create-prd` where the folder holds no `prd.md` yet* — which already matches the new never-produced stop. Where a `prd.md` is on disk and on no ref, the named run now stops and names the landing. These texts already named those runs where the PRD sat on an unmerged branch (rows D and E), so the class predates this batch; the population is a user who runs a BRD command on an idea-route folder whose PRD handoff was declined. Kept, not rewritten; the anti-goal *a stop names a command that itself stops on arrival* is the reading to weigh.
+3. **Dev-side namings of `/specify <PRD>` and `/create-ard <PRD>` (K70–K73) — flagged keep.** `/design` and `/conformance` run on a unit whose specification exists; after this batch, an idea-route `/specify` writes one only above a merged PRD. The residual population is a specification written before this batch with no merged PRD above it, where the named run now stops naming `/create-prd` — the stop design L1 intends. No change proposed.
+4. **The not-handed-off stop is on both routes, which falsifies BRD-route sentences** that equate `absent` with *proceeds*: D10, D13, D14 and E6. Sentences that speak of *no PRD* or *an absent PRD* (meaning none written) stay true of a slice and are kept or left to batch 4 (L-B4-10, L-B4-11, K61, K62).
+5. **Cross-task quotes.** B3/C2's bold lead is quoted at `brd-reconcile.md:3019–3020` (D13), and B2/C1's heading *Gate the PRD — on every route* at PH:351 (A7). Whichever task edits the source updates the quote, or the other task does.
+6. **What design §7 names that holds no statement of the claim today:** `.claude/rules/dev-workflows-implement.md` (`grep -nE "absent|in-scope spec|Specs are required|optional|prerequisite|specs question|Proceed without specs"` finds only an unrelated *absent* at :32 — batch 2 re-derives); *the error-id lists* (no page lists the family's ids; each command's docs page names its own inline, so B11 and C12 are where the new ids go); `pw/docs/getting-started.md`, `wc/docs/getting-started.md` and `wc/docs/family-map.md` (no sentence says a step can be skipped; the family map's solid `prd.md` arrows into `/create-ard` and `/specify` already draw the PRD as a main input); `docs/maintainers/rationale.md` (Task 6 adds the section). `docs/superpowers/to-fix.md` and `to-test-on-real-project.md` are outside the sweep's scope and are Tasks 6 and 8's.
+7. **Line drift against the plan:** the plan's `update-spec.md:59` is line 60 (K36); its `prd-ground.md:559–566` is the id's block inside the split at 549–566 (D1); its ARD `### Next step` at 800–806 is the paragraph at 799–816 (B6); its SPEC 660–666 is 662–665 (C6). Every other line the plan cites holds. The brief's *Task 7 writes the after-counts* is Task 8's job, as the plan has it.
