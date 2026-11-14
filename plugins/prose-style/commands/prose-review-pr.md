@@ -52,7 +52,7 @@ Run every git command with `git -C <repo_path>`.
 as `main`. Where the repository's is another, put its **name** in `main`'s place:
 `origin/<name>...origin/<branch>`, `<name>...<branch>`, `<name>...remotes/origin/<branch>`. Take
 the name from `git -C <repo_path> symbolic-ref --quiet --short refs/remotes/origin/HEAD`, which
-prints `origin/<name>`: the name is what follows `origin/`. Without `--short` the command prints
+prints `origin/<name>`: the name is what follows `origin/`. Before any command names it, the name must match `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`: git allows `$`, `(`, `)`, `;`, a backtick and quotes in a branch name, and a command that wrote such a name would run what it holds. Test it with a quoted here-document, `grep -Eqx '[A-Za-z0-9_][A-Za-z0-9._/@+-]*' <<'EOF'`, the name, `EOF`; where it fails, treat it as a name the probes below reject, and never print it. `symbolic-ref` without `--short` prints
 `refs/remotes/origin/<name>`, which is not a name — put in `main`'s place in `origin/main`, it makes
 `origin/refs/remotes/origin/<name>`, a revision git rejects, and in the other two it turns a diff
 against the local branch into one against the remote.
@@ -91,6 +91,7 @@ through to the branch search.
     git -C <repo_path> fetch --all --prune 2>/dev/null
     git -C <repo_path> branch -r | grep -i "<NUMBER>" | head -5
     ```
+  - Test each matching name as the default branch's is tested above, with the quoted here-document, before any command names it: one outside `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$` is skipped, never printed and never diffed — a remote branch is pushed by anyone with push access, and a diff naming one would run what it holds.
   - If a matching remote branch is found, diff it:
     ```bash
     git -C <repo_path> diff origin/main...origin/<branch> --name-only -- '*.md'

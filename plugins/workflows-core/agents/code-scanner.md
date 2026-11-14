@@ -100,11 +100,11 @@ status:    OK | PARTIAL | REPO_MISSING | DIRTY_TREE | REFRESH_BLOCKED | EMPTY
 repo:      <short repo name — the basename of repo_path>
 repo_path: <absolute path as received in input>
 prep:
-  branch_at_scan:   <branch name | "unknown">
+  branch_at_scan:   <branch name | "HEAD" where §3's third fact names none — HEAD detached, or on a branch outside §3's *Branch names* class | "unknown">
   refreshed:        true | false
   refresh_note:     <e.g. "switched to main, pulled 12 commits" | "read-only mount; scanned at origin/main" | "read origin/main by ref; checkout left on feat/x" | "skipped per user">
   read_only:        true | false
-  scanned_ref:      <ref name, e.g. "origin/main"; on a writable mount read by ref, the default ref it read, e.g. "origin/main"; on any other writable mount, the branch the prep left checked out — the default branch where it switched onto it, else the one it found — or HEAD's commit where HEAD is detached>
+  scanned_ref:      <ref name, e.g. "origin/main"; on a writable mount read by ref, the default ref it read, e.g. "origin/main"; on any other writable mount, the branch the prep left checked out — the default branch where it switched onto it, else the one it found — or HEAD's commit where HEAD is detached, or on a branch outside `read-only-repos.md` §3's *Branch names* class>
   ref_committed_at: <ISO-8601 timestamp of the ref's newest commit>
   head_divergence:  { branch: <working-tree branch>, ahead: <n>, behind: <n> }
 capability_map:
