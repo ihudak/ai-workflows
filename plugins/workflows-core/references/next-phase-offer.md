@@ -326,7 +326,9 @@ array carries every option.
   `/dev-workflows:design <ITS-KEY>` to revise it;
   where it names an Epic's `## Covers` or the PRD's `_coverage.md`, `/product-workflows:epics <PRD>` to
   refine; where it names nothing, the next step `/product-workflows:specify` gives a specification at
-  the same altitude.
+  the same altitude. Where the PRD folder holds no `prd.md`, or its Phase 0 went on past a PRD
+  `/product-workflows:specify` stops on, its Phase 8 says what it names first and names no run that
+  would stop on that PRD.
 <!-- /part -->
 
 <!-- part: epics-precondition -->
