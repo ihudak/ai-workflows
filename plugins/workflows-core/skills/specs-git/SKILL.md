@@ -27,6 +27,7 @@ Where your run took `$SPECS_PATH` from the *Set SPECS_PATH* answer, open the cal
 - `--started <stamp>` (end, and start with `--rerun` or `--resume`) — the `started` field of your last `start` JSON (*Start*), so that the call reads and writes your run's own record; *Declined*'s call takes it too. Omit it where no `start` call of yours has printed JSON, and on a start that carries neither `--rerun` nor `--resume`, where it is a usage error.
 - `--no-preflight` (end) — where your run stopped before its start call.
 - `--misrooted-stdin` (end) — where your run carries `specs_git: misrooted` from anything but this skill's start — `specs-root-check`'s `SPECS_PATH_INSIDE_TREE:` stop, `env-check`'s `Environment changed:` line, or `session-hygiene` §6's `RESUME_ENVIRONMENT_CHANGED:` line — with that notice, verbatim, on stdin: `<<'EOF'`, the notice, `EOF`.
+- `--superseded` (end) — only where your command's text says to pass it: `/dev-workflows:implement`'s stop on its run-state file's exit `9`, on a direct run from inside the specs repository, whose tree another session now holds. The end writes nothing there, commits nothing and prints one `Specs repo: NOT COMMITTED` line.
 - `--session-branch-created <sha7>` (end) — where a session-branch `commit` or `lift` that your command, or its handoff, ran printed `created: true` (`/implement` keeps it as run-state `session_branch_created`): the `<base short sha>` taken then.
 - `--declined '<path>'` (end), once for each path — only where a `declined` call below could not run.
 

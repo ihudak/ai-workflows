@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.80.1] — 2026-11-14
+
+`/harvest-decisions` never names a branch whose name holds shell characters: batch B39. Update with `workflows-core` 1.89.2.
+
+### Fixed
+
+- **`/harvest-decisions`' stop on a checkout off the default branch prints G0's block in place of the branch's name** where G0 held it, since `workflows-core` 1.89.2 counts a branch whose name is outside the safe class as detached; `/brd-reconcile`'s gate sentence, and the `/idea`, `/brd-package` and `/brd-interview` pages, name that case beside a detached HEAD.
+
 ## [3.80.0] — 2026-11-14
 
 SEC-G1: `/create-ard`, `/specify`, `/update-spec` and `/promote-decisions` read the **weakness classes** the security findings registers hold — one code repository's findings that share a CWE, in the registers `/security-workflows:scan` keeps under `$SPECS_PATH/security/` — through `workflows-core`'s new `weakness-classes` skill, which hands them counts and checked values, never a finding's text; and the bundled `promotion-signals.py` that `/promote-decisions` runs no longer reads `security/`. Update with `workflows-core` 1.87.0, which carries the skill, its script and the grounding and promotion rules these commands cite; `dev-workflows` 4.66.0 and `security-workflows` 0.12.0 are released with it. Where `$SPECS_PATH/security/` does not exist, `/create-ard`, `/specify` and `/update-spec` ground exactly as before; where it exists and holds no register, they add one `security registers: OFF` line and ground as before.

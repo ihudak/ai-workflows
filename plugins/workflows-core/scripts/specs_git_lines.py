@@ -63,6 +63,11 @@ T = {
     "g0": G0,
     "g1": G1,
     "g2": G2,
+    # §5's G0 where HEAD is on a branch whose name is outside §3.2's safe class: each replaces the text after its
+    # label ("Found:    ", "Not done: ", "If ignored: ") in G0, rendered on its one line, unwrapped.
+    "g0.unsafe.found": "<SPECS_PATH> is on a branch whose name holds a character outside letters, digits and . _ / @ + - (at <sha7>), so this plugin counts it as no branch.",
+    "g0.unsafe.not_done": "this run's feedback, cost, follow-ups, and resume pointer will NOT be committed and will NOT reach the plugin maintainer. Git allows $, (, ), ;, a backtick and quotes in a branch name, and a command that named this one would run what the name holds, so the plugin neither commits on it nor names it.",
+    "g0.unsafe.if_ignored": "the artifacts stay in your working tree, uncommitted and intact; the next run's preflight picks them up once HEAD is on a branch named with those characters alone — the one Fix creates, or an existing one you rejoin instead with git -C \"<SPECS_PATH>\" switch <branch>",
     # §5's G1 on a branch the run would have left (§4 step 1's landing), and under a run typed mid-run: each replaces
     # the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G1, rendered on its one line, unwrapped;
     # <path list> on the Fix line is the plain block's second, shell-quoted one. The landing form's Not done by the
@@ -155,6 +160,7 @@ T = {
     # Followed by the G0 block.
     "row.blocked": "Specs repo: NOT COMMITTED — see the notice below",
     # Followed by the notice that set the flag.
+    "row.superseded": "Specs repo: NOT COMMITTED — this run's state belongs to another session, which now holds this repository's tree, so this run wrote and committed nothing in it",
     "row.misrooted": "Specs repo: NOT COMMITTED — SPECS_PATH is misplaced, or the run's environment no longer matches the one it recorded; see the notice below",
     # §4 step 1's landing refused: held for a cause that passes, or for one that will not; the <which no key ...>
     # alternation by the stay's kind (STAY_KINDS, specs-git.py). row.held's tail, like pre.held.failed's, is its second
@@ -281,6 +287,7 @@ T = {
     "pre.nonrepo": "Specs preflight: SPECS_PATH is <value>, which <is not a directory | is not in a git repository> — nothing this run writes there is committed or handed off; set SPECS_PATH to your specs repository's top level, where it is set, and re-run.",
     "pre.below-top": "Specs preflight: SPECS_PATH is <value>, below the top level of its repository (<top>) — a specs tree inside a larger repository is unsupported, because this plugin switches branches and commits in the repository SPECS_PATH belongs to, so this run switches and commits nothing there; set SPECS_PATH to a dedicated specs repository's top level.",
     # <git's first error line> reads text.pull-capped where the cap ended the pull.
+    "pre.default-refused": "Specs preflight: origin's default branch has a name holding a character outside letters, digits and . _ / @ + -, which this plugin never writes into a command; <default> stands in for it",
     "pre.pull-failed": "Specs preflight: could not fast-forward <default> (<git's first error line>); the run goes on from it as it stands",
     "pre.leave-failed": "Specs preflight: could not switch from merged <branch> to <default> (<git's first error line>)",
     # In these three, <the first line of its stderr> is the line the entry point's CLI prints on stderr:
@@ -355,7 +362,7 @@ ROWS = (
     "pushed-plugin", "pushed-default", "pushed-session", "no-identity", "session-not-run", "not-ours", "no-remote",
     "elsewhere", "remote-deleted", "origin-lacks", "refused-before", "push-refused", "scope", "replayed",
     "already-there", "moved", "rejected", "failed", "nothing", "locked", "commit-failed", "blocked", "misrooted",
-    "held", "held-stuck", "midrun-kept", "there", "here", "silent",
+    "superseded", "held", "held-stuck", "midrun-kept", "there", "here", "silent",
 )
 
 BLOCKS = ("g0", "g1", "g2")

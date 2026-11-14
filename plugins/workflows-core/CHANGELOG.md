@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.89.2] — 2026-11-14
+
+Branch names that would run as shell commands are never handed to a run, and a superseded run's end writes nothing in a tree another session holds: batch B39. Update with `dev-workflows` 4.66.1 and `product-workflows` 3.80.1.
+
+### Fixed
+
+- **A default branch whose name holds shell characters is passed over** (DEFAULT-REF-INJECT). Git allows `$`, `(`, `)`, `;`, a backtick, quotes, `|` and `&` in a branch name, and every command that writes `<default-ref>` or `<default>` into a command line would run what such a name holds. `specs-git.py`'s `resolve_default` now takes a name only where it matches `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`; one `origin/HEAD` gives outside it counts as unset, the fallback goes on to `main`, then `master`, then the current branch, and the preflight prints once that the remote's default was refused and which branch stands in for it, never the name. `specs-repo-git` §3.2 states the class and how a run tests a name by hand without writing it into a command — before the `rev-parse --verify` probe that would name it — and `read-only-repos` §3's rung 1 holds a code or docs repository's default branch to it the same way.
+- **HEAD on a branch whose name holds shell characters counts as detached** in the specs repository: G0 blocks the run, as on a detached HEAD (`specs-repo-git` §3.3, §3.7), with a notice whose Found, Not done and If ignored parts name no branch (§5); the JSON's `branch` is null; and G0's rejoin branch skips a local branch outside the class. `phase-handoff`'s gate, row I and its remedy, and the line above the consent choice say so.
+- **`end --superseded`** writes nothing in the repository and prints `Specs repo: NOT COMMITTED — this run's state belongs to another session, which now holds this repository's tree, so this run wrote and committed nothing in it` (§6's new *Superseded* row): for `/dev-workflows:implement`'s stop on its run-state file's exit `9` on a direct run from inside the specs repository, whose tree the session that resumed the run works in (EXIT9-SPECSREPO). `cost-emission`'s `emit-cost` takes `report_only: true` for the same stop, which puts the cost entry in the run's output.
+
 ## [1.89.1] — 2026-11-14
 
 The status line's opt-in plan usage draws on Linux, and draws a per-model limit the account lists only among its limits, such as a Fable limit. No command's behaviour changes, and no other plugin relies on this release, so it needs no other plugin's update of its own.

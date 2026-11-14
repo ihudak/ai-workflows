@@ -31,7 +31,13 @@ In order, stopping at the first that succeeds:
 
 1. `git -C "<repo_path>" symbolic-ref --quiet --short refs/remotes/origin/HEAD` — `--quiet` is
    required, or a clone whose `origin/HEAD` is unset leaks `fatal: ref refs/remotes/origin/HEAD is not
-   a symbolic ref` into the run's output. **It succeeds only where the ref it prints exists:**
+   a symbolic ref` into the run's output. **Before any command names it, the name must be in the safe
+   class**, `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$` — the class `specs-repo-git.md` §3.2 holds the specs
+   repository's branch names to: git allows `$`, `(`, `)`, `;`, a backtick, a quote, `|` and `&` in a
+   branch name, and every command that wrote this one, the probe below first, would run what it holds.
+   Test it with a quoted here-document, `grep -Eqx '[A-Za-z0-9_][A-Za-z0-9._/@+-]*' <<'EOF'`, the name
+   without its `origin/`, `EOF`; where it fails, rung 1 has failed — go on to rung 2, and never print
+   the name. **It succeeds only where the ref it prints exists:**
    `git -C "<repo_path>" rev-parse --verify --quiet origin/<name> >/dev/null`, with `origin/<name>`
    what it printed. Where that probe fails, rung 1 has failed; go on to rung 2. A remote that renames
    its default branch — `master` to `main` — and a clone that then fetches with `--prune` leave

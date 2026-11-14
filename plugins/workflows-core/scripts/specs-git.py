@@ -18,6 +18,7 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
                [--rerun] [--resume] [--budget <seconds>] [--started <stamp>, with --rerun or --resume]
   specs-git.py --specs "<value>" end --command /<name> [--commit-key <K>] [--register-rebuild <path>] [--no-preflight]
                [--misrooted-stdin] [--session-branch-created <sha7>] [--declined <p>]... [--resume] [--started <stamp>]
+               [--superseded]
   specs-git.py --specs <root> replay --for start|end --command /<name> --branch <name> [--set-upstream] [--timed-out]
                [--started <stamp>]
   specs-git.py --specs <root> land --branch <name> --default-ref <ref> --command /<name> [--commit-key <K>]
@@ -607,10 +608,23 @@ def _first_line(r, error=False):
     return found[0] if found else "git exited %d" % r.returncode
 
 
+# specs-repo-git §3.2's safe class: the only branch names this script hands a run, whose text writes them into shell
+# commands. Git allows $, (, ), ;, a backtick, quotes, | and & in a branch name, and a command that wrote such a name
+# would run what it holds, so a name outside the class counts as none (DEFAULT-REF-INJECT).
+SAFE_BRANCH = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*\Z")
+
+
+def safe_branch(name):
+    """Whether <name> is in specs-repo-git §3.2's safe class."""
+    return isinstance(name, str) and SAFE_BRANCH.match(name) is not None
+
+
 def _head_branch(root):
-    """The branch HEAD stands on, or None on a detached HEAD."""
+    """The branch HEAD stands on, or None on a detached HEAD -- and on a branch whose name is outside §3.2's safe
+    class, which no command may name, so that G0 takes it as it takes a detached HEAD (§3.3)."""
     r = sb.git(root, "symbolic-ref", "--short", "-q", "HEAD", check=False)
-    return (sb.text(r) or None) if r.returncode == 0 else None
+    name = (sb.text(r) or None) if r.returncode == 0 else None
+    return name if name is None or safe_branch(name) else None
 
 
 def _today():
@@ -628,15 +642,13 @@ def _swap(text, old, new):
 
 def resolve_default(root, fetch):
     """specs-repo-git §3.2: the default branch's name, the ref that represents it, and whether a fetch freshened it.
-    The name is the one origin/HEAD names, where origin/<name> resolves; else main, then master, where either is a
-    local or an origin branch; else the branch HEAD stands on (None on a detached HEAD). <default-ref> is
+    The name is the one origin/HEAD names, where origin/<name> resolves and the name is in the safe class
+    (safe_branch); else main, then master, where either is a local or an origin branch; else the branch HEAD stands
+    on (None on a detached HEAD, or on a branch outside the class: _head_branch). <default-ref> is
     origin/<default> where `remote get-url origin` prints a URL, else refs/heads/<default>. With <fetch>, where that
     remote exists, origin's <default> is fetched, capped at 60 s; offline where the fetch fails."""
-    name = None
-    r = sb.git(root, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD", check=False)
-    named = sb.text(r) if r.returncode == 0 else ""
-    if named.startswith("refs/remotes/origin/") and sb.rev(root, "origin/" + named[len("refs/remotes/origin/"):]):
-        name = named[len("refs/remotes/origin/"):]
+    named = _origin_head(root)
+    name = named if safe_branch(named) else None
     for candidate in ("main", "master"):
         if name is None and (sb.rev(root, "refs/heads/" + candidate) or sb.rev(root, "refs/remotes/origin/" + candidate)):
             name = candidate
@@ -649,6 +661,22 @@ def resolve_default(root, fetch):
     if fetch and remote == "origin" and name is not None:
         offline = sb.git_bounded(root, CAP, "fetch", "origin", name).returncode != 0
     return {"default": name, "default_ref": ref, "remote": remote, "offline": offline}
+
+
+def _origin_head(root):
+    """The name origin/HEAD gives, where origin/<name> resolves (specs-repo-git §3.2), else None."""
+    r = sb.git(root, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD", check=False)
+    named = sb.text(r) if r.returncode == 0 else ""
+    if named.startswith("refs/remotes/origin/") and sb.rev(root, "origin/" + named[len("refs/remotes/origin/"):]):
+        return named[len("refs/remotes/origin/"):]
+    return None
+
+
+def default_refused(root):
+    """Whether origin/HEAD names an origin branch that resolves and whose name is outside §3.2's safe class, which
+    resolve_default passes over for the rest of the ladder (§3.2, pre.default-refused)."""
+    named = _origin_head(root)
+    return named is not None and not safe_branch(named)
 
 
 SB_SCRIPT = os.path.join(HERE, "session-branch.py")  # <the script's path> in specs-repo-git §6's session-branch remedies
@@ -1183,12 +1211,20 @@ def _values(line):
 
 
 def _g0_block(lines, specs, default):
-    """specs-repo-git §5's G0 block for the checkout at <specs>: its detached HEAD's sha7, today's date for the rescue
-    branch, and the default branch to rejoin -- where there is none, the first local branch, else main."""
+    """specs-repo-git §5's G0 block for the checkout at <specs>: its HEAD's sha7, today's date for the rescue branch,
+    and the default branch to rejoin -- where there is none, the first local branch in the safe class, else main.
+    Where HEAD is on a branch, which G0 holds only for a name outside §3.2's safe class (_head_branch), its Found, Not
+    done and If ignored parts are the g0.unsafe ones, which name no branch."""
     sha = sb.text(sb.git(specs, "rev-parse", "HEAD"))
-    rejoin = default or (sb.text(sb.git(specs, "for-each-ref", "--count=1", "--format=%(refname:short)", "refs/heads"))
-                         or "main")
-    return lines.fill("g0", {"<SPECS_PATH>": specs, "<sha7>": sha[:7], "<YYYY-MM-DD>": _today(), "<branch>": rejoin})
+    heads = sb.text(sb.git(specs, "for-each-ref", "--format=%(refname:short)", "refs/heads")).splitlines()
+    rejoin = default or next((b for b in heads if safe_branch(b)), None) or "main"
+    values = {"<SPECS_PATH>": specs, "<sha7>": sha[:7], "<YYYY-MM-DD>": _today(), "<branch>": rejoin}
+    block = lines.fill("g0", values)
+    if sb.git(specs, "symbolic-ref", "-q", "HEAD", check=False).returncode == 0:
+        block = _block_part(block, "Found:", lines.fill("g0.unsafe.found", values))
+        block = _block_part(block, "Not done:", lines.T["g0.unsafe.not_done"])
+        block = _block_part(block, "If ignored:", lines.fill("g0.unsafe.if_ignored", values))
+    return block
 
 
 def _unique(paths):
@@ -1292,7 +1328,7 @@ def _resume_next(command, args, budget=None, started=None):
 
 
 def _stop(run, row, printed, line):
-    """An outcome of §4 step 1 -- misrooted, blocked or silent: what it prints, the record removed. A blocked row's
+    """An outcome of §4 step 1 -- superseded, misrooted, blocked or silent: what it prints, the record removed. A blocked row's
     <line> already carries §6's declined append where it takes one (_declined, _declined_checked); the misrooted row
     takes none, so no git status runs in a path the run has found wrong (§6), and the silent no-op prints nothing."""
     _remove(run)
@@ -1493,7 +1529,7 @@ def _record_at(state, session, command, started):
 
 
 def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=False, misrooted_notice=None,
-        session_branch_created=None, declined=(), resume=False, started=None):
+        session_branch_created=None, declined=(), resume=False, started=None, superseded=False):
     """specs-repo-git §4's commit-artifacts for the run of this session and <command>, steps 1-7, on <specs>
     (SPECS_PATH as set, "" meaning unset). <misrooted_notice>: the lines of a notice that set misrooted outside the
     script (--misrooted-stdin), [] for none. <declined>: paths a declined call could not record. <started>: the run's
@@ -1504,7 +1540,9 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
     run's first write -- the catch-up's pull, else `git add`, or, before §4 step 1's landing, the record's save --
     raises, so the caller exits 2 with nothing done; after it, an exception (a signal sb.git_bounded turns into NotRun
     among them) returns error set and the end.stopped line, and the record stays for --resume: a later start replaces
-    it, --no-preflight ignores it, and prune removes it after 7 days."""
+    it, --no-preflight ignores it, and prune removes it after 7 days. <superseded> (--superseded): the run's state
+    belongs to another session, which holds this repository's tree -- the end writes nothing in it, removes the run's
+    record (restoring one its start parked, by reads alone) and prints the superseded row (specs-repo-git §4 step 1)."""
     state, lines = _flow()
     if not state.COMMAND_RE.fullmatch(command):
         raise NotRun("usage: --command is /<name>, got %s" % command)
@@ -1516,6 +1554,10 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
     run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "record": None,
            "wrote": False, "pre": [], "commit": None, "started": started,
            "record_path": _record_at(state, session, command, started)}
+    if superseded:  # §4 step 1: the tree is another session's now -- nothing written in it, the record removed
+        run["record"] = "missing" if state.load(session, command, at=run["record_path"]) is None else "found"
+        line = lines.T["row.superseded"]
+        return _stop(run, "superseded", [line], line)
     try:
         return _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, session_branch_created,
                     list(declined), resume)
@@ -3133,6 +3175,8 @@ def _fetch(run):
         return _advance(run, "done")
     run["budget"].check(FETCH_COST)
     rec.update(resolve_default(specs, fetch=True))
+    if rec["default"] and default_refused(specs):
+        _once(run, "pre.default-refused", "pre.default-refused", {"<default>": rec["default"]})
     misrooted = rec["specs_git"] == "misrooted"
     if not misrooted and rec["default"]:
         m = sb.mode(specs, rec["default"])
@@ -4976,6 +5020,7 @@ def main():
     p.add_argument("--register-rebuild")
     p.add_argument("--no-preflight", action="store_true")
     p.add_argument("--misrooted-stdin", action="store_true")
+    p.add_argument("--superseded", action="store_true")
     p.add_argument("--session-branch-created")
     p.add_argument("--declined", action="append", default=[])
     p.add_argument("--resume", action="store_true")
@@ -5044,7 +5089,7 @@ def main():
             if a.misrooted_stdin:
                 notice = [line for line in sys.stdin.buffer.read().decode("utf-8", "replace").splitlines() if line.strip()]
             print(json.dumps(end(a.specs, a.command, a.commit_key, a.register_rebuild, a.no_preflight, notice,
-                                 a.session_branch_created, a.declined, a.resume, a.started), indent=2,
+                                 a.session_branch_created, a.declined, a.resume, a.started, a.superseded), indent=2,
                              ensure_ascii=False))
             return 0
         if not a.specs:
