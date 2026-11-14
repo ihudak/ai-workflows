@@ -4,8 +4,9 @@ Single source of truth for `threat-model.md`, the threat model an ARD may carry:
 
 **Who reads it.**
 - **Two readers by name:** `/product-workflows:create-ard` (a later run on the same folder) and `product-workflows:ard-reviewer` (within the run).
-- **One reader as prose, on the BRD route:** `/product-workflows:brd-reconcile`'s stale cross-reference sweep reads it as it reads every markdown file under the parent BRD's folder — as prose. By that sweep's structured-record class, a hit there is `needs-a-human`, never corrected in place. The class is that command's Phase 11's: "a structured record — any file whose content is fields, rows or labelled lines some other rule writes and reads", and "What `updated` is for is the route's own prose, and only that". A threat model's threats are labelled lines that this file writes, and that §6's check and `workflows-core:pre-lint`'s *Threat model* block read.
-- **No other command reads it.** `/dev-workflows:design` and `/dev-workflows:conformance` are to read it later, which is why this file is `workflows-core`'s: a reference crosses a plugin boundary only from here.
+- **No other command reads it as a threat model.** Three read it as they read every markdown file under the specs tree: `/product-workflows:brd-reconcile`'s stale cross-reference sweep reads it as prose, where by that sweep's structured-record class a hit is `needs-a-human`, never corrected in place; and `/product-workflows:harvest-decisions` and `/product-workflows:promote-decisions` take from it only the lines their patterns match — an `ARD deviation:` line for the first, and a link to a team decision record or an `Architecture deviation:` line for the second — as from any specification. `/dev-workflows:design` and `/dev-workflows:conformance` are to read it later, which is why this file is `workflows-core`'s: a reference crosses a plugin boundary only from here.
+
+`/product-workflows:brd-reconcile`'s structured-record class is its Phase 11's: "a structured record — any file whose content is fields, rows or labelled lines some other rule writes and reads", and "What `updated` is for is the route's own prose, and only that". A threat model's threats are labelled lines that this file writes, and that §6's check and `workflows-core:pre-lint`'s *Threat model* block read.
 
 ## 1. What it is and where it lives
 
@@ -120,8 +121,7 @@ Where a set resolves, `/product-workflows:create-ard` runs the check at up to th
 
 They are the opening's *Who reads it*, in its words:
 - **Two readers by name:** `/product-workflows:create-ard` (a later run on the same folder) and `product-workflows:ard-reviewer` (within the run).
-- **One reader as prose, on the BRD route:** `/product-workflows:brd-reconcile`'s stale cross-reference sweep, which reads it as prose and, by its structured-record class, takes a hit there as `needs-a-human`, never corrected in place.
-- **No other command reads it.** `/dev-workflows:design` and `/dev-workflows:conformance` are to read it later.
+- **No other command reads it as a threat model.** Three read it as they read every markdown file under the specs tree: `/product-workflows:brd-reconcile`'s stale cross-reference sweep reads it as prose, where by that sweep's structured-record class a hit is `needs-a-human`, never corrected in place; and `/product-workflows:harvest-decisions` and `/product-workflows:promote-decisions` take from it only the lines their patterns match — an `ARD deviation:` line for the first, and a link to a team decision record or an `Architecture deviation:` line for the second — as from any specification. `/dev-workflows:design` and `/dev-workflows:conformance` are to read it later.
 
 The commands and agents that load this reference are what `grep -l 'args: "threat-model-format' plugins/*/commands/*.md plugins/*/agents/*.md` lists — a scope this file is outside. `workflows-core:pre-lint` cites it by path, as the format its *Threat model* block checks. No list of them is kept here.
 
