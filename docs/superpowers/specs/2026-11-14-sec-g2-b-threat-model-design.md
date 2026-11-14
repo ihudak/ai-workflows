@@ -1,6 +1,6 @@
 # SEC-G2 B: the ARD threat model
 
-Date: 2026-11-14. Status: draft, revision 3 (after Fable's builder review and its re-check), for the maintainer's approval. Roadmap row **B** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` ("ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard`"), the first of SEC-G2's three sub-projects (B, then C, then D). It depends on A (the scan and its findings registers) and on E (SEC-G1, the architecture feedback loop).
+Date: 2026-11-14. Status: **approved** by the maintainer 2026-11-14, revision 3.1 (after Fable's builder review and two re-checks), with the recommended answer to each of the four questions below. Roadmap row **B** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` ("ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard`"), the first of SEC-G2's three sub-projects (B, then C, then D). It depends on A (the scan and its findings registers) and on E (SEC-G1, the architecture feedback loop).
 
 Every decision is written with a recommended answer. The four marked **(maintainer)** at the end are the calls only the maintainer can make; the rest are the author's, stated so they can be corrected.
 
@@ -153,7 +153,9 @@ Field wording and order; the decision-pair syntax (T4); where the phase sits in 
 - **Noise**: the 25 cap, the element + action + asset rule and the reviewer's *Where* check.
 - **An `[AD#N]` added for a threat changes the ARD**: the review runs after T7, over both files, and T10's check runs after the ARD's last write.
 
-## Questions for the maintainer
+## Questions for the maintainer — answered 2026-11-14
+
+The maintainer took the recommended answer to all four: optional; B makes the two `phase-handoff` edits, named in the pull request for the GIT-G1 owner; the PA alone accepts, the pull request being the Security Engineer's check; below-architecture answers become `Deferred to design`, a requirement gap also an ARD open question.
 
 1. **Optional, or required at `HIGH-RISK`?** Recommended: optional everywhere (the ARD itself is optional, and an absent optional input never becomes a prerequisite); recommended at `HIGH-RISK` or a `known-weakness` challenge.
 2. **Two edits to `phase-handoff`, a GIT-G1 file** (T1): its deliverable register row and the sentence naming `/create-ard`'s set. Recommended: B makes them, named in the pull request for the GIT-G1 owner (as SEC-G1's one CI step was). The alternative hands them to the GIT-G1 owner, and B ships only after they land.
