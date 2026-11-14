@@ -1899,16 +1899,19 @@ def selftest(groups=None):
             "merged-flush", "refused", "refused.unrecorded", "created.empty",
             "created.committed", "deleted", "delete-failed", "advisory-D", "advisory-D.rm", "pushed-left", "b2-config",
             "b2-squash", "b4", "b4.count", "stay", "stay.unlisted", "rerun-failed", "rerun-stay", "session-not-run",
-            "stopped")]
+            "stopped", "default-refused")]
+        ids += ["g0.unsafe.found", "g0.unsafe.not_done", "g0.unsafe.if_ignored", "g0.if_ignored.no-rejoin",
+                "g0.unsafe.if_ignored.no-rejoin"]
         ids += ["end.stopped", "end.session-not-run", "text.push-capped", "text.pull-capped", "text.lift-unpreserved", "text.offline", "root.one-line",
                 "root.stray", "root.two-readings",
                 "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
         missing = [i for i in ids if i not in T]
         check(not missing, "l_ids: every id the interface names is a template (missing %r)" % missing)
-        check(len(lines.ROWS) == 29 and lines.ROWS[0] == "pushed-plugin"
-              and lines.ROWS[-7:] == ("misrooted", "held", "held-stuck", "midrun-kept", "there", "here", "silent")
+        check(len(lines.ROWS) == 30 and lines.ROWS[0] == "pushed-plugin"
+              and lines.ROWS[-8:] == ("misrooted", "superseded", "held", "held-stuck", "midrun-kept", "there", "here",
+                                      "silent")
               and all(("row." + r in T) == (r != "silent") for r in lines.ROWS),
-              "l_ids: 29 rows in §6's order, each a row.<id> template but silent (%r)" % (lines.ROWS,))
+              "l_ids: 30 rows in §6's order, each a row.<id> template but silent (%r)" % (lines.ROWS,))
         check(all("\n" not in t for k, t in T.items() if k not in lines.BLOCKS),
               "l_ids: every template but the three blocks is one line")
         # The landing's refusal codes, read through globals() so that a missing constant fails its check rather than
@@ -3186,6 +3189,14 @@ def selftest(groups=None):
         h = head(r)
         r.git("switch", "-q", "--detach")
 
+        def g0_unsafe(r, h, day, default="main"):
+            """G0's block as rendered for HEAD on a branch whose name is outside the safe class: its Found, Not done
+            and If ignored parts the g0.unsafe ones."""
+            v = {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": day, "<branch>": default}
+            b = _block_part(lines.fill("g0", v), "Found:", lines.fill("g0.unsafe.found", v))
+            b = _block_part(b, "Not done:", lines.T["g0.unsafe.not_done"])
+            return _block_part(b, "If ignored:", lines.fill("g0.unsafe.if_ignored", v))
+
         def g0_on(r, h, days):
             """G0's block as end renders it, one per day of <days> (dated)."""
             return [lines.fill("g0", {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": d, "<branch>": "main"})
@@ -3777,6 +3788,25 @@ def selftest(groups=None):
         check(got.get("record") == "missing" and got.get("row") == "misrooted" and got.get("print") == [MIS, stop]
               and head(r) == h, "e_d3_signal: specs-root-check's one-line stop, nothing committed (%r)" % got)
 
+        # e_superseded: the run's state is another session's, which holds the tree (EXIT9-SPECSREPO): the end writes
+        # nothing -- the dirty session file stays, HEAD and the branch stay -- removes the record, prints its row
+        r, env = world(tmp, "e-superseded")
+        seed(env, "/implement")
+        r.git("switch", "-q", "-c", "feat/x")
+        h = head(r)
+        r.write(RESUME, "r\n")
+        before = r.git("status", "--porcelain", "--untracked-files=all")
+        got = run_end(env, "/implement", "--superseded")
+        check(got.get("_rc") == 0 and got.get("row") == "superseded" and got.get("record") == "found"
+              and got.get("print") == [lines.T["row.superseded"]] and head(r) == h
+              and r.git("symbolic-ref", "--short", "HEAD") == "feat/x"
+              and r.git("status", "--porcelain", "--untracked-files=all") == before
+              and record(env, "/implement") is None,
+              "e_superseded: nothing written, the record removed, the superseded row (%r)" % got)
+        got = run_end(env, "/implement", "--superseded")
+        check(got.get("row") == "superseded" and got.get("record") == "missing" and head(r) == h,
+              "e_superseded: with no record, the same row (%r)" % got)
+
         # e_g0_found: a record with no flag, HEAD detached since its start
         r, env = world(tmp, "e-g0-found")
         seed(env, "/specify")
@@ -3810,6 +3840,55 @@ def selftest(groups=None):
         check(resolve_default(loc.path, False)["default"] == "master", "e_resolve_default: then master")
         loc.git("branch", "-m", "master", "work")
         check(resolve_default(loc.path, False)["default"] == "work", "e_resolve_default: then the current branch")
+
+        # e_unsafe_names: a branch name outside the safe class is never taken (DEFAULT-REF-INJECT)
+        bad = "evil$(touch${IFS}PWNED)`touch${IFS}PWNED2`;x|y&z'q\"r"
+        u, uenv = world(tmp, "e-unsafe")
+        u.git("branch", bad)
+        u.git("push", "-q", "origin", bad)
+        u.git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/" + bad)
+        check(resolve_default(u.path, True) == {"default": "main", "default_ref": "origin/main", "remote": "origin",
+                                                "offline": False} and default_refused(u.path) is True,
+              "e_unsafe_names: origin/HEAD naming an unsafe branch is refused, and the ladder gives main")
+        safe = "release/v1.2_rc@x+y-z"
+        u.git("branch", safe)
+        u.git("push", "-q", "origin", safe)
+        u.git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/" + safe)
+        check(resolve_default(u.path, False)["default"] == safe and default_refused(u.path) is False,
+              "e_unsafe_names: a name inside the class (/ . _ @ + -) is taken")
+        ul = new_repo(tmp, "e-unsafe-local")
+        ul.git("branch", "-m", "main", bad)
+        check(resolve_default(ul.path, False) == {"default": None, "default_ref": None, "remote": "none", "offline": False}
+              and _head_branch(ul.path) is None,
+              "e_unsafe_names: HEAD on an unsafe branch is no branch, and no default remains")
+        check(not any(os.path.exists(os.path.join(x.path, f)) for x in (u, ul) for f in ("PWNED", "PWNED2")),
+              "e_unsafe_names: nothing a name holds was run")
+        # ... and G0's rejoin branch, where there is no default, is the first local branch inside the class
+        rj = new_repo(tmp, "e-unsafe-rejoin")
+        rj.git("branch", "-m", "main", "zz-safe")
+        rj.git("branch", "a" + bad)
+        rj.git("switch", "-q", "--detach")
+        block = _g0_block(lines, rj.path, resolve_default(rj.path, False)["default"])
+        check("switch zz-safe" in block and "$(" not in block and "`" not in block,
+              "e_unsafe_names: G0's rejoin branch skips a local branch outside the class (%r)" % block)
+        # ... and where no branch is there to rejoin, If ignored names none, in either form
+        rj.git("branch", "-D", "zz-safe")
+        block = _g0_block(lines, rj.path, None)
+        check(block.endswith(lines.T["g0.if_ignored.no-rejoin"]) and " switch " not in block.split("If ignored:")[1],
+              "e_unsafe_names: a detached HEAD with nothing to rejoin, If ignored names no branch (%r)" % block)
+        rj.git("switch", "-q", "a" + bad)
+        block = _g0_block(lines, rj.path, None)
+        check(block.endswith(lines.T["g0.unsafe.if_ignored.no-rejoin"]) and "$(" not in block,
+              "e_unsafe_names: HEAD on an unsafe branch with nothing to rejoin, If ignored names no branch (%r)" % block)
+        # ... and an end with no record, HEAD on such a branch with something to stage, blocks as on a detached HEAD
+        u.git("switch", "-q", bad)
+        hu = head(u)
+        u.write(RESUME, "r\n")
+        got, days, _ = dated(lambda: run_end(uenv, "/specify", "--no-preflight"))
+        check(got.get("record") == "missing" and got.get("row") == "blocked"
+              and got.get("print") in [[BLOCKED, g0_unsafe(u, hu, d, safe)] for d in days] and head(u) == hu
+              and not any("$(" in x or "`" in x for x in got.get("print") or []),
+              "e_unsafe_names: no record, HEAD on an unsafe branch: G0's unsafe-name block, naming no branch (%r)" % got)
 
         # e_key_grammar
         with open(ADDRESSING, encoding="utf-8") as fh:
@@ -8532,6 +8611,50 @@ def selftest(groups=None):
               "t_g0: a detached HEAD prints G0's block and sets blocked (%r)" % got)
         rec = record(env, "/feedback") or {}
         check(rec.get("guard_block") == block and rec.get("stage") == "done", "t_g0: the block saved for end (%r)" % rec)
+
+        # t_unsafe_head: HEAD on a branch whose name is outside the safe class blocks as a detached HEAD does, and
+        # no line, nor the JSON's branch, names it (DEFAULT-REF-INJECT)
+        bad = "evil$(touch${IFS}PWNED)`touch${IFS}PWNED2`;x|y&z'q\"r"
+        r, env = world(tmp, "t-unsafe-head")
+        r.git("switch", "-q", "-c", bad)
+        r.write(RESUME, "r\n")
+        h = head(r)
+        got, days, _ = dated(lambda: run_start(env, "/feedback"))
+        blocks = []
+        for d in days:
+            v = {"<SPECS_PATH>": r.path, "<sha7>": h[:7], "<YYYY-MM-DD>": d, "<branch>": "main"}
+            b = _block_part(lines.fill("g0", v), "Found:", lines.fill("g0.unsafe.found", v))
+            b = _block_part(b, "Not done:", lines.T["g0.unsafe.not_done"])
+            blocks.append(_block_part(b, "If ignored:", lines.fill("g0.unsafe.if_ignored", v)))
+        check(got.get("print") in [[env_line(r.path), b] for b in blocks] and got.get("specs_git") == "blocked"
+              and got.get("guard") == "G0" and got.get("branch") is None and head(r) == h
+              and not any("$(" in x or "`" in x for x in got.get("print") or [])
+              and not any(os.path.exists(os.path.join(r.path, f)) for f in ("PWNED", "PWNED2")),
+              "t_unsafe_head: G0's unsafe-name block, blocked, no branch named (%r)" % got)
+
+        # t_unsafe_plugin_branch: a merged local branch with a plugin prefix and an unsafe name is no plugin branch --
+        # never settled, deleted or named
+        r, env = world(tmp, "t-unsafe-plugin")
+        r.git("branch", "spec/a" + bad)
+        got = run_start(env, "/feedback")
+        check(got.get("print") == [env_line(r.path)] and rev(r, "spec/a" + bad)
+              and branch_key("spec/a" + bad, [])["plugin_branch"] is False
+              and not any(os.path.exists(os.path.join(r.path, f)) for f in ("PWNED", "PWNED2")),
+              "t_unsafe_plugin_branch: left alone and unnamed (%r)" % got)
+
+        # t_default_refused: origin/HEAD naming an unsafe branch is refused once, with a line naming what stands in
+        r, env = world(tmp, "t-default-refused")
+        r.git("branch", bad)
+        r.git("push", "-q", "origin", bad)
+        r.git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/" + bad)
+        refused = lines.fill("pre.default-refused", {"<default>": "main"})
+        got = run_start(env, "/feedback")
+        check(got["_rc"] == 0 and got.get("print") == [env_line(r.path), refused] and got.get("default") == "main"
+              and got.get("default_ref") == "origin/main" and got.get("specs_git") is None,
+              "t_default_refused: the refusal line, main stands in (%r)" % got)
+        got = run_start(env, "/feedback", "--rerun")
+        check(got.get("print") == [env_line(r.path)] and got.get("default") == "main",
+              "t_default_refused: a --rerun does not print it again (%r)" % got)
 
         # t_g1: a plugin branch cut at main's tip holds nothing of its own, so branch-merged reads it merged and G1 takes
         # its landing form (§5), merged's alternative; t_land_merged_b3_g1 below has the plain block on an unmerged branch

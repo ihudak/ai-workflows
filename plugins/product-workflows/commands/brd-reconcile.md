@@ -512,7 +512,7 @@ write would re-ask a question already answered.
    row, or `absent`, means this run cannot write the log safely: it is edited in this checkout and
    not handed off — a run whose handoff was declined leaves it so — or on a branch the default
    branch does not have, or on no branch at all, or the repository itself cannot be
-   checked (no default branch, a detached HEAD), or it changed on `<default>` after this run's own
+   checked (no default branch, a detached HEAD or one on a branch no command may name), or it changed on `<default>` after this run's own
    branch was cut, whatever that branch holds of it (row B′, whose message names the merge
    of `<default>` into the branch, save where no merge can run). Say what the gate reported — the files, branch or
    pull request it named, or the repository state — say that this run writes its defect resolutions

@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.81.1] — 2026-11-14
+
+`/harvest-decisions` never names a branch whose name holds shell characters: batch B39. Update with `workflows-core` 1.90.1.
+
+### Fixed
+
+- **`/harvest-decisions`' stop on a checkout off the default branch prints G0's block in place of the branch's name** where G0 held it, since `workflows-core` 1.90.1 counts a branch whose name is outside the safe class as detached; `/brd-reconcile`'s gate sentence, and the `/idea`, `/brd-package` and `/brd-interview` pages, name that case beside a detached HEAD.
+- **`/harvest-decisions` compares the checkout's branch with the default branch's name**, the preflight's `default`, where it compared `<default-ref>` stripped of `origin/`: with no `origin`, `<default-ref>` is `refs/heads/<default>`, so the stop fired on the default branch itself.
+
 ## [3.81.0] — 2026-11-14
 
 SEC-G2 B: the ARD threat model. `/create-ard` can now add, check and refine `threat-model.md` beside the ARD it writes, in the same run, review and pull request: one numbered `[TH#N]` per concrete attack on a component the architecture names, or on an interface between two of them, each with one disposition — mitigated by ordinary `[AD#N]` decisions, deferred to design, or accepted with an owner, a reason and a review date. A new agent, `threat-modeler`, proposes the candidates and the architect decides each one; `ard-reviewer` reviews the model in the ARD's one review. Update with `workflows-core` 1.90.0, which carries the model's format, its lineage kind, its pre-lint block and the handoff register's row: beside an older `workflows-core`, the new phase cannot load the format, and there is no runtime fallback. `docs-workflows` 1.39.2 and `security-workflows` 0.12.1 are released with it. The model is optional and advisory: in a folder that holds none, a run that declines it, or where no component set resolves, runs as before, its only additions the new phase's question or line, the final report's `Threat model:` line, Phase 1.5's `threat_modeler_model` routing line, and four lines of Phase 5's brief to `ard-reviewer` — `Threat model: none`, `Prior threat model: none`, `Other ARD files` and `Component set` — which the reviewer reads only beside a model.
