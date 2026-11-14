@@ -1,6 +1,6 @@
 # SEC-G2 C: the design threat review
 
-Date: 2026-11-14. Status: **approved** by the maintainer 2026-11-14 (revision 2.1), with the recommended answer to each of the three questions below.
+Date: 2026-11-14. Status: **approved** by the maintainer 2026-11-14 (revision 2.1, with the recommended answer to each of the three questions below), after a builder review of revision 1 (`ae08e0df`) and a re-check of revision 2 (`12bd1263`); what changed is listed at the end. Roadmap row **C** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:103` ("Design threat review: threats per interface of `design.md`, with amendments proposed through `/design`"; dependencies "A; B where present"), the second of SEC-G2's three sub-projects (B, then C, then D). It builds on B as built — `docs/superpowers/specs/2026-11-14-sec-g2-b-threat-model-design.md`, revision 3.2, on `feat/sec-g2-b-threat-model` — and on E (SEC-G1, `docs/superpowers/specs/2026-11-13-sec-g1-architecture-feedback-design.md`). **C's build starts after B's pull request #198 merges.**
 
 Every decision is written with a recommended answer. The three marked **(maintainer)** at the end are the calls only the maintainer can make; the rest are the author's, stated so they can be corrected. Statements about the tree cite `file:line` at B's head (`9ddad5f0`); a paragraph opening **Inference** is the author's reading, not the code's.
 
