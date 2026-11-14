@@ -3,9 +3,9 @@ paths:
   - "plugins/dev-workflows/**"
 ---
 
-# dev-workflows — `/conformance` and the readers of its record
+# dev-workflows — `/conformance`, the readers of its record, and `/ready`'s optional rung
 
-Loaded with `.claude/rules/dev-workflows.md`, whose `paths:` it shares. Split out of `.claude/rules/dev-workflows.md` to keep that file under 20,000 characters; the plugin's other rules are there, `conformance-tracer`'s caller line and `/ready`'s map line and invariant among them.
+Loaded with `.claude/rules/dev-workflows.md`, whose `paths:` it shares. Split out of `.claude/rules/dev-workflows.md` to keep that file under 20,000 characters; the plugin's other rules are there, `conformance-tracer`'s caller line and `/ready`'s map line and its read-only invariant among them.
 
 ## Workflow map
 
@@ -21,3 +21,7 @@ Loaded with `.claude/rules/dev-workflows.md`, whose `paths:` it shares. Split ou
 - `/implement`, which reads back the `withdraws:` lines of the PRD folder's record so that it never builds a follow-up a PRD run withdrew (§3);
 - `/ready`, which reads the PRD folder's record from `<default-ref>` by `git show`, never the working tree, and tests from it, and from the `implementation.md` blocks in the PRD's tree, each ordered against the record by instant where both carry one and by date otherwise, whether the PRD reaches the optional *Delivery verified* rung (its Phase 1 step 2b): it maps no decision, so its test is its own and not `workflows-core:source-truth` §7.8's;
 - `/document` (keyed mode: Phase 3, and Phase 5.8 step 0) and `/release-notes` (Phase 0 and Phase 3), which read every record in their scope from the working tree, as data, and take the decision a person recorded in place of asking again. Which records, which entries are open, which of two entries on one claim wins, what each decision maps to and how far the code has moved since are §7.8's, the one authority on them (`.claude/rules/workflows-core.md`), save that `/release-notes` keeps its own commits-read test of how far the code has moved; neither `docs-workflows` nor `workflows-core` can load `conformance-format`, so §7.8, `/document` and `/release-notes` each state the fields they read.
+
+## /ready and the optional rung
+
+- `/ready` decides the PRD ladder's one optional rung, *Delivery verified (optional)* (`workflow-states.md`, *An optional rung*), from the PRD folder's `_conformance.md` and the PRD tree's `implementation.md` blocks, on a PRD- and an Epic-level run alike (Phase 1 step 2b): the record read from `<default-ref>` by `git show`, never the working tree, and gated by no `require-on-main`, so an unmerged or missing record is neither row D/E's finding nor row F's coverage gap. A record passing that step's six conditions — the last, no block later than it, by instant if both carry one, else by date, a same-day block then not counted — lifts a PRD derived at *Implementation* to the rung; any other PRD passes it over — never a straddle, never a finding, never asked about — and keeps the phase the mandatory rungs give it, with its `Delivery:` line as a note (`not verified — <reason>` where the record does not settle the rung) that never caps or lowers the verdict. Where the PRD is at *Implementation* or later and delivery is not verified, the Next step adds `PE → /dev-workflows:conformance <PRD>`, whatever the verdict. `--claimed` names the rung with or without its `(optional)` suffix at PRD altitude; at Epic altitude, whose ladder has no such rung, either spelling is re-prompted

@@ -30,7 +30,7 @@ plugins/
 
 ## Active plugins: dev-workflows, product-workflows, docs-workflows, security-workflows, and their shared dependency workflows-core
 
-`plugins/dev-workflows/` provides six slash commands — `/design`, `/implement`, `/ready`, `/conformance`, `/upgrade`, and `/vuln` — plus fourteen reusable subagents (`ls plugins/dev-workflows/agents | wc -l`), one hook, nineteen reference files (`find plugins/dev-workflows/references -type f | wc -l`), and no bundled skill. It depends only on `workflows-core`, and does not use `prose-style` at all.
+`plugins/dev-workflows/` provides six slash commands — `/design`, `/implement`, `/ready`, `/conformance`, `/upgrade`, and `/vuln` — plus fifteen reusable subagents (`ls plugins/dev-workflows/agents | wc -l`), one hook, nineteen reference files (`find plugins/dev-workflows/references -type f | wc -l`), and no bundled skill. It depends only on `workflows-core`, and does not use `prose-style` at all.
 
 `plugins/product-workflows/` provides seventeen slash commands — the idea→PRD→ARD→specification ladder (`/idea` → `/create-prd` → `/update-prd` → `/create-ard` → `/specify`), `/update-spec`, which revises a merged specification in place, `/epics`, `/harvest-decisions`, `/promote-decisions`, a six-command BRD-to-PRD route (`/brd-intake`, `/brd-split`, `/prd-ground`, `/brd-interview`, `/brd-package`, `/brd-reconcile`), and the effort proposals `/prd-proposal` and `/brd-proposal` — plus fifteen subagents (`ls plugins/product-workflows/agents | wc -l`), twelve reference files, one hook, no bundled skill, and four user-settable environment variables (`SPECS_PATH`, `REPOS_PATH`, `DOCS_PATH`, `ARCHITECTURE_REPO_PATH`: the `$VAR`s its commands, agents, references, hooks and skills read, as `scripts/check-docs.sh` check 9 counts them). It depends on `workflows-core` and `prose-style`, with no absent case for the second (S12). `dev-workflows` does not depend on `product-workflows`.
 
@@ -84,7 +84,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `specs-git-selftest.md` | `scripts/selftests/**` (repo root); `workflows-core/scripts/`: `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py` | where `specs-git.py`'s selftest lives, how it runs, group runs, the mutants |
 | `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
-| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers |
+| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers, `/ready`'s optional rung |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
 | `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | plugin facts, map, callers |
 | `product-workflows-prd-flow.md` | as `product-workflows.md` | the PRD-creation flow's invariants |
@@ -97,7 +97,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
 | `security-workflows.md` | `security-workflows/**`; `workflows-core/`: `references/security-register-format.md`, `scripts/weakness-classes.py`, `docs/family-map.md` | plugin facts, map, register invariants |
-| `threat-model.md` | `workflows-core/`: `references/threat-model-format.md`, `references/pre-lint.md`, `scripts/lineage-kinds.json`; `product-workflows/`: `commands/create-ard.md`, `agents/ard-reviewer.md`, `agents/threat-modeler.md`, `docs/commands/create-ard.md` | the ARD threat model: authority, invariants, readers |
+| `threat-model.md` | `workflows-core/`: `references/threat-model-format.md`, `references/pre-lint.md`, `scripts/lineage-kinds.json`; `product-workflows/`: `commands/create-ard.md`, `agents/ard-reviewer.md`, `agents/threat-modeler.md`, `docs/commands/create-ard.md`; `dev-workflows/`: `commands/design.md`, `references/design-format.md`, `agents/design-*.md` | the ARD threat model and the design threat review: authority, invariants, readers |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 24 command files: the ten docs-grounding consumers, `/design` (architecture only) and thirteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, authorities, map |
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |
@@ -165,7 +165,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:prose-formatting` — output line-wrapping: never hard-wrap prose → `workflows-core.md`
 - `workflows-core:implementation-format` — the append-only `implementation.md` record, the `[<key>]` commit convention, the two-source read, `unit-branch` → `workflows-core.md`
 - `workflows-core:security-register-format` — the security findings register: its layout, run records, statuses, roles and the rules `register.py` applies, and §7's weakness classes → `security-workflows.md`
-- `workflows-core:threat-model-format` — the ARD threat model: `threat-model.md`'s sections, a threat's fields and its one disposition, the decision-pair and cross-folder forms, `[TH#N]` identity, the check → `threat-model.md`
+- `workflows-core:threat-model-format` — the ARD threat model: `threat-model.md`'s sections, a threat's fields and its one disposition, the decision-pair and cross-folder forms, `[TH#N]` identity, the check, an agent's reply → `threat-model.md`
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`
