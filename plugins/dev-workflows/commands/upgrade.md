@@ -119,7 +119,7 @@ Phase 1's inventory and every plan read versions off the tree, and Phase 2 appli
 
    If the planner returns `### Re-classification`, surface it and let the user accept the down-classification, override it, or cancel the component.
 
-7. **Confirm the full plan** — Present the resolved component list, classifications, related upgrades, and any Opus plans. Do not touch files until approved. **Any stop before Phase 2 prep cuts the branch** — a plan declined here, every component `NOT_FOUND` or skipped, a conflict left unresolved — says where Phase 0.5 left HEAD, read rather than assumed — the branch, or `detached at origin/<base> <its short commit>` — and the branch the run started on, and names `stash_ref` where it pushed one.
+7. **Confirm the full plan** — Present the resolved component list, classifications, related upgrades, and any Opus plans. Do not touch files until approved. **Any stop before Phase 2 prep cuts the branch** — a plan declined here, every component `NOT_FOUND` or skipped, a conflict left unresolved — says where Phase 0.5 left HEAD, read rather than assumed — the branch, or `detached at origin/<base> <its short commit>` — and the branch the run started on (`a branch whose name is outside the safe class` for one outside `workflows-core:read-only-repos` §3's *Branch names* class), and names `stash_ref` where it pushed one.
 
 ---
 

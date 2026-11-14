@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.4] — 2026-11-14
+
+The docs commands never name, or switch back to, a branch whose name holds shell characters: batch B40. Update with `workflows-core` 1.90.2.
+
+### Fixed
+
+- **`/docs-init`, `/docs-brand`, `/docs-profile` and `/document` record `<start>` as a commit** where HEAD's branch name is outside `workflows-core:read-only-repos` §3's *Branch names* class, as for a detached HEAD, and their last-resort `<base>` — the branch HEAD is on, where no default resolves — is HEAD's commit then, so no `merge-base` or message names it; `/docs-profile`'s Cancel lines and `/docs-audit`'s question say `a branch whose name is outside the safe class` in its place, and the `/docs-profile` page says so.
+
 ## [1.39.3] — 2026-11-14
 
 Wording only, beside `workflows-core` 1.90.1: batch B39.
