@@ -22,7 +22,7 @@ B adds that question to `/create-ard`, as an optional step the PA takes in the s
 
 ## Non-goals
 
-- **C and D.** No `/design` threat review and no security conformance. Nothing reads `threat-model.md` outside `/create-ard` and its reviewer yet.
+- **C and D.** No `/design` threat review and no security conformance. Nothing reads `threat-model.md` as a threat model outside `/create-ard`, its review and pre-lint yet; three commands read it as they read every markdown file under the specs tree (corrected during the build: `/brd-reconcile`'s prose sweep, and `/harvest-decisions` and `/promote-decisions`, which take from it only the decision links and `ARD deviation:` lines their patterns match).
 - **Claude Security's model.** Not consumed, copied or persisted; it describes code at scan time and is deleted with the run directory.
 - **A new command, plugin dependency or role.** No `/threat-model`, nothing under `$SPECS_PATH/security/` (kept for a team's own documents and the register), no dependency on `security-workflows`, no Security Engineer role in `product-workflows`. The Security Engineer reviews the pull request.
 - **Risk scoring** (DREAD, likelihood × impact, CVSS), **attack trees, data-flow diagrams**, and **CAPEC as a required field**.
