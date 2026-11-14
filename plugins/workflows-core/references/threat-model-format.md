@@ -35,7 +35,7 @@ In this order, under the title `# <PRD or Epic title> — threat model`:
 - **`## Scope`** lists every component id and every contract pair the model considered: a `- **Components:**` line holding the ids, comma-separated, and a `- **Contract rows:**` line holding the pairs (§4), or `none`.
 - **`## Not considered`** gives each id or contract pair of the set that the model leaves out, one bullet each with its reason — `- <id or pair> — <why it was left out>` — or reads `_None._` where nothing was left out.
 - **`## Threats`** holds one `### [TH#N]: <title>` block per threat (§4).
-- **`## Inherited threats`** is written **on an Epic-level model only**. It lists the PRD-level model's live threats, one bullet each: `- [[<PRD-KEY>]] [TH#N] <title> — <its Disposition, as the PRD-level model states it>`. They are bullets, never `### [TH#N]` headings, so the numbering (§5) and the lineage item pattern skip them. Under `## Threats`, an Epic-level model adds only the threats its Epic's `target:` component raises.
+- **`## Inherited threats`** is written **on an Epic-level model only**. It lists the PRD-level model's live threats, one bullet each: `- [[<PRD-KEY>]] [TH#N] <title> — <its Disposition, as the PRD-level model states it>`, or reads `_None._` where the PRD folder holds no model or one with no live threat. They are bullets, never `### [TH#N]` headings, so the numbering (§5) and the lineage item pattern skip them. Under `## Threats`, an Epic-level model adds only the threats its Epic's `target:` component raises.
 - **A BRD-route slice's model inherits none**, and has no `## Inherited threats`: its parent is a BRD container, where `/product-workflows:create-ard` writes nothing, so no model stands above it.
 
 ## 4. A threat
@@ -53,7 +53,7 @@ In this order, under the title `# <PRD or Epic title> — threat model`:
 ```
 
 - **The heading** is `### [TH#N]: <title>`, with the colon, as an ARD's `### [AD#N]:` heading has it.
-- **The five fields** — Category, Where, Threat, CWE and Disposition — are list items in that order, and every one is present on every threat. `—` marks an empty Category or CWE. `**Superseded by:**` or `**Withdrawn:**` follows them only on a threat that is no longer live (§5). **A live threat** is one carrying neither.
+- **The five fields** — Category, Where, Threat, CWE and Disposition — are list items in that order, and every one is present on every threat. `—` marks an empty Category or CWE. `**Superseded by:**` or `**Withdrawn:**` follows them only on a threat that is no longer live (§5). **A marker counts only as its own list item at the start of a line** — `- **Superseded by:**` or `- **Withdrawn:**` in the threat's block — and one written inline inside another field's text is text. **A live threat** is one carrying neither marker.
 - **Category** is one STRIDE letter — Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege — or `—`. It is a completeness prompt, never a score.
 - **Where** is `<id>[, <id>…][; contract <pair>]`: at least one component id, and the contract row's decision pair where the threat crosses an interface. A contract row is named by its decision pair, never by a row number. Each id is resolved against **the run's resolved component set**, and never against an ARD's own `components:` alone, which only a PRD-level ARD carries:
   - **On a PRD-level run, the BRD route's slice-level run included:** the components `/product-workflows:create-ard`'s Phase 3 confirmed — the list the ARD's `components:` is written from.
