@@ -1,6 +1,6 @@
 # GIT-G1 Part 3, batch 1 — the rulings
 
-**Plan:** `docs/superpowers/plans/2026-11-13-git-g1-part3-batch1-selftest-split.md`. **Record:** `2026-11-13-git-g1-part3-batch1.md`, beside this file. **Ledger:** `2026-11-13-git-g1-part3-batch1-ledger.md`, beside this file, copied as it stood just before the branch was pushed; the *Ledger* column below gives line numbers of that file.
+**Plan:** `docs/superpowers/plans/2026-11-13-git-g1-part3-batch1-selftest-split.md`. **Record:** `2026-11-13-git-g1-part3-batch1.md`, beside this file. **Ledger:** `2026-11-13-git-g1-part3-batch1-ledger.md`, beside this file, copied as it stood just before the branch was pushed; the *Ledger* column below gives line numbers of that file, and rulings 20 to 22, made after that copy, have none.
 
 A ruling is a decision the controller took while the plan ran, in place of stopping to ask. Each is listed with its reason and what it costs if it was wrong, so the maintainer can overturn it.
 
@@ -10,6 +10,7 @@ A ruling is a decision the controller took while the plan ran, in place of stopp
 |---|---|
 | 2026-11-13, 11:19 UTC | The design (`docs/superpowers/specs/2026-11-13-git-g1-part3-design.md`) approved; pull request #187 merged the same day. |
 | 2026-11-13, 13:50 UTC | The batch 1 plan approved, and its execution by subagents: Opus implementers and task reviews, a Fable 5.2 review of the whole branch. The committed mutant runner and mutants file, which go beyond the design, were put to the maintainer with the plan and not objected to. |
+| 2026-11-14, 06:51 UTC | With pull request #189 conflicting after `main` took PRs #190 and #191: "can you please resolve conflicts? and next time, merge the pr when ready". |
 
 ## The controller's rulings, in the order made
 
@@ -34,6 +35,9 @@ A ruling is a decision the controller took while the plan ran, in place of stopp
 | 17 | After the merge | The changelog's "is updated alone" is reworded to name 1.85.1's coupling. | A reader going from 1.85.0 to 1.85.2 would read "alone" as overriding `main`'s instruction to update `dev-workflows` too. | Nothing. | 96 |
 | 18 | Closing review | Every finding of the closing review (four Important, five Minor) is fixed before the push, with the values and sentences the reviewer gave, by the record's writer; the five loose `fails` are tightened as data, not explained away in prose. | The same standing rule as rulings 4 and 14. Tightening the data makes a rules-file sentence and the runner's docstring true without rewording either. | One more round. | 100 |
 | 19 | Closing review's re-check | The controller applies the re-check's two replacements and one nit itself, word for word as the reviewer gave them. | Each is a dictated replacement with no judgement in it; a fourth dispatch and re-check for two clauses would be the loop the skill's cap exists to stop. | These edits have no reviewer of their own beyond the one who worded them. | 103 |
+| 20 | After the pull request opened | `main` took `workflows-core` 1.86.0 and 1.87.0, so the branch merges `main` again and renumbers its release to 1.87.1, its section dated 2026-11-14, the day it reaches `main`; the section's opening clause names all three releases below it that couple a plugin. | Ruling 16 applied again, as its *If wrong* foresaw. A section dated 2026-11-13 above one dated 2026-11-14 would read as released before it. | One more merge commit. | — |
+| 21 | After the pull request opened | The failure of `main`'s `weakness-classes.py --selftest` in this container (the record's *After the pull request opened*) is reported to the maintainer and not fixed on this branch. | The file is another change's, merged the same morning, and this branch does not touch it; a fix here would ship unreviewed by that change's reviews and under a patch release that says no behaviour changes. | The defect stands on `main` until its owner fixes it; a local gate run in this container shows one red step meanwhile. | — |
+| 22 | After the pull request opened | The controller merges pull request #189 itself once its CI is green, after one Opus review of the merge and the renumbering. | The maintainer's "next time, merge the pr when ready" is read as standing from that message on, and the pull request becomes ready again only after it; leaving it open is what let it conflict. | A merge the maintainer meant to make by hand was made for them; `git revert -m 1` of the merge commit undoes it. | — |
 
 ## What the task reviews deferred, and how each ended
 
