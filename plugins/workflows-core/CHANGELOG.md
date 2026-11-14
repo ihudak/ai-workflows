@@ -7,16 +7,17 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.89.1] — 2026-11-14
 
-The status line's opt-in plan usage draws on Linux, and draws a per-model limit the account lists only among its limits, such as a plan's Fable limit. No command's behaviour changes, and no other plugin relies on this release, so it needs no other plugin's update of its own.
+The status line's opt-in plan usage draws on Linux, and draws a per-model limit the account lists only among its limits, such as a Fable limit. No command's behaviour changes, and no other plugin relies on this release, so it needs no other plugin's update of its own.
 
 ### Fixed
 
-- **Plan usage is drawn on Linux.** The script read the cache's age, and the time of its last fetch, with `stat -f %m` before `stat -c %Y`. GNU `stat` reads `-f` as "file-system status" and `%m` as a file name, so it printed a file-system report, failed, and the GNU form's answer was appended to that report. The age was then no number, and with `WORKFLOWS_STATUSLINE_PLAN_USAGE=1` set on Linux the plan-usage bars were never drawn and the endpoint was fetched at most once. Each form is now captured on its own, the GNU one first, and anything but digits reads as no age.
-- **A per-model weekly limit listed only among the account's limits is drawn**, as `7d-<model>` (`7d-fable ███░░░░░░░ 25% resets 2d1h`). The endpoint sends some per-model windows as a field of their own, `seven_day_opus` and the like, which the line already drew, but on at least one plan it lists the Fable limit only in its `limits` array, as a model-scoped weekly entry, which the line did not read. A window sent in both forms is drawn once, from its field.
+- **Plan usage is drawn on Linux.** The script read the cache's age, and the time of its last fetch, with `stat -f %m` before `stat -c %Y`. GNU `stat` reads `-f` as "file-system status" and `%m` as a file name, so it printed a file-system report, failed, and the GNU form's answer was appended to that report. The age was then no number, and with `WORKFLOWS_STATUSLINE_PLAN_USAGE=1` set on Linux the plan-usage bars were never drawn and the endpoint was fetched at most once. Each form is now captured on its own, the GNU one first. Anything but digits reads as 0: the cache is then not drawn, and a fetch stamp that reads 0 counts as made now, so a time that cannot be read never brings a fetch on every render.
+- **A per-model weekly limit listed only among the account's limits is drawn**, as `7d-<model>` (`7d-fable ███░░░░░░░ 25% resets 2d1h`). The endpoint sends some per-model windows as a field of their own, `seven_day_opus` and the like, which the line already drew, but for at least one account it listed the Fable limit only in its `limits` array, as a model-scoped weekly entry, which the line did not read. A window named alike in both forms is drawn once, from its field: a field's label now turns every underscore into a dash (`seven_day_oauth_apps` draws as `7d-oauth-apps`), as a limit's model name turns every run of characters that are neither letters nor digits. An entry scoped to a surface as well as a model is not drawn.
+- **Each entry of the reply is read on its own**, so a malformed one drops only itself, and a reset time sent as a number with a fraction is drawn, where it broke its bar and printed a shell error.
 
 ### Added
 
-- **A self-test of the plan-usage line**, `scripts/selftests/statusline_selftest.sh`, run in CI. Each case renders the shipped script against a cached reply under a `HOME` of its own, so none reads a credential or reaches the network; it lives outside the plugin and ships to no one.
+- **A self-test of the plan-usage line**, `scripts/selftests/statusline_selftest.sh`, run in CI. Each case renders the shipped script against a cached reply under a `HOME` of its own, with a fresh fetch stamp, which keeps the script from fetching, and with `curl` and `security` stubbed, so that even a script whose throttle regressed reads no credential and reaches no network. Its reset times are computed from the clock. It lives outside the plugin and ships to no one.
 
 ## [1.89.0] — 2026-11-14
 

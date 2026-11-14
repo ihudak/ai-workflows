@@ -281,8 +281,10 @@ jobs:
         # draws a cached reply of the account's usage endpoint. Its failure modes are silent: a
         # limit the reply lists only among its limits is not drawn, a window is drawn twice, or, on
         # Linux, the cache's age reads as garbage and the line is never drawn at all. Each case
-        # renders the shipped script under a HOME of its own that holds only the cache, so no case
-        # reads a credential or reaches the network. The tests live outside the plugin.
+        # renders the shipped script under a HOME of its own with a fresh fetch stamp, which keeps
+        # it from fetching, and with curl and security stubbed on PATH, so no case reads a
+        # credential or reaches the network even where the throttle regressed. The tests live
+        # outside the plugin.
         run: bash scripts/selftests/statusline_selftest.sh
 
       - name: Every plugin's copied scripts are the same
