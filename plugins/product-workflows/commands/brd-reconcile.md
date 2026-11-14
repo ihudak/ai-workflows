@@ -3017,10 +3017,10 @@ this phase offers.
   but neither waits on a PRD the slice has not got, because on a slice holding no `prd.md` that
   gate's `absent` branch proceeds and reports, so `/create-prd` on the BRD route is still not a
   prerequisite for either (`commands/create-ard.md` and `commands/specify.md`, *The BRD route runs
-  this gate too, and a slice holding no `prd.md` still goes on*); what makes either stop is a
-  `prd.md` that exists and was never handed off — on an unmerged branch, or in the slice folder and
-  on no ref, where each stops with its `*_PRD_NOT_HANDED_OFF` — a file this run neither writes nor
-  reads, so not a condition it tests for the operator; and neither reads the
+  this gate too, and a slice holding no `prd.md` still goes on*); what makes either stop on that
+  gate is a `prd.md` that exists and was never handed off — on an unmerged branch, or in the slice
+  folder and on no ref, where each stops with its `*_PRD_NOT_HANDED_OFF` — a file this run neither
+  writes nor reads, so not a condition it tests for the operator; and neither reads the
   `claims:` list or the coverage ledger **as an authoring input** — each opens them only to shape
   its own offers and report — because PRD eligibility is §5's rule about authoring
   a **PRD** and an ARD is not that artifact and neither is a specification. What each needs is this

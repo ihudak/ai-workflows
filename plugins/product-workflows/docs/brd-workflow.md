@@ -352,7 +352,7 @@ PRD folder — because a root has to resolve before it can be refused by name.
 `/brd-package` and `/brd-reconcile` each refuse a resolved root outright. An idea-route PRD folder —
 a `PRD-` folder carrying no `brd-link.md`, never carved from a BRD — is refused by `/brd-split`,
 `/brd-interview`, `/brd-package` and `/brd-reconcile` (`BRD_SPLIT_NOT_A_BRD`,
-`BRD_INTERVIEW_NOT_A_SLICE`, `BRD_PACKAGE_NOT_A_SLICE`, `BRD_RECONCILE_NOT_A_SLICE`), each naming `/create-ard` and `/specify` as the way that route goes on once its PRD is on the default branch — after `/create-prd`, its handoff merged, where the folder holds none yet;
+`BRD_INTERVIEW_NOT_A_SLICE`, `BRD_PACKAGE_NOT_A_SLICE`, `BRD_RECONCILE_NOT_A_SLICE`), each naming `/create-ard` and `/specify` as the way that route goes on once its PRD is on the default branch wherever the specs tree is a git repository — after `/create-prd`, its handoff merged, where the folder holds none yet;
 `/prd-ground` grounds one. `resolve-address` searches the Epic level too, so a key naming an
 `EPIC-` folder resolves as readily, and all five refuse it before any gate
 (`PRD_GROUND_EPIC_LEVEL`, `BRD_SPLIT_EPIC_LEVEL`, `BRD_INTERVIEW_EPIC_LEVEL`,

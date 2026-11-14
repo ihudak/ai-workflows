@@ -278,8 +278,9 @@ reads was already independently verified by `/prd-ground`'s own agents.
   output, never carved from a BRD — has no ledger and no inventory to allocate, and would otherwise
   be read as a root that owns its source document. It stops with `BRD_SPLIT_NOT_A_BRD` before the
   run mode is set, naming [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way the idea route goes on, once its
-  PRD is on the default branch — after [`/create-prd`](create-prd.md), its handoff merged, where the folder
-  holds none yet — and `/brd-intake` where the key was meant to name a BRD.
+  PRD is on the default branch wherever the specs tree is a git repository — after
+  [`/create-prd`](create-prd.md), its handoff merged, where the folder holds none yet — and
+  `/brd-intake` where the key was meant to name a BRD.
 - **Not an Epic folder.** An `EPIC-` folder carries no `brd-link.md` either, and would be read the
   same way; it stops with `BRD_SPLIT_EPIC_LEVEL` before the run mode is set, naming
   `/brd-split <SLICE-KEY>` on the slice above the Epic where it sits in one, and no command where it

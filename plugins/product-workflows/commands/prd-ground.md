@@ -561,7 +561,7 @@ behaviour, not the behaviour.
       `./<path>` as §3.2 writes every `<ref>:` object name — whatever form the stop later prints the
       path in, exit 0 where HEAD holds the file. Where HEAD does not hold it — an untracked file, or
       one staged and never committed — the uncommitted form:
-      `PRD_GROUND_PRD_NOT_HANDED_OFF: <KEY>'s prd.md is written at <path> but is on no branch — its handoff was declined, so nothing is missing but the commit. Commit and merge it to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:prd-ground <KEY>'. Do not re-run /product-workflows:create-prd, which would rewrite the PRD rather than land the one on disk.`
+      `PRD_GROUND_PRD_NOT_HANDED_OFF: <KEY>'s prd.md is written at <path> but is on no branch — its handoff was declined, so nothing is missing but the commit. This run read none of it and grounded nothing. Commit and merge it to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:prd-ground <KEY>'. Do not re-run /product-workflows:create-prd, which would rewrite the PRD rather than land the one on disk. Ignored, every /prd-ground run on this folder stops here until prd.md is on <default>.`
       ```
       git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
       git -C "<SPECS_PATH>" add -f -- "<path>"

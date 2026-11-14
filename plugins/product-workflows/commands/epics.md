@@ -490,7 +490,7 @@ Otherwise the PRD spans two or more code components without the artifacts that f
 choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Split without <the missing artifacts>", "Cancel"]
 ```
 
-Where Phase 0's `prd_landed` is false, a remedy that names `/product-workflows:create-ard <PRD>` or `/product-workflows:specify <PRD>` — the one for a `missing` `ard_contract` or `prd_spec` row — would send the operator into a run that stops on this PRD, so it is the PRD's landing first: the option's slot reads `land <PRD-KEY>'s prd.md on <default>, then <the command>`, and the stop *Stop* leads to prints Phase 0's landing sentence before the command. Every other remedy reads as the slot says.
+Where Phase 0's `prd_landed` is false, a remedy that names `/product-workflows:create-ard <PRD>` or `/product-workflows:specify <PRD>` — the one for a `missing` `ard_contract` or `prd_spec` row — would send the operator into a run that stops on this PRD, so it is the PRD's landing first: the option's slot reads `land <PRD-KEY>'s prd.md on <default> and then run <the command>`, the array itself staying verbatim, and the stop *Stop* leads to prints Phase 0's landing sentence before the command. Every other remedy reads as the slot says.
 
 - **Stop** → stop, naming that remedy and every other gap in ladder order.
 - **Split without** → record the override for Phase 9's `### Targets` and continue: every Epic still gets one target, and where the ARD's `contracts` is null (no ARD, or one without `## Contracts`), no Epic gets a `## Contract` section.
