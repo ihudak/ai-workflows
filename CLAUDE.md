@@ -162,7 +162,7 @@ The evidence behind the rules — measured cases, refused widenings, history —
 Each reference below is the **single source of truth** for what it owns; `<plugin>:<name>` is `plugins/<plugin>/references/<name>.md`. Its full paragraph — consumers, entry points, invariants — is in the `.claude/rules/` file named.
 
 - `workflows-core:model-routing/classification` — complexity classes, the model fallback chain, the Opus review checklist, the `model_routing` block, the §8 scan fan-out → `workflows-core-model-routing.md`
-- `workflows-core:run-flags` — `--skip-costs`, `--skip-feedback`, `--enforce-model` and their `WORKFLOWS_*` env defaults; where a run's `mktemp` files go → `workflows-core.md`
+- `workflows-core:run-flags` — `--skip-costs`, `--skip-feedback`, `--enforce-model` and their `WORKFLOWS_*` env defaults; where a run's `mktemp` files go; `WORKFLOWS_FABLE_ESCALATION`, `/implement`'s `HIGH-RISK` Fable setting, no run flag → `workflows-core.md`
 - `workflows-core:source-truth` — the Implementation-vs-Description discrepancy-escalation protocol, and §7.8's decisions a conformance record already holds → `workflows-core.md`
 - `workflows-core:prose-formatting` — output line-wrapping: never hard-wrap prose → `workflows-core.md`
 - `workflows-core:implementation-format` — the append-only `implementation.md` record, the `[<key>]` commit convention, the two-source read, `unit-branch` → `workflows-core.md`

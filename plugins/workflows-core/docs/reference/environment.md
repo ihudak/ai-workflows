@@ -1,10 +1,10 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first use of this plugin. This page says what each variable **is** — its default, what happens when it is unset, and what happens when it points somewhere unreadable. The plugin reads nine user-settable variables.
+[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first use of this plugin. This page says what each variable **is** — its default, what happens when it is unset, and what happens when it points somewhere unreadable. The plugin documents ten user-settable variables.
 
-The nine are what the whole family needs: each is read by a reference this plugin ships, inside whichever plugin's command is running, and `/frames` also checks `$SPECS_PATH` itself and stops on an unset one. Four of the nine are the price-table override and the three run-flag defaults; of the other five, the sibling plugins' own commands use these:
+The ten are what the whole family needs. Nine are read by a reference this plugin ships, inside whichever plugin's command is running, and `/frames` also checks `$SPECS_PATH` itself and stops on an unset one; the tenth, `$WORKFLOWS_FABLE_ESCALATION`, is documented here and read by `/dev-workflows:implement` alone. Four of the ten are the price-table override and the three run-flag defaults; of the other six, `$WORKFLOWS_FABLE_ESCALATION` among them, the sibling plugins' own commands use these:
 
-- `dev-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$GIT_USER_INITIALS`, since it branches a code repository, and `$ARCHITECTURE_REPO_PATH`, through `/design`'s architecture grounding — not `$DOCS_PATH`, since it grounds nothing in documentation.
+- `dev-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$GIT_USER_INITIALS`, since it branches a code repository, `$ARCHITECTURE_REPO_PATH`, through `/design`'s architecture grounding, and `$WORKFLOWS_FABLE_ESCALATION`, through `/implement`'s HIGH-RISK coding — not `$DOCS_PATH`, since it grounds nothing in documentation.
 - `product-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$DOCS_PATH` and `$ARCHITECTURE_REPO_PATH`, through `/create-ard`, `/specify`, `/update-spec` and `/promote-decisions`, and `$GIT_USER_INITIALS`, since `/promote-decisions` branches the architecture repository.
 - `docs-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$DOCS_PATH` and `$GIT_USER_INITIALS`, since it branches a docs repository — not `$ARCHITECTURE_REPO_PATH`, since it authors no ARD.
 - `security-workflows` uses `$SPECS_PATH` alone of its own.
@@ -96,15 +96,38 @@ Until that pull request merges, your specs checkout shows those files as modifie
 
 **Resolution.** First-found-wins, three tiers: `$DEV_WORKFLOWS_COST_PRICES` (a path) → a repo-local `cost-prices.yaml` → the bundled `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml`. Whichever file resolves must carry a top-level `models:` map keyed by model id — a file missing that wrapper, override or default, prices every model as `cost_usd: null` rather than raising an error.
 
-**When unset.** Resolution falls straight through to the repo-local file, then the bundled default. Of the nine variables, this is the one most users never touch.
+**When unset.** Resolution falls straight through to the repo-local file, then the bundled default. Of the ten variables, this is the one most users never touch.
 
 **When it points somewhere unreadable.** Treated the same as "not set at this tier" — resolution continues down the same chain rather than failing the run.
 
 **Its name keeps the `DEV_WORKFLOWS_` prefix deliberately**: renaming it would silently ignore every setting already exported on a working machine. See [Session cost](session-cost.md) for what the table prices.
 
+## `$WORKFLOWS_FABLE_ESCALATION`
+
+- **`$WORKFLOWS_FABLE_ESCALATION`** — whether `/dev-workflows:implement` writes the code of a HIGH-RISK change on Fable rather than on the model it would otherwise write it on: `ask`, `always` or `never`. `/implement` alone reads it. It is no run flag and has no command-line form, so it is not among the three under Run flags, below.
+
+**Resolution.** Matched case-insensitively, after trimming surrounding whitespace. `ask` asks you before the run's first HIGH-RISK coding step, stating how Fable's per-token price compares with the other model's, with Fable recommended; `always` takes Fable without asking, and `never` keeps the other model, each saying so in one line as it decides a HIGH-RISK run's coding. The answer, or the setting, covers every step that writes or fixes the run's code while the run is HIGH-RISK: the plan's steps, the fixes for a failing test, lint or build, and the fixes after review. A run re-classified below HIGH-RISK codes as its new class says from then on, and one that rises back applies a choice it already made, without asking again; only a resume, below, can ask again. Where a Fable step fails outright before any Fable step group has come back with a readable return, the run retries it once on the other model and codes on that model from then on, printing `HIGH-RISK coding on <model> — a Fable dispatch failed outright (fallback)` as it falls back, so that a run that stops before its report has said so too. Nothing is escalated, whatever the value, where any of these holds:
+
+- the run enforces a model with `--enforce-model`, which decides every step's model itself;
+- the session already runs on Fable or Mythos, which writes the code on its own model;
+- the run fixes a security finding, or cannot rule one out, since Fable's safety filters would re-run such requests on Opus and the run would pay twice;
+- Fable is not reachable from the session; under `always`, the run says so in one line.
+
+A stopped run you resume on a session on Fable or Mythos, or under `--enforce-model`, keeps the earlier choice as it stands. Otherwise it keeps an answer you gave it, an answer for Fable taking the Fable model the session reaches now, and keeps the other model where a fallback or a security finding chose it; a choice of Fable gives way to the other model where Fable is no longer reachable; a choice the setting made follows the setting's value when you resume; and one made because Fable was not reachable is tested again. Under `ask`, either of the last two can then be asked again, at the run's next HIGH-RISK coding step. A resume prints its lines about the choice only where the run is HIGH-RISK, save the line a bad value prints, which it prints wherever it reads the variable.
+
+**Where it is set.** In the environment the session runs in, as the other variables on this page are. No command writes it, and an answer to the question decides only the run it was given in.
+
+**When unset.** `ask`: the run asks. A value that is empty, or only spaces, reads the same.
+
+**When the value is bad.** Any value but the three reads as `ask`, and the run prints one line saying so; nothing stops.
+
+**When it points somewhere unreadable.** Not applicable — this variable holds a literal value, not a path.
+
+**A one-run route to Fable**, whatever the variable says, is `--enforce-model=fable` (Run flags, below). It runs every subagent the run dispatches on Fable — the planner, the reviewer and the scanners too, not only the steps that write code — and asks nothing.
+
 ## Run flags
 
-Three flags change what a run does around its work, and each has an environment variable, below, as its persistent default. A flag on the command line always wins over its variable; with neither, the flag is off. A flag may stand anywhere in a command's arguments — save inside the free-text request of a command that takes one, such as `/implement` or `/feedback`, where only the flags before the request starts and those it ends with are read.
+Three flags change what a run does around its work, and each has an environment variable, below, as its persistent default; `$WORKFLOWS_FABLE_ESCALATION`, above, is no flag's default. A flag on the command line always wins over its variable; with neither, the flag is off. A flag may stand anywhere in a command's arguments — save inside the free-text request of a command that takes one, such as `/implement` or `/feedback`, where only the flags before the request starts and those it ends with are read.
 
 | Flag | What it does | Its default |
 |---|---|---|

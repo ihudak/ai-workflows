@@ -26,7 +26,7 @@ It does ship seven commands of its own, and one of them is worth running first �
 
 ## What you set on your machine
 
-`workflows-core` reads nine environment variables, on behalf of every plugin in the family. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional. Most fall back to a documented default or are skipped silently, but three say so: an unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off with a line naming the variable; where no entry of `REPOS_PATH`, or of its `/workspace` default, exists, a command that needs the code asks you to set it; and where `GIT_USER_INITIALS` is unset and neither `git config user.initials` nor the repository's existing branch names supply an identifier, a command creating a branch outside the specs repository asks you for a prefix or your initials before it creates the branch — where that repository's branch convention has a place for your name or initials, or it documents no convention at all — while a specs repository in session-branch mode commits nothing for the run, its `Specs repo:` line naming the variable to set. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
+`workflows-core` documents ten environment variables: it reads nine on behalf of every plugin in the family, and `/dev-workflows:implement` reads the tenth, `WORKFLOWS_FABLE_ESCALATION`, itself. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional. Most fall back to a documented default or are skipped silently, but three say so: an unset `ARCHITECTURE_REPO_PATH` turns architecture grounding off with a line naming the variable; where no entry of `REPOS_PATH`, or of its `/workspace` default, exists, a command that needs the code asks you to set it; and where `GIT_USER_INITIALS` is unset and neither `git config user.initials` nor the repository's existing branch names supply an identifier, a command creating a branch outside the specs repository asks you for a prefix or your initials before it creates the branch — where that repository's branch convention has a place for your name or initials, or it documents no convention at all — while a specs repository in session-branch mode commits nothing for the run, its `Specs repo:` line naming the variable to set. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
 
 ### `SPECS_PATH`
 
@@ -50,7 +50,11 @@ Your branch identifier. Branch naming is repo-rule-first: where the target repo'
 
 ### `DEV_WORKFLOWS_COST_PRICES`
 
-An optional path to your own price table, overriding the bundled `references/cost-prices.yaml` that session-cost reporting prices tokens against. It is the variable of the nine you are least likely ever to set — the bundled defaults are used until you do. It keeps its original name so a setting already exported on a working machine is not silently ignored.
+An optional path to your own price table, overriding the bundled `references/cost-prices.yaml` that session-cost reporting prices tokens against. It is the variable of the ten you are least likely ever to set — the bundled defaults are used until you do. It keeps its original name so a setting already exported on a working machine is not silently ignored.
+
+### `WORKFLOWS_FABLE_ESCALATION`
+
+Whether `/dev-workflows:implement` writes the code of a HIGH-RISK change on Fable rather than on the model it would otherwise use: `ask`, the default, asks you before the run's first HIGH-RISK coding step, stating how Fable's per-token price compares with that model's; `always` takes Fable and `never` keeps the other model, without asking. It does not apply to a run that fixes a security finding, or cannot rule one out, which is never escalated; to a run under `--enforce-model` or on a session already on Fable or Mythos, where the model is decided already; or where Fable is not reachable. It is no run flag and has no command-line form: for one run on Fable, `--enforce-model=fable` runs every subagent of that run on Fable, the planner, the reviewer and the scanners too. [Environment](reference/environment.md#workflows_fable_escalation) has the rest.
 
 ### `WORKFLOWS_SKIP_COSTS`
 
