@@ -9,6 +9,7 @@ paths:
   - "plugins/workflows-core/commands/frames.md"
   - "plugins/docs-workflows/commands/document.md"
   - "plugins/docs-workflows/commands/release-notes.md"
+  - "plugins/security-workflows/commands/scan.md"
 ---
 
 # `/prd-ground` — blind verification
