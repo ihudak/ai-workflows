@@ -99,13 +99,13 @@ Each count is taken with the command named beside it, before any edit; Task 8 re
 
 | What | Command | Before | After (Task 8) |
 |---|---|---|---|
-| Consumers with a §3.4 row that stops on `absent` | R1 (`.claude/rules/workflows-core-handoff.md`'s recipe) | **9** — `/brd-interview` `/brd-package` `/brd-proposal` `/brd-reconcile` `/brd-split` `/design` `/prd-ground` `/prd-proposal` `/update-spec` | |
-| `No authored PRD on` in ARD | R2 | **1** (ARD:274) | |
-| `No authored PRD on` in SPEC | R3 | **1** (SPEC:315) | |
-| `No authored PRD on`, whole scope | R4 | **2** (the two above) | |
-| `CLAUDE.md` size | R5 | **35462** (warning 36,000) | |
-| Coupling file size | R6 | **18781** (warning 20,000) | |
-| The floor | R7 | **23** lines (17 outside `reference-parts/`) | |
+| Consumers with a §3.4 row that stops on `absent` | R1 (`.claude/rules/workflows-core-handoff.md`'s recipe) | **9** — `/brd-interview` `/brd-package` `/brd-proposal` `/brd-reconcile` `/brd-split` `/design` `/prd-ground` `/prd-proposal` `/update-spec` | **11** — the nine and `/create-ard`, `/specify`; as intended |
+| `No authored PRD on` in ARD | R2 | **1** (ARD:274) | **1** (ARD:280, the slice bullet) — as intended |
+| `No authored PRD on` in SPEC | R3 | **1** (SPEC:315) | **1** (SPEC:321, the slice bullet) — as intended |
+| `No authored PRD on`, whole scope | R4 | **2** (the two above) | **3** (ARD:280, SPEC:321, `pw/commands/update-spec.md:57`) — as intended |
+| `CLAUDE.md` size | R5 | **35462** (warning 36,000) | **36224** bytes by R5; **35972** characters by `LC_ALL=C.UTF-8 wc -m`, the warning's unit — as intended (R5 counts bytes: *After*, below) |
+| Coupling file size | R6 | **18781** (warning 20,000) | **19845** bytes by R6; **19749** characters — as intended |
+| The floor | R7 | **23** lines (17 outside `reference-parts/`) | **20** lines (14 outside `reference-parts/`) — as intended: three sites now wrap, and none states the old rule (*After*, below) |
 
 ```bash
 # R1
@@ -140,51 +140,128 @@ print("TOTAL",tot)' "$@"; }
 
 | `wic` string | Before (scope) | Before (`parts`) | Where, before | After (Task 8) |
 |---|---|---|---|---|
-| `is not a prerequisite` | 15 | 6 | ARD 4, SPEC 2, `pw/commands/create-prd.md` 2, `pw/docs/commands/create-ard.md` 2, `pw/docs/commands/create-prd.md` 1, `pw/docs/commands/specify.md` 1, `wc/references/next-phase-offer.md` 1, PH 1, `dw/docs/commands/vuln.md` 1 | |
-| `not a prerequisite at all` | 2 | — | ARD 1, SPEC 1 | |
-| `is still not a prerequisite` | 3 | — | ARD 1, SPEC 1, `pw/commands/brd-reconcile.md` 1 | |
-| `No authored PRD on` | 2 | — | ARD 1, SPEC 1 | |
-| `reported as no authored PRD` | 1 | — | `pw/commands/prd-ground.md:544` (D15) | |
-| `its handoff merged` | 1 | — | `pw/commands/brd-interview.md:226` (K65, the clause D22–D24 take) | |
-| `The idea route goes on from its PRD` | 4 | — | `pw/commands/brd-interview.md` 1 (K65), `pw/commands/brd-package.md` 1 (D24), `pw/commands/brd-reconcile.md` 1 (D23), `pw/commands/brd-split.md` 1 (D22) | |
-| `never optional` | 10 | — | PH 1, `.claude/rules/workflows-core-handoff.md` 1, `wc/docs/reference/references.md` 1, `pw/docs/roles-and-phases.md` 1, `dw/docs/roles-and-phases.md` 1, `dw/docs/getting-started.md` 1, `dw/docs/commands/design.md` 1, `dw/docs/commands/ready.md` 2, `pw/commands/brd-intake.md` 1 (another subject) | |
-| `whose gated input was never optional` | 6 | — | `pw/docs/roles-and-phases.md` 1, `dw/docs/roles-and-phases.md` 1, `dw/docs/getting-started.md` 1, `dw/docs/commands/design.md` 1, `dw/docs/commands/ready.md` 2 | |
-| `an absent optional input` | 4 | — | `CLAUDE.md` 1, `pw/docs/roles-and-phases.md` 1, `dw/docs/roles-and-phases.md` 1, `dw/references/context-management.md` 1 | |
-| `never becomes a prerequisite` | 2 | — | `CLAUDE.md` 1, `wc/docs/reference/references.md` 1 | |
-| `never a missing one` | 3 | — | `pw/docs/roles-and-phases.md` 3 | |
-| `the hard stop is an unmerged PRD` | 3 | — | `pw/docs/roles-and-phases.md` 3 | |
-| `` The hard stop is a `prd.md` that exists on an unmerged branch `` | 2 | — | `pw/docs/commands/create-ard.md` 1, `pw/docs/commands/specify.md` 1 | |
-| `falls back to reading the resolved folder` | 3 | — | `pw/docs/commands/create-ard.md` 1, `pw/docs/roles-and-phases.md` 2 | |
-| `falls back to the resolved folder` | 3 | — | `pw/commands/create-prd.md` 1, `pw/commands/update-prd.md` 1, `pw/docs/roles-and-phases.md` 1 | |
-| `does **not** require a PRD` | 2 | — | ARD 1, SPEC 1 | |
-| `may legitimately hold no PRD` | 2 | — | ARD 1, SPEC 1 | |
-| `on every route, with no branch` | 2 | — | ARD 1, SPEC 1 | |
-| `is reported and never a stop, on either route` | 1 | — | ARD 1 | |
-| `` on the `prd.md` test alone `` | 4 | — | ARD 3, SPEC 1 | |
-| `` the `absent` branch is what makes that safe `` | 3 | — | ARD 1, SPEC 1, `pw/commands/brd-reconcile.md` 1 (quotes the other two) | |
-| `` `absent` branch proceeds `` | 3 | 1 | `pw/commands/brd-reconcile.md` 1, `pw/docs/commands/brd-reconcile.md` 1, `wc/references/next-phase-offer.md` 1 | |
-| `its absent branch architects from the slice folder` | 1 | — | `.claude/rules/brd-route.md` 1 | |
-| `the one state that would make either wait` | 1 | — | `pw/commands/brd-reconcile.md` 1 | |
-| `absent falls back, unmerged stops` | 1 | — | `pw/docs/commands/specify.md` 1 | |
-| `An input that was optional before this gate existed stays optional` | 1 | 1 | PH 1 | |
-| `No consumer turns an optional input into a prerequisite` | 1 | 1 | PH 1 | |
-| `the gate never makes an optional input mandatory` | 1 | 1 | PH 1 | |
-| `` the same shape as `/create-ard`'s row `` | 1 | 1 | PH 1 | |
-| `the shape of their PRD rows` | 1 | 1 | PH 1 | |
-| `*"Gate the PRD — on every route"*` | 1 | 1 | PH 1 | |
-| `It stood there on the strength of` | 1 | 1 | PH 1 | |
-| `the caller proceeds exactly as it did before this feature` (A13, added by Task 2; counted before its edit) | 1 | 1 | PH 1 | |
-| `reports the artifact absent and stops on that` (A14, added by Task 2; counted before its edit) | 1 | — | `wc/references/addressing.md` 1 | |
-| ``with their stops named `UPDATE_SPEC_` in place of `SPECIFY_` `` | 1 | — | `pw/commands/update-spec.md` 1 | |
-| ``gated as [`/specify`](specify.md) gates them`` | 1 | — | `pw/docs/commands/update-spec.md` 1 | |
-| `then its inputs as /specify gates them` | 1 | — | `.claude/rules/product-workflows.md` 1 | |
-| `as on the idea route` | 6 | — | ARD:788 (branch naming), `pw/docs/commands/create-ard.md:73` (repositories), `pw/docs/commands/specify.md:88` (repository candidates) — another subject; SPEC:1393 (row K35); `pw/docs/workflow.md:199` (row E17); `pw/docs/brd-workflow.md:327` (row L-B4-10) | |
-| `CREATE_ARD_NEEDS_PRD` | 0 | — | — | |
-| `CREATE_ARD_PRD_NOT_HANDED_OFF` | 0 | — | — | |
-| `SPECIFY_NEEDS_PRD` | 0 | — | — | |
-| `SPECIFY_PRD_NOT_HANDED_OFF` | 0 | — | — | |
-| `UPDATE_SPEC_NEEDS_PRD` | 0 | — | — (must stay 0) | |
-| `UPDATE_SPEC_PRD_NOT_HANDED_OFF` | 0 | — | — (must stay 0) | |
+| `is not a prerequisite` | 15 | 6 | ARD 4, SPEC 2, `pw/commands/create-prd.md` 2, `pw/docs/commands/create-ard.md` 2, `pw/docs/commands/create-prd.md` 1, `pw/docs/commands/specify.md` 1, `wc/references/next-phase-offer.md` 1, PH 1, `dw/docs/commands/vuln.md` 1 | 15 / 6 — as intended |
+| `not a prerequisite at all` | 2 | — | ARD 1, SPEC 1 | 1 / 0 — as intended |
+| `is still not a prerequisite` | 3 | — | ARD 1, SPEC 1, `pw/commands/brd-reconcile.md` 1 | 3 / 0 — as intended |
+| `No authored PRD on` | 2 | — | ARD 1, SPEC 1 | 3 / 0 — as intended |
+| `reported as no authored PRD` | 1 | — | `pw/commands/prd-ground.md:544` (D15) | 0 / 0 — as intended |
+| `its handoff merged` | 1 | — | `pw/commands/brd-interview.md:226` (K65, the clause D22–D24 take) | 9 / 0 — as intended |
+| `The idea route goes on from its PRD` | 4 | — | `pw/commands/brd-interview.md` 1 (K65), `pw/commands/brd-package.md` 1 (D24), `pw/commands/brd-reconcile.md` 1 (D23), `pw/commands/brd-split.md` 1 (D22) | 4 / 0 — as intended |
+| `never optional` | 10 | — | PH 1, `.claude/rules/workflows-core-handoff.md` 1, `wc/docs/reference/references.md` 1, `pw/docs/roles-and-phases.md` 1, `dw/docs/roles-and-phases.md` 1, `dw/docs/getting-started.md` 1, `dw/docs/commands/design.md` 1, `dw/docs/commands/ready.md` 2, `pw/commands/brd-intake.md` 1 (another subject) | 11 / 2 (*parts* before was 1, not —) — as intended |
+| `whose gated input was never optional` | 6 | — | `pw/docs/roles-and-phases.md` 1, `dw/docs/roles-and-phases.md` 1, `dw/docs/getting-started.md` 1, `dw/docs/commands/design.md` 1, `dw/docs/commands/ready.md` 2 | 6 / 0 — as intended |
+| `an absent optional input` | 4 | — | `CLAUDE.md` 1, `pw/docs/roles-and-phases.md` 1, `dw/docs/roles-and-phases.md` 1, `dw/references/context-management.md` 1 | 4 / 0 — as intended |
+| `never becomes a prerequisite` | 2 | — | `CLAUDE.md` 1, `wc/docs/reference/references.md` 1 | 0 / 0 — as intended |
+| `never a missing one` | 3 | — | `pw/docs/roles-and-phases.md` 3 | 0 / 0 — as intended |
+| `the hard stop is an unmerged PRD` | 3 | — | `pw/docs/roles-and-phases.md` 3 | 0 / 0 — as intended |
+| `` The hard stop is a `prd.md` that exists on an unmerged branch `` | 2 | — | `pw/docs/commands/create-ard.md` 1, `pw/docs/commands/specify.md` 1 | 0 / 0 — as intended |
+| `falls back to reading the resolved folder` | 3 | — | `pw/docs/commands/create-ard.md` 1, `pw/docs/roles-and-phases.md` 2 | 0 / 0 — as intended |
+| `falls back to the resolved folder` | 3 | — | `pw/commands/create-prd.md` 1, `pw/commands/update-prd.md` 1, `pw/docs/roles-and-phases.md` 1 | 0 / 0 — as intended |
+| `does **not** require a PRD` | 2 | — | ARD 1, SPEC 1 | 1 / 0 — as intended |
+| `may legitimately hold no PRD` | 2 | — | ARD 1, SPEC 1 | 2 / 0 — as intended |
+| `on every route, with no branch` | 2 | — | ARD 1, SPEC 1 | 2 / 0 — as intended |
+| `is reported and never a stop, on either route` | 1 | — | ARD 1 | 0 / 0 — as intended |
+| `` on the `prd.md` test alone `` | 4 | — | ARD 3, SPEC 1 | 1 / 0 — as intended |
+| `` the `absent` branch is what makes that safe `` | 3 | — | ARD 1, SPEC 1, `pw/commands/brd-reconcile.md` 1 (quotes the other two) | 0 / 0 — as intended |
+| `` `absent` branch proceeds `` | 3 | 1 | `pw/commands/brd-reconcile.md` 1, `pw/docs/commands/brd-reconcile.md` 1, `wc/references/next-phase-offer.md` 1 | 3 / 1 — as intended |
+| `its absent branch architects from the slice folder` | 1 | — | `.claude/rules/brd-route.md` 1 | 1 / 0 — as intended |
+| `the one state that would make either wait` | 1 | — | `pw/commands/brd-reconcile.md` 1 | 0 / 0 — as intended |
+| `absent falls back, unmerged stops` | 1 | — | `pw/docs/commands/specify.md` 1 | 0 / 0 — as intended |
+| `An input that was optional before this gate existed stays optional` | 1 | 1 | PH 1 | 1 / 1 — as intended |
+| `No consumer turns an optional input into a prerequisite` | 1 | 1 | PH 1 | 0 / 0 — as intended |
+| `the gate never makes an optional input mandatory` | 1 | 1 | PH 1 | 0 / 0 — as intended |
+| `` the same shape as `/create-ard`'s row `` | 1 | 1 | PH 1 | 0 / 0 — as intended |
+| `the shape of their PRD rows` | 1 | 1 | PH 1 | 0 / 0 — as intended |
+| `*"Gate the PRD — on every route"*` | 1 | 1 | PH 1 | 1 / 1 — as intended |
+| `It stood there on the strength of` | 1 | 1 | PH 1 | 1 / 1 — as intended |
+| `the caller proceeds exactly as it did before this feature` (A13, added by Task 2; counted before its edit) | 1 | 1 | PH 1 | 0 / 0 — as intended |
+| `reports the artifact absent and stops on that` (A14, added by Task 2; counted before its edit) | 1 | — | `wc/references/addressing.md` 1 | 0 / 0 — as intended |
+| ``with their stops named `UPDATE_SPEC_` in place of `SPECIFY_` `` | 1 | — | `pw/commands/update-spec.md` 1 | 1 / 0 — as intended |
+| ``gated as [`/specify`](specify.md) gates them`` | 1 | — | `pw/docs/commands/update-spec.md` 1 | 1 / 0 — as intended |
+| `then its inputs as /specify gates them` | 1 | — | `.claude/rules/product-workflows.md` 1 | 1 / 0 — as intended |
+| `as on the idea route` | 6 | — | ARD:788 (branch naming), `pw/docs/commands/create-ard.md:73` (repositories), `pw/docs/commands/specify.md:88` (repository candidates) — another subject; SPEC:1393 (row K35); `pw/docs/workflow.md:199` (row E17); `pw/docs/brd-workflow.md:327` (row L-B4-10) | 5 / 0 — as intended |
+| `CREATE_ARD_NEEDS_PRD` | 0 | — | — | 21 / 3 — as intended |
+| `CREATE_ARD_PRD_NOT_HANDED_OFF` | 0 | — | — | 20 / 3 — as intended |
+| `SPECIFY_NEEDS_PRD` | 0 | — | — | 22 / 3 — as intended |
+| `SPECIFY_PRD_NOT_HANDED_OFF` | 0 | — | — | 19 / 3 — as intended |
+| `UPDATE_SPEC_NEEDS_PRD` | 0 | — | — (must stay 0) | 0 / 0 — as intended |
+| `UPDATE_SPEC_PRD_NOT_HANDED_OFF` | 0 | — | — (must stay 0) | 0 / 0 — as intended |
+
+### After — at `97fb8c8c`
+
+**Taken by Task 8 Step 1**, 2026-11-14, at `97fb8c8c` — the head of `feat/ladder-order-b1`, with `origin/main` at `9b1d6aef` merged in (`95e30032`) — from the worktree root, each command run as written above: R1 to R7 verbatim, and `wic` pasted from the block above, each string run once for the scope and once with `parts`. Nothing is inferred. The before-counts were re-derived the same way on `git archive 0de91630` of the five scope roots, and every recorded number reproduces except the three named under *Task 8 — found at the after-count* (3b to 3d). The last column of each table above holds the after-count, and this table says what each was meant to come to, and why.
+
+*Intended*, for a phrase that stated the old rule, is the number of sites where a row kept it in a form that is still true: on a slice or on the BRD route, of another command, or as the opening of a sentence the rewrite went on to qualify. Where every site was a rewrite that dropped the phrase, it is 0. Sites are given at the tree's present lines.
+
+| Count | Command | Before | After | Intended, and why | Verdict |
+|---|---|---|---|---|---|
+| `R1`, consumers whose §3.4 row stops on `absent` | R1 | 9 | 11 | 11: the nine, plus `/create-ard` (PH:321) and `/specify` (PH:322), whose PRD rows now open **stops** (A4, A5). `/update-spec`'s split-off PRD row (PH:323) falls back, and `/update-spec` counts once, for its base row. Printed: `/brd-interview` `/brd-package` `/brd-proposal` `/brd-reconcile` `/brd-split` `/create-ard` `/design` `/prd-ground` `/prd-proposal` `/specify` `/update-spec`. `.claude/rules/workflows-core-handoff.md:24` carries the same recipe, character for character, and says *eleven* | as intended |
+| `R2` | R2 | 1 | 1 | 1: ARD:280, the slice bullet, *No authored PRD on `<default>` … architecting from the resolved folder* | as intended |
+| `R3` | R3 | 1 | 1 | 1: SPEC:321, the slice bullet | as intended |
+| `R4` | R4 | 2 | 3 | 3, which the brief names: the two slice bullets, and `/update-spec`'s carve-out at `pw/commands/update-spec.md:57` (C11) | as intended |
+| `R5`, `CLAUDE.md` size | R5 (`wc -c`, bytes) | 35462 bytes (35215 characters) | 36224 bytes; 35972 characters by `LC_ALL=C.UTF-8 wc -m CLAUDE.md` | under 36,000 characters: the warning (`CLAUDE_MD_WARN` in `scripts/validate-catalog.py`) counts characters (`len(read_text)`), and the controller's ruling for Task 7 lifted the earlier cap of 100 over `origin/main`, which rested on a byte count. `origin/main` (`9b1d6aef`) is 35858 characters, and the branch adds 114 | as intended, in characters; R5's bytes read over a limit the file is under (3a below) |
+| `R6`, coupling file size | R6 (`wc -c`, bytes) | 18781 bytes (18687 characters) | 19845 bytes; 19749 characters | under 20,000 characters (`RULES_FILE_WARN`, also `len(read_text)`). Task 7 added the 1.91.0 bullet | as intended |
+| `R7`, the floor | R7 | 23 lines (17 outside `reference-parts/`) | 20 (14 outside) | not a target: a line count of three phrases whose wrap-insensitive counts are below. It falls by 3 because three sites now wrap the phrase across two lines (ARD:487–488 and SPEC:1401–1402, each *not a / prerequisite*, and `pw/commands/brd-reconcile.md:3018–3019`, *still not a / prerequisite*), and SPEC:1401's survivor is BRD-scoped. No surviving line states the phrase of the idea route | as intended |
+| `` `is not a prerequisite` `` | `wic` | 15 / 6 | 15 / 6 | 15: six rewrite rows kept it, now scoped to the BRD route or a slice (B4 ARD:487, B6 ARD:1018, C3 SPEC:594, C8 SPEC:1401, B12 `pw/docs/commands/create-ard.md:77`, C13 `pw/docs/commands/specify.md:86`); four keep rows on the BRD route (K15 ARD:266, which now says *on that route*; K25 ARD:1086; K28 `pw/docs/commands/create-ard.md:211`; K45 NPO:347); four say `/idea` is not a prerequisite for `/create-prd` (K46 `pw/commands/create-prd.md:123`, :127; K49 `pw/docs/commands/create-prd.md:57`; K4 PH:320); one is another subject (`dw/docs/commands/vuln.md:46`). Parts 6: K45's sentence in five `next-phase-offer` parts, and K4's in `phase-handoff/require-on-main.md` | as intended |
+| `` `not a prerequisite at all` `` | `wic` | 2 / 0 | 1 / 0 | 1: C8 kept it at SPEC:1401, *on the BRD route … not a prerequisite at all there*; B6's copy became *is not a prerequisite for this command* (ARD:1018) | as intended |
+| `` `is still not a prerequisite` `` | `wic` | 3 / 0 | 3 / 0 | 3, each scoped to a slice: B3 ARD:327 and C2 SPEC:366 (*On a slice … is still not a prerequisite*), and D13 `pw/commands/brd-reconcile.md:3018` (*on the BRD route*) | as intended |
+| `` `No authored PRD on` `` | `wic` | 2 / 0 | 3 / 0 | 3, as R4 | as intended |
+| `` `reported as no authored PRD` `` | `wic` | 1 / 0 | 0 / 0 | 0: D15 (PG:540–547) now says one in the folder and on no ref stops both commands | as intended |
+| `` `its handoff merged` `` | `wic` | 1 / 0 | 9 / 0 | 9: K65 and the three stops that took its clause (D22–D24), and five docs pages, each carrying it where its wording needed it (D25 `pw/docs/commands/brd-split.md:282`, D26 `pw/docs/brd-workflow.md:355`, D29 `pw/docs/commands/brd-interview.md:31`, D30 `pw/docs/commands/brd-package.md:27`, D31 `pw/docs/commands/brd-reconcile.md:44`). D21 and D27 say *that PRD's handoff merged* and *once that PRD's handoff is merged* | as intended |
+| `` `The idea route goes on from its PRD` `` | `wic` | 4 / 0 | 4 / 0 | 4: K65 and D22–D24 keep the lead and gained the clause | as intended |
+| `` `never optional` `` | `wic` | 10 / 1 | 11 / 2 | 11: A8's paragraph adds PH:356, *stop on `absent` for the PRD as decided, not as never optional*, and its generated copy adds the second in `parts`. The other ten: PH:316 (A3, now *one of two reasons*), `.claude/rules/workflows-core-handoff.md:24` (E2), `wc/docs/reference/references.md:27` (A12), `pw/docs/roles-and-phases.md:10` (E7), `dw/docs/roles-and-phases.md:10` (E11), `dw/docs/getting-started.md:108` (E13), `dw/docs/commands/design.md:59` (E14), `dw/docs/commands/ready.md:55`, :94 (E15, E16) — each now names `/create-ard` and `/specify` apart from the never-optional set — and `pw/commands/brd-intake.md` (another subject). Its before-*parts* cell reads —; it was 1 (3c) | as intended |
+| `` `whose gated input was never optional` `` | `wic` | 6 / 0 | 6 / 0 | 6: E7, E11, E13, E14, E15, E16 each keep the phrase for the never-optional set and name the two decided commands after it | as intended |
+| `` `an absent optional input` `` | `wic` | 4 / 0 | 4 / 0 | 4: `CLAUDE.md:154` (E1, now *becomes a prerequisite only by a recorded decision, never by the gate*), `pw/docs/roles-and-phases.md:10` (E7, the two named among *the exception*), `dw/docs/roles-and-phases.md:10` (L-B2-12's sentence, batch 2's; E11's parenthetical names the two), K56 `dw/references/context-management.md` | as intended |
+| `` `never becomes a prerequisite` `` | `wic` | 2 / 0 | 0 / 0 | 0: E1 and A12 rewrote both | as intended |
+| `` `never a missing one` `` | `wic` | 3 / 0 | 0 / 0 | 0: E8–E10 | as intended |
+| `` `the hard stop is an unmerged PRD` `` | `wic` | 3 / 0 | 0 / 0 | 0: E8–E10 | as intended |
+| ``` `` The hard stop is a `prd.md` that exists on an unmerged branch `` ``` | `wic` | 2 / 0 | 0 / 0 | 0: B12, C13 | as intended |
+| `` `falls back to reading the resolved folder` `` | `wic` | 3 / 0 | 0 / 0 | 0: B11, E8, E9 | as intended |
+| `` `falls back to the resolved folder` `` | `wic` | 3 / 0 | 0 / 0 | 0: D11, D12, E10 | as intended |
+| `` `does **not** require a PRD` `` | `wic` | 2 / 0 | 1 / 0 | 1: C8 kept it, BRD-scoped (SPEC:1400, *on the BRD route this run does **not** require a PRD*); B6 dropped it | as intended |
+| `` `may legitimately hold no PRD` `` | `wic` | 2 / 0 | 2 / 0 | 2: B6 ARD:1019 and C8 SPEC:1402, each now *a slice it just wrote … into may legitimately hold no PRD* | as intended |
+| `` `on every route, with no branch` `` | `wic` | 2 / 0 | 2 / 0 | 2: the heading text kept by ruling (fix round 1), ARD:277 and SPEC:318 | as intended |
+| `` `is reported and never a stop, on either route` `` | `wic` | 1 / 0 | 0 / 0 | 0: B4 | as intended |
+| ``` `` on the `prd.md` test alone `` ``` | `wic` | 4 / 0 | 1 / 0 | 1: B7's two idea-route copies (ARD:823, :829 before) and C9's (SPEC:1365 before) are gone; the one left, ARD:1040, *the first being taken on the `prd.md` test alone*, is about the slice's arrays and stood in B7's paragraph before | as intended |
+| ``` `` the `absent` branch is what makes that safe `` ``` | `wic` | 3 / 0 | 0 / 0 | 0: B3's and C2's leads, and D13's quote of them. Their successor, `` The BRD route runs this gate too, and a slice holding no `prd.md` still goes on ``, counts 3 (ARD, SPEC, `pw/commands/brd-reconcile.md`), as walk T5-W26 records | as intended |
+| ``` `` `absent` branch proceeds `` ``` | `wic` | 3 / 1 | 3 / 1 | 3, each a rewrite row that kept the phrase, scoped to a slice holding no `prd.md`: D13 `pw/commands/brd-reconcile.md:3018`, D14 `pw/docs/commands/brd-reconcile.md:727`, D10 NPO:260; parts 1, D10's copy in `next-phase-offer/brd.md` | as intended |
+| `` `its absent branch architects from the slice folder` `` | `wic` | 1 / 0 | 1 / 0 | 1: E6 kept it at `.claude/rules/brd-route.md:32`, now *where the slice holds no prd.md, and stops where it holds one the gate found on no ref* | as intended |
+| `` `the one state that would make either wait` `` | `wic` | 1 / 0 | 0 / 0 | 0: D13 | as intended |
+| `` `absent falls back, unmerged stops` `` | `wic` | 1 / 0 | 0 / 0 | 0: C15 | as intended |
+| `` `An input that was optional before this gate existed stays optional` `` | `wic` | 1 / 1 | 1 / 1 | 1: A2 kept the opening and qualified it — PH:314 goes on *unless a recorded decision makes it required* (`wic` of that clause: 1 / 1) | as intended |
+| `` `No consumer turns an optional input into a prerequisite` `` | `wic` | 1 / 1 | 0 / 0 | 0 in that case: A11's sentence is now lower-case and qualified, *no consumer turns an optional input into a prerequisite on its own account* (`wic`: 2 / 2, PH:356 and PH:625) | as intended |
+| `` `the gate never makes an optional input mandatory` `` | `wic` | 1 / 1 | 0 / 0 | 0: A1 | as intended |
+| ``` `` the same shape as `/create-ard`'s row `` ``` | `wic` | 1 / 1 | 0 / 0 | 0: A5 | as intended |
+| `` `the shape of their PRD rows` `` | `wic` | 1 / 1 | 0 / 0 | 0: A6 | as intended |
+| `` `*"Gate the PRD — on every route"*` `` | `wic` | 1 / 1 | 1 / 1 | 1: A7 keeps the quote, which the heading kept by ruling keeps valid; the claim around it is rewritten (PH:352) | as intended |
+| `` `It stood there on the strength of` `` | `wic` | 1 / 1 | 1 / 1 | 1: A9 keeps the history sentence, now *which then fell back on every `absent`*, and follows it with the 2026-11-14 sentence (PH:537) | as intended |
+| `` `the caller proceeds exactly as it did before this feature` `` | `wic` | 1 / 1 | 0 / 0 | 0: A13 | as intended |
+| `` `reports the artifact absent and stops on that` `` | `wic` | 1 / 0 | 0 / 0 | 0: A14 | as intended |
+| ```` ``with their stops named `UPDATE_SPEC_` in place of `SPECIFY_` `` ```` | `wic` | 1 / 0 | 1 / 0 | 1: C11 keeps it at `pw/commands/update-spec.md:57`, followed by *save the two stops* | as intended |
+| ```` ``gated as [`/specify`](specify.md) gates them`` ```` | `wic` | 1 / 0 | 1 / 0 | 1: C16 keeps it at `pw/docs/commands/update-spec.md:58`, followed by *save that this run never takes `/specify`'s two PRD stops* | as intended |
+| `` `then its inputs as /specify gates them` `` | `wic` | 1 / 0 | 1 / 0 | 1: E5 keeps it at `.claude/rules/product-workflows.md:46`, followed by *save /specify's two PRD stops on absent* | as intended |
+| `` `as on the idea route` `` | `wic` | 6 / 0 | 5 / 0 | 5: E17's copy (`pw/docs/workflow.md:199`) is gone; ARD:1001, `pw/docs/commands/create-ard.md:76` and `pw/docs/commands/specify.md:90` are other subjects, SPEC:1446 is K35, and `pw/docs/brd-workflow.md:327` is L-B4-10, batch 4's | as intended |
+| `` `CREATE_ARD_NEEDS_PRD` `` | `wic` | 0 / 0 | 21 / 3 | more than 0, in the command, its docs page, PH §3.4 and the map line: ARD 12, `pw/docs/commands/create-ard.md` 2, PH 3, `.claude/rules/product-workflows.md` 1, and `pw/docs/reference/environment.md`, `pw/docs/roles-and-phases.md`, `.claude/rules/plugin-updates-coupling.md` 1 each | as intended |
+| `` `CREATE_ARD_PRD_NOT_HANDED_OFF` `` | `wic` | 0 / 0 | 20 / 3 | the same: ARD 9, `pw/docs/commands/create-ard.md` 2, PH 3, `.claude/rules/product-workflows.md` 1, `.claude/rules/brd-route.md` 1, and `pw/commands/create-prd.md` (D11), `pw/commands/update-prd.md` (D12), `pw/docs/roles-and-phases.md`, the coupling file 1 each | as intended |
+| `` `SPECIFY_NEEDS_PRD` `` | `wic` | 0 / 0 | 22 / 3 | the same: SPEC 11, `pw/docs/commands/specify.md` 2, PH 3, the map line 1, and `pw/commands/update-spec.md` and its docs page (naming the stop it does not take), the environment page, the roles page, the coupling file 1 each | as intended |
+| `` `SPECIFY_PRD_NOT_HANDED_OFF` `` | `wic` | 0 / 0 | 19 / 3 | the same: SPEC 8, `pw/docs/commands/specify.md` 2, PH 3, the map line 1, `.claude/rules/brd-route.md` 1, and `/update-spec`'s command and page, the roles page, the coupling file 1 each | as intended |
+| `` `UPDATE_SPEC_NEEDS_PRD` `` | `wic` | 0 / 0 | 0 / 0 | 0, which must stay; `grep -rc UPDATE_SPEC_NEEDS_PRD plugins`, `CHANGELOG.md` files included, also sums to 0 | as intended |
+| `` `UPDATE_SPEC_PRD_NOT_HANDED_OFF` `` | `wic` | 0 / 0 | 0 / 0 | 0, which must stay; `grep -rc` over `plugins` sums to 0 | as intended |
+
+**The counts recorded elsewhere in this file, with their commands**, re-run the same way:
+
+| Count | Where recorded | Before | After | Intended, and why | Verdict |
+|---|---|---|---|---|---|
+| §1's starter grep | §1, its comment | 229 lines; 206 outside `reference-parts/`, 23 in it | 250 lines; 222 outside, 28 in it, by path. The literal `\| grep -v reference-parts` prints 205 before and 221 after (3d) | a search, not a target. 65 lines outside `reference-parts/` are new or changed by text against `0de91630`, and 49 are gone or changed; each new one was read in its paragraph (*found at the after-count*, item 2). The 5 more in `reference-parts/` are the generated copies of PH (+4) and NPO (+1), which the source files' counts match | as expected |
+| The paragraph-level pass | §1 | 160 blocks | 184 blocks | a search, not a target: 82 blocks are new or changed by their collapsed text against `0de91630`, and their new sentences were read (item 2) | as expected |
+| §6's *starter grep hits 23 lines there* | §6 | 23 | 28: `phase-handoff/require-on-main.md` 15, `handoff-to-main.md` 4, `next-phase-offer/pe.md` 2, and one each in the other seven files §6 names | follows PH and NPO, as above | as expected |
+| The distinct `CREATE_ARD_*` ids, `grep -o 'CREATE_ARD_[A-Z_]*' plugins/product-workflows/commands/create-ard.md \| sort -u` | walk T3-W27 | twelve ids | 13 lines: the twelve ids, and the bare `CREATE_ARD_` of *each `CREATE_ARD_*` stop* (ARD:33) — 13 lines at `7d8e214f` and `b01883a6` too (3e) | 12 ids, no new one since the merge | as intended |
+| `choices:` arrays in ARD, two to four options each | walk T3-W28 | 35, all within 2–4 | 35, all within 2–4. The walk names no command; this one is Task 8's own, a script reading each `choices: [` to its closing bracket and counting the quoted options | 35 | as intended |
+| `grep -rc UPDATE_SPEC_NEEDS_PRD plugins`, summed | walk T4-W27 | 0 | 0 | 0 | as intended |
+| `grep -rc UPDATE_SPEC_PRD_NOT_HANDED_OFF plugins`, summed | walk T4-W28 | 0 | 0 | 0 | as intended |
+| `grep -n "create-ard\|:specify" plugins/workflows-core/references/next-phase-offer.md`, and the unprefixed forms | Task 5 Step 3 | 26 lines, and 2 more | 31 lines; the unprefixed forms are on 2 lines (267, 268), one of which (267) the first grep already counts | no change since Task 5: the same command prints 31 at `7f5e1c66`, Task 5's commit, and 30 at `0de91630`. The recorded 26 reproduces at none of them (3b) | as at Task 5; the record's 26 is wrong |
+| `wic` of `` The BRD route runs this gate too, and a slice holding no `prd.md` still goes on `` | walk T5-W26 | 3 | 3 | 3: ARD, SPEC, and D13's quote of them | as intended |
+
+Task 6M's *22 line hits and 20 flagged blocks* were counted on the merge's diff (`git diff -U0 HEAD^1 HEAD` at `7d8e214f`), not on the tree, and a fixed diff gives the same answer, so they were not re-run.
 
 ## 3. The population — rows this batch rewrites
 
@@ -684,3 +761,30 @@ Task 6M merged `origin/main` at `c12ca55f` (PR #197, B39, unsafe branch names; P
 | M7 | ARD:865, `pw/docs/commands/create-ard.md:143`, `wc/references/threat-model-format.md:73`, `pw/agents/threat-modeler.md:63` | "**A requirement gap** — a threat whose answer, at any question of this phase, is a product requirement the PRD does not state — is disposed `Deferred to design: <the requirement it needs>` …" | keep | Task 6M, for this batch's subject: the line it writes, `- [ ] threat-model.md [TH#N] needs a product requirement: <what> — for [[<PRD>]], through /product-workflows:update-prd`, is a follow-up written into a record for a later run, which design L8 does not count as an offer, and it names neither `/create-ard` nor `/specify`. **Flagged to the controller, not this batch's to fix:** on a BRD slice holding no `prd.md`, which batch 1 keeps going, the named `/update-prd <SLICE-KEY>` stops with `UPDATE_PRD_NO_PRD`, so the line names a run that stops for that folder; on the idea route the PRD gate now guarantees a `prd.md`, so it cannot arise there |
 | M8 | ARD:997 (Phase 6) | "Then **offer** … Where that set is the ARD file(s) alone — or the ARD file(s) and `threat-model.md`, an advisory path … Every §3.4 row naming an ARD preserves `status: none` and `ard-resolution.md`'s no-regression rule, so `/specify`, `/dev-workflows:design`, … each proceed without it rather than stopping …" | keep | Task 6M. Main widened the set this sentence speaks of by the advisory model; what it says of consumers is about the ARD's absence, which batch 1 does not change (`/specify`'s ARD row still falls back) |
 | M9 | `wc/references/document-lineage.md:83` (§5 step 2) | "— `--capture` may be repeated, and `stamp` records the entries of every capture file, in the order given … No input is in two capture files: `stamp` records an entry repeated exactly once, and refuses one path at two blobs, exiting non-zero." | keep | Task 6M. `/update-spec`'s step 7 writes one capture file, leaving out each input its Phase 2 guard skips, and Phase 7 stamps with that one file, so the refusal cannot fire there. Re-run against the merged `lineage.py` in a scratch repository: a `prd.md` absent everywhere, and one on disk and on no ref, each capture and stamp exit 0 and the stamped `upstreams:` name the ARD alone (Task 6M report, Step 6) |
+
+## Task 8 — the rewrite rows, re-read
+
+Each of the 102 rows dispositioned *rewrite* was found in the tree at `97fb8c8c` by its text and by its file's structure, since the line numbers in §3 are older than the tree, and was read against the row's quote and its last column. **102 done, 0 NOT DONE.** Each row's present site is given below. Where a site moved or split, the present lines are given, and where a sentence went with its paragraph, that is said.
+
+- **Task 2 (14 of 14 done):** A1 PH:312, the heading now *an optional input becomes mandatory only by a recorded decision, never by the gate*; A2 PH:314, *stays optional unless a recorded decision makes it required*; A3 PH:316, *one of two reasons*; A4 PH:321, `/create-ard`'s row now **stops**, split by the folder's `prd.md` and the route; A5 PH:322 (`/specify`, the same split) and PH:323 (`/update-spec`, the fallback kept); A6 PH:324, *the shape `/update-spec`'s PRD row keeps on every `absent`, and `/create-ard`'s and `/specify`'s keep on a slice holding no `prd.md`*; A7 PH:352, the quote kept and the claim around it now *the route deciding only what those rows do where the gate returns `absent` or `unmanaged`*; A8 PH:356, *the only new stop the gate itself makes* and *A second change came later*; A9 PH:537; A10 PH:613, §4.4 row F with both HEAD-test forms; A11 PH:625; A12 `wc/docs/reference/references.md:27`; A13 PH:263; A14 `wc/references/addressing.md:687–690`, *the never-produced stops of `/product-workflows:prd-proposal`, `/product-workflows:create-ard` and `/product-workflows:specify` name the rename instead*.
+- **Task 3 (15 of 15 done):** B1 ARD:234–245, step 5 *taken after* the three gates, and :245 *a slice, since Gate the PRD stops an idea-route run without one*; B2 ARD:277–283, the heading kept by ruling and its list in six bullets; B3 ARD:317–339, its lead now *… and a slice holding no `prd.md` still goes on*, with *On the idea route it is, by a decision recorded on 2026-11-14*; B4 ARD:481–491; B5 ARD:493; B6 ARD:1012–1031; B7 ARD:1032–1042, the idea-route substitution gone and *The idea route never reaches the table* in its place; B8 ARD:1059, *PRD-level ARD (the idea route; a slice takes the BRD-route arrays below)*, with no `/create-prd` option left in it; B9 ARD:1123; B10 ARD:1156, *The ten argument-, tree- and git-shaped stops*, both new ids in the list; B11 `pw/docs/commands/create-ard.md:53–55`, the two ids as bullets of their own; B12 :77; B13 :194; B14 :217–218; B15 ARD:214.
+- **Task 4 (21 of 21 done):** C1 SPEC:318–324; C2 SPEC:358–377; C3 SPEC:584–597; C4 SPEC:658–662; C5 — the sentence is gone (no *container test alone* is left in SPEC), and the `/create-prd` choice it qualified is now a slice's, SPEC:660–675; C6 SPEC:710–713; C7 SPEC:1239, both new ids in the list; C8 SPEC:1395–1402; C9 SPEC:1409–1418, ending *so the precondition above never fails there*; C10 SPEC:1458; C11 UPS:57; C12 `pw/docs/commands/specify.md:68–70`; C13 :86; C14 :140; C15 :150; C16 `pw/docs/commands/update-spec.md:58`; C17 SPEC:290; C18 UPS:81 (the guard), with :59 (step 7's capture), :68 (Phase 1's confirmation) and :94 (Phase 3), and `pw/docs/commands/update-spec.md:41` and :64; C19 UPS:162–166; C20 `pw/docs/commands/update-spec.md:94–96`; C21 NPO:333–336.
+- **Task 5 (32 of 32 done):** D1 PG:549–580, the HEAD test before either form; D2 PP:236–270; D3 `pw/docs/commands/prd-ground.md:325–335`; D4 `pw/docs/commands/prd-proposal.md:52`; D5 EP:1148; D6 `pw/docs/commands/epics.md:107` — the two bullets the row quotes stand unchanged at :108–109, and a bullet added above them (*land it there first … What follows applies once it has*) gives them the landing condition the row asked for; D7 EP:490–493; D8 EP:1083, beneath the *First:* line at :1082; D9 NPO:326–330; D10 NPO:258–264; D11 `pw/commands/create-prd.md:913`; D12 `pw/commands/update-prd.md:235`; D13 `pw/commands/brd-reconcile.md:3016–3024`; D14 `pw/docs/commands/brd-reconcile.md:727`; D15 PG:540–547; D16 EP:421; D17 EP:1084; D18 EP:1085; D19 EP:1269; D20 EP:1154–1156; D21 `pw/commands/idea.md:98`; D22 `pw/commands/brd-split.md:146`; D23 `pw/commands/brd-reconcile.md:291`; D24 `pw/commands/brd-package.md:218`; D25 `pw/docs/commands/brd-split.md:277–283`; D26 `pw/docs/brd-workflow.md:355`; D27 `pw/docs/commands/idea.md:159`; D28 EP:45–52; D29 `pw/docs/commands/brd-interview.md:31`; D30 `pw/docs/commands/brd-package.md:27`; D31 `pw/docs/commands/brd-reconcile.md:44`; D32 `pw/docs/commands/brd-reconcile.md:748`.
+- **Task 6 (19 of 19 done):** E1 `CLAUDE.md:154`; E2 `.claude/rules/workflows-core-handoff.md:24`; E3 `.claude/rules/product-workflows.md:42`; E4 :45; E5 :46; E6 `.claude/rules/brd-route.md:32`; E7 `pw/docs/roles-and-phases.md:10`; E8 :20; E9 :33; E10 :42; E11 `dw/docs/roles-and-phases.md:10`; E12 :26, where the comparison with `/create-ard` and `/specify` is gone; E13 `dw/docs/getting-started.md:108`; E14 `dw/docs/commands/design.md:59`; E15 `dw/docs/commands/ready.md:55`; E16 :94; E17 `pw/docs/workflow.md:199`; E18 `pw/docs/reference/environment.md:13`; E19 `dw/docs/reference/environment.md:13`.
+- **Task 7 (1 of 1 done):** L-B3-8 `plugins/docs-workflows/docs/reference/environment.md:13`.
+
+Here PG is `pw/commands/prd-ground.md`, PP `pw/commands/prd-proposal.md`, EP `pw/commands/epics.md`, NPO `wc/references/next-phase-offer.md` and UPS `pw/commands/update-spec.md`, as in the walks.
+
+## Task 8 — found at the after-count
+
+**No row is NOT DONE, and the searches of §1 find no miss.** The header's totals are unchanged: this step adds no row and re-dispositions none, and the totals command prints 237 rows (102 rewrite: Task 2 14, Task 3 15, Task 4 21, Task 5 32, Task 6 19, Task 7 1; 44 *beyond plan*), 83 keep and 52 later (29, 7, 16), with no malformed row and no duplicate id.
+
+1. **The brief's after-condition holds.** `grep -rn "No authored PRD on" plugins/ CLAUDE.md .claude/rules/ docs/maintainers/`, with `CHANGELOG.md` files and `plugins/workflows-core/reference-parts/` left out, hits three lines: ARD:280 and SPEC:321, each the bullet for *`absent`, no `prd.md` in the PRD folder, on a slice*, and UPS:57, `/update-spec`'s carve-out. The one excluded hit is `pw/CHANGELOG.md`, which is history.
+2. **No miss.** §1's starter grep, re-run, has 65 lines outside `reference-parts/` that are new or changed by text against `0de91630`. Each was read in its paragraph, and each is one of three things: a §3 row's rewritten text; Task 7's coupling bullet (`.claude/rules/plugin-updates-coupling.md:26`), which says what an older side does; or `docs/maintainers/rationale.md#ladder-order` (:670, :674, :676). The paragraph-level pass flags 184 blocks, 82 of them new or changed by their collapsed text. Task 8 then took the sentences in those 82 blocks that are new to their file and name `/create-ard` or `/specify` beside the pass's wording, widened by *goes on*, *go on* and *proceed*. That gave 42 sentences, and each was read. Every one states the batch's behaviour, except one in `pw/agents/ard-reviewer.md:50–64`, which is about main's threat model, another subject. Every one of the 82 blocks was also read wherever the subject and that wording fall within 300 characters of each other in text new to its file — 58 windows in 44 blocks, the paragraph-level pass's own reading method — and none states the old behaviour. **No line in scope says that `/create-ard` or `/specify` goes on, on the idea route, where the PRD folder's `prd.md` is not on the default branch.**
+3. **Discrepancies in this file's records.** These are in this file, not in the tree, and none changes an intended number:
+   - a. **R5 counts bytes.** R5 (`wc -c CLAUDE.md`) prints 36224, over the 36,000 it is set against. But that warning, `CLAUDE_MD_WARN` in `scripts/validate-catalog.py`, counts characters (`len(read_text)`), and by `LC_ALL=C.UTF-8 wc -m CLAUDE.md` the file is 35972 characters, under it. The controller's Task 7 ruling bound exactly that count. R6 has the same mismatch, but its file is under 20,000 in both units (19845 bytes, 19749 characters). A later count should use `LC_ALL=C.UTF-8 wc -m`.
+   - b. **Task 5 Step 3's 26 does not reproduce.** Its command, `grep -n "create-ard\|:specify" plugins/workflows-core/references/next-phase-offer.md`, prints 31 lines now, 31 at `7f5e1c66` (Task 5's commit) and 30 at `0de91630`. The unprefixed forms sit on 2 lines, 267 and 268, and the first grep already counts 267. The file did not change after Task 5, so the recorded number was wrong when it was written. The reading it records still covers the file.
+   - c. **`never optional`'s *Before (parts)* cell reads —, and the count was 1.** On `0de91630`, `wic "never optional" parts` prints 1, the copy of PH:316 in `reference-parts/phase-handoff/require-on-main.md`.
+   - d. **§1's *206 outside reference-parts* is a count by path.** The literal `| grep -v reference-parts` also drops `.claude/rules/workflows-core-handoff.md:24`, whose text names that directory, and prints 205 (221 after). This is the trap CLAUDE.md describes: *match the execution phrase, not the bare name*.
+   - e. **Walk T3-W27's command prints 13 lines for its *twelve distinct ids*.** The 13th is the bare `CREATE_ARD_` in *each `CREATE_ARD_*` stop* (ARD:33). The command prints 13 at `7d8e214f` and `b01883a6` too, so the walk's twelve ids hold.
+   - f. **T6-N1 quotes an older `CLAUDE.md:154`.** Its *What the tree says now* gives that line as *§3.4 names each;*. Task 7 (`b7b14718`), by the controller's ruling, made it *§3.4 names each input that stops and why;*, and that is the present text.
