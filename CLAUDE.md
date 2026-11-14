@@ -56,7 +56,7 @@ Do NOT edit `~/.claude/claude-config/` — that repo is retired and will be dele
 
 ## Adding a new plugin
 
-The five steps are in `.claude/rules/plugin-authoring.md`, which loads when any file is read.
+The steps are in `.claude/rules/plugin-authoring.md`, which loads when any file is read.
 
 ## Conventions
 

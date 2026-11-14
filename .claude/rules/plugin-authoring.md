@@ -3,7 +3,7 @@ paths:
   - "**"
 ---
 
-# Plugin authoring — the command, agent and skill taxonomy, and the Karpathy notes, and adding a new plugin
+# Plugin authoring — the command, agent and skill taxonomy, the Karpathy notes, and adding a new plugin
 
 Loaded when any file is read (`paths: "**"`), as near to always-on as a rules file comes: it was always-on in `CLAUDE.md`, and moved out to keep that file under its 36,000-character warning, as `claim-sweep.md` and `plugin-updates.md` were; evidence is in `docs/maintainers/rationale.md`.
 
