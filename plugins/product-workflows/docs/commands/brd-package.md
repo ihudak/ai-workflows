@@ -24,7 +24,7 @@ questions it held, are what this command gates on and packages.
   format-validated only, never checked against a tracker. **Only a slice is packaged**: a resolved
   root stops with `BRD_PACKAGE_ROOT_LEVEL`, naming [`/brd-split`](brd-split.md) as the way to carve one, and an idea-route PRD folder — a `PRD-`
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_PACKAGE_NOT_A_SLICE`, naming
-  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on. An `EPIC-` folder stops with `BRD_PACKAGE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one.
+  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on, once its PRD is on the default branch — after [`/create-prd`](create-prd.md), its handoff merged, where the folder holds none yet. An `EPIC-` folder stops with `BRD_PACKAGE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one.
 - **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_PACKAGE_TWO_ADDRESSES`.
 - **`--depends-on <BRD-KEY>`** (optional, repeatable) — declares a prerequisite BRD. Persisted
   additively to `brd-link.md`, never replacing what is already there. Any key at any level is

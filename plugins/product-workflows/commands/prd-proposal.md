@@ -233,7 +233,12 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    | A `brd-link.md`; no gate-set row `covered-here`, and the gate set is **empty** | Not `/create-prd`, which raises `CREATE_PRD_BRD_NOT_ELIGIBLE`: `This slice claims nothing: keep or remove it with /product-workflows:brd-split <PARENT-KEY>`, `<PARENT-KEY>` read off the same `brd-link.md` the `claims:` list came from — in the form the **parent's** own ledger decides, exactly as `/product-workflows:create-prd` Phase 0 step 7's empty-gate-set row decides it: where that ledger still holds an `unallocated` row, name `/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"` instead, since that run walks the row too and stops with `BRD_SPLIT_NEEDS_INSTRUCTION` without an instruction; where it holds none, the bare form above; where it cannot be read, report it by path and name neither form |
    | A `brd-link.md`; no gate-set row `covered-here` and none `unallocated`, and the gate set is **non-empty** | Name no command, and say why: this slice holds no PRD of its own and none can be authored in it, `/create-prd` would raise `CREATE_PRD_BRD_NOT_ELIGIBLE`, and nothing in this plugin moves a slice's terminal row back to `unallocated` — report what its gate-set rows resolved to |
 
-   Where a `prd.md` is in the folder but on no ref:
+   Where a `prd.md` is in the folder but on no ref, which of the stop's two forms to print turns on
+   the HEAD test, made before it prints: `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>/prd.md" 2>/dev/null`,
+   `<path>` there the folder's path relative to `$SPECS_PATH`, so that `<path>/prd.md` is the gate's
+   own `path` input, written with `./` before it as §3.2 writes every `<ref>:` object name — whatever
+   form the stop later prints `<path>` in — exit 0 where HEAD holds the file. Where HEAD does not hold
+   it — an untracked file, or one staged and never committed — the uncommitted form:
 
    ```
    PRD_PROPOSAL_PRD_NOT_HANDED_OFF: <path>/prd.md exists but is on no ref — it was written and its handoff was declined.
@@ -248,6 +253,21 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    ```
 
    `<new-branch>` is `prd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<path>` is this folder's path. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+
+   Where HEAD holds the `prd.md` — committed on a branch no plugin prefix names, or on a local
+   `<default>` that `origin` does not hold — the commands above do not apply, since the switch they
+   open with takes the file out of the working tree; the committed form lands the branch instead:
+
+   ```
+   PRD_PROPOSAL_PRD_NOT_HANDED_OFF: <path>/prd.md is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of it and priced nothing.
+     Land that branch by running these; re-running /product-workflows:create-prd would author a second PRD rather than land the one committed.
+
+   <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
+
+     Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run this command. Ignored, every /prd-proposal run on this folder stops here until prd.md is on <default>.
+   ```
+
+   In the committed form `<branch>` is the branch `git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints, and the commands the stop prints are the ones §4.4's row F gives for a file HEAD holds, in the case row F selects — each chosen by the reads that row names before the stop prints, each on a line of its own, and an alternative introduced by a line saying when it applies; a `<new-branch>` among them is named as in the uncommitted form. Two of the message's sentences change with the case, each on a test the stop makes itself. Where `<branch>` is `<default>`, the first reads `<path>/prd.md is committed on your local <default> and not pushed.`, and the one opening `Then` reads `Then re-run this command — where <default> is protected, once a pull request from <new-branch> into <default> is merged.` Where the specs repository has no `origin`, the one opening `Then` reads `Then re-run this command.` alone, since the local merge row F selects there needs no pull request. `<path>` and the `#` rule are as for the uncommitted form. On a read-only specs mount (§3.6) every command either form prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it.
 
 **Nothing gates on `ard.md` or `specification.md`.** That is what grading replaces, and it is the
 whole answer to the question of when a requirement set becomes estimable: Phase 3 grades what the

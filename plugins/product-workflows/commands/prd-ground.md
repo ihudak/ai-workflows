@@ -540,11 +540,11 @@ behaviour, not the behaviour.
     **The gate is here, not skipped, for the reason step 6 already gates the ledger: a claim list
     read off an unmerged artifact produces a finding set nothing downstream can reproduce.**
     `/product-workflows:create-ard` and `/product-workflows:specify` both gate `prd.md` with their
-    own `require-on-main` before reading it as the PRD — one on a branch stops them, and one on no
-    ref at all returns `absent` and is reported as no authored PRD — so a finding this run derived
-    from a `prd.md` written only to a working tree would ground a document those two commands do not
-    yet take as the PRD — a `[CG#n]` or `[DG#n]` whose premise agrees with nobody's
-    committed copy of the requirement but this run's own.
+    own `require-on-main` before reading it as the PRD — one on a branch stops them, and so does one
+    in the folder and on no ref, with their `*_PRD_NOT_HANDED_OFF`, on either route — so a finding
+    this run derived from a `prd.md` written only to a working tree would ground a document those
+    two commands do not yet take as the PRD — a `[CG#n]` or `[DG#n]` whose premise agrees with
+    nobody's committed copy of the requirement but this run's own.
 
     **Row F splits the same way the BRD route's row F does, and for the same reason: *never
     produced* and *produced, handoff declined* name different fixes.** Test whether `prd.md` is in
@@ -553,9 +553,14 @@ behaviour, not the behaviour.
       run has ever landed here, so there is nothing to build a claim list from. Stop:
       `PRD_GROUND_NEEDS_PRD: <KEY> has no prd.md on any ref and none in the folder — there is nothing to build a claim list from. Run '/product-workflows:create-prd <KEY>' and merge its handoff first.`
     - **`prd.md` is in the folder, and on no ref — produced, handoff declined.** The file exists;
-      what is missing is a commit. Land what is already on disk, and **do not name
-      `/product-workflows:create-prd`** — re-running it would author a second PRD over the one
-      already written rather than land it:
+      what is missing is its landing on the default branch. Land what is already on disk, and **do
+      not name `/product-workflows:create-prd`** — re-running it would author a second PRD over the
+      one already written rather than land it. Which of the stop's two forms to print turns on the
+      HEAD test, made before it prints: `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>" 2>/dev/null`,
+      `<path>` the `prd.md`'s path relative to `$SPECS_PATH` — the gate's own `path` input, written
+      `./<path>` as §3.2 writes every `<ref>:` object name — whatever form the stop later prints the
+      path in, exit 0 where HEAD holds the file. Where HEAD does not hold it — an untracked file, or
+      one staged and never committed — the uncommitted form:
       `PRD_GROUND_PRD_NOT_HANDED_OFF: <KEY>'s prd.md is written at <path> but is on no branch — its handoff was declined, so nothing is missing but the commit. Commit and merge it to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:prd-ground <KEY>'. Do not re-run /product-workflows:create-prd, which would rewrite the PRD rather than land the one on disk.`
       ```
       git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
@@ -564,6 +569,15 @@ behaviour, not the behaviour.
       git -C "<SPECS_PATH>" push -u origin <new-branch>
       ```
       `<new-branch>` is `prd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<path>` is the prd.md this message names. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+
+      Where HEAD holds the `prd.md` — committed on a branch no plugin prefix names, or on a local
+      `<default>` that `origin` does not hold — the commands above do not apply, since the switch they open with
+      takes the file out of the working tree; the committed form lands the branch instead:
+      `PRD_GROUND_PRD_NOT_HANDED_OFF: <KEY>'s prd.md at <path> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of it and grounded nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:create-prd, which would rewrite the PRD rather than land the one committed. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:prd-ground <KEY>'. Ignored, every /prd-ground run on this folder stops here until prd.md is on <default>.`
+      ```
+      <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
+      ```
+      In the committed form `<branch>` is the branch `git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints, and the commands the stop prints are the ones §4.4's row F gives for a file HEAD holds, in the case row F selects — each chosen by the reads that row names before the stop prints, each on a line of its own, and an alternative introduced by a line saying when it applies; a `<new-branch>` among them is named as in the uncommitted form. Two of the message's sentences change with the case, each on a test the stop makes itself. Where `<branch>` is `<default>`, the first reads `<KEY>'s prd.md at <path> is committed on your local <default> and not pushed.`, and the one opening `Then` reads `Then re-run '/product-workflows:prd-ground <KEY>' — where <default> is protected, once a pull request from <new-branch> into <default> is merged.` Where the specs repository has no `origin`, the one opening `Then` reads `Then re-run '/product-workflows:prd-ground <KEY>'.` alone, since the local merge row F selects there needs no pull request. `<path>` and the `#` rule are as for the uncommitted form. On a read-only specs mount (§3.6) every command either form prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it.
 7. **Require `$REPOS_PATH`.** Resolve `--repos-path`'s value where step 2 read one, else
    `${REPOS_PATH:-/workspace}` (`docs/reference/environment.md`), as one directory or a
    colon-separated list, resolving each entry with `realpath`; a `--repos-path` value is carried as `$REPOS_PATH` for the rest of the run,

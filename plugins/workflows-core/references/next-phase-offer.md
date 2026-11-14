@@ -257,8 +257,11 @@ array carries every option.
   condition that the reconciled ledger leaves no row `unallocated` and at least one `covered-here`
   (`product-workflows:coverage-ledger-format` §5, the two refusals its Phase 0 raises); the other two
   carry none of their own: neither reads the ledger as an authoring input, and although both now run the PRD gate on every
-  route, that gate's `absent` branch proceeds — a slice holding no authored `prd.md` is the ordinary
-  state for both, since `/product-workflows:create-prd` is a prerequisite for neither. **That difference is where the conditions come from, and it matters:**
+  route, that gate's `absent` branch proceeds on a slice holding no `prd.md` — the ordinary state
+  for both, since `/product-workflows:create-prd` is a prerequisite for neither on a slice; a `prd.md`
+  the slice holds and never handed off — on an unmerged branch, or in the folder and on no ref —
+  stops both, as it does on the idea route, naming its landing, and the offering run, which reads no
+  `prd.md`, does not test for it. **That difference is where the conditions come from, and it matters:**
   the level test and `/create-prd`'s eligibility test are each enforced by the offered command's own
   Phase 0, so offering either wrongly hands over a run that stops;
   the advance/re-entry split is enforced **nowhere downstream** — `/create-ard` on the BRD route and
@@ -320,7 +323,11 @@ array carries every option.
   gate stops with `DESIGN_NO_SPEC` where no ref carries the Epic's `specification.md` (none written,
   or written and never committed), and with `require-on-main`'s stop naming the branch or pull
   request where a plugin branch carries it.
-- `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
+- `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>` —
+  each after the landing of the PRD folder's `prd.md` where the specs tree is a git repository and
+  that file is not on its default branch, since `/product-workflows:epics` reads that file from the
+  working tree and gates it nowhere, while both of these stop on the PRD folder until it lands
+  (`/product-workflows:epics` Phase 0, *Note whether the PRD is landed*).
 - `/product-workflows:update-spec <KEY>` (a merged specification revised in place) → for each design it
   names — one citing an ID that changed, or one built on the specification it replaced — Dev →
   `/dev-workflows:design <ITS-KEY>` to revise it;

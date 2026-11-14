@@ -328,8 +328,11 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   Where `prd.md` is on no ref and not in the folder either, no [`/create-prd`](create-prd.md) run has
   ever landed here and the run stops with `PRD_GROUND_NEEDS_PRD`. Where it is written in the folder
   but on no ref — produced, handoff declined — the run stops with `PRD_GROUND_PRD_NOT_HANDED_OFF`,
-  naming committing and merging it as the fix and explicitly **not** re-running `/create-prd`, which
-  would author a second PRD over the one already written.
+  printing the git commands that land that file — on a new `prd/` branch where it is uncommitted;
+  where it is committed, on a branch of your own or on your local default branch, by pushing that
+  branch and, for one of your own, merging it, or, where the default branch is protected, a new
+  `prd/` branch and a pull request — and explicitly **not** re-running `/create-prd`, which would
+  author a second PRD over the one already written.
 - **A claim list built from `prd.md`, not an inventory, and from live rows only** — a requirement
   marked `Superseded by` or `Withdrawn` grounds nothing. Every `[AC#n]` row under
   `## Acceptance Criteria`, every `[FR#n]` row under `## Functional requirements` (present only on a
