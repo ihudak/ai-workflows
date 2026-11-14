@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 
-- **§5's *Latest, earlier and earliest* orders blocks by one key**: each block stands at its `at:` instant where it carries one, else at the start of its heading's date, and of two at the same point the one further down the file is later. `unit-branch` step 1's "latest block", the merged test's "earliest earlier block" and *A unit's work is merged*'s "latest block" said neither whether they meant a block's place in the file or its date; the two agree only while the file stands in time order, which an entry-set merge of two clones' blocks breaks, so a run could take an older block's branch for the unit's work. `next-phase-offer`'s use of the latest block cites the same order.
+- **§5's *Latest, earlier and earliest* orders blocks by one key**: each block stands at its instant (§1's *A block's instant*) where it has one, else at the earliest instant its heading's local date can name, `10:00:00Z` the day before, and of two at the same point the one further down the file is later; its limits are stated. `unit-branch` step 1's "latest block", the merged test's "earliest earlier block" and *A unit's work is merged*'s "latest block" said neither whether they meant a block's place in the file or its date; the two agree only while the file stands in time order, which an entry-set merge of two clones' blocks breaks, so a run could take an older block's branch for the unit's work. `next-phase-offer` takes each repository's latest block, as *A unit's work is merged* does, where it took one block for the whole file; and §1 names §5 among the readers of `at:`.
 
 ## [1.90.2] — 2026-11-14
 

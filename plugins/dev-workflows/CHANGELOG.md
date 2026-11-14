@@ -7,11 +7,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.66.3] — 2026-11-14
 
-`/conformance` and `/ready` read "the latest block" by `implementation-format` §5's one order: batch B41. Update with `workflows-core` 1.90.3.
+`/implement` and `/conformance` read "the latest block" by `implementation-format` §5's one order, and `/ready` says its pair rule is not that order: batch B41. Update with `workflows-core` 1.90.3.
 
 ### Fixed
 
-- **`/conformance` fetches and traces the branch of the block `workflows-core:implementation-format` §5's *Latest, earlier and earliest* names latest**, by instant where a block carries one, never by its place in a merged file; `/ready`'s *Release Preparation* test says its pair rule is its own and picks no single latest.
+- **`/implement` fetches, and `/conformance` fetches and traces, the branch of the block `workflows-core:implementation-format` §5's *Latest, earlier and earliest* names latest**, by instant where a block carries one, never by its place in the file alone; `/ready`'s *Release Preparation* test says its pair rule is its own and picks no single latest.
 
 ## [4.66.2] — 2026-11-14
 

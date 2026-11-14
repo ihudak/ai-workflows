@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 
-- **The change scan's branch comes from the latest block by `workflows-core:implementation-format` §5's *Latest, earlier and earliest*** — by instant where a block carries one — never by its place in a merged `implementation.md`.
+- **The change scan's branch comes from the latest block by `workflows-core:implementation-format` §5's *Latest, earlier and earliest*** — by instant where a block carries one — never by its place in the file alone.
 
 ## [0.12.2] — 2026-11-14
 

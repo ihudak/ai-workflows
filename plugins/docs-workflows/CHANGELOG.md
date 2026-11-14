@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 
-- **The GitHub footer's command posts the body alone**: `pr-draft.md` holds the title on its first line, a blank line, then the body, and the footer offered `gh pr create --title '<title>' --body-file <pr-draft path>`, so the description began with the title the `--title` flag had already set. It now offers `tail -n +3 '<pr-draft path>' | gh pr create --title '<title>' --body-file -`, the path single-quoted as the title is; `finish-and-handoff` §5 and `/document` Phase 8.5 state the file's layout, and the `/document` page says so.
+- **The GitHub footer's command posts the body alone**: `pr-draft.md` holds the title on its first line, a blank line, then the body, and the footer offered `gh pr create --title '<title>' --body-file <pr-draft path>`, so the description began with the title the `--title` flag had already set. It now offers `[ -r '<pr-draft path>' ] && tail -n +3 -- '<pr-draft path>' | gh pr create -R '<owner/repo>' --base '<base_branch>' --head '<branch>' --title '<title>' --body-file -`, every value single-quoted, so the description starts with the body, the pull request opens in the docs repository wherever the shell stands, and an unreadable path posts nothing; `finish-and-handoff` §5 and `/document` Phase 8.5 state the file's layout, and the `/document` page says so.
 
 ## [1.39.4] — 2026-11-14
 
