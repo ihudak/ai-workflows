@@ -6,6 +6,7 @@ paths:
   - "plugins/dev-workflows/commands/implement.md"
   - "plugins/dev-workflows/commands/conformance.md"
   - "plugins/workflows-core/references/addressing.md"
+  - "plugins/workflows-core/references/cost-emission.md"
   - "plugins/workflows-core/commands/frames.md"
   - "plugins/docs-workflows/commands/document.md"
   - "plugins/docs-workflows/commands/release-notes.md"
@@ -14,7 +15,7 @@ paths:
 
 # BRD route — route detection
 
-Loaded with `.claude/rules/brd-route.md`, whose `paths:` it shares. Split out of `.claude/rules/brd-route.md` to keep that file under 20,000 characters; the route's map lines and its other invariants are there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded with `.claude/rules/brd-route.md`, whose `paths:` it shares. Split out of `.claude/rules/brd-route.md` to keep that file under 20,000 characters; the route's map lines and its folder-kind invariants are there, the sibling re-cut's in `.claude/rules/brd-route-recut.md`; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Invariants
 

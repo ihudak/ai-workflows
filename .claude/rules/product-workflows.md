@@ -14,7 +14,7 @@ paths:
 
 Loaded when a file under `plugins/product-workflows/` is read, or `/design`'s, `/ready`'s, `/implement`'s or `/release-notes`' command file, or `workflows-core:addressing`, `workflows-core:grilling-technique` or `workflows-core:prd-format` — the files outside the plugin that the PRD-creation flow's invariants bind. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
-The BRD route's map lines and its slice-kind, PRD-eligibility and sibling re-cut invariants are in `.claude/rules/brd-route.md`, its route-detection invariant in `.claude/rules/brd-route-detection.md`, `/prd-ground`'s blind-verification invariant in `.claude/rules/prd-ground-verification.md`, and the PRD-creation flow's invariants in `.claude/rules/product-workflows-prd-flow.md`, which shares this file's `paths:` — all split out to keep each rules file under 20,000 characters.
+The BRD route's map lines and its slice-kind and PRD-eligibility invariants are in `.claude/rules/brd-route.md`, its sibling re-cut invariant in `.claude/rules/brd-route-recut.md`, its route-detection invariant in `.claude/rules/brd-route-detection.md`, `/prd-ground`'s blind-verification invariant in `.claude/rules/prd-ground-verification.md`, and the PRD-creation flow's invariants in `.claude/rules/product-workflows-prd-flow.md`, which shares this file's `paths:` — all split out to keep each rules file under 20,000 characters.
 
 ## Plugin facts
 
