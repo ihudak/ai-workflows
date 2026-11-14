@@ -100,6 +100,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
 | `security-workflows.md` | `security-workflows/**`; `workflows-core/`: `references/security-register-format.md`, `scripts/weakness-classes.py`, `docs/family-map.md` | plugin facts, map, register invariants |
+| `threat-model.md` | `workflows-core/`: `references/threat-model-format.md`, `references/pre-lint.md`, `scripts/lineage-kinds.json`; `product-workflows/`: `commands/create-ard.md`, `agents/ard-reviewer.md`, `docs/commands/create-ard.md` | the ARD threat model: authority, invariants, readers |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 24 command files: the ten docs-grounding consumers, `/design` (architecture only) and thirteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, authorities, map |
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |
@@ -167,6 +168,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:prose-formatting` — output line-wrapping: never hard-wrap prose → `workflows-core.md`
 - `workflows-core:implementation-format` — the append-only `implementation.md` record, the `[<key>]` commit convention, the two-source read, `unit-branch` → `workflows-core.md`
 - `workflows-core:security-register-format` — the security findings register: its layout, run records, statuses, roles and the rules `register.py` applies, and §7's weakness classes → `security-workflows.md`
+- `workflows-core:threat-model-format` — the ARD threat model: `threat-model.md`'s sections, a threat's fields and its one disposition, the decision-pair and cross-folder forms, `[TH#N]` identity, the check → `threat-model.md`
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`

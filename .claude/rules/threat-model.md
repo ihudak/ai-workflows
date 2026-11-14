@@ -1,0 +1,31 @@
+---
+paths:
+  - "plugins/workflows-core/references/threat-model-format.md"
+  - "plugins/workflows-core/references/pre-lint.md"
+  - "plugins/workflows-core/scripts/lineage-kinds.json"
+  - "plugins/product-workflows/commands/create-ard.md"
+  - "plugins/product-workflows/agents/ard-reviewer.md"
+  - "plugins/product-workflows/docs/commands/create-ard.md"
+---
+
+# The ARD threat model — authority, invariants, readers
+
+Loaded when the threat model's format (`workflows-core:threat-model-format`), `workflows-core:pre-lint`, whose *Threat model* block checks a model, the lineage kind table (`plugins/workflows-core/scripts/lineage-kinds.json`), `/product-workflows:create-ard`, which writes the model, `product-workflows:ard-reviewer`, which reviews it, or `/create-ard`'s page is read. The format is `workflows-core`'s, and its paragraph is kept here rather than in `.claude/rules/workflows-core.md`, whose 20,000-character budget leaves it no room to grow as the model gains readers. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`; the design is `docs/superpowers/specs/2026-11-14-sec-g2-b-threat-model-design.md`.
+
+## Authority
+
+`plugins/workflows-core/references/threat-model-format.md` is the **single source of truth** for `threat-model.md`, the threat model an ARD may carry beside it in a PRD folder, an Epic folder or a BRD-route slice: what it is and where it lives (§1), its frontmatter (§2), its sections, `## Inherited threats` on an Epic-level model only (§3), a threat — its heading, its five fields, the decision-pair form, its one disposition of three, the bar a mitigating decision meets, an acceptance, and its field text read as data (§4), `[TH#N]` identity and change, the cross-folder form and *Start fresh* (§5), the check and what clears each of its tests (§6), what a model never holds (§7), and its readers (§8). It lives in `workflows-core` because `/dev-workflows:design` and `/dev-workflows:conformance` are to read the model later, and a reference crosses a plugin boundary only from `workflows-core`. The commands and agents that load it are what `grep -l 'args: "threat-model-format' plugins/*/commands/*.md plugins/*/agents/*.md` lists; `workflows-core:pre-lint` cites it by path, as the format its *Threat model* block checks.
+
+## Invariants
+
+1. **Never named `ard-*.md`, and never under `$SPECS_PATH/security/`.** One `threat-model.md` sits beside a folder's ARD files and covers all of them. Three readers take any `ard-<x>.md` as a per-area ARD: `workflows-core:ard-resolution`, the lineage kind table's `ard` row (`workflows-core:document-lineage` §4), and `product-workflows`' `scripts/architecture-harvest.py`, which would mint team records from it. `$SPECS_PATH/security/` is kept for a team's own documents and the findings register (format §1).
+2. **Advisory: the ARD picks the handoff's array.** A later `/create-ard` run on the folder reads the model and nothing gates on it, so it is an advisory deliverable. It rides in `/create-ard`'s handoff beside the ARD, and the ARD alone picks the consent array, by the strongest-class rule (`workflows-core:phase-handoff` §4.0's register row for `threat-model.md`).
+3. **No mitigation id.** A mitigation is an ordinary `[AD#N]` of an ARD file, cited by its decision pair — `ard.md [AD#3]`, `ard-payments.md [AD#2]`, or `[[<PRD-KEY>]] ard.md [AD#4]` for the PRD-level ARD an Epic inherits — and there is no `[MT#N]` or any other mitigation id: a mitigation the architecture owns is an `[AD#N]`, and one it cannot own is the design's (format §4 and §7).
+4. **The check, the fix and the escape.** Where a set resolves, `/create-ard` runs format §6's mechanical check at up to three points: at Phase 4.3 on the model the folder holds, at Phase 4.3 again on the draft before its playback, and at Phase 6 before any stamp. A fix to a model finding never adds or changes a decision — it re-disposes, supersedes or withdraws a threat, which changes the model alone — so fixing the model never changes a decision the review has already passed. The escape, Phase 5's *Hand off the ARD without the threat model*, exists only for a new model, one this run added, and never for a model the folder already held.
+5. **Its readers — a claim with an expiry date.** As the format states them (its opening and §8):
+   - **Two readers by name:** `/product-workflows:create-ard` (a later run on the same folder) and `product-workflows:ard-reviewer` (within the run).
+   - **One reader as prose, on the BRD route:** `/product-workflows:brd-reconcile`'s stale cross-reference sweep reads it as it reads every markdown file under the parent BRD's folder — as prose. By that sweep's structured-record class, a hit there is `needs-a-human`, never corrected in place.
+   - **No other command reads it.** Sub-projects C and D of the security roadmap (`docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md`) will add `/dev-workflows:design` and `/dev-workflows:conformance`.
+
+   C and D must sweep this bullet when they land, with every other copy of the claim, found by its subject — the model's readers — and never by this wording (`.claude/rules/claim-sweep.md` refinement 6).
+6. **The PA alone accepts a risk.** An acceptance names its owner, its reason and its review date (format §4); the Security Engineer's check is the pull request that hands the model off.
