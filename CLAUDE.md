@@ -38,7 +38,7 @@ plugins/
 
 `plugins/security-workflows/` provides one slash command, `/security-workflows:scan`, which records Claude Security's scans — of an Epic's branch before its pull request merges, or of a whole repository — in a findings register in the specs repository; two scripts (`register.py`, the register's one writer, and the `bounded.py` copy); and no subagent, hook, skill or reference file. It depends on `workflows-core` and on `claude-security@claude-plugins-official`, which Claude Code installs only because `marketplace.json` allowlists `claude-plugins-official` (`allowCrossMarketplaceDependenciesOn`). No other family plugin depends on it. A finding marked fix goes to `/dev-workflows:implement`, which continues on the Epic's branch while its pull request is open. Facts, map and invariants: `.claude/rules/security-workflows.md`.
 
-`plugins/workflows-core/` carries the family's shared foundation — reference corpus, agents, skills, two session-wide hooks, and seven family-meta commands (listed, with detail, in `.claude/rules/workflows-core.md`). **All four of `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` name it in `dependencies`**; an unsatisfied dependency disables the plugin that named it rather than letting it half-run, and there is no degraded mode to fall back to.
+`plugins/workflows-core/` carries the family's shared foundation — reference corpus, agents, skills, three session-wide hooks, and seven family-meta commands (listed, with detail, in `.claude/rules/workflows-core.md`). **All four of `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` name it in `dependencies`**; an unsatisfied dependency disables the plugin that named it rather than letting it half-run, and there is no degraded mode to fall back to.
 
 The catalog also ships `prose-style`, `guideline-reviewers` and `acli`; none has a rules file of its own.
 
@@ -85,6 +85,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `gates-reference-parts.md` | as `gates.md` | the reference-parts gate |
 | `gates-branch-check.md` | as `gates.md` | the reference-parts script's branch-check gate |
 | `gates-check-docs-late.md` | as `gates.md` | `check-docs.sh`'s checks 22 to 29 |
+| `specs-git-selftest.md` | `scripts/selftests/**` (repo root); `workflows-core/scripts/`: `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py` | where `specs-git.py`'s selftest lives, how it runs, group runs, the mutants |
 | `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
 | `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers |

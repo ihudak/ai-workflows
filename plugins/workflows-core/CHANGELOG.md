@@ -5,6 +5,76 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.89.1] — 2026-11-14
+
+The status line's opt-in plan usage draws on Linux, and draws a per-model limit the account lists only among its limits, such as a Fable limit. No command's behaviour changes, and no other plugin relies on this release, so it needs no other plugin's update of its own.
+
+### Fixed
+
+- **Plan usage is drawn on Linux.** The script read the cache's age, and the time of its last fetch, with `stat -f %m` before `stat -c %Y`. GNU `stat` reads `-f` as "file-system status" and `%m` as a file name, so it printed a file-system report, failed, and the GNU form's answer was appended to that report. The age was then no number, and with `WORKFLOWS_STATUSLINE_PLAN_USAGE=1` set on Linux the plan-usage bars were never drawn and the endpoint was fetched at most once. Each form is now captured on its own, the GNU one first. Anything but digits reads as 0: the cache is then not drawn, and a fetch stamp that reads 0 counts as made now, so a time that cannot be read never brings a fetch on every render.
+- **A per-model weekly limit listed only among the account's limits is drawn**, as `7d-<model>` (`7d-fable ███░░░░░░░ 25% resets 2d1h`). The endpoint sends some per-model windows as a field of their own, `seven_day_opus` and the like, which the line already drew, but for at least one account it listed the Fable limit only in its `limits` array, as a model-scoped weekly entry, which the line did not read. A window named alike in both forms is drawn once, from its field: a field's label now turns every underscore into a dash (`seven_day_oauth_apps` draws as `7d-oauth-apps`), as a limit's model name turns every run of characters that are neither letters nor digits. An entry scoped to a surface as well as a model is not drawn.
+- **Each entry of the reply is read on its own**, so a malformed one drops only itself, and a reset time sent as a number with a fraction is drawn, where it broke its bar and printed a shell error.
+
+### Added
+
+- **A self-test of the plan-usage line**, `scripts/selftests/statusline_selftest.sh`, run in CI. Each case renders the shipped script against a cached reply under a `HOME` of its own, with a fresh fetch stamp, which keeps the script from fetching, and with `curl` and `security` stubbed, so that even a script whose throttle regressed reads no credential and reaches no network. Its reset times are computed from the clock. It lives outside the plugin and ships to no one.
+
+## [1.89.0] — 2026-11-14
+
+The status line follows plugin updates. `/workflows-core:statusline` installs a copy of the script, which an update left at the version installed until the command was run again; a new `statusline-refresh` hook now brings an unedited copy up to the shipped script at session start. No other plugin relies on this release, so it needs no other plugin's update of its own.
+
+### Added
+
+- **The `statusline-refresh` hook, on `SessionStart`.** Where `/workflows-core:statusline` installed `~/.claude/dev-workflows/statusline-command.sh` and it differs from the script the running plugin version ships, the hook puts the shipped one in place and keeps the old one as `statusline-command.sh.prev`, so after `claude plugin update workflows-core@shipwright` and a restart the new status line arrives with nothing to re-run. It replaces the script only while it matches the SHA-256 recorded beside it in `statusline-command.sh.sha256`, so a copy edited by hand is never overwritten. It never installs a status line, prints nothing, and does nothing without `shasum` or `sha256sum`; like the other two hooks, it always exits 0.
+- **`/workflows-core:statusline` records the installed script's fingerprint** (Phase 3), the record the hook checks, and its report says the status line now follows updates.
+
+### Changed
+
+- **An install made before this release keeps its script until `/workflows-core:statusline` is run once more**, since it has no fingerprint to prove it unedited, unless it already equals the shipped script, in which case the hook records it on the next session start. The statusline page's new *Updates* section says so, and the hooks page describes the hook.
+
+## [1.88.0] — 2026-11-14
+
+The status line shows more of your usage limits. It draws a Claude apps gateway's spend limit, which Claude Code hands it alongside the 5h and 7d windows, and, opt-in, the plan usage Claude Code does not hand it at all: an Enterprise seat's monthly usage budget and the per-model weekly windows. No command's behaviour changes, and no other plugin relies on this release, so it needs no other plugin's update of its own: the copies of `tree-snapshot.py` in `dev-workflows`, `docs-workflows` and `product-workflows` change only in their self-test.
+
+### Added
+
+- **The gateway spend limit on the status line's fourth line.** Where Claude Code is routed through a Claude apps gateway that sets a spend limit, `rate_limits.spend_limit` draws a `spend` bar with its percentage and reset, and its dollar amounts and period once Claude Code has them (`spend ██████░░░░ 63% $314.12 / $500 monthly resets 4d23h`). Nothing to set: the line appears only where Claude Code sends the field.
+- **Plan usage, opt-in with `WORKFLOWS_STATUSLINE_PLAN_USAGE=1`.** Claude Code passes the status line only the 5h and 7d windows, and only for Pro, Max and Ultra subscribers, so an Enterprise seat saw no limit at all. With the variable set — in the `env` block of `~/.claude/settings.json` — the script reads the account's usage endpoint, the one Claude Code's `/usage` and the desktop app read, and draws a `usage` bar for a monthly usage budget (`usage ████░░░░░░ 43% $425.54 / $1000.00 monthly`) and one bar for each `five_hour…` or `seven_day…` window that has a value (`7d-opus`, `7d-sonnet`, and any other per-model window, Fable's among them where a plan carries it under such a name); a window Claude Code already passed is not drawn twice. It reads the Claude Code login token from the macOS Keychain, or `~/.claude/.credentials.json` elsewhere, skips an expired one and never refreshes it, and hands it to `curl` on stdin, so it is never printed, written to disk or put on a command line. The call runs in the background at most every five minutes into `~/.claude/dev-workflows/plan-usage.json`, so a render never waits on the network, and a cache more than an hour old is not drawn. The endpoint is not a public API: a field it stops sending drops out of the line. The `/workflows-core:statusline` page's new *Usage limits* section describes all three.
+
+### Changed
+
+- **A reset more than two days away reads in days and hours** (`resets 4d23h`), where it read in hours (`resets 119h0m`).
+
+### Fixed
+
+- **`weakness-classes.py --selftest` passes on Python 3.15.** Its `case_register_states` and `case_across_register_states` expected a register nested 100,000 deep to be `unreadable`, by the parser's `RecursionError`; Python 3.15's parser reads that nesting, so the register parses as a list and is `malformed`, and both cases failed. Each now expects the state the running interpreter gives. The script itself is unchanged: either state draws no counts.
+- **`tree-snapshot.py --selftest` passes on macOS.** Its byte-for-byte path case wrote a file named with a non-UTF-8 byte, which APFS refuses (`Illegal byte sequence`), so the self-test died before its first check. It now tries the name first and leaves that one path out where the filesystem refuses it, the only place such a name cannot occur; a filesystem that takes it is tested as before. The snapshot itself is unchanged, and the three copies stay byte-identical to this one.
+
+## [1.87.2] — 2026-11-14
+
+`weakness-classes.py across` reads a partial clone of the specs repository under a git that fails a sized listing over one missing blob, where it stopped with `not run`. No other plugin changes with this release or relies on it, so this release needs no other plugin's update of its own; each release below it names its own.
+
+### Fixed
+
+- **`across` no longer stops on a git that cannot size one blob of its listing.** `across` lists the registers and the team records with `git ls-tree -l`, which gives each blob's size. Under `GIT_NO_LAZY_FETCH=1`, which the script always sets, Ubuntu's git `1:2.43.0-1ubuntu7.4` fails that whole listing, exit 128, where a partial clone lacks any blob it names, and the run ended `weakness-classes: not run (git could not list --specs at --ref)`. Where the sized listing fails, the script now lists again without `-l`, which reads no blob, and asks `git cat-file -s` for the size of each register and record listed that is a regular file, one at a time: a blob git cannot read is an `unreadable` register or a skipped record, as it is under a git whose sized listing answers, and nothing is fetched. Only a commit neither listing can list still ends the run with that line. Where the sized listing answers, the script runs exactly as before.
+- **The selftest asks the git it runs on whether it honours `GIT_NO_LAZY_FETCH`**, in a second clone, where it read the answer off the version number, taking every git before 2.44 to ignore the variable, though Ubuntu's 2.43.0 carries it from its `1:2.43.0-1ubuntu7.1` security update, so on that git the case would have skipped no-fetch checks the git can run. The case `case_across_partial_clone` also checks first that its clones lack the blob, so a fixture that is not partial fails it and is never read as a git that fetched. A new case, `case_across_listing_without_sizes`, runs `across` under a `git` that fails every sized listing, so the second listing is tested on every git, and counts the sizes asked for: one for each regular file, none for a link. The selftest now runs 57 cases.
+
+### Changed
+
+- **`security-register-format` §7.1** describes the second listing and corrects which gits know `GIT_NO_LAZY_FETCH` — upstream git from 2.45.0 and from six maintenance releases of the lines before it, where it said from 2.44, and a build that backports it — and §7.5's table of `not run` reasons gives `git could not list --specs at --ref` as both listings failing.
+
+## [1.87.1] — 2026-11-14
+
+GIT-G1 Part 3, batch 1: `specs-git.py`'s selftest moves out of the script the plugin ships and into the repository's `scripts/selftests/`, and `--selftest --group <name>` runs one group of it alone. No command's behaviour, output or exit status changes, and no other plugin changes with this release or relies on it, so this release needs no other plugin's update of its own; each release below it names its own.
+
+### Changed
+
+- **`specs-git.py` no longer carries its selftest.** The tests are `scripts/selftests/specs_git_selftest.py`, outside the plugin, and `python3 plugins/workflows-core/scripts/specs-git.py --selftest`, run from a checkout of the repository, is still the command that runs them and the one CI runs: the script's `_run_selftest` executes that file in the script's own namespace. The two imports and three constants that only the tests used move with them, and the shipped script falls from 18,105 lines to 5,120 (`wc -l`). A plugin cache holds no `scripts/selftests/`, so `--selftest` run from one prints one line on stderr, starting `specs-git: not run (the selftest is not shipped with the plugin`, and exits 2; a selftest path that is there but cannot be read, such as a directory, prints `specs-git: not run (the selftest could not be read: <path>: <reason>)` instead, and a selftest file that rebinds a name the script held prints `specs-git: not run (the selftest file redefines a name of the script: <names>)`, each exiting 2 before any test runs. Every subcommand behaves, prints and exits as before.
+
+### Added
+
+- **`specs-git.py --selftest --group <name>`** runs only the named group of the selftest, and `--group` may be repeated; the named groups run in the selftest's own order, whatever order they are named in. An unknown name is a usage error naming every group, `--group` without `--selftest` is a usage error too, and a run with `--group` prints `specs-git selftest: PASS (<n> checks; partial: <groups>)`, which is never evidence that the whole selftest passes; so in CI, where `GITHUB_ACTIONS` is `true`, a run with `--group` is refused with one line on stderr and exit 2. Every run of the selftest that its `selftest` group starts carries `SPECS_GIT_SELFTEST_NESTED=1`, and such a run fails before any group runs where it would include the `selftest` group, and on reaching that group where it reaches it by any other route, so a break in group selection, in the script or in the selftest, fails that group rather than recursing. The selftest's new `selftest` group pins all this with eleven checks: one group alone, the order, an unknown name, `--group` without `--selftest`, the refusal in CI, a marked run of the `selftest` group, the not-shipped line, an unreadable selftest path, a selftest file that rebinds a name of the script, the selftest file run on its own, and CI's one `run:` line naming the script, which carries no `--group`. The repository also gains `scripts/selftests/mutants.py`, a runner for one-line mutants of this plugin's scripts, and its mutants file, `scripts/selftests/specs-git-mutants.json`; CI runs only `mutants.py --check`, which counts each mutant's `old` text in its file and runs no mutant. `.claude/rules/specs-git-selftest.md` describes the selftest's place, its groups and the mutants.
+
 ## [1.87.0] — 2026-11-14
 
 SEC-G1: the security findings registers feed the architecture work. A new script, `scripts/weakness-classes.py`, reads the registers `/security-workflows:scan` keeps and the team decision records, each by its format, and prints a register's **weakness classes** — one code repository's findings that share a primary CWE — as counts, fixed wording and values that passed a check, never a finding's text; a new internal skill, `weakness-classes`, is the one way a command runs it, and no agent does. Architecture grounding turns the classes of the repositories a piece of work touches into at most three `known-weakness` challenges; the scan raises a follow-up for the product architect where accepted risks of one class recur in a register and no team decision prevents the class; and `/product-workflows:promote-decisions` sees the classes that recur across registers. Update with `product-workflows` 3.80.0, `dev-workflows` 4.66.0 and `security-workflows` 0.12.0, whose commands make the calls. Nothing in this release writes a register, `register.py` is unchanged, and no plugin comes to depend on `security-workflows`. Where `$SPECS_PATH/security/` does not exist, the grounding commands run exactly as before; where it exists and holds no register, they add one `security registers: OFF` line and ground as before.

@@ -197,11 +197,11 @@ The parent design's §3 stands: the plugin-root boundary, Python 3 standard libr
 
 ## 9. Done when
 
-- **Batch 1:** the selftest lives outside `specs-git.py`; the check count is unchanged; a mutant per scenario group still fails its check; the eight named checks each have a mutant on record; one group can be run alone; CI is green.
+- **Batch 1:** the selftest lives outside `specs-git.py`; the check count is unchanged by the move, and rises only by checks of the group runs; a mutant per scenario group still fails its check; the eight named checks each have a mutant on record; one group can be run alone; CI is green.
 - **Batch 2:** all 23 producers, 16 consumers and 24 `branch-check` callers run through the skill; §4's question has a selftest for each answer, for several open runs, for the same command typed again with the earlier run's end still finding its record, for a re-run and a continuation that find their record and are not asked, for a remade first start that finds none and is, and for a logging command left unchanged; each call §4.4 names has one for each answer, with the other run started before and started after, and each remedy one for its form under an open run; RO-SIZE is shown closed as §5.2 says; D15's read has a selftest for each row that uses it; MIDRUN-HANDOFF, RO-SIZE and D15 are gone from `to-fix.md`, D15's read-only-mount bullet moved to its *Accepted* section; the claim sweep's before and after counts are on record; the gate chain exits 0.
 - **Batches 3 onward:** the parent design's §8 measurements, before and after each batch.
 - **The last batch:** neither reference is read whole by any run, and each one's size is stated before and after.
-- **Each batch:** a verification record written last, the rulings and the verbatim ledger committed before the workspace goes, dated changelogs, and a coupling bullet for each `workflows-core` release.
+- **Each batch:** a verification record written last, the rulings and the verbatim ledger committed before the workspace goes, dated changelogs, and a coupling bullet for each `workflows-core` release that `.claude/rules/plugin-updates-coupling.md`'s own test calls for.
 
 ## 10. Left to the builder
 

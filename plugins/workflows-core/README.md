@@ -30,7 +30,7 @@ Most of this plugin is not a command at all. It is the corpus a sibling plugin r
 | [References](docs/reference/references.md) | The reference corpus under `references/`. |
 | [Environment](docs/reference/environment.md) | Every environment variable this plugin reads, and the three run flags. |
 | [Grounding sources](docs/reference/grounding.md) | What each authoring command grounds on, and how to turn a source off. |
-| [Hooks](docs/reference/hooks.md) | The two session-wide hooks this plugin bundles, and why they live here. |
+| [Hooks](docs/reference/hooks.md) | The three session-wide hooks this plugin bundles, and why they live here. |
 | [Session cost](docs/reference/session-cost.md) | How a run's dollar cost is computed, attributed, and persisted. |
 | [Session feedback](docs/reference/session-feedback.md) | What `/feedback` and `/prompt*` record, and where it lands. |
 

@@ -222,6 +222,13 @@ def selftest():
 
         # Paths survive byte for byte, through the CLI and compare.
         names = ["with space.txt", 'quo"te.txt', "café.txt", "new\nline.txt", "bad\udcffbyte.txt"]
+        try:  # APFS and other UTF-8-only filesystems refuse a non-UTF-8 name (EILSEQ): nothing to test there
+            put(tmp, "bad\udcffbyte.txt")
+            os.remove(os.path.join(tmp, "bad\udcffbyte.txt"))
+            raw_names = True
+        except OSError:
+            names.remove("bad\udcffbyte.txt")
+            raw_names = False
         before_file = os.path.join(tmp, "before.json")
         after_file = os.path.join(tmp, "after.json")
         rc, out = cli("snapshot", "--dir", repo)
@@ -242,7 +249,7 @@ def selftest():
             if e is not None:
                 check("created " + ascii(n), e["created"] and e["changed"] and not e["clean_before"], e)
                 check("fp " + ascii(n), e["after_fp"] == sha(repo, n), e)
-        check("escape only for the non-UTF-8 byte", "\\udcff" in out and "café" in out and "\\u00e9" not in out)
+        check("escape only for the non-UTF-8 byte", ("\\udcff" in out) == raw_names and "café" in out and "\\u00e9" not in out)
         for n in names:
             os.remove(os.path.join(repo, n))
 

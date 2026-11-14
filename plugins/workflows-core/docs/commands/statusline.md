@@ -25,6 +25,24 @@ Takes no arguments. None of the three run flags apply to this command ([`environ
 
 Installs the vendored script to a stable per-user path (`~/.claude/dev-workflows/statusline-command.sh`, `chmod +x`'d) and merges a `statusLine` block into `~/.claude/settings.json`, preserving every other key. **It is idempotent and backs up anything it would overwrite** — an existing `statusLine` block, or an existing installed script — suffixing `-2`, `-3`, … rather than clobbering a prior backup. Installing it also enables — given `jq`, as *What it needs* says — the per-session **cost snapshot** behind the [status-line cross-check](../reference/session-cost.md#status-line-cross-check), the `cost_statusline_usd` figure a cost entry carries beside the computed one. **This is the only settings change the command makes**, and it never commits anything; every write stays under `~/.claude/` — though enabling the cost snapshot does change what every cost-emitting command's Session cost line reports.
 
+## Updates
+
+The installed script is a copy, so a plugin update does not change it by itself. The plugin's [`statusline-refresh` hook](../reference/hooks.md) closes that gap: at every session start it compares the installed copy with the script the installed plugin version ships, and where they differ it puts the new one in place, keeping the old one as `statusline-command.sh.prev`. So after a `claude plugin update` of `workflows-core` and a restart, the new status line arrives with nothing to re-run.
+
+**It replaces only a copy it can prove is unedited.** The install records the installed script's SHA-256 in `~/.claude/dev-workflows/statusline-command.sh.sha256`, and the hook replaces the script only while it still matches that record, then records the new one. A copy you edit by hand stops matching, and from then on the hook leaves it alone; run `/workflows-core:statusline` again to go back to the shipped script and to updates.
+
+**An install made before 1.89.0 has no record**, so the hook leaves it alone too, unless it already equals the shipped script, in which case the hook records it and updates follow from then on. Run `/workflows-core:statusline` once to start following updates. Without `shasum` or `sha256sum` the hook does nothing, and the status line stays at the version last installed.
+
+## Usage limits
+
+The status line's fourth line shows your usage limits, as far as Claude Code or your account tells it:
+
+- **`5h` and `7d`**: your rolling five-hour and weekly windows. Claude Code hands them to the status line itself, only for claude.ai Pro, Max and Ultra subscribers, and only after the session's first response.
+- **`spend`**: your spend against a limit a Claude apps gateway sets for you — the percentage, and the dollar amounts and period once Claude Code has them. You set nothing: it appears only where your Claude Code is routed through such a gateway, which Claude Code reports by itself.
+- **Plan usage, opt-in.** Claude Code passes no other limit to the status line, so an Enterprise seat's monthly usage budget and the per-model weekly windows (`7d-opus`, `7d-sonnet`, `7d-fable`, and any other a plan carries) show nothing by default. Set `WORKFLOWS_STATUSLINE_PLAN_USAGE=1` — in the `env` block of `~/.claude/settings.json`, so the status line inherits it — and the script reads them from your account's usage endpoint, the one Claude Code's own `/usage` and the desktop app read: `usage` with your spend against the monthly budget, and one bar per per-model window that has a value — a weekly one too where the endpoint lists it only among its limits, as it has listed a Fable limit. A window named alike in both forms is drawn once. To do so it reads your Claude Code login token from the macOS Keychain, or, where the Keychain has none, from `.credentials.json` in your Claude config directory (`$CLAUDE_CONFIG_DIR`, else `~/.claude`), and sends it to Anthropic only; the token is never printed, never written to disk and never put on a command line, and an expired one is skipped, never refreshed. The call runs in the background, at most once every five minutes, into `~/.claude/dev-workflows/plan-usage.json`, so a render never waits on the network; a cache more than an hour old is not drawn. The endpoint is not a public API: a field it stops sending drops out of the line, and a field it sends only under an internal name is not shown. It needs `curl`.
+
+A window Claude Code already passed is never drawn twice.
+
 ## Gates
 
 No reviewer, no branch, no commit. The one checkpoint is the explicit confirmation question, shown against the exact settings diff, before your settings are written.

@@ -276,6 +276,17 @@ jobs:
         # agent's. Fixtures are throwaway git repositories built at run time.
         run: python3 plugins/workflows-core/scripts/tree-snapshot.py --selftest
 
+      - name: Self-test the status line's plan usage
+        # /workflows-core:statusline installs statusline-command.sh, whose opt-in plan-usage line
+        # draws a cached reply of the account's usage endpoint. Its failure modes are silent: a
+        # limit the reply lists only among its limits is not drawn, a window is drawn twice, or, on
+        # Linux, the cache's age reads as garbage and the line is never drawn at all. Each case
+        # renders the shipped script under a HOME of its own with a fresh fetch stamp, which keeps
+        # it from fetching, and with curl and security stubbed on PATH, so no case reads a
+        # credential or reaches the network even where the throttle regressed. The tests live
+        # outside the plugin.
+        run: bash scripts/selftests/statusline_selftest.sh
+
       - name: Every plugin's copied scripts are the same
         # A command, agent or reference calls ${CLAUDE_PLUGIN_ROOT}/scripts/<name> -- the copy in
         # the calling file's own plugin, for each of bounded.py and tree-snapshot.py. A plugin with a
@@ -323,4 +334,21 @@ jobs:
         # lines are committed under this run's message, or files are left dirty so every
         # later switch is refused. Fixtures are built at run time, with a bare remote and a
         # HOME and session id of their own.
+        #
+        # The tests are in scripts/selftests/specs_git_selftest.py, outside the plugin, and the
+        # script executes that file in its own namespace. With no --group, this step runs every
+        # group of the selftest; with one, the selftest refuses to run, since GITHUB_ACTIONS is
+        # true here and a partial run is never evidence that it passes, and the step fails.
+        # On this full run, s_ci_runs_all, in its selftest group, also fails unless the run:
+        # line below, stripped of the whitespace around it, is the only run: line here naming
+        # specs-git.py and reads exactly as written; a change of indentation alone passes it.
         run: python3 plugins/workflows-core/scripts/specs-git.py --selftest
+
+      - name: Check the specs-git mutants are not stale
+        # scripts/selftests/specs-git-mutants.json holds one-line mutants of the scripts under
+        # plugins/workflows-core/scripts/, which scripts/selftests/mutants.py runs against
+        # groups of the selftest; a full run takes minutes, so CI runs none. --check only
+        # counts each mutant's old text in its file and fails where any is not found exactly
+        # once: a mutant whose text an edit has taken away. A check made to assert less shows
+        # only in a run.
+        run: python3 scripts/selftests/mutants.py --check
