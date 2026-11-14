@@ -1,155 +1,159 @@
 # SEC-G2 B: the ARD threat model
 
-Date: 2026-11-14. Status: draft for the maintainer's approval. Roadmap row **B** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` ("ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard`"), the first of SEC-G2's three sub-projects (B, then C, then D). It depends on A (the scan and its findings registers) and on E (SEC-G1, the architecture feedback loop).
+Date: 2026-11-14. Status: draft, revision 2 (after Fable's builder review), for the maintainer's approval. Roadmap row **B** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` ("ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard`"), the first of SEC-G2's three sub-projects (B, then C, then D). It depends on A (the scan and its findings registers) and on E (SEC-G1, the architecture feedback loop).
 
-Every decision below is written with a recommended answer. The ones marked **(maintainer)** at the end are the calls only the maintainer can make; everything else is the author's call, stated so it can be corrected.
+Every decision is written with a recommended answer. The four marked **(maintainer)** at the end are the calls only the maintainer can make; the rest are the author's, stated so they can be corrected.
 
 ## Intent
 
-A product architect who designs a feature's architecture with `/create-ard` today records decisions, components and contracts, and since SEC-G1 is challenged by the weaknesses the security registers already show for the repositories the work touches. Nothing yet asks, of the **planned** architecture, *what can an attacker do at each component and at each interface between them, and what does the architecture do about it?* Claude Security answers a similar question of the code as it already stands, at scan time; it cannot answer it for a design that is not built yet, and it keeps its own model only in memory (`/security-workflows:scan` copies its four report files and nothing else).
+A product architect who designs a feature's architecture with `/create-ard` records decisions, components and contracts, and since SEC-G1 is challenged by the weaknesses the security registers already show for the repositories the work touches. Nothing yet asks, of the **planned** architecture, *what can an attacker do at each component and at each interface between them, and what does the architecture do about it?* Claude Security answers a similar question of the code as it stands, at scan time; it cannot answer it for a design not yet built, and keeps its own model only in memory (`/security-workflows:scan` copies its four report files and nothing else).
 
-B adds that question to `/create-ard`, as an optional step the PA takes in the same run as the ARD. Its output is a second document beside the ARD, `threat-model.md`: one numbered threat per concrete attack on a named component or contract, each with exactly one disposition. A threat the architecture answers is answered by an ordinary `[AD#N]` decision in the ARD, so everything the family already does with ARD decisions applies to it unchanged: every reviewer treats a violated Rule as a BLOCKER, `/conformance` traces it against the merged code, the harvest carries it into the team's decision records, and SEC-G1's "prevented" test sees it through its `Prevents:` CWE. A threat left to the detailed design is handed to sub-project C, and an accepted residual risk is recorded with an owner, a reason and a date to look at it again.
+B adds that question to `/create-ard`, as an optional step the PA takes in the same run as the ARD. Its output is a second document beside the ARD, `threat-model.md`: one numbered threat per concrete attack on a named component or contract, each with one disposition. A threat the architecture answers is answered by ordinary `[AD#N]` decisions in the ARD, so everything the family already does with ARD decisions applies unchanged: every reviewer treats a violated Rule as a BLOCKER, `/conformance` traces it against the merged code, and once `/harvest-decisions` has minted the team record, SEC-G1's "prevented" test sees it through its `Prevents:` CWE. A threat left to the detailed design is handed to sub-project C; an accepted residual risk is recorded with an owner, a reason and a date to look at it again.
 
-**Why now:** the maintainer's program builds every planned track before a customer demo run from `/brd-intake`; a big customer feature is exactly where a design-time threat model is expected, and B is the root C and D depend on.
+**Why now:** the maintainer's program builds every planned track before a customer-demo run from `/brd-intake`; a big customer feature is where a design-time threat model is expected, and B is the root C and D depend on.
 
 ## Goals
 
-1. **`threat-model.md`, written by `/create-ard`** beside the ARD it accompanies, in the same run, the same review and the same pull request. No new command and no new branch prefix.
-2. **Every threat has exactly one disposition**: mitigated by an `[AD#N]`, deferred to the detailed design, or accepted (owner, reason, review date). A threat with none, or two, fails the review.
-3. **Security decisions are proposed as `[AD#N]`** with a testable Rule, and with `Prevents:` naming the CWE where the threat names one. The PA confirms each before it is written; no decision is written without the PA (SEC-G1's rule, kept).
-4. **C and D get stable handles now**: every threat is `[TH#N]`, never renumbered, and names the component ids and contract rows it lives on, resolved against the ARD's own `components:` and `## Contracts`.
-5. **No regression**: a run that declines the threat model, a PRD with none, and every command that does not read one behave exactly as before.
+1. **`threat-model.md`, written by `/create-ard`** beside the ARD, in the same run, review and pull request. No new command and no new branch prefix.
+2. **Every threat has one disposition**: mitigated by one or more `[AD#N]` (optionally with a remainder deferred to design), deferred to design, or accepted.
+3. **Security decisions are proposed as `[AD#N]`** that meet `ard-format`'s full bar and fields, with `Prevents:` naming the CWE where the threat names one; the PA decides each as any ARD decision is decided.
+4. **C and D get stable, unambiguous handles now**: `[TH#N]`, never renumbered; *Where* resolved against the run's resolved component set; every cited decision named with the ARD file that holds it.
+5. **No regression**: a run that declines the model, a PRD with none, and every command that does not read one behave as before — save one named, visible change (T9: `/document` and `/release-notes` may print a checkout note for the new file).
 
 ## Non-goals
 
-- **C and D.** No `/design` threat review and no security conformance. B records what they will need (Goal 4) and nothing reads `threat-model.md` outside `/create-ard` and its reviewer yet.
-- **Claude Security's model.** Not consumed, copied or persisted: it describes code as it is, at scan time, and is deleted with the run directory. B models the plan.
-- **A new command, plugin dependency or role.** No `/threat-model`, nothing under `$SPECS_PATH/security/` (which `specs-repo-git` keeps for a team's own documents and the register), no dependency on `security-workflows`, and no Security Engineer role in `product-workflows`. The Security Engineer reviews the pull request as any reviewer does.
-- **Risk scoring.** No DREAD, likelihood × impact or CVSS. The disposition is the decision; a score invites false precision.
-- **Attack trees, data-flow diagrams, CAPEC as a required field.** CAPEC may be linked like a CWE; nothing requires it.
+- **C and D.** No `/design` threat review and no security conformance. Nothing reads `threat-model.md` outside `/create-ard` and its reviewer yet.
+- **Claude Security's model.** Not consumed, copied or persisted; it describes code at scan time and is deleted with the run directory.
+- **A new command, plugin dependency or role.** No `/threat-model`, nothing under `$SPECS_PATH/security/` (kept for a team's own documents and the register), no dependency on `security-workflows`, no Security Engineer role in `product-workflows`. The Security Engineer reviews the pull request.
+- **Risk scoring** (DREAD, likelihood × impact, CVSS), **attack trees, data-flow diagrams**, and **CAPEC as a required field**.
 
-## Anti-goals (would make B a failure even if it works)
+## Anti-goals
 
-- **A generic STRIDE checklist.** Thirty threats of the form "an attacker could spoof a user" are noise the PA will learn to skip. Every threat names its element, a concrete attacker action and the asset at stake, or it is not written.
-- **A threat model nobody confirmed.** The agent proposes; the PA keeps, edits or drops each threat. Nothing is written on the agent's word.
-- **Text steering the model.** Code, scanner output and register-derived values are data. The threat modeler reads no register and opens nothing under `security/`, as SEC-G1's agents do not.
+- **A generic STRIDE checklist.** Every threat names its element, a concrete attacker action and the asset at stake, or it is not written.
+- **A model nobody confirmed.** The agent proposes; the PA keeps, edits or drops each threat.
+- **Text steering the model.** Code, scanner output and register-derived values are data. The threat modeler reads no register and can open nothing under `security/` (T6's tools).
 
 ## Decisions
 
 ### T1. `/create-ard` produces it, optionally, in the same run
 
-A new phase in `/create-ard`, after its decisions are drafted and before its review gate, asks once whether to add a threat model:
+A new phase in `/create-ard`, after its decisions are drafted (Phase 4, including SEC-G1's `known-weakness` grill) and before its review gate, asks once:
 
-- **Recommended** where the run's complexity class is `SIGNIFICANT` or `HIGH-RISK`, where the PRD touches `classification` §1.1's security triggers, or where SEC-G1's grounding raised a `known-weakness` challenge; otherwise offered without the recommendation.
-- **Choices** (2–4, verbatim, no "Other"): *Add a threat model (Recommended)* / *Not this time*. On a refine run whose folder already holds `threat-model.md`, the question is *Refine the threat model (Recommended)* / *Leave it as it is*.
-- **Declined:** the run is exactly today's run.
+- **Not offered** where no component set resolves (T4, *Where*): the run prints one line saying why and goes on as today.
+- **Recommended** where the run's class is `HIGH-RISK`, or Phase 4 raised a `known-weakness` challenge. (`SIGNIFICANT` alone is common for cross-repository PRDs, so it does not by itself recommend the model.)
+- **Choices** (verbatim, no "Other"): *Add a threat model (Recommended)* / *Not this time*; on a folder already holding `threat-model.md`, see T10.
+- **Declined:** the run is today's run.
 
-`threat-model.md` joins the run's `deliverable_paths`, so the existing `ard/` handoff commits and proposes it with the ARD in one pull request. No change to `phase-handoff`, `specs-repo-git` or any GIT-G1 file.
+`threat-model.md` joins the run's `deliverable_paths`. **It is an advisory deliverable** (a later `/create-ard` reads it, T10; nothing gates on it), so it does not change the run's handoff class: `create-ard.md`'s array selection — today "the ARD file(s) alone and new" → the falling-back array, else the stopping one — is reworded so that `threat-model.md` beside the ARD leaves the choice as the ARD alone would make it (`phase-handoff`'s strongest-class rule). **`phase-handoff` itself needs two edits** (maintainer question 2): a §4.0 register row for `threat-model.md`, which `phase-handoff` requires of "a producer adding a deliverable … in the same change", and the sentence stating `/create-ard`'s deliverable set.
 
-**Why not a separate command:** a new producer needs a twelfth branch prefix, copied in about seven places (`phase-handoff`, `specs-repo-git`, `branch-naming`, `specs-git.py` and its selftest, `session-branch.py`, three generated parts), most of them GIT-G1's; and the roadmap says the decisions are proposed "through `/create-ard`". `/create-ard` already holds every input the model needs: the components, the contracts, the code scan, the grounding and the Opus gate. **Why not `security-workflows`:** it depends on Claude Security, and no family plugin may depend on it.
+**Why not a separate command:** a new producer needs a twelfth branch prefix copied in about seven places, most of them GIT-G1's; the roadmap says the decisions are proposed "through `/create-ard`"; and `/create-ard` already holds the components, contracts, code scan, grounding and Opus gate. **Why not `security-workflows`:** it depends on Claude Security, and no family plugin may depend on it.
 
 ### T2. The PA owns it; the run costs as `/create-ard` does
 
-The PA authors and records; the run's cost entry is `/create-ard`'s existing `architecture` / `pa` row. The Security Engineer's touchpoints stay the register (through SEC-G1) and the pull request.
+The PA authors and records; the cost entry is `/create-ard`'s existing `architecture` / `pa` row.
 
 ### T3. A separate file beside the ARD
 
-`threat-model.md`, in the same folder as the ARD it accompanies: the PRD folder for a PRD-level ARD, the Epic folder for an Epic-level one; a BRD-route slice like any PRD folder (the kind gate tests the artifact, never the folder's asserted kind). One per folder, covering the folder's ARD and any per-area `ard-<area>.md`.
+`threat-model.md`, in the folder of the ARD it accompanies: a PRD folder, an Epic folder, or a BRD-route slice (the kind gate tests the artifact, never the folder's asserted kind). One per folder, covering that folder's `ard.md` and any `ard-<area>.md`.
 
 - **Never `ard-*.md`**: three readers take any `ard-<x>.md` as a per-area ARD (`ard-resolution`, the lineage table, the harvest, which would mint team records from it).
-- **Frontmatter `kind: threat-model`**, which names no folder kind, so the file is never read as the folder's carrier (`addressing`'s rule; precedents `kind: design`, `kind: conformance-record`).
+- **Frontmatter `kind: threat-model`**, naming no folder kind, so the file is never read as the folder's carrier.
 
-**Why not a section of `ard.md`:** the roadmap names the file; a threat model is read by a different audience (the Security Engineer), at a different rate of change, and C and D will consume it on its own. The cost of a file — one lineage row, one format reference, one pre-lint block — is paid once.
+**Why not a section of `ard.md`:** the roadmap names the file; the model has a different reader (the Security Engineer) and rate of change, and C and D consume it on its own.
 
-### T4. The format: a `workflows-core` reference
+### T4. The format: `workflows-core:threat-model-format`
 
-`workflows-core:threat-model-format` (core, because `/design` and `/conformance` in `dev-workflows` will read it in C and D, and a reference crosses a plugin boundary only from `workflows-core`; `ard-format` itself is `product-workflows`', which is why consumers read ARDs through `workflows-core:ard-resolution`). The shape, for the plan to fix exactly:
+In `workflows-core` because `/design` and `/conformance` (`dev-workflows`) will read it in C and D, and a reference crosses a plugin boundary only from `workflows-core` (`ard-format` itself is `product-workflows`', which is why consumers read ARDs through `workflows-core:ard-resolution`). The shape, for the plan to fix exactly:
 
-- **Frontmatter**: `kind: threat-model`, the key, `status` as the ARD's, and the lineage record.
-- **`## Scope`**: the components (by id) and the contract rows (by their `[AD#N]`) the model considered, read from the ARD in the same run, and **`## Not considered`**: what was left out and why (a component out of the PRD's scope, a third-party system the team does not run).
+- **Frontmatter**: `kind: threat-model`, the key, `status` as the ARD's, the lineage record.
+- **`## Scope`**: the component ids and contract rows considered; **`## Not considered`**: what was left out and why.
 - **`## Threats`**: one `### [TH#N] <title>` each, with:
-  - **Category**: one STRIDE letter (S, T, R, I, D, E) — a prompt for completeness, not a score.
-  - **Where**: one or more component ids from the ARD's `components:`, and the contract row's `[AD#N]` where the threat crosses a boundary. Resolved against those sets, never parsed from prose (`CLAUDE.md`, *resolve against a known set*).
-  - **Threat**: the attacker, the action and the asset, in one or two sentences.
+  - **Category**: one STRIDE letter, optional to fill — a completeness prompt, never a score; a field is cheaper to drop later than to add.
+  - **Where**: component ids, and the contract row's decision where the threat crosses a boundary. **Resolved against the run's resolved component set** — `ard-resolution`'s step 4 and `workflows-core:components` §3 — never against the ARD's own `components:` alone, which only a PRD-level ARD carries; contract rows exist only in a PRD-level ARD with two or more `kind: code` components, so an Epic-level threat names a contract row from the PRD-level ARD it inherits, or none.
+  - **Threat**: the attacker, the action and the asset.
   - **CWE**: optional, in the family's link form.
-  - **Disposition**, exactly one of:
-    - `Mitigated by [AD#N]` — a live decision in this ARD, or one the Epic inherits from its PRD's ARD;
-    - `Deferred to design` — the detailed design answers it (sub-project C will review these);
+  - **Disposition**, one of:
+    - `Mitigated by <decisions>` — one or more decisions, each named as **the ARD file and its id** (`ard.md [AD#3]`, `ard-payments.md [AD#2]`, or the inherited PRD-level `ard.md` by its folder's key), since each ARD file numbers its own series; optionally followed by `; the rest deferred to design: <what>`;
+    - `Deferred to design: <what the design must answer>`;
     - `Accepted — <owner>; <reason>; review by <YYYY-MM-DD>`.
   - **Superseded by `[TH#M]`** / **Withdrawn — `<reason>`**, as `product-workflows:ard-format`'s superseding rules: never renumbered, never deleted.
-- **An Epic-level model** inherits its PRD's threats read-only, as an Epic-level ARD inherits the PRD's decisions (`inherits:` and *Inherited invariants*; a BRD-route slice's model inherits the slice's, and the slice's own the parent BRD folder's, as the ARD does); it adds only threats its own components and contracts raise.
+- **`## Inherited threats`** (an Epic's model): the PRD-level model's live threats as bullets — never `### [TH#N]` headings, so numbering and the lineage regex skip them. An Epic adds only threats its own components and contracts raise. A BRD-route slice's model inherits none (a container holds no ARD).
+- **Across folders**, a threat is named by its folder's key and its id; a PRD and an Epic model both start at `[TH#1]`.
 
 ### T5. One new ID prefix: `[TH#N]`
 
-`TH` is unused (checked against the gate's alternation and every bracketed prefix in the tree). It joins `check-id-grammar.sh`'s alternation (and its fixtures and selftest), `pre-lint`'s branch 1, `CLAUDE.md`'s list of taught prefixes, and a lineage items regex.
+`TH` is unused in the tree. It joins `check-id-grammar.sh`'s alternation, fixtures and selftest; `.claude/rules/gates-id-grammar.md` and `CLAUDE.md`'s list of taught prefixes; `pre-lint`'s auto-link branch 1 **and its scope** (today "PRD, ARD, Epic files only", which gains `threat-model.md`); and the new lineage row's items regex. Reviewer and pre-lint wording describes the dash form without quoting it, so no new `id-grammar-ok` marker is needed.
 
-**No `[MT#N]` mitigation IDs.** A mitigation the architecture owns is an `[AD#N]` — already traced, enforced and harvested. One the architecture cannot own belongs to the design (C) and will be recorded there. A third ID kind would duplicate one of the two.
+**No `[MT#N]`.** A mitigation the architecture owns is an `[AD#N]`; one it cannot own is the design's (C). A third ID kind would duplicate one of them.
 
-### T6. A new agent proposes; the PA disposes
+### T6. `threat-modeler` proposes
 
-`product-workflows:threat-modeler`, pinned to the Opus chain (`model-routing/classification` gains it in its caller list). It is dispatched once per run with:
+A new `product-workflows` agent, pinned to Opus in its frontmatter as `ard-reviewer` is; `/create-ard`'s `model_routing` block gains its line. **Tools: Read only**, for the weakness-classes JSON path; everything else arrives in the brief. Dispatched once per run with:
 
-- the drafted ARD's components, contracts and decisions (from the run, not re-read);
-- the code scan the run already made (`code-scanner`'s results), for components that exist;
-- SEC-G1's weakness-class JSON fields for the repositories the work touches — each class is a candidate threat the agent must consider, named by its CWE, never by any register text.
+- the drafted ARD's resolved components, contracts and decisions, from the run;
+- the code scan the run already made, inline;
+- where Phase 4's weakness-classes call ran (`security_registers: ON` and an id passed), the JSON's path — each class a candidate threat named by its CWE, never by any register text. A class a live decision already prevents arrives disposed as `Mitigated by` that decision; a class the PA answered *Not in this ARD* in Phase 4 is proposed only as deferred, accepted or dropped, never as a new decision.
 
-It returns candidate threats as structured data (the T4 fields, with a proposed disposition and, for `Mitigated by`, a proposed decision: title, testable Rule, `Prevents:` CWE). It writes nothing, reads no register, opens nothing under `security/`, carries the untrusted-content block, and holds **at most 25 candidates**, ranked: those on a contract row first, then those naming a CWE the registers show, then the rest; the overflow is named in one line, never silently dropped.
+It returns up to **25 candidates**, ranked: on a contract row first, then those naming a CWE the registers show, then the rest; the overflow is named in one line. A candidate it proposes as `Mitigated by` carries a **full proposed decision** — title, Binds, Prevents (with the CWE), a testable Rule, Alternatives — and passes `ard-format`'s three-part bar; one that fails the bar is proposed as `Deferred to design` instead. It writes nothing and carries the untrusted-content block.
 
 ### T7. The PA walks the candidates
 
-In batches, each candidate shown with its fields and a four-choice question (verbatim, no "Other"): *Record an [AD#N] for it* / *Defer to design* / *Accept the risk* / *Not a threat — drop it*. A free-text answer is normalised into one of the four or re-asked.
+Four candidates per question call; each with its fields and four choices (verbatim, no "Other"): *Record an [AD#N] for it* / *Defer to design* / *Accept the risk* / *Not a threat — drop it*. Free text is normalised into one of the four or re-asked.
 
-- **Record an [AD#N]**: the proposed decision is shown in full; the PA confirms or edits it; it is added to the ARD's decisions in the ARD's own format, numbered after the last, with `Prevents:` where the threat names a CWE. The threat's disposition becomes `Mitigated by [AD#N]`. An existing decision may be named instead of a new one.
-- **Accept the risk**: asks for the owner and the reason; the review date defaults to 180 days ahead.
-- **Drop**: the candidate is not written.
+- **Record an [AD#N]**: the proposed decision is grilled as any ARD decision is (the Phase 4 path SEC-G1's challenge uses); an existing live decision may be named instead. A proposed decision may not reopen a verified or customer decision on the BRD route (`[VD#n]`, `[CD#n]`); a conflict goes to the ARD's `## Open questions`.
+- **Accept the risk**: owner and reason, then the review horizon, as the scan's acceptance asks it: *90 days (Recommended)* / *30 days* / *180 days*.
+- **Drop**: not written.
 
-The PA may also add a threat the agent did not propose, in the same fields.
+The PA may add a threat the agent did not propose.
 
-### T8. The review gate: `ard-reviewer` gains the threat model
+### T8. The review gate: `ard-reviewer` reviews the model
 
-Same run, so the same reviewer and the same one-fix-cycle cap. New dimensions, each a BLOCKER unless stated:
+One `ard-reviewer` dispatch reviews `threat-model.md`, given every ARD file of the folder and, on a refine, the prior model. Dimensions:
 
-- every `[TH#N]` has exactly one disposition;
-- every **Where** names a component id in `components:` or a contract row's `[AD#N]`;
-- every `Mitigated by [AD#N]` names a live decision this folder's ARD holds or inherits;
-- every acceptance has an owner, a reason and a date;
-- a decision recorded for a threat has a testable Rule;
-- (MAJOR) a component or contract row no threat names and `## Not considered` does not list.
+- BLOCKER: a threat with no disposition, or more than one kind of disposition; a *Where* id not in the resolved component set; a `Mitigated by` naming a decision that is not live in the ARD file it names; an acceptance missing its owner, reason or date; a renumbered or deleted `[TH#N]` against the prior model.
+- MAJOR: a decision recorded for a threat missing a field `ard-format` requires (as `ard-reviewer` already raises it).
+- MINOR: a component or contract row in `## Scope` that no threat names and `## Not considered` does not explain.
 
-### T9. Lineage: a covered kind at architecture altitude
+**After the one fix cycle**, where the model still blocks, the escalation offers to hand off the ARD without the model (the ARD is never held hostage by its optional companion).
 
-A `threat-model` row in `lineage-kinds.json`: matches `^threat-model\.md$`, items `[TH#N]`, altitude `architecture`, reviser `/product-workflows:create-ard <KEY>`. It records the same upstreams as the ARD written in the same run (the PRD, `epic.md` for an Epic, the grounding, the decisions) and never records `ard.md`, its sibling output, not its input (`document-lineage`'s rule that a producer never records a document below its own output). `document-lineage`'s kind table and chain prose gain it; `lineage.py --selftest` covers it.
+### T9. Lineage: a covered kind, recording the ARD
+
+A `threat-model` row in `lineage-kinds.json`: matches `^threat-model\.md$`, items `[TH#N]`, altitude `architecture`, reviser `/product-workflows:create-ard <KEY>`, and the same exclusions as the `ard` row (the lines `/conformance` writes), so D can write into it later without making it look revised. **It records the folder's ARD files**, captured after the ARD's last write in the run (the ARD is the model's real input, and the lineage rule only bars recording a document that records this one), plus what the ARD records; an Epic's model also records the PRD folder's `threat-model.md`. The chain prose places it after the folder's ARDs.
+
+The visible change elsewhere: `/document` and `/release-notes` keep every path a kind matches, so they may print a checkout note naming `threat-model.md`.
 
 ### T10. A refine run
 
-A re-run of `/create-ard` on a folder holding `threat-model.md` reads it, offers to refine it (T1), and:
+Phase 0 detects `threat-model.md` beside the ARD and hands a copy of it (`prior_threat_model`, as `prior_ard`) to the reviewer and pre-lint. Whenever the file exists, **the run checks it mechanically after the ARD's last write, whatever the PA answers**: every cited decision live in the ARD file it names, every *Where* id still in the set.
 
-- keeps every `[TH#N]`, superseding or withdrawing rather than renumbering;
-- re-dispatches the threat modeler with the current threats, so it proposes only what the changed architecture adds;
-- lists every acceptance whose review date has passed, for the PA to renew, re-dispose or keep (one line each in the report).
+- **The check passes:** *Refine the threat model (Recommended)* / *Leave it as it is*.
+- **The check fails:** *Leave it* is not offered; the run refines the stale entries (supersede or re-dispose them), since a stale model would send C and D to dead decisions.
+- **A refine** keeps every `[TH#N]`, re-dispatches the modeler with the current threats (it proposes only what the changed architecture adds), and lists every acceptance past its review date for the PA to renew, re-dispose or keep. **The model follows the ARD's refine-versus-fresh semantics**: whatever *Start fresh* does to the ARD's numbering, it does to `[TH#N]`.
 
-### T11. Pages and claims
+### T11. Pages, counts and claims
 
-- The `/create-ard` page gains *The threat model*; the references page gains the format reference; the agents page gains `threat-modeler`; the family map's PA lane and the `roles-and-phases` pages name the new output; the security plugin's roles page says the Security Engineer reviews it in the pull request.
-- **Claim sweep** (refinements 4–8): the roadmap row B gains *Built as SEC-G2 B*; the security plugin's *Not built yet* note and the feature-gaps review's SEC-G2 row are narrowed to C and D.
+- The `/create-ard` page gains *The threat model*; references and agents pages gain their rows; the family map's PA lane and the `roles-and-phases` pages name the output; the security plugin's roles page says the Security Engineer reviews it in the pull request.
+- **Counts and inventories**: `CLAUDE.md`'s `product-workflows` subagent count and the hard-constraint ID list; `create-ard.md`'s description; check 16's preamble on the new agent; the `product-workflows` plugin description (896 characters: new wording replaces old).
+- **Claim sweep** (refinements 4–8): the roadmap row B gains *Built as SEC-G2 B*; the feature-gaps review's SEC-G2 row narrows to C and D; the security plugin's dated *Not built yet* note stays as history, and the new release gets its own entry.
+- **Sizes**: `workflows-core.md`, `security-workflows.md`, the coupling file and `CLAUDE.md` are near their limits; the plan measures and splits or moves before adding.
 
 ### T12. Versions and coupling
 
-`workflows-core` minor (format reference, lineage row, ID gate, pre-lint, model-routing caller list) and `product-workflows` minor (`/create-ard`, `threat-modeler`, `ard-reviewer`); a `security-workflows` page-only patch if its roles page changes. One coupling bullet: a newer `/create-ard` beside an older core finds no `threat-model-format` and no lineage row — it must stop the threat-model phase with one line and run as today; an older `/create-ard` beside a newer core never offers the phase.
+`workflows-core` minor (format reference, lineage row, pre-lint), `product-workflows` minor (`/create-ard`, `threat-modeler`, `ard-reviewer`), the ID gate and its rules, and a `security-workflows` page-only patch. One coupling bullet stating what breaks: a newer `/create-ard` beside an older core cannot load `threat-model-format` and its lineage row is unknown — update both together. No runtime fallback.
 
 ## What is left to the builder
 
-The exact field wording and order in the format; the batch size in T7; the reviewer dimension wording; how the inherited-threat citation reads (following the ARD's inherited-decision form); where in `/create-ard`'s phase numbering the new phase sits, so long as it is after the decisions and before the review; the selftest fixtures.
+Field wording and order; the decision-pair syntax (T4); where the phase sits in `/create-ard`'s numbering, between the decisions and the review; the reviewer's dimension wording; the selftest fixtures; whether `HIGH-RISK`'s recommendation also names `classification` §1.1's two security bullets, if `/create-ard` records which bullets fired.
 
 ## Risks
 
-- **`create-ard.md` grows** (about 1,000 lines). Mitigation: the threat-model phase is short and cites the format reference and the agent for the detail.
-- **Noise** (the anti-goal). Mitigation: the 25 cap, the "element + action + asset" rule in the agent and the reviewer's Where check.
-- **An `[AD#N]` added for a threat changes the ARD the reviewer already read.** The review runs after T7, over both files.
-- **The 180-day default** may not fit every team; it is a default the PA changes per acceptance.
+- **`create-ard.md` grows** (about 1,000 lines): the phase cites the format reference and the agent for its detail.
+- **Noise**: the 25 cap, the element + action + asset rule and the reviewer's *Where* check.
+- **An `[AD#N]` added for a threat changes the ARD**: the review runs after T7, over both files, and T10's check runs after the ARD's last write.
 
 ## Questions for the maintainer
 
-1. **(maintainer) Optional, or required at `HIGH-RISK`?** Recommended: optional everywhere, recommended at `SIGNIFICANT`/`HIGH-RISK`, the security triggers or a `known-weakness` challenge (T1). Required would make `/create-ard` refuse to finish a `HIGH-RISK` ARD without one.
-2. **(maintainer) STRIDE as the category set?** Recommended: yes, as a completeness prompt only (T4). The alternative is no categories at all, CWE only.
-3. **(maintainer) The 180-day default review date for an accepted threat** (T7) — the same horizon as the register's "a fix made in the last 180 days".
+1. **Optional, or required at `HIGH-RISK`?** Recommended: optional everywhere (the ARD itself is optional, and an absent optional input never becomes a prerequisite); recommended at `HIGH-RISK` or a `known-weakness` challenge.
+2. **Two edits to `phase-handoff`, a GIT-G1 file** (T1): its deliverable register row and the sentence naming `/create-ard`'s set. Recommended: B makes them, named in the pull request for the GIT-G1 owner (as SEC-G1's one CI step was). The alternative hands them to the GIT-G1 owner, and B ships only after they land.
+3. **Who may accept a design-time risk?** Recommended: the PA alone, with the pull request as the Security Engineer's check — the page says so. The alternative marks each acceptance unconfirmed until a Security Engineer confirms it, as the register does a Dev's; that needs a confirming step B does not otherwise have.
+4. **What is below the architecture?** Recommended: a mitigation that fails the decision bar, and a gap whose answer is a product requirement, both become `Deferred to design` — the requirement gap also as an ARD open question naming the `[TH#N]`, for `/update-prd`. D then traces nothing for them until C ships. The alternative relaxes the decision bar for security decisions.
