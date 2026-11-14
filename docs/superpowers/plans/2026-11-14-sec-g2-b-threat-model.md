@@ -83,12 +83,12 @@ From Phase 0 on, `/create-ard` carries one record, `threat_model`:
 
 | Field | Values | Set by |
 |---|---|---|
-| `prior` | the temp copy `<default-ref>` holds of the folder's `threat-model.md`, or `none` | Phase 1 step 2 (Task 6) |
+| `prior` | a temp copy of the folder's `threat-model.md` — `<default-ref>`'s, or the working tree's where `<default-ref>` holds none (R22) — or `none`, which it always is where `fresh` | Phase 1 step 2 (Task 6) |
 | `fresh` | `true` where R23's *Start fresh* case holds, else `false` | Phase 1 step 2 (Task 6) |
 | `set` | the run's resolved component set, a list of ids, possibly empty | Phase 4.3 step 1 (Task 6) |
 | `state` | `not-offered`, `unchecked`, `declined`, `added`, `refined`, `redisposed`, `left`, `empty`, `dropped` | Phases 4.3, 5 and 6 |
 | `draft` | the temp file holding the model this run drafted, refined or re-disposed, or `null` | Phase 4.3 step 8 (Task 6) |
-| `capture` | the capture file of `<prd_dir>/threat-model.md`, taken where Phase 4.3 read it, or `null` | Phase 4.3 step 8 (Task 6) |
+| `capture` | the capture file of `<prd_dir>/threat-model.md`, taken at its first read — step 5's *Inherited threats* — where the file exists, or `null` | Phase 4.3 step 5 (Task 6) |
 | `stale` | the `[TH#N]`s the latest check found stale, each with its reason | each check |
 | `report` | counts and lines for the Final report | throughout |
 
@@ -168,10 +168,10 @@ accepted: …                   # written only by lineage.py
 ### Who reads it (R32 — every copy of this claim uses these words)
 
 - **Two readers by name:** `/create-ard` (a later run on the same folder) and `ard-reviewer` (within the run).
-- **One reader as prose, on the BRD route:** `/product-workflows:brd-reconcile`'s stale cross-reference sweep reads it as it reads every markdown file under the parent BRD's folder. Like any artifact there outside the sweep's carve-outs, it may take a corrected sentence naming a changed `[CD#n]`.
+- **One reader as prose, on the BRD route:** `/product-workflows:brd-reconcile`'s stale cross-reference sweep reads it as it reads every markdown file under the parent BRD's folder — as prose. By that sweep's structured-record class, a hit there is `needs-a-human`, never corrected in place.
+  - The class is `brd-reconcile.md` Phase 11's: "a structured record — any file whose content is fields, rows or labelled lines some other rule writes and reads", and "What `updated` is for is the route's own prose, and only that".
+  - A threat model's threats are labelled lines that `threat-model-format` writes and this branch's checks read.
 - **No other command reads it.** Sub-projects C and D will add `/dev-workflows:design` and `/dev-workflows:conformance`.
-
-**On the sweep's edit:** that the sweep can write there was read off `brd-reconcile.md` Phase 11's outcome table. Its `updated` outcome goes into any artifact under the parent, and its `needs-a-human` carve-outs do not name a threat model. So no copy says the sweep never edits it.
 
 ### The run's resolved component set (Task 6 step 1; design T4 *Where*)
 
@@ -388,8 +388,9 @@ Each hit about what `/create-ard` writes, or what reads an ARD's folder, is re-r
   - **An unrecognised name is dropped, and only an empty list is refused:** `["TaskList", "CronList"]` dispatched with `CronList` alone.
   - **`CronList` alone, and `ListAgents` alone,** each read `(Tools: <that one>)` and dispatched. Asked to read `/etc/hostname`, each agent reported it had no tool able to read a file, with `tool_uses: 0`, and the file's content appeared nowhere.
   - **The chosen line is `tools: ["CronList", "ListAgents"]`.**
-    - Both are read-only listings of the harness's own state, with no file, network or execution access.
-    - There are two so that a rename of one leaves the dispatch standing.
+    - Both read no file, make no network request the model chooses, and execute nothing (design revision 3.2). `ListAgents` returns the names of the user's other sessions, which the harness looks up itself.
+    - There are two so that a rename of one leaves the dispatch standing; `ListAgents` has been renamed once already, from `ListPeers`.
+    - **Recognition can depend on the session:** `CronList` is gated by `isCronManagementEnabled`, and the probe ran under `claude -p`. A miss fails closed to R19. Task 11 adds the interactive live check to `docs/superpowers/to-test-on-real-project.md`, and the maintainer's end-to-end demo covers it.
     - A harness that recognises neither refuses the dispatch, and Phase 4.3 takes R19's failed-dispatch path.
   - **The agent's rule is "call no tool".**
   - **Rejected:**
@@ -432,17 +433,29 @@ Each hit about what `/create-ard` writes, or what reads an ARD's folder, is re-r
   - The key is in the wikilink form, never bare, so pre-lint's auto-link check discards it.
   - This holds at Phase 4.3 and at Phase 6's second check alike. At Phase 6 it is an open-question line like those Phase 5 writes after its last review, never a decision. It is written before the model's capture, which then records the ARD as edited.
 - **R21 — the lineage row's regex uses `[0-9]`.**
-- **R22 — `prior` is copied whenever Phase 0 found a model**, whatever the ARD's refine-or-fresh answer. It is copied as `<default-ref>` holds it where it is there, else from the working tree, as `prior_ard` is. It is removed with the `prior_ard` copies once the last review has returned.
+- **R22 — `prior` is copied whenever Phase 0 found a model, save where `fresh`**, whatever the ARD's refine-or-fresh answer.
+  - It is copied as `<default-ref>` holds it where it is there, else from the working tree, as `prior_ard` is.
+  - Where `fresh`, `prior` is `none` (R23).
+  - It is removed with the `prior_ard` copies once the last review has returned.
 - **R23 — *Start fresh* (controller ruling).** *Start fresh* rewrites the ARD. "Decisions already on the default branch keep their IDs" (Phase 1's array; `ard-format` § Superseding a decision). Where `<default-ref>` carries no ARD file of the folder, nothing pins them, and the rewrite may renumber.
-  - **Where Phase 1 took *Start fresh*, and `<default-ref>` carries none of the folder's ARD files and not `threat-model.md`,** `fresh` is `true`. The working-tree model is discarded and walked fresh: Phase 4.3 skips step 3, puts B-rec or B-plain as for a folder with no model, reads neither `prior` nor the working-tree model, and numbers from `[TH#1]`.
-    - On *Add a threat model*, Phase 6 writes the new model over the old file.
-    - On *Not this time*, Phase 6 removes the old file with `command rm -f --`. First, `git -C "$SPECS_PATH" ls-files --error-unmatch -- <its path relative to $SPECS_PATH>` tells whether a branch tracks it. Where it does, its path joins `deliverable_paths`, so the handoff stages the deletion (`phase-handoff` §2.3 step 3's `-A`). The report names the removal.
+  - **Where Phase 1 took *Start fresh*, and `<default-ref>` carries none of the folder's ARD files and not `threat-model.md`,** `fresh` is `true` and `prior` is `none`. The working-tree model is discarded and walked fresh:
+    - Phase 4.3 skips step 3;
+    - it puts B-rec or B-plain as for a folder with no model, and **the question's own text says the old model is discarded on either answer**, since the array labels do not;
+    - it does not read the working-tree model;
+    - it numbers from `[TH#1]`.
+
+    What happens to the old file:
+    - on *Add a threat model* with a model written, Phase 6 writes the new model over the old file;
+    - on *Not this time*, on *Add a threat model* whose walk ends `empty`, and on Phase 5's escape dropping the new model, Phase 6 removes the old file with `command rm -f --`. First, `git -C "$SPECS_PATH" ls-files --error-unmatch -- <its path relative to $SPECS_PATH>` tells whether a branch tracks it. Where it does, its path joins `deliverable_paths`, so the handoff stages the deletion (`phase-handoff` §2.3 step 3's `-A`). The report names the removal.
   - **Otherwise** — the ARD, or the model, on `<default-ref>` — `fresh` is `false`, the normal check applies, and every `[TH#N]` keeps its id.
 - **R24 — candidate validation, and the backstop.** The command drops a candidate in any of four cases, and lists it in the report as `dropped — <why>`:
   - its Where names an id outside the set;
   - on an Epic-level run, its Where omits the Epic's target;
   - its contract names no interface row;
-  - **any string field matches `\[SEC#[0-9]+\]` or `(^|[^A-Za-z0-9._-])security/`** — a register id, or a path under `security/`, which no brief field carries, so its presence means text the modeler should never have had (controller ruling).
+  - **the backstop** (controller ruling). A string field holds a substring matching `\[SEC#[0-9]+\]`, or the register's own path shape `(^|[^A-Za-z0-9._-])security/[A-Za-z0-9._-]+/(register\.|runs/|scans/)`, **and that substring does not occur verbatim in the brief the run sent**.
+    - The brief may legitimately carry either: an existing decision's text in *Decisions* may cite a `[SEC#n]`, or the code scan a path.
+    - So only a value the modeler could not have been given is dropped.
+    - A path such as `src/security/auth.py` never matches the shape.
 
   It adjusts two:
   - a `mitigated` candidate whose `decision` lacks any of title, binds, prevents, rule or alternatives, and that names no `existing` pair, is treated as `proposed: deferred` (design T6);
@@ -450,13 +463,11 @@ Each hit about what `/create-ard` writes, or what reads an ARD's folder, is re-r
 
   A threat the PA adds is held to the Where test at entry (*The prompted answers*).
 - **R25 — `## Not considered`.** At Phase 4.3's playback, the run lists every set id and contract row that no threat names and that `## Not considered` does not already explain. It asks one plain-text question for each one's reason, so the reviewer's MINOR (design T8) is answered at authoring.
-- **R26 — `stamp` takes `--capture` more than once.** An Epic's model records `<prd_dir>/threat-model.md`, captured where Phase 4.3 reads it, and the folder's ARD files, captured at Phase 6 once they are written (design T9: "captured when the run reads the input").
-  - `lineage.py stamp` takes `--capture` repeatedly (`action="append"`) and records the files' entries in order. `stamp()` itself is unchanged.
-  - The one caller that passes two captures is this branch's Phase 6.
-- **R27 — a lineage failure on the model never holds the ARD.** Where the model's `capture` or `stamp` exits non-zero at Phase 6, the run does not stop: `CREATE_ARD_LINEAGE_FAILED` is the ARD's stop. Instead:
-  - the model is written and handed off unstamped;
-  - the run prints `Threat model: handed off without a lineage record — lineage.py failed: <its first stderr line>; a later check of it reports the missing record and asks once` (`document-lineage` §3);
-  - the report carries the same line.
+- **R26 — `stamp` takes `--capture` more than once.** An Epic's model records two captures (design T9: "captured when the run reads the input"):
+  - `<prd_dir>/threat-model.md`, captured at its **first** read — Phase 4.3 step 5's *Inherited threats* field — and only where the file exists, since `capture --from-disk` fails on a missing one;
+  - the folder's ARD files, captured at Phase 6 once they are written.
+
+  `lineage.py stamp` takes `--capture` repeatedly (`action="append"`) and records the files' entries in order. `stamp()` itself is unchanged. The one caller that passes two captures is this branch's Phase 6.
 - **R28 — *Leave it as it is* over a model no ref holds as written.** Where the folder's `threat-model.md` differs from `<default-ref>`'s copy, or `<default-ref>` holds none — an earlier run's declined handoff — its path joins `deliverable_paths` though this run changed nothing in it, so the handoff lands it. Test this with `git -C "$SPECS_PATH" diff --quiet <default-ref> -- <path>`, and `cat-file -e` for a missing one. It is not reviewed again and not re-stamped.
 - **R29 — the weakness-classes JSON gone by Phase 4.3.** *Weakness classes* reads `none`, and one report line names it (*The `threat-modeler` brief*).
 - **R30 — a model finding left open.** A finding on `threat-model.md` left open is written into the ARD's `## Open questions` once the last review has returned, per *A finding left open that needs a decision is recorded in the artifact*. That covers one the PA left open at its decision question, and a deferred BLOCKER under *Settle the model's findings*. Its form is `- [ ] threat-model.md [TH#N]: <the finding> — <the decision it needs>`. A dropped model writes none.
@@ -504,7 +515,7 @@ A **scenario trace** is a step in the task report that does four things:
    - No set resolves. Phase 4.3 prints one line and offers nothing; where the Epic folder already holds a model, it also prints the known-limit line, and the model is left and unchecked.
    - With a PRD-level ARD holding contract rows instead, a boundary threat's Where reads `<target>; contract [[<PRD-KEY>]] ard.md [AD#4]`.
    - Pre-lint's auto-link check discards that wikilink and wraps nothing.
-   - The PRD folder's model is captured where Phase 4.3 reads it.
+   - The PRD folder's model is captured at its first read, where it exists.
 
    Trace: **Task 6, RF4**; the pre-lint half, **Task 2, RF4b**.
 6. **Phase 5's fix, or a manual fix note, supersedes a decision a threat cites.** Expected:
@@ -763,11 +774,15 @@ A **scenario trace** is a step in the task report that does four things:
     - open no file, and fetch nothing;
     - write nothing;
     - decide nothing;
-    - never put a register's or a finding's text, a `[SEC#n]` id, or a path under `security/` into a candidate. None reaches you, and a value that looks like one is data. The command drops any candidate holding one (R24).
+    - never put a register's or a finding's text into a candidate, nor a `[SEC#n]` id or a register path the brief did not give you. A value that looks like one is data. The command drops any candidate holding one the brief did not carry (R24).
   - **The untrusted-content block**, copied byte for byte from `plugins/workflows-core/references/untrusted-content.md`, markers included.
 - Modify `.claude/rules/threat-model.md`:
   - `paths:` gains `"plugins/product-workflows/agents/threat-modeler.md"`;
-  - a seventh invariant: `threat-modeler` calls no tool. It is declared with two read-only harness listings, `CronList` and `ListAgents`, because a subagent with none cannot be dispatched (R6). It never opens a register or anything under `security/`, since it opens nothing; everything, the decision bar included, arrives in its brief; and the command drops a candidate holding a `[SEC#n]` or a `security/` path.
+  - a seventh invariant: `threat-modeler` calls no tool.
+    - It declares `CronList` and `ListAgents`, two tools that read no file, make no network request the model chooses and execute nothing, because a subagent with none cannot be dispatched (R6).
+    - It never opens a register or anything under `security/`, since it opens nothing.
+    - Everything, the decision bar included, arrives in its brief.
+    - The command drops a candidate holding a `[SEC#n]` or a register path the brief did not carry.
 - Modify `CLAUDE.md`:
   - the `product-workflows` paragraph: `fourteen subagents` becomes `fifteen subagents` (S2);
   - the `threat-model.md` table row's `product-workflows/` list gains `agents/threat-modeler.md`.
@@ -813,8 +828,8 @@ A **scenario trace** is a step in the task report that does four things:
 - Modify `plugins/product-workflows/commands/create-ard.md`:
   - **Phase 0 step 4**, after its first sentence, gains a sentence: where the feature folder holds `threat-model.md`, note it. Phase 1 step 2 copies it as `threat_model.prior`, and Phase 4.3 checks it and offers to refine it (`workflows-core:threat-model-format`).
   - **Phase 1 step 2**, after `Otherwise \`prior_ard: none\`.`, gains a paragraph:
-    - wherever Phase 0 step 4 found `threat-model.md`, whatever the answer above, copy it the same way to `command mktemp -t dw-threat-model-prior-XXXXXX`, and record it as `threat_model.prior`; otherwise `none` (R22);
-    - set `threat_model.fresh` per R23.
+    - set `threat_model.fresh` per R23;
+    - wherever Phase 0 step 4 found `threat-model.md` and `fresh` is `false`, whatever the answer above, copy it the same way to `command mktemp -t dw-threat-model-prior-XXXXXX`, and record it as `threat_model.prior`. Otherwise, and always where `fresh`, it is `none` (R22).
   - **Phase 1.5's `model_routing` block**, after the `review_model:` line, gains: `  threat_modeler_model: <§2 Opus chain>   # threat-modeler (frontmatter-pinned; recorded, no override unless §10 enforces a model) — Phase 4.3, only where a threat model is added or refined`.
   - **Phase 4, the *A `known-weakness` challenge* paragraph**: after `*Not in this ARD* writes nothing into the ARD, and the final report names the class.`, add `Phase 4.3 reads that answer as the class's not_in_this_ard.`
   - **A new `## Phase 4.3 — Threat model (optional)`**, after *Per-area split.* and its `---`. Its steps, in order:
@@ -827,10 +842,13 @@ A **scenario trace** is a step in the task report that does four things:
        - *Leave it as it is* → `left`; go to Phase 4.5.
        - *Re-dispose only the stale threats* → `redisposed`; steps 7–9 only. There is no dispatch and no walk.
        - *Refine the threat model* → `refined`; steps 5–9.
-    4. **A folder with no model, or `fresh` true.** Put B-rec where `model_routing.classification` is `HIGH-RISK` or `arch_challenges` holds a `known-weakness` challenge, else B-plain. B-plain's question text says neither option is recommended, since the class is not `HIGH-RISK` and no known weakness was raised.
+    4. **A folder with no model, or `fresh` true.** Put B-rec where `model_routing.classification` is `HIGH-RISK` or `arch_challenges` holds a `known-weakness` challenge, else B-plain. B-plain's question text says neither option is recommended, since the class is not `HIGH-RISK` and no known weakness was raised. Where `fresh`, the question's text also says the folder's old model is discarded on either answer (R23).
        - *Not this time* → `declined`; go to Phase 4.5. Where `fresh`, Phase 6 removes the old file (R23).
        - *Add a threat model* → `added`; steps 5–9.
     5. **Dispatch `threat-modeler`** once, with Global Constraints' block and brief. On a refine, *Current threats* comes from the folder's `threat-model.md`. *Decision bar* comes from Phase 4's read of `ard-format.md` (R8).
+       - **On an Epic-level run where `<prd_dir>/threat-model.md` exists**, its read for *Inherited threats* is its first read. Capture it then — `document-lineage` `record` §5 step 1, `--from-disk <prd_dir>/threat-model.md --out <capture file>` — as `threat_model.capture` (R26).
+       - **On `redisposed`**, which skips this step, the capture is taken at step 8's read instead.
+       - A non-zero exit stops the run with `CREATE_ARD_LINEAGE_FAILED`, as `document-lineage` §5 says.
        - `OK` → step 6.
        - `EMPTY` → say so, and walk nothing.
        - `ERROR`, or a failed or refused dispatch → one line, `threat-modeler: ERROR — <error>` or `threat-modeler: dispatch failed — <the harness's message>`, and walk nothing (R19).
@@ -856,10 +874,11 @@ A **scenario trace** is a step in the task report that does four things:
        On C-existing, *Not a threat — withdraw it* writes `- **Withdrawn:** <reason>`. A threat is never deleted.
     8. **The draft, then its check.** Number each threat recorded this run from the next free `[TH#N]` (from `[TH#1]` where `fresh`), in walk order. Write the model to `threat_model.draft` (R5):
        - from the folder's `threat-model.md` on `refined` or `redisposed`;
-       - with `## Scope`, `## Not considered` (R25) and, on an Epic-level run, `## Inherited threats`, built from the live threats of `<prd_dir>/threat-model.md` in the working tree;
-       - capturing that file at the moment of reading: `document-lineage` `record` §5 step 1, `--from-disk <prd_dir>/threat-model.md --out <capture file>`, as `threat_model.capture` (R26).
+       - with `## Scope`, `## Not considered` (R25) and, on an Epic-level run, `## Inherited threats`, built from the live threats of `<prd_dir>/threat-model.md` in the working tree. That file was captured at step 5, or, on `redisposed`, is captured here, where it exists (R26).
 
-       Then run §6's check on the draft (R31). Each stale entry goes back through C-new where this run recorded it, or C-existing where the folder held it, until the check finds none. Where no threat is recorded and no model was held, write nothing: `empty` (R18).
+       Then run §6's check on the draft (R31). Each stale entry goes back through C-new where this run recorded it, or C-existing where the folder held it, until the check finds none.
+
+       Where no threat is recorded and the run holds no model to keep — the folder held none, or `fresh` discarded it — write nothing: `empty` (R18). Where `fresh`, Phase 6 removes the old file, as *Not this time* would (R23).
     9. **The confirmation gate.** `workflows-core:grilling-technique`'s whole-artifact gate plays back the model and every `[AD#N]` this phase added to the ARD, then asks R25's reasons.
 - Modify `plugins/workflows-core/references/architecture-grounding.md` § Dispatch, *The result* (S21). `read nothing else of it, open no register` becomes `read nothing else of it at this step, open no register`. Then add the sentence: "`/product-workflows:create-ard`'s Phase 4.3, where the architect adds or refines a threat model, later takes each class's `repo`, `cwe`, `cwe_url`, `live`, `top_severity`, `in_component` and `recurs` from the same file for `threat-modeler`'s brief, and no other field."
 - Modify `.claude/rules/docs-grounding.md`, the `architecture-grounding` authority paragraph. After `is the grounder's \`weakness_classes\` input`, add `— and whose classes' validated fields \`/create-ard\`'s Phase 4.3 hands to \`threat-modeler\` inline`.
@@ -894,12 +913,13 @@ A **scenario trace** is a step in the task report that does four things:
     - The same run with a PRD-level ARD whose components include the Epic's target and which holds an interface row `[AD#4]`. Expected:
       - the set resolves from `ard-resolution`'s `components`;
       - a boundary candidate's Where reads `<target>; contract [[<PRD-KEY>]] ard.md [AD#4]`;
-      - `<prd_dir>/threat-model.md` is captured in step 8.
+      - `<prd_dir>/threat-model.md` is captured at step 5, its first read, and not at all where the file is absent.
   - **RF6.** *Start fresh* over an ARD that `<default-ref>` lacks, in a folder holding a model. Expected:
-    - `fresh: true`;
-    - step 3 is skipped and B-rec or B-plain is put;
+    - `fresh: true` and `prior: none`;
+    - step 3 is skipped, and B-rec or B-plain is put, its text saying the old model is discarded on either answer;
     - neither model text is read;
-    - numbering starts at `[TH#1]`.
+    - numbering starts at `[TH#1]`;
+    - an *Add a threat model* whose walk ends `empty` leaves Phase 6 removing the old file.
   - **RF7.** The PA adds a threat whose Where names `billing`, which is outside the set. Expected:
     - the id and the set are named, and the Where is asked again;
     - nothing is written with `billing`.
@@ -937,7 +957,7 @@ A **scenario trace** is a step in the task report that does four things:
   - **Phase 5's dispatch block** gains four lines after `Prior ARD:` (R12, R13):
     ```text
     >  Threat model: [threat_model.draft — on the dispatch for ard.md, else for the first ard-<area>.md by name; none on every other dispatch, and wherever draft is null]
-    >  Prior threat model: [threat_model.prior, or none]
+    >  Prior threat model: [threat_model.prior, or none — always none where fresh]
     >  Other ARD files: [each other ARD file of the feature folder, one absolute path per line; on an Epic-level run also `[[<PRD-KEY>]] ard.md = <absolute path>`]
     >  Component set: [threat_model.set, one id per line]
     ```
@@ -949,7 +969,7 @@ A **scenario trace** is a step in the task report that does four things:
        - `threat_model.prior` is `none`.
 
        The question's text says neither option is recommended, and that the ARD's own findings are settled.
-       - *Hand off the ARD without the threat model* → `command rm -f -- <draft>`; `draft: null`, `state: dropped`. The ARD's verdict is reported as `BLOCK on the threat model only — the model was dropped`.
+       - *Hand off the ARD without the threat model* → `command rm -f -- <draft>`; `draft: null`, `state: dropped`. The ARD's verdict is reported as `BLOCK on the threat model only — the model was dropped`. Where `fresh`, Phase 6 also removes the discarded old file (R23).
        - *Settle the model's findings* → the rule's per-BLOCKER escalation, whose manual fix notes re-dispose threats only.
 
        On a refine there is no escape (T8).
@@ -979,15 +999,15 @@ A **scenario trace** is a step in the task report that does four things:
 **Files:**
 - Modify `plugins/product-workflows/commands/create-ard.md`:
   - **Phase 6**, after *Stamp each ARD file written*, gains a paragraph: **The threat model — the second check, then its write.**
-    1. Wherever `threat_model.set` is non-empty and the folder holds a model or `draft` is set — and not where `fresh` and `declined` — run §6's check again, on `draft` where it is set, else on the folder's `threat-model.md`, against the ARD files as just written.
+    1. Wherever `threat_model.set` is non-empty and the folder holds a model or `draft` is set — and not where `fresh` with no `draft` — run §6's check again, on `draft` where it is set, else on the folder's `threat-model.md`, against the ARD files as just written.
     2. Each stale threat takes H. On *Name a live decision*, the pair is re-asked until it names a live decision. A requirement gap writes R20's open-question line into the ARD, now and before step 3's capture. Where the model was `left`, a re-disposition copies it into a new `draft` first, and sets `state: redisposed`.
     3. Where `draft` is set:
        - write it to `<feature folder>/threat-model.md`, `status:` as the ARD's;
        - execute `document-lineage` `record` §5 step 1, capturing `--from-disk` every ARD file in the feature folder (`ard.md` and each `ard-<area>.md`);
        - then step 2's `stamp` on the model, with that capture and, on an Epic-level run, `threat_model.capture`, as two `--capture` flags (R26), and no `accept`;
-       - a non-zero exit is R27's;
+       - a non-zero exit stops the run with `CREATE_ARD_LINEAGE_FAILED`, as `document-lineage` §5 says;
        - then `command rm -f -- <draft>` and the capture files.
-    4. Where `fresh` and `declined`, remove the old file per R23.
+    4. Where `fresh` and the state is `declined`, `empty` or `dropped`, remove the old file per R23.
   - **The handoff paragraph (Q3; S16):**
     - **the array-selection sentence.** `Where that set is the ARD file(s) **alone** and the ARD is new — \`<default-ref>\` carries none of them` becomes: `Where that set is the ARD file(s) alone — or the ARD file(s) and \`threat-model.md\`, an advisory path that leaves the choice as the ARD alone makes it (\`workflows-core:phase-handoff\` §4.0, *A handoff whose \`deliverable_paths\` set spans classes takes the strongest class in it*) — and the ARD is new — \`<default-ref>\` carries none of the ARD files`;
     - **`deliverable_paths`.** `the ARD file(s)` gains `and \`<feature folder>/threat-model.md\` where Phase 6 wrote it, where R28 holds of a left one, or where R23 removed a tracked one`;
@@ -995,11 +1015,11 @@ A **scenario trace** is a step in the task report that does four things:
 
     These three clauses are the whole of the GIT-G1 section's change.
   - **The Final report:**
-    - *Report:* gains, after `the \`ard-reviewer\` verdict;`, `the \`Threat model:\` line — its state, and where a model was written \`<n> threats: <m> mitigated, <d> deferred to design, <a> accepted, <s> superseded, <w> withdrawn; <k> [AD#N] recorded for threats; <p> candidates proposed\`, then \`, <o> over the cap: <titles>\`, each candidate dropped and why, each acceptance past its date and what was done with it, each re-disposition at the second check, each requirement gap, any \`threat-modeler\` failure, R27's and R29's lines where they fired, and R23's removal`;
+    - *Report:* gains, after `the \`ard-reviewer\` verdict;`, `the \`Threat model:\` line — its state, and where a model was written \`<n> threats: <m> mitigated, <d> deferred to design, <a> accepted, <s> superseded, <w> withdrawn; <k> [AD#N] recorded for threats; <p> candidates proposed\`, then \`, <o> over the cap: <titles>\`, each candidate dropped and why, each acceptance past its date and what was done with it, each re-disposition at the second check, each requirement gap, any \`threat-modeler\` failure, R29's line where it fired, and R23's removal`;
     - the frontmatter `description` (S20): `Writes ard.md into the resolved PRD- or EPIC- folder.` becomes `Writes ard.md into the resolved PRD- or EPIC- folder and, where the architect adds one, a threat model (threat-model.md) beside it.` Measure it: at most 600.
 - Modify `plugins/workflows-core/references/phase-handoff.md` — exactly three edits:
   1. **§4.0's register (S32)** — a row immediately after the `_readiness.md` row. Every word of it lies outside every `<!-- entry -->` region (the table runs from the line after the `<!-- /entry -->` closing §4.0's opening to the line before `<!-- entry: require-on-main -->`), so no generated file changes:
-     `` | `threat-model.md`, beside an ARD | advisory | a later `/product-workflows:create-ard` run on the same folder reads it from the working tree — its Phase 0 finds it, its Phase 4.3 checks every decision it cites and every component it names, and refines it — and on the BRD route `/product-workflows:brd-reconcile`'s stale cross-reference sweep (its Phase 11) reads it as it reads every markdown file under the parent BRD's folder; `ard-reviewer` reads it inside the run that wrote it, a same-run read that does not count. §3.4 names no gate on it. **No array moves for this**: `/create-ard` declares it beside the ARD, whose class the set takes, so the ARD alone still picks the array (§4.0's strongest-class rule) | ``
+     `` | `threat-model.md`, beside an ARD | advisory | a later `/product-workflows:create-ard` run on the same folder reads it from the working tree — its Phase 0 finds it, its Phase 4.3 checks every decision it cites and every component it names, and refines it — and on the BRD route `/product-workflows:brd-reconcile`'s stale cross-reference sweep (its Phase 11) reads it as prose, as it reads every markdown file under the parent BRD's folder; by that sweep's structured-record class a hit there is `needs-a-human`, never corrected in place. `ard-reviewer` reads it inside the run that wrote it, a same-run read that does not count. §3.4 names no gate on it. **No array moves for this**: `/create-ard` declares it beside the ARD, whose class the set takes, so the ARD alone still picks the array (§4.0's strongest-class rule) | ``
   2. **§4.1's sentence (S15)**, inside the `handoff-to-main` entry region: `` `/create-ard` (the ARD alone, or the ARD beside `grounding/` files and `decisions.md`) `` becomes `` `/create-ard` (the ARD alone or beside its advisory `threat-model.md`, or the ARD beside `grounding/` files and `decisions.md`) ``.
   3. **§4.3's falling-back paragraph (S17; Q2)**, inside the same region. `the ARD and \`design.md\` are two more artifacts, reached by a producer whose whole set is one of them` becomes `the ARD and \`design.md\` are two more artifacts, reached by a producer whose whole set is one of them — the ARD also by \`/create-ard\` for a set whose other paths stop nothing, its advisory \`threat-model.md\` (§4.0)`. This mirrors the paragraph's own `/epics` clause, *for a set whose other paths stop nothing*.
 - Regenerate `plugins/workflows-core/reference-parts/phase-handoff/handoff-to-main.md` with `python3 scripts/reference-parts.py generate`. It is never edited by hand.
@@ -1031,7 +1051,7 @@ A **scenario trace** is a step in the task report that does four things:
     - H is put;
     - no `[AD#N]` is added;
     - a requirement gap writes its open-question line before the capture, so the model records the ARD as edited.
-  - **RF6b:** RF6's run answered *Not this time*, its old model tracked on an `ard/` branch. Expected: the file is removed, its path joins `deliverable_paths`, and the report names it. Run it again with the old model untracked. Expected: removed, and not in the set.
+  - **RF6b:** RF6's run answered *Not this time*, its old model tracked on an `ard/` branch. Expected: the file is removed, its path joins `deliverable_paths`, and the report names it. Run it again with the old model untracked. Expected: removed, and not in the set. Run it a third time as *Add a threat model* whose walk ends `empty`. Expected: removed, as on *Not this time*.
 - [ ] **Step 5: The map line. After counts.** Measure `product-workflows.md`.
 - [ ] **Step 6: Gates.**
 - [ ] **Step 7: Commit:** `feat(sec-g2): /create-ard checks, writes and hands off the threat model — the ARD alone still picks the array`.
@@ -1134,6 +1154,12 @@ A **scenario trace** is a step in the task report that does four things:
   - **R32, by subject:** every hit of `grep -rn 'threat-model\|threat model' plugins CLAUDE.md .claude/rules` that states who reads the model states R32's readers.
   - The brief's field labels in `create-ard.md` equal those in `threat-modeler.md`'s *Inputs*, and its output keys equal Phase 4.3's reads.
   - Where Task 5's probe could not run, run it now.
+  - **The live check** (controller ruling). Append a section to `docs/superpowers/to-test-on-real-project.md`, headed with this release's versions in that file's form. Its one item:
+    - **In an interactive session, `/create-ard` dispatches `threat-modeler`, and it proposes candidates.**
+    - Why it needs a live run: R6's probe ran under `claude -p`, and tool recognition can depend on the session — `CronList` is gated by `isCronManagementEnabled`.
+    - What a miss looks like: it fails closed to R19, a one-line dispatch refusal with no candidates.
+
+    The maintainer's end-to-end demo covers it.
   - **No regression.** Trace a `declined` run, and a `not-offered` one, through Phases 4.5 to 8. Expected: no model step fires. The only additions are Phase 4.3's question or line and the `Threat model:` report line, and the handoff set and array are the ones from before this branch.
 - [ ] **Step 2: GIT-G1.**
   - `git diff origin/main...HEAD --stat` shows nothing under `.github/`, `specs-repo-git.md`, `specs-git.py`, `workflows-core-git.md` or `workflows-core-handoff.md`.
