@@ -101,7 +101,7 @@ LINK_MODE = b"120000"  # a symbolic link, whose blob holds its target's name and
 # What across adds to the environment, once every GIT_ variable is gone: no prompt, no optional lock, and no fetch
 # of an object a partial clone lacks (a git that does not know the last ignores it: git knows it from 2.45.0 and from
 # the 2.39.4, 2.40.2, 2.41.1, 2.42.2, 2.43.4 and 2.44.1 maintenance releases; 2.44.0 and the earlier releases of each
-# line ignore it, save a build that backports it, as Ubuntu's 2.43.0 does).
+# line ignore it, save a build that backports it, as Ubuntu's 2.43.0 does from its 1:2.43.0-1ubuntu7.1 update).
 GIT_SET = {"GIT_TERMINAL_PROMPT": "0", "GIT_OPTIONAL_LOCKS": "0", "GIT_NO_LAZY_FETCH": "1"}
 SINGLE_FLAGS = ("--specs", "--prd-key", "--ref", "--today")  # each taken once: a second refuses the run
 
@@ -618,9 +618,10 @@ def _listing(specs, sha):
     directory is a symbolic link -- each unreadable -- and for a record that is a symbolic link, which is skipped. A
     directory or a submodule named *.md is no record.
     The sizes come with the listing (-l) where git gives it. A git that fails the whole sized listing over one blob it
-    cannot size -- Ubuntu's 2.43.0 does, in a partial clone that lacks a blob -- is asked again without sizes, which
-    reads trees alone, and then for the size of each register.json and record listed that is a regular file, one at
-    a time (_size): None where it cannot read that one. Only a commit neither listing can list stops the run."""
+    cannot size -- Ubuntu's 1:2.43.0-1ubuntu7.4 does, in a partial clone that lacks a blob -- is asked again without
+    sizes, which reads trees alone, and then for the size of each register.json and record listed that is a regular
+    file, one at a time (_size): None where it cannot read that one. Only a commit neither listing can list stops the
+    run."""
     paths = ("--full-tree", sha, "--", "security", "architecture/decisions")
     code, out = _git(specs, "ls-tree", "-r", "-t", "-l", "-z", *paths)
     sized = code == 0
@@ -2235,9 +2236,12 @@ def case_across_partial_clone(tmp):
     def held(d):
         return subprocess.run(["git", "-C", d, "cat-file", "-e", blob], env=dict(_fixture_env(), GIT_NO_LAZY_FETCH="1"),
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
-    listed = subprocess.run(["git", "-C", probe, "cat-file", "--batch-all-objects", "--batch-check=%(objectname)"],
-                            env=_fixture_env(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.split()
-    assert blob.encode("ascii") not in listed, "the clones are not partial"  # a read of the object store, no fetch
+    for d in (clone, probe):  # a read of each object store, which never fetches
+        r = subprocess.run(["git", "-C", d, "cat-file", "--batch-all-objects", "--batch-check=%(objectname)"],
+                           env=_fixture_env(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        listed = r.stdout.split()
+        assert r.returncode == 0 and sha.encode("ascii") in listed, ("the object store could not be read", d)
+        assert blob.encode("ascii") not in listed, "the clones are not partial"
     fetches = held(probe)  # asked of the second clone, so the clone under test is read first by the script
     res, _ = _across(clone)
     assert res["ref"] == sha, res
