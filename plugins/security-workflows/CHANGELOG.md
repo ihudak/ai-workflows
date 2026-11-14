@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.12.1] — 2026-11-14
+
+Docs only: SEC-G2 B. The roles page says the Security Engineer reviews a threat model in its ARD's pull request. It describes `product-workflows` 3.81.0's `/create-ard`, and needs nothing of the other plugins' releases, nor they of it.
+
+### Changed
+
+- **Roles and phases.** The Security Engineer's role gains *Reviews a threat model in its ARD's pull request*: where a product architect adds one with `/product-workflows:create-ard`, `threat-model.md` rides in that pull request, whose description names each risk accepted, with its owner and review date, and the Security Engineer checks every threat's disposition and each risk the architect alone records. `/security-workflows:scan` reads none of it.
+
 ## [0.12.0] — 2026-11-14
 
 SEC-G1, the architecture feedback loop: `/security-workflows:scan` raises a follow-up for the product architect (PA) where the risks a run accepts recur in one **weakness class** of the repository's register — one CWE — and no team decision for the repository prevents it, and a review-due row at triage names the team decision that now prevents its class. The scan reads the classes through `workflows-core`'s new `weakness-classes` skill, which hands it counts and checked values, never a finding's text. Update with `workflows-core` 1.87.0, which carries the skill, its script, the line's exact copy and the follow-up rules the scan cites; `product-workflows` 3.80.0 and `dev-workflows` 4.66.0 are released with it. `register.py` is unchanged, and no plugin comes to depend on this one; beside it, `/product-workflows:create-ard`, `/product-workflows:specify`, `/product-workflows:update-spec`, `/dev-workflows:design` and `/product-workflows:promote-decisions` now read the classes the registers hold.
