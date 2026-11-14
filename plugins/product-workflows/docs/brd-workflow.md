@@ -296,7 +296,7 @@ a `reopened` record may not be consumed downstream and all three consume the reg
 dependent recorded-not-written still reads a position the customer has since settled. On an advancing slice run, `/create-prd` on the BRD route carries one further condition —
 the reconciled ledger leaves no row `unallocated` and at least one `covered-here` (the two refusals
 its own Phase 0 raises) — while `/create-ard` on the BRD route and `/specify` on the BRD route carry none of
-their own, since neither reads the ledger as an authoring input, and the PRD gate both run reports an absent PRD rather than stopping on it.
+their own, since neither reads the ledger as an authoring input, and the PRD gate both run reports a slice holding no `prd.md` rather than stopping on it, and stops on a `prd.md` the slice holds that was never handed off.
 The difference is where the enforcement sits: the level test and `/create-prd`'s eligibility test are
 each refused by the offered command's own Phase 0, whereas the one gate all three run on the register
 — `require-on-main` on `decisions.md`, stopping on a register left on an unmerged branch — tests
@@ -304,7 +304,7 @@ which ref it is on and never what it holds, so nothing downstream refuses a merg
 a `reopened` or `open` record, and the advance/re-entry split is a judgement only the offering station can make — `/brd-reconcile`, or `/brd-interview` on a slice that needs no customer review. That same gate is why all three advance options carry the `<merge-clause>`: the register
 is one of the files `/brd-reconcile` hands off, and each offered command stops until it is merged. **The diagram above draws all three**, as the three solid edges leaving
 `/brd-reconcile` into the right-hand box. They are alternatives rather than a sequence: neither of
-the other two waits on anything `/create-prd` on the BRD route produces, so an ARD or a specification can
+the other two waits on an unauthored PRD, so an ARD or a specification can
 be authored from a BRD whose ledger will never qualify for a PRD of its own. [Workflow overview](workflow.md) draws
 the same three edges with the same labels, into the same three commands.
 
@@ -324,7 +324,7 @@ each of those three also has a keyed form that this route never uses.
 | `/brd-package` | `<BRD-KEY>` | `--depends-on <BRD-KEY>…` | Only a slice is packaged — a root stops with `BRD_PACKAGE_ROOT_LEVEL`. `--depends-on` is repeatable; a mistyped key is warned and dropped, never fatal |
 | `/brd-reconcile` | `<BRD-KEY> [@<review-file>]` | `--sent <path>…`, `--free-text` | Only a slice is reconciled — a root stops with `BRD_RECONCILE_ROOT_LEVEL`. The review is a path you give, or the one the customer committed beside the bundle, once you confirm it |
 | `/create-prd` | `<SLICE-KEY>` | `--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<path>` (extra grounding, never the seed) | A `BRD-` container is refused. Offered only where the slice's claimed rows leave none `unallocated` and one `covered-here`. Defaults to `--full`. `--from-prd` is refused |
-| `/create-ard` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | A `BRD-` container is refused. Otherwise offered on any advancing slice run; gates `prd.md` as on the idea route, never authors from the ledger. One address (`CREATE_ARD_ONE_ADDRESS`) |
+| `/create-ard` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container; offered on any advancing slice run. Gates `prd.md`: goes on with none, stops on one never handed off. Never authors from the ledger. One address (`CREATE_ARD_ONE_ADDRESS`) |
 | `/specify` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | A `BRD-` container is refused. Otherwise offered on the same terms as `/create-ard`. One address; a second token stops it (`SPECIFY_ONE_ADDRESS`) |
 
 `--no-docs` and `--docs <path>` appear together on two of the six **route** rows and mean the same
