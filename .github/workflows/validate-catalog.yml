@@ -276,6 +276,15 @@ jobs:
         # agent's. Fixtures are throwaway git repositories built at run time.
         run: python3 plugins/workflows-core/scripts/tree-snapshot.py --selftest
 
+      - name: Self-test the status line's plan usage
+        # /workflows-core:statusline installs statusline-command.sh, whose opt-in plan-usage line
+        # draws a cached reply of the account's usage endpoint. Its failure modes are silent: a
+        # limit the reply lists only among its limits is not drawn, a window is drawn twice, or, on
+        # Linux, the cache's age reads as garbage and the line is never drawn at all. Each case
+        # renders the shipped script under a HOME of its own that holds only the cache, so no case
+        # reads a credential or reaches the network. The tests live outside the plugin.
+        run: bash scripts/selftests/statusline_selftest.sh
+
       - name: Every plugin's copied scripts are the same
         # A command, agent or reference calls ${CLAUDE_PLUGIN_ROOT}/scripts/<name> -- the copy in
         # the calling file's own plugin, for each of bounded.py and tree-snapshot.py. A plugin with a
