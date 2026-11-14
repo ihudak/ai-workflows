@@ -6,7 +6,7 @@ The workflow plugin family charges every cost-emitting run to a `phase` and a `r
 - **`prd-update`** (`pm`) — revising an existing PRD: `/update-prd`.
 - **`brd-to-prd`** (`pm`) — taking a customer's business requirements document to its PRDs: `/brd-intake`, `/brd-split`, `/brd-interview`, `/brd-package` and `/brd-reconcile`, and `/prd-ground`, which charges this phase on either route.
 - **`proposal`** (`pm`) — an effort proposal over a set of requirements: `/prd-proposal` and `/brd-proposal`.
-- **`architecture`** (`pa`) — the architecture record: `/create-ard`.
+- **`architecture`** (`pa`) — the architecture record and, optionally, its threat model: `/create-ard`.
 - **`specification`** (`pe`) — writing or revising a specification: `/specify` and `/update-spec`.
 - **`epic-refinement`** (`pe`) — breaking a PRD into Epics, or refining one: `/epics`.
 - **`planning`** (`dev`) — an engineering design: `/design`.
