@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.66.0] — 2026-11-14
 
-SEC-G1: `/design` reads the **weakness classes** the security findings registers hold for the repositories a design touches — one code repository's findings that share a CWE, in the registers `/security-workflows:scan` keeps under `$SPECS_PATH/security/` — through `workflows-core`'s new `weakness-classes` skill, which hands it counts and checked values, never a finding's text, and the design records how it answers each class it is asked about. Update with `workflows-core` 1.87.0, which carries the skill, its script and the grounding rules `/design` cites; `product-workflows` 3.80.0 and `security-workflows` 0.12.0 are released with it. Where `$SPECS_PATH/security/` holds no register, `/design` runs as before.
+SEC-G1: `/design` reads the **weakness classes** the security findings registers hold for the repositories a design touches — one code repository's findings that share a CWE, in the registers `/security-workflows:scan` keeps under `$SPECS_PATH/security/` — through `workflows-core`'s new `weakness-classes` skill, which hands it counts and checked values, never a finding's text, and the design records how it answers each class it is asked about. Update with `workflows-core` 1.87.0, which carries the skill, its script and the grounding rules `/design` cites; `product-workflows` 3.80.0 and `security-workflows` 0.12.0 are released with it. Where `$SPECS_PATH/security/` does not exist, `/design` grounds exactly as before; where it exists and holds no register, it adds one `security registers: OFF` line and grounds as before.
 
 ### Added
 
@@ -17,7 +17,7 @@ SEC-G1: `/design` reads the **weakness classes** the security findings registers
 
 - **`design-format`'s *Architecture governance*** applies where grounding ran or `architecture-grounder` returned a `known-weakness` challenge, and holds the `Known weakness:` line; where neither holds, nothing in it is required.
 - **`design-reviewer`** raises no finding on a `Known weakness:` line and never opens its register link, which is for people.
-- **Pages.** The `/design` page describes the security registers and the `Known weakness:` line; the environment page says `--no-arch` turns off the security registers with the other two architecture sources; and the follow-ups page says `/security-workflows:scan` writes its line for the product architect into the `follow-ups.md` of the folder that holds the PRD, matched by its PRD key, its CWE and its register, against open lines only.
+- **Pages.** The `/design` page describes the security registers and the `Known weakness:` line; the environment page says `--no-arch` turns off the security registers with the other two architecture sources; and the follow-ups page says `/security-workflows:scan` writes its line for the product architect into the `follow-ups.md` of the folder that holds the PRD, matched by its PRD key, its CWE and its register, against open lines only. The getting-started page gives the skill listing's current size, about 3,900 characters for every plugin of the marketplace installed together, since `workflows-core` 1.87.0's new skill is listed.
 
 ## [4.65.0] — 2026-11-14
 

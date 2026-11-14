@@ -12,7 +12,7 @@ Compare the team's decisions with the organisation's architecture, so a product 
 - `specs_root` — absolute path of the specs repository; the records are under `architecture/decisions/`.
 - `signals` — absolute path of the JSON `promotion-signals.py --signals` printed: `records` (each with `cited_by`, `deviated_elsewhere`, `superseded_others`) and `artifacts` (each with its `friction`).
 - `weakness_classes` — the absolute path of a JSON file your caller's weakness-classes call wrote, or `null` (also when absent). It holds the weakness classes that recur across the specs repository's security findings registers — each a CWE that two or more registers, one per code repository, hold a finding of judged real — and step 6 reads it. You never run the skill or the script that wrote it, and never open a register: this file is all you learn of the registers.
-- `candidates` — the record ids to compare; `[]` where only the weakness classes brought the run here.
+- `candidates` — the record ids to compare; `[]` where no record is a candidate: the weakness classes, or artifacts with friction, or both, brought the run here.
 - `pending_superseding` — ADR ids a proposed successor already proposes to supersede. Never a superseding entry.
 
 ## Method

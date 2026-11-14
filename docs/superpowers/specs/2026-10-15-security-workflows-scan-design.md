@@ -1,6 +1,6 @@
 # `security-workflows`: record Claude Security scans in SPECS and route their fixes through `/implement` (sub-project A)
 
-Date: 2026-10-15. Status: approved. Amended seven times.
+Date: 2026-10-15. Status: approved. Amended seventeen times.
 
 1. **After the user's first review:**
    - effort defaults per scan kind;

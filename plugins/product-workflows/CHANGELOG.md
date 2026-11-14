@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.80.0] — 2026-11-14
 
-SEC-G1: `/create-ard`, `/specify`, `/update-spec` and `/promote-decisions` read the **weakness classes** the security findings registers hold — one code repository's findings that share a CWE, in the registers `/security-workflows:scan` keeps under `$SPECS_PATH/security/` — through `workflows-core`'s new `weakness-classes` skill, which hands them counts and checked values, never a finding's text; and `/promote-decisions`' signals no longer read `security/` at all. Update with `workflows-core` 1.87.0, which carries the skill, its script and the grounding and promotion rules these commands cite; `dev-workflows` 4.66.0 and `security-workflows` 0.12.0 are released with it. Where `$SPECS_PATH/security/` holds no register, every command runs as before.
+SEC-G1: `/create-ard`, `/specify`, `/update-spec` and `/promote-decisions` read the **weakness classes** the security findings registers hold — one code repository's findings that share a CWE, in the registers `/security-workflows:scan` keeps under `$SPECS_PATH/security/` — through `workflows-core`'s new `weakness-classes` skill, which hands them counts and checked values, never a finding's text; and the bundled `promotion-signals.py` that `/promote-decisions` runs no longer reads `security/`. Update with `workflows-core` 1.87.0, which carries the skill, its script and the grounding and promotion rules these commands cite; `dev-workflows` 4.66.0 and `security-workflows` 0.12.0 are released with it. Where `$SPECS_PATH/security/` does not exist, `/create-ard`, `/specify` and `/update-spec` ground exactly as before; where it exists and holds no register, they add one `security registers: OFF` line and ground as before.
 
 ### Added
 
@@ -19,9 +19,9 @@ SEC-G1: `/create-ard`, `/specify`, `/update-spec` and `/promote-decisions` read 
 
 ### Changed
 
-- **`/promote-decisions`' signals no longer read `security/`.** The bundled `promotion-signals.py` skips the specs repository's top-level `security/` when its `--signals` walk reads the specs tree at the default branch, as it skips `architecture/`: the findings registers, and the scan reports copied beside them, are text a scanner wrote, so a scan report's text can no longer count as a link to a team decision, a departure from one, or friction on an ADR or standard, and so can no longer move a promotion candidate's rank or add friction. Its selftest covers the skip.
+- **`promotion-signals.py` no longer reads `security/`.** The bundled `promotion-signals.py` that `/promote-decisions` runs skips the specs repository's top-level `security/` when its `--signals` walk reads the specs tree at the default branch, as it skips `architecture/`: the findings registers, and the scan reports copied beside them, are text a scanner wrote, so a scan report's text can no longer count as a link to a team decision, a departure from one, or friction on an ADR or standard, and so can no longer move a promotion candidate's rank or add friction. Its selftest covers the skip.
 - **`spec-reviewer` and `epic-reviewer`** raise no finding on a `Known weakness:` open question and never open its register link, which is for people.
-- **Pages.** The `/create-ard`, `/specify`, `/update-spec` and `/promote-decisions` pages, the environment page and the workflow overview describe the security registers as the third source architecture grounding reads, and `--no-arch` as turning them off with the other two.
+- **Pages.** The `/create-ard`, `/specify` and `/update-spec` pages, the environment page and the workflow overview describe the security registers as the third source architecture grounding reads, and `--no-arch` as turning them off with the other two. The `/promote-decisions` page describes the weakness classes recurring across registers and its signals' skip of `security/`. The getting-started page gives the skill listing's current size, about 3,900 characters for every plugin of the marketplace installed together, since `workflows-core` 1.87.0's new skill is listed.
 
 ## [3.79.4] — 2026-11-13
 
