@@ -32,7 +32,8 @@ are always fully qualified. Direct users to `/workflows-core:statusline`.
 
 1. Source script: `${CLAUDE_PLUGIN_ROOT}/scripts/statusline-command.sh`.
 2. Stable install path: `~/.claude/dev-workflows/statusline-command.sh`
-   (per-user, survives plugin re-installs). Create `~/.claude/dev-workflows/` if
+   (per-user, survives plugin re-installs; the `statusline-refresh` hook keeps it
+   current, Phase 3). Create `~/.claude/dev-workflows/` if
    missing.
 3. Settings file: `~/.claude/settings.json`.
 
@@ -52,6 +53,14 @@ are always fully qualified. Direct users to `/workflows-core:statusline`.
 
 Copy the source script to the stable install path and `chmod +x` it. Verify it is
 non-empty and begins with a `#!` shebang.
+
+Then record its fingerprint: write the SHA-256 of the installed script
+(`shasum -a 256`, or `sha256sum` where that is absent) as one line to
+`~/.claude/dev-workflows/statusline-command.sh.sha256`. The plugin's
+`statusline-refresh` hook replaces the installed script at session start, after a
+plugin update, only while it still matches this fingerprint — so a copy the user
+later edits by hand is never overwritten. Where neither tool is present, skip the
+record and say in Phase 5 that the status line will not follow plugin updates.
 
 ## Phase 4 — Merge the settings block (confirm first)
 
@@ -78,7 +87,7 @@ place, so a failed merge never truncates `settings.json`. Preserve all other key
 
 ## Phase 5 — Report
 
-Confirm the install path, the settings change, and any backups created. Where
+Confirm the install path, the settings change, any backups created, and that the status line now follows plugin updates: after a `claude plugin update` of `workflows-core` and a restart, the next session start installs the new script, until the user edits the installed copy. Where
 `jq_missing` is not set, tell the user the status line takes effect on the next
 render / new session, and that the per-session cost snapshot behind the status-line cross-check is now
 enabled — both given `jq` on the `PATH` the status line runs with, which is the
