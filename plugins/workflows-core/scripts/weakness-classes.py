@@ -99,8 +99,9 @@ JUDGED_REAL = ("fix", "fixing", "reopened", "accepted-risk")  # and a recent fix
 FILE_MODES = (b"100644", b"100755")  # a regular file
 LINK_MODE = b"120000"  # a symbolic link, whose blob holds its target's name and never the file
 # What across adds to the environment, once every GIT_ variable is gone: no prompt, no optional lock, and no fetch
-# of an object a partial clone lacks (a git that does not know the last ignores it: git before 2.44, save a build
-# that carries it all the same, as Ubuntu's 2.43.0 does).
+# of an object a partial clone lacks (a git that does not know the last ignores it: git knows it from 2.45.0 and from
+# the 2.39.4, 2.40.2, 2.41.1, 2.42.2, 2.43.4 and 2.44.1 maintenance releases; 2.44.0 and the earlier releases of each
+# line ignore it, save a build that backports it, as Ubuntu's 2.43.0 does).
 GIT_SET = {"GIT_TERMINAL_PROMPT": "0", "GIT_OPTIONAL_LOCKS": "0", "GIT_NO_LAZY_FETCH": "1"}
 SINGLE_FLAGS = ("--specs", "--prd-key", "--ref", "--today")  # each taken once: a second refuses the run
 
@@ -618,8 +619,8 @@ def _listing(specs, sha):
     directory or a submodule named *.md is no record.
     The sizes come with the listing (-l) where git gives it. A git that fails the whole sized listing over one blob it
     cannot size -- Ubuntu's 2.43.0 does, in a partial clone that lacks a blob -- is asked again without sizes, which
-    reads trees alone, and then for the size of each register.json and record listed, one at a time (_size): None
-    where it cannot read that one. Only a commit neither listing can list stops the run."""
+    reads trees alone, and then for the size of each register.json and record listed that is a regular file, one at
+    a time (_size): None where it cannot read that one. Only a commit neither listing can list stops the run."""
     paths = ("--full-tree", sha, "--", "security", "architecture/decisions")
     code, out = _git(specs, "ls-tree", "-r", "-t", "-l", "-z", *paths)
     sized = code == 0
@@ -637,10 +638,11 @@ def _listing(specs, sha):
         regular, link = kind == b"blob" and mode in FILE_MODES, kind == b"blob" and mode == LINK_MODE
 
         def size():
-            """The entry's size: asked of git only for an entry kept below, and only where the listing gave none."""
+            """The entry's size: asked of git only for a regular file kept below, the one kind across reads, and only
+            where the listing gave none."""
             if sized:
                 return int(fields[3]) if fields[3].isdigit() else None  # ls-tree prints BAD for a blob it cannot read
-            return _size(specs, oid)
+            return _size(specs, oid) if regular else None
         parts = name.decode("utf-8", "surrogateescape").split("/")
         if parts[0] == "security" and len(parts) in (2, 3) and _slug(parts[1]):
             if len(parts) == 3 and parts[2] == "register.json":
@@ -1810,16 +1812,18 @@ def _drop_object(specs, oid):
 
 
 def _git_without_sizes(tmp):
-    """A directory holding a `git` that fails `ls-tree -l` outright, exit 128, and hands every other call to the real
-    git: what a git does that cannot size one blob of the listing (_listing names one)."""
+    """(A directory holding a `git` that fails `ls-tree -l` outright, exit 128, and hands every other call to the real
+    git -- what a git does that cannot size one blob of the listing (_listing names one) -- and the file it writes
+    each call's arguments to, a line a call.)"""
     real = shutil.which("git")
-    assert real and "'" not in real, real
     d = tempfile.mkdtemp(dir=tmp)
-    path = os.path.join(d, "git")
+    path, log = os.path.join(d, "git"), os.path.join(d, "calls")
+    assert real and "'" not in real + log, (real, log)
     with io.open(path, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write("#!/bin/sh\ncase \" $* \" in *\" ls-tree \"*\" -l \"*) exit 128;; esac\nexec '%s' \"$@\"\n" % real)
+        fh.write("#!/bin/sh\necho \" $* \" >>'%s'\ncase \" $* \" in *\" ls-tree \"*\" -l \"*) exit 128;; esac\n"
+                 "exec '%s' \"$@\"\n" % (log, real))
     os.chmod(path, 0o755)
-    return d
+    return d, log
 
 
 @contextlib.contextmanager
@@ -2231,6 +2235,9 @@ def case_across_partial_clone(tmp):
     def held(d):
         return subprocess.run(["git", "-C", d, "cat-file", "-e", blob], env=dict(_fixture_env(), GIT_NO_LAZY_FETCH="1"),
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+    listed = subprocess.run(["git", "-C", probe, "cat-file", "--batch-all-objects", "--batch-check=%(objectname)"],
+                            env=_fixture_env(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.split()
+    assert blob.encode("ascii") not in listed, "the clones are not partial"  # a read of the object store, no fetch
     fetches = held(probe)  # asked of the second clone, so the clone under test is read first by the script
     res, _ = _across(clone)
     assert res["ref"] == sha, res
@@ -2252,21 +2259,26 @@ def case_across_listing_without_sizes(tmp):
     _register(specs, "ops", [_finding(1, status="fix")])
     _record(specs, "ACME-17-AD1")
     _record(specs, "ACME-17-AD2")
-    sha = _commit(specs)
+    _g(specs, "add", "-A")
+    _plant(specs, "architecture/decisions/ACME-17-AD3.md", "ACME-17-AD1.md", mode="120000")  # a link: never read
+    sha = _commit(specs, add=False)
     want, _ = _across(specs)
-    assert _rows(_xcls(want, "CWE-89")) == ["api", "ops", "web"], want
+    assert _rows(_xcls(want, "CWE-89")) == ["api", "ops", "web"] and want["kb_skipped"] == 1, want
     assert [p["id"] for p in _xcls(want, "CWE-89")["prevented_by"]] == ["ACME-17-AD1", "ACME-17-AD2"], want
-    fake = _git_without_sizes(tmp)
+    fake, log = _git_without_sizes(tmp)
     with _path_first(fake):
         sized = subprocess.run(["git", "-C", specs, "ls-tree", "-r", "-l", sha], env=_fixture_env(),
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
         assert sized == 128, sized  # the fixture is what it says: the sized listing fails
         got, _ = _across(specs)
     assert got == want, got
+    with io.open(log, encoding="utf-8") as fh:
+        asked = [line for line in fh if " cat-file -s " in line]
+    assert len(asked) == 5, asked  # the three registers and the two regular records: never the link
     _drop_object(specs, _g(specs, "rev-parse", "main:security/ops/register.json"))
     _drop_object(specs, _g(specs, "rev-parse", "main:architecture/decisions/ACME-17-AD2.md"))
     lost, _ = _across(specs)  # the sized listing, on this git
-    assert _states(lost)["ops"] == "unreadable" and lost["kb_skipped"] == 1, lost
+    assert _states(lost)["ops"] == "unreadable" and lost["kb_skipped"] == 2, lost
     assert _rows(_xcls(lost, "CWE-89")) == ["api", "web"], lost
     with _path_first(fake):
         got, _ = _across(specs)
