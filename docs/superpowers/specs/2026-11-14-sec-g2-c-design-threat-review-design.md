@@ -1,6 +1,6 @@
 # SEC-G2 C: the design threat review
 
-Date: 2026-11-14. Status: **draft for the maintainer's approval — revision 2.1**, after a builder review of revision 1 (`ae08e0df`) and a re-check of revision 2 (`12bd1263`); what changed is listed at the end. Roadmap row **C** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:103` ("Design threat review: threats per interface of `design.md`, with amendments proposed through `/design`"; dependencies "A; B where present"), the second of SEC-G2's three sub-projects (B, then C, then D). It builds on B as built — `docs/superpowers/specs/2026-11-14-sec-g2-b-threat-model-design.md`, revision 3.2, on `feat/sec-g2-b-threat-model` — and on E (SEC-G1, `docs/superpowers/specs/2026-11-13-sec-g1-architecture-feedback-design.md`). **C's build starts after B's pull request #198 merges.**
+Date: 2026-11-14. Status: **approved** by the maintainer 2026-11-14 (revision 2.1), with the recommended answer to each of the three questions below.
 
 Every decision is written with a recommended answer. The three marked **(maintainer)** at the end are the calls only the maintainer can make; the rest are the author's, stated so they can be corrected. Statements about the tree cite `file:line` at B's head (`9ddad5f0`); a paragraph opening **Inference** is the author's reading, not the code's.
 
@@ -185,7 +185,9 @@ The step's number; field wording and order; the agent's name; the 15 cap; whethe
 - **A fallback hides a model in flux**: one line says so, and the kept section is named as unreviewed.
 - **Noise**: the cap, the element + action + asset rule, and `Not a threat — drop it`.
 
-## Questions for the maintainer
+## Questions for the maintainer — answered 2026-11-14
+
+The maintainer took the recommended answer to all three: returned threats live in `design.md` and the pull request only; a design may hand off with a returned, unanswered threat; the review is not offered where no threat model exists.
 
 1. **Where do returned threats live?** Recommended: in `design.md` and the pull request only, `threat-model.md` staying the architect's alone, with `/create-ard`'s intake a named follow-up. The alternative is D7's `## Engineering review` notes in the model, at the seven costs D7 lists.
 2. **Can a design hand off with a returned, unanswered threat?** Recommended: yes — it is a recorded decision with a reason, MINOR to the reviewer, verbatim in the pull request, and D's finding until the PA re-disposes it. The alternative treats it as an ARD deviation is treated, a `- [ ]` open question, so the design, the last gate before `/implement`, waits on the PA's `/create-ard` run.
