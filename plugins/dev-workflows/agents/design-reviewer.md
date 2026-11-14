@@ -74,7 +74,7 @@ working tree is at it, in the working tree, since no commit holds what that scan
    `_N/A — why_` is present and the omission is legitimate at this classification — save the two
    optional sections, whose omission needs no line and is never a finding at this step: `## Pieces`,
    which the *Pieces* check (below) alone judges, present or not, its omission meaning one piece; and
-   `## Threat review`, its omission meaning no threat review ran.
+   `## Threat review`, which the threat-review check (below) alone judges, present or not.
 4. Apply the cross-cutting checks (below).
 5. Record each finding in the shared severity schema; never fabricate a design — route a genuinely
    undecidable item to **needs engineering input** (but note that an undecided item means the design
