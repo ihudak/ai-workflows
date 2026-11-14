@@ -27,7 +27,7 @@ The run stops, writing nothing, at the first of these that holds. Each stop name
 2. **Writable.** `test -w "<root>" && test -w "<root>/.git"` (`workflows-core:read-only-repos` §1). On failure, stop: `PROMOTE_ARCHITECTURE_READ_ONLY: <root> is read-only here. Start a session inside the architecture repository, or point ARCHITECTURE_REPO_PATH at a writable clone.`
 3. **A clean default branch.**
    - `git -C <root> status --porcelain` must print nothing.
-   - `git -C <root> branch --show-current` must equal the default branch: `git -C <root> symbolic-ref --short refs/remotes/origin/HEAD` without its `origin/`, else `main`. A name outside `read-only-repos.md` §3's *Branch names* class counts as none there, before any command names it, and a HEAD on such a branch equals no default branch.
+   - `git -C <root> branch --show-current` must equal the default branch: `git -C <root> symbolic-ref --quiet --short refs/remotes/origin/HEAD` without its `origin/`, where `git -C <root> rev-parse --verify --quiet origin/<name> >/dev/null` finds it, else `main` (`read-only-repos.md` §3 rung 1's form). A name outside `read-only-repos.md` §3's *Branch names* class counts as none there, tested before any command names it — the probe included — and a HEAD on such a branch equals no default branch.
 
    Otherwise stop, naming the dirty paths or the branch — one outside that class as *Branch names* says, never by its name. The command never stashes or pulls the user's clone, and switches it only to its own branch and back (§11.1).
 

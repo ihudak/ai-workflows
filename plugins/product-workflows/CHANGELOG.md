@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.81.2] — 2026-11-14
+
+`/harvest-decisions` never names, or queries `gh` for, a `kb/` branch whose name holds characters outside the safe class: batch B40. Update with `workflows-core` 1.90.2.
+
+### Fixed
+
+- **A pending harvest on such a branch is named as `a branch whose name is outside the safe class`**, with no `gh pr list --head` query for it: the `kb/` branches the stop lists come from `origin`, and a command naming one would run what its name holds.
+
 ## [3.81.1] — 2026-11-14
 
 `/harvest-decisions` never names a branch whose name holds shell characters: batch B39. Update with `workflows-core` 1.90.1.

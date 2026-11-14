@@ -62,6 +62,8 @@ choices: ["Use proposed name: <name>", "Edit name (you'll be prompted)", "Cancel
 
 *Edit name* asks for the branch name in plain text and puts the edited name back to this same confirmation.
 
+**The name stays inside `read-only-repos.md` §3's *Branch names* class**, since every later step — the commit's branch, the push, the pull request — writes it into a command. Before presenting a proposed name, drop from its slug every character outside `a-z`, `0-9` and `-` (a description in another script leaves an ASCII slug, or none); an edited name outside the class is refused, the confirmation asked again with the reason said, and never printed.
+
 ### 1.4 No documented convention
 
 Only when §1.1 finds nothing: build **`<prefix>/<key>-<slug>`** on a keyed run — the key the run resolved, so the branch name carries the key for a **person** reading the log or the branch list (`references/implementation-format.md` §3); it is no recovery path for that file's §4 commit scan, which matches a token only as a whole key and so never reads one out of a branch name — or `<prefix>/<slug>` where there is no key. `<prefix>` comes from the identity ladder in §2 (falling back to this command's default in §2.4) and `<slug>` from §3.

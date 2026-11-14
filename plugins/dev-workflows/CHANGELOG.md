@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 
-- **HEAD on such a branch counts as detached** (`workflows-core:read-only-repos` §3, *Branch names*): `/implement`'s run-state `branch`, which every stop and report reads, and its resume check record its commit; `/vuln` returns to its commit before each later CVE, never `switch <name>`; and `code-handoff` §2.1 check 2 takes it as a detached HEAD.
+- **HEAD on such a branch counts as detached** (`workflows-core:read-only-repos` §3, *Branch names*): `/implement`'s run-state `branch`, which every stop and report reads, and its resume check record its commit; `/vuln` asks no *Branch each CVE from `<current>`* question for it, moving to the base as on a detached HEAD, and returns to its commit before each later CVE, never `switch <name>`, and its reports and `/upgrade`'s name no such branch; and `code-handoff` §2.1 check 2 fails on it with its own reason, `HEAD is on a branch whose name is outside the safe class`, giving the rename to make. `/implement`'s slug drops every character outside `a-z`, `0-9` and `-`, as `branch-naming` §1.3 now requires, so a run's own branch passes that check.
 
 ## [4.66.1] — 2026-11-14
 

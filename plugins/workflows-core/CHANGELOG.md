@@ -7,13 +7,15 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.90.2] — 2026-11-14
 
-Branch names read outside the specs repository are held to the safe class too: batch B40 (CODE-HEAD-NAME). Update with `dev-workflows` 4.66.2 and `docs-workflows` 1.39.4.
+Branch names read outside the specs repository are held to the safe class too: batch B40 (CODE-HEAD-NAME). Update with `dev-workflows` 4.66.2, `docs-workflows` 1.39.4, `product-workflows` 3.81.2 and `security-workflows` 0.12.2.
 
 ### Fixed
 
 - **`read-only-repos` §3's *Branch names* rule** holds every branch name a run reads from a repository — a default branch's wherever it is resolved, HEAD's wherever it is read — to `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`, tested with a quoted here-document before any command names it. A default outside it counts as unresolved and the reader's own fallback goes on; HEAD on such a branch counts as detached, its commit recorded where a detached HEAD's would be; and the name is never printed. Batch B39 held the specs repository, and code and docs repositories' default branch at rung 1, to the class; a clone of a remote whose default branch holds `$(…)` stands on it, and every other read of HEAD's branch, and three other default reads, still named it.
-- **The `prep` block's working-tree branch** is `HEAD` for such a name, as for a detached HEAD, so `code-scanner`'s and `diff-summarizer`'s output never carries it.
-- **`architecture-promotion`, `architecture-grounding`, `scan-refresh` and `escalation-rules`' stash recipe** apply the rule: the architecture repository's default and HEAD, a scan's branch question, and the record of where HEAD stood, which a stash's restore command switches back to.
+- **The `prep` block's `scanned_ref`, `branch_at_scan` and working-tree branch** take HEAD's commit, or `HEAD`, for such a name, as for a detached HEAD, so a caller that writes `scanned_ref` into a command — `/idea`, `/design`, `/create-ard` — never names it.
+- **`architecture-promotion`, `architecture-grounding`, `scan-refresh` and `escalation-rules`' stash recipe** apply the rule: the architecture repository's default and HEAD (its read takes rung 1's `--quiet` and existence probe), a scan's branch question, and the record of where HEAD stood, which a stash's restore command switches back to.
+- **`branch-naming` §1.3 keeps a run's own branch name inside the class**: a proposed slug drops every character outside `a-z`, `0-9` and `-`, and an edited name outside the class is refused and asked again, since the commit, push and pull request all name the branch.
+- **Text that would name such a branch** reads `a branch whose name is outside the safe class`; a field that would hold it holds the detached form its reader already uses.
 
 ## [1.90.1] — 2026-11-14
 
