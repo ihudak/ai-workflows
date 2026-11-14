@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.66.0] — 2026-11-14
+
+SEC-G1: `/design` reads the **weakness classes** the security findings registers hold for the repositories a design touches — one code repository's findings that share a CWE, in the registers `/security-workflows:scan` keeps under `$SPECS_PATH/security/` — through `workflows-core`'s new `weakness-classes` skill, which hands it counts and checked values, never a finding's text, and the design records how it answers each class it is asked about. Update with `workflows-core` 1.87.0, which carries the skill, its script and the grounding rules `/design` cites; `product-workflows` 3.80.0 and `security-workflows` 0.12.0 are released with it. Where `$SPECS_PATH/security/` holds no register, `/design` runs as before.
+
+### Added
+
+- **Known weaknesses in `/design`.** Where `$SPECS_PATH/security/` exists, Phase 1 shows a `security registers:` line beside the `team decisions:` line. After the code scan, Phase 4 reads the weakness classes of the repositories in the design's components, and dispatches `architecture-grounder` where either architecture root resolved or a register holds a class; the agent turns at most three classes into questions — how the design avoids adding to the class. `design.md` records each answer under `## Risks & mitigations` as `- Known weakness: [<cwe>](<cwe_url>) in <repo> ([register](<link>)) — <how this design avoids adding to it, or why it accepts it>`, the CWE only as the link: advisory, never an open question, and never blocking handoff. A register that is missing, unreadable or malformed costs only its own classes; a read that fails is one `security registers: not read` line in the final report, and grounding runs as it would have without it; and the report's `architecture grounding:` line names the registers read and any skipped, with one `architecture grounding: root not read` line where the agent could not read an architecture root. `--no-arch` turns the registers off with the architecture repository and the team decision records.
+
+### Changed
+
+- **`design-format`'s *Architecture governance*** applies where grounding ran or `architecture-grounder` returned a `known-weakness` challenge, and holds the `Known weakness:` line; where neither holds, nothing in it is required.
+- **`design-reviewer`** raises no finding on a `Known weakness:` line and never opens its register link, which is for people.
+- **Pages.** The `/design` page describes the security registers and the `Known weakness:` line; the environment page says `--no-arch` turns off the security registers with the other two architecture sources; and the follow-ups page says `/security-workflows:scan` writes its line for the product architect into the `follow-ups.md` of the folder that holds the PRD, matched by its PRD key, its CWE and its register, against open lines only.
+
 ## [4.65.0] — 2026-11-14
 
 IMP-G3: `/implement` can write a `HIGH-RISK` change's code on Fable. On a session on neither Fable nor Mythos, under no `--enforce-model`, its `code-writer` and `review-fixer` dispatches at `HIGH-RISK` run on Fable once the run has chosen it — by your answer to one question, or by `WORKFLOWS_FABLE_ESCALATION`, `ask` by default, `always` or `never`. `risk-planner` and `code-review` keep their Opus models, and a run that fixes a security finding is never escalated. Update with `workflows-core` 1.86.0, whose `classification` §4 carries the third coding-model clause this release cites, and whose `run-flags` §8 documents the setting. A run-state file 4.64.0 wrote is read with the new key at its default, so a run 4.64.0 stopped can still be resumed.

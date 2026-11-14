@@ -53,7 +53,7 @@ Abort = H.Abort
 
 DECISIONS = H.KB + "/decisions/"
 SECURITY = "security/"  # the findings registers and copied scan reports: scanner-written, never read by --signals
-KEYS =("promotion", "promoted_to", "promotion_note")
+KEYS = ("promotion", "promoted_to", "promotion_note")
 VALUES = ("proposed", "accepted", "rejected", "declined", "covered")
 NEEDS_ADR = ("proposed", "accepted", "rejected", "covered")
 NEEDS_NOTE = ("declined",)
