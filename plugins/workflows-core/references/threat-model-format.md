@@ -89,7 +89,7 @@ In this order, under the title `# <PRD or Epic title> — threat model`:
 
 ## 6. The check
 
-The check is mechanical and asks nothing. It reads the model as the run holds it, and the ARD files as the run holds them at that point: this run's drafts at Phase 4.3, and the files as just written at Phase 6. A `[[<PRD-KEY>]] ard.md` pair is read in the inherited PRD-level ARD the run resolved.
+The check is mechanical and asks nothing. It reads the model as the run holds it, and the ARD files as the run holds them at that point: `/product-workflows:create-ard`'s drafts at its Phase 4.3 and the files as just written at its Phase 6, and the working tree's at `/dev-workflows:design`'s Phase 2.5. A `[[<PRD-KEY>]] ard.md` pair is read in the inherited PRD-level ARD the run resolved.
 
 A **live** threat is **stale** where any of these holds:
 
@@ -107,6 +107,8 @@ Where a set resolves, `/product-workflows:create-ard` runs the check at up to th
 - at its Phase 4.3, on the model the folder holds, where it holds one that *Start fresh* has not discarded (§5), to choose the question it puts;
 - at its Phase 4.3 again, on the draft, where the run made one, before the draft is played back, since a walk can make its own entries stale;
 - at its Phase 6, on the model the run writes or leaves in the folder, before the model is stamped, since the review's fixes and manual fix notes can still supersede a decision a threat cites.
+
+`/dev-workflows:design` runs it too, read-only, at its Phase 2.5: on each model its gate let it read, against the folder's ARD files as the working tree holds them and its own resolved set. It lists each stale threat and clears none.
 
 ## 7. What a threat model never holds
 
