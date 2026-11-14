@@ -39,7 +39,7 @@ B adds that question to `/create-ard`, as an optional step the PA takes in the s
 
 A new phase in `/create-ard`, after its decisions are drafted and grilled (Phase 4, which grills the challenges Phase 3 step 6's grounding raised, SEC-G1's `known-weakness` ones among them) and before its review gate, asks once:
 
-- **Not offered** where no component set resolves (T4, *Where*): the run prints one line saying why and goes on as today. Where the folder already holds a model and no set resolves, the model can be neither checked nor refined: the run leaves it as it stands and says so in one line (a known limit).
+- **Not offered** where no component set resolves (T4, *Where*): the run prints one line saying why and goes on as today. Where the folder already holds a model and no set resolves, the model can be neither checked nor refined: the run leaves it as it stands and says so in one line (a known limit) — save under *Start fresh*, which removes it, with one line saying so, so that it never stands beside renumbered decisions (settled during the build).
 - **Recommended** where the run's class is `HIGH-RISK`, or the grounder's `arch_challenges` hold a `known-weakness` entry. (`SIGNIFICANT` alone is common for cross-repository PRDs, so it does not by itself recommend the model.)
 - **Choices** (verbatim, no "Other"): *Add a threat model (Recommended)* / *Not this time*; on a folder already holding `threat-model.md`, see T10.
 - **Declined:** the run is today's run.
