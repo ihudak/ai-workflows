@@ -56,11 +56,7 @@ Do NOT edit `~/.claude/claude-config/` — that repo is retired and will be dele
 
 ## Adding a new plugin
 
-1. Create `plugins/<name>/` with `.claude-plugin/plugin.json`.
-2. Add content directories (`commands/`, `agents/`, `hooks/`, etc.).
-3. For hooks: create `hooks/hooks.json` using `${CLAUDE_PLUGIN_ROOT}` for all paths.
-4. Register in `.claude-plugin/marketplace.json` with `"source": "./plugins/<name>"`.
-5. Commit and push to `main`. Claude Code picks up the change on the next `claude plugin update` of that plugin, and a restart — before writing any such command for someone to run, Read `.claude/rules/plugin-updates.md`.
+The five steps are in `.claude/rules/plugin-authoring.md`, which loads when any file is read.
 
 ## Conventions
 
@@ -112,7 +108,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `workflows-core-handoff.md` | as `workflows-core-git.md` | the `phase-handoff` authority |
 | `claim-sweep.md` | `**` (any file) | the claim-expiry sweep's refinements |
 | `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |
-| `plugin-authoring.md` | `**` (any file) | the command, agent and skill taxonomy; the Karpathy notes |
+| `plugin-authoring.md` | `**` (any file) | the command, agent and skill taxonomy; the Karpathy notes; adding a new plugin |
 | `plugin-updates-coupling.md` | `*/.claude-plugin/plugin.json`, `*/CHANGELOG.md`; `.claude-plugin/marketplace.json` (repo root) | which plugins to update together, one bullet per release pair |
 | `plugin-updates-coupling-history.md` | as `plugin-updates-coupling.md` | its older bullets, up to `workflows-core` 1.58.0 |
 | `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.74.0 |
@@ -139,7 +135,7 @@ The evidence behind the rules — measured cases, refused widenings, history —
 ## Hard constraints
 
 - **A plugin `description` is a stable capability blurb, never a changelog.** Hard budget: **1024 characters** in both `plugin.json` and the `marketplace.json` entry; `scripts/validate-catalog.py` fails the build above it and warns above 900. A new capability **replaces** wording; it never appends. Release detail belongs in `CHANGELOG.md`. ([why](docs/maintainers/rationale.md#description-budget))
-- **Every requirement ID a plugin doc teaches is the bracketed `[PREFIX#N]` form** — `[US#1]`, `[AC#1]`, `[SM#1]`, `[SMC#1]`, `[UC#1]`, `[FR#1]` in a PRD, `[AD#1]` in an ARD, a threat's `[TH#1]` in an ARD's threat model, and a security finding's `[SEC#1]` — never the dash-separated form. `scripts/check-id-grammar.sh` enforces it: run `./scripts/check-id-grammar.sh --root .` and `--baseline` before pushing. `CHANGELOG.md` is excluded (history keeps the old form), and a line that has to quote the legacy form in order to forbid or report it carries an `id-grammar-ok` HTML-comment marker, audited per file so the marker never becomes a general escape hatch. ([why](docs/maintainers/rationale.md#id-grammar))
+- **Every requirement ID a plugin doc teaches is the bracketed `[PREFIX#N]` form** — `[US#1]`, `[AC#1]`, `[SM#1]`, `[SMC#1]`, `[UC#1]`, `[FR#1]` in a PRD, `[AD#1]` in an ARD, a threat's `[TH#1]` in an ARD's threat model, a threat-review entry's `[DT#1]` in a design, and a security finding's `[SEC#1]` — never the dash-separated form. `scripts/check-id-grammar.sh` enforces it: run `./scripts/check-id-grammar.sh --root .` and `--baseline` before pushing. `CHANGELOG.md` is excluded (history keeps the old form), and a line that has to quote the legacy form in order to forbid or report it carries an `id-grammar-ok` HTML-comment marker, audited per file so the marker never becomes a general escape hatch. ([why](docs/maintainers/rationale.md#id-grammar))
 - **One key namespace.** Every key names a **folder** under `$SPECS_PATH/specifications/` and is validated for shape only against `workflows-core:addressing` §1's single grammar — `^[A-Z][A-Z0-9_]*(-\d+)+$`, which fixes no depth; nothing is looked up anywhere (a typed whole folder name is matched against the tree's own folder names, which is resolution, not validation — `workflows-core:addressing` §1). `workflows-core:pre-lint`'s Jira-key collision grep (`\b[A-Z]{2,10}-[0-9]+\b`) is an **autolink detector**, not a key validator, and its narrowness is exactly what makes it correct: never widen it. A user's own tracker identity lives in the reserved `workitem_key` frontmatter field, which the plugin preserves and displays and never mints, validates, or resolves a folder by. ([why](docs/maintainers/rationale.md#one-key-namespace)) <!-- vendor-token-ok: names the tracker whose key shape the pre-lint autolink detector matches; the detector's narrowness is the point being made -->
 - **Each plugin in `check-docs.sh`'s `PLUGIN_RELS` keeps its human-facing documentation in `plugins/<name>/docs/`, not in its README.** **The retired README is a source of topics, never a source of facts**: every claim on a page is derived from the thing that runs it — a synopsis from the command's argument-parsing phase, phases from its `## Phase` headings, gates from its reviewer dispatch, the agent inventory from `agents/`. `scripts/check-docs.sh` enforces the tree: run `./scripts/check-docs.sh --root .` before pushing. Its body — everything from `FAILURES=0` down — is shared byte for byte with the internal Claude and Copilot editions; only its config block and `scripts/fixtures/docs/fixture.env` are this edition's, so a fix to a check reaches all three by `cp` of the body ([why](docs/maintainers/rationale.md#check-docs-one-body)). Adding a command, agent, reference file, hook, skill, or environment variable without its docs entry fails the build. ([why](docs/maintainers/rationale.md#docs-tree))
 - **Vendor neutrality:** no text file under a plugin in `check-docs.sh`'s `PLUGIN_RELS` or in the instruction tiers (`CLAUDE.md`, `.claude/rules/`, `docs/maintainers/`) names a tracker unless its line, or the fence opening its block, carries `<!-- vendor-token-ok: <why> -->`; `CHANGELOG.md` is exempt as history; check 13 enforces it. ([why](docs/maintainers/rationale.md#check-13))

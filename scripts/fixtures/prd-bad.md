@@ -19,5 +19,9 @@ As a PM, I want an export, so that I can share it.
 - [TH-1] A threat in the dash form.
 - A bare TH-2 mention in prose.
 
+## Threat review
+- [DT-1] A threat-review entry in the dash form.
+- A bare DT-2 mention in prose.
+
 ## References
 - [[PRODUCT-123]]

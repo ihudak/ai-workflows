@@ -3,7 +3,7 @@ paths:
   - "**"
 ---
 
-# Plugin authoring — the command, agent and skill taxonomy, and the Karpathy notes
+# Plugin authoring — the command, agent and skill taxonomy, and the Karpathy notes, and adding a new plugin
 
 Loaded when any file is read (`paths: "**"`), as near to always-on as a rules file comes: it was always-on in `CLAUDE.md`, and moved out to keep that file under its 36,000-character warning, as `claim-sweep.md` and `plugin-updates.md` were; evidence is in `docs/maintainers/rationale.md`.
 
@@ -20,3 +20,11 @@ These notes add to the user-scope Claude guidance only the marketplace-specific 
 
 - **Goal-Driven Execution** maps directly onto the existing `test-baseliner` → implementation → `test-writer` → re-run flow enforced by `dev-workflows`. Frame each command invocation as a verifiable goal up front so the test gates have a concrete target to check.
 - **Surgical Changes** applies in both directions when you edit command docs, agent prompts, hook declarations, or `workflows-core:model-routing/classification`: if you remove a `model_routing` field, phase, or workflow edge, remove every cross-reference to it in the same change. Stale references between commands and agents silently break the workflow.
+
+## Adding a new plugin
+
+1. Create `plugins/<name>/` with `.claude-plugin/plugin.json`.
+2. Add content directories (`commands/`, `agents/`, `hooks/`, etc.).
+3. For hooks: create `hooks/hooks.json` using `${CLAUDE_PLUGIN_ROOT}` for all paths.
+4. Register in `.claude-plugin/marketplace.json` with `"source": "./plugins/<name>"`.
+5. Commit and push to `main`. Claude Code picks up the change on the next `claude plugin update` of that plugin, and a restart — before writing any such command for someone to run, Read `.claude/rules/plugin-updates.md`.
