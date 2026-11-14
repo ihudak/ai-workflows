@@ -85,6 +85,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `gates-reference-parts.md` | as `gates.md` | the reference-parts gate |
 | `gates-branch-check.md` | as `gates.md` | the reference-parts script's branch-check gate |
 | `gates-check-docs-late.md` | as `gates.md` | `check-docs.sh`'s checks 22 to 29 |
+| `specs-git-selftest.md` | `scripts/selftests/**` (repo root); `workflows-core/scripts/`: `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py` | where `specs-git.py`'s selftest lives, how it runs, group runs, the mutants |
 | `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
 | `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers |

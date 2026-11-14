@@ -1,0 +1,186 @@
+[
+  {
+    "id": "e_land_refused",
+    "group": "end",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "        _keep_stay(run, branch, False, \"refused\")",
+    "new": "        _keep_stay(run, branch, False, \"stopped\")",
+    "fails": "e_land_refused:"
+  },
+  {
+    "id": "e_land_stopped",
+    "group": "end",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "        _ask_stay(run, head, \"stopped\")",
+    "new": "        _ask_stay(run, head, \"refused\")",
+    "fails": "e_land_stopped:"
+  },
+  {
+    "id": "e_land_offline",
+    "group": "end",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    if p.returncode == 124:",
+    "new": "    if p.returncode >= 124:",
+    "fails": "e_land_offline:"
+  },
+  {
+    "id": "e_land_no_origin",
+    "group": "end",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    if sb.git(root, \"remote\", \"get-url\", \"origin\", check=False).returncode != 0:",
+    "new": "    if sb.git(root, \"remote\", \"get-url\", \"origin\", check=False).returncode == 1:",
+    "fails": "e_land_no_origin:"
+  },
+  {
+    "id": "t_held_journal",
+    "group": "end",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "            rep[\"finished\"].append({\"sha\": got[\"sha\"], \"here\": False,",
+    "new": "            rep[\"finished\"].append({\"sha\": got[\"sha\"], \"here\": True,",
+    "fails": "t_held_journal:"
+  },
+  {
+    "id": "t_midrun_keyed_other",
+    "group": "midrun",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "found = [k for k in keys if rest == k or rest.startswith(k + \"-\")",
+    "new": "found = [k for k in keys if rest == k or rest.startswith(k.split(\"-\")[0] + \"-\")",
+    "fails": "t-midrun-keyed-other: no commit on the branch"
+  },
+  {
+    "id": "e_midrun_here_kill",
+    "group": "midrun",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "PENDING_FIELDS = (\"c1\", \"c2\", \"old\", \"tip\",",
+    "new": "PENDING_FIELDS = (\"c1\", \"c2\", \"tip\",",
+    "fails": "e_midrun_here_kill: error set"
+  },
+  {
+    "id": "e_midrun_here_no_resume",
+    "group": "midrun",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "            out[\"finished\"].append({\"sha\": got.get(\"sha\"), \"here\": True,",
+    "new": "            out[\"finished\"].append({\"sha\": got.get(\"sha\"), \"here\": False,",
+    "fails": "e_midrun_here_no_resume:"
+  },
+  {
+    "id": "status_rename_original",
+    "group": "status",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "        if \"R\" in record[:2] or \"C\" in record[:2]:",
+    "new": "        if \"C\" in record[:2]:",
+    "fails": "status: a rename's original path"
+  },
+  {
+    "id": "branch_merged_squash",
+    "group": "branch_merged",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    if whole:",
+    "new": "    if not whole:",
+    "fails": "branch-merged: a squash merge is test 3"
+  },
+  {
+    "id": "branch_key_underscore_slug",
+    "group": "branch_key",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": " or rest.startswith(k + \"_\")]",
+    "new": "]",
+    "fails": "branch-key: ard/EPIC-008-01_slug with"
+  },
+  {
+    "id": "push_scope_merge_commit",
+    "group": "push_scope",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "            if _parents(root, bad) == 1:",
+    "new": "            if _parents(root, bad) >= 1:",
+    "fails": "push-scope: a merge commit fails"
+  },
+  {
+    "id": "owner_repo_alias_host_kept",
+    "group": "owner_repo",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    value = slug if host == \"github.com\" else",
+    "new": "    value = slug if host.startswith(\"github\") else",
+    "fails": "owner-repo: git@github-ig.com:acme/repo.git (alias False) gives"
+  },
+  {
+    "id": "mode_m_remote_deleted",
+    "group": "mode",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    if not session and (upstream == own or (not upstream and tracking)):",
+    "new": "    if upstream == own or (not upstream and tracking):",
+    "fails": "m_remote_deleted:"
+  },
+  {
+    "id": "state_s_remove",
+    "group": "state",
+    "file": "plugins/workflows-core/scripts/specs_git_state.py",
+    "old": "    _rmdir_if_empty(os.path.dirname(target))",
+    "new": "    _rmdir_if_empty(target)",
+    "fails": "s_remove: load then None"
+  },
+  {
+    "id": "lines_l_literal_bracket",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs_git_lines.py",
+    "old": "elif ch == \"[\" and not t.startswith(\"[SEC#\", i):",
+    "new": "elif ch == \"[\" and not t.startswith(\"[SEC#\", i + 1):",
+    "fails": "l_literal_bracket:"
+  },
+  {
+    "id": "gate_g_file",
+    "group": "gate",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "if os.path.isdir(specs) else None",
+    "new": "if os.path.exists(specs) else None",
+    "fails": "g_file: a regular file"
+  },
+  {
+    "id": "land_l_land_absent",
+    "group": "land",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "            why = None if made.returncode == 0 else {\"reason\": \"branch-moved\", \"path\": None}",
+    "new": "            why = None if made.returncode != 0 else {\"reason\": \"branch-moved\", \"path\": None}",
+    "fails": "l_land_absent:"
+  },
+  {
+    "id": "replay_r_not_run",
+    "group": "replay",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "        return {\"row\": \"rejected\", \"why\": None, \"reason\": \"not-run\"}",
+    "new": "        return {\"row\": \"rejected\", \"why\": None, \"reason\": \"timed-out\"}",
+    "fails": "r_not_run:"
+  },
+  {
+    "id": "start_t_b4_no_remote",
+    "group": "start",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    return bool(rec[\"default\"]) and rec[\"default_ref\"] == \"origin/\" + rec[\"default\"]",
+    "new": "    return bool(rec[\"default\"])",
+    "fails": "t_b4_no_remote:"
+  },
+  {
+    "id": "skill_k_skill_options",
+    "group": "skill",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    if started is not None and not (rerun or resume):",
+    "new": "    if started is not None and not rerun:",
+    "fails": "k_skill_options: every option"
+  },
+  {
+    "id": "selftest_s_group_without_selftest",
+    "group": "selftest",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    if a.group and not a.selftest:",
+    "new": "    if a.group and a.cmd:",
+    "fails": "s_group_without_selftest:"
+  },
+  {
+    "id": "selftest_s_group_alone",
+    "group": "selftest",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "        return _run_selftest(a.group)",
+    "new": "        return _run_selftest(a.group and a.group + [\"selftest\"])",
+    "fails": "s_group_alone:"
+  }
+]
