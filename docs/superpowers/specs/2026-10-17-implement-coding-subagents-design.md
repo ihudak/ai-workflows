@@ -45,7 +45,7 @@ The orchestrator stops writing code. For each step of the approved plan, it disp
 ## Non-goals
 
 - **No single Epic-finishing command.** See *Decided by the user*.
-- **No Fable escalation (part 2 of F).** Deferred. No run so far has shown Opus falling short, and an ask before every high-risk run adds friction for an unmeasured gain. A Fable *session* still gets Fable code, by the model rule's "never below the session" clause.
+- **No Fable escalation (part 2 of F).** Deferred. No run so far has shown Opus falling short, and an ask before every high-risk run adds friction for an unmeasured gain. A Fable *session* still gets Fable code, by the model rule's "never below the session" clause. *Later built as IMP-G3:* `docs/superpowers/specs/2026-11-13-imp-g3-fable-escalation-design.md`, where a `HIGH-RISK` run's coding moves to Fable once the user, or `WORKFLOWS_FABLE_ESCALATION`, chooses it.
 - **No change to `test-writer`, `code-review`, `risk-planner`, `test-baseliner` or the maintenance agents.** Their models and briefs stay as they are, save where the run-state file changes what they are handed.
 - **No per-step review.** The Opus `code-review` gate still judges the whole change once, as now. SIMPLE runs still have no Opus review gate.
 - **No change to `/vuln`'s or `/upgrade`'s routing,** nor to the classification's §3.1 for any command but `/implement`.

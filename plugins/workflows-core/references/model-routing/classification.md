@@ -166,7 +166,8 @@ The orchestrator MUST execute these steps in order:
    for raw coding throughput; Opus is not required here). Sub-agents that do
    the actual file edits inherit the orchestrator's model unless overridden (§2's provisos aside).
    `/implement` is the exception: its `code-writer` and `review-fixer` dispatches
-   run on §4's `implementation_model`.
+   run on §4's `implementation_model` — at HIGH-RISK, on a session not on Fable or
+   Mythos and with no `--enforce-model`, Fable where the run chose it (§4's third clause).
 4. **Opus code review** of the completed implementation. This is a dedicated
    `code-review` sub-agent invocation pinned to Opus. It MUST cover every item
    in the §6 checklist. Tests MUST NOT be run until this review completes.
@@ -235,7 +236,14 @@ class:
 - `SIMPLE` → `current_model`;
 - `MODERATE`, `SIGNIFICANT`, `HIGH-RISK` → `current_model` where it is an **Opus-tier
   model**, else the §2 Opus chain's first available row;
-- `--enforce-model` overrides both (§10).
+- at HIGH-RISK, a `current_model` that is not Fable or Mythos is escalated where
+  `/implement`'s run-state `fable_escalation.choice` is a Fable value;
+- `--enforce-model` overrides all three (§10).
+
+Escalated, `implementation_model` is that `choice`. **A Fable value** is a `claude-fable-*` id,
+or the family `fable`; nothing escalates to Mythos. Only `/implement`'s Fable escalation guard,
+its fallback and its resume set `fable_escalation`'s members — `run-state.py`'s `init` and
+`load` put nothing there but their null default — and the setting the guard reads is `workflows-core:run-flags` §8.
 
 **An Opus-tier model** is a `claude-opus-*`, `claude-fable-*` or `claude-mythos-*` id:
 Opus, or a family above it. This is the family's one test of the term, and every gate,
@@ -249,10 +257,13 @@ its inline judgement steps; and the degrade paths of `/idea`, `/create-prd`,
 session passes each.
 
 So from MODERATE up a Fable or Mythos session codes on its own model, an Opus session
-on its own Opus, and a Sonnet or Haiku session on the §2 Opus chain; at SIMPLE each
-codes on its own model. A re-classification mid-run re-resolves `implementation_model` for every later
-dispatch; steps already coded stay as they are. `fixes_model` = `implementation_model`
-for `/implement`, so its `review-fixer` follows the same rule; = `detection_model`
+on its own Opus, and a Sonnet or Haiku session on the §2 Opus chain — save at HIGH-RISK,
+where an Opus, Sonnet or Haiku session's `/implement` codes on Fable once the run has chosen
+it; at SIMPLE each codes on its own model. A re-classification mid-run re-resolves `implementation_model` for every later
+dispatch; steps already coded stay as they are. So a fall below HIGH-RISK drops the
+escalation for the dispatches after it, `fable_escalation` staying recorded, and a rise back
+to HIGH-RISK applies the recorded choice, never asking again. `fixes_model` = `implementation_model`
+for `/implement`, so its `review-fixer` follows the same rule, the escalation included; = `detection_model`
 elsewhere (§2.1).
 
 Sub-agents that receive a `model_routing` block:
@@ -308,7 +319,7 @@ task(
 )
 ```
 
-**The dispatch rule — the record keeps the id, the argument passes what the tool accepts.** The `model_routing` record (§4) keeps the resolved id — it is the record of intent, and a family-level §10 value is recorded as the family. The `task` tool's `model:` argument passes the **dispatch form** of that id: the id itself where the tool's `model` parameter accepts ids, and otherwise — in a §2 family-only harness — that id's **family name** (`claude-opus-*` → `opus`, `claude-sonnet-*` → `sonnet`, `claude-haiku-*` → `haiku`, `claude-fable-*` → `fable`; a value that already is a family name passes unchanged). **In a §2 family-only harness, an id whose family the parameter does not list — a `claude-mythos-*` id, where no `mythos` family is listed — has no family name to pass:** its dispatch passes no `model:` argument at all, and the agent inherits the session's model (§2), save where the harness is configured with a default model for subagents, which then runs instead. In such a harness only `current_model` can be such an id — no chain names Mythos, and `workflows-core:run-flags` §2's Reachability stops an enforced id the harness cannot select — so, with no such default configured, the inherited model is the very id the record keeps. Where the parameter accepts ids, a Mythos id passes as itself, like any other. This one rule covers every dispatch in every command and agent of the family: wherever a command, an agent or this file says a dispatch passes, carries or is pinned to an id — a chain's resolution, §10's enforced id, or a `model: <…>` placeholder naming one — that id is what the record says, and the argument is its dispatch form, or no argument where this rule gives none.
+**The dispatch rule — the record keeps the id, the argument passes what the tool accepts.** The `model_routing` record (§4) keeps the resolved id — it is the record of intent, and a family-level §10 value is recorded as the family, as is §4's escalated family value `fable`. The `task` tool's `model:` argument passes the **dispatch form** of that id: the id itself where the tool's `model` parameter accepts ids, and otherwise — in a §2 family-only harness — that id's **family name** (`claude-opus-*` → `opus`, `claude-sonnet-*` → `sonnet`, `claude-haiku-*` → `haiku`, `claude-fable-*` → `fable`; a value that already is a family name passes unchanged). **In a §2 family-only harness, an id whose family the parameter does not list — a `claude-mythos-*` id, where no `mythos` family is listed — has no family name to pass:** its dispatch passes no `model:` argument at all, and the agent inherits the session's model (§2), save where the harness is configured with a default model for subagents, which then runs instead. In such a harness only `current_model` can be such an id — no chain names Mythos, nor does §4's escalation, and `workflows-core:run-flags` §2's Reachability stops an enforced id the harness cannot select — so, with no such default configured, the inherited model is the very id the record keeps. Where the parameter accepts ids, a Mythos id passes as itself, like any other. This one rule covers every dispatch in every command and agent of the family: wherever a command, an agent or this file says a dispatch passes, carries or is pinned to an id — a chain's resolution, §4's escalated value, §10's enforced id, or a `model: <…>` placeholder naming one — that id is what the record says, and the argument is its dispatch form, or no argument where this rule gives none.
 
 **`risk-planner` and `code-review` belong to `dev-workflows`, not to the plugin that ships this file.** **`dev-workflows`'s own commands name them directly and nothing here conditions that** — some name them by that exact `dev-workflows:` form and some by bare name, and either reaches the agent because a command's own plugin is installed whenever that command runs, so the owning plugin is never the *dependency* case this note is about. **No per-command list of which form each uses stands here on purpose:** it would be a census of three commands' call sites inside a shared reference, going stale on the next edit to any of them, and the rule it was offered as evidence for does not turn on it. Any *other* plugin can count on naming them as a `subagent_type` only by declaring `dev-workflows` in its `dependencies`, which is what installs it alongside; a reader in `workflows-core` — or in any other plugin that neither ships those agents nor declares `dev-workflows` — has no such agent to count on and takes the `general-purpose` fallback below. For those readers the fallback is not a degraded path bolted on for a missing environment: it is the *normal* one, and the §6 checklist this file already carries is complete for them, because none of them hands `code-review` any of the three optional inputs that add a dimension beyond §6's eight — `applicable_ard` and `applicable_spec` (`/implement` only) and `claims_file` (all three of `dev-workflows`'s code-changing commands). **A caller that does pass one and still has to fall back — on the environment half of the trigger below — carries that dimension into the fallback prompt itself**, because §6 does not list it.
 
@@ -550,7 +561,8 @@ map govern every command, and §9.4 applies them to scanning.
   Opus (otherwise an Opus session burns Opus on cheap work). `/implement`'s
   `code-writer` and `review-fixer` dispatches are the exception — `code-writer`'s
   step and fix dispatches alike, raw coding throughput though they are (§3.2 step 3):
-  they run on §4's `implementation_model`.
+  they run on §4's `implementation_model`, escalated to Fable at HIGH-RISK where the run
+  chose it, on a session not on Fable or Mythos and with no `--enforce-model` (§4).
 - **Orchestrator-executed** judgment steps — the inline prose writing and the
   interactive gates, plus the orchestration itself — run on the session model
   and CANNOT be overridden from inside a running command. Except under §10, where none of the rest of this bullet fires — no advisory, no gate, no degrade path, for any command that carries one (§10's *Opus-session gates do not fire* bullet is the general rule, and `workflows-core:run-flags` §3 step 7's advisory is the only notice) — handle them with an
@@ -561,7 +573,7 @@ map govern every command, and §9.4 applies them to scanning.
 | Role | Chain |
 |------|-------|
 | Synthesis / planner (e.g. `doc-planner`) | §2 reasoning (Opus) |
-| `/implement`'s `code-writer` and `review-fixer` dispatches | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus-tier model (§4), else §2 reasoning (Opus) |
+| `/implement`'s `code-writer` and `review-fixer` dispatches | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus-tier model (§4), else §2 reasoning (Opus); at HIGH-RISK, Fable where the run chose it and the session is not on Fable or Mythos (§4); `--enforce-model` overrides all three (§10) |
 | Reader / summarizer / locator / style-checker / fixer (save `/implement`'s `code-writer` and `review-fixer` dispatches, row above) / maintenance (`code-scanner`, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
 | Domain reviewer (`doc-reviewer`, `epic-reviewer`) | §2 review (Opus) — usually already frontmatter-pinned; the orchestrator records it and adds **no** override — unless §10 enforces a model |
 | Delegated writer (`doc-writer` / `epic-writer`) | §2 reasoning (Opus) for SIGNIFICANT/judgment writing; §2.1 detection (Sonnet) for MODERATE writing |
