@@ -106,7 +106,7 @@ Nothing else is checked. An acceptance past its review date is not stale: a refi
 Where a set resolves, `/product-workflows:create-ard` runs the check at up to three points:
 - at its Phase 4.3, on the model the folder holds, where it holds one that *Start fresh* has not discarded (§5), to choose the question it puts;
 - at its Phase 4.3 again, on the draft, where the run made one, before the draft is played back, since a walk can make its own entries stale;
-- at its Phase 6, on the model the run writes or leaves in the folder, before any stamp, since the review's fixes and manual fix notes can still supersede a decision a threat cites.
+- at its Phase 6, on the model the run writes or leaves in the folder, before the model is stamped, since the review's fixes and manual fix notes can still supersede a decision a threat cites.
 
 ## 7. What a threat model never holds
 
