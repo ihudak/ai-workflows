@@ -1,6 +1,6 @@
 # SEC-G2 B: the ARD threat model
 
-Date: 2026-11-14. Status: draft, revision 2 (after Fable's builder review), for the maintainer's approval. Roadmap row **B** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` ("ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard`"), the first of SEC-G2's three sub-projects (B, then C, then D). It depends on A (the scan and its findings registers) and on E (SEC-G1, the architecture feedback loop).
+Date: 2026-11-14. Status: draft, revision 3 (after Fable's builder review and its re-check), for the maintainer's approval. Roadmap row **B** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` ("ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard`"), the first of SEC-G2's three sub-projects (B, then C, then D). It depends on A (the scan and its findings registers) and on E (SEC-G1, the architecture feedback loop).
 
 Every decision is written with a recommended answer. The four marked **(maintainer)** at the end are the calls only the maintainer can make; the rest are the author's, stated so they can be corrected.
 
@@ -31,16 +31,16 @@ B adds that question to `/create-ard`, as an optional step the PA takes in the s
 
 - **A generic STRIDE checklist.** Every threat names its element, a concrete attacker action and the asset at stake, or it is not written.
 - **A model nobody confirmed.** The agent proposes; the PA keeps, edits or drops each threat.
-- **Text steering the model.** Code, scanner output and register-derived values are data. The threat modeler reads no register and can open nothing under `security/` (T6's tools).
+- **Text steering the model.** Code, scanner output and register-derived values are data. The threat modeler has no tools (T6): it can open no register and nothing under `security/`.
 
 ## Decisions
 
 ### T1. `/create-ard` produces it, optionally, in the same run
 
-A new phase in `/create-ard`, after its decisions are drafted (Phase 4, including SEC-G1's `known-weakness` grill) and before its review gate, asks once:
+A new phase in `/create-ard`, after its decisions are drafted and grilled (Phase 4, which grills the challenges Phase 3 step 6's grounding raised, SEC-G1's `known-weakness` ones among them) and before its review gate, asks once:
 
-- **Not offered** where no component set resolves (T4, *Where*): the run prints one line saying why and goes on as today.
-- **Recommended** where the run's class is `HIGH-RISK`, or Phase 4 raised a `known-weakness` challenge. (`SIGNIFICANT` alone is common for cross-repository PRDs, so it does not by itself recommend the model.)
+- **Not offered** where no component set resolves (T4, *Where*): the run prints one line saying why and goes on as today. Where the folder already holds a model and no set resolves, the model can be neither checked nor refined: the run leaves it as it stands and says so in one line (a known limit).
+- **Recommended** where the run's class is `HIGH-RISK`, or the grounder's `arch_challenges` hold a `known-weakness` entry. (`SIGNIFICANT` alone is common for cross-repository PRDs, so it does not by itself recommend the model.)
 - **Choices** (verbatim, no "Other"): *Add a threat model (Recommended)* / *Not this time*; on a folder already holding `threat-model.md`, see T10.
 - **Declined:** the run is today's run.
 
@@ -69,16 +69,16 @@ In `workflows-core` because `/design` and `/conformance` (`dev-workflows`) will 
 - **`## Scope`**: the component ids and contract rows considered; **`## Not considered`**: what was left out and why.
 - **`## Threats`**: one `### [TH#N] <title>` each, with:
   - **Category**: one STRIDE letter, optional to fill — a completeness prompt, never a score; a field is cheaper to drop later than to add.
-  - **Where**: component ids, and the contract row's decision where the threat crosses a boundary. **Resolved against the run's resolved component set** — `ard-resolution`'s step 4 and `workflows-core:components` §3 — never against the ARD's own `components:` alone, which only a PRD-level ARD carries; contract rows exist only in a PRD-level ARD with two or more `kind: code` components, so an Epic-level threat names a contract row from the PRD-level ARD it inherits, or none.
+  - **Where**: component ids, and the contract row's decision where the threat crosses a boundary. **Resolved against the run's resolved component set** — `ard-resolution`'s step 4 and `workflows-core:components` §3 — never against the ARD's own `components:` alone, which only a PRD-level ARD carries; contract rows exist only in a PRD-level ARD with two or more `kind: code` components, so an Epic-level threat names its `target:` component and, where it crosses a boundary, a contract row of the PRD-level ARD it inherits.
   - **Threat**: the attacker, the action and the asset.
   - **CWE**: optional, in the family's link form.
   - **Disposition**, one of:
-    - `Mitigated by <decisions>` — one or more decisions, each named as **the ARD file and its id** (`ard.md [AD#3]`, `ard-payments.md [AD#2]`, or the inherited PRD-level `ard.md` by its folder's key), since each ARD file numbers its own series; optionally followed by `; the rest deferred to design: <what>`;
+    - `Mitigated by <decisions>` — one or more decisions, each named as **the ARD file and its id** (`ard.md [AD#3]`, `ard-payments.md [AD#2]`, or for the inherited PRD-level ARD its folder's key in the wikilink form, `[[<KEY>]] ard.md [AD#4]`, which pre-lint would otherwise rewrite a bare key into), since each ARD file numbers its own series; optionally followed by `; the rest deferred to design: <what>`;
     - `Deferred to design: <what the design must answer>`;
     - `Accepted — <owner>; <reason>; review by <YYYY-MM-DD>`.
   - **Superseded by `[TH#M]`** / **Withdrawn — `<reason>`**, as `product-workflows:ard-format`'s superseding rules: never renumbered, never deleted.
-- **`## Inherited threats`** (an Epic's model): the PRD-level model's live threats as bullets — never `### [TH#N]` headings, so numbering and the lineage regex skip them. An Epic adds only threats its own components and contracts raise. A BRD-route slice's model inherits none (a container holds no ARD).
-- **Across folders**, a threat is named by its folder's key and its id; a PRD and an Epic model both start at `[TH#1]`.
+- **`## Inherited threats`** (an Epic's model): the PRD-level model's live threats as bullets — never `### [TH#N]` headings, so numbering and the lineage regex skip them. An Epic adds only threats its `target:` component raises. A BRD-route slice's model inherits none (a container holds no ARD).
+- **Across folders**, a threat is named by its folder's key in the wikilink form and its id (`[[<KEY>]] [TH#2]`); a PRD and an Epic model both start at `[TH#1]`.
 
 ### T5. One new ID prefix: `[TH#N]`
 
@@ -88,11 +88,11 @@ In `workflows-core` because `/design` and `/conformance` (`dev-workflows`) will 
 
 ### T6. `threat-modeler` proposes
 
-A new `product-workflows` agent, pinned to Opus in its frontmatter as `ard-reviewer` is; `/create-ard`'s `model_routing` block gains its line. **Tools: Read only**, for the weakness-classes JSON path; everything else arrives in the brief. Dispatched once per run with:
+A new `product-workflows` agent, pinned to Opus in its frontmatter as `ard-reviewer` is; `/create-ard`'s `model_routing` block gains its line. **It has no tools**: everything arrives in the brief, and the command reads the weakness-classes JSON's fields itself (as the skill allows) and passes them inline. Dispatched once per run with:
 
 - the drafted ARD's resolved components, contracts and decisions, from the run;
 - the code scan the run already made, inline;
-- where Phase 4's weakness-classes call ran (`security_registers: ON` and an id passed), the JSON's path — each class a candidate threat named by its CWE, never by any register text. A class a live decision already prevents arrives disposed as `Mitigated by` that decision; a class the PA answered *Not in this ARD* in Phase 4 is proposed only as deferred, accepted or dropped, never as a new decision.
+- where Phase 3 step 6's weakness-classes call ran (`security_registers: ON` and an id passed), the classes' validated fields, inline — each class a candidate threat named by its CWE, never by any register text. A class a live decision already prevents arrives disposed as `Mitigated by` that decision; a class the PA answered *Not in this ARD* in Phase 4 is proposed only as deferred, accepted or dropped, never as a new decision.
 
 It returns up to **25 candidates**, ranked: on a contract row first, then those naming a CWE the registers show, then the rest; the overflow is named in one line. A candidate it proposes as `Mitigated by` carries a **full proposed decision** — title, Binds, Prevents (with the CWE), a testable Rule, Alternatives — and passes `ard-format`'s three-part bar; one that fails the bar is proposed as `Deferred to design` instead. It writes nothing and carries the untrusted-content block.
 
@@ -106,34 +106,35 @@ Four candidates per question call; each with its fields and four choices (verbat
 
 The PA may add a threat the agent did not propose.
 
-### T8. The review gate: `ard-reviewer` reviews the model
+### T8. The review gate: one review over both documents
 
-One `ard-reviewer` dispatch reviews `threat-model.md`, given every ARD file of the folder and, on a refine, the prior model. Dimensions:
+The `ard-reviewer` dispatch for the folder's `ard.md` (its input contract needs an ARD path) also receives `threat-model.md`, the folder's other ARD files and, on a refine, the prior model. **One review and one fix cycle cover both documents**, under `/create-ard`'s existing cap; **a fix to a model finding never adds or changes a decision** — it re-disposes the threat — so the model's review cannot change the ARD after the ARD's verdict. Dimensions:
 
 - BLOCKER: a threat with no disposition, or more than one kind of disposition; a *Where* id not in the resolved component set; a `Mitigated by` naming a decision that is not live in the ARD file it names; an acceptance missing its owner, reason or date; a renumbered or deleted `[TH#N]` against the prior model.
 - MAJOR: a decision recorded for a threat missing a field `ard-format` requires (as `ard-reviewer` already raises it).
 - MINOR: a component or contract row in `## Scope` that no threat names and `## Not considered` does not explain.
 
-**After the one fix cycle**, where the model still blocks, the escalation offers to hand off the ARD without the model (the ARD is never held hostage by its optional companion).
+**After the one fix cycle**, where every unresolved BLOCKER is the model's and the folder held no model before this run, `/create-ard` asks its own question once, before the shared per-BLOCKER escalation (whose four-option array is fixed and shared by eight commands): *Hand off the ARD without the threat model* / *Settle the model's findings*. The first drops the new model from `deliverable_paths`; the ARD is never held hostage by its optional companion. On a refine there is no such escape: re-disposing the blocking threats (T10) is always possible.
 
 ### T9. Lineage: a covered kind, recording the ARD
 
-A `threat-model` row in `lineage-kinds.json`: matches `^threat-model\.md$`, items `[TH#N]`, altitude `architecture`, reviser `/product-workflows:create-ard <KEY>`, and the same exclusions as the `ard` row (the lines `/conformance` writes), so D can write into it later without making it look revised. **It records the folder's ARD files**, captured after the ARD's last write in the run (the ARD is the model's real input, and the lineage rule only bars recording a document that records this one), plus what the ARD records; an Epic's model also records the PRD folder's `threat-model.md`. The chain prose places it after the folder's ARDs.
+A `threat-model` row in `lineage-kinds.json`: matches `^threat-model\.md$`, items `[TH#N]`, altitude `architecture`, reviser `/product-workflows:create-ard <KEY>`, and the same exclusions as the `ard` row (the lines `/conformance` writes), so D can write into it later without making it look revised. **It records the folder's ARD files**, captured in Phase 6 after the ARD's own `stamp` and `accept` (the ARD is the model's real input, and the lineage rule only bars recording a document that records this one); an Epic's model also records the PRD folder's `threat-model.md`. It records nothing else: an upstream check walks on through each covered upstream's own record, and re-capturing the PRD at Phase 6 would break "captured when the run reads the input". The chain prose places it after the folder's ARDs.
 
 The visible change elsewhere: `/document` and `/release-notes` keep every path a kind matches, so they may print a checkout note naming `threat-model.md`.
 
 ### T10. A refine run
 
-Phase 0 detects `threat-model.md` beside the ARD and hands a copy of it (`prior_threat_model`, as `prior_ard`) to the reviewer and pre-lint. Whenever the file exists, **the run checks it mechanically after the ARD's last write, whatever the PA answers**: every cited decision live in the ARD file it names, every *Where* id still in the set.
+Phase 0 detects `threat-model.md` beside the ARD and hands a copy of it (`prior_threat_model`, as `prior_ard`) to the reviewer and pre-lint. Whenever the file exists and a set resolves, **the run checks it mechanically, whatever the PA answers** — every cited decision live in the ARD file it names, every *Where* id still in the set — **twice**: at the new phase, to choose its question, and again in Phase 6 before the model is stamped, since Phase 5's fixes and manual fix notes can still supersede a decision.
 
 - **The check passes:** *Refine the threat model (Recommended)* / *Leave it as it is*.
-- **The check fails:** *Leave it* is not offered; the run refines the stale entries (supersede or re-dispose them), since a stale model would send C and D to dead decisions.
+- **The check fails:** *Leave it* is not offered. **The forced part is only a re-disposition of the stale entries** — no modeler dispatch and no candidate walk: each stale threat is re-disposed through T7's four choices, and `Deferred to design` or `Accepted` is always available with no new decision, so the PA can always finish. A stale model would send C and D to dead decisions.
+- **The second check fails** (Phase 5 changed a decision after the first): the run re-disposes the newly stale entries the same way before the model is stamped.
 - **A refine** keeps every `[TH#N]`, re-dispatches the modeler with the current threats (it proposes only what the changed architecture adds), and lists every acceptance past its review date for the PA to renew, re-dispose or keep. **The model follows the ARD's refine-versus-fresh semantics**: whatever *Start fresh* does to the ARD's numbering, it does to `[TH#N]`.
 
 ### T11. Pages, counts and claims
 
 - The `/create-ard` page gains *The threat model*; references and agents pages gain their rows; the family map's PA lane and the `roles-and-phases` pages name the output; the security plugin's roles page says the Security Engineer reviews it in the pull request.
-- **Counts and inventories**: `CLAUDE.md`'s `product-workflows` subagent count and the hard-constraint ID list; `create-ard.md`'s description; check 16's preamble on the new agent; the `product-workflows` plugin description (896 characters: new wording replaces old).
+- **Counts and inventories**: `CLAUDE.md`'s `product-workflows` subagent count, its `workflows-core` reference count and the hard-constraint ID list; the counts in `.claude/rules/product-workflows.md` and `.claude/rules/workflows-core.md`; `create-ard.md`'s description; check 16's preamble on the new agent; the `product-workflows` plugin description (896 characters: new wording replaces old).
 - **Claim sweep** (refinements 4–8): the roadmap row B gains *Built as SEC-G2 B*; the feature-gaps review's SEC-G2 row narrows to C and D; the security plugin's dated *Not built yet* note stays as history, and the new release gets its own entry.
 - **Sizes**: `workflows-core.md`, `security-workflows.md`, the coupling file and `CLAUDE.md` are near their limits; the plan measures and splits or moves before adding.
 
