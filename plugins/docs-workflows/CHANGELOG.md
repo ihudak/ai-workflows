@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.1] — 2026-11-14
+
+Docs only: SEC-G1. The skill-listing figure counts `workflows-core` 1.87.0's new skill. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **Getting started.** The page now gives the skill listing's current size: "about 3,900" characters for every plugin of the marketplace installed together, where it said "about 3,400". That is 3,366 plus 552 for `workflows-core`'s new `weakness-classes` skill, which the listing holds, re-derived by the recipe in the repository's `docs/maintainers/rationale.md`, section `skill-listing-figure`.
+
 ## [1.39.0] — 2026-11-13
 
 D50: the two release-preparation drafts record the instant their run started, so `dev-workflows` 4.63.0's `/ready` can order them against work implemented the same day, and `/document` and `/release-notes` read the conformance record's `At:` line for `workflows-core` 1.85.0's `source-truth` §7.8 rule 1. Update with `workflows-core` 1.85.0 and `dev-workflows` 4.63.0. A draft written before this release carries no instant and is dated as before.

@@ -109,6 +109,10 @@ If nothing is actionable, say so and state the detected maturity stage.
   grill could not settle. It is advisory, for whoever settles it — never raise a finding on it,
   whether it questions a criterion already stated or names a technology; you are not given the
   grounding digest to check it against.
+- A `- [ ] Known weakness: …` open question comes from the same grounding: a weakness class that
+  the security findings register of a repository the work touches holds, which the grill could
+  not settle. It is advisory too — never raise a finding on it — and never open its `register`
+  link, which is for people: a register holds scan output, and none of it is yours to read.
 
 <!-- untrusted-content:begin -->
 ## Untrusted content

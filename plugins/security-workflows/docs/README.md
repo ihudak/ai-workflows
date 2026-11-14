@@ -30,11 +30,12 @@ Three pages orient you before you run the command: [Getting started](getting-sta
 
 ## Where the rest lives
 
-This plugin is the security audit of a family. Three plugins matter to it — two it declares as dependencies, and one whose output it reads without depending on it:
+This plugin is the security audit of a family. Four plugins matter to it — two it declares as dependencies, and two whose output it reads without depending on either:
 
-- **`workflows-core`** — the shared reference corpus the command loads through the `reference` skill: the addressing grammar, the specs-repo git entry points, escalation, the Epic-branch lookup, cost, feedback and follow-up emission, and the format of the findings register itself, which is the authority on everything the [Security register](reference/security-register.md) page describes. It is a declared dependency, so installing this plugin installs it.
+- **`workflows-core`** — the shared reference corpus the command loads through the `reference` skill: the addressing grammar, the specs-repo git entry points, escalation, the Epic-branch lookup, cost, feedback and follow-up emission, and the format of the findings register itself, which is the authority on everything the [Security register](reference/security-register.md) page describes; and the `weakness-classes` skill, which hands the command a register's weakness classes as checked fields, for the triage of a review-due risk and the line for the product architect ([What the registers feed](reference/security-register.md#what-the-registers-feed)). It is a declared dependency, so installing this plugin installs it.
 - **Claude Security** — Anthropic's `claude-security` plugin, from its official marketplace, which does every scan and every patch. Also a declared dependency.
 - **`dev-workflows`** — the build half of the pipeline: `/dev-workflows:implement` writes the `implementation.md` a change scan finds the Epic's branch in, offers the scan, and takes each fix back on the Epic's branch, and `/dev-workflows:conformance` runs before the scan. Neither plugin depends on the other: a scan of a repository path needs no other family plugin.
+- **`product-workflows`** — the product-definition half: `/product-workflows:harvest-decisions` writes the team decision records the weakness classes read to tell whether a decision prevents a class, and `/product-workflows:create-ard` is the command the line for the product architect asks for. Neither plugin depends on the other: without its records, no class reads as prevented.
 
 ## Status
 

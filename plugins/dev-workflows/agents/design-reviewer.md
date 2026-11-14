@@ -241,6 +241,10 @@ If nothing is actionable, say so and state the classification you reviewed again
   (`design-format.md` § Architecture governance). Both are advisory and the architect's to
   adjudicate: never raise a finding on one — a deviation line needs no mitigation — and you are not
   given the grounding digest to check a citation against.
+- A `- Known weakness: …` line under **Risks & mitigations** comes from the same grounding: a
+  weakness class that the security findings register of a repository the work touches holds. It
+  is advisory too — never raise a finding on it — and never open its `register` link, which is for
+  people: a register holds scan output, and none of it is yours to read.
 
 <!-- untrusted-content:begin -->
 ## Untrusted content

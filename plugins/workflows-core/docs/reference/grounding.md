@@ -1,6 +1,6 @@
 # Grounding sources
 
-The family's authoring commands read more than the folder they were given: the shipped product docs, the organisation's architecture repository, the team's own harvested decisions, the mounted code, and — for `/prd-ground` — exported design frames. This page lists every one of those sources in one place: what it feeds, which commands read it, what turns it on, the line a run prints about it, and how to turn it off. Every source is **read-only** and **advisory** — a miss turns that source off with a reason and never stops the run — except where a command's own page says a repository is required. The shared grounding references ([References](references.md)) are the authority; each command's page says how it uses what it reads.
+The family's authoring commands read more than the folder they were given: the shipped product docs, the organisation's architecture repository, the team's own harvested decisions, the security findings registers, the mounted code, and — for `/prd-ground` — exported design frames. This page lists every one of those sources in one place: what it feeds, which commands read it, what turns it on, the line a run prints about it, and how to turn it off. Every source is **read-only** and **advisory** — a miss turns that source off with a reason and never stops the run — except where a command's own page says a repository is required. The shared grounding references ([References](references.md)) are the authority; each command's page says how it uses what it reads.
 
 ## At a glance
 
@@ -9,6 +9,7 @@ The family's authoring commands read more than the folder they were given: the s
 | [Shipped product docs](#shipped-product-docs) | `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/brd-intake`, `/epics`, `/prd-ground`, `/release-notes` | `$DOCS_PATH` (default `/workspace/docs`) holding markdown; `--docs <path>` for one run | `--no-docs` |
 | [Architecture repository](#architecture-repository) | `/create-ard`, `/specify`, `/update-spec`, `/dev-workflows:design` | `$ARCHITECTURE_REPO_PATH` naming a valid architecture repository | `--no-arch` |
 | [Team decision records](#team-decision-records) | `/create-ard`, `/specify`, `/update-spec`, `/dev-workflows:design` | `$SPECS_PATH/architecture/`, built by `/harvest-decisions` | `--no-arch` |
+| [Security registers](#security-registers) | `/create-ard`, `/specify`, `/update-spec`, `/dev-workflows:design` | a findings register under `$SPECS_PATH/security/`, written by `/security-workflows:scan` | `--no-arch` |
 | [Mounted code](#mounted-code) | `/idea`, `/epics`, `/create-ard`, `/specify`, `/update-spec`, `/prd-ground`, `/dev-workflows:design`; diffs in `/document`, `/release-notes` | clones under `$REPOS_PATH` (default `/workspace`) | per command — see below |
 | [Design frames](#design-frames) | `/prd-ground` | a frame set under the folder's `design/`, indexed by `/frames` | `--no-design` |
 
@@ -34,7 +35,14 @@ The status lines are printed in the command's configure or plan step; the off sw
 - **Feeds:** the team's own architecture decisions — one record per `[AD#N]` of every merged ARD, under `$SPECS_PATH/architecture/` — to the same `architecture-grounder` as a second, team root. A run does not re-read the decisions it already inherits from its own ARD, and skips a record whose decision has been promoted to an accepted organisation ADR or marked as covered by one; it cites that ADR instead. The `product-workflows` Workflow overview page draws how `/harvest-decisions` builds the records and `/promote-decisions` promotes them.
 - **Turned on by:** `$SPECS_PATH/architecture/` holding `index.yaml` or a record under `decisions/`. It is resolved independently of `$ARCHITECTURE_REPO_PATH`, so it is read where no architecture repository is set.
 - **Status line:** `team decisions: ON <specs>/architecture (<N> live records)` — `; differs from <default-ref>` when your working copy of the records is not the default branch's — or `team decisions: OFF (<reason>)`.
-- **Off switch:** `--no-arch`, which turns off both architecture roots.
+- **Off switch:** `--no-arch`, which turns off this source, the architecture repository and the security registers together.
+
+## Security registers
+
+- **Feeds:** the weakness classes — a CWE in one repository's findings register — that the registers of the repositories the work touches hold, to the same `architecture-grounder`. It raises at most three `known-weakness` challenges, ranked after a contradicted decision or standard and before the radar's: each names the CWE, the register and the findings' numbers, and the grill asks how the work avoids adding to that class. The command runs the `weakness-classes` skill and hands the agent the checked fields it prints; neither of them opens a register, and no finding's text reaches the run. What the ARD, specification or design records is written in the grill, never copied from a register.
+- **Turned on by:** a findings register — a `register.json` in a repository's folder under `$SPECS_PATH/security/`, which `/security-workflows:scan` keeps. It is resolved independently of the other two architecture sources, and read only for the repositories the work touches. No run waits on a register: one that cannot be read is skipped and named in the report.
+- **Status line:** `security registers: ON <specs>/security (<N> registers; read for the repositories the work touches)`, or `security registers: OFF (<reason>)` — and no line at all where `$SPECS_PATH/security/` does not exist. Where the skill fails, the final report says `security registers: not read — <why>` and the run goes on as it would have without the registers; where it ran, the report's `architecture grounding:` line names the registers read and any skipped, and counts any component whose id the skill cannot be passed; and where the `security registers:` line is `ON` and the run makes no read — no component of the work names a repository, or every id was left out — the `architecture grounding:` line says `registers read: none` and why, so an `ON` line never stands over a run that read nothing.
+- **Off switch:** `--no-arch`, which turns off the security registers together with the architecture repository and the team decision records.
 
 ## Mounted code
 

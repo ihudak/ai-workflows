@@ -1,6 +1,6 @@
 # `security-workflows`: record Claude Security scans in SPECS and route their fixes through `/implement` (sub-project A)
 
-Date: 2026-10-15. Status: approved. Amended seven times.
+Date: 2026-10-15. Status: approved. Amended since approval; the list below and the file's git history record the amendments.
 
 1. **After the user's first review:**
    - effort defaults per scan kind;
@@ -98,7 +98,7 @@ This spec is sub-project **A**. Each of the others gets its own spec, plan and b
 | # | Sub-project | Depends on |
 |---|---|---|
 | **A** | This spec: the `security-workflows` plugin and its scan wrapper, the findings register, fixes through `/implement` on the Epic's own branch | Claude Security plugin |
-| **E** | The architecture feedback loop, in three parts. (1) `architecture-grounder` reads the registers of the repositories a piece of work touches and returns a `known-weakness` challenge to `/create-ard`, `/specify` and `/design`. (2) A weakness class that recurs among **accepted risks** becomes a follow-up for the PA, who records it as an `[AD#N]` whose `Prevents:` names the CWE; `/harvest-decisions` and `/promote-decisions` then carry it as an ordinary decision, and `ard-resolution` makes breaking it a reviewer BLOCKER. (3) `promotion-scout` flags weakness classes that recur across teams' registers with no covering ADR or standard. E's agents read a register's text as data, never as instructions (D10). | A's register |
+| **E** | The architecture feedback loop, in three parts. (1) `architecture-grounder` reads the registers of the repositories a piece of work touches and returns a `known-weakness` challenge to `/create-ard`, `/specify` and `/design`. (2) A weakness class that recurs among **accepted risks** becomes a follow-up for the PA, who records it as an `[AD#N]` whose `Prevents:` names the CWE; `/harvest-decisions` and `/promote-decisions` then carry it as an ordinary decision, and `ard-resolution` makes breaking it a reviewer BLOCKER. (3) `promotion-scout` flags weakness classes that recur across teams' registers with no covering ADR or standard. E's agents read a register's text as data, never as instructions (D10). *Built as SEC-G1:* `docs/superpowers/specs/2026-11-13-sec-g1-architecture-feedback-design.md`, in `workflows-core` 1.87.0, `product-workflows` 3.80.0, `dev-workflows` 4.66.0 and `security-workflows` 0.12.0. | A's register |
 | **B** | ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard` | A, E |
 | **C** | Design threat review: threats per interface of `design.md`, with amendments proposed through `/design` | A; B where present |
 | **D** | Security conformance: traces each threat-model mitigation to merged code, as `/conformance` traces requirements | B or C |
@@ -206,6 +206,8 @@ If either dependency is later disabled or uninstalled, Claude Code disables `sec
 `plugins/workflows-core/references/security-register-format.md` is the single source of truth for the register's layout, fields, statuses, transitions, roles and rebuild rule.
 
 It lives in `workflows-core` for two reasons. A reference does not cross a plugin boundary, and E's consumers (`architecture-grounder` and `promotion-scout`) are `workflows-core` agents.
+
+(Amended 2026-11-14 by SEC-G1: the scan joins E's consumers, reading its own register's weakness classes for the PA's follow-up and for its review-due rows. E reads a register only through `workflows-core`'s `scripts/weakness-classes.py`, which the `workflows-core:weakness-classes` skill runs for a command: E's commands and agents get the script's JSON, and its agents never read a register.)
 
 `security-workflows` cites it as `workflows-core:security-register-format` through the `reference` loader skill, with the preamble the Internal reference convention requires. Reading `$SPECS_PATH/security/` needs no plugin dependency, since it is data in SPECS.
 

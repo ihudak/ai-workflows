@@ -31,13 +31,15 @@ in two places is a summary that drifts in one of them.
 
 ## 2. Where it lands
 
-**`follow-ups.md` in the folder the run resolved**, appended — or, where the caller names the
-folder of the unit its run worked on, that folder (§8): `/dev-workflows:implement`, whose Epic
-picker can choose an Epic under a PRD address, names the folder its implementation record goes in,
-so every run of one unit writes into one file however the unit was addressed; and
-`/dev-workflows:conformance`, whose PRD run queues items for several units, names one folder per
-item, so each lands in the file of the unit its line asks a run of. One file per PRD or Epic folder,
-alongside the artifacts the follow-ups are about.
+**`follow-ups.md` in the folder the run resolved**, appended — or, where the caller names a
+folder (§8), that folder: `/dev-workflows:implement`, whose Epic picker can choose an Epic under a
+PRD address, names the folder its implementation record goes in, so every run of one unit writes
+into one file however the unit was addressed; `/dev-workflows:conformance`, whose PRD run queues
+items for several units, names one folder per item, so each lands in the file of the unit its line
+asks a run of; and `/security-workflows:scan` names the unit's folder for each finding's line and,
+for its line for the product architect (the PA, §6), which asks a run of
+`/product-workflows:create-ard` on a PRD, the folder that holds that PRD. One file per PRD or Epic
+folder, alongside the artifacts the follow-ups are about.
 
 **Run `env-check` first** (`Skill(skill: "workflows-core:reference", args: "session-hygiene env-check")`, `session-hygiene.md` §7), before this section's first rung: it sets `specs_git: misrooted` where the run no longer stands in the environment its preflight printed.
 
@@ -85,6 +87,8 @@ re-insert.
 
 **A security finding's line.** `/security-workflows:scan` writes one line per finding it queues for a fix, and each carries that finding's `[SEC#n]` (`workflows-core:security-register-format` §3). A line carrying a `[SEC#n]` token is matched only against an **open** line that carries the same `[SEC#n]` for the same repository and unit, each compared as the other-repository identity above compares it — never against a ticked line, and never against a line without that token, in whatever words it names the change. The register decides when a finding needs a fix, so a line for it is a new request each time: the ticked line of an earlier fix does not stand for a finding reopened after that fix landed, and a line another caller wrote for the same change, in its own words, does not stand for the finding either. An open line with the same `[SEC#n]` still matches, so a re-run does not write it twice. A line without the token is matched as before, against every line the other-repository identity reaches, a `[SEC#n]` line included.
 
+**A decision for the PA.** `/security-workflows:scan` writes one line for the PA (§6) per weakness class of a risk the run accepted, where that class's accepted risks recur in a register and no team decision prevents it (`workflows-core:security-register-format` §7.4): a class that recurs unprevented, but holds no risk the run accepted, raises none. The line carries no `[SEC#n]`, and is matched by its own identity, never as a line without the token above: three values, each compared exactly as the run holds it — the PRD key, as the whole address inside the line's `` `/product-workflows:create-ard <KEY>` `` span, so `ACME-17` matches neither `ACME-17-01` nor an `ACME-17` named elsewhere on the line; its CWE, as the link text `[CWE-<n>]`, so `[CWE-89]` matches no `[CWE-890]`; and its register, as `(security/<slug>/register.md)`, so `security/api/register.md` matches no `security/api-gateway/register.md`. It matches only an **open** line carrying all three, so a ticked line never stands for it: once the PA has ticked one, a later run that records an accepted risk of the class raises it again while no team decision prevents the class. An open line with the same three still matches, so a re-run does not write it twice.
+
 ## 6. Qualifying predicate — what becomes a follow-up
 
 Emit a task ONLY for signals whose action lands OUTSIDE the current change or
@@ -100,6 +104,12 @@ requires a MANUAL human step:
 - Manual publish steps: screenshots to upload (CDN), "publish the release notes",
   "create these Epics in your tracker manually", open-the-PR-by-hand.
 - SPEC-VS-PRD ("update the PRD to match the spec").
+- A decision another role must record — here `/security-workflows:scan`'s line for the product
+  architect (the PA): a weakness class of a risk the run accepted, whose accepted risks recur in its
+  register and that no team decision prevents, for the PA to record as an `[AD#N]` with `/product-workflows:create-ard`. The
+  scan writes it into the file of the folder that holds the PRD (§2, §8), exactly as
+  `scripts/weakness-classes.py` printed it (`workflows-core:security-register-format` §7.4), and
+  its identity is §5's *A decision for the PA*.
 
 DO NOT emit tasks for in-scope items the report/draft already tracks: deferred review BLOCKERs (save one whose fix lies in another code repository, which the first bullet takes), skipped tests, in-draft `<!-- TODO -->` markers. Those belong
 to the current task and are already carried in the Final Report.
@@ -145,8 +155,10 @@ The calling phase provides:
   §2 writes there in place of the resolved folder, and the caller passes that folder's key as `key`,
   so §5's stable key is the same for every run of the unit however it was addressed. A caller whose
   items belong to different units — `/dev-workflows:conformance`'s PRD run, whose items are each an
-  Epic's or the PRD's — names `unit_folder` and its `key` on each item instead: §2 writes each item
-  into its own folder's file, and §5 dedupes it against that file under that key.
+  Epic's or the PRD's, and `/security-workflows:scan`'s run that holds a line for the PA (§6), which
+  is the PRD's while each finding's line is the unit's — names `unit_folder` and its `key` on each
+  item instead, on every item of the call and never beside a call-level `unit_folder`: §2 writes
+  each item into its own folder's file, and §5 dedupes it against that file under that key.
 
 The phase applies §6 (filter) → §2 (resolve target) → §1–§3 (render + place) →
 §5 (dedupe) → §7 (confirm), then writes. It is ADDITIVE: the follow-ups always

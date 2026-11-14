@@ -45,7 +45,7 @@
 
 - **`$ARCHITECTURE_REPO_PATH`** — a local clone of your organisation's architecture repository (technology radar, standards, principles, patterns, ADRs), read-only to grounding; no default.
 
-**Resolution.** Resolved by the architecture-grounding gate the family shares, in `/create-ard`, `/specify` and `/update-spec` on both routes (and in `/dev-workflows:design`); `--no-arch` turns it off for a run. `/promote-decisions` uses it where the session's own repository is not the architecture repository, and writes there only when the clone is writable.
+**Resolution.** Resolved by the architecture-grounding gate the family shares, in `/create-ard`, `/specify` and `/update-spec` on both routes (and in `/dev-workflows:design`); `--no-arch` turns off, for a run, this repository and the two other sources architecture grounding reads: the team knowledge base and the security findings registers under `$SPECS_PATH/security/`. `/promote-decisions` uses it where the session's own repository is not the architecture repository, and writes there only when the clone is writable.
 
 **When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it; the team knowledge base under `$SPECS_PATH/architecture/` is resolved separately, and still read where it exists.
 
