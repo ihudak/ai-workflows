@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.82.0] — 2026-11-14
 
-LADDER-ORDER batch 1: `/create-ard` and `/specify` stop where the PRD they build from is missing — never produced, on the idea route, or written and never handed off, on either route. **This is a behaviour change**: where the gate found no PRD on any ref, both used to read the resolved folder and report the PRD absent, so a run went on with no PRD where none was written, and from a working copy nobody could later read where one was written and never handed off. Update with `workflows-core` 1.91.0, whose `phase-handoff` §3.4 rows describe these stops and whose §4.4 row F gives the commands their committed form prints; `dev-workflows` 4.66.3 is released with it. A BRD-route slice holding no `prd.md` goes on as before, and so does `/update-spec`, which takes neither stop.
+LADDER-ORDER batch 1: `/create-ard` and `/specify` stop where the PRD they build from is missing — never produced, on the idea route, or written and never handed off, on either route. **This is a behaviour change**: where the gate found no PRD on any ref, both used to read the resolved folder and report the PRD absent, so a run went on with no PRD where none was written, and from a working copy nobody could later read where one was written and never handed off. Update with `workflows-core` 1.91.0, whose `phase-handoff` §3.4 rows describe these stops and whose §4.4 row F gives the commands their committed form prints; `dev-workflows` 4.66.3 and `docs-workflows` 1.39.5, pages only, are released with it. A BRD-route slice holding no `prd.md` goes on as before, and so does `/update-spec`, which takes neither stop.
 
 ### Changed
 

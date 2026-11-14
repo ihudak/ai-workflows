@@ -180,7 +180,7 @@ Each batch is one pull request. Each ends with the claim sweep of §7 over its o
 
 ### 5.5 Found while building batch 1 — owed by batches 2, 3 and 4
 
-Added 2026-11-14, at batch 1's end. Each site below names `/create-ard` or `/specify`, which batch 1 made stop, or repeats a claim a later batch falsifies, and §5.2, §5.3 and §5.4 do not name it. The id is the row of `docs/superpowers/plans/2026-11-14-ladder-order-b1-sweep-population.md` that says more; line numbers are at batch 1's branch, so find each by its text. Until its batch ships, each names a command whose own stop then names the right one, so nothing it says is false — save the `docs-workflows` environment page (L-B3-8), false now and left to batch 3 by ruling; each batch's plan takes its own list below.
+Added 2026-11-14, at batch 1's end. Each site below names `/create-ard` or `/specify`, which batch 1 made stop, or repeats a claim a later batch falsifies, and §5.2, §5.3 and §5.4 do not name it. The id is the row of `docs/superpowers/plans/2026-11-14-ladder-order-b1-sweep-population.md` that says more; line numbers are at batch 1's branch, so find each by its text. Until its batch ships, each names a command whose own stop then names the right one, so nothing it says is false; each batch's plan takes its own list below. The `docs-workflows` environment page (L-B3-8), which batch 1 had made false, was first left to batch 3 by ruling and then fixed in batch 1, at its release (`docs-workflows` 1.39.5), by a second ruling: a known false sentence on a shipped page is fixed before the push, not listed.
 
 **Batch 2** — a keyed `/implement`, whose earliest-gap test these take (L12):
 
@@ -193,7 +193,7 @@ Added 2026-11-14, at batch 1's end. Each site below names `/create-ard` or `/spe
 **Batch 3** — `/document`, and `docs-workflows`:
 
 - `plugins/docs-workflows/commands/release-notes.md:760`'s offer of `/product-workflows:create-ard <PRD>`: L8, made conditional on the PRD being landed, since `/release-notes` tests `prd.md` only in the working tree. L-B3-7.
-- `plugins/docs-workflows/docs/reference/environment.md:13`, *on which the caller proceeds as it would with no gate at all*, of `unmanaged`: false of `/create-ard` and `/specify` on an idea-route PRD folder holding no `prd.md`, and of `/update-spec`; rewritten as batch 1 rewrote `dev-workflows`' copy (E19). L-B3-8.
+- *Fixed in batch 1, at its release, not owed:* `plugins/docs-workflows/docs/reference/environment.md:13`, *on which the caller proceeds as it would with no gate at all*, of `unmanaged`, false of `/create-ard` and `/specify` on an idea-route PRD folder holding no `prd.md`, and of `/update-spec`, was rewritten as batch 1 rewrote `dev-workflows`' copy (E19), and released as `docs-workflows` 1.39.5. L-B3-8. Of this section's sites, batch 3 owes L-B3-7 alone.
 
 **Batch 4** — the BRD route:
 

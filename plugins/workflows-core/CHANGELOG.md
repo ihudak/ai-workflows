@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.91.0] — 2026-11-14
 
-LADDER-ORDER batch 1: `phase-handoff` §3.4's rows for `/product-workflows:create-ard` and `/product-workflows:specify` now stop where the PRD they build from is missing — never produced, on the idea route, or written and never handed off, on either route — a behaviour change each row declares; and §4.4's row F gains the commands for a file committed on a branch the plugin does not hand off. Update with `product-workflows` 3.82.0, whose commands make those stops and print row F's new form; `dev-workflows` 4.66.3 is released with it. The gate itself is unchanged: it still returns `absent` on row F and never stops there.
+LADDER-ORDER batch 1: `phase-handoff` §3.4's rows for `/product-workflows:create-ard` and `/product-workflows:specify` now stop where the PRD they build from is missing — never produced, on the idea route, or written and never handed off, on either route — a behaviour change each row declares; and §4.4's row F gains the commands for a file committed on a branch the plugin does not hand off. Update with `product-workflows` 3.82.0, whose commands make those stops and print row F's new form; `dev-workflows` 4.66.3 and `docs-workflows` 1.39.5, pages only, are released with it. The gate itself is unchanged: it still returns `absent` on row F and never stops there.
 
 ### Changed
 

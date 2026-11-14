@@ -12,7 +12,7 @@
 
 A phrase hit dispositions its whole paragraph (refinement 1), so most rows cite a range. A row's first words are the start of the statement, not of the line where they differ.
 
-**Totals** (after fix round 1, A13–A14, found by Task 2, B15 and C17, found by Task 3, C18–C21, found by Task 4 and its review, Task 5's D28–D32 and K85, K62 moving to D32, Task 6's E18, E19 and L-B3-8, found by Task 2, and Task 6M's M1–M9, found in what the merge of `origin/main` brought): **237 rows** — **101 rewrite** (Task 2: 14, Task 3: 15, Task 4: 21, Task 5: 32, Task 6: 19; 43 of them *beyond plan*), **83 keep**, **53 later** (batch 2: 29, batch 3: 8, batch 4: 16). The first pass's totals were 193 rows (73, 77, 43); fix round 1's, 212 (86, 74, 52); after Task 2, 214 (88, 74, 52); after Task 3, 216 (90, 74, 52); after Task 4, 220 (94, 74, 52); after Task 5, 225 (99, 74, 52); after Task 6, 228 (101, 74, 53). Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does:
+**Totals** (after fix round 1, A13–A14, found by Task 2, B15 and C17, found by Task 3, C18–C21, found by Task 4 and its review, Task 5's D28–D32 and K85, K62 moving to D32, Task 6's E18, E19 and L-B3-8, found by Task 2, and Task 6M's M1–M9, found in what the merge of `origin/main` brought, and L-B3-8, taken into batch 1 at the release by ruling and moving to Task 7): **237 rows** — **102 rewrite** (Task 2: 14, Task 3: 15, Task 4: 21, Task 5: 32, Task 6: 19, Task 7: 1; 44 of them *beyond plan*), **83 keep**, **52 later** (batch 2: 29, batch 3: 7, batch 4: 16). The first pass's totals were 193 rows (73, 77, 43); fix round 1's, 212 (86, 74, 52); after Task 2, 214 (88, 74, 52); after Task 3, 216 (90, 74, 52); after Task 4, 220 (94, 74, 52); after Task 5, 225 (99, 74, 52); after Task 6, 228 (101, 74, 53); after Task 6M, 237 (101, 83, 53). Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does:
 
 ```bash
 python3 -I - docs/superpowers/plans/2026-11-14-ladder-order-b1-sweep-population.md <<'EOF'
@@ -316,6 +316,12 @@ print("TOTAL",tot)' "$@"; }
 
 `docs/maintainers/rationale.md` holds no statement of the old rule: the searches in §1 found none. Task 6 Step 4 adds `#ladder-order`.
 
+### Task 7 — the release
+
+| # | file:line | First words | Disposition | Owner, and why |
+|---|---|---|---|---|
+| L-B3-8 | `plugins/docs-workflows/docs/reference/environment.md:13` | "… The deliverable-verification gate, `require-on-main`, needs only a readable git dir, and a failure there returns `unmanaged`, on which the caller proceeds as it would with no gate at all." | rewrite | Task 7, *beyond plan*, *found by Task 2*, *taken into batch 1 at the release, by ruling* — it was `later 3`, `docs-workflows` taking no release in batch 1 and batch 3 being its batch, until the ruling that a known false sentence on a shipped page is fixed before the push, not listed. The sentence E19 rewrites, on `docs-workflows`' page: false of the companion plugin's `/create-ard` and `/specify` on an idea-route PRD folder holding no `prd.md`, and of its `/update-spec` already. Rewritten from PH §3.3 row H and §3.4 with no count of callers, and released as `docs-workflows` 1.39.5 |
+
 ## 4. The population — rows kept
 
 ### Still true, with why
@@ -467,7 +473,8 @@ Each names `/product-workflows:specify` or `/product-workflows:create-ard`, whic
 | # | file:line | First words | Disposition | Why |
 |---|---|---|---|---|
 | L-B3-7 | `plugins/docs-workflows/commands/release-notes.md:760` | "[leaf/closure per the whole of `workflows-core:next-phase-offer`, … If earlier pipeline phases remain, continue — hand to PA → `/product-workflows:create-ard <PRD>` or PE → `/product-workflows:epics <PRD>`; …]" | later 3 | An offer, not a false statement (review finding 3): `/release-notes` tests `prd.md` by presence in the working tree (its :131–138), so on a declined handoff the `/create-ard` it names stops with `CREATE_ARD_PRD_NOT_HANDED_OFF`. Batch 3 is the `docs-workflows` batch and conditions it (design L8). §1's offer grep matched this line, and the first pass left it unlisted |
-| L-B3-8 | `plugins/docs-workflows/docs/reference/environment.md:13` | "… The deliverable-verification gate, `require-on-main`, needs only a readable git dir, and a failure there returns `unmanaged`, on which the caller proceeds as it would with no gate at all." | later 3 | *Found by Task 2* (controller ruling, Task 6 brief): the sentence E19 rewrites, on `docs-workflows`' page. False of the companion plugin's `/create-ard` and `/specify` on an idea-route PRD folder holding no `prd.md`, and of its `/update-spec` already; `docs-workflows` takes no release in batch 1, and batch 3 is its batch |
+
+L-B3-8, `docs-workflows`' environment page, stood here until the release, when a ruling took it into batch 1: it is now under §3, *Task 7 — the release*.
 
 ## 6. Generated copies — `plugins/workflows-core/reference-parts/`
 
