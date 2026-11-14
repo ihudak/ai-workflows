@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.87.1] — 2026-11-14
 
-GIT-G1 Part 3, batch 1: `specs-git.py`'s selftest moves out of the script the plugin ships and into the repository's `scripts/selftests/`, and `--selftest --group <name>` runs one group of it alone. No command's behaviour, output or exit status changes, and no other plugin changes with this release or relies on it, so this release needs no other plugin's update beyond what 1.87.0, 1.86.0 and 1.85.1 each name.
+GIT-G1 Part 3, batch 1: `specs-git.py`'s selftest moves out of the script the plugin ships and into the repository's `scripts/selftests/`, and `--selftest --group <name>` runs one group of it alone. No command's behaviour, output or exit status changes, and no other plugin changes with this release or relies on it, so this release needs no other plugin's update of its own; each release below it names its own.
 
 ### Changed
 
