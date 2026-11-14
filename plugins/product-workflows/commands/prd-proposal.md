@@ -203,14 +203,19 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    other than `<KEY>_ARD.md` — stop with the same code and its own message, naming no other remedy:
 
    ```
-   PRD_PROPOSAL_NEEDS_PRD: <KEY>'s PRD is <path>/<name>, written before the artifact filenames lost their keys, and this command reads prd.md alone.
-     Rename it to prd.md, give it the frontmatter fields kind: prd and key: <KEY>, which no file written under the old name carries (workflows-core:addressing §5), and commit the rename — the old name's removal and prd.md together — and land it on <default>, with the commands printed beneath this message, adding the two fields to prd.md after the mv and before the add; then open a pull request from <new-branch> into <default>, merge it, and re-run this command.
+   PRD_PROPOSAL_NEEDS_PRD: <KEY>'s PRD is <path>/<name>, written before the artifact filenames lost their keys, and this command reads prd.md alone. This run read nothing further and priced nothing.
+     Rename it to prd.md, give it the frontmatter fields kind: prd and key: <KEY>, which no file written under the old name carries (workflows-core:addressing §5), and commit the rename — the old name's removal and prd.md together — and land it on <default>, by running these:
 
    git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
    git -C "<SPECS_PATH>" mv -- "<path>/<name>" "<path>/prd.md"
+
+     Add kind: prd and key: <KEY> to prd.md's frontmatter now, then run these:
+
    git -C "<SPECS_PATH>" add -f -- "<path>/prd.md"
    git -C "<SPECS_PATH>" commit -m "<KEY> prd" -- "<path>/<name>" "<path>/prd.md"
    git -C "<SPECS_PATH>" push -u origin <new-branch>
+
+     Then open a pull request from <new-branch> into <default>, merge it, and re-run this command. Ignored, every /prd-proposal run on this folder stops here until it holds a merged prd.md.
    ```
 
    `<new-branch>`, `<default-ref>` and `<path>` are named as in the uncommitted `PRD_PROPOSAL_PRD_NOT_HANDED_OFF` form below — `prd/` and the folder's `<KEY>-<slug>`, the lowest free `-<n>` suffix where that name is taken, found before the stop prints — and `<name>` is the pre-rename file's name. Where git does not track that file — `git -C "$SPECS_PATH" ls-files --error-unmatch -- "<path>/<name>" >/dev/null 2>&1` exits non-zero — the `git mv` line gives way to `mv -- "<SPECS_PATH>/<path>/<name>" "<SPECS_PATH>/<path>/prd.md"`, `<path>` relative to `<SPECS_PATH>` there, since `git mv` refuses an untracked file and a bare `mv` reads a path from the shell's own directory; and, since git holds no old name to remove and refuses a path it does not know, the commit names `"<path>/prd.md"` alone and the message drops ` — the old name's removal and prd.md together —`. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. On a read-only specs mount (§3.6) every command names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it. Print the commands on lines of their own with no `#` comment. This form is reached only on the gate's row F: on `unmanaged` (row H) the mapping above proceeds and makes no pre-rename test.
@@ -218,8 +223,9 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    Otherwise:
 
    ```
-   PRD_PROPOSAL_NEEDS_PRD: no prd.md on any ref for <KEY>, and none in <path> either — there is nothing to estimate yet.
+   PRD_PROPOSAL_NEEDS_PRD: no prd.md on any ref for <KEY>, and none in <path> either — there is nothing to estimate yet. This run read nothing further and priced nothing.
      <remedy>
+     Ignored, every /prd-proposal run on this folder stops here until it holds a merged prd.md.
    ```
 
    `<remedy>` names `/product-workflows:create-prd` **only where that command can itself run** on

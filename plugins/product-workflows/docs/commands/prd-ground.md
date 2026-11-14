@@ -330,9 +330,10 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   but on no ref — produced, handoff declined — the run stops with `PRD_GROUND_PRD_NOT_HANDED_OFF`,
   printing the git commands that land that file — on a new `prd/` branch where it is uncommitted;
   where it is committed, on a branch of your own or on your local default branch, by pushing that
-  branch, where `origin` does not hold it already, and, for one of your own, merging it, or, where
-  the default branch is protected, a new `prd/` branch and a pull request — and explicitly **not**
-  re-running `/create-prd`, which would author a second PRD over the one already written.
+  branch, where `origin` does not already hold every commit of it, and, for one of your own,
+  merging it, or, where the default branch is protected, a new `prd/` branch and a pull request —
+  and explicitly **not** re-running `/create-prd`, which would author a second PRD over the one
+  already written.
 - **A claim list built from `prd.md`, not an inventory, and from live rows only** — a requirement
   marked `Superseded by` or `Withdrawn` grounds nothing. Every `[AC#n]` row under
   `## Acceptance Criteria`, every `[FR#n]` row under `## Functional requirements` (present only on a
