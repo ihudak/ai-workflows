@@ -97,7 +97,7 @@ What each `state` means:
 - **The section is optional**, the fifteenth, after `## Pieces`: present only where a review ran or an earlier one's section is kept, and left out with no `_N/A_` line. No section number moves.
 - **`Models read`** names each model the review read, by its folder's key in the wikilink form. `<KEY>` is the run's own `<EPIC>` or `<PRD>` key for that folder, never one parsed out of the file.
 - **The six fields** are list items in that order, each present once on every entry. `—` marks an empty Answers, interface, CWE or Test.
-- **An entry answering a model's threat** has `Answers: [[<KEY>]] [TH#N]`, the model threat's title as its own, and `Threat: as [[<KEY>]] [TH#N]` — it cites the model's threat and copies none of its text. **A new threat** has `Answers: —` and a full Threat line.
+- **An entry answering a model's threat** has `Answers: [[<KEY>]] [TH#N]`, a title of its own (Task 3's review: never the model threat's title), and `Threat: as [[<KEY>]] [TH#N]` — it cites the model's threat and copies none of its text, title included. **A new threat** has `Answers: —` and a full Threat line.
 - **Disposition** holds exactly one of:
   1. `Mitigated — Rule: <testable statement>`
   2. `Not this design's — answered in [[<KEY>]] design.md`, or `Not this design's — the interface it attacks is not built by this design: <which is>`, or `Not this design's — does not arise: <why>`
