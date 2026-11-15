@@ -35,7 +35,7 @@ SEC-G2 C: `/design` can review the design's threats. Where an ARD's threat model
 
 ### Fixed
 
-- **Phase 2.5 on a run where no ARD resolves.** Its opening sentence said, on `status: none`, "skip the rest of this phase and proceed exactly as before", yet *Record and check lineage*, added to the same phase later, takes the capture Phase 7's stamp uses on every run — the specification and, on an Epic, its `epic.md` — so a literal reading of an ARD-less run skipped the capture its own stamp then needed. The sentence now reads "skip the rest of this paragraph": on `status: none`, *Threat models (optional)* runs — it reads no model there, and records a not-offered line, which Phase 5 prints, only where a file stands at a known path — and so does *Record and check lineage*, while *Threat models, read.* does not.
+- **Phase 2.5 on a run where no ARD resolves.** Its opening sentence said, on `status: none`, "skip the rest of this phase and proceed exactly as before", yet *Record and check lineage*, added to the same phase later, takes the capture Phase 7's stamp uses on every run — the specification and, on an Epic whose folder holds one, its `epic.md` — so a literal reading of an ARD-less run skipped the capture its own stamp then needed. The sentence now reads "skip the rest of this paragraph": on `status: none`, *Threat models (optional)* runs — it reads no model there, and records a not-offered line, which Phase 5 prints, only where a file stands at a known path — and so does *Record and check lineage*, while *Threat models, read.* does not.
 
 ### Departures from the approved design
 
