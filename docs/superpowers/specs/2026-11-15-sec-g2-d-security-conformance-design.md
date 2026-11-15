@@ -8,6 +8,7 @@ Date: 2026-11-15. Status: **approved by the maintainer 2026-11-15**, revision 3.
 - **The PRD-level `ard-resolution` call D2 makes for a model is a fifth §3.7 site, approved by name:** no stopping row of it stops the run, and the model is left unused. **Withholding row C's repair offer there is approved by the maintainer too** (after plan review 2): `/conformance` puts no repair offer on row C at that site. `phase-handoff` §3.7 and `ard-resolution`'s no-regression rule say so.
 - **Phase 6's list of annotated documents gains `ard-<area>.md`**, a truth edit D3 forces, under the standing truth-edit approval.
 - **D10's fixtures are built as traced runs and one live check**, since no harness executes command prose.
+- **The §5 rule 2 carve-out (D2, GIT-G1 edit 2) is narrowed to gated deliverables, approved by the maintainer 2026-11-15 at Task 1's review**: a consumer that reads a *gated* deliverable (§4.0) only as `<default-ref>` holds it executes no gate, so the existing default-branch reads of advisory artifacts by `/ready` and `/brd-reconcile` are not of that kind.
 
 Every decision is written with a recommended answer. The four at the end are the maintainer's calls; the rest are the author's. Statements about the tree cite `file:line` at `ec60ad47`.
 
