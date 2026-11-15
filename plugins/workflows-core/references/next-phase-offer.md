@@ -329,8 +329,10 @@ array carries every option.
   *Gate the PRD*), so on such a tree a run that reaches these offers has found that file on the
   default branch already, and they name no landing of it — save where that gate returned
   `pass_amending`: the copy the run read is then its own `epics/` branch's, which carries a change
-  to `prd.md` the default branch lacks, both commands stop on that difference until it is merged,
-  and the offers name that change's merge first (`/product-workflows:epics` Phase 9).
+  to `prd.md` the default branch lacks; until that change is merged, neither command reads it —
+  from that branch each stops on the difference or offers to switch to the default branch, whose
+  copy lacks the change — and the offers name that change's merge first
+  (`/product-workflows:epics` Phase 9).
 - `/product-workflows:update-spec <KEY>` (a merged specification revised in place) → for each design it
   names — one citing an ID that changed, or one built on the specification it replaced — Dev →
   `/dev-workflows:design <ITS-KEY>` to revise it;
