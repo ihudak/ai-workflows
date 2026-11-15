@@ -120,25 +120,25 @@ EOF
 | Id | String | Before | Sites | After |
 |---|---|---|---|---|
 | R1 | the recipe's count of `/commands` with a §3.4 row whose column 3 begins `**stops` | **12** | `/brd-interview` `/brd-package` `/brd-proposal` `/brd-reconcile` `/brd-split` `/create-ard` `/design` `/epics` `/prd-ground` `/prd-proposal` `/specify` `/update-spec` (13 on the scratch copy with `/implement`'s row flipped, measurement 2) |  **13** — `/implement` added (Task 2, recipe run on the edited PH) |
-| S1 | `Point me at a specs directory` | **1** | IMPL:318 | |
-| S2 | `Proceed without specs` | **2** | IMPL:318, :320 | |
-| S3 | `Specs are required for keyed runs` | **1** | IMPL:316 | |
-| S4 | `the specs-required prompt` | **1** | IMPL:88 | |
-| S5 | `picker and specs prompt` | **1** | IMPL:16 | |
+| S1 | `Point me at a specs directory` | **1** | IMPL:318 | **0** — the question removed whole, with its array (Task 3) |
+| S2 | `Proceed without specs` | **2** | IMPL:318, :320 | **0** (Task 3) |
+| S3 | `Specs are required for keyed runs` | **1** | IMPL:316 | **0** (Task 3) |
+| S4 | `the specs-required prompt` | **1** | IMPL:88 | **0** — *Resuming* step 1 no longer lists it (Task 3) |
+| S5 | `picker and specs prompt` | **1** | IMPL:16 | **0**; bounded ``stopped-run question and picker and Phase 1's multi-component questions`` **1**, IMPL:16 (Task 3) |
 | S6 | `only an **in-scope** spec is gated; a direct-prompt run resolves none` | **1** | PH:327 (RP 1: `phase-handoff/require-on-main.md:163`) |  **0** (RP 0) (Task 2) |
-| S7 | `only an in-scope spec is gated at all` | **1** | IMPL:324 | |
-| S8 | `behave exactly as before this feature` | **8** | IMPL:324 (×2, P-20); DES:107 (P-44's `unmanaged` clause, kept); `pw/commands/create-ard.md:281`, `:283`, EP:525, SPEC:324, `:326` (other commands, not this batch's) | |
+| S7 | `only an in-scope spec is gated at all` | **1** | IMPL:324 | **0** (Task 3) |
+| S8 | `behave exactly as before this feature` | **8** | IMPL:324 (×2, P-20); DES:107 (P-44's `unmanaged` clause, kept); `pw/commands/create-ard.md:281`, `:283`, EP:525, SPEC:324, `:326` (other commands, not this batch's) | **6** — IMPL:324's two gone; DES:107, `pw/commands/create-ard.md:281`, `:283`, EP:525, SPEC:324, `:326` untouched (Task 3) |
 | S9 | ``an absent in-scope spec being `absent` rather than a stop`` | **1** | IMPL:237 | |
 | S10 | ``no consumer of `design.md` stops on row F`` | **1** | IMPL:1366 | |
 | S11 | `the next phase does not stop on this, but until this is on main it might not read your copy` | **4** | IMPL:1368 (P-35); PH:571, `pw/commands/create-ard.md:1010`, EP:1024 (the array itself and two other producers, kept) (RP 1: `handoff-to-main.md:325`) | |
 | S12 | `this plugin's one exception` | **2** | `dw/docs/roles-and-phases.md:10`, DES page :172 | |
 | S13 | `one hard exception` | **3** | `dw/docs/getting-started.md:108`, `dw/docs/roles-and-phases.md:17`, `:27` | |
 | S14 | `an absent one is not` | **1** | `dw/docs/roles-and-phases.md:27` | |
-| S15 | `while an absent one does not` | **1** | IMPL page :176 | |
+| S15 | `while an absent one does not` | **1** | IMPL page :176 | **0**; the link now reads ``which gated inputs stop a run when the specs repo's default branch does not hold them`` **1**, IMPL page :180 (Task 3) |
 | S16 | `the one that genuinely stops on absence` | **1** | DES page :61 | |
 | S17 | `one gated input that genuinely stops on absence` | **1** | RDY page :55 | |
 | S18 | `the only gated input in this plugin that does` | **1** | RDY page :94 | |
-| S19 | `An **absent** one is not a stop at all` | **1** | IMPL page :130 | |
+| S19 | `An **absent** one is not a stop at all` | **1** | IMPL page :130 | **0** (Task 3) |
 | S20 | `Implement one broad PRD-level slice anyway` | **2** | IMPL:219 (×2) | |
 | S21 | `Implement one broad PRD-level slice instead` | **3** | IMPL:226, :265, EPK:140 | |
 | S22 | `epic_spec` | **4** | COMP:93, :111, :117, :119 | |
@@ -192,14 +192,14 @@ EOF
 | S85 | ``unless the PRD folder also holds a flat `specification.md` `` | **2** | IMPL:221, IMPL page :17 | |
 | S93 | ``` `/implement` only where the PRD folder holds a flat `specification.md` ``` | **1** | `.claude/rules/gates.md:73` | |
 | S87 | ``Save where the default branch already carries that `design.md` `` | **1** | IMPL:1370 | |
-| S44 | `Phase 1 asks about a missing Epic specification or design, offering to continue` | **2** | IMPL page :130, `dw/docs/roles-and-phases.md:27` | |
+| S44 | `Phase 1 asks about a missing Epic specification or design, offering to continue` | **2** | IMPL page :130, `dw/docs/roles-and-phases.md:27` | **1**, `dw/docs/roles-and-phases.md:27` (Task 6's, P-69); the IMPL page's copy gone (Task 3) |
 | S45 | `the Epic's own specification and design are on the specs repo's default branch` | **1** | IMPL page :123 | |
-| S46 | ``a resolved `specification.md` with no `design.md` yet is gated the same way, independently`` | **1** | IMPL page :177 | |
-| S47 | ``When Phase 0's address resolution finds no `specs` at all`` | **1** | IMPL page :128 | |
-| S49 | `the in-scope specs gate and the lineage check run again` | **1** | IMPL page :106 | |
-| S50 | `The in-scope specs gate` | **1** | IMPL:94 | |
-| S51 | ``` `specification.md` and `design.md` present in the unit's own folder ``` | **1** | IMPL:280 | |
-| S59 | ``every named `IMPLEMENT_*` stop (`IMPLEMENT_BRD_NOT_SLICED`, `IMPLEMENT_LINEAGE_FAILED`, `IMPLEMENT_UPSTREAM_STALE`)`` | **1** | IMPL:16 | |
+| S46 | ``a resolved `specification.md` with no `design.md` yet is gated the same way, independently`` | **1** | IMPL page :177 | **0** (Task 3) |
+| S47 | ``When Phase 0's address resolution finds no `specs` at all`` | **1** | IMPL page :128 | **0** — the bullet removed with the question (Task 3) |
+| S49 | `the in-scope specs gate and the lineage check run again` | **1** | IMPL page :106 | **0**; ``the check of the specification and design`` **1**, IMPL page :106 (Task 3) |
+| S50 | `The in-scope specs gate` | **1** | IMPL:94 | **0**; step 7 opens ``The gate on the specification and design`` **1**, IMPL:94 (Task 3) |
+| S51 | ``` `specification.md` and `design.md` present in the unit's own folder ``` | **1** | IMPL:280 | **0**, with ``re-resolve `specs` `` **0** and `No shared reference defines this set` **0**; the paragraph is now ``**The unit's pair.**`` **1**, IMPL:279 (Task 3) |
+| S59 | ``every named `IMPLEMENT_*` stop (`IMPLEMENT_BRD_NOT_SLICED`, `IMPLEMENT_LINEAGE_FAILED`, `IMPLEMENT_UPSTREAM_STALE`)`` | **1** | IMPL:16 | **0**; the list now names Phase 0's four after `IMPLEMENT_BRD_NOT_SLICED` (``IMPLEMENT_BRD_NOT_SLICED`, Phase 0's four on the unit's specification and design`` **1**, IMPL:16) (Task 3) |
 | S96 | ``` `/implement` gates its own in-scope `specification.md` / `design.md` ``` | **1** | `dw/docs/roles-and-phases.md:27` | |
 | S48 | ``the in-scope `specification.md`/`design.md` once they exist`` | **1** | `dw/docs/workflow.md:50` | |
 | S54 | ``with no specified Epic it recommends `/epics` (no Epics yet) or `/specify` (Epics not yet specified) first`` | **1** | DES page :54 | |
@@ -208,7 +208,7 @@ EOF
 | S91 | `[require-on-main: in-scope spec/design]` | **1** | `.claude/rules/dev-workflows.md:33` | |
 | S39 | ``` `/implement` recommends `/epics` at 0 Epics ``` | **1** | `.claude/rules/dev-workflows.md:65` | |
 | S40 | ``with no specified Epic `/design` stops for `/specify` or recommends `/epics` `` | **1** | `.claude/rules/dev-workflows.md:65` | |
-| S95 | ``Gate the in-scope specs on `$SPECS_PATH`'s main`` | **1** | IMPL:324 | |
+| S95 | ``Gate the in-scope specs on `$SPECS_PATH`'s main`` | **1** | IMPL:324 | **0**; ``**Gate the unit's specification and design.**`` **1**, IMPL:323 — the title PH §3.4 and NPO cite (``Gate the unit's specification and design`` **7**: IMPL:94, :284, :323, :1868, NPO:375, PH:327, :358) (Task 3) |
 | S100 | ``and is unaffected wherever it reached none (§3.4's `/implement` row)`` (fix round 1) | **1** | DES:829 — the one pointer to §3.4's `/implement` row outside PH (``§3.4's `/implement` row`` **1**, the same site) | |
 | S101 | ``or re-run `/implement` where its pull request closed without merging`` (fix round 1) | **1** | CONF page :57 | |
 | S102 | ``(c)'s `CONFORMANCE_NOT_IMPLEMENTED`, `CONFORMANCE_BRANCH_MISSING` and `CONFORMANCE_NO_CODE` `` (fix round 1; an addition, bounded on the side the list grows) | **1** | CONF:103 | |
@@ -551,3 +551,60 @@ F-1 to F-15 stand as the first pass wrote them, when *the earliest gap* was the 
 - *Minor 5* — P-66 kept; S38's note and P-34 name *the first missing document*.
 
 The totals command and its output are at the top of this file.
+
+## Task 3 walks
+
+Written before the edit (Task 3's brief, Step 1), at `32ae8e93`, from the plan's Global Constraints, its *Settled after Task 1's measurements*, Task 3's dispatch and the coordinator's two clarifications sent during Task 3 (a resume gates the paths the earlier run recorded, stopping only on the rows that stop it today, and its report names a file of the pair not on the default branch when it resumed; a stop names the missing document and the command that produces it, and never claims that command goes on). Each result was filled after the edit by walking the edited `plugins/dev-workflows/commands/implement.md`, Phase 0, from the address to the end of *Gate the unit's specification and design.*; *IMPL* below is that file as edited.
+
+**The gate, per file of the pair.** A design row presumes the specification went on (W-2, W-6, W-9, W-13); where the specification stops, the design is not tested (one stop per run). The four run kinds read the same Phase 0: a companion run and a tasks-only run are found only in Phase 1, after the gate, and a later run for a unit already built differs from a first run only in what Phase 1.4 and Phase 1 find later.
+
+| # | File | Gate return, and the file | Unit | Expected | First run | Later run for the unit | Companion run | Tasks-only run |
+|---|---|---|---|---|---|---|---|---|
+| W-1 | `specification.md` | a stopping row (D, E, a C row, B′, G, I) | Epic unit (`focus_key` set) | stops per §4.4, naming `$SPECS_PATH`, as before | Matches | Matches | Matches | Matches |
+| W-2 | `specification.md` | `pass` / `pass_amending` | Epic unit (`focus_key` set) | goes on (spec: the design is tested next; design: past the gate) | Matches | Matches | Matches | Matches |
+| W-3 | `specification.md` | `absent`, in the unit's folder, HEAD lacks it | Epic unit (`focus_key` set) | stops `IMPLEMENT_SPEC_NOT_HANDED_OFF`, uncommitted form, `<new-branch>` under `spec/` | Matches | Matches | Matches | Matches |
+| W-4 | `specification.md` | `absent`, in the unit's folder, HEAD holds it | Epic unit (`focus_key` set) | stops `IMPLEMENT_SPEC_NOT_HANDED_OFF`, committed form (row F's HEAD-holds commands) | Matches | Matches | Matches | Matches |
+| W-5 | `specification.md` | `absent`, not in the unit's folder | Epic unit (`focus_key` set) | stops `IMPLEMENT_NEEDS_SPEC`, naming what *the first missing document* names (W-38 to W-40) and the direct run | Matches | Matches | Matches | Matches |
+| W-6 | `specification.md` | `unmanaged`, in the unit's folder | Epic unit (`focus_key` set) | goes on | Matches | Matches | Matches | Matches |
+| W-7 | `specification.md` | `unmanaged`, not in the unit's folder | Epic unit (`focus_key` set) | stops `IMPLEMENT_NEEDS_SPEC`, unmanaged form (no handoff or merge), naming what *the first missing document* names (W-38 to W-40) and the direct run | Matches | Matches | Matches | Matches |
+| W-8 | `specification.md` | a stopping row (D, E, a C row, B′, G, I) | PRD-level broad slice (`focus_key` null) | stops per §4.4, naming `$SPECS_PATH`, as before | Matches | Matches | Matches | Matches |
+| W-9 | `specification.md` | `pass` / `pass_amending` | PRD-level broad slice (`focus_key` null) | goes on (spec: the design is tested next; design: past the gate) | Matches | Matches | Matches | Matches |
+| W-10 | `specification.md` | `absent`, in the unit's folder, HEAD lacks it | PRD-level broad slice (`focus_key` null) | stops `IMPLEMENT_SPEC_NOT_HANDED_OFF`, uncommitted form, `<new-branch>` under `spec/` | Matches | Matches | Matches | Matches |
+| W-11 | `specification.md` | `absent`, in the unit's folder, HEAD holds it | PRD-level broad slice (`focus_key` null) | stops `IMPLEMENT_SPEC_NOT_HANDED_OFF`, committed form (row F's HEAD-holds commands) | Matches | Matches | Matches | Matches |
+| W-12 | `specification.md` | `absent`, not in the unit's folder | PRD-level broad slice (`focus_key` null) | stops `IMPLEMENT_NEEDS_SPEC`, naming what *the first missing document* names (W-38 to W-40) and the direct run | Matches — names `/product-workflows:specify <PRD>` or, by the PRD's state, its landing, `/product-workflows:create-prd <PRD>` or the rename (W-38, W-39); the 0-Epic question that precedes the gate on a PRD address is Task 4's | Matches — names `/product-workflows:specify <PRD>` or, by the PRD's state, its landing, `/product-workflows:create-prd <PRD>` or the rename (W-38, W-39); the 0-Epic question that precedes the gate on a PRD address is Task 4's | Matches — names `/product-workflows:specify <PRD>` or, by the PRD's state, its landing, `/product-workflows:create-prd <PRD>` or the rename (W-38, W-39); the 0-Epic question that precedes the gate on a PRD address is Task 4's | Matches — names `/product-workflows:specify <PRD>` or, by the PRD's state, its landing, `/product-workflows:create-prd <PRD>` or the rename (W-38, W-39); the 0-Epic question that precedes the gate on a PRD address is Task 4's |
+| W-13 | `specification.md` | `unmanaged`, in the unit's folder | PRD-level broad slice (`focus_key` null) | goes on | Matches | Matches | Matches | Matches |
+| W-14 | `specification.md` | `unmanaged`, not in the unit's folder | PRD-level broad slice (`focus_key` null) | stops `IMPLEMENT_NEEDS_SPEC`, unmanaged form (no handoff or merge), naming what *the first missing document* names (W-38 to W-40) and the direct run | Matches | Matches | Matches | Matches |
+| W-15 | `design.md` (the specification having gone on) | a stopping row (D, E, a C row, B′, G, I) | Epic unit (`focus_key` set) | stops per §4.4, naming `$SPECS_PATH`, as before | Matches | Matches | Matches | Matches |
+| W-16 | `design.md` (the specification having gone on) | `pass` / `pass_amending` | Epic unit (`focus_key` set) | goes on (spec: the design is tested next; design: past the gate) | Matches | Matches | Matches | Matches |
+| W-17 | `design.md` (the specification having gone on) | `absent`, in the unit's folder, HEAD lacks it | Epic unit (`focus_key` set) | stops `IMPLEMENT_DESIGN_NOT_HANDED_OFF`, uncommitted form, `<new-branch>` under `design/` | Matches | Matches | Matches | Matches |
+| W-18 | `design.md` (the specification having gone on) | `absent`, in the unit's folder, HEAD holds it | Epic unit (`focus_key` set) | stops `IMPLEMENT_DESIGN_NOT_HANDED_OFF`, committed form (row F's HEAD-holds commands) | Matches | Matches | Matches | Matches |
+| W-19 | `design.md` (the specification having gone on) | `absent`, not in the unit's folder | Epic unit (`focus_key` set) | stops `IMPLEMENT_NEEDS_DESIGN`, naming `/dev-workflows:design <UNIT>` and the direct run | Matches | Matches | Matches | Matches |
+| W-20 | `design.md` (the specification having gone on) | `unmanaged`, in the unit's folder | Epic unit (`focus_key` set) | goes on | Matches | Matches | Matches | Matches |
+| W-21 | `design.md` (the specification having gone on) | `unmanaged`, not in the unit's folder | Epic unit (`focus_key` set) | stops `IMPLEMENT_NEEDS_DESIGN`, unmanaged form (no handoff or merge), naming `/dev-workflows:design <UNIT>` and the direct run | Matches | Matches | Matches | Matches |
+| W-22 | `design.md` (the specification having gone on) | a stopping row (D, E, a C row, B′, G, I) | PRD-level broad slice (`focus_key` null) | stops per §4.4, naming `$SPECS_PATH`, as before | Matches | Matches | Matches | Matches |
+| W-23 | `design.md` (the specification having gone on) | `pass` / `pass_amending` | PRD-level broad slice (`focus_key` null) | goes on (spec: the design is tested next; design: past the gate) | Matches | Matches | Matches | Matches |
+| W-24 | `design.md` (the specification having gone on) | `absent`, in the unit's folder, HEAD lacks it | PRD-level broad slice (`focus_key` null) | stops `IMPLEMENT_DESIGN_NOT_HANDED_OFF`, uncommitted form, `<new-branch>` under `design/` | Matches | Matches | Matches | Matches |
+| W-25 | `design.md` (the specification having gone on) | `absent`, in the unit's folder, HEAD holds it | PRD-level broad slice (`focus_key` null) | stops `IMPLEMENT_DESIGN_NOT_HANDED_OFF`, committed form (row F's HEAD-holds commands) | Matches | Matches | Matches | Matches |
+| W-26 | `design.md` (the specification having gone on) | `absent`, not in the unit's folder | PRD-level broad slice (`focus_key` null) | stops `IMPLEMENT_NEEDS_DESIGN`, naming `/dev-workflows:design <UNIT>` and the direct run | Matches — names `/dev-workflows:design <PRD>`; on a multi-component PRD F-14's `/product-workflows:epics <PRD>` is Task 4's to add | Matches — names `/dev-workflows:design <PRD>`; on a multi-component PRD F-14's `/product-workflows:epics <PRD>` is Task 4's to add | Matches — names `/dev-workflows:design <PRD>`; on a multi-component PRD F-14's `/product-workflows:epics <PRD>` is Task 4's to add | Matches — names `/dev-workflows:design <PRD>`; on a multi-component PRD F-14's `/product-workflows:epics <PRD>` is Task 4's to add |
+| W-27 | `design.md` (the specification having gone on) | `unmanaged`, in the unit's folder | PRD-level broad slice (`focus_key` null) | goes on | Matches | Matches | Matches | Matches |
+| W-28 | `design.md` (the specification having gone on) | `unmanaged`, not in the unit's folder | PRD-level broad slice (`focus_key` null) | stops `IMPLEMENT_NEEDS_DESIGN`, unmanaged form (no handoff or merge), naming `/dev-workflows:design <UNIT>` and the direct run | Matches — the same, unmanaged form | Matches — the same, unmanaged form | Matches — the same, unmanaged form | Matches — the same, unmanaged form |
+
+**The other walks.**
+
+| # | Walk | Expected | Result |
+|---|---|---|---|
+| W-29 | Both files of the pair nowhere (no ref, not in the folder), Epic unit | one stop, `IMPLEMENT_NEEDS_SPEC`; `design.md` neither tested nor reported | Matches — IMPL:323, *the design … only where the run goes on past it*; IMPL:323 *So the run stops at most once here, and where both files are missing it stops on the specification* |
+| W-30 | Review Focus 1 — a direct run, `/implement fix the typo in the README` | resolves no unit; tests, asks and prints nothing new; *Gate the unit's specification and design.* gates no pair; a spec-folder token's `specification.md`/`design.md`, where one is given, gated as before (a stopping row stops, every other return goes on) | Matches — *The unit's pair* and the gate's opening are keyed (IMPL:279, :323 *On a fresh keyed run, execute*); the token paragraph (IMPL:395) keeps the old mapping for a spec-folder file on any run that has one; *Ending early*, Phase 0.5 and later phases unchanged for a direct run; no new question or print |
+| W-31 | Review Focus 2 — a later fresh keyed run (a follow-up, or a security-finding fix on the Epic's open branch) for a unit built before this batch with a specification on the default branch and no `design.md` anywhere | `IMPLEMENT_NEEDS_DESIGN`, saying the unit has no design and that a keyed run — a later one for a unit already built included — builds from both documents, naming `/dev-workflows:design <UNIT>` and the direct run; no accusation, nothing said to have broken | Matches — IMPL:388: *every keyed run for a unit — a first one, or a later one for a unit already built — builds from the unit's specification.md and design.md … and <UNIT> has its specification there but no design*, then `/dev-workflows:design <UNIT>` and the direct run |
+| W-32 | Review Focus 3 — `$SPECS_PATH` no git repository (row H, `unmanaged`): both files in the folder / `specification.md` not in it / `specification.md` in it and `design.md` not | goes on / `IMPLEMENT_NEEDS_SPEC` unmanaged form / `IMPLEMENT_NEEDS_DESIGN` unmanaged form; neither form names a handoff, a merge or `<default>` | Matches — IMPL:329 (`unmanaged` split on the folder's file) and IMPL:391 (the unmanaged forms: no ref, no handoff, no merge, no `<default>`) |
+| W-33 | Review Focus 5 — a resumed run whose recorded `design.md` left the default branch, or was never handed off, after the run started (the gate returns `absent`), before its first edit and after it | goes on; none of the four stops; the Phase 5 report names `design.md` as not on the default branch when the run resumed | Matches — IMPL:94: *At any point, before its first edit as after it*; `absent` goes on; the line `Not on <default> when this run resumed: <path>` into `assumptions` after step 9 (IMPL:113 *the session-model gate's and step 7's*) |
+| W-34 | A resumed run of a run started before this batch whose recorded `spec_paths` hold no `design.md` (it answered *Proceed without specs*, or built from a specification alone) | goes on; none of the four stops; the Phase 5 report names `design.md` as a file of the pair the run it resumes did not record | Matches — IMPL:94: `Not among the files the run this resumes recorded, so not gated or read: <path>`. Worded apart from W-33's on purpose: an unrecorded file is not gated on a resume, so the run cannot say whether the default branch holds it (report, *Concerns*) |
+| W-35 | A resumed run on a stopping row (D, E, a C row, B′, G, I) for a recorded file | stops per §4.4, as today | Matches — IMPL:94: *a stopping state stops per §4.4, naming `$SPECS_PATH`, as it does on any run* |
+| W-36 | A resumed run whose recorded path is missing from disk before a dispatch | the existing `test -e` stop (P-139), unchanged | Matches — IMPL:94 names the brief's own test as a different check it leaves as it stands; the `test -e` paragraph's text unchanged (P-139; IMPL:473 at `aeedacf0`, IMPL:544 as edited) |
+| W-37 | A resumed run on a recorded path the earlier run noted (`note_blobs`) | as today: no gate where the note and the blob stand; stop where either changed; gate where the blob is `null` | Matches — IMPL:94's last sentences, unchanged but for *as for any other recorded path* |
+| W-38 | *The first missing document*, `prd.md` rung — `specification.md` nowhere, on the idea route: `prd.md` nowhere with no pre-rename file / a pre-rename file / `prd.md` in the PRD folder on no ref (HEAD lacks it, HEAD holds it) / `prd.md` on a plugin branch (rows D, E) | `IMPLEMENT_NEEDS_SPEC` naming `/product-workflows:create-prd <PRD>` / the PRD under its old file name, naming `/product-workflows:specify <UNIT>` and saying it stops there and prints the rename's commands / the landing of `prd.md` — row F's commands in the form its HEAD test selects, never `/product-workflows:create-prd` / the commands rows D or E give | Matches — IMPL:381, :382, :383, :384 (the four `prd.md` states that are gaps; the rename names `/product-workflows:specify <UNIT>` and says it stops) |
+| W-39 | *The first missing document*, `specification.md` rung — `specification.md` nowhere, `prd.md` on the default branch, or a slice holding no `prd.md` | `IMPLEMENT_NEEDS_SPEC` naming `/product-workflows:specify <UNIT>` | Matches — IMPL:380 |
+| W-40 | *The first missing document*, `design.md` rung — `specification.md` gone on, `design.md` nowhere | `IMPLEMENT_NEEDS_DESIGN` naming `/dev-workflows:design <UNIT>` | Matches — IMPL:388–389 |
+| W-41 | A keyed run with a spec-folder `@path` token holding a `specification.md`, the unit's own folder holding none | the token's file is context only, stands in for nothing; `IMPLEMENT_NEEDS_SPEC` on the unit's | Matches — IMPL:279 (*beside any file a spec-folder token added as context*) and IMPL:395 (*stands in for no file of the pair*; its own mapping, `absent` going on) |
+| W-42 | The specs question and every carrier of its answer | gone: `Point me at a specs directory` and `Proceed without specs` count 0 outside history | Matches — `Point me at a specs directory` **0**, `Proceed without specs` **0** (S1, S2); no run-state key carried the answer (measurement 8), and its `### Assumptions & limitations` line went with the question |
+| W-43 | Each of the four stops | takes *Ending early*'s tail (Phase 7's cost entry and `commit-artifacts`, no run-state file of its own, no Phase 5 report); no `emit-block`; §4.4's four parts in order; commands on lines of their own, no `#` comment | Matches — IMPL:16 lists the four; IMPL:393 *None of the four stops is a plugin gap, so `emit-block` does not fire; each takes *Ending early*'s tail*; each form found, not done, commands, ignored, in that order; command lines carry no `#` |
