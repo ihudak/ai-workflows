@@ -1,6 +1,6 @@
 ---
 name: conformance
-description: Delivery conformance check. Given an Epic (run by its Dev, before its pull request merges) or a PRD (run by the PE, once every Epic has merged), traces every requirement against the Epic's branch, or each repository's default branch, has a person settle each discrepancy — fix the code, amend the document, or accept — and records the decisions in _conformance.md. Changes no code and rewrites no requirement.
+description: Delivery conformance check. Given an Epic (run by its Dev, before its pull request merges) or a PRD (run by the PE, once every Epic has merged), traces every requirement against the Epic's branch, or each repository's default branch, has a person settle each discrepancy — fix the code, amend the document, or accept, never on a threat mitigation or on an ARD Rule an unused threat model may rest on — and records the decisions in _conformance.md. Changes no code and rewrites no requirement.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 disable-model-invocation: true
 ---
