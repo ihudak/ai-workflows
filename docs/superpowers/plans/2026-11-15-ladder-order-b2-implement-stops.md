@@ -42,7 +42,7 @@ The **unit** is the folder a keyed run resolved its `specs` from: an Epic's fold
 - `/ready`: it reports and never stops. `/epics`' and `/ready`'s scopes of `multi-component-prereqs`.
 - `/design`'s own gate on `specification.md` and its stops' tests; only what its stops and offers NAME changes (§5.5).
 - On a multi-component PRD, taking the flat pair whole stays a question with *Split* recommended, never an auto-selection.
-- A resumed run that is already past its first edit is never stopped by a document removed since (design §5.2).
+- A resumed run is never stopped by this batch's four stops (design §5.2, as settled below); the command's older stop on a recorded path missing from disk before a dispatch is a different check and stays.
 - `plugins/workflows-core/reference-parts/` is generated: edit the reference, then `python3 scripts/reference-parts.py generate`.
 - The BRD route's ledger tests are batch 4's: on a slice, the earliest gap's last rung names `/product-workflows:specify <UNIT>` here.
 
