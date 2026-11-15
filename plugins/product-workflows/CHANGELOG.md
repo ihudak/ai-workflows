@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.83.1] — 2026-11-15
+
+LADDER-ORDER batch 2: one sentence of `/specify`'s next step, which describes `dev-workflows` 4.68.0's `/design`. Released with `workflows-core` 1.94.0, whose PE lane says the same, and `dev-workflows` 4.68.0 and `security-workflows` 0.12.5. Which routes the next step offers, and when, is unchanged.
+
+### Changed
+
+- **`/specify`'s next step after a PRD-level specification** says that `/dev-workflows:design <PRD>`, on a multi-component PRD whose Epic folders hold no `specification.md` on the default branch, stops naming, for each such Epic, what that Epic needs first, as `/design` words it; it said that stop named `/product-workflows:specify <PRD>` for an Epic with no specification and the merge of the branch or pull request for one not yet merged.
+
 ## [3.83.0] — 2026-11-15
 
 LADDER-ORDER batch 1b: `/epics` stops while the PRD it splits is not on the specs repository's default branch, and the fixes found at batch 1's end and while building this batch. **This is a behaviour change**: `/epics` read `prd.md` from the working tree and gated it nowhere, so a run typed in the same sitting as `/create-prd`, before the PRD's pull request merged, drafted Epics from it and only named the landing in its offers; it now stops and names what puts the PRD on the default branch. Update with `workflows-core` 1.93.0, whose `phase-handoff` §3.4 row describes this stop; `dev-workflows` 4.67.1, pages only, is released with it. On a specs tree that is no git repository nothing changes.
