@@ -39,9 +39,10 @@ Given a resolved `PRD-` folder (`references/addressing.md` §3) and no Epic in t
 - **Exactly one `EPIC-` folder** → no picker; auto-proceed for it, and emit a one-line notice saying
   which, so an auto-selection is never silent — save where the command's own policy asks instead:
   `/implement` puts that Epic and one broad PRD-level slice to the operator where the PRD folder
-  holds its own `specification.md` and `design.md` on the default branch, the broad slice `/design` designs as one unit, and asks
-  whether to implement it again where the one Epic already holds an implementation record (`/implement`
-  Phase 0) — never on a multi-component PRD, where the flat `specification.md` is a requirements source and no slice (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3); and `/specify`, on a multi-component PRD with no PRD-level `specification.md`, puts that Epic and the broad PRD-level spec to the operator, the spec recommended (`/specify` Phase 2).
+  holds its own `specification.md` and `design.md` on the default branch, the broad slice `/design` designs as one unit
+  — never on a multi-component PRD, where the flat `specification.md` is a requirements source and no slice (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3) —
+  and asks whether to implement the one Epic again where it already holds an implementation record (`/implement`
+  Phase 0); and `/specify`, on a multi-component PRD with no PRD-level `specification.md`, puts that Epic and the broad PRD-level spec to the operator, the spec recommended (`/specify` Phase 2).
 - **Two or more** → render the picker, one row per Epic: its marker, its `key` (read from the
   folder's frontmatter per §4, never parsed from the directory name) and its title — **capped at four
   options, see *The cap* below**.
