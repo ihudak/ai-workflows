@@ -209,6 +209,16 @@ Found while SEC-G2 C built `/dev-workflows:design`'s threat review (`docs/superp
   - **Until then.** Review is the check for that one form; every other dash form still fails the gate.
   - **Evidence.** SEC-G2 C's final whole-branch review (2026-11-15), its table of the `[DT#N]` gate's mutation tests: on a scratch copy of the gate and its fixtures, `[DT-3 here` exits 0, and so does `[US-3 here` on `main`.
 
+## From LADDER-ORDER batch 1b — any machine
+
+Found by LADDER-ORDER batch 1b's final whole-branch review (2026-11-15; `docs/superpowers/plans/2026-11-15-ladder-order-b1b-epics-gate.md`, `product-workflows` 3.83.0, `workflows-core` 1.93.0), beside `/update-spec`'s new differing-copy test. LINEAGE-FILTERS is older than the batch: every `--from-disk` capture has taken the path it describes.
+
+- **LINEAGE-FILTERS — `lineage.py` hashes a `--from-disk` input with no clean filter or line-ending conversion.** Owner: `workflows-core`, `scripts/lineage.py`'s `capture` (its `_hash_bytes`), with `document-lineage` §5. Priority: the maintainer's to schedule; no Linux container checkout reaches it.
+  - **The case.** `capture` reads a `--from-disk` input's bytes and hashes them with `git hash-object --stdin` and no `--path`, so git applies no clean filter and no line-ending conversion, while its stored blobs and `/product-workflows:update-spec`'s differing-copy test (`git hash-object -- "./<path>"`, which names the path) apply both. On a checkout with `core.autocrlf=true`, or a clean filter, and a CRLF working copy, the differing-copy test says *equal*, the capture goes `--from-disk`, and the record names a blob the repository does not hold. `document-lineage` §5's *a working-tree copy equal to the default branch's has the default branch's blob* is false there, for every command's `--from-disk` capture.
+  - **What would fix it.** Hashing with the path, `git hash-object --stdin --path <path>`, so git converts the bytes as it does for a stored blob, with a `lineage.py` selftest case: a scratch repository with `core.autocrlf=true` and a CRLF working copy, whose `--from-disk` capture names the default branch's blob.
+  - **Until then.** No Linux container checkout reaches it, by the review's reading; a checkout that converts line endings or runs a clean filter on a specs file does.
+  - **Evidence.** The review's scratch repository, re-run while this was filed: with `core.autocrlf=true` and a CRLF working copy, `git hash-object -- ./f.md`, `git rev-parse main:./f.md` and `git hash-object --stdin --path f.md` print one id, and `git hash-object --stdin`, what `_hash_bytes` runs, another.
+
 ## Accepted — known, not to fix
 
 - **Which of the customer's sentences is the reason** a `/brd-reconcile` *Correct it* copies out of the review is a reading no test can make. product-workflows 3.34.5 records every *Correct it* pick in the reconciliation record — the reader's row, the corrected `chosen` and reason, and where in the review each was copied from — so the pick can be checked, as a re-point already is. Nothing further can be done in the command; a reviewer of the record is the check.
