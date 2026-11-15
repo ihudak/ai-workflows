@@ -469,13 +469,29 @@ deletes a requirement.
 - **A `stale` entry the PE marks resolved, and every `fixed` entry** → `resolved` on the PRD record's
   entry, ruling `resolved <EPIC-KEY>/[DD#k]`.
 
+**Where each threat stands** is worked out here, once, on a `traced` run alone, from what this run holds — no state is asked about.
+
+**A mitigation's state** is `open` where it is a discrepancy, *unverified*, or named — by its identity, as Phase 4 matches an entry — by an entry of the record this run writes that is not `resolved`, `orphaned` or `requirement withdrawn`, whatever it decided: an amended mitigation stays `open` until its document changes, and an `accept` on what is now a mitigation leaves its threat `open` only where this run did not put the entry — a `lists:` entry, one a hand edit gave a `ruling:` beside its `lists:` included. Otherwise it is `not checked` where it is untraced — routed to no repository — or `not-checkable`, or, on an Epic run, `satisfied` with sibling parts named; and otherwise `verified`: `satisfied`, as Phase 2 composed it and Phase 3 re-read it in this run.
+
+**Each live threat in scope** takes the first of these that holds:
+1. `unreadable` — `workflows-core:threat-model-format` §10, which *Threat input* loaded, found it not in format §4's form; its reason is what is wrong, in §10's words.
+2. `stale` — it fails a test of format §6; its reason names each, as `test <n>`, joined by `, `.
+3. `accepted` or `review due` — its Disposition opens `Accepted — `: `review due` where its review date — the text after the Disposition's last `; review by `, none where it holds none — does not match `^[0-9]{4}-[0-9]{2}-[0-9]{2}$`, or matches and `python3 -c 'import sys,datetime as d; print(d.date.fromisoformat(sys.argv[1]) < d.date.fromisoformat(sys.argv[2]))' "<review date>" "<the date the record's Run: line carries>"` prints anything but `False`; otherwise `accepted`.
+4. Otherwise the worst of its parts, `open` before `unanswered` before `not checked` before `verified`:
+   - **the mitigated part**, where its Disposition opens `Mitigated by `: `open` where any pair's mitigation is; else `not checked` where any pair joined none (Phase 1 (b) step 8) or its mitigation is; else `verified`;
+   - **the deferred part**, where its Disposition opens `Deferred to design: ` or holds `; the rest deferred to design: `. *M* is the `[DT#N]` requirements of in-scope entries whose `Answers` is, whole, the threat's ref. Where *M* holds one: `open` where any of them is; else `verified` where any is; else `not checked`. Where it holds none, `unanswered`, its reason the first of these that an in-scope entry answering the threat bears: `returned to the architect`, its Disposition opening `Returned to the architect — `; on an Epic run, `answered elsewhere — not verified on this run`, its Disposition opening `Not this design's — answered in `; `no design takes it`, its Disposition opening `Not this design's — `; and, where none does, `no design answers it`.
+
+**An in-scope entry that answers no live threat in scope with a deferred part** stands alone, on a line of its own: its state is its Rule's, as a mitigation's above, where it is a `[DT#N]` requirement; `unanswered — returned to the architect` where its Disposition opens `Returned to the architect — `; `not checked — not this design's` where its Disposition opens `Not this design's — answered in [[`, `Not this design's — the interface it attacks is not built by this design: ` or `Not this design's — does not arise: `; and `unreadable` otherwise. Why it stands alone: `it answers no threat` where its `Answers` is `—`; `its threat is in no model this run read` where the `[[…]]` of its `Answers` holds, whole, no key of a folder whose model this run read; and otherwise `it answers no live threat with a deferred part`.
+
+**The lines** take `conformance-format.md` §2's form, `<KEY>` always the run's own key for the folder and `N` the number Phase 1 (b) matched. A threat's line names, in its last part, each mitigation of its parts as `[[<KEY>]] <id>` with its verdict or its entry's `[DD#n]`, each pair that joined none as `<n> pair(s) joined to no requirement`, each other in-scope entry answering it as `[[<KEY>]] [DT#N]`, and, on `no design answers it`, each design *Threat input* read that holds no `## Threat review`, as `[[<KEY>]] design.md` — on a PRD run, for an Epic folder's model, that Epic's alone.
+
 **Write `_conformance.md`** into the unit's folder per `conformance-format.md`: §2's header — with its
 `At:` line, right after `Run:`, the `started_at` Phase 0 step 1 took, verbatim, never a new reading of the clock (**where the run no longer holds `started_at` verbatim** — a long run whose context has lost it — write no `At:` line: a later reading would pass as the run's start, to the second, and no reader could tell it from a true one, while with no `At:` line every reader applies its stated date limits — and under `workflows-core:source-truth` §7.8 rule 1 an Epic record's later `At:` takes the unsafe direction, setting aside the ruling of a PRD run that started after the Epic run truly did); the
-ref and commit each repository was traced at; its `Not traced:` line — the requirement-bearing subset of what Phase 7's *Scope* line *Not traced* reports: each `prd.md`, `epic.md` or `specification.md` this run should have traced but could not read, and each ARD file Phase 1 (b) refused by its name, in the words (b) gives, each marked `(requirements uncounted)`, a PRD-level `specification.md` only where one exists, and each repository with no clone or no default branch with the count of requirements it left untraced, the total of those counts first and only where it names a repository, never a `design.md` — and its `Not shown merged:` line, the units Phase 7's *Traced where not shown merged* names, both as `conformance-format.md` §2 says and each `none` where it names nothing; and the counts, `unverified` included — then the `## Satisfied`
-list, one line per satisfied requirement with its evidence paths, followed on an Epic run by each sibling Epic's part it places (`conformance-format.md` §2) — those whose discrepancy the re-check dropped included, with the evidence that settled it — then the `## Unverified` list, one line per unverified requirement with what would settle it, then the `## Not checkable` list, one line per `not-checkable` requirement with the tracer's `reason` — on an Epic run, a Rule that binds only components other than this Epic's naming each component it binds and the sibling Epic that targets it, as the report's *Verdicts* does — left out where there is none, then the `## Discrepancies` heading and §3's entries under it. On a re-run, apply
+ref and commit each repository was traced at; its `Not traced:` line — the requirement-bearing subset of what Phase 7's *Scope* line *Not traced* reports: each `prd.md`, `epic.md` or `specification.md` this run should have traced but could not read, and each ARD file Phase 1 (b) refused by its name, in the words (b) gives, each marked `(requirements uncounted)`, a PRD-level `specification.md` only where one exists, and each repository with no clone or no default branch with the count of requirements it left untraced, the total of those counts first and only where it names a repository, never a `design.md` — and its `Not shown merged:` line, the units Phase 7's *Traced where not shown merged* names, both as `conformance-format.md` §2 says and each `none` where it names nothing; the counts, `unverified` included; and, where `threat_input` is not `none`, the `Threats:` line, its second form on a `not-traced` run — then the `## Satisfied`
+list, one line per satisfied requirement with its evidence paths, followed on an Epic run by each sibling Epic's part it places (`conformance-format.md` §2) — those whose discrepancy the re-check dropped included, with the evidence that settled it — then the `## Unverified` list, one line per unverified requirement with what would settle it, then the `## Not checkable` list, one line per `not-checkable` requirement with the tracer's `reason` — on an Epic run, a Rule that binds only components other than this Epic's naming each component it binds and the sibling Epic that targets it, as the report's *Verdicts* does — left out where there is none, then, where the `Threats:` line stands, `## Threats` — a `not-traced` run's holding its `Models read:` line alone — then the `## Discrepancies` heading and §3's entries under it, an entry or `## Satisfied` line the legacy match read written as §3's rule 2 says. On a re-run, apply
 §5: carry each decided entry forward while its discrepancy persists, save an `accept` Phase 4 put again, which takes its answer, mark it `resolved` once the code
 satisfies its requirement, mark it `requirement withdrawn` where its requirement is superseded or
-withdrawn and `orphaned` where its text is no longer in its document, withdrawing a `fix-code`
+withdrawn — a `[DT#N]`'s where its design's entry is withdrawn or no longer `Mitigated`, save on a `not-traced` run, which carries each `[DT#N]` entry forward as it stands — and `orphaned` where its text is no longer in its document, withdrawing a `fix-code`
 entry's follow-up for either, and number new discrepancies after the highest id on file. A PRD run's record lists every
 Epic entry it ruled on, with the ruling — `confirms`, `overrules` or `resolved` — and every one it only
 listed, with its flag, each as an entry of its own (`conformance-format.md` §3) — one it only listed
@@ -526,7 +542,7 @@ record, every Epic `_conformance.md` this run marked `superseded-by`, every docu
 every path in Phase 5.5's `maintenance_paths`.
 Its class is the strongest among its paths, since a set spanning classes takes the strongest class (§4.0), and the array is §4.3's for that class, presented
 verbatim:
-- **A set holding an annotated document** — `specification.md`, `prd.md`, `epic.md` or `ard.md`, each
+- **A set holding an annotated document** — `specification.md`, `prd.md`, `epic.md`, `ard.md` or an `ard-<area>.md`, each
   gated onto the default branch by the commands that read it next — is **gated — stopping**:
   ```
   choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
@@ -560,7 +576,7 @@ they ride the same commit.
 On its first option, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with
 `prefix: conformance`; `feature_folder` = `unit_folder`, the unit's folder; `deliverable_paths` = the set above, one
 literal path each, relative to `$SPECS_PATH` (§2.9); `title: <KEY> Settle delivery conformance`; `body_facts` = the counts by verdict,
-each decision, on a PRD run the rulings on Dev's entries, and the documentation or `CLAUDE.md` edit at
+each decision, on a PRD run the rulings on Dev's entries, where the `Threats:` line stands that line, the entries after its `not read:` replaced by their number, and, one line each, every threat and stand-alone entry not `verified` or `accepted`, as its `[[<KEY>]] [TH#N]` or `[[<KEY>]] [DT#N]`, its state and its reason (Phase 5) — every word Phase 5's own or the run's key or a number it matched, never a title or any other text of a model, a design or a tracer — and the documentation or `CLAUDE.md` edit at
 each path in Phase 5.5's `maintenance_paths`, the only edits the handoff carries; and `inputs_read` = the
 record of reads Phase 0 began. Emit its §4.1 outcome line in the report,
 with the `<downstream-clause>` of the class presented. On its second or third option, the set stays
@@ -598,6 +614,9 @@ Emit the terminal report:
 [each not-checkable requirement and its reason, on either run — on an Epic run, a Rule that binds only components other than this Epic's names each component it binds and the sibling Epic that targets it, where one does — or omit where there is none]
 [PRD run only: each requirement an Epic record lists under `## Not checkable`, with the reason recorded there, beside the verdict this run traced (Phase 1 (d)) — or omit where there is none]
 
+### Threats
+[only where `threat_input` is not `none` — or omit: the record's `Threats:` line, then, in one flat list, each line of its `## Threats` whose state is not `verified` or `accepted`, each ending with its owner's route, as the *Next step* below gives it]
+
 ### Discrepancies
 [each [DD#n]: requirement, verdict, what shipped, decision and status — each entry of a cluster marked with the cluster's shared location and its other [DD#n]s, and whether the cluster was decided whole or split; carried-forward entries marked so, and on a PRD run each of a unit traced under *Trace anyway* — an Epic, or the PRD itself where it has no Epic folder — marked as traced where its merge was not shown]
 
@@ -605,7 +624,7 @@ Emit the terminal report:
 [every Epic entry with the PE's ruling and its flag, the listed-only ones included; each entry this run could not mark because an unmerged `conformance/` branch carries that Epic's newer record — read from that branch, or overruled on the merged copy under *Use the merged record instead* — and each follow-up line the checkout does not hold yet, naming the branch it is on where known: a later PRD run applies each held-back overrule once no `conformance/` branch carries that Epic's record, and ticks each such line once the checkout holds it — its `withdraws:` field keeps `/dev-workflows:implement` from building it meanwhile; each held-back ruling a later run found on a reused `[DD#k]` naming another requirement, as not applied; each confirmed `fix-code` entry whose follow-up line the checkout lacks but a `conformance/` branch holds open, beside that branch, as queued nothing because the line arrives with that branch (Phase 5); omit on an Epic run]
 
 ### Unverified
-[each requirement the re-check could not settle, and what would settle it — or "none"]
+[each requirement the re-check could not settle — or Phase 2's tests held, for a mitigation — and what would settle it — or "none"]
 
 ### Dropped at the re-check
 [each verdict the re-check dropped, or judged again without a sibling Epic's part, and why — or "none"]
@@ -649,11 +668,12 @@ The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "nex
   every Epic has merged — the whole route where the run traced no branch before the merge;
 - a PRD run → for a `fix-code` decision, `/dev-workflows:implement <EPIC-KEY>` from repository
   `<slug>`, as its follow-up names it — for a PRD-level
-  requirement, the Epic Phase 4 named or chose, or `<PRD-KEY>` where the PRD has no Epics; for
+  requirement, as Phase 4 reads one, the Epic Phase 4 named or chose, or `<PRD-KEY>` where the PRD has no Epics; for
   an `amend-document` decision,
   `/product-workflows:update-prd <PRD-KEY>`, `/product-workflows:update-spec <KEY>`,
-  `/product-workflows:epics <PRD-KEY>` or `/product-workflows:create-ard <KEY>`, as the note names; once
-  settled, `/docs-workflows:document <PRD-KEY>` and `/docs-workflows:release-notes <PRD-KEY>`.
+  `/product-workflows:epics <PRD-KEY>` or `/product-workflows:create-ard <KEY>`, as the note names, or `/dev-workflows:design <KEY>` for a `[DT#N]`, which takes no note; once
+  settled, `/docs-workflows:document <PRD-KEY>` and `/docs-workflows:release-notes <PRD-KEY>`;
+- either run, each line of `### Threats` → each route of its owner's that applies: **Dev** → `/dev-workflows:design <KEY>` for `unanswered — no design answers it`, `<KEY>` each design the line names, or, where it names none, the run's own key — on a PRD run, for an Epic folder's model, that Epic's — and for an `open` held by a `[DT#N]` decided *Amend the document*, `<KEY>` its entry's `document:` key; **PA** → `/product-workflows:create-ard <KEY>`, `<KEY>` the model's folder's — on a stand-alone line, the run's key the `[[…]]` of its `Answers` holds, whole, else `<PRD-KEY>` — for `stale`, `review due` and `unreadable`, and, the line then ending `No command re-disposes a live threat that is not stale yet: the architect supersedes the decision, or waits for the intake of returned threats.`, for `unanswered — returned to the architect`, `unanswered — no design takes it`, and an `open` on a decision the team will not build — an `[AD#n]` mitigation whose entry is not, whole, `fix-code`; any other `open` → the route of what holds it, a `fix-code` entry's above, or this command again for an *unverified* mitigation; on an Epic run, `answered elsewhere — not verified on this run` and `not checked` → the PE's `/dev-workflows:conformance <PRD-KEY>`; on a PRD run, `not checked` names no command. The scan after an Epic run with no `fix-code` decision stays as above.
 
 An offer carries `<merge-clause>`, in a span of its own after the command's, resolved from Phase 6's
 `Phase handoff:` line per `workflows-core:next-phase-offer`'s *resolution table*, where Phase 6 handed off a document the
@@ -709,6 +729,8 @@ Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission
 - NEVER rewrite, renumber or delete a requirement; a document changes only by an `## Engineering review` note
 - NEVER decide for the person: every open discrepancy is put to them, and a free-text answer is normalised or re-asked
 - NEVER accept a mitigation's discrepancy, a walk-only one's included, on any array or from free text, nor carry an `accept` on file forward on one (Phase 4, *A mitigation*)
+- NEVER write into a `threat-model.md`, a `design.md` or a findings register; NEVER gate, repair or stop on a threat model, or on the PRD-level `ard-resolution` call made for one (Phase 1 (b), *Threat input*) — the PRD folder's `design.md` a model brings into Phase 0 step 4's gate is gated as any document read
+- A threat reads `verified` only on a trace and a re-read made in this run (Phase 5, *Where each threat stands*): no record, read back or carried, makes one so
 - NEVER hide a Dev entry from the PE: a PRD run lists every Epic entry with its ruling or its flag, `stale`, `orphaned` and `requirement withdrawn` ones included
 - A `[DD#n]` is permanent: never renumbered or reused (`conformance-format.md` §5)
 - ALWAYS run `specs-preflight`, the document gate and the record check at Phase 0, and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`)
