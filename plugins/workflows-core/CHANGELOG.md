@@ -43,6 +43,14 @@ The design (`docs/superpowers/specs/2026-11-14-sec-g2-c-design-threat-review-des
 - **Failing closed holds every value, whatever its origin.** D5's older-core case dispatches no agent, proposes no candidate and says why in one line, which left the run's own values — what the Dev or the PA types, a reviewer's fix — unheld where §9 is missing. As built, each command then holds every value it shows or writes to one line by a copy of the line-ending list kept for that case alone, and still builds what its later steps resolve against.
 - **`phase-handoff` takes more than the design's two rows and three sentences**: §3.7's passage, which the maintainer allowed, and the truth edits listed under *Changed*, under the maintainer's standing permission; each is named in the pull request.
 
+## [1.91.1] — 2026-11-15
+
+`implementation-format` §5 says which block is the latest: batch B41 (IF5-LATEST). Update with `dev-workflows` 4.66.4 and `security-workflows` 0.12.3.
+
+### Fixed
+
+- **§5's *Latest, earlier and earliest* orders blocks by one key**: each block stands at its instant (§1's *A block's instant*) where it has one, else at the earliest instant its heading's local date can name, `10:00:00Z` the day before, and of two at the same point the one further down the file is later; its limits are stated. `unit-branch` step 1's "latest block", the merged test's "earliest earlier block" and *A unit's work is merged*'s "latest block" said neither whether they meant a block's place in the file or its date; the two agree only while the file stands in time order, which an entry-set merge of two clones' blocks breaks, so a run could take an older block's branch for the unit's work. `next-phase-offer` takes each repository's latest block, as *A unit's work is merged* does, where it took one block for the whole file; and §1 names §5 among the readers of `at:`.
+
 ## [1.91.0] — 2026-11-14
 
 LADDER-ORDER batch 1: `phase-handoff` §3.4's rows for `/product-workflows:create-ard` and `/product-workflows:specify` now stop where the PRD they build from is missing — never produced, on the idea route, or written and never handed off, on either route — a behaviour change each row declares; and §4.4's row F gains the commands for a file committed on a branch the plugin does not hand off. Update with `product-workflows` 3.82.0, whose commands make those stops and print row F's new form; `dev-workflows` 4.66.3 and `docs-workflows` 1.39.5, pages only, are released with it. The gate itself is unchanged: it still returns `absent` on row F and never stops there.

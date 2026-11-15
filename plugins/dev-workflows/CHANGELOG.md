@@ -56,6 +56,14 @@ The design (`docs/superpowers/specs/2026-11-14-sec-g2-c-design-threat-review-des
 - **A failure of a model's lineage capture stops the run**, with `DESIGN_LINEAGE_FAILED`, as any lineage capture failure does (`workflows-core`'s `document-lineage`); the model being optional adds no exception to that shared rule.
 - ***Ending early* does not repeat a finished Epic's threat-review lines** after a later Epic stops the run; each Epic's lines are printed when its design is written, so none is lost.
 
+## [4.66.4] — 2026-11-15
+
+`/implement` and `/conformance` read "the latest block" by `implementation-format` §5's one order, and `/ready` says its pair rule is not that order: batch B41. Update with `workflows-core` 1.91.1.
+
+### Fixed
+
+- **`/implement` fetches, and `/conformance` fetches and traces, the branch of the block `workflows-core:implementation-format` §5's *Latest, earlier and earliest* names latest**, by instant where a block carries one, never by its place in the file alone; `/ready`'s *Release Preparation* test says its pair rule is its own and picks no single latest.
+
 ## [4.66.3] — 2026-11-14
 
 Docs only: LADDER-ORDER batch 1. The pages that name the companion `product-workflows` plugin's commands which stop on a missing input now name its `/create-ard` and `/specify`, and the environment page says what a command does on a specs tree that is no git repository. No command, agent or reference changes. It describes `product-workflows` 3.82.0, and needs nothing of the other plugins' releases, nor they of it.

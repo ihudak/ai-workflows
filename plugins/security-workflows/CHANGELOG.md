@@ -13,6 +13,14 @@ Docs only: SEC-G2 C. The roles page says what a design's threat review puts in f
 
 - **Roles and phases.** The Security Engineer's *Reviews a threat model in its ARD's pull request* gains what follows from a design: where the Dev takes `/dev-workflows:design`'s optional threat review, the design's pull request names each threat the Dev returned to the architect, and the design's `## Threat review` records how each threat deferred to design that lands on it, and is not stale, was answered. `/security-workflows:scan` still reads none of it.
 
+## [0.12.3] — 2026-11-15
+
+`/scan` takes a unit's branch from the block `implementation-format` §5 names latest: batch B41. Update with `workflows-core` 1.91.1.
+
+### Fixed
+
+- **The change scan's branch comes from the latest block by `workflows-core:implementation-format` §5's *Latest, earlier and earliest*** — by instant where a block carries one — never by its place in the file alone.
+
 ## [0.12.2] — 2026-11-14
 
 `/security-workflows:scan` never lists or names a branch whose name holds characters outside the safe class: batch B40. Update with `workflows-core` 1.90.2.
