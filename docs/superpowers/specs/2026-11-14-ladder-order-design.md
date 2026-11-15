@@ -190,6 +190,8 @@ Added 2026-11-14, at batch 1's end, and extended 2026-11-15 by batch 1b. Each si
 
 **Batch 2** — a keyed `/implement`, whose earliest-gap test these take (L12):
 
+*Built by batch 2 (2026-11-15): every site below was rewritten there, each a row of `docs/superpowers/plans/2026-11-15-ladder-order-b2-sweep-population.md`, and the earliest-gap test they take is the rule `workflows-core:phase-handoff` §4.4 names "The first missing document".*
+
 - `plugins/dev-workflows/commands/design.md:107`, `DESIGN_NO_SPEC`, names `/product-workflows:specify <ADDRESS>`, which stops on arrival on a folder holding only `idea.md` or a `prd.md` never handed off: name the earliest gap instead. L-B2-24.
 - `design.md:114`, with its excluded-count report at `:120`, the stop for a multi-component PRD with no specified Epic, names `/product-workflows:specify <PRD>`: as above. L-B2-25. Its statement in `.claude/rules/dev-workflows.md:64` follows it. L-B2-29.
 - `plugins/dev-workflows/commands/conformance.md:115`, `CONFORMANCE_NO_REQUIREMENTS`, names `/product-workflows:specify <KEY>`: as above. L-B2-26.
@@ -219,6 +221,7 @@ Added 2026-11-14, at batch 1's end, and extended 2026-11-15 by batch 1b. Each si
 - `plugins/product-workflows/docs/commands/create-ard.md` and `docs/commands/specify.md`, *No coverage-ledger check.*: overturned with ARD:466–480 and SPEC:702–717. L-B4-12.
 - *Found at batch 1b:* `plugins/product-workflows/commands/specify.md:678`, the slice form of the zero-Epics question, whose `"Author the PRD first — /product-workflows:create-prd <PRD> (Recommended)"` is described as *the run that writes the PRD `/epics` then reads*: since batch 1b `/epics` reads that PRD only once it is on the default branch, so the sentence owes the merge of `/create-prd`'s handoff between the two runs, beside the ledger work §5.4 gives this question. b1b P-131.
 - *Found at batch 1b:* `create-ard.md` Phase 4.3 step 8's requirement-gap line names `/product-workflows:create-prd` on a slice holding no `prd.md` whatever that slice's ledger says, while the same file's later paragraph on naming `/create-prd` (search "naming `/create-prd` without the test below") applies the ledger tests first; batch 4, which gives `/create-ard` those tests, reconciles the two.
+- *Found at batch 2 (2026-11-15), its id a row of `docs/superpowers/plans/2026-11-15-ladder-order-b2-sweep-population.md`:* `plugins/dev-workflows/commands/implement.md`'s `IMPLEMENT_BRD_NOT_SLICED` remedy, `Implement within a slice instead: '/dev-workflows:implement <SLICE-KEY>' — <each slice's key>.`, names `/dev-workflows:implement <SLICE-KEY>` for every slice of the container, a run that stops on arrival on a slice whose `specification.md` or `design.md` is not on the default branch: L8 and L12, the remedy naming for each slice what its own ladder resolves, once batch 4 has given `/specify` the slice's coverage-ledger tests (§5.4). Until then each named run's own stop names the first missing document, so nothing it says is false. b2 P-140.
 
 ### 5.6 Batch 1b — `/epics` stops on an unlanded PRD, and two fixes found at batch 1's end
 
