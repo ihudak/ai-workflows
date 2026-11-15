@@ -103,19 +103,19 @@ EOF
 
 | Id | String | Before | Sites | After |
 |---|---|---|---|---|
-| R1 | the recipe's count of `/commands` with a §3.4 row whose column 3 begins `**stops` | **11** | `/brd-interview` `/brd-package` `/brd-proposal` `/brd-reconcile` `/brd-split` `/create-ard` `/design` `/prd-ground` `/prd-proposal` `/specify` `/update-spec` (12 on the scratch copy with the test row, measurement 3) | |
+| R1 | the recipe's count of `/commands` with a §3.4 row whose column 3 begins `**stops` | **11** | `/brd-interview` `/brd-package` `/brd-proposal` `/brd-reconcile` `/brd-split` `/create-ard` `/design` `/prd-ground` `/prd-proposal` `/specify` `/update-spec` (12 on the scratch copy with the test row, measurement 3) | **12** (Task 2): the eleven, and `/epics` |
 | S1 | `` `prd_landed` `` | **8** | EP:304, :308, :421, :493, :1082, :1148, :1154, :1269 | |
 | S2 | `landing sentence` | **5** | EP:310, :493, :1082, :1148, :1154 | |
 | S3 | `Land <PRD-KEY>'s prd.md` | **1** | EP:311 | |
 | S4 | `for this run's offers, never as a gate` | **1** | EP:296 | |
-| S5 | `gates it nowhere` | **2** | EP:297, NPO:329 (+1 in `reference-parts/`) | |
-| S6 | `knowingly reads the worktree` | **1** | PH:451 (+1 RP) | |
+| S5 | `gates it nowhere` | **2** | EP:297, NPO:329 (+1 in `reference-parts/`) | **1** after Task 2: EP:297, Task 3's; NPO's gone (RP 0) |
+| S6 | `knowingly reads the worktree` | **1** | PH:451 (+1 RP) | **1** (Task 2): PH:452, the rule kept, its `/epics` example gone (S12) (RP 1) |
 | S7 | `knowingly reads the working tree` | **2** | EP:298, `docs/maintainers/rationale.md:684` | |
 | S8 | `offers only, never a gate` | **1** | `.claude/rules/product-workflows.md:38` | |
-| S9 | `the eleven consumers with a row that stops` | **1** | `.claude/rules/workflows-core-handoff.md:24` | |
-| S10 | `` `/epics` in its Phase 2.6 `` | **1** | PH:624 (+1 RP) | |
-| S11 | `Note whether the PRD is landed` | **3** | EP:296, NPO:330, `.claude/rules/plugin-updates-coupling.md:26` (+1 RP) | |
-| S12 | `` — `/epics` on `prd.md`, `` | **1** | PH:451 (+1 RP) | |
+| S9 | `the eleven consumers with a row that stops` | **1** | `.claude/rules/workflows-core-handoff.md:24` | **0** (Task 2); `the twelve consumers with a row that stops` **1**, rules:24 |
+| S10 | `` `/epics` in its Phase 2.6 `` | **1** | PH:624 (+1 RP) | **1** (Task 2): PH:625, kept and extended; bounded `` `/epics` in its Phase 2.6, `/specify` `` 1 → **0** (RP 1, the extended form) |
+| S11 | `Note whether the PRD is landed` | **3** | EP:296, NPO:330, `.claude/rules/plugin-updates-coupling.md:26` (+1 RP) | **2** after Task 2: EP:296, Task 3's; coupling:26, keep (P-114); NPO's gone (RP 0) |
+| S12 | `` — `/epics` on `prd.md`, `` | **1** | PH:451 (+1 RP) | **0** (Task 2) (RP 0) |
 | S13 | `` `/product-workflows:epics` gates no file this run writes `` | **1** | CPRD:916 | |
 | S14 | `` `/epics` gates only a PRD-level `specification.md` `` | **1** | `pw/docs/commands/update-prd.md:96` | |
 | S15 | `` `/epics` waits on nothing this run wrote `` | **1** | `pw/docs/commands/create-prd.md:168` | |
@@ -129,11 +129,11 @@ EOF
 | S22 | `"Hand to a Product Engineer — /product-workflows:epics <ADDRESS> (PE)"` | **1** | CPRD:901 | |
 | S23 | `"Re-run epics — /product-workflows:epics <KEY> (PE, if Epics exist)"` | **1** | UPRD:210 | |
 | S24 | `— /product-workflows:epics <KEY> (PE, if Epics exist)` | **2** | UPRD:205, UPRD:210 | |
-| S25 | ``hand to PE → `/product-workflows:epics <PRD>` (or`` | **1** | NPO:205 (+1 RP) | |
-| S26 | `` `/epics` partitioning a PRD whose pull request is still open `` | **1** | PH:77 (+3 RP) | |
-| S27 | `` `/epics` on an open `prd/` branch that changed `prd.md` `` | **1** | PH:654 (+1 RP) | |
-| S28 | `` the way `/epics` would partition a PRD whose revision is still on its open `prd/` branch `` | **1** | PH:657 (+1 RP) | |
-| S29 | `` is conditional on the folder it names holding an authored `prd.md` `` | **1** | NPO:342 (+5 RP) | |
+| S25 | ``hand to PE → `/product-workflows:epics <PRD>` (or`` | **1** | NPO:205 (+1 RP) | **0** (Task 2) (RP 0); ``hand to PE → `/product-workflows:epics <PRD>`, which gates this PRD and so carries `<merge-clause>` too`` **1**, NPO:205 |
+| S26 | `` `/epics` partitioning a PRD whose pull request is still open `` | **1** | PH:77 (+3 RP) | **0** (Task 2) (RP 0) |
+| S27 | `` `/epics` on an open `prd/` branch that changed `prd.md` `` | **1** | PH:654 (+1 RP) | **0** (Task 2) (RP 0) |
+| S28 | `` the way `/epics` would partition a PRD whose revision is still on its open `prd/` branch `` | **1** | PH:657 (+1 RP) | **0** (Task 2) (RP 0) |
+| S29 | `` is conditional on the folder it names holding an authored `prd.md` `` | **1** | NPO:342 (+5 RP) | **1** (Task 2): NPO:342, kept, F2's sentence added after it; bounded ``(`/product-workflows:epics` Phase 0 step 1b). Where the`` 1 → **0** (RP 5) |
 | S30 | `` `/epics` resolves docs grounding ahead of its `require-on-main` gates `` | **1** | BI:262 | |
 | S31 | `` `/product-workflows:create-ard` and `/product-workflows:specify` both gate `prd.md` with their own `require-on-main` `` | **1** | PG:542 | |
 | S32 | `` The run reads `prd.md` from the PRD folder as it stands and does not require it on the specs repo's default branch `` | **1** | `pw/docs/commands/epics.md:67` | |
@@ -150,8 +150,8 @@ EOF
 | S41 | `second, once that PRD exists` | **1** | EP:224 | |
 | S42 | `` whether it then passes step 1b depends on whether a `prd.md` has been authored in that slice `` | **1** | EP:122 | |
 | S43 | `` authors the PRD and `/product-workflows:epics <SLICE-KEY>` partitions it `` | **1** | EP:129 | |
-| S44 | `` `/create-ard`, `/specify`, and `/epics` now hard-stop `` | **1** | PH:356 (+1 RP) | |
-| S45 | `` `/create-ard`'s and `/specify`'s rows for the idea-route PRD do, dated 2026-11-14 `` | **1** | PH:316 (+1 RP) | |
+| S44 | `` `/create-ard`, `/specify`, and `/epics` now hard-stop `` | **1** | PH:356 (+1 RP) | **1** (Task 2): PH:357, kept; the paragraph gains the 2026-11-15 decision (`A third followed on 2026-11-15` **1**) (RP 1) |
+| S45 | `` `/create-ard`'s and `/specify`'s rows for the idea-route PRD do, dated 2026-11-14 `` | **1** | PH:316 (+1 RP) | **1** (Task 2): PH:316, kept; bounded `dated 2026-11-14. A stop only on a file` 1 → **0**, `/epics`' sentence between (RP 1) |
 | S46 | `or specify it with '/product-workflows:specify <KEY>', that PRD's handoff merged.` | **1** | IDEA:98 | |
 | S47 | `or re-refine this Epic with '/product-workflows:epics <KEY>'.` | **1** | CPRD:240 | |
 | S48 | `to re-refine this Epic instead, run '/product-workflows:epics <KEY>'.` | **1** | UPRD:42 | |
@@ -160,6 +160,8 @@ EOF
 | S51 | `` and, where no `prd.md` is in the folder, not `/product-workflows:epics <PRD>` (`EPICS_NO_PRD`) `` | **1** | UPS:164 | |
 | S52 | `` and not `/epics` where no `prd.md` is in the folder `` | **1** | `pw/docs/commands/update-spec.md:96` | |
 | S53 | `` the companion `product-workflows` commands whose gated input was never optional stop too: `` | **1** | `dw/docs/getting-started.md:108` | |
+| T2-a | `EPICS_PRD_NOT_HANDED_OFF` (added by Task 2) | **0** | — | **3** (Task 2): PH:338 (the row), PH:357, `.claude/rules/workflows-core-handoff.md:24` (RP 2) |
+| T2-b | `The architecture, Epics and specification routes each gate this PRD and so carry` (P-10, added by Task 2) | **0** | — | **1** (Task 2): NPO:206 |
 
 ## 3. The population — rows this batch rewrites
 
