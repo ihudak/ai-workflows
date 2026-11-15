@@ -140,7 +140,7 @@ Each candidate is put to you as a question of its own, up to four at a time, wit
 - ***Accept the risk*** — asks for the owner and the reason, then the review date: *90 days* (recommended), *30 days* or *180 days* from today, or a date you type. Only you, the architect, accept a risk; the run never accepts one for you.
 - ***Not a threat — drop it*** — nothing is written.
 
-A threat whose answer is a product requirement the PRD does not state is deferred to design, never answered by a decision, and the ARD's `## Open questions` gains a line naming the requirement the PRD needs, to be added through [`/update-prd`](update-prd.md) — one line per threat, however many times the gap is answered, in this run or a later one.
+A threat whose answer is a product requirement the PRD does not state is deferred to design, never answered by a decision, and the ARD's `## Open questions` gains a line naming the requirement the PRD needs, to be added through [`/update-prd`](update-prd.md), or through [`/create-prd`](create-prd.md) where the PRD folder holds no `prd.md` when the line is written — a BRD slice's case, on which `/update-prd` stops — one line per threat, however many times the gap is answered, in this run or a later one. A line an earlier run wrote keeps the command it names.
 
 **Your own threats.** After the candidates the run asks *Add a threat of my own* or *No more threats*, again after each one you add. You describe who attacks, what they do, to what, and where. An id outside the component set, or a contract no row holds, is named together with the set and asked for again, so it is never written. The run drafts the rest, plays it back and asks the four answers, none recommended.
 
@@ -226,7 +226,7 @@ Phase 7 adapts the offer to the ARD's level and runs nothing itself. An offer ma
   - `/brd-split <PARENT-KEY>`, to keep or remove the slice, where it claims nothing — with a slicing instruction where the parent's ledger still holds an `unallocated` row, bare where it holds none; this one waits on nothing this run wrote, since that root run reads none of it;
   - no second option where every claimed row is fully allocated with none `covered-here`, or the slice's or the parent's ledger cannot be read.
 - **Every run** → a closing line naming [`/harvest-decisions`](harvest-decisions.md), to add this ARD's decisions to the team knowledge base, after the merge: the harvest reads only the default branch.
-- **Where the PRD folder holds an authored `prd.md`** → [`/prd-proposal <PRD>`](prd-proposal.md), optional and waiting on nothing this run wrote: it gates `prd.md`, which this run does not write. On a PRD-level run on the BRD route this ARD takes the folder to tier 3 and a re-run narrows the range; on the idea route the folder stays at tier 1. Without a PRD, the offer says a proposal becomes available once `/create-prd` has written one.
+- **Where the PRD folder holds an authored `prd.md`** → [`/prd-proposal <PRD>`](prd-proposal.md), optional and waiting on nothing this run wrote: it gates `prd.md`, which this run does not write. On a PRD-level run on the BRD route this ARD takes the folder to tier 3 and a re-run narrows the range; on the idea route the folder stays at tier 1. Without a PRD, the offer says a proposal becomes available once `/create-prd` has written one and, wherever the specs tree is a git repository, its handoff is merged.
 
 ## See also
 

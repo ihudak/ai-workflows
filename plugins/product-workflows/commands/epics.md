@@ -21,7 +21,7 @@ Key distinction from `/document` (keyed mode): the PRD being Epic-ized is **not 
 
 Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
-**Ending early.** Every stop in this command — each `EPICS_*` stop, the lineage stops `EPICS_LINEAGE_FAILED` and `EPICS_UPSTREAM_STALE` among them, the `$SPECS_PATH` *Cancel*, Phase 0's address stops, a `branch-check` stop, a stopping `require-on-main` state, Phase 2.5's `ard-resolution` `unmerged` stop and Phase 6's `DONE` return with no Epic written — and every run-ending answer — each *Cancel* that ends the run (Phase 1's `REPOS_PATH` question, Phase 2's plan, Phase 2.7's prerequisites, Phases 4–5's repository questions, Phase 5.5's components, Phase 6's size and missing-input questions, and Phase 7's *Cancel the whole run*) and Phase 2.7's *Stop*, which names the earliest gap's remedy for the user to run — takes `workflows-core:specs-repo-git` §4's refusal tail, once Phase 7.4's removal has run on every file `temp_files` holds by then: Phase 11's cost entry (unless `--skip-costs`) and its `commit-artifacts`, which prints the run's `Specs repo:` line after the stop's own message, with no `resume.md`, no follow-ups and no maintenance phase. A stop before step 1's preflight skips only the preflight (that reference's §3). `emit-block` still fires at the halt wherever the Invariants call for it. Phase 7.5's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the drafts and what Phase 7.4's agents edited stay written, and the run goes on through Phases 8–11; a *cancel* at Phase 10's follow-up preview drops only the items it names.
+**Ending early.** Every stop in this command — each `EPICS_*` stop, the lineage stops `EPICS_LINEAGE_FAILED` and `EPICS_UPSTREAM_STALE` and Phase 0's `EPICS_PRD_NOT_HANDED_OFF` among them, the `$SPECS_PATH` *Cancel*, Phase 0's address stops, a `branch-check` stop, a stopping `require-on-main` state (Phase 0's on `prd.md`, Phase 2.6's on the PRD-level `specification.md`), Phase 2.5's `ard-resolution` `unmerged` stop and Phase 6's `DONE` return with no Epic written — and every run-ending answer — each *Cancel* that ends the run (Phase 1's `REPOS_PATH` question, Phase 2's plan, Phase 2.7's prerequisites, Phases 4–5's repository questions, Phase 5.5's components, Phase 6's size and missing-input questions, and Phase 7's *Cancel the whole run*) and Phase 2.7's *Stop*, which names the earliest gap's remedy for the user to run — takes `workflows-core:specs-repo-git` §4's refusal tail, once Phase 7.4's removal has run on every file `temp_files` holds by then: Phase 11's cost entry (unless `--skip-costs`) and its `commit-artifacts`, which prints the run's `Specs repo:` line after the stop's own message, with no `resume.md`, no follow-ups and no maintenance phase. A stop before step 1's preflight skips only the preflight (that reference's §3). `emit-block` still fires at the halt wherever the Invariants call for it. Phase 7.5's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the drafts and what Phase 7.4's agents edited stay written, and the run goes on through Phases 8–11; a *cancel* at Phase 10's follow-up preview drops only the items it names.
 
 ---
 
@@ -42,14 +42,29 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message. **`absent` is a graceful stop, not a folder
    to create** — `/epics` partitions a PRD folder that exists and creates no PRD folder of its own:
    ```
-   EPICS_NOT_FOUND: no folder found for <ADDRESS> under $SPECS_PATH/specifications/ (every level addressing.md §3 bounds, plus §5's legacy fallback) — check the address. /epics partitions an existing PRD folder and creates none. On the idea route the folder this command needs is the one /product-workflows:create-prd <KEY> writes a PRD into (after /product-workflows:idea <KEY>, where an idea comes first); a PRD folder is created by /product-workflows:brd-split on its parent BRD on the BRD route, and is partitioned here once a PRD is written in it; an EPIC- folder is created by this command and by no other, so an Epic address that resolves to nothing was never drafted here.
+   EPICS_NOT_FOUND: no folder found for <ADDRESS> under $SPECS_PATH/specifications/ (every level addressing.md §3 bounds, plus §5's legacy fallback) — check the address. /epics partitions an existing PRD folder and creates none. On the idea route the folder this command needs is the one /product-workflows:create-prd <KEY> writes a PRD into (after /product-workflows:idea <KEY>, where an idea comes first), and this command runs once that PRD is on the default branch — or, on a specs tree that is no git repository, in the folder: where a /product-workflows:create-prd <KEY> run created the folder and that run's pull request is still open, or is merged and this checkout does not stand on a default branch pulled since, the folder is not in this checkout, so merge that pull request — or, where it is merged already, bring this checkout's default branch up to date (pull it, with this checkout standing on it) — rather than run /product-workflows:create-prd again; a PRD folder is created by /product-workflows:brd-split on its parent BRD on the BRD route, and is partitioned here once a PRD is written in it and, wherever the specs tree is a git repository, merged; an EPIC- folder is created by this command and by no other, so an Epic address that resolves to nothing was never drafted here, or its Epic is on an epics/ branch that is not yet merged, or is merged and this checkout does not stand on a default branch pulled since.
    ```
    Every command that stop names creates the folder it claims to: `/idea` and `/create-prd` each
    write `PRD-<KEY>-<slug>/` on their first write, and `/brd-split` carves the `PRD-` slice — all
    three `PRD-` folders that pass step 1a. On the idea route the stop names `/create-prd` as the run
-   this command follows, and on the BRD route it says a slice is partitioned once a PRD is written in
-   it, since a folder holding only `/idea`'s output, or a slice with no PRD written in it, is refused
-   at step 1b with `EPICS_NO_PRD`, whose remedy then names what that folder needs.
+   this command follows, once the PRD it writes is on the default branch, and names the merge of an open
+   `/create-prd` pull request, or, for a merged one, bringing the checkout's default branch up to
+   date (pulling it, with the checkout standing on it), rather than a second run: a folder
+   `/create-prd` created and handed off, with no `/idea` before it, is on that run's `prd/` branch
+   alone until its pull request merges, and reaches a checkout on the default branch only when that
+   checkout pulls the merge, since step 1 resolves the address before the specs-repo preflight
+   fetches or pulls anything; until then the address resolves to nothing there; while that pull
+   request is open, a second `/create-prd` would author a second PRD. The remedy names the checkout
+   standing on its default branch because a checkout on another branch, cut before the merge, lacks
+   the folder too, and pulling the default branch while standing there would merge it into that
+   branch. The stop's last clause says of an `EPIC-` folder an earlier run of this command drafted
+   and handed off what its idea-route clause says of a PRD folder's state, and names no remedy: the
+   folder is on that run's `epics/` branch until that branch is merged, and reaches a checkout on
+   the default branch when that checkout pulls the merge. On the BRD route the stop says a slice is partitioned once a PRD is written in it and
+   merged. A folder that is in the checkout — holding only `/idea`'s output, or a slice with no
+   PRD written in it — is refused at step 1b with `EPICS_NO_PRD`, whose remedy then names what that
+   folder needs, save where its PRD sits on an unmerged plugin branch, which *Gate the PRD* stops on
+   before step 1b.
 
    `/epics` is **address-required**: with no positional address, or one `read-key` (§1) finds `invalid` — which `resolve-address` returns as `status: invalid` — stop with
    `EPICS_NEEDS_KEY: /epics needs a PRD or Epic address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7 or ACME-7-01) — a key, or an @<path> to its folder.` —
@@ -64,8 +79,9 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    container's own on that route — and, where `workflows-core:addressing` §4.1 places the resolved
    folder at Epic level — an `EPIC-` prefix, or with no prefix a resolved `kind: epic` — also the key
    its parent's carrier asserts (§4), the would-be `<PRD-KEY>`. Then run the specs-repo preflight
-   below, and only then take step 1a's container refusal, step 1b's table and refusals, and the
-   requirements test. A stale plugin branch the preflight switches away from would otherwise make a
+   below, and only then take step 1a's container refusal, the branch check and *Gate the PRD*,
+   step 1b's table and refusals, and the stops on a PRD never handed off and on one stating no
+   requirements. A stale plugin branch the preflight switches away from would otherwise make a
    slice's `brd-link.md`, a `prd.md` or an `epic.md` that is on the default branch look absent, and
    the run would refuse where it would have proceeded, or list the wrong slices.
 
@@ -119,15 +135,18 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    test**: an immediate subdirectory carrying a `brd-link.md` whose `parent:` names this BRD.
    - **One or more slices** — the ordinary shape, since a split always confirms at least one. Name
      every slice and offer `/product-workflows:epics <SLICE-KEY>` once per slice. That run resolves a
-     `PRD-` folder and passes this refusal; whether it then passes step 1b depends on whether a
-     `prd.md` has been authored in that slice, which the offer **states** rather than promises. Do
+     `PRD-` folder and passes this refusal; whether it then passes *Gate the PRD* and step 1b depends
+     on whether a `prd.md` has been authored in that slice and, wherever the specs tree is a git
+     repository, merged to the default branch, which the offer **states** rather than promises. Do
      **not** name `/product-workflows:brd-split <BRD-KEY>` here: the slices it would carve exist, and on
      a parent whose ledger is fully allocated that run carves nothing (`commands/brd-split.md` Phase 0
      step 10).
    - **No slice at all** — `/product-workflows:brd-split <BRD-KEY> "<how to cut it>"` is the run that
      carves one, walking every row still `unallocated` and always confirming at least one slice (its
-     Phase 2), after which `/product-workflows:create-prd <SLICE-KEY>` authors the PRD and
-     `/product-workflows:epics <SLICE-KEY>` partitions it. **Two conditions travel with that offer**,
+     Phase 2), after which `/product-workflows:create-prd <SLICE-KEY>` authors the PRD and, once its
+     handoff is merged, `/product-workflows:epics <SLICE-KEY>` partitions it — on a specs tree that
+     is no git repository (`git -C "$SPECS_PATH" rev-parse --git-dir` fails) there is no handoff or
+     merge to name, and the offer names none. **Two conditions travel with that offer**,
      in its own text, because this command holds neither answer: the slicing instruction is not
      optional there — a root is never ground, so that run has no findings to cluster candidate slices
      from and stops with `BRD_SPLIT_NEEDS_INSTRUCTION` where it has rows to place and was given
@@ -173,6 +192,14 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
 
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the PRD folder — the resolved folder, or its parent on an Epic address, which its handoff names as `prd_dir`, with `prefix: epics`; a stop it makes ends the run here.
 
+**Gate the PRD.** Execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against the `prd.md` of the PRD folder the branch check ran on — the resolved folder on a PRD address, and its parent on an Epic address, an address step 1's run key set reads at Epic level — on either route, a slice as readily as an idea-route folder; that `prd.md`'s path relative to `$SPECS_PATH` is the gate's `path` input. On an Epic address nothing under the `EPIC-` folder is gated: neither a `prd.md` path there nor the Epic's own `epic.md`, which a re-refine run revises rather than builds from. **The gate runs here, after step 1a and the branch check and before step 1b's table**, because a PRD that is only on an unmerged plugin branch is not in a checkout standing on the default branch: where its folder is in that checkout all the same — through `/idea`'s `idea.md`, or a slice's `brd-link.md` — the table would find no `prd.md` there and refuse the folder with `EPICS_NO_PRD`, naming `/product-workflows:create-prd` — a second PRD — where the gate's own finding names the branch and any pull request that PRD waits on (§3.3 rows D and E). Where the folder is not in that checkout at all — `/create-prd` created it on its `prd/` branch, whose pull request is still open — the address resolves to nothing, and step 1 has already stopped with `EPICS_NOT_FOUND`, whose text says to merge that pull request rather than run `/product-workflows:create-prd` again.
+
+**Map the gate's §3.7 return by `stopped` first**, never by `on_main` alone: `on_main: absent` is returned by row F alone, and a caller that branches on `absent` first cannot tell row F from rows D/E. Any stopping row → stop per §4.4, at once, naming the concrete branch and pull-request state it reports; step 1b's table is not reached. Otherwise (`stopped: false`) carry the return as `prd_gate` and go on to step 1b's table:
+- **`pass`** → nothing more.
+- **`pass_amending`** → print §3.3's row-B message first. The copy the run reads is then its own `epics/` branch's, which carries a change to `prd.md` that `<default>` lacks, and Phase 2.7's *Stop* and Phase 9 name that change with Phase 0's amending sentence, printed there as it stands here, `<branch>` being the branch row B's message names and `<prd path>` that `prd.md`'s path relative to `$SPECS_PATH`: `This run's branch, <branch>, carries a change to <PRD-KEY>'s prd.md (<prd path>) that <default> lacks; until that change is merged, /product-workflows:specify and /product-workflows:create-ard do not read it — from this branch each stops on the difference or offers to switch to <default>, whose copy lacks the change.`
+- **`unmanaged`** → exactly as before this gate: there is no ref to test, and the table tests the folder's own file.
+- **`absent`** → the table decides. Where it refuses the folder, the run stops with the table's own refusal, as before this gate; where it accepts it, the `prd.md` it accepted is in the folder and on no ref, and the run stops with `EPICS_PRD_NOT_HANDED_OFF` (*Stop on a PRD never handed off*, below the preflight paragraph).
+
 1b. **`/epics` accepts exactly two shapes, and the gate is the artifact's own `kind:`.** A `PRD-`
    folder holding its `prd.md` is partitioned into Epics; an `EPIC-` folder **that holds its `epic.md`
    and has a PRD above it** is re-refined. Everything else is refused — among it an `EPIC-` folder
@@ -195,8 +222,10 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    | Holds an `epic.md` asserting `kind: epic`, and its parent holds no such `prd.md` | Refuse — `EPICS_EPIC_NOT_UNDER_PRD` below |
    | Anything else — including a `PRD-` folder in which no `prd.md` has been authored yet, and an `EPIC-` folder holding no `epic.md` | Refuse — `EPICS_NO_PRD` below |
 
-   **A `prd.md` either accepting row names is tested for requirements next** —
-   `EPICS_PRD_NO_REQUIREMENTS` below the preflight paragraph, still in Phase 0 and before Phase 1.
+   **A `prd.md` either accepting row names is tested next** — where *Gate the PRD* returned
+   `absent`, as a PRD never handed off (`EPICS_PRD_NOT_HANDED_OFF`), then for requirements
+   (`EPICS_PRD_NO_REQUIREMENTS`), both below the preflight paragraph, still in Phase 0 and before
+   Phase 1.
 
    **This revives a path that was already written and unreachable.** `/epics` parses `focus_key`
    below (Phase 3, Phase 3.5, Phase 6) but nothing ever set it, so refine-by-focus could not run and
@@ -221,7 +250,7 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
 
    | The resolved folder | What the stop names |
    |---|---|
-   | An `EPIC-` folder — its name beginning `EPIC-<the resolved key>-`, a prefix as `workflows-core:addressing` §4.1 defines one — holding no `epic.md` | **Not** `/create-prd` or `/update-prd`, which refuse an Epic folder with `CREATE_PRD_EPIC_FOLDER` and `UPDATE_PRD_EPIC_FOLDER`; every row below reads a folder that is not this one. No command writes an `EPIC-` folder without its `epic.md`, so this one is hand-made or left by an interrupted run, and no command takes it as an input. Where the folder above holds a `prd.md` asserting `kind: prd`, name `/product-workflows:epics <PRD-KEY>`, `<PRD-KEY>` being that `prd.md`'s own `key` — it drafts this PRD's Epics, each in a folder it creates and keys itself, so this folder is not an input to it; say what the folder holds, and that it may be removed once the operator has checked nothing in it is wanted — a hand-made folder can hold notes. Where the folder above is a `PRD-` folder holding no `prd.md`, name `/product-workflows:create-prd <PARENT-KEY>` first, `<PARENT-KEY>` being that folder's own `key`, subject to the rows below applied to *that* folder, and `/product-workflows:epics <PARENT-KEY>` second, once that PRD exists. Anywhere else, name no command and say so |
+   | An `EPIC-` folder — its name beginning `EPIC-<the resolved key>-`, a prefix as `workflows-core:addressing` §4.1 defines one — holding no `epic.md` | **Not** `/create-prd` or `/update-prd`, which refuse an Epic folder with `CREATE_PRD_EPIC_FOLDER` and `UPDATE_PRD_EPIC_FOLDER`; every row below reads a folder that is not this one. No command writes an `EPIC-` folder without its `epic.md`, so this one is hand-made or left by an interrupted run, and no command takes it as an input. Where the folder above holds a `prd.md` asserting `kind: prd`, name `/product-workflows:epics <PRD-KEY>`, `<PRD-KEY>` being that `prd.md`'s own `key` — it drafts this PRD's Epics, each in a folder it creates and keys itself, so this folder is not an input to it; say what the folder holds, and that it may be removed once the operator has checked nothing in it is wanted — a hand-made folder can hold notes. Where *Gate the PRD* returned `absent` — that `prd.md` is on no ref the gate reads — say too that the `/product-workflows:epics <PRD-KEY>` run it names stops first on that PRD (`EPICS_PRD_NOT_HANDED_OFF`) and prints the commands that land it. Where the folder above is a `PRD-` folder holding no `prd.md`, name `/product-workflows:create-prd <PARENT-KEY>` first, `<PARENT-KEY>` being that folder's own `key`, subject to the rows below applied to *that* folder, and `/product-workflows:epics <PARENT-KEY>` second, once that PRD exists and its handoff is merged — on a specs tree that is no git repository (*Gate the PRD* returned `unmanaged`), once it exists, there being no handoff or merge to name. Anywhere else, name no command and say so |
    | No `brd-link.md` — an idea-route `PRD-` folder | `/product-workflows:create-prd <KEY>`, and neither data refusal exists off the BRD route |
    | A `brd-link.md`, and no readable `coverage-ledger.md` beside it — absent, or present and unreadable — while `brd-link.md` claims rows | **Name no command at all**: report `<slice-dir>/coverage-ledger.md` by path, as missing or as unreadable with the read error, and say `/brd-split` wrote it with the slice. This is not an empty gate set — `claims:` names rows and the evidence for judging them is gone — so neither data refusal can be evaluated, and §5.2 forbids resolving it to the empty row's `/brd-split <PARENT-KEY>` (`/product-workflows:create-prd` Phase 0 step 7 names no option on it either) |
    | A `brd-link.md`; the gate set leaves **no** row `unallocated` **and** at least one `covered-here` | `/product-workflows:create-prd <KEY>` — all three refusals cleared |
@@ -229,7 +258,7 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    | A `brd-link.md`; no gate-set row `covered-here`, and the gate set is **empty** | **Not** `/create-prd`, which raises `CREATE_PRD_BRD_NOT_ELIGIBLE`. This is a standing empty child: name the keep-or-remove `/product-workflows:brd-split <PARENT-KEY>`, the one run that resolves one and not a no-op there (`commands/brd-split.md` Phase 0 step 10), `<PARENT-KEY>` read off the same `brd-link.md` the `claims:` list came from. **Which form to name is the parent's own ledger's to decide**, exactly as `/product-workflows:create-prd` Phase 0 step 7's empty-gate-set row decides it: where that ledger still holds an `unallocated` row, name `/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"`, since that run walks the row too and stops with `BRD_SPLIT_NEEDS_INSTRUCTION` without an instruction; where it holds none, the bare form; where it cannot be read, report it by path and name neither form |
    | A `brd-link.md`; no gate-set row `covered-here` and none `unallocated`, and the gate set is **non-empty** | **Name no command at all**, and say why rather than going quiet: this slice holds no PRD of its own, `/create-prd` would raise `CREATE_PRD_BRD_NOT_ELIGIBLE` whose non-empty branch names nothing either, and nothing in this plugin moves a slice's terminal row back to `unallocated` (§3). Report what the gate-set rows actually resolved to — `deferred-to` is a live obligation of this slice, `rejected` is an obligation of nobody, `superseded-by` was absorbed by the `[BR#n]` that replaced it |
 
-   **Every row above that names `/product-workflows:create-prd <KEY>` is qualified by one more fact, whichever route the folder is on: where the folder holds a `prd.md` that asserts no `kind: prd`, say so as well.** This stop reads that file as no PRD, but `/create-prd` counts any `prd.md` as found (its Phase 0 step 6) and offers `/product-workflows:update-prd <KEY>` or an overwrite that archives the file first, so name both, and say that adding the `kind: prd` and `key:` its format carries (`workflows-core:addressing` §5) is what lets `/epics` read the file as it stands.
+   **Every row above that names `/product-workflows:create-prd <KEY>` is qualified by one more fact, whichever route the folder is on: where the folder holds a `prd.md` that asserts no `kind: prd`, say so as well.** This stop reads that file as no PRD, but `/create-prd` counts any `prd.md` as found (its Phase 0 step 6) and offers `/product-workflows:update-prd <KEY>` or an overwrite that archives the file first, so name both, and say that adding the `kind: prd` and `key:` its format carries (`workflows-core:addressing` §5) is what lets `/epics` read the file, once that edit is merged to the default branch — on a specs tree that is no git repository (*Gate the PRD* returned `unmanaged`), once it is made, there being no merge to name.
 
    Stop gracefully:
    ```
@@ -250,11 +279,15 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    `<remedy>` has two forms. Where the folder above is a `PRD-` folder holding no `prd.md` — a
    prefix as `workflows-core:addressing` §4.1 defines one, `<PARENT-KEY>` being that folder's own
    `key` (§4), never parsed out of its name — it is `The PRD folder above it holds no PRD yet:
-   author one with '/product-workflows:create-prd <PARENT-KEY>', then re-run
-   '/product-workflows:epics <KEY>'.` That run resolves the `PRD-` folder, not this one, and on a
-   slice applies its refusals to the slice's own ledger, so the offer is subject to step 1b's
-   `EPICS_NO_PRD` slice rows applied to *that* folder where it carries a `brd-link.md`, as that
-   table's own Epic row is. Anywhere else — a top-level `EPIC-` folder, or one
+   author one with '/product-workflows:create-prd <PARENT-KEY>' and merge its handoff, then re-run
+   '/product-workflows:epics <KEY>'.`, since the re-run stops until that PRD is on the default
+   branch; on a specs tree that is no git repository (*Gate the PRD* returned `unmanaged`) there
+   is no handoff or merge to name, and it is `The PRD folder above it holds no PRD yet: author one
+   with '/product-workflows:create-prd <PARENT-KEY>', then re-run '/product-workflows:epics
+   <KEY>'.` The `/create-prd` run resolves the `PRD-` folder, not this one, and on a slice applies
+   its refusals to the slice's own ledger, so the offer is subject to step 1b's `EPICS_NO_PRD`
+   slice rows applied to *that* folder where it carries a `brd-link.md`, as that table's own Epic
+   row is. Anywhere else — a top-level `EPIC-` folder, or one
    below a folder that is not PRD-level — no plugin command authors a PRD above it, and it is `If
    this Epic's PRD folder exists elsewhere, move the folder into it (git mv) and re-run
    '/product-workflows:epics <KEY>'. If the work has no PRD at all, it starts at
@@ -280,6 +313,51 @@ terminal `commit-artifacts` step skips on it.
 each file under `$SPECS_PATH` that this run or an agent it dispatches reads — the session files `workflows-core:specs-repo-git` §2.1 names aside — as
 `inputs_read`, as it reads it, for the handoff contract, which takes it as a caller input.
 
+**Stop on a PRD never handed off**, where *Gate the PRD* returned `absent` and step 1b's table
+accepted the run — so after the preflight, which step 1 ends with — and before the requirements test
+below, so a run that would fail both prints one stop. The `prd.md` that table accepted — the
+resolved folder's on a Draft row, the parent's on a Re-refine row, the one *Gate the PRD* tested —
+is in the folder and on no ref the gate reads, neither `<default-ref>` nor a plugin branch: written
+and its handoff declined, or committed on a branch no plugin prefix names or on a local `<default>`
+that `origin` does not hold. Which of the stop's two forms to print turns on the HEAD test, made
+before it prints:
+`git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>/prd.md" 2>/dev/null`, `<path>` there the PRD
+folder's path relative to `$SPECS_PATH`, so that `<path>/prd.md` is the gate's own `path` input,
+written with `./` before it as §3.2 writes every `<ref>:` object name — whatever form the stop later
+prints `<path>` in — exit 0 where HEAD holds the file. Where HEAD does not hold it — an untracked
+file, or one staged and never committed — the uncommitted form:
+
+```
+EPICS_PRD_NOT_HANDED_OFF: <path>/prd.md exists but is on no ref — it was written and its handoff was declined. This run read none of it and drafted nothing.
+  Land the file that is already on disk by running these; re-running /product-workflows:create-prd would author a second PRD rather than land this one.
+
+git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+git -C "<SPECS_PATH>" add -f -- "<path>/prd.md"
+git -C "<SPECS_PATH>" commit -m "<PRD-KEY> prd" -- "<path>/prd.md"
+git -C "<SPECS_PATH>" push -u origin <new-branch>
+
+  Then open a pull request from <new-branch> into <default>, merge it, and re-run this command. Ignored, every /epics run on this folder stops here until prd.md is on <default>.
+```
+
+`<path>` is the PRD folder's path — the resolved folder's on a PRD address, the folder above's on an Epic address, never the `EPIC-` folder's — and `<PRD-KEY>` that folder's own `key`. `<new-branch>` is `prd/` and the PRD folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+
+Where HEAD holds the `prd.md` — committed on a branch no plugin prefix names, or on a local
+`<default>` that `origin` does not hold — the commands above do not apply, since the switch they
+open with takes the file out of the working tree; the committed form lands the branch instead:
+
+```
+EPICS_PRD_NOT_HANDED_OFF: <path>/prd.md is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of it and drafted nothing.
+  Land that branch by running these; re-running /product-workflows:create-prd would author a second PRD rather than land the one committed.
+
+<the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
+
+  Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run this command. Ignored, every /epics run on this folder stops here until prd.md is on <default>.
+```
+
+In the committed form `<branch>` is the branch `git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints, and the commands the stop prints are the ones §4.4's row F gives for a file HEAD holds, in the case row F selects — each chosen by the reads that row names before the stop prints, each on a line of its own, and an alternative introduced by a line saying when it applies; a `<new-branch>` among them is named as in the uncommitted form. Three of the message's sentences change with the case, each on a test the stop makes itself. Where `<branch>` is `<default>`, the first reads `<path>/prd.md is committed on your local <default> and not pushed.`, and the one opening `Then` reads `Then re-run this command — where <default> is protected, once a pull request from <new-branch> into <default> is merged.` Where the specs repository has no `origin`, the one opening `Then` reads `Then re-run this command.` alone, since the local merge row F selects there needs no pull request. Where the reads row F names select no command — `<branch>` on `origin`, and the local branch holding no commit `origin` lacks — the stop prints none: the sentence opening `Land that branch` says instead that `<branch>` is already on origin, so nothing is left to push and the pull request is all that is left, and keeps its warning not to re-run `/product-workflows:create-prd`. `<path>`, `<PRD-KEY>` and the `#` rule are as for the uncommitted form. On a read-only specs mount (§3.6) every command either form prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it.
+
+Neither form is a plugin gap, so `emit-block` does not fire.
+
 **Refuse a PRD that states no requirements**, once step 1b's table has accepted the run — so after
 the preflight, which step 1 ends with — and before Phase 1 asks anything. The `prd.md` that
 table accepted — the resolved folder's on a Draft row, the parent's on a Re-refine row — is the one
@@ -289,27 +367,14 @@ superseded or withdrawn one not counted — states no requirements, and drafting
 passes vacuously. The key resolved and the PRD is there, so this is neither the `key dir not found`
 rule, whose re-enter cannot help, nor `EPICS_NO_PRD`, whose message says no PRD is there:
 ```
-EPICS_PRD_NO_REQUIREMENTS: <PRD-KEY>'s prd.md at <path> states no requirements — no live [US#n], [AC#n], [SM#n], [SMC#n], [UC#n] or [FR#n] — so there is nothing to partition. Add them with /product-workflows:update-prd <PRD-KEY>, then re-run /product-workflows:epics <KEY>.
+EPICS_PRD_NO_REQUIREMENTS: <PRD-KEY>'s prd.md at <path> states no requirements — no live [US#n], [AC#n], [SM#n], [SMC#n], [UC#n] or [FR#n] — so there is nothing to partition. Add them with /product-workflows:update-prd <PRD-KEY> and merge its handoff, then re-run /product-workflows:epics <KEY>.
 ```
-It is a user halt, so `emit-block` does not fire.
-
-**Note whether the PRD is landed — for this run's offers, never as a gate.** This run reads the
-`prd.md` step 1b's table accepted from the folder as it stands, and gates it nowhere: a command
-that knowingly reads the working tree asserts nothing false. But
-`/product-workflows:create-ard` and `/product-workflows:specify`, which this run names for the PRD
-folder and the Epics under it, each stop on that PRD folder, on either route, until its `prd.md` is
-on the default branch, wherever the specs tree is a git repository — on an unmerged plugin branch
-with `require-on-main`'s stop, and in the folder and on no ref with their `*_PRD_NOT_HANDED_OFF`.
-So test it once, here, on the `prd.md` the requirements test read, and carry the answer as
-`prd_landed`: **false** where `$SPECS_PATH` is a git repository and `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<prd path>" 2>/dev/null`
-fails, `<prd path>` that `prd.md`'s path relative to `$SPECS_PATH` and `<default-ref>` the ref the
-preflight resolved for `<default>`; **true** where it exits 0, and on a specs tree that is no git
-repository, which has no ref and nothing to land, so every offer stands there as it is. Where
-`prd_landed` is false, every offer this run makes of either command — the remedy Phase 2.7's *Stop*
-names, and Phase 9's `### Targets`, `### Next step` and `### Context hygiene` — names first the
-landing of that `prd.md` with Phase 0's landing sentence, printed as it stands here:
-`Land <PRD-KEY>'s prd.md (<prd path>) on <default> first — /product-workflows:create-ard and /product-workflows:specify each stop on this PRD folder until it is, printing the commands that land it.`
-The test asks nothing and stops nothing.
+The re-run reads that revision only once it is on the default branch — until then it stops at
+*Gate the PRD*, or, reading the default branch's copy (on a checkout already standing there, or
+switched there by that gate's repair), here again — so the merge comes before it. On a specs tree
+that is no git repository (*Gate the PRD* returned `unmanaged`) there is no handoff or merge to name, and the last sentence reads `Add them with
+/product-workflows:update-prd <PRD-KEY>, then re-run /product-workflows:epics <KEY>.` It is a user
+halt, so `emit-block` does not fire.
 
 ---
 
@@ -418,7 +483,7 @@ choices: ["Approve & continue (Recommended)", "Revise plan (you'll be prompted)"
 ```
 
 - **Approve** → proceed to Phase 3
-- **Revise** → ask what to change, update, re-show, re-ask — the revised plan, again printed and again the question's own text. On a focus run, a revision naming work of the focus Epic and the component it moves to (`/dev-workflows:design`'s *Re-split*) is a split: Phase 5.5 proposes that component with the others where the run has no ARD set, Phase 6 drafts it its own Epic, and Phase 3.5 makes ON its recommended code-scan default. A named component the run's known set does not hold once settled — an ARD's set that lacks it — is not split to: Phase 9 says so and names `/product-workflows:create-ard <PRD>`, which records it — after the PRD's landing, where Phase 0's `prd_landed` is false
+- **Revise** → ask what to change, update, re-show, re-ask — the revised plan, again printed and again the question's own text. On a focus run, a revision naming work of the focus Epic and the component it moves to (`/dev-workflows:design`'s *Re-split*) is a split: Phase 5.5 proposes that component with the others where the run has no ARD set, Phase 6 drafts it its own Epic, and Phase 3.5 makes ON its recommended code-scan default. A named component the run's known set does not hold once settled — an ARD's set that lacks it — is not split to: Phase 9 says so and names `/product-workflows:create-ard <PRD>`, which records it
 - **Cancel** → stop and summarise what was planned
 
 ---
@@ -490,9 +555,7 @@ Otherwise the PRD spans two or more code components without the artifacts that f
 choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Split without <the missing artifacts>", "Cancel"]
 ```
 
-Where Phase 0's `prd_landed` is false, a remedy that names `/product-workflows:create-ard <PRD>` or `/product-workflows:specify <PRD>` — the one for a `missing` `ard_contract` or `prd_spec` row — would send the operator into a run that stops on this PRD, so it is the PRD's landing first: the option's slot reads `land <PRD-KEY>'s prd.md on <default> and then run <the command>`, the array itself staying verbatim, and the stop *Stop* leads to prints Phase 0's landing sentence before the command. Every other remedy reads as the slot says.
-
-- **Stop** → stop, naming that remedy and every other gap in ladder order.
+- **Stop** → stop, naming that remedy and every other gap in ladder order. Where Phase 0's `prd_gate` is `pass_amending`, the stop prints Phase 0's amending sentence before that remedy.
 - **Split without** → record the override for Phase 9's `### Targets` and continue: every Epic still gets one target, and where the ARD's `contracts` is null (no ARD, or one without `## Contracts`), no Epic gets a `## Contract` section.
 - **Cancel** → stop.
 
@@ -1079,7 +1142,7 @@ MODERATE — Epic drafting for a single PRD
 - [<EPIC-KEY>] → <target> — produces [AD#…]; consumes [AD#…]
 - ...
 - Contract: [present | N/A — one component | split without <the missing artifacts> at the Phase 2.7 stop]
-- First: [Phase 0's landing sentence, verbatim] — _only where Phase 0's `prd_landed` is false and a line below names `/product-workflows:create-ard`; omit otherwise_
+- First: [Phase 0's amending sentence, verbatim] — _only where Phase 0's `prd_gate` is `pass_amending` and a line below names `/product-workflows:create-ard`; omit otherwise_
 - Split not made: <component> — not in the ARD's set; `/product-workflows:create-ard <PRD>` records it — _only where a Phase 2 split named such a component; omit otherwise_
 - Landing-order inversion: [AD#N] — producer <id> lands after consumer <id>, whose artifact <path> a contract Epic builds first — `/product-workflows:create-ard <PRD-KEY>` (refine) reorders it; unplaced in the landing order: <ids> — _one line each, only where Phase 2.5 found one; omit otherwise_
 - Contract omission: <caller> → <callee> — called from <entry_point> at <path>:<lines> — _by its kind:_ no row — `/product-workflows:create-ard <PRD-KEY>` (refine) adds one | [AD#N] omits <caller> from its consumers — `/product-workflows:create-ard <PRD-KEY>` (refine) adds it — _one line each, only where Phase 5 recorded one; omit otherwise_
@@ -1145,13 +1208,13 @@ The review's markers: see ### Deferred items. — _only where Phase 7 wrote a `[
 [The Phase 7.5 `Phase handoff:` line (`workflows-core:phase-handoff` §4.1), with the paths it committed beneath it — or, on a run that reached no offer, that the drafts are written and uncommitted, and why. This run's `$SPECS_PATH` session artifacts are committed separately by the terminal step — see its outcome line at the end of the run; on the `epics/` branch the handoff cut, they ride its pull request, save in session-branch mode (`workflows-core:specs-repo-git` §8), where they go to the session branch.]
 
 ### Next step
-[Per `workflows-core:next-phase-offer`'s *PE — breakdown & specification* lane — guidance only, never auto-invoked. Where Phase 0's `prd_landed` is false, open with Phase 0's landing sentence, verbatim, and name each command below as following it: both stop on this PRD folder until that `prd.md` is on the default branch, before either reaches an Epic, so what is said below of each Epic's own state applies once it is. For each Epic just drafted, author its spec → `/product-workflows:specify <EPIC>` (PE) `<merge-clause>` — on a **new** Epic it stops while the Epic's `epic.md` sits on this run's unmerged `epics/` branch (`workflows-core:phase-handoff` §3.3 rows D/E), and on an **edited** one it meets the copy the default branch still holds — without this run's edit — and stops on the difference or, once switched to the default branch, specifies that earlier copy (§3.3's A and C rows), each until the pull request merges (Phase 7.5's sort); wherever the drafts reached no branch, it reads a new Epic from the folder as it stands (§3.4's `/specify` **(an Epic)** row) but stops on a re-drafted Epic whose merged copy it no longer matches, until the edit is committed (§3.3's C rows); one address, the Epic's own (D4); `/specify` resolves that folder and, finding no `brd-link.md` in it, looks one level up, so a slice-derived Epic keeps the BRD-route contract on this address exactly as it does through the picker; the **Epic fan-out** (depth vs breadth) applies from the spec/design stage on. Optionally a Product Architect adds an Epic-level ARD first → `/product-workflows:create-ard <EPIC>` `<merge-clause>`, which gates the Epic the same way. `<merge-clause>` is `workflows-core:next-phase-offer`'s placeholder, resolved by that reference's *resolution table* from Phase 7.5's own `Phase handoff:` line — never the unconditional "once the pull request above is merged", since that handoff reaches a declined and a nothing-to-commit outcome among the others §4.1 lists. A draft's `[NEEDS CLARIFICATION]` markers are questions that run's grill asks. If the review BLOCKED, resolve that first.]
+[Per `workflows-core:next-phase-offer`'s *PE — breakdown & specification* lane — guidance only, never auto-invoked. Where Phase 0's `prd_gate` is `pass_amending`, open with Phase 0's amending sentence, verbatim, and name each command below as following that merge: until that change is merged, each meets it at its PRD gate before reaching an Epic — stopping on the difference, or offering to switch to `<default>`, whose copy lacks the change — so what is said below of each Epic's own state applies once that change is merged. For each Epic just drafted, author its spec → `/product-workflows:specify <EPIC>` (PE) `<merge-clause>` — on a **new** Epic it stops while the Epic's `epic.md` sits on this run's unmerged `epics/` branch (`workflows-core:phase-handoff` §3.3 rows D/E), and on an **edited** one it meets the copy the default branch still holds — without this run's edit — and stops on the difference or, once switched to the default branch, specifies that earlier copy (§3.3's A and C rows), each until the pull request merges (Phase 7.5's sort); wherever the drafts reached no branch, it reads a new Epic from the folder as it stands (§3.4's `/specify` **(an Epic)** row) but stops on a re-drafted Epic whose merged copy it no longer matches, until the edit is committed (§3.3's C rows); one address, the Epic's own (D4); `/specify` resolves that folder and, finding no `brd-link.md` in it, looks one level up, so a slice-derived Epic keeps the BRD-route contract on this address exactly as it does through the picker; the **Epic fan-out** (depth vs breadth) applies from the spec/design stage on. Optionally a Product Architect adds an Epic-level ARD first → `/product-workflows:create-ard <EPIC>` `<merge-clause>`, which gates the Epic the same way. `<merge-clause>` is `workflows-core:next-phase-offer`'s placeholder, resolved by that reference's *resolution table* from Phase 7.5's own `Phase handoff:` line — never the unconditional "once the pull request above is merged", since that handoff reaches a declined and a nothing-to-commit outcome among the others §4.1 lists. A draft's `[NEEDS CLARIFICATION]` markers are questions that run's grill asks. If the review BLOCKED, resolve that first.]
 
 ### Context hygiene
 
 The resume pointer is written in the terminal cost phase (Phase 11), per `workflows-core:session-hygiene` §1. Then:
 
-- **First: [Phase 0's landing sentence, verbatim]** — _only where Phase 0's `prd_landed` is false; omit otherwise_
+- **First: [Phase 0's amending sentence, verbatim]** — _only where Phase 0's `prd_gate` is `pass_amending`; omit otherwise_
 - **Continuing as PE (`/product-workflows:specify <EPIC>`)?** → run **`/compact`** — context still relevant.
 - **Handing to PA (`/product-workflows:create-ard <EPIC>`), even yourself?** → run **`/clear`** for a clean slate.
 - Consider **`/rename <PRD-ID>-<slug>-pe`** to relocate this session later.
@@ -1239,6 +1302,7 @@ user name is ever written (§10 privacy).
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - ALWAYS resolve one positional address (Phase 0) — a key or an `@<path>` naming a folder in the specs tree works without it; `/epics` is cwd-agnostic and rejects `mode: direct`
 - ALWAYS gate the resolved folder in Phase 0 step 1b on **`prd.md`'s own `kind: prd`** (and, one level down, `epic.md`'s own `kind: epic`) — NEVER on the folder's asserted `kind:`, which a `PRD-` slice folder sets to `brd`; two shapes are accepted (a PRD folder → draft; an `EPIC-` folder with a PRD above it → re-refine, `focus_key` derived from it) and every other shape is refused
+- ALWAYS gate the PRD folder's `prd.md` with `require-on-main` in Phase 0 (*Gate the PRD*) — the resolved folder's on a PRD address, the folder above's on an Epic address, NEVER a path under the `EPIC-` folder and NEVER the Epic's own `epic.md`, which a re-refine run revises — after step 1a and the branch check and before step 1b's table: a stopping state stops the run there, `pass_amending` goes on and Phase 2.7's *Stop* and Phase 9 name the change it read with Phase 0's amending sentence, and `absent` leaves the decision to the table — its own refusal where it refuses the folder, `EPICS_PRD_NOT_HANDED_OFF` where it accepts it, which lands the file on disk and NEVER names `/product-workflows:create-prd` as the fix; on a specs tree that is no git repository the table alone decides, as before the gate
 - NEVER partition a `BRD-` container (step 1a, `EPICS_BRD_NOT_SLICED`, taken on the directory prefix after the specs-repo preflight and before any other read) or an `EPIC-` folder with no PRD above it (`EPICS_EPIC_NOT_UNDER_PRD`) or no `epic.md` in it (`EPICS_NO_PRD`) — Epics come from a PRD only, and `/epics` is the ONLY command that creates an `EPIC-` folder
 - ALWAYS offer Phase 7.5's handoff once Phase 7 has settled and Phase 7.4's agents have returned — the one deliverable branch this command creates is the `epics/` branch `handoff-to-main` cuts behind that consent choice (`workflows-core:phase-handoff` §2). `specs-preflight` may switch `$SPECS_PATH` only onto the default branch or onto a branch the plugin created that already exists (`workflows-core:specs-repo-git` §2.2); it creates no deliverable branch, and besides the `epics/` branch the branches the run may create there are `session/<identity>`, in session-branch mode, where its session-file commits go (§8.2) — a branch that holds no deliverable and that the checkout never stands on (§8.1) — and a local `<default>` where none exists, which the preflight's switch to the default branch creates at `origin/<default>` (§3.5), as the repair `require-on-main` offers on its row C does before its switch, and, outside that mode, §4 step 1's landing creates at the commit it lands, at the run's end or in its preflight's held stage (§3.2), moving no checkout (§4 step 1 (3)).
 - NEVER commit the Epic files except through Phase 7.5's `handoff-to-main`, and never anything in the current working directory, where it is not the specs repository. **Say what a declined handoff costs**: an uncommitted `epic.md` in the PRD folder is an `OTHER` path to `workflows-core:specs-repo-git` §2.1, so it fires §3.3's G1 advisory on every later run of any command and keeps the preflight's leftover flush and branch settle skipped until it is committed or removed. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1).
@@ -1266,7 +1330,7 @@ user name is ever written (§10 privacy).
 - ARD steps (Phase 2.5, writer/reviewer `applicable_ard`, the Phase 9 ARD section) are ADDITIVE and guarded on `status: found` — a run with no ARD is byte-identical to before, save what the components rules add: Phase 5.5, which asks only where two or more components are proposed — from the scan, or from the targets existing Epics carry — and then runs Phase 2.7 on a multi-component set; the `target:` a known set puts on each Epic, with `epic-reviewer`'s *Single target* check; a focus run's split (Phase 6); and Phase 9's `### Targets` section — and, with or without an ARD, the sizing rules: `size_limit`, Phase 6 step 4's count and question and the recounts in Phases 6.1 and 7, `epic-reviewer`'s *Epic size*, and Phase 9's `### Sizing`
 - ALWAYS give every Epic exactly one `target:` from the known set where the run has one (`workflows-core:components`), and NEVER a target outside it; a capability spanning components is split into one Epic per component
 - ALWAYS pass `requirements[]` (as `requirements_file`), `existing_epics`, the `_coverage.md` path, and `applicable_ard` (when found) to `epic-reviewer` — and a large intermediate output (the scanner outputs, `requirements[]`, a style-checker or survivor list) to a reviewer or a fixer as the path of a temp file this run made, never pasted; every such file is in `temp_files`, which Phase 7.4 removes, as does a run that stops before it
-- ALWAYS report landing-order inversions (Phase 2.5) and contract omissions (Phase 5) in Phase 9's `### Targets` with `/product-workflows:create-ard <PRD-KEY>` (refine) as the remedy — preceded by the PRD's landing where Phase 0's `prd_landed` is false — and pass `contract_omissions` to `epic-writer` and `epic-reviewer`; NEVER mint an `[AD#N]` for either — report-only, never a stop
+- ALWAYS report landing-order inversions (Phase 2.5) and contract omissions (Phase 5) in Phase 9's `### Targets` with `/product-workflows:create-ard <PRD-KEY>` (refine) as the remedy, and pass `contract_omissions` to `epic-writer` and `epic-reviewer`; NEVER mint an `[AD#N]` for either — report-only, never a stop
 - ALWAYS reach refine through `focus_key` alone — an `EPIC-` address — and NEVER detect refinement targets from a frontmatter flag: no Epic format defines one (Phase 3, *No detected refinement*)
 - ALWAYS estimate each planned net-new Epic against `size_limit` before the writer runs, and ask split-or-keep-whole there for one over it, a keep-whole answer passed through `scope` (Phase 6) — and NEVER ask an Epic so asked, or one cut from it, to split again
 - ALWAYS size every Epic this run writes or refines against `size_limit` (Phase 6 step 4, and once more before the handoff) — components first, size second: a split never crosses a component and never merges Epics; NEVER write `kept_whole` from anything but the operator's words; NEVER split an Epic whose folder holds `specification.md`, `design.md`, `implementation.md`, or an Epic-level ARD (`ard.md` or an `ard-<area>.md`).

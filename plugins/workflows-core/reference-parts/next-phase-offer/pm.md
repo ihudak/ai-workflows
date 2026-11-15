@@ -163,12 +163,16 @@ array carries every option.
   the operator types (`/product-workflows:idea` Phase 5).
 - `/product-workflows:create-prd <ADDRESS>`:
   `/docs-workflows:release-notes <PRD>` (PM — draft the release note; recommended clear next step); hand to PA
-  *(optional)* → `/product-workflows:create-ard <PRD>`, which gates this PRD and so carries `<merge-clause>`; or hand to PE → `/product-workflows:epics <PRD>` (or `/product-workflows:specify <PRD>`, which gates this PRD and so carries `<merge-clause>` too).
-- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:update-spec <PRD>` (PE) — the revision of an existing specification, which `/product-workflows:specify` would rewrite from scratch.
+  *(optional)* → `/product-workflows:create-ard <PRD>`, which gates this PRD and so carries `<merge-clause>`; or hand to PE → `/product-workflows:epics <PRD>`, which gates this PRD and so carries `<merge-clause>` too (or `/product-workflows:specify <PRD>`, which gates it as well and so carries the clause).
+- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:update-spec <PRD>` (PE) — the revision of an existing specification, which `/product-workflows:specify` would rewrite from scratch. The architecture, Epics and specification routes each gate this PRD and so carry `<merge-clause>`; the release-note route gates nothing and carries none.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
 holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder
-under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). Where the
+under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). `/epics` also
+stops while that `prd.md` is on no ref or only on an unmerged branch, and after a revision it stops
+on the difference or reads the default branch's earlier copy, without the revision, until that
+revision is merged (its Phase 0, *Gate the PRD*), so an offer of it by a run that has just written
+or edited the PRD carries `<merge-clause>`. Where the
 caller's PRD folder — the resolved folder itself on a PRD-level run, its parent on an Epic-level
 one — holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd`
 is not a prerequisite for `/product-workflows:create-ard` there, the offer is

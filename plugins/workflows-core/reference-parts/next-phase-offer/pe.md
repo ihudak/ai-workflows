@@ -164,11 +164,16 @@ array carries every option.
   gate stops with `DESIGN_NO_SPEC` where no ref carries the Epic's `specification.md` (none written,
   or written and never committed), and with `require-on-main`'s stop naming the branch or pull
   request where a plugin branch carries it.
-- `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>` —
-  each after the landing of the PRD folder's `prd.md` where the specs tree is a git repository and
-  that file is not on its default branch, since `/product-workflows:epics` reads that file from the
-  working tree and gates it nowhere, while both of these stop on the PRD folder until it lands
-  (`/product-workflows:epics` Phase 0, *Note whether the PRD is landed*).
+- `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
+  Both stop on the PRD folder until its `prd.md` is on the default branch, wherever the specs tree
+  is a git repository, and `/product-workflows:epics` now stops on that file first (its Phase 0,
+  *Gate the PRD*), so on such a tree a run that reaches these offers has found that file on the
+  default branch already, and they name no landing of it — save where that gate returned
+  `pass_amending`: the copy the run read is then its own `epics/` branch's, which carries a change
+  to `prd.md` the default branch lacks; until that change is merged, neither command reads it —
+  from that branch each stops on the difference or offers to switch to the default branch, whose
+  copy lacks the change — and the offers name that change's merge first
+  (`/product-workflows:epics` Phase 9).
 - `/product-workflows:update-spec <KEY>` (a merged specification revised in place) → for each design it
   names — one citing an ID that changed, or one built on the specification it replaced — Dev →
   `/dev-workflows:design <ITS-KEY>` to revise it;
@@ -180,7 +185,11 @@ array carries every option.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
 holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder
-under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). Where the
+under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). `/epics` also
+stops while that `prd.md` is on no ref or only on an unmerged branch, and after a revision it stops
+on the difference or reads the default branch's earlier copy, without the revision, until that
+revision is merged (its Phase 0, *Gate the PRD*), so an offer of it by a run that has just written
+or edited the PRD carries `<merge-clause>`. Where the
 caller's PRD folder — the resolved folder itself on a PRD-level run, its parent on an Epic-level
 one — holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd`
 is not a prerequisite for `/product-workflows:create-ard` there, the offer is

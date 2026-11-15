@@ -50,7 +50,11 @@ commands so the routing graph and the offer rules live in ONE place (the same sh
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
 holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder
-under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). Where the
+under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). `/epics` also
+stops while that `prd.md` is on no ref or only on an unmerged branch, and after a revision it stops
+on the difference or reads the default branch's earlier copy, without the revision, until that
+revision is merged (its Phase 0, *Gate the PRD*), so an offer of it by a run that has just written
+or edited the PRD carries `<merge-clause>`. Where the
 caller's PRD folder — the resolved folder itself on a PRD-level run, its parent on an Epic-level
 one — holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd`
 is not a prerequisite for `/product-workflows:create-ard` there, the offer is
