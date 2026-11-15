@@ -1,8 +1,8 @@
 # ARD resolution (embedded — shared reference)
 
 Given a resolved item, resolve any applicable **Architecture Requirements/Decision Document(s)** produced by
-`/create-ard` and return a normalized **ARD context** — or **`none`**. Cited by `/create-ard`, `/design`,
-`/implement`, `/specify`, `/update-spec`, `/epics`, `/ready`, and `/conformance` so the resolution logic, the **optional/no-regression** rule, and the deviation-record
+`/create-ard` and return a normalized **ARD context** — or **`none`**. Run by `/create-ard`, `/design`,
+`/implement`, `/specify`, `/update-spec`, `/epics`, `/ready`, and `/conformance` — the commands *Consumers (informative)* below lists — so the resolution logic, the **optional/no-regression** rule, and the deviation-record
 convention live in ONE place.
 
 ## Inputs
@@ -20,8 +20,8 @@ convention live in ONE place.
    its `SPECS_PATH_INSIDE_TREE` message — never `none`, which would let the caller go on without an
    ARD it should have enforced.
 
-   **This step is the only route by which that resolution reaches an ARD.** All seven consumers below
-   delegate their ARD lookup here, so none of them finds an ARD by resolving its *own* folder —
+   **This step is the only route by which that resolution reaches an ARD.** Every command *Consumers (informative)*
+   below lists delegates its ARD lookup here, so none of them finds an ARD by resolving its *own* folder —
    `/implement` included, which resolves its own folder on a keyed run and still reaches an ARD
    solely by citing this file.
 2. Collect candidate ARD files **inside the folder step 1 resolved**, by filename — never a path
