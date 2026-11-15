@@ -9,6 +9,7 @@ Date: 2026-11-15. Status: **approved by the maintainer 2026-11-15**, revision 3.
 - **Phase 6's list of annotated documents gains `ard-<area>.md`**, a truth edit D3 forces, under the standing truth-edit approval.
 - **D10's fixtures are built as traced runs and one live check**, since no harness executes command prose.
 - **The §5 rule 2 carve-out (D2, GIT-G1 edit 2) is narrowed to gated deliverables, approved by the maintainer 2026-11-15 at Task 1's review**: a consumer that reads a *gated* deliverable (§4.0) only as `<default-ref>` holds it executes no gate, so the existing default-branch reads of advisory artifacts by `/ready` and `/brd-reconcile` are not of that kind.
+- **D9's restated test keeps the handoff** (Task 2 review I2, the controller's ruling, 2026-11-15): a match that equals, whole, one of the same pattern's matches in the tracer's handoff is carried, as format §9 carries what the brief carried; the traced ref is added to what the agent was given, never put in its place.
 
 Every decision is written with a recommended answer. The four at the end are the maintainer's calls; the rest are the author's. Statements about the tree cite `file:line` at `ec60ad47`.
 
