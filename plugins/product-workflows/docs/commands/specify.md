@@ -142,7 +142,7 @@ The final report ends with a *Next step* recommendation; nothing is run for you.
   - [`/brd-split <SLICE-KEY>`](brd-split.md) (after the merge) where a claimed row is still `unallocated`: it gates the slice's `grounding/code-grounding.md`, which this run hands off wherever the slice holds `grounding/`;
   - `/brd-split <PARENT-KEY>`, to keep or remove the slice, where it claims nothing — with a slicing instruction where the parent's ledger still holds an `unallocated` row, bare where it holds none;
   - neither `/create-prd` nor `/epics` where every claimed row is allocated with none `covered-here`, or a ledger cannot be read; `/dev-workflows:design` is still named there, on the terms above.
-- **Where the PRD folder holds an authored `prd.md`** → [`/prd-proposal <PRD>`](prd-proposal.md), optional and waiting on nothing this run wrote: it gates `prd.md`, which this run does not write. For a PRD-level spec on the BRD route with an `ard.md` in place, this specification takes the folder to tier 4; on the idea route it stays at tier 1. Without a PRD, the step says a proposal becomes available once `/create-prd` has written one.
+- **Where the PRD folder holds an authored `prd.md`** → [`/prd-proposal <PRD>`](prd-proposal.md), optional and waiting on nothing this run wrote: it gates `prd.md`, which this run does not write. For a PRD-level spec on the BRD route with an `ard.md` in place, this specification takes the folder to tier 4; on the idea route it stays at tier 1. Without a PRD, the step says a proposal becomes available once `/create-prd` has written one and, wherever the specs tree is a git repository, its handoff is merged.
 
 ## See also
 
