@@ -148,6 +148,7 @@ Each batch is one pull request. Each ends with the claim sweep of §7 over its o
 - **A resumed run** (IMPL, *Resuming a stopped run*) passed this check when it started. The builder reads whether its Phase 0 reaches the gate again and states the answer in the command; the design asks only that a run already past its first edit is never stopped by a document removed since.
 - **L9:** trace `/conformance <PRD>` where no unit holds a block. Where it runs on, it stops as the Epic run does, with an id of its own.
 - **In PH §3.4**, the `/implement` row is rewritten to *stops*, with the four ids.
+- **Settled at planning (2026-11-15, the lead's):** L12's rule for what a never-produced stop names is stated once, in PH §4.4, under the name *the earliest gap*, and cited by `/implement`'s stops and by the `/design`, `/conformance` and `/security-workflows:scan` sites §5.5 lists; no shared entry point or script is added (M5). Where both files of the pair are missing the run tests and reports the specification alone. `.claude/rules/dev-workflows-implement.md` stood 9 characters under its 20,000 warning when this batch was planned, so the batch's new invariant text goes to `.claude/rules/dev-workflows-conformance.md`, which loads with the same paths.
 
 ### 5.3 Batch 3 — `/document <KEY>`
 
