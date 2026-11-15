@@ -164,13 +164,19 @@ array carries every option.
   gate stops with `DESIGN_NO_SPEC` where no ref carries the Epic's `specification.md` (none written,
   or written and never committed), and with `require-on-main`'s stop naming the branch or pull
   request where a plugin branch carries it.
-- `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
+- `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>` —
+  each after the landing of the PRD folder's `prd.md` where the specs tree is a git repository and
+  that file is not on its default branch, since `/product-workflows:epics` reads that file from the
+  working tree and gates it nowhere, while both of these stop on the PRD folder until it lands
+  (`/product-workflows:epics` Phase 0, *Note whether the PRD is landed*).
 - `/product-workflows:update-spec <KEY>` (a merged specification revised in place) → for each design it
   names — one citing an ID that changed, or one built on the specification it replaced — Dev →
   `/dev-workflows:design <ITS-KEY>` to revise it;
   where it names an Epic's `## Covers` or the PRD's `_coverage.md`, `/product-workflows:epics <PRD>` to
   refine; where it names nothing, the next step `/product-workflows:specify` gives a specification at
-  the same altitude.
+  the same altitude. Where the PRD folder holds no `prd.md`, or its Phase 0 went on past a PRD
+  `/product-workflows:specify` stops on, its Phase 8 says what it names first and names no run that
+  would stop on that PRD.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
 holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder

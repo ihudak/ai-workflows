@@ -128,7 +128,9 @@ step skips on it.
 
 3. **Read from a clean specs-repo main — never a branch.** The specs repo's `main` (or `master`) branch
    is the handoff surface for every artifact `/ready` judges (per `/design`'s Phase 0 rule). Check
-   `git -C "$SPECS_PATH" branch --show-current`, and test dirtiness with
+   `git -C "$SPECS_PATH" branch --show-current` — never naming a branch whose name is outside
+   `workflows-core:specs-repo-git` §3.2's safe class, tested as §3.2 tests one: such a HEAD counts as
+   detached there, and the preflight already printed G0's notice — and test dirtiness with
    `git -C "$SPECS_PATH" status --porcelain -z --untracked-files=all`, never the bare form: read
    each NUL-terminated record as `workflows-core:specs-repo-git` §2.1 step 1 does — strip the two
    status bytes and the space, and consume a rename or copy record's second field with it — and

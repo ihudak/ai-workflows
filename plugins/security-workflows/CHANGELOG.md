@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.12.2] — 2026-11-14
+
+`/security-workflows:scan` never lists or names a branch whose name holds characters outside the safe class: batch B40. Update with `workflows-core` 1.90.2.
+
+### Fixed
+
+- **The `session/*` branches the reserve copy lists skip one outside `workflows-core:specs-repo-git` §3.2's safe class**, before `ls-tree` or `show` names it, and the stop on a refused switch names such a checkout branch as `a branch whose name is outside the safe class`.
+
 ## [0.12.1] — 2026-11-14
 
 Docs only: SEC-G2 B. The roles page says the Security Engineer reviews a threat model in its ARD's pull request. It describes `product-workflows` 3.81.0's `/create-ard`, and needs nothing of the other plugins' releases, nor they of it.

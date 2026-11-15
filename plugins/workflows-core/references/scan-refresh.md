@@ -16,8 +16,8 @@ A caller supplies three inputs:
 
 Run on `session_repo`'s top level, wherever this reference asks whether that repository **stands on a branch other than its default**:
 
-- **Its branch** is the one `git -C <top level> branch --show-current` prints. Where it prints nothing, HEAD is detached, which counts as another branch, `<branch>` reading `its detached HEAD at <short commit>` (`git -C <top level> rev-parse --short HEAD`).
-- **Its default branch** is what follows `origin/` in what `git -C <top level> rev-parse --abbrev-ref origin/HEAD` prints, where that exits 0 — `<default>` below. Where it exits non-zero — `origin/HEAD` unset, when it prints `origin/HEAD` itself — the run cannot tell, which counts as another branch too, and the four-option question takes its unknown-default form.
+- **Its branch** is the one `git -C <top level> branch --show-current` prints. Where it prints nothing, HEAD is detached — and where it prints a name outside `read-only-repos.md` §3's *Branch names* class, HEAD counts as detached — which counts as another branch, `<branch>` reading `its detached HEAD at <short commit>`, or `a branch whose name is outside the safe class, at <short commit>` for the second (`git -C <top level> rev-parse --short HEAD`).
+- **Its default branch** is what follows `origin/` in what `git -C <top level> rev-parse --abbrev-ref origin/HEAD` prints, where that exits 0 — `<default>` below. Where it exits non-zero — `origin/HEAD` unset, when it prints `origin/HEAD` itself — or the name is outside that class, tested before any command names it, the run cannot tell, which counts as another branch too, and the four-option question takes its unknown-default form.
 
 So a detached HEAD whose default branch the run can tell takes the **known**-default form, its `<branch>` naming the detached commit; an `origin/HEAD` that does not resolve takes the **unknown**-default form, whatever HEAD is.
 

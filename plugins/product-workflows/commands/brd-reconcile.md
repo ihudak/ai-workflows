@@ -288,7 +288,7 @@ write would re-ask a question already answered.
       such a `prd.md` is not decided here, and step 6 handles it as it always has.
 
     Stop:
-    `BRD_RECONCILE_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Reconciling applies a customer's returned review of a BRD slice's package, and this folder was never packaged by this route and holds no coverage ledger and no requirement inventory for a correction to land in; --sent does not change that. Check the key names the slice whose package the customer answered. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>' where the folder holds no prd.md yet). Where it holds a prd.md, run '/product-workflows:update-prd <KEY>' to revise that PRD from what the review says. Re-running this command on this folder stops here again.`
+    `BRD_RECONCILE_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Reconciling applies a customer's returned review of a BRD slice's package, and this folder was never packaged by this route and holds no coverage ledger and no requirement inventory for a correction to land in; --sent does not change that. Check the key names the slice whose package the customer answered. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>', its handoff merged, where the folder holds no prd.md yet). Where it holds a prd.md, run '/product-workflows:update-prd <KEY>' to revise that PRD from what the review says. Re-running this command on this folder stops here again.`
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`, the prefix of its first handoff; a stop it makes ends the run here. A dependent BRD under another root folder is checked by the cross-BRD write guard, before anything is written into it.
 
 6. **Gate the sent package on main — unless `--sent` supplied one.**
@@ -512,7 +512,7 @@ write would re-ask a question already answered.
    row, or `absent`, means this run cannot write the log safely: it is edited in this checkout and
    not handed off — a run whose handoff was declined leaves it so — or on a branch the default
    branch does not have, or on no branch at all, or the repository itself cannot be
-   checked (no default branch, a detached HEAD), or it changed on `<default>` after this run's own
+   checked (no default branch, a detached HEAD or one on a branch no command may name), or it changed on `<default>` after this run's own
    branch was cut, whatever that branch holds of it (row B′, whose message names the merge
    of `<default>` into the branch, save where no merge can run). Say what the gate reported — the files, branch or
    pull request it named, or the repository state — say that this run writes its defect resolutions
@@ -3014,11 +3014,13 @@ this phase offers.
   0s rather than assumed symmetric with `/create-prd`'s. Neither consults a tracker, and what each
   reads outside the specs tree — code through `$REPOS_PATH`, documentation through `$DOCS_PATH` — is resolved by that run itself, not
   a condition this command can test for the operator; both run the PRD gate — on every route, as of increment E —
-  but neither waits on a PRD, because that gate's `absent` branch proceeds and reports, so
-  `/create-prd` on the BRD route is still not a prerequisite for either (`commands/create-ard.md` and
-  `commands/specify.md`, *The BRD route runs this gate too, and the `absent` branch is what makes that
-  safe*); the one state that would make either wait is a `prd.md` that exists on an unmerged branch,
-  which is not a condition this command can test for the operator; and neither reads the
+  but neither waits on a PRD the slice has not got, because on a slice holding no `prd.md` that
+  gate's `absent` branch proceeds and reports, so `/create-prd` on the BRD route is still not a
+  prerequisite for either (`commands/create-ard.md` and `commands/specify.md`, *The BRD route runs
+  this gate too, and a slice holding no `prd.md` still goes on*); what makes either stop on that
+  gate is a `prd.md` that exists and was never handed off — on an unmerged branch, or in the slice
+  folder and on no ref, where each stops with its `*_PRD_NOT_HANDED_OFF` — a file this run neither
+  writes nor reads, so not a condition it tests for the operator; and neither reads the
   `claims:` list or the coverage ledger **as an authoring input** — each opens them only to shape
   its own offers and report — because PRD eligibility is §5's rule about authoring
   a **PRD** and an ARD is not that artifact and neither is a specification. What each needs is this

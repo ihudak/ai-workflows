@@ -28,7 +28,7 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   interviewed**: a resolved root stops with `BRD_INTERVIEW_ROOT_LEVEL`, naming
   [`/brd-split`](brd-split.md) as the way to carve one, and an idea-route PRD folder — a `PRD-`
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_INTERVIEW_NOT_A_SLICE`, naming
-  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on. An `EPIC-` folder stops with `BRD_INTERVIEW_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one.
+  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on, once its PRD is on the default branch wherever the specs tree is a git repository — after [`/create-prd`](create-prd.md), its handoff merged, where the folder holds none yet. An `EPIC-` folder stops with `BRD_INTERVIEW_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one.
 - **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_INTERVIEW_TWO_ADDRESSES`.
 - **`--round N`** (optional) — target one round: resume it if it is open, or re-open it if it is
   closed, recorded as a re-open with its cause. Naming the next round opens it only where every
@@ -422,8 +422,7 @@ Behind the handoff phase's consent choice, these are committed, pushed, and a pu
 against the specs repo's default branch under the shared `brd/<BRD-KEY>-<slug>` branch prefix. That
 choice is preceded by a read-only probe for an `origin` remote, and where the specs repo has none
 the run says so in a line above the choice: the first option still branches and commits locally,
-but the push and the pull request cannot run. On a run that found a detached
-HEAD in the specs repository, a misplaced `$SPECS_PATH` or its environment changed since its preflight, the line above
+but the push and the pull request cannot run. On a run that found a detached HEAD in the specs repository, or a branch there whose name it will not write into a command, a misplaced `$SPECS_PATH` or its environment changed since its preflight, the line above
 the choice says instead that the first option will be refused, and nothing is committed whichever
 option is picked.
 

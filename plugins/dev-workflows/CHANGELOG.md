@@ -5,6 +5,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.66.3] — 2026-11-14
+
+Docs only: LADDER-ORDER batch 1. The pages that name the companion `product-workflows` plugin's commands which stop on a missing input now name its `/create-ard` and `/specify`, and the environment page says what a command does on a specs tree that is no git repository. No command, agent or reference changes. It describes `product-workflows` 3.82.0, and needs nothing of the other plugins' releases, nor they of it.
+
+### Changed
+
+- **The companion plugin's PRD stops.** The sentences that list which `product-workflows` commands stop on an absent input — on the roles page, the getting-started page, the `/design` page and twice on the `/ready` page — add `/create-ard` and `/specify`, which since `product-workflows` 3.82.0 stop where an idea-route PRD folder holds no `prd.md` and, on either route, where a `prd.md` is in the folder but was never handed off. The roles page's paragraph on `/implement` no longer says it gates its specification and design the way those two gate the PRD. What `/design`, `/implement` and `/ready` do is unchanged.
+
+### Fixed
+
+- **Environment page.** On a specs tree that is no git repository, `require-on-main` verifies nothing and every command of this plugin goes on as it would with no handoff check. The page said every caller does, which was already false of `product-workflows`' `/update-spec`, which stops with no merged specification to revise, and is now false of its `/create-ard` and `/specify`, which stop where an idea-route PRD folder holds no `prd.md`; it names them.
+
+## [4.66.2] — 2026-11-14
+
+`/implement`, `/vuln` and `code-handoff` never name, or switch back to, a code repository's branch whose name holds shell characters: batch B40. Update with `workflows-core` 1.90.2.
+
+### Fixed
+
+- **HEAD on such a branch counts as detached** (`workflows-core:read-only-repos` §3, *Branch names*): `/implement`'s run-state `branch`, which every stop and report reads, and its resume check record its commit; `/vuln` asks no *Branch each CVE from `<current>`* question for it, moving to the base as on a detached HEAD, and returns to its commit before each later CVE, never `switch <name>`, and its reports and `/upgrade`'s name no such branch; and `code-handoff` §2.1 check 2 fails on it with its own reason, `HEAD is on a branch whose name is outside the safe class`, giving the rename to make. `/implement`'s slug drops every character outside `a-z`, `0-9` and `-`, as `branch-naming` §1.3 now requires, so a run's own branch passes that check.
+
+## [4.66.1] — 2026-11-14
+
+A superseded `/implement` writes nothing in the specs repository when that is its code repository, and a code repository's default branch whose name holds shell characters is passed over: batch B39. Update with `workflows-core` 1.90.1.
+
+### Fixed
+
+- **`/implement`'s stop on its run-state file's exit `9`, on a direct run from inside the specs repository, writes nothing there** (EXIT9-SPECSREPO). Another session resumed the run and works in that tree, which is the code repository too, so the stop's cost entry went into it and its `commit-artifacts` committed there, under the resumed run. Now Phase 7 passes `emit-cost`'s `report_only: true`, which puts the entry in the stop's output, and its end `--superseded`, which commits nothing and prints one `Specs repo: NOT COMMITTED` line. The stop runs Phase 0's three-part specs-repository test again, since the run-state file records nothing of it — `$SPECS_PATH` set and a directory among them, since `git -C ""` reads the working directory's own repository. The limit 4.64.0 stated is gone from the command and its page.
+- **`code-handoff` §2.8's rung 1 takes `origin/HEAD`'s name only inside the safe class**, `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`, tested before any command names it, as `workflows-core:read-only-repos` §3 states: a name outside it goes on to `main`, `master` and `develop`, and is never printed.
+- **`/conformance` and `/ready` never name a specs-repository branch outside that class**: `/conformance` skips such a `conformance/` branch and names its checkout's as `HEAD`, and `/ready`'s main-branch check names none, the preflight's G0 notice having said why.
+
 ## [4.66.0] — 2026-11-14
 
 SEC-G1: `/design` reads the **weakness classes** the security findings registers hold for the repositories a design touches — one code repository's findings that share a CWE, in the registers `/security-workflows:scan` keeps under `$SPECS_PATH/security/` — through `workflows-core`'s new `weakness-classes` skill, which hands it counts and checked values, never a finding's text, and the design records how it answers each class it is asked about. Update with `workflows-core` 1.87.0, which carries the skill, its script and the grounding rules `/design` cites; `product-workflows` 3.80.0 and `security-workflows` 0.12.0 are released with it. Where `$SPECS_PATH/security/` does not exist, `/design` grounds exactly as before; where it exists and holds no register, it adds one `security registers: OFF` line and grounds as before.
