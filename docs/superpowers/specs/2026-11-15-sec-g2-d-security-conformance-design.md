@@ -2,6 +2,13 @@
 
 Date: 2026-11-15. Status: **approved by the maintainer 2026-11-15**, revision 3.1, with the recommended answer to each of the four questions at the end (no accept on a mitigation; the model read from the default branch with no gate, and the three GIT-G1 edits that answer names; ship D and schedule RETURNED-INTAKE next, widened to any live, non-stale threat; a narrow yes on `/ready`'s *Delivery verified* rung). Written after two independent reviews — of revision 1 (`7b67c671`; `.superpowers/design-review-1.md`: 3 Critical, 11 Important, 9 Minor) and of revision 2 (`bf864c61`; `.superpowers/design-review-2.md`: 5 Important, 9 Minor); what changed is listed at the end. Roadmap row **D** of `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:104` ("Security conformance: traces each threat-model mitigation to merged code, as `/conformance` traces requirements"; depends on "B or C"), the last of SEC-G2's sub-projects. It builds on B and C as built, both on `main` at `ec60ad47` (`docs/superpowers/specs/2026-11-14-sec-g2-b-threat-model-design.md`, `…-sec-g2-c-design-threat-review-design.md`).
 
+**Amended at plan review, 2026-11-15** (`.superpowers/plan-review-1.md`; the plan is `docs/superpowers/plans/2026-11-15-sec-g2-d-security-conformance.md`). Where this note and the text below differ, the note holds.
+- **GIT-G1 edit 3 is approved by name:** `/conformance`'s `body_facts` carries the threat states.
+- **On a PRD run where a threat model stands on the default branch, the PRD folder's `design.md` is gated** — where none stands it is neither gated nor read, as today — in Phase 0 step 4's existing `require-on-main` gate, as each Epic's is, with the truth edit to `phase-handoff` §3.4's `/conformance` row. D2's "No new gate" holds for the models, not for this design, which D2 took to be gated already.
+- **The PRD-level `ard-resolution` call D2 makes for a model is a fifth §3.7 site, approved by name:** no stopping row of it stops the run or offers a repair, and the model is left unused. `phase-handoff` §3.7 and `ard-resolution`'s no-regression rule say so.
+- **Phase 6's list of annotated documents gains `ard-<area>.md`**, a truth edit D3 forces, under the standing truth-edit approval.
+- **D10's fixtures are built as traced runs and one live check**, since no harness executes command prose.
+
 Every decision is written with a recommended answer. The four at the end are the maintainer's calls; the rest are the author's. Statements about the tree cite `file:line` at `ec60ad47`.
 
 ## Intent
