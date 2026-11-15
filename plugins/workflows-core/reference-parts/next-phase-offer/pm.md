@@ -26,6 +26,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `PA — architecture (optional)` → `pa`
 - `PE — breakdown & specification` → `pe`
 - `Dev — build, verify & deliver` → `dev`
+- `` `/dev-workflows:implement` precondition `` → `dev`
 - `` `/epics` precondition `` → `epics-precondition`
 - `overflow rule` → `overflow`
 - `Not pipeline nodes` → `not-pipeline`

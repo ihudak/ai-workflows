@@ -119,13 +119,13 @@ EOF
 
 | Id | String | Before | Sites | After |
 |---|---|---|---|---|
-| R1 | the recipe's count of `/commands` with a §3.4 row whose column 3 begins `**stops` | **12** | `/brd-interview` `/brd-package` `/brd-proposal` `/brd-reconcile` `/brd-split` `/create-ard` `/design` `/epics` `/prd-ground` `/prd-proposal` `/specify` `/update-spec` (13 on the scratch copy with `/implement`'s row flipped, measurement 2) | |
+| R1 | the recipe's count of `/commands` with a §3.4 row whose column 3 begins `**stops` | **12** | `/brd-interview` `/brd-package` `/brd-proposal` `/brd-reconcile` `/brd-split` `/create-ard` `/design` `/epics` `/prd-ground` `/prd-proposal` `/specify` `/update-spec` (13 on the scratch copy with `/implement`'s row flipped, measurement 2) |  **13** — `/implement` added (Task 2, recipe run on the edited PH) |
 | S1 | `Point me at a specs directory` | **1** | IMPL:318 | |
 | S2 | `Proceed without specs` | **2** | IMPL:318, :320 | |
 | S3 | `Specs are required for keyed runs` | **1** | IMPL:316 | |
 | S4 | `the specs-required prompt` | **1** | IMPL:88 | |
 | S5 | `picker and specs prompt` | **1** | IMPL:16 | |
-| S6 | `only an **in-scope** spec is gated; a direct-prompt run resolves none` | **1** | PH:327 (RP 1: `phase-handoff/require-on-main.md:163`) | |
+| S6 | `only an **in-scope** spec is gated; a direct-prompt run resolves none` | **1** | PH:327 (RP 1: `phase-handoff/require-on-main.md:163`) |  **0** (RP 0) (Task 2) |
 | S7 | `only an in-scope spec is gated at all` | **1** | IMPL:324 | |
 | S8 | `behave exactly as before this feature` | **8** | IMPL:324 (×2, P-20); DES:107 (P-44's `unmanaged` clause, kept); `pw/commands/create-ard.md:281`, `:283`, EP:525, SPEC:324, `:326` (other commands, not this batch's) | |
 | S9 | ``an absent in-scope spec being `absent` rather than a stop`` | **1** | IMPL:237 | |
@@ -147,29 +147,29 @@ EOF
 | S94 | `— specify it with '/product-workflows:specify <KEY>', then re-run '/dev-workflows:conformance <KEY>'` | **1** | CONF:115 (the bare clause also stands twice in `pw/commands/idea.md:98`, another command's) | |
 | S26 | `run '/product-workflows:specify <ADDRESS>' and land it there first` | **2** | DES:107, DES page :61 | |
 | S27 | ``naming `/product-workflows:specify <PRD>` (whose picker offers those Epics)`` | **1** | DES:114 | |
-| S55 | ``naming `/product-workflows:specify <PRD>` for an Epic with no `specification.md` `` | **2** | NPO:320, SPEC:1408 (RP 1: `next-phase-offer/pe.md:161`) | |
+| S55 | ``naming `/product-workflows:specify <PRD>` for an Epic with no `specification.md` `` | **2** | NPO:320, SPEC:1408 (RP 1: `next-phase-offer/pe.md:161`) |  **1**, SPEC:1408 (Task 5's); NPO:320 rewritten to name what each Epic needs first as `/design`'s step 4 words it (RP 0) (Task 2) |
 | S73 | `stop with its wording, unchanged` | **1** | DES:127 | |
 | S74 | `M excluded — specification.md not yet merged to` | **1** | DES:120 | |
 | S28 | ``` `specification.md` but no `design.md` → ○ ``` | **2** | IMPL:256, IMPL page :17 | |
-| S29 | `Five artifacts qualify` | **1** | PH:533 (RP 1: `handoff-to-main.md:287`) | |
-| S30 | ``` `design.md`, gated in-scope-only by `/implement` ``` | **1** | PH:533 (RP 1: `handoff-to-main.md:287`) | |
-| S31 | ``` `/implement` reads an in-scope `design.md` exactly as it did before the gate ``` | **1** | PH:533 (RP 1: `handoff-to-main.md:287`) | |
-| S34 | ``` `/implement` Phase 4.5 annotating a merged `design.md` ``` | **1** | PH:537 (RP 1: `handoff-to-main.md:291`) | |
-| S32 | ``beside a `design.md` nothing stops on`` | **1** | PH:541 (RP 1: `handoff-to-main.md:295`) | |
-| S33 | ``` `/implement` Phase 4.5 (an annotated `design.md` alone, or `specification.md` with it) ``` | **1** | PH:541 (RP 1: `handoff-to-main.md:295`) | |
-| S35 | ``the ARD and `design.md` are two more artifacts`` | **1** | PH:569 (RP 1: `handoff-to-main.md:323`) | |
-| S88 | ``dated 2026-11-14. `/epics`' PRD row is legitimate by the first`` (P-2's insertion point) | **1** | PH:316 (RP 1: `require-on-main.md:152`) | |
-| S37 | `A third followed on 2026-11-15` | **1** | PH:358 (RP 1: `require-on-main.md:194`) | |
-| S89 | ``but `/design`'s, whose stop predates this gate`` | **1** | PH:358 (RP 1: `require-on-main.md:194`) | |
-| S36 | `the twelve consumers with a row that stops` | **1** | `.claude/rules/workflows-core-handoff.md:24` | |
-| S38 | `the earliest gap` (lower case; the name Task 2 gives PH §4.4's new rule — F-1) | **3** | IMPL:375, EP:24, EP:555 — all COMP §6's rule; `The earliest gap` 1 more, COMP:117, where it is defined | |
+| S29 | `Five artifacts qualify` | **1** | PH:533 (RP 1: `handoff-to-main.md:287`) |  **0**; `Four artifacts qualify` **1**, PH:533 (RP 1) (Task 2) |
+| S30 | ``` `design.md`, gated in-scope-only by `/implement` ``` | **1** | PH:533 (RP 1: `handoff-to-main.md:287`) |  **0** (RP 0) (Task 2) |
+| S31 | ``` `/implement` reads an in-scope `design.md` exactly as it did before the gate ``` | **1** | PH:533 (RP 1: `handoff-to-main.md:287`) |  **0** (RP 0) (Task 2) |
+| S34 | ``` `/implement` Phase 4.5 annotating a merged `design.md` ``` | **1** | PH:537 (RP 1: `handoff-to-main.md:291`) |  **1** (RP 1), kept in a clause saying Phase 4.5 said so until `/implement`'s row came to stop on `design.md`; bounded ``… annotating a merged `design.md` and `/epics` re-drafting`` **0** (Task 2) |
+| S32 | ``beside a `design.md` nothing stops on`` | **1** | PH:541 (RP 1: `handoff-to-main.md:295`) |  **0** (RP 0) (Task 2) |
+| S33 | ``` `/implement` Phase 4.5 (an annotated `design.md` alone, or `specification.md` with it) ``` | **1** | PH:541 (RP 1: `handoff-to-main.md:295`) |  **0** (RP 0) (Task 2) |
+| S35 | ``the ARD and `design.md` are two more artifacts`` | **1** | PH:569 (RP 1: `handoff-to-main.md:323`) |  **0** (RP 0) (Task 2) |
+| S88 | ``dated 2026-11-14. `/epics`' PRD row is legitimate by the first`` (P-2's insertion point) | **1** | PH:316 (RP 1: `require-on-main.md:152`) |  **0** (RP 0): the sentence now goes on ``…dated 2026-11-14, and `/implement`'s row … does, dated 2026-11-15, by a recorded decision of 2026-11-14.`` (Task 2) |
+| S37 | `A third followed on 2026-11-15` | **1** | PH:358 (RP 1: `require-on-main.md:194`) |  **1** (RP 1), kept: the fourth decision is added after its paragraph's `/epics` sentences; bounded `and on row H the table decides, as before. The consumers whose` **0** (Task 2) |
+| S89 | ``but `/design`'s, whose stop predates this gate`` | **1** | PH:358 (RP 1: `require-on-main.md:194`) |  **1** (RP 1), kept: the exclusion list gains `/implement`'s row at its end; bounded ``whose stop on one in the folder and on no ref is the 2026-11-15 decision's: `/prd-ground` `` **0** (Task 2) |
+| S36 | `the twelve consumers with a row that stops` | **1** | `.claude/rules/workflows-core-handoff.md:24` |  **0**; `the thirteen consumers with a row that stops` **1**, `.claude/rules/workflows-core-handoff.md:24` (Task 2) |
+| S38 | `the earliest gap` (lower case; the name Task 2 gives PH §4.4's new rule — F-1) | **3** | IMPL:375, EP:24, EP:555 — all COMP §6's rule; `The earliest gap` 1 more, COMP:117, where it is defined |  **3** after Task 2, unchanged: PH §4.4's rule is named *the first missing document* (`The first missing document` **3**: PH:327, PH:617, NPO:375) |
 | S76 | `the earliest gap's remedy, §6` | **2** | IMPL:375, EP:555 | |
-| S42 | ``For one with no implementation record it is `/dev-workflows:implement <EPIC>` `` | **1** | NPO:102 (RP 1: `next-phase-offer/dev.md:91`) | |
+| S42 | ``For one with no implementation record it is `/dev-workflows:implement <EPIC>` `` | **1** | NPO:102 (RP 1: `next-phase-offer/dev.md:91`) |  **1** (RP 1), kept: the condition follows the dash clause; bounded ``and the same step from `/dev-workflows:conformance` and `/security-workflows:scan`. For one implemented`` **0** (Task 2) |
 | S70 | ``` `/dev-workflows:implement <its key>` for one with no implementation record ``` | **1** | IMPL:1531 | |
-| S71 | ``→ a `fix-code` decision → `/dev-workflows:implement <EPIC>` `` | **2** | NPO:385, :386 (RP 2: `next-phase-offer/dev.md:189`, `:190`) | |
-| S98 | ``` `/dev-workflows:implement <EPIC>` (`<PRD>` where the PRD has no Epics) ``` | **1** | NPO:386 (RP 1: `dev.md:190`) | |
-| S72 | ``→ a `fix` decision → `/dev-workflows:implement <EPIC>` `` | **1** | NPO:387 (RP 1: `dev.md:191`) | |
-| S43 | ``SUPPORTED → `/dev-workflows:implement <ADDRESS>` `` | **2** | RDY:700, :708; NPO:378 writes `**SUPPORTED** → `/dev-workflows:implement <ADDRESS>``, 1 (RP 1: `dev.md:182`) | |
+| S71 | ``→ a `fix-code` decision → `/dev-workflows:implement <EPIC>` `` | **2** | NPO:385, :386 (RP 2: `next-phase-offer/dev.md:189`, `:190`) |  **2** (RP 2), kept: each line gains the condition; bounded ``then `/dev-workflows:conformance <EPIC>` again; none →`` **0**, and S98's bounded form **0** (Task 2) |
+| S98 | ``` `/dev-workflows:implement <EPIC>` (`<PRD>` where the PRD has no Epics) ``` | **1** | NPO:386 (RP 1: `dev.md:190`) |  **1** (RP 1), kept; bounded ``(`<PRD>` where the PRD has no Epics); an `amend-document` `` **0** (Task 2) |
+| S72 | ``→ a `fix` decision → `/dev-workflows:implement <EPIC>` `` | **1** | NPO:387 (RP 1: `dev.md:191`) |  **1** (RP 1), kept; bounded ``(continues on the Epic's branch), then the pull request's review`` **0** (Task 2) |
+| S43 | ``SUPPORTED → `/dev-workflows:implement <ADDRESS>` `` | **2** | RDY:700, :708; NPO:378 writes `**SUPPORTED** → `/dev-workflows:implement <ADDRESS>``, 1 (RP 1: `dev.md:182`) |  NPO **1** (RP 1), kept; bounded ``(the same address); **PARTIAL`` **0**; RDY:700, :708 are Task 5's (Task 2) |
 | S79 | ``an Epic run with a `fix-code` decision → `/dev-workflows:implement <EPIC-KEY>` `` | **1** | CONF:560 | |
 | S80 | ``a PRD run → for a `fix-code` decision, `/dev-workflows:implement <EPIC-KEY>` `` | **1** | CONF:572 | |
 | S63 | ``/product-workflows:epics <PRD-KEY>` or `/product-workflows:create-ard <KEY>`, as the note names`` | **1** | CONF:577 | |
