@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.82.1] — 2026-11-15
 
-SEC-G2 C: `dev-workflows` 4.67.0's `/design` can now answer the threats a threat model defers to design, and `/create-ard` takes the two rules that hold `threat-modeler`'s reply from `workflows-core` 1.92.0's `threat-model-format` section 9, where they now stand for both commands, in place of its own copy. Update with `workflows-core` 1.92.0: beside an older one, `/create-ard` finds no section 9 and, failing closed, dispatches no `threat-modeler` and proposes no candidate, one line saying so; the architect can still add threats. `dev-workflows` 4.67.0, `docs-workflows` 1.39.6 and `security-workflows` 0.12.3 are released with it. Nothing else `/create-ard` does changes.
+SEC-G2 C: `dev-workflows` 4.67.0's `/design` can now answer the threats a threat model defers to design, and `/create-ard` takes the two rules that hold `threat-modeler`'s reply from `workflows-core` 1.92.0's `threat-model-format` section 9, where they now stand for both commands, in place of its own copy. Update with `workflows-core` 1.92.0: beside an older one, `/create-ard` finds no section 9 and, failing closed, dispatches no `threat-modeler` and proposes no candidate, one line saying so; the architect can still add threats. `dev-workflows` 4.67.0, `docs-workflows` 1.39.7 and `security-workflows` 0.12.4 are released with it. Nothing else `/create-ard` does changes.
 
 ### Changed
 

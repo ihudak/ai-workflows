@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [0.12.3] — 2026-11-15
+## [0.12.4] — 2026-11-15
 
 Docs only: SEC-G2 C. The roles page says what a design's threat review puts in front of the Security Engineer. It describes `dev-workflows` 4.67.0's `/design`, and needs nothing of the other plugins' releases, nor they of it.
 
