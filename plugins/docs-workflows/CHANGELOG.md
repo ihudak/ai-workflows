@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.6] — 2026-11-15
+
+`/document`'s pull request no longer repeats its title in its description: batch B41 (PRDRAFT-TITLE).
+
+### Fixed
+
+- **The GitHub footer's command posts the body alone**: `pr-draft.md` holds the title on its first line, a blank line, then the body, and the footer offered `gh pr create --title '<title>' --body-file <pr-draft path>`, so the description began with the title the `--title` flag had already set. It now offers `[ -r '<pr-draft path>' ] && tail -n +3 -- '<pr-draft path>' | gh pr create -R '<owner/repo>' --base '<base_branch>' --head '<branch>' --title '<title>' --body-file -`, every value single-quoted, so the description starts with the body, the pull request opens in the docs repository wherever the shell stands, and an unreadable path posts nothing; `finish-and-handoff` §5 and `/document` Phase 8.5 state the file's layout, and the `/document` page says so.
+
 ## [1.39.5] — 2026-11-14
 
 Docs only: LADDER-ORDER batch 1. The environment page says what a caller does on a specs tree that is no git repository. It describes `product-workflows` 3.82.0 and `workflows-core` 1.91.0, and needs nothing of the other plugins' releases, nor they of it.

@@ -90,10 +90,7 @@ Classify the docs repo's `git -C <docs_repo_path> remote get-url origin`, its ho
 ## 5. PR draft (always; no API)
 
 Compose the draft and BOTH write and show it:
-- **write** to the resolved PRD folder as `pr-draft.md`
-  (the resolved PRD folder; ask if
-  none) — the same destination convention as the release-notes / bug drafts —
-  the draft, then its **last line** (below).
+- **write** to the resolved PRD folder as `pr-draft.md` (the resolved PRD folder; ask if none) — the same destination convention as the release-notes / bug drafts — the title on the file's first line, one blank line, then the body, then its **last line** (below).
 - **show** the draft without that last line: the title + body a footer below
   tells the user to paste is the printed one, and carries no comment.
 - **title**: per `commit_convention` (e.g. `<KEY> <summary>`).
@@ -130,11 +127,7 @@ Compose the draft and BOTH write and show it:
   - Bitbucket (Cloud / Server) → "Open a pull request in the web UI and paste
     the title + body above." (No API.)
   - GitHub → additionally offer a command the USER may run:
-    `gh pr create --title '<title>' --body-file <pr-draft path>`, the title in
-    single quotes with each `'` it holds written `'\''`, since inside double
-    quotes its backticks and `$(…)` would be command-substituted. `--body-file`
-    passes the file as written, its last line included, and GitHub shows no
-    HTML comment in a pull request's description.
+    `[ -r '<pr-draft path>' ] && tail -n +3 -- '<pr-draft path>' | gh pr create -R '<owner/repo>' --base '<base_branch>' --head '<branch>' --title '<title>' --body-file -`, to run once `<branch>` is pushed — `<pr-draft path>` the draft's absolute path, `<owner/repo>` the docs repository's, as §4's `owner-repo` call gives it, `<base_branch>` and `<branch>` §1's and §3's — each value in single quotes with each `'` it holds written `'\''`, since inside double quotes backticks and `$(…)` would be command-substituted. `-R`, `--base` and `--head` name the docs repository and its branches, so the command opens nothing in whatever repository the shell stands in, and gh, reading the body from a pipe, has no prompt to ask them with; the `[ -r … ]` test stops it before an unreadable path posts an empty description. `tail -n +3` drops the title line and the blank line under it, so the description starts with the body rather than repeating the title the `--title` flag already sets; `--body-file -` reads the rest from standard input, its last line included, and GitHub shows no HTML comment in a pull request's description.
   - other → "Open a pull request in your host and paste the title + body above."
 
 **A limit of the last line:** a user who pastes from `pr-draft.md` itself, not
