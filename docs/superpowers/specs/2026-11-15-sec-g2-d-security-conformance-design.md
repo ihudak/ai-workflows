@@ -4,8 +4,8 @@ Date: 2026-11-15. Status: **approved by the maintainer 2026-11-15**, revision 3.
 
 **Amended at plan review, 2026-11-15** (`.superpowers/plan-review-1.md`; the plan is `docs/superpowers/plans/2026-11-15-sec-g2-d-security-conformance.md`). Where this note and the text below differ, the note holds.
 - **GIT-G1 edit 3 is approved by name:** `/conformance`'s `body_facts` carries the threat states.
-- **On a PRD run where a threat model stands on the default branch, the PRD folder's `design.md` is gated** — where none stands it is neither gated nor read, as today — in Phase 0 step 4's existing `require-on-main` gate, as each Epic's is, with the truth edit to `phase-handoff` §3.4's `/conformance` row. D2's "No new gate" holds for the models, not for this design, which D2 took to be gated already.
-- **The PRD-level `ard-resolution` call D2 makes for a model is a fifth §3.7 site, approved by name:** no stopping row of it stops the run or offers a repair, and the model is left unused. `phase-handoff` §3.7 and `ard-resolution`'s no-regression rule say so.
+- **On a PRD run where the PRD folder's own threat model stands on the default branch, the PRD folder's `design.md` is gated** — where none stands it is neither gated nor read, as today — in Phase 0 step 4's existing `require-on-main` gate, as each Epic's is, with the truth edit to `phase-handoff` §3.4's `/conformance` row. D2's "No new gate" holds for the models, not for this design, which D2 took to be gated already.
+- **The PRD-level `ard-resolution` call D2 makes for a model is a fifth §3.7 site, approved by name:** no stopping row of it stops the run, and the model is left unused. **Withholding row C's repair offer there is approved by the maintainer too** (after plan review 2): `/conformance` puts no repair offer on row C at that site. `phase-handoff` §3.7 and `ard-resolution`'s no-regression rule say so.
 - **Phase 6's list of annotated documents gains `ard-<area>.md`**, a truth edit D3 forces, under the standing truth-edit approval.
 - **D10's fixtures are built as traced runs and one live check**, since no harness executes command prose.
 
