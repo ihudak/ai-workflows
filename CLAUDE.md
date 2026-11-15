@@ -84,7 +84,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `specs-git-selftest.md` | `scripts/selftests/**` (repo root); `workflows-core/scripts/`: `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py` | where `specs-git.py`'s selftest lives, how it runs, group runs, the mutants |
 | `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
-| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers, `/ready`'s optional rung |
+| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance` map, record readers, `/ready` rung, `/implement` spec gate |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
 | `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | plugin facts, map, callers |
 | `product-workflows-prd-flow.md` | as `product-workflows.md` | the PRD-creation flow's invariants |
