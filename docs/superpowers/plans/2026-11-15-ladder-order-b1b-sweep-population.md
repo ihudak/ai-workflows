@@ -8,11 +8,11 @@
 
 **Abbreviations.** The plan's: PH = `plugins/workflows-core/references/phase-handoff.md`, EP = `plugins/product-workflows/commands/epics.md`, PP = `.../prd-proposal.md`, ARD = `.../create-ard.md`, UPS = `.../update-spec.md`, NPO = `plugins/workflows-core/references/next-phase-offer.md`. Also SPEC = `.../specify.md`, CPRD = `.../create-prd.md`, UPRD = `.../update-prd.md`, PG = `.../prd-ground.md`, IDEA = `.../idea.md`, BI = `.../brd-intake.md` (all `plugins/product-workflows/commands/`); `pw/` = `plugins/product-workflows/`, `dw/` = `plugins/dev-workflows/`, `wc/` = `plugins/workflows-core/`, `dcw/` = `plugins/docs-workflows/`.
 
-**Dispositions.** **rewrite** — this batch, with the task that owns it; *beyond plan* marks a row the plan's file lists or named sites do not name; *ruling* marks a row the controller should rule on before the task edits it (§8). **keep** — still true after the change, with why. **later 2**, **later 3** — a dev-side or docs-side offer of `/epics` that L8 reaches but design §5.6 does not (§5.6 binds only the offers of a run that wrote `prd.md`), left as batch 1 left the dev-side and docs-side namings of `/create-ard` and `/specify` (design §5.5).
+**Dispositions.** **rewrite** — this batch, with the task that owns it; *beyond plan* marks a row the plan's file lists or named sites do not name; *ruling* marks a row the controller should rule on before the task edits it (§8). **keep** — still true after the change, with why. **later 2**, **later 3** — a dev-side or docs-side offer of `/epics` that L8 reaches but design §5.6 does not (§5.6 binds only the offers of a run that wrote `prd.md`), left as batch 1 left the dev-side and docs-side namings of `/create-ard` and `/specify` (design §5.5). **later 4** — a BRD-route slice form design §5.4 gives batch 4.
 
 A phrase hit dispositions its whole paragraph (refinement 1), so a row cites the paragraph's line where it is one line, or a range. A row's first words are the start of the statement.
 
-**Totals: 120 rows — 62 rewrite (Task 2: 13, Task 3: 17, Task 4: 32; 19 of them *beyond plan*, 4 needing a *ruling*), 52 keep (one of them, P-66, needing a ruling too), 6 later (batch 2: 4, batch 3: 2).** Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does:
+**Totals (after fix round 1, P-121 to P-135 added and P-111 moved from keep to Task 4): 135 rows — 71 rewrite (Task 2: 13, Task 3: 17, Task 4: 41; 27 of them *beyond plan*, 4 marked *ruling*, since ruled, §8), 54 keep (one of them, P-66, ruled too), 10 later (batch 2: 7, batch 3: 2, batch 4: 1).** The first pass's totals were 120 rows (62, 52, 6). Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does:
 
 ```bash
 python3 -I - docs/superpowers/plans/2026-11-15-ladder-order-b1b-sweep-population.md <<'EOF'
@@ -26,6 +26,16 @@ print("keep",sum(r[3].startswith("keep") for r in rows))
 print("later",dict(sorted(C.Counter(r[3] for r in rows if r[3].startswith("later")).items())))
 ids=[r[0] for r in rows]; print("duplicate ids",[i for i,n in C.Counter(ids).items() if n>1])
 EOF
+```
+
+It prints, after fix round 1:
+
+```
+rows 135 malformed []
+rewrite 71 {'Task 2': 13, 'Task 3': 17, 'Task 4': 41} beyond plan 27 ruling 4
+keep 54
+later {'later 2': 7, 'later 3': 2, 'later 4': 1}
+duplicate ids []
 ```
 
 ## 1. Searches run
@@ -74,6 +84,30 @@ EOF
 **The enumeration pass.** Every sentence that names two or more of `/create-ard`, `/specify`, `/prd-ground`, `/prd-proposal`, names `prd.md` or the PRD, carries *gate* or *stop*, and does not name `/epics` — the lists `/epics` may now belong in: 59 sentences, each read.
 
 **The exclusivity probe** (refinement 3), over every sentence naming `/epics` and the PRD, a gate, the default branch or a landing: `only when`, `is the only`, `nothing else`, `and no other`, `only ever`, `the only <noun>`, `the sole`, `no other command`, `the one command`, `the only place`, `the one input|gate|reason`, `one exception`, `gates only`, `its only`, `this is the input`. Its subject hits are P-27 (*this is the input `/epics` gates*), P-53 (*`/epics` gates only a PRD-level `specification.md`*), P-5 (*save where it reaches the artifact it gates only at a later step*) and EP:217 (*This table is the one reason `/epics` reads a coverage ledger*, which stays true: the ledger is still read only at step 1b's refusals). The rest were about the `EPIC-` folder's one creator, unrelated.
+
+**Fix round 1** (2026-11-15, from the review of `de738147`). The review's probes found what the passes above missed: a gloss stating `/epics`' gates in the *has written* wording the starter `gates? no file this run writes` cannot match (P-121), the page copies of the F9 refusals, which no search keyed on `/epics` near landing wording reaches because they say *re-refine* (P-122 to P-124), and copies and twins of rows already filed (P-125 to P-135). Re-run here before the rows were added, each hit read:
+
+```bash
+# /epics within 300 characters of a statement of its gates, whitespace collapsed (the review's probe 15)
+python3 -I - <<'EOF'
+import os,re
+S=re.compile(r"/(product-workflows:)?epics\b")
+L=re.compile(r"gates no file|its gates are|gates only|waits on nothing|does not gate|gate(s|d)? nothing|no PRD gate")
+for r in ["plugins","CLAUDE.md",".claude/rules","docs/maintainers","README.md"]:
+  ps=[r] if os.path.isfile(r) else sorted(os.path.join(d,f) for d,_,fs in os.walk(r) for f in fs if f.endswith(".md"))
+  for p in ps:
+    if p.endswith("CHANGELOG.md") or "/reference-parts/" in p: continue
+    t=re.sub(r"\s+"," ",open(p,encoding="utf-8").read())
+    for m in L.finditer(t):
+      if S.search(t[max(0,m.start()-300):m.end()+300]): print(p,"…",t[max(0,m.start()-160):m.end()+80])
+EOF
+# every re-refine site, commands and pages (the review's probe 17)
+grep -rnE 're-refin' <scope>
+# every /epics mention in the docs pages of specify and create-ard, and the review's other cited sites, by line
+grep -n 'epics' plugins/product-workflows/docs/commands/specify.md plugins/product-workflows/docs/commands/create-ard.md
+```
+
+The gate-statement probe's only hit not already a row was SPEC:244–246 (P-121). `pw/docs/commands/create-ard.md:204`, the walkthrough's copy of P-92's slice offer, was found beside the review's two lines and is in P-130.
 
 ## 2. Baseline counts
 
@@ -162,6 +196,14 @@ EOF
 | S53 | `` the companion `product-workflows` commands whose gated input was never optional stop too: `` | **1** | `dw/docs/getting-started.md:108` | |
 | T2-a | `EPICS_PRD_NOT_HANDED_OFF` (added by Task 2) | **0** | — | **3** (Task 2): PH:338 (the row), PH:357, `.claude/rules/workflows-core-handoff.md:24` (RP 2) |
 | T2-b | `The architecture, Epics and specification routes each gate this PRD and so carry` (P-10, added by Task 2) | **0** | — | **1** (Task 2): NPO:206 |
+| S54 | `and gates no file this run has written — its gates are` (fix round 1) | **1** | SPEC:245 | |
+| S55 | ``or [`/epics`](epics.md) to re-refine the Epic (on the Epic's key`` (fix round 1) | **1** | `pw/docs/commands/create-prd.md:78` | |
+| S56 | ``and [`/epics`](epics.md) for re-refining the Epic itself`` (fix round 1) | **1** | `pw/docs/commands/update-prd.md:45` | |
+| S57 | ``or [`/specify <KEY>`](specify.md) to specify it, once that PRD's handoff is merged`` (fix round 1) | **1** | `pw/docs/commands/idea.md:159` | |
+| S58 | ``as its `/create-ard` and `/specify` do on an idea-route PRD`` (fix round 1) | **2** | `dw/docs/commands/ready.md:55`, `:94` | |
+| S59 | ``document `/create-ard` and `/specify` cannot yet see`` (fix round 1) | **1** | `pw/docs/commands/prd-ground.md:454` | |
+| S60 | ``in `/epics`' place wherever a route above names it`` (fix round 1) | **1** | UPS:166 | |
+| S61 | ``(§3.4's `/epics` row)`` (fix round 1) | **1** | SPEC:1406 | |
 
 ## 3. The population — rows this batch rewrites
 
@@ -241,6 +283,15 @@ EOF
 | P-60 | `dw/docs/getting-started.md:108` | "**A gate.** `/design` refuses to start if `specification.md` is not found on the specs repo's default branch — … (the companion `product-workflows` commands whose gated input was never optional stop too: `/update-spec` …; and so do its `/create-ard` and `/specify` …)" | rewrite | Task 4, *beyond plan* (F8): a list after a colon, presented whole, which `/epics` now joins. A `dev-workflows` page, so Task 6 releases `dev-workflows` as a patch, as batch 1 did for E11–E16 | S36, S53 |
 | P-61 | `dw/docs/roles-and-phases.md:10` | "(The companion `product-workflows` has several of its own — each command whose gated input was never optional: `/update-spec` …; and `/create-ard` and `/specify`, whose PRD was optional to them until a decision of 2026-11-14 made it required: …)" | rewrite | Task 4, *beyond plan* (F8), as P-60 | S36b |
 | P-62 | `dw/docs/commands/design.md:59` | "**Of the inputs this plugin gates on the default branch, this is the one that genuinely stops on absence**: … (the companion `product-workflows` commands whose gated input was never optional stop too, and so do its `/create-ard` and `/specify` on an idea-route PRD that was never written and, on either route, on a `prd.md` in the folder that was never handed off)" | rewrite | Task 4, *beyond plan* (F8). Names who stops on a `prd.md` never handed off; one wording with P-60's copy (refinement 8) | S36 |
+| P-111 | `dw/docs/commands/ready.md:55` | "- **The gated ARD/spec/design themselves — `/ready` is the one command here whose gated inputs never stop it.** … the companion `product-workflows` commands whose gated input was never optional stop on absence too, as its `/create-ard` and `/specify` do on an idea-route PRD that was never written and, on either route, on a `prd.md` in the folder that was never handed off." | rewrite | Task 4, *beyond plan* (F8). Fix round 1: its line corrected from :57, and moved from keep. *as … do* gives an example, but P-62 rewrites the same claim in `design.md:59`, so the `dev-workflows` copies take one wording (refinement 8), with P-62 and P-125. Its *this plugin's one gated input that genuinely stops on absence* clause is batch 2's (design §5.5) | S58 |
+| P-121 | SPEC:244–246 | "That remedy runs in the state this stop reports: `/product-workflows:epics` takes the PRD address this step already resolved, and gates no file this run has written — its gates are `<PRD-dir>/specification.md` and the PRD-level ARD, and this run has written neither." | rewrite | Task 4, *beyond plan* (fix round 1). The gloss on `SPECIFY_EPIC_NOT_FOUND`, whose stop text P-97 keeps. `/epics` now gates `prd.md` too, and the stop is taken in Phase 0 step 3, before *Gate the PRD* (SPEC:318), so where the PRD is not landed the remedy does not run in the state the stop reports: it stops `EPICS_PRD_NOT_HANDED_OFF` or on rows D/E. The claim of S13 and S14/S21b, in a wording the starter probe missed | S54 |
+| P-122 | `pw/docs/commands/create-prd.md:78` | "- **Where the folder above holds a `prd.md`**, the stop names that PRD's key, with [`/update-prd`](update-prd.md) to revise it or [`/epics`](epics.md) to re-refine the Epic (on the Epic's key where its folder holds an `epic.md`, otherwise on the PRD's)." | rewrite | Task 4, *beyond plan* (F9): the page copy of P-34, one wording with it | S55 |
+| P-123 | `pw/docs/commands/update-prd.md:45` | "- **`<KEY>`** — mandatory, … Where the folder above holds a `prd.md`, the stop names that PRD's key as the likely target, and [`/epics`](epics.md) for re-refining the Epic itself (on the Epic's key where its folder holds an `epic.md`, otherwise on the PRD's). …" | rewrite | Task 4, *beyond plan* (F9): the page copy of P-38 | S56 |
+| P-124 | `pw/docs/commands/idea.md:159` | "- **An Epic folder whose parent holds a PRD** → [`/update-prd <PRD-KEY>`](update-prd.md) for that PRD …, [`/epics <KEY>`](epics.md) to re-refine the Epic …, or [`/specify <KEY>`](specify.md) to specify it, once that PRD's handoff is merged wherever the specs tree is a git repository." | rewrite | Task 4, *beyond plan* (F9): the page copy of P-39, the same trailing clause, read as the last item's, which now binds `/epics` too | S57 |
+| P-125 | `dw/docs/commands/ready.md:94` | "- [`/design`](design.md) — the opposite extreme on the same gate: … (the companion `product-workflows` commands whose gated input was never optional stop too, as its `/create-ard` and `/specify` do on an idea-route PRD that was never written and, on either route, on a `prd.md` in the folder that was never handed off) …" | rewrite | Task 4, *beyond plan* (F8), with P-62 and P-111: one wording across the `dev-workflows` copies. Its *the only gated input in this plugin that does* clause is batch 2's (design §5.5) | S58 |
+| P-126 | `pw/docs/commands/prd-ground.md:453–454` | "On the idea route, `prd.md` itself — a claim list read off an unmerged artifact would ground a document `/create-ard` and `/specify` cannot yet see." | rewrite | Task 4 (in plan, Step 2): the page copy of P-50; `/epics` is a third command that takes no unlanded `prd.md` as the PRD, one wording with P-50 | S59 |
+| P-127 | UPS:166 | "- **No `prd.md`, on the idea route** → `/product-workflows:create-prd <PRD>`, in `/epics`' place wherever a route above names it: …" | rewrite | Task 4, *beyond plan* (F10), with P-48 and P-49. Read with :164's *each run left out follows once it is cleared*, it names a PRD-writing run in `/epics`' place with `/epics` to follow; as the controller has decided (§8, fix round 1), that remedy gains the merge of `/create-prd`'s handoff, since writing the PRD does not clear the state for `/epics` (nor, since batch 1, for `/specify`) | S60 |
+| P-128 | SPEC:1406 | "… **PRD-level spec** (`focus_key` is null …) → `/product-workflows:epics <PRD>` (PE) `<merge-clause>`, which stops rather than skipping wherever this spec reached a branch (§3.3 rows D/E) and, wherever it reached none, skips exactly as it did before (§3.4's `/epics` row) — …" | rewrite | Task 4, *beyond plan* (the pointer face of `CLAUDE.md`'s sentence-context bullet). Since Task 2 §3.4 holds two `/epics` rows, `prd.md`'s and the PRD-level `specification.md`'s, and the pointer means the second: name it. The offer itself is P-95's, kept | S61 |
 
 ## 4. The population — rows kept
 
@@ -280,7 +331,7 @@ EOF
 | P-94 | SPEC:1408–1420 | "**One precondition governs every `/product-workflows:epics` option above, and only a slice can fail it.** …" | keep | As P-91 | — |
 | P-95 | SPEC:1406, :1459 | "… **PRD-level spec** (`focus_key` is null …) → `/product-workflows:epics <PRD>` (PE) `<merge-clause>` …" / "- **`/product-workflows:epics <PRD>`**, on a PRD-level spec only …" | keep | A run past its own PRD gate; the clause is for the `specification.md` it wrote | — |
 | P-96 | SPEC:624–688 | "- **PRD with exactly 1 Epic, on a multi-component PRD …** … `choices: ["Split into Epics first with /product-workflows:epics (Recommended)", …]` … **`/product-workflows:epics` is only offered where the resolved folder holds an authored `prd.md`.**" | keep | Step A runs after Phase 0's PRD gate, so an authored `prd.md` there is a landed one | — |
-| P-97 | SPEC:243 | "`SPECIFY_EPIC_NOT_FOUND: no Epic folder for <EPIC> under <the resolved PRD dir> — … Run '/product-workflows:epics <PRD>' to draft this PRD's Epics, then re-run '/product-workflows:specify <EPIC>'.`" | keep | F13: taken before `/specify`'s PRD gate, so where the PRD is not landed the `/epics` run it names stops `EPICS_PRD_NOT_HANDED_OFF`, which names the landing (one more round, L12's cost). Outside design §5.6's L8 scope, which binds offers by a run that wrote `prd.md` | — |
+| P-97 | SPEC:243 | "`SPECIFY_EPIC_NOT_FOUND: no Epic folder for <EPIC> under <the resolved PRD dir> — … Run '/product-workflows:epics <PRD>' to draft this PRD's Epics, then re-run '/product-workflows:specify <EPIC>'.`" | keep | F13: taken before `/specify`'s PRD gate, so where the PRD is not landed the `/epics` run it names stops `EPICS_PRD_NOT_HANDED_OFF`, which names the landing (one more round, L12's cost). Outside design §5.6's L8 scope, which binds offers by a run that wrote `prd.md`. The stop text only: its gloss at :244–246, which states `/epics`' gates, is P-121, rewritten (fix round 1) | — |
 | P-98 | UPS:162 | "End the report with a `### Next step` … `/product-workflows:epics <PRD>` `<merge-clause>` to refine, where the PRD folder holds a `prd.md` …" | keep | The clause is for the `specification.md` it wrote; the unlanded-PRD case is P-48's | — |
 | P-99 | PG:564, :576 | "… Ignored, every /prd-ground run on this folder stops here until prd.md is on <default>." | keep | Read per the brief for whether `/epics` belongs: it names the stop's own command and enumerates no consumers, so it does not | — |
 | P-100 | PP:218, :228, :266, :281 | "… Ignored, every /prd-proposal run on this folder stops here until it holds a merged prd.md." (and the three like it) | keep | As P-99 | — |
@@ -294,10 +345,12 @@ EOF
 | P-108 | `wc/docs/reference/references.md:27` | "- `phase-handoff.md` — … or a stop where its input was never optional, where a recorded decision made it required, as one did on 2026-11-14 for the PRD `/create-ard` and `/specify` build from on the idea route, or where the input is in the folder and was never landed …" | keep | Its categories cover `/epics`' row; the 2026-11-14 decision is an example | — |
 | P-109 | `wc/docs/family-map.md:196` | "- **`/dev-workflows:conformance` is drawn twice, once per role.** … `/epics` for an `epic.md`, …" | keep | The amend-document recommendation; P-110's rule carries the clause | — |
 | P-110 | `dw/commands/conformance.md:572–586` | "- a PRD run → … `/product-workflows:epics <PRD-KEY>` or `/product-workflows:create-ard <KEY>`, as the note names; … An offer carries `<merge-clause>` … where Phase 6 handed off a document the offered command gates …" | keep | The rule is by gate, so the `/epics` offer takes the clause wherever Phase 6 handed off an annotated `prd.md`, once `/epics` gates it — no edit | — |
-| P-111 | `dw/docs/commands/ready.md:57` | "`/design`'s `specification.md` is the extreme case of that rule — … the companion `product-workflows` commands whose gated input was never optional stop on absence too, as its `/create-ard` and `/specify` do …" | keep | *as … do* gives an example, not a list | — |
 | P-112 | `dw/docs/reference/environment.md:13` | "… a command that requires the document it gates says what it does instead, as the companion `product-workflows` plugin's `/update-spec` stops …, and its `/create-ard` and `/specify` stop where an idea-route PRD folder holds no `prd.md`." | keep | Unmanaged-tree examples; `/epics` is unchanged there | — |
 | P-113 | `dcw/docs/reference/environment.md:13` | "… Most callers proceed as they would with no gate at all; a caller that requires its document, or a merged state, says what it does instead — among them …" | keep | *among them*; `/epics` unchanged on an unmanaged tree | — |
 | P-114 | `.claude/rules/plugin-updates-coupling.md:26` | "- **Update `workflows-core` 1.91.0 with `product-workflows` 3.82.0**: … its `/epics` and `/update-spec` load 1.91.0's PE lane, which cites `/epics`' Phase 0 *Note whether the PRD is landed* …" | keep | A release-pair bullet, true of that pair; Task 6 writes this release's | S11 |
+| P-129 | `pw/docs/commands/specify.md:23`, `:45`, `:100`, `:139` | "- **A PRD with 0 Epics and an authored `prd.md`** — offered *Split into Epics first with /product-workflows:epics* …" / "noepics -->\|"Split first — authored PRD exists"\| split[…]" / "… and [`/epics`](epics.md) **only where the PRD folder — the slice — holds an authored `prd.md`** …" / "- **PRD-level spec** → [`/epics <PRD>`](epics.md) (PE), after the merge, where the folder holds an authored `prd.md`; …" | keep | Fix round 1: the page copies of P-94 to P-96, offers by a run past its own PRD gate, so an authored `prd.md` there is a landed one | — |
+| P-130 | `pw/docs/commands/create-ard.md:204`, `:217`, `:221` | "Its next-step offer names `/product-workflows:specify ACME-001-01`; the second option is `/product-workflows:epics ACME-001-01` **only where the slice already holds an authored `prd.md`**." / "- **PRD-level ARD on the idea route, no Epics yet** → [`/epics <PRD>`](epics.md) (PE, recommended) …, both after the merge." / "  - `/epics <SLICE-KEY>` (after the merge) where the slice holds an authored `prd.md`;" | keep | Fix round 1: the page copies of P-91 and P-92, offers by a run past its own PRD gate | — |
+| P-135 | `dcw/commands/release-notes.md:767` | "- **A PA/PE phase still pending for this PRD (e.g. `/product-workflows:create-ard`, `/product-workflows:epics`), even yourself?** → run **`/clear`** before switching roles." | keep | Fix round 1: P-119's *Context hygiene* twin. It names no wait for either command, as P-89's and P-93's lines name none; the review proposed *later 3*, and batch 3 reads it beside P-119 | — |
 
 ## 5. Later batches, recorded and left
 
@@ -309,6 +362,10 @@ EOF
 | P-118 | `wc/references/components.md:120–123` | "- `epic_target` `missing` or `outside_set` → `/product-workflows:epics <EPIC>`, … else `/product-workflows:epics <PRD>` …" | later 2 | Remedies `/implement` and `/ready` print (at `epics` scope `/epics` prints them past its own gate) | — |
 | P-119 | `dcw/commands/release-notes.md:760` | "[… If earlier pipeline phases remain, continue — hand to PA → `/product-workflows:create-ard <PRD>` or PE → `/product-workflows:epics <PRD>`; …]" | later 3 | Batch 1's L-B3-7 for the same line's `/create-ard`: `/release-notes` tests `prd.md` only in the working tree | — |
 | P-120 | `pw/docs/workflow.md:49` | "rnpm -.->\|"an earlier phase still pending — hand to PE"\| epics" | later 3 | The diagram edge of P-119's offer | — |
+| P-131 | SPEC:676–677 | "`"Author the PRD first — /product-workflows:create-prd <PRD> (Recommended)"` (without `(Recommended)` on the multi-component array), which is the run that writes the PRD `/epics` then reads and takes the single address this run already resolved." | later 4 | Fix round 1. A slice-only form — an idea-route folder with no `prd.md` stops at *Gate the PRD* first (SPEC:674–675) — of the zero-Epics question design §5.4 gives batch 4; `/epics` now reads that PRD only once it lands | — |
+| P-132 | `dw/commands/implement.md:270–271` | "- **PRD with 0 Epics** → offer: split with `/product-workflows:epics` first, or implement one broad PRD-level slice (`focus_key` stays null). …" | later 2 | Fix round 1: the prose twin of P-117 | — |
+| P-133 | `dw/docs/commands/implement.md:17` | "`/implement` implements **one Epic per run**. … a PRD with no Epics offers to split with `/product-workflows:epics` first, or to implement a broad PRD-level slice. …" | later 2 | Fix round 1: P-117's page copy | — |
+| P-134 | `wc/references/epic-picker.md:42` | "- **None** → the command's own no-Epics policy — typically: split with `/product-workflows:epics` first, or author one broad PRD-level artifact." | later 2 | Fix round 1: the shared no-Epics policy `/design` and `/implement` follow (P-115, P-117); `/specify`, which follows it too, does so past its own PRD gate | — |
 
 ## 5a. Generated copies — `plugins/workflows-core/reference-parts/`
 
@@ -374,4 +431,6 @@ Check 11 prints no line on a pass. Why, read from a copy of the script (scratch 
 - **F10 — `update-spec.md` is Task 5's file (M10) and holds two rows of this subject** (P-48, P-49, with its page P-54). Tasks 4 and 5 both edit it; one should follow the other.
 - **F11 — Check 11 sees none of the `/epics` offers this batch changes** (measurement 3), even widened; the `<merge-clause>` on P-31 and P-36 is review's to hold.
 - **F12 — Dev-side and docs-side offers of `/epics`** (P-115 to P-120) name a run that can now stop on arrival but fall outside §5.6's L8 scope; recorded *later 2* and *later 3*, as batch 1's like offers of `/create-ard` and `/specify` were.
-- **F13 — `SPECIFY_EPIC_NOT_FOUND`** (P-97) names `/epics <PRD>` before `/specify`'s own PRD gate has run; kept under §5.6's scope.
+- **F13 — `SPECIFY_EPIC_NOT_FOUND`** (P-97) names `/epics <PRD>` before `/specify`'s own PRD gate has run; kept under §5.6's scope. Its gloss, which states `/epics`' gates, is not kept: P-121 (fix round 1).
+
+**Controller rulings, fix round 1** (2026-11-15), applied to the dispositions of P-121 to P-135; the rows they settle stand as dispositioned. `pass_amending` goes on with row B's message, and Phase 9 prints one sentence about it (Task 3; P-66, F3). Every `/epics` remedy that names a PRD-writing run and then an `/epics` re-run gains the merge of that run's handoff — Task 3 for EP and its page (P-22 to P-25, P-30), Task 4 elsewhere (P-127). `dev-workflows` and `docs-workflows` offers of `/epics` are *later 2* and *later 3* (F12; P-132 to P-134 join them). `EPICS_NOT_FOUND` for a folder that exists only on a `prd/` branch is not changed (F4). One disposition departs from the review: P-135, which the review proposed as *later 3*, is kept, as the other *Context hygiene* lines are (P-89, P-93). P-111 and P-125 are rewritten with P-62 rather than kept, so the three `dev-workflows` copies of the claim take one wording.
