@@ -30,7 +30,7 @@ plugins/
 
 ## Active plugins: dev-workflows, product-workflows, docs-workflows, security-workflows, and their shared dependency workflows-core
 
-`plugins/dev-workflows/` provides six slash commands — `/design`, `/implement`, `/ready`, `/conformance`, `/upgrade`, and `/vuln` — plus fourteen reusable subagents (`ls plugins/dev-workflows/agents | wc -l`), one hook, nineteen reference files (`find plugins/dev-workflows/references -type f | wc -l`), and no bundled skill. It depends only on `workflows-core`, and does not use `prose-style` at all.
+`plugins/dev-workflows/` provides six slash commands — `/design`, `/implement`, `/ready`, `/conformance`, `/upgrade`, and `/vuln` — plus fifteen reusable subagents (`ls plugins/dev-workflows/agents | wc -l`), one hook, nineteen reference files (`find plugins/dev-workflows/references -type f | wc -l`), and no bundled skill. It depends only on `workflows-core`, and does not use `prose-style` at all.
 
 `plugins/product-workflows/` provides seventeen slash commands — the idea→PRD→ARD→specification ladder (`/idea` → `/create-prd` → `/update-prd` → `/create-ard` → `/specify`), `/update-spec`, which revises a merged specification in place, `/epics`, `/harvest-decisions`, `/promote-decisions`, a six-command BRD-to-PRD route (`/brd-intake`, `/brd-split`, `/prd-ground`, `/brd-interview`, `/brd-package`, `/brd-reconcile`), and the effort proposals `/prd-proposal` and `/brd-proposal` — plus fifteen subagents (`ls plugins/product-workflows/agents | wc -l`), twelve reference files, one hook, no bundled skill, and four user-settable environment variables (`SPECS_PATH`, `REPOS_PATH`, `DOCS_PATH`, `ARCHITECTURE_REPO_PATH`: the `$VAR`s its commands, agents, references, hooks and skills read, as `scripts/check-docs.sh` check 9 counts them). It depends on `workflows-core` and `prose-style`, with no absent case for the second (S12). `dev-workflows` does not depend on `product-workflows`.
 
@@ -56,11 +56,7 @@ Do NOT edit `~/.claude/claude-config/` — that repo is retired and will be dele
 
 ## Adding a new plugin
 
-1. Create `plugins/<name>/` with `.claude-plugin/plugin.json`.
-2. Add content directories (`commands/`, `agents/`, `hooks/`, etc.).
-3. For hooks: create `hooks/hooks.json` using `${CLAUDE_PLUGIN_ROOT}` for all paths.
-4. Register in `.claude-plugin/marketplace.json` with `"source": "./plugins/<name>"`.
-5. Commit and push to `main`. Claude Code picks up the change on the next `claude plugin update` of that plugin, and a restart — before writing any such command for someone to run, Read `.claude/rules/plugin-updates.md`.
+The steps are in `.claude/rules/plugin-authoring.md`, which loads when any file is read.
 
 ## Conventions
 
@@ -88,7 +84,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `specs-git-selftest.md` | `scripts/selftests/**` (repo root); `workflows-core/scripts/`: `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py` | where `specs-git.py`'s selftest lives, how it runs, group runs, the mutants |
 | `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
-| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers |
+| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers, `/ready`'s optional rung |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
 | `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | plugin facts, map, callers |
 | `product-workflows-prd-flow.md` | as `product-workflows.md` | the PRD-creation flow's invariants |
@@ -101,7 +97,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
 | `security-workflows.md` | `security-workflows/**`; `workflows-core/`: `references/security-register-format.md`, `scripts/weakness-classes.py`, `docs/family-map.md` | plugin facts, map, register invariants |
-| `threat-model.md` | `workflows-core/`: `references/threat-model-format.md`, `references/pre-lint.md`, `scripts/lineage-kinds.json`; `product-workflows/`: `commands/create-ard.md`, `agents/ard-reviewer.md`, `agents/threat-modeler.md`, `docs/commands/create-ard.md` | the ARD threat model: authority, invariants, readers |
+| `threat-model.md` | `workflows-core/`: `references/threat-model-format.md`, `references/pre-lint.md`, `scripts/lineage-kinds.json`; `product-workflows/`: `commands/create-ard.md`, `agents/ard-reviewer.md`, `agents/threat-modeler.md`, `docs/commands/create-ard.md`; `dev-workflows/`: `commands/design.md`, `references/design-format.md`, `agents/design-*.md` | the ARD threat model and the design threat review: authority, invariants, readers |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 24 command files: the ten docs-grounding consumers, `/design` (architecture only) and thirteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, authorities, map |
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |
@@ -112,11 +108,12 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `workflows-core-handoff.md` | as `workflows-core-git.md` | the `phase-handoff` authority |
 | `claim-sweep.md` | `**` (any file) | the claim-expiry sweep's refinements |
 | `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |
-| `plugin-authoring.md` | `**` (any file) | the command, agent and skill taxonomy; the Karpathy notes |
+| `plugin-authoring.md` | `**` (any file) | the command, agent and skill taxonomy; the Karpathy notes; adding a new plugin |
 | `plugin-updates-coupling.md` | `*/.claude-plugin/plugin.json`, `*/CHANGELOG.md`; `.claude-plugin/marketplace.json` (repo root) | which plugins to update together, one bullet per release pair |
 | `plugin-updates-coupling-history.md` | as `plugin-updates-coupling.md` | its older bullets, up to `workflows-core` 1.58.0 |
 | `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.74.0 |
 | `plugin-updates-coupling-history-3.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.75.0 to 1.83.1 |
+| `plugin-updates-coupling-history-4.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.84.0 to 1.86.0 |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
@@ -139,7 +136,7 @@ The evidence behind the rules — measured cases, refused widenings, history —
 ## Hard constraints
 
 - **A plugin `description` is a stable capability blurb, never a changelog.** Hard budget: **1024 characters** in both `plugin.json` and the `marketplace.json` entry; `scripts/validate-catalog.py` fails the build above it and warns above 900. A new capability **replaces** wording; it never appends. Release detail belongs in `CHANGELOG.md`. ([why](docs/maintainers/rationale.md#description-budget))
-- **Every requirement ID a plugin doc teaches is the bracketed `[PREFIX#N]` form** — `[US#1]`, `[AC#1]`, `[SM#1]`, `[SMC#1]`, `[UC#1]`, `[FR#1]` in a PRD, `[AD#1]` in an ARD, a threat's `[TH#1]` in an ARD's threat model, and a security finding's `[SEC#1]` — never the dash-separated form. `scripts/check-id-grammar.sh` enforces it: run `./scripts/check-id-grammar.sh --root .` and `--baseline` before pushing. `CHANGELOG.md` is excluded (history keeps the old form), and a line that has to quote the legacy form in order to forbid or report it carries an `id-grammar-ok` HTML-comment marker, audited per file so the marker never becomes a general escape hatch. ([why](docs/maintainers/rationale.md#id-grammar))
+- **Every requirement ID a plugin doc teaches is the bracketed `[PREFIX#N]` form** — `[US#1]`, `[AC#1]`, `[SM#1]`, `[SMC#1]`, `[UC#1]`, `[FR#1]` in a PRD, `[AD#1]` in an ARD, a threat's `[TH#1]` in an ARD's threat model, a threat-review entry's `[DT#1]` in a design, and a security finding's `[SEC#1]` — never the dash-separated form. `scripts/check-id-grammar.sh` enforces it: run `./scripts/check-id-grammar.sh --root .` and `--baseline` before pushing. `CHANGELOG.md` is excluded (history keeps the old form), and a line that has to quote the legacy form in order to forbid or report it carries an `id-grammar-ok` HTML-comment marker, audited per file so the marker never becomes a general escape hatch. ([why](docs/maintainers/rationale.md#id-grammar))
 - **One key namespace.** Every key names a **folder** under `$SPECS_PATH/specifications/` and is validated for shape only against `workflows-core:addressing` §1's single grammar — `^[A-Z][A-Z0-9_]*(-\d+)+$`, which fixes no depth; nothing is looked up anywhere (a typed whole folder name is matched against the tree's own folder names, which is resolution, not validation — `workflows-core:addressing` §1). `workflows-core:pre-lint`'s Jira-key collision grep (`\b[A-Z]{2,10}-[0-9]+\b`) is an **autolink detector**, not a key validator, and its narrowness is exactly what makes it correct: never widen it. A user's own tracker identity lives in the reserved `workitem_key` frontmatter field, which the plugin preserves and displays and never mints, validates, or resolves a folder by. ([why](docs/maintainers/rationale.md#one-key-namespace)) <!-- vendor-token-ok: names the tracker whose key shape the pre-lint autolink detector matches; the detector's narrowness is the point being made -->
 - **Each plugin in `check-docs.sh`'s `PLUGIN_RELS` keeps its human-facing documentation in `plugins/<name>/docs/`, not in its README.** **The retired README is a source of topics, never a source of facts**: every claim on a page is derived from the thing that runs it — a synopsis from the command's argument-parsing phase, phases from its `## Phase` headings, gates from its reviewer dispatch, the agent inventory from `agents/`. `scripts/check-docs.sh` enforces the tree: run `./scripts/check-docs.sh --root .` before pushing. Its body — everything from `FAILURES=0` down — is shared byte for byte with the internal Claude and Copilot editions; only its config block and `scripts/fixtures/docs/fixture.env` are this edition's, so a fix to a check reaches all three by `cp` of the body ([why](docs/maintainers/rationale.md#check-docs-one-body)). Adding a command, agent, reference file, hook, skill, or environment variable without its docs entry fails the build. ([why](docs/maintainers/rationale.md#docs-tree))
 - **Vendor neutrality:** no text file under a plugin in `check-docs.sh`'s `PLUGIN_RELS` or in the instruction tiers (`CLAUDE.md`, `.claude/rules/`, `docs/maintainers/`) names a tracker unless its line, or the fence opening its block, carries `<!-- vendor-token-ok: <why> -->`; `CHANGELOG.md` is exempt as history; check 13 enforces it. ([why](docs/maintainers/rationale.md#check-13))
@@ -169,7 +166,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:prose-formatting` — output line-wrapping: never hard-wrap prose → `workflows-core.md`
 - `workflows-core:implementation-format` — the append-only `implementation.md` record, the `[<key>]` commit convention, the two-source read, `unit-branch` → `workflows-core.md`
 - `workflows-core:security-register-format` — the security findings register: its layout, run records, statuses, roles and the rules `register.py` applies, and §7's weakness classes → `security-workflows.md`
-- `workflows-core:threat-model-format` — the ARD threat model: `threat-model.md`'s sections, a threat's fields and its one disposition, the decision-pair and cross-folder forms, `[TH#N]` identity, the check → `threat-model.md`
+- `workflows-core:threat-model-format` — the ARD threat model: `threat-model.md`'s sections, a threat's fields and its one disposition, the decision-pair and cross-folder forms, `[TH#N]` identity, the check, an agent's reply → `threat-model.md`
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`

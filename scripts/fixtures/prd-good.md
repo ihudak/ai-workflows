@@ -18,6 +18,9 @@ As a PM, I want an export, so that I can share it.
 ## Threats
 - [TH#1] A threat in the hash form.
 
+## Threat review
+- [DT#1] A threat-review entry in the hash form.
+
 ## References
 - [[PRODUCT-123]]
 - [[PROJ-8605]]

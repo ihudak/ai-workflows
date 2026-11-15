@@ -159,3 +159,15 @@ The threat model is not pasted anywhere either. It is checked because it can nam
   lines with its resource on the next line is not — read those by hand. Never inline-fixed: which
   resource was meant is the author's to say. A `kubectl get` or any other read-only verb is outside
   the pattern.
+- **`## Threat review` (`design-format.md` section 15) — only where the draft holds a line `## Threat review` outside any fenced block.** The section runs from that line to the next `## ` heading outside a fenced block, or the end of the file; an entry runs from its `### [DT#` heading to the next `### ` or `## ` heading. Each finding of this group is MAJOR, save a missing Disposition and a dash-form id, which are BLOCKER; the numbering's are universal check 2's.
+  - The section holds a `- **Models read:**` line.
+  - ID series: `[DT#N]`, in `### [DT#N]` headings, each counted with or without its colon — contiguous from `[DT#1]`, withdrawn entries counted. It joins the series universal check 2 (*Identifier integrity*) reads, which finds a repeated or a missing number at that check's own severity. An id counts where its `### [DT#N]` heading defines it, its colon aside; one cited anywhere else — a `- **Withdrawn:** superseded by [DT#M]` line, another folder's `[[KEY]] design.md [DT#N]` — is a reference, never a duplicate. Every `### [DT#` heading carries the colon after its `]`.
+  - Each entry holds `- **Answers:**`, `- **Where:**`, `- **Threat:**`, `- **CWE:**`, `- **Disposition:**` and `- **Test:**`, each once and in that order, each a list item at the start of a line. A missing Disposition → BLOCKER.
+  - The Answers value, the text after `- **Answers:** `, matches `^(\[\[[^]]+\]\] \[TH#[0-9]+\]|—)$`.
+  - The Disposition value, the text after `- **Disposition:** `, matches one of `^Mitigated — Rule: \S`, `^Not this design's — (answered in \[\[[^]]+\]\] design\.md$|the interface it attacks is not built by this design: \S|does not arise: \S)` and `^Returned to the architect — \S`.
+  - On a live entry — one with no `- **Withdrawn:**` list item at the start of a line — whose Disposition opens `Mitigated — Rule: `, the Test value is not `—`.
+  - The section holds no `- [ ]` line.
+  - An entry id written with a dash in place of its `#`, bracketed or bare, anywhere in the draft → BLOCKER.
+
+  A design never enters the *Auto-link collision* check, whose scope is PRD, ARD, threat-model and Epic files, so `DT` is not among that check's requirement-ID prefixes.
+- **Bound `[DT#N]` entries — wherever the caller hands a prior design's path whose `## Threat review` holds a `### [DT#N]` heading, whether or not the draft holds a `## Threat review` section.** Each file's `## Threat review` is found outside any fenced block, as the group's trigger finds it. Every `[DT#N]` with a `### [DT#N]` heading in that file's `## Threat review`, its colon aside, still heads an entry in the draft's `## Threat review` (else BLOCKER, one per missing id): a bound entry is never renumbered or deleted, so a draft whose section is gone has deleted every one.
