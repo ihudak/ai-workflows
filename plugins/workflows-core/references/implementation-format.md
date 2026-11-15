@@ -87,8 +87,9 @@ is: by a PRD-level reader, and by no Epic-level one. No run moves or copies it �
 append-only — and the picker's ● marker, which reads the Epic's own folder, does not count it.
 
 **Until that block is moved, the Epic reads as not implemented to everything Epic-level.**
-`/implement`'s picker marks it ◐ where its `design.md` stands and ○ where it does not, a ◐ row
-taking the default cursor; `/ready` derives its phase from an Epic folder holding no record; an
+`/implement`'s picker lists it as not started, ○, a row the default cursor can take, where its
+`specification.md` and `design.md` are both on the default branch, and otherwise leaves it out,
+naming what it needs first; `/ready` derives its phase from an Epic folder holding no record; an
 Epic-level `/document` or `/release-notes` reads none of its refs; and §5's `unit-branch` answers
 `none` for that Epic, so no consumer of it finds the Epic's branch. **Population: every Epic
 implemented under a PRD address before `dev-workflows` 4.1.2.** And where the PRD folder also holds

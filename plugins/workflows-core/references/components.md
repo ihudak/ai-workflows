@@ -90,7 +90,8 @@ Inputs: the resolved PRD folder and its key, the Epic key (or null), and `scope`
    - `ard_contract` — the PRD folder's `ard.md`, **and** `ard-resolution`'s `contracts` not null. The file's state is read first: not on `<default-ref>` → `not_on_default` (or `missing` where it is nowhere); on it but without a `## Contracts` section → `missing`.
    - `prd_spec` — the PRD folder's flat `specification.md`.
    - `epic_target` (`implement` scope) — read from the Epic's `epic.md`, not tested on a ref: `present` where it carries a `target:` (in the set, where §3's source is `ard`), `missing` where it carries none, `outside_set` where the ARD's set does not hold it.
-   - `epic_spec`, `epic_design` (`implement` scope) — the Epic folder's `specification.md` and `design.md`.
+
+   The Epic folder's own `specification.md` and `design.md` are no row: `/implement`, the one `implement`-scope caller, stops on a fresh run in its Phase 0 where either is not on the default branch — or, on a specs tree that is no git repository, not in the Epic's folder — before it runs this check, and a resumed run does not run it again.
 3. **Target** (`implement` scope): the Epic's `target:`, or `none`; `in_set` where `set_source` is `ard`; and `target_repo_matches` — the target's `<repo-slug>` against the slug of the repository the run stands in (§1's derivation, from its top level): `true`, `false`, `unknown` where that repository has no `origin`, or `null` where the Epic has no target (the `epic_target` row reports that).
 4. **Targets** (`ready` scope): one row per `epic.md` in an `EPIC-` folder directly under the PRD folder — its key, its `target:` or `none`, and `in_set` where `set_source` is `ard`.
 5. **Contract coverage** (`implement` and `ready` scope), where `ard-resolution`'s `contracts` is not null. Read the `epic.md` in every `EPIC-` folder directly under the PRD folder for its `target:`, its `## Contract` lines (`- Produces: [AD#N] — …`, `- Consumes: [AD#N] — …`; every `[AD#N]` on such a line counts) and its `## Dependencies`. Then report each gap by `AD#N`:
@@ -108,19 +109,21 @@ Return shape:
 multi_component: true | false
 set_source: ard | epics-run | epic-targets | none
 prerequisites:            # epics and implement scope
-  - {name: ard_contract | prd_spec | epic_target | epic_spec | epic_design, state: present | not_on_default | missing | outside_set | unverified | unmanaged, path: <path>, reason: <text or null>}
+  - {name: ard_contract | prd_spec | epic_target, state: present | not_on_default | missing | outside_set | unverified | unmanaged, path: <path>, reason: <text or null>}
 target: {id: <id or none>, in_set: true | false | null, target_repo_matches: true | false | unknown | null}   # implement scope
 targets: [{epic: <key>, id: <id or none>, in_set: true | false | null}]                                 # ready scope
 coverage_gaps: [{kind: unknown_ad | consumed_unproduced | produced_off_target | consumer_not_dependent | unproduced_row, ad: AD#N, epic: <key or null>, detail: <text>}]
 ```
 
-**The earliest gap's remedy**, which `/epics` and `/implement` recommend, is the remedy for the first row that is neither `present` nor `unmanaged`, in ladder order — `ard_contract`, `prd_spec`, `epic_target`, `epic_spec`, `epic_design`:
+**The earliest gap's remedy**, which `/epics` and `/implement` recommend, is the remedy for the first row that is neither `present` nor `unmanaged`, in ladder order — `ard_contract`, `prd_spec`, `epic_target`:
 
-- a `missing` row → the command that authors it: `ard_contract` → `/product-workflows:create-ard <PRD>`, `prd_spec` → `/product-workflows:specify <PRD>`, choosing its broad PRD-level spec, `epic_spec` → `/product-workflows:specify <EPIC>`, `epic_design` → `/dev-workflows:design <EPIC>`;
+- a `missing` row → the command that authors it: `ard_contract` → `/product-workflows:create-ard <PRD>`, `prd_spec` → `/product-workflows:specify <PRD>`, choosing its broad PRD-level spec;
 - `epic_target` `missing` or `outside_set` → `/product-workflows:epics <EPIC>`, whose refine mode re-drafts the Epic with a target from the set;
 - a `not_on_default` row → landing that artifact on the default branch — merging the branch or pull request that carries it, or, for a file only in the `$SPECS_PATH` worktree, handing it off with its producing command's handoff (re-run it and accept the handoff) or a commit and push of your own;
 - an `unverified` row → settling `$SPECS_PATH`'s default branch, which the row's reason names;
 - with every row `present` or `unmanaged`, a coverage gap → `/product-workflows:epics <the gap's epic>`, whose refine mode re-drafts that Epic's `## Contract` and `## Dependencies` — save `consumed_unproduced`, whose fix is on the producer's side: `/product-workflows:epics <the Epic targeting the row's producer>` where one exists, else `/product-workflows:epics <PRD>`, whose drafting gives the producer side an Epic of its own.
+
+**A remedy naming `/product-workflows:epics` takes the PRD's landing first** where the PRD folder's `prd.md` is in that folder, or on a plugin branch, and not on `<default-ref>` — read with step 2's ref-existence test and plugin-branch scan; never on a specs tree that is no git repository, where `/epics` reads the folder's own file — since `/epics` stops on a PRD the default branch does not hold, a run on an Epic gating the PRD folder above it (`/product-workflows:epics` Phase 0): the remedy is then that `prd.md`'s landing, as `workflows-core:phase-handoff` §4.4's *The first missing document* words a `prd.md`'s, and then the `/epics` run. At `epics` scope neither an `epic_target` row nor a coverage gap is returned, and `/epics` runs this check only past its own gate on `prd.md`, so its remedies read as the list above.
 
 ## Consumers (informative)
 

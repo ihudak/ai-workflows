@@ -27,20 +27,28 @@ not only by the three above.
 Given a resolved `PRD-` folder (`references/addressing.md` §3) and no Epic in the address:
 
 1. **Enumerate the `EPIC-` folders directly under it.** A directory listing — the tree *is* the
-   hierarchy, so there is nothing to read and nothing to import.
+   hierarchy, so there is nothing to read and nothing to import. A command lists only the Epics it
+   can act on where its own rule says so: `/design` those whose `specification.md` is on the default
+   branch, counting the rest (`/design` Phase 0 step 4), and `/implement` those whose
+   `specification.md` and `design.md` both are, counting the rest and naming each with what it needs
+   first (`/implement` Phase 0). The branches below count the Epics the command lists.
 2. Branch on how many there are:
 
 - **The address named an `EPIC-` folder** → no picker; proceed for that Epic.
 - **Exactly one `EPIC-` folder** → no picker; auto-proceed for it, and emit a one-line notice saying
   which, so an auto-selection is never silent — save where the command's own policy asks instead:
   `/implement` puts that Epic and one broad PRD-level slice to the operator where the PRD folder
-  also holds a flat `specification.md`, the broad slice `/design` designs as one unit (`/implement`
-  Phase 0) — never on a multi-component PRD, where that file is a requirements source and no slice (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3); and `/specify`, on a multi-component PRD with no PRD-level `specification.md`, puts that Epic and the broad PRD-level spec to the operator, the spec recommended (`/specify` Phase 2).
+  holds its own `specification.md` and `design.md` on the default branch, the broad slice `/design` designs as one unit (`/implement`
+  Phase 0) — never on a multi-component PRD, where the flat `specification.md` is a requirements source and no slice (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3); and `/specify`, on a multi-component PRD with no PRD-level `specification.md`, puts that Epic and the broad PRD-level spec to the operator, the spec recommended (`/specify` Phase 2).
 - **Two or more** → render the picker, one row per Epic: its marker, its `key` (read from the
   folder's frontmatter per §4, never parsed from the directory name) and its title — **capped at four
   options, see *The cap* below**.
 - **None** → the command's own no-Epics policy — typically: split with `/product-workflows:epics` first,
-  or author one broad PRD-level artifact.
+  after landing the PRD where its `prd.md` is not on the default branch, since `/epics` stops on one
+  the default branch does not hold (`/product-workflows:epics` Phase 0), or author one broad
+  PRD-level artifact. Where a command that lists fewer Epics than the folder holds lists none, its
+  own Phase 0 says what it does: `/implement` takes its broad PRD-level slice, with a notice, where
+  it offers one, and otherwise stops on the first Epic it left out.
 
 ## The marker, and where it comes from
 
@@ -53,6 +61,10 @@ folder** — never a status somebody declared:
   the command's own ● rule says — `/specify` rewrites the specification behind an archive, and stops on a
   published one. For `/implement` the artifact is a record — an `implementation.md` holding at least one
   block, never a file holding only its heading (`references/implementation-format.md` §1).
+
+`/implement` shows ○ and ● alone: it lists only Epics whose `specification.md` and `design.md` are on
+the default branch, and no file in an Epic's folder marks one of its runs under way, so it has no ◐
+(`/implement` Phase 0).
 
 Default cursor on the first actionable row, in-progress before not-started.
 
@@ -127,9 +139,9 @@ places, two per command, and wins there. `/specify`, on a multi-component PRD wi
 `specification.md`, recommends the broad PRD-level spec — over the one Epic in its one-Epic question
 and over every Epic row in this picker (`/specify` Phase 2). `/implement` recommends nothing wherever
 its broad PRD-level slice stands beside the Epics — in its one-Epic question and in this picker alike,
-which is where the PRD folder also holds a flat `specification.md` and the PRD is not
-multi-component (`/implement` Phase 0) — since which unit the run implements is the operator's to
-say. **Where every Epic row is ●, nothing is actionable and no Epic row carries the marker**, nor
+which is where the PRD folder holds its own `specification.md` and `design.md` on the default branch
+and the PRD is not multi-component (`/implement` Phase 0) — since which unit the run implements is
+the operator's to say. **Where every Epic row is ●, nothing is actionable and no Epic row carries the marker**, nor
 does any option save `/specify`'s broad spec where its rule above recommends it: say so in the
 question's own text (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`,
 *When no option is safe to recommend*).
@@ -138,12 +150,12 @@ question's own text (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`,
 appends *"Author one broad PRD-level spec instead"* on every run — it is the command that authors
 the spec, so nothing can condition it — so up to three Epics fit beside it, and with four or more
 its array carries at most **two** Epic rows plus that option plus the remainder option. `/implement` appends *"Implement one broad PRD-level slice
-instead"* **only where the PRD folder holds a flat `specification.md` and the PRD is not multi-component** (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3), the same condition its
+instead"* **only where the PRD folder holds its own `specification.md` and `design.md` on the default branch and the PRD is not multi-component** (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3), the same condition its
 one-Epic branch above carries, so, where the Epics and that option do not fit in four, its array carries at most **two** Epic rows where it appends that option and at most **three** where it does not, the freed row going back to the Epics. The added
 option is never the one the **cap** drops: it is the alternative to picking any Epic at all, and a
 picker that hides it to fit forces a choice the command means to leave open. `/implement`
-withholding it is a different thing and not an exception to that — where no flat `specification.md`
-stands the slice is a unit nothing specified, and on a multi-component PRD the flat file is a requirements source its Epics are built from rather than a unit, so in neither case is there a choice to leave open.
+withholding it is a different thing and not an exception to that — where the PRD folder lacks either
+file on the default branch the slice is a unit its gate would stop on, and on a multi-component PRD the flat file is a requirements source its Epics are built from rather than a unit, so in neither case is there a choice to leave open.
 
 **Reading the artifact rather than a declared status is the point, not an accident of the rewrite.**
 A status is a human's claim about the work and can lag it — which is why the version of this picker
@@ -152,9 +164,11 @@ does not.
 
 **A command whose done-predicate artifact does not exist yet shows the markers it can support and
 says which it cannot.** Claiming ● on a signal the tree cannot supply is worse than a shorter legend.
-Every consumer can support all three today — `/specify` on `specification.md`, `/design` on
-`design.md`, `/implement` on `implementation.md` — so this is a rule for the next command that adopts
-the picker, not a live caveat.
+Every consumer's artifact exists today — `/specify`'s `specification.md`, `/design`'s
+`design.md`, `/implement`'s `implementation.md` — and each shows every marker its listing can reach:
+all three for `/specify` and `/design`, and ○ and ● for `/implement`, whose listing leaves no state
+for ◐ to mark (*The marker, and where it comes from*, above). So this is a rule for the next command
+that adopts the picker, not a live caveat.
 
 ## What the picker does not do
 
