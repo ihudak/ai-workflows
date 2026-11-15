@@ -260,8 +260,9 @@ Show, and confirm before writing anything:
   run**, here, and Phase 3.5 consumes the cached result rather than re-resolving.
 
 **The `/epics` consent-ordering exception does not apply to this command.** `/epics` resolves docs
-grounding ahead of its `require-on-main` gates because a later stop would sit after the run's only
-consent-bearing step (`commands/epics.md` Phase 2). `/brd-intake` runs no `require-on-main` gate at
+grounding ahead of its Phase 2.5 and 2.6 gates — its Phase 0 gate on `prd.md` runs before that resolution —
+because a later stop would sit after the run's only consent-bearing step (`commands/epics.md`
+Phase 2). `/brd-intake` runs no `require-on-main` gate at
 all — it is the route's first command and consumes no prior phase's deliverable (Phase 0) — so
 resolving here, in the ordinary confirmation step, already puts the one consent-bearing step ahead
 of every write and every dispatch.

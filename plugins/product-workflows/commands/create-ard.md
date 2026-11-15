@@ -284,7 +284,7 @@ this stage). Zero external calls.
 
 All four forms carry §4.4's four parts, in order:
 ```
-CREATE_ARD_NEEDS_PRD: <PRD> has no prd.md — none on any ref, and none in <path>. This run read nothing further and wrote nothing: an ARD decides how a PRD's requirements are built, and there is no PRD here to decide for. Run '/product-workflows:create-prd <PRD>' and merge its handoff, then re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, /create-ard and /specify each stop on this folder until it holds a merged PRD.
+CREATE_ARD_NEEDS_PRD: <PRD> has no prd.md — none on any ref, and none in <path>. This run read nothing further and wrote nothing: an ARD decides how a PRD's requirements are built, and there is no PRD here to decide for. Run '/product-workflows:create-prd <PRD>' and merge its handoff, then re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, /create-ard, /specify and /epics each stop on this folder until it holds a merged PRD.
 ```
 ```
 CREATE_ARD_NEEDS_PRD: <PRD>'s PRD is <path>/<name>, written before the artifact filenames lost their keys, and this command reads prd.md alone. This run read nothing further and wrote nothing. Rename it to prd.md, give it the frontmatter fields kind: prd and key: <PRD>, which no file written under the old name carries (workflows-core:addressing §5), and commit the rename — the old name's removal and prd.md together — and land it on <default>, by running these:
@@ -298,7 +298,7 @@ git -C "<SPECS_PATH>" add -f -- "<path>/prd.md"
 git -C "<SPECS_PATH>" commit -m "<PRD> prd" -- "<path>/<name>" "<path>/prd.md"
 git -C "<SPECS_PATH>" push -u origin <new-branch>
 
-Then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, /create-ard and /specify each stop on this folder until it holds a merged prd.md.
+Then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, /create-ard, /specify and /epics each stop on this folder until it holds a merged prd.md.
 ```
 ```
 CREATE_ARD_PRD_NOT_HANDED_OFF: <PRD>'s prd.md is written at <path> but is on no branch — its handoff was declined, so nothing is missing but the commit. This run read none of it and wrote nothing. Commit and merge it to the specs repo's default branch by running these; do not re-run /product-workflows:create-prd, which would rewrite the PRD rather than land the one on disk:
@@ -308,14 +308,14 @@ git -C "<SPECS_PATH>" add -f -- "<path>"
 git -C "<SPECS_PATH>" commit -m "<PRD> prd" -- "<path>"
 git -C "<SPECS_PATH>" push -u origin <new-branch>
 
-Then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, every /create-ard and /specify run on this folder stops here until prd.md is on <default>.
+Then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, every /create-ard, /specify and /epics run on this folder stops here until prd.md is on <default>.
 ```
 ```
 CREATE_ARD_PRD_NOT_HANDED_OFF: <PRD>'s prd.md at <path> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of it and wrote nothing. Land that branch; do not re-run /product-workflows:create-prd, which would rewrite the PRD rather than land the one committed:
 
 <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
 
-Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, every /create-ard and /specify run on this folder stops here until prd.md is on <default>.
+Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, every /create-ard, /specify and /epics run on this folder stops here until prd.md is on <default>.
 ```
 `<PRD>` is the PRD folder's key — on an Epic-level run the folder above the Epic, never the Epic's own. In the two `CREATE_ARD_NEEDS_PRD` forms `<path>` is the PRD folder's path and `<name>` the pre-rename file's name; in the two `CREATE_ARD_PRD_NOT_HANDED_OFF` forms `<path>` is the `prd.md`'s path. In the uncommitted form and the rename form `<new-branch>` is `prd/` and the PRD folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. Where the specs repository has no `origin`, the push line and pull request of the uncommitted form and the rename form give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. On a read-only specs mount (§3.6) every command a stop prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging a pull request is the forge's to do, so it is worded in prose.
 

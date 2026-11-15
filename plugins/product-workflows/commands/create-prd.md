@@ -238,11 +238,16 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
    folder above holds a `prd.md` asserting `kind: prd` — the ordinary shape, since `/epics` writes
    every `EPIC-` folder under a PRD it has read — it is `This is probably the PRD you meant: revise
    it with '/product-workflows:update-prd <PRD-KEY>', or re-refine this Epic with
-   '/product-workflows:epics <KEY>'.`, `<PRD-KEY>` being that `prd.md`'s own `key`
-   (`workflows-core:addressing` §4) — never parsed out of either folder's name. Where this folder
-   holds no `epic.md`, `/product-workflows:epics <KEY>` refuses it (`EPICS_NO_PRD`), so that clause
-   names `'/product-workflows:epics <PRD-KEY>'` instead, which drafts the PRD's Epics in folders of
-   its own. Where the folder above holds no such `prd.md`, this Epic has no PRD above it to revise,
+   '/product-workflows:epics <KEY>' once that PRD's handoff is merged.`, `<PRD-KEY>` being that
+   `prd.md`'s own `key` (`workflows-core:addressing` §4) — never parsed out of either folder's name.
+   Where this folder holds no `epic.md`, `/product-workflows:epics <KEY>` refuses it
+   (`EPICS_NO_PRD`), so that clause names `'/product-workflows:epics <PRD-KEY>'` instead, which
+   drafts the PRD's Epics in folders of its own. Either `/epics` run stops while that `prd.md` is
+   not on the default branch (its Phase 0, *Gate the PRD*) — after an `/update-prd` revision, until
+   that revision is merged — so the clause names the merge first; on a specs tree that is no git
+   repository (`git -C "$SPECS_PATH" rev-parse --git-dir` fails) there is no handoff or merge to
+   name, and the clause is left out, the remedy ending at the `/epics` command. Where the folder
+   above holds no such `prd.md`, this Epic has no PRD above it to revise,
    which is the shape `/product-workflows:epics <KEY>` reports as `EPICS_EPIC_NOT_UNDER_PRD` where
    this folder holds an `epic.md` and as `EPICS_NO_PRD` where it holds none, and the remedy is the
    one both stops give: where the folder above is a `PRD-` folder, it is `The PRD folder above it
@@ -898,7 +903,7 @@ resolves per that part's *resolution table* from this run's own `Phase handoff:`
 Offer these — clearly labeling the role handoff:
 
 ```
-choices: ["Draft the release note now — /docs-workflows:release-notes <ADDRESS> (PM) (Recommended)", "Hand to a Product Architect — /product-workflows:create-ard <ADDRESS> (PA, optional) <merge-clause>", "Hand to a Product Engineer — /product-workflows:epics <ADDRESS> (PE)", "Stop here"]
+choices: ["Draft the release note now — /docs-workflows:release-notes <ADDRESS> (PM) (Recommended)", "Hand to a Product Architect — /product-workflows:create-ard <ADDRESS> (PA, optional) <merge-clause>", "Hand to a Product Engineer — /product-workflows:epics <ADDRESS> (PE) <merge-clause>", "Stop here"]
 ```
 
 **One address appears in that array, and every option takes the same one** — `<ADDRESS>`, this run's
@@ -911,9 +916,9 @@ carried `--from-brd` into the PA option; D4 retired the pair and D18 retired the
 
 - **`/docs-workflows:release-notes <ADDRESS>`** (PM) — draft the customer-facing release note now (the cost model's `pm`/`prd-creation` inferred case: no spec/design yet).
 - **`/product-workflows:create-ard <ADDRESS>`** (PA, **optional**) — hand to a Product Architect to author the grounded architecture document. It gates this PRD on the specs repo's default branch (its own Phase 0), so, wherever the specs tree is a git repository, it stops until this PRD is there: on the branch's state where this PRD reached a branch, and with `CREATE_ARD_PRD_NOT_HANDED_OFF`, which names the landing of the file on disk, where it reached none; on a specs tree that is no git repository it reads the folder's `prd.md`; **on the BRD route** it also gates the `decisions.md` this run stages and stops where that is on a branch or on no ref (see the PA paragraph below). `<merge-clause>` is the placeholder `workflows-core:next-phase-offer` owns, resolved per its *resolution table*, loaded at the top of this phase, from this run's own `Phase handoff:` outcome line (§4.1) and never written as the unconditional "once the pull request above is merged": a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the array is still presented verbatim per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
-- **`/product-workflows:epics <ADDRESS>`** (PE) — hand to a Product Engineer to split the PRD into Epics (or author a PRD-level spec → `/product-workflows:specify <ADDRESS>` `<merge-clause>`, which resolves the same folder through the same entry point and gates this PRD on the specs repo's default branch in its own Phase 0, so it stops while this run's PRD sits on a branch — name it with the clause).
+- **`/product-workflows:epics <ADDRESS>`** (PE) — hand to a Product Engineer to split the PRD into Epics. It gates this PRD on the specs repo's default branch (its own Phase 0, *Gate the PRD*), so, wherever the specs tree is a git repository, it stops until this PRD is there: on the branch's state where this PRD reached a branch, and with `EPICS_PRD_NOT_HANDED_OFF`, which names the landing of the file on disk, where it reached none; on a specs tree that is no git repository it reads the folder's `prd.md`. So its option carries `<merge-clause>`, as the PA option does (or author a PRD-level spec → `/product-workflows:specify <ADDRESS>` `<merge-clause>`, which resolves the same folder through the same entry point and gates this PRD on the specs repo's default branch in its own Phase 0, so it stops while this run's PRD sits on a branch — name it with the clause).
 
-The other two options carry no clause — `/product-workflows:specify`, named beside the PE option, carries one, as its bullet says — and that is checked, not assumed: `/docs-workflows:release-notes` runs no `require-on-main` at all, and `/product-workflows:epics` gates no file this run writes — its gates are `<PRD-dir>/specification.md` (`require-on-main`, its Phase 2.6) and the PRD-level ARD (`workflows-core:ard-resolution`'s `unmerged` stop, its Phase 2.5), and this run writes neither.
+The release-note option carries no clause — `/product-workflows:specify`, named beside the PE option, carries one, as its bullet says — and that is checked, not assumed: `/docs-workflows:release-notes` runs no `require-on-main` at all. The PE option's clause is for this PRD alone: `/product-workflows:epics`' other gates, on `<PRD-dir>/specification.md` (`require-on-main`, its Phase 2.6) and on the PRD-level ARD (`workflows-core:ard-resolution`'s `unmerged` stop, its Phase 2.5), are on files this run writes neither of.
 
 **Every option is presented unconditionally now, and the reason the two used to be withheld is
 gone.** `/product-workflows:epics` and `/docs-workflows:release-notes` were held back until a key had been minted outside the plugin *and* an export produced against it, because both resolved that export and found nothing without it. Neither reads an export any more: both resolve a folder in the specs tree, which
