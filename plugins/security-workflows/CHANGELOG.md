@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.12.4] — 2026-11-15
+
+Docs only: SEC-G2 C. The roles page says what a design's threat review puts in front of the Security Engineer. It describes `dev-workflows` 4.67.0's `/design`, and needs nothing of the other plugins' releases, nor they of it.
+
+### Changed
+
+- **Roles and phases.** The Security Engineer's *Reviews a threat model in its ARD's pull request* gains what follows from a design: where the Dev takes `/dev-workflows:design`'s optional threat review, the design's pull request names each threat the Dev returned to the architect, and the design's `## Threat review` records how each threat deferred to design that lands on it, and is not stale, was answered. `/security-workflows:scan` still reads none of it.
+
 ## [0.12.3] — 2026-11-15
 
 `/scan` takes a unit's branch from the block `implementation-format` §5 names latest: batch B41. Update with `workflows-core` 1.91.1.

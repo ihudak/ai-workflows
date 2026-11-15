@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.7] — 2026-11-15
+
+Docs only: SEC-G2 C. The `/document` and `/release-notes` pages name the threat models a design records among what their lineage check walks. They describe `dev-workflows` 4.67.0's `/design`, which records a threat model in a design that holds a threat review, and `workflows-core` 1.92.0's `document-lineage`, and need nothing of the other plugins' releases, nor they of it.
+
+### Changed
+
+- **The lineage above the note, and above what is documented.** The `/document` and `/release-notes` pages say the check walks each unit's specification and design up the chain to the Epic, ARDs and PRD they were built from and, since `dev-workflows` 4.67.0, to each threat model a design that holds a threat review was built from. Neither command changes: the check is `workflows-core`'s `lineage.py`, which follows whatever a design records.
+
 ## [1.39.6] — 2026-11-15
 
 `/document`'s pull request no longer repeats its title in its description: batch B41 (PRDRAFT-TITLE).
