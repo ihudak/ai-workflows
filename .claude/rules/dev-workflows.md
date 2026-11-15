@@ -62,7 +62,7 @@ The `dev-workflows` commands' lines of the family workflow map — all but `/con
 
 ### Multi-component PRDs (`workflows-core:components`)
 
-- On a multi-component PRD the flat PRD-level `specification.md` is a requirements source: `/design <PRD>` and `/implement <PRD>` do not take it as one unit (Epic picker; with no specified Epic `/design` stops for `/specify` or recommends `/epics`, `/implement` recommends `/epics` at 0 Epics, and taking it whole is an override both offer only at 0 Epics), and `workflow-states.md`'s *Ready for Implementation* expects no PRD-level `design.md` — save where the override built it whole (a PRD-level `design.md` or implementation record), which reads the single-component clause
+- On a multi-component PRD the flat PRD-level `specification.md` is a requirements source: `/design <PRD>` and `/implement <PRD>` do not take it as one unit (Epic picker; with no specified Epic `/design` stops naming what each Epic needs first or recommends `/epics`, `/implement` recommends `/epics` at 0 Epics, and taking it whole is an override both offer only at 0 Epics), and `workflow-states.md`'s *Ready for Implementation* expects no PRD-level `design.md` — save where the override built it whole (a PRD-level `design.md` or implementation record), which reads the single-component clause
 - `/design` keeps a targeted Epic's design in its target's repository; a second repository is a `Target span` risk `design-reviewer` flags. `/implement`'s Phase 1 check and `/ready`'s Phase 3(d) run one definition, `multi-component-prereqs` (§6), which writes nothing and never stops — the caller decides
 
 ### /design and /ready
