@@ -9,7 +9,7 @@ Opus-gated quality gates, plus the lighter-weight planners that feed or precede 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
 | `code-review` | opus | Read, Glob, Grep, Skill | Reviews SIGNIFICANT / HIGH-RISK changes and `/implement`'s MODERATE ones — correctness, security, architecture, edge cases, migration, dependencies, tests, rollback; gates tests; by piece if split. | `/implement`, `/upgrade`, `/vuln` |
-| `design-reviewer` | opus | Read, Glob, Grep, Bash | Reviews a design against design-format and its specification — any open question a BLOCKER — re-derives its claims about the existing system from the scanned code, and checks its review pieces. | `/design` |
+| `design-reviewer` | opus | Read, Glob, Grep, Bash | Reviews a design against design-format and its specification — open questions, its claims about the existing system re-derived from the scanned code, its review pieces and its threat review. | `/design` |
 | `readiness-reviewer` | opus | Read, Glob, Grep | Checks the ARD/spec/design justify the derived phase and next transition; the only reviewer whose verdict spans artifacts. Reads no code repository; a fact outside its read scope is unverified. | `/ready` |
 | `risk-planner` | opus | Read, Glob, Grep, Bash, WebFetch, WebSearch, Skill | Risk-weighted planner for SIGNIFICANT / HIGH-RISK tasks; returns a structured plan with an explicit risks section. Never dispatched for SIMPLE / MODERATE work. | `/implement`, `/upgrade` |
 | `design-threat-modeler` | opus | CronList, ListAgents (never called) | Proposes, for `/design`'s optional threat review, an answer to each threat the architecture deferred to design and up to 15 new threats on the design's own interfaces; reads nothing. | `/design` |
