@@ -12,7 +12,7 @@
 
 A phrase hit dispositions its whole paragraph (refinement 1), so a row cites the paragraph's line where it is one line, or a range. A row's first words are the start of the statement, abridged with `…`.
 
-**Totals, after fix round 1: 147 rows — 84 rewrite (Task 2: 13, Task 3: 12, Task 4: 19, Task 5: 27, Task 6: 13; 18 of them *beyond plan*), 62 keep, 1 later (batch 4); 10 rows marked *ruled*.** The first pass's were 134 rows (80 rewrite, 54 keep, 0 later; 17 *beyond plan*, 9 then marked *ruling*). Fix round 1 moved P-21 to Task 4's table, P-66 to the kept rows and P-107 and P-109 to Task 5's, and added P-135 to P-147 (§8, *Fix round 1*). Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does; since fix round 1 it counts the markers `*ruling*` and `*ruled*` with their asterisks, since the rulings are now named in the rows' prose too:
+**Totals, after fix round 1 and Task 4: 147 rows — 85 rewrite (Task 2: 13, Task 3: 12, Task 4: 20, Task 5: 27, Task 6: 13; 18 of them *beyond plan*), 61 keep, 1 later (batch 4); 10 rows marked *ruled*.** Task 4 re-dispositioned P-143, a kept row whose own text gave it to Task 4 once the picker lost a marker (*Task 4 walks*); fix round 1's were 84 rewrite (Task 4: 19) and 62 keep. The first pass's were 134 rows (80 rewrite, 54 keep, 0 later; 17 *beyond plan*, 9 then marked *ruling*). Fix round 1 moved P-21 to Task 4's table, P-66 to the kept rows and P-107 and P-109 to Task 5's, and added P-135 to P-147 (§8, *Fix round 1*). Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does; since fix round 1 it counts the markers `*ruling*` and `*ruled*` with their asterisks, since the rulings are now named in the rows' prose too:
 
 ```bash
 python3 -I - docs/superpowers/plans/2026-11-15-ladder-order-b2-sweep-population.md <<'EOF'
@@ -28,12 +28,12 @@ ids=[r[0] for r in rows]; print("duplicate ids",[i for i,n in C.Counter(ids).ite
 EOF
 ```
 
-The first pass printed `rows 134`, `rewrite 80 {'Task 2': 13, 'Task 3': 13, 'Task 4': 17, 'Task 5': 25, 'Task 6': 12} beyond plan 17 ruling 9`, `keep 54`, `later {}`. After fix round 1 it prints:
+The first pass printed `rows 134`, `rewrite 80 {'Task 2': 13, 'Task 3': 13, 'Task 4': 17, 'Task 5': 25, 'Task 6': 12} beyond plan 17 ruling 9`, `keep 54`, `later {}`. After fix round 1 and Task 4 it prints:
 
 ```
 rows 147 malformed []
-rewrite 84 {'Task 2': 13, 'Task 3': 12, 'Task 4': 19, 'Task 5': 27, 'Task 6': 13} beyond plan 18 ruling 0 ruled 10
-keep 62
+rewrite 85 {'Task 2': 13, 'Task 3': 12, 'Task 4': 20, 'Task 5': 27, 'Task 6': 13} beyond plan 18 ruling 0 ruled 10
+keep 61
 later {'later 4': 1}
 duplicate ids []
 ```
@@ -734,3 +734,27 @@ Written before the edit (Task 4's brief, Step 1), at `247cb604`, from the plan's
 | T4-W29 | Phase 4.5, an annotated `design.md` alone / `specification.md` with or without it | the stopping array in both cases; one array in the phase | Matches — IMPL:1459–1461: one array, the stopping one, for either file; the falling-back array, its reason and the carve-out gone |
 | T4-W30 | Phase 5's *Next step*, a remaining Epic with no implementation record, its pair on `<default-ref>` / not | `/dev-workflows:implement <its key>` / what its first missing document needs, as NPO:102 says | Matches — IMPL:1622: `/dev-workflows:implement <its key>` where its pair is on the default branch (the listing test's read), else what its first missing document needs, worded as Phase 0 names it for a left-out Epic — NPO:102's step |
 | T4-W31 | EPK's no-Epics policy and the markers; IF:89–90's moved-block Epic | `/epics` offered after the PRD's landing where it is not on the default branch; `/implement`'s markers ○ and ●, ◐ said not shown; the moved-block Epic listed ○ with its pair, left out and named without | Matches — EPK:46–51 (`/epics` after the PRD's landing; a command that lists none says what it does); EPK:65–67 (`/implement` ○ and ● alone); EPK:167–171 (P-143); IF:89–92 |
+
+**Fix round 1 — the rows Task 4's review touched, re-walked, and the rows it added.** Walked at the fix commit, after the edits; IMPL, COMP and page line numbers as edited (the table above and this file's S-table cells cite `386d746d`). EP is `plugins/product-workflows/commands/epics.md`, unchanged.
+
+| # | Walk | Expected | Result |
+|---|---|---|---|
+| T4-W2 (again) | 2 ≤ k < N, some left-out Epics sharing a `prd.md` need | the `<PRD>: ` line names, in key order, each Epic it stands for, after the Epics' own lines (M-3) | Matches — IMPL:228 *printed once, after the Epics' own lines, as `<PRD>: <what prd.md needs> — for <EPIC>, <EPIC>, …`, naming in key order each Epic it stands for* |
+| T4-W4, T4-W14 (again) | Epic folders, none listed, no slice; the first left-out Epic's specification on `<default-ref>` with a differing working copy, or its line folded into the `<PRD>: ` line | no picker or question of this branch's; the gate runs as on any unit — its repair offer or row stop where it meets one first, otherwise that Epic's gap (M-2) | Matches — IMPL:282–287 *the gate below runs on its pair as on any unit. Where it meets nothing ahead of that Epic's gap … its stop is that gap's, which the left-out lines above named* |
+| T4-W8 (again) | single-component, Epic folders, the slice's specification written, the pair not on `<default-ref>` | the slice line last, under the count line or, with no Epic left out, under its own lead-in; never at 0 Epic folders (M-5) | Matches — IMPL:228 *The broad PRD-level slice is named the same way where the PRD has Epic folders … under the count line, or, where no Epic is left out, under `The broad PRD-level slice of <PRD> is not offered — …`* and *With no Epic folder there is no such line* |
+| T4-W9 (again) | single-component, no Epic folder, pair | a literal array, neither option marked; its first option's three forms each quoted; the slice and *Cancel* where *`/epics` precondition* names nothing (M-4) | Matches — IMPL:292 `choices: ["Split into Epics first — /product-workflows:epics <PRD>", "Implement one broad PRD-level slice"]`; IMPL:295 `"Land the PRD, then split into Epics — /product-workflows:epics <PRD>"`; IMPL:296 *unmarked*; IMPL:298 `["Implement one broad PRD-level slice", "Cancel"]` |
+| T4-W10, T4-W16 (again) | no Epic folder, no pair | no question of this bullet's; the gate runs as on any unit and, where nothing ahead stops it first, stops with the folder's gap | Matches — IMPL:300–307 |
+| T4-W17, T4-W18 (again) | the multi-component slot's lead-in, against both bullets | true of both: each names `/dev-workflows:design <PRD>` with *Design across components anyway*; the first names `/epics` ahead of it (M-6) | Matches — IMPL:426 *Both name `/dev-workflows:design <PRD>` with the answer that goes on there; the first names another command of the ladder ahead of it* |
+| T4-W21 (again) | a listed unit whose working copy differs from the merged one | the gate decides: a repair offer on row C, a stop on C′, C″, B′; the test itself asks and stops nothing (M-1) | Matches — IMPL:227 |
+| T4-W22 (again) | unmanaged specs tree (row H), `/implement <PRD>` | item 1 first: the folders' own files; no row-G or row-I stop (I-1) | Matches — IMPL:222 *by the first of these that holds, in … §3.3's row order*; IMPL:223 row H; IMPL:224 reached only past it |
+| T4-W23 (again) | git specs repository, `<default-ref>` does not exist | stop before listing, as the gate stops on row G (§4.4), naming `$SPECS_PATH` | Matches — IMPL:224 |
+| T4-W27 (again) | Phase 1's sentence on the Epic's own pair | the unmanaged case stated (M-7) | Matches — IMPL:485 *— or, on a specs tree that is no git repository, in the Epic's folder —* |
+| T4-W32 | row I: the run carries `specs_git: blocked`, or `$SPECS_PATH`'s HEAD is detached or on a branch outside the safe class | stop before listing, as the gate stops on row I, naming `$SPECS_PATH` (M-1) | Matches — IMPL:224 |
+| T4-W33 | unmanaged tree, Epics, some folders holding both files, the PRD folder one | each folder's own files list the Epics and decide the slice; nothing stops before the listing | Matches — IMPL:223, :227 |
+| T4-W34 | three left-out Epics: two with no specification anywhere and `prd.md` not on `<default-ref>`, one with a specification and no design | `<EPIC-c>: '/dev-workflows:design <EPIC-c>' …`, then `<PRD>: <the prd.md's landing> — for <EPIC-a>, <EPIC-b>` | Matches — IMPL:228 |
+| T4-W35 | the literal 0-Epic arrays | two options each; `check-questions` passes; no option marked on a single-component PRD | Matches — IMPL:292–298; `reference-parts.py check-questions` PASS |
+| T4-W36 | the two 0-Epic bullets against each other | `(Recommended)` on a multi-component PRD only, in every form; the single-component bullet says *unmarked* for the precondition's replacement too | Matches — IMPL:229 (*still marked `(Recommended)`*, inside *On a multi-component PRD*), IMPL:291 *Otherwise neither option is recommended*, IMPL:296 *unmarked* |
+| T4-W37 | COMP §6's `not_on_default` remedy: a `prd_spec` (or the ARD) in its folder on no ref, HEAD lacking it / holding it; on a plugin branch | row F's uncommitted / committed commands, `<new-branch>` under `spec/` (`ard/` for the ARD); rows D/E's commands then the merge; never `/product-workflows:specify` or `/product-workflows:create-ard`; printed by `/implement` Phase 1's and `/epics` Phase 2.7's *Stop* | Matches — COMP:122; IMPL:485 *Stop stops, naming that remedy whole*; EP:558 *Stop → stop, naming that remedy and every other gap in ladder order* |
+| T4-W38 | `/implement` Phase 1, a gap whose remedy is a landing (`prd_spec` not on `<default-ref>`, or the `/epics` remedy with an unlanded PRD, COMP:126) | the label carries a phrase; **Stop** prints the remedy whole, a landing's commands on lines of their own (M-8) | Matches — IMPL:485 |
+| T4-W39 | single-component, every Epic listed, the slice's specification written and its design not | the slice's own lead-in, then its line; the picker without the slice | Matches — IMPL:228; IMPL:243–262 (*Where it does not*, IMPL:251) |
+| T4-W40 | single-component, no Epic folder, a flat specification on `<default-ref>`, no design | no slice line; the gate's `IMPLEMENT_NEEDS_DESIGN` alone, naming `/dev-workflows:design <PRD>` | Matches — IMPL:228 *With no Epic folder there is no such line*; IMPL:300–307; IMPL:426 |
