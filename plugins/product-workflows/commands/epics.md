@@ -42,7 +42,7 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message. **`absent` is a graceful stop, not a folder
    to create** — `/epics` partitions a PRD folder that exists and creates no PRD folder of its own:
    ```
-   EPICS_NOT_FOUND: no folder found for <ADDRESS> under $SPECS_PATH/specifications/ (every level addressing.md §3 bounds, plus §5's legacy fallback) — check the address. /epics partitions an existing PRD folder and creates none. On the idea route the folder this command needs is the one /product-workflows:create-prd <KEY> writes a PRD into (after /product-workflows:idea <KEY>, where an idea comes first), and this command runs once that PRD is on the default branch — or, on a specs tree that is no git repository, in the folder: where a /product-workflows:create-prd <KEY> run created the folder and that run's pull request is still open, or was merged after this checkout last pulled the default branch, the folder is not in this checkout, so merge that pull request — or, where it is merged already, bring this checkout's default branch up to date (pull it, with this checkout standing on it) — rather than run /product-workflows:create-prd again; a PRD folder is created by /product-workflows:brd-split on its parent BRD on the BRD route, and is partitioned here once a PRD is written in it and, wherever the specs tree is a git repository, merged; an EPIC- folder is created by this command and by no other, so an Epic address that resolves to nothing was never drafted here, or its Epic is on an epics/ branch whose pull request is still open, or was merged after this checkout last pulled the default branch.
+   EPICS_NOT_FOUND: no folder found for <ADDRESS> under $SPECS_PATH/specifications/ (every level addressing.md §3 bounds, plus §5's legacy fallback) — check the address. /epics partitions an existing PRD folder and creates none. On the idea route the folder this command needs is the one /product-workflows:create-prd <KEY> writes a PRD into (after /product-workflows:idea <KEY>, where an idea comes first), and this command runs once that PRD is on the default branch — or, on a specs tree that is no git repository, in the folder: where a /product-workflows:create-prd <KEY> run created the folder and that run's pull request is still open, or is merged and this checkout does not stand on a default branch pulled since, the folder is not in this checkout, so merge that pull request — or, where it is merged already, bring this checkout's default branch up to date (pull it, with this checkout standing on it) — rather than run /product-workflows:create-prd again; a PRD folder is created by /product-workflows:brd-split on its parent BRD on the BRD route, and is partitioned here once a PRD is written in it and, wherever the specs tree is a git repository, merged; an EPIC- folder is created by this command and by no other, so an Epic address that resolves to nothing was never drafted here, or its Epic is on an epics/ branch that is not yet merged, or is merged and this checkout does not stand on a default branch pulled since.
    ```
    Every command that stop names creates the folder it claims to: `/idea` and `/create-prd` each
    write `PRD-<KEY>-<slug>/` on their first write, and `/brd-split` carves the `PRD-` slice — all
@@ -50,16 +50,17 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    this command follows, once the PRD it writes is on the default branch, and names the merge of an open
    `/create-prd` pull request, or, for a merged one, bringing the checkout's default branch up to
    date (pulling it, with the checkout standing on it), rather than a second run: a folder
-   `/create-prd` created, with no `/idea` before it, is on that run's `prd/` branch alone until its
-   pull request merges, and reaches a checkout on the default branch only when that checkout pulls
-   the merge, since step 1 resolves the address before the specs-repo preflight fetches or pulls
-   anything; until then the address resolves to nothing there, and a second `/create-prd` would
-   author a second PRD. The remedy names the checkout standing on its default branch because a
-   checkout on another branch, cut before the merge, lacks the folder too, and pulling the default
-   branch while standing there would merge it into that branch. The stop's last clause says the same of an `EPIC-` folder an earlier run of
-   this command drafted and handed off: the folder is on that run's `epics/` branch until that run's
-   pull request merges, and reaches a checkout on the default branch when that checkout pulls the
-   merge. On the BRD route the stop says a slice is partitioned once a PRD is written in it and
+   `/create-prd` created and handed off, with no `/idea` before it, is on that run's `prd/` branch
+   alone until its pull request merges, and reaches a checkout on the default branch only when that
+   checkout pulls the merge, since step 1 resolves the address before the specs-repo preflight
+   fetches or pulls anything; until then the address resolves to nothing there; while that pull
+   request is open, a second `/create-prd` would author a second PRD. The remedy names the checkout
+   standing on its default branch because a checkout on another branch, cut before the merge, lacks
+   the folder too, and pulling the default branch while standing there would merge it into that
+   branch. The stop's last clause says of an `EPIC-` folder an earlier run of this command drafted
+   and handed off what its idea-route clause says of a PRD folder's state, and names no remedy: the
+   folder is on that run's `epics/` branch until that branch is merged, and reaches a checkout on
+   the default branch when that checkout pulls the merge. On the BRD route the stop says a slice is partitioned once a PRD is written in it and
    merged. A folder that is in the checkout — holding only `/idea`'s output, or a slice with no
    PRD written in it — is refused at step 1b with `EPICS_NO_PRD`, whose remedy then names what that
    folder needs, save where its PRD sits on an unmerged plugin branch, which *Gate the PRD* stops on
