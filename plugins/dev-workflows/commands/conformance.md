@@ -312,7 +312,7 @@ now superseded or withdrawn.
 ## Phase 4 — The walk
 
 An entry the record on file already decided is not asked again while its discrepancy persists
-(`conformance-format.md` §5) — save an `accept` on a mitigation, put again (*Put again*, below): it is listed, with its decision — on a PRD run, a Dev entry its ruling
+(`conformance-format.md` §5) — save an `accept` on a mitigation, put again (*Put again*, below): each such entry is listed, with its decision — on a PRD run, a Dev entry its ruling
 names included, where that Dev entry's heading names the same requirement as the ruling entry's, with
 the same `document:`. A Dev entry whose `[DD#k]` now names another requirement — its numbers reused
 after a record that never merged was discarded — is asked as any other. On a PRD run, `requirement withdrawn` and
@@ -350,7 +350,7 @@ choices: ["Confirm Dev's decision — <decision>", "<other decision 1>", "<other
 choices: ["Mark it resolved — the code now matches", "Keep Dev's decision — <decision>", "Cancel"]
 ```
 
-**A mitigation** — here, any of Phase 1 (b)'s mitigations, its walk-only ones included — is asked on its own, never in a cluster, and is offered an accept on no form: only the architect accepts a risk, in the threat model. Its question says, besides what an item's says, that it is a mitigation. Where walk-only mitigations exist, the walk opens with one line, printed once whether or not it asks anything, `<n>` their number:
+**A mitigation** — in this phase and Phase 5, any of Phase 1 (b)'s mitigations, its walk-only ones included — is asked on its own and is offered an accept on no form: only the architect accepts a risk, in the threat model. On a mitigation, a decision on file that is not, whole, `fix-code` or `amend-document` is read as `accept`, so that it fails closed. Its question says, besides what an item's says, that it is a mitigation — for a walk-only one, that a threat model the run could not use may rest on it. Where walk-only mitigations exist, the walk opens with one line, printed once whether or not it asks anything, `<n>` their number:
 `Threats: no accept is offered on <n> architecture Rule(s) — a threat model the run could not use may rest on them`
 Its forms:
 - **decide** — an Epic run's, and a PRD item with no Dev entry:
@@ -361,19 +361,23 @@ Its forms:
   ```
   choices: ["Confirm Dev's decision — <decision>", "<the other of the two>", "Cancel"]
   ```
-- **overrule** — a PRD item whose Dev entry decided `accept`, which either answer overrules:
+- **overrule** — a PRD item whose Dev entry decided anything else, `accept` as read above, which either answer overrules:
   ```
   choices: ["Overrule — fix the code", "Overrule — amend the document", "Cancel"]
   ```
-- **stale** — a Dev entry flagged `stale` that decided `amend-document`, then one that decided `accept`:
+- **stale** — a Dev entry flagged `stale` that decided `amend-document`:
   ```
   choices: ["Mark it resolved — the code now matches", "Keep Dev's decision — amend the document", "Cancel"]
+  ```
+- **stale accept** — a Dev entry flagged `stale` that decided anything else, `accept` as read above:
+  ```
   choices: ["Mark it resolved — the code now matches", "Cancel"]
   ```
 
-**Put again** (`conformance-format.md` §5): an entry of the unit's own record decided `accept` — not one that only lists an Epic entry — whose discrepancy persists and whose requirement is a mitigation, is asked again, on its own, its earlier decision and rationale shown, and keeps its `[DD#n]`:
-- one whose `ruling:`, if any, names no Epic entry whose heading names the same requirement, with the same `document:` → the decide form;
-- on a PRD run, one whose `ruling:` names such an Epic entry → that Epic entry, at the form its own decision takes, as if no ruling stood: the overrule form where it decided `accept`, so a `confirms` is answered as an overrule; otherwise the confirm form, where *Confirm Dev's decision* writes `ruling: confirms <EPIC-KEY>/[DD#k]` and the other option `ruling: overrules <EPIC-KEY>/[DD#k]`. Phase 5, *An overrule held back* included, reads the ruling this answer writes.
+**Put again** (`conformance-format.md` §5): an entry of the unit's own record decided `accept`, as *A mitigation* reads it, whose discrepancy persists and whose requirement is a mitigation, is asked again, on its own, its earlier decision and rationale shown, and keeps its `[DD#n]`. An Epic entry is *of its requirement* where this run read it and its heading names that requirement, with the same `document:`:
+- one whose `lists:` names an Epic entry of its requirement is not put again: that Epic entry is listed, or ruled on, as `conformance-format.md` §3 says;
+- one whose `ruling:` or `lists:`, if any, names none → the decide form;
+- on a PRD run, one whose `ruling:` names one → that Epic entry, at the form its own decision takes, as if no ruling stood: the confirm form where it decided `fix-code` or `amend-document`, *Confirm Dev's decision* writing `ruling: confirms <EPIC-KEY>/[DD#k]` and the other option `ruling: overrules <EPIC-KEY>/[DD#k]`; otherwise the overrule form, so a `confirms` is answered as an overrule. Phase 5, *An overrule held back* included, reads the ruling this answer writes.
 
 A free-text answer is normalised into one of the three decisions or the question is asked again — on the stale-entry form, into marking it resolved or keeping Dev's decision; on a cluster's, into one of the three decisions for all its items, *Split* or *Cancel*; on a mitigation's, into one of its own array's options, never an accept: an answer that would accept, keeping or confirming Dev's `accept` included, is normalised into no option and asked again, the question then saying that only the architect accepts a risk, in the threat model — and it is never written through as a new value (`workflows-core:escalation-rules` *Closed-vocabulary pickers must normalise the free-text answer*, the `/conformance` decision picker); what the answer says beyond the decision is its rationale. Record the rationale in the person's own words from the answer's notes or free text. **A decision that needs a rationale and got none gets one follow-up prompt**, in plain text, after the call that carried it returns: *Accept as shipped*, and on a PRD run an answer that overrules Dev's decision — each a departure someone later has to understand; where the person gives none there either, record `—`. *Fix the code* and *Amend the document* need none, and an answer without one records `—` with no prompt. *Cancel* ends the run there: no record, note or follow-up is written, and the report says how many items were decided before it.
 
@@ -414,13 +418,13 @@ deletes a requirement.
   § *Re-queuing a confirmed fix* writes where its §5 dedupe would otherwise skip it. A line that only
   a session branch carries (`workflows-core:specs-repo-git` §8) is not seen here, so it is queued
   again, and the two stand side by side once that branch merges.
-- **Amend the document on a design's `[DT#N]`** → no note on either run, a PRD run confirming an Epic run's proposal included: the design is the Dev's; its `effect:` is `conformance-format.md` §3's, naming `/dev-workflows:design <KEY>`.
+- **Amend the document on a design's `[DT#N]`** → no note on either run, a PRD run confirming an Epic run's proposal included; its `effect:` is `conformance-format.md` §3's, naming `/dev-workflows:design <KEY>`.
 - **Amend the document — on a PRD run**, a `[DT#N]` aside → add a `- [ ]` note under an `## Engineering review` heading
   (created at the end of the document where it has none) on the document holding the requirement —
   `specification.md`, `prd.md`, `epic.md`, or, for an `[AD#n]` Rule, the ARD file holding its decision, as its identity (Phase 1 (b)) or `conformance-format.md` §3's legacy match names it, whatever `document:` the entry keeps — naming the requirement,
   what shipped and `<KEY>/[DD#n]`, and recommending `/product-workflows:update-spec`,
   `/product-workflows:update-prd`, `/product-workflows:epics` or `/product-workflows:create-ard`.
-- **Amend the document — on an Epic run** → recorded as a proposal only. The documents are the PE's and
+- **Amend the document — on an Epic run**, a `[DT#N]` aside → recorded as a proposal only. The documents are the PE's and
   the PM's; the PE's PRD run writes the note when it confirms the proposal.
 - **Accept** → recorded with its rationale; never on a mitigation (Phase 4).
 - **An Epic entry the PE overrules** → write `superseded-by: <PRD-KEY>/[DD#n]` into that Epic's
@@ -704,7 +708,7 @@ Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission
 - NEVER change code, and NEVER switch, pull or write a code repository's working tree — read it at a ref (`workflows-core:read-only-repos` §3–§4); the writes are Phase 1's `fetch` of remote refs, on a writable clone only — with (c)'s removal of a tracking ref whose branch `origin` no longer has — and, on either run, the unreferenced objects the merged test's `merge-tree --write-tree` adds to a clone's object store — through `unit-branch` on an Epic run (`workflows-core:implementation-format` §5), which change no ref and no file
 - NEVER rewrite, renumber or delete a requirement; a document changes only by an `## Engineering review` note
 - NEVER decide for the person: every open discrepancy is put to them, and a free-text answer is normalised or re-asked
-- NEVER accept a mitigation's discrepancy, a walk-only one's included — on any array or from free text — nor carry an `accept` on file forward on one: Phase 4 puts it again; only the architect accepts a risk, in the threat model
+- NEVER accept a mitigation's discrepancy, a walk-only one's included, on any array or from free text, nor carry an `accept` on file forward on one (Phase 4, *A mitigation*)
 - NEVER hide a Dev entry from the PE: a PRD run lists every Epic entry with its ruling or its flag, `stale`, `orphaned` and `requirement withdrawn` ones included
 - A `[DD#n]` is permanent: never renumbered or reused (`conformance-format.md` §5)
 - ALWAYS run `specs-preflight`, the document gate and the record check at Phase 0, and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`)
