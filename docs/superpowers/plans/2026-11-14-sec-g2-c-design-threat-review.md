@@ -288,7 +288,7 @@ Exclusivity probe (refinement 3), run in Task 13 over `design.md`, its page, `de
   A file read whose frontmatter `kind:` is not `threat-model` is not a model: its capture is removed, its entry dropped, and one line says so.
 - **R4 — the lines the step prints** (each also carried to `threat_review.report`):
   - a fallback: `Threat review: <path> not read — <the gate's own stop line, or "in the working tree, on no branch the plugin manages (row F)">; no review of it is offered`, ending `; the kept ## Threat review section's link to this model was not re-recorded` where the folder's `design.md` holds the section;
-  - a stale threat: `Threat review: [[<KEY>]] [TH#N] is stale in <path> (<the test it fails>) — left out of the review; the architect re-disposes it with /product-workflows:create-ard <KEY>`;
+  - a stale threat: `Threat review: [[<KEY>]] [TH#N] is stale in <path> (<the test it fails>) — left out of the review; the architect supersedes or withdraws it with /product-workflows:create-ard <KEY>` (amended in Task 6's review: per format §5, re-disposition never clears a stale Where);
   - not offered: `Threat review: not offered — <no ARD resolves for this item | no threat model was read | no component set resolves | the Epic's target is not in the component set>`;
   - declined: `Threat review: declined — <n> deferred threat(s) unanswered`;
   - kept: `Threat review: the existing ## Threat review section is kept, not reviewed against the model`.
