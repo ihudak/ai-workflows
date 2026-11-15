@@ -12,7 +12,7 @@
 
 A phrase hit dispositions its whole paragraph (refinement 1), so a row cites the paragraph's line where it is one line, or a range. A row's first words are the start of the statement.
 
-**Totals (after fix round 1, P-121 to P-135 added and P-111 moved from keep to Task 4): 135 rows — 71 rewrite (Task 2: 13, Task 3: 17, Task 4: 41; 27 of them *beyond plan*, 4 marked *ruling*, since ruled, §8), 54 keep (one of them, P-66, ruled too), 10 later (batch 2: 7, batch 3: 2, batch 4: 1).** The first pass's totals were 120 rows (62, 52, 6). Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does:
+**Totals (after fix round 1, P-121 to P-135 added and P-111 moved from keep to Task 4; then Task 2's review, P-70 moved from keep to Task 2): 135 rows — 72 rewrite (Task 2: 14, Task 3: 17, Task 4: 41; 28 of them *beyond plan*, 4 marked *ruling*, since ruled, §8), 53 keep (one of them, P-66, ruled too), 10 later (batch 2: 7, batch 3: 2, batch 4: 1).** The first pass's totals were 120 rows (62, 52, 6). Derived with this command, from the worktree root, which splits the table cells on unescaped `|` as GitHub does:
 
 ```bash
 python3 -I - docs/superpowers/plans/2026-11-15-ladder-order-b1b-sweep-population.md <<'EOF'
@@ -163,7 +163,7 @@ EOF
 | S22 | `"Hand to a Product Engineer — /product-workflows:epics <ADDRESS> (PE)"` | **1** | CPRD:901 | |
 | S23 | `"Re-run epics — /product-workflows:epics <KEY> (PE, if Epics exist)"` | **1** | UPRD:210 | |
 | S24 | `— /product-workflows:epics <KEY> (PE, if Epics exist)` | **2** | UPRD:205, UPRD:210 | |
-| S25 | ``hand to PE → `/product-workflows:epics <PRD>` (or`` | **1** | NPO:205 (+1 RP) | **0** (Task 2) (RP 0); ``hand to PE → `/product-workflows:epics <PRD>`, which gates this PRD and so carries `<merge-clause>` too`` **1**, NPO:205 |
+| S25 | ``hand to PE → `/product-workflows:epics <PRD>` (or`` | **1** | NPO:205 (+1 RP) | **0** (Task 2) (RP 0); ``hand to PE → `/product-workflows:epics <PRD>`, which gates this PRD and so carries `<merge-clause>` too`` **1**, NPO:205 (RP 1, `next-phase-offer/pm.md`) |
 | S26 | `` `/epics` partitioning a PRD whose pull request is still open `` | **1** | PH:77 (+3 RP) | **0** (Task 2) (RP 0) |
 | S27 | `` `/epics` on an open `prd/` branch that changed `prd.md` `` | **1** | PH:654 (+1 RP) | **0** (Task 2) (RP 0) |
 | S28 | `` the way `/epics` would partition a PRD whose revision is still on its open `prd/` branch `` | **1** | PH:657 (+1 RP) | **0** (Task 2) (RP 0) |
@@ -195,7 +195,7 @@ EOF
 | S52 | `` and not `/epics` where no `prd.md` is in the folder `` | **1** | `pw/docs/commands/update-spec.md:96` | |
 | S53 | `` the companion `product-workflows` commands whose gated input was never optional stop too: `` | **1** | `dw/docs/getting-started.md:108` | |
 | T2-a | `EPICS_PRD_NOT_HANDED_OFF` (added by Task 2) | **0** | — | **3** (Task 2): PH:338 (the row), PH:357, `.claude/rules/workflows-core-handoff.md:24` (RP 2) |
-| T2-b | `The architecture, Epics and specification routes each gate this PRD and so carry` (P-10, added by Task 2) | **0** | — | **1** (Task 2): NPO:206 |
+| T2-b | `The architecture, Epics and specification routes each gate this PRD and so carry` (P-10, added by Task 2) | **0** | — | **1** (Task 2): NPO:206 (RP 1, `next-phase-offer/pm.md`) |
 | S54 | `and gates no file this run has written — its gates are` (fix round 1) | **1** | SPEC:245 | |
 | S55 | ``or [`/epics`](epics.md) to re-refine the Epic (on the Epic's key`` (fix round 1) | **1** | `pw/docs/commands/create-prd.md:78` | |
 | S56 | ``and [`/epics`](epics.md) for re-refining the Epic itself`` (fix round 1) | **1** | `pw/docs/commands/update-prd.md:45` | |
@@ -204,6 +204,7 @@ EOF
 | S59 | ``document `/create-ard` and `/specify` cannot yet see`` (fix round 1) | **1** | `pw/docs/commands/prd-ground.md:454` | |
 | S60 | ``in `/epics`' place wherever a route above names it`` (fix round 1) | **1** | UPS:166 | |
 | S61 | ``(§3.4's `/epics` row)`` (fix round 1) | **1** | SPEC:1406 | |
+| S62 | `` `/epics` on a `prd.md` stating no requirements `` (Task 2's review, P-70) | **1** | PH:402 (+1 RP, `phase-handoff/handoff-to-main.md`) | **0** (Task 2's fix round) (RP 0); `` `/brd-split` on a root's `brd/brd-inventory.md` holding no row, `BRD_SPLIT_EMPTY_INVENTORY` `` 0 → **1**, PH:402 (RP 1, `handoff-to-main.md`) |
 
 ## 3. The population — rows this batch rewrites
 
@@ -304,7 +305,7 @@ EOF
 | P-67 | PH:530, :537 | "- **gated — stopping** (§4.3's first array), where **any** §3.4 row naming the artifact says *stops* …" / "**The PRD is what the quantifier was written for** …" | keep | Measurement 4: the PRD is gated — stopping already; one more stopping row changes neither class nor array. :537 says *Read the rows; never carry either membership list above* | — |
 | P-68 | PH:412 | "\| `idea.md`, the PRD, the ARD, `specification.md`, … \| gated \| each is named in a §3.4 row" | keep | The PRD is still named in §3.4 rows (measurement 4) | — |
 | P-69 | PH:441 | "\| `epic.md` \| gated \| named in §3.4's `/create-ard` `/specify` **(an Epic)** row … so `/epics`, whose set it lifts to *gated*, presents §4.3's falling-back array …" | keep | The new row names `prd.md`, which `/epics` never hands off (EP:931); its own array is unchanged (measurement 4) | — |
-| P-70 | PH:398–402 | "\| **advisory** \| no §3.4 row, **but** a command reads the artifact … (`/prd-ground` stops on a moved pin …; `/epics` on a `prd.md` stating no requirements) …" | keep | A stop on content, `EPICS_PRD_NO_REQUIREMENTS`, unchanged, and *a different question from whether the artifact reached the default branch* stays true | — |
+| P-70 | PH:398–402 (PH:402 after Task 2) | "\| **advisory** \| no §3.4 row, **but** a command reads the artifact … (`/prd-ground` stops on a moved pin …; `/epics` on a `prd.md` stating no requirements) …" | rewrite | Task 2, *beyond plan* (Task 2's review, Important 1; first kept here on its contents-stop half alone): the clause gave `/epics` reading `prd.md` as a stop inside an *advisory* artifact, which the new §3.4 row and the register (the PRD is *gated*, PH:413) contradict. The example becomes `/brd-split` on a root's `brd/brd-inventory.md` holding no row, `BRD_SPLIT_EMPTY_INVENTORY`, which the register classes advisory and calls a contents stop (PH:424; `brd-split.md` step 8) | S62 |
 | P-71 | PH:231 | "Runs in most callers' Phase 0 immediately after `specs-preflight`, … a caller whose check runs a phase or more after its preflight too — `/ready`, `/epics`, …" | keep | `/epics`' Phase 2.6 check still does; the sentence does not deny a Phase 0 gate beside it. Re-read after Task 2 | — |
 | P-72 | NPO:136 | "**Where this rule applies:** … every one of them that names a downstream gate its run feeds carries the placeholder. … the fifth, `/product-workflows:update-prd`, named two downstream commands that gate this run's own PRD …" | keep | The rule binds `/create-prd`'s and `/update-prd`'s `/epics` offers once `/epics` gates `prd.md`; Task 4 Step 1 (P-31, P-35, P-36) makes them carry the placeholder. *the fifth … named two* is the history of that conversion | — |
 | P-73 | NPO:146 | "**The family scope is deliberate** … the two downstream offers that intersect it (`/specify`, `/create-ard`) already carry `<merge-clause>` …" | keep | A recorded measurement, and re-measured here (measurement 3): even widened, check 11 derives no `prd.md` writer for `/update-prd` or `/create-prd`, so their `/epics` offers would not fire either | — |
