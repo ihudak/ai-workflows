@@ -5,13 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.66.3] — 2026-11-14
+## [4.66.4] — 2026-11-15
 
-`/implement` and `/conformance` read "the latest block" by `implementation-format` §5's one order, and `/ready` says its pair rule is not that order: batch B41. Update with `workflows-core` 1.90.3.
+`/implement` and `/conformance` read "the latest block" by `implementation-format` §5's one order, and `/ready` says its pair rule is not that order: batch B41. Update with `workflows-core` 1.91.1.
 
 ### Fixed
 
 - **`/implement` fetches, and `/conformance` fetches and traces, the branch of the block `workflows-core:implementation-format` §5's *Latest, earlier and earliest* names latest**, by instant where a block carries one, never by its place in the file alone; `/ready`'s *Release Preparation* test says its pair rule is its own and picks no single latest.
+
+## [4.66.3] — 2026-11-14
+
+Docs only: LADDER-ORDER batch 1. The pages that name the companion `product-workflows` plugin's commands which stop on a missing input now name its `/create-ard` and `/specify`, and the environment page says what a command does on a specs tree that is no git repository. No command, agent or reference changes. It describes `product-workflows` 3.82.0, and needs nothing of the other plugins' releases, nor they of it.
+
+### Changed
+
+- **The companion plugin's PRD stops.** The sentences that list which `product-workflows` commands stop on an absent input — on the roles page, the getting-started page, the `/design` page and twice on the `/ready` page — add `/create-ard` and `/specify`, which since `product-workflows` 3.82.0 stop where an idea-route PRD folder holds no `prd.md` and, on either route, where a `prd.md` is in the folder but was never handed off. The roles page's paragraph on `/implement` no longer says it gates its specification and design the way those two gate the PRD. What `/design`, `/implement` and `/ready` do is unchanged.
+
+### Fixed
+
+- **Environment page.** On a specs tree that is no git repository, `require-on-main` verifies nothing and every command of this plugin goes on as it would with no handoff check. The page said every caller does, which was already false of `product-workflows`' `/update-spec`, which stops with no merged specification to revise, and is now false of its `/create-ard` and `/specify`, which stop where an idea-route PRD folder holds no `prd.md`; it names them.
 
 ## [4.66.2] — 2026-11-14
 

@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [0.12.3] — 2026-11-14
+## [0.12.3] — 2026-11-15
 
-`/scan` takes a unit's branch from the block `implementation-format` §5 names latest: batch B41. Update with `workflows-core` 1.90.3.
+`/scan` takes a unit's branch from the block `implementation-format` §5 names latest: batch B41. Update with `workflows-core` 1.91.1.
 
 ### Fixed
 

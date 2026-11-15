@@ -202,8 +202,11 @@ array carries every option.
   condition that the reconciled ledger leaves no row `unallocated` and at least one `covered-here`
   (`product-workflows:coverage-ledger-format` §5, the two refusals its Phase 0 raises); the other two
   carry none of their own: neither reads the ledger as an authoring input, and although both now run the PRD gate on every
-  route, that gate's `absent` branch proceeds — a slice holding no authored `prd.md` is the ordinary
-  state for both, since `/product-workflows:create-prd` is a prerequisite for neither. **That difference is where the conditions come from, and it matters:**
+  route, that gate's `absent` branch proceeds on a slice holding no `prd.md` — the ordinary state
+  for both, since `/product-workflows:create-prd` is a prerequisite for neither on a slice; a `prd.md`
+  the slice holds and never handed off — on an unmerged branch, or in the folder and on no ref —
+  stops both, as it does on the idea route, naming its landing, and the offering run, which reads no
+  `prd.md`, does not test for it. **That difference is where the conditions come from, and it matters:**
   the level test and `/create-prd`'s eligibility test are each enforced by the offered command's own
   Phase 0, so offering either wrongly hands over a run that stops;
   the advance/re-entry split is enforced **nowhere downstream** — `/create-ard` on the BRD route and
