@@ -84,7 +84,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `specs-git-selftest.md` | `scripts/selftests/**` (repo root); `workflows-core/scripts/`: `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py` | where `specs-git.py`'s selftest lives, how it runs, group runs, the mutants |
 | `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
-| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`'s map line, its record's readers, `/ready`'s optional rung |
+| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`, its mitigations and threats, its record's readers, `/ready`'s optional rung |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
 | `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | plugin facts, map, callers |
 | `product-workflows-prd-flow.md` | as `product-workflows.md` | the PRD-creation flow's invariants |
@@ -97,7 +97,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
 | `security-workflows.md` | `security-workflows/**`; `workflows-core/`: `references/security-register-format.md`, `scripts/weakness-classes.py`, `docs/family-map.md` | plugin facts, map, register invariants |
-| `threat-model.md` | `workflows-core/`: `references/threat-model-format.md`, `references/pre-lint.md`, `scripts/lineage-kinds.json`; `product-workflows/`: `commands/create-ard.md`, `agents/ard-reviewer.md`, `agents/threat-modeler.md`, `docs/commands/create-ard.md`; `dev-workflows/`: `commands/design.md`, `references/design-format.md`, `agents/design-*.md` | the ARD threat model and the design threat review: authority, invariants, readers |
+| `threat-model.md` | `workflows-core/`: `references/threat-model-format.md`, `references/pre-lint.md`, `scripts/lineage-kinds.json`; `product-workflows/`: `commands/create-ard.md`, `agents/ard-reviewer.md`, `agents/threat-modeler.md`, `docs/commands/create-ard.md`; `dev-workflows/`: `commands/design.md`, `commands/conformance.md`, `references/design-format.md`, `references/conformance-format.md`, `agents/design-*.md` | the threat model and the design threat review: authority, invariants, readers |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 24 command files: the ten docs-grounding consumers, `/design` (architecture only) and thirteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, authorities, map |
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |

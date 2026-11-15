@@ -24,6 +24,7 @@ Loaded with `.claude/rules/dev-workflows.md`, whose `paths:` it shares. Split ou
 - **The three-part join.** A pair joins the requirement of the folder it names, the ARD file's whole basename and the number — never fewer; none or several leaves that part `not checked`, never matched by number alone. An area file's decision carries its file in its id and `document:`.
 - **The PRD run's full trace.** A mitigation is exempt from the PRD run's `## Satisfied` skip and traced in full every time; no `/conformance` run reads a `Threats:` line or `## Threats` back, so no record — hand-edited, carried on a Dev's branch, or written before threats were traced — makes a threat `verified`.
 - **Located and re-read, not `/design`'s guarantee.** `verified` means each mitigation's lines were located by the tracer, held to `threat-model-format` §9's backstop, and re-read by the orchestrator in this run: they exist and reach the check — not that they run in production, nor that the attack fails. The tracer reads code with tools, so `/design`'s no-tool structural guarantee does not carry over, and a steered tracer can cite real code that is wired but ineffective.
+- **The tracer's two copies of the backstop's test.** Item 6 of `conformance-tracer`'s handoff file and the paragraph of its agent file opening *Where the run hands any mitigation* restate `threat-model-format` §9's *An agent given a repository*: a change to any of the three is made to all three (`.claude/rules/threat-model.md` invariant 10).
 
 ## The record's readers
 
