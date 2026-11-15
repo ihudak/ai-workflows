@@ -238,15 +238,17 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
    folder above holds a `prd.md` asserting `kind: prd` — the ordinary shape, since `/epics` writes
    every `EPIC-` folder under a PRD it has read — it is `This is probably the PRD you meant: revise
    it with '/product-workflows:update-prd <PRD-KEY>', or re-refine this Epic with
-   '/product-workflows:epics <KEY>' once that PRD's handoff is merged.`, `<PRD-KEY>` being that
+   '/product-workflows:epics <KEY>' once that PRD, and any revision of it, is on the default
+   branch.`, `<PRD-KEY>` being that
    `prd.md`'s own `key` (`workflows-core:addressing` §4) — never parsed out of either folder's name.
    Where this folder holds no `epic.md`, `/product-workflows:epics <KEY>` refuses it
    (`EPICS_NO_PRD`), so that clause names `'/product-workflows:epics <PRD-KEY>'` instead, which
    drafts the PRD's Epics in folders of its own. Either `/epics` run gates that `prd.md` on the
    default branch (its Phase 0, *Gate the PRD*): it stops while the file is on no ref or only on an
-   unmerged branch, and after an `/update-prd` revision it reads the default branch's earlier copy,
-   without the revision, until that revision is merged — so the clause names the merge first; on a specs tree that is no git
-   repository (`git -C "$SPECS_PATH" rev-parse --git-dir` fails) there is no handoff or merge to
+   unmerged branch, and after a revision it stops on the difference or reads the default branch's
+   earlier copy, without the revision, until that revision is merged — so the clause asks for that
+   PRD, and any revision of it, on the default branch first; on a specs tree that is no git
+   repository (`git -C "$SPECS_PATH" rev-parse --git-dir` fails) there is no default branch to
    name, and the clause is left out, the remedy ending at the `/epics` command. Where the folder
    above holds no such `prd.md`, this Epic has no PRD above it to revise,
    which is the shape `/product-workflows:epics <KEY>` reports as `EPICS_EPIC_NOT_UNDER_PRD` where
