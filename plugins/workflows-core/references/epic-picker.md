@@ -29,8 +29,9 @@ Given a resolved `PRD-` folder (`references/addressing.md` §3) and no Epic in t
 1. **Enumerate the `EPIC-` folders directly under it.** A directory listing — the tree *is* the
    hierarchy, so there is nothing to read and nothing to import. A command lists only the Epics it
    can act on where its own rule says so: `/design` those whose `specification.md` is on the default
-   branch, counting the rest (`/design` Phase 0 step 4), and `/implement` those whose
-   `specification.md` and `design.md` both are, counting the rest and naming each with what it needs
+   branch (in its folder, on a specs tree that is no git repository), counting the rest (`/design`
+   Phase 0 step 4), and `/implement` those whose `specification.md` and `design.md` both are (in its
+   folder, on a specs tree that is no git repository), counting the rest and naming each with what it needs
    first (`/implement` Phase 0). The branches below count the Epics the command lists.
 2. Branch on how many there are:
 

@@ -555,7 +555,7 @@ Otherwise the PRD spans two or more code components without the artifacts that f
 choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Split without <the missing artifacts>", "Cancel"]
 ```
 
-- **Stop** → stop, naming that remedy and every other gap in ladder order. Where Phase 0's `prd_gate` is `pass_amending`, the stop prints Phase 0's amending sentence before that remedy.
+- **Stop** → stop, naming that remedy whole — a landing's commands each on a line of its own, where it is one, since the option's label names it in a phrase, its command or the landing it makes — and every other gap in ladder order. Where Phase 0's `prd_gate` is `pass_amending`, the stop prints Phase 0's amending sentence before that remedy.
 - **Split without** → record the override for Phase 9's `### Targets` and continue: every Epic still gets one target, and where the ARD's `contracts` is null (no ARD, or one without `## Contracts`), no Epic gets a `## Contract` section.
 - **Cancel** → stop.
 
