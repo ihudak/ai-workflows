@@ -599,7 +599,8 @@ The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "nex
   since each stops on arrival on one that is not, and otherwise, in its place, what that `prd.md`
   needs, as that step's *What a stop or an offer names* prints it — save
   `/product-workflows:create-ard` on a BRD-route slice holding no `prd.md`, which it takes as it stands,
-  and `/product-workflows:epics` where the folder holds no `prd.md`, which gives way to what
+  and `/product-workflows:epics` where the folder holds no `prd.md`, or one asserting no
+  `kind: prd`, which gives way to what
   `workflows-core:next-phase-offer`'s *`/epics` precondition* names; once
   settled, `/docs-workflows:document <PRD-KEY>` and `/docs-workflows:release-notes <PRD-KEY>`.
 

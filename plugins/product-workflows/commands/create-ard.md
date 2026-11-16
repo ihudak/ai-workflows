@@ -1022,16 +1022,16 @@ Load the lane before any array below is printed: the offer follows
 `Skill(skill: "workflows-core:reference", args: "next-phase-offer pa")`, the *PA — architecture (optional)* lane, and each `<merge-clause>` in
 it resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
 
-**One precondition governs every `/product-workflows:epics` option below, and only a slice can fail
-it.** `/epics` accepts a folder holding a `prd.md` that asserts `kind: prd` and refuses one that
+**One precondition governs every `/product-workflows:epics` option below, and only a slice, or a
+`prd.md` asserting no `kind: prd`, can fail it.** `/epics` accepts a folder holding a `prd.md` that asserts `kind: prd` and refuses one that
 does not (`commands/epics.md` Phase 0 step 1b, `EPICS_NO_PRD`). On the idea route this run reaches
 this phase only with a `prd.md` on the default branch (or in the folder on an unmanaged tree) —
 Phase 0's *Gate the PRD* stopped it with `CREATE_ARD_NEEDS_PRD` where the folder held none, and with
 `CREATE_ARD_PRD_NOT_HANDED_OFF` where it held one on no ref — but on the BRD route
 `/product-workflows:create-prd` is not a prerequisite for this command, so a slice it just wrote an
 ARD into may legitimately hold no PRD. **Test the resolved folder for an authored `prd.md`**
-before rendering the array: where there is one, offer `/product-workflows:epics`; where there is
-not — a slice — **the option is replaced only by a command that can itself run**, and replaced
+before rendering the array: where there is one, offer `/product-workflows:epics`; where the folder
+holds no `prd.md` — a slice — **the option is replaced only by a command that can itself run**, and replaced
 whole: the lead-in, the role label and the `<merge-clause>` all belong to the command an option
 names, so none of the three is carried over from the option it replaces. The test runs on a
 PRD-level run only, the one whose array names `/epics`; an Epic-level run's array names neither
@@ -1040,7 +1040,15 @@ PRD-level run only, the one whose array names `/epics`; an Epic-level run's arra
 slice's branches are written out as separate literal arrays below rather than substituted into
 one, which is what keeps that rule checkable by reading. Offering `/epics` on a folder holding no
 PRD would name a run that stops on arrival, and naming `/create-prd` without the test below does the
-same thing one command further on.
+same thing one command further on. **Where the folder holds a `prd.md` asserting no `kind: prd`** —
+on either route, since Phase 0's *Gate the PRD* tests the file and not its kind — `/epics` refuses
+it and `/product-workflows:create-prd` counts it as found, so the option is dropped and nothing
+replaces it: on the idea route the PRD-level array below without its `/product-workflows:epics`
+option, its marker going with it, and on a slice the last of the BRD-route arrays; say instead that
+the file asserts no `kind: prd`, and that adding the `kind: prd` and `key: <PRD>` its format carries
+(`workflows-core:addressing` §5) is what lets `/product-workflows:epics <PRD>` read it, once that
+edit is merged to the default branch or, on a specs tree that is no git repository, once it is made
+(`workflows-core:next-phase-offer`'s *`/epics` precondition*).
 
 **`/create-prd` refuses three BRD-route shapes, not one**
 (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2, the authority, not restated
@@ -1076,7 +1084,7 @@ judge for themselves. Where the option is dropped and nothing replaces it, the a
   holds is a slice key**: `/dev-workflows:design` cannot be reached with one at all, and the second
   option is not a fixed command — this phase's opening precondition decides which command it names,
   or whether the array has one. **Six literal arrays, one per branch of that test — the
-  standing-empty-child branch split in two by the parent's ledger, the missing-ledger branch sharing the last.** They are written out rather than derived by substituting a command into one array, and the reason is the
+  standing-empty-child branch split in two by the parent's ledger, the missing-ledger branch and a `prd.md` asserting no `kind: prd` sharing the last.** They are written out rather than derived by substituting a command into one array, and the reason is the
   rule stated with the precondition: an option's lead-in, its role label and its `<merge-clause>`
   each belong to the command that option names, and none of the three survives a different command
   being put in its place. Present the one whose condition holds, verbatim, per
@@ -1086,7 +1094,7 @@ judge for themselves. Where the option is dropped and nothing replaces it, the a
   - **No `prd.md`, and a claimed row is still `unallocated`** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Allocate this slice's ledger — /product-workflows:brd-split <SLICE-KEY> (PM) <merge-clause>", "Stop here"]`
   - **No `prd.md`, no row `covered-here`, the gate set is empty — a standing empty child — and the parent's own `coverage-ledger.md` still holds an `unallocated` row** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Keep or remove this empty slice — /product-workflows:brd-split <PARENT-KEY> \"<how to cut it>\" (PM)", "Stop here"]` — that run walks the parent's unallocated row too and stops with `BRD_SPLIT_NEEDS_INSTRUCTION` without an instruction, so the bare form would name a run that stops on arrival (`/product-workflows:create-prd` Phase 0 step 7's empty-gate-set row).
   - **No `prd.md`, no row `covered-here`, the gate set is empty, and the parent's own `coverage-ledger.md` holds no `unallocated` row** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Keep or remove this empty slice — /product-workflows:brd-split <PARENT-KEY> (PM)", "Stop here"]`
-  - **No `prd.md`, and either no row `covered-here` and none `unallocated` with the gate set non-empty, or no readable `coverage-ledger.md` while `brd-link.md` claims rows, or the gate set empty and the parent's `coverage-ledger.md` unreadable** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Stop here"]` — the second option is dropped and nothing takes its place, per the precondition table's third, fourth and fifth rows; say instead what the gate-set rows resolved to, or, where a ledger is missing or unreadable, report it by path.
+  - **No `prd.md`, and either no row `covered-here` and none `unallocated` with the gate set non-empty, or no readable `coverage-ledger.md` while `brd-link.md` claims rows, or the gate set empty and the parent's `coverage-ledger.md` unreadable; or a `prd.md` asserting no `kind: prd`** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Stop here"]` — the second option is dropped and nothing takes its place, per the precondition table's third, fourth and fifth rows, or the precondition's sentence on such a `prd.md`; say instead what the gate-set rows resolved to, or, where a ledger is missing or unreadable, report it by path, or, for a `prd.md` asserting no `kind: prd`, what that sentence says.
   - **`/product-workflows:specify <SLICE-KEY>` is always reachable from this state.** It takes
     the same slice key this run resolved — and passes that command's own container refusal for the
     same reason this run did, finds the same folder through `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), and needs no key minted anywhere else. It
@@ -1241,10 +1249,12 @@ read that content out of is the one this run already read. Say plainly whether `
 folder holds no authored `prd.md`, and name what Phase 7's precondition table put in its place —
 `/product-workflows:create-prd <SLICE-KEY>`, a `/product-workflows:brd-split` against this slice or its
 parent, or nothing at all where this slice's gate set holds no `covered-here` row, none
-`unallocated`, and is not empty, or where its `coverage-ledger.md` is missing or unreadable. Where the answer is
+`unallocated`, and is not empty, or where its `coverage-ledger.md` is missing or unreadable, or where
+the folder's `prd.md` asserts no `kind: prd`. Where the answer is
 *nothing*, say that too, and say why: `/create-prd` would raise `CREATE_PRD_BRD_NOT_ELIGIBLE` and
 that branch names no command either — or, for a missing ledger, that there is no gate set to judge,
-naming the file by path. Name the folder tested, the
+naming the file by path — or, for a `prd.md` asserting no `kind: prd`, what Phase 7's precondition
+says for that file. Name the folder tested, the
 `key` it asserts, and the two gate-set figures the table was resolved on (for a missing ledger, the
 `claims:` count and the missing path). That is the case a reader
 is most likely to mistake for reachable.
