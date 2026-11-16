@@ -29,15 +29,20 @@ fetches nothing and writes nothing.
 own directory where it lies below the top level, and each --docs-content, relative to the top level
 and matched as the literal path it is (an absolute one, or one with a ".." segment, is rejected and
 listed); the documentation set is those and FAMILY_DOC_PATHS. Every --repo that is that repository,
-by its path or by its origin's slug, is read with the set as exclude pathspecs and --full-history:
-"scanned" counts the non-merge commits touching a path outside it, a commit naming a key that
-touches none is listed as documentation only and never found, the probe drops a merge that brought
-in nothing outside it relative to its first parent, and a merged pull request there keeps only the
-landed commits touching a path outside it. Where no content path is known, or one is the whole
-repository, or --exclude names the repository too, it is left out whole, as --exclude leaves one
-out; where no --repo is that repository, its pull requests are dropped by name. A root in no git
-work tree changes nothing. docs-check prints the paths `git diff --name-only <base> <head>` lists
-outside the same documentation set.
+by its path or by its origin's slug, is read under the set. "scanned" counts the non-merge commits
+touching a path outside it, in a walk with the set as exclude pathspecs and --full-history -- a
+pathspec alone simplifies history, and a side branch netting to nothing would vanish from the
+count. Each commit the scan or the probe matched there, and each a merged pull request there
+landed, is then tested on its own, which walks no history and so needs no --full-history: a
+merge against its first parent, any other commit against its parent (a root commit against the
+empty tree). A commit naming a key that touches nothing outside the set is listed as
+documentation only and never found, the probe drops a merge that brought in nothing outside it,
+and a merged pull request keeps only the landed commits touching a path outside it, listing the
+rest. Where no content path is known, or one is the whole repository, or --exclude names the
+repository too, it is left out whole, as --exclude leaves one out; where no --repo is that
+repository, its pull requests are dropped by name. A root in no git work tree changes nothing.
+docs-check prints the paths `git diff --name-only <base> <head>` lists outside the same
+documentation set.
 
 Exit 0: it ran -- a clone or a search it could not reach is a field of the result. Exit 2: it
 could not run; the cause is on stderr. Python standard library only.
@@ -1180,14 +1185,12 @@ def scan_ref(clone, scope):
     return "HEAD", "HEAD (no origin default branch)"
 
 
-def _log(clone, ref, greps, merges, pathspecs=()):
+def _log(clone, ref, greps, merges):
     argv = ["log", ref, "-z", "--date=iso-strict-local", "--extended-regexp", "--regexp-ignore-case", "--format=" + FMT]
     if not merges:
         argv.append("--no-merges")
-    if pathspecs:
-        argv.append("--full-history")  # a pathspec alone simplifies history: a side branch netting to nothing vanishes
     argv += ["--grep=" + g for g in greps]
-    rc, out, err = _git_in(clone, *argv, "--", *pathspecs)
+    rc, out, err = _git_in(clone, *argv, "--")
     if rc != 0:
         raise SearchFailed("git log failed: " + _last_line(err, "exit %s" % rc))
     rows = []
@@ -1205,31 +1208,31 @@ def _subject(body):
 def scan_clone(clone, scope, keys, patterns, pathspecs=()):
     """The repos[] entry for one clone, its key-matched commits, and the key-matched commits it left out as
     documentation only -- none unless the clone is read under the documentation rule, where `pathspecs` is the
-    whole tree less the documentation set and every walk takes it."""
+    whole tree less the documentation set."""
     entry = {"path": clone, "ref": None, "scanned": None, "matched": 0, "github": None, "error": None, "probe": [],
              "probe_error": None, "docs_rule": bool(pathspecs)}
     commits, docs_only = [], []
     ref, shown = scan_ref(clone, scope)
     entry["ref"] = shown
-    greps = [EDGE_L + ere_escape(k) + EDGE_R for k in keys]
     try:
+        # The count is the one walk under the pathspecs, so it takes --full-history: a pathspec alone simplifies
+        # history, and a side branch netting to nothing outside the set would vanish from it. The matched commits
+        # are filtered one by one below, which walks no history and so has no simplification to fall into.
         walk = ["--full-history", ref, "--", *pathspecs] if pathspecs else [ref, "--"]
         rc, out, err = _git_in(clone, "rev-list", "--no-merges", "--count", *walk)
         if rc != 0:
             raise SearchFailed("cannot count commits on %s: %s" % (shown, _last_line(err, "exit %s" % rc)))
         entry["scanned"] = int(out.strip())
-        for sha, date, body in _log(clone, ref, greps, merges=False, pathspecs=pathspecs):
+        for sha, date, body in _log(clone, ref, [EDGE_L + ere_escape(k) + EDGE_R for k in keys], merges=False):
             named = [k for k in keys if patterns[k].search(body)]
             if named:
                 commits.append({"repo": clone, "sha": sha, "date": date, "subject": _subject(body),
                                 "keys": named, "via": "message", "prs": []})
-        if pathspecs:  # the same log without the pathspecs, less what it kept, is what touched documentation only
-            kept = {c["sha"] for c in commits}
-            for sha, date, body in _log(clone, ref, greps, merges=False):
-                named = [k for k in keys if patterns[k].search(body)]
-                if named and sha not in kept:
-                    docs_only.append({"repo": clone, "sha": sha, "date": date, "subject": _subject(body),
-                                      "keys": named})
+        if pathspecs:
+            outside = _touching_outside(clone, [c["sha"] for c in commits], pathspecs)
+            docs_only = [{k: c[k] for k in ("repo", "sha", "date", "subject", "keys")}
+                         for c in commits if c["sha"] not in outside]
+            commits = [c for c in commits if c["sha"] in outside]
     except SearchFailed as e:
         entry["error"] = str(e)
         entry["scanned"] = None  # a clone with an error was not read, whatever the count said first
@@ -1238,29 +1241,49 @@ def scan_clone(clone, scope, keys, patterns, pathspecs=()):
     return entry, commits, docs_only, ref
 
 
+def _touching_outside(clone, shas, pathspecs):
+    """The commits among `shas` -- none of them a merge -- that touch a path outside the documentation set.
+
+    One --no-walk call compares each commit with its parent, a root commit with the empty tree, and walks no
+    history. No SHA, no call: given none, git would read HEAD instead."""
+    if not shas:
+        return set()
+    rc, out, err = _git_in(clone, "log", "--no-walk=unsorted", "--format=%H", *shas, "--", *pathspecs)
+    if rc != 0:
+        raise SearchFailed("cannot read which commits touch a path outside the documentation set: "
+                           + _last_line(err, "exit %s" % rc))
+    return set(out.split())
+
+
 def probe_clone(clone, ref, keys, accounted, pathspecs=()):
-    rows = [row for row in _log(clone, ref, [ere_escape(k) for k in keys], merges=True, pathspecs=pathspecs)
+    rows = [row for row in _log(clone, ref, [ere_escape(k) for k in keys], merges=True)
             if (clone, row[0]) not in accounted]
     if pathspecs and rows:
-        documentation = _documentation_merges(clone, [row[0] for row in rows], pathspecs)
-        rows = [row for row in rows if row[0] not in documentation]
+        outside = _brought_in_outside(clone, [row[0] for row in rows], pathspecs)
+        rows = [row for row in rows if row[0] in outside]
     return [{"sha": sha, "date": date, "subject": _subject(body)} for sha, date, body in rows]
 
 
-def _documentation_merges(clone, shas, pathspecs):
-    """The merge commits among `shas` that brought in no path outside the documentation set relative to their
-    first parent. A commit git cannot read, or that has no first parent, is never one of them."""
-    rc, out, _ = _git_in(clone, "rev-list", "--no-walk=unsorted", "--parents", *shas)
+def _brought_in_outside(clone, shas, pathspecs):
+    """The commits among `shas` that brought in a path outside the documentation set: a merge whose diff from its
+    first parent touches one -- or that git could not compare, since a merge is never dropped untested -- and each
+    other commit _touching_outside keeps. No merge reaches _touching_outside."""
+    if not shas:
+        return set()
+    rc, out, err = _git_in(clone, "rev-list", "--no-walk=unsorted", "--parents", *shas)
     if rc != 0:
-        return set()  # untested is kept: the probe never drops a merge it could not show brought in documentation only
-    merges = set()
+        raise SearchFailed("cannot read the parents of the commits to filter: " + _last_line(err, "exit %s" % rc))
+    merges, others = [], []
     for line in out.splitlines():
         fields = line.split()
-        if len(fields) >= 3:  # the commit and at least two parents
-            rc, _, _ = _git_in(clone, "diff", "--quiet", fields[0] + "^1", fields[0], "--", *pathspecs)
-            if rc == 0:
-                merges.add(fields[0])
-    return merges
+        if fields:
+            (merges if len(fields) >= 3 else others).append(fields[0])  # the commit and at least two parents
+    outside = _touching_outside(clone, others, pathspecs)
+    for sha in merges:
+        rc, _, _ = _git_in(clone, "diff", "--quiet", sha + "^1", sha, "--", *pathspecs)
+        if rc != 0:
+            outside.add(sha)
+    return outside
 
 
 def parse_remote(url):
@@ -1422,12 +1445,11 @@ def _pr_entry(hit, keys):
 def _leave_out_documentation(clone, pr, pathspecs):
     """Move each commit a pull request landed in the documentation-holding repository that touches no path outside
     the documentation set from `landed` to `landed_docs_only`."""
-    rc, out, err = _git_in(clone, "log", "--no-walk=unsorted", "--format=%H", *pr["landed"], "--", *pathspecs)
-    if rc != 0:
-        pr["landed_as"], pr["landed"] = None, []
-        pr["reason"] = "cannot read the landed commits' paths: " + _last_line(err, "exit %s" % rc)
+    try:
+        outside = _brought_in_outside(clone, pr["landed"], pathspecs)
+    except SearchFailed as e:
+        pr["landed_as"], pr["landed"], pr["reason"] = None, [], str(e)
         return
-    outside = set(out.split())
     pr["landed_docs_only"] = [sha for sha in pr["landed"] if sha not in outside]
     pr["landed"] = [sha for sha in pr["landed"] if sha in outside]
     if not pr["landed"]:
