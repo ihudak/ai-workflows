@@ -95,7 +95,9 @@ Compose the draft and BOTH write and show it:
   tells the user to paste is the printed one, and carries no comment.
 - **title**: per `commit_convention` (e.g. `<KEY> <summary>`).
 - **body**: what was documented; the output files; the Phase 6.5
-  render-verification summary; deferred style/review/render items; a link back to the PRD.
+  render-verification summary; deferred style/review/render items; a link back to the PRD;
+  and, where `/document`'s `nothing_built_answer` is set, the one line its Phase 8.5 step 3
+  gives it, the body's first line or its second after the DO-NOT-MERGE banner.
   Where the docs repository carries a pull-request template, the body is that
   template, filled with these facts, per `workflows-core:phase-handoff` §2.7.1,
   with the DO-NOT-MERGE banner below, where there is one, as its required first line.
