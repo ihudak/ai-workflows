@@ -87,8 +87,9 @@ is: by a PRD-level reader, and by no Epic-level one. No run moves or copies it �
 append-only — and the picker's ● marker, which reads the Epic's own folder, does not count it.
 
 **Until that block is moved, the Epic reads as not implemented to everything Epic-level.**
-`/implement`'s picker marks it ◐ where its `design.md` stands and ○ where it does not, a ◐ row
-taking the default cursor; `/ready` derives its phase from an Epic folder holding no record; an
+`/implement`'s picker lists it as not started, ○, a row the default cursor can take, where its
+`specification.md` and `design.md` are both on the default branch, and otherwise leaves it out,
+naming what it needs first; `/ready` derives its phase from an Epic folder holding no record; an
 Epic-level `/document` or `/release-notes` reads none of its refs; and §5's `unit-branch` answers
 `none` for that Epic, so no consumer of it finds the Epic's branch. **Population: every Epic
 implemented under a PRD address before `dev-workflows` 4.1.2.** And where the PRD folder also holds
@@ -96,7 +97,7 @@ a flat `specification.md` on a PRD that is not multi-component, or one the 0-Epi
 own record** (on a multi-component PRD, `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3, a PRD-folder block is what marks the PRD as built whole by the 0-Epic override, so `/ready` reads the PRD as that slice and counts the block toward it — a leftover block for an Epic is therefore moved before a multi-component PRD's readiness is read), the PRD folder's record being the slice's — which moves the slice to *In Progress*
 only where the PRD folder also holds a `design.md`, since `/ready` Phase 3(0) takes the furthest
 rung whose expected artifacts all exist and the lower rung where they straddle
-(`dev-workflows:workflow-states`, the Epic ladder). **Population: every PRD folder holding both a
+(`dev-workflows:workflow-states`, the Epic ladder); `/implement <PRD>` counts it the same way, and asks before it implements that slice again where the slice is the one unit left (`/implement` Phase 0). **Population: every PRD folder holding both a
 flat `specification.md` and such a block, from `dev-workflows` 4.1.2, whose `/ready` is the first to
 read that record.**
 
