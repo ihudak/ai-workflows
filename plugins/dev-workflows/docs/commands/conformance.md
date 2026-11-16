@@ -101,7 +101,7 @@ On a run that traced threats, each threat it took from a model, and each live en
 |---|---|---|
 | `verified` | Each mitigation its `Mitigated by` names, and, for a part deferred to design, at least one design Rule answering it, was traced and re-read as satisfied in this run, and none is open. | — |
 | `open` | A mitigation it rests on is a discrepancy or unverified, or has an entry not resolved, whatever it decided: an amended one stays `open` until its document changes. | *Fix the code*'s `/implement`; this command again, for one unverified; Dev, for an amended `[DT#N]`; architect, for an ARD Rule not being fixed. |
-| `not checked` | A mitigation it rests on is untraced or no code can show it, or a pair joins no requirement; on an Epic run, also an ARD Rule binding only other components, or one satisfied save a sibling's part. | On an Epic run, the PE's PRD run; on a PRD run, no command. |
+| `not checked` | A mitigation it rests on is untraced, no code can show it, or, on an Epic run, is satisfied save a sibling's part or is an ARD Rule binding only other components; or a pair joins no requirement. | On an Epic run, the PE's PRD run; on a PRD run, no command. |
 | `unanswered — returned to the architect` | A design returned the deferred threat to the architect. | Architect. |
 | `unanswered — answered elsewhere — not verified on this run` | On an Epic run, its design says another design answers it, which only the PRD run can check. | The PE's PRD run. |
 | `unanswered — no design takes it` | A design says the threat is not its own, and no design answers it with a Rule. | Architect. |
