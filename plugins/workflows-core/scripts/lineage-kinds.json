@@ -49,7 +49,7 @@
       "ignore_lines": [
         "^\\s*[-*]\\s+\\[[ xX]\\]"
       ],
-      "_source": "product-workflows/agents/epic-writer.md: the epic.md template under Write mechanics carries no item ids of its own; notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
+      "_source": "product-workflows/agents/epic-writer.md: the epic.md template under Write mechanics carries no item ids of its own; notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to specification.md, prd.md, epic.md, ard.md and ard-<area>.md (conformance.md Phase 5)"
     },
     "design": {
       "match": [
@@ -67,7 +67,7 @@
         "^- \\*\\*Version\\*\\*:",
         "^- \\*\\*Open questions\\*\\*:"
       ],
-      "_source": "dev-workflows/references/design-format.md: Header (Version), Traceability & identifiers (cites spec ids; its optional ## Threat review defines [DT#N], which no lineage item reads); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
+      "_source": "dev-workflows/references/design-format.md: Header (Version), Traceability & identifiers (cites spec ids; its optional ## Threat review defines [DT#N], which no lineage item reads); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to specification.md, prd.md, epic.md, ard.md and ard-<area>.md (conformance.md Phase 5)"
     },
     "prd": {
       "match": [
@@ -93,7 +93,7 @@
       "ignore_lines": [
         "^\\s*[-*]\\s+\\[[ xX]\\]"
       ],
-      "_source": "workflows-core/references/prd-format.md:144-147,153,162,181 (### [US#N]: headings; [AC#N] bullets under a label line; ids global, never renumbered); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
+      "_source": "workflows-core/references/prd-format.md:144-147,153,162,181 (### [US#N]: headings; [AC#N] bullets under a label line; ids global, never renumbered); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to specification.md, prd.md, epic.md, ard.md and ard-<area>.md (conformance.md Phase 5)"
     },
     "ard": {
       "match": [
@@ -116,7 +116,7 @@
       "ignore_lines": [
         "^\\s*[-*]\\s+\\[[ xX]\\]"
       ],
-      "_source": "product-workflows/references/ard-format.md:15 (ard-<area>.md), :63 (### [AD#N]:); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to prd.md, epic.md and ard.md (conformance.md Phase 5)"
+      "_source": "product-workflows/references/ard-format.md:15 (ard-<area>.md), :63 (### [AD#N]:); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to specification.md, prd.md, epic.md, ard.md and ard-<area>.md (conformance.md Phase 5)"
     },
     "threat-model": {
       "match": [
@@ -138,7 +138,7 @@
       "ignore_lines": [
         "^\\s*[-*]\\s+\\[[ xX]\\]"
       ],
-      "_source": "workflows-core/references/threat-model-format.md §3-§4 (### [TH#N]: headings; ## Inherited threats bullets are no items); notes and ignore_lines as the ard row, so a /dev-workflows:conformance note (sub-project D) never reads as a revision"
+      "_source": "workflows-core/references/threat-model-format.md §3-§4 (### [TH#N]: headings; ## Inherited threats bullets are no items); notes and ignore_lines as the ard row, though no command writes a note into the model (/dev-workflows:conformance writes nothing into it): they keep a hand-written note from reading as a revision"
     },
     "grounding": {
       "match": [

@@ -3,7 +3,7 @@
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
 The canonical structure and per-section rules for an engineering `design.md`. `/design` authors
-against this file, and its threat review writes section 15 and hands sections 4 and 8 to its agent as the bar a Rule meets; `design-reviewer` reviews against it, section 15 by its threat-review dimension; `interface-designer` reads its `## Seams` dependency categories, and `/ready` reads its `- **Repos**:` header. **Net-new — authored for the dev-workflows
+against this file, and its threat review writes section 15 and hands sections 4 and 8 to its agent as the bar a Rule meets; `design-reviewer` reviews against it, section 15 by its threat-review dimension; `interface-designer` reads its `## Seams` dependency categories, `/ready` reads its `- **Repos**:` header, and `/conformance` reads section 15 and never writes it, tracing each live `Mitigated` entry's Rule as a requirement. **Net-new — authored for the dev-workflows
 plugin, no import source.**
 
 ## Principle — decision-dense, scalable

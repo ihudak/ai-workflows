@@ -84,7 +84,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `specs-git-selftest.md` | `scripts/selftests/**` (repo root); `workflows-core/scripts/`: `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py` | where `specs-git.py`'s selftest lives, how it runs, group runs, the mutants |
 | `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
-| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance` map, record readers, `/ready` rung, `/implement` spec gate |
+| `dev-workflows-conformance.md` | as `dev-workflows.md` | `/conformance`, mitigations, threats, record readers, `/ready` rung, `/implement` spec gate |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
 | `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | plugin facts, map, callers |
 | `product-workflows-prd-flow.md` | as `product-workflows.md` | the PRD-creation flow's invariants |
@@ -97,7 +97,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
 | `security-workflows.md` | `security-workflows/**`; `workflows-core/`: `references/security-register-format.md`, `scripts/weakness-classes.py`, `docs/family-map.md` | plugin facts, map, register invariants |
-| `threat-model.md` | `workflows-core/`: `references/threat-model-format.md`, `references/pre-lint.md`, `scripts/lineage-kinds.json`; `product-workflows/`: `commands/create-ard.md`, `agents/ard-reviewer.md`, `agents/threat-modeler.md`, `docs/commands/create-ard.md`; `dev-workflows/`: `commands/design.md`, `references/design-format.md`, `agents/design-*.md` | the ARD threat model and the design threat review: authority, invariants, readers |
+| `threat-model.md` | `workflows-core/`: `references/threat-model-format.md`, `references/pre-lint.md`, `scripts/lineage-kinds.json`; `product-workflows/`: `commands/create-ard.md`, `agents/ard-reviewer.md`, `agents/threat-modeler.md`, `docs/commands/create-ard.md`; `dev-workflows/`: `commands/design.md`, `commands/conformance.md`, `references/design-format.md`, `references/conformance-format.md`, `agents/design-*.md` | the threat model and the design threat review: authority, invariants, readers |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 24 command files: the ten docs-grounding consumers, `/design` (architecture only) and thirteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, authorities, map |
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |
@@ -113,7 +113,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `plugin-updates-coupling-history.md` | as `plugin-updates-coupling.md` | its older bullets, up to `workflows-core` 1.58.0 |
 | `plugin-updates-coupling-history-2.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.59.0 to 1.74.0 |
 | `plugin-updates-coupling-history-3.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.75.0 to 1.83.1 |
-| `plugin-updates-coupling-history-4.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.84.0 to 1.86.0 |
+| `plugin-updates-coupling-history-4.md` | as `plugin-updates-coupling.md` | its bullets for `workflows-core` 1.84.0 to 1.90.2 |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
@@ -148,7 +148,7 @@ The evidence behind the rules — measured cases, refused widenings, history —
 - **`workflows-core:addressing` §7's shared-fallback adoption is additive, and it keeps no totals.** Every command that addresses a folder reaches the tree through `resolve-address` (§3), and §5's legacy unprefixed fallback is tried ONLY where the prefixed glob already returned nothing — so a key whose folder carries its kind prefix resolves exactly as it did before, and a command that creates the folder it did not find creates it **prefixed** (§2). The fallback honours a legacy folder that exists; it never proposes one. **Re-derive the set with `grep -l resolve-address plugins/*/commands/*.md`; do not count it off §7's table**, which is a finding aid and not the set. ([why](docs/maintainers/rationale.md#addressing-fallback-totals))
 - **Any kind gate must test the artifact it actually cares about, never the folder's asserted kind** — a BRD-route slice is `PRD-`-prefixed yet asserts `kind: brd`; `.claude/rules/brd-route.md` states why, and how the existing gates apply the rule.
 - `/create-ard`, `/design`, `/implement`, `/specify`, `/update-spec`, `/epics`, `/ready` respect the applicable ARD via `workflows-core:ard-resolution`; an `AD#N` Rule violated without a recorded "ARD deviation" is a reviewer BLOCKER.
-- A phase is not finished until its artifact is on the specs repo's default branch — every producer offers branch + commit + push + PR, and every consumer executes `require-on-main` before expensive work; an absent optional input still delegates to the command's pre-existing behaviour and becomes a prerequisite only by a recorded decision, never by the gate (`workflows-core:phase-handoff` §3.4 names each input that stops and why; multi-component PRDs: `workflows-core:ard-resolution`).
+- A phase is not finished until its artifact is on the specs repo's default branch — every producer offers branch + commit + push + PR, and every consumer gates or reads the default branch's copy alone (`workflows-core:phase-handoff` §5 rule 2); an absent optional input still delegates to the command's pre-existing behaviour and becomes a prerequisite only by a recorded decision, never by the gate (its §3.4 names each input that stops and why; multi-component PRDs: `workflows-core:ard-resolution`).
 
 ## Running the gates
 
