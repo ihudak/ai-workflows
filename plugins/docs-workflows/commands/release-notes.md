@@ -140,7 +140,14 @@ This command makes **no external API calls but two**: key discovery's optional, 
      `<the remedy>` turns on what that folder carries, because `/product-workflows:create-prd`
      refuses a BRD-route slice in three states, as `/product-workflows:epics`' `EPICS_NO_PRD`
      remedy table also records:
-     - **No `brd-link.md`** — an idea-route PRD folder: `Run /product-workflows:create-prd <KEY> first.`
+     - **No `brd-link.md`** — an idea-route PRD folder: `Run /product-workflows:create-prd <KEY> first.` —
+       save where the folder holds the PRD under its pre-rename file name, which
+       `workflows-core:phase-handoff` §4.4's *The first missing document* tests for
+       (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`), and on which
+       `/product-workflows:create-prd` would write a second PRD: there
+       `<KEY>'s PRD is <its file>, under its name from before the artifact filenames lost their keys — run '/product-workflows:specify <KEY>': it stops on that file, and its stop prints the commands that rename it to prd.md and land it.`
+       — on a specs tree that is no git repository, `and its stop says how to rename it to prd.md.` in
+       place of its last clause.
      - **A `brd-link.md`** — a BRD-route slice. Read the rows its `claims:` names (its gate set) and
        their dispositions from the slice's own `coverage-ledger.md`, never from a `ledger:` line,
        and take the first row that applies:
@@ -757,7 +764,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Reminder: paste the draft just appended to <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>, wherever your release notes are published — but not before every `document-as-spec` gap above is fixed, where there is one, since the note describes behaviour the code does not have yet; you, or whoever publishes it, add any identifiers or wrapper your publishing process needs.
 
    ### Next step
-   [leaf/closure per the whole of `workflows-core:next-phase-offer`, whose Dev node for this command continues any pending PA or PE phase, which the other lanes define — guidance only, never auto-invoked: the release note is drafted. If earlier pipeline phases remain, continue — hand to PA → `/product-workflows:create-ard <PRD>` or PE → `/product-workflows:epics <PRD>`; if the change is already built and documented, the PRD is fully processed.]
+   [leaf/closure per the whole of `workflows-core:next-phase-offer`, whose Dev node for this command continues any pending PA or PE phase, which the other lanes define — guidance only, never auto-invoked: the release note is drafted. If earlier pipeline phases remain, continue — hand to PA → `/product-workflows:create-ard <PRD>` or PE → `/product-workflows:epics <PRD>`, each named only where *The two offers wait for a landed PRD*, after this report, says, and otherwise what that paragraph names in its place; if the change is already built and documented, the PRD is fully processed.]
 
    ### Context hygiene
 
@@ -771,6 +778,11 @@ Outside that one case there is no question to ask and no option that replaces th
    ```
 
    The `### Next step` follows the whole reference, `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`, not its `dev` lane alone, because its Dev node for this command continues any pending PA or PE phase, which the other lanes define.
+
+   **The two offers wait for a landed PRD.** `/product-workflows:create-ard <PRD>` and `/product-workflows:epics <PRD>` each stop while the PRD folder's `prd.md` is not on the specs repository's default branch, and Phase 0 step 1 tested that file only in the working tree, so before the `### Next step` names either, read where the file stands. It is a read and nothing more: this command runs no `require-on-main` and gates nothing on the file. Where `$SPECS_PATH` is unset — an `@<path>` run — or names a specs tree that is no git repository (`git -C "$SPECS_PATH" rev-parse --git-dir` fails), the PRD folder's own `prd.md` decides, and Phase 0 step 1 found it there. A PRD folder outside the work tree of the repository `$SPECS_PATH` stands in is read as `workflows-core:phase-handoff` §4.4's *The first missing document* reads one (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`), its own `prd.md` deciding, and each command named for it is followed by that rule's sentence. Otherwise test the ref first, `git -C "$SPECS_PATH" rev-parse --verify --quiet "<default-ref>"`, `<default-ref>` being the ref `specs-preflight` resolved — a non-zero exit is the last case below — since the read after it cannot tell a missing ref from a missing file; then read the PRD folder's `prd.md` itself from that branch, `git -C "$SPECS_PATH" show "<default-ref>:./<the PRD folder, relative to $SPECS_PATH>/prd.md" 2>/dev/null`, which prints nothing and exits non-zero where the branch holds no such file. Then:
+   - **The file is there** — on the default branch, or in the PRD folder where its own file decides → name `/product-workflows:create-ard <PRD>`, and `/product-workflows:epics <PRD>` where the copy read asserts `kind: prd` in its frontmatter. Where that copy asserts none, `/epics` refuses the file, so in `/epics`' place name what `workflows-core:next-phase-offer`'s *`/epics` precondition* names, saying that `<PRD>`'s `prd.md` asserts no `kind: prd`.
+   - **The default branch does not hold it** — the `prd.md` in its folder and on no ref, or on a plugin branch, its state read as §4.4's *The first missing document* reads a document → name neither. Print `<PRD>'s prd.md is not on the specs repository's default branch yet, and /product-workflows:create-ard and /product-workflows:epics stop until it is — land it first:` — or, where the PRD folder's copy asserts no `kind: prd`, which `/epics` reads as no PRD wherever it stands, `<PRD>'s prd.md is not on the specs repository's default branch yet, and /product-workflows:create-ard stops until it is — land it first:` — then its landing, as that rule names it: the file with its path and state, then the commands §4.4 gives its row — row F's in the form its HEAD test selects, a `<new-branch>` among them named as row F names it, under `prd/`; rows D and E's with the branch and pull request found as §3.5 finds them — each on a line of its own with no `#` comment and `$SPECS_PATH` substituted, then, in prose, the pull request to open and merge, or the open one to merge, and that re-running its producing command, `/product-workflows:create-prd`, would author a second one rather than land it.
+   - **`<default-ref>` does not exist** (§4.4's row G) → §4.4's *The first missing document* reads nothing: name neither, and in their place say that the specs repository's default branch could not be read and name row G's commands, as that rule says.
 
 ---
 
