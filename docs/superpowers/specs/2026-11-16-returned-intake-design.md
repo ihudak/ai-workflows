@@ -1,218 +1,222 @@
 # RETURNED-INTAKE: `/create-ard` takes in the threats sent back to the architect
 
-Date: 2026-11-16. Status: **draft, revision 1 — awaiting review, then the maintainer's answers to the four questions at the end.** The track is the `RETURNED-INTAKE` entry of `docs/superpowers/to-fix.md:201-206`, scheduled next after SEC-G2 D by the maintainer's answer to that design's third question, which widened it to any live threat that is not stale (`docs/superpowers/specs/2026-11-15-sec-g2-d-security-conformance-design.md:3`, `:236`). It builds on SEC-G2 B, C and D as built, all on `main` at `8ee5bb809` (`workflows-core` 1.95.0, `product-workflows` 3.83.2, `dev-workflows` 4.69.0).
+Date: 2026-11-16. Status: **draft, revision 2 — awaiting the maintainer's answers to the three questions at the end.** Written after one independent review of revision 1 (`.superpowers/design-review-1.md`: 1 Critical, 9 Important, 8 Minor); what changed is listed at the end. The track is the `RETURNED-INTAKE` entry of `docs/superpowers/to-fix.md:201-206`, scheduled next after SEC-G2 D by the maintainer's answer to that design's third question, which widened it to any live threat that is not stale (`docs/superpowers/specs/2026-11-15-sec-g2-d-security-conformance-design.md:3`, `:236`). It builds on SEC-G2 B, C and D as built, on `main` at `8ee5bb809` (`workflows-core` 1.95.0, `product-workflows` 3.83.2, `dev-workflows` 4.69.0).
 
-Every decision is written with a recommended answer. The four at the end are the maintainer's calls; the rest are the author's. Statements about the tree cite `file:line` at `8ee5bb809`; `create-ard.md`, `design.md` and `conformance.md` are the command files, `plugins/product-workflows/commands/create-ard.md` and `plugins/dev-workflows/commands/{design,conformance}.md`, and *the format* is `plugins/workflows-core/references/threat-model-format.md`. What I could not ground is marked **assumption**.
+The three questions at the end are the maintainer's calls; every other decision is the author's. Statements about the tree cite `file:line` at `8ee5bb809`. `create-ard.md`, `design.md` and `conformance.md` are the command files; *the format* is `plugins/workflows-core/references/threat-model-format.md`; `ph` is `plugins/workflows-core/references/phase-handoff.md`.
 
 ## Intent
 
-Three states of a live threat are routed to the architect and no command closes them. `/dev-workflows:conformance` sends the PA to `/product-workflows:create-ard <KEY>` for `unanswered — returned to the architect`, `unanswered — no design takes it` and an `open` on a decision the team will not build, each line ending `No command re-disposes a live threat that is not stale yet: the architect waits for the intake of returned threats, or, for a threat open on a decision, supersedes that decision.` (`conformance.md:704`). `design-format` already tells the Dev that "the architect takes it up with `/product-workflows:create-ard`" (`plugins/dev-workflows/references/design-format.md:334`), and `/design` prints that command beside every returned entry (`design.md:572`). But a `/create-ard` refine reads no design's threat review and no conformance record, and puts a question only about a stale threat or an acceptance past its date (`create-ard.md:812-816`, `:881-885`).
+Three states of a live threat are routed to the architect and no command closes them. `/dev-workflows:conformance` sends the PA to `/product-workflows:create-ard <KEY>` for `unanswered — returned to the architect`, `unanswered — no design takes it` and an `open` on a decision the team will not build, each line ending `No command re-disposes a live threat that is not stale yet: …` (`conformance.md:704`). `design-format` tells the Dev that "the architect takes it up with `/product-workflows:create-ard`" (`plugins/dev-workflows/references/design-format.md:334`). But a `/create-ard` refine takes no threat review and no conformance record into its threat model, and puts a question only about a stale threat or an acceptance past its date (`create-ard.md:812-816`, `:881-885`).
 
-This design makes that run read both, at its Phase 4.3 step 3, and put each such threat to the architect by the dispositions step 7 already offers. It adds no command, no agent, no id prefix, no branch prefix, no gate and no field of the model.
+This design makes that run read both at its Phase 4.3 step 3, and put each such threat to the architect by the dispositions step 7 already offers. It adds no command, agent, id prefix, branch prefix, gate or field of the model.
 
-**One noun.** *A threat sent back* is a live threat of the model that is not stale and that a design or a conformance record sends to the architect, in one of the three kinds D2 defines. Every copy of the rule uses that noun, so the next sweep finds them.
+**One noun.** *A threat sent back* is a live threat of the model, readable and not stale, that a design or a conformance record sends to the architect, in one or more of the three kinds D2 defines. Every copy of the rule uses that noun.
 
 ## What exists today
 
-- **A refine asks about two populations.** Step 3 checks the folder's model and puts `["Refine the threat model (Recommended)", "Leave it as it is"]`, or, where a threat is stale, `["Refine the threat model (Recommended)", "Re-dispose only the stale threats"]` (`create-ard.md:812-816`). Step 7 walks each stale threat with a four-option array, and on `refined` each acceptance past its date with `["Renew it — a new review date", "Re-dispose it", "Keep it as it stands"]`, whose *Re-dispose it* "puts this step's four-option question, as for a threat stale on its Disposition" (`:881-885`).
-- **One path already re-disposes a live threat that is not stale, unasked:** at step 9's confirmation gate "a correction to a held threat … that changes only its Disposition re-disposes it in place, and any other change … supersedes it or withdraws it, as step 7 does" (`create-ard.md:905`). It is reached only on a run that holds a draft, by free text, and nothing brings a returned threat to it. The `to-fix` entry's "no path" is true of a put question, not of this correction.
-- **Identity.** A threat is bound once it stands on the default branch; a re-disposition rewrites only the Disposition line and keeps the id; a changed Where or Threat is a new `[TH#M]` superseding the old; a moot one is withdrawn (format `:80-83`). A stale Disposition clears on a re-disposition (`:106`).
-- **The PA alone accepts a risk**, in the model (format `:74`; `.claude/rules/threat-model.md:35`). The Dev never does (`design.md:540`), and `/conformance` accepts no mitigation's discrepancy (D's D5).
-- **A design's entry** is `### [DT#N]: <title>` under `## Threat review`, six fields each a list item at the start of a line, `Answers` being `[[<KEY>]] [TH#N]` or `—`, its Disposition one of `Mitigated — Rule: `, `Not this design's — …` and `Returned to the architect — <why>`, live while it carries no `- **Withdrawn:**` item (`design-format.md:308-338`). It is bound on the default branch as a threat is (`:337`).
-- **A later `/design` run** puts a deferred threat again from its `Returned` entry, showing the earlier reason (`design.md:537`, `:556`), and proposes the entry's withdrawal once the model no longer holds the threat as live and deferred (C's design, `docs/superpowers/specs/2026-11-14-sec-g2-c-design-threat-review-design.md:119`). A design records the model in its lineage, and that check compares the model's threats with the copy the design recorded (`.claude/rules/threat-model.md:34`).
-- **`/conformance` works every threat's state out itself**, from the default branch's model and the designs it gates, and reads no record's `## Threats` back (`plugins/dev-workflows/references/conformance-format.md:78`). The two `unanswered` reasons this track cares about come from design entries alone (`conformance.md:489`); the third state comes from a record entry's `decision:` (`:704`: "an `[AD#n]` mitigation whose entry is not, whole, `fix-code`").
-- **A stand-alone `Returned` entry** — one whose threat is no longer live with a deferred part — still reads `unanswered — returned to the architect` and is still routed to the PA (`conformance.md:491`, `:704`).
-- **A record's entry is structured**: a `### [DD#n] <requirement id>` heading, `document: <file>, in <KEY>`, `decision:` with `status:`, `flags:`, `superseded-by:` (`conformance-format.md:93-108`). `workflows-core:source-truth` §7.8 is the one authority on which entries are open and on the mapping `amend-document` or `accept` → `document-as-code` (`plugins/workflows-core/references/source-truth.md:606-615`), and two commands of another plugin already read records by it without loading `conformance-format` (`conformance-format.md:163-167`).
-- **Two reads are already sanctioned without a gate.** A consumer that reads a gated deliverable only as `<default-ref>` holds it executes no `require-on-main` and names, in one line, a copy the working tree holds that the ref does not (`plugins/workflows-core/references/phase-handoff.md:628`; `CLAUDE.md:151`). `_conformance.md` is advisory, gated by nobody, and `/dev-workflows:ready` reads it from `<default-ref>` alone (`phase-handoff.md:418`).
-- **`/create-ard` cannot load `design-format` or `conformance-format`**: both are `dev-workflows`' references, and a reference crosses a plugin boundary only from `workflows-core` (`.claude/rules/threat-model.md:24`).
+- **A refine asks about two populations.** Step 3 puts `["Refine the threat model (Recommended)", "Leave it as it is"]`, or, where a threat is stale, `["Refine the threat model (Recommended)", "Re-dispose only the stale threats"]` (`create-ard.md:812-816`). Step 7 walks each stale threat with a four-option array, and on `refined` each acceptance past its date with `["Renew it — a new review date", "Re-dispose it", "Keep it as it stands"]`, whose *Re-dispose it* "puts this step's four-option question, as for a threat stale on its Disposition" (`:881-885`).
+- **One path already re-disposes a live threat that is not stale, unasked:** a free-text correction at step 9's gate, which "re-disposes it in place" where it changes only the Disposition and otherwise supersedes or withdraws (`create-ard.md:905`). Nothing brings a returned threat to it.
+- **Identity.** A threat is bound on the default branch; a re-disposition rewrites only its Disposition line and keeps its id (format `:80-83`). The PA alone accepts a risk, in the model (format `:74`).
+- **`/conformance` reads a design's entries so** (`conformance.md:132`): each `### [DT#N]:` heading at the start of a line in the section, `N` matching `^[1-9][0-9]*$`, with its block to the next `### ` or `## ` heading, live where the block holds no `- **Withdrawn:**` item; a `Mitigated` entry counts only where its block holds `- **Disposition:**` exactly once and its `[DT#N]` heads one entry. An unreadable threat takes its state before any part is read (`:484`). The two `unanswered` reasons come from entries (`:489`); a mitigation is `open` where an entry "that is not `resolved`, `orphaned` or `requirement withdrawn`" names it (`:481`), and goes to the architect where that entry "is not, whole, `fix-code`" (`:704`).
+- **A record's entry is structured**: `### [DD#n] <requirement id>`, `document: <file>, in <KEY>`, `decision:` with `status:`, `flags:` (`plugins/dev-workflows/references/conformance-format.md:93-108`). `workflows-core:source-truth` §7.8 reads records for a documentation run, **from the working tree, "never from the default branch"** (`plugins/workflows-core/references/source-truth.md:587`); `/dev-workflows:ready` keeps a test of its own on the default branch's copy (`conformance-format.md:167`).
+- **A consumer that reads a gated deliverable only as `<default-ref>` holds it executes no gate** (`ph:628`; `CLAUDE.md:151`). `_conformance.md` is advisory and gated by nobody (`ph:418`).
+- **An Epic-level `/create-ard` run already reads its Epic's `specification.md` and `design.md` from the working tree at Phase 2, ungated**, as context (`create-ard.md:483-488`, `:628`); no `ph` §3.4 row names either, and both are gated deliverables (`ph:414`).
+- **`/create-ard` cannot load `design-format` or `conformance-format`** — `dev-workflows`' references (`.claude/rules/threat-model.md:24`).
 
 ## Goals
 
-1. **A refine shows the architect every threat sent back**, from sources that have landed, without being asked to look.
-2. **Each is put as a question whose answers are the model's own dispositions**: mitigated by a decision, deferred to design, accepted by the architect, or withdrawn; a supersession stays step 9's.
-3. **`threat-model.md` stays the architect's alone**, and `/create-ard` writes no design and no record.
-4. **Nothing read from a design or a record is written anywhere or handed to an agent.** It is shown to the architect, one line, and that is all.
-5. **No regression** (D9).
+1. **A refine shows the architect every threat sent back**, from sources that have landed, unasked.
+2. **Each is put as a question whose answers are the model's own dispositions.**
+3. **`threat-model.md` stays the architect's alone**; `/create-ard` writes no design and no record.
+4. **Nothing read from a design or a record is written anywhere or handed to an agent.** It is shown in a question's text, and nowhere else.
+5. **No question, array or written file changes** where nothing is sent back (D8).
 6. **A minimal GIT-G1 footprint**, every edit listed for approval by name.
 
 ## Non-goals
 
-- **A new command, agent, id prefix, branch prefix, role, plugin dependency or field of the model.**
-- **Any change to `threat-modeler` or `ard-reviewer`** — neither brief gains a field.
-- **Any change to how `/conformance` works a state out**, to its record's form or to `/ready`'s rung. D8 changes one route of its *Next step*.
-- **Stopping anything.** No threat sent back stops a `/create-ard` run, its handoff, a design or a merge: a design may hand off with one unanswered (C's question 2).
-- **Suppressing a threat the architect already answered by keeping it deferred** (D7's limit; logged).
-- **Gating the Epic's `design.md` that an Epic-level run already reads at Phase 2** (`create-ard.md:487`) — an older read, logged, not this track's.
-- **Moving `/design` onto format §10** (DESIGN-ON-S10 stands).
+- **A new command, agent, id prefix, branch prefix, role, plugin dependency or model field.**
+- **Any change to `threat-modeler` or `ard-reviewer`**, to how `/conformance` works a state out, to its record's form, to `/ready`'s rung or to `source-truth`.
+- **Stopping anything**: a design may hand off with a threat unanswered (C's question 2).
+- **Gating or moving Phase 2's older read** of the Epic's `specification.md` and `design.md` — logged (question 3).
+- **Suppressing a threat the architect kept as it stands**; **moving `/conformance` onto §11**; **splitting Phase 4.3 out of `create-ard.md`** — each logged.
 
 ## Anti-goals
 
 - **A second place a risk is accepted**: only the architect, only in this run, only into the model.
-- **A design or a record that steers the run**: no path, key or id is built from their text, and none of it reaches a file or a brief.
-- **A record that decides**: a source nominates a threat for a question and settles nothing.
-- **A prerequisite**: no design and no record is required, and an absent one changes nothing.
+- **A design, record or folder name that steers the run**: every value read has a shape test or is compared whole with one the run composed (D5).
+- **A source that decides**: it nominates a threat for a question and settles nothing.
+- **A prerequisite**: no design and no record is required.
 
 ## Decisions
 
-### D1. Two sources, both read as the default branch holds them
+### D1. Two sources, each read as the default branch holds it
 
-**Designs** carry the two `unanswered` kinds; **conformance records' entries** carry the third. Both are read at Phase 4.3 step 3, after its check, only where the folder holds a model, `fresh` is `false` and a set resolved — the run that already loads the format and asks a question.
+**Designs** carry the two `unanswered` kinds; **records' entries** carry the third. Both are read at Phase 4.3 step 3, after its check, only where the folder holds a model, `fresh` is `false` and a set resolved.
 
-- **Which files, by known path, never by a search.** For the model's folder `F`: `F/design.md` and `F/_conformance.md`; where `F` is a PRD folder (a BRD-route slice included), also each Epic folder's `design.md` and `_conformance.md`, the Epic folders being those directly under `F` that `<default-ref>` lists, placed by prefix and keyed by their own carrier, as `/conformance` lists a PRD's Epics (`conformance.md:67`); where `F` is an Epic folder, also the PRD folder's `_conformance.md`, since a PRD run lists an Epic model's threats.
-- **How.** `git -C "$SPECS_PATH" show "<default-ref>:./<path>"`, the object name written as `phase-handoff` §3.2 writes one. No gate, no repair offer, nothing switched. For a design this is `phase-handoff` §5 rule 2's consumer that executes no gate, and it owes that rule's one line: `Threat model: <path> is not on the default branch — its threat review is not read`, for a design the working tree holds and the ref does not. On a specs tree that is no git repository there is no other copy, and the file is read.
-- **Why the default branch.** Identity binds there, for a threat and for an entry alike, so only a bound `Returned` entry or a landed ruling nominates. A Dev's uncommitted draft, or a PE's declined record, cannot. And a `<default-ref>` read is not a read of a file under `$SPECS_PATH`, so `inputs_read` (`create-ard.md:275`), which `phase-handoff` §2.2's stack test reads (`phase-handoff.md:224`), is unchanged: where the run's branch is cut does not move.
-- **Why not the record's `## Threats` lines**, as the `to-fix` entry sketches. They put a free-text title before the state (`conformance-format.md:50`), so a state would be parsed out of free text; no run reads them back (`:78`); and an `open` line does not say whether its entry is `fix-code`. The entries are structured, and §7.8 already says which are open.
-- **Why not designs alone.** The fact that the team will not build a decision is a person's ruling, and it is written only in a record's entry.
-- **Rejected: a `require-on-main` gate on each design.** It adds a §3.4 row and a §3.7 site per folder, with a repair offer that can move the checkout mid-run — D's question 2, answered the same way.
-- **Rejected: the working tree's records**, as §7.8's documentation runs read them. It needs one GIT-G1 edit, not three, but each record then joins `inputs_read` and can change where the stack test cuts the run's branch, and an unlanded ruling would nominate (question 1).
+- **Which files, by known path.** For the model's folder `F`: `F/design.md` and `F/_conformance.md`. Where `F` is a PRD folder (a BRD-route slice included): also each Epic folder's two files, the Epic folders being those directly under `F` that `<default-ref>` lists, placed by prefix, as `/conformance` lists a PRD's Epics (`conformance.md:67`). Where `F` is an Epic folder: also the PRD folder's `_conformance.md`, since a PRD run's record holds entries on an Epic's decisions.
+- **How.** `git -C "$SPECS_PATH" show "<default-ref>:./<path>"`, written as `ph` §3.2 writes one. No gate, no repair offer, nothing switched. On a specs tree that is no git repository there is no other copy, and the file is read.
+- **A folder name is held to a class before it reaches a command** — the gap FOLDER-NAME-CLASS names (`to-fix.md:265`). An Epic folder whose name does not match, whole, `^EPIC-[A-Za-z0-9._-]+$` is named in words, by its position in the listing, and neither of its files is read.
+- **What is true of the designs, per run kind.** A **PRD-level run** reads every design under its folder only as `<default-ref>` holds it: it is `ph` §5 rule 2's consumer that executes no gate. An **Epic-level run** reads its Epic's `design.md` so for the intake, and also, at Phase 2, from the working tree as context — the older ungated read. It is not that consumer, and this design does not say it is. Either way the intake itself takes nothing from an unlanded copy: for a design the working tree holds and the ref does not, the run prints `Threat model: <path> is not on the default branch — it nominates nothing`.
+- **Why the default branch.** Identity binds there for a threat and an entry alike, so only a bound entry or a landed ruling nominates.
+- **Why not the record's `## Threats` lines.** They put a free-text title before the state (`conformance-format.md:50`), no run reads them back (`:78`), and an `open` line does not say what its entry decided.
+- **Rejected: a `require-on-main` gate per design** — a §3.4 row and a §3.7 site per folder, with a repair offer that can move the checkout mid-run. **Rejected: the working tree's records** — one GIT-G1 edit, not three, but an unlanded ruling nominates, and each record becomes a file the run read, which `ph` §2.2's stack test takes as an input (`create-ard.md:275`; `ph:224`).
 
 ### D2. Which threats are sent back — format §11, new
 
-`workflows-core:threat-model-format` gains **§11, *Threats sent back to the architect***, the one statement of the rule, since `/create-ard` can load neither `dev-workflows` reference. It states exactly what is read of each source; everything else in either file is not read.
+`workflows-core:threat-model-format` gains **§11, *Threats sent back to the architect***. It holds everything that is rule and not flow — the file list, the kinds, the entry reading, D5's shape tests and fixed line texts — so the command gains only step 3's table, one paragraph of step 7 and the no-§11 line. It is written **in `/conformance`'s words**, as §10 took `/design`'s.
 
-For each live threat of the model that the check did not find stale, `<ref>` being `[[<K>]] [TH#N]` composed by the run from its own key for the folder and the threat's own id:
+**The threats tested** are the model's live threats that the check did not find stale and that are readable by format §10's test — a field missing or repeated, its Where, its Disposition in none of the three forms, an id heading more than one threat. An unreadable threat is never sent back: one line names it by id, and it keeps its own route, the review. `<ref>` is `[[<K>]] [TH#N]`, composed from the run's own key for the folder and the threat's id.
 
-1. **`returned`** — its Disposition has a deferred part (`Deferred to design: `, or `; the rest deferred to design: `); no live entry of a design read answers it with a Disposition opening `Mitigated — Rule: `; and one answers it with a Disposition opening `Returned to the architect — `.
-2. **`taken by no design`** — the same, save that no entry returns it and one answers it with a Disposition opening `Not this design's — `.
-3. **`open on a decision`** — its Disposition opens `Mitigated by `, and for a pair of it a record read holds an entry that §7.8's *Which entries are open* leaves open, that its *mapping* maps to `document-as-code`, and that names that pair's decision: its heading's requirement id is, whole, `[AD#n] Rule` for a decision of `ard.md` or `[AD#n] Rule (ard-<area>.md)` for an area file's, and its `document:` line names, whole, that file and the key of the folder holding it.
+**An entry**, as `conformance.md:132` reads one: each `### [DT#N]:` heading at the start of a line in the design's `## Threat review`, outside any fenced block, the section running to the next `## ` heading, the block to the next `### ` or `## ` heading; live where its block holds no `- **Withdrawn:**` list item at the start of a line. It **answers** a threat where its block holds `- **Answers:**` exactly once, its value, whole, `<ref>`. It is ***M*** where its block holds `- **Disposition:**` exactly once, opening `Mitigated — Rule: `, and its `[DT#N]` heads one entry of the design.
 
-An entry *answers* a threat where its `- **Answers:**` value is, whole, `<ref>`. An entry is a `### [DT#N]:` heading at the start of a line under the design's `## Threat review`, outside any fenced block, `N` matching `^[1-9][0-9]*$`, live where its block holds no `- **Withdrawn:**` list item at the start of a line. A threat takes the first kind that holds; a threat no entry and no record names is not sent back — `no design answers it` is the Dev's (`conformance.md:704`), and stays so.
+A threat takes **every kind that holds**:
 
-- **Compose and compare, never extract.** The run builds `<ref>` and each requirement id from what it holds — its key, the model's ids, the pairs of the model's own Disposition — and compares whole. No key, id or path is taken out of a design or a record, save a `[DT#N]` or `[DD#n]` read at its heading's fixed position and shown, never resolved.
-- **It is a nomination.** A record may be older than the code, and a design under the PRD may not have landed. So §11 decides only who is asked; the question says what each source said and when (the record's `Run:` date), and *Keep it as it stands* is always an answer (D3).
-- **Two statements of one rule.** Kinds 1 and 2 restate, for a model's own run, what `/conformance` Phase 5's *the deferred part* computes (`conformance.md:489`). A rules invariant names the pair, changed together; `/conformance` does not cite §11, since beside an older `workflows-core` it would lose its states.
-- **The two `dev-workflows` formats name their new reader**: `design-format` section 15 and `conformance-format` §6 each gain the sentence the latter already carries for `/release-notes` — the fields §11 reads, and that a change to one is a change to §11 too.
+1. **`returned`** — its Disposition opens `Deferred to design: ` or holds `; the rest deferred to design: `; no live *M* entry of a design read answers it; and a live entry answering it bears a Disposition opening `Returned to the architect — `.
+2. **`taken by no design`** — the same, save that none returns it and one bears a Disposition opening `Not this design's — `.
+3. **`open on a decision`** — its Disposition opens `Mitigated by `, and a record read holds an entry naming a pair's decision that is not `resolved`, `orphaned` or `requirement withdrawn` and whose `decision:` is, whole, `amend-document` or `accept`. It names the decision where its heading's requirement id is, whole, `[AD#n] Rule` for a decision of `ard.md` or `[AD#n] Rule (ard-<area>.md)` for an area file's, and its `document:` line is, whole, that file and the key of the folder holding it. A `[[<PRD-KEY>]] ard.md` pair counts only where the key is, whole, the run's PRD key (format §6, `:94`).
 
-### D3. How each is put — a widening of step 7, and two new arrays at step 3
+A threat no entry and no record names is not sent back: `no design answers it` is the Dev's.
 
-No new path. The four-option question and the `redisposed` state already exist; step 3 gains the entry point and step 7 a third population, beside the stale threats and the acceptances past their date.
+- **The record test is §11's own, as `/ready`'s is its own** — not §7.8's, whose *The copy read* forbids this copy. **The record set** is D1's files. A record is read only where its frontmatter `key:` is, whole, the run's key for its folder and it holds no line beginning `<<<<<<<` or `>>>>>>>`; another is named in one line and not read. **No instant is used**: the test orders no two records, so `At:` and its guard are never read; each entry found is shown with its record's `Run:` date (D5). §11 applies no precedence between an Epic's entry and a PRD's — both are shown — and a known-set test on `decision:` where `/conformance` says "not, whole, `fix-code`", so a malformed decision nominates nothing.
+- **Compose and compare, never extract.** No key, id or path is taken out of a design or a record, save the two ids D5 shape-tests and shows.
+- **It is a nomination.** A record may be older than the code and a design may not have landed, so §11 decides only who is asked; *Keep it as it stands* is always an answer.
+- **Two statements, changed together.** Kinds 1 and 2 and the entry reading restate `conformance.md:132` and `:489`; kind 3 restates `:481` and `:704`. `/conformance` cannot cite §11 yet — beside an older `workflows-core` it would lose its states, as `/design` and §10. A rules invariant names the pair with a `command grep` recipe that lists both copies and no other file, and `to-fix.md` logs `/conformance`'s move onto §11.
+- **`design-format` section 15 and `conformance-format` §6 name their new reader**, as §6 does for `/release-notes`: the fields §11 reads, and that a change to one is a change to §11.
 
-**Step 3**, its text listing each threat sent back with its kind:
+### D3. How each is put — step 7 widened, two new arrays at step 3
 
-| The check finds | Threats sent back | `choices:` |
+**Step 3**, its text listing each threat sent back with its kinds:
+
+| The check finds | Sent back | `choices:` |
 |---|---|---|
 | no stale threat | none | `["Refine the threat model (Recommended)", "Leave it as it is"]` — today's |
 | a stale threat | none | `["Refine the threat model (Recommended)", "Re-dispose only the stale threats"]` — today's |
 | no stale threat | one or more | `["Refine the threat model (Recommended)", "Re-dispose only the threats sent back", "Leave it as it is"]` |
 | a stale threat | one or more | `["Refine the threat model (Recommended)", "Re-dispose only the stale threats and those sent back"]` |
 
-Each new *Re-dispose only …* option → `state: redisposed`, steps 7 to 9, no dispatch and no walk, as today's. *Leave it as it is* stays where no threat is stale: a threat sent back is not wrong, as a stale one is; the report names each one left.
+Each *Re-dispose only …* option → `state: redisposed`, steps 7 to 9, no dispatch and no walk. *Leave it as it is* stays where no threat is stale: a threat sent back is not wrong, as a stale one is. The report names each one left.
 
-**Step 7**, on `refined` and `redisposed`: each threat sent back that is not in `stale` takes `choices: ["Re-dispose it", "Keep it as it stands"]`, its text naming the threat, its current Disposition, its kind and what sent it back (D5), and saying no option is recommended. *Keep it as it stands* changes nothing. *Re-dispose it* puts step 7's four-option question, as for a threat stale on its Disposition — the sentence the acceptance paragraph already uses (`create-ard.md:885`):
+**Step 7**, on `refined` and `redisposed`, at most four questions per call as step 6 puts them: each threat sent back takes `choices: ["Re-dispose it", "Keep it as it stands"]`, its text naming the threat, its Disposition, each kind and what sent it back (D5), and saying no option is recommended. *Keep it as it stands* changes nothing. *Re-dispose it* puts step 7's four-option question, as for a threat stale on its Disposition (`create-ard.md:885`'s sentence):
 
 | Answer | What it does to the threat |
 |---|---|
-| *Record an [AD#N] for it* | confirms a live decision the architect names, or grills a new one, as step 6 does; the Disposition becomes `Mitigated by <pair>`, with `; the rest deferred to design: <what>` where the grill leaves a rest |
-| *Defer to design* | `Deferred to design: <what the design must answer>` — the current text offered to keep or replace, so the architect's answer to the Dev is the reworded question; no note field is added to the format |
-| *Accept the risk* | owner and reason, then the review horizon, as step 6 asks; `Accepted — <owner>; <reason>; review by <date>`; the architect alone |
-| *Not a threat — withdraw it* | the reason, then `- **Withdrawn:** <reason>` |
+| *Record an [AD#N] for it* | confirms a live decision the architect names, or grills a new one, as step 6 does → `Mitigated by <pair>`, with `; the rest deferred to design: <what>` where the grill leaves a rest |
+| *Defer to design* | `Deferred to design: <what the design must answer>`, the current text offered to keep or replace: the architect's answer to the Dev is the reworded question, and the format gains no note field |
+| *Accept the risk* | owner, reason and review horizon, as step 6 asks; the architect alone |
+| *Not a threat — withdraw it* | its reason → `- **Withdrawn:** <reason>` |
 
-Each of the first three is a re-disposition: the threat keeps its `[TH#N]` (format §5). A change to its Where or to what its Threat line means is a supersession, and stays a correction at step 9's gate, which the question's text says. Free text is normalised into the array or asked again, as step 6's. The arrays are step 7's own, verbatim, so `workflows-core:escalation-rules`' picker vocabulary gains nothing.
+The first three are re-dispositions: the threat keeps its `[TH#N]` (format §5). A changed Where or Threat is a supersession and stays step 9's correction, which the question's text says. Free text is normalised into the array or asked again. The arrays are step 7's own, so `escalation-rules`' picker vocabulary gains nothing.
 
-- **A stale threat that was also sent back** is step 7's stale question alone; its text adds what sent it back.
-- **Why two questions, not one.** The acceptance walk already does it, an explicit *Keep* is honest where nothing forces a change, and the four-option array has no room for a fifth.
-- **Rejected: a dedicated array** with *Keep it deferred* and *Supersede it*. It would be a second vocabulary for the same four dispositions, and a supersession needs a typed Where, which step 9 already handles.
-- **A limit, stated.** The format has three exclusive forms, so accepting a threat that reads `Mitigated by <pair>; the rest deferred …` drops its pairs. The question's text quotes the Disposition it replaces; an architect who wants both supersedes it into two threats at step 9.
+- **A `redisposed` run that changed no threat** — every answer *Keep it as it stands*, and no stale threat — writes no draft: `state: left`, and the report says each was kept. So it costs no review, no stamp and no handoff of an unchanged model (`create-ard.md:799`, `:890`).
+- **A stale threat is the stale walk's alone.** §11 does not test it, and its question is today's.
+- **The threat open on a decision is put like any.** The architect may supersede the decision — in Phase 4's grill, or as a correction to the ARD draft at step 9, after which step 8's check finds the threat stale and the stale walk puts it — and the question's text says so. Or they keep the decision and accept, defer or re-rest the threat: that is the gap, since only the architect accepts a risk and no question reached a threat that is not stale.
+- **Why two questions.** The acceptance walk already does it, an explicit *Keep* is honest where nothing forces a change, and four options leave no room for a fifth.
+- **A limit.** The three forms are exclusive, so accepting a threat that reads `Mitigated by <pair>; the rest deferred …` drops its pairs. The text quotes the Disposition it replaces.
 
-### D4. The threat open on a decision is listed, with the same question
+### D4. A returned threat that answers none of the model's
 
-Its exit in D's words is "supersede that decision", which is ordinary ARD work. Two things follow, and the intake serves both.
+A Dev may return a threat the design's own interfaces add: `Answers: —` (`design-format.md:329`). **It is listed, never converted**: step 3's text names each — `[[<its design's key>]] design.md [DT#N]`, with its Threat line and reason under D5's bounds — and says *Refine the threat model* is where the architect adds a threat of their own, typed by them (step 6's *The PA's own threats*). The report carries its key and id alone. The run makes no link, and the entry stays until the Dev withdraws it. It follows from two standing decisions — the model is the architect's alone, and returned threats live in `design.md` and the pull request only — so it is not a question. **Rejected: a candidate built from it**, which would write a Dev's or an agent's text into the architect's file.
 
-- **Supersede the decision** — in Phase 4's grill, or as a correction to the ARD draft at step 9, which that gate already applies in place (`create-ard.md:905`). The threat then fails format §6's test 3, step 8's check finds it, and the stale walk puts it. Nothing new is needed but the telling: the question's text names the pair, the entry as `<KEY>/[DD#n]` with its decision and status, and says this.
-- **Keep the decision and re-dispose the threat** — accept the risk, defer it, or rest it on another decision. This is the gap: only the architect accepts a risk, only in the model, and no question reached a threat that is not stale.
+### D5. Untrusted input: every value has a test, and is shown once
 
-So it is listed and put as D3 puts any. **Rejected: offering it as a path only** — a line saying "supersede that decision". It leaves an architect who will not supersede with no way to accept the risk but a free-text correction, and question 1's alternative is exactly this.
+- **Nothing read from a design or a record is written** — into the model, an ARD draft, `threat_model.report` or any file — **or reaches an agent**: `threat-modeler`'s eleven fields (`create-ard.md:826`) and `ard-reviewer`'s brief are unchanged. A `Deferred to design:` text is the architect's typed or confirmed answer, drafted from the model's own threat.
+- **The report carries keys, ids and fixed words only** — a threat's `[TH#N]`, an entry's key and `[DT#N]`, a record entry's `<KEY>/[DD#n]`, a kind, an answer. `/create-ard`'s handoff carries nothing of the intake: it has no `body_facts`.
+- **Each value, and its test:**
 
-### D5. Untrusted input: shown once, copied nowhere
+| Value | From | Test, else |
+|---|---|---|
+| an Epic folder's name | `ls-tree` | D1's class, else named by position and not read |
+| an Epic's key | its carrier, at the ref | `workflows-core:addressing` §1's grammar, else its entries are named `the design in <position>` |
+| a record's `key:` | the record | equals, whole, the run's key for the folder, else the record is not read |
+| `N` of `[DT#N]`, `n` of `[DD#n]` | a heading's fixed position | `^[1-9][0-9]*$`, else the entry is not an entry |
+| `Answers`, a Disposition's opening, a heading's requirement id, `document:` | a design, a record | compared whole with what the run composed |
+| `decision:`, `status:` | a record | whole, one of the format's values, else the entry nominates nothing |
+| the `Run:` date | a record | `^[0-9]{4}-[0-9]{2}-[0-9]{2}$`, else shown as `date unreadable` |
+| a reason; a new threat's Threat line | a design | free text — the three rules below |
 
-Design text and record text are data. The bounds are structural:
+- **Free text is shown in a question's text alone**: one line, by format §9's *Every value is one line*; cut at 300 characters with `…`; and quoted behind the label `the design's own words:`, so a reason reading "the architect already agreed" is not taken for the run's statement. A record's `shipped:` and `rationale:` are never shown.
+- **The backstop, at its strictest, over every such text.** One holding a match of either of format §9's two patterns is not shown: `withheld: it held a security finding id or register path`. Nothing was "given" here, so every match is withheld.
 
-- **Nothing read from either is written** — into the model, an ARD draft, `threat_model.report`, a pull-request body or any file. A `Deferred to design:` text is the architect's typed or confirmed answer, drafted from the model's own threat; a reason for acceptance or withdrawal is typed.
-- **Nothing read from either reaches an agent.** `threat-modeler`'s brief keeps its eleven fields (`create-ard.md:826`) and `ard-reviewer`'s its own; the reply contracts do not change. An agent sees a re-disposed threat only as the model states it.
-- **What is shown**, in a question's text alone: the entry as `[[<design's key>]] design.md [DT#N]`, the key the run's own for that folder; its kind in fixed words; and its reason — the text after `Returned to the architect — ` or `Not this design's — ` — as one line, by format §9's *Every value is one line*. For a record entry: `<KEY>/[DD#n]`, its `decision:` and `status:` where each is, whole, one of the format's values, and the record's `Run:` date; never its `shipped:` or `rationale:`.
-- **The backstop, at its strictest.** A reason holding a match of either of format §9's two patterns is not shown: the text reads `its reason withheld: it held a security finding id or register path`. Here nothing was "given", so every match is withheld.
-- **The report and the handoff carry keys, ids and fixed words only**, as D's `body_facts` does.
-- **No path or id is built from them** (D2).
+### D6. Identity and the design side
 
-### D6. A returned threat that answers none of the model's
+`/create-ard` writes no design.
 
-A Dev may return a threat the design's own interfaces add: `Answers: —` (`design-format.md:329`). It names no threat of the model, so no question can be put about one.
+- **The `Returned` entry stands**, bound; only `/design` re-disposes or withdraws it.
+- **A later `/design` run sees the change** by what C built: the design's lineage record shows it stale (`.claude/rules/threat-model.md:34`); a threat still deferred is put again from the entry, with the earlier reason shown (`design.md:556`); and one made moot has its entry proposed for withdrawal, naming the new state (`design.md:557`). No edit to `/design`.
+- **A later `/conformance` run sees it** from the default branch's model; the old entry then stands alone (D7).
+- **A limit.** A threat kept as it stands is put again on the next refine — until the Dev's `/design` runs for kinds 1 and 2, and until the record changes for kind 3. One *Keep* each, and by D3 an all-*Keep* run costs no review. **Rejected for now: suppression by the design's lineage record**, which has `/create-ard` check a document it does not own. Logged.
 
-**It is listed, never converted.** Where a design read holds a live `Returned` entry whose `Answers` is `—`, step 3's text and the report name it — `[[<design's key>]] design.md [DT#N]`, with its Threat line and reason shown under D5's bounds — and say that *Refine the threat model* is where the architect adds a threat of their own (step 6's *The PA's own threats*), typed by them. The run copies nothing from it and makes no link: the design's entry stays until the Dev withdraws it, as C has it. **Rejected: turning it into a candidate** — it would write a Dev's, or an agent's, text into the architect's file, which D5 forbids (question 3).
+### D7. What `/conformance` and `next-phase-offer` now say
 
-### D7. Identity and the design side
+- **The three routes keep `/product-workflows:create-ard <KEY>` and lose their caveat** (`conformance.md:704`; `next-phase-offer.md:394` and its generated part).
+- **A stand-alone `Returned` entry whose reason is `it answers no live threat with a deferred part` goes to the Dev**, `/dev-workflows:design <KEY>`, the design's key: the architect has re-disposed, superseded or withdrawn the threat, and `/design` proposes the withdrawal in each case (`design.md:557`). Today it goes to the PA (`conformance.md:491`, `:704`). Its state, its words and the header's count are unchanged; the page says the line still reads "returned to the architect". This amends a route D shipped (question 2).
+- **A limit.** A stand-alone `Returned` entry whose reason is `its threat is in no model this run read` still goes to the PA, and no refine lists it. Logged.
 
-`/create-ard` writes no design: the design is the Dev's.
+### D8. No regression
 
-- **The `Returned` entry stands as it is.** It is bound; only `/design` re-disposes or withdraws it.
-- **A later `/design` run sees the change** by what C built: the design's lineage record shows it stale once the model's threat changes; a threat still deferred is put again from the entry, with the model's reworded question beside the earlier reason (`design.md:556`); and one no longer live and deferred has its entry proposed for withdrawal, naming the new disposition (C's D4). No edit to `/design`.
-- **A later `/conformance` run sees it** from the default branch's model: `Mitigated by` → its mitigated part's state; `Accepted` → `accepted`; withdrawn → no line. The design's old entry then stands alone (D8).
-- **A limit, stated.** A threat the architect keeps deferred is still returned until the Dev's next `/design`, so the next refine puts it again; *Keep it as it stands* is one answer. **Rejected for now: suppressing it by the design's lineage record**, which would have `/create-ard` run a lineage check on a document it does not own. Logged in `to-fix.md`.
+- **A folder with no model**, one *Start fresh* discards, and a run with no set never reach the read.
+- **A model with nothing sent back: no question, array or written file changes.** Not byte-equal: the run makes its `git show` reads, may print D1's line for an unlanded design or a line for a folder, record or threat it did not read, and, beside an older `workflows-core`, prints the line below on every refine of a model.
+- **No reference is loaded for the intake** but the format step 3 already loads.
+- **One precondition, failing closed**: where the loaded format holds no heading `## 11.`, the run reads no design and no record, prints `Threat model: threats sent back not read — update workflows-core`, and goes on as today.
+- **Fixtures, as traced runs**: no model; a model and no design; a returned threat, each of the four answers; an all-*Keep* run; a threat taken by no design; one open on a decision, superseded at step 9; a threat holding kinds 1 and 3; an unreadable threat; a duplicated `[DT#N]`; a returned new threat; a design only in the working tree; an Epic-level run; a folder name outside the class; a format with no §11; a reason holding a `SEC#n`.
 
-### D8. What `/conformance` and `next-phase-offer` now say
+### D9. Every site the change touches
 
-Three sentences become false or misleading when the intake lands, and are rewritten against what it enforces:
+- **The claim sweep is by subject over refinement 4's scope** (`.claude/rules/claim-sweep.md`), each count taken before and after; no hand list is the set. The subjects: *what re-disposes a live threat that is not stale*; *what a refine proposes, and what each step 3 option walks*; *who reads `_conformance.md`, and how many*; *what `/create-ard` reads*; *where a returned threat goes*. Copies revision 1 missed, as a start: `plugins/product-workflows/docs/workflow.md:137`, `plugins/product-workflows/docs/commands/create-ard.md:152`, `plugins/dev-workflows/docs/commands/conformance.md:130`, `plugins/workflows-core/reference-parts/next-phase-offer/dev.md:199`. The exclusivity probe runs over "only the stale", "only what", "no command", "three more commands".
+- **`product-workflows`:** `create-ard.md` (steps 3 and 7, `threat_model.report`, *Final report*), about 2 to 3 KB; pages.
+- **`workflows-core`:** the format (§11; §5's and §6's sentences on a re-disposition and a refine; §9's opening); `next-phase-offer` and its part; `phase-handoff` and its parts; pages.
+- **`dev-workflows`:** `conformance.md` (`:704`, `:576`); `design-format` section 15; `conformance-format` §6; pages.
+- **Rules files, measured before writing** — `.claude/rules/product-workflows.md` is 18,017 characters of 20,000: `threat-model.md` (a new invariant: the two sources, the default branch, shown and never copied, the pair and its recipe; invariants 4 and 8); `product-workflows.md` (the map line); `dev-workflows-conformance.md` (the record's readers); the coupling file. `.claude/rules/workflows-core.md`, at 19,166, is not touched.
+- **Untouched:** `threat-modeler`, `ard-reviewer`, `design.md`, `ready.md`, `source-truth`, `pre-lint`, `lineage-kinds.json`, `escalation-rules`, `specs-repo-git`, every script and gate.
 
-- **The three routes keep `/product-workflows:create-ard <KEY>` and lose their caveat** (`conformance.md:704`; `plugins/workflows-core/references/next-phase-offer.md:394`, with its generated part): a refine there lists the threat and puts it to the architect.
-- **A stand-alone `Returned` entry whose reason is `it answers no live threat with a deferred part` goes to the Dev**, `/dev-workflows:design <KEY>`, the design's key: the architect has answered, and the entry is the Dev's to withdraw. Today it goes to the PA (`conformance.md:491`, `:704`), who could do nothing with it. Its state and the header's count are unchanged. Every other stand-alone reason keeps its route. This amends a route D shipped (question 2).
-- **The pages**: `plugins/dev-workflows/docs/commands/conformance.md:120` ("Three states have no exit yet"), `plugins/product-workflows/docs/commands/create-ard.md:118` and `:169`, and `/design`'s page where it says what the architect does with a returned threat.
+### D10. Versions and coupling
 
-### D9. No regression
+A minor each for `workflows-core`, `product-workflows` and `dev-workflows`. Three bullets:
 
-- **A folder with no model**, a model *Start fresh* discards, and a run with no component set never reach the read: steps 1, 2 and 4 are untouched.
-- **A model with no threat sent back** gets today's two arrays, today's question text, today's step 7, draft, review, write, stamp and report. The run makes its `git show` reads and prints nothing for them, with one exception it owes `phase-handoff` §5 rule 2: the line naming a design the working tree holds and the default branch does not.
-- **`source-truth` is loaded only** where a record stands at a known path and the model holds a live, non-stale threat whose Disposition opens `Mitigated by `.
-- **One precondition, failing closed**, as B's and D's: where the loaded format holds no heading `## 11.` — an older `workflows-core` — the run reads no design and no record, prints `Threat model: threats sent back not read — update workflows-core`, and goes on as today.
-- **Fixtures, as traced runs** (no harness executes command prose): no model; a model and no design; a returned threat, each of the four answers and *Keep*; a threat taken by no design; a threat open on a decision, with the decision superseded at step 9; a stale threat also sent back; a returned new threat; a design only in the working tree; a format with no §11; a reason holding a `SEC#n`.
-
-### D10. Every site the change touches
-
-- **Claim sweep, by subject, each counted before and after** (`.claude/rules/claim-sweep.md`, refinements 6 to 8). *What re-disposes a live threat that is not stale*: `conformance.md:704`, the two pages above, `next-phase-offer.md:394` and its part, `to-fix.md:201-206`, format §5's examples of a re-disposition (`:83`) and §6's "a refine lists it" (`:102`). *What a refine proposes*: `create-ard.md:813` ("a refine proposes only what this run's architecture adds and lists each acceptance past its review date"), the page. *What `/create-ard` reads*: the map line in `.claude/rules/product-workflows.md:42`; `conformance-format.md:163` and `phase-handoff.md:418`, the record's readers; `.claude/rules/workflows-core.md:32`, §7.8's consumers. *Where a returned threat goes*: `design-format.md:334`, `design.md:572`, C's and D's designs (history, left). The exclusivity probe runs over "only the stale", "only what", "no command".
-- **`product-workflows`:** `create-ard.md` — step 3, step 7, the `threat_model` record (`report`), *Final report*; its page; `CHANGELOG.md`.
-- **`workflows-core`:** the format (§11; §5 and §6's sentences; §9's opening, which lists what each command holds to it); `next-phase-offer` and its part; `phase-handoff` and its parts (below); pages; `CHANGELOG.md`.
-- **`dev-workflows`:** `conformance.md` (`:704`, and the line above its handoff array, below); `design-format` section 15 and `conformance-format` §6 (their new reader); pages; `CHANGELOG.md`.
-- **Rules files:** `.claude/rules/threat-model.md` — a new invariant (the intake: its two sources, the default branch, shown and never copied, the pair §11 makes with `/conformance`'s Phase 5), and invariants 4 and 8, which say what a refine and a stale line do; `.claude/rules/product-workflows.md` (the map line); `.claude/rules/workflows-core.md` (§7.8's consumers); `.claude/rules/dev-workflows-conformance.md` (the record's readers); the coupling file.
-- **Untouched:** `threat-modeler`, `ard-reviewer`, `design.md`, `ready.md`, `pre-lint`, `lineage-kinds.json`, `escalation-rules`, `specs-repo-git`, every script and gate.
-
-### D11. Versions and coupling
-
-`workflows-core` and `product-workflows` each a minor; `dev-workflows` a minor, for D8's route. Three bullets, each naming the plugins to update together:
-
-- **`product-workflows` beside an older `workflows-core`**: the format has no §11, so the run reads nothing sent back and says so (D9). Safe; update `workflows-core`.
-- **`dev-workflows` or `workflows-core` beside an older `product-workflows`**: the report sends the architect to a `/create-ard` that lists nothing. This is the misleading direction, and nothing can detect it — update `product-workflows` with either.
-- **`product-workflows` beside an older `dev-workflows`**: its report still says no command re-disposes such a threat, which is now false, and sends a re-disposed threat's old entry to the PA. Nothing breaks; update `dev-workflows`.
+- **`product-workflows` beside an older `workflows-core`**: no §11, so nothing sent back is read, and the run says so. Update `workflows-core`.
+- **`dev-workflows` or `workflows-core` beside an older `product-workflows`**: the report sends the architect to a `/create-ard` that lists nothing — the misleading direction, which nothing detects. Update `product-workflows` with either.
+- **`product-workflows` beside an older `dev-workflows`**: its report still says no command re-disposes such a threat, and sends a re-disposed threat's old entry to the PA. Update `dev-workflows`.
 
 ## The GIT-G1 edits
 
-**Every one needs the maintainer's approval by name.** `specs-preflight`, `commit-artifacts`, `specs-repo-git`, `branch-check`, §3.4's table, §3.7's sites and `/create-ard`'s own handoff call (`create-ard.md:1010`: its `deliverable_paths`, arrays and body) are untouched. **No `require-on-main` caller is added or changed, and no §3.4 row**: the designs are read under §5 rule 2's existing sentence, and the record is advisory.
+**Each needs the maintainer's approval by name.** `specs-preflight`, `commit-artifacts`, `specs-repo-git`, `branch-check`, `ph` §3.4's table and §3.7's sites, and every section of `/create-ard`'s own handoff (`create-ard.md:1010`) are untouched. No `require-on-main` caller is added or changed.
 
-1. **`phase-handoff` §4.0, the `_conformance.md` register row** (`phase-handoff.md:418`): `/product-workflows:create-ard` joins the readers — from `<default-ref>` alone, at its Phase 4.3, the records at the known paths D1 names. A truth edit; "None runs `require-on-main` on it" and the class stand.
-2. **`phase-handoff` §4.0, the advisory class's sentence on a reader that does not read the working copy** (`:403`): its first case, "`_conformance.md`'s PRD record, which `/dev-workflows:ready` reads on the default branch", gains `/create-ard`, which reads an Epic's record so too. A truth edit.
-3. **`/dev-workflows:conformance`'s handoff call site**: the line it prints above the array for a reader of the default branch alone (`conformance.md:563`, `:579`) names `/create-ard`'s refine too, on an Epic run as on a PRD run. A truth edit that edit 2's rule obliges, at a command's handoff step.
-4. **`phase-handoff` §5 rule 2** (`:628`): the sentence "`/dev-workflows:conformance` reads each `threat-model.md` so, at its Phase 1" gains the second consumer of that kind, `/create-ard` and the designs under its folder. A truth edit, and the one I could omit: the rule covers the read without it, and the sentence claims no exclusivity. Recommended, so the rule names every consumer that relies on it.
+1. **`ph` §4.0, the `_conformance.md` register row** (`ph:418`) — **truth edit**: `/product-workflows:create-ard` joins the readers, from `<default-ref>` alone, at its Phase 4.3, for D1's records. "None runs `require-on-main` on it" stands.
+2. **`ph` §4.0, the advisory class's sentence on a reader that does not read the working copy** (`ph:403`) — **truth edit**: its `_conformance.md` case gains `/create-ard`, which reads an Epic's record so too.
+3. **A new printed line at `/dev-workflows:conformance`'s handoff step** (`conformance.md:576`) — **new behaviour**, obliged by edit 2's rule. On an Epic or a PRD run whose record holds an entry on an `[AD#n]` Rule decided `amend-document` or `accept`, above the array and below the `/ready` line where there is one, verbatim: `/product-workflows:create-ard reads this record only on the default branch — declined, a refine of the threat model does not see this run's decisions until this record merges.` An Epic run prints no such line today.
+4. **`ph` §5 rule 2** (`ph:628`) — **truth edit**, narrowed: after "`/dev-workflows:conformance` reads each `threat-model.md` so", a sentence that a PRD-level `/product-workflows:create-ard` run reads each `design.md` under its folder so, at its Phase 4.3, and that an Epic-level run reads its own Epic's `design.md` so there and also, at its Phase 2, from the working tree, ungated — a read `to-fix.md` logs.
 
-The regenerated `reference-parts/phase-handoff/` files follow edits 1, 2 and 4. **Under question 1's alternative** (no record read) the list is edit 4 alone.
+The regenerated `reference-parts/phase-handoff/` files follow edits 1, 2 and 4.
 
 ## What is left to the builder
 
-Step numbering inside steps 3 and 7; the wording of §11 and of each question's text; how `source-truth` §7.8 is loaded for the one test, and whether the builder measures `create-ard.md`'s load before and after; `threat_model.report`'s lines; the fixtures.
+Step numbering inside steps 3 and 7; the wording of §11 and of each question's text; the fixed lines D5 and D8 name only in part; `threat_model.report`'s lines; the fixtures; measuring `create-ard.md`'s load before and after.
 
 ## Risks
 
-- **`create-ard.md` is 220 KB and grows.** §11 holds the rule; the command's steps cite it. The builder measures.
-- **A stale nomination.** A record older than the code, or a design under the PRD that has not landed, can nominate a threat that is already answered. The question shows the source and its date, and *Keep it as it stands* costs one answer.
-- **Asked again.** D7's limit: a threat kept deferred is put on every refine until the Dev's `/design` runs.
-- **Two statements of the deferred-part rule** (D2), held together only by a rules invariant.
-- **An Epic-level run already reads the Epic's `design.md` from the working tree at Phase 2, with no gate I could find** (`create-ard.md:487`; no §3.4 row names it). **Assumption**: I read Phase 0's gates and §3.4 and found none; I did not trace every path. Logged, not fixed here.
+- **`create-ard.md` is 220 KB.** §11 holds the rule; the command gains 2 to 3 KB.
+- **Two statements of `/conformance`'s rules** (D2), held together by an invariant and a recipe until `/conformance` can cite §11.
+- **§11's record test is a third "open" test**, beside §7.8's and `/ready`'s. It is narrower than either and only nominates.
 
 ## The `to-fix` and roadmap updates
 
-- **`docs/superpowers/to-fix.md`**: the RETURNED-INTAKE entry (`:201-206`) is closed, naming this file and the versions the build releases; `:199` and `:242`, which introduce it, are reworded. Three entries are added: a threat kept deferred is put again until `/design` runs (D7); the three-form limit on accepting a partly mitigated threat (D3); and the Epic-level run's ungated read of `design.md` at Phase 2 (Risks).
-- **The roadmap** (`docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:103-104`): rows C and D each gain *Its follow-up, the intake of threats sent back, built as RETURNED-INTAKE:* this file, in the versions the build releases.
+- **`docs/superpowers/to-fix.md`**: RETURNED-INTAKE (`:201-206`) is closed, naming this file and the versions released, and `:199` and `:242` reworded. FOLDER-NAME-CLASS (`:265`) notes that this track's sites state a class. New entries: a threat kept as it stands is put again (D6); the three-form limit (D3); the Epic-level run's ungated Phase 2 read of `specification.md` and `design.md`; `/conformance`'s move onto §11; the stand-alone entry whose threat is in no model read (D7); Phase 4.3's weight in a 220 KB command.
+- **The roadmap** (`docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md:103-104`): rows C and D each gain *Its follow-up, the intake of threats sent back, built as RETURNED-INTAKE:* this file, with its versions.
 
 ## Questions for the maintainer
 
-1. **Does the intake read the conformance records, and so take in the threat open on a decision?** Recommended: **yes** — the entries, from `<default-ref>` alone, by `source-truth` §7.8's two rules (D1, D2, D4). **A yes approves GIT-G1 edits 1, 2 and 3 by name.** The alternative reads designs only: the two `unanswered` kinds are taken in, the `open` one keeps a line saying "supersede that decision", an architect who keeps the decision can accept the risk only by a free-text correction at step 9, and the GIT-G1 list falls to edit 4. A third way, the working tree's records, needs edit 1 alone but lets an unlanded ruling nominate and can move where the run's branch is cut.
-2. **May this track change one route D shipped?** Recommended: **yes** — a stand-alone `Returned` entry behind a threat the architect has re-disposed goes to the Dev's `/dev-workflows:design`, not back to the PA (D8). Without it, `/conformance` keeps sending the architect to a `/create-ard` that has nothing left to ask.
-3. **What becomes of a returned threat that answers none of the model's?** Recommended: **listed, never converted** (D6) — the architect adds a threat of their own, in their words. The alternatives are a candidate built from the design's text, which writes a Dev's text into the architect's file, or silence, which leaves `/conformance`'s line for it with no exit.
-4. **GIT-G1 edit 4, by name.** Recommended: **approve** — one clause naming `/create-ard`'s design read in §5 rule 2, so the rule lists both consumers that execute no gate. Declined, the read still stands under the rule as written, and the sentence names one of two.
+1. **How is the threat open on a decision found, and which GIT-G1 edits follow?** That it is taken in is already decided. Recommended: **the records' entries, from `<default-ref>` alone, by §11's own test** — approving by name edit 1, edit 2 and edit 3, which is a new printed line at `/conformance`'s handoff step, not a truth edit. Alternatives: the working tree's records (edit 1 only; an unlanded ruling nominates, and the run's branch can be cut elsewhere); or no record read — the architect names any live `[TH#N]` to re-dispose, from the model's own ids (no edit 1 to 3; the run does not show the threat unasked).
+2. **May this track change one route D shipped?** Recommended: **yes** — a stand-alone `Returned` entry behind a threat the architect has re-disposed, superseded or withdrawn goes to the Dev's `/dev-workflows:design` (D7).
+3. **GIT-G1 edit 4, narrowed, and the Epic-level run's older read.** Recommended: **approve the sentence as edit 4 words it, and log the Phase 2 read**, with `specification.md`, in `to-fix.md`. Alternatives: omit edit 4, leaving §5 rule 2 naming one consumer of two; or fix the read now — reading both files at Phase 2 from `<default-ref>` alone, a change to what an Epic-level ARD takes as context, or gating them, a new §3.4 row.
+
+## Revision 2 — how each finding was addressed
+
+- **C1** — D1 states the two run kinds apart; the unlanded-design line says "nominates nothing"; edit 4 is narrowed and question 3 asks for it; the Phase 2 read is logged with both files.
+- **I1** — the §7.8 dependency is cut: §11's record test is its own, with its record set, its malformed test, and no instant or guard (D2). `source-truth` is untouched.
+- **I2** — §11 takes `/conformance`'s entry reading, its exactly-once Disposition, its duplicated-`[DT#N]` rule and its unreadable-threat rule, with a recipe and a `to-fix` entry.
+- **I3** — the stale-and-sent-back case and its fixture are cut. **I4** — an all-*Keep* `redisposed` run is `state: left` (D3).
+- **I5** — edit 3 is classed new behaviour, at `:576`, with its text and condition. **I6** — question 1 asks only how, and the edits.
+- **I7** — D1 states a class for the folder names it writes. **I8** — D5's table gives every value its test; the backstop covers every free text; the report carries ids and fixed words, and D4 conforms; `body_facts` is gone.
+- **I9** — D9 gives subjects and scope, with the missed copies as a start.
+- **M1** — the `inputs_read` inference about a `<default-ref>` read is cut. **M2** — every kind that holds. **M3** — format §6's key rule cited. **M4** — named as a limit (D7). **M5** — D8 reworded. **M6** — four per call. **M7** — budgets measured; `workflows-core.md` no longer touched. **M8** — labelled, quoted, cut at 300 characters.
+- **Rulings** — the asked-again entry covers kind 3; rule moved into §11; revision 1's D4 folded into D3, its question 3 into D4, its question 4 into question 3; *What exists today* and Risks cut.
