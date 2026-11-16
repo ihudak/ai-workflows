@@ -7,11 +7,15 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.83.2] — 2026-11-16
 
-Docs only: LADDER-ORDER batch 3. The workflow page says when the PM's `/docs-workflows:release-notes` hands on to `/create-ard` and `/epics`, as `docs-workflows` 1.40.0's `/release-notes` does. No command, agent or reference changes. Released with `docs-workflows` 1.40.0, `workflows-core` 1.94.1 and `dev-workflows` 4.68.1.
+LADDER-ORDER batch 3. The workflow page says when the PM's `/docs-workflows:release-notes` hands on to `/create-ard` and `/epics`, as `docs-workflows` 1.40.0's `/release-notes` does; and, on a PRD folder whose `prd.md` asserts no `kind: prd`, `/specify`, `/create-ard` and `/update-spec` no longer offer `/epics` or `/create-prd` there, as `workflows-core` 1.94.1's *`/epics` precondition* now says. No agent or reference changes. Released with `docs-workflows` 1.40.0, `workflows-core` 1.94.1 and `dev-workflows` 4.68.1.
 
 ### Changed
 
 - **The workflow page's two edges from the PM's `/docs-workflows:release-notes`** read `an earlier phase still pending, prd.md on the default branch — hand to PA`, into `/create-ard`, and `an earlier phase still pending, an authored prd.md on the default branch — hand to PE`, into `/epics`, where each said only `an earlier phase still pending`; and the prose under the diagram says that run hands on to either once the PRD's `prd.md` is on the specs repo's default branch — each stops on one that branch does not hold, so until then the run names that `prd.md`'s landing in their place — and that `/epics` also needs it to assert `kind: prd`.
+
+### Fixed
+
+- **A `prd.md` asserting no `kind: prd` no longer gets `/epics`, or `/product-workflows:create-prd` in its place.** `/epics` refuses such a file, and `/create-prd` counts it as found and offers `/product-workflows:update-prd` or an overwrite; each command's *Gate the PRD* tests the file and not its kind, so on either route the runs below reached their offers on one. `/specify`'s 0-Epics question leaves *Split into Epics first* out and its `### Next step` names neither, `/create-ard`'s Phase 7 drops its `/epics` option — on the idea route from the PRD-level array, on a slice by taking the last BRD-route array — and `/update-spec`'s next step names no run in `/epics`' place; each says that the file asserts no `kind: prd`, and that adding the `kind: prd` and `key: <PRD>` its format carries is what lets `/product-workflows:epics <PRD>` read it, once that edit is merged. `/specify` and `/create-ard` said only a slice could fail the precondition, and on such a file named `/create-prd` in `/epics`' place, or `/epics` itself, which stops on it; `/update-spec` named `/epics` wherever the folder held a `prd.md`. The `/specify`, `/create-ard` and `/update-spec` pages say the same.
 
 ## [3.83.1] — 2026-11-15
 
