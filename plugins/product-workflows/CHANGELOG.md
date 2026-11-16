@@ -7,13 +7,14 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.83.1] — 2026-11-15
 
-LADDER-ORDER batch 2: one sentence of `/specify`'s next step, which describes `dev-workflows` 4.68.0's `/design`; a clause of `/epics`' Phase 2.7 question; and the `/epics` page's account of that question. Released with `workflows-core` 1.94.0, whose PE lane says the same, and `dev-workflows` 4.68.0 and `security-workflows` 0.12.5. Which routes the next step offers, and when, is unchanged.
+LADDER-ORDER batch 2: one sentence of `/specify`'s next step, which describes `dev-workflows` 4.68.0's `/design`; a clause of `/epics`' Phase 2.7 question; a clause each of `/update-spec`'s next step and `/epics`' `EPICS_NO_PRD` for a PRD under its pre-rename file name; and the `/epics` and `/update-spec` pages. Released with `workflows-core` 1.94.0, whose PE lane says the same, and `dev-workflows` 4.68.0 and `security-workflows` 0.12.5. Which routes the next step offers, and when, is unchanged.
 
 ### Changed
 
 - **`/specify`'s next step after a PRD-level specification** says that `/dev-workflows:design <PRD>`, on a multi-component PRD whose Epic folders hold no `specification.md` on the default branch, stops naming, for each such Epic, what that Epic needs first, as `/design` words it; it said that stop named `/product-workflows:specify <PRD>` for an Epic with no specification and the merge of the branch or pull request for one not yet merged.
 - **`/epics`' Phase 2.7 question** on a multi-component PRD's prerequisites says that its *Stop* option's label names the earliest gap's remedy in a phrase, and that *Stop* names it whole — a landing's commands each on a line of its own; `workflows-core` 1.94.0's `components` §6 made that remedy a landing of several commands for a document written and not merged.
-- **Pages.** The `/epics` page says that the multi-component check recommends, first, what is missing: the command that writes a document never written, or the git commands that land one written and not merged. It said the run recommends running whichever is missing first, which is not the remedy for a document written and not merged.
+- **A PRD under its pre-rename file name is never offered `/product-workflows:create-prd`**, which reads only `prd.md` and would write a second PRD. `/update-spec`'s next step, in `/epics`' place on the idea route, and `/epics`' own `EPICS_NO_PRD` stop on an idea-route folder name `/product-workflows:specify` there, saying that it stops on that file and that its stop prints the commands that rename it to `prd.md` and land it, as `workflows-core` 1.94.0's `next-phase-offer` *`/epics` precondition* does. Both named `/product-workflows:create-prd` there.
+- **Pages.** The `/update-spec` page names the rename for a PRD still under its old file name. The `/epics` page says that the multi-component check recommends, first, what is missing: the command that writes a document never written, or the git commands that land one written and not merged. It said the run recommends running whichever is missing first, which is not the remedy for a document written and not merged.
 
 ## [3.83.0] — 2026-11-15
 
