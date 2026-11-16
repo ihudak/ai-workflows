@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.83.1] — 2026-11-16
+
+Docs only: SEC-G2 D. The pages say what `dev-workflows` 4.68.0's `/conformance` does with the threat model `/create-ard` writes: it reads the model's copy on the specs repo's default branch, with no gate, traces each mitigation to the code, and sends the architect back to `/create-ard` for the threats only the architect can settle. No command, agent or reference changes. The pages describe `dev-workflows` 4.68.0 and `workflows-core` 1.94.0; beside an older `dev-workflows` they name a reader the command is not. No run needs either release, nor they this one.
+
+### Changed
+
+- **The `/create-ard` page** names `/dev-workflows:conformance` among the model's readers — the copy on the specs repo's default branch, the file itself in a specs folder that is no git repository, with no gate, never judging whether a threat is answered well enough — and gains *What brings you back once code is built*: the threats `/conformance` sends the architect, with `/product-workflows:create-ard <KEY>` — stale, due for review, or not written in the model's form — and three it cannot close, a threat a design returned, a deferred threat no design takes, and a threat left open on a decision the team will not build, whose report line says no command re-disposes such a threat yet.
+- **The roles page** says that two of the companion plugin's commands go on where the handover gate would otherwise stop them, `/dev-workflows:conformance` beside `/dev-workflows:design`: on a PRD with no Epic folder whose own threat model it reads, an ARD not verified on the default branch leaves the model unused, one line saying why, and the check goes on.
+- **The workflow page** draws `/conformance`'s routes back to the architect for a threat, and to `/dev-workflows:design` for a threat no design answers or a design's Rule to revise, every new edge label quoted; and says a design's threat-review Rule takes no note on an amend decision, its route being `/dev-workflows:design`.
+
 ## [3.83.0] — 2026-11-15
 
 LADDER-ORDER batch 1b: `/epics` stops while the PRD it splits is not on the specs repository's default branch, and the fixes found at batch 1's end and while building this batch. **This is a behaviour change**: `/epics` read `prd.md` from the working tree and gated it nowhere, so a run typed in the same sitting as `/create-prd`, before the PRD's pull request merged, drafted Epics from it and only named the landing in its offers; it now stops and names what puts the PRD on the default branch. Update with `workflows-core` 1.93.0, whose `phase-handoff` §3.4 row describes this stop; `dev-workflows` 4.67.1, pages only, is released with it. On a specs tree that is no git repository nothing changes.

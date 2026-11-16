@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.12.5] — 2026-11-16
+
+Docs only: SEC-G2 D. The roles page says what `dev-workflows` 4.68.0's `/conformance` checks of a threat model before the scan, and what it leaves to the scan. It describes that release, and needs nothing of the other plugins' releases, nor they of it.
+
+### Changed
+
+- **Roles and phases.** The Security Engineer's *Reviews a threat model in its ARD's pull request* gains: `/dev-workflows:conformance` traces each mitigation to the code — each Rule of a design's threat review and each architecture decision a threat's `Mitigated by` names — on the Epic's branch before the scan, and again on the PRD once every Epic has merged, and records where each threat stands, accepting no risk. It confirms that a mitigation's lines exist and, where the mitigation is a check, that code calls it — never that the attack fails: what the code still lets through is the scan's to find. `/security-workflows:scan` itself changes in nothing, and still reads no threat model.
+
 ## [0.12.4] — 2026-11-15
 
 Docs only: SEC-G2 C. The roles page says what a design's threat review puts in front of the Security Engineer. It describes `dev-workflows` 4.67.0's `/design`, and needs nothing of the other plugins' releases, nor they of it.
