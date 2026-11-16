@@ -1,6 +1,6 @@
 # The commit scan reads a repository that holds the documentation — design
 
-Status: draft for the maintainer's approval, 2026-11-16. Closes `DOCS-IN-CODE-REPO-SCAN` (`docs/superpowers/to-fix.md`). Measured against the tree on 2026-11-16: `docs/superpowers/specs/2026-11-16-scan-docs-paths-measurements.md`, cited below as *M §n*.
+Status: approved by the maintainer, 2026-11-16. Plan: `docs/superpowers/plans/2026-11-16-scan-docs-paths.md`. Closes `DOCS-IN-CODE-REPO-SCAN` (`docs/superpowers/to-fix.md`). Measured against the tree on 2026-11-16: `docs/superpowers/specs/2026-11-16-scan-docs-paths-measurements.md`, cited below as *M §n*.
 
 ## 1. Intent
 
@@ -141,7 +141,7 @@ And, read from the commands: Phase 8.5's check (L9) on a commit that holds a pat
 - `CLAUDE.md` and `.claude/rules/docs-workflows.md` do not grow.
 - No tracker is named; requirement IDs keep the bracketed form.
 - The claim sweep covers every statement of the exclusion (M §8 lists them).
-- Whether the internal editions carry `key-discovery.py` is the maintainer's knowledge; the port follows their scope.
+- Both internal editions carry `key-discovery.py` and the same whole-repository exclusion (checked 2026-11-16, on the maintainer's pointer). The fix is ported to each after it merges here, as its own change.
 
 ## 11. Left to the builder
 
