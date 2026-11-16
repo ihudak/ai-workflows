@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.83.2] — 2026-11-16
+
+Docs only: LADDER-ORDER batch 3. The workflow page says when the PM's `/docs-workflows:release-notes` hands on to `/create-ard` and `/epics`, as `docs-workflows` 1.40.0's `/release-notes` does. No command, agent or reference changes. Released with `docs-workflows` 1.40.0, `workflows-core` 1.94.1 and `dev-workflows` 4.68.1.
+
+### Changed
+
+- **The workflow page's two edges from the PM's `/docs-workflows:release-notes`** read `an earlier phase still pending, prd.md on the default branch — hand to PA`, into `/create-ard`, and `an earlier phase still pending, an authored prd.md on the default branch — hand to PE`, into `/epics`, where each said only `an earlier phase still pending`; and the prose under the diagram says that run hands on to either once the PRD's `prd.md` is on the specs repo's default branch — each stops on one that branch does not hold, so until then the run names that `prd.md`'s landing in their place — and that `/epics` also needs it to assert `kind: prd`.
+
 ## [3.83.1] — 2026-11-15
 
 LADDER-ORDER batch 2: one sentence of `/specify`'s next step, which describes `dev-workflows` 4.68.0's `/design`; a clause of `/epics`' Phase 2.7 question; a clause each of `/update-spec`'s next step and `/epics`' `EPICS_NO_PRD` for a PRD under its pre-rename file name; and the `/epics` and `/update-spec` pages. Released with `workflows-core` 1.94.0, whose PE lane says the same, and `dev-workflows` 4.68.0 and `security-workflows` 0.12.5. Which routes the next step offers, and when, is unchanged.

@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.68.1] — 2026-11-16
+
+LADDER-ORDER batch 3: one sentence of `/implement` and two pages, which describe `docs-workflows` 1.40.0's keyed `/document`. What every command does is unchanged. Released with `docs-workflows` 1.40.0, `workflows-core` 1.94.1 and `product-workflows` 3.83.2.
+
+### Changed
+
+- **`/implement` Phase 4.7**, saying why a run that committed nothing writes no block, names `/docs-workflows:document`'s nothing-built question among the readers that test for a block, to which a block naming no commit would mark the unit implemented, and gives the readers it lists as examples (`… among them`), where it listed three as though they were all.
+- **Pages.** The commit-convention page says that where `implementation.md` records nothing for the key either, a keyed `/docs-workflows:document` asks, before it writes any page, whether anything is built at all — stopping to implement it first recommended over documenting from the PRD alone; and the environment page, that a keyed `/document` whose implementation record holds no block reports a base that exists and is empty as a commit scan that did not look in any repository, never as one that found nothing.
+
 ## [4.68.0] — 2026-11-15
 
 LADDER-ORDER batch 2: a keyed `/implement` builds only from the unit's own `specification.md` and `design.md`, both on the specs repository's default branch. **This is a behaviour change**: a keyed run whose unit — the Epic's folder, or the PRD folder for a broad PRD-level slice — held neither file asked where its specs were, or went on without them, and one with a specification and no design went on without the design; one whose `specification.md` or `design.md` was written in the unit's folder and never handed off was built from that working copy; and a spec-folder `@path` token's files filled the run's specs, sparing it the question. A fresh keyed run now stops, naming what the first missing document needs. **A unit built earlier with a specification and no design stops on its next keyed run** — a follow-up, a companion run, or a security fix on the Epic's open branch — with `IMPLEMENT_NEEDS_DESIGN`, naming `/dev-workflows:design` for it: the maintainer decided to accept that cost (2026-11-14). A change too small to specify and design is made with a direct run, `/implement` with no key, which is unchanged; a resumed run is not stopped. `/implement <PRD>` lists only the units it can build, and `/design`, `/conformance` and `/ready` name what the first missing document needs where they named a run that would now stop. Update with `workflows-core` 1.94.0, whose `phase-handoff` §3.4 row and §4.4 rule these stops follow; `security-workflows` 0.12.5 and `product-workflows` 3.83.1 are released with it.
