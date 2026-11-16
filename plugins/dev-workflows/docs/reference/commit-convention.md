@@ -20,7 +20,9 @@ The scan is what finds **everything the plugin did not do itself** — the commi
 after the session ran out, the fix a colleague pushed, the follow-up nobody ran a command for. A
 commit whose subject names the key — any commit but a merge commit — is one those commands can find. A commit that names nothing is
 invisible to them, and the release note or the documentation page comes out thinner than the work
-was.
+was. Where `implementation.md` records nothing for the key either, a keyed `/docs-workflows:document`
+asks, before it writes any page, whether anything is built at all — its nothing-built question,
+with stopping to implement it first recommended over documenting from the PRD alone.
 
 **Put the key on your branch's own commits, not only on the pull request.** The scan reads no merge
 commit, so a key that only a merge commit carries — your own `git merge -m`, or the pull-request

@@ -6,7 +6,9 @@ Design authority: `docs/superpowers/specs/2026-08-31-specs-native-pipeline-desig
 
 **Written by `/implement`. Read by `/document` and `/release-notes`**, which hand the refs it records
 to `diff-summarizer`; and, for whether it holds a block (§1) or for the repositories its entries
-name, by `references/epic-picker.md`'s ● marker, `/ready`, `/specify` and `/epics`; and, for the
+name, by `references/epic-picker.md`'s ● marker, `/ready`, `/specify`, `/epics` and `/document`,
+whose keyed run puts its nothing-built question where no record in its scope holds a block and its
+commit scan finds no commit; and, for the
 date each block's heading carries and the instant its `at:` gives it (§1), by §5's order of blocks (*Latest, earlier and earliest*), and by `/dev-workflows:ready`'s
 *Delivery verified* and *Release Preparation* tests (its Phase 1 steps 2b and 2c), which count a
 block dated later — by instant where both carry one, else by date — than the PRD's conformance
@@ -90,7 +92,9 @@ append-only — and the picker's ● marker, which reads the Epic's own folder, 
 `/implement`'s picker lists it as not started, ○, a row the default cursor can take, where its
 `specification.md` and `design.md` are both on the default branch, and otherwise leaves it out,
 naming what it needs first; `/ready` derives its phase from an Epic folder holding no record; an
-Epic-level `/document` or `/release-notes` reads none of its refs; and §5's `unit-branch` answers
+Epic-level `/document` or `/release-notes` reads none of its refs, and an Epic-level `/document`
+whose commit scan finds no commit naming the Epic puts its nothing-built question, *Stop*
+recommended, the lines above it and the line *Stop* prints naming the move below; and §5's `unit-branch` answers
 `none` for that Epic, so no consumer of it finds the Epic's branch. **Population: every Epic
 implemented under a PRD address before `dev-workflows` 4.1.2.** And where the PRD folder also holds
 a flat `specification.md` on a PRD that is not multi-component, or one the 0-Epic override built whole, a PRD-level `/ready` counts the block as the **broad PRD-level slice's

@@ -256,7 +256,8 @@ ending the run), `/brd-interview` (Phase 0 step 3), `/brd-package`
 (Phase 0 step 1), `/brd-proposal` (Phase 0 step 1), `/idea` (Phase 0 step 1),
 `/security-workflows:scan` (Phase 0 step 3, on every run), `/implement` (Phase 0
 *Address resolution*, on a `<KEY>` address only), `/document` (*Mode detection*, keyed mode on a
-`<KEY>` address only, and for `REPOS_PATH` keyed mode's Phase 1), `/release-notes` (Phase 0
+`<KEY>` address only, and for `REPOS_PATH` keyed mode's Phase 0 step 3a on a run whose
+implementation record holds no block, its Phase 1 otherwise), `/release-notes` (Phase 0
 step 1, on a `<KEY>` address only, and for `REPOS_PATH` Phase 1, with diff grounding on),
 `/conformance` (Phase 0 step 2), `/vuln` (Step 0, on an `@<path>` address only), `/ready` (Phase 0 step 2), `/create-prd` (Phase 0 step 2b),
 `/update-prd` (Phase 0 step 2), and — for `SPECS_PATH` and `REPOS_PATH` both — `/design` (Phase 0
