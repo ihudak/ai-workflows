@@ -673,7 +673,14 @@ is the only command that writes one at all.
   - **`/product-workflows:epics` is only offered where the resolved folder holds an authored `prd.md`.**
     That command accepts a folder holding a `prd.md` asserting `kind: prd` and refuses one that does not
     (`commands/epics.md` Phase 0 step 1b, `EPICS_NO_PRD`), so offering it on a folder with no PRD would
-    name a run that stops on arrival. A folder holding none is a slice, since Phase 0's *Gate the PRD*
+    name a run that stops on arrival. **Where the folder holds a `prd.md` asserting no `kind: prd`** —
+    on either route, since Phase 0's *Gate the PRD* tests the file and not its kind — `/epics`
+    refuses it and `/product-workflows:create-prd` counts it as found, so the `/epics` choice is left
+    out and names no run in its place, and the question's own text says that the file asserts no
+    `kind: prd`, and that adding the `kind: prd` and `key: <PRD>` its format carries
+    (`workflows-core:addressing` §5) is what lets `/product-workflows:epics <PRD>` read it, once that
+    edit is merged to the default branch or, on a specs tree that is no git repository, once it is
+    made. A folder holding no `prd.md` is a slice, since Phase 0's *Gate the PRD*
     stops an idea-route run without one, and on a slice it is the ordinary state. There the `/epics` choice — the first, or the second on the multi-component array, which keeps its own marker on the broad-spec option — becomes
     `"Author the PRD first — /product-workflows:create-prd <PRD> (Recommended)"` (without `(Recommended)` on the multi-component array), which is the run that
     writes the PRD `/epics` then reads and takes the single address this run already resolved.
@@ -1407,7 +1414,7 @@ was not, why.
 
 End the report with a `### Next step` recommendation per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pe")`, the *PE — breakdown & specification* lane (guidance only — never auto-invoked). `<SPEC-KEY>`, used below, is the key of the folder this run's `specification.md` landed in: `focus_key` where it is set, `<PRD>` (the resolved PRD folder's own key, never a typed `@<path>`) where it is null. **On a run the *Next Epic* loop took past its first Epic**, name the Epic-level recommendation's `/dev-workflows:design` route once for each Epic the run specified, naming that Epic's key, with its `<merge-clause>` resolved from that Epic's own `Phase handoff:` line, so the offer names every branch or pull request the run opened. **Epic-level spec** (`focus_key` is set — the address resolved an `EPIC-` folder, or Step A chose one under a PRD address, by its single-Epic auto-select or its picker) → hand to Dev → `/dev-workflows:design <EPIC>` `<merge-clause>`, which will not start until this spec is on the default branch — on every path, since `workflows-core:phase-handoff` §3.4's `/design` row is a stop even for a spec that reached no branch — and the **Epic fan-out** `/product-workflows:specify <SIBLING-EPIC>` for a sibling Epic (breadth), which waits on nothing this run produced and carries no clause; **PRD-level spec** (`focus_key` is null — a broad spec of the `PRD-` folder itself) → `/product-workflows:epics <PRD>` (PE) `<merge-clause>`, which stops rather than skipping wherever this spec reached a branch (§3.3 rows D/E) and, wherever it reached none, skips exactly as it did before (§3.4's `/epics` row for the PRD-level `specification.md`) — save on a multi-component PRD, where `/epics` Phase 2.7 asks for that spec instead, offering to split without it (`workflows-core:components` §6) — and, to design this spec whole rather than through Epics, `/dev-workflows:design <PRD>` (Dev) `<merge-clause>`, which `/dev-workflows:design`'s Phase 0 takes as one design of the flat `specification.md`, gating this spec, hence the clause; on a multi-component PRD it does so only as its *Design across components anyway* override and only where the PRD folder holds no Epic folder — with Epics there it designs them instead, so name it there as designing the Epics, not this spec, as `/dev-workflows:design <PRD>` (Dev) with **no `<merge-clause>`**, since it gates the Epic's own merged `specification.md` and never waits on this run's pull request, and say that the Epic's specification predates this PRD-level one, which `/product-workflows:epics <PRD>` folds into the Epics, so a design started now starts from the older Epic specification; and name it only where an Epic's `specification.md` is on the default branch, since `/dev-workflows:design` stops without one: on the PRD's address its Phase 0 step 4 stops with the excluded-count report, naming, for each Epic whose `specification.md` is not on the default branch, what that Epic needs first, as that step words it (the *PE — breakdown & specification* lane); where no Epic's is, name no `/dev-workflows:design <PRD>` at all. If the run BLOCKED or left open `- [ ]` items, recommend resolving those first.
 
-**One precondition governs every `/product-workflows:epics` option above, and only a slice can fail it.** `/epics` accepts
+**One precondition governs every `/product-workflows:epics` option above, and only a slice, or a `prd.md` asserting no `kind: prd`, can fail it.** `/epics` accepts
 a folder holding a `prd.md` that asserts `kind: prd` and refuses one that does not
 (`commands/epics.md` Phase 0 step 1b, `EPICS_NO_PRD`). On the idea route this run reaches this report only
 with a `prd.md` on the default branch (or in the folder on an unmanaged tree) — Phase 0's *Gate the PRD*
@@ -1416,10 +1423,16 @@ it held one on no ref — but on the BRD route this run does **not** require a P
 gate's slice branch specifies from the resolved folder, and `/product-workflows:create-prd` is not a
 prerequisite at all there — so a slice it just wrote a specification into may legitimately hold no PRD.
 **This precondition, and the table below that replaces `/epics`, apply to a PRD-level spec only** (`focus_key` null), the one whose recommendation names `/epics`; a per-Epic spec names `/dev-workflows:design <SPEC-KEY>` and the sibling fan-out and nothing in their place. **Test the resolved folder for an authored `prd.md`** before
-rendering the recommendation — the `PRD-` folder the address named, which Phase 0's PRD gate tested. Where there is one, name `/product-workflows:epics <PRD>`; where there
-is not — a slice — name **`/product-workflows:create-prd <PRD>`** instead — the folder's own key, never an Epic's, which `/create-prd` refuses (its step 5b, `CREATE_PRD_EPIC_FOLDER`) — **but only where
+rendering the recommendation — the `PRD-` folder the address named, which Phase 0's PRD gate tested. Where there is one, name `/product-workflows:epics <PRD>`; where the folder
+holds no `prd.md` — a slice — name **`/product-workflows:create-prd <PRD>`** instead — the folder's own key, never an Epic's, which `/create-prd` refuses (its step 5b, `CREATE_PRD_EPIC_FOLDER`) — **but only where
 that command can itself run**. Offering `/epics` there would name a run that stops on arrival, and
-naming `/create-prd` without the test below does the same thing one command further on.
+naming `/create-prd` without the test below does the same thing one command further on. **Where it
+holds a `prd.md` asserting no `kind: prd`**, on either route, name neither — `/epics` refuses that
+file and `/create-prd` counts it as found — and in `/epics`' place say that the file asserts no
+`kind: prd`, and that adding the `kind: prd` and `key: <PRD>` its format carries
+(`workflows-core:addressing` §5) is what lets `/product-workflows:epics <PRD>` read it, once that
+edit is merged to the default branch or, on a specs tree that is no git repository, once it is
+made (`workflows-core:next-phase-offer`'s *`/epics` precondition*).
 
 **`/create-prd` refuses three BRD-route shapes, not one**
 (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2, the authority, not restated
@@ -1430,7 +1443,7 @@ naming the tested folder's key rather than the Epic's is what clears it. The oth
 refusals on a slice's own ledger and exist only where the tested PRD folder carries a `brd-link.md`.
 The idea route never reaches them: that folder carries no `brd-link.md` and so has no gate set, and
 Phase 0 stopped every idea-route run whose PRD folder holds no `prd.md`, so the precondition above
-never fails there. Where the folder is a **slice**, read its `coverage-ledger.md` —
+fails there only on a `prd.md` asserting no `kind: prd`, which names neither command. Where the folder is a **slice**, read its `coverage-ledger.md` —
 the rows its `brd-link.md` `claims:`, out of the file and never off a `ledger:` line (§6.1) — and
 resolve the recommendation from it:
 
@@ -1470,7 +1483,7 @@ offers used to be withheld unless an export directory existed under the key, a t
 only because both commands resolved that export and found nothing without it. Neither reads an
 export any more. The test is not relaxed — its subject no longer exists.
 
-**And the commercial step, in prose — and it too depends on the route, and on a PRD.** Name it only where the PRD folder holds an authored `prd.md`, the test the precondition above makes: `/product-workflows:prd-proposal` stops with `PRD_PROPOSAL_NEEDS_PRD` without one, so on a folder holding none — a slice, since Phase 0's *Gate the PRD* stops an idea-route run without one — say instead that a proposal becomes available once `/product-workflows:create-prd` has written the PRD and its handoff is merged, since `/product-workflows:prd-proposal` stops on a `prd.md` the default branch lacks — on a specs tree that is no git repository (*Gate the PRD* returned `unmanaged`), once `/product-workflows:create-prd` has written the PRD, there being no handoff or merge to name — and claim no tier. **A tier is claimed only for a PRD-level spec** (`focus_key` null): `proposal-format.md` §5 grades the PRD folder's own `specification.md`, so a per-Epic spec raises no tier — name `/product-workflows:prd-proposal <PRD>` there with no tier claim. Where both hold: on the BRD route, where
+**And the commercial step, in prose — and it too depends on the route, and on a PRD.** Name it only where the PRD folder holds a `prd.md` — one asserting no `kind: prd` among them, since `/product-workflows:prd-proposal`, like Phase 0's *Gate the PRD*, tests the file and not its kind: `/product-workflows:prd-proposal` stops with `PRD_PROPOSAL_NEEDS_PRD` without one, so on a folder holding none — a slice, since Phase 0's *Gate the PRD* stops an idea-route run without one — say instead that a proposal becomes available once `/product-workflows:create-prd` has written the PRD and its handoff is merged, since `/product-workflows:prd-proposal` stops on a `prd.md` the default branch lacks — on a specs tree that is no git repository (*Gate the PRD* returned `unmanaged`), once `/product-workflows:create-prd` has written the PRD, there being no handoff or merge to name — and claim no tier. **A tier is claimed only for a PRD-level spec** (`focus_key` null): `proposal-format.md` §5 grades the PRD folder's own `specification.md`, so a per-Epic spec raises no tier — name `/product-workflows:prd-proposal <PRD>` there with no tier claim. Where both hold: on the BRD route, where
 verified grounding and a settled register already exist **and an `ard.md` is already in place**, this
 specification takes the folder to tier 4, the top tier, where QA effort is sized from the authored
 test-case count rather than a ratio and the definition of done is built from the acceptance criteria

@@ -192,7 +192,7 @@ on the difference or reads the default branch's earlier copy, without the revisi
 revision is merged (its Phase 0, *Gate the PRD*), so an offer of it by a run that has just written
 or edited the PRD carries `<merge-clause>`. Where the
 caller's PRD folder — the resolved folder itself on a PRD-level run, its parent on an Epic-level
-one — holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd`
+one — holds no `prd.md`, which the BRD route reaches legitimately since `/product-workflows:create-prd`
 is not a prerequisite for `/product-workflows:create-ard` there, the offer is
 `/product-workflows:create-prd <PRD>` instead, `<PRD>` being that tested folder's own key and
 never an Epic's — save where that folder holds the PRD under its pre-rename file name (the test
@@ -205,7 +205,14 @@ three on the BRD route, and an `EPIC-` folder on either, which is why the key is
 — so on a BRD-route slice the two data refusals on that slice's own ledger are tested first and
 the offer resolves to `/product-workflows:brd-split` against one of two keys, or to no option at
 all, where either fails (`product-workflows:coverage-ledger-format` §5.2, the authority, applied
-by each offering command). An offer whose run stops the moment it starts is the same defect the
+by each offering command). Where the caller's PRD folder holds a `prd.md` asserting no `kind: prd`
+— which `/epics` reads as no PRD and `/product-workflows:create-prd` counts as found, offering
+`/product-workflows:update-prd` or an overwrite — the offer names neither: in their place it says
+that the file asserts no `kind: prd`, and that adding the `kind: prd` and `key: <PRD>` its format
+carries (`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §5) is what lets
+`/product-workflows:epics <PRD>` read it, once that edit is merged to the default branch or, on a
+specs tree that is no git repository, once it is made — where the offer is an option of a
+question, the option left out and that said in the question's own text. An offer whose run stops the moment it starts is the same defect the
 `<merge-clause>` rules exist to prevent, one command further on: a next step the operator
 cannot take from the state the report describes.
 

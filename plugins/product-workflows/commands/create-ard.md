@@ -1039,16 +1039,16 @@ Load the lane before any array below is printed: the offer follows
 `Skill(skill: "workflows-core:reference", args: "next-phase-offer pa")`, the *PA — architecture (optional)* lane, and each `<merge-clause>` in
 it resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
 
-**One precondition governs every `/product-workflows:epics` option below, and only a slice can fail
-it.** `/epics` accepts a folder holding a `prd.md` that asserts `kind: prd` and refuses one that
+**One precondition governs every `/product-workflows:epics` option below, and only a slice, or a
+`prd.md` asserting no `kind: prd`, can fail it.** `/epics` accepts a folder holding a `prd.md` that asserts `kind: prd` and refuses one that
 does not (`commands/epics.md` Phase 0 step 1b, `EPICS_NO_PRD`). On the idea route this run reaches
 this phase only with a `prd.md` on the default branch (or in the folder on an unmanaged tree) —
 Phase 0's *Gate the PRD* stopped it with `CREATE_ARD_NEEDS_PRD` where the folder held none, and with
 `CREATE_ARD_PRD_NOT_HANDED_OFF` where it held one on no ref — but on the BRD route
 `/product-workflows:create-prd` is not a prerequisite for this command, so a slice it just wrote an
 ARD into may legitimately hold no PRD. **Test the resolved folder for an authored `prd.md`**
-before rendering the array: where there is one, offer `/product-workflows:epics`; where there is
-not — a slice — **the option is replaced only by a command that can itself run**, and replaced
+before rendering the array: where there is one, offer `/product-workflows:epics`; where the folder
+holds no `prd.md` — a slice — **the option is replaced only by a command that can itself run**, and replaced
 whole: the lead-in, the role label and the `<merge-clause>` all belong to the command an option
 names, so none of the three is carried over from the option it replaces. The test runs on a
 PRD-level run only, the one whose array names `/epics`; an Epic-level run's array names neither
@@ -1057,7 +1057,15 @@ PRD-level run only, the one whose array names `/epics`; an Epic-level run's arra
 slice's branches are written out as separate literal arrays below rather than substituted into
 one, which is what keeps that rule checkable by reading. Offering `/epics` on a folder holding no
 PRD would name a run that stops on arrival, and naming `/create-prd` without the test below does the
-same thing one command further on.
+same thing one command further on. **Where the folder holds a `prd.md` asserting no `kind: prd`** —
+on either route, since Phase 0's *Gate the PRD* tests the file and not its kind — `/epics` refuses
+it and `/product-workflows:create-prd` counts it as found, so the option is dropped and nothing
+replaces it: on the idea route the PRD-level array below without its `/product-workflows:epics`
+option, its marker going with it, and on a slice the last of the BRD-route arrays; say instead, in
+the question's own text, that the file asserts no `kind: prd`, and that adding the `kind: prd` and `key: <PRD>` its format carries
+(`workflows-core:addressing` §5) is what lets `/product-workflows:epics <PRD>` read it, once that
+edit is merged to the default branch or, on a specs tree that is no git repository, once it is made
+(`workflows-core:next-phase-offer`'s *`/epics` precondition*).
 
 **`/create-prd` refuses three BRD-route shapes, not one**
 (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2, the authority, not restated
@@ -1086,14 +1094,14 @@ judge for themselves. Where the option is dropped and nothing replaces it, the a
 `/product-workflows:specify <SLICE-KEY>` and `"Stop here"`, so it never falls below the two options
 `AskUserQuestion` requires.
 
-- **PRD-level ARD** (the idea route; a slice takes the BRD-route arrays below): if the PRD has 0 Epics → `choices: ["Hand to a Product Engineer — /product-workflows:epics <ADDRESS> (PE) (Recommended) <merge-clause>", "Author a PRD-level spec — /product-workflows:specify <PRD> (PE) <merge-clause>", "Stop here"]`; else offer `/product-workflows:specify <PRD>` (PE) carrying the same `<merge-clause>`. *(No `/design` — no Epics yet.)* **Where this run wrote `components:` with two or more `kind: code` entries and the PRD has 0 Epics**, the first two options swap and the marker moves with them — `choices: ["Author a PRD-level spec — /product-workflows:specify <PRD> (PE) (Recommended) <merge-clause>", "Hand to a Product Engineer — /product-workflows:epics <ADDRESS> (PE) <merge-clause>", "Stop here"]` — because the end-to-end acceptance criteria a PRD-level spec states are what `/epics` splits across the components, and `/epics` stops to recommend that spec where it is missing (`workflows-core:components` §6).
+- **PRD-level ARD** (the idea route; a slice takes the BRD-route arrays below): if the PRD has 0 Epics → `choices: ["Hand to a Product Engineer — /product-workflows:epics <ADDRESS> (PE) (Recommended) <merge-clause>", "Author a PRD-level spec — /product-workflows:specify <PRD> (PE) <merge-clause>", "Stop here"]` (without its `/epics` option on a `prd.md` asserting no `kind: prd` — the precondition above); else offer `/product-workflows:specify <PRD>` (PE) carrying the same `<merge-clause>`. *(No `/design` — no Epics yet.)* **Where this run wrote `components:` with two or more `kind: code` entries and the PRD has 0 Epics**, the first two options swap and the marker moves with them — `choices: ["Author a PRD-level spec — /product-workflows:specify <PRD> (PE) (Recommended) <merge-clause>", "Hand to a Product Engineer — /product-workflows:epics <ADDRESS> (PE) <merge-clause>", "Stop here"]` (without its `/epics` option on a `prd.md` asserting no `kind: prd` — the precondition above) — because the end-to-end acceptance criteria a PRD-level spec states are what `/epics` splits across the components, and `/epics` stops to recommend that spec where it is missing (`workflows-core:components` §6).
 - **Epic-level ARD:** test the Epic folder for a `specification.md` on the default branch first — `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<epic-folder>/specification.md"` — since `/dev-workflows:design` stops without one: its Phase 0 step 3's gate stops with `DESIGN_NO_SPEC` where no ref carries the Epic's `specification.md` (none written, or written and never committed), and with `require-on-main`'s stop naming the branch or pull request where a plugin branch carries it. Where it is there, `choices: ["Author the spec — /product-workflows:specify <EPIC> (PE) (Recommended) <merge-clause>", "Hand to Dev — /dev-workflows:design <EPIC> (Dev) <merge-clause>", "Stop here"]`; where it is not — the ordinary case, an Epic-level ARD usually coming before the Epic's spec — `choices: ["Author the spec — /product-workflows:specify <EPIC> (PE) (Recommended) <merge-clause>", "Stop here"]`, and say that `/dev-workflows:design <EPIC>` follows once the specification is on the default branch. One address each, the Epic's own, because that is the only form either command accepts (D4). **Epic fan-out** — repeat this ARD for a sibling Epic: `/product-workflows:create-ard <SIBLING-EPIC>`; that run inherits the PRD-level ARD, not this Epic-level one, so it waits on nothing this run produced and carries no clause.
 - **Team knowledge base (both levels):** end the offer with the prose line `Harvest this ARD's decisions into the team knowledge base — /product-workflows:harvest-decisions` `<merge-clause>`. The harvest reads only the default branch, so the wait the clause names is this ARD's.
 - **the BRD route (an ARD in a `PRD-` slice folder):** different arrays, because **the key this run
   holds is a slice key**: `/dev-workflows:design` cannot be reached with one at all, and the second
   option is not a fixed command — this phase's opening precondition decides which command it names,
   or whether the array has one. **Six literal arrays, one per branch of that test — the
-  standing-empty-child branch split in two by the parent's ledger, the missing-ledger branch sharing the last.** They are written out rather than derived by substituting a command into one array, and the reason is the
+  standing-empty-child branch split in two by the parent's ledger, the missing-ledger branch and a `prd.md` asserting no `kind: prd` sharing the last.** They are written out rather than derived by substituting a command into one array, and the reason is the
   rule stated with the precondition: an option's lead-in, its role label and its `<merge-clause>`
   each belong to the command that option names, and none of the three survives a different command
   being put in its place. Present the one whose condition holds, verbatim, per
@@ -1103,7 +1111,7 @@ judge for themselves. Where the option is dropped and nothing replaces it, the a
   - **No `prd.md`, and a claimed row is still `unallocated`** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Allocate this slice's ledger — /product-workflows:brd-split <SLICE-KEY> (PM) <merge-clause>", "Stop here"]`
   - **No `prd.md`, no row `covered-here`, the gate set is empty — a standing empty child — and the parent's own `coverage-ledger.md` still holds an `unallocated` row** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Keep or remove this empty slice — /product-workflows:brd-split <PARENT-KEY> \"<how to cut it>\" (PM)", "Stop here"]` — that run walks the parent's unallocated row too and stops with `BRD_SPLIT_NEEDS_INSTRUCTION` without an instruction, so the bare form would name a run that stops on arrival (`/product-workflows:create-prd` Phase 0 step 7's empty-gate-set row).
   - **No `prd.md`, no row `covered-here`, the gate set is empty, and the parent's own `coverage-ledger.md` holds no `unallocated` row** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Keep or remove this empty slice — /product-workflows:brd-split <PARENT-KEY> (PM)", "Stop here"]`
-  - **No `prd.md`, and either no row `covered-here` and none `unallocated` with the gate set non-empty, or no readable `coverage-ledger.md` while `brd-link.md` claims rows, or the gate set empty and the parent's `coverage-ledger.md` unreadable** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Stop here"]` — the second option is dropped and nothing takes its place, per the precondition table's third, fourth and fifth rows; say instead what the gate-set rows resolved to, or, where a ledger is missing or unreadable, report it by path.
+  - **No `prd.md`, and either no row `covered-here` and none `unallocated` with the gate set non-empty, or no readable `coverage-ledger.md` while `brd-link.md` claims rows, or the gate set empty and the parent's `coverage-ledger.md` unreadable; or a `prd.md` asserting no `kind: prd`** — `choices: ["Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) (Recommended) <merge-clause>", "Stop here"]` — the second option is dropped and nothing takes its place, per the precondition table's third, fourth and fifth rows, or the precondition's sentence on such a `prd.md`; say instead what the gate-set rows resolved to, or, where a ledger is missing or unreadable, report it by path, or, for a `prd.md` asserting no `kind: prd`, what that sentence says.
   - **`/product-workflows:specify <SLICE-KEY>` is always reachable from this state.** It takes
     the same slice key this run resolved — and passes that command's own container refusal for the
     same reason this run did, finds the same folder through `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), and needs no key minted anywhere else. It
@@ -1150,7 +1158,7 @@ judge for themselves. Where the option is dropped and nothing replaces it, the a
 
 **Every merge clause above is the `<merge-clause>` placeholder**, resolved from this run's own `Phase handoff:` outcome line per `workflows-core:next-phase-offer`'s *resolution table*, loaded at the top of this phase, and never the unconditional "once the pull request above is merged": a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the arrays are still presented verbatim per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*. **The wait it names is real for every option that carries it**, and it is a stop, not a silent degradation: `/product-workflows:epics`, `/product-workflows:specify` and `/dev-workflows:design` each read this ARD through `workflows-core:ard-resolution` and each stops on `status: unmerged`, naming the branch and any open pull request, and `/product-workflows:brd-split` on this slice stops on its own `require-on-main` against `grounding/code-grounding.md`. `/product-workflows:create-prd <SLICE-KEY>` stops on its own `require-on-main` against the slice's `decisions.md`. **The option carrying none names no gate this run feeds** — `/product-workflows:brd-split <PARENT-KEY>`, in either form — which is why the rule is stated against the gate an offer names rather than against which array it sits in. Only a handoff that reached no branch at all resolves `status: none`, where that reference's no-regression rule has the run proceed exactly as it would with no ARD.
 
-**The commercial step this run just unlocked, named in prose — and it depends on the route, and on a PRD.** Name it only where `prd_dir` holds an authored `prd.md` — the same `prd.md` test this phase's opening precondition makes, made at `prd_dir`: `/product-workflows:prd-proposal` stops with `PRD_PROPOSAL_NEEDS_PRD` without one, so on a folder holding none — a slice, since Phase 0's *Gate the PRD* stops an idea-route run without one — say instead that a proposal becomes available once `/product-workflows:create-prd` has written the PRD and its handoff is merged, since `/product-workflows:prd-proposal` stops on a `prd.md` the default branch lacks — on a specs tree that is no git repository (*Gate the PRD* returned `unmanaged`), once `/product-workflows:create-prd` has written the PRD, there being no handoff or merge to name — and name no tier. **A tier is claimed only on a PRD-level run**: `proposal-format.md` §5 grades the PRD folder's own `ard.md`, so an Epic-level ARD raises no tier — name `/product-workflows:prd-proposal <PRD>` there with no tier claim. On a PRD-level run where it holds one: on the
+**The commercial step this run just unlocked, named in prose — and it depends on the route, and on a PRD.** Name it only where `prd_dir` holds a `prd.md` — one asserting no `kind: prd` among them, since `/product-workflows:prd-proposal` tests the file and not the kind this phase's opening precondition tests, made at `prd_dir`: `/product-workflows:prd-proposal` stops with `PRD_PROPOSAL_NEEDS_PRD` without one, so on a folder holding none — a slice, since Phase 0's *Gate the PRD* stops an idea-route run without one — say instead that a proposal becomes available once `/product-workflows:create-prd` has written the PRD and its handoff is merged, since `/product-workflows:prd-proposal` stops on a `prd.md` the default branch lacks — on a specs tree that is no git repository (*Gate the PRD* returned `unmanaged`), once `/product-workflows:create-prd` has written the PRD, there being no handoff or merge to name — and name no tier. **A tier is claimed only on a PRD-level run**: `proposal-format.md` §5 grades the PRD folder's own `ard.md`, so an Epic-level ARD raises no tier — name `/product-workflows:prd-proposal <PRD>` there with no tier claim. On a PRD-level run where it holds one: on the
 BRD route, where verified grounding and a settled register already exist, this ARD is what takes the
 folder to tier 3, where architecture-bearing work packages become eligible for High confidence
 (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §5): **`/product-workflows:prd-proposal <PRD>`
@@ -1258,10 +1266,12 @@ read that content out of is the one this run already read. Say plainly whether `
 folder holds no authored `prd.md`, and name what Phase 7's precondition table put in its place —
 `/product-workflows:create-prd <SLICE-KEY>`, a `/product-workflows:brd-split` against this slice or its
 parent, or nothing at all where this slice's gate set holds no `covered-here` row, none
-`unallocated`, and is not empty, or where its `coverage-ledger.md` is missing or unreadable. Where the answer is
+`unallocated`, and is not empty, or where its `coverage-ledger.md` is missing or unreadable, or where
+the folder's `prd.md` asserts no `kind: prd`. Where the answer is
 *nothing*, say that too, and say why: `/create-prd` would raise `CREATE_PRD_BRD_NOT_ELIGIBLE` and
 that branch names no command either — or, for a missing ledger, that there is no gate set to judge,
-naming the file by path. Name the folder tested, the
+naming the file by path — or, for a `prd.md` asserting no `kind: prd`, what Phase 7's precondition
+says for that file. Name the folder tested, the
 `key` it asserts, and the two gate-set figures the table was resolved on (for a missing ledger, the
-`claims:` count and the missing path). That is the case a reader
+`claims:` count and the missing path; for a `prd.md` asserting no `kind: prd`, none — no table was resolved). That is the case a reader
 is most likely to mistake for reachable.
