@@ -539,11 +539,11 @@ behaviour, not the behaviour.
 
     **The gate is here, not skipped, for the reason step 6 already gates the ledger: a claim list
     read off an unmerged artifact produces a finding set nothing downstream can reproduce.**
-    `/product-workflows:create-ard` and `/product-workflows:specify` both gate `prd.md` with their
-    own `require-on-main` before reading it as the PRD — one on a branch stops them, and so does one
-    in the folder and on no ref, with their `*_PRD_NOT_HANDED_OFF`, on either route — so a finding
-    this run derived from a `prd.md` written only to a working tree would ground a document those
-    two commands do not yet take as the PRD — a `[CG#n]` or `[DG#n]` whose premise agrees with
+    `/product-workflows:create-ard`, `/product-workflows:specify` and `/product-workflows:epics` each
+    gate `prd.md` with their own `require-on-main` before reading it as the PRD — one on a branch
+    stops them, and so does one in the folder and on no ref, with their `*_PRD_NOT_HANDED_OFF`, on
+    either route — so a finding this run derived from a `prd.md` written only to a working tree
+    would ground a document those three commands do not yet take as the PRD — a `[CG#n]` or `[DG#n]` whose premise agrees with
     nobody's committed copy of the requirement but this run's own.
 
     **Row F splits the same way the BRD route's row F does, and for the same reason: *never

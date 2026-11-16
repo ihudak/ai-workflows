@@ -451,7 +451,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   slice must also agree with its parent's ledger (`PRD_GROUND_SLICE_UNRECONCILED`), because a carve
   cancelled mid-walk leaves provisional files that pass both.
   On the idea route, `prd.md` itself — a claim list read off an unmerged artifact would ground a
-  document `/create-ard` and `/specify` cannot yet see. See "What it needs" above for the exact stop
+  document `/create-ard`, `/specify` and [`/epics`](epics.md) cannot yet see. See "What it needs" above for the exact stop
   conditions on each route.
 - **Phase 3 — baseline integrity, run by the orchestrator itself, not delegated to an agent.**
   Every repository is pinned and proven clean in content — not merely in `git status` — before
