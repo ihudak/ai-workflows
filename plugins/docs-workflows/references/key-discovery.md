@@ -6,7 +6,7 @@ How `/document` (keyed mode) and `/release-notes` (with diff grounding on) run t
 
 ## 1. Run it
 
-In Phase 3's diff-source step, once the slug→clone map is built and the tokens are known — §4's tokens for this run's scope, each read off a folder the run resolved or listed — in one shell block, with the Bash tool's timeout set to 600000 ms, since it reads every clone and asks GitHub once per pull request it keeps:
+In Phase 3's diff-source step, or, on a `/document` run whose implementation record holds no block in its scope, in that command's Phase 0 step 3a, before it asks whether to document at all, its Phase 3 then taking that result: once the slug→clone map is built and the tokens are known — §4's tokens for this run's scope, each read off a folder the run resolved or listed — in one shell block, with the Bash tool's timeout set to 600000 ms, since it reads every clone and asks GitHub once per pull request it keeps:
 
 ```bash
 kd=$(command mktemp) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/key-discovery.py" scan --scope head --probe \
@@ -18,7 +18,7 @@ Each token is its own `--key`. Each repository the scan covers — those `implem
 
 **No clone to scan: do not run it.** Where the scan covers no repository — the map holds no clone, as on a run that took `/document` Phase 1's *Proceed without the repos*, or every repository `implementation.md` names resolved to none — the script cannot run (it requires a `--repo`) and there is nothing to scan. Do not call it, and report the scan as not run, *no clone resolved*, with no `--no-github` retry and no script failure.
 
-The JSON goes to a file of the run's own, never to the tool's output, which a large result would overflow: read the file the printed line names — the script indents it, so it reads line by line however large — and remove it with `rm -f` once this phase has taken what it needs.
+The JSON goes to a file of the run's own, never to the tool's output, which a large result would overflow: read the file the printed line names — the script indents it, so it reads line by line however large — and remove it with `rm -f` once the phase that ran it has taken what it needs — save the file of `/document`'s Phase 0 scan, which is kept until that run's Phase 3 has taken its result, and which a run ending before then removes as it ends (that command's *Ending early*).
 
 **Never code: the specs repository and the docs repository.** Pass `--exclude <the specs repository>` — the top level of the PRD folder's repository, `git -C <PRD folder> rev-parse --show-toplevel` — and `--exclude <the docs repository>`: `/document`'s resolved `docs_repo_path`, and `/release-notes`' docs root, the one its documentation grounding resolved (`--docs <path>`, else `${DOCS_PATH:-/workspace/docs}`). Pass either only where it is a git checkout's top level and not a repository `implementation.md` names: documentation kept inside a code repository is that code's, and the code stays scanned. `--exclude` leaves out nothing for a path inside a repository, or outside any. The script leaves out every clone whose `origin` slug is one of theirs, a second clone of either included, and drops every pull request in a repository of that name: their commits and pull requests carry the run's tokens by the family's own conventions — the specs repository's artifact commits and handoff pull-request titles, the docs repository's squash subjects — and read as code they would verify a requirement by its own text.
 
