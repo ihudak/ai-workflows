@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.68.1] — 2026-11-16
+## [4.69.1] — 2026-11-16
 
-LADDER-ORDER batch 3: one sentence of `/implement` and two pages, which describe `docs-workflows` 1.40.0's keyed `/document`; and, on a PRD folder whose `prd.md` asserts no `kind: prd`, what `/design`, `/implement` and `/conformance` name in `/product-workflows:epics`' place, as `workflows-core` 1.94.1's *`/epics` precondition* now says. Released with `docs-workflows` 1.40.0, `workflows-core` 1.94.1 and `product-workflows` 3.83.2.
+LADDER-ORDER batch 3: one sentence of `/implement` and two pages, which describe `docs-workflows` 1.40.0's keyed `/document`; and, on a PRD folder whose `prd.md` asserts no `kind: prd`, what `/design`, `/implement` and `/conformance` name in `/product-workflows:epics`' place, as `workflows-core` 1.95.1's *`/epics` precondition* now says. Released with `docs-workflows` 1.40.0, `workflows-core` 1.95.1 and `product-workflows` 3.83.3.
 
 ### Changed
 

@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.94.1] — 2026-11-16
+## [1.95.1] — 2026-11-16
 
-LADDER-ORDER batch 3: three references describe `docs-workflows` 1.40.0's keyed `/document`, which reads the implementation record in its Phase 0 and, where no record in its scope holds a block and its commit scan finds no commit, puts its nothing-built question. One rule changes: `next-phase-offer`'s *`/epics` precondition*, for a PRD folder whose `prd.md` asserts no `kind: prd`, says what lets `/epics` read that file where it named `/product-workflows:create-prd`, which counts the file as found — so `/conformance`'s *amend-document* offer, and every other offer citing the precondition, names it too. Released with `docs-workflows` 1.40.0, `dev-workflows` 4.68.1 and `product-workflows` 3.83.2.
+LADDER-ORDER batch 3: three references describe `docs-workflows` 1.40.0's keyed `/document`, which reads the implementation record in its Phase 0 and, where no record in its scope holds a block and its commit scan finds no commit, puts its nothing-built question. One rule changes: `next-phase-offer`'s *`/epics` precondition*, for a PRD folder whose `prd.md` asserts no `kind: prd`, says what lets `/epics` read that file where it named `/product-workflows:create-prd`, which counts the file as found — so `/conformance`'s *amend-document* offer, and every other offer citing the precondition, names it too. Released with `docs-workflows` 1.40.0, `dev-workflows` 4.69.1 and `product-workflows` 3.83.3.
 
 ### Changed
 

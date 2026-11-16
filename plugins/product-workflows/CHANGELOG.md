@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.83.2] — 2026-11-16
+## [3.83.3] — 2026-11-16
 
-LADDER-ORDER batch 3. The workflow page says when the PM's `/docs-workflows:release-notes` hands on to `/create-ard` and `/epics`, as `docs-workflows` 1.40.0's `/release-notes` does; and, on a PRD folder whose `prd.md` asserts no `kind: prd`, `/specify`, `/create-ard` and `/update-spec` no longer offer `/epics` or `/create-prd` there, as `workflows-core` 1.94.1's *`/epics` precondition* now says. No agent or reference changes. Released with `docs-workflows` 1.40.0, `workflows-core` 1.94.1 and `dev-workflows` 4.68.1.
+LADDER-ORDER batch 3. The workflow page says when the PM's `/docs-workflows:release-notes` hands on to `/create-ard` and `/epics`, as `docs-workflows` 1.40.0's `/release-notes` does; and, on a PRD folder whose `prd.md` asserts no `kind: prd`, `/specify`, `/create-ard` and `/update-spec` no longer offer `/epics` or `/create-prd` there, as `workflows-core` 1.95.1's *`/epics` precondition* now says. No agent or reference changes. Released with `docs-workflows` 1.40.0, `workflows-core` 1.95.1 and `dev-workflows` 4.69.1.
 
 ### Changed
 
