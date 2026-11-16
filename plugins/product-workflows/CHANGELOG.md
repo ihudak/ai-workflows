@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.83.1] — 2026-11-16
+## [3.83.2] — 2026-11-16
 
-Docs only: SEC-G2 D. The pages say what `dev-workflows` 4.68.0's `/conformance` does with the threat model `/create-ard` writes: it reads the model's copy on the specs repo's default branch, with no gate, traces each mitigation to the code, and sends the architect back to `/create-ard` for the threats only the architect can settle. No command, agent or reference changes. The pages describe `dev-workflows` 4.68.0 and `workflows-core` 1.94.0; beside an older `dev-workflows` they name a reader the command is not. No run needs either release, nor they this one.
+Docs only: SEC-G2 D. The pages say what `dev-workflows` 4.69.0's `/conformance` does with the threat model `/create-ard` writes: it reads the model's copy on the specs repo's default branch, with no gate, traces each mitigation to the code, and sends the architect back to `/create-ard` for the threats only the architect can settle. No command, agent or reference changes. The pages describe `dev-workflows` 4.69.0 and `workflows-core` 1.95.0; beside an older `dev-workflows` they name a reader the command is not. No run needs either release, nor they this one.
 
 ### Changed
 

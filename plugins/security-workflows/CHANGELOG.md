@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [0.12.5] — 2026-11-16
+## [0.12.6] — 2026-11-16
 
-Docs only: SEC-G2 D. The roles page says what `dev-workflows` 4.68.0's `/conformance` checks of a threat model before the scan, and what it leaves to the scan. It describes that release, and needs nothing of the other plugins' releases, nor they of it.
+Docs only: SEC-G2 D. The roles page says what `dev-workflows` 4.69.0's `/conformance` checks of a threat model before the scan, and what it leaves to the scan. It describes that release, and needs nothing of the other plugins' releases, nor they of it.
 
 ### Changed
 
