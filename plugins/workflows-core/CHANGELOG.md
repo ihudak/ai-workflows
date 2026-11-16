@@ -13,7 +13,7 @@ LADDER-ORDER batch 3: wording only. Three references describe `docs-workflows` 1
 
 - **`escalation-rules`**, among the citers of its `Required path environment variable unset` rule: `/document` puts the question for `REPOS_PATH` in keyed mode's Phase 0 step 3a on a run whose implementation record holds no block, and in its Phase 1 otherwise. It said keyed mode's Phase 1.
 - **`implementation-format`.** Its opening list of the readers that test a record for whether it holds a block names `/document`, whose keyed run puts its nothing-built question where no record in its scope holds a block and its commit scan finds no commit. §1's account of an Epic implemented under a PRD address before `dev-workflows` 4.1.2, whose block sits in the PRD folder, says that an Epic-level `/document` whose commit scan finds no commit naming the Epic puts that question, *Stop* recommended, the lines above it and the line *Stop* prints naming the move.
-- **`document-lineage` §6 step 6** says that `/document` and `/release-notes` describe work already built save a `/release-notes` run at the PM stage and a `/document` run answered *Go on* at its nothing-built question, which write from the PRD with no implementation found behind it.
+- **`document-lineage` §6 step 6** says that `/document` and `/release-notes` describe work already built save a `/release-notes` run at the PM stage, a `/document` run answered *Go on* at its nothing-built question, and a `/document` run whose later scan found none where the earlier scan found commits, which write from the PRD with no implementation found behind it.
 - **Generated parts.** `reference-parts/escalation-rules/stops.md` is regenerated from the reference above.
 
 ## [1.94.0] — 2026-11-15

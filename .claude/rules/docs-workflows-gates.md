@@ -20,6 +20,6 @@ Loaded with `.claude/rules/docs-workflows.md`, whose `paths:` it shares. Split o
 
 ## The ledger-row invariant
 
-Moved here from `.claude/rules/docs-workflows.md`'s *Key invariants for `/document` (keyed mode) and `/epics`*, where *docs flow* means `/document`'s and *epics flow* `/epics`':
+Moved here from `.claude/rules/docs-workflows.md`'s *Key invariants for `/document` (keyed mode) and `/epics`*, where *docs flow* means keyed `/document`'s and *epics flow* `/epics`':
 
 - (docs flow) Every gate in the `gate-ledger.md` registry appends its row **when the gate completes**; a missing row, an unconverted `UNAVAILABLE`, or an unattributed skip is a `doc-reviewer` BLOCKER
