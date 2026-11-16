@@ -1,8 +1,8 @@
 # ARD resolution (embedded — shared reference)
 
 Given a resolved item, resolve any applicable **Architecture Requirements/Decision Document(s)** produced by
-`/create-ard` and return a normalized **ARD context** — or **`none`**. Cited by `/create-ard`, `/design`,
-`/implement`, `/specify`, `/update-spec`, `/epics`, `/ready`, and `/conformance` so the resolution logic, the **optional/no-regression** rule, and the deviation-record
+`/create-ard` and return a normalized **ARD context** — or **`none`**. Run by `/create-ard`, `/design`,
+`/implement`, `/specify`, `/update-spec`, `/epics`, `/ready`, and `/conformance` — the commands *Consumers (informative)* below lists — so the resolution logic, the **optional/no-regression** rule, and the deviation-record
 convention live in ONE place.
 
 ## Inputs
@@ -20,8 +20,8 @@ convention live in ONE place.
    its `SPECS_PATH_INSIDE_TREE` message — never `none`, which would let the caller go on without an
    ARD it should have enforced.
 
-   **This step is the only route by which that resolution reaches an ARD.** All seven consumers below
-   delegate their ARD lookup here, so none of them finds an ARD by resolving its *own* folder —
+   **This step is the only route by which that resolution reaches an ARD.** Every command *Consumers (informative)*
+   below lists delegates its ARD lookup here, so none of them finds an ARD by resolving its *own* folder —
    `/implement` included, which resolves its own folder on a keyed run and still reaches an ARD
    solely by citing this file.
 2. Collect candidate ARD files **inside the folder step 1 resolved**, by filename — never a path
@@ -43,8 +43,9 @@ convention live in ONE place.
    stops on it; row C's repair, where it is taken, brings the file into the working tree, and it is
    read as any found ARD is; and only row B passes it with nothing to read — the run's own branch
    deleted the file — where it is not used.
-3. Parse each file's `## Architecture decisions` into `AD#N {id, binds, prevents, rule, source}` where
-   `source` ∈ `prd | epic | area`. PRD-level `AD#N` are the inherited base; Epic/area `AD#N` layer on top
+3. Parse each file's `## Architecture decisions` into `AD#N {id, binds, prevents, rule, source, file}` where
+   `source` ∈ `prd | epic | area`, and `file` is the basename, whole, of the file of `ard_paths` the decision was read in — `ard.md` or `ard-<area>.md` — never a path, and never derived from the id. **A basename alone names no decision**, since an Epic folder's `ard.md` and the inherited PRD folder's each number from `[AD#1]`: `source` says which folder.
+   PRD-level `AD#N` are the inherited base; Epic/area `AD#N` layer on top
    (Epic/area wins on any conflict — contradictions were already blocked by `ard-reviewer` at authoring).
    **Skip a decision carrying `**Superseded by:**` or `**Withdrawn:**`** — it binds nothing (`product-workflows`'
    `ard-format.md` § Superseding a decision), and emitting it would have consumers enforce a rule the ARD itself
@@ -67,6 +68,7 @@ pr: <open pull request number> | null   # present only when status: unmerged
 invariants:
   - id: AD#1
     source: prd | epic | area
+    file: <basename of the ARD file that holds the decision>
     binds: <text>
     prevents: <text>
     rule: <testable statement>
@@ -90,9 +92,9 @@ contracts:           # the PRD-level ARD's `## Contracts` (step 4), or null
 
 `status: unmerged` when an ARD file resolves but is **not on the specs repo's default branch** — verified by `require-on-main` (§3), executed from its own file with `Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, which holds the gate and every rule it applies. The gate's rows D and E find the ARD file on a plugin branch and return the carrying `branch` and any open `pr`; both are passed through to the caller.
 
-**An ARD file no plugin branch carries is not `unmerged`.** There `require-on-main` returns row F — `on_main: absent`, with no branch to pass through — which is the state a declined handoff of a new ARD leaves, or that an ARD committed only on a branch of the person's own leaves, and it is `status: none`, exactly as `phase-handoff.md` §3.4's ARD row records it: the file is not read, and the no-regression rule below applies unchanged. Reading it as `unmerged` would stop every consumer but `/ready`, naming no branch, in a state §3.4 lets them proceed past.
+**An ARD file no plugin branch carries is not `unmerged`.** There `require-on-main` returns row F — `on_main: absent`, with no branch to pass through — which is the state a declined handoff of a new ARD leaves, or that an ARD committed only on a branch of the person's own leaves, and it is `status: none`, exactly as `phase-handoff.md` §3.4's ARD row records it: the file is not read, and the no-regression rule below applies unchanged. Reading it as `unmerged` would stop every consumer's call but `/ready`'s and `/dev-workflows:conformance`'s one PRD-level call for a threat model (the no-regression rule below), naming no branch, in a state §3.4 lets them proceed past.
 
-**Any other stopping state of that gate stops the caller as `unmerged` does.** `require-on-main` also stops on an ARD the default branch already carries whose working copy differs from it — §3.3's rows C′ and C″, and row C once its repair offer is declined or fails — which is what a declined `/create-ard` refinement of a merged ARD leaves, and what a hand edit leaves; and row B′, where the run stands on a branch of its own that lacks a change the default branch made to the ARD since that branch was cut — holding the copy it was cut with, none where the default branch added the ARD since, or its own change made without the default branch's (step 2's ref listing is what brings an added one to the gate) — or holding only an uncommitted copy identical to the default branch's, which reads the same but on a branch that carries none of the default branch's commits of the ARD. There is no status for it here and none is owed: the caller stops on that row's own §4.4 message, naming the files, and `/ready` records it as a readiness finding capping the verdict at `PARTIAL`, as it records `unmerged`. Reading that copy as `found` would ground the run on an edit nobody landed, or on B′'s copy the default branch has superseded, or on a branch behind the default one where B′'s copy is the default branch's own, and reading it as `none` would drop a decision the default branch holds.
+**Any other stopping state of that gate stops the caller as `unmerged` does.** `require-on-main` also stops on an ARD the default branch already carries whose working copy differs from it — §3.3's rows C′ and C″, and row C once its repair offer is declined or fails, or where none is put — which is what a declined `/create-ard` refinement of a merged ARD leaves, and what a hand edit leaves; and row B′, where the run stands on a branch of its own that lacks a change the default branch made to the ARD since that branch was cut — holding the copy it was cut with, none where the default branch added the ARD since, or its own change made without the default branch's (step 2's ref listing is what brings an added one to the gate) — or holding only an uncommitted copy identical to the default branch's, which reads the same but on a branch that carries none of the default branch's commits of the ARD. There is no status for it here and none is owed: the caller stops on that row's own §4.4 message, naming the files, save two: `/ready` records it as a readiness finding capping the verdict at `PARTIAL`, as it records `unmerged`; and `/dev-workflows:conformance`'s one PRD-level call for a threat model, on a PRD with no Epic folder, leaves the model unused, says so in one line, puts no repair offer on row C — the switch and pull would move the checkout, and `<default-ref>`, under records and a model the run has already read — and continues, as it does on `unmerged` (`phase-handoff.md` §3.7's fifth caller). Reading that copy as `found` would ground the run on an edit nobody landed, or on B′'s copy the default branch has superseded, or on a branch behind the default one where B′'s copy is the default branch's own, and reading it as `none` would drop a decision the default branch holds.
 
 **`unmerged` is reachable only when an ARD file resolves.** An absent ARD is `none`, unchanged — see the no-regression rule below. This status does not make `/create-ard` a prerequisite for anything.
 
@@ -104,7 +106,7 @@ extra phase output, no reviewer dimension. The ARD steps are strictly additive a
 
 **One stated exception: a multi-component PRD.** Where `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3 finds two or more `kind: code` components — from an ARD's `components:`, or, with `none` here, from an `/epics` run's confirmed set or the targets the PRD's Epics carry — an ARD without `## Contracts`, `none` included, leaves the Epics with no contract to fit together by. So `/epics` (Phases 2.7 and 5.5) and `/implement` (Phase 1) ask whether to stop and author it first (`components.md` §6), each offering to continue without it; `/design <PRD>` and `/implement <PRD>` take a flat PRD-level specification as a requirements source rather than a unit, save by their override; and `/ready` asks nothing and caps its verdict. Continuing without the ARD proceeds exactly as `none` does here: it is still never a prerequisite. **This rule binds the ARD's steps, not another input's**: what an Epic's `target:` drives — `/specify`'s and `/design`'s narrowing to it, `/design`'s re-split question, `/implement`'s target-repository question, `/ready`'s target repositories — runs on a one-component PRD with no ARD too, because the target, not the ARD, is its input.
 
-A caller that gets `status: unmerged` **stops**, naming the branch and any open pull request, except `/ready` — which is a read-only verifier and records it as a readiness finding capping the verdict at `PARTIAL`. The distinction matters: reporting a phase as complete while its ARD sits unmerged is exactly the claim `/ready` exists to check.
+A caller that gets `status: unmerged` **stops**, naming the branch and any open pull request, except `/ready` — which is a read-only verifier and records it as a readiness finding capping the verdict at `PARTIAL` — and `/dev-workflows:conformance`'s one PRD-level call for a threat model, on a PRD with no Epic folder, which leaves the model unused, says so in one line and continues (`phase-handoff.md` §3.7's fifth caller). For `/ready` the distinction matters: reporting a phase as complete while its ARD sits unmerged is exactly the claim `/ready` exists to check. For `/dev-workflows:conformance` the model is an optional input, and a run that makes no such call where no model stands must not stop because one does; every other `ard-resolution` call of that command stops as before.
 
 ## Deviation-record convention
 
@@ -124,8 +126,8 @@ deviation record as *allowed-but-flagged* (the architect adjudicates), **without
 - `/specify` and `/update-spec` — keep user stories + scope consistent with `AD#N` + scope (`/update-spec` the items it revises); deviations → the spec's `### Open questions`.
 - `/epics` — PRD-level only (`epic: null` on a re-refine run as on a draft one, `prd` the PRD folder's key either way); `AD#N` = inherited invariants the drafted Epics must respect; deviations → a `- ARD deviation: …` line in the Epic draft + the Phase 9 report.
 - `/ready` — PRD-level + Epic-level `AD#N` = inherited invariants passed to `readiness-reviewer` as `applicable_ard`; read-only — it never authors a deviation record, only checks the artifacts it reads for an existing one.
-- `/conformance` — Epic-level resolution on either run — an Epic run's own, and on a PRD run each Epic's (its Phase 1 (b)); the `Rule` of each returned `AD#N` is a requirement to trace against the code, and `status: unmerged` stops the run. On an Epic run it also reads each `AD#N`'s `source` and `binds` and the `components` field (its Phase 1 (b) and Phase 2). Read-only — it never authors a deviation record.
+- `/conformance` — Epic-level resolution on either run — an Epic run's own, and on a PRD run each Epic's (its Phase 1 (b)); the `Rule` of each returned `AD#N` is a requirement to trace against the code, and `status: unmerged` stops the run. And one PRD-level call for a threat model, on a PRD run of a PRD with no Epic folder whose folder holds a `threat-model.md` (its Phase 1 (b)): no stopping state of `require-on-main` stops the run there — `unmerged`, like every other, leaves the model unused (both above) — and the call's Rules join the requirements only where it returns `found`. On an Epic run it also reads each `AD#N`'s `binds`, and the `components` field for its tracers (its Phase 1 (b) and Phase 2). On either run it reads each `AD#N`'s `source` and `file`, so that each decision is keyed by its folder and two ARD files' decisions of one number are told apart, and, where a threat model stands, `components` and `contracts`, for that model's component set and for which of its threats land on the unit (its Phase 1 (b)). Read-only — it never authors a deviation record.
 
-`components` and `contracts` are read by `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3 and §6, read directly by `/specify`, `/design` and `/ready` — and `components` alone by `/conformance` — and passed on by `/epics` to `epic-writer` and `epic-reviewer`, and by `/design` to `design-reviewer` (its interface rows); a caller that reads neither field behaves exactly as it did before they existed.
+`components` and `contracts` are read by `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3 and §6, read directly by `/specify`, `/design`, `/ready` and `/conformance`, and passed on by `/epics` to `epic-writer` and `epic-reviewer`, and by `/design` to `design-reviewer` (its interface rows); a caller that reads neither field behaves exactly as it did before they existed. Each invariant's `file` is read by `/conformance` (above); a caller that reads no `file` behaves exactly as it did before the field existed.
 
 Of the consumers listed above, `/design`, `/implement`, `/specify`, `/update-spec`, `/epics` and `/ready` pass `invariants` to their reviewer as `applicable_ard`; the reviewer's ARD-conformance dimension is skipped entirely when it is absent. `/create-ard` does not: it inherits PRD-level `AD#N` read-only straight into its own grill and drafting (Phase 4), and `ard-reviewer` checks non-contradiction directly against the drafted file, never via that field. `/conformance` passes them to no reviewer, since it traces each `Rule` itself.

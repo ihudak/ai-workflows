@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.8] — 2026-11-16
+
+SEC-G2 D. A conformance record's entry on a Rule of a design's threat review — a threat mitigation, which `dev-workflows` 4.69.0's `/conformance` now traces — is never a documentation decision: `workflows-core` 1.95.0's `source-truth` §7.8 leaves it out of the open entries, so `/document` neither takes nor reports one, and `/release-notes` neither carries one to its writer nor opens the design. Neither command changes for that, since both take the open entries from §7.8 alone; `doc-planner`'s one sentence and the pages say so. Nothing here needs another plugin's release to run, and an older `docs-workflows` beside `workflows-core` 1.95.0 leaves such an entry out too. Beside a `workflows-core` older than 1.95.0, §7.8 counts such an entry open, whatever `docs-workflows` stands beside it: update `workflows-core` before `/release-notes` reads a record `dev-workflows` 4.69.0 wrote.
+
+### Changed
+
+- **`doc-planner` sets `requirement` to `null` on a claim drawn from `design.md`**, its own clause now: a design's only requirements are its threat review's `[DT#N]` Rules, which no documentation decision takes. It already set `null` there, where it called the design context holding no requirement, so no warning changes.
+- **Pages.** The `/document` and `/release-notes` pages, and the workflow overview, say an entry on a Rule of a design's threat review never counts — a threat mitigation the design settles, never a documentation decision — so neither command takes nor reports one, and `/release-notes` never opens the design for it.
+
 ## [1.39.7] — 2026-11-15
 
 Docs only: SEC-G2 C. The `/document` and `/release-notes` pages name the threat models a design records among what their lineage check walks. They describe `dev-workflows` 4.67.0's `/design`, which records a threat model in a design that holds a threat review, and `workflows-core` 1.92.0's `document-lineage`, and need nothing of the other plugins' releases, nor they of it.
