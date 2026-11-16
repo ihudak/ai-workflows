@@ -93,7 +93,7 @@ append-only — and the picker's ● marker, which reads the Epic's own folder, 
 `specification.md` and `design.md` are both on the default branch, and otherwise leaves it out,
 naming what it needs first; `/ready` derives its phase from an Epic folder holding no record; an
 Epic-level `/document` or `/release-notes` reads none of its refs, and an Epic-level `/document`
-whose commit scan finds no commit naming the Epic puts its nothing-built question, *Stop*
+whose commit scan finds no commit for the Epic's tokens puts its nothing-built question, *Stop*
 recommended, the lines above it and the line *Stop* prints naming the move below; and §5's `unit-branch` answers
 `none` for that Epic, so no consumer of it finds the Epic's branch. **Population: every Epic
 implemented under a PRD address before `dev-workflows` 4.1.2.** And where the PRD folder also holds
