@@ -36,13 +36,14 @@ count. Each commit the scan or the probe matched there, and each a merged pull r
 landed, is then tested on its own, which walks no history and so needs no --full-history: a
 merge against its first parent, any other commit against its parent (a root commit against the
 empty tree). A commit naming a key that touches nothing outside the set is listed as
-documentation only and never found, the probe drops a merge that brought in nothing outside it,
-and a merged pull request keeps only the landed commits touching a path outside it, listing the
-rest. Where no content path is known, or one is the whole repository, or --exclude names the
-repository too, it is left out whole, as --exclude leaves one out; where no --repo is that
-repository, its pull requests are dropped by name. A root in no git work tree changes nothing.
-docs-check prints the paths `git diff --name-only <base> <head>` lists outside the same
-documentation set.
+documentation only and never found, the probe drops a commit that touches, and a merge that
+brought in, nothing outside it, and a merged pull request keeps only the landed commits touching a
+path outside it, listing the rest. Where no content path is known, or one is the whole
+repository, or --exclude names the repository too, it is left out whole, as --exclude leaves one
+out; where no --repo is that repository, its pull requests are dropped by name. A root in no git
+work tree changes nothing. docs-check prints, as "outside", the paths
+`git diff --name-only <base> <head>` lists outside the same documentation set, and [] where
+"docs" is null or its "rule" is "left-out".
 
 Exit 0: it ran -- a clone or a search it could not reach is a field of the result. Exit 2: it
 could not run; the cause is on stderr. Python standard library only.
@@ -79,7 +80,9 @@ STATES = {"merged": "MERGED", "open": "OPEN", "closed": "CLOSED"}
 # The family's own paths: what the family itself writes into a documentation repository, and the configuration
 # and navigation files of the generators its docs signals name.
 # Each is matched from the repository's top level: "literal" as the path written, a directory with everything
-# below it; "glob" as a pattern whose "*" stops at "/", so "*.md" is the top level's markdown and nothing deeper.
+# below it; "glob" as a pattern whose "*" stops at "/", so "*.md" is the top level's markdown and nothing deeper,
+# and whose leading "**/" is any depth, the top level included. A generator's configuration and navigation files
+# match at any depth, since a site kept in a subfolder has them there and no profile field records them.
 FAMILY_DOC_PATHS = (
     ("literal", ".dev-workflows"),
     ("literal", ".claude"),
@@ -87,16 +90,12 @@ FAMILY_DOC_PATHS = (
     ("literal", ".docstack"),
     ("glob", "*.md"),
     ("glob", "**/_snippets/**"),
-    ("literal", "mkdocs.yml"),
-    ("glob", "mkdocs.*.yml"),
-    ("literal", "docusaurus.config.js"),
-    ("literal", "docusaurus.config.ts"),
-    ("literal", "docusaurus.config.mjs"),
-    ("literal", "docusaurus.config.cjs"),
-    ("literal", "sidebars.js"),
-    ("literal", "sidebars.ts"),
-    ("literal", "sidebars.mjs"),
-    ("literal", "sidebars.cjs"),
+    ("glob", "**/mkdocs.yml"),
+    ("glob", "**/mkdocs.*.yml"),
+    ("glob", "**/docusaurus.config.[jt]s"),
+    ("glob", "**/docusaurus.config.[cm]js"),
+    ("glob", "**/sidebars.[jt]s"),
+    ("glob", "**/sidebars.[cm]js"),
     ("glob", "**/_category_.json"),
     ("glob", "**/_category_.yml"),
     ("glob", "**/antora.yml"),
@@ -870,9 +869,10 @@ def case_docs_second_run(tmp):
     mono = _mono(tmp)
     first = _commit(mono, "ACME-7 Document intake",
                     ("website/docs/intake.md", "website/mkdocs.yml", ".dev-workflows/docs-profile.yml"))
-    out = discover(["ACME-7"], [mono], "head", github=False, docs_root=os.path.join(mono, "website"))
+    out = discover(["ACME-7"], [mono], "head", probe=True, github=False, docs_root=os.path.join(mono, "website"))
     docs = out["docs"]
     assert out["commits"] == [], out["commits"]
+    assert out["repos"][0]["probe"] == [] and out["repos"][0]["probe_error"] is None, out["repos"]
     assert docs["rule"] == "paths" and docs["reason"] is None and docs["content_paths"] == ["website"], docs
     assert docs["top"] == mono and docs["repo"] == "mono" and docs["clones"] == [mono], docs
     assert [d["sha"] for d in docs["docs_only"]] == [first], docs["docs_only"]
@@ -1062,11 +1062,32 @@ def case_docs_no_clone_of_it_scanned(tmp):
 
 
 def case_docs_excluded_too(tmp):
-    mono = _mono(tmp)
+    remote = "git@example.com:acme/mono.git"
+    mono = _mono(tmp, remote=remote)
     _commit(mono, "[ACME-7] code", "src/a.py")
-    out = discover(["ACME-7"], [mono], "head", github=False, excludes=[mono], docs_root=os.path.join(mono, "website"))
-    assert out["excluded"] == ["mono"] and out["repos"] == [] and out["commits"] == [], out
-    assert out["docs"]["rule"] == "left-out" and out["docs"]["clones"] == [], out["docs"]
+    second = _repo(tmp, "mono-2", remote)
+    _commit(second, "base")
+    for excludes in ([mono], [second]):  # by the repository's own top level, and by a second clone's origin slug
+        out = discover(["ACME-7"], [mono], "head", github=False, excludes=excludes,
+                       docs_root=os.path.join(mono, "website"))
+        docs = out["docs"]
+        assert out["excluded"] == ["mono"] and out["repos"] == [] and out["commits"] == [], (excludes, out)
+        assert docs["rule"] == "left-out" and docs["reason"] == "--exclude names it too", (excludes, docs)
+        assert docs["clones"] == [] and docs["docs_only"] == [], (excludes, docs)
+
+
+def case_docs_navigation_at_any_depth(tmp):
+    r = _repo(tmp, "mono")
+    _commit(r, "base", ("src/app.py", "website/docs/a.md", "website/mkdocs.yml"))
+    sidebar = _commit(r, "ACME-7 sidebar entry", "website/sidebars.js")
+    config = _commit(r, "ACME-7 navbar link", "website/docusaurus.config.ts")
+    component = _commit(r, "ACME-7 sidebar component", "website/src/sidebars.jsx")
+    out = discover(["ACME-7"], [r], "head", github=False, docs_root=r,
+                   docs_content=["website/docs", "website/mkdocs.yml"])  # a root at the top level, a profile's paths
+    docs = out["docs"]
+    assert docs["rule"] == "paths" and docs["content_paths"] == ["website/docs", "website/mkdocs.yml"], docs
+    assert [d["sha"] for d in docs["docs_only"]] == [config, sidebar], docs["docs_only"]
+    assert [c["sha"] for c in out["commits"]] == [component], out["commits"]
 
 
 def case_docs_check(tmp):
