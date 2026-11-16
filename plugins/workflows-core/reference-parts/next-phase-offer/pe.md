@@ -26,6 +26,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `PA — architecture (optional)` → `pa`
 - `PE — breakdown & specification` → `pe`
 - `Dev — build, verify & deliver` → `dev`
+- `` `/dev-workflows:implement` precondition `` → `dev`
 - `` `/epics` precondition `` → `epics-precondition`
 - `overflow rule` → `overflow`
 - `Not pipeline nodes` → `not-pipeline`
@@ -158,9 +159,9 @@ array carries every option.
   the spec whole rather than through Epics — on a multi-component PRD only as `/dev-workflows:design`'s override where the
   PRD folder holds no Epic folder, and, where it holds Epics, as designing those Epics — only where an
   Epic's `specification.md` is on the default branch, since `/dev-workflows:design` stops without
-  one: on the PRD's address, its Phase 0 step 4 stops with the excluded-count report, naming
-  `/product-workflows:specify <PRD>` for an Epic with no `specification.md` and the merge of the
-  branch or pull request for one whose spec is not yet merged; on an Epic's own address, step 3's
+  one: on the PRD's address, its Phase 0 step 4 stops with the excluded-count report, naming, for
+  each Epic whose `specification.md` is not on the default branch, what that Epic needs first, as
+  that step words it; on an Epic's own address, step 3's
   gate stops with `DESIGN_NO_SPEC` where no ref carries the Epic's `specification.md` (none written,
   or written and never committed), and with `require-on-main`'s stop naming the branch or pull
   request where a plugin branch carries it.
@@ -194,7 +195,12 @@ caller's PRD folder — the resolved folder itself on a PRD-level run, its paren
 one — holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd`
 is not a prerequisite for `/product-workflows:create-ard` there, the offer is
 `/product-workflows:create-prd <PRD>` instead, `<PRD>` being that tested folder's own key and
-never an Epic's, **and only where that command can itself run**: it refuses more than one shape —
+never an Epic's — save where that folder holds the PRD under its pre-rename file name (the test
+`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's `prd.md` rung makes), on which
+`/product-workflows:create-prd` would write a second PRD: there the offer names the rename, never
+`/product-workflows:create-prd`, as §4.4's *The first missing document* names it, through
+`/product-workflows:specify <PRD>`, whose own stop prints the rename's commands, saying that run
+stops — **and only where `/product-workflows:create-prd` can itself run**: it refuses more than one shape —
 three on the BRD route, and an `EPIC-` folder on either, which is why the key is the PRD folder's
 — so on a BRD-route slice the two data refusals on that slice's own ledger are tested first and
 the offer resolves to `/product-workflows:brd-split` against one of two keys, or to no option at
