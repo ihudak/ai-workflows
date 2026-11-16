@@ -133,7 +133,6 @@ Behaviour under `paths`, per clone read under the rule:
 | `case_docs_no_clone_of_it_scanned` (L12) | `docs_root` with a content path in a GitHub clone that is **not** a `--repo`; another clone is; a pull request in the docs repository names the key | that pull request is absent from `github.prs`; `docs["clones"] == []` |
 | `case_docs_excluded_too` | the same top level as `--exclude` and `--docs-root` with a content path | left out whole: in `excluded`, no `repos[]` entry |
 | `case_docs_check` | a branch with one commit touching `website/docs/a.md`, `README.md` and `assets/shot.png`; `_main(["docs-check", "--docs-root", <mono/website>, "--base", <base sha>])` | exit 0; `outside == ["assets/shot.png"]`; with `--docs-content assets` → `[]`; under `left-out` → `[]` |
-| `case_docs_family_paths_match_the_reference` | reads `../references/key-discovery.md` beside the script and takes the lines of the fenced block that follows the line `<!-- family-doc-paths -->` | the set of patterns there equals the set in `FAMILY_DOC_PATHS`. **Task 2 writes the block; until then this case is skipped where the marker is absent** — it prints nothing and passes, and Task 2 removes that allowance |
 | `case_docs_content_without_root_is_a_usage_error` | `_main(["scan", …, "--docs-content", "x"])` | exit 2, one stderr line |
 
 Also extend `case_cli`'s pinned key sets for the new fields.
@@ -142,7 +141,7 @@ Also extend `case_cli`'s pinned key sets for the new fields.
 
 - [ ] **Step 4: Implement.** `discover(keys, clones, scope, probe=False, github=True, excludes=(), owners_of=(), docs_root=None, docs_content=())`; a helper that resolves the documentation rule once (`top`, `rule`, `reason`, `content_paths`, `rejected`, the pathspec list); `_log`, `scan_clone` and `probe_clone` take an optional pathspec list; `github_layer` takes the clones under the rule and their pathspecs; `main` gains the two flags and the `docs-check` subcommand; the module docstring's usage and prose say what the new flags do. Keep every git call through `_git_in`.
 
-- [ ] **Step 5: Run the self-test.** Expected: `selftest: 60/60 passed` (42 + 18; state the real count if a case was added or merged, with the reason).
+- [ ] **Step 5: Run the self-test.** Expected: `selftest: 59/59 passed` (42 + 17; state the real count if a case was added or merged, with the reason).
 
 - [ ] **Step 6: Time it.** On a clone with at least 10,000 commits under `/workspace` (pick one with `git rev-list --count HEAD`), run `scan --scope head --probe --no-github` once without and once with `--docs-root`/`--docs-content`; report both wall-clock times. Expected: the second within a few seconds of the first (M §5d measured 0.3–0.7 s per walk on 60k–100k commits).
 
@@ -155,7 +154,7 @@ Also extend `case_cli`'s pinned key sets for the new fields.
 **Files:**
 - Modify: `plugins/docs-workflows/references/key-discovery.md`
 - Modify: `plugins/workflows-core/references/implementation-format.md` (§4, the sentence *never the specs repository or the docs repository …*)
-- Modify: `plugins/docs-workflows/scripts/key-discovery.py` (only `case_docs_family_paths_match_the_reference`'s skip allowance, removed)
+- Modify: `plugins/docs-workflows/scripts/key-discovery.py` (one new self-test case, `case_docs_family_paths_match_the_reference`; nothing else)
 - Modify where they describe the script or state the exclusion: `plugins/docs-workflows/agents/diff-summarizer.md`, `plugins/docs-workflows/docs/reference/references.md`
 
 **Interfaces:**
@@ -171,7 +170,7 @@ What `key-discovery.md` must say after this task (the wording is yours; the cont
   - **The documentation-holding repository** — D §4's rule. State: what the documentation root is for each caller (`/document`: `docs_repo_resolved`; `/release-notes`: `--docs <path>`, else `${DOCS_PATH:-/workspace/docs}`, **whether documentation grounding is on or off** — L13), left off where that directory does not exist; that it is passed **whether or not `implementation.md` names the repository** (L4); the content paths to pass and where they come from — the profile's `spaces[].content_root` and `snippet_root`, `images.root`, `builds[].config`, `announcement_pages[].path`, from the profile readable when the scan runs (L11): for `/document` Phase 0 step 3a the in-repo `<docs_repo_path>/.dev-workflows/docs-profile.yml` where it exists, else the built-in one where `is_known_docs_repo`, else none; for its Phase 3 and Phase 4 scans the profile step 4 loaded or generated; for `/release-notes` the in-repo file at the documentation-holding repository's top level where it exists, else none (L5); that the script adds the site's own directory where the root lies below the top level; the fixed list; that a commit touching a documentation path and a code path is kept; L3, with the reason the run prints; L10; L12.
   - The sentence *nothing the run holds tells the two apart* is gone, and so is *Pass either only where it is a git checkout's top level and not a repository `implementation.md` names*.
 
-- [ ] **Step 3: The fixed list**, once, as a fenced block directly under the line `<!-- family-doc-paths -->`, one pattern per line, exactly the patterns of `FAMILY_DOC_PATHS`, with one sentence above it saying what the list is (what the family itself writes into a documentation repository, and the configuration and navigation files of the generators its docs signals name) and that a path outside it and outside the content paths is code. Then remove the skip allowance from `case_docs_family_paths_match_the_reference`, so a missing marker fails.
+- [ ] **Step 3: The fixed list**, once, as a fenced block directly under the line `<!-- family-doc-paths -->`, one pattern per line, exactly the patterns of `FAMILY_DOC_PATHS`, with one sentence above it saying what the list is (what the family itself writes into a documentation repository, and the configuration and navigation files of the generators its docs signals name) and that a path outside it and outside the content paths is code. Then add the self-test case `case_docs_family_paths_match_the_reference`: it reads `../references/key-discovery.md` beside the script, takes the lines of the fenced block that follows the marker line, and asserts that the set of patterns there equals the set in `FAMILY_DOC_PATHS`; a missing marker fails it. Run it against a scratch copy of the reference with one pattern removed and see it fail; expected after: `selftest: 60/60 passed`.
 
 - [ ] **Step 4: §2** gains `docs`, `repos[].docs_rule` and `landed_docs_only`, and says what `scanned` means on a clone read under the rule. **§3** says a documentation-only commit is never a commit found. **§4** says a merged pull request that landed only documentation is listed as that and never read, and that the documentation-holding repository's pull requests are dropped by name where no scanned clone is that repository.
 
