@@ -399,8 +399,15 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
        register absent and carries what the folder holds. Nothing becomes a prerequisite
        (§5 rule 3); a slice nobody has interviewed holds no register, and that is not a stop.
      - **A `decisions.md` in the folder, and on no ref** — the run that wrote it had its handoff
-       declined — → stop, as `CREATE_PRD_REGISTER_NOT_HANDED_OFF` below. Reading it would freeze
-       this PRD against decisions only a working tree holds, the state this gate exists to refuse.
+       declined — → stop, as `CREATE_PRD_REGISTER_NOT_HANDED_OFF` below, in the form the HEAD test
+       selects — `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>" 2>/dev/null`, `<path>` the
+       register's path relative to `$SPECS_PATH` — the gate's own `path` input, written `./<path>`
+       as §3.2 writes every `<ref>:` object name — whatever form the stop later prints the path in,
+       exit 0 where HEAD holds the file. Where HEAD does not hold it — an untracked file, or one
+       staged and never committed — the uncommitted form; where HEAD holds it — committed on a
+       branch no plugin prefix names, or on a local `<default>` that `origin` does not hold — the
+       committed form. Reading it would freeze this PRD against decisions the default branch does
+       not hold, the state this gate exists to refuse.
 
    Both stops carry §4.4's four parts, in order:
    ```
@@ -418,9 +425,18 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
    git -C "<SPECS_PATH>" commit -m "<SLICE-KEY> decision register" -- "<path>"
    git -C "<SPECS_PATH>" push -u origin <new-branch>
 
-   Then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:create-prd <SLICE-KEY>'. Ignored, every /create-prd, /create-ard and /specify run on this slice meets this register's gate again until it is on <default> — this stop, or, where the register has since been committed to a branch, the stop for a register on a branch.
+   Then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:create-prd <SLICE-KEY>'. Ignored, every /create-prd, /create-ard and /specify run on this slice, and every /create-ard and /specify run on an Epic under it, that reaches this register's gate stops here until the register is on <default>; once it is committed on a branch and not landed, such a run meets the stop for a register on a branch where a plugin prefix names that branch, and, run from that branch, this stop's committed form where no plugin prefix names it.
+   ```
+   ```
+   CREATE_PRD_REGISTER_NOT_HANDED_OFF: <SLICE-KEY>'s decision register at <path> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of it and wrote nothing. Land that branch by running these:
+
+   <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
+
+   Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:create-prd <SLICE-KEY>'. Ignored, every /create-prd, /create-ard and /specify run on this slice, and every /create-ard and /specify run on an Epic under it, that reaches this register's gate from <branch> stops here the same way until the register is on <default>; one from a branch that does not hold the register finds none in the folder and goes on without it.
    ```
    `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<path>` is decisions.md's path. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+
+   In the committed form `<branch>` is the branch `git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints, and the commands the stop prints are the ones §4.4's row F gives for a file HEAD holds, in the case row F selects — each chosen by the reads that row names before the stop prints, each on a line of its own, and an alternative introduced by a line saying when it applies; a `<new-branch>` among them is named as in the uncommitted form. Three of the message's sentences change with the case, each on a test the stop makes itself. Where `<branch>` is `<default>`, the first reads `<SLICE-KEY>'s decision register at <path> is committed on your local <default> and not pushed.`, and the one opening `Then` reads `Then re-run '/product-workflows:create-prd <SLICE-KEY>' — where <default> is protected, once a pull request from <new-branch> into <default> is merged.` Where the specs repository has no `origin`, the one opening `Then` reads `Then re-run '/product-workflows:create-prd <SLICE-KEY>'.` alone, since the local merge row F selects there needs no pull request. Where the reads row F names select no command — `<branch>` on `origin`, and the local branch holding no commit `origin` lacks — the stop prints none: the sentence opening `Land that branch` says instead that `<branch>` is already on origin, so nothing is left to push and the pull request is all that is left. On a read-only specs mount (§3.6) every command either form prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it.
    Neither is a plugin gap, so neither `emit-block`s (Phase 7).
 
 `/create-prd` is **cwd-agnostic** and needs **no repos mounted** (product-level; no code scan).

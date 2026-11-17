@@ -298,8 +298,14 @@ cannot review, and they will not tell you that — they will review it anyway, b
      with nothing staged, reports `nothing to commit` and opens no pull request — save where the handoff re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch, and a re-publish pushes only commits already made, never the files on disk — while where it finds something the round it opens is handed
      off with its own record and not the earlier ones. Either way `handoff-to-main` stages only the
      paths *that* run declared, and the round records already
-     on disk are not among them. What is needed is the register already written, landed:
-     `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register is written at <path> but is on no branch — its handoff was declined. Commit and merge decisions.md and the interview/ round records to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk.`
+     on disk are not among them. What is needed is the register already written, landed. Which of
+     the stop's two forms to print turns on the HEAD test, made before it prints as
+     `workflows-core:phase-handoff` §4.4's row F makes it for a stop that lands several files: on
+     each of `decisions.md` and the `interview/round-<N>.md` files in the folder that `<default-ref>`
+     does not hold, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<file>" 2>/dev/null`, `<file>` that
+     file's path relative to `$SPECS_PATH`, exit 0 where HEAD holds it. Where HEAD holds none of
+     them — untracked, or staged and never committed — the uncommitted form:
+     `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register is written at <path> but is on no branch — its handoff was declined. This run built no package and wrote nothing. Commit and merge decisions.md and the interview/ round records to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk. Ignored, every /brd-package run on this slice stops here until decisions.md is on <default>.`
      ```
      git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
      git -C "<SPECS_PATH>" add -f -- "<path>" "<round-file>" …
@@ -307,6 +313,16 @@ cannot review, and they will not tell you that — they will review it anyway, b
      git -C "<SPECS_PATH>" push -u origin <new-branch>
      ```
      `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<path>` is decisions.md's path and `<round-file>` is each `interview/round-<N>.md` in the folder, one quoted path each in place of the `…`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+
+     Where HEAD holds all of them, or some — committed on a branch no plugin prefix names, or on a
+     local `<default>` that `origin` does not hold — the commands above do not apply, since the
+     switch they open with takes the files HEAD holds out of the working tree; the committed form
+     lands the branch instead, never the uncommitted form (§4.4's row F):
+     `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register at <path> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run built no package and wrote nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run. Ignored, every /brd-package run on this slice stops here until decisions.md is on <default>.`
+     ```
+     <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
+     ```
+     **The committed form's slot rules — this stop's, and step 6b's and step 7's and step 7a's committed forms take them too.** `<branch>` is the branch `git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints, and the commands the stop prints are the ones §4.4's row F gives for a file HEAD holds, in the case row F selects — each chosen by the reads that row names before the stop prints, each on a line of its own, and an alternative introduced by a line saying when it applies; a `<new-branch>` among them is named as in the uncommitted form. Three of the message's sentences change with the case, each on a test the stop makes itself. Where `<branch>` is `<default>`, the first says the files it names are committed on your local `<default>` and not pushed, and the one opening `Then` reads `Then re-run — where <default> is protected, once a pull request from <new-branch> into <default> is merged.` Where the specs repository has no `origin`, the one opening `Then` reads `Then re-run.` alone, since the local merge row F selects there needs no pull request. Where the reads row F names select no command — `<branch>` on `origin`, and the local branch holding no commit `origin` lacks — the stop prints none: the sentence opening `Land that branch` says instead that `<branch>` is already on origin, so nothing is left to push and the pull request is all that is left, and keeps any warning it carries not to re-run another command. **Where HEAD holds some of the files the test is made on and not the others** — row F's *some* — the first sentence names, folder-relative, the files HEAD holds in place of the file or files it names, and says the others are not committed; the sentence opening `Land that branch` opens `Commit <the files HEAD lacks> onto <branch> and land that branch`; and the commands open with the `add -f` and `commit` row F gives for those files, the commit message the uncommitted form's. A path, the `#` rule and the `…` are as for the uncommitted form. On a read-only specs mount (§3.6) every command either form prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it.
 6b. **Gate the question set and the code-defect log on main, each where it is in the folder.**
     Both ship in the bundle whole (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1),
     and neither is implied by step 6's gate. For each of `interview/customer-questions.md` and
@@ -314,8 +330,12 @@ cannot review, and they will not tell you that — they will review it anyway, b
     (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against it and map the
     §3.7 return by `stopped` first: any stopping row → stop, naming the file and the branch/PR state
     it reports; `pass` / `pass_amending` / `unmanaged` → proceed as step 6 does; `absent` (row F — in
-    the folder and on no ref) → collect it, and stop once after both naming every file collected:
-    `BRD_PACKAGE_SHIPPED_NOT_HANDED_OFF: <BRD-KEY>'s <files> are written in the folder but on no branch, while its decisions.md is on the default branch — the run that wrote them had its handoff declined, or a later run landed the register without them. This package would ship what no branch holds. Commit and merge <files> to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-interview for this, which stages only the files it writes itself. Nothing was written.`
+    the folder and on no ref) → collect it, and stop once after both naming every file collected,
+    in the form the HEAD test selects — made before the stop prints, as §4.4's row F makes it for a
+    stop that lands several files, on each file collected, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<file>" 2>/dev/null`,
+    `<file>` that file's path relative to `$SPECS_PATH`, exit 0 where HEAD holds it. Where HEAD holds
+    none of them — untracked, or staged and never committed — the uncommitted form:
+    `BRD_PACKAGE_SHIPPED_NOT_HANDED_OFF: <BRD-KEY>'s <files> are written in the folder but on no branch, while its decisions.md is on the default branch — the run that wrote them had its handoff declined, or a later run landed the register without them. This package would ship what no branch holds. This run built no package and wrote nothing. Commit and merge <files> to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-interview for this, which stages only the files it writes itself. Ignored, every /brd-package run on this slice stops here until <files> are on <default>.`
     ```
     git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
     git -C "<SPECS_PATH>" add -f -- "<file>" …
@@ -323,6 +343,12 @@ cannot review, and they will not tell you that — they will review it anyway, b
     git -C "<SPECS_PATH>" push -u origin <new-branch>
     ```
     `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<file>` is each of `<files>` as `<BRD-dir>/<file>` (step 6b names them folder-relative), one quoted path each in place of the `…`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+    Where HEAD holds all of them, or some, the committed form, under step 6's committed-form slot
+    rules, its commit message `"<BRD-KEY> question set and defect log"`:
+    `BRD_PACKAGE_SHIPPED_NOT_HANDED_OFF: <BRD-KEY>'s <files> are committed on <branch>, a branch this plugin does not hand off, and are not on <default>, while its decisions.md is on the default branch. This package would ship what <default> does not hold. This run built no package and wrote nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:brd-interview for this, which stages only the files it writes itself. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run. Ignored, every /brd-package run on this slice stops here until <files> are on <default>.`
+    ```
+    <the commands §4.4's row F gives for a file HEAD holds, as step 6's committed-form slot rules say>
+    ```
     **A file absent from the folder is not gated**: a slice whose rounds held no `[C]` has no
     question set and one whose decisions turned on no code defect has no log, and neither absence
     is a decline.
@@ -363,8 +389,12 @@ cannot review, and they will not tell you that — they will review it anyway, b
    that came back absent. **Split the collected rounds on a worktree test row F cannot make**:
    whether `interview/round-<N>.md` exists in the folder at all.
    - **Present in the worktree, on no ref** — the record was written and its handoff declined, or
-     the run stopped after writing it; landing it is the fix:
-     `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s decisions.md and held [C] questions name rounds <list>, but <these> have no interview/round-<N>.md on any ref — the records those decisions and questions came from never merged. Land them on the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk.`
+     the run stopped after writing it; landing it is the fix, in the form the HEAD test selects —
+     made before the stop prints, as §4.4's row F makes it for a stop that lands several files, on
+     each such `interview/round-<N>.md`, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<file>" 2>/dev/null`,
+     `<file>` its path relative to `$SPECS_PATH`, exit 0 where HEAD holds it. Where HEAD holds none
+     of them — untracked, or staged and never committed — the uncommitted form:
+     `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s decisions.md and held [C] questions name rounds <list>, but <these> have no interview/round-<N>.md on any ref — the records those decisions and questions came from never merged. This run built no package and wrote nothing. Land them on the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk. Ignored, every /brd-package run on this slice stops here until the records of <these> are on <default>.`
      ```
      git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
      git -C "<SPECS_PATH>" add -f -- "<round-file>" …
@@ -372,6 +402,12 @@ cannot review, and they will not tell you that — they will review it anyway, b
      git -C "<SPECS_PATH>" push -u origin <new-branch>
      ```
      `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<round-file>` is each `interview/round-<N>.md` named in `<these>`, one quoted path each in place of the `…`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+     Where HEAD holds all of them, or some, the committed form, under step 6's committed-form slot
+     rules, its commit message `"<BRD-KEY> round records"`:
+     `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s decisions.md and held [C] questions name rounds <list>, but the interview/round-<N>.md records of <these> are committed on <branch>, a branch this plugin does not hand off, and are not on <default> — the records those decisions and questions came from never merged. This run built no package and wrote nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run. Ignored, every /brd-package run on this slice stops here until the records of <these> are on <default>.`
+     ```
+     <the commands §4.4's row F gives for a file HEAD holds, as step 6's committed-form slot rules say>
+     ```
    - **Absent from the worktree too** — after step 5c, the one state that reaches here is a
      re-decision a `/brd-interview` run left standing at a round whose record it never wrote: a
      record carrying a `Reopened` paragraph, which
@@ -462,8 +498,10 @@ cannot review, and they will not tell you that — they will review it anyway, b
    is gated as step 7 gates that set** — a round that only answered flags names no register record
    and no `[C]` entry, so step 7 never reaches it — with the same `require-on-main` mapped the same way before its answer counts — any stopping row
    stops, naming that round, and every one on no ref is collected and stops once, with this message —
-   the record is in the folder, since step 7a read the answer there:
-   `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s round(s) <list> answered code-defect flags, but their interview/round-<N>.md is on no ref — the records never merged. Land them on the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run.`
+   the record is in the folder, since step 7a read the answer there — in the form the HEAD test
+   selects, made on each such record as step 7 makes it. Where HEAD holds none of them, the
+   uncommitted form:
+   `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s round(s) <list> answered code-defect flags, but their interview/round-<N>.md is on no ref — the records never merged. This run built no package and wrote nothing. Land them on the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run. Ignored, every /brd-package run on this slice stops here until those records are on <default>.`
    ```
    git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
    git -C "<SPECS_PATH>" add -f -- "<round-file>" …
@@ -471,6 +509,12 @@ cannot review, and they will not tell you that — they will review it anyway, b
    git -C "<SPECS_PATH>" push -u origin <new-branch>
    ```
    `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<round-file>` is each `interview/round-<N>.md` named in `<list>`, one quoted path each in place of the `…`. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+   Where HEAD holds all of them, or some, the committed form, under step 6's committed-form slot
+   rules, its commit message `"<BRD-KEY> round records"`:
+   `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN: <BRD-KEY>'s round(s) <list> answered code-defect flags, but their interview/round-<N>.md is committed on <branch>, a branch this plugin does not hand off, and is not on <default> — the records never merged. This run built no package and wrote nothing. Land that branch with the commands printed beneath this message. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run. Ignored, every /brd-package run on this slice stops here until those records are on <default>.`
+   ```
+   <the commands §4.4's row F gives for a file HEAD holds, as step 6's committed-form slot rules say>
+   ```
    Step 7 stops before this step reaches its own, so an operator missing rounds of both kinds
    learns of these on the next run. An answer whose record never merged leaves the default branch
    showing the flag unanswered, and another clone's `/brd-interview` would open that round again.

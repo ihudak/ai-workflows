@@ -198,7 +198,12 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   at all, the run **splits a state the gate cannot**: no prompt in the folder means no package was
   ever built (`BRD_RECONCILE_NEEDS_PACKAGE`, run `/brd-package`), while a prompt in the folder means
   the package was built and its handoff declined (`BRD_RECONCILE_PACKAGE_NOT_HANDED_OFF`, land the
-  files that are already on disk). The second must **not** send the operator back to `/brd-package`:
+  files that are already on disk: the stop prints the git commands that land them — on a new `brd/`
+  branch where none of them is committed; where they are committed, on a branch of your own or on
+  your local default branch — any of them that branch does not hold committed onto it first — by
+  pushing that branch, where `origin` does not already hold every commit of it, and, for one of
+  your own, merging it, or, where the default branch is protected, a new `brd/` branch and a pull
+  request). The second must **not** send the operator back to `/brd-package`:
   that command will not rewrite a dated bundle, so it stops today and builds a *different* package on
   any other date.
 - **The parent's defect log, settled.** On a slice the run writes its defect resolutions into the
