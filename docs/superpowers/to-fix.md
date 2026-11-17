@@ -397,6 +397,14 @@ Found while DOC-D-G1's sub-project 1 built `/docs-workflows:docs-write` (`docs/s
   - **Until then.** Read a repository's pull-request template before a run fills it, where not every committer is trusted.
   - **Evidence.** The final review of DOC-D-G1 sub-project 1, I1 (`.superpowers/sdd/2026-11-17-doc-d-g1-docs-write/final-review.md`), and the controller's ruling on it (`.superpowers/sdd/2026-11-17-doc-d-g1-docs-write/progress.md`).
 
+- **CLONE-BARE-REPO — a path taken from committed data or a workspace listing is admitted as a clone by `rev-parse --show-toplevel` alone, so a committed directory laid out as a bare repository passes, and git commands then run in it read its config (`core.fsmonitor` among them).** Owner: the full-review phase. Priority: high, as it is a command run from repository data. Older than DOC-D-G1, except where noted.
+  - **The case.** The final review of DOC-D-G1 sub-project 1 reproduced it on git 2.56. A committed bare-shaped directory passed `/docs-write`'s clone test, and `git status` ran its `core.fsmonitor` command. `/docs-write` and `/docs-audit` are fixed on that branch: `test -e '<path>/.git'` runs before any git call names the path, and every git call in a clone runs with `-c safe.bareRepository=explicit`. The other sites were reported and not edited:
+    - **paths from committed data:** `docs-workflows/references/docs-profiles/docs-profile-schema.md:102`, `docs-workflows/commands/docs-brand.md:79`, and `workflows-core/references/session-hygiene.md:242` (probes only);
+    - **git run in an admitted clone:** `workflows-core/agents/code-scanner.md:46` (`status` at `:69`, `switch` and `pull` at `:71`–`:72`) and `docs-workflows/agents/diff-summarizer.md:80` (`status` at `:82`, `fetch` and `pull` at `:83`–`:84`);
+    - **a workspace listing rather than data:** `docs-workflows/commands/docs-init.md:78`. Lower risk, but it is the same test.
+  - **What would fix it.** The same two-part clone test at every admission site, and `-c safe.bareRepository=explicit` on the git calls the two agents make in a clone they were handed. Then re-run the reproduction from the final review against each.
+  - **Evidence.** `.superpowers/sdd/2026-11-17-doc-d-g1-docs-write/final-review.md` C1 and `final-fix-report.md`.
+
 ## Accepted — known, not to fix
 
 - **Which of the customer's sentences is the reason** a `/brd-reconcile` *Correct it* copies out of the review is a reading no test can make. product-workflows 3.34.5 records every *Correct it* pick in the reconciliation record — the reader's row, the corrected `chosen` and reason, and where in the review each was copied from — so the pick can be checked, as a re-point already is. Nothing further can be done in the command; a reviewer of the record is the check.
