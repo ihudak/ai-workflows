@@ -94,7 +94,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `prd-ground-verification.md` | as `brd-route.md` | `/prd-ground`'s blind verification |
 | `docs-workflows.md` | `docs-workflows/**`; `product-workflows/`: `commands/epics.md`, `agents/epic-*.md`, `docs/commands/epics.md` | invariants, map, callers |
 | `docs-workflows-gates.md` | as `docs-workflows.md` | three gate authorities |
-| `docs-workflows-backlog.md` | as `docs-workflows.md` | the backlog runs |
+| `docs-workflows-backlog.md` | as `docs-workflows.md` | the docs backlog |
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
 | `security-workflows.md` | `security-workflows/**`; `workflows-core/`: `references/security-register-format.md`, `scripts/weakness-classes.py`, `docs/family-map.md` | plugin facts, map, register invariants |

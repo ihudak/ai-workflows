@@ -221,7 +221,7 @@ provides seven slash commands (`ls plugins/docs-workflows/commands`) plus eleven
 and, after the `docs-workflows-gates.md` row of the rules table:
 
 ```text
-| `docs-workflows-backlog.md` | as `docs-workflows.md` | the backlog runs |
+| `docs-workflows-backlog.md` | as `docs-workflows.md` | the docs backlog |
 ```
 
 Later, each of equal length: Task 3 `twenty-four reference files` → `twenty-five reference files`; Task 5b `seven slash commands` → `eight slash commands`, and in the `docs-grounding.md` row `24 command files` → `25 command files` and `thirteen that resolve none` → `fourteen that resolve none`. Expected size 35,980 throughout.
@@ -284,7 +284,7 @@ Inputs a reasonable operator will meet that no gate exercises, most likely first
 ### Task 1: Room — the backlog rules file and `CLAUDE.md`'s cut [mechanical]
 
 **Files:**
-- Create `.claude/rules/docs-workflows-backlog.md` (`paths:` identical to `docs-workflows.md`'s four globs): heading `# docs-workflows — the backlog runs`, an opening in `docs-workflows-gates.md`'s form, `## Workflow map` holding the lines moved.
+- Create `.claude/rules/docs-workflows-backlog.md` (`paths:` identical to `docs-workflows.md`'s four globs): heading `` # docs-workflows — the docs backlog: `/docs-audit` and the backlog runs `` (fix round 1, M1), an opening in `docs-workflows-gates.md`'s form, `## Workflow map` holding the lines moved.
 - Modify `.claude/rules/docs-workflows.md`: move out the `/docs-audit` map line (:38, 1,480 with its newline) and the caller lines of `docs-auditor`, `ia-planner`, `docs-audit-reviewer` (:45-47, 253); the "Split out" paragraph (:13) gains `` `/docs-audit`'s map line, its three agents' caller lines and the backlog runs' map lines and invariants → `.claude/rules/docs-workflows-backlog.md` ``; the map section's opening (:31) names that file for them.
 - Modify `CLAUDE.md`: Task 1's two edits in *Exact copy*.
 
@@ -478,7 +478,7 @@ Inputs a reasonable operator will meet that no gate exercises, most likely first
 
 - [ ] **Step 1: Consistency.** Every array, printed line, marker, pointer sentence, carve-out, the stash clause, the triage row and E1–E5 is verbatim in the file that owns it (`command grep -F` each), E1–E3 as Task 8 Step 1 re-derived them (M15). BF §1's shape paragraph and the selftest's cases agree reason for reason. `unit-brief.md` §1 is the only copy of the replaced-sections list: `command grep -nE 'steps 2, 4, 5|Completeness vs plan.{0,40}Coverage' plugins/docs-workflows/agents/*.md` prints nothing.
 - [ ] **Step 2: The design's D13 note.** Append under D13 a dated note giving R1's shape as built, without rewriting the approved text.
-- [ ] **Step 3: Forward references**, each now true: Tasks 3 and 4's.
+- [ ] **Step 3: Forward references**, each now true: Tasks 3 and 4's; and Task 1's — `.claude/rules/docs-workflows.md:13`'s "the backlog runs' map lines and invariants" and `:31`'s "the backlog runs' lines", each in `docs-workflows-backlog.md`, and that file's heading naming the backlog runs, made true by Task 2's `## Invariants` and Task 5b's `/docs-write` map line.
 - [ ] **Step 4: No regression (D15).** Trace one keyed and one direct `/document` run through `doc-writer` and `doc-reviewer`: no path into `unit-brief.md`. List every hunk of `git diff origin/main...HEAD -- plugins/docs-workflows/agents plugins/workflows-core/references` with the condition under which it acts; one that changes `/document`'s behaviour beyond D9's carve-out and R21's clause is a defect.
 - [ ] **Step 5: Fail-closed, the new cases:** a forged `kind: artifact` entry naming `security/x/register.md`; a `doc-location-finder` path with `..`; T-ARTQ re-run against the finished command.
 - [ ] **Step 6: GIT-G1 audit.** `git diff origin/main...HEAD --stat` shows nothing under `phase-handoff.md`, its parts, `specs-git.py` and its modules, the `specs-git` skill or `workflows-core-handoff.md`. `.github/`'s diff is E4 and E5 exactly; `specs-repo-git.md`'s E3; `workflows-core-git.md`'s E1 and E2; `workflows-core-read-only.md`'s R26's two edits.

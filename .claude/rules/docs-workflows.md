@@ -28,7 +28,7 @@ The subagents are `diff-summarizer`, `doc-location-finder`, `doc-planner`, `doc-
 
 ## Workflow map
 
-The `docs-workflows` commands' lines of the family workflow map, and the caller lines of this plugin's agents that have one (`diff-summarizer`, `doc-writer` and `release-notes-writer` have no tree line). `/docs-audit`'s line, its three agents' caller lines and the backlog runs' lines are in `.claude/rules/docs-workflows-backlog.md`, loaded with this file.
+The `docs-workflows` commands' lines of the family workflow map, and the caller lines of this plugin's agents that have one (`diff-summarizer`, `doc-writer` and `release-notes-writer` have no tree line). `/docs-audit`'s line, its three agents' caller lines and the backlog runs' lines are in `.claude/rules/docs-workflows-backlog.md`, loaded with this file. `/docs-serve`'s and `/release-notes`' lines are in `.claude/rules/docs-serve.md` and `.claude/rules/release-notes.md`.
 
 ```
 /document (direct)   → [docs-style-checker] → [doc-fixer] → impl-maintenance → commit-artifacts   (with no PRD folder — the ordinary case, this mode taking no address — its cost and feedback land under $SPECS_PATH/documentation/<docs-repo-slug>/ for the repository it edited, ahead of pending — D19; report-only if misrooted)

@@ -6,7 +6,7 @@ paths:
   - "plugins/product-workflows/docs/commands/epics.md"
 ---
 
-# docs-workflows — the backlog runs
+# docs-workflows — the docs backlog: `/docs-audit` and the backlog runs
 
 Loaded with `.claude/rules/docs-workflows.md`, whose `paths:` it shares. Split out of `.claude/rules/docs-workflows.md` to keep that file under 20,000 characters; the plugin's other rules are there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
