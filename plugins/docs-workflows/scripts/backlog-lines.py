@@ -1397,6 +1397,16 @@ def case_status_flow_out(tmp):
     _out(tmp, MINI.replace(STATUS6, "    status: [missing]\n"), 6, "status")
 
 
+def case_document_start_line_one_only(tmp):
+    """BF section 1's `---` as line 1 only: in shape on line 1, a CRLF ending included; out of shape on a later line,
+    or with anything after it on line 1 -- so each side of the reader's line-1 test turns a case red."""
+    _eq(_shape(tmp, "---\n" + MINI, "first"), _ok(), "line 1")
+    _eq(_shape(tmp, "---\r\n" + MINI, "first-crlf"), _ok(), "line 1, CRLF")
+    _out(tmp, "schema_version: 1\n---\n" + MINI.split("\n", 1)[1], 2, "continuation", "second")
+    _out(tmp, MINI + "---\n", 10, "continuation", "last")
+    _out(tmp, "--- x\n" + MINI, 1, "continuation", "first-trailing")
+
+
 def case_entry_indent_non_id_out(tmp):
     _out(tmp, MINI.replace("threshold: 2\n", "  - title: x\n    status: missing\nthreshold: 2\n"), 9, "entry-opener")
 
@@ -1945,7 +1955,8 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_flow_multiline_out, case_continuation_out, case_nested_continuation_out,
          case_anchor_alias_tag_tab_out, case_control_out, case_encoding_out, case_key_out, case_second_id_out,
          case_duplicate_status_out, case_column0_entries_out, case_nbsp_indent_out, case_trailing_text_out,
-         case_status_missing_out, case_status_flow_out, case_entry_indent_non_id_out, case_too_large_out,
+         case_status_missing_out, case_status_flow_out, case_document_start_line_one_only,
+         case_entry_indent_non_id_out, case_too_large_out,
          case_units_twice_out, case_units_flow_out, case_units_empty_ok, case_under_indent_out, case_id_quoted_out,
          case_duplicate_id, case_symlink_refused, case_not_regular_refused, case_moved_on_branch,
          case_ref_name_outside_class, case_ref_unreadable, case_absent_not_moved, case_twenty_cap,
