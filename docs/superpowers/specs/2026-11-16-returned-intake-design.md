@@ -151,6 +151,7 @@ A Dev may return a threat the design's own interfaces add: `Answers: —` (`desi
 - **The three routes keep `/product-workflows:create-ard <KEY>` and lose their caveat** (`conformance.md:704`; `next-phase-offer.md:394` and its generated part).
 - **A stand-alone `Returned` entry whose reason is `it answers no live threat with a deferred part` goes to the Dev**, `/dev-workflows:design <KEY>`, the design's key: the architect has re-disposed, superseded or withdrawn the threat, and `/design` proposes the withdrawal in each case (`design.md:557`). Today it goes to the PA (`conformance.md:491`, `:704`). Its state, its words and the header's count are unchanged; the page says the line still reads "returned to the architect". This amends a route D shipped (question 2).
 - **A limit.** A stand-alone `Returned` entry whose reason is `its threat is in no model this run read` still goes to the PA, and no refine lists it. Logged.
+  - **Note, 2026-11-17 — "no refine lists it" is false in part** (the plan's Task 4 review, M1; the approved text above is left as it reads). As built, no refine lists it where its `[[…]]` names no folder whose model a refine reads; where it names a folder whose model `/conformance` left unused, or that only the working tree holds, a refine of that folder lists the threat. `docs/superpowers/to-fix.md` logs it so, as STANDALONE-NO-MODEL.
 
 ### D8. No regression
 

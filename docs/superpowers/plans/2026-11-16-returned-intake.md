@@ -115,8 +115,9 @@ choices: ["Refine the threat model (Recommended)", "Re-dispose only the stale th
 - `Threat model: <n> folder(s) under [[<PRD>]] with no EPIC- prefix hold a design.md or a _conformance.md on the default branch — not read for threats sent back` — on a specs tree that is no git repository, `on the default branch` reads `in the specs tree` (N6)
 - `Threat model: <path> not read — its key is not its folder's, or it holds a conflict marker`
 - `Threat model: [TH#N] is unreadable — not tested as sent back; the review takes it`
+- `Threat model: a listing of the default branch failed — the Epic folders under it may be unread, and a design only the working tree holds is not named` — printed once however many listings fail, and never on a specs tree that is no git repository (Task 3 review I1, M6; added at Task 7)
 
-Each of the six is printed where `workflows-core:threat-intake` calls for it and carried to `threat_model.report`, as step 1's lines are (M9).
+Each of the seven is printed where `workflows-core:threat-intake` calls for it — the first where R1's precondition fails, by `create-ard.md` itself — and carried to `threat_model.report`, as step 1's lines are (M9).
 
 **Fixed words in a question's text:** `withheld: it held a security finding id or register path`; `date unreadable`; the label `the design's own words:`.
 
