@@ -233,7 +233,7 @@ Run it after a new integration, a new role or a new release, so the denominator 
 
 - **`drafted`** — the page has not been verified yet. Rewrite it; the unit stays `drafted`, and step 6's walk covers the rewrite.
 - **`published`** — the lifecycle leads back to `drafted` only through `stale`. Mark the unit `stale` in the backlog when you find the page out of date, move it on to `drafted` in the commit that rewrites the page, then walk the page as step 6 says.
-- **`verified`** — its one move is to `published`, which you make by hand when the page ships. Publish it, then take the `published` route above.
+- **`verified`** — its one move is to `published`, which you make by hand when the page ships. Publish it as it stands, before you rewrite it — a page carrying a marker may never be marked `published` — then take the `published` route above.
 
 *Later: `/docs-drift` is planned to watch the evidence side of this — diffing a surface's evidence paths between the ref the backlog recorded and today, and re-queueing the units that fan out from it. The calendar side stays a human judgement either way, so this step does not disappear when that command ships.*
 
