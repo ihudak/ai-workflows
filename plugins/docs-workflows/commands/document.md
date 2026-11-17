@@ -169,8 +169,8 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
          its ledger file exists or can be read: a standing empty child. Name
          `/product-workflows:brd-split <PARENT-KEY>`, which keeps or removes it, `<PARENT-KEY>` read
          off the same `brd-link.md`'s `parent:` — with `"<how to cut it>"` where the parent's ledger
-         still holds an `unallocated` row, bare where it holds none, and neither form, reporting the
-         parent's ledger by path, where it cannot be read.
+         still holds an `unallocated` row, bare where it holds none, and neither form where it cannot be read: report the parent's ledger
+         by path, and say that which form applies is that ledger's to say.
        - No gate-set row `covered-here`, and the gate set **non-empty**: name no command.
          `This slice holds no PRD of its own — <what each claimed row resolved to> — so there is nothing here to document.`
        - Otherwise: `Run /product-workflows:create-prd <KEY> first.`

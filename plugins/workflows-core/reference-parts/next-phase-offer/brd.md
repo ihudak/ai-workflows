@@ -172,7 +172,8 @@ array carries every option.
   (PM), `/product-workflows:create-ard <BRD-KEY>` (PA, optional) and `/product-workflows:specify <BRD-KEY>`
   (PE), on the conditions `/product-workflows:brd-reconcile`'s advancing list applies, stated in this
   lane's `/product-workflows:brd-reconcile` bullet — all three where the slice passes its ledger
-  tests and *The landed condition* holds. Here the slice's ledger tests
+  tests and *The landed condition* holds, save `/product-workflows:create-prd` where it holds on a
+  `prd.md` the slice holds. Here the slice's ledger tests
   reduce to PRD-eligibility: `/product-workflows:brd-interview`'s own Phase 0 refuses a slice with a
   row still `unallocated`, so the `covered-here` test is what its offer has left to read
   (`/product-workflows:brd-interview`'s next-step phase owns that list).
@@ -231,14 +232,17 @@ array carries every option.
     nothing on it. Where `$SPECS_PATH` is unset or empty, or names a specs tree that is no git
     repository (`git -C "$SPECS_PATH" rev-parse --git-dir` fails), the slice folder's own file decides,
     and the condition holds with or without a `prd.md` there: there is no ref to land it on, and on
-    `require-on-main`'s `unmanaged` each of the two's *Gate the PRD* goes on either way. A slice
+    `require-on-main`'s `unmanaged` each of the two's *Gate the PRD* goes on either way — where one
+    is there, `/product-workflows:create-prd` is left out as on `<default-ref>` (below). A slice
     folder outside the work tree of the repository `$SPECS_PATH` stands in —
     `git -C "<the slice folder>" rev-parse --show-toplevel`
     failing, or printing other than `git -C "$SPECS_PATH" rev-parse --show-toplevel` prints — is read
     as `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's *The first missing document* reads
     one — load `phase-handoff` whole for it (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`),
-    as the case after it does — its own `prd.md` deciding: the condition holds, and each command the
-    offer names for that folder is followed, in the prose beside the list, by that rule's sentence.
+    as the case after it does — its own `prd.md` deciding: the condition holds —
+    `/product-workflows:create-prd` left out where that file is there, as on `<default-ref>` (below)
+    — and each command the offer names for that folder is followed, in the prose beside the list, by
+    that rule's sentence.
     Otherwise load `phase-handoff` whole (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`), which
     the cases below apply, and test the ref first,
     `git -C "$SPECS_PATH" rev-parse --verify --quiet "<default-ref>"`, `<default-ref>` being the ref
@@ -247,7 +251,10 @@ array carries every option.
     document — with `phase-handoff.md` §3.2's read-only primitives and a look in the slice folder,
     one that is nowhere being no gap on a slice that passed the tests. Then:
     - **On the default branch, or nowhere** — on `<default-ref>`, or in no folder and on no ref — the
-      condition holds, and all three are named.
+      condition holds, and all three are named, save `/product-workflows:create-prd` where the file is
+      on `<default-ref>`, in whose place the offering run names `/product-workflows:update-prd <SLICE-KEY>`
+      in prose: that run counts the file as found and opens on its existing-PRD question, whose
+      recommended answer stops for `/product-workflows:update-prd`, as it does beside an unlanded one.
     - **Not landed** — on a plugin branch and not on `<default-ref>` (`phase-handoff.md` §3.3's rows
       D and E), or in the slice folder and on no ref (row F) — none of the three is named. In their
       place the offering run prints
@@ -269,7 +276,8 @@ array carries every option.
   before they author — the first two in all three's Phase 0s, the last by `/create-ard`'s and
   `/specify`'s *Gate the PRD* and by `/create-prd`'s existing-PRD question (its Phase 1 step 2, on a
   file its Phase 0 step 6 counts as found) — so offering any of them wrongly hands over a run
-  that stops, or, for `/create-prd`, one that asks to refresh a PRD the offer has just said to land;
+  that stops, or, for `/create-prd`, one that asks to refresh a PRD the offer has just said to land,
+  or one the slice already holds on the default branch;
   the advance/re-entry split is enforced **nowhere downstream** — `/create-ard` on the BRD route and
   `/specify` on the BRD route treat an `open` or `reopened` record as an open question to record rather
   than as a stop — so the station that offers them must make it: `/product-workflows:brd-reconcile` for a slice the customer reviewed, and `/product-workflows:brd-interview`, whose `nothing-to-review` state keeps a reopened record's list apart from the one that offers the three, for a slice that needs no review. **All

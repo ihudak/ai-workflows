@@ -187,7 +187,12 @@ array carries every option.
   refine; where it names nothing, the next step `/product-workflows:specify` gives a specification at
   the same altitude. Where the PRD folder holds no `prd.md`, or its Phase 0 went on past a PRD
   `/product-workflows:specify` stops on, its Phase 8 says what it names first and names no run that
-  would stop on that PRD.
+  would stop on that PRD. On a BRD-route slice — the PRD folder carrying a `brd-link.md` — each
+  `/product-workflows:create-prd` and `/product-workflows:specify` run its Phase 8 names is named as
+  it stands, since `/product-workflows:update-spec` takes no ledger test and reads no slice's ledger,
+  and they are followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+  — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in
+  this sentence's place.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
 holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder

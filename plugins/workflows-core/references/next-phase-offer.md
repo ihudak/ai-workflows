@@ -203,7 +203,7 @@ array carries every option.
 - `/product-workflows:create-prd <ADDRESS>`:
   `/docs-workflows:release-notes <PRD>` (PM — draft the release note; recommended clear next step); hand to PA
   *(optional)* → `/product-workflows:create-ard <PRD>`, which gates this PRD and so carries `<merge-clause>`; or hand to PE → `/product-workflows:epics <PRD>`, which gates this PRD and so carries `<merge-clause>` too (or `/product-workflows:specify <PRD>`, which gates it as well and so carries the clause).
-- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:update-spec <PRD>` (PE) — the revision of an existing specification, which `/product-workflows:specify` would rewrite from scratch. The architecture, Epics and specification routes each gate this PRD and so carry `<merge-clause>`; the release-note route gates nothing and carries none.
+- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:update-spec <PRD>` (PE) — the revision of an existing specification, which `/product-workflows:specify` would rewrite from scratch. The architecture, Epics and specification routes each gate this PRD and so carry `<merge-clause>`; the release-note route gates nothing and carries none. On a BRD-route slice — the feature folder carrying a `brd-link.md` — the architecture route is named as it stands, since `/product-workflows:update-prd` reads no slice's ledger for it, and is followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).` — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in this sentence's place.
 <!-- /part -->
 
 <!-- part: brd -->
@@ -225,7 +225,8 @@ array carries every option.
   (PM), `/product-workflows:create-ard <BRD-KEY>` (PA, optional) and `/product-workflows:specify <BRD-KEY>`
   (PE), on the conditions `/product-workflows:brd-reconcile`'s advancing list applies, stated in this
   lane's `/product-workflows:brd-reconcile` bullet — all three where the slice passes its ledger
-  tests and *The landed condition* holds. Here the slice's ledger tests
+  tests and *The landed condition* holds, save `/product-workflows:create-prd` where it holds on a
+  `prd.md` the slice holds. Here the slice's ledger tests
   reduce to PRD-eligibility: `/product-workflows:brd-interview`'s own Phase 0 refuses a slice with a
   row still `unallocated`, so the `covered-here` test is what its offer has left to read
   (`/product-workflows:brd-interview`'s next-step phase owns that list).
@@ -284,14 +285,17 @@ array carries every option.
     nothing on it. Where `$SPECS_PATH` is unset or empty, or names a specs tree that is no git
     repository (`git -C "$SPECS_PATH" rev-parse --git-dir` fails), the slice folder's own file decides,
     and the condition holds with or without a `prd.md` there: there is no ref to land it on, and on
-    `require-on-main`'s `unmanaged` each of the two's *Gate the PRD* goes on either way. A slice
+    `require-on-main`'s `unmanaged` each of the two's *Gate the PRD* goes on either way — where one
+    is there, `/product-workflows:create-prd` is left out as on `<default-ref>` (below). A slice
     folder outside the work tree of the repository `$SPECS_PATH` stands in —
     `git -C "<the slice folder>" rev-parse --show-toplevel`
     failing, or printing other than `git -C "$SPECS_PATH" rev-parse --show-toplevel` prints — is read
     as `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's *The first missing document* reads
     one — load `phase-handoff` whole for it (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`),
-    as the case after it does — its own `prd.md` deciding: the condition holds, and each command the
-    offer names for that folder is followed, in the prose beside the list, by that rule's sentence.
+    as the case after it does — its own `prd.md` deciding: the condition holds —
+    `/product-workflows:create-prd` left out where that file is there, as on `<default-ref>` (below)
+    — and each command the offer names for that folder is followed, in the prose beside the list, by
+    that rule's sentence.
     Otherwise load `phase-handoff` whole (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`), which
     the cases below apply, and test the ref first,
     `git -C "$SPECS_PATH" rev-parse --verify --quiet "<default-ref>"`, `<default-ref>` being the ref
@@ -300,7 +304,10 @@ array carries every option.
     document — with `phase-handoff.md` §3.2's read-only primitives and a look in the slice folder,
     one that is nowhere being no gap on a slice that passed the tests. Then:
     - **On the default branch, or nowhere** — on `<default-ref>`, or in no folder and on no ref — the
-      condition holds, and all three are named.
+      condition holds, and all three are named, save `/product-workflows:create-prd` where the file is
+      on `<default-ref>`, in whose place the offering run names `/product-workflows:update-prd <SLICE-KEY>`
+      in prose: that run counts the file as found and opens on its existing-PRD question, whose
+      recommended answer stops for `/product-workflows:update-prd`, as it does beside an unlanded one.
     - **Not landed** — on a plugin branch and not on `<default-ref>` (`phase-handoff.md` §3.3's rows
       D and E), or in the slice folder and on no ref (row F) — none of the three is named. In their
       place the offering run prints
@@ -322,7 +329,8 @@ array carries every option.
   before they author — the first two in all three's Phase 0s, the last by `/create-ard`'s and
   `/specify`'s *Gate the PRD* and by `/create-prd`'s existing-PRD question (its Phase 1 step 2, on a
   file its Phase 0 step 6 counts as found) — so offering any of them wrongly hands over a run
-  that stops, or, for `/create-prd`, one that asks to refresh a PRD the offer has just said to land;
+  that stops, or, for `/create-prd`, one that asks to refresh a PRD the offer has just said to land,
+  or one the slice already holds on the default branch;
   the advance/re-entry split is enforced **nowhere downstream** — `/create-ard` on the BRD route and
   `/specify` on the BRD route treat an `open` or `reopened` record as an open question to record rather
   than as a stop — so the station that offers them must make it: `/product-workflows:brd-reconcile` for a slice the customer reviewed, and `/product-workflows:brd-interview`, whose `nothing-to-review` state keeps a reopened record's list apart from the one that offers the three, for a slice that needs no review. **All
@@ -408,7 +416,12 @@ array carries every option.
   refine; where it names nothing, the next step `/product-workflows:specify` gives a specification at
   the same altitude. Where the PRD folder holds no `prd.md`, or its Phase 0 went on past a PRD
   `/product-workflows:specify` stops on, its Phase 8 says what it names first and names no run that
-  would stop on that PRD.
+  would stop on that PRD. On a BRD-route slice — the PRD folder carrying a `brd-link.md` — each
+  `/product-workflows:create-prd` and `/product-workflows:specify` run its Phase 8 names is named as
+  it stands, since `/product-workflows:update-spec` takes no ledger test and reads no slice's ledger,
+  and they are followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+  — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in
+  this sentence's place.
 <!-- /part -->
 
 <!-- part: epics-precondition -->
