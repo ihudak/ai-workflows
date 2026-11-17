@@ -18,9 +18,11 @@ keys_hierarchy:   # optional; passed by caller to enable the key-commit fallback
   - <every EPIC- folder's key discovered by the folder read>
 docs_only_shas:   # optional; commits the key-commit fallback must not read
   - <the full sha of each commit the caller's commit scan left out as documentation only in this
-     clone: it names a key and touches only the documentation paths of the documentation-holding
-     repository. The scan read one ref, so a documentation-only commit on a branch that ref does not
-     hold is not here>
+     clone: it names a key and touches only the paths taken as documentation in the
+     documentation-holding repository. The scan read one ref, `scan_ref`, so a documentation-only
+     commit only another ref holds is not here>
+scan_ref:         # optional; given for a clone the caller's commit scan read by path, docs_only_shas or not
+  HEAD            # the ref that scan read; the key-commit fallback greps it in place of --all
 refresh:
   fetch: true   # default true
   pull:  false  # default false — a historical diff does not need the current branch tip;
@@ -43,7 +45,9 @@ fast-forward left no merge and `branch_from` is a single commit, that commit's o
 the branch or the sha does not resolve, where a branch name or a merge commit landed with no merge to read, or where
 a range changes no file — save a single commit, one-parent or root, whose own change is empty — the agent's
 **Key-commit fallback** greps `keys_hierarchy` when the caller
-supplied one, and drops every match `docs_only_shas` names before it reads any. An empty range is never reported as resolved, save a single commit whose own change is empty. A
+supplied one — over every ref, or, where the caller supplied `scan_ref`, over the commit that ref named
+before the agent's Refresh step fetched or pulled, which is what the caller's scan read — and drops
+every match `docs_only_shas` names before it reads any. An empty range is never reported as resolved, save a single commit whose own change is empty. A
 commit with no parent is read against the empty tree, or, in a shallow clone, where it may only be
 the clone's boundary, comes back unresolved.
 
