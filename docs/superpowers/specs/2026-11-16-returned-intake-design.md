@@ -121,6 +121,9 @@ A Dev may return a threat the design's own interfaces add: `Answers: —` (`desi
 
 - **Nothing read from a design or a record is written** — into the model, an ARD draft, `threat_model.report` or any file — **or reaches an agent**: `threat-modeler`'s eleven fields (`create-ard.md:826`) and `ard-reviewer`'s brief are unchanged. A `Deferred to design:` text is the architect's typed or confirmed answer, drafted from the model's own threat.
 - **The report carries keys, ids and fixed words only** — a threat's `[TH#N]`, an entry's key and `[DT#N]`, a record entry's `<KEY>/[DD#n]`, a kind, an answer. `/create-ard`'s handoff carries nothing of the intake: it has no `body_facts`.
+  - **Note, 2026-11-17 — two claims of this bullet are false in part** (the final whole-branch review, M5 and M2; the approved text above is left as it reads).
+    - **"it has no `body_facts`".** The handoff does pass `body_facts` (`create-ard.md` Phase 6): the ARD's scope and counts, the reviewer's verdict, and the threat model's state, its counts and each accepted risk with its owner and review date. Nothing of the intake enters them, since an acceptance's owner and reason are the architect's typed answer and none is offered from a design or a record. The plan's Task 3 step 9 found this (its M1).
+    - **"keys, ids and fixed words only".** As built, the report also carries the path two printed lines name: a `design.md` only the working tree holds, and a record not read. `workflows-core:threat-intake` §6 says so.
 - **Each value, and its test:**
 
 | Value | From | Test, else |
