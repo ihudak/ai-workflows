@@ -6,7 +6,7 @@
                         [--exclude <clone> ...] [--owner-of <clone> ...]
                         [--docs-root <dir> [--docs-content <path> ...] [--docs-named]]
   key-discovery.py docs-check --docs-root <dir> [--docs-content <path> ...] [--docs-named]
-                              --base <rev> [--head <rev>]
+                              [--exclude <clone> ...] --base <rev> [--head <rev>]
   key-discovery.py --selftest
 
 scan: in each clone, the non-merge commits on one ref whose message names a key whole -- not
@@ -25,12 +25,14 @@ repository of that name is dropped. --owner-of names a clone that is not scanned
 owner is searched too. Prints one JSON document, indented so a reader can take it line by line;
 fetches nothing and writes nothing.
 
---docs-root names the documentation root -- a site's own directory, or a repository's top level
--- and the repository holding it is read by path, not left out. Its content paths are the root's
-own directory where it lies below the top level, and each --docs-content, relative to the top level
-and matched as the literal path it is (an absolute one, or one with a ".." segment, is rejected and
-listed); the documentation set is those and FAMILY_DOC_PATHS. Every --repo that is that repository,
-by its path or by its origin's slug, is read under the set. "scanned" counts the non-merge commits
+--docs-root names the documentation root -- a site's own directory, or a repository's top level.
+The repository holding it is read by path, left out whole, or read whole, as below. Its content
+paths are the root's own directory where it lies below the top level, and each --docs-content,
+relative to the top level and matched as the literal path it is (an absolute one, or one with a
+".." segment, is rejected and listed); the documentation set is those and FAMILY_DOC_PATHS. Where
+a content path other than the whole repository is known and no --exclude names the repository,
+it is read by path ("rule" "paths"): every --repo that is that repository, by its path or by its
+origin's slug, is read under the set. "scanned" counts the non-merge commits
 touching a path outside it, in a walk with the set as exclude pathspecs and --full-history -- a
 pathspec alone simplifies history, and a side branch netting to nothing would vanish from the
 count. Each commit the scan or the probe matched there, and each a merged pull request there
@@ -39,14 +41,15 @@ merge against its first parent, any other commit against its parent (a root comm
 empty tree). A commit naming a key that touches nothing outside the set is listed as
 documentation only and never found, the probe drops a commit that touches, and a merge that
 brought in, nothing outside it, and a merged pull request keeps only the landed commits touching a
-path outside it, listing the rest. Where no content path is known, or one is the whole
-repository, or --exclude names the repository too, it is left out whole, as --exclude leaves one
-out -- save that in the first two cases, unless --exclude names it, --docs-named, which says the
-implementation record names the repository, has it read whole instead ("rule" "whole"): every
-clone of it is read as any other clone is, and its pull requests are kept. Under "paths", where no --repo is that repository, its
-pull requests are dropped by name. A root in no git work tree changes nothing. docs-check prints,
-as "outside", the paths `git diff --name-only <base> <head>` lists outside the same documentation
-set, and [] where "docs" is null or its "rule" is "left-out" or "whole".
+path outside it, listing the rest; where no --repo is that repository, its pull requests are
+dropped by name. Where no content path other than the whole repository is known, it is left out
+whole ("left-out"), as --exclude leaves one out -- or, with --docs-named, which says the
+implementation record names it, read whole ("whole"): every clone of it read as any other clone
+is, and its pull requests kept. An --exclude naming it leaves it out whole whatever else holds
+("left-out", reason "--exclude names it too"). A root in no git work tree changes nothing.
+docs-check prints, as "outside", the paths `git diff --name-only <base> <head>` lists outside the
+same documentation set, taking --docs-named and --exclude as scan does, and [] where "docs" is
+null or its "rule" is "left-out" or "whole".
 
 Exit 0: it ran -- a clone or a search it could not reach is a field of the result. Exit 2: it
 could not run; the cause is on stderr. Python standard library only.
@@ -1172,6 +1175,15 @@ def case_docs_check(tmp):
     rc, out, _ = _main(["docs-check", "--docs-root", mono, "--base", base, "--head", "HEAD"])
     doc = json.loads(out)
     assert rc == 0 and doc["docs"]["rule"] == "left-out" and doc["outside"] == [], doc
+    rc, out, _ = _main(["docs-check", "--docs-root", website, "--exclude", mono, "--base", base])  # as scan's
+    doc = json.loads(out)
+    assert rc == 0 and doc["docs"]["rule"] == "left-out" and doc["outside"] == [], doc
+    assert doc["docs"]["reason"] == "--exclude names it too", doc
+    rc, out, _ = _main(["docs-check", "--docs-root", website, "--exclude", website, "--base", base])  # no top level
+    assert rc == 0 and json.loads(out)["outside"] == ["assets/shot.png"], out
+    rc, out, err = _main(["docs-check", "--docs-root", website, "--exclude", os.path.join(tmp, "missing"),
+                          "--base", base])
+    assert rc == 2 and out == "" and len(err.splitlines()) == 1, (rc, out, err)
     plain = os.path.join(tmp, "plain")
     os.makedirs(plain)
     rc, out, _ = _main(["docs-check", "--docs-root", plain, "--base", base])
@@ -1665,6 +1677,15 @@ def _describe(clone, shas):
     return rows
 
 
+def _own_top(path):
+    """(top, slug) where `path` is a repository's own top level, its slug that of its origin or None; else None."""
+    rc, out, _ = _git_in(path, "rev-parse", "--show-toplevel")
+    top = os.path.realpath(out.strip()) if rc == 0 and out.strip() else None
+    if top is None or top != os.path.realpath(path):
+        return None
+    return top, remote_slug(top)
+
+
 def documentation_set(root, content=(), named=False):
     """(docs, pathspecs) for the documentation root `root` and the content paths `content`.
 
@@ -1723,12 +1744,11 @@ def discover(keys, clones, scope, probe=False, github=True, excludes=(), owners_
     excluded, excluded_paths, lowered = [], set(), set()
 
     def leave_out(path):
-        rc, out, _ = _git_in(path, "rev-parse", "--show-toplevel")
-        top = os.path.realpath(out.strip()) if rc == 0 and out.strip() else None
-        if top is None or top != os.path.realpath(path):
+        own = _own_top(path)
+        if own is None:
             return  # only a repository's own top level is a repository to leave out
+        top, slug = own
         excluded_paths.add(top)
-        slug = remote_slug(top)
         if slug:
             lowered.add(slug.lower())
         name = slug or os.path.basename(top)
@@ -1815,10 +1835,16 @@ def discover(keys, clones, scope, probe=False, github=True, excludes=(), owners_
             "docs": docs}
 
 
-def docs_check(root, content, base, head="HEAD", named=False):
+def docs_check(root, content, base, head="HEAD", named=False, excludes=()):
     """The docs-check document: the paths `git diff <base> <head>` lists outside the documentation set -- none where
-    no path rule applies ("left-out" or "whole")."""
+    no path rule applies ("left-out" or "whole"). An exclude naming the repository leaves it out, as scan does."""
     docs, pathspecs = documentation_set(root, content, named)
+    if docs is not None:
+        slug = (remote_slug(docs["top"]) or "").lower()
+        for own in filter(None, map(_own_top, excludes)):
+            if own[0] == docs["top"] or (slug and (own[1] or "").lower() == slug):
+                docs["rule"], docs["reason"], pathspecs = "left-out", "--exclude names it too", None
+                break
     outside = []
     if pathspecs:
         rc, out, err = _git_in(docs["top"], "diff", "--name-only", "--no-renames", "-z", base, head, "--", *pathspecs)
@@ -1850,6 +1876,7 @@ def main(argv):
     check.add_argument("--docs-root", action="append", required=True)
     check.add_argument("--docs-content", action="append", default=[])
     check.add_argument("--docs-named", action="store_true")
+    check.add_argument("--exclude", action="append", default=[])
     check.add_argument("--base", required=True)
     check.add_argument("--head", default="HEAD")
     args = parser.parse_args(argv)
@@ -1867,10 +1894,13 @@ def main(argv):
             for flag, rev in (("--base", args.base), ("--head", args.head)):
                 if not rev or rev.startswith("-"):
                     raise Unrunnable("%s %r is empty or starts with '-'" % (flag, rev))
+            for path in args.exclude:
+                if not os.path.isdir(path):
+                    raise Unrunnable("--exclude %s is not a directory" % path)
             if shutil.which("git") is None:
                 raise Unrunnable("git is not on PATH")
-            print(json.dumps(docs_check(docs_root, args.docs_content, args.base, args.head, args.docs_named),
-                             ensure_ascii=False, indent=1))
+            print(json.dumps(docs_check(docs_root, args.docs_content, args.base, args.head, args.docs_named,
+                                        [os.path.realpath(p) for p in args.exclude]), ensure_ascii=False, indent=1))
             return 0
         keys = []
         for key in args.key:
