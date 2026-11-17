@@ -30,9 +30,9 @@ The repository holding it is read by path, left out whole, or read whole, as bel
 paths are the root's own directory where it lies below the top level, and each --docs-content,
 relative to the top level and matched as the literal path it is (an absolute one, or one with a
 ".." segment, is rejected and listed); the documentation set is those and FAMILY_DOC_PATHS. Where
-a content path other than the whole repository is known and no --exclude names the repository,
-it is read by path ("rule" "paths"): every --repo that is that repository, by its path or by its
-origin's slug, is read under the set. "scanned" counts the non-merge commits
+a content path is known, none of them the whole repository, and no --exclude names the
+repository, it is read by path ("rule" "paths"): every --repo that is that repository, by its
+path or by its origin's slug, is read under the set. "scanned" counts the non-merge commits
 touching a path outside it, in a walk with the set as exclude pathspecs and --full-history -- a
 pathspec alone simplifies history, and a side branch netting to nothing would vanish from the
 count. Each commit the scan or the probe matched there, and each a merged pull request there
@@ -42,7 +42,7 @@ empty tree). A commit naming a key that touches nothing outside the set is liste
 documentation only and never found, the probe drops a commit that touches, and a merge that
 brought in, nothing outside it, and a merged pull request keeps only the landed commits touching a
 path outside it, listing the rest; where no --repo is that repository, its pull requests are
-dropped by name. Where no content path other than the whole repository is known, it is left out
+dropped by name. Where no content path is known, or one is the whole repository, it is left out
 whole ("left-out"), as --exclude leaves one out -- or, with --docs-named, which says the
 implementation record names it, read whole ("whole"): every clone of it read as any other clone
 is, and its pull requests kept. An --exclude naming it leaves it out whole whatever else holds

@@ -210,15 +210,16 @@ over the repositories this file names — or, when it names none, the repositori
 conventions — with one `--grep` for each key and each `workitem_key` below; git lists a commit
 that matches any of them anywhere in its message, its trailers included. **In the repository that
 holds the documentation**, where the scan covers it — this file names it, or names none and it is
-among those resolved from `$REPOS_PATH` — and the run knows a content path there other than the
+among those resolved from `$REPOS_PATH` — and the run knows a content path there, none of them the
 whole repository, the scan never takes a commit that touches documentation paths alone, since
 `/document`'s own commits there carry the tokens by the same conventions; a commit that also
-touches another path is taken. `docs-workflows`' `references/key-discovery.md` §1 states which
-paths are content paths and which are documentation paths. The probe below drops such a commit
-there too, and a merge that brought in nothing but documentation paths over its first parent.
-**Where the run knows no such content path there**, no path rule applies: the repository is left
-out whole, as the specs repository is — or, where this file names it, scanned whole like any
-other, its documentation commits taken as code.
+touches another path is taken. The probe below drops a commit there that touches documentation
+paths alone too, and a merge that brought in nothing but documentation paths over its first
+parent. **Where the run knows no content path there, or knows one that is the whole
+repository**, no path rule applies: the repository is left out whole, as the specs repository is
+— or, where this file names it, scanned whole like any other, its documentation commits taken as
+code. `docs-workflows`' `references/key-discovery.md` §1 states which paths are content paths and
+which are documentation paths.
 
 **The scan takes no merge commit (`--no-merges`).** A merge commit's range is the whole branch it
 merged — work the blocks and the scan already reach commit by commit, which it would report a second
@@ -316,7 +317,7 @@ listed under the PRD folder — and each `workitem_key` off the same folder. Not
 identifier out of a commit message, which is the rule `CLAUDE.md` states and the difference between
 resolving and guessing.
 
-**The pull-request layer, optional.** Where a scanned clone's `origin` is on github.com and `gh` is installed and logged in, the scan's consumers also search the GitHub pull requests of every owner a clone under `$REPOS_PATH` belongs to for the same tokens, keep one only where its title or body names a token whole — by the boundary above — and take a merged one's landed commits into the scan's result — only where its merge commit is on the scanned ref and its range brings in no other branch's merges, so a release pull request is reported, never read: the branch's own commits for a merge commit, the one commit for a squash, the rebased run for a rebase, each read off the clone — in the repository that holds the documentation, where the scan above reads a clone of it by its documentation paths, only those that touch a path outside them, a pull request that landed nothing else being reported, never read; where the scan leaves that repository out whole, or where those paths are known but the scan holds no clone of it, its pull requests are dropped, none of them reported, as the specs repository's are; and where the scan reads it whole, they are taken as any repository's. A landed commit whose own message names no token joins the scan's commits as one only the scan found, its tokens those its own message names and those of every pull request that landed it; an open, unmerged or out-of-clone pull request in a repository whose pull requests are not dropped is reported, never read. Like the scan, it searches for tokens the run already holds; a pull request's number, branches and merge commit come from `gh`'s JSON, never from parsed text. `docs-workflows` runs the scan, its probe and this layer through one script (its `references/key-discovery.md`).
+**The pull-request layer, optional.** Where a scanned clone's `origin` is on github.com and `gh` is installed and logged in, the scan's consumers also search the GitHub pull requests of every owner a clone under `$REPOS_PATH` belongs to for the same tokens, keep one only where its title or body names a token whole — by the boundary above — and take a merged one's landed commits into the scan's result — only where its merge commit is on the scanned ref and its range brings in no other branch's merges, so a release pull request is reported, never read: the branch's own commits for a merge commit, the one commit for a squash, the rebased run for a rebase, each read off the clone — in the repository that holds the documentation, where the scan above reads a clone of it by its documentation paths, only those that touch a path outside them, a pull request that landed nothing else being reported, never read; where the scan leaves that repository out whole, or where a content path is known there, none of them the whole repository, but the scan holds no clone of it, its pull requests are dropped, none of them reported, as the specs repository's are; and where the scan reads it whole, they are taken as any repository's. A landed commit whose own message names no token joins the scan's commits as one only the scan found, its tokens those its own message names and those of every pull request that landed it; an open, unmerged or out-of-clone pull request in a repository whose pull requests are not dropped is reported, never read. Like the scan, it searches for tokens the run already holds; a pull request's number, branches and merge commit come from `gh`'s JSON, never from parsed text. `docs-workflows` runs the scan, its probe and this layer through one script (its `references/key-discovery.md`).
 
 **Merged and deduped by SHA.** A ref two records name — the same repository and the same commit, as
 where an operator copied a block into its Epic's record rather than moving it (§1) — is one ref,
@@ -416,8 +417,10 @@ is.
 **What is honestly still lost, and what a run therefore says out loud:** only a non-merge commit whose
 message names the key is findable, no convention compels a human to follow one, and so **the run reports how
 many commits it scanned — the non-merge commits it walked, `git -C <repo> rev-list --no-merges
---count HEAD` — and how many matched**. A zero-match scan in a repository that has commits is
-a signal about the convention, not proof that no work happened.
+--count HEAD`, or, on a clone of the repository that holds the documentation read by path, only
+those touching a path outside its documentation paths (`docs-workflows`'
+`references/key-discovery.md` §2) — and how many matched**. A zero-match scan in a repository that
+has commits is a signal about the convention, not proof that no work happened.
 
 ## 5. The unit's branch — `unit-branch`
 
