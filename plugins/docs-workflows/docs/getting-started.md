@@ -47,7 +47,7 @@ Where your code clones live — one directory, or a colon-separated list of them
 
 ### `DOCS_PATH`
 
-Where your product documentation's clone lives, defaulting to `/workspace/docs`. `/document` prefers it as a docs-repo discovery hint when your current working directory carries no documentation signals — in a container the docs clone is usually mounted right here, which makes this the common fast path — and `/docs-init` scaffolds a new documentation repository here when nothing is there yet. `/release-notes` reads the same variable for optional grounding against what is already published, and **as a grounding root it is read-only**: that is the one role in which nothing writes into it. Writing into the docs repository it points at is a different role, not a contradiction.
+Where your product documentation's clone lives, defaulting to `/workspace/docs`. `/document` prefers it as a docs-repo discovery hint when your current working directory carries no documentation signals — in a container the docs clone is usually mounted right here, which makes this the common fast path — and `/docs-init` scaffolds a new documentation repository here when nothing is there yet. `/release-notes` reads the same variable for optional grounding against what is already published, and **as a grounding root it is read-only**, as it is where `/release-notes`, with diff grounding on, takes the same root as the documentation root of its commit scan, `--no-docs` or not: those are the uses in which nothing writes into it. Writing into the docs repository it points at is a different role, not a contradiction.
 
 ### `GIT_USER_INITIALS`
 
