@@ -3022,6 +3022,7 @@ this phase offers.
   withhold the options from a slice whose own gate is fully satisfied. Where either test fails, **drop all three options
   from the array** and say which one failed: a row still `unallocated` is walked to a
   terminal disposition by `/product-workflows:brd-split <SLICE-KEY>`, which on a slice runs allocate-only,
+  with beside it the note `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2's table puts beside that remedy — `/product-workflows:brd-split`'s own Phase 0 gates on this slice's grounding findings each carrying a verifier verdict and stops naming `/product-workflows:prd-ground <SLICE-KEY>` where they do not, so a slice that has only been carved reaches it through `/product-workflows:prd-ground` first —
   while a slice with no `covered-here` row holds no requirement of its own at all — no PRD, ARD or
   specification is authored for it — and §5 is where its
   requirements went. **Where `claims:` names no row** — an empty gate set, whatever the state of this
@@ -3131,7 +3132,8 @@ question.** All three advance options are dropped, so `Stop here` is all the arr
 no picker holds *Stop here* alone (`workflows-core:escalation-rules` §0), the rule this phase also
 states for its re-entry list, below. Print the prose list, which then holds only reconciling another
 BRD or slice; beside it, why the three were dropped, in the two bullets' words above — the
-`/product-workflows:brd-split <SLICE-KEY>` that walks a row still `unallocated`; the slice holding
+`/product-workflows:brd-split <SLICE-KEY>` that walks a row still `unallocated`, with its note on
+`/product-workflows:prd-ground`; the slice holding
 no requirement of its own, and §5 as where its requirements went; for a slice whose `claims:` names
 no row, `/product-workflows:brd-split <PARENT-KEY>` and, in words, which form applies; the ledger's
 path and `/product-workflows:prd-ground <SLICE-KEY>` in prose; or the slice's `prd.md` landing, as
