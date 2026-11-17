@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.95.2] — 2026-11-17
+## [1.96.1] — 2026-11-17
 
 DOCS-IN-CODE-REPO-SCAN: `implementation-format` §4 states what `docs-workflows` 1.41.0's commit scan does in the repository that holds the documentation. §4 said the scan never reads the docs repository; it now says the scan never takes that repository's documentation commits — a commit touching its documentation paths alone — and takes one that touches another path. Update with `docs-workflows` 1.41.0, which runs the scan.
 
