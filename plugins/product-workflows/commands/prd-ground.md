@@ -447,7 +447,7 @@ behaviour, not the behaviour.
      `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>" 2>/dev/null`, `<path>` that file's path
      relative to `$SPECS_PATH`, exit 0 where HEAD holds it. Where HEAD holds none of them —
      untracked, or staged and never committed — the uncommitted form:
-   `PRD_GROUND_NOT_HANDED_OFF: <BRD-KEY>'s coverage-ledger.md is written at <BRD-dir> but is on no branch — their handoff was declined, so nothing is missing but the commit. This run grounded nothing and wrote nothing. Commit brd/brd-inventory.md and coverage-ledger.md to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:prd-ground <BRD-KEY>'. <the clause below> Ignored, every /prd-ground run on this slice stops here until coverage-ledger.md is on <default>.`
+   `PRD_GROUND_NOT_HANDED_OFF: <BRD-KEY>'s coverage-ledger.md is written at <BRD-dir> but is on no branch — the handoff of the run that wrote it was declined, so nothing is missing but the commit. This run grounded nothing and wrote nothing. Commit brd/brd-inventory.md and coverage-ledger.md to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:prd-ground <BRD-KEY>'. <the clause below> Ignored, every /prd-ground run on this slice stops here until coverage-ledger.md is on <default>.`
    ```
    git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
    git -C "<SPECS_PATH>" add -f -- "<BRD-dir>/brd/brd-inventory.md" "<BRD-dir>/coverage-ledger.md"

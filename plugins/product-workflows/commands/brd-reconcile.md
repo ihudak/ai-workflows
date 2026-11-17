@@ -3023,9 +3023,8 @@ this phase offers.
   from the array** and say which one failed: a row still `unallocated` is walked to a
   terminal disposition by `/product-workflows:brd-split <SLICE-KEY>`, which on a slice runs allocate-only,
   with beside it the note `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2's table puts beside that remedy — `/product-workflows:brd-split`'s own Phase 0 gates on this slice's grounding findings each carrying a verifier verdict and stops naming `/product-workflows:prd-ground <SLICE-KEY>` where they do not, so a slice that has only been carved reaches it through `/product-workflows:prd-ground` first —
-  while a slice with no `covered-here` row holds no requirement of its own at all — no PRD, ARD or
-  specification is authored for it — and §5 is where its
-  requirements went. **Where `claims:` names no row** — an empty gate set, whatever the state of this
+  while a slice whose `claims:` names rows, none of them `covered-here` and none `unallocated`, holds no requirement of its own at all — no PRD, ARD or
+  specification is authored for it: say what each claimed row resolved to, as §5's table has a consumer say it in its last row — a `deferred-to` row a live obligation of this slice, a `rejected` one with the `[DEF#n]` or the customer decision that withdrew it, a `superseded-by` one with the `[BR#n]` that absorbed it — and that no command applies, since nothing in this plugin moves such a row back to `unallocated` and un-deferring a requirement is a decision taken with the customer. **Where `claims:` names no row** — an empty gate set, whatever the state of this
   slice's `coverage-ledger.md`: read, absent, or present and unreadable (§5.2) — the slice is a
   standing empty child, and the run that keeps or removes it is `/product-workflows:brd-split <PARENT-KEY>`,
   `<PARENT-KEY>` read off this `brd-link.md`'s `parent:`. Name it, and say in words which form
@@ -3060,7 +3059,9 @@ this phase offers.
   `/create-prd`, which writes that file and gates no copy of it, is dropped there with the two: it
   counts the file as found and opens on its existing-PRD question, whose recommended answer stops for
   `/product-workflows:update-prd` (`commands/create-prd.md` Phase 0 step 6, Phase 1 step 2), while the landing
-  printed beside the list says to land the file first. Neither `/create-ard` nor `/specify` consults
+  printed beside the list says to land the file first. For the same reason `/create-prd` alone is
+  left out where the condition holds on a `prd.md` the slice holds, `/product-workflows:update-prd
+  <SLICE-KEY>` named in prose in its place (below). Neither `/create-ard` nor `/specify` consults
   a tracker, and what each
   reads outside the specs tree — code through `$REPOS_PATH`, documentation through `$DOCS_PATH` — is resolved by that run itself, not
   a condition this command can test for the operator. What each needs beyond the two conditions is this
@@ -3121,10 +3122,22 @@ Where this run can go next:
   • Reconcile another BRD or slice    — /product-workflows:brd-reconcile <KEY> @<review-file>
 ```
 
-Where this slice passes its ledger tests and *The landed condition* holds:
+Where this slice passes its ledger tests, *The landed condition* holds and the slice holds no `prd.md`:
 
 ```
 choices: ["Stop here — the decisions are frozen and both sweeps are recorded", "Author this slice's PRD — /product-workflows:create-prd <SLICE-KEY> (PM) <merge-clause>", "Author this slice's architecture — /product-workflows:create-ard <SLICE-KEY> (PA, optional) <merge-clause>", "Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) <merge-clause>"]
+```
+
+Where it passes them and *The landed condition* holds on a `prd.md` the slice holds — on the
+default branch, or in the folder where that condition reads the folder's own file: on a specs tree
+that is no git repository, or in a slice folder outside its work tree — the PRD line is left out of
+the prose and the array, since `/product-workflows:create-prd` counts that file as found and opens
+on its existing-PRD question, whose recommended answer stops for `/product-workflows:update-prd`.
+Print beside the list `<SLICE-KEY>'s PRD is already authored: revise it with '/product-workflows:update-prd <SLICE-KEY>'.`,
+and present:
+
+```
+choices: ["Stop here — the decisions are frozen and both sweeps are recorded", "Author this slice's architecture — /product-workflows:create-ard <SLICE-KEY> (PA, optional) <merge-clause>", "Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) <merge-clause>"]
 ```
 
 **Where it fails them, or they cannot be read, or *The landed condition* does not hold, put no
@@ -3134,7 +3147,7 @@ states for its re-entry list, below. Print the prose list, which then holds only
 BRD or slice; beside it, why the three were dropped, in the two bullets' words above — the
 `/product-workflows:brd-split <SLICE-KEY>` that walks a row still `unallocated`, with its note on
 `/product-workflows:prd-ground`; the slice holding
-no requirement of its own, and §5 as where its requirements went; for a slice whose `claims:` names
+no requirement of its own, with what each claimed row resolved to and that no command applies; for a slice whose `claims:` names
 no row, `/product-workflows:brd-split <PARENT-KEY>` and, in words, which form applies; the ledger's
 path and `/product-workflows:prd-ground <SLICE-KEY>` in prose; or the slice's `prd.md` landing, as
 *The landed condition* words it, with `/create-prd`'s reason for being dropped beside it — and
@@ -3336,7 +3349,9 @@ slice, or handing on to PA (`/product-workflows:create-ard <SLICE-KEY>`) or PE
 **`/clear`**; those runs read the reconciled folder from the specs repo, not from this session.
 Name each of `/product-workflows:create-prd`, `/product-workflows:create-ard` and
 `/product-workflows:specify` here only where the list above offers it, since this guidance names no
-run that list left out. Guidance only — nothing is auto-run.
+run that list left out — and, where it names `/product-workflows:update-prd <SLICE-KEY>` in
+`/create-prd`'s place beside a landed `prd.md`, name that run in the PM branch instead, revising
+this slice's PRD yourself. Guidance only — nothing is auto-run.
 
 ---
 

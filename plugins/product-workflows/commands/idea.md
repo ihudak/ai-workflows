@@ -83,7 +83,9 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    `/brd-split` with its no-op case said beside it. **Another is an Epic folder whose parent is a
    BRD-route slice holding a `prd.md` asserting `kind: prd`**: that row reads no slice's ledger, so it
    names `/product-workflows:specify <KEY>` as it stands and says beside it that that run stops where
-   the slice fails its ledger tests, naming what its stop names. The slice rows read the gate set
+   the slice fails its ledger tests, naming what its stop names. **A third is a slice claiming rows
+   whose ledger is missing or unreadable**: that row names `/product-workflows:prd-ground <KEY>`, a
+   run that stops there by design, and says so. The slice rows read the gate set
    `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 defines — this slice's own
    `coverage-ledger.md` rows narrowed by its `brd-link.md` `claims:`, read out of the ledger file
    and never off a `ledger:` line (§6.1) — exactly as `/product-workflows:update-prd` Phase 0 step 4

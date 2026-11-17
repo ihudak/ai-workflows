@@ -51,10 +51,10 @@ flowchart TD
     reconcile -.->|questions still held for the customer| package
     reconcile -.->|"the review challenged a code claim — --rebaseline, or a question needing grounding before its round resumes"| ground
     interview -.->|"a question no finding bears on yet, or a --rebaseline"| ground
-    reconcile -->|"slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here, any prd.md landed"| createprd
+    reconcile -->|"slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here, no prd.md"| createprd
     reconcile -->|"slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here, any prd.md landed"| createard
     reconcile -->|"slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here, any prd.md landed"| specify
-    interview -.->|"nothing for the customer to review, PRD-eligible, any prd.md landed — no reconciliation needed"| createprd
+    interview -.->|"nothing for the customer to review, PRD-eligible, no prd.md — no reconciliation needed"| createprd
     interview -.->|"nothing for the customer to review, PRD-eligible, any prd.md landed — no reconciliation needed"| createard
     interview -.->|"nothing for the customer to review, PRD-eligible, any prd.md landed — no reconciliation needed"| specify
     createprd -->|prd.md| createard
@@ -312,12 +312,15 @@ where the slice holds one that is not on the specs repo's default branch, `/crea
 `/specify` stop on it at the PRD gate both run, and `/create-prd` would open on its existing-PRD
 question, whose recommended answer stops for [`/update-prd`](commands/update-prd.md), so the offering run prints that file's
 landing in place of all three — on a specs tree that is no git repository there is no branch to
-land it on, and the condition holds. A slice that passes the tests and holds no `prd.md` is the ordinary state for
+land it on, and the condition holds. Where the slice's `prd.md` is landed — or in its folder on such
+a tree — `/create-prd` would open on that same question, so it alone is dropped and the offering run
+names `/update-prd <SLICE-KEY>` in its place, beside `/create-ard` and `/specify`. A slice that passes the tests and holds no `prd.md` is the ordinary state for
 `/create-ard` and `/specify`: the PRD gate both run reports it rather than stopping on it. Where
 either condition does not hold, all three are dropped and the run says why, naming what the slice
 needs first — `/brd-split` on the slice for a row still `unallocated`, `/brd-split` on its parent
 for a slice that claims no row, `/prd-ground` for a ledger missing or unreadable while the slice
-claims rows, the `prd.md`'s landing — or that nothing applies.
+claims rows, the `prd.md`'s landing — or that nothing applies, saying what each claimed row resolved
+to.
 The difference is where the enforcement sits: the level test, the slice's ledger tests and the
 landed `prd.md` are each met in the offered commands' own runs before they author, whereas the one gate all three run on the register
 — `require-on-main` on `decisions.md`, stopping on a register left on an unmerged branch — tests
@@ -344,8 +347,8 @@ each of those three also has a keyed form that this route never uses.
 | `/brd-interview` | `<BRD-KEY>` | `--round N` | Only a slice is interviewed — a root stops with `BRD_INTERVIEW_ROOT_LEVEL`. No flag continues at the first open question; `--round N` resumes or re-opens one, cause recorded |
 | `/brd-package` | `<BRD-KEY>` | `--depends-on <BRD-KEY>…` | Only a slice is packaged — a root stops with `BRD_PACKAGE_ROOT_LEVEL`. `--depends-on` is repeatable; a mistyped key is warned and dropped, never fatal |
 | `/brd-reconcile` | `<BRD-KEY> [@<review-file>]` | `--sent <path>…`, `--free-text` | Only a slice is reconciled — a root stops with `BRD_RECONCILE_ROOT_LEVEL`. The review is a path you give, or the one the customer committed beside the bundle, once you confirm it |
-| `/create-prd` | `<SLICE-KEY>` | `--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<path>` (extra grounding, never the seed) | A `BRD-` container is refused. Offered only where the slice's claimed rows leave none `unallocated` and one `covered-here`, and any `prd.md` is landed. Defaults to `--full`. `--from-prd` is refused |
-| `/create-ard` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container, and a slice failing its ledger tests. Offered as `/create-prd` is. Gates `prd.md`: goes on with none, stops on one never handed off. One address (`CREATE_ARD_ONE_ADDRESS`) |
+| `/create-prd` | `<SLICE-KEY>` | `--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<path>` (extra grounding, never the seed) | A `BRD-` container is refused. Offered only where the slice's claimed rows leave none `unallocated` and one `covered-here`, and no `prd.md` is written. Defaults to `--full`. `--from-prd` is refused |
+| `/create-ard` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container and a slice failing its ledger tests. Offered where any `prd.md` is landed; goes on with none, stops on one never handed off. One address (`CREATE_ARD_ONE_ADDRESS`) |
 | `/specify` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container, and a slice failing its ledger tests. Offered as `/create-ard` is. One address; a second token stops it (`SPECIFY_ONE_ADDRESS`) |
 
 `--no-docs` and `--docs <path>` appear together on two of the six **route** rows and mean the same

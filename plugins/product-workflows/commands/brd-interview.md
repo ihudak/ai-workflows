@@ -2572,7 +2572,8 @@ and for the same reasons, both stated in the *PM — the BRD-to-PRD route* lane 
 `/product-workflows:brd-reconcile` bullet): **all three only where the slice is PRD-eligible** —
 where it passes its ledger tests, which each of the three applies in its own Phase 0 and stops on a
 slice that fails — **and where *The landed condition* that lane states holds besides**, read as that
-lane says and never restated here. The level test is not among them: this
+lane says and never restated here, `/product-workflows:create-prd` left out where it holds on a
+`prd.md` the slice holds, as that lane says too. The level test is not among them: this
 command runs on a slice only (`BRD_INTERVIEW_ROOT_LEVEL`). **Here the slice's ledger tests reduce
 to PRD-eligibility.** This command's own gate has already refused a row
 `unallocated` (*Resolve inputs and gate the grounded BRD*, step 8), so of the slice's ledger tests
@@ -2596,10 +2597,12 @@ routes stand, so apply the *overflow rule* of `Skill(skill: "workflows-core:refe
 *PM — the BRD-to-PRD route* lane: print every route in prose, in the order below, and, wherever a question is put, put in the question's own text one line saying the list is
 longer than the prompt, naming each route the array leaves out, and that anything on it is reachable by typing it into the free-text option.
 Leave out of both the prose and the array each route whose condition does not hold, and say why
-beside the list: the three authoring lines where the slice is not PRD-eligible or *The landed
-condition* does not hold — printing, in the second case, what that condition prints in their place —
-and, where the ledger cannot be read or `claims:` names no row, the three and the re-ground line,
-whose run stops on this slice too. The array carries the forward routes first, as
+beside the list: the three authoring lines where the slice is not PRD-eligible — where its ledger was read and `claims:` names rows, saying what each claimed row resolved to and that no command makes the slice eligible (§5.2's non-empty row) — or where *The landed
+condition* does not hold, printing what that condition prints in their place; the PRD line alone
+where the slice is PRD-eligible and *The landed condition* holds on a `prd.md` the slice holds,
+printing in its place the line the array for that state gives, below; and, where the ledger cannot
+be read or `claims:` names no row, the three and the re-ground line, whose run stops on this slice
+too. The array carries the forward routes first, as
 `/product-workflows:brd-reconcile`'s does, and keeps the lateral move — interviewing another BRD —
 in the prose only, in every case, because this run has just finished the slice it was given; where
 the forward routes left fit beside `Stop here`, the array carries all of them, and the question's
@@ -2614,10 +2617,23 @@ Where this run can go next:
   • Interview another BRD or slice
 ```
 
-Where the slice is PRD-eligible and *The landed condition* holds:
+Where the slice is PRD-eligible, *The landed condition* holds and the slice holds no `prd.md`:
 
 ```
 choices: ["Stop here — every question was settled from the findings and this BRD needs no customer review", "Author this slice's PRD — /product-workflows:create-prd <BRD-KEY> (PM) <merge-clause>", "Author this slice's architecture — /product-workflows:create-ard <BRD-KEY> (PA, optional) <merge-clause>", "Author this slice's specification — /product-workflows:specify <BRD-KEY> (PE) <merge-clause>"]
+```
+
+Where it is PRD-eligible and *The landed condition* holds on a `prd.md` the slice holds — on the
+default branch, or in the folder where that condition reads the folder's own file: on a specs tree
+that is no git repository, or in a slice folder outside its work tree — the PRD line is left out of
+the prose and the array, since `/product-workflows:create-prd` counts that file as found and opens
+on its existing-PRD question, whose recommended answer stops for `/product-workflows:update-prd`.
+Print beside the list `<BRD-KEY>'s PRD is already authored: revise it with '/product-workflows:update-prd <BRD-KEY>'.`,
+and present the forward routes left, which fit beside `Stop here` with the re-ground pass among
+them:
+
+```
+choices: ["Stop here — every question was settled from the findings and this BRD needs no customer review", "Author this slice's architecture — /product-workflows:create-ard <BRD-KEY> (PA, optional) <merge-clause>", "Author this slice's specification — /product-workflows:specify <BRD-KEY> (PE) <merge-clause>", "Re-ground every claim against current commits — /product-workflows:prd-ground <BRD-KEY> --rebaseline (a changed finding is what can make a new round askable)"]
 ```
 
 Where it is PRD-eligible and *The landed condition* does not hold — the slice's `prd.md` written and
@@ -2663,7 +2679,7 @@ what reopened it, and offer the round that puts it:**
 choices: ["Stop here — the reopened decision named above waits for the next round", "Work another round now — /product-workflows:brd-interview <BRD-KEY> (puts the reopened decision's question again)", "Interview another BRD or slice"]
 ```
 
-**Five of the six lists carry no `(Recommended)` marker, and that omission is deliberate**, per
+**Six of the seven lists carry no `(Recommended)` marker, and that omission is deliberate**, per
 the `When no option is safe to recommend` guidance in
 `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: on `yes`, `rounds-unsettled`,
 `nothing-to-review` and its reopened-record list, which one is right depends entirely on what this round left behind.
@@ -2716,7 +2732,8 @@ going on to `/product-workflows:brd-package <BRD-KEY>`? Both stay in the PM lane
 (`workflows-core:session-hygiene` §2's *Same role* bullet) → run **`/compact`**. Moving to a different BRD or slice? → run **`/clear`**.
 **Where the `nothing-to-review` list offers the authoring ladder, it spans roles, so print both
 branches** (`workflows-core:session-hygiene` §2's *Next options span both* bullet): authoring this slice's PRD yourself as PM
-(`/product-workflows:create-prd <BRD-KEY>`)? → run **`/compact`**. Handing on to PA
+(`/product-workflows:create-prd <BRD-KEY>`, or, where the slice's `prd.md` is landed and the list
+names `/product-workflows:update-prd <BRD-KEY>` in that route's place, revising it)? → run **`/compact`**. Handing on to PA
 (`/product-workflows:create-ard <BRD-KEY>`) or PE (`/product-workflows:specify <BRD-KEY>`), even
 when the same person does it? → run **`/clear`**; those runs read the slice folder from the specs
 repo, not from this session. Where it offers none of the three, print neither branch, since each
