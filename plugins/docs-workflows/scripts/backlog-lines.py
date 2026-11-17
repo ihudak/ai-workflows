@@ -82,9 +82,10 @@ answer (HEAD, the base, the branch list), the working backlog out of shape or no
 write that failed (the backlog unchanged), or an internal error; stdout is empty and stderr holds one line,
 "backlog-lines: not run (<why>)", <why> fixed text. Three exits 2 follow edit's write, each with a <why> of its own: a
 write -- the edit's or its undo's -- not reading back as written; an undo not written, since the backlog no longer
-held the edit's bytes but another writer's; and an undo that failed on its own write, the backlog still holding the
-edit. Exit 3: edit refused on the file's content before writing; the file is untouched. Exit 4: edit undone; the file
-holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
+held the edit's bytes but another writer's; and an undo that failed on its own write, the backlog then read again and
+found to hold the edit's bytes exactly -- where that read finds other bytes, the undo counts as blocked, and where it
+fails, as a write not reading back. Exit 3: edit refused on the file's content before writing; the file is untouched.
+Exit 4: edit undone; the file holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
 
 The caller's rule, which fails closed. Any exit but 0, 3 and 4 -- a crash's 1, a signal's -- is read as 2, and so is a
 stdout that is not one JSON object. check or moved exiting anything but 0 is a stop, never a skip: never read as in
@@ -885,6 +886,19 @@ def _replace(line, value, new):
     return line[:value.start] + new + line[value.end:]
 
 
+def _undo_failed(top, new_data):
+    """The <why> for an undo whose own write failed. The write can fail before its last look at the backlog, so what
+    the backlog holds is read here, and WHY_UNDO -- the one text that has the caller restore from its copy -- is
+    returned only where that read finds the edit's bytes exactly: any other bytes are another writer's
+    (WHY_UNDO_BLOCKED), and a read that fails is a failed read (WHY_RACED). This is the only place WHY_UNDO is
+    chosen."""
+    try:
+        now = _read_backlog(top)[0]
+    except Exception:
+        return WHY_RACED
+    return WHY_UNDO if now == new_data else WHY_UNDO_BLOCKED
+
+
 def _refuse(why, line=None, reason=None):
     return 3, {"refused": why, "line": line, "reason": reason}
 
@@ -958,13 +972,14 @@ def cmd_edit(top, uid, status, page_path):
     if why is None:
         return 0, result
     # The undo writes back only over the edit's own bytes. Which of three things went wrong decides what the caller
-    # may do: only an undo that failed on its own write leaves the edit in place for the caller's copy to replace.
+    # may do: only an undo that failed on its own write, over a backlog read again and found to hold the edit, leaves
+    # the edit in place for the caller's copy to replace.
     try:
         _write_backlog(top, data, mode, new_data)
     except (_Changed, NotRun):  # the backlog no longer held the edit's bytes: another writer's change stands
         raise NotRun(WHY_UNDO_BLOCKED)
-    except OSError:  # the undo's own write failed: the backlog still holds the edit
-        raise NotRun(WHY_UNDO)
+    except OSError:  # the undo's own write failed, perhaps before its last look: what the backlog holds is read now
+        raise NotRun(_undo_failed(top, new_data))
     try:
         landed = _read_backlog(top)[0]
     except Exception:
@@ -1728,27 +1743,93 @@ def case_edit_undo_blocked(tmp):
     _eq(_get(top), theirs, "the other writer's bytes, as that writer left them")
 
 
-def case_edit_undo_failed(tmp):
-    """The diff calls for an undo and the undo's own write fails: exit 2 with WHY_UNDO, the one text that has the
-    caller restore from its copy, since the backlog still holds the edit, unchecked. The docstring's caller rule quotes
-    that line whole, and no other text after a write says to restore."""
-    dirty = MINI.replace("schema_version: 1\n", "schema_version: 1  # touched\n")
-    top = _repo(tmp, MINI)
-    _put(top, dirty)
+def _undo_write_fails(before=None):
+    """A stand-in for _write_backlog whose second call -- the undo's -- runs the real function with no entropy for its
+    new file's name, so it raises OSError before its last look at the backlog; `before` runs first, as another actor."""
     real, calls = _write_backlog, []
 
     def failing(*args):
         calls.append(args)
-        if len(calls) == 2:  # the undo's write
+        if len(calls) != 2:
+            return real(*args)
+        if before is not None:
+            before()
+
+        def no_entropy(k):
             raise OSError("no space left on device")
-        return real(*args)
-    code, out, err = _with("_write_backlog", failing, lambda: _edit(top, "U-001", "drafted"))
+        saved = os.urandom
+        os.urandom = no_entropy
+        try:
+            return real(*args)
+        finally:
+            os.urandom = saved
+    return failing
+
+
+def case_edit_undo_failed(tmp):
+    """The diff calls for an undo and the undo's own write fails before its last look, over a backlog that, read
+    again, holds the edit: exit 2 with WHY_UNDO, the one text that has the caller restore from its copy. The
+    docstring's caller rule quotes that line whole, no other text after a write says to restore, and the one function
+    that names WHY_UNDO is the one that reads the backlog first."""
+    dirty = MINI.replace("schema_version: 1\n", "schema_version: 1  # touched\n")
+    top = _repo(tmp, MINI)
+    _put(top, dirty)
+    code, out, err = _with("_write_backlog", _undo_write_fails(), lambda: _edit(top, "U-001", "drafted"))
     _refused(code, out, err, WHY_UNDO)
     _eq(_get(top), dirty.replace("status: missing", "status: drafted").encode("utf-8"), "the edit, still in place")
     doc = " ".join(__doc__.split())
     _true(" ".join(("backlog-lines: not run (%s)" % WHY_UNDO).split()) in doc, "the caller rule quotes WHY_UNDO whole")
     _true("restore" in WHY_UNDO and "restore" not in WHY_RACED and "restore" not in WHY_UNDO_BLOCKED,
           "only WHY_UNDO says to restore")
+    import ast
+    with open(os.path.abspath(__file__), encoding="utf-8") as fh:
+        src = fh.read()
+    tree = ast.parse(src[:src.index("# ==== selftest ====")])
+    users = sorted({f.name for f in ast.walk(tree) if isinstance(f, ast.FunctionDef)
+                    for node in ast.walk(f) if isinstance(node, ast.Name) and node.id == "WHY_UNDO"})
+    _eq(users, ["_undo_failed"], "the functions that name WHY_UNDO")
+
+
+def case_edit_undo_failed_over_another_writer(tmp):
+    """The review's reproduction: another writer replaces the backlog after the edit's read-back, and the undo's own
+    write fails before its last look. The read that follows finds that writer's bytes, so the exit 2 is the blocked
+    undo's -- leave the backlog -- never WHY_UNDO's restore, and those bytes stand."""
+    dirty = MINI.replace("schema_version: 1\n", "schema_version: 1  # touched\n")
+    theirs = MINI.replace("threshold: 2\n", "threshold: 3\n").encode("utf-8")
+    top = _repo(tmp, MINI)
+    _put(top, dirty)
+    real_git = _git
+
+    def racing_git(path, *args):
+        got = real_git(path, *args)
+        if args[:1] == ("diff",):
+            _put(top, theirs)
+        return got
+    code, out, err = _with("_git", racing_git, lambda: _with(
+        "_write_backlog", _undo_write_fails(), lambda: _edit(top, "U-001", "drafted")))
+    _refused(code, out, err, WHY_UNDO_BLOCKED)
+    _eq(_get(top), theirs, "the other writer's bytes, as that writer left them")
+
+
+def case_edit_undo_failed_unreadable(tmp):
+    """The undo's own write fails and the backlog cannot then be read -- another actor has put a symbolic link in its
+    place -- so the exit 2 is the failed read's, WHY_RACED: leave the backlog and compare, never restore."""
+    dirty = MINI.replace("schema_version: 1\n", "schema_version: 1  # touched\n")
+    top = _repo(tmp, MINI)
+    _put(top, dirty)
+    elsewhere = os.path.join(tmp, "elsewhere.yml")
+    path = os.path.join(top, BACKLOG_DIR, BACKLOG_NAME)
+
+    def swap_in_a_link():
+        with open(elsewhere, "wb") as fh:
+            fh.write(MINI.encode("utf-8"))
+        os.remove(path)
+        os.symlink(elsewhere, path)
+    code, out, err = _with("_write_backlog", _undo_write_fails(swap_in_a_link), lambda: _edit(top, "U-001", "drafted"))
+    _refused(code, out, err, WHY_RACED)
+    _true(os.path.islink(path), "the link is left where it is")
+    with open(elsewhere, "rb") as fh:
+        _eq(fh.read(), MINI.encode("utf-8"), "the link's target, untouched")
 
 
 def case_edit_noop(tmp):
@@ -1839,6 +1920,7 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_examined_cap, case_no_base, case_moved_working_refused, case_edit_two_keys, case_edit_tilde_null,
          case_edit_page_path_set, case_edit_page_path_same, case_edit_no_page_path_key, case_edit_refused_content,
          case_edit_changed_while_reading, case_edit_changed_after_write, case_edit_undo_blocked, case_edit_undo_failed,
+         case_edit_undo_failed_over_another_writer, case_edit_undo_failed_unreadable,
          case_edit_noop,
          case_edit_not_a_repository, case_edit_undo, case_bad_args,
          case_shape_paragraph_pinned)
