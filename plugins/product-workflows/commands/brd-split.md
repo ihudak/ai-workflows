@@ -176,11 +176,50 @@ four-resolution one.
    `/brd-intake`'s ledger was on main before this BRD was ever grounded. Map the §3.7 return by
    `stopped` first: any stopping row → stop, naming the concrete branch/PR state it reports;
    `pass` → proceed; `pass_amending` → proceed, printing the §3.3 row-B message; `absent` (row F —
-   grounding findings are on no branch the commands cut) → **split it before stopping, on a test row F cannot
-   make**, the way `/brd-reconcile` splits its own row F. Row F covers three states here, and in
-   the last two `/prd-ground` would stop rather than produce the findings this gate wants, so
-   neither message may name it as the fix. Read
-   `<BRD-dir>/brd/brd-inventory.md` from the worktree and count its `[BR#n]` rows:
+   grounding findings are on no branch the commands cut) → **split it before stopping, on two tests row F cannot
+   make**, the way `/brd-reconcile` splits its own row F. Row F covers four states here. **Test
+   first whether `<BRD-dir>/grounding/code-grounding.md` is in the folder**: where it is, the
+   findings were written and never landed, the first bullet below; where it is not, read
+   `<BRD-dir>/brd/brd-inventory.md` from the worktree and count its `[BR#n]` rows, on which the
+   other three split. In the first `/prd-ground` would ground again what is already written, and in
+   the last two it would stop rather than produce the findings this gate wants, so none of those
+   three messages may name it as the fix:
+   - **`grounding/code-grounding.md` in the folder** — written and never handed off: the
+     `/prd-ground` run that wrote it did not land it, its handoff declined or never reached. What is
+     missing is the landing, so **name landing what is already on disk as the action**, and name
+     `/prd-ground` only to warn against it. The files to land are those of
+     `/product-workflows:prd-ground`'s handoff on the BRD route (its Phase 9, *`route: brd`*) that
+     are in this folder and not as `<default-ref>` holds them —
+     `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<path>" 2>/dev/null` exits non-zero, or
+     `git -C "$SPECS_PATH" diff --quiet "<default-ref>" -- "./<path>"` exits 1, `<path>` the file's
+     path relative to `$SPECS_PATH` — of `grounding/baselines.md`, `grounding/code-grounding.md`,
+     which is always among them, `grounding/design-grounding.md`, `brd-link.md` and
+     `coverage-ledger.md`. That handoff stages the last two only where its run changed them, and
+     this stop, which cannot read what that run did, lands each where its copy differs from
+     `<default-ref>`'s. Which of the stop's two forms to
+     print turns on the HEAD test, made before it prints as `workflows-core:phase-handoff` §4.4's
+     row F makes it for a stop that lands several files: on each of those files that
+     `<default-ref>` does not hold, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>" 2>/dev/null`,
+     exit 0 where HEAD holds it. Where HEAD holds none of them — untracked, or staged and never
+     committed — the uncommitted form:
+     `BRD_SPLIT_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s grounding/code-grounding.md is written at <BRD-dir> but is on no branch — the /product-workflows:prd-ground run that wrote it did not hand it off. This run read none of its findings, allocated nothing and wrote nothing. Commit <files> to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:brd-split <BRD-KEY>'. Do not re-run /product-workflows:prd-ground for this: it would ground every claim again rather than land the findings already written. Ignored, every /brd-split run on this slice stops here until grounding/code-grounding.md is on <default>.`
+     ```
+     git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+     git -C "<SPECS_PATH>" add -f -- "<BRD-dir>/<file>" …
+     git -C "<SPECS_PATH>" commit -m "<BRD-KEY> grounding findings" -- "<BRD-dir>/<file>" …
+     git -C "<SPECS_PATH>" push -u origin <new-branch>
+     ```
+     `<files>` is those files, folder-relative, and `"<BRD-dir>/<file>"` each of them, one quoted path each in place of the `…`. `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<BRD-dir>` is the folder this message names. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+
+     Where HEAD holds all of them, or some — committed on a branch no plugin prefix names, or on a
+     local `<default>` that `origin` does not hold — the commands above do not apply, since the
+     switch they open with takes the files HEAD holds out of the working tree; the committed form
+     lands the branch instead, never the uncommitted form (§4.4's row F):
+     `BRD_SPLIT_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s grounding/code-grounding.md at <BRD-dir> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of its findings, allocated nothing and wrote nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:prd-ground for this, which would ground every claim again rather than land the findings committed. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:brd-split <BRD-KEY>'. Ignored, every /brd-split run on this slice stops here until grounding/code-grounding.md is on <default>.`
+     ```
+     <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
+     ```
+     In the committed form `<branch>` is the branch `git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints, and the commands the stop prints are the ones §4.4's row F gives for a file HEAD holds, in the case row F selects — each chosen by the reads that row names before the stop prints, each on a line of its own, and an alternative introduced by a line saying when it applies; a `<new-branch>` among them is named as in the uncommitted form. Three of the message's sentences change with the case, each on a test the stop makes itself. Where `<branch>` is `<default>`, the first reads `<BRD-KEY>'s grounding/code-grounding.md at <BRD-dir> is committed on your local <default> and not pushed.`, and the one opening `Then` reads `Then re-run '/product-workflows:brd-split <BRD-KEY>' — where <default> is protected, once a pull request from <new-branch> into <default> is merged.` Where the specs repository has no `origin`, the one opening `Then` reads `Then re-run '/product-workflows:brd-split <BRD-KEY>'.` alone, since the local merge row F selects there needs no pull request. Where the reads row F names select no command — `<branch>` on `origin`, and the local branch holding no commit `origin` lacks, never on row F's *some*, whose `commit` those reads count among the commits `origin` lacks — the stop prints none: the sentence opening `Land that branch` says instead that `<branch>` is already on origin, so nothing is left to push and the pull request is all that is left, and keeps its warning not to re-run `/product-workflows:prd-ground`. **Where HEAD holds some of the files and not the others** — row F's *some* — the first sentence names, folder-relative, the files HEAD holds as committed on `<branch>` and says the others are not committed; the sentence opening `Land that branch` opens `Commit <the files HEAD lacks> onto <branch> and land that branch`; and the commands open with the `add -f` and `commit` row F gives for those files, `-m "<BRD-KEY> grounding findings"`. **A file of those that `<default-ref>` holds counts among the files HEAD lacks** wherever its working copy is not HEAD's — HEAD lacks it, or `git -C "<SPECS_PATH>" diff --quiet HEAD -- "<BRD-dir>/<file>"` exits 1 — since landing `<branch>` carries only what is committed on it; where HEAD holds every one `<default-ref>` lacks, those three changes are made for such files alone, and the reads row F names count that `commit` too among the commits `origin` lacks, so the stop never prints no command there. `<files>`, the paths and the `#` rule are as for the uncommitted form. On a read-only specs mount (§3.6) every command either form prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it.
    - **One or more rows** — grounding simply has not run yet, and running it is the fix:
      `BRD_SPLIT_NEEDS_GROUNDING: no grounding findings on file for <BRD-KEY> — run /product-workflows:prd-ground <BRD-KEY> first.`
    - **No `brd/brd-inventory.md` in the folder at all** — not an empty inventory, and not a slice
@@ -1654,11 +1693,12 @@ a stop added later is classified by the same test. Among them: a missing or malf
 (`BRD_SPLIT_EPIC_LEVEL`), an idea-route PRD folder (`BRD_SPLIT_NOT_A_BRD`) or any other folder that is
 not a BRD container and holds no `[BR#n]` row (`BRD_SPLIT_EMPTY_INVENTORY`'s second form at step 8) and an unset `$SPECS_PATH`
 are argument or environment halts; a missing instruction on a root with a row still `unallocated`
-(`BRD_SPLIT_NEEDS_INSTRUCTION`) is the operator's own argument left out; an ungated or missing
-grounding deliverable (`BRD_SPLIT_NEEDS_GROUNDING`), a grounding file on main recording no finding
+(`BRD_SPLIT_NEEDS_INSTRUCTION`) is the operator's own argument left out; a missing grounding
+deliverable (`BRD_SPLIT_NEEDS_GROUNDING`) or one written and never handed off
+(`BRD_SPLIT_GROUNDING_NOT_HANDED_OFF`), a grounding file on main recording no finding
 (`BRD_SPLIT_NO_FINDINGS`), frame sets no design grounding on main covers
 (`BRD_SPLIT_DESIGN_NOT_GROUND`) and unverified findings (`BRD_SPLIT_UNVERIFIED`) are sequencing
-halts, each naming the run that clears it; and an inventory carrying no claim at all
+halts, each naming what clears it — a run, or the landing of what is already written; and an inventory carrying no claim at all
 (`BRD_SPLIT_EMPTY_INVENTORY` — step 8's container form on a root, step 6's row-F branch on a slice) is a
 fact about the customer's document or about what the parent allocated, never about this plugin;
 nor is a slice with no inventory in its folder (`BRD_SPLIT_NO_INVENTORY`, step 6's row-F branch),
