@@ -255,6 +255,13 @@ jobs:
         # Fixtures and a fake gh and ssh are built at run time.
         run: python3 plugins/docs-workflows/scripts/key-discovery.py --selftest
 
+      - name: Self-test the backlog line reader
+        # /docs-workflows:docs-write reads and edits the documentation backlog with it, line by
+        # line, since no YAML parser ships with the plugins. Its failure modes are silent: a value
+        # spanning lines read as a unit entry, a status written outside its entry, and a branch
+        # name from a remote reaching a git command. Fixtures and repositories are built at run time.
+        run: python3 plugins/docs-workflows/scripts/backlog-lines.py --selftest
+
       - name: Self-test the bounded run
         # Every capped call in the family runs through it -- the slug-to-clone maps, the qmd probes,
         # the clone-identity lines. A cap that does not fire, a child left running, or a timeout

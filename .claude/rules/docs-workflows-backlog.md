@@ -18,3 +18,7 @@ Loaded with `.claude/rules/docs-workflows.md`, whose `paths:` it shares. Split o
                       └── ia-planner (docs-workflows)         (used by /docs-audit)
                       └── docs-audit-reviewer (docs-workflows) (used by /docs-audit)
 ```
+
+## Invariants
+
+- **`plugins/docs-workflows/references/docs-audit/backlog-format.md` §1's line shape and `plugins/docs-workflows/scripts/backlog-lines.py` change in one commit.** The paragraph *The line shape a backlog run reads.* states the shape, and the script is its one implementer: every line-wise read or edit a backlog run makes of `.dev-workflows/docs-backlog.yml` goes through it. Its `--selftest` pins the script to the paragraph — it reads the paragraph's out-of-shape reasons and §1's schema from the reference itself and fails where either disagrees with the script — so a reason added to one and not the other turns the build red. `.github/workflows/validate-catalog.yml`'s *Self-test the backlog line reader* step runs it on every push.
