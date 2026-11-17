@@ -32,7 +32,7 @@ flowchart TD
     VERIFY --> REFRESH
     VERIFY --> ROT
     REFRESH --> WRITE
-    ROT -->|"a page rewritten by hand — walk it again"| VERIFY
+    ROT -->|"a page rewritten by hand — walk it"| VERIFY
 
     classDef entry stroke:#dc2626,stroke-width:3px
     class INIT entry
@@ -229,7 +229,11 @@ Run it after a new integration, a new role or a new release, so the denominator 
 
 ### 8. Re-read what `review_by` has aged — by hand
 
-`review_by` in a page's frontmatter is the calendar backstop for the rot no diff can see: a product renamed, a process changed, a policy that moved, none of which touches a line of the code a page's evidence points at. Sort your pages by that date and re-read what has aged past it. A page that is still right takes a new date. **One that is not you rewrite by hand, in place** — `/docs-write` drafts only a unit still `missing`, and nothing on this route rewrites a published page for you. Edit the page where it stands, keeping its path and its `unit:` line; mark each claim you can no longer ground rather than leave it standing; set each `code` and `artifact` evidence entry's `ref` to the commit you read it at, so that step 6 reads against what you read; and give the page a new `review_by`. Its unit is `published`, and the lifecycle leads from there back to `drafted` only through `stale`: mark the unit `stale` in the backlog when you find the page out of date, and move it on to `drafted` in the commit that rewrites the page. Then walk the page as step 6 says, as any drafted page.
+`review_by` in a page's frontmatter is the calendar backstop for the rot no diff can see: a product renamed, a process changed, a policy that moved, none of which touches a line of the code a page's evidence points at. Sort your pages by that date and re-read what has aged past it. A page that is still right takes a new date. **One that is not you rewrite by hand, in place** — `/docs-write` drafts only a unit still `missing`, and nothing on this route rewrites a page for you. The rewrite is the same whatever the unit's status: edit the page where it stands, keeping its path and its `unit:` line; mark each claim you can no longer ground rather than leave it standing; set each `code` and `artifact` evidence entry's `ref` to the commit you read it at, so that step 6 reads against what you read; and give the page a new `review_by`. What becomes of the unit turns on its `status`, because the backlog's lifecycle allows only the moves [its diagram](reference/docs-backlog.md#the-states-a-page-moves-through) draws:
+
+- **`drafted`** — the page has not been verified yet. Rewrite it; the unit stays `drafted`, and step 6's walk covers the rewrite.
+- **`published`** — the lifecycle leads back to `drafted` only through `stale`. Mark the unit `stale` in the backlog when you find the page out of date, move it on to `drafted` in the commit that rewrites the page, then walk the page as step 6 says.
+- **`verified`** — its one move is to `published`, which you make by hand when the page ships. Publish it, then take the `published` route above.
 
 *Later: `/docs-drift` is planned to watch the evidence side of this — diffing a surface's evidence paths between the ref the backlog recorded and today, and re-queueing the units that fan out from it. The calendar side stays a human judgement either way, so this step does not disappear when that command ships.*
 
