@@ -3004,8 +3004,11 @@ this phase offers.
   while a slice with no `covered-here` row holds no PRD of its own at all and §5 is where its
   requirements went. **Where `coverage-ledger.md` is absent, or present and unreadable, while that `brd-link.md` claims rows** —
   reachable on a `--sent` run, whose step 7 gates no ledger — neither test can be read: drop the
-  option, name nothing in its place, and report the path, as missing or as unreadable with the read error, as
-  `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 requires (it is not an empty gate set). Dropping rather than annotating is
+  option, report the path, as missing or as unreadable with the read error, and name
+  `/product-workflows:prd-ground <SLICE-KEY>` in prose beside the list — never as an option of the
+  array, since it stops on this slice by design — as the run whose stop tells a carve interrupted
+  before the ledger was written from a file lost or damaged after it, and names the repair for each,
+  as `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 requires (it is not an empty gate set). Dropping rather than annotating is
   this phase's rule for every option whose condition does not hold, and here the condition is a hard
   refusal in another command's Phase 0.
 - **`/product-workflows:create-ard <SLICE-KEY>` and `/product-workflows:specify <SLICE-KEY>` are always

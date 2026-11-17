@@ -235,7 +235,10 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   `/brd-split` re-allocates a row already carrying a fate, apart from the key repair a removal
   performs (its Phase 4.5). That third outcome is not guaranteed to be
   on offer: it needs such a row to exist and it needs this slice never to have been interviewed, so a
-  slice emptied after its own interview can only be removed or kept.
+  slice emptied after its own interview can only be removed or kept. Where this slice's own ledger
+  or inventory is missing or cannot be read — as it is where a remedy table hands this stop's remedy
+  to a claimless slice with no ledger or no inventory — that run offers it no row, neither
+  `covered-by` nor a re-cut, and the stop says so: removing or keeping it is the whole of what it offers.
 - **This BRD's own inventory and ledger already on the specs repo's main branch.** `/prd-ground`
   gates `coverage-ledger.md` on `origin/<default>` via `require-on-main` before reading anything
   else; an unmerged pull request stops the run naming the branch/PR state. It gates

@@ -631,8 +631,17 @@ behaviour, not the behaviour.
    neither `/brd-split` form, since which one runs is that ledger's to say: replace everything from
    `Re-run /product-workflows:brd-split on <PARENT-KEY>` to the end of the message with
    `The parent's ledger at <path> cannot be read, and which /product-workflows:brd-split form resolves this slice is that ledger's to say — report it; neither form is named here.`
-   Every remedy table in step 6 that hands this stop's remedy on inherits that case with it, so a
-   first row matching a claimless slice never names a form its own last row would withhold:
+   **Where this slice's own `coverage-ledger.md` or `brd/brd-inventory.md` is missing or cannot be
+   read** — as it is where step 6's remedy tables hand this stop's remedy to a claimless slice with
+   no ledger or no inventory — a `/brd-split` run on the parent marks this slice unreconcilable and offers it
+   no row (its Phase 0 step 9; `coverage-ledger-format.md` §3.2), so the keep-or-remove is the whole
+   of what it offers: drop ` and will offer covered-by against this slice`, and replace everything
+   from `Adding an instruction to that same run` to the end of the message with
+   `This slice's <file> at <path> is <missing | unreadable (<error>)>, so that run offers it no row: neither covered-by nor a re-cut reaches it.`
+   Where the parent's ledger cannot be read as well, print the parent's replacement above and then
+   this sentence. Every remedy table in step 6 that hands this stop's remedy on inherits both cases
+   with it, so a first row matching a claimless slice never names a form its own last row would
+   withhold, nor promises it a row it cannot be given:
      `PRD_GROUND_EMPTY_INVENTORY: <BRD-KEY> is a slice of <PARENT-KEY> and its inventory holds no [BR#n] row — it claims nothing, so there is nothing to ground. Do not run /product-workflows:brd-intake on a slice; it has no source document of its own. Re-run /product-workflows:brd-split on <PARENT-KEY>: either way it resolves every standing empty child, so it will offer to remove this slice or to keep it against its recorded reason. Which form to type depends on that parent's own ledger. Where it still holds an unallocated row, the run walks it too and will offer covered-by against this slice — and a run with rows still to place needs a slicing instruction to group them, so type '/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"'. Where no row is left unallocated, the bare '/product-workflows:brd-split <PARENT-KEY>' is the run, and removing this slice or keeping it against a recorded reason is the whole of what it offers here. Adding an instruction to that same run, '/product-workflows:brd-split <PARENT-KEY> "<what to peel off>"', can additionally re-cut onto this slice a row the parent delegated to a sibling that has since recorded it will not build it — the one case, apart from the key repair a removal performs, in which /brd-split re-allocates a row already carrying a fate, and the only third thing that can change this slice's state. That third one is not guaranteed to be on offer: it needs such a row to exist, and it needs this slice never to have been interviewed, so a slice emptied after its own interview can only be removed or kept.`
 
    **Why a stop rather than an empty handoff.** Writing an empty `grounding/code-grounding.md` and

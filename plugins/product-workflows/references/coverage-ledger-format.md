@@ -347,9 +347,11 @@ ledger that is missing, or present and unreadable, while `claims:` names rows le
 read: both fail the tests, and they differ in what is named (§5.2). The tests have five outcomes,
 each a row of §5.2's table after its container row: *passes*; *unallocated*; *none covered-here,
 gate set non-empty*; *none covered-here, gate set empty* — `claims:` empty, whatever the ledger
-file's state, the parent's ledger deciding the form of what is named, and where that ledger cannot
-be read it is reported by path and neither form is named; and *ledger missing or unreadable while
-`claims:` names rows*. `/create-prd` applies the slice's ledger tests to a slice in its Phase 0
+file's state, the parent's ledger deciding the form of what is named, the re-cut form among them
+only where this slice's own ledger was read, and where the parent's ledger cannot be read it is
+reported by path and neither form is named; and *ledger missing or unreadable while `claims:` names
+rows* — the file reported by path and `/product-workflows:prd-ground <SLICE-KEY>` named, the run
+whose stop names the repair. `/create-prd` applies the slice's ledger tests to a slice in its Phase 0
 step 7, under `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE`.
 
 **The level test is a check the consumer performs, and it comes first.** A BRD is a container and is
@@ -569,17 +571,18 @@ A prefixed tree never reaches this test at all, exactly as it never reaches `wor
 
 `/create-prd` refuses **three** shapes on the BRD route, and an offer that names it is safe only
 once it has tested all three. The container refusal is the one an offering command remembers,
-because it is usually the one that command took itself; the other two are data refusals read off the
-resolved slice's own ledger (`commands/create-prd.md` Phase 0 step 7) — the slice's ledger tests
-(§5), whose five outcomes are the rows after the first:
+because it is usually the one that command took itself; the other two, its data refusals, are this
+command's two stops for the slice's ledger tests (§5), read off the resolved slice's own
+`brd-link.md` and ledger (`commands/create-prd.md` Phase 0 step 7). The rows after the first are the
+tests' five outcomes:
 
 | Tested on | Fires when | What `/create-prd` then names |
 |---|---|---|
 | the resolved folder's prefix, or §5.1's evidence where it has none (§5, §5.1) | it is a `BRD-` container | `CREATE_PRD_BRD_NOT_SLICED` — the `PRD-` slices under it, or `/brd-split <BRD-KEY> "<how to cut it>"` where there are none |
 | the gate set | *unallocated* — a row is still `unallocated` | `CREATE_PRD_BRD_UNALLOCATED` — `/brd-split <SLICE-KEY>`, whose walk moves exactly those rows; and beside it, that `/brd-split`'s own Phase 0 gates on this slice's grounding findings each carrying a verifier verdict and stops naming `/prd-ground <SLICE-KEY>` where they do not, so a slice that has only been carved reaches it through `/prd-ground` first |
-| the gate set | *none covered-here, gate set non-empty* — `claims:` names rows, no row is `covered-here`, and none `unallocated` (the row above is tested first) | `CREATE_PRD_BRD_NOT_ELIGIBLE` — **no command at all**, and what each row resolved to (§5's table, its last row) |
-| `claims:` | *none covered-here, gate set empty* — `claims:` names no row: a *standing empty child*, whatever the state of its `coverage-ledger.md` — read, absent, or present and unreadable (the converse paragraph below) | `CREATE_PRD_BRD_NOT_ELIGIBLE` — `/brd-split <PARENT-KEY>`, in the form the parent's own ledger decides: `/brd-split <PARENT-KEY> "<how to cut it>"` where it still holds an `unallocated` row (a bare run stops there with `BRD_SPLIT_NEEDS_INSTRUCTION`); the bare `/brd-split <PARENT-KEY>` where it holds none, and beside it, where a sibling has recorded `deferred-to` on a row the parent delegated to it, `/brd-split <PARENT-KEY> "<what to peel off>"`, a run that still offers the keep-or-remove (its Phase 4.5) and can also re-cut that row onto this slice (§3.2), which needs this slice never to have been interviewed; and neither form, the parent's ledger reported by path, where it cannot be read |
-| `coverage-ledger.md`, while `claims:` names rows | *ledger missing or unreadable while `claims:` names rows* — the file is absent, or present and cannot be read | `CREATE_PRD_BRD_NOT_ELIGIBLE` — **no option at all**: the file by path, as missing or as unreadable with the read error (the converse paragraph below) |
+| the gate set | *none covered-here, gate set non-empty* — the ledger read, `claims:` naming rows, no row `covered-here` and none `unallocated` (the row above is tested first) | `CREATE_PRD_BRD_NOT_ELIGIBLE` — **no command at all**, and what each row resolved to (§5's table, its last row) |
+| `claims:` | *none covered-here, gate set empty* — `claims:` names no row: a *standing empty child*, whatever the state of its `coverage-ledger.md` — read, absent, or present and unreadable (the converse paragraph below) | `CREATE_PRD_BRD_NOT_ELIGIBLE` — `/brd-split <PARENT-KEY>`, in the form the parent's own ledger decides: `/brd-split <PARENT-KEY> "<how to cut it>"` where it still holds an `unallocated` row (a bare run stops there with `BRD_SPLIT_NEEDS_INSTRUCTION`); the bare `/brd-split <PARENT-KEY>` where it holds none, and beside it, where a sibling has recorded `deferred-to` on a row the parent delegated to it, `/brd-split <PARENT-KEY> "<what to peel off>"`, a run that still offers the keep-or-remove (its Phase 4.5) and can also re-cut that row onto this slice (§3.2), which needs this slice never to have been interviewed and its own ledger and inventory readable — a slice missing either, or unable to read it, is unreconcilable to that run and no receiver (§3.2; `commands/brd-split.md` Phase 0 steps 9 and 9a), so this form is named only where this slice's own ledger was read; and neither form, the parent's ledger reported by path, where it cannot be read |
+| `coverage-ledger.md`, while `claims:` names rows | *ledger missing or unreadable while `claims:` names rows* — the file is absent, or present and cannot be read | `CREATE_PRD_BRD_NOT_ELIGIBLE` — the file by path, as missing or as unreadable with the read error, and `/prd-ground <SLICE-KEY>` named in prose as the run whose stop tells a carve interrupted before the ledger was written from a file lost or damaged after it and names the repair: a stop's remedy, never an option of an array (the converse paragraph below) |
 | the gate set | *passes* — no row `unallocated`, and at least one `covered-here` | neither data refusal fires: `/create-prd <SLICE-KEY>` is reachable on these tests |
 
 **The gate set is this slice's own `coverage-ledger.md` rows, narrowed by its `brd-link.md`
@@ -613,20 +616,27 @@ while that `brd-link.md` claims rows it is not an empty gate set.** `/brd-split`
 (`commands/brd-split.md` Phase 3, steps 3 to 5), so a carve interrupted after the first and before
 the last leaves a slice whose ledger was never written; and a ledger written and lost afterwards
 leaves the same folder. **Where `claims:` names rows**, a consumer that meets it can evaluate
-neither data refusal, and must not read the absent file as a gate set of zero rows: those rows'
-dispositions are the evidence any remedy turns on, and resolving a missing file to the standing
-empty child's offer would send an operator to keep-or-remove a slice on evidence nobody has.
-**Name no option at all.** Report the absent `<slice-dir>/coverage-ledger.md` by path, and say that
-`/brd-split` writes it with the slice. **A `coverage-ledger.md` that is present and cannot be read
-is the same state for this purpose**: its rows are `unresolved` (§6.2), so neither data refusal can
-be evaluated either — name no option, and report the file by path with the read error. **Where
-`claims:` names no row, the gate set is empty whether or not the ledger file exists, or can be
-read**: the slice is the *standing empty child* — a slice whose `claims:` list is empty — which the
-table above resolves to `/brd-split <PARENT-KEY>` (with or without an instruction, as the parent's
-ledger decides). The missing or unreadable file costs that remedy nothing: the run that resolves a
-standing empty child reads the parent's ledger and the other children's, never the child's own
-(`commands/brd-split.md` Phase 4.5), and `/prd-ground`'s `PRD_GROUND_NEEDS_SPLIT` names the same
-remedy for a slice that claims nothing and holds no ledger. The rule is stated here, in the authority
+neither data refusal, and must not read the absent file as a gate set of zero rows, nor resolve it
+to the standing empty child's `/brd-split <PARENT-KEY>`: a parent re-run writes nothing into a slice
+with a file missing (`commands/brd-split.md` Phase 4 Step 3), so it repairs neither cause. **A
+`coverage-ledger.md` that is present and cannot be read is the same state for this purpose**: its
+rows are `unresolved` (§6.2), so neither data refusal can be evaluated either. In both, report
+`<slice-dir>/coverage-ledger.md` by path, as missing or as unreadable with the read error, and name
+`/product-workflows:prd-ground <SLICE-KEY>` as the run whose stop on this slice tells a carve
+interrupted before the ledger was written from a file lost or damaged after it, and names the
+repair for each — the command `/brd-split` itself names for a child in this state (its Phase 4
+Step 3). Name it in prose, as a stop's remedy, and say that run stops there by design: never as an
+option of an array, and never `(Recommended)`. **Where `claims:` names no row, the gate set is empty
+whether or not the ledger file exists, or can be read**: the slice is the *standing empty child* — a
+slice whose `claims:` list is empty — which the table above resolves to `/brd-split <PARENT-KEY>`
+(with or without an instruction, as the parent's ledger decides). The missing or unreadable file
+costs the keep-or-remove nothing — `/brd-split`'s Phase 4.5 takes a standing empty child by its
+`claims:` and reads the parent's ledger and the other children's, never the child's own — and
+`/prd-ground`'s `PRD_GROUND_NEEDS_SPLIT` names the same remedy for a slice that claims nothing and
+holds no ledger. It does bar this slice as a target of that run: its Phase 0 step 9 marks a child
+whose ledger is missing or unreadable unreconcilable, and no list of the run offers such a child a
+row, so neither the walk's `covered-by` nor the re-cut reaches this slice (§3.2), and the re-cut
+form is named only where this slice's own ledger was read. The rule is stated here, in the authority
 every offering command already cites; each command that reads a slice's ledger to shape an offer or
 a remedy carries a row, citing it, for a ledger missing or unreadable while `claims:` names rows.
 
@@ -638,7 +648,9 @@ for themselves. Dropping is not going quiet: name what moves the failing test wh
 — `/brd-split <SLICE-KEY>` for an `unallocated` row, `/brd-split <PARENT-KEY>` for a standing empty
 child, in the table's form: with a slicing instruction where the parent still holds an `unallocated`
 row, bare (the keep-or-remove run) where it holds none, and neither, reporting the parent's ledger by
-path, where it cannot be read — and where none exists, say so. **The non-empty
+path, where it cannot be read; and, for a ledger missing or unreadable while `claims:` names rows,
+the file by path and `/prd-ground <SLICE-KEY>` in prose as the run whose stop names the repair (the
+converse paragraph above) — and where none exists, say so. **The non-empty
 `CREATE_PRD_BRD_NOT_ELIGIBLE` branch is the one that must never be offered into**: it names no
 command by design, so an offer that sends the operator there hands them a stop with no way out, and
 nothing in this plugin moves a slice's `deferred-to`, `rejected` or `superseded-by` row back to
