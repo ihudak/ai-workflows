@@ -22,6 +22,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `Where the placeholder sits in the text` → `contract`
 - `PM — ideation & framing` → `pm`
 - `PM — the BRD-to-PRD route` → `brd`
+- `The landed condition` → `brd`
 - `PM — effort proposals (optional, and they gate nothing on the build ladder)` → `proposals`
 - `PA — architecture (optional)` → `pa`
 - `PE — breakdown & specification` → `pe`
@@ -167,10 +168,14 @@ array carries every option.
   (`/product-workflows:brd-package` Phase 0 owns that test); otherwise → another
   `/product-workflows:brd-interview <BRD-KEY>` round (PM), or `/product-workflows:prd-ground <BRD-KEY>` (PM)
   for a question no finding bears on yet. Where nothing is left for the customer to review, the slice is
-  decided and hands over from here, with no reconciliation: → `/product-workflows:create-ard <BRD-KEY>`
-  (PA, optional) or `/product-workflows:specify <BRD-KEY>` (PE), and `/product-workflows:create-prd <BRD-KEY>`
-  (PM) where the slice is PRD-eligible — the same conditions `/product-workflows:brd-reconcile`'s
-  advancing list applies (`/product-workflows:brd-interview`'s next-step phase owns that list).
+  decided and hands over from here, with no reconciliation: → `/product-workflows:create-prd <BRD-KEY>`
+  (PM), `/product-workflows:create-ard <BRD-KEY>` (PA, optional) and `/product-workflows:specify <BRD-KEY>`
+  (PE), on the conditions `/product-workflows:brd-reconcile`'s advancing list applies, stated in this
+  lane's `/product-workflows:brd-reconcile` bullet — all three where the slice passes its ledger
+  tests, and the last two where *The landed condition* holds besides. Here the slice's ledger tests
+  reduce to PRD-eligibility: `/product-workflows:brd-interview`'s own Phase 0 refuses a slice with a
+  row still `unallocated`, so the `covered-here` test is what its offer has left to read
+  (`/product-workflows:brd-interview`'s next-step phase owns that list).
 - `/product-workflows:brd-package <BRD-KEY>` → *(the customer reviews it off-platform, and the round
   holding each customer question stays open until the answer comes back, or the question stops
   applying)* →
@@ -199,17 +204,63 @@ array carries every option.
   only record a dependent's sweep, all three advance options are dropped: a `reopened` record may not
   be consumed downstream (`product-workflows:decision-register-format` §3) and all three consume the
   register, and a dependent recorded-not-written still reads a position the customer has since
-  settled. On an advancing slice run, `/product-workflows:create-prd <SLICE-KEY>` carries the further
-  condition that the reconciled ledger leaves no row `unallocated` and at least one `covered-here`
-  (`product-workflows:coverage-ledger-format` §5, the two refusals its Phase 0 raises); the other two
-  carry none of their own: neither reads the ledger as an authoring input, and although both now run the PRD gate on every
-  route, that gate's `absent` branch proceeds on a slice holding no `prd.md` — the ordinary state
-  for both, since `/product-workflows:create-prd` is a prerequisite for neither on a slice; a `prd.md`
-  the slice holds and never handed off — on an unmerged branch, or in the folder and on no ref —
-  stops both, as it does on the idea route, naming its landing, and the offering run, which reads no
-  `prd.md`, does not test for it. **That difference is where the conditions come from, and it matters:**
-  the level test and `/create-prd`'s eligibility test are each enforced by the offered command's own
-  Phase 0, so offering either wrongly hands over a run that stops;
+  settled. On an advancing slice run, each of the three carries a further condition, and two carry a
+  second:
+  - **The slice's ledger tests, for all three** — the reconciled ledger leaves no row the slice's
+    `brd-link.md` `claims:` names `unallocated`, and at least one `covered-here`, read off the slice's
+    `coverage-ledger.md` as the offering run left it (`product-workflows:coverage-ledger-format` §5):
+    each of the three applies them in its own Phase 0, whatever the slice holds, and stops on a slice
+    that fails them (`CREATE_PRD_BRD_UNALLOCATED`, `CREATE_PRD_BRD_NOT_ELIGIBLE`,
+    `CREATE_ARD_BRD_UNALLOCATED`, `CREATE_ARD_BRD_NOT_ELIGIBLE`, `SPECIFY_BRD_UNALLOCATED`,
+    `SPECIFY_BRD_NOT_ELIGIBLE`). Where they fail, or cannot be read, all three are dropped, and the
+    offering command says why in its own words.
+  - ***The landed condition*, for `/product-workflows:create-ard` and `/product-workflows:specify`
+    alone** — the slice's `prd.md`, where one is written, is landed. Each of the two runs the PRD
+    gate on every route (its Phase 0, *Gate the PRD*): on a slice that passed the tests and holds no
+    `prd.md` the gate's `absent` branch proceeds — the ordinary state for both, since
+    `/product-workflows:create-prd` is a prerequisite for neither on a slice — while a `prd.md` the
+    slice holds and never handed off, on an unmerged branch or in the folder and on no ref, stops
+    both, as it does on the idea route, naming its landing. `/product-workflows:create-prd`, which
+    writes that file and gates no copy of it, takes no such condition. The offering run writes no
+    `prd.md` and gates none, so before it names either of the two — and only on a slice that passed
+    the tests, since on any other all three are dropped already — it reads where that file stands. It
+    is a read and nothing more: the offering run runs no `require-on-main` on the file and gates
+    nothing on it. Where `$SPECS_PATH` is unset or empty, or names a specs tree that is no git
+    repository (`git -C "$SPECS_PATH" rev-parse --git-dir` fails), the slice folder's own file decides,
+    and the condition holds with or without a `prd.md` there: there is no ref to land it on, and on
+    `require-on-main`'s `unmanaged` each of the two's *Gate the PRD* goes on either way. A slice
+    folder outside the work tree of the repository `$SPECS_PATH` stands in —
+    `git -C "<the slice folder>" rev-parse --show-toplevel`
+    failing, or printing other than `git -C "$SPECS_PATH" rev-parse --show-toplevel` prints — is read
+    as `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's *The first missing document* reads
+    one, its own `prd.md` deciding: the condition holds, and each command the offer names for that
+    folder is followed, in the prose beside the list, by that rule's sentence. Otherwise load
+    `phase-handoff` whole (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`), which
+    the cases below apply, and test the ref first,
+    `git -C "$SPECS_PATH" rev-parse --verify --quiet "<default-ref>"`, `<default-ref>` being the ref
+    `workflows-core:specs-repo-git` §3.2 resolves for the default branch; then read the slice's
+    `prd.md` by its state, as §4.4's *The first missing document* reads a document — with §3.2's
+    read-only primitives and a look in the slice folder, one that is nowhere being no gap on a slice
+    that passed the tests. Then:
+    - **On the default branch, or nowhere** — on `<default-ref>`, or in no folder and on no ref — the
+      condition holds, and the two are named.
+    - **Not landed** — on a plugin branch and not on `<default-ref>` (§3.3's rows D and E), or in the
+      slice folder and on no ref (row F) — neither is named. In their place the offering run prints
+      `<SLICE-KEY>'s prd.md is not on the specs repository's default branch yet, and /product-workflows:create-ard and /product-workflows:specify stop until it is — land it first:`,
+      `<SLICE-KEY>` being the key the offer names, then its landing as that rule names it: the file
+      with its path and state, then the commands
+      §4.4 gives its row — row F's in the form its HEAD test selects, a `<new-branch>` among them
+      named as row F names it, under `prd/`; rows D and E's with the branch and pull request found
+      as §3.5 finds them — each on a line of its own with no `#` comment and `$SPECS_PATH`
+      substituted, then, in prose, the pull request to open and merge, or the open one to merge.
+    - **`<default-ref>` does not exist** (§3.3's row G) → §4.4's *The first missing document* reads
+      nothing: neither is named, and in their place the offering run says that the specs
+      repository's default branch could not be read and names row G's commands, as that rule says.
+
+  **Where each condition is enforced is why the offer carries it, and it matters:** the level test,
+  the slice's ledger tests and *The landed condition* are each enforced by the offered commands' own
+  Phase 0s — the first two by all three, the last by `/create-ard`'s and `/specify`'s *Gate the PRD*
+  — so offering any of them wrongly hands over a run that stops;
   the advance/re-entry split is enforced **nowhere downstream** — `/create-ard` on the BRD route and
   `/specify` on the BRD route treat an `open` or `reopened` record as an open question to record rather
   than as a stop — so the station that offers them must make it: `/product-workflows:brd-reconcile` for a slice the customer reviewed, and `/product-workflows:brd-interview`, whose `nothing-to-review` state keeps a reopened record's list apart from the one that offers the three, for a slice that needs no review. **All

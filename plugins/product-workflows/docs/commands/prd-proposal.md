@@ -109,7 +109,7 @@ Phase 11 picks one of three option lists by the readiness tier, drops any option
 
 - **Roll it into the programme umbrella** → [`/brd-proposal <BRD-KEY>`](brd-proposal.md), where the folder has a parent BRD. It gates the `proposal.md` this run wrote, so the offer says what has to reach the specs repo's default branch first, worded for how this run's handoff ended.
 - **Price the next sibling slice** → `/prd-proposal <SIBLING-SLICE-KEY>`, where some sibling holds no current proposal.
-- **Raise the tier first** → at tier 2, [`/create-ard <KEY>`](create-ard.md); at tier 3, [`/specify <KEY>`](specify.md) — then re-run this command to narrow the range. Neither waits for this run: both gate `prd.md`, which it does not write.
+- **Raise the tier first** → at tier 2, [`/create-ard <KEY>`](create-ard.md); at tier 3, [`/specify <KEY>`](specify.md) — then re-run this command to narrow the range. Neither waits for this run: both gate `prd.md`, which it does not write. On a BRD slice the question carries one line saying that run applies the slice's ledger tests and stops where they fail, naming what its stop names, since this command reads no slice's ledger for it.
 - **Re-derive it from scratch once the inputs move** → `/prd-proposal <KEY> --redo` — at tiers 1 and 4, where no command raises the tier, and on any run where dropping options would leave fewer than two.
 - **Stop here.**
 

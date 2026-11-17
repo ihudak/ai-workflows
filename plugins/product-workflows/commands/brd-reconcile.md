@@ -536,7 +536,8 @@ write would re-ask a question already answered.
    without both gates having passed. A `--sent` run cannot lean on either — its package was not built
    here, and its slice may never have been interviewed — and is not gated here either: a row it
    finds still `unallocated` is never refused, and the *Next steps* phase names
-   `/product-workflows:brd-split` for it in place of `/product-workflows:create-prd`. Re-gating here
+   `/product-workflows:brd-split` for it in place of `/product-workflows:create-prd`,
+   `/product-workflows:create-ard` and `/product-workflows:specify`, each of which stops on it. Re-gating here
    would add a second, differently-worded copy of rules
    `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §6.1 and
    `${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` §5 already own, and the copies would
@@ -2984,49 +2985,55 @@ to take here, and none of the three commands' own container refusals
 `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5) can fire against the `<SLICE-KEY>`
 this phase offers.
 
-- **`/product-workflows:create-prd <SLICE-KEY>` is offered only where this slice is PRD-eligible** —
-  two tests, both read off `coverage-ledger.md` as this run left it and both owned by
+- **`/product-workflows:create-prd <SLICE-KEY>`, `/product-workflows:create-ard <SLICE-KEY>` and
+  `/product-workflows:specify <SLICE-KEY>` are offered only where this slice passes its ledger
+  tests** — two tests, both read off `coverage-ledger.md` as this run left it and both owned by
   `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5: **no** row of
   this slice's ledger is still `unallocated`, and **at least one** of them is `covered-here`.
   **The rows are this slice's ledger rows, narrowed by its `brd-link.md` `claims:`.** This
   is the same gate set `/product-workflows:create-prd`'s Phase 0 step 7 defines, read the same way — and
   the narrowing drops something real, without changing either verdict: a slice's
   ledger may hold **orphan rows** — ledger rows for `[BR#n]`s it no longer claims, whose claim `/brd-split`'s walk on the parent withdrew and wrote to a terminal disposition, or left at the one this slice's own walk had written, whether that claim was still provisional or was one this slice had committed to and then recorded it would not build, which a re-cut then moved to a sibling (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §2, §3, §3.2). `claims:` names none of them, so the gate set never reaches one — which matters, because an orphan row left standing as the slice's own earlier decision can read `covered-here` (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §2), and read outside the gate set it would add
-  the option.
-  These two tests are exactly the two *data* refusals that command's own Phase 0 raises
-  (`CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE`) — so naming the option where
-  either fails would hand the operator a run that stops on its first phase. **Read the dispositions off the
+  the options.
+  These two tests are exactly the slice's ledger tests each of the three applies in its own Phase 0,
+  with two stops for them each —
+  `/create-prd`'s `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE` (its step 7),
+  `/create-ard`'s `CREATE_ARD_BRD_UNALLOCATED` and `CREATE_ARD_BRD_NOT_ELIGIBLE`, and `/specify`'s
+  `SPECIFY_BRD_UNALLOCATED` and `SPECIFY_BRD_NOT_ELIGIBLE` (`commands/create-ard.md` and
+  `commands/specify.md` Phase 0, *The slice's ledger tests*, taken whatever the slice holds) — so
+  naming any of them where either fails would hand the operator a run that stops on its first phase. **Read the dispositions off the
   ledger file, never off a `ledger:` line** — that line's `unallocated` term is a *resolved* count
   that also holds rows the BRD they name has not walked yet (§6.1), so keying the offer to it would
-  withhold the option from a slice whose own gate is fully satisfied. Where either test fails, **drop the option
+  withhold the options from a slice whose own gate is fully satisfied. Where either test fails, **drop all three options
   from the array** and say which one failed: a row still `unallocated` is walked to a
   terminal disposition by `/product-workflows:brd-split <SLICE-KEY>`, which on a slice runs allocate-only,
-  while a slice with no `covered-here` row holds no PRD of its own at all and §5 is where its
+  while a slice with no `covered-here` row holds no requirement of its own at all — no PRD, ARD or
+  specification is authored for it — and §5 is where its
   requirements went. **Where `coverage-ledger.md` is absent, or present and unreadable, while that `brd-link.md` claims rows** —
-  reachable on a `--sent` run, whose step 7 gates no ledger — neither test can be read: drop the
-  option, report the path, as missing or as unreadable with the read error, and name
+  reachable on a `--sent` run, whose step 7 gates no ledger — neither test can be read: drop all three
+  options, report the path, as missing or as unreadable with the read error, and name
   `/product-workflows:prd-ground <SLICE-KEY>` in prose beside the list — never as an option of the
   array, since it stops on this slice by design — as the run whose stop tells a carve interrupted
   before the ledger was written from a file lost or damaged after it, and names the repair for each,
   as `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 requires (it is not an empty gate set). Dropping rather than annotating is
   this phase's rule for every option whose condition does not hold, and here the condition is a hard
-  refusal in another command's Phase 0.
-- **`/product-workflows:create-ard <SLICE-KEY>` and `/product-workflows:specify <SLICE-KEY>` are always
-  offered**, with no condition of their own, and
-  that is read out of their own Phase
-  0s rather than assumed symmetric with `/create-prd`'s. Neither consults a tracker, and what each
+  refusal in each offered command's Phase 0.
+- **`/product-workflows:create-ard <SLICE-KEY>` and `/product-workflows:specify <SLICE-KEY>` wait for
+  *The landed condition* besides** — the one the *PM — the BRD-to-PRD route* lane of
+  `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` states in its
+  `/product-workflows:brd-reconcile` bullet, read as that lane says and never restated here — which
+  is read out of their own Phase 0s rather than assumed symmetric with `/create-prd`'s. Both run the
+  PRD gate on every route (`commands/create-ard.md` and `commands/specify.md` Phase 0, *Gate the
+  PRD*), and neither waits on a PRD the slice has not got: on a slice holding no `prd.md` that
+  passed the tests, that gate's `absent` branch proceeds and reports, so `/create-prd` on the BRD
+  route is still not a prerequisite for either. What makes either stop on that gate is a `prd.md`
+  that exists and was never handed off — on an unmerged branch, or in the slice folder and on no
+  ref, where each stops with its `*_PRD_NOT_HANDED_OFF` — a file this run does not write, and which
+  it reads, before naming either, only to know where it stands, as that condition says.
+  `/create-prd`, which writes that file and gates no copy of it, does not wait for it. Neither of
+  the two consults a tracker, and what each
   reads outside the specs tree — code through `$REPOS_PATH`, documentation through `$DOCS_PATH` — is resolved by that run itself, not
-  a condition this command can test for the operator; both run the PRD gate — on every route, as of increment E —
-  but neither waits on a PRD the slice has not got, because on a slice holding no `prd.md` that
-  gate's `absent` branch proceeds and reports, so `/create-prd` on the BRD route is still not a
-  prerequisite for either (`commands/create-ard.md` and `commands/specify.md`, *The BRD route runs
-  this gate too, and a slice holding no `prd.md` still goes on*); what makes either stop on that
-  gate is a `prd.md` that exists and was never handed off — on an unmerged branch, or in the slice
-  folder and on no ref, where each stops with its `*_PRD_NOT_HANDED_OFF` — a file this run neither
-  writes nor reads, so not a condition it tests for the operator; and neither reads the
-  `claims:` list or the coverage ledger **as an authoring input** — each opens them only to shape
-  its own offers and report — because PRD eligibility is §5's rule about authoring
-  a **PRD** and an ARD is not that artifact and neither is a specification. What each needs is this
+  a condition this command can test for the operator. What each needs beyond the two conditions is this
   slice's folder, which `resolve-address` finds at whatever level it sits, plus its own altitude's seed — and an
   absent `ard-seed.md` or `spec-seed.md` is reported by those runs, never a stop. Each takes **one**
   address: a second positional token is refused on every route (`CREATE_ARD_ONE_ADDRESS` /
@@ -3074,7 +3081,7 @@ on a failed eligibility test — so the second array is typically two or three o
 **`advance_ready: yes` — the route is finished with this slice and crosses into the PRD
 pipeline.** Print the full list as prose first, per
 the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the
-*PM — the BRD-to-PRD route* lane — five routes do not fit in four slots, and the prose is what carries all of them:
+*PM — the BRD-to-PRD route* lane — five routes do not fit in four slots where all three advance options stand, and the prose is what carries all of them. Leave out of both the prose and the array each advance route whose condition does not hold, and say why beside the list, as the two bullets above say:
 
 ```
 Where this run can go next:
@@ -3084,12 +3091,34 @@ Where this run can go next:
   • Reconcile another BRD or slice    — /product-workflows:brd-reconcile <KEY> @<review-file>
 ```
 
+Where this slice passes its ledger tests and *The landed condition* holds:
+
 ```
 choices: ["Stop here — the decisions are frozen and both sweeps are recorded", "Author this slice's PRD — /product-workflows:create-prd <SLICE-KEY> (PM) <merge-clause>", "Author this slice's architecture — /product-workflows:create-ard <SLICE-KEY> (PA, optional) <merge-clause>", "Author this slice's specification — /product-workflows:specify <SLICE-KEY> (PE) <merge-clause>"]
 ```
 
-**And, in prose beside the array — either array — what this run may have changed commercially.**
-**This paragraph is scoped by its own condition and not by the array it sits under**: it is printed
+Where it passes them and *The landed condition* does not hold — the slice's `prd.md` written and not
+on the default branch, its landing printed beside the list as that lane words it —
+`/product-workflows:create-prd`, which writes that file and gates no copy of it, is the one advance
+option left:
+
+```
+choices: ["Stop here — the decisions are frozen and both sweeps are recorded", "Author this slice's PRD — /product-workflows:create-prd <SLICE-KEY> (PM) <merge-clause>"]
+```
+
+**Where it fails them, or they cannot be read, put no question.** All three advance options are
+dropped, so `Stop here` is all the array would hold — and no picker holds *Stop here* alone
+(`workflows-core:escalation-rules` §0), the rule this phase also states for its re-entry list,
+below. Print the prose list, which then holds only reconciling another BRD or slice; beside it, why
+the three were dropped, in the first bullet's words above — the
+`/product-workflows:brd-split <SLICE-KEY>` that walks a row still `unallocated`; the slice holding
+no requirement of its own, and §5 as where its requirements went; or the ledger's path and
+`/product-workflows:prd-ground <SLICE-KEY>` in prose — and nothing beyond them: no read of the
+parent's ledger, no placed-row line and no wait. Then end the phase on the *Stop here* option's
+words, `Stop here — the decisions are frozen and both sweeps are recorded`, as a line of its own.
+
+**And, in prose beside the list — either list, whether or not an array follows it — what this run may have changed commercially.**
+**This paragraph is scoped by its own condition and not by the list it sits under**: it is printed
 wherever this run froze at least one `[CD#n]`, on an `advance_ready: no` run as much as on a `yes`
 one. What makes a run `no` is a reopened decision, an open question, an unre-derived finding or an
 unswept dependent —
@@ -3115,16 +3144,16 @@ offer reads **`/product-workflows:prd-proposal <SLICE-KEY>` prices this slice on
 on main — after `/product-workflows:create-prd <SLICE-KEY>` where it holds none yet — and it can
 cite the customer decisions this run froze.** **A run that froze none names no proposal**, whichever
 path it took: the offer's one reason is a decision this run froze, and there is none to cite. It is
-offered in prose rather than as a fifth option because the array is full at four
-(`workflows-core:escalation-rules` §0) and the three advance options are the route's actual
-handover, which an optional, ungated document must not displace. It carries no `<merge-clause>`:
+offered in prose rather than as an option because the three advance options are the route's actual
+handover, which an optional, ungated document must not displace — where all three stand the array is
+full at four (`workflows-core:escalation-rules` §0) — nor stand in for where they are dropped. It carries no `<merge-clause>`:
 `/product-workflows:prd-proposal` gates on `prd.md`, which this run does not write, so the one wait
 its offer names is the PRD's own.
 
 **Reconciling another BRD is on the list and not in the array**, because it is the one lateral move
-among four forward ones and this run has just finished the slice it was given. Say so in the
-question's own text: the list is longer than the options, naming that route, and anything on it is
-reachable through the free-text option.
+among the forward ones and this run has just finished the slice it was given. Say so in the
+question's own text, wherever a question is put: the list is longer than the options, naming that
+route, and anything on it is reachable through the free-text option.
 
 **`advance_ready: no` — the three BRD-route options are left out rather than offered and
 consumed against an unsettled register**, and each remaining option appears only where its own
@@ -3191,8 +3220,9 @@ operator whose current BRD has an unsettled register is how a reopened decision 
 while attention moves elsewhere. The harness's free-text option still reaches it for anyone who means it.
 
 **Dropping the three BRD-route options on an `advance_ready: no` run is a refusal this phase can
-make and their own Phase 0s cannot** — unlike the level refusal above, which each of them now makes
-for itself. `/create-ard` on the BRD route and `/specify` on the BRD route run no gate that would catch a
+make and their own Phase 0s cannot** — unlike the level refusal and the slice's ledger tests above,
+which each of them now makes for itself, and *The landed condition*, which `/create-ard`'s and
+`/specify`'s *Gate the PRD* make. `/create-ard` on the BRD route and `/specify` on the BRD route run no gate that would catch a
 reopened decision — their gate on `decisions.md` tests which ref the register is on, never what it
 holds — and they read the register and route its `open` and `reopened` records to their own
 open-questions section, which is correct behaviour and not a stop. So an operator sent there on an
@@ -3213,14 +3243,17 @@ cover** is each command's other gate: `/create-prd`'s on `idea.md`, a file no `/
 and one the BRD route resolves no ladder for, and `/create-ard`'s and `/specify`'s on `prd.md`, a
 file this run does not write either — the same derivation this phase applies to
 `/product-workflows:prd-proposal`'s offer — so neither of those adds a wait the clause could name.
+The second is *The landed condition*'s to read instead (`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`):
+an option it does not hold for is dropped, not given a wait.
 
 **No option carries a `(Recommended)` marker, and that omission is deliberate**, per the
 `When no option is safe to recommend` guidance in
 `workflows-core:escalation-rules`: which one is right depends entirely on what
 this reconciliation left behind, and the reason is stated here, beside the list, rather than folded
 into a conditional marker the orchestrator would then have to evaluate. **An option whose condition
-does not hold is dropped, never annotated** — the `/create-prd` option on a failed eligibility test,
-and each re-entry option whose trigger did not fire — which is what keeps the list honourable
+does not hold is dropped, never annotated** — the three advance options on a failed or unreadable
+ledger test, `/create-ard`'s and `/specify`'s where *The landed condition* does not hold, and each
+re-entry option whose trigger did not fire — which is what keeps the list honourable
 verbatim: an operator whose run reopened nothing is never shown the *Work another round* option at
 all, rather than being offered a run that would report there is nothing new to ask. What an option
 that survives carries is the reason it was offered — in its own label, and for a re-entry option in
@@ -3271,7 +3304,9 @@ same BRD, or working another round of it, or authoring this slice's PRD yourself
 slice, or handing on to PA (`/product-workflows:create-ard <SLICE-KEY>`) or PE
 (`/product-workflows:specify <SLICE-KEY>`), even when the same person does it? → run
 **`/clear`**; those runs read the reconciled folder from the specs repo, not from this session.
-Guidance only — nothing is auto-run.
+Name each of `/product-workflows:create-prd`, `/product-workflows:create-ard` and
+`/product-workflows:specify` here only where the list above offers it, since this guidance names no
+run that list left out. Guidance only — nothing is auto-run.
 
 ---
 

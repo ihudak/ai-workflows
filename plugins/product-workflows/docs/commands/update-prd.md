@@ -88,7 +88,7 @@ The run resolves the feature folder, reads its `prd.md` as the base, grills the 
 An updated PRD can invalidate what was built from it, so Phase 6 offers a re-run only of a downstream artifact that already exists, and runs nothing itself. A route whose artifact depends on something this update changed — a requirement or section of the PRD that the artifact asserts — is recommended and listed first, naming the artifact, its path and the requirement or section the update altered; one asserting nothing the update touched carries no recommendation. The run judges that from the artifact's text and its own changes, and treats an unclear case as changed. With nothing downstream to re-run, no question is asked.
 
 - **A specification exists** → [`/update-spec <KEY>`](update-spec.md) (PE) — a revision that keeps the specification's IDs, never [`/specify`](specify.md), which would rewrite it.
-- **An ARD exists** → [`/create-ard <KEY>`](create-ard.md) (PA).
+- **An ARD exists** → [`/create-ard <KEY>`](create-ard.md) (PA) — on a BRD slice with one line beside the offer saying that run applies the slice's ledger tests and stops where they fail, naming what its stop names, since `/update-prd` reads no slice's ledger for it.
 - **Epics exist** (an `epic.md` in an `EPIC-` folder under the PRD folder) → [`/epics <KEY>`](epics.md) (PE), to re-run them.
 - **A release note exists** (`release-notes.md` in the folder) → `/docs-workflows:release-notes <KEY>` (PM), from the companion `docs-workflows` plugin.
 - **Stop here.**

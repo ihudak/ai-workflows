@@ -22,6 +22,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `Where the placeholder sits in the text` → `contract`
 - `PM — ideation & framing` → `pm`
 - `PM — the BRD-to-PRD route` → `brd`
+- `The landed condition` → `brd`
 - `PM — effort proposals (optional, and they gate nothing on the build ladder)` → `proposals`
 - `PA — architecture (optional)` → `pa`
 - `PE — breakdown & specification` → `pe`
@@ -162,7 +163,12 @@ array carries every option.
   proposal. And, below tier 4, **the command that would raise the tier** —
   `/product-workflows:create-ard <KEY>` at tier 2, `/product-workflows:specify <KEY>` at tier 3 — named
   together with the plain statement that re-running the proposal afterwards narrows the range. Neither
-  of those two carries a clause: both gate on `prd.md`, which a proposal run does not write.
+  of those two carries a clause: both gate on `prd.md`, which a proposal run does not write. On a
+  BRD-route slice — the folder carrying a `brd-link.md` — the one named is named as it stands, since
+  `/product-workflows:prd-proposal` names it on the tier alone and reads no slice's ledger for it, and
+  is followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+  — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in
+  this sentence's place.
 - `/product-workflows:brd-proposal <BRD-KEY>` — **no forward advance.** The umbrella is the end of this
   branch, not a phase in the build ladder. It offers re-runs: `/product-workflows:prd-proposal
   <SLICE-KEY>` for each slice its readiness walk found stale or excluded, and itself once those land.

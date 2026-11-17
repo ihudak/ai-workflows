@@ -824,7 +824,10 @@ The **first** array is presented at tier 1 and at tier 4 — at tier 1 because n
 the tier from a `PRD-` folder alone, at tier 4 because there is no tier above it. The **second** is
 presented at tier 2 and the **third** at tier 3: those are the two runs where a named command actually
 moves the grade, and telling the operator the document they just received is improvable is worth more
-than a forward pointer.
+than a forward pointer. **On a slice — the folder carrying a `brd-link.md` — the command that raises
+the tier is named as it stands**, since this command names it on the tier alone and reads no slice's
+ledger for it: where the second or third array is presented there, print once, in the question's own
+text, `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (coverage-ledger-format.md §5).`
 
 **Drop an option whose subject does not exist on this run** — the umbrella option where the folder has
 no parent BRD, the sibling option where **no sibling holds a stale proposal or holds none at all**.

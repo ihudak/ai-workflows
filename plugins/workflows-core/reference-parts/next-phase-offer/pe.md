@@ -22,6 +22,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `Where the placeholder sits in the text` → `contract`
 - `PM — ideation & framing` → `pm`
 - `PM — the BRD-to-PRD route` → `brd`
+- `The landed condition` → `brd`
 - `PM — effort proposals (optional, and they gate nothing on the build ladder)` → `proposals`
 - `PA — architecture (optional)` → `pa`
 - `PE — breakdown & specification` → `pe`
@@ -174,7 +175,11 @@ array carries every option.
   to `prd.md` the default branch lacks; until that change is merged, neither command reads it —
   from that branch each stops on the difference or offers to switch to the default branch, whose
   copy lacks the change — and the offers name that change's merge first
-  (`/product-workflows:epics` Phase 9).
+  (`/product-workflows:epics` Phase 9). On a BRD-route slice — the PRD folder carrying a
+  `brd-link.md` — both are named as they stand, since `/product-workflows:epics` names them on no test
+  of the slice's ledger and reads none for them, and are followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+  — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in
+  this sentence's place.
 - `/product-workflows:update-spec <KEY>` (a merged specification revised in place) → for each design it
   names — one citing an ID that changed, or one built on the specification it replaced — Dev →
   `/dev-workflows:design <ITS-KEY>` to revise it;
