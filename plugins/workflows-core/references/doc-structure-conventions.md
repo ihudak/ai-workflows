@@ -2,11 +2,11 @@
 
 Single source of truth for how a written page is **structured** and what it may **contain**,
 independent of any single docs repo. This reference is repo-agnostic: it governs the shape of prose,
-callouts, and reusable components for whatever docs repo `/document` writes into. Consumed by `/document` and `/epics`, and by `doc-planner`, `doc-writer`, and `doc-reviewer`. Repo-specific
+callouts, and reusable components for whatever docs repo `/document` or `/docs-write` writes into. Consumed by `/document`, `/docs-write` and `/epics`, and by `doc-planner`, `doc-writer`, and `doc-reviewer`. Repo-specific
 conventions — frontmatter fields, changelog format, terminology lists, component syntax — live under
 the `docs-workflows` plugin's `references/docs-profiles/`, not here.
 
-Consumed by `doc-writer`, `doc-planner`, and `doc-reviewer`.
+Consumed by `doc-writer`, `doc-planner`, and `doc-reviewer` — `doc-writer` and `doc-reviewer` for `/docs-write` too.
 
 ---
 
@@ -16,7 +16,7 @@ Consumed by `doc-writer`, `doc-planner`, and `doc-reviewer`.
 comments belong in the commit message and in the run's handoff — never in body prose, never in a
 changelog entry, never as a comment in the markdown.
 
-**Scope: rendered product-docs pages** — the pages `/document` writes into a docs repo. This section
+**Scope: rendered product-docs pages** — the pages `/document` and `/docs-write` write into a docs repo. This section
 does not govern **specs-tree documents**, such as the `epic.md` files `/epics` writes,
 where a `[[KEY]]` wikilink is the native idiom and the required traceability form. It resolves
 nowhere — the specs tree is a git repository, not a vault — and does not need to: it names a key,
@@ -25,7 +25,7 @@ not a page.
 | Where | Carries |
 |---|---|
 | Rendered page | The customer-facing claim only. |
-| Commit message | The key and the summary (`profile.commit_convention`). |
+| Commit message | The key and the summary (`profile.commit_convention`); a backlog run's commit names its unit's id instead, which is no key. |
 | Run handoff / final report | Per-claim attribution to resolved keys and to the refs `diff-summarizer` named. |
 
 A changelog entry is reader-visible "what changed on this page" prose, so it is covered by the rule
@@ -38,6 +38,8 @@ competing ones.
 text does cite a key. It is a user-decided gap flag, not provenance, and `doc-reviewer`'s
 Source-code accuracy dimension checks for it. Do not remove this marker as a stray provenance
 comment; see `${CLAUDE_PLUGIN_ROOT}/references/source-truth.md` §7.6 for its exact format.
+
+**Outside the rule, because none is provenance:** the evidence contract's frontmatter keys `unit:` and `evidence:`, which a backlog run writes and `/docs-workflows:docs-audit --refresh` reads (`docs-workflows:docs-audit/evidence-contract` §2, `docs-workflows:docs-audit/backlog-format` §3), a walkthrough's image-slot comment `<!-- docs-image-slot: <slot> -->`, and the visibility marker `<!-- docs-visibility: internal -->` (`docs-workflows:docs-workflow/visibility` §5).
 
 ## 2. Callout scope and adjacency
 

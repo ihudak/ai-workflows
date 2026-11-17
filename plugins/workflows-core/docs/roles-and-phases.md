@@ -14,7 +14,7 @@ The workflow plugin family charges every cost-emitting run to a `phase` and a `r
 - **`implementation`** (`dev`) — writing the code: `/implement`.
 - **`conformance`** — checking delivered work against its documents: `/conformance`, charged to `dev` on an Epic and to `pe` on a PRD, or on a BRD container it refuses.
 - **`security-audit`** — a code repository's security scan and its findings register: `/security-workflows:scan`, charged to `dev` for a key run without `--triage` or `--verify-fixes` and to `sec` for every other run.
-- **`documenting`** (`dev`) — writing documentation: `/document`, and a `/release-notes` run on a PRD that already has a specification or a design.
+- **`documenting`** (`dev`) — writing documentation: `/document`, `/docs-write`, and a `/release-notes` run on a PRD that already has a specification or a design.
 - **`docs-scaffold`** (`dev`) — setting up and branding a documentation repository: `/docs-init` and a standalone `/docs-brand` (a `/docs-brand` that `/docs-init` runs inline is charged to `/docs-init`).
 - **`docs-audit`** (`dev`) — finding what documentation a product is missing: `/docs-audit`.
 

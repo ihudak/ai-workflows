@@ -7,7 +7,7 @@ Single source of truth for **which directory a documentation command works in** 
 - **`resolve-docs-repo`** (§1) — the signal-positive form, for a command that needs a docs repo that already exists.
 - **`resolve-scaffold-target`** (§2) — the inverted form, for the one command that needs a place to make one.
 
-Consumed by `/docs-brand`, `/docs-serve`, `/docs-profile` and `/docs-audit` (`resolve-docs-repo`), and by `/docs-init` (`resolve-scaffold-target`).
+Consumed by `/docs-brand`, `/docs-serve`, `/docs-profile`, `/docs-audit` and `/docs-write` (`resolve-docs-repo`), and by `/docs-init` (`resolve-scaffold-target`).
 
 ---
 

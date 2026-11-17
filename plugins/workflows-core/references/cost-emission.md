@@ -1,7 +1,7 @@
 # Session Cost Emission — Shared Reference
 
-Single source of truth for the plugin family's session-cost subsystem. Twenty-nine of
-the thirty-one commands with an §7 row cite this file from their terminal
+Single source of truth for the plugin family's session-cost subsystem. Thirty of
+the thirty-two commands with an §7 row cite this file from their terminal
 "Session cost" phase and execute its steps inline through the single `emit-cost`
 entry point (§11). The other two — `/prompt-brainstorm` and `/prompt-grill-me` —
 cede the session before such a phase could run, call `emit-cost` never, and
@@ -421,6 +421,7 @@ Fixed per-command labels, with nine inferred exceptions:
 | `/docs-brand` | docs-scaffold | dev |
 | `/docs-init` | docs-scaffold | dev |
 | `/docs-audit` | docs-audit | dev |
+| `/docs-write` | documenting | dev |
 
 **`/release-notes` inference (PM PRD-run vs. dev documenting-run).** The
 discriminator is the presence of **downstream engineering artifacts** — any
@@ -601,7 +602,7 @@ subdir. Walk top-down; stop at the first tier that applies:
    `<PRD-dir>/dev-workflows/cost/<sid8>.md`. *[primary]*
 2. `$SPECS_PATH` writable but no PRD dir (or no key resolved) — three branches,
    and the documentation and security branches are tried first:
-   - **The run is `/docs-init`, `/docs-audit`, `/docs-brand` on its standalone path, or `/document` in direct mode**, and it resolved the target it writes into (design D19) -> `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `specs-repo-git.md` §2.1 defines for that repo — for direct mode, the write target its own Phase 0 step 3 resolved, which every direct-mode run holds from that step on — cited, never re-derived here, because the staging classifier admits exactly one segment there. **Per docs repo, not one flat bucket**, for the same reason the PRD-directory rung exists for the pipeline: a person documenting two products must still be able to answer what documenting each one cost. The inner `dev-workflows/` names the *family*, not the emitting plugin — `specs-repo-git.md` §2.1 says why — and that section's `<specs-root>/documentation/*/dev-workflows/**` shape is what stages it.
+   - **The run is `/docs-init`, `/docs-audit`, `/docs-write`, `/docs-brand` on its standalone path, or `/document` in direct mode**, and it resolved the target it writes into (design D19) -> `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `specs-repo-git.md` §2.1 defines for that repo — for direct mode, the write target its own Phase 0 step 3 resolved, which every direct-mode run holds from that step on — cited, never re-derived here, because the staging classifier admits exactly one segment there. **Per docs repo, not one flat bucket**, for the same reason the PRD-directory rung exists for the pipeline: a person documenting two products must still be able to answer what documenting each one cost. The inner `dev-workflows/` names the *family*, not the emitting plugin — `specs-repo-git.md` §2.1 says why — and that section's `<specs-root>/documentation/*/dev-workflows/**` shape is what stages it.
    - **The run is `/security-workflows:scan` with no key** — one addressed by a repository path, whatever its mode. Where it resolved the repository's `<repo-slug>` -> `$SPECS_PATH/security/<repo-slug>/dev-workflows/cost/<sid8>.md`, where `<repo-slug>` is the one-segment name that repository's register lives under (`security-register-format.md` §1), cited, never re-derived here. Where it resolved none — a path that is no repository, or a repository `components.md` §1 derives no slug for, on a run that stops before resolving it — -> **report-only**, as in tier 4: never pending, which such an entry would never leave. **Per code repository, not one flat bucket**, as the documentation branch is per docs repo: a repository scan has no PRD and never will, and the register is the unit a Security Engineer's spend is asked about. The layout below `<repo-slug>/` is the documentation branch's, its inner `dev-workflows/` naming the *family*. It sits beside the register's `runs/` and `scans/`, the only directories `register.py` reads, so the register never sees it, and `specs-repo-git.md` §2.1's `<specs-root>/security/*/{runs/**|scans/**|dev-workflows/**|register.json|register.md}` shape stages it, through its `dev-workflows/**` member. A `/scan` run whose key resolved its folder is tier 1's.
    - **Otherwise** -> **pending** (§9).
 
@@ -614,9 +615,9 @@ subdir. Walk top-down; stop at the first tier that applies:
    will not.
 
    **The documentation branch names the runs it serves rather than testing "did the run resolve a
-   docs repo".** Each of the four works against a target it resolved — a repository,
+   docs repo".** Each of the five works against a target it resolved — a repository,
    or a path that is not one (`specs-repo-git.md` §2.1 names the runs that meet
-   that case) — and resolves no PRD folder: `/docs-init`, `/docs-audit` and a standalone `/docs-brand` never resolve one, and
+   that case) — and resolves no PRD folder: `/docs-init`, `/docs-audit`, `/docs-write` and a standalone `/docs-brand` never resolve one, and
    `/document` direct mode is the mode with no address, so its key is ordinarily
    `null` — where one does resolve a PRD folder, tier 1 takes it first, as it
    would for any run. `/document` in keyed mode resolves a PRD folder and so is
@@ -684,7 +685,7 @@ and acceptable.
 ## 11. Caller contract — `emit-cost`
 
 One entry point, called by the
-twenty-nine commands that measure themselves (§7) and by
+thirty commands that measure themselves (§7) and by
 whichever of them replays a §13 record (never by the two that defer — they call
 nothing). Every caller supplies `command`, `phase`, `role` (or the
 `inferred` marker — `/release-notes`, `/frames`, `/conformance`, `/scan`, the four feedback commands and
@@ -904,7 +905,7 @@ exists to catch.
 
 ### 13.3 The replay
 
-`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-nine
+`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the thirty
 commands that measure themselves (§7) never take this path.
 
 Otherwise the run passes one `--claim <command>` per deferred record, oldest

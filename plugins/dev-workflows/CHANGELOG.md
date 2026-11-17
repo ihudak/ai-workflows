@@ -17,6 +17,15 @@ LADDER-ORDER batch 4, the BRD route. **What changes for you.** `product-workflow
 - **`/conformance`'s offers of `/product-workflows:create-ard` on a slice** — its `amend-document` decision's and its routes to the architect — name it only where the rung finds the slice's tests passing and its `prd.md` needing no landing, and otherwise what the rung names. **`/design`'s lines naming `/create-ard` for the architect** keep naming it, since that run reads no slice's ledger for them, and on a slice add, once, `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
 - **Pages.** The `/implement`, `/design`, `/conformance` and `/ready` pages and the follow-ups page say the same; the `/conformance` page no longer says that `CONFORMANCE_NO_REQUIREMENTS` names `/product-workflows:create-prd` wherever there is no PRD.
 
+## [4.70.2] — 2026-11-17
+
+DOC-D-G1: one passage of `/implement` and five pages name `docs-workflows` 1.43.0's `/docs-workflows:docs-write`. No agent or reference changes, and nothing a run does or prints: the passage is a rationale. Released with `docs-workflows` 1.43.0 and `workflows-core` 1.97.0; it needs neither, nor they it.
+
+### Changed
+
+- **`/implement`'s reason for scanning the repository it modifies.** It said that is "exactly what no other `code-scanner` caller does"; it now names the one other, `/docs-workflows:docs-write`, which, once it has branched, reads the documentation repository it commits to by ref with its refresh pinned off where that repository is also a unit's source, for the same reason, and names `/docs-write` beside `/docs-audit` among the callers that write their output into a docs repository.
+- **Pages.** The model-routing page counts thirty-one commands that classify, twenty-five of them from the companion plugins, `/docs-write` among them; the session-cost page names `/docs-write` among the runs filed per documentation repository and counts six `docs-workflows` commands that emit; the roles-and-phases page names it among the Dev's runs and in the `documenting` phase; the workflow page's Dev row and its `docs-workflows` paragraph name it; and the environment page says that `/docs-audit` and `/docs-write` match a docs profile's recorded `origin` rather than through the page's slug→clone map.
+
 ## [4.70.1] — 2026-11-17
 
 DOCS-IN-CODE-REPO-SCAN: one sentence of a page, made true of `docs-workflows` 1.41.0's commit scan. No command, agent or reference changes, and nothing a run does or prints.

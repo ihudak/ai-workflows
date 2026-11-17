@@ -35,6 +35,14 @@ LADDER-ORDER batch 4, the BRD route. **What changes for you.** `/create-ard` and
 - **To re-author a `prd.md` written and not landed**, type `/product-workflows:create-prd` yourself: the route offers no authoring option beside it.
 - **The placed-row line prints its two waits on any specs tree that is a git repository**, one that can take no handoff — a read-only `.git`, a misrooted tree — included; every `require-on-main` gate on the route blocks such a tree first.
 
+## [3.84.1] — 2026-11-17
+
+DOC-D-G1: two pages name `docs-workflows` 1.43.0's `/docs-workflows:docs-write`. No command, agent or reference changes. Released with `docs-workflows` 1.43.0 and `workflows-core` 1.97.0; it needs neither, nor they it.
+
+### Changed
+
+- **Pages.** The roles-and-phases page names `/docs-workflows:docs-write` beside `/docs-workflows:document` in the `documenting` phase; the workflow page's `docs-workflows` paragraph names the backlog `/docs-workflows:docs-audit` writes and the pages `/docs-write` drafts from it, each of the two emitting its own session bookkeeping.
+
 ## [3.84.0] — 2026-11-17
 
 RETURNED-INTAKE: a `/create-ard` refine of a threat model takes in the threats sent back to the architect. Where the run checks the model its folder holds, it reads, unasked and before it asks about the model, what the designs and conformance records on the specs repository's default branch say about the model's threats; lists each threat sent back — returned by a design's threat review, deferred to design and taken by no design, or mitigated by a decision a record says the team will not build; and puts each to the architect with *Re-dispose it* or *Keep it as it stands*, *Re-dispose it* putting the four answers a stale threat takes, the threat keeping its `[TH#N]`. These are the three states `dev-workflows`' `/conformance` sent the architect with no command to close them. The model stays the architect's alone: the run writes no design and no record, and nothing read from either is written into the model, the ARD, the report or the pull request, or handed to an agent — it is shown in a question's text alone. No new command, agent, id prefix, branch prefix or model field. Update with `workflows-core` 1.96.0, whose new `threat-intake` reference holds every rule: beside an older `workflows-core` the run reads nothing for it, prints `Threat model: threats sent back not read — update workflows-core`, and asks the question it asked before. `dev-workflows` 4.70.0, released with it, drops the caveat its report printed on those three routes. The design is `docs/superpowers/specs/2026-11-16-returned-intake-design.md`, revision 3, approved by the maintainer on 2026-11-16.

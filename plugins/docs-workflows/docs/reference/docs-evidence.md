@@ -38,6 +38,8 @@ evidence:
 
 It always records the commit, in `ref`, and that is the whole reason it is worth recording. A path on its own only tells you the document is still there. A path and a `ref` tell you whether it still *says* what the page claims it says, and only the second of those is evidence.
 
+A page [`/docs-write`](../commands/docs-write.md) drafts records its evidence this way for you: a `code` entry's `ref` is the commit its scan of that repository read, and an `artifact` entry — an architecture decision record, the one specs document it reads — has the commit of the specs repository's default branch it was read at. Where the unit names a walkthrough, the page records it too, and the run reads the file as data: what its steps describe may ground a claim, and any answers already recorded on it are ignored.
+
 ## A claim nobody could check is marked, not smoothed over
 
 Individual sentences are not tracked. The frontmatter says what the page as a whole rests on; nothing keeps a map from claims to sentences, because a map like that is out of date two edits after somebody stops maintaining it.
@@ -49,6 +51,8 @@ The export runs nightly [NEEDS CLARIFICATION: no schedule found in the code; con
 ```
 
 **A marked claim never quietly becomes a fact.** There are exactly two things that can happen to it: a verification pass confirms it, and the marker comes off because the claim has been settled — or the page ships with the marker still visible. There is no third option, and in particular "the page is being published now, so let us tidy that up" is not one. A reader who meets a marker learns something true; a reader who meets the smoothed-over version learns something the writer did not know.
+
+**A drafted page carries one more marker, for the page as a whole.** Every page `/docs-write` drafts opens its body — after the internal marker, on an internal page — with a `[NEEDS CLARIFICATION]` marker saying it was drafted from the product's code and specifications and has not been checked against the product itself. No claim on such a page has been settled by its audience's method yet: a user page none, and an engineering page none beyond the review's spot checks. The same rules bind it as any other marker, and it comes off once the person who walked the page has walked every claim on it.
 
 This is also why a page carrying markers is not counted as done. [The backlog's](docs-backlog.md) coverage fraction counts units that reached `published`, and a marked page cannot get there by either route: it has not been verified, and an audit refresh that finds it reads the markers and files the unit as `drafted` instead. Resolve the markers and the page counts; leave them and the grid keeps saying, correctly, that the work is not finished.
 

@@ -4,7 +4,7 @@ Single source of truth for how a command that creates a git branch in a **code o
 
 **The repository's own documented convention always wins.** This doc's job is to find that convention, fill its placeholders, and supply a name only when the repo documents none.
 
-Commands that consume this: `/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` (standalone only — an `--inline` run writes on its caller's branch and creates none), `/upgrade`, `/vuln` (applied by the orchestrator, once per CVE in its Step 1, per the `/vuln` "Git Workflow" spec — `vuln-fixer` creates the branch it is handed and never derives a name), and `/promote-decisions` (its branch in the architecture repository).
+Commands that consume this: `/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` (standalone only — an `--inline` run writes on its caller's branch and creates none), `/docs-write` (once per run, where it cuts rather than continues on a branch), `/upgrade`, `/vuln` (applied by the orchestrator, once per CVE in its Step 1, per the `/vuln` "Git Workflow" spec — `vuln-fixer` creates the branch it is handed and never derives a name), and `/promote-decisions` (its branch in the architecture repository).
 
 ---
 
@@ -121,6 +121,7 @@ Tie-breaking:
 | `/docs-profile` | `docs/` |
 | `/docs-init` | `docs/` |
 | `/docs-brand` (standalone) | `docs/` |
+| `/docs-write` | `docs/` |
 | `/vuln` | `fix/` |
 | `/upgrade` | `chore/` |
 | `/promote-decisions` | `feat/` |
@@ -163,6 +164,7 @@ Used for the description segment (§1.2) or the §1.4 `<slug>`:
 - `/docs-profile` — `docs-profile`
 - `/docs-init` — `docs-init`
 - `/docs-brand` (standalone) — `docs-brand`
+- `/docs-write` — `docs-write-<id>` for one unit, or `docs-write-<first id>-and-<n>-more` for a batch, `<n>` the number of its other units, each unit id lowercased with every character outside `a-z`, `0-9` and `-` dropped (§1.3); it never prepends a key, since a unit id is none
 - `/vuln` — `<CVE-ID>`
 - `/upgrade` — `upgrade-<component>-to-<version>`, or `upgrade-<first>-and-<N>-more` for a batch
 - `/promote-decisions` — `promote-<YYYY-MM-DD>` where the pattern carries an ADR marker of its own (`feat/adr-<slug>`), else `adr-promote-<YYYY-MM-DD>`

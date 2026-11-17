@@ -2,7 +2,7 @@
 
 A portal is not finished when it builds. [`/docs-init`](commands/docs-init.md) gives you a site that builds, lints and serves with a stub in every section, and [`/docs-audit`](commands/docs-audit.md) gives you a prioritised list of every page that site is missing — and then you are holding a backlog with no stated order to work through it. This page is that order: from an empty repository to a portal whose coverage grid says the work is done, step by step, with the parts no command runs written out as the procedure a person actually follows.
 
-**Four of the eight steps below run a command. The other four you do by hand, and this page says how.** Read *by hand* as **no command of this plugin does that step for you** — not as *no command helps*: [`/document`](commands/document.md) will draft and style-check a page you describe to it, and step 4 says which half of the work that leaves with you. Where a command is planned to automate a step, it is named at the end of that step, as what may change later and never as something to type. **Nothing on this page asks you to run a command that is not installed.**
+**Five of the eight steps below run a command. The other three you do by hand, and this page says how.** Read *by hand* as **no command of this plugin does that step for you** — not as *no command helps*: [`/document`](commands/document.md) in direct mode will apply an edit you describe to a page and style-check it, though it reads no backlog and moves no unit. Where a command is planned to automate a step, it is named at the end of that step, as what may change later and never as something to type. **Nothing on this page asks you to run a command that is not installed.**
 
 ## The route
 
@@ -16,7 +16,7 @@ flowchart TD
         SERVE --> AUDIT
     end
     subgraph LOOP["Repeatedly — until the coverage threshold is met"]
-        WRITE["write the next unit — by hand"]
+        WRITE["/docs-write — write the next unit"]
         CAPTURE["capture what the page shows — by hand"]
         VERIFY["verify the marked claims — by hand"]
         WRITE -->|"a how-to or a tutorial"| CAPTURE
@@ -32,13 +32,13 @@ flowchart TD
     VERIFY --> REFRESH
     VERIFY --> ROT
     REFRESH --> WRITE
-    ROT --> WRITE
+    ROT -->|"a page rewritten by hand — walk it"| VERIFY
 
     classDef entry stroke:#dc2626,stroke-width:3px
     class INIT entry
 ```
 
-Every node carrying *by hand* is a step nothing in this plugin runs for you, and the loop in the middle is three of them on purpose: the commands on either side derive what a portal ought to contain and measure what it does, and neither of those is the act of writing a page about a product for a person who has never used it. [Workflow overview](workflow.md) draws all seven of this plugin's commands and where each sits; this page draws only the ones on this route, plus the work between them.
+Every node carrying *by hand* is a step nothing in this plugin runs for you. The loop in the middle opens with [`/docs-write`](commands/docs-write.md), which drafts a unit's page from the product's code and specifications, and goes on by hand on purpose: a page drafted from the code has not been checked against the product, and walking its claims — on the screen for a user page, in the code for an engineering one — is what checks it. [Workflow overview](workflow.md) draws all eight of this plugin's commands and where each sits; this page draws only the ones on this route, plus the work between them.
 
 ---
 
@@ -74,7 +74,7 @@ The run enumerates the surfaces the product has, crosses each with the page type
 
 - **The top twenty units and the `priority_reason` under each.** Correct the ones that are wrong. A reason you edit is preserved by every later run — the test is mechanical, so nothing has to guess what you touched.
 - **The tutorial candidates.** Which journey a role should learn first is the one judgement no scan can make, so the run proposes and you pick, by setting `picked: true` on a `tutorial_candidates[]` entry. The pick becomes a real unit on the **next `--refresh` run** (step 7), once each and never twice.
-- **Commit the file.** The run leaves it in the working tree and neither branches nor commits in the documentation repository; the backlog is meant to be tracked and reviewed in a pull request like anything else. Where one of your project's own `.gitignore` rules catches the path, the run names the rule and the file it is in and writes the backlog anyway, rather than force-adding past a rule your project chose. Getting it committed is then yours to decide — changing the rule is the cleaner answer, and forcing the add is the other one.
+- **Commit the file, and the profile with it.** The run leaves the backlog in the working tree and neither branches nor commits in the documentation repository; the backlog is meant to be tracked and reviewed in a pull request like anything else. Where the run recorded the code repositories you confirmed as the profile's `source_repos[]`, the profile has changed too. [`/docs-write`](commands/docs-write.md), step 4, starts only once both files are tracked and neither has changed since its last commit: otherwise it stops before writing anything and names the file to commit, on the branch the repository stands on. Where one of your project's own `.gitignore` rules catches the path, the run names the rule and the file it is in and writes the backlog anyway, rather than force-adding past a rule your project chose. Getting it committed is then yours to decide — changing the rule is the cleaner answer, and forcing the add is the other one.
 
 **A run that enumerated no surface at all writes no backlog**, and that is not a failure: no plan is made, an existing file is left exactly as it was, and the report says whether the product genuinely has none of these things or the scan could not tell. Settle that before step 4, which has nothing to open otherwise.
 
@@ -84,35 +84,55 @@ The run enumerates the surfaces the product has, crosses each with the page type
 
 ## Then, repeatedly, until the coverage threshold is met
 
-These three steps are the loop, and no command of this plugin runs any of them end to end.
+These three steps are the loop: [`/docs-write`](commands/docs-write.md) drafts a unit's page, and the two steps after it are yours.
 
-### 4. Write the next unit — by hand
+### 4. Write the next unit — `/docs-write`
 
-Take the highest-priority unit whose `status` is `missing` **and whose `blocked_by` is empty**. That second half is not a formality: a run records `blocked_by` and leaves the `status` alone, so a blocked unit is still `missing` and a selection made on `status` alone picks it. `[surface-removed]` means the last `--refresh` no longer found that unit's surface — and since a refresh re-derives `surfaces[]`, the row the next paragraph sends you to is gone with it — while `[page-missing]` means its recorded page is not where the backlog says. Both are judgements a run cannot make and left for you: a surface vanishing is as likely to be a repository nobody mounted as a feature genuinely removed. Settle the token before you write against the unit, and the list is open, so a unit may carry a token somebody added by hand for a reason of their own.
+```
+/docs-workflows:docs-write --next
+```
 
-**What the unit tells you.** Its `type` is the shape of the page — the four user types are the Diátaxis quadrants (`tutorial`, `how-to`, `reference`, `explanation`) and the four engineering types take the shape their own tradition fixes: an `architecture` page is an arc42 or C4 section, a `decision` page is a MADR record, a `runbook` is a runbook, and `api-reference` is generated API reference. Its `audience` decides what its claims may rest on. Where the unit names a `surface`, that row in `surfaces[]` carries the `evidence[]` list of the files to read; where the unit's `surface` is `null` — a page somebody added by hand for something the code does not imply — the evidence is on the **unit** instead, in its own `evidence` list. [Evidence and walkthroughs](reference/docs-evidence.md) is what those files entitle you to assert: a claim about what a user sees is settled by looking at it, and a claim about how the system is put together is settled by reading the code, and swapping the two is how a page ends up confidently wrong about the half nobody checked.
+[`/docs-write`](commands/docs-write.md) drafts the page for a backlog unit from that unit's own evidence, and commits the page, its navigation and the unit's move to `drafted` together, in one commit on a branch of the documentation repository. `--next` takes the next unit it can draft. Name one instead with `/docs-write <unit-id>`, or take up to ten in one run with `--batch <n>`, which leaves out tutorials and how-tos, whose process a batch should not draft unwatched.
 
-**What you write.** Create the page under the section its surface belongs to, in the content root the profile declares for it. Then its frontmatter, and one line beneath it — and everything after the first entry below is what steps 6 and 8 actually depend on, rather than decoration:
+**What it selects, and what it refuses.** `--next` goes through the units lowest priority number first, then in file order, and takes the first it can draft. That is a unit whose `status` is `missing` **and whose `blocked_by` is empty** — the second half is not a formality: a run records `blocked_by` and leaves the `status` alone, so a blocked unit is still `missing`. It is also a unit whose backlog entry has a `page_path:` line (`null` until a page exists), no page already carries the id of, whose surface still resolves, whose type, audience and visibility the coverage model admits, whose walkthrough, where it names one, is a regular file of at most 1 MiB under `.dev-workflows/walkthroughs/`, whose evidence the run can read, for which, where it is internal, the profile records an internal build to keep it off the public site, and which is not the *What's new* page of a release version, whose content is that version's [`/release-notes`](commands/release-notes.md) drafts, pasted in by hand. `--next` and `--batch` pass over a unit that fails any of these, and over one that a branch not yet merged has already moved; a unit you name that fails one stops the run, with a line naming the one thing to change. [`/docs-write`'s failure modes](commands/docs-write.md#failure-modes) list them all.
 
-- **The four keys this family reserves** — `type`, `audience`, `visibility`, and **`unit: <the unit's id>`**, which is the link in both directions: it is what a later `--refresh` matches the page back to, and without it the run has no way to connect the page it can see to the unit that asked for it.
-- **`evidence:`** — what the page's claims rest on, one entry per source, in the three-kind shape [Evidence and walkthroughs](reference/docs-evidence.md) fixes. **A `code` entry carries a `ref`, and where the evidence came from a surface this frontmatter is where that `ref` first gets written**: a surface's `evidence[]` rows carry a repository and a path and no commit, so the commit to record is that repository's entry in the backlog's own `sources[]`, which is the commit the scan actually read. (A `surface: null` unit's own `evidence` list already carries its refs — copy them across.) Step 6 re-reads the code *at the ref the evidence entry records*, so a page written without one leaves that step nothing to read against.
-- **`review_by`** — a date. Step 8 is entirely "sort your pages by this and re-read what has aged", and nothing anywhere on this route sets it for you, so a page written without one is a page that step can never surface.
+`[surface-removed]` means the last `--refresh` no longer found that unit's surface — and since a refresh re-derives `surfaces[]`, the row the unit's evidence came from is gone with it — while `[page-missing]` means its recorded page is not where the backlog says. Both are judgements a run cannot make and left for you: a surface vanishing is as likely to be a repository nobody mounted as a feature genuinely removed. Settle each token, then clear `blocked_by`; until you do, `--next` and `--batch` pass the unit over, and naming it stops the run. The list is open, so a unit may carry a token somebody added by hand for a reason of their own.
+
+**What the unit tells it.** Its `type` is the shape of the page — the four user types are the Diátaxis quadrants (`tutorial`, `how-to`, `reference`, `explanation`) and the four engineering types take the shape their own tradition fixes: an `architecture` page is an arc42 or C4 section, a `decision` page is a MADR record, a `runbook` is a runbook, and `api-reference` is generated API reference. Its `audience` decides what its claims may rest on. Where the unit names a `surface`, that row in `surfaces[]` carries the `evidence[]` list of the files to read; where the unit's `surface` is `null` — a page somebody added by hand for something the code does not imply — the evidence is on the **unit** instead, in its own `evidence` list, and a tutorial's journey adds the evidence of each surface it passes through. The run scans each code repository that evidence names at its default branch, and reads an architecture decision record, the one specs document it reads, at the specs repository's default branch — never a working-tree copy. [Evidence and walkthroughs](reference/docs-evidence.md) is what those files entitle a page to assert: a claim about what a user sees is settled by looking at it, and a claim about how the system is put together is settled by reading the code, and swapping the two is how a page ends up confidently wrong about the half nobody checked.
+
+**What it asks before it writes.** It takes the unit's recorded `page_path`, or finds a place for the page, then asks once, showing each unit with its page path, each file that will gain the page's entry, each code repository and decision record it will read — one outside `$REPOS_PATH` marked as admitted only by your answer — the branch, and every build and lint command it will run, verbatim. Nothing is written, and no repository is scanned, before that answer. It then continues on the branch you stand on, or cuts a new one from the default branch, asking which where you stand on a branch other than the default, and asks about any uncommitted change it finds there before it writes.
+
+**What the page carries.** Its frontmatter, and the lines that open its body:
+
+- **The four keys this family reserves** — `type`, `audience` and `visibility`, from the unit, and **`unit: <the unit's id>`**, which is the link in both directions: it is what a later `--refresh` matches the page back to. The run writes `unit:` only in the commit that moves the unit, so a page that never reached that commit carries no unit id, and no refresh ever matches it to the unit.
+- **`evidence:`** — one entry per source the page rests on, in the three-kind shape [Evidence and walkthroughs](reference/docs-evidence.md) fixes. A `code` entry's `ref` is the commit the run's scan of that repository read, never the commit the backlog recorded, and an `artifact` entry's `ref` is the specs commit the decision record was read at. Step 6 re-reads the code *at the ref the evidence entry records*.
+- **`review_by`** — a date: the day of the run plus 90 days for a surface of `high` volatility, 180 for `medium`, 365 for `low`, and 180 for a unit with no surface. Step 8 sorts your pages by it.
+- **The markers.** Every claim the evidence does not ground is marked `[NEEDS CLARIFICATION: why]` inline, where a reader meets it, and the page's first body line is one more marker, for the page as a whole, saying it was drafted from the product's code and specifications and has not been checked against the product itself. On an internal page that line comes second, after the internal marker below. Step 6 is where they come off.
+- **The internal marker, where the page is internal** — `<!-- docs-visibility: internal -->`, the first line after the frontmatter, for the reason the procedure below gives.
+- **Image slots.** Where the unit names a walkthrough, each capture it lists becomes a `<!-- docs-image-slot: <slot> -->` comment where the page describes what that capture shows, for step 5 to fill.
+
+**The navigation.** Where the profile records its builds and every build config carries the generated `nav:` block a `/docs-init` scaffold writes, the run regenerates that block — each section's pages sorted on their frontmatter `order`, then `title`, a page with no `order` after every page that has one — so you place nothing. Otherwise it adds the page's entry beside its siblings in each navigation config holding a `nav:` block and in each page its placement search names as linking to the new one, each listed in the question above — an internal page's entry going only on internal pages and into the internal build's config. Where there is neither, the repository's own navigation decides.
+
+**The build, the review and the commit.** Before the unit moves, the page goes through a style check — the repository's own linter and the semantic prose pass, with one fixer pass over what they find and a question to you over anything left — then every build the question showed, which must pass, and an Opus review, its findings triaged before any fix, with one fix cycle and one re-review. Then the page, its navigation and the unit's move — `status: drafted`, and its `page_path` where none was recorded — go into one commit, `docs: draft <unit-id> (<type>, <audience>)` or your profile's commit convention where it takes only a summary. After the last unit the run offers one push, never forced, and prints a pull-request draft in its report — the units moved, their pages, the review verdicts, the builds and the markers left — which it writes to no file; no pull request is opened. A batch's units stack on one branch, and so make one pull request.
+
+**A unit that does not commit** — a build still failing, a review finding you defer, a cancel once the branch is settled — carries no `unit:` line. Every file the run created for it is moved under `.dev-workflows/unfinished/<unit-id>/`, or the next free `-2`, `-3` directory, every file it edited for it is restored, nothing is deleted, and a batch ends there, the units before it committed. The next run names each such directory and reads nothing in it; they block nothing, and what becomes of them is yours.
+
+**Watch `visibility` against `page_path`.** The two-build split decides by path: a page is internal because it sits under `docs/internal/`, and nothing in either build reads the `visibility` value. So a unit marked `visibility: internal` whose `page_path` is outside that tree describes a page that **ships publicly**, with both build gates green. `/docs-write` puts an internal unit's page under its content root's `internal/`, refuses an internal unit whose recorded `page_path` lies elsewhere, and refuses one outright where no build the profile records keeps an internal page off the public site. By hand, set the pair in one edit. [Documentation visibility](reference/docs-visibility.md) is the model behind it.
+
+#### A page written any other way
+
+A page `/docs-write` does not write — one it refuses, such as a release's *What's new* page or a unit resting on a document it does not read — is written by hand, and these steps are then yours. Create the page under the section its surface belongs to, in the content root the profile declares for it. Then its frontmatter, and one line beneath it:
+
+- **The four reserved keys** — `type`, `audience`, `visibility` and `unit: <the unit's id>`, as above.
+- **`evidence:`** — **a `code` entry carries a `ref`, and where the evidence came from a surface this frontmatter is where that `ref` first gets written**: a surface's `evidence[]` rows carry a repository and a path and no commit, so the commit to record is that repository's entry in the backlog's own `sources[]`, which is the commit the audit's scan read. (A `surface: null` unit's own `evidence` list already carries its refs — copy them across.) A page written without one leaves step 6 nothing to read against.
+- **`review_by`** — a date. Nothing sets it on a page written by hand, so a page written without one is a page step 8 can never surface.
 - **The internal marker, where the page is internal.** Every file under `docs/internal/` carries `<!-- docs-visibility: internal -->` as its **first line after the frontmatter**. It is an HTML comment because it has to survive into the built output, where the CI marker gate greps for it — a frontmatter key would be consumed by the renderer and never reach the artefact. A hand-written internal page missing it fails nothing at all and silently weakens that gate, which is the only defence against an internal snippet leaking into a public page.
 
 Mark every claim you could not ground with `[NEEDS CLARIFICATION: why]`, in the prose, where a reader meets it — a marked claim is never quietly smoothed into a fact, and a page ships with its markers showing rather than being held back over one unresolved sentence.
 
-**Add the page to the navigation.** The scaffold's configs list every page in a `nav:` block, sorted in each section by the pages' frontmatter `order`, then `title`, and the public build runs in strict mode with a page missing from that list reported — so a page left out fails `mkdocs build --strict`, locally and in CI. Nothing on this route regenerates the block for you yet, so place the page's entry yourself, exactly where that sort puts it: a public page into `mkdocs.yml` and, where the scaffold has one, `mkdocs.internal.yml`; an internal page into `mkdocs.internal.yml` alone. Placed by the rule, the entry is what a later generated block would hold anyway; placed anywhere else, it is overwritten the first time one is generated.
+**Add the page to the navigation.** The scaffold's configs list every page in a `nav:` block, sorted in each section by the pages' frontmatter `order`, then `title`, and the public build runs in strict mode with a page missing from that list reported — so a page left out fails `mkdocs build --strict`, locally and in CI. On a page written by hand, place its entry yourself, exactly where that sort puts it: a public page into `mkdocs.yml` and, where the scaffold has one, `mkdocs.internal.yml`; an internal page into `mkdocs.internal.yml` alone. Placed by the rule, the entry is what `/docs-write`'s next regeneration of the block holds anyway; placed anywhere else, it is moved there the next time the block is regenerated.
 
-**Watch `visibility` against `page_path`.** The two-build split decides by path: a page is internal because it sits under `docs/internal/`, and nothing in either build reads the `visibility` value. So a unit marked `visibility: internal` whose `page_path` is outside that tree describes a page that **ships publicly**, with both build gates green. Set the pair in one edit. [Documentation visibility](reference/docs-visibility.md) is the model behind it.
-
-**Then update the unit**: `page_path` to where you put the page, and `status: drafted`. Do this now rather than later — the two costs of not doing it are real, and both are yours to carry:
-
-- **The loop re-selects the unit.** Step 4 picks on `status: missing`, so a unit left `missing` with a page already written is the unit this step hands you again on the next pass, and again after that, until a `--refresh` reconciles it. Nothing on this route runs a refresh between iterations; step 7 is on a cadence.
-- **It routes past step 6.** A `--refresh` that finds a page carrying the unit's id reads the page first, and lands the unit on `drafted` where it carries a marker — but straight on `published` where it carries none, without anybody having walked a claim. The schema allows that edge deliberately, and states what it rests on: your tag that the page is done, and no walkthrough. A coverage figure raised that way is only as good as that tag.
-
-**What helps today.** [`/document`](commands/document.md) in direct mode will apply a described edit to pages and run the style check over them, which is real work off your hands — but it reads no backlog: it does not open the unit, does not write the `unit:` key, does not move a `status`, and does not add the page to the `nav:` blocks. The prose is its half; the unit is yours.
-
-*Later: `/docs-write` is planned to take the highest-priority missing unit and draft it, leaving it `drafted` with its unresolved claims marked, and to regenerate both `nav:` blocks whenever it adds or renames a page. No such command exists yet.*
+**Then update the unit** in the same commit as the page: `page_path` to where you put the page, and `status: drafted`.
 
 ### 5. Capture what the page shows — by hand
 
@@ -140,7 +160,7 @@ captures:
   - { slot: img-order-form, after_step: 1, shows: "the empty order form" }
 ```
 
-**The action vocabulary is closed at those five words**, because a driver has to implement every one of them and a verb a writer invented is a verb no driver supports; a step you cannot express with the five is worth reporting rather than working around. `expect.kind` is deliberately *not* closed. Each entry in `captures` names a **slot** — a placeholder you leave in the page, which the screenshot you take then fills — so `slot` is the name that connects the image you produce to the place it belongs.
+**The action vocabulary is closed at those five words**, because a driver has to implement every one of them and a verb a writer invented is a verb no driver supports; a step you cannot express with the five is worth reporting rather than working around. `expect.kind` is deliberately *not* closed. Each entry in `captures` names a **slot** — a placeholder in the page, which the screenshot you take then fills; on a page `/docs-write` drafted it is already there, as a `<!-- docs-image-slot: <slot> -->` comment, and on a page written by hand you leave it yourself — so `slot` is the name that connects the image you produce to the place it belongs.
 
 **Where the images go is the profile's `images.policy`, and it has three values — check which one your repository records before you save anything:**
 
@@ -187,6 +207,8 @@ Answers go back into the walkthrough file, on the step they belong to, and **eac
 
 **Then dispose of each marker.** A claim that survives becomes prose and its `[NEEDS CLARIFICATION]` marker comes off, because the claim has been settled. One that does not **stays marked** and ships marked — there is no third disposition, and "the page is being published now, so let us tidy that up" is not one of them.
 
+**A drafted page's own marker comes off once every claim is walked.** A page `/docs-write` drafted carries a marker for the page as a whole, saying it has not been checked against the product: its first body line, or, on an internal page, the line after `<!-- docs-visibility: internal -->`, which stays where it is. Remove the page-level marker once you have walked every claim on the page; until then a `--refresh` that meets the page lands its unit on `drafted`, never `published`.
+
 **Then set the status, and the two cases end differently.** A page you resolved every marker on goes `status: verified`, and then `published` when the page actually ships. **A page still carrying a marker takes `drafted` and stops there** — it may be merged and deployed with the marker showing, which is what *ships marked* means, but its unit may not reach `published` by any route: not the ordinary one, which runs through `verified`, and not the `--refresh` reconciliation, which reads the page, finds the marker and lands the unit on `drafted` itself. Resolve the marker and the unit moves on; until then the grid says, correctly, that this one is not finished.
 
 **`verified → published` has no command behind it, now or later** — that transition is a branch merged and a site deployed, which happens in your repository. It is worth knowing which arrow that is, because `published` is the state the coverage fraction counts, and there is deliberately no arrow from `drafted` straight to it: if there were, the grid could go green over pages the family knows it never walked.
@@ -207,7 +229,11 @@ Run it after a new integration, a new role or a new release, so the denominator 
 
 ### 8. Re-read what `review_by` has aged — by hand
 
-`review_by` in a page's frontmatter is the calendar backstop for the rot no diff can see: a product renamed, a process changed, a policy that moved, none of which touches a line of the code a page's evidence points at. Sort your pages by that date and re-read what has aged past it. A page that is still right takes a new date; one that is not goes back to step 4, and a claim you can no longer ground is marked rather than left standing.
+`review_by` in a page's frontmatter is the calendar backstop for the rot no diff can see: a product renamed, a process changed, a policy that moved, none of which touches a line of the code a page's evidence points at. Sort your pages by that date and re-read what has aged past it. A page that is still right takes a new date. **One that is not you rewrite by hand, in place** — `/docs-write` drafts only a unit still `missing`, and nothing on this route rewrites a page for you. The rewrite is the same whatever the unit's status: edit the page where it stands, keeping its path and its `unit:` line; mark each claim you can no longer ground rather than leave it standing; set each `code` and `artifact` evidence entry's `ref` to the commit you read it at, so that step 6 reads against what you read; and give the page a new `review_by`. What becomes of the unit turns on its `status`, because the backlog's lifecycle allows only the moves [its diagram](reference/docs-backlog.md#the-states-a-page-moves-through) draws:
+
+- **`drafted`** — the page has not been verified yet. Rewrite it; the unit stays `drafted`, and step 6's walk covers the rewrite.
+- **`published`** — the lifecycle leads back to `drafted` only through `stale`. Mark the unit `stale` in the backlog when you find the page out of date, move it on to `drafted` in the commit that rewrites the page, then walk the page as step 6 says.
+- **`verified`** — its one move is to `published`, which you make by hand when the page ships. Publish it as it stands, before you rewrite it — a page carrying a marker may never be marked `published` — then take the `published` route above.
 
 *Later: `/docs-drift` is planned to watch the evidence side of this — diffing a surface's evidence paths between the ref the backlog recorded and today, and re-queueing the units that fan out from it. The calendar side stays a human judgement either way, so this step does not disappear when that command ships.*
 
@@ -219,9 +245,9 @@ The four user page types do not cost the same, and one of the four prioritisatio
 
 | Page type | What it takes |
 |---|---|
-| `reference`, `explanation` | Ground almost entirely from code; little human input beyond the writing |
-| `how-to` | Drafts from code, and **requires** a capture — a sequence of screens is not derivable from routes |
-| `tutorial` | Needs a human to choose the journey first (step 3), then a capture |
+| `reference`, `explanation` | Ground almost entirely from code; `/docs-write` drafts them, a batch included, and little human input remains beyond walking the draft |
+| `how-to` | Drafts from code, and **requires** a capture — a sequence of screens is not derivable from routes; a batch leaves it out |
+| `tutorial` | Needs a human to choose the journey first (step 3), then a capture; a batch leaves it out |
 
 So the realistic order front-loads reference and explanation — which is also where a reader with no documentation at all gets the most immediate value, and the cheapest way to make a portal stop being empty. It is a lean and not a rule: the signal that outweighs every other is *does this page's absence block the primary journey*, which points squarely at how-tos, and a separate rule biases a **high-churn** surface away from step-by-step toward explanation and reference because those survive churn. A ranked backlog is the resultant of all four signals, not of this table.
 
@@ -232,10 +258,11 @@ So the realistic order front-loads reference and explanation — which is also w
 - [`/docs-init`](commands/docs-init.md) — step 1: what the scaffold writes and what it leaves on the branch.
 - [`/docs-serve`](commands/docs-serve.md) — step 2: starting, stopping and checking the dev server.
 - [`/docs-audit`](commands/docs-audit.md) — steps 3 and 7: the flags, the phases, the gates and every failure mode.
-- [`/document`](commands/document.md) — the two modes, and what direct mode does with the prose in step 4.
+- [`/docs-write`](commands/docs-write.md) — step 4: the selectors, the consent, the gates, the commit and every failure mode.
+- [`/document`](commands/document.md) — the two modes, and what direct mode does with the prose of a page you write yourself.
 - [The documentation backlog](reference/docs-backlog.md) — the file this route is worked through: each block, the status lifecycle, what the coverage fraction counts.
 - [The coverage model](reference/docs-coverage-model.md) — surfaces, the page types a surface earns, and what decides the order.
 - [Evidence and walkthroughs](reference/docs-evidence.md) — what a claim may rest on, what a marked claim looks like, and how to walk a checklist.
 - [Documentation visibility](reference/docs-visibility.md) — the two-build public/internal split behind step 4's `visibility` warning.
-- [Workflow overview](workflow.md) — all seven commands of this plugin, including the ones off this route.
+- [Workflow overview](workflow.md) — all eight commands of this plugin, including the ones off this route.
 - [Getting started](getting-started.md) — install, the environment variables, and a first run end to end.
