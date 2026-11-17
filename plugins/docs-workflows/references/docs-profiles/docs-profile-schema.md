@@ -6,7 +6,9 @@
 the target docs repo's git work-tree top level (**Where the profile lives**,
 below), and `/docs-init` writes the first one when it scaffolds that repo.
 `/document`, `/docs-serve`, `/docs-brand` and `/docs-audit` read it, as do the
-`docs-frontmatter` skill and its reminder hook — and `/docs-audit` also writes
+`docs-frontmatter` skill and its reminder hook, and the commit scan of `/document` (keyed mode)
+and of `/release-notes` (with diff grounding on) takes its content paths
+(`references/key-discovery.md` §1) — and `/docs-audit` also writes
 one key back, `source_repos[]`, where it confirmed a set the profile did not
 record. `changelog` and `owners` are
 intentionally absent — they are owned by the `docs-frontmatter` skill.
@@ -15,7 +17,7 @@ intentionally absent — they are owned by the `docs-frontmatter` skill.
 
 **One home: the git work-tree top level of the resolved docs repository.** Whatever directory a command resolved — through `repo-resolution.md`'s `resolve-docs-repo`, or `/document`'s own Phase 0 ladder — its profile is `<top>/.dev-workflows/docs-profile.yml`, where `<top>` is what `git -C <resolved> rev-parse --show-toplevel` prints, or the resolved directory itself where it is in no git work tree. The resolved directory can sit below that top level — a Docusaurus `website/` in a monorepo, a `site/` beside the code — and the profile still lives at the top level, never beside the site: one repository has one profile however many content roots it publishes, as the two-space example below does. It is where `/docs-profile` has always written the file, so no existing profile moves.
 
-- **Every path the profile records is relative to that top level** — `spaces[].content_root` and `snippet_root`, `builds[].config` and `out`, `announcement_pages[].path`, `images.root`. A site under `site/` records `content_root: site/docs`, never `docs`.
+- **Every path the profile records is relative to that top level** — `spaces[].content_root` and `snippet_root`, `builds[].config` and `out`, `announcement_pages[].path`, `images.root`, each entry of `documentation_paths`. A site under `site/` records `content_root: site/docs`, never `docs`.
 - **Every command it records runs from that top level** — every `commands.*` and `commands.per_space.*` value, every `builds[].command` and every `dev_servers.servers[].command` — so a site below it names its config from there: `mkdocs serve -f site/mkdocs.yml -a 0.0.0.0:{port}`.
 - **`/docs-serve`'s state file sits beside it**, at `<top>/.dev-workflows/docs-serve.state.json`.
 
@@ -122,6 +124,13 @@ prerequisites:
 - `commands.build` (flat) and `commands.per_space.<space>.build` are both optional, and `builds[]`, where a profile records it, comes before both: `/document`'s gating build check runs **every** `builds[]` entry's `command` and neither of the other two, and `/docs-serve --build` looks there first too (`references/docs-profiles/render-verification.md` §1). When none of the three exists, the consumer treats the dev-server boot as the build proof. Declare a build command whenever the repo has one — an absent build command disables `/document`'s gating build check.
 - `commit_convention` is optional — the squash commit-message format Phase 8.5 uses. When absent, the consumer infers it from recent `git log` / `CONTRIBUTING`, else falls back to `<KEY> <summary>`.
 - `announcement_pages` is optional — hand-authored destination pages that receive a given class of change regardless of where the feature itself is documented, typically inside a tree that is otherwise automation-owned. A repo without any omits the block. Each entry is `{postid, path, kinds}`; `kinds` is an open list of change kinds. `path` is authoritative when `path` and `postid` disagree; `postid` alone suffices when the repo's link convention is postid-based. A declared page is a **cross-cutting** destination: `doc-location-finder` proposes it whichever content root it sits under, even one no other target in the run touched.
+- `documentation_paths` is optional — a list of paths, each relative to the top level like every other path the profile records, each naming a file or a directory (a directory with everything below it) — a path as written, never a pattern: a `*` in it is a character, not a wildcard — that holds documentation the profile's other fields do not locate: navigation data, data files a generator renders into pages, code samples a page includes, an image directory a writer chose. **Only the commit scan reads it** — that of `/document` and `/release-notes` (`references/key-discovery.md` §1), and `/document`'s check of its own commit against the same set (`key-discovery.md` §6) — taking each entry as a content path, exactly as it takes a `content_root`, so that a commit touching only those paths and the rest of the documentation set is never taken for built work. Nothing else reads it: it does not say where pages are written, it is not a space, and no writer places a file by it. Without it, a consumer does nothing — the scan takes the paths the other fields record, and no more. An entry the scan refuses — absolute, empty or blank, or holding a `..` segment — is named in its report and left out. An entry naming the whole repository — `.`, or `./`, which the scan normalises to it — takes the whole repository as documentation, as a `content_root` of `.` does, which leaves the scan no path to tell its code by (`key-discovery.md` §1). **The field is the operator's**: `/docs-profile` does not detect such paths and never writes the field, and its refresh carries an existing one forward as written; `/document`'s check of its own commit names the field where that commit touches a path outside the documentation set (`key-discovery.md` §6). A built-in profile may carry it too; `docs-profile.default.yml` carries none, since its example layout has none to name.
+
+  ```yaml
+  documentation_paths:
+    - data/navigation.yml      # a file: that path alone
+    - website/examples         # a directory: everything below it
+  ```
 - `frontmatter.*` are pointers; never copy the rules here.
 - `images.policy` is one of `in-repo` (scaffold default), `object-store`, or `cdn` (D16) — replacing the free-text sentence this field used to carry. Every rule the old sentence stated is preserved below, under the policy it describes:
   - `in-repo`: the file is committed under `images.root` (default `docs/assets`) and referenced by relative path. A replacement overwrites the same path — one path per slot, never a new filename beside the old one. `images.max_bytes` (default 307200, 300 KB) is the CI budget checked per image; SVG is preferred, then optimised PNG.
