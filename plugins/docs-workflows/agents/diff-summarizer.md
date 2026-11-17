@@ -29,8 +29,8 @@ docs_only_shas:   # optional; commits the key-commit fallback below must not rea
      clone: it names a key and touches only the paths taken as documentation in the
      documentation-holding repository. The scan read one ref, `scan_ref`, so a documentation-only
      commit only another ref holds is not here>
-scan_ref:         # optional; given for a clone the caller's commit scan read by path, docs_only_shas or not
-  HEAD            # the ref that scan read; the key-commit fallback greps it in place of --all
+scan_ref:         # optional; given for a clone the caller's commit scan read by path without an `error`, docs_only_shas or not
+  HEAD            # the ref that scan read; the key-commit fallback greps the commit it names before the Refresh step, in place of --all
 refresh:
   fetch: true   # default true
   pull:  false  # default false — a historical diff does not need the current branch tip;

@@ -211,15 +211,15 @@ conventions — with one `--grep` for each key and each `workitem_key` below; gi
 that matches any of them anywhere in its message, its trailers included. **In the repository that
 holds the documentation**, where the scan covers it — this file names it, or names none and it is
 among those resolved from `$REPOS_PATH` — and the run knows a content path there, none of them the
-whole repository, the scan never takes a commit that touches documentation paths alone, since
-`/document`'s own commits there carry the tokens by the same conventions; a commit that also
-touches another path is taken. The probe below drops a commit there that touches documentation
-paths alone too, and a merge that brought in nothing but documentation paths over its first
-parent. **Where the run knows no content path there, or knows one that is the whole
+whole repository, the scan never takes a commit that touches only paths in the documentation set,
+since `/document`'s own commits there carry the tokens by the same conventions; a commit that also
+touches a path outside the set is taken. The probe below drops a commit there that touches only
+paths in the documentation set too, and a merge that brought in no path outside the set over its
+first parent. **Where the run knows no content path there, or knows one that is the whole
 repository**, no path rule applies: the repository is left out whole, as the specs repository is
 — or, where this file names it, scanned whole like any other, its documentation commits taken as
 code. `docs-workflows`' `references/key-discovery.md` §1 states which paths are content paths and
-which are documentation paths.
+which make up the documentation set.
 
 **The scan takes no merge commit (`--no-merges`).** A merge commit's range is the whole branch it
 merged — work the blocks and the scan already reach commit by commit, which it would report a second
@@ -421,7 +421,7 @@ is.
 message names the key is findable, no convention compels a human to follow one, and so **the run reports how
 many commits it scanned — the non-merge commits it walked, `git -C <repo> rev-list --no-merges
 --count HEAD`, or, on a clone of the repository that holds the documentation read by path, only
-those touching a path outside its documentation paths (`docs-workflows`'
+those touching a path outside the documentation set (`docs-workflows`'
 `references/key-discovery.md` §2) — and how many matched**. A zero-match scan in a repository that
 has commits is a signal about the convention, not proof that no work happened.
 
