@@ -83,6 +83,8 @@ STATES = {"merged": "MERGED", "open": "OPEN", "closed": "CLOSED"}
 # below it; "glob" as a pattern whose "*" stops at "/", so "*.md" is the top level's markdown and nothing deeper,
 # and whose leading "**/" is any depth, the top level included. A generator's configuration and navigation files
 # match at any depth, since a site kept in a subfolder has them there and no profile field records them.
+# The list is stated for every reader in references/key-discovery.md §1, in the fenced block under its
+# "<!-- family-doc-paths -->" line; case_docs_family_paths_match_the_reference holds the two equal.
 FAMILY_DOC_PATHS = (
     ("literal", ".dev-workflows"),
     ("literal", ".claude"),
@@ -1114,6 +1116,25 @@ def case_docs_check(tmp):
     for argv in (["--base", "no-such-rev"], ["--base=-p"], ["--base", base, "--head=--output=x"]):
         rc, out, err = _main(["docs-check", "--docs-root", website] + argv)
         assert rc == 2 and out == "" and len(err.splitlines()) == 1, (argv, rc, out, err)
+
+
+def case_docs_family_paths_match_the_reference(tmp):
+    """FAMILY_DOC_PATHS is the list references/key-discovery.md §1 states, line by line as a reader reads it."""
+    marker = "<!-- family-doc-paths -->"
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "key-discovery.md")
+    with open(path, encoding="utf-8") as f:
+        lines = [line.rstrip() for line in f.read().splitlines()]
+    assert [line.strip() for line in lines].count(marker) == 1, "%s holds no single %s line" % (path, marker)
+    at = [line.strip() for line in lines].index(marker) + 1
+    assert at < len(lines) and lines[at].startswith("```"), "no fenced block directly under " + marker
+    block = list(itertools.takewhile(lambda line: not line.startswith("```"), lines[at + 1:]))
+    assert at + 1 + len(block) < len(lines), "the fenced block under %s is never closed" % marker
+    stated = [tuple(line.split()) for line in block if line.strip()]
+    assert all(len(entry) == 2 and entry[0] in ("literal", "glob") for entry in stated), stated
+    missing, extra = set(FAMILY_DOC_PATHS) - set(stated), set(stated) - set(FAMILY_DOC_PATHS)
+    assert not missing and not extra, "missing from the reference: %s; not in FAMILY_DOC_PATHS: %s" % (
+        sorted(missing), sorted(extra))
+    assert len(stated) == len(set(stated)), "a line is stated twice: %s" % stated
 
 
 def case_docs_content_without_root_is_a_usage_error(tmp):
