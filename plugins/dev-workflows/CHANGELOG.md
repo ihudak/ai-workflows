@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.70.2] — 2026-11-17
+
+DOC-D-G1: one passage of `/implement` and five pages name `docs-workflows` 1.43.0's `/docs-workflows:docs-write`. No agent or reference changes, and nothing a run does or prints: the passage is a rationale. Released with `docs-workflows` 1.43.0 and `workflows-core` 1.97.0; it needs neither, nor they it.
+
+### Changed
+
+- **`/implement`'s reason for scanning the repository it modifies.** It said that is "exactly what no other `code-scanner` caller does"; it now names the one other, `/docs-workflows:docs-write`, which, once it has branched, reads the documentation repository it commits to by ref with its refresh pinned off where that repository is also a unit's source, for the same reason, and names `/docs-write` beside `/docs-audit` among the callers that write their output into a docs repository.
+- **Pages.** The model-routing page counts thirty-one commands that classify, twenty-five of them from the companion plugins, `/docs-write` among them; the session-cost page names `/docs-write` among the runs filed per documentation repository and counts six `docs-workflows` commands that emit; the roles-and-phases page names it among the Dev's runs and in the `documenting` phase; the workflow page's Dev row and its `docs-workflows` paragraph name it; and the environment page says that `/docs-audit` and `/docs-write` match a docs profile's recorded `origin` rather than through the page's slug→clone map.
+
 ## [4.70.1] — 2026-11-17
 
 DOCS-IN-CODE-REPO-SCAN: one sentence of a page, made true of `docs-workflows` 1.41.0's commit scan. No command, agent or reference changes, and nothing a run does or prints.
