@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.96.0] — 2026-11-16
+## [1.96.0] — 2026-11-17
 
 RETURNED-INTAKE: `/product-workflows:create-ard` takes in the threats sent back to the architect. A refine of a threat model reads, unasked, each threat a design or a conformance record on the specs repository's default branch sends back — returned by a design's threat review, deferred to design and taken by no design, or mitigated by a decision a record says the team will not build — and puts each to the architect as a question whose answers are the model's own dispositions. No new command, agent, id prefix, branch prefix, gate, script or field of the model; the model stays the architect's alone, and nothing read from a design or a record is written anywhere or handed to an agent. This release carries the shared half: a new reference, `threat-intake`, which holds every rule of the intake; `phase-handoff`'s three GIT-G1 truth edits; three sentences of `threat-model-format` citing the new reference; and `next-phase-offer`'s Dev lane, which drops its no-exit caveat and sends one stand-alone design entry to the Dev. Update with `product-workflows` 3.84.0, which runs the intake: beside an older `workflows-core` its `/create-ard` reads nothing for it and says so. `dev-workflows` 4.70.0 is released with it. The design is `docs/superpowers/specs/2026-11-16-returned-intake-design.md`, revision 3, approved by the maintainer on 2026-11-16 with the recommended answer to each of its three questions.
 
