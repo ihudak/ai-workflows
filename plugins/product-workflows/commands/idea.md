@@ -78,12 +78,12 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    `IDEA_NOT_AN_IDEA_FOLDER: <KEY> resolves to <folder path>, <a BRD container | a BRD-route slice | an Epic folder> — /idea writes only into an idea-route PRD folder. <remedy> For a separate idea, give it a key of its own: '/product-workflows:idea <NEW-KEY> [<prompt>|@<file>]'.`
    `<remedy>` names the run that does take that folder's work, by what the folder is — and, in the
    slice and Epic rows below, names a run **only where that run can itself take the folder**, since
-   each command it could name refuses some shape of it. **The BRD container row is the exception**:
+   each command it could name refuses some shape of it. **The BRD container row is one exception**:
    it names each slice's `/create-prd` as where a PRD belongs, not as a run promised to start, and
-   `/brd-split` with its no-op case said beside it. **So is an Epic under a BRD-route slice**: the
-   Epic row reads no slice's ledger, so it names `/product-workflows:specify <KEY>` as it stands and
-   says beside it that that run stops where the slice fails its ledger tests, naming what its stop
-   names. The slice rows read the gate set
+   `/brd-split` with its no-op case said beside it. **The other is an Epic folder whose parent is a
+   BRD-route slice holding a `prd.md` asserting `kind: prd`**: that row reads no slice's ledger, so it
+   names `/product-workflows:specify <KEY>` as it stands and says beside it that that run stops where
+   the slice fails its ledger tests, naming what its stop names. The slice rows read the gate set
    `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 defines — this slice's own
    `coverage-ledger.md` rows narrowed by its `brd-link.md` `claims:`, read out of the ledger file
    and never off a `ledger:` line (§6.1) — exactly as `/product-workflows:update-prd` Phase 0 step 4
