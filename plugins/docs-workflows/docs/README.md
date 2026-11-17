@@ -62,4 +62,4 @@ Neither pipeline plugin is a dependency in either direction; this plugin install
 
 ## Status
 
-This plugin ships 7 slash commands, 11 agents, 24 reference files and 2 hooks — and it ships one bundled skills entry, `docs-frontmatter`. `prose-style` is a declared dependency, so no style check here skips or degrades for want of it. `dev-workflows` and `product-workflows` each ship a `preload-context` hook of their own, covering their own commands; [Hooks](reference/hooks.md) says how the three plugins' hooks share a prompt.
+This plugin ships 7 slash commands, 11 agents, 25 reference files and 2 hooks — and it ships one bundled skills entry, `docs-frontmatter`. `prose-style` is a declared dependency, so no style check here skips or degrades for want of it. `dev-workflows` and `product-workflows` each ship a `preload-context` hook of their own, covering their own commands; [Hooks](reference/hooks.md) says how the three plugins' hooks share a prompt.
