@@ -241,7 +241,7 @@ subagent is dispatched — every finding this command reads was already independ
   first — by pushing that branch, where `origin` does not already hold every commit of it, and, for
   one of your own, merging it, or, where the default branch is protected, a new `brd/` branch and a
   pull request — and it names `/prd-ground` only to warn against it, since only the landing of
-  the findings written is missing, which a re-run reaches only through the same handoff. A BRD never grounded at all — no
+  the findings written is missing, which a re-run reaches only through the same handoff. Where your branch committed a change to the slice's `brd-link.md` or `coverage-ledger.md` that the default branch does not hold, while the grounding files are uncommitted, the new `brd/` branch starts from the default branch's copy of that file, so the stop leaves it out of what it lands and says to land your branch too where that change is wanted. A BRD never grounded at all — no
   `code-grounding.md` in a slice's folder either — stops naming the
   fix that actually applies: `BRD_INTERVIEW_NEEDS_GROUNDING` when the inventory holds at least one
   `[BR#n]` row and grounding has simply not run; `BRD_INTERVIEW_NO_INVENTORY` when a slice has no

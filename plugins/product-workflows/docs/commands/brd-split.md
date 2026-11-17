@@ -317,7 +317,7 @@ reads was already independently verified by `/prd-ground`'s own agents.
   not already hold every commit of it, and, for one of your own, merging it, or, where the default
   branch is protected, a new `brd/` branch and a pull request — and it names `/prd-ground` only to
   warn against it, since only the landing of the findings written is missing, which a re-run
-  reaches only through the same handoff. A BRD that has never been grounded at all — no `code-grounding.md` in the slice's folder
+  reaches only through the same handoff. Where your branch committed a change to the slice's `brd-link.md` or `coverage-ledger.md` that the default branch does not hold, while the grounding files are uncommitted, the new `brd/` branch starts from the default branch's copy of that file, so the stop leaves it out of what it lands and says to land your branch too where that change is wanted. A BRD that has never been grounded at all — no `code-grounding.md` in the slice's folder
   either — stops naming the fix — but which fix depends on why no findings exist. With at least one `[BR#n]` row in the inventory, grounding simply has
   not run: `BRD_SPLIT_NEEDS_GROUNDING`, naming `/prd-ground`. With **no** row, there is nothing to
   ground and `/prd-ground` would stop on the same emptiness (`PRD_GROUND_EMPTY_INVENTORY`), so

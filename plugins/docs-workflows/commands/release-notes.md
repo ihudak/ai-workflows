@@ -256,7 +256,7 @@ traces the PRD's own requirements, and only one written after the requirement wa
 plan says how the claims are checked. It is reported,
 never a reason to stop: nothing is asked, accepted or written, and this command records no lineage of
 its own. Where there is no specs repository to read — an `@<path>` run with `$SPECS_PATH` unset, or one
-leading outside its work tree — run nothing, and carry `Lineage: not checked — no specs repository`.
+leading outside the work tree of the repository `$SPECS_PATH` stands in — run nothing, and carry `Lineage: not checked — no specs repository`.
 
 ---
 
@@ -324,7 +324,7 @@ leading outside its work tree — run nothing, and carry `Lineage: not checked �
 
   **NEVER write into a docs repo, a code repo, or the current working directory, where it is not the specs repository.** The PRD
   folder is in `$SPECS_PATH` — always on a `<KEY>`, and on an `@<path>` that leads there — which is where Phase 8's handoff commits it, on a `prd/` branch with a
-  pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses, or `$SPECS_PATH` is unset on an `@<path>` run or the `@<path>` leads outside its work tree, when none is offered (Phase 8 step 1a); either way it is written and not committed.
+  pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses, or `$SPECS_PATH` is unset on an `@<path>` run or the `@<path>` leads outside the work tree of the repository `$SPECS_PATH` stands in, when none is offered (Phase 8 step 1a); either way it is written and not committed.
 
 - **Release version** — **asked only where `--version` was not given**; the flag's value is the version, and nothing is asked:
   ```
@@ -741,7 +741,8 @@ Outside that one case there is no question to ask and no option that replaces th
 1a. **Hand off the draft** (commit-when-asked — never automatic). It is content a team reviews before
    it is published, so it lands on the specs repository's default branch by pull request, like any
    deliverable, and never through the terminal session commit. **Where `$SPECS_PATH` is unset, or the
-   resolved PRD folder lies outside its work tree, the offer is never made**: there is no specs
+   resolved PRD folder lies outside the work tree of the repository `$SPECS_PATH` stands in, the
+   offer is never made**: there is no specs
    repository to hand the draft to, and a handoff would cut a `prd/` branch in `$SPECS_PATH`, stage
    nothing there, and leave the checkout on that branch for the terminal session commit. The draft
    stays where it was written, and the report says no offer was made and why. The first case is an

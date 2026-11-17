@@ -290,7 +290,10 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   which — the run stops with `PRD_GROUND_CARVE_UNFINISHED`: the slice's files are provisional,
   nothing in the folder is to be committed, and the fix is the parent's **instructed** re-run,
   `/brd-split <PARENT-KEY> "<how to cut it>"`, taken to completion, since the bare form stops asking
-  for an instruction while a row is unallocated. Where the parent is fully allocated but this slice
+  for an instruction while a row is unallocated. Where the parent is fully allocated and the slice's
+  ledger or inventory cannot be read, the run stops with `PRD_GROUND_SLICE_FILE_UNREADABLE` (below),
+  naming the file and the error, rather than landing a file no run can read; for a file no branch
+  holds, it says to report it where its content is lost, since nothing re-creates it. Where the parent is fully allocated but this slice
   is not what it records — a carve stopped after its last walk write and before it reconciled this
   slice — the run stops with `PRD_GROUND_SLICE_UNRECONCILED` (below). Where the parent's ledger
   cannot be read, the run stops with `PRD_GROUND_SLICE_UNRECONCILED`, reporting that ledger by path

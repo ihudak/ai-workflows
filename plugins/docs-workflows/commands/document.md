@@ -203,7 +203,8 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
    was written is one more requirement the code may not have — so it is reported beside those
    discrepancies and is never a reason to stop: nothing is asked, accepted or written, and this command
    records no lineage of its own. Where there is no specs repository to read — an `@<path>` run with
-   `$SPECS_PATH` unset, or a folder outside its work tree — run nothing, and carry
+   `$SPECS_PATH` unset, or a folder outside the work tree of the repository `$SPECS_PATH` stands in —
+   run nothing, and carry
    `Lineage: not checked — no specs repository`.
 
    **Read the implementation record in the run's scope — step 3a turns on it.** Once the folder is

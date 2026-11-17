@@ -141,7 +141,14 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   pull request). The second must
   **not** send the operator back to `/brd-interview`: a bare re-run of that command hands off only
   the files it writes itself — at most the register, re-stamped with its lineage, where it finds nothing new to ask, and where it opens a
-  new round, that round's record and not the earlier ones already on disk.
+  new round, that round's record and not the earlier ones already on disk. A register already on the
+  default branch, whose copy in your checkout of the default branch a later round's declined handoff
+  changed, stops the run with `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF` too, naming beside it every
+  other file that round left unlanded — its round record, and the question set and the code-defect
+  log where the round changed or created them — with the commands that commit them together and push
+  the default branch, or, where it is protected, a new `brd/` branch and a pull request, so the round
+  lands in one stop rather than three; it prints the commands that set them aside or discard them
+  too, for packaging without that round.
 - **The question set and the code-defect log on the default branch too, each where it is in the
   folder.** The bundle ships both whole, and the register being merged says nothing about either: a
   handoff declined and landed in part, or a later interview run that lands the register without a
@@ -158,10 +165,11 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   `require-on-main`; any on no ref stop the run together with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN`,
   whose commands land those records as `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF`'s land the register,
   in the same two forms —
-  save a round whose record exists nowhere, not even in the folder, which is named only by a
-  re-decision an interrupted `/brd-interview` run left standing: there is nothing to land, so that
-  one stops with `BRD_PACKAGE_ROUND_NOT_RECORDED`, naming `/brd-interview` as the run that writes
-  the record. The
+  save a round whose record is on no branch the gate reads and not in the folder either, which only
+  a re-decision names — ordinarily one an interrupted `/brd-interview` run left standing: there is
+  nothing in the folder to land, so that one stops with `BRD_PACKAGE_ROUND_NOT_RECORDED`, naming
+  `/brd-interview` as the run that writes the record, or, where you committed the record on a branch
+  of your own, that branch to land. The
   set is derived from those two sources rather than from the **interview/** listing, which is what
   makes a partial merge visible — enumerating the directory finds the rounds that landed and never
   learns a third was owed.
