@@ -268,7 +268,8 @@ cannot review, and they will not tell you that — they will review it anyway, b
    (`workflows-core:phase-handoff` §4.0, never infer an artifact's merged-ness from a sibling's
    gate). This sentence once claimed the question set merged with the register, and before that the
    round records, and each claim was false in the state it did not name. Map the §3.7 return by `stopped` first: any stopping row → stop, naming the
-   concrete branch/PR state it reports; `pass` → proceed; `pass_amending` → proceed, printing the
+   concrete branch/PR state it reports — row C″ in the form *Row C″* below gives, which lands the
+   round's other files with the register; `pass` → proceed; `pass_amending` → proceed, printing the
    §3.3 row-B message; `unmanaged` → proceed as before this feature; `absent` (row F — the register
    is on no branch the commands cut) → **split it before stopping**, on a test row F cannot make, exactly as
    `/product-workflows:brd-reconcile` splits its own. Row F covers two states, and sending the second
@@ -323,6 +324,37 @@ cannot review, and they will not tell you that — they will review it anyway, b
      <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
      ```
      **The committed form's slot rules — this stop's, and step 6b's and step 7's and step 7a's committed forms take them too.** `<branch>` is the branch `git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints, and the commands the stop prints are the ones §4.4's row F gives for a file HEAD holds, in the case row F selects — each chosen by the reads that row names before the stop prints, each on a line of its own, and an alternative introduced by a line saying when it applies; a `<new-branch>` among them is named as in the uncommitted form. Three of the message's sentences change with the case, each on a test the stop makes itself. Where `<branch>` is `<default>`, the first says the files it names are committed on your local `<default>` and not pushed, and the one opening `Then` reads `Then re-run '/product-workflows:brd-package <BRD-KEY>' — where <default> is protected, once a pull request from <new-branch> into <default> is merged.` Where the specs repository has no `origin`, the one opening `Then` reads `Then re-run '/product-workflows:brd-package <BRD-KEY>'.` alone, since the local merge row F selects there needs no pull request. Where the reads row F names select no command — `<branch>` on `origin`, and the local branch holding no commit `origin` lacks, never on row F's *some*, whose `commit` those reads count among the commits `origin` lacks — the stop prints none: the sentence opening `Land that branch` says instead that `<branch>` is already on origin, so nothing is left to push and the pull request is all that is left, and keeps any warning it carries not to re-run another command. **Where HEAD holds some of the files the test is made on and not the others** — row F's *some* — the first sentence names, folder-relative, the files HEAD holds in place of the file or files it names, and says the others are not committed; the sentence opening `Land that branch` opens `Commit <the files HEAD lacks> onto <branch> and land that branch`; and the commands open with the `add -f` and `commit` row F gives for those files, the commit message the uncommitted form's. A path, the `#` rule and the `…` are as for the uncommitted form. On a read-only specs mount (§3.6) every command either form prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it.
+
+   **Row C″ — the register on `<default>` and changed in the checkout of `<default>` — lands the
+   round's other files with it.** A declined handoff of a second or later `/brd-interview` round
+   leaves exactly this state, since round 1's register is merged and HEAD stands on `<default>`
+   after that run's preflight: the later round's records written over the register, beside a round
+   record no ref holds and, where the round wrote them, a question set or a code-defect log it
+   changed or created. `workflows-core:phase-handoff` §4.4's commands for row C″ name the gated file,
+   so landing them would land the register alone, and steps 6b and 7 would then stop on the round's
+   other files one after the other, each landed by a pull request of its own. So this stop names,
+   beside `decisions.md`, each other file of the round in the folder and not as `<default-ref>`
+   holds it — each `interview/round-<N>.md`, and `interview/customer-questions.md` and
+   `code-defect-log.md`, for which `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<file>" 2>/dev/null`
+   exits non-zero or `git -C "$SPECS_PATH" diff --quiet "<default-ref>" -- "./<file>"` exits 1,
+   `<file>` its path relative to `$SPECS_PATH` — and prints §4.4's row-C″ commands with every one of
+   them wherever a command names a file, each on a line of its own and each alternative introduced
+   by a line saying when it applies: the commit, naming each file whose working copy HEAD does not
+   hold — `git -C "$SPECS_PATH" cat-file -e "HEAD:./<file>" 2>/dev/null` exiting non-zero, or
+   `git -C "$SPECS_PATH" diff --quiet HEAD -- "./<file>"` exiting 1 — left out where HEAD holds them
+   all, its message `"<BRD-KEY> decision register"`; then, where `origin` exists, the push row C″
+   gives for a commit the default branch holds and `origin` does not, and its protected-branch
+   alternative, `<new-branch>` named as the uncommitted form's above, since a commit left on the
+   local `<default>` meets row C″ again; then the set-aside and the discard, for an operator who
+   packages without the change:
+   `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register at <path> is on <default>, and your checkout of <default> holds a change to it that <default-ref> does not — ordinarily a later /product-workflows:brd-interview round whose handoff was declined — beside <files>, which <default-ref> does not hold as the folder does. This run built no package and wrote nothing. Commit and push them together with the first commands printed beneath this message — where <default> is protected, the alternative printed after them, then open a pull request from <new-branch> into <default> and merge it — and re-run '/product-workflows:brd-package <BRD-KEY>'; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk. To package without the change instead, set the files aside or discard them with the last commands. Ignored, every /brd-package run on this slice stops here until the register on <default> is the one your checkout holds.`
+   `<files>` is those other files, folder-relative, and the clause opening `beside` is left out where
+   there are none — a register edited by hand, say. Where the specs repository has no `origin`, the
+   commit is the whole landing, `<default-ref>` being the local `<default>` (§3.2): `and push` and
+   the protected-branch clause are left out, and so is that alternative. A path, the `#` rule and a
+   read-only specs mount are as the committed form's slot rules above say. Steps 6b and 7 keep their
+   own causes — a handoff landed in part, or a later run that landed the register without a file an
+   earlier run left.
 6b. **Gate the question set and the code-defect log on main, each where it is in the folder.**
     Both ship in the bundle whole (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1),
     and neither is implied by step 6's gate. For each of `interview/customer-questions.md` and
@@ -408,13 +440,16 @@ cannot review, and they will not tell you that — they will review it anyway, b
      ```
      <the commands §4.4's row F gives for a file HEAD holds, as step 6's committed-form slot rules say>
      ```
-   - **Absent from the worktree too** — after step 5c, the one state that reaches here is a
-     re-decision a `/brd-interview` run left standing at a round whose record it never wrote: a
-     record carrying a `Reopened` paragraph, which
-     `${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §8 never counts a torn write.
-     There is nothing to land, and `/brd-interview` is the command that writes that round's record
-     (its *A later round is generated from what changed*):
-     `BRD_PACKAGE_ROUND_NOT_RECORDED: <BRD-KEY>'s decisions.md names rounds <list> through <records>, each a re-decision an interrupted /product-workflows:brd-interview run left standing, and no interview/round-<N>.md for <these> exists anywhere. Run '/product-workflows:brd-interview <BRD-KEY>' and merge its handoff, then re-run this command: once every round is closed, the round it opens records each such re-decision; while a round is still open it resumes that round instead, and the re-decision is recorded in the round it opens once that one closes.`
+   - **Absent from the worktree too** — after step 5c, only a re-decision reaches here: a record
+     carrying a `Reopened` paragraph, which
+     `${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §8 never counts a torn write, at a
+     round whose record is on no ref the gate reads — `<default-ref>` and the branches the plugin
+     hands off — and not in the folder. Ordinarily a `/brd-interview` run left the re-decision
+     standing and was interrupted before it wrote that round's record; a record committed on a
+     branch no plugin prefix names that HEAD is not on, which the gate's scan does not read, leaves
+     the same state. There is nothing in the folder to land, and `/brd-interview` is the command that
+     writes that round's record (its *A later round is generated from what changed*):
+     `BRD_PACKAGE_ROUND_NOT_RECORDED: <BRD-KEY>'s decisions.md names rounds <list> through <records>, each a re-decision, and no interview/round-<N>.md for <these> is on <default>, on a branch this plugin hands off, or in this folder — ordinarily an interrupted /product-workflows:brd-interview run left the re-decision standing and never wrote the record. Run '/product-workflows:brd-interview <BRD-KEY>' and merge its handoff, then re-run this command: once every round is closed, the round it opens records each such re-decision; while a round is still open it resumes that round instead, and the re-decision is recorded in the round it opens once that one closes. Where you committed a record of <these> on a branch of your own, land that branch instead, then re-run this command.`
    Where both kinds are collected, print both stops, the second first.
 
    **A round that only re-decided is in the set, and the round it re-decided out of may not be.** A

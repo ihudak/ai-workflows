@@ -288,6 +288,7 @@ this stage). Zero external calls.
   - it still holds a row `unallocated` → `Run '/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"' — it walks <PARENT-KEY>'s unallocated rows too, which is why it needs the instruction — to remove this slice or keep it against a recorded reason.`, followed by §5.2's placed-row line in its walk-placement form, where §5.2 prints it;
   - it holds none → `Run '/product-workflows:brd-split <PARENT-KEY>' to remove this slice or keep it against a recorded reason.`, followed by §5.2's placed-row line in its re-cut form, where §5.2 prints it;
   - it cannot be read → `<PARENT-KEY>'s coverage-ledger.md at <parent-path> is <missing | unreadable (<error>)>, and which /product-workflows:brd-split run applies is that ledger's to say, so none is named.`
+  - the slice's `brd-link.md` names no `parent:`, so there is no `<PARENT-KEY>` and no ledger of its to read → the sentence §5.2 words for that state in its paragraph on `<PARENT-KEY>`, read there, never from memory, and no placed-row line.
 - **Ledger missing or unreadable while `claims:` names rows** → stop with `CREATE_ARD_BRD_NOT_ELIGIBLE` in its third form below: the file by path, and `/product-workflows:prd-ground <SLICE-KEY>` named in the message — never as an option — as the run whose stop tells an interrupted carve from a lost file and names the repair (§5.2). Say nothing about rows nobody read, and never that the file was written.
 
 Each form carries `workflows-core:phase-handoff` §4.4's four parts, in order:

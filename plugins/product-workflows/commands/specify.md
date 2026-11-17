@@ -83,7 +83,9 @@ second positional token is refused (Phase 0 step 1, `SPECIFY_ONE_ADDRESS`).
      every slice and offer `/product-workflows:specify <SLICE-KEY>` once per slice, and print
      beside the offers, since this remedy reads no slice's ledger: `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (coverage-ledger-format.md §5).` —
      save where `/product-workflows:update-spec` takes this refusal (its Phase 0 step 3), whose
-     offers name itself, a run that takes no ledger test, so it prints no such sentence. Do **not** name
+     offers name itself, a run that takes no ledger test, so it prints no such sentence: it prints
+     instead, once beside its offers, since this remedy reads no slice's specification,
+     `That run revises a specification already on the default branch, and stops with UPDATE_SPEC_NO_BASE on a slice holding none there — on a specs tree that is no git repository, on every slice — or, where only the slice's Epics hold theirs, with UPDATE_SPEC_EPIC_SPECS_ONLY, naming each.` Do **not** name
      `/product-workflows:brd-split <BRD-KEY>`: the slices exist, and on a parent whose ledger is fully
      allocated that run carves nothing (`commands/brd-split.md` Phase 0 step 10).
    - **No slice at all** — `/product-workflows:brd-split <BRD-KEY> "<how to cut it>"` is the run that
@@ -332,6 +334,7 @@ aside — as `inputs_read`, as it reads it, for the handoff contract, which take
   - it still holds a row `unallocated` → `Run '/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"' — it walks <PARENT-KEY>'s unallocated rows too, which is why it needs the instruction — to remove this slice or keep it against a recorded reason.`, followed by §5.2's placed-row line in its walk-placement form, where §5.2 prints it;
   - it holds none → `Run '/product-workflows:brd-split <PARENT-KEY>' to remove this slice or keep it against a recorded reason.`, followed by §5.2's placed-row line in its re-cut form, where §5.2 prints it;
   - it cannot be read → `<PARENT-KEY>'s coverage-ledger.md at <parent-path> is <missing | unreadable (<error>)>, and which /product-workflows:brd-split run applies is that ledger's to say, so none is named.`
+  - the slice's `brd-link.md` names no `parent:`, so there is no `<PARENT-KEY>` and no ledger of its to read → the sentence §5.2 words for that state in its paragraph on `<PARENT-KEY>`, read there, never from memory, and no placed-row line.
 - **Ledger missing or unreadable while `claims:` names rows** → stop with `SPECIFY_BRD_NOT_ELIGIBLE` in its third form below: the file by path, and `/product-workflows:prd-ground <SLICE-KEY>` named in the message — never as an option — as the run whose stop tells an interrupted carve from a lost file and names the repair (§5.2). Say nothing about rows nobody read, and never that the file was written.
 
 Each form carries `workflows-core:phase-handoff` §4.4's four parts, in order:

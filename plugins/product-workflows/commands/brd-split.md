@@ -196,7 +196,14 @@ four-resolution one.
      `grounding/design-grounding.md`, `brd-link.md` and `coverage-ledger.md`, `<gated-file>`, the
      file the gate returned row F for, always among them. That handoff stages `brd-link.md` and `coverage-ledger.md` only where its run changed them, and
      this stop, which cannot read what that run did, lands each where its copy differs from
-     `<default-ref>`'s. Which of the stop's two forms to
+     `<default-ref>`'s. **Save a file `<default-ref>` holds whose difference HEAD's branch committed** — its working
+     copy HEAD's, `git -C "$SPECS_PATH" diff --quiet HEAD -- "./<path>"` exiting 0, the state a hand
+     commit of `brd-link.md` or `coverage-ledger.md` leaves: the uncommitted form's `switch` puts
+     `<default-ref>`'s copy in its place, so that form leaves the file out of `<files>` and its
+     commands, and says, before the sentence opening `Ignored`, `<file> is committed on <branch> with a change <default-ref> does not hold; the switch below puts <default-ref>'s copy in its place, so land <branch> too where that change is wanted.`,
+     `<file>` folder-relative and `<branch>` what `git -C "$SPECS_PATH" symbolic-ref --short HEAD`
+     prints. The HEAD test below decides nothing on such a file, which `<default-ref>` holds, and the
+     committed form lands `<branch>` with its change. Which of the stop's two forms to
      print turns on the HEAD test, made before it prints as `workflows-core:phase-handoff` §4.4's
      row F makes it for a stop that lands several files: on each of those files that
      `<default-ref>` does not hold, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>" 2>/dev/null`,

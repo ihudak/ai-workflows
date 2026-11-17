@@ -431,6 +431,12 @@ behaviour, not the behaviour.
      that stops with `BRD_SPLIT_NEEDS_INSTRUCTION` while a row is unallocated, so name the instructed
      form. `<N>` is the count of those rows:
      `PRD_GROUND_CARVE_UNFINISHED: <BRD-KEY>'s coverage-ledger.md is written at <BRD-dir> but is on no branch, and its parent <PARENT-KEY>'s coverage-ledger.md still holds <N> unallocated row(s) — the carve of <PARENT-KEY> is not finished, so this slice's brd-link.md, brd/brd-inventory.md and coverage-ledger.md are provisional and may yet change. Commit nothing in this folder until that carve completes: run '/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"' to completion — it walks every row still unallocated, then reconciles every child's three files against the parent's ledger — merge its handoff, then re-run '/product-workflows:prd-ground <BRD-KEY>', which names anything of this slice's still left to land.`
+   - **No `unallocated` row, and this slice's `coverage-ledger.md` or `brd/brd-inventory.md` cannot
+     be read** — step 6a's readability test, *Then both must be readable*, which the two cases below
+     run over this folder's worktree copies with the rest of that step, reads both files before any
+     set is: print step 6a's `PRD_GROUND_SLICE_FILE_UNREADABLE`, naming each such file and the read
+     error, in its form for a file no ref holds, and neither stop below — never
+     `PRD_GROUND_NOT_HANDED_OFF`, whose commands would land a file no run can read.
    - **No `unallocated` row, but this slice fails step 6a's reconciliation test** — run over this
      folder's worktree copies of the three files, since none is on a ref yet. The parent's ledger is
      allocated, and this slice is still not what it records: a carve stopped after its last walk
@@ -524,6 +530,11 @@ behaviour, not the behaviour.
     only at Phase 8's `evidence` rebuild, after the whole run's spend. Stop here instead, naming each
     such file and the read error:
     `PRD_GROUND_SLICE_FILE_UNREADABLE: <BRD-KEY>'s <file(s)> at <path(s)> <is|are> in the folder but cannot be read (<error>), so nothing here can be tested against its parent or ground, and nothing was written. Repair the file — its permissions, or restore it from the ref that carried it — then re-run '/product-workflows:prd-ground <BRD-KEY>'. No /product-workflows:brd-split run repairs it: that command writes nothing into a slice whose inventory or ledger cannot be read.`
+
+    **Its form for a file no ref holds** — printed from step 6's row-F branch (b), where the ledger
+    is on no ref and the inventory may be too: for the ledger, and for the inventory where its own
+    gate returns row F as well, `or restore it from the ref that carried it` reads
+    `or, since no ref holds it and no command re-creates it, report it where its content is lost`.
 
     Read three sets of
     `[BR#n]` ids, each off a structured field and never out of prose:
