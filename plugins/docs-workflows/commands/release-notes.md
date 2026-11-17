@@ -423,7 +423,10 @@ here is asked, and no record is written.
    an earlier one; and `--docs-named` exactly where §1 says — where a repository `implementation.md`
    names resolves, through the slug→clone map, to the documentation-holding repository's top level
    or to a clone with the same `origin` slug. Where the documentation root does not
-   exist, pass none of `--docs-root`, `--docs-content` and `--docs-named`.
+   exist, pass none of `--docs-root`, `--docs-content` and `--docs-named`, and print once, before
+   this step's call, and carry to the report's *Documentation-holding repository* bullet (Phase 8),
+   `Documentation root: <path> does not exist — no repository is read by path on this run, so a commit that touches only documentation is read as code; set DOCS_PATH or pass --docs <path>.`,
+   `<path>` the documentation root.
 
 **Merge and dedupe by SHA.** Anything the scan finds beyond the recorded blocks is reported as
 **unrecorded work**, named as such with its commits listed: folding hand-made commits silently into
@@ -449,8 +452,8 @@ in).
 
 **Report the scan's own reach.** Say **how many commits it scanned** — the non-merge commits it walked, the script's `scanned`
 (`git -C <repo> rev-list --no-merges --count HEAD`; on a clone read by path — its `docs_rule` true —
-only those that touch a path outside the documentation set, as the `read by path` line printed after
-the reach says) — **and how many
+only those that touch a path outside the documentation set, the line giving that count saying so in
+the words `touch a path outside the paths taken as documentation`) — **and how many
 matched** (`matched`, which on such a clone counts no commit that touches only paths in the documentation set). Only a non-merge
 commit whose message names the key is findable, and no convention compels a human to follow one — so
 a zero-match scan in a repository that has commits is a signal about the commit convention
@@ -466,9 +469,15 @@ Where `docs.docs_only` is not empty, `Left out as documentation only: <n> commit
 `<n>` its length, then each of those commits on a line of its own, `<sha> <date> <subject>`: none
 is a commit found (`key-discovery.md` §3), so none joins the provisional read set this phase
 carries. Where `docs.rejected` is not empty, `Not taken as content paths in <slug>: <path> (<why>)[, <path> (<why>)]…`,
-each entry's `path` and `why`. Under `left-out` no clone of it was read: the report's
-`left out as never code:` names it, with why (Phase 8). Where `docs` is null — no `--docs-root`
-passed, or a documentation root in no git work tree — print none of these.
+each entry's `path` and `why`. Under `paths`, where `docs.clones` is empty on a scan of every clone in
+the map — `implementation.md` naming no repository — `<slug>: not read — no clone of the documentation-holding repository is among the clones scanned under <$REPOS_PATH>; the scan did not look there.`,
+`<$REPOS_PATH>` the directory the map was built over; a scan over the repositories
+`implementation.md` names prints no such line (`key-discovery.md` §5). Under `left-out` no clone of it
+was read: the report's `left out as never code:` names it, with why (Phase 8). Where `docs` is null,
+print none of these: no `--docs-root` was passed, the documentation root not existing, and this step
+printed its `Documentation root: <path> does not exist …` line before the call; or the root passed is
+not a directory in a git work tree, where print in their place, and carry to the report's bullet,
+`Documentation root: <path> is not a directory in a git work tree — no repository is read by path on this run, so a commit that touches only documentation is read as code; set DOCS_PATH or pass --docs <path>.`
 
 **On a repository the scan left at zero matches, run `workflows-core:implementation-format` §4's report-only unanchored probe** (the script's `probe` for it, less the commits a found pull request accounts for and, on a clone read by path, each commit that touches, and each merge that brought in, no path outside the documentation set) — zero
 **before** the note boundary drops anything, since a repository where the whole-key `--grep` matched
@@ -793,7 +802,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — usually a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again
    - Branch-name probe: <per repository the whole-key scan left at zero matches: each commit it matched, by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | fired on <repo>, matched nothing | on <repo>, probe failed — <its `probe_error`> | not fired — the scan matched in every repository | not run — no clone resolved> — on a run with diff grounding on; nothing listed here was read
    - Pull requests: <GitHub PR search: ok — <owners>, <queries> queries, <n> kept, <dropped> loose matches dropped | <status> — <detail> | not run — <first call's reason>>; read through their landed commits: <each by URL, with its commits' SHAs, followed, where its `landed_docs_only` is not empty, by `; left out as documentation only: <those SHAs>` | none>; found but not read: <each by URL and why, as `key-discovery.md` §4 gives it | none>; left out as never code: <the `excluded` slugs — the repositories left out whole, and only those — `docs.repo`, where it is among them, carrying the reason `key-discovery.md` §5 gives for its `docs.reason`: `<slug> (no content path is known there; /docs-workflows:docs-profile writes a profile that records where its documentation lives)` for `no content path`, `<slug> (its profile takes the whole repository as documentation)` for `the content path is the whole repository`, and `<slug> (the specs repository's exclusion names it too)` for `--exclude names it too` | none>; not read by the script: <each repository by path and its `error` | none><; probe failed: each repository by path and its `probe_error`>; or, the whole line, `not run — no clone resolved` where there was no clone to scan (`key-discovery.md` §1) — on a run with diff grounding on (`key-discovery.md` §5)
-   - Documentation-holding repository: <each line Phase 3's *Say how the documentation-holding repository was read* gives, for the scan's latest result — Phase 3's, or the re-run Phase 4 made over a clone mounted or specified there — its `read by path` or `read whole` line for each clone in `docs.clones`, its `Left out as documentation only:` line with each commit, and its `Not taken as content paths` line, each where it applies> — on a run with diff grounding on, and only where one of those lines applies: omit the bullet where `docs` is null, the script did not run, or `docs.clones` and `docs.rejected` are both empty — a repository the scan left out whole is named, with why, in the `Pull requests:` line's `left out as never code:`; no commit listed as documentation only was read
+   - Documentation-holding repository: <the `Documentation root: <path> does not exist …` line Phase 3's scan step printed, where it printed one; and each line Phase 3's *Say how the documentation-holding repository was read* gives, for the scan's latest result — Phase 3's, or the re-run Phase 4 made over a clone mounted or specified there — its `read by path` or `read whole` line for each clone in `docs.clones`, its `Left out as documentation only:` line with each commit, its `not read — no clone of the documentation-holding repository …` line, its `Not taken as content paths` line and its `Documentation root: <path> is not a directory in a git work tree …` line, each where it applies> — on a run with diff grounding on, and only where one of those lines applies: omit the bullet where none does — the script did not run and the documentation root exists, or `docs` is not null and its `docs.clones` and `docs.rejected` are both empty with no `not read — no clone …` line — a repository the scan left out whole is named, with why, in the `Pull requests:` line's `left out as never code:`; no commit listed as documentation only was read
    - Style check: <applied N safe fixes | report only (M findings) | skipped — you chose "Skip style check"> — rules: <the checker's rules_source, where it ran><; DEGRADED — Phase 7's reason, where Phase 7 recorded it>
    - Model routing: <under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatch above already carries the enforced id, per `workflows-core:model-routing/classification` §10 | "MODERATE — detection chain throughout, no degradation (Phase 1.5)">
    - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 9's own output; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
