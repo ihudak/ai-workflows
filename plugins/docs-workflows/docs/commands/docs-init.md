@@ -1,6 +1,6 @@
 # /docs-init
 
-Scaffolds a documentation repository for a project that has none — one that builds, serves, lints, and carries the profile [`/document`](document.md), `/docs-serve`, `/docs-brand` and [`/docs-audit`](docs-audit.md) read.
+Scaffolds a documentation repository for a project that has none — one that builds, serves, lints, and carries the profile [`/document`](document.md), `/docs-serve`, `/docs-brand`, [`/docs-audit`](docs-audit.md) and `/docs-write` read.
 
 ## Who runs it
 
@@ -20,7 +20,7 @@ All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_CO
 
 ## What it needs
 
-- **Somewhere to scaffold into** — resolved by the **inverted** form of the ladder `/docs-profile`, `/docs-brand`, `/docs-serve` and `/docs-audit` use (`/document` has a ladder of its own): the given path, else `$DOCS_PATH` *when it is absent or carries no documentation signal*, else the working directory. Every other command here that resolves a documentation repository — those four, and `/document` on its own ladder — accepts a directory because it already looks like one; this one accepts it because it does not. The rung that answered is always reported.
+- **Somewhere to scaffold into** — resolved by the **inverted** form of the ladder `/docs-profile`, `/docs-brand`, `/docs-serve`, `/docs-audit` and [`/docs-write`](docs-write.md) use (`/document` has a ladder of its own): the given path, else `$DOCS_PATH` *when it is absent or carries no documentation signal*, else the working directory. Every other command here that resolves a documentation repository — those five, and `/document` on its own ladder — accepts a directory because it already looks like one; this one accepts it because it does not. The rung that answered is always reported.
 - **A git work tree's top level, or an empty or absent directory outside every git work tree** — the second is offered a `git init` before anything is written. A non-empty directory that is not a git work tree stops the run, and so does a target below a work tree's top level, whether it exists yet or not: an absent one is tested through the nearest directory up its path that does exist, since a `git init` there would nest a second repository inside the first. A work tree that already has a `.gitignore` — a repository created from a template, say — keeps it: the scaffold appends only the lines it needs and never removes, reorders or rewrites one. Just before committing, every file the run wrote — the logo and stylesheet branding added included — is tested against it: a file one of the project's own lines ignores is left uncommitted rather than forced in, any config line naming it is removed so the committed site never points at a missing file, and both are named in the pull-request draft and the report.
 - **A directory carrying no documentation signal.** One signal is enough to refuse: scaffolding is for cold start, and describing a repository that already exists is `/docs-profile`'s job.
 - **The toolchain the scaffold's own gates invoke** — `git`, `python3` and `pip` (or `uv`), `mkdocs`, and `vale`. Checked at Phase 2, and the run prompts only when something is missing.
@@ -57,7 +57,7 @@ flowchart TD
 |---|---|
 | 0 — Resolve and validate | Strip flags; resolve the target and report the rung; run the specs-repo preflight; establish a writable git work tree or offer to create one; refuse a directory carrying a docs signal. |
 | 1 — Model routing | Classify MODERATE and record the routing block. The review model is pinned to the Opus chain regardless (unless `--enforce-model` pins another). |
-| 2 — Source repos and toolchain preflight | Confirm the code repositories the portal documents — Phase 6 records them as the profile's `source_repos[]`, read later by `/docs-audit` and `/docs-brand` — plus product name, version and toolchain. |
+| 2 — Source repos and toolchain preflight | Confirm the code repositories the portal documents — recorded at Phase 6 as `source_repos[]`, which `/docs-audit`, `/docs-brand` and `/docs-write` read — plus product name, version and toolchain. |
 | 2.5 — Branch | Create the branch, **before anything is written**, behind a clean-tree check that is only meaningful ahead of the first write. |
 | 3 — Scaffold | Write the tree, the stubs, the generated navigation, both build configs, the visibility markers, and the CI workflow, resolving every substitution including the pinned Vale release. |
 | 4 — Vale | Create `.gitignore` or append the lines an existing one lacks; write `requirements-docs.txt` and `.vale.ini`, run `vale sync`, and seed the vocabulary with the product name and stub words. |
@@ -84,7 +84,7 @@ Findings are triaged by the orchestrator before anything is applied: each is ver
 ## Outputs
 
 - **The scaffolded repository**, on a branch with one commit and a drafted pull-request message. Nothing is pushed and nothing is merged.
-- **`.dev-workflows/docs-profile.yml`** — the output the family's other docs-repo commands read: `/docs-serve` reads its `dev_servers` block — whose two commands carry `{port}` where a port would go, so `/docs-serve` can serve either build on another port after a collision or under `--port`, and every consumer substitutes the port it serves on — `/document` reads its content roots and commands, a standalone `/docs-brand` reads its branch-naming pattern, `/docs-audit` reads its `source_repos[]` and content roots — and writes `source_repos[]` back where it confirmed a set the profile did not record — and the CI workflow's conditional image step is written against its `images.policy`. `/release-notes` reads no docs profile.
+- **`.dev-workflows/docs-profile.yml`** — the output the family's other docs-repo commands read: `/docs-serve` reads its `dev_servers` block — whose two commands carry `{port}` where a port would go, so `/docs-serve` can serve either build on another port after a collision or under `--port`, and every consumer substitutes the port it serves on — `/document` reads its content roots and commands, a standalone `/docs-brand` reads its branch-naming pattern, `/docs-write` reads its content roots, its build and lint commands, its build configs and its `source_repos[]`, `/docs-audit` reads its `source_repos[]` and content roots — and writes `source_repos[]` back where it confirmed a set the profile did not record — and the CI workflow's conditional image step is written against its `images.policy`. `/release-notes` reads no docs profile.
 - **A session cost entry and any feedback**, filed under `$SPECS_PATH/documentation/<docs-repo-slug>/` — per documentation repository rather than in the pending queue, because a documentation run frequently has no PRD and never will — unless the run found `$SPECS_PATH` misplaced or its environment changed since its preflight, when the entry stays in the run's output. See [Session cost](../reference/session-cost.md).
 
 ## Failure modes

@@ -2,13 +2,13 @@
 
 The audit's output is one file: **`.dev-workflows/docs-backlog.yml`**, a list of every page your product could have, what each one is about, which ones exist, and what order the rest are worth writing in. It is not a report you read once — it is a file you keep, edit, argue with in a pull request, and re-run the audit against.
 
-This page explains what is in it and how to work with it. The runnable version — the one `/docs-audit` and its agents execute — is the plugin's own backlog-format reference, listed on [References](references.md). The vocabulary the file is written in (what a surface is, what a page type is, what decides priority) is on [the coverage model page](docs-coverage-model.md).
+This page explains what is in it and how to work with it. The runnable version — the one `/docs-audit`, [`/docs-write`](../commands/docs-write.md) and their agents execute — is the plugin's own backlog-format reference, listed on [References](references.md). The vocabulary the file is written in (what a surface is, what a page type is, what decides priority) is on [the coverage model page](docs-coverage-model.md).
 
 ## Where it lives, and why it is committed
 
 The backlog sits at **the git top level of your docs repository**, in `.dev-workflows/`, beside the profile `/docs-profile` writes and the state file `/docs-serve` keeps. That is one home and not a per-site one: if your repository publishes two sites — a `site/` beside the code, a `website/` in a monorepo — there is still **one backlog**, because the denominator is your product's surfaces and publishing twice does not give you a second set of them.
 
-**It is meant to be tracked in git and reviewed in a pull request**, exactly like the profile beside it. In a repository this plugin scaffolded it will be: the scaffold's `.gitignore` ignores only `/docs-serve`'s state file by name and deliberately not the `.dev-workflows/` directory. Your repository may not be one of those, and its own `.gitignore` may well have a line that catches this path — so the run checks, and if something ignores the file it **tells you the path, the rule and the file the rule is in, rather than force-adding past it.** The backlog is still written; you decide whether to change the rule.
+**It is meant to be tracked in git and reviewed in a pull request**, exactly like the profile beside it. In a repository this plugin scaffolded it will be: the scaffold's `.gitignore` ignores only `/docs-serve`'s state file by name and deliberately not the `.dev-workflows/` directory. Your repository may not be one of those, and its own `.gitignore` may well have a line that catches this path — so the run checks, and if something ignores the file it **tells you the path, the rule and the file the rule is in, rather than force-adding past it.** The backlog is still written; you decide whether to change the rule. Committing it matters for more than review: `/docs-write` starts only once the backlog and the profile beside it are both tracked and neither has changed since its last commit, and otherwise stops, naming the file to commit.
 
 **Editing it by hand is normal.** It is one of the five ways a page gets into the backlog, and the intended way for anything the code does not imply — a migration guide, a policy page, a comparison, the question a customer actually asked. Because the file is reviewed like code, a hand-added page is a proposal somebody can disagree with rather than a private note.
 
@@ -18,7 +18,7 @@ The backlog sits at **the git top level of your docs repository**, in `.dev-work
 |---|---|---|
 | `sources` | Every repository the run scanned, with the commit it was scanned at | The audit |
 | `surfaces` | The denominator — every thing in the product documentation could be about | The audit |
-| `units` | One entry per page: what it is about, who for, what type, what priority, what state | The audit, then you |
+| `units` | One entry per page: what it is about, who for, what type, what priority, what state | The audit, then you — and `/docs-write`, which moves a unit to `drafted` and records its `page_path` |
 | `tutorial_candidates` | Proposed first journeys, one per role. **You pick** by setting `picked: true` | Proposed by the audit, picked by you |
 | `coverage` | A fraction per audience-and-type cell | The audit, derived from `units` |
 | `threshold` | The priority number at or below which "done" applies — 1 is the highest priority | Seeded at 2 by the first run, yours thereafter |
@@ -36,7 +36,7 @@ Every unit carries a `status`. These are the transitions, and the only ones:
 ```mermaid
 stateDiagram-v2
   [*] --> missing: "/docs-audit mints the unit"
-  missing --> drafted: "a page is written, or --refresh finds one with unchecked claims"
+  missing --> drafted: "/docs-write drafts its page, or --refresh finds one with unchecked claims"
   drafted --> verified: "its claims are walked"
   verified --> published: "the page ships"
   published --> stale: "the code moved under it"
@@ -44,7 +44,7 @@ stateDiagram-v2
   missing --> published: "/docs-audit --refresh finds a page carrying this unit id and no unresolved claim markers"
 ```
 
-**Three of those seven transitions have a command behind them today, and it is `/docs-audit` every time.** The initial run mints units as `missing`; a `--refresh` run that finds a page already carrying the id of a unit still `missing` moves that unit to `published` or to `drafted`, by the test in the next paragraph. The rest are drawn for commands that do not exist yet — `verified` belongs to a verification command, `stale` to a drift command, and a writing command would also move a unit to `drafted` when it writes the page — and **until those ship, you move a unit between those states by editing the file.** The diagram shows the model, not seven pieces of automation you have today.
+**Three of those seven transitions have a command behind them today, and two commands write them: `/docs-audit` all three, and `/docs-write` `missing → drafted` alone.** The initial audit mints units as `missing`; a `--refresh` run that finds a page already carrying the id of a unit still `missing` moves that unit to `published` or to `drafted`, by the test in the next paragraph; and `/docs-write` moves a `missing` unit to `drafted` in the one commit that writes its page, tags the page with the unit's id and leaves the page-level marker on it. The rest are drawn for commands that do not exist yet — `verified` belongs to a verification command, `stale` to a drift command — and **until those ship, you move a unit between those states by editing the file.** The diagram shows the model, not seven pieces of automation you have today.
 
 **The refresh reads the page before it decides, and this is the part worth knowing if you write pages by hand.** A page with a `[NEEDS CLARIFICATION]` marker left in it has a claim nobody checked — that marker is exactly what you are meant to leave (see [Evidence and walkthroughs](docs-evidence.md)). So a refresh that found such a page and published its unit would put an unchecked claim straight into the coverage figure. It does not: **a matched page with no marker takes its unit to `published`, and a matched page with a marker takes it to `drafted`**, with the page, the unit and the marker count in the run's report. Resolve the markers, then move the unit to `verified` yourself by editing the file: a refresh reads a page only for a unit still `missing`, so it never revisits one it left `drafted`. Until the verification command lands, that edit is how a unit leaves `drafted`.
 
@@ -52,7 +52,7 @@ stateDiagram-v2
 
 **There is deliberately no arrow from `drafted` to `published`, and that missing arrow is doing real work.** `drafted` means a page exists whose claims have not been walked — the writing pass leaves markers behind exactly where it could not confirm something. If a page could go straight from there to `published`, the coverage figure would go green over the pages nobody checked, which is the one number in this file worth having. The only route runs through `verified`.
 
-The arrow from `missing` to `published` is not that same jump under another name. It fires only when a page already exists carrying the unit's id **and carrying no unresolved marker** — which means **a person wrote that page, tagged it, and left nothing in it saying a claim went unchecked**, and the audit is recording their judgement rather than making one of its own. Worth knowing what it rests on, though: that tag, and no walkthrough. The absence of a marker means nobody recorded an unresolved claim, not that anybody walked one — the page's `review_by` date and the evidence rules are what catch that later.
+The arrow from `missing` to `published` is not that same jump under another name. It fires only when a page already exists carrying the unit's id **and carrying no unresolved marker** — which means **a person wrote that id onto the page, or walked a page `/docs-write` drafted and removed its page-level marker, and nothing left in it says a claim went unchecked**, and the audit is recording their judgement rather than making one of its own. A page `/docs-write` drafted keeps that marker until it is walked, so one whose unit's move a merge lost still lands on `drafted`, never here. Worth knowing what it rests on, though, where a person tagged the page: that tag, and no walkthrough. The absence of a marker means nobody recorded an unresolved claim, not that anybody walked one — the page's `review_by` date and the evidence rules are what catch that later.
 
 ## What the coverage fraction counts
 
