@@ -9,7 +9,7 @@ finish & handoff (squash → opt-in push → copy-paste PR draft). Generic git +
 PR-draft logic; the command cites this so it stays lean. Read repo specifics
 from the resolved `profile`. This flow does not open the pull request itself: docs repos here are Bitbucket-hosted, and Bitbucket offers no CLI that can create one. Where a host does, the family opens one via `gh` — `workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo — and no command of this plugin opens one in a docs repository. Its one pull request is `/docs-workflows:release-notes`' own, in `$SPECS_PATH`, for its draft, through `handoff-to-main`.
 
-**§6 is a backlog run's finish**, which its command cites section by section: the check that the backlog and the profile are committed, the branch, one commit per unit, what becomes of a unit that does not commit, one push offer and the printed pull-request draft. §1–§5 are `/document`'s; §6 takes from them only what it names — §2's index restore and §3's push array — and nothing else of theirs applies to a backlog run.
+**§6 is a backlog run's finish**, which its command cites section by section: the check that the backlog and the profile are committed, the branch, one commit per unit, what becomes of a unit that does not commit, one push offer and the printed pull-request draft. §1–§5 are `/document`'s; §6 takes from them only what it names — §2's index restore, §3's push array and §5's use of the repository's pull-request template — and nothing else of theirs applies to a backlog run.
 
 ## 1. The branch entering Phase 8.5
 
@@ -211,5 +211,7 @@ Where a unit committed, the run's report prints a pull-request draft, for the us
 - **the deferred items** — a finding deferred, a style violation left;
 - **the paths left unstaged** — each path §6.3's ignore test matched, with its ignoring line, and the unit it ended;
 - **the `unfinished/` directories** this run made, and the unit each holds.
+
+Where `<top>` carries a pull-request template, the body — every item above but the title, in that order — is that template, filled, as §5's body is (`workflows-core:phase-handoff` §2.7.1); it has no required first line. The draft is still printed only: no file, no pull request.
 
 Where no unit committed, the report says there is no pull request to draft.

@@ -796,12 +796,12 @@ Runs after Phase 1.6 and replaces the single Phase 2B exploration subagent for m
    here would leave Pre-Phase 3 cutting from it whatever the user answered, and would take a run that
    continues on the unit's own branch off that branch. When that question came after this scan, the scan had
    already moved HEAD, so *"Branch from current position — continue on this work"*, offered only when
-   HEAD is **not** on the default branch, was never shown on a fan-out run. `/implement` scans the repository it is about to branch and modify — the working directory's — which is exactly what no other
-   `code-scanner` caller does — every one of the others scans a repository it only reads and writes
-   its own output elsewhere, into `$SPECS_PATH` or, for `/docs-workflows:docs-audit` and
-   `/docs-workflows:docs-write`, into a docs repo, save `/docs-write`'s scan of that docs repository
-   where it is also one of a unit's sources, which reads it by ref with its refresh pinned off, for
-   this same reason. **Stated as the property rather than as a count of the others**, which is what went stale
+   HEAD is **not** on the default branch, was never shown on a fan-out run. `/implement` scans the repository it is about to branch and modify — the working directory's — which only one other
+   `code-scanner` caller does, `/docs-workflows:docs-write`, once it has branched, where the docs
+   repository it commits to is also one of a unit's sources: it reads that repository by ref with its
+   refresh pinned off, for this same reason. Every other caller scans a repository it only reads and
+   writes its own output elsewhere, into `$SPECS_PATH` or, for `/docs-workflows:docs-audit` and
+   `/docs-write`, into a docs repo. **Stated as the property rather than as a count of the others**, which is what went stale
    here: the sentence said *the other five* and `/docs-audit` had since made them six. Re-derive the
    set with ``grep -l 'code-scanner' plugins/*/commands/*.md`` and read each hit, since
    `/dev-workflows:ready` names the agent only to forbid dispatching it. `/idea` pins the same two

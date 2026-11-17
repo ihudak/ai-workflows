@@ -123,7 +123,7 @@ model_routing:
   reason: "one page per unit, written from read evidence and gated by an Opus review; nothing merges"
   current_model: <the model this orchestrator is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it and routing: bypassed
-  implementation_model: <the §2 Opus chain — doc-writer, per §9.2's role map>
+  implementation_model: <the §2 Opus chain — doc-writer is judgment writing under §9.2, each claim decided against its evidence>
   review_model: <the §2 Opus chain — doc-reviewer, equal to its frontmatter pin>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # code-scanner, doc-location-finder, docs-style-checker, doc-fixer, impl-maintenance
   defect_model: <§2.1 Sonnet chain — only under --skip-feedback; under §10, run_flags.enforced_model>
@@ -131,7 +131,7 @@ model_routing:
   notes: <any §2 degradation>
 ```
 
-**Every dispatch carries an explicit `model:`**: `doc-writer` the implementation model, `doc-reviewer` its Opus pin — named, overriding nothing — and every other agent the detection model; under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) each carries the enforced id instead. An Opus fallback, or the enforced id, is announced here and again in the report.
+**Every dispatch carries an explicit `model:`**: `doc-writer` the implementation model — the §2 Opus chain at this MODERATE class, since `doc-writer` is §9.2's judgment writing, each claim decided against its evidence — `doc-reviewer` its Opus pin — named, overriding nothing — and every other agent the detection model; under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) each carries the enforced id instead. An Opus fallback, or the enforced id, is announced here and again in the report.
 
 ---
 
@@ -280,7 +280,7 @@ Every unit end here is the unit-level end (*Units and their ends*).
 2. **The handoff file.** Write one per unit, to `command mktemp -t dw-docs-write-XXXXXX`, holding `brief_kind: unit` as a top-level field and every field the unit brief's §2 defines, composed as it says — a one-line string written as a double-quoted YAML scalar, `\` and `"` escaped; a file's text as a literal block scalar indented under its key. Record its path.
 3. **Dispatch the writer**, the field on a line of its own, since the agent's pointer to the unit brief fires only on a top-level field:
 
-→ Agent (subagent_type: "docs-workflows:doc-writer", model: `<implementation_model — the §2 Opus chain; under §10, run_flags.enforced_model>`):
+→ Agent (subagent_type: "docs-workflows:doc-writer", model: `<implementation_model — the §2 Opus chain, doc-writer being judgment writing under §9.2, each claim decided against its evidence; under §10, run_flags.enforced_model>`):
   > "Write the page for this documentation backlog unit.
   >
   > brief_kind: unit
@@ -405,7 +405,7 @@ sys.exit(0 if k and body[:len(want)] == want else 1)' "${CLAUDE_PLUGIN_ROOT}/ref
 
 ## Phase 10 — Finish
 
-§6.5 of the finish, once, after the run's last unit, then §6.6, whose draft the report prints. *Push* runs as §6.5 says; *Skip* and *Cancel* push nothing, and the report follows.
+§6.5 of the finish, once, after the run's last unit, then §6.6, whose draft — the docs repository's pull-request template, filled, where it carries one — the report prints. *Push* runs as §6.5 says; *Skip* and *Cancel* push nothing, and the report follows.
 
 ---
 
@@ -421,7 +421,7 @@ Before the report, remove the run's handoff, snapshot and claims files, each wit
 (A stop or a Cancel fills every section the run reached and reads `N/A — ended at <the stop or the Cancel>` below it; the Next step says what to change.)
 
 ### Classification
-MODERATE — <reason> (doc-writer on the §2 Opus chain, doc-reviewer at its Opus pin, unless run_flags.enforced_model is set — §10)
+MODERATE — <reason> (doc-writer on the §2 Opus chain — judgment writing under §9.2, each claim decided against its evidence — doc-reviewer at its Opus pin, unless run_flags.enforced_model is set — §10)
 
 ### Model Routing
 Implementation model (§2): <implementation_model>   Review model (§2): <review_model>   Detection model (§2.1): <detection_model>   Notes: <any §2 fallback, or "none">
@@ -467,7 +467,7 @@ Branch: <name> (cut from <base> | adopted | cut from where HEAD stood); commits 
 <where the run switched onto <base> and ended there, the switch back>
 
 ### Pull-request draft
-<§6.6 of the finish: the draft, or "No unit committed — there is no pull request to draft.">
+<§6.6 of the finish: the draft, in the repository's pull-request template where it carries one, or "No unit committed — there is no pull request to draft.">
 
 ### Untrusted-content notices
 <each distinct line, verbatim | omit the section where there is none>

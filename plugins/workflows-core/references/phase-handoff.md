@@ -187,7 +187,7 @@ Body: written to a file (never passed inline, which would break on newlines and 
 
 ### 2.7.1 The repository's own pull-request template
 
-**Where the repository a pull request is opened in carries a template, the body is that template, filled.** This subsection is the one statement of that rule. This reference's §2.7 applies it in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.7 in a code repository, and `docs-workflows:finish-and-handoff` §5 in a docs repository. Each caller supplies `<repo>`, its own body's sections in their order, and any line that must come first (a banner).
+**Where the repository a pull request is opened in carries a template, the body is that template, filled.** This subsection is the one statement of that rule. This reference's §2.7 applies it in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.7 in a code repository, and `docs-workflows:finish-and-handoff` §5 and §6.6 in a docs repository. Each caller supplies `<repo>`, its own body's sections in their order, and any line that must come first (a banner).
 
 **Resolve the template against a fixed set of paths, never by searching for one.** List the committed tree's candidates with `git -C "<repo>" ls-tree -r -z --full-tree --name-only HEAD | tr '\0' '\n' | grep -i -E '^(\.github/|docs/)?pull_request_template(\.md|/[^/]+\.md)$|^\.gitlab/merge_request_templates/default\.md$'`. Use `-z` because, without it, git quotes a name holding a non-ASCII byte and the anchor never matches it, and `--full-tree` so the listing is the whole tree wherever `<repo>` points. No output is no template. Otherwise stop at the first rung below that a listed path matches, comparing without regard to case:
 

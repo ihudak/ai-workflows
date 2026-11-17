@@ -102,7 +102,7 @@ flowchart TD
 - **One commit per unit** on the run's branch: the page, each file that gained its entry or each regenerated navigation config, and the backlog's move of that unit to `drafted`. The message is `docs: draft <unit-id> (<type>, <audience>)`, or your profile's commit convention where it takes only a summary, with the unit id and the page path in its body.
 - **The page** — under its content root, under `internal/` for an internal unit — carrying its type, audience, visibility, evidence and review-by date in its frontmatter, every claim its evidence does not ground marked, and the page-level marker first in its body — after the internal marker, on an internal page.
 - **One push offer**, after the last unit, never forced. No pull request is opened.
-- **A pull-request draft, printed in the report** and written to no file: the units moved, their pages, the files edited, the review verdicts and their triage, the build results, the markers left, the deferred items, and any unit left under `.dev-workflows/unfinished/`.
+- **A pull-request draft, printed in the report** and written to no file: the units moved, their pages, the files edited, the review verdicts and their triage, the build results, the markers left, the deferred items, and any unit left under `.dev-workflows/unfinished/` — filled into the documentation repository's own pull-request template where it has one.
 - **A session cost entry and any feedback**, filed under `$SPECS_PATH/documentation/<docs-repo-slug>/`, as for an audit — unless the run found `$SPECS_PATH` misplaced or its environment changed, when they stay in the run's output. See [Session cost](../reference/session-cost.md).
 
 ## Failure modes
