@@ -1,10 +1,10 @@
 # DOC-D-G1 sub-project 2: `/docs-verify`
 
-Date: 2026-11-17. Status: **revision 2, for the maintainer**. This is the design-questions step P-D1 gives sub-project 2, revised against design review 1 (`.superpowers/design-review-1.md`: 1 Critical, 13 Important, 12 Minor).
+Date: 2026-11-17. Status: **revision 3, for the maintainer**. This is the design-questions step P-D1 gives sub-project 2. Revision 2 answered design review 1 (`.superpowers/design-review-1.md`: 1 Critical, 13 Important, 12 Minor). Revision 3 answers design review 2 (`.superpowers/design-review-2.md`: 2 Important, 7 Minor, all new), whose verdict is that no further review is needed once these are fixed.
 
 The parent is `docs/superpowers/specs/2026-11-17-doc-d-g1-docs-iteration-design.md` (revision 3, approved 2026-11-17), and it is the authority. This document settles what the parent leaves open: its *What is left to the builder* (:194), and whatever else a plan needs. A departure from an approved decision is named, and goes to the maintainer as a question.
 
-Base: `main` at `74d3e8d1e` (`docs-workflows` 1.43.0, `workflows-core` 1.97.0, with sub-project 1 shipped as PR #210). `file:line` citations are at that commit. Anything not grounded in a citation is marked *assumption*. The three questions at the end are the maintainer's; each `S2-D<n>` is the author's.
+Base: `main` at `74d3e8d1e` (`docs-workflows` 1.43.0, `workflows-core` 1.97.0, with sub-project 1 shipped as PR #210). `file:line` citations are at that commit. Anything not grounded in a citation is marked *assumption*. The four questions at the end are the maintainer's; each `S2-D<n>` is the author's.
 
 **Abbreviations**, under `plugins/docs-workflows/` unless named:
 
@@ -27,7 +27,24 @@ Base: `main` at `74d3e8d1e` (`docs-workflows` 1.43.0, `workflows-core` 1.97.0, w
 | **BKR** | `.claude/rules/docs-workflows-backlog.md` |
 | **P-D1** to **P-D17** | the parent's decisions |
 
-## Revision 2 — where each finding is settled
+## Revision 3 — review 2's findings
+
+| Finding | Where it is settled |
+|---|---|
+| **N1** | S2-D15 and S2-D4. The stamp test and P-D11's *Take these answers* question move into batch 3, so a stopped or blocked walk's answers survive the next run. Batch 4 keeps `--prepare`, its stamp write, the printed checklist and EC §5's text. Each batch's "usable" line is re-read |
+| **N2** | S2-D6 and Q1. `--block` is passed only for Q1's three cases; a blocked, unanswered or stopped walk records with no token and stays resumable |
+| **N3** | S2-D4, *Images*: the slot question is asked when answers are taken, too |
+| **N4** | Q1: *Leave it undecided*; the decision is recorded in the report and FH §6.6's draft |
+| **N5** | Q1: the token stops `--next` once its branch merges; alternative 1's cost falls on a user unit |
+| **N6** | Q4, new, and S2-D15 |
+| **N7** | S2-D5: the rejected no-Bash alternative is a bounded export of the evidence blobs; a plan-time check of agent frontmatter |
+| **N8** | S2-D1: the row with no reader is dropped |
+| **N9** | S2-D1: the reach tests' path set is a parameter |
+| **I11** (review 1, residual) | S2-D5: accepted as review 2 says, with the plan-time check |
+| **I13** (review 1) | S2-D9, unchanged |
+| Review 2 §2's older gap | *to-fix*: BASE-MOVED-STALE |
+
+## Revision 2 — where review 1's findings are settled
 
 **Critical and Important.**
 
@@ -174,7 +191,11 @@ Signature: `/docs-verify <unit-id>|--next [--prepare] [--docs-repo <path>] [--sk
 - *Copies* and the first two reach tests (DW:263-265);
 - the two marker programs (DW:110-116, :383-393).
 
-**Parameters.** Stop codes are written `<RUN>_…`, and each command names its prefix. Temp templates are written `<run>-XXXXXX`. "Phase 4's *Repo missing*" becomes "the scan phase's".
+**Parameters.**
+- Stop codes are written `<RUN>_…`, and each command names its prefix.
+- Temp templates are written `<run>-XXXXXX`.
+- "Phase 4's *Repo missing*" becomes "the scan phase's".
+- The reach tests' set of paths a writing agent may change is the command's (N9): for `/docs-write`, "the unit's page and its placement targets"; for `/docs-verify`, the page alone.
 
 **What stays in DW**: its unit tests, consent, Style, Build, Review and Commit phases, report and tail. `/docs-verify` writes its own Style, Build and Review, which are shorter, since it has no placement targets.
 
@@ -189,7 +210,6 @@ Signature: `/docs-verify <unit-id>|--next [--prepare] [--docs-repo <path>] [--sk
 | `emit-cost` | check 8 |
 | `args: "specs-repo-git commit-artifacts` | WCG:26's recipe |
 | `scan-refresh` | `.claude/rules/docs-workflows.md`:73's recipe |
-| the `specs-preflight` and `finding-triage` loads | — |
 
 If DW's tail moved, `/docs-write` would leave WCG:26's count.
 
@@ -275,7 +295,7 @@ Its contract:
 - A free-text answer naming one outcome is that outcome; any other is re-asked (CLAUDE.md, *choices*).
 - **Each answer is written to the file as it is given** (S2-D10). Rejected: writing at the walk's end, which would lose a dying session's answers.
 
-**Answers recorded outside the session (batch 4).** They count only where the stamp is in shape, names `page_path`, and its blob equals the page's (S2-D9). Otherwise the consent says why (no stamp, another page, or another version), and the walk restamps the file.
+**Answers recorded in the file (batch 3).** These are answers a stopped or blocked walk left in the file, or a walker recorded after a prepare. They count only where the stamp is in shape, names `page_path`, and its blob equals the page's (S2-D9). Otherwise the consent says why (no stamp, another page, or another version), and the walk restamps the file.
 
 Where they count, Phase 5 asks P-D11's question verbatim: `["Take these answers (Recommended)", "Walk it again here", "Cancel"]`. **Its text shows what *Take* admits (I9):**
 
@@ -304,7 +324,7 @@ Where they count, Phase 5 asks P-D11's question verbatim: `["Take these answers 
 
 **Images** (P-D11: "each slot's screenshot taken here").
 
-- **When.** After the step a capture's `after_step` names, for each slot in class whose comment the page carries:
+- **When.** For each slot in class whose comment the page carries, the run asks after the step a capture's `after_step` names in a walk, or, in a run that takes answers, once they are taken (N3). The question:
   - under `in-repo`, the run asks `["I have it — I'll give the file", "Skip — the slot keeps its placeholder"]`;
   - under `object-store` and `cdn`, where the person uploads (docs-profile-schema.md:136-138), it asks the same for a URL.
 - **The profile's values (I10)**, held at Phase 0, shown in the consent, and equal at Phase 4's re-check. A failure stops the run, naming the field.
@@ -365,8 +385,10 @@ Its contract:
   - It reads only through ROR §4's ref primitives (`git grep`, `ls-tree`, `show` at a commit), as `git -c safe.bareRepository=explicit -C '<clone>'`, every value single-quoted, never the working tree.
   - Page text reaches git only through a pattern file (`grep -F -f`) under `run-flags` §7's TMPDIR.
   - A commit the clone lacks is *not read*.
-  - **The read-only rule is held by the prompt (I11)**, the residual `code-scanner` carries (CS:139-142). *Assumption*: an agent's `tools:` names tools and takes no command patterns, so no tool-level hold exists for Bash.
-  - Rejected: no Bash, with commits exported by `git archive`. An export can be gigabytes, and its committed symbolic links lead Read outside it.
+  - **The read-only rule is held by the prompt (I11)**: the named residual, which `code-scanner` and the family's other Bash-holding agents carry (CS:139-142).
+  - *Assumption*: an agent's `tools:` names tools and takes no command pattern. All 45 lists in the family are bare names, with no pattern and no `disallowedTools`.
+  - **Plan-time check.** Does agent frontmatter accept a tool pattern, or `disallowedTools`? Verify it with `claude plugin validate`. If it does, `claim-reader` takes one that admits only `git` read commands.
+  - Rejected: **no Bash**, with the orchestrator writing the blobs the evidence entries name, by object id, as regular files, at both commits. That export is bounded and carries no symbolic links. Its real cost is that the reader could not follow a claim to a file the evidence does not name — which is where SRC §3's techniques look: schemas, constants, UI strings and tests (SRC:151-204) (N7).
 - **Inputs:** the page's path; the unit; per clone `{repo, path, today, evidence refs}`; the code entries after S2-D11's classes; per artifact `{path, today_ref, text_today}`; and the scanner returns.
 - **Grading,** by SRC §3's techniques (SRC:126-222), mapped from SRC:250-261:
   - **`confirmed`** — today's source states the claim (VERIFIED).
@@ -386,7 +408,12 @@ Its contract:
 - **User units:** every step is answered; none is `blocked`; every `differs` has its observed text (S2-D10's counts); and no claim is `uncoverable`.
 - **Engineering units:** nothing is `unresolvable`; no evidence path is gone; and every `specs-vs-code` claim is answered "as the code reads" (Q1).
 
-A unit that fails the move test takes Q1's exit.
+**Which failures take Q1's exit (N2).** Q1's exit, and `edit --block`, apply only to Q1's three cases:
+- an `uncoverable` claim;
+- an `unresolvable` reading;
+- a `specs-vs-code` claim left undecided.
+
+Any other failure — a `blocked` step, an unanswered step, a `differs` without observed text, or a stopped walk — makes the record commit with **no token**. The unit stays resumable: the next run takes the answers and walks those steps in session (S2-D4).
 
 **Three commits.** Each is one commit, by FH §6.3, on the run's branch.
 
@@ -394,7 +421,7 @@ A unit that fails the move test takes Q1's exit.
 |---|---|---|
 | **verify** | the page; each image; the walkthrough with its results, where this run changed it; the backlog's move | moved — P-D8's commit |
 | **prepare** | the walkthrough, stamped, with no results; a composed file's id in the backlog | no move (P-D11) |
-| **record** (Q3) | the walkthrough with its stamp and results; a composed file's id; and Q1's token where Q1's exit applies | no move |
+| **record** (Q3) | the walkthrough with its stamp and results; a composed file's id; and the token, for Q1's three cases only | no move |
 
 An engineering unit's Q1 exit commits the token alone.
 
@@ -659,7 +686,7 @@ Deliberate changes, each named:
 - **`workflows-core`:** the sites in *Files touched*. One is a count: `escalation-rules`' "Seven stash choices" (:377) becomes eight.
 - **BKR:** invariant 1, the map line, and the apply-brief and move invariants. **Invariant 5 stands.**
 
-**Versions (S2-D15).** Batches 1, 3 and 4 are each a `docs-workflows` minor; batch 2 is a minor of both plugins.
+**Versions (S2-D15, Q4).** Under Q4's recommendation: batches 1, 3 and 4 are each a `docs-workflows` minor, and batch 2 is a minor of both plugins.
 
 **Coupling (batch 2).** A newer `docs-workflows` beside an older `workflows-core`:
 
@@ -671,11 +698,11 @@ Update both together. The reverse is harmless. `schema_version` stays 1. An olde
 
 ### S2-D15. Batches and releases
 
-**Recommended: one plan in four batches, each reviewed, merged and released on its own**, so that each ships something usable. One plan keeps the decisions, the sweep and the fixtures in one place.
-
-P-D16's "a minor" is read per release. If the maintainer prefers one release, the batches merge in order and the release follows batch 4.
+**One plan in four batches.** One plan keeps the decisions, the sweep and the fixtures in one place. Whether each batch is also its own release is Q4.
 
 1. **Groundwork.** `/docs-write`'s behaviour is unchanged. The batch holds Q2's extraction, BL's `moved --own-moves` and its `edit` flags, and FH §6's wording, proven by `/docs-write`'s fixtures and the self-test.
+
+   *Usable:* the same `/docs-write`, and the script flags the later batches call.
 2. **Engineering units.** The spine:
    - select, consent and branch;
    - the scans and `claim-reader`;
@@ -687,8 +714,20 @@ P-D16's "a minor" is read per release. If the maintainer prefers one release, th
    - GL §10.
 
    Plus every registration: the `workflows-core` sites, the four GIT-G1 edits, the docs and the counts. A user unit is refused with a line naming the next release.
-3. **User units in session.** BL's walkthrough verbs and EC §4's shape paragraph; the composer; the walk; *Stop*; the record commit; images; and the fitness question. The walk writes the stamp, but nothing tests it until batch 4, so until then a stopped walk is walked again.
-4. **`--prepare`, the stamp test and answers taken from the file**, with P-D11's question and EC §4–§5's stamp text.
+
+   *Usable:* an engineering page reaches `verified`. A unit that cannot resolve leaves the run by Q1's exit.
+3. **User units walked in session, and resumed (N1).** It holds:
+   - BL's walkthrough verbs, and EC §4's shape paragraph and stamp key;
+   - the composer;
+   - the walk, *Stop* and the record commit;
+   - **the stamp's write and its test**;
+   - **P-D11's *Take these answers* question**, which walks the steps left;
+   - images and the fitness question.
+
+   *Usable:* a user page reaches `verified` in one sitting. A stopped or blocked walk is resumed by the next run, which takes its answers — so Q3's option text is true in the release that ships it.
+4. **`--prepare`.** It holds the prepare commit, its stamp write, the printed checklist, and EC §5's text on recording results by hand for a later run.
+
+   *Usable:* the asynchronous walk. Its answers are taken by batch 3's question.
 
 ## Questions for the maintainer
 
@@ -701,13 +740,20 @@ P-D16's "a minor" is read per release. If the maintainer prefers one release, th
 
    **Recommended:**
    - **No page edit without the move.** The unit stays `drafted`, and every marker, the page-level one included, stays. A partial page would get a new blob and void every recorded answer.
-   - **The run records the outcome.** A user unit's walk goes into the record commit (Q3). For both backends, the same commit sets `blocked_by: [claims-unresolved]` (`edit --block`), so `--next` stops re-choosing the unit. The report lists each claim and why.
-   - **Specs against code gets one bounded question per claim**, as SRC §7.3 asks: `["Document as the code reads (Recommended)", "Leave it marked — the unit stays drafted"]`. There is no "as the ARD reads" option, since that drafts SRC §7.5's gap file into a PRD folder this run lacks.
+   - **The run records the outcome.**
+     - A user unit's walk goes into the record commit (Q3).
+     - **For these three cases only (N2)**, the same commit sets `blocked_by: [claims-unresolved]` (`edit --block`). An engineering unit's commit holds the token alone.
+     - A blocked, unanswered or stopped walk records with no token and stays resumable.
+     - The token stops `--next` on the branch that holds it, and everywhere once that branch merges (N5).
+     - The report lists each claim and why.
+   - **Specs against code gets one bounded question per claim**, as SRC §7.3 asks: `["Document as the code reads (Recommended)", "Leave it undecided — the unit stays drafted"]` (N4).
+     - The decision is recorded in the report and in FH §6.6's draft, as SRC §7.4 records one.
+     - There is no "as the ARD reads" option, since that drafts SRC §7.5's gap file into a PRD folder this run lacks.
    - **The exit.** A person edits the page or its source, clears the token, and re-runs. Or a person verifies by hand (ROUTE step 6) and moves the unit by hand (BF:116).
    - **`explanation` pages: accept the hole, with ROUTE step 6 by hand as the named route.** `verified` asserts observation or a read, and nothing observes a rationale. The run says so before the walk.
 
    **Alternatives:**
-   - P-D11's clause as written: commit the partial page, marked, with no move. This voids recorded answers.
+   - P-D11's clause as written: commit the partial page, marked, with no move. For a user unit this voids every recorded answer. For an engineering unit the cost is only a commit without a move (N5).
    - An attestation outcome for an unexpressible claim. This changes what `verified` asserts (P-D11 :134) and EC §5's table.
    - No token, so `--next` re-chooses the unit every run.
 2. **Where the shared steps live.**
@@ -721,11 +767,16 @@ P-D16's "a minor" is read per release. If the maintainer prefers one release, th
    - a fourth option on P-D11's per-step array: `"Stop — keep these answers for a later run"`;
    - **a record commit for every walk that ends without its move** — a stop, a blocked step, a failed build, a review that stayed blocked, a fitness *Cancel*, or a refused verify commit (S2-D6).
 
-   FH §6.1 and §6.2 then keep their approved text.
+   FH §6.1 and §6.2 then keep their approved text. From batch 3 on, the next run takes the recorded answers behind P-D11's question and walks only the steps left (N1), so the option's promise holds in the release that ships it.
 
    **Alternatives:**
    - P-D11's array as written. Interrupting the session is then the only way out, and it skips the tail.
    - Revision 1's design: a record commit only on a failed move test, with every other walk left uncommitted behind a new FH §6.1 and §6.2 exclusion.
+4. **Releases: how P-D16's "a minor" reads (N6).** P-D16 says each sub-project is a minor of both plugins.
+
+   **Recommended:** four batches, each released on its own: four `docs-workflows` minors, and one `workflows-core` minor, in batch 2. Each batch then reaches users as soon as it passes review: engineering verification first, then the in-session walk, then the asynchronous walk. Bumping `workflows-core` in batches 1, 3 and 4, which change nothing in it, would be a false release. This reads P-D16's "a minor" per release, which departs from its letter.
+
+   **Alternative:** one release after batch 4 — a minor of both plugins, as P-D16 reads literally. The batches still merge in order, but no user gets engineering verification until the walks are done too, and the release carries four batches of change at once.
 
 ## Files touched
 
@@ -848,6 +899,7 @@ The stash count is `workflows-core`'s, not GIT-G1's.
 - New: **DW-EDIT-FROM**. `/docs-write` could pass `--from missing` and use `--own-moves`. It is recorded only, since S2-D14 keeps `/docs-write`'s behaviour.
 - New: **UNWALKABLE-CLAIMS**, under Q1's recommendation.
 - CLONE-BARE-REPO stays open at CS's sites, which this command does not reach.
+- New: **BASE-MOVED-STALE**, a gap older than this design (review 2 §2). `moved` drops the base from the refs it reads, so a unit the base has already moved is not passed over on a stale working branch. Phase 4's re-check catches it after a cut, but an adopted stale branch does not.
 - Each batch adds what its review leaves.
 
 **Feature-gaps.** The DOC-D-G1 heading (:285) and row (:48) gain sub-project 2's design, then each batch's versions.
@@ -863,10 +915,10 @@ The stash count is `workflows-core`'s, not GIT-G1's.
 ## What is left to the builder
 
 - **Wording:** the `DOCS_VERIFY_*` codes and their lines; the question texts around the fixed arrays; the commit subjects.
-- **The agents:** each agent's schemas, and the `environment` class.
+- **The agents:** each agent's schemas, and the `environment` class. The plan-time frontmatter check comes first (S2-D5): whether `claim-reader` can take a tool pattern or `disallowedTools`.
 - **BL:** the verb names, JSON shapes and exits; the `--own-moves` docstring; EC §4's structure paragraph.
 - **`backlog-run.md`:** its layout.
 - **Images:** the list of image extensions.
 - **The marker program:** how it treats inline code.
 
-**Fixtures, as traced runs.** Selection: two open draft branches, where `--next` chooses (C1); `/docs-write`'s fixtures re-run after batch 1. Engineering: all confirmed, refs advanced; a `differs`; an ARD changed since the page's ref, read at today alone; specs against code, under both answers; an evidence path gone; an `evidence:` value out of class; a bare-repository clone. User: a composed walk to `verified`; a hand-written walkthrough extended; an `explanation` page taking Q1's exit and token; a blocked step's record commit; *Stop*, then a resume (batch 4); a build failing after apply, the page restored and the walk recorded. Review: a fixer's wording edit, allowed; a mis-applied answer, repaired by `doc-writer`; a frontmatter change, refused by program. Outside answers: `--prepare`, then another author's answers, taken behind the question that shows them; uncommitted answers through *Proceed anyway*; a page rewritten after a prepare; a CRLF page under `text=auto`. Text and images: a `differs` holding markup; an internal unit's image; an `images.root` outside the repository.
+**Fixtures, as traced runs.** Selection: two open draft branches, where `--next` chooses (C1); `/docs-write`'s fixtures re-run after batch 1. Engineering: all confirmed, refs advanced; a `differs`; an ARD changed since the page's ref, read at today alone; specs against code, under both answers; an evidence path gone; an `evidence:` value out of class; a bare-repository clone. User: a composed walk to `verified`; a hand-written walkthrough extended; an `explanation` page taking Q1's exit and token; a blocked step's record commit with no token, resumed by the next run; *Stop*, then a resume (batch 3); a build failing after apply, the page restored and the walk recorded. Review: a fixer's wording edit, allowed; a mis-applied answer, repaired by `doc-writer`; a frontmatter change, refused by program. Outside answers: `--prepare`, then another author's answers, taken behind the question that shows them; uncommitted answers through *Proceed anyway*; a page rewritten after a prepare; a CRLF page under `text=auto`. Text and images: a `differs` holding markup; an internal unit's image; an `images.root` outside the repository.
