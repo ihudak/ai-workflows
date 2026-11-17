@@ -374,17 +374,16 @@ which option is right depends entirely on why the repo is absent.
 
 ## Stashing the user's changes
 
-**Six stash choices run this procedure**: the Stash choice of § *Dirty working tree*, and the
+**Seven stash choices run this procedure**: the Stash choice of § *Dirty working tree*, and the
 "Stash … and continue" choices of the documentation commands that branch a repository they write
-into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5 and `/docs-brand`
-Phase 7). `/implement` and `/upgrade` keep their own: each records a `stash_ref` that
+into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5, `/docs-brand` Phase 7 and `/docs-write` Phase 3, through `docs-workflows:finish-and-handoff` §6.2). `/implement` and `/upgrade` keep their own: each records a `stash_ref` that
 `dev-workflows:code-handoff` reads; `/vuln` never stashes.
 
 1. **Stash under a name no other run shares**, reading the stash ref on both sides of it:
    `git -C "<repo>" rev-parse -q --verify refs/stash` (empty where there is none), then
    `git -C "<repo>" stash push -u -m "<command> <KEY>: <why> <UTC timestamp>"`, untracked files
-   included, since `status --porcelain` counts them, then the same `rev-parse` again. `<KEY>` is the
-   run's key, or its command name alone where it has none. Never a bare `git stash`. **Where the
+   included, since `status --porcelain` counts them, then the same `rev-parse` again. A caller that names a pathspec appends it to that push after `--`, so the stash takes only the paths it names: `/docs-workflows:docs-write` names `. ':(exclude).dev-workflows/unfinished'`, so that a stash never takes the files of a unit an earlier run did not commit.
+   `<KEY>` is the run's key, or its command name alone where it has none. Never a bare `git stash`. **Where the
    ref did not change, nothing was stashed** — git prints `No local changes to save` and exits 0 on
    a clean tree — so record nothing and say so. Where the choice was § *Dirty working tree*'s, present that choice again rather than re-dispatching: what stash cannot take (changed content inside a submodule) keeps the tree dirty, and a re-dispatch would only return `DIRTY_TREE` again. Anywhere else, go on as the choice says. **Where the push exits
    non-zero** (`You do not have the initial commit yet` on a repository with no commit), report
