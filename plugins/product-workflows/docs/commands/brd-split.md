@@ -316,8 +316,8 @@ reads was already independently verified by `/prd-ground`'s own agents.
   that branch does not hold committed onto it first — by pushing that branch, where `origin` does
   not already hold every commit of it, and, for one of your own, merging it, or, where the default
   branch is protected, a new `brd/` branch and a pull request — and it names `/prd-ground` only to
-  warn against it, since re-running it would ground every claim again rather than land the findings
-  written. A BRD that has never been grounded at all — no `code-grounding.md` in the slice's folder
+  warn against it, since only the landing of the findings written is missing, which a re-run
+  reaches only through the same handoff. A BRD that has never been grounded at all — no `code-grounding.md` in the slice's folder
   either — stops naming the fix — but which fix depends on why no findings exist. With at least one `[BR#n]` row in the inventory, grounding simply has
   not run: `BRD_SPLIT_NEEDS_GROUNDING`, naming `/prd-ground`. With **no** row, there is nothing to
   ground and `/prd-ground` would stop on the same emptiness (`PRD_GROUND_EMPTY_INVENTORY`), so
@@ -336,7 +336,10 @@ reads was already independently verified by `/prd-ground`'s own agents.
   main but records no `[CG#n]` stops with `BRD_SPLIT_NO_FINDINGS`. Where the folder's **design/**
   holds any frame set, `design-grounding.md` must itself be on the default branch — the run
   executes `require-on-main` against it rather than trusting the code gate's single-commit
-  implication, which `/prd-ground --no-code` breaks by design. A **design/** subdirectory that no
+  implication, which `/prd-ground --no-code` breaks by design. A `design-grounding.md` written in
+  the slice's folder and never handed off stops it with `BRD_SPLIT_GROUNDING_NOT_HANDED_OFF`, the
+  stop the code file takes, naming that file, and never with a `--no-code` re-ground, since only its landing is
+  missing. A **design/** subdirectory that no
   entry in `design-grounding.md`'s frame-set list covers — absent from it, or listed as having no
   index or a stale one (an index whose frames are all gone) — stops with `BRD_SPLIT_DESIGN_NOT_GROUND`, which names `/prd-ground <KEY> --no-code` as
   the repair so the missing design pass can be added without re-deriving verified code findings. A

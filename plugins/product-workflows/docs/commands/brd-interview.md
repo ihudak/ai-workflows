@@ -240,16 +240,16 @@ subagent is dispatched — every finding this command reads was already independ
   own or on your local default branch — any of them that branch does not hold committed onto it
   first — by pushing that branch, where `origin` does not already hold every commit of it, and, for
   one of your own, merging it, or, where the default branch is protected, a new `brd/` branch and a
-  pull request — and it names `/prd-ground` only to warn against it, since re-running it would
-  ground every claim again rather than land the findings written. A BRD never grounded at all — no
+  pull request — and it names `/prd-ground` only to warn against it, since only the landing of
+  the findings written is missing, which a re-run reaches only through the same handoff. A BRD never grounded at all — no
   `code-grounding.md` in a slice's folder either — stops naming the
   fix that actually applies: `BRD_INTERVIEW_NEEDS_GROUNDING` when the inventory holds at least one
   `[BR#n]` row and grounding has simply not run; `BRD_INTERVIEW_NO_INVENTORY` when a slice has no
   `brd/brd-inventory.md` at all — never written, by an interrupted `/brd-split` on the parent, or
   written and since lost — with a remedy that
   turns on the slice's `claims:` and the parent's ledger; and `BRD_INTERVIEW_EMPTY_INVENTORY` when
-  the inventory holds no row, or when a folder naming no parent has none, whatever grounding that
-  folder holds. None of the last three
+  the inventory holds no row. A folder naming no parent, with no inventory or one holding no row,
+  takes `BRD_INTERVIEW_EMPTY_INVENTORY`'s no-parent form whatever grounding it holds. None of the last three
   names `/prd-ground` as the fix — each names it only to warn against it — because it would not
   produce the findings: it stops on a slice's missing or empty inventory with
   `PRD_GROUND_NO_INVENTORY` or `PRD_GROUND_EMPTY_INVENTORY`, and refuses a folder naming no parent

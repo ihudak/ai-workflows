@@ -238,13 +238,13 @@ and nothing downstream can tell the difference afterwards.
    `unmanaged` → proceed as before this feature; `absent` (row F — grounding findings are on no ref at
    all) → **split it before stopping, on tests row F cannot make**, the way `/brd-reconcile` splits
    its own row F. Row F covers more than one state here, and the message for any state in which
-   `/prd-ground` would not produce the findings this gate wants, or would ground again what is
-   already written, must not name it as the fix. **On a slice — the resolved folder's `brd-link.md`
+   `/prd-ground` would not produce the findings this gate wants, or in which only the landing of
+   findings already written is missing, must not name it as the fix. **On a slice — the resolved folder's `brd-link.md`
    naming a `parent:` — test first whether `<BRD-dir>/grounding/code-grounding.md` is in the
    folder**: where it is, the findings were written and never landed, the first bullet below. Where
    it is not, or on a folder naming no `parent:`, read `<BRD-dir>/brd/brd-inventory.md` from the
    worktree and count its `[BR#n]` rows, on which the other bullets split. A folder naming no
-   `parent:` takes its no-parent stop below whatever grounding it holds: it is no slice this
+   `parent:` is read on its inventory below whatever grounding it holds: it is no slice this
    command could interview, and landing what it holds would not make it one.
    - **A slice, and `grounding/code-grounding.md` in the folder** — written and never handed off:
      the `/prd-ground` run that wrote it did not land it, its handoff declined or never reached.
@@ -262,9 +262,12 @@ and nothing downstream can tell the difference afterwards.
      print turns on the HEAD test, made before it prints as `workflows-core:phase-handoff` §4.4's
      row F makes it for a stop that lands several files: on each of those files that
      `<default-ref>` does not hold, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>" 2>/dev/null`,
-     exit 0 where HEAD holds it. Where HEAD holds none of them — untracked, or staged and never
-     committed — the uncommitted form:
-     `BRD_INTERVIEW_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s grounding/code-grounding.md is written at <BRD-dir> but is on no branch — the /product-workflows:prd-ground run that wrote it did not hand it off. This run read none of its findings, decided nothing and wrote nothing. Commit <files> to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:brd-interview <BRD-KEY>'. Do not re-run /product-workflows:prd-ground for this: it would ground every claim again rather than land the findings already written. Ignored, every /brd-interview run on this slice stops here until grounding/code-grounding.md is on <default>.`
+     exit 0 where HEAD holds it. A file of those that `<default-ref>` holds counts as one HEAD holds
+     where HEAD's copy is not `<default-ref>`'s — `git -C "$SPECS_PATH" diff --quiet "<default-ref>" HEAD -- "./<path>"`
+     exits 1 — since the switch the uncommitted form opens with would put `<default-ref>`'s copy in
+     its place. Where HEAD holds none of them — untracked, or staged and never committed — the
+     uncommitted form:
+     `BRD_INTERVIEW_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s grounding/code-grounding.md is written at <BRD-dir> but is on no branch — the /product-workflows:prd-ground run that wrote it did not hand it off. This run read none of its findings, decided nothing and wrote nothing. Commit and merge <files> to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:brd-interview <BRD-KEY>'. Do not re-run /product-workflows:prd-ground for this: the findings are written and verified, and only their landing is missing, which a re-run reaches only through the same handoff this one did not make. Ignored, every /brd-interview run on this slice stops here until grounding/code-grounding.md is on <default>.`
      ```
      git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
      git -C "<SPECS_PATH>" add -f -- "<BRD-dir>/<file>" …
@@ -277,7 +280,7 @@ and nothing downstream can tell the difference afterwards.
      local `<default>` that `origin` does not hold — the commands above do not apply, since the
      switch they open with takes the files HEAD holds out of the working tree; the committed form
      lands the branch instead, never the uncommitted form (§4.4's row F):
-     `BRD_INTERVIEW_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s grounding/code-grounding.md at <BRD-dir> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of its findings, decided nothing and wrote nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:prd-ground for this, which would ground every claim again rather than land the findings committed. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:brd-interview <BRD-KEY>'. Ignored, every /brd-interview run on this slice stops here until grounding/code-grounding.md is on <default>.`
+     `BRD_INTERVIEW_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s grounding/code-grounding.md at <BRD-dir> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of its findings, decided nothing and wrote nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:prd-ground for this: the findings are committed and verified, and only their landing is missing. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:brd-interview <BRD-KEY>'. Ignored, every /brd-interview run on this slice stops here until grounding/code-grounding.md is on <default>.`
      ```
      <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
      ```
