@@ -274,8 +274,9 @@ array carries every option.
     slice holds and never handed off, on an unmerged branch or in the folder and on no ref, stops
     both, as it does on the idea route, naming its landing. `/product-workflows:create-prd`, which
     writes that file and gates no copy of it, does not stop on one, but counts it as found and opens
-    on its existing-PRD question (`/product-workflows:create-prd` Phase 0 step 6), whose recommended
-    answer stops for `/product-workflows:update-prd`: named beside a landing that says to land the file first, it would send the
+    on its existing-PRD question (`/product-workflows:create-prd` Phase 0 step 6, Phase 1 step 2),
+    whose recommended answer stops for `/product-workflows:update-prd`: named beside a landing that
+    says to land the file first, it would send the
     operator the other way, so it is dropped with the two. The offering run writes no `prd.md` and
     gates none, so before it names any of the three — and only on a slice that passed the tests,
     since on any other all three are dropped already — it reads where that file stands. It
@@ -317,9 +318,10 @@ array carries every option.
       that rule says.
 
   **Where each condition is enforced is why the offer carries it, and it matters:** the level test,
-  the slice's ledger tests and *The landed condition* are each met in the offered commands' own
-  Phase 0s — the first two by all three, the last by `/create-ard`'s and `/specify`'s *Gate the PRD*
-  and by `/create-prd`'s existing-PRD question — so offering any of them wrongly hands over a run
+  the slice's ledger tests and *The landed condition* are each met in the offered commands' own runs
+  before they author — the first two in all three's Phase 0s, the last by `/create-ard`'s and
+  `/specify`'s *Gate the PRD* and by `/create-prd`'s existing-PRD question (its Phase 1 step 2, on a
+  file its Phase 0 step 6 counts as found) — so offering any of them wrongly hands over a run
   that stops, or, for `/create-prd`, one that asks to refresh a PRD the offer has just said to land;
   the advance/re-entry split is enforced **nowhere downstream** — `/create-ard` on the BRD route and
   `/specify` on the BRD route treat an `open` or `reopened` record as an open question to record rather

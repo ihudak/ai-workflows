@@ -80,7 +80,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    slice and Epic rows below, names a run **only where that run can itself take the folder**, since
    each command it could name refuses some shape of it. **The BRD container row is one exception**:
    it names each slice's `/create-prd` as where a PRD belongs, not as a run promised to start, and
-   `/brd-split` with its no-op case said beside it. **The other is an Epic folder whose parent is a
+   `/brd-split` with its no-op case said beside it. **Another is an Epic folder whose parent is a
    BRD-route slice holding a `prd.md` asserting `kind: prd`**: that row reads no slice's ledger, so it
    names `/product-workflows:specify <KEY>` as it stands and says beside it that that run stops where
    the slice fails its ledger tests, naming what its stop names. The slice rows read the gate set

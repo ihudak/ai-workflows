@@ -3032,9 +3032,10 @@ this phase offers.
   `coverage-ledger.md` still holds an `unallocated` row, the bare `'/product-workflows:brd-split <PARENT-KEY>'`
   where it holds none, and neither where that ledger cannot be read — for the operator to check: this
   run reads no ledger of the parent's for it. Name no re-cut form: that form turns on a sibling's own
-  `deferred-to` on a row the parent delegated to it, read in ledgers this run does not read, and on
-  this slice never having been interviewed (§3.2), which on the ordinary path, where `/brd-package`
-  refused a slice holding no round record, it has been. Print neither §5.2's placed-row line nor a
+  `deferred-to` on a row the parent delegated to it, which this phase reads in no ledger, and on this
+  slice never having been interviewed (§3.2) — which on the ordinary path it has been, since
+  `/brd-package`, which refuses a slice holding no round record (`BRD_PACKAGE_NOT_INTERVIEWED`), ran
+  on it. Print neither §5.2's placed-row line nor a
   wait: those are the stops' own, which apply the tests. **Where `coverage-ledger.md` is absent, or present and unreadable, while that `brd-link.md` claims rows** —
   reachable on a `--sent` run, whose step 7 gates no ledger — neither test can be read: drop all three
   options, report the path, as missing or as unreadable with the read error, and name
@@ -3047,7 +3048,7 @@ this phase offers.
 - **All three wait for *The landed condition* besides** — the one the *PM — the BRD-to-PRD route*
   lane of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` states in its
   `/product-workflows:brd-reconcile` bullet, read as that lane says and never restated here — which
-  is read out of the offered commands' own Phase 0s. `/create-ard` and `/specify` both run the
+  is read out of the offered commands' own runs. `/create-ard` and `/specify` both run the
   PRD gate on every route (`commands/create-ard.md` and `commands/specify.md` Phase 0, *Gate the
   PRD*), and neither waits on a PRD the slice has not got: on a slice holding no `prd.md` that
   passed the tests, that gate's `absent` branch proceeds and reports, so `/create-prd` on the BRD
@@ -3057,7 +3058,7 @@ this phase offers.
   it reads, before naming any of the three, only to know where it stands, as that condition says.
   `/create-prd`, which writes that file and gates no copy of it, is dropped there with the two: it
   counts the file as found and opens on its existing-PRD question, whose recommended answer stops for
-  `/product-workflows:update-prd` (`commands/create-prd.md` Phase 0 step 6), while the landing
+  `/product-workflows:update-prd` (`commands/create-prd.md` Phase 0 step 6, Phase 1 step 2), while the landing
   printed beside the list says to land the file first. Neither `/create-ard` nor `/specify` consults
   a tracker, and what each
   reads outside the specs tree — code through `$REPOS_PATH`, documentation through `$DOCS_PATH` — is resolved by that run itself, not
@@ -3170,7 +3171,7 @@ path it took: the offer's one reason is a decision this run froze, and there is 
 first advance bullet above reads them, on either list — name no proposal either**:
 `/product-workflows:create-prd`, the run that offer names first, stops on such a slice
 (`CREATE_PRD_BRD_UNALLOCATED`, `CREATE_PRD_BRD_NOT_ELIGIBLE`), so there is no PRD to price until what
-those stops name is done. It is
+those stops name is done. **The proposal** is
 offered in prose rather than as an option because the three advance options are the route's actual
 handover, which an optional, ungated document must not displace — where all three stand the array is
 full at four (`workflows-core:escalation-rules` §0) — nor stand in for where they are dropped. It carries no `<merge-clause>`:

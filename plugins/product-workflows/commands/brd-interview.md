@@ -2583,8 +2583,8 @@ not on the default branch, its landing printed beside the list as that lane word
 `/product-workflows:create-prd` is dropped with the other two: that run counts the file as found and
 opens on its existing-PRD question, whose recommended answer stops for
 `/product-workflows:update-prd`, while the landing beside the list says to land the file first. There,
-and where the slice is not PRD-eligible and its `claims:` names a row, the re-ground pass is the
-forward route left, and it fits beside `Stop here`:
+and where the slice's ledger was read, its `claims:` names a row and the slice is not PRD-eligible,
+the re-ground pass is the forward route left, and it fits beside `Stop here`:
 
 ```
 choices: ["Stop here — every question was settled from the findings and this BRD needs no customer review", "Re-ground every claim against current commits — /product-workflows:prd-ground <BRD-KEY> --rebaseline (a changed finding is what can make a new round askable)"]
