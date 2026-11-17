@@ -1093,6 +1093,7 @@ def main(argv):
 # ==== selftest ====
 
 BF_PATH = os.path.join(HERE, os.pardir, "references", "docs-audit", "backlog-format.md")
+FH_PATH = os.path.join(HERE, os.pardir, "references", "finish-and-handoff.md")
 BF_LEAD = "**The line shape a backlog run reads.**"
 MINI = ("schema_version: 1\n"                          # 1
         "units:\n"                                     # 2
@@ -1769,7 +1770,8 @@ def _undo_write_fails(before=None):
 def case_edit_undo_failed(tmp):
     """The diff calls for an undo and the undo's own write fails before its last look, over a backlog that, read
     again, holds the edit: exit 2 with WHY_UNDO, the one text that has the caller restore from its copy. The
-    docstring's caller rule quotes that line whole, no other text after a write says to restore, and the one function
+    docstring's caller rule quotes that line whole, finish-and-handoff's section 6.4 quotes it byte for byte (a caller
+    matches the line whole against that copy), no other text after a write says to restore, and the one function
     that names WHY_UNDO is the one that reads the backlog first."""
     dirty = MINI.replace("schema_version: 1\n", "schema_version: 1  # touched\n")
     top = _repo(tmp, MINI)
@@ -1779,6 +1781,9 @@ def case_edit_undo_failed(tmp):
     _eq(_get(top), dirty.replace("status: missing", "status: drafted").encode("utf-8"), "the edit, still in place")
     doc = " ".join(__doc__.split())
     _true(" ".join(("backlog-lines: not run (%s)" % WHY_UNDO).split()) in doc, "the caller rule quotes WHY_UNDO whole")
+    with open(FH_PATH, encoding="utf-8") as fh:
+        _true(("`backlog-lines: not run (%s)`" % WHY_UNDO) in fh.read(),
+              "finish-and-handoff section 6.4 quotes WHY_UNDO's line byte for byte")
     _true("restore" in WHY_UNDO and "restore" not in WHY_RACED and "restore" not in WHY_UNDO_BLOCKED,
           "only WHY_UNDO says to restore")
     import ast
