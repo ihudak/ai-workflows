@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.95.2] — 2026-11-17
+
+DOCS-IN-CODE-REPO-SCAN: `implementation-format` §4 states what `docs-workflows` 1.41.0's commit scan does in the repository that holds the documentation. §4 said the scan never reads the docs repository; it now says the scan never takes that repository's documentation commits — a commit touching its documentation paths alone — and takes one that touches another path. Update with `docs-workflows` 1.41.0, which runs the scan.
+
+### Changed
+
+- **`implementation-format` §4, the repositories the scan reads.** "Never the specs repository or the docs repository" becomes "never the specs repository". In the repository that holds the documentation — where the scan covers it, that file naming it or naming none — and where the run knows a content path there, none of them the whole repository, the scan never takes a commit that touches documentation paths alone, since `/document`'s own commits there carry the tokens by the family's conventions, and takes one that also touches another path; the report-only probe drops such a commit too, and a merge that brought in nothing but documentation paths over its first parent. Where the run knows no content path there, or one that is the whole repository, no path rule applies: the repository is left out whole, as the specs repository is, or, where the record names it, scanned whole like any other, its documentation commits taken as code. `docs-workflows`' `references/key-discovery.md` §1 states which paths are content paths and which are documentation paths.
+- **§4's pull-request layer.** In a clone of that repository read by its documentation paths, it takes only the landed commits that touch a path outside them, and reports, never reads, a pull request that landed nothing else; where the scan leaves the repository out whole, or knows a content path there but holds no clone of it, its pull requests are dropped as the specs repository's are; where the scan reads it whole, they are taken as any repository's.
+- **What the run reports as scanned** (§4's closing paragraph): on a clone of that repository read by path, only the non-merge commits touching a path outside its documentation paths.
+- **Pages.** The References page's `implementation-format.md` entry says that, where the repository holding the documentation is read by path, the scan and the pull-request layer leave out there a commit touching only its documentation paths.
+
 ## [1.95.1] — 2026-11-16
 
 LADDER-ORDER batch 3: three references describe `docs-workflows` 1.40.0's keyed `/document`, which reads the implementation record in its Phase 0 and, where no record in its scope holds a block and its commit scan finds no commit, puts its nothing-built question. One rule changes: `next-phase-offer`'s *`/epics` precondition*, for a PRD folder whose `prd.md` asserts no `kind: prd`, says what lets `/epics` read that file where it named `/product-workflows:create-prd`, which counts the file as found — so `/conformance`'s *amend-document* offer, and every other offer citing the precondition, names it too. Released with `docs-workflows` 1.40.0, `dev-workflows` 4.69.1 and `product-workflows` 3.83.3.
