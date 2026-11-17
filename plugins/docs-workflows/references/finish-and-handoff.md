@@ -60,6 +60,10 @@ Then squash:
   `docs:` prefix), else fall back to `<KEY> <summary>`. The key carries
   traceability; the reader-visible changelog still must NOT name it.
 
+Then, before §3, `/document` Phase 8.5 Step 1 checks the commit against the documentation set a
+later run's commit scan reads it by (`key-discovery.md` §6), printing one line — that the check did
+not run, where git refused the commit — and changing nothing this reference describes.
+
 ## 3. Push (opt-in)
 
 Only where §2's commit was made. Where git refused it — a hook's rejection, a signature it
