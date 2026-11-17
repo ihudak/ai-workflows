@@ -194,18 +194,15 @@ four-resolution one.
      `git -C "$SPECS_PATH" diff --quiet "<default-ref>" -- "./<path>"` exits 1, `<path>` the file's
      path relative to `$SPECS_PATH` — of `grounding/baselines.md`, `grounding/code-grounding.md`,
      `grounding/design-grounding.md`, `brd-link.md` and `coverage-ledger.md`, `<gated-file>`, the
-     file the gate returned row F for, always among them. That handoff stages the last two only where its run changed them, and
+     file the gate returned row F for, always among them. That handoff stages `brd-link.md` and `coverage-ledger.md` only where its run changed them, and
      this stop, which cannot read what that run did, lands each where its copy differs from
      `<default-ref>`'s. Which of the stop's two forms to
      print turns on the HEAD test, made before it prints as `workflows-core:phase-handoff` §4.4's
      row F makes it for a stop that lands several files: on each of those files that
      `<default-ref>` does not hold, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>" 2>/dev/null`,
-     exit 0 where HEAD holds it. A file of those that `<default-ref>` holds counts as one HEAD holds
-     where HEAD's copy is not `<default-ref>`'s — `git -C "$SPECS_PATH" diff --quiet "<default-ref>" HEAD -- "./<path>"`
-     exits 1 — since the switch the uncommitted form opens with would put `<default-ref>`'s copy in
-     its place. Where HEAD holds none of them — untracked, or staged and never committed — the
-     uncommitted form:
-     `BRD_SPLIT_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s <gated-file> is written at <BRD-dir> but is on no branch — the /product-workflows:prd-ground run that wrote it did not hand it off. This run read none of its findings, allocated nothing and wrote nothing. Commit and merge <files> to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:brd-split <BRD-KEY>'. Do not re-run /product-workflows:prd-ground for this: the findings are written and verified, and only their landing is missing, which a re-run reaches only through the same handoff this one did not make. Ignored, every /brd-split run on this slice stops here until <gated-file> is on <default>.`
+     exit 0 where HEAD holds it. Where HEAD holds none of them — untracked, or staged and never
+     committed — the uncommitted form:
+     `BRD_SPLIT_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s <gated-file> is written at <BRD-dir> but is on no branch — the /product-workflows:prd-ground run that wrote it did not hand it off. This run read none of its findings, allocated nothing and wrote nothing. Commit and merge <files> to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:brd-split <BRD-KEY>'. Do not re-run /product-workflows:prd-ground for this: the findings are written and verified, and only their landing is missing, which a re-run reaches only through the handoff the run that wrote them did not make. Ignored, every /brd-split run on this slice stops here until <gated-file> is on <default>.`
      ```
      git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
      git -C "<SPECS_PATH>" add -f -- "<BRD-dir>/<file>" …
@@ -218,7 +215,7 @@ four-resolution one.
      local `<default>` that `origin` does not hold — the commands above do not apply, since the
      switch they open with takes the files HEAD holds out of the working tree; the committed form
      lands the branch instead, never the uncommitted form (§4.4's row F):
-     `BRD_SPLIT_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s <gated-file> at <BRD-dir> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of its findings, allocated nothing and wrote nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:prd-ground for this: the findings are committed and verified, and only their landing is missing. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:brd-split <BRD-KEY>'. Ignored, every /brd-split run on this slice stops here until <gated-file> is on <default>.`
+     `BRD_SPLIT_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s <gated-file> at <BRD-dir> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of its findings, allocated nothing and wrote nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:prd-ground for this: the findings are written and verified, and only their landing is missing. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:brd-split <BRD-KEY>'. Ignored, every /brd-split run on this slice stops here until <gated-file> is on <default>.`
      ```
      <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
      ```
