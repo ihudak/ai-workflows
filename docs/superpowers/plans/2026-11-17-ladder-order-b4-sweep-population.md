@@ -1,8 +1,8 @@
 # LADDER-ORDER batch 4 — the sweep population
 
-The population every task of this batch sweeps, and the plan's working list: the rows `S-1` to `S-117` of `docs/superpowers/plans/2026-11-17-ladder-order-b4-measurements.md` §10 (*M §10*), each under its own id, with its site, the words measured there, its verdict, the design bullet or ruling that owns it, and the task of `docs/superpowers/plans/2026-11-17-ladder-order-b4-brd-route.md` that takes it; then the rows `N-1` to `N-8`, which the measurements name outside §10's tables or the plan found, and which the plan gives a task. Every line reference is a line of the measurements' tree (`main` at `67b4c740`) and a hint only: find each site by its words.
+The population every task of this batch sweeps, and the plan's working list: the rows `S-1` to `S-117` of `docs/superpowers/plans/2026-11-17-ladder-order-b4-measurements.md` §10 (*M §10*), each under its own id, with its site, the words measured there, its verdict, the design bullet or ruling that owns it, and the task of `docs/superpowers/plans/2026-11-17-ladder-order-b4-brd-route.md` that takes it; then the rows `N-1` to `N-17`, which the measurements name outside §10's tables or the plan found, and which the plan gives a task. Every line reference is a line of the measurements' tree (`main` at `67b4c740`) and a hint only: find each site by its words.
 
-**Columns.** *Site* and *As measured* are M §10's cells, copied; for the page rows, where §10 gives no quote, the words are M §9's. *V* is the measurer's verdict: **F** false after batch 4 · **U** describes a branch the stop makes unreachable (removed, design §5.4 bullet 4) · **I** incomplete, extend · **R** re-read: true, or true by citation, if the plan keeps it · **T** stays true, checked. *Owner* is the design bullet (§5.4's nine, §5.5's Batch 4 list of twelve, counted in order) or the plan's ruling (R1 to R15) or call (P1 to P7) that decides the row; where the measurements say "found now", the owner is what the plan rules it under. *Taken by* is the plan's task and step. *Status* is kept current by each task: `open`, `done in Task <n> — <what, and the line>`, `stays true — checked (Task <n>): <why>`, or `left as it stands — <reason>`. No row is unassigned: 113 rows have a task, and 4 (S-37, S-59, S-66, S-116) are left as they stand, each with its reason.
+**Columns.** *Site* and *As measured* are M §10's cells, copied; for the page rows, where §10 gives no quote, the words are M §9's. *V* is the measurer's verdict: **F** false after batch 4 · **U** describes a branch the stop makes unreachable (removed, design §5.4 bullet 4) · **I** incomplete, extend · **R** re-read: true, or true by citation, if the plan keeps it · **T** stays true, checked. *Owner* is the design bullet (§5.4's nine, §5.5's Batch 4 list of twelve, counted in order) or the plan's ruling (R1 to R17) or call (P1 to P7) that decides the row; where the measurements say "found now", the owner is what the plan rules it under. *Taken by* is the plan's task and step. *Status* is kept current by each task: `open`, `done in Task <n> — <what, and the line>`, `stays true — checked (Task <n>): <why>`, or `left as it stands — <reason>`. No row is unassigned: 116 of the `S` rows have a task — a re-read where the row is **R** or **T** — and one (S-116) is left as it stands, with its reason; every `N` row has a task. *Revised 2026-11-17 after the plan's pre-flight scan:* R16 added rows N-9 to N-15, R17 gave S-72, S-73, S-81, S-82, S-85 and S-90 an explicit disposition, and N-16 and N-17 are sites the scan found with no row.
 
 **The abbreviations** are the measurements': CPRD, ARD, SPEC, INT, REC, CLF, PH, NPO, IMPL, DES, CONF, RDY, DOC, RN, SCAN, and `pw/docs/` for `plugins/product-workflows/docs/`.
 
@@ -24,9 +24,9 @@ The population every task of this batch sweeps, and the plan's working list: the
 | S-10 | ARD:921 | requirement-gap line | R (reason) | §5.5 Batch 4 bullet 12 (M: §5.5 last bullet) | Task 2, Step 5 | open |
 | S-11 | ARD:1042–1068 | precondition, "naming `/create-prd` without the test below…" | I | §5.5 Batch 4 bullet 12 (M: §5.5 last bullet) | Task 2, Step 5 | open |
 | S-12 | ARD:1070–1080 | "has cleared only the container refusal"; "five rows pick among the last five of the six literal arrays" | F | §5.4 bullet 4 (M: §5.4) | Task 2, Step 3 | open |
-| S-13 | ARD:1085–1088 | table rows 2–5 | U | §5.4 bullet 4 (M: §5.4) | Task 2, Step 3 | open |
+| S-13 | ARD:1085–1088 | table rows 2–5 | U | §5.4 bullet 4; R16 (each holds the retired condition, ARD:1088 and :1114, and loses it here) (M: §5.4) | Task 2, Step 3 | open |
 | S-14 | ARD:1090–1095 | dropping rather than annotating | I | §5.4 bullet 4 (M: §5.4) | Task 2, Step 3 | open |
-| S-15 | ARD:1100–1104, :1111–1114 | "Six literal arrays"; arrays 3–5, and 6's ledger states | U (keep 6 for `kind: prd`) | §5.4 bullet 4 (M: §5.4) | Task 2, Step 3 | open |
+| S-15 | ARD:1100–1104, :1111–1114 | "Six literal arrays"; arrays 3–5, and 6's ledger states | U (keep 6 for `kind: prd`) | §5.4 bullet 4; R16 (each holds the retired condition, ARD:1088 and :1114, and loses it here) (M: §5.4) | Task 2, Step 3 | open |
 | S-16 | ARD:1115–1119 | "`/specify <SLICE-KEY>` is always reachable from this state" — reason | I | §5.4 bullet 4 (M: found now) | Task 2, Step 3 | open |
 | S-17 | ARD:1120–1135 | `/epics` bullet, :1126–1131 | F | §5.4 bullet 4 (M: §5.4) | Task 2, Step 3 | open |
 | S-18 | ARD:1136–1148, :1159 | `/brd-split` clause halves | U | §5.4 bullet 4 (M: found now (§5.4's class)) | Task 2, Step 3 | open |
@@ -44,20 +44,20 @@ The population every task of this batch sweeps, and the plan's working list: the
 | S-30 | SPEC:1261 | capture-at-block list of every `SPECIFY_*` | I | §5.4, its table (the two ids) (M: found now) | Task 3, Step 4 | open |
 | S-31 | SPEC:1417–1435 | precondition, "naming `/create-prd` without the test below" | I | §5.4 bullet 4 (M: found now) | Task 3, Step 4 | open |
 | S-32 | SPEC:1437–1440 | "has cleared only the container refusal" | F | §5.4 bullet 4 (M: §5.4) | Task 3, Step 3 | open |
-| S-33 | SPEC:1453–1456 | table rows 2–5 | U | §5.4 bullet 4 (M: §5.4) | Task 3, Step 3 | open |
+| S-33 | SPEC:1453–1456 | table rows 2–5 | U | §5.4 bullet 4; R16 (SPEC:1456 holds the retired condition and loses it here) (M: §5.4) | Task 3, Step 3 | open |
 | S-34 | SPEC:1458–1462, :1474–1479 | dropping; "only a BRD-route slice has a gate set, so the table above is where a slice with no `prd.md` and no `covered-here` row stops the `/create-prd` recommendation" | I/F | §5.4 bullet 4 (M: found now) | Task 3, Step 3 | open |
 | S-35 | CPRD:270–375 | step 7, the test's source | R | §5.4 bullet 2 → R6, P6 (M: §5.4 bullet 2 (home)) | Task 1, Steps 2 and 5 | open |
 | S-36 | CPRD:405–414 | `CREATE_PRD_REGISTER_NOT_HANDED_OFF` | I | §4; §5.4 bullet 7 → R10 (M: §4) | Task 7, Step 3 | open |
-| S-37 | CPRD:909–931 | Phase 6 offers `/create-ard`, `/specify` on the slice | T (same run's ledger passed) | — | — | left as it stands — the same run's step 7 passed the slice's ledger tests before Phase 6 offers either command; Task 1 re-reads it after R6's change |
-| S-38 | INT:2524–2535 | *level test alone* | F | §5.4 bullet 3; §5.5 Batch 4 bullet 1 → R5 (M: §5.4, §5.5) | Task 6, Step 2 | open |
-| S-39 | INT:2545–2552, :2557 | prose list; eligible array | I | §5.5 Batch 4 bullet 1 → R5 (M: §5.5 (landed)) | Task 6, Step 2 | open |
-| S-40 | INT:2563 | not-eligible array | F | §5.4 bullet 3 → R5 (M: §5.4) | Task 6, Step 2 | open |
-| S-41 | INT:2573–2591 | "Five of the six lists…"; "which of the three authoring commands comes first" | R | §5.4 bullet 3 (M: —) | Task 6, Step 2 (re-read) | open |
-| S-42 | INT:2624–2629 | context hygiene for the authoring ladder | R | §5.4 bullet 3 (M: found now) | Task 6, Step 2 (re-read) | open |
-| S-43 | REC:3011–3030 | *always offered* | F | §5.4 bullet 3; §5.5 Batch 4 bullet 1 (M: §5.4, §5.5) | Task 6, Step 3 | open |
-| S-44 | REC:3071–3086 | advance list and array — arity where all three drop | I | §5.4 bullet 3 → R4 (M: found now (arity)) | Task 6, Step 3 | open |
-| S-45 | REC:3190–3199 | "a refusal this phase can make and their own Phase 0s cannot — unlike the level refusal above, which each of them now makes for itself" | I | §5.4 bullet 3 (M: found now) | Task 6, Step 3 | open |
-| S-46 | REC:3201–3214 | "What the clause does not cover … `/create-ard`'s and `/specify`'s on `prd.md`, a file this run does not write either" | R | §5.5 Batch 4 bullet 1 (M: —) | Task 6, Step 3 (re-read) | open |
+| S-37 | CPRD:909–931 | Phase 6 offers `/create-ard`, `/specify` on the slice | T (same run's ledger passed) | §5.4 bullet 3 (L8) (M: —) | Task 1, Step 5 (re-read: the same run's step 7 passed the tests before Phase 6 offers either command) | open |
+| S-38 | INT:2524–2535 | *level test alone* | F | §5.4 bullet 3; §5.5 Batch 4 bullet 1 → R5 (M: §5.4, §5.5) | Task 6, Step 3 | open |
+| S-39 | INT:2545–2552, :2557 | prose list; eligible array | I | §5.5 Batch 4 bullet 1 → R5 (the landed condition, cited from NPO's `brd` part) (M: §5.5 (landed)) | Task 6, Step 3 | open |
+| S-40 | INT:2563 | not-eligible array | F | §5.4 bullet 3 → R5 (M: §5.4) | Task 6, Step 3 | open |
+| S-41 | INT:2573–2591 | "Five of the six lists…"; "which of the three authoring commands comes first" | R | §5.4 bullet 3 (M: —) | Task 6, Step 3 (re-read) | open |
+| S-42 | INT:2624–2629 | context hygiene for the authoring ladder | R | §5.4 bullet 3 (M: found now) | Task 6, Step 3 (re-read) | open |
+| S-43 | REC:3011–3030 | *always offered* | F | §5.4 bullet 3; §5.5 Batch 4 bullet 1 (M: §5.4, §5.5) | Task 6, Step 4 | open |
+| S-44 | REC:3071–3086 | advance list and array — arity where all three drop | I | §5.4 bullet 3 → R4 (M: found now (arity)) | Task 6, Step 4 | open |
+| S-45 | REC:3190–3199 | "a refusal this phase can make and their own Phase 0s cannot — unlike the level refusal above, which each of them now makes for itself" | I | §5.4 bullet 3 (M: found now) | Task 6, Step 4 | open |
+| S-46 | REC:3201–3214 | "What the clause does not cover … `/create-ard`'s and `/specify`'s on `prd.md`, a file this run does not write either" | R | §5.5 Batch 4 bullet 1 (M: —) | Task 6, Step 4 (re-read) | open |
 | S-47 | REC:377–384 | `BRD_RECONCILE_PACKAGE_NOT_HANDED_OFF` | I | §4; §5.4 bullet 7 → R11, P1 (M: §4) | Task 7, Step 4 | open |
 | S-48 | `brd-package.md:302`, `:318` | the two stops | I | §4; §5.4 bullet 7 → R11, P1 (M: §4) | Task 7, Step 4 | open |
 | S-49 | `brd-package.md:367`, `:466` | `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN` | I | §4 → R11, P1 (M: found now) | Task 7, Step 4 | open |
@@ -67,15 +67,15 @@ The population every task of this batch sweeps, and the plan's working list: the
 | S-53 | `update-prd.md:204`, `:210` | "Re-run architecture — `/product-workflows:create-ard <KEY>`" | R/decide | L8 → R1, R3, P2 (M: found now) | Task 6, Step 5 | open |
 | S-54 | `prd-proposal.md:816`, `:820` | "Raise the tier first — `/product-workflows:create-ard <KEY>`" / `/specify <KEY>` | R/decide | L8 → R1, R3, P2 (M: found now) | Task 6, Step 5 | open |
 | S-55 | `idea.md:98` | Epic-folder remedy "specify it with '/product-workflows:specify <KEY>'" | R/decide | L8 → R1, R3, P2 (M: found now) | Task 6, Step 5 | open |
-| S-56 | `update-spec.md:52`; `:57`; `:164–166` | `UPDATE_SPEC_NO_BASE` "Author one with '/product-workflows:specify <ADDRESS>'"; the step-6 carve-out (L5); Phase 8 | I | §5.1 (the carve-out), L5 → R3, P2 (M: found now; §5.1 (carve-out)) | Task 3, Step 5 | open |
+| S-56 | `update-spec.md:52`; `:57`; `:164–166` | `UPDATE_SPEC_NO_BASE` "Author one with '/product-workflows:specify <ADDRESS>'"; the step-6 carve-out (L5); Phase 8 | I | §5.1 (the carve-out), L5 → R3; R1 (c) by P2, the general kept-offer sentence (M: found now; §5.1 (carve-out)) | Task 3, Step 5 | open |
 
 ### `product-workflows` reference
 
 | Row | Site | As measured (M §10; pages, M §9) | V | Owner | Taken by | Status |
 |---|---|---|---|---|---|---|
-| S-57 | CLF:332–381 | "## 5. PRD eligibility"; "may go on to author its own `prd.md`"; "must refuse to author a PRD here" | I (widen or cite) | §5.4 bullet 2 → R7, R14, R3 (M: §5.4 bullet 2) | Task 1, Step 3; Task 4, Step 5 | open |
+| S-57 | CLF:332–381 | "## 5. PRD eligibility"; "may go on to author its own `prd.md`"; "must refuse to author a PRD here" | I (widen or cite) | §5.4 bullet 2 → R7, R14, R3 (M: §5.4 bullet 2) | Task 1, Step 3 (the noun; `/create-prd` as its applier); Task 2, Step 2a and Task 3, Step 2a (each its own command and ids; Task 3 also R3's sentence); Task 4, Step 5 | open |
 | S-58 | CLF:552–611 | "### 5.2 Offering `/create-prd` — three refusals, not one"; the empty-set vs missing-ledger wording | I | §5.4 bullet 2 → R6 (M: §5.4 bullet 2) | Task 1, Step 4 | open |
-| S-59 | CLF:508–524 | §5.1's consumer list | T (container test) | — | — | left as it stands — §5.1's list is the container test's consumers, a different test; Task 1 checks the new consumer sentence is not written into it |
+| S-59 | CLF:508–524 | §5.1's consumer list | T (container test) | §5.4 bullet 2 (M: —) | Task 1, Step 5 (re-read: §5.1's list is the container test's consumers, a different test, and takes no part of the consumer sentence) | open |
 
 ### `workflows-core`
 
@@ -85,16 +85,16 @@ The population every task of this batch sweeps, and the plan's working list: the
 | S-61 | PH:358 | "a slice holding no `prd.md` still falls back for both"; "a slice holding none still goes on" | I | §11.1 (M: found now) | Task 4, Step 3 | open |
 | S-62 | PH:617 | `prd.md` rung on a slice, "do not yet apply" | F | §5.4 bullet 6; §5.5 Batch 4 bullet 9 (F-12); L12 → R2, P4 (M: §5.5 F-12, L12) | Task 4, Steps 1 and 2 | open |
 | S-63 | PH:615 | row F's two forms | T (cited) | §4 → P1 (M: §4) | Task 7, Step 2 | open |
-| S-64 | NPO:219–227 | interview advance offers | F | §5.5 Batch 4 bullet 2 (L-B4-8) (M: §5.5 L-B4-8) | Task 6, Step 4 | open |
-| S-65 | NPO:256–269 | "the other two carry none of their own…"; "the level test and `/create-prd`'s eligibility test are each enforced by the offered command's own Phase 0" | F | §5.5 Batch 4 bullet 2 (L-B4-8) (M: §5.5 L-B4-8) | Task 6, Step 4 | open |
-| S-66 | NPO:244–249 | "The BRD route on `/create-prd`, `/create-ard` and `/specify` all ship" | T | — | — | left as it stands — true: the route ships on all three commands; Task 6 re-reads it beside the part it rewrites |
+| S-64 | NPO:219–227 | interview advance offers | F | §5.5 Batch 4 bullet 2 (L-B4-8); the landed condition is stated here, once (M: §5.5 L-B4-8) | Task 6, Step 2 | open |
+| S-65 | NPO:256–269 | "the other two carry none of their own…"; "the level test and `/create-prd`'s eligibility test are each enforced by the offered command's own Phase 0" | F | §5.5 Batch 4 bullet 2 (L-B4-8); the landed condition is stated here, once (M: §5.5 L-B4-8) | Task 6, Step 2 | open |
+| S-66 | NPO:244–249 | "The BRD route on `/create-prd`, `/create-ard` and `/specify` all ship" | T | §5.5 Batch 4 bullet 2 (M: —) | Task 6, Step 2 (re-read: true — the route ships on all three commands) | open |
 | S-67 | NPO:326–335 | PE: `/epics <PRD>` → `/specify <EPIC>`, `/create-ard <EPIC>` | R/decide | L8 → R1, P2 (M: found now) | Task 6, Step 5 | open |
 | S-68 | NPO:283–286 | proposals: "`/product-workflows:create-ard <KEY>` at tier 2, `/product-workflows:specify <KEY>` at tier 3" | R/decide | L8 → R1, P2 (M: found now) | Task 6, Step 5 | open |
 | S-69 | NPO:354–367 | `/epics` precondition: "which the BRD route reaches legitimately since `/create-prd` is not a prerequisite for `/create-ard` there"; ledger resolution "applied by each offering command" | I | §5.4 bullet 6 → R2 (M: §5.4 bullet 6 (mechanism)) | Task 4, Step 4 | open |
 | S-70 | NPO:387 | the `/implement` precondition | R (by §4.4) | §5.4 bullet 6 → R2 (M: —) | Task 4, Step 4 (re-read) | open |
 | S-71 | NPO:400 | "save `/product-workflows:create-ard` on a BRD-route slice holding no `prd.md`, which it takes as it stands" | F | L8 → R1 (a) (M: found now) | Task 4, Step 4 | open |
-| S-72 | NPO:401 | threats → PA `/product-workflows:create-ard <KEY>` | R | L8 → R2 (M: found now) | Task 4, Step 4 (re-read) | open |
-| S-73 | `components.md:120` | "`ard_contract` → `/product-workflows:create-ard <PRD>`, `prd_spec` → `/product-workflows:specify <PRD>`" | R | L8 → R2 (M: found now) | Task 4, Step 4 (re-read) | open |
+| S-72 | NPO:401 | threats → PA `/product-workflows:create-ard <KEY>` | R | L8 → R17: R1 (c) — the command printing the line reads no §4.4 rule for that folder; the general kept-offer sentence, once (M: found now) | Task 4, Step 4 | open |
+| S-73 | `components.md:120` | "`ard_contract` → `/product-workflows:create-ard <PRD>`, `prd_spec` → `/product-workflows:specify <PRD>`" | R | L8 → R17: R1 (b) by way of §4.4 — §6's remedies read the rule for the PRD folder; confirmed in the step, else R1 (c) (M: found now) | Task 4, Step 4 | open |
 | S-74 | `workflows-core/docs/family-map.md:98–99`, `:101–102` | handover edge labels | I | §5.5 Batch 4 bullet 3 → R13 (M: found now) | Task 9, Step 2 | open |
 
 ### `dev-workflows`, `docs-workflows`, `security-workflows`
@@ -107,16 +107,16 @@ The population every task of this batch sweeps, and the plan's working list: the
 | S-78 | DES:67–68 | `DESIGN_BRD_NOT_SLICED` "Design within a slice instead" | R/decide | L8 → P5 (M: found now (same shape as P-140)) | Task 5, Step 4 | open |
 | S-79 | DES:115 | "no gap — … or nowhere on a BRD-route slice" | F | §5.5 Batch 4 bullet 9 (F-12) (M: §5.5 F-12) | Task 5, Step 2 | open |
 | S-80 | DES:128 | the same "whatever its ledger tests resolve" | R | §5.4 bullet 6 → R2 (M: found now) | Task 5, Step 3 | open |
-| S-81 | DES:282–283 | "Add the component first — /product-workflows:create-ard <PRD>" | R | §5.5 Batch 4 bullet 9 → R2 (M: found now) | Task 5, Step 7 (re-read) | open |
-| S-82 | DES:259, :265, :540, :572, :713, :826 | threat lines naming `/create-ard <KEY>` for the architect | R | §5.5 Batch 4 bullet 9 → R2 (M: found now) | Task 5, Step 7 (re-read) | open |
+| S-81 | DES:282–283 | "Add the component first — /product-workflows:create-ard <PRD>" | R | L8 → R17: R1 (a) for DES:283's "which `/create-ard` takes as it stands", the third copy; R1 (b) by way of §4.4 for the option, which reads the rule at that point (M: found now) | Task 5, Step 5 | open |
+| S-82 | DES:259, :265, :540, :572, :713, :826 | threat lines naming `/create-ard <KEY>` for the architect | R | L8 → R17: R1 (c) — these lines read no §4.4 rule; the general kept-offer sentence, once, where the command first words such a line (M: found now) | Task 5, Step 5a | open |
 | S-83 | CONF:74, :141 | by §4.4 | R | §5.5 Batch 4 bullet 9 → R2 (M: §5.5 F-12) | Task 5, Step 7 (re-read) | open |
 | S-84 | CONF:702 | "save `/product-workflows:create-ard` on a BRD-route slice holding no `prd.md`, which it takes as it stands" | F | L8 → R1 (a) (M: found now) | Task 5, Step 5 | open |
-| S-85 | CONF:707 | `### Threats` PA → `/create-ard <KEY>` | R | §5.5 Batch 4 bullet 9 → R2 (M: found now) | Task 5, Step 7 (re-read) | open |
+| S-85 | CONF:707 | `### Threats` PA → `/create-ard <KEY>` | R | L8 → R17: R1 (b) by way of §4.4 where CONF:74's paragraph covers the line, else R1 (c); the step records which (M: found now) | Task 5, Step 5a | open |
 | S-86 | RDY:701 | by §4.4 | R | §5.5 Batch 4 bullet 9 → R2 (M: §5.5 F-12) | Task 5, Step 7 (re-read) | open |
 | S-87 | `dev-workflows/docs/commands/implement.md:132`, `ready.md:66`, `design.md:54` | "(a BRD-route slice needs none)" | F | §5.5 Batch 4 bullet 9 (F-12) (M: §5.5 F-12) | Task 5, Step 2 | open |
 | S-88 | DOC:270–276 | step 3a *Stop* line | R | §5.5 Batch 4 bullet 11 (M: §5.5 b3 bullet) | Task 5, Step 7 (re-read) | open |
 | S-89 | RN:815, :830–833 | *The two offers wait for a landed PRD* | I | §5.5 Batch 4 bullet 10 → R1 (b) (M: §5.5 b3 bullet) | Task 5, Step 6 | open |
-| S-90 | SCAN:448, :554 | `pa_next_step` → `/product-workflows:create-ard`; PRD test | R | §5.5 Batch 4 bullet 9 → R2 (M: found now) | Task 5, Step 7 (re-read) | open |
+| S-90 | SCAN:448, :554 | `pa_next_step` → `/product-workflows:create-ard`; PRD test | R | L8 → R17: R1 (b) by way of §4.4 — SCAN:554 reads the rule for the PRD's `prd.md` already (M: found now) | Task 5, Step 5a (SCAN:554); Step 7 (SCAN:448, re-read) | open |
 | S-91 | `security-workflows/docs/commands/scan.md:168` | "(a BRD-route slice needs none)" | F | §5.5 Batch 4 bullet 9 (F-12) (M: §5.5 F-12) | Task 5, Step 2 | open |
 
 ### `product-workflows` pages
@@ -169,6 +169,15 @@ Sites the measurements name outside §10's tables (the section is given), or tha
 | N-6 | CPRD:333–334 | the missing-ledger row's condition "while `brd-link.md` claims rows", and the empty-gate-set row, which a `claims:`-empty slice with no ledger reaches today (M §2 (c), M §14.6) | F | §5.4 bullet 2 → R6 | Task 1, Step 5 | open |
 | N-7 | `.claude/rules/plugin-updates-coupling.md:10`, `:16–18`; `.claude/rules/plugin-updates.md:24`; `CLAUDE.md:116` | the coupling file's three oldest bullets and every sentence that names where the history files divide: "The bullets up to `workflows-core` 1.91.1 continue in …", "read all five" (M §12) | I | §10 → R12, P3 | Task 10 | open |
 | N-8 | page `update-spec` | where the page describes step 6's gates and the stops `/update-spec` does not take | I | §5.1 (the carve-out), L5 → R3 | Task 3, Step 6 | open |
+| N-9 | `epics.md:255` | step 1b's table, the missing-ledger row: "A `brd-link.md`, and no readable `coverage-ledger.md` beside it — absent, or present and unreadable — while `brd-link.md` claims rows"; its reason, "This is not an empty gate set — `claims:` names rows" | F | R6 → R16 | Task 1, Step 5a | open |
+| N-10 | `update-prd.md:74` | step 4's table, the same row and reason | F | R6 → R16 | Task 1, Step 5a | open |
+| N-11 | `prd-proposal.md:244` | its table, the same row and reason | F | R6 → R16 | Task 1, Step 5a | open |
+| N-12 | REC:3005 | "**Where `coverage-ledger.md` is absent, or present and unreadable, while that `brd-link.md` claims rows**" — the words Task 6 extends to three options | F | R6 → R16 | Task 1, Step 5a | open |
+| N-13 | page `brd-reconcile`, `:744` | "Where `coverage-ledger.md` is absent, or present and unreadable, while `brd-link.md` claims rows" | F | R6 → R16 | Task 1, Step 5a | open |
+| N-14 | DOC:159 | "`coverage-ledger.md` missing, or present and unreadable, while `claims:` names rows: name no command" | F | R6 → R16 | Task 5, Step 6a | open |
+| N-15 | RN:155 | the same row, in `RELEASE_NOTES_NO_PRD`'s slice remedies | F | R6 → R16 | Task 5, Step 6a | open |
+| N-16 | `pw/docs/reference/environment.md:13` | "a BRD slice holding none goes on", said of a specs tree that is no git repository — incomplete once the slice's ledger tests are applied there too (R9); the third hit of `holding none goes on` | I | §7 (the docs pages) → R9 | Task 9, Step 1 | open |
+| N-17 | `plugins/dev-workflows/docs/commands/implement.md:17`, `design.md:15`, `:59`, `conformance.md:20` | the pages' descriptions of the three container refusals P5 changes | I | §5.5 Batch 4 bullet 8 → P5 | Task 5, Step 4 | open |
 
 ### Outside the sweep's scope, taken by Task 11
 
@@ -192,7 +201,7 @@ M §10's, re-run when this file was written, wrap-insensitively over the sweep's
 | `nowhere on a BRD-route slice` | 2 | DES; IMPL |
 | `do not yet apply` | 1 | PH |
 | `as an authoring input` | 8 | REC; ARD; SPEC; `pw/docs/brd-workflow.md`; page `brd-reconcile`; `pw/docs/roles-and-phases.md`; `pw/docs/workflow.md`; NPO |
-| `holding none goes on` | 3 | `.claude/rules/product-workflows.md` ×2; `plugins/docs-workflows/docs/reference/environment.md` |
+| `holding none goes on` | 3 | `.claude/rules/product-workflows.md` ×2; `pw/docs/reference/environment.md` (N-16) |
 | `still goes on` | 4 | REC; ARD; SPEC; PH |
 | `six literal arrays` | 2 | ARD ×2 |
 | `of the six arrays` | 2 | ARD; `prd-ground.md` (another subject) |
@@ -200,8 +209,18 @@ M §10's, re-run when this file was written, wrap-insensitively over the sweep's
 | `ledger tests resolve` | 2 | DES; IMPL |
 | `which it takes as it stands` | 2 | CONF; NPO |
 | ``reads neither `claims:` nor the ledger`` | 1 | page `brd-reconcile` |
+| ``while (that )?(`brd-link.md`\|that file) claims rows`` (a pattern; R16) | 9 | CPRD:333; `epics.md:255`; `update-prd.md:74`; `prd-proposal.md:244`; REC:3005; page `brd-reconcile:744`; ARD:1088, :1114; SPEC:1456 |
+| ``while `claims:` names rows`` (R16) | 2 | DOC:159; RN:155 |
+| `takes as it stands` | 5 | CONF:702; DES:283; NPO:400 (this subject, R1 (a)); `render-verification.md` and `code-scanner.md` (other subjects) |
+| `cleared only` | 4 | ARD; SPEC; pages `create-ard`, `specify` |
+| `only one of its three refusals` | 1 | SPEC |
+| `Two places do open` | 1 | ARD |
+| `Three places do open` | 2 | SPEC; page `specify` |
+| `row still unallocated` | 7 | `pw/docs/brd-workflow.md` ×2 and `pw/docs/workflow.md` ×2 (the edges, S-96, S-101); `.claude/rules/brd-route.md`; `prd-ground.md` ×2 (other subjects) |
+| `keep or remove` (case as written; 13 ignoring case) | 11 | `pw/docs/brd-workflow.md` ×3; `pw/docs/workflow.md` ×2; pages `create-ard`, `specify` (this subject); DES; page `design`; `idea.md`; `prd-proposal.md` (other subjects) |
+| `has cleared` | 10 | ARD; SPEC ×2; pages `create-ard`, `specify` (this subject); `update-prd.md` and four `dev-workflows` files (other subjects) |
 | `the slice's ledger tests` | 0 | — (the noun this batch introduces, R14) |
 
 ## The walks
 
-Each command task writes its table here before it edits — `## Task <n> walks`, columns `State | Expected, from the design and the rulings | What the text does (file:line) | Match` — with the states the plan's *The walk states* lists, and fills the last two columns from the text as written. Task 2 and Task 3 also record here, before removing anything, the confirmation that each branch they remove is unreachable (design §5.4 bullet 4); Task 1 its line-by-line itemisation of `/create-prd`'s step 7 against CLF §5 and §5.2.
+Each command task, Task 8 among them, writes its table here before it edits — `## Task <n> walks`, columns `State | Expected, from the design and the rulings | What the text does (file:line) | Match` — with the states the plan's *The walk states* lists, and fills the last two columns from the text as written. Task 2 and Task 3 also record here, before removing anything, the confirmation that each branch they remove is unreachable (design §5.4 bullet 4); Task 1 its line-by-line itemisation of `/create-prd`'s step 7 against CLF §5 and §5.2.
