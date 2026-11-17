@@ -67,8 +67,8 @@ flowchart TD
     createard -.->|"a prd.md — price against the ARD"| prdproposal
     specify -.->|"a prd.md — price against the specification"| prdproposal
     reconcile -.->|"a [CD#n] frozen — price the slice once its prd.md is on the default branch"| prdproposal
-    createard -.->|"no prd.md — author the PRD"| createprd
-    specify -.->|"no prd.md — author the PRD"| createprd
+    createard -.->|"BRD slice, no prd.md — author the PRD"| createprd
+    specify -.->|"BRD slice, no prd.md — author the PRD"| createprd
     createard -.->|"stopped on the slice's ledger tests — a claimed row still unallocated"| splitslice
     specify -.->|"stopped on the slice's ledger tests — a claimed row still unallocated"| splitslice
     createard -.->|"stopped on the slice's ledger tests — a slice claiming no row: keep or remove it"| splitroot
@@ -92,11 +92,11 @@ another: `/create-prd` hands on to `/create-ard`, or to a PRD-level `/specify` b
 every `/create-ard` run on a slice recommends `/specify`. On a slice with no `prd.md`, `/create-ard`
 and `/specify` offer `/create-prd`, since a slice that reaches their offer has passed the slice's
 ledger tests. A slice that fails those tests stops both in their own Phase 0, whatever it holds, and
-the stops that name a run hand back into the route through `/brd-split` — on the slice, to walk a
+the stops that name `/brd-split` hand back into the route through it — on the slice, to walk a
 row still `unallocated`, or on its parent, to keep or remove a slice that claims no row: the dashed
 edges from both into the route are those stops' remedies. The stops' other outcomes are not drawn:
 a slice whose claimed rows are all settled with none `covered-here` is named no command, as is one
-claiming no row whose parent's ledger cannot be read, and one whose coverage ledger is missing or
+claiming no row whose parent's ledger cannot be read, and one claiming rows whose coverage ledger is missing or
 unreadable is sent to `/prd-ground`, which stops there by design and names the repair. Where a `prd.md` exists, both name `/prd-proposal`, priced
 against what they just wrote.
 
@@ -150,7 +150,9 @@ bears on yet, or a `--rebaseline` pass — and `/brd-reconcile` offers `/brd-int
 `/prd-ground` offers `/brd-interview` on a prerequisite slice whose frozen decisions this slice
 waits on, and `/brd-reconcile` names `/prd-proposal` wherever its run froze a customer decision —
 as pricing the slice once its `prd.md` is on the default branch, after `/create-prd` where the
-slice holds none yet, which is the ordinary state there.
+slice holds none yet, which is the ordinary state there — save on a slice holding no `prd.md` that
+fails its ledger tests or whose ledger cannot be read, where it names no proposal, since
+`/create-prd` would stop there.
 
 **There is a third occasion, and it is a re-run on the parent: the sibling re-cut.** The route carves a
 slice before it is ground, so *"this slice is larger than one deliverable"* is a normal discovery,
@@ -299,7 +301,7 @@ That phase then decides whether the slice can advance: a reopened decision, a `[
 customer, a finding the review left to re-derive, or a dependent it could only record each drops the three advance options:
 a `reopened` record may not be consumed downstream and all three consume the register, and a
 dependent recorded-not-written still reads a position the customer has since settled. On an advancing slice run, each of the three carries two further conditions.
-**The first is the slice's ledger tests**: the reconciled ledger leaves no row the slice claims
+**The first of them is the slice's ledger tests**: the reconciled ledger leaves no row the slice claims
 `unallocated` and at least one `covered-here` — the two tests each of the three applies in its own
 Phase 0, whatever the slice holds, stopping on a slice that fails them (`CREATE_PRD_BRD_UNALLOCATED`
 and `CREATE_PRD_BRD_NOT_ELIGIBLE`, `CREATE_ARD_BRD_UNALLOCATED` and `CREATE_ARD_BRD_NOT_ELIGIBLE`,
@@ -309,7 +311,8 @@ row still `unallocated`. **The second is a landed `prd.md`**:
 where the slice holds one that is not on the specs repo's default branch, `/create-ard` and
 `/specify` stop on it at the PRD gate both run, and `/create-prd` would open on its existing-PRD
 question, whose recommended answer stops for [`/update-prd`](commands/update-prd.md), so the offering run prints that file's
-landing in place of all three. A slice that passes the tests and holds no `prd.md` is the ordinary state for
+landing in place of all three — on a specs tree that is no git repository there is no branch to
+land it on, and the condition holds. A slice that passes the tests and holds no `prd.md` is the ordinary state for
 `/create-ard` and `/specify`: the PRD gate both run reports it rather than stopping on it. Where
 either condition does not hold, all three are dropped and the run says why, naming what the slice
 needs first — `/brd-split` on the slice for a row still `unallocated`, `/brd-split` on its parent

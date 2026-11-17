@@ -148,7 +148,7 @@ The final report ends with a *Next step* recommendation; nothing is run for you.
 ## See also
 
 - [Workflow overview](../workflow.md) — where this command sits among the plugin's others.
-- [Roles and phases](../roles-and-phases.md) — what the `pe` role owns, including the gates it shares with [`/create-ard`](create-ard.md): on the PRD, which stops both where one was written and never landed, and, on the idea route, where none was written — a BRD slice needs none; and at Epic altitude on the Epic, where an absent `epic.md` falls back and an unmerged one stops.
+- [Roles and phases](../roles-and-phases.md) — what the `pe` role owns, including the gates it shares with [`/create-ard`](create-ard.md): on the PRD, which stops both where one was written and never landed, and, on the idea route, where none was written — a BRD slice needs none, where it passes the slice's ledger tests, which both apply to a slice first, stopping it where they fail; and at Epic altitude on the Epic, where an absent `epic.md` falls back and an unmerged one stops.
 - [`/epics`](epics.md) — the upstream command that splits a PRD into the child Epics `/specify` is typically run once per; a PRD with 0 Epics is offered a link back here.
 - [`/create-ard`](create-ard.md) — the optional upstream command whose `[AD#N]` invariants `/specify` inherits when present.
 - `/dev-workflows:design` — the downstream command that refuses to start until this command's `specification.md` is merged to the specs repo's default branch — save, on a multi-component PRD whose folder already holds Epics, where `/dev-workflows:design <PRD>` designs an Epic from that Epic's own merged specification, which predates this PRD-level one; the next step names it there without a merge wait, and says so.
