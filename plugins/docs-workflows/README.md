@@ -31,7 +31,7 @@ Eleven agents and twenty-three reference pages carry the docs-repo discovery, di
 |------|--------------|
 | [Documentation index](docs/README.md) | The full "I want to…" lookup table, plus the command, agent, and reference inventories. |
 | [Getting started](docs/getting-started.md) | Install, environment variables, your first `/docs-profile` and `/document` runs. |
-| [Workflow overview](docs/workflow.md) | The seven commands as one diagram, and the two modes of `/document`. |
+| [Workflow overview](docs/workflow.md) | The eight commands as one diagram, and the two modes of `/document`. |
 | [The documentation route](docs/docs-workflow.md) | The ordered procedure from an empty repository to a populated portal, with every manual step written out. |
 | [Roles and phases](docs/roles-and-phases.md) | Which role runs each command, what it hands over, and what each cost phase means. |
 | [Coverage model](docs/reference/docs-coverage-model.md) | What counts as a documentation surface, and how an audit finds each kind. |

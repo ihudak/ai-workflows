@@ -34,7 +34,7 @@ All three run flags apply. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips the 
 - **Page paths of a plain form.** A page path is written into the backlog, into git and into a command, so it is held to letters, digits, `.`, `_`, `-` and `/`, ending `.md`. **A limit:** a content root or a page name holding a space or a non-ASCII character is refused — a proposed path is passed over, and a path you type is refused and asked for again.
 - **The code repositories a unit's evidence names**, as the backlog's sources record them. Each is found by its recorded path, else by its origin under `$REPOS_PATH`, else by asking you. One outside `$REPOS_PATH` is read only once you have seen its path in the consent and agreed. Each is scanned at its default branch: a clone is switched to that branch and pulled, save the repository your session runs in where it stands on another branch, and the documentation repository itself where it is also a source, each read at its default branch by ref, its checkout left where it is.
 - **`$SPECS_PATH`**, for a unit whose evidence is an architecture decision record, and for the run's own bookkeeping. The only specs document the run reads is an `ard.md` under the specifications tree, at the specs repository's default branch — never a working-tree copy, and never a scan of that repository.
-- **The tools the profile's build and lint commands run.** A missing build tool is reported before anything is written, since no unit can be committed without a passing build.
+- **The tools the profile's build and lint commands run.** A missing build tool is reported before anything is written, since no unit whose page that build compiles can be committed without a passing build.
 
 ## Phases
 
@@ -50,9 +50,12 @@ flowchart TD
     p1 --> p2["Phase 2 — Place each page, then one consent over everything the run will read, write and execute"]
     p2 -.->|"Cancel — nothing written"| p11
     p2 --> p3["Phase 3 — Branch: continue on the branch or cut one; per unit, re-check the unit on that branch"]
+    p3 -.->|"Cancel at the branch question, or the unit or the profile changed — nothing written for the unit"| p11
     p3 --> p4["Phase 4 — Ground: read the decision records at the specs default branch; one code scan per repository"]
+    p4 -.->|"Cancel at a scan question — nothing written for the unit"| p11
     p4 --> p5["Phase 5 — Write: doc-writer @Opus, the tree read before and after"]
     p5 --> p6["Phase 6 — Style: docs-style-checker, doc-fixer, one re-run"]
+    p6 -.->|"Cancel"| undo
     p6 --> p7["Phase 7 — Navigation and build: regenerate the navigation where it is generated, then every build"]
     p7 --> p8["Phase 8 — Review: doc-reviewer @Opus, triage, one fix cycle and one re-review"]
     p8 --> p9["Phase 9 — Commit the unit: the page's unit line, the backlog move, one commit"]
@@ -62,7 +65,8 @@ flowchart TD
     p9 -.-> undo
     p9 -->|"next unit of a batch"| p3
     p9 --> p10["Phase 10 — Finish: offer one push"]
-    undo --> p10
+    undo -->|"a unit that did not commit — the batch ends"| p10
+    undo -.->|"after a Cancel or a stop — nothing pushed"| p11
     p10 --> p11["Phase 11 — Report: units, gates, git state and the pull-request draft"]
     p11 --> tail["Phases 12–14 — Maintenance and feedback, follow-ups, session cost, commit-artifacts"]
 ```
@@ -85,7 +89,7 @@ flowchart TD
 
 ## Gates
 
-**The consent.** Nothing is written, and no repository is scanned, until you have seen, in one question: each unit and its page path; each file that gains the page's entry; each code repository and decision record the run will read, a repository outside `$REPOS_PATH` marked as admitted only by this answer; the branch; each branch whose backlog could not be read; each build config; and every build and lint command the run will execute, verbatim. A batch asks once for all of its units.
+**The consent.** Nothing is written, and no repository is scanned, until you have seen, in one question: each unit and its page path; each file that gains the page's entry; each code repository and decision record the run will read, a repository outside `$REPOS_PATH` marked as admitted only by this answer; the branch; each branch whose backlog could not be read; each build config; every build and lint command the run will execute, verbatim; and that the style check also runs the repository's own linter, such as Vale or markdownlint, on the repository's configuration. A batch asks once for all of its units.
 
 **The style check, the build and the review**, per unit. The style check runs the repository's own linter and the semantic prose pass over the page, and one fixer pass is made over its violations. The build runs every build the consent showed, and it decides whether the unit can move: only a passing build — or a profile that records no build command for the page's space — lets the unit commit. A build that fails on its content gets one fixer pass and one re-run; a build that fails because its tool will not run asks you, and proceeding without it ends the unit uncommitted. The review is Opus, and its findings are triaged before any fix: each is verified where it points, kept, marked unverified or dismissed with a reason, and only survivors are fixed. One fix cycle and one re-review at most; a BLOCKER still standing is asked about one at a time — fix notes, defer, override with a rationale, or cancel.
 

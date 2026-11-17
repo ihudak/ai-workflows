@@ -364,7 +364,7 @@ outcome the command cannot deliver.
 
 Used when a diff-summarizer or code-scanner batch returns `REPO_MISSING` at
 Phase 5 after Phase 4 already checked, in `/idea` Phase 2.6, which has no
-earlier check, and in `/implement` Phase 1.7. `REPO_MISSING` means `repo_path`
+earlier check, in `/implement` Phase 1.7, and in `/docs-workflows:docs-write` twice: at its Phase 1, before any scan, where a source repository resolves by neither its recorded path nor its origin, and at its Phase 4 on `REPO_MISSING`. `REPO_MISSING` means `repo_path`
 is not a directory, **or** the clone's `origin` slug does not match
 `repo_url_slug`, or it has no `origin` to compare — the agent's note says which,
 and in the last two the directory exists; *Specify a different absolute path for this repo* is the
