@@ -49,7 +49,7 @@ How the two documentation commands find the code a feature changed, beyond the i
 
 `docs-iteration/` (1) — what a backlog run — a command that takes one documentation backlog unit at a time and moves its status — changes in the agents it shares with `/document`. Enumerated rather than merely counted, for the same reason as `docs-workflow/` and `docs-audit/` above.
 
-- `docs-iteration/unit-brief.md` — the unit brief: the one list of the sections of `doc-writer` and `doc-reviewer` that a backlog run's brief replaces, the brief's fields and how the run composes each, and the text that replaces each listed section — the writer's inputs, entry checks, frontmatter, snippet, image-slot and marker steps, and the reviewer's inputs, its cross-check against the unit's evidence, the dimensions it grades against that evidence and the unit's page type, and its next steps. A dispatch whose brief does not say it is a unit brief reads both agents as they stand, so `/document` reads them unchanged.
+- `docs-iteration/unit-brief.md` — the unit brief: the one list of the sections of `doc-writer` and `doc-reviewer` that a backlog run's brief replaces, the brief's fields and how the run composes each, and the text that replaces each listed section. A dispatch whose brief does not say it is a unit brief reads both agents as they stand, so `/document` reads them unchanged.
 
 ## Bundled reference sets
 

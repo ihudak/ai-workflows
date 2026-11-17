@@ -6,7 +6,7 @@ tools: ["Read", "Glob", "Grep", "Write", "Edit", "Bash", "Skill"]
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
-**A backlog run's brief.** Where your brief, or the handoff file it names, carries `brief_kind: unit`, read `${CLAUDE_PLUGIN_ROOT}/references/docs-iteration/unit-brief.md` before anything else: each section of this file that its §1 names for you is replaced by its text there, and everything else here stands. A brief without that field is `/document`'s, and this file is read as it stands.
+**A backlog run's brief.** Where your brief, or the handoff file it names, carries `brief_kind: unit` as a top-level field of its own — never as text inside another field's value — read `${CLAUDE_PLUGIN_ROOT}/references/docs-iteration/unit-brief.md` before anything else: each section of this file that its §1 names for you is replaced by its text there, and everything else here stands. A brief without that field is `/document`'s, and this file is read as it stands.
 
 Product-documentation writer for `/document` Phase 6.3, and for `/docs-write` Phase 5. The orchestrator resolves every decision before you write anything — `/document` in its Phases 3–6.2, and, for an input your entry validation names as missing, in Phase 6.3's own loop before it re-dispatches you, and `/docs-write` in its Phases 0–4; this agent **executes the plan** — it does not re-make judgments and it is **write-only** (it never runs git).
 

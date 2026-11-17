@@ -6,7 +6,7 @@ These shared references load by part — `escalation-rules`, `finding-triage`, `
 
 Single source of truth for how a command records whether each of its verification gates actually ran.
 
-Consumed by `/document` (both modes) and `/docs-write` (§9), and by the two agents that read the ledger it produces: `doc-reviewer` (§4 and §6, for its verification-gate-integrity dimension — §9 and §6 under a `/docs-write` unit brief) and `docs-style-checker`. Written generically so other commands can adopt it — see §7.
+Consumed by `/document` (both modes) and `/docs-write` (§9), and by the two agents that read a ledger this file defines: `doc-reviewer` (§4 and §6, for its verification-gate-integrity dimension — §9 and §6 under a `/docs-write` unit brief) and `docs-style-checker`. Written generically so other commands can adopt it — see §7.
 
 ---
 
@@ -187,4 +187,4 @@ block to its review gate with the §6 contract. Nothing in §2, §3, or §5 is `
 
 **`build_check` decides whether the unit moves.** It permits the unit's move only at `RAN` with every build passing, or at `NOT_APPLICABLE` where the profile records no build command at any of `render-verification.md` §1's three levels. A content failure gets one `doc-fixer` pass with the build output and one re-run; a build still failing records `FAILED` and ends the unit, with no question. An environmental failure — no fallback being registered — is `UNAVAILABLE` and takes §5's conversion, whose question says, above its choices, that *Proceed without this check* ends the unit: that answer records `SKIPPED_BY_USER`, and the unit ends uncommitted. Where the toolchain preflight finds a build tool missing, the run says so at Phase 0, before anything is written.
 
-§2, §3, §5 and §6 apply unchanged. The block goes to `doc-reviewer` under a unit brief, whose Verification-gate integrity dimension reads it against this section and §6 (`docs-iteration/unit-brief.md` §4).
+§2, §5 and §6 apply unchanged, and §3 with this section's ids where it names §4's; no `/docs-write` phase writes a provisional row, §3's two sanctioned cases being `/document`'s. The block goes to `doc-reviewer` under a unit brief, whose Verification-gate integrity dimension reads it against this section and §6 (`docs-iteration/unit-brief.md` §4).
