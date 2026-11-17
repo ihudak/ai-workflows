@@ -18,8 +18,9 @@ keys_hierarchy:   # optional; passed by caller to enable the key-commit fallback
   - <every EPIC- folder's key discovered by the folder read>
 docs_only_shas:   # optional; commits the key-commit fallback must not read
   - <the full sha of each commit the caller's commit scan left out as documentation only in this
-     clone: it names a key and touches only the documentation of the repository holding it. The
-     scan read one ref, so a documentation-only commit on a branch that ref does not hold is not here>
+     clone: it names a key and touches only the documentation paths of the documentation-holding
+     repository. The scan read one ref, so a documentation-only commit on a branch that ref does not
+     hold is not here>
 refresh:
   fetch: true   # default true
   pull:  false  # default false — a historical diff does not need the current branch tip;
