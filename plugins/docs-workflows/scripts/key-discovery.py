@@ -1272,17 +1272,19 @@ def _git_answers(match, answer):
 def case_docs_root_git_cannot_answer_is_unrunnable(tmp):
     mono = _mono(tmp)
     root = os.path.join(mono, "website")
-    for answer in ((None, "", "timed out after 60s"),
-                   (128, "", "fatal: detected dubious ownership in repository at '%s'" % mono)):
+    dubious = "fatal: detected dubious ownership in repository at '%s'" % mono
+    refused = ("%s\nTo add an exception for this directory, call:\n\n\tgit config --global --add safe.directory %s\n"
+               % (dubious, mono))  # git's own four lines, the remedy last: the reason is the fatal: line
+    for answer, why in (((None, "", "timed out after 60s"), "timed out after 60s"), ((128, "", refused), dubious)):
         with _git_answers(("rev-parse", "--show-toplevel"), answer):
             try:
                 discover(["ACME-7"], [mono], "head", github=False, docs_root=root)
             except Unrunnable as e:
-                assert answer[2] in str(e), (answer, e)
+                assert why in str(e), (answer, e)
             else:
                 raise AssertionError("discover took %r for a root in no git work tree" % (answer,))
             rc, out, err = _main(["docs-check", "--docs-root", root, "--base", "HEAD"])
-            assert rc == 2 and out == "" and answer[2] in err, (answer, rc, out, err)
+            assert rc == 2 and out == "" and why in err, (answer, rc, out, err)
     with _git_answers(("rev-parse", "--show-prefix"), (128, "", "fatal: boom")):
         rc, out, err = _main(["docs-check", "--docs-root", root, "--base", "HEAD"])
         assert rc == 2 and out == "" and "boom" in err, (rc, out, err)
@@ -1322,6 +1324,7 @@ def case_docs_content_normalised_and_empty_rejected(tmp):
 
 def case_docs_shallow_boundary_is_never_documentation_only(tmp):
     mono = _mono(tmp)
+    _commit(mono, "unrelated", "src/other.py")
     _commit(mono, "[ACME-7] intake", "src/intake.py")
     tip = _commit(mono, "ACME-7 Document intake", ("website/docs/intake.md", ".dev-workflows/docs-profile.yml"))
     full = discover(["ACME-7"], [mono], "head", github=False, docs_root=os.path.join(mono, "website"))
@@ -1333,6 +1336,17 @@ def case_docs_shallow_boundary_is_never_documentation_only(tmp):
     assert entry["error"] and "shallow" in entry["error"] and tip in entry["error"], entry
     assert entry["scanned"] is None and entry["probe"] == [], entry
     assert out["commits"] == [] and out["docs"]["docs_only"] == [], out
+    _git(tmp, "clone", "-q", "--depth", "3", "file://" + mono, "deep")  # its boundary the unmatched "unrelated"
+    deep = os.path.join(tmp, "deep")
+    assert _git(deep, "rev-parse", "--is-shallow-repository") == "true", deep
+    out = discover(["ACME-7"], [deep], "head", github=False, docs_root=os.path.join(deep, "website"))
+    (entry,) = out["repos"]
+    assert entry["error"] is None, entry
+
+    def unplaced(rows):
+        return [{k: v for k, v in row.items() if k != "repo"} for row in rows]
+    assert unplaced(out["commits"]) == unplaced(full["commits"]) != [], (out["commits"], full["commits"])
+    assert unplaced(out["docs"]["docs_only"]) == unplaced(full["docs"]["docs_only"]), (out["docs"], full["docs"])
     _commit(mono, "see ACME-7x", "src/later.py")  # names the key bare: a probe hit, never a commit found
     _git(tmp, "clone", "-q", "--depth", "1", "file://" + mono, "shallow-2")
     shallow = os.path.join(tmp, "shallow-2")
@@ -1953,9 +1967,10 @@ def documentation_set(root, content=(), named=False):
     rc, out, err = _git_in(root, "rev-parse", "--show-toplevel", c_messages=True)
     if rc != 0 and rc is not None and NO_WORK_TREE_RE.search(err):
         return None, None
-    if rc != 0:
-        raise Unrunnable("cannot tell which repository holds the documentation root %s: %s"
-                         % (root, _last_line(err, "exit %s" % rc)))
+    if rc != 0:  # git's reason is its fatal: line; a refusal's last line is only the remedy
+        why = next((line.strip() for line in err.splitlines() if line.startswith("fatal:")),
+                   _last_line(err, "exit %s" % rc))
+        raise Unrunnable("cannot tell which repository holds the documentation root %s: %s" % (root, why))
     top = out.rstrip("\n")
     if not top:
         return None, None  # git answered with no top level: no work tree
