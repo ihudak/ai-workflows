@@ -1784,10 +1784,18 @@ def case_edit_undo_failed(tmp):
     import ast
     with open(os.path.abspath(__file__), encoding="utf-8") as fh:
         src = fh.read()
-    tree = ast.parse(src[:src.index("# ==== selftest ====")])
+    code = src[:src.index("# ==== selftest ====")]
+    tree = ast.parse(code)
     users = sorted({f.name for f in ast.walk(tree) if isinstance(f, ast.FunctionDef)
                     for node in ast.walk(f) if isinstance(node, ast.Name) and node.id == "WHY_UNDO"})
     _eq(users, ["_undo_failed"], "the functions that name WHY_UNDO")
+    # The whole module, not only its functions: a module-level alias of WHY_UNDO is a use outside _undo_failed.
+    inside = {id(n) for f in ast.walk(tree) if isinstance(f, ast.FunctionDef) and f.name == "_undo_failed"
+              for n in ast.walk(f)}
+    outside = [type(n.ctx).__name__ for n in ast.walk(tree)
+               if isinstance(n, ast.Name) and n.id == "WHY_UNDO" and id(n) not in inside]
+    _eq(outside, ["Store"], "outside _undo_failed, WHY_UNDO is only assigned, once")
+    _true("'WHY_UNDO'" not in code and '"WHY_UNDO"' not in code, "no code names WHY_UNDO by string")
 
 
 def case_edit_undo_failed_over_another_writer(tmp):
