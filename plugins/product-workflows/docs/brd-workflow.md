@@ -348,7 +348,7 @@ each of those three also has a keyed form that this route never uses.
 | `/brd-package` | `<BRD-KEY>` | `--depends-on <BRD-KEY>…` | Only a slice is packaged — a root stops with `BRD_PACKAGE_ROOT_LEVEL`. `--depends-on` is repeatable; a mistyped key is warned and dropped, never fatal |
 | `/brd-reconcile` | `<BRD-KEY> [@<review-file>]` | `--sent <path>…`, `--free-text` | Only a slice is reconciled — a root stops with `BRD_RECONCILE_ROOT_LEVEL`. The review is a path you give, or the one the customer committed beside the bundle, once you confirm it |
 | `/create-prd` | `<SLICE-KEY>` | `--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<path>` (extra grounding, never the seed) | A `BRD-` container is refused. Offered only where the slice's claimed rows leave none `unallocated` and one `covered-here`, and no `prd.md` is written. Defaults to `--full`. `--from-prd` is refused |
-| `/create-ard` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container and a slice failing its ledger tests. Offered where any `prd.md` is landed; goes on with none, stops on one never handed off. One address (`CREATE_ARD_ONE_ADDRESS`) |
+| `/create-ard` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container and a slice failing its ledger tests. Offered where they pass and any `prd.md` is landed; goes on with none, stops on one unlanded. One address (`CREATE_ARD_ONE_ADDRESS`) |
 | `/specify` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container, and a slice failing its ledger tests. Offered as `/create-ard` is. One address; a second token stops it (`SPECIFY_ONE_ADDRESS`) |
 
 `--no-docs` and `--docs <path>` appear together on two of the six **route** rows and mean the same

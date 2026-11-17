@@ -816,3 +816,18 @@ The final whole-branch review (`.superpowers/sdd/2026-11-17-ladder-order-b4-brd-
 | W-35 | D | `docs/superpowers/to-test-on-real-project.md:270`, `:286`, `:287`, `:288` | the section's count of items; a check for R23 and one for A3; the miss list |
 | W-36 | D | `docs/superpowers/specs/2026-11-14-ladder-order-design.md:206`, `:207`, `:225`, `:232`, `:233` | the note's lead (R23); (1) the two offers the final review found; (19) the to-fix entry filed, then fixed; (26) R23; (27) A3 |
 | W-37 | D | `.claude/rules/plugin-updates-coupling.md:21` | re-read, unchanged: every claim holds after A2 and B1, and no pair is missing |
+| W-38 | touch-up, N-1 (`final-rereview-1.md`) | page `commands/brd-reconcile.md:721`, `:752` | the no-command reason confined to a slice whose `claims:` names rows, none `covered-here` and none `unallocated` |
+| W-39 | touch-up, N-2 | page `brd-workflow.md:351` | the `/create-ard` cell: offered where the ledger tests pass and any `prd.md` is landed (197 characters) |
+| W-40 | touch-up, N-3 | page `getting-started.md:151` | "where the slice's `prd.md` is already on the default branch, or in its folder on a specs tree that is no git repository" |
+| W-41 | touch-up, N-4, N-5, N-6 | INT:2628, :2706, :2735 | "outside the work tree of the repository `$SPECS_PATH` stands in"; "each of its arrays that carries the re-ground option"; the hygiene branch keyed on what this phase prints |
+| W-42 | touch-up, N-5, N-6 | REC:3133, :3352 | "outside the work tree of the repository `$SPECS_PATH` stands in"; the hygiene sentence keyed on what this phase prints |
+| W-43 | touch-up, N-7 | page `workflow.md:145` | "`/create-prd` only where the slice holds no `prd.md`" |
+| W-44 | touch-up, N-8 | `specify.md:481` | each *Ignored* clause names `/update-spec` runs beside the `/specify` runs it names |
+| W-45 | touch-up, N1 (`final-rereview-2.md`) | `plugins/dev-workflows/commands/implement.md:1319` | the slice clause moved into a sentence of its own after "Phase 6 collects it as a follow-up for that command" |
+| W-46 | touch-up, N2 | NPO:206; `reference-parts/next-phase-offer/pm.md` | `/update-prd` prints the sentence once beside the list and once in the question's own text |
+| W-47 | touch-up, N3 | PH:617; `reference-parts/phase-handoff/require-on-main.md` | "`<PRD>` — on an Epic its parent slice, the slice whose ledger tests the rung reads —" |
+| W-48 | touch-up, N4 | `plugins/workflows-core/CHANGELOG.md:21` | the bullet rewritten as *`phase-handoff` §4.4, beside the rung* |
+| W-49 | touch-up, N5, N8, N9 | `plugins/product-workflows/CHANGELOG.md:24`, `:26`, `:28` | the landed states named as the commands name them; `/brd-interview`'s text for a slice with no row `covered-here`; step 6b's two causes; the lineage sentence in `/specify`, `/update-spec` and `/epics` |
+| W-50 | touch-up, N6 | `plugins/docs-workflows/CHANGELOG.md:10` | "on a slice that passes the tests, only a stale ARD's or threat model's lineage finding gains a sentence" |
+| W-51 | touch-up, N7 | `plugins/dev-workflows/CHANGELOG.md:10` | the save list names the lineage check's `/create-ard` |
+| W-52 | touch-up, N10 | `docs/superpowers/to-test-on-real-project.md:287` | the switch line quoted as the command prints it |

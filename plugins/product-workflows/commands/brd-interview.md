@@ -2625,7 +2625,7 @@ choices: ["Stop here — every question was settled from the findings and this B
 
 Where it is PRD-eligible and *The landed condition* holds on a `prd.md` the slice holds — on the
 default branch, or in the folder where that condition reads the folder's own file: on a specs tree
-that is no git repository, or in a slice folder outside its work tree — the PRD line is left out of
+that is no git repository, or in a slice folder outside the work tree of the repository `$SPECS_PATH` stands in — the PRD line is left out of
 the prose and the array, since `/product-workflows:create-prd` counts that file as found and opens
 on its existing-PRD question, whose recommended answer stops for `/product-workflows:update-prd`.
 Print beside the list `<BRD-KEY>'s PRD is already authored: revise it with '/product-workflows:update-prd <BRD-KEY>'.`,
@@ -2703,7 +2703,7 @@ until whoever owns the next round runs it.
 this run's own `Phase handoff:` outcome line; it is never written as an unconditional "once the pull
 request above is merged", because the no-new-round path reaches the handoff with nothing to commit
 wherever the register was already on file, and then opens no pull request, save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch. **The lists that name
-`/product-workflows:prd-ground <BRD-KEY>` — `rounds-unsettled`'s, and `nothing-to-review`'s prose and its array that carries the re-ground option — carry no clause on that option, nor does the prose naming it where the ledger cannot be read, and that asymmetry is deliberate:** that command gates on `coverage-ledger.md`
+`/product-workflows:prd-ground <BRD-KEY>` — `rounds-unsettled`'s, and `nothing-to-review`'s prose and each of its arrays that carries the re-ground option — carry no clause on that option, nor does the prose naming it where the ledger cannot be read, and that asymmetry is deliberate:** that command gates on `coverage-ledger.md`
 (`commands/prd-ground.md` Phase 0 step 6), which this run never writes, so no handoff of this run's
 can hold it up and there is no wait to state. **The `defects-unasked` re-open, and the reopened-record list's round, carry none
 for the same reason**, and so does every *Work another round now* option: this command stops only
@@ -2732,8 +2732,7 @@ going on to `/product-workflows:brd-package <BRD-KEY>`? Both stay in the PM lane
 (`workflows-core:session-hygiene` §2's *Same role* bullet) → run **`/compact`**. Moving to a different BRD or slice? → run **`/clear`**.
 **Where the `nothing-to-review` list offers the authoring ladder, it spans roles, so print both
 branches** (`workflows-core:session-hygiene` §2's *Next options span both* bullet): authoring this slice's PRD yourself as PM
-(`/product-workflows:create-prd <BRD-KEY>`, or, where the slice's `prd.md` is landed and the list
-names `/product-workflows:update-prd <BRD-KEY>` in that route's place, revising it)? → run **`/compact`**. Handing on to PA
+(`/product-workflows:create-prd <BRD-KEY>`, or, where this phase prints `/product-workflows:update-prd <BRD-KEY>` in that route's place, revising it)? → run **`/compact`**. Handing on to PA
 (`/product-workflows:create-ard <BRD-KEY>`) or PE (`/product-workflows:specify <BRD-KEY>`), even
 when the same person does it? → run **`/clear`**; those runs read the slice folder from the specs
 repo, not from this session. Where it offers none of the three, print neither branch, since each

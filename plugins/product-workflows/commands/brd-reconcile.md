@@ -3130,7 +3130,7 @@ choices: ["Stop here — the decisions are frozen and both sweeps are recorded",
 
 Where it passes them and *The landed condition* holds on a `prd.md` the slice holds — on the
 default branch, or in the folder where that condition reads the folder's own file: on a specs tree
-that is no git repository, or in a slice folder outside its work tree — the PRD line is left out of
+that is no git repository, or in a slice folder outside the work tree of the repository `$SPECS_PATH` stands in — the PRD line is left out of
 the prose and the array, since `/product-workflows:create-prd` counts that file as found and opens
 on its existing-PRD question, whose recommended answer stops for `/product-workflows:update-prd`.
 Print beside the list `<SLICE-KEY>'s PRD is already authored: revise it with '/product-workflows:update-prd <SLICE-KEY>'.`,
@@ -3349,9 +3349,7 @@ slice, or handing on to PA (`/product-workflows:create-ard <SLICE-KEY>`) or PE
 **`/clear`**; those runs read the reconciled folder from the specs repo, not from this session.
 Name each of `/product-workflows:create-prd`, `/product-workflows:create-ard` and
 `/product-workflows:specify` here only where the list above offers it, since this guidance names no
-run that list left out — and, where it names `/product-workflows:update-prd <SLICE-KEY>` in
-`/create-prd`'s place beside a landed `prd.md`, name that run in the PM branch instead, revising
-this slice's PRD yourself. Guidance only — nothing is auto-run.
+run that list left out — and, where this phase prints `/product-workflows:update-prd <SLICE-KEY>` in `/create-prd`'s place, name that run in the PM branch instead, revising this slice's PRD yourself. Guidance only — nothing is auto-run.
 
 ---
 
