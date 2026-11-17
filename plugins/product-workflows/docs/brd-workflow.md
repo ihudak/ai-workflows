@@ -160,8 +160,7 @@ against a row its parent delegated to it — two ledgers already agreeing that n
 requirement — an instruction typed against the parent's fully-allocated ledger, `/brd-split
 <PARENT-KEY> "<what to peel off>"`, re-points that row onto a **sibling under the same parent that
 has not been interviewed and does not already hold a ledger row for that requirement**: one already
-standing whose own ledger and inventory can be read — a sibling missing either, or unable to read
-it, is offered no row — or one that same run carves. The receiving slice's own ledger
+standing whose own ledger and inventory can be read — a sibling missing either, or holding either unreadable, is offered no row — or one that same run carves. The receiving slice's own ledger
 seeds the row `unallocated` — a **new** row, which is why a sibling already holding one for that
 requirement is not its receiver — so it re-enters at `/prd-ground` — with a row no finding on file was
 derived against — and its own `allocate-only` walk then takes the row to `covered-here`. **The
