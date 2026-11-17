@@ -418,9 +418,11 @@ here is asked, and no record is written.
    the root Phase 2's `resolve-docs-grounding` resolves, where it resolves one, and resolved here
    whether documentation grounding is on or off, `--no-docs` included, on which that procedure
    returns before it resolves a root; one `--docs-content` for each content path §1 names for
-   `/release-notes` — those the in-repo profile at the documentation-holding repository's top level
-   records, where one exists there, else none — worked out when that scan runs, never carried from
-   an earlier one; and `--docs-named` exactly where §1 says — where a repository `implementation.md`
+   `/release-notes` — those of the profile that section names for it: the in-repo profile at the
+   documentation-holding repository's top level where one exists there, else the built-in profile,
+   `${CLAUDE_PLUGIN_ROOT}/references/docs-profiles/docs-profile.default.yml`, where that repository
+   passes §1's layout test, else none — worked out when that scan runs, never carried from an
+   earlier one; and `--docs-named` exactly where §1 says — where a repository `implementation.md`
    names resolves, through the slug→clone map, to the documentation-holding repository's top level
    or to a clone with the same `origin` slug. Where the documentation root does not
    exist, pass none of `--docs-root`, `--docs-content` and `--docs-named`, and print once, before
