@@ -297,7 +297,7 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   and naming no `/brd-split` form, and so does a slice whose `brd-link.md` names no `parent:`. Only where the parent
   is fully allocated and this slice agrees with it was the handoff simply declined, and the run stops
   with `PRD_GROUND_NOT_HANDED_OFF`, whose action is to land the inventory and the ledger already on
-  disk — the stop prints the git commands, on a new `brd/` branch where neither is committed; where
+  disk — the stop prints the git commands, on a new `brd/` branch where neither is committed (one the default branch already holds aside); where
   they are committed, on a branch of your own or on your local default branch — where only one of them is, the
   other committed onto that branch first — by pushing that branch, where
   `origin` does not already hold every commit of it, and, for one of your own, merging it, or, where

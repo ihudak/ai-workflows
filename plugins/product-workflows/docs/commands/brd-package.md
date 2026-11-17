@@ -134,7 +134,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   [`/create-prd`](create-prd.md) or [`/brd-reconcile`](brd-reconcile.md) where either created it —
   had its handoff declined (`BRD_PACKAGE_REGISTER_NOT_HANDED_OFF`, land the files that are already
   on disk: the stop prints the git commands that land the register and the round records — on a
-  new `brd/` branch where none of them is committed; where they are committed, on a branch of your
+  new `brd/` branch where none of them that the default branch lacks is committed; where they are committed, on a branch of your
   own or on your local default branch — any of them that branch does not hold committed onto it
   first — by pushing that branch, where `origin` does not already hold every commit of it, and, for
   one of your own, merging it, or, where the default branch is protected, a new `brd/` branch and a
